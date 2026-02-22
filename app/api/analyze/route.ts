@@ -29,7 +29,8 @@ export async function GET(request: NextRequest) {
       username,
       gamesAnalyzed: result.gamesAnalyzed,
       repeatedPositions: result.repeatedPositions,
-      leaks: result.leaks
+      leaks: result.leaks,
+      missedTactics: []
     };
 
     return NextResponse.json(payload, { status: 200 });

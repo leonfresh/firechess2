@@ -60,11 +60,29 @@ export type AnalysisReport = {
   severeLeakRate: number;
 };
 
+export type MissedTactic = {
+  fenBefore: string;
+  fenAfter: string;
+  userMove: string;
+  bestMove: string;
+  cpBefore: number;
+  cpAfter: number;
+  cpLoss: number;
+  sideToMove: PlayerColor;
+  userColor: PlayerColor;
+  gameIndex: number;
+  moveNumber: number;
+  tags: string[];
+  /** Seconds remaining on the clock when the tactic was missed (null if unknown) */
+  timeRemainingSec: number | null;
+};
+
 export type AnalyzeResponse = {
   username: string;
   gamesAnalyzed: number;
   repeatedPositions: number;
   leaks: RepeatedOpeningLeak[];
+  missedTactics: MissedTactic[];
   diagnostics?: AnalysisDiagnostics;
   report?: AnalysisReport;
 };

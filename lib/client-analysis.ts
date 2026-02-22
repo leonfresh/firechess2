@@ -3,6 +3,7 @@ import { stockfishClient } from "@/lib/stockfish-client";
 import type {
   AnalyzeResponse,
   GameOpeningTrace,
+  MissedTactic,
   MoveSquare,
   PlayerColor,
   PositionEvalTrace,
@@ -11,14 +12,41 @@ import type {
 
 type LichessGame = {
   moves?: string;
+  clocks?: number[];
   players?: {
     white?: { user?: { name?: string } };
     black?: { user?: { name?: string } };
   };
 };
 
+type ChessComArchiveList = {
+  archives?: string[];
+};
+
+type ChessComGame = {
+  pgn?: string;
+  rules?: string;
+  white?: { username?: string };
+  black?: { username?: string };
+};
+
+type ChessComMonthArchive = {
+  games?: ChessComGame[];
+};
+
+type SourceGame = {
+  moves: string;
+  whiteName?: string;
+  blackName?: string;
+  /** Clock times in centiseconds per half-move (ply), if available */
+  clocks?: number[];
+};
+
+export type AnalysisSource = "lichess" | "chesscom";
+export type ScanMode = "openings" | "tactics" | "both";
+
 export type AnalysisProgress = {
-  phase: "fetch" | "parse" | "aggregate" | "eval" | "done";
+  phase: "fetch" | "parse" | "aggregate" | "eval" | "tactics" | "done";
   message: string;
   current?: number;
   total?: number;
@@ -29,6 +57,8 @@ type AnalyzeOptions = {
   maxOpeningMoves?: number;
   cpLossThreshold?: number;
   engineDepth?: number;
+  source?: AnalysisSource;
+  scanMode?: ScanMode;
   onProgress?: (progress: AnalysisProgress) => void;
 };
 
@@ -75,6 +105,41 @@ function parseGamesPayload(payload: string): LichessGame[] {
       }
     })
     .filter((g): g is LichessGame => g !== null);
+}
+
+function sourceGamesFromLichess(games: LichessGame[]): SourceGame[] {
+  return games
+    .filter((game) => typeof game.moves === "string" && game.moves.trim().length > 0)
+    .map((game) => ({
+      moves: game.moves!.trim(),
+      whiteName: game.players?.white?.user?.name,
+      blackName: game.players?.black?.user?.name,
+      clocks: game.clocks
+    }));
+}
+
+function parseMovesFromChessComPgn(pgn: string): { moves: string; clocks: number[] } | null {
+  try {
+    // Extract %clk annotations before loading (chess.js strips comments)
+    const clockRegex = /\{\[%clk\s+(\d+):(\d+):(\d+(?:\.\d+)?)\]\}/g;
+    const clocks: number[] = [];
+    let match: RegExpExecArray | null;
+    while ((match = clockRegex.exec(pgn)) !== null) {
+      const hours = parseInt(match[1], 10);
+      const minutes = parseInt(match[2], 10);
+      const seconds = parseFloat(match[3]);
+      // Store as centiseconds to match Lichess format
+      clocks.push(Math.round((hours * 3600 + minutes * 60 + seconds) * 100));
+    }
+
+    const chess = new Chess();
+    chess.loadPgn(pgn, { strict: false });
+    const history = chess.history();
+    if (!history.length) return null;
+    return { moves: history.join(" "), clocks: clocks.length > 0 ? clocks : [] };
+  } catch {
+    return null;
+  }
 }
 
 function scoreToCpFromUserPerspective(scoreCp: number | null, sideToMoveAtFen: PlayerColor, userColor: PlayerColor): number {
@@ -149,6 +214,111 @@ async function fetchGamesNdjsonWithRetry(url: string, retries = 3): Promise<stri
   }
 
   throw new Error("Browser cannot reach lichess.org (network timeout or block)");
+}
+
+async function fetchJsonWithRetry<T>(
+  url: string,
+  retries = 3,
+  timeoutMs = 15000,
+  accept = "application/json"
+): Promise<T> {
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      const response = await fetchWithTimeout(
+        url,
+        {
+          headers: { Accept: accept },
+          cache: "no-store"
+        },
+        timeoutMs
+      );
+
+      if (response.ok) {
+        return (await response.json()) as T;
+      }
+
+      if (attempt < retries && (response.status === 408 || response.status === 429 || response.status >= 500)) {
+        const retryAfter = Number(response.headers.get("retry-after") ?? "0");
+        const backoffMs = retryAfter > 0 ? retryAfter * 1000 : 500 * Math.pow(2, attempt);
+        await sleep(backoffMs);
+        continue;
+      }
+
+      throw new Error(`Request failed (${response.status})`);
+    } catch (error) {
+      lastError = error;
+      if (attempt < retries) {
+        await sleep(500 * Math.pow(2, attempt));
+      }
+    }
+  }
+
+  if (lastError instanceof Error) {
+    throw new Error(`Network request failed. Last error: ${lastError.message}`);
+  }
+
+  throw new Error("Network request failed");
+}
+
+async function fetchChessComGamesInReverse(
+  username: string,
+  maxGames: number,
+  options?: AnalyzeOptions
+): Promise<SourceGame[]> {
+  const normalizedUsername = normalizeName(username);
+  const baseUrl = `https://api.chess.com/pub/player/${encodeURIComponent(username)}/games`;
+
+  const archiveList = await fetchJsonWithRetry<ChessComArchiveList>(`${baseUrl}/archives`, 3, 15000);
+  const archives = [...(archiveList.archives ?? [])].reverse();
+
+  if (archives.length === 0) {
+    return [];
+  }
+
+  const collected: SourceGame[] = [];
+
+  for (let archiveIndex = 0; archiveIndex < archives.length; archiveIndex += 1) {
+    if (collected.length >= maxGames) break;
+
+    const archiveUrl = archives[archiveIndex];
+    emitProgress(options, {
+      phase: "fetch",
+      message: `Chess.com archive ${archiveIndex + 1}/${archives.length}...`,
+      current: archiveIndex + 1,
+      total: archives.length
+    });
+
+    const monthData = await fetchJsonWithRetry<ChessComMonthArchive>(archiveUrl, 3, 20000);
+    const monthGames = [...(monthData.games ?? [])].reverse();
+
+    for (const game of monthGames) {
+      if (collected.length >= maxGames) break;
+      if (game.rules && game.rules !== "chess") continue;
+      if (!game.pgn) continue;
+
+      const whiteName = game.white?.username;
+      const blackName = game.black?.username;
+      const involvesUser =
+        (whiteName && normalizeName(whiteName) === normalizedUsername) ||
+        (blackName && normalizeName(blackName) === normalizedUsername);
+
+      if (!involvesUser) continue;
+
+      const parsed = parseMovesFromChessComPgn(game.pgn);
+      if (!parsed) continue;
+
+      collected.push({
+        moves: parsed.moves,
+        whiteName,
+        blackName,
+        clocks: parsed.clocks.length > 0 ? parsed.clocks : undefined
+      });
+    }
+  }
+
+  return collected.slice(0, maxGames);
 }
 
 function emitProgress(options: AnalyzeOptions | undefined, progress: AnalysisProgress) {
@@ -247,37 +417,156 @@ function deriveLeakTags(args: {
   return [...tags].slice(0, 3);
 }
 
+/**
+ * Convert a SAN move token to UCI format using chess.js
+ */
+function moveToUci(chess: Chess, moveToken: string): string | null {
+  try {
+    const tempChess = new Chess(chess.fen());
+    const result = tempChess.move(moveToken, { strict: false });
+    if (!result) return null;
+    return result.from + result.to + (result.promotion ?? "");
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Derive descriptive tags for a missed tactic
+ */
+function deriveTacticTags(args: {
+  fenBefore: string;
+  userMove: string;
+  bestMove: string;
+  bestMoveSan: string;
+  cpLoss: number;
+  cpBefore: number;
+}): string[] {
+  const tags: string[] = [];
+  const { fenBefore, bestMoveSan, cpLoss, cpBefore } = args;
+
+  // Severity
+  if (cpLoss >= 600) tags.push("Winning Blunder");
+  else if (cpLoss >= 400) tags.push("Major Miss");
+  else tags.push("Tactical Miss");
+
+  // Type of tactic
+  if (bestMoveSan.includes("#")) {
+    tags.push("Missed Mate");
+  } else if (bestMoveSan.includes("+") && bestMoveSan.includes("x")) {
+    tags.push("Forcing Capture");
+  } else if (bestMoveSan.includes("+")) {
+    tags.push("Missed Check");
+  } else if (bestMoveSan.includes("x")) {
+    tags.push("Missed Capture");
+  }
+
+  // Context
+  if (cpBefore >= 200) {
+    tags.push("Converting Advantage");
+  } else if (cpBefore >= -50 && cpBefore <= 50) {
+    tags.push("Equal Position");
+  }
+
+  // Piece type from SAN
+  try {
+    if (bestMoveSan.startsWith("N") && bestMoveSan.includes("x")) {
+      tags.push("Knight Fork?");
+    } else if (bestMoveSan.startsWith("Q") && bestMoveSan.includes("x")) {
+      tags.push("Queen Tactic");
+    }
+  } catch {
+    // best-effort
+  }
+
+  // Check if it's a back-rank or king attack pattern
+  try {
+    const chess = new Chess(fenBefore);
+    const sideToMove = chess.turn() === "w" ? "white" : "black";
+    const oppKingSquare = findKingSquare(chess, sideToMove === "white" ? "black" : "white");
+    if (oppKingSquare) {
+      const rank = oppKingSquare.charAt(1);
+      if ((sideToMove === "white" && rank === "8") || (sideToMove === "black" && rank === "1")) {
+        if (bestMoveSan.includes("+") || bestMoveSan.includes("#")) {
+          tags.push("Back Rank");
+        }
+      }
+    }
+  } catch {
+    // best-effort
+  }
+
+  return tags.slice(0, 3);
+}
+
+function findKingSquare(chess: Chess, color: "white" | "black"): string | null {
+  const board = chess.board();
+  const targetColor = color === "white" ? "w" : "b";
+  for (let rank = 0; rank < 8; rank++) {
+    for (let file = 0; file < 8; file++) {
+      const square = board[rank][file];
+      if (square && square.type === "k" && square.color === targetColor) {
+        const fileChar = String.fromCharCode("a".charCodeAt(0) + file);
+        const rankChar = String(8 - rank);
+        return fileChar + rankChar;
+      }
+    }
+  }
+  return null;
+}
+
 export async function analyzeOpeningLeaksInBrowser(
   username: string,
   options?: AnalyzeOptions
 ): Promise<AnalyzeResponse> {
+  const source: AnalysisSource = options?.source ?? "lichess";
   const maxGames = clampInt(options?.maxGames, DEFAULT_MAX_GAMES, 1, 500);
   const maxOpeningMoves = clampInt(options?.maxOpeningMoves, DEFAULT_MAX_OPENING_MOVES, 1, 30);
   const cpLossThreshold = clampInt(options?.cpLossThreshold, CP_LOSS_THRESHOLD, 1, 1000);
   const engineDepth = clampInt(options?.engineDepth, 10, 6, 24);
   const maxOpeningPlies = maxOpeningMoves * 2;
+  const scanMode: ScanMode = options?.scanMode ?? "both";
+  const doOpenings = scanMode === "openings" || scanMode === "both";
+  const doTactics = scanMode === "tactics" || scanMode === "both";
 
-  emitProgress(options, {
-    phase: "fetch",
-    message: "Downloading recent games from Lichess..."
-  });
+  let games: SourceGame[] = [];
 
-  const payload = await fetchGamesNdjsonWithRetry(
-    `https://lichess.org/api/games/user/${encodeURIComponent(username)}?max=${maxGames}&moves=true&tags=false&opening=false&clocks=false&evals=false&pgnInJson=false`,
-    3
-  );
+  if (source === "chesscom") {
+    emitProgress(options, {
+      phase: "fetch",
+      message: "Downloading recent games from Chess.com archives..."
+    });
+
+    try {
+      games = await fetchChessComGamesInReverse(username, maxGames, options);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "unknown error";
+      throw new Error(`Browser cannot reach api.chess.com. Last error: ${message}`);
+    }
+  } else {
+    emitProgress(options, {
+      phase: "fetch",
+      message: "Downloading recent games from Lichess..."
+    });
+
+    const payload = await fetchGamesNdjsonWithRetry(
+      `https://lichess.org/api/games/user/${encodeURIComponent(username)}?max=${maxGames}&moves=true&tags=false&opening=false&clocks=true&evals=false&pgnInJson=false`,
+      3
+    );
+
+    games = sourceGamesFromLichess(parseGamesPayload(payload));
+  }
 
   emitProgress(options, {
     phase: "parse",
     message: "Parsing games and extracting opening moves..."
   });
 
-  const games = parseGamesPayload(payload);
-
   const byFen = new Map<string, { totalReachCount: number; moveCounts: Map<string, number> }>();
   let gamesAnalyzed = 0;
   const gameTraces: GameOpeningTrace[] = [];
 
+  if (doOpenings) {
   for (let gameIndex = 0; gameIndex < games.length; gameIndex += 1) {
     const game = games[gameIndex];
 
@@ -292,8 +581,8 @@ export async function analyzeOpeningLeaksInBrowser(
 
     if (!game.moves) continue;
 
-    const whiteName = game.players?.white?.user?.name;
-    const blackName = game.players?.black?.user?.name;
+    const whiteName = game.whiteName;
+    const blackName = game.blackName;
     const target = normalizeName(username);
 
     const userColor: PlayerColor | null =
@@ -338,10 +627,30 @@ export async function analyzeOpeningLeaksInBrowser(
       openingMoves: openingMovesPlayed
     });
   }
+  } // end if (doOpenings)
+
+  // Count games even in tactics-only mode
+  if (!doOpenings) {
+    for (const game of games) {
+      if (!game.moves) continue;
+      const whiteName = game.whiteName;
+      const blackName = game.blackName;
+      const target = normalizeName(username);
+      const userColor =
+        (whiteName && normalizeName(whiteName) === target)
+          ? "white"
+          : (blackName && normalizeName(blackName) === target)
+            ? "black"
+            : null;
+      if (userColor) gamesAnalyzed += 1;
+    }
+  }
 
   const leaks: RepeatedOpeningLeak[] = [];
   const positionTraces: PositionEvalTrace[] = [];
   let repeatedPositions = 0;
+
+  if (doOpenings) {
   const repeatedEntries = [...byFen.entries()].filter(([, data]) => data.totalReachCount >= MIN_POSITION_REPEATS);
 
   emitProgress(options, {
@@ -462,10 +771,167 @@ export async function analyzeOpeningLeaksInBrowser(
   }
 
   leaks.sort((a, b) => b.cpLoss - a.cpLoss);
+  } // end if (doOpenings)
+
+  /* ── Phase: Missed Tactics Detection ─────────────────────────── */
+
+  const TACTIC_CP_THRESHOLD = 200;
+  const MAX_TACTICS = 25;
+  const missedTactics: MissedTactic[] = [];
+
+  if (doTactics) {
+
+  emitProgress(options, {
+    phase: "tactics",
+    message: "Scanning games for missed tactics..."
+  });
+
+  const seenTacticFens = new Set<string>();
+
+  for (let gameIndex = 0; gameIndex < games.length; gameIndex += 1) {
+    if (missedTactics.length >= MAX_TACTICS) break;
+
+    const game = games[gameIndex];
+    if (!game.moves) continue;
+
+    const whiteName = game.whiteName;
+    const blackName = game.blackName;
+    const target = normalizeName(username);
+
+    const userColor: PlayerColor | null =
+      whiteName && normalizeName(whiteName) === target
+        ? "white"
+        : blackName && normalizeName(blackName) === target
+          ? "black"
+          : null;
+
+    if (!userColor) continue;
+
+    if (gameIndex % 10 === 0 || gameIndex === games.length - 1) {
+      emitProgress(options, {
+        phase: "tactics",
+        message: `Scanning game ${gameIndex + 1}/${games.length} for missed tactics...`,
+        current: gameIndex + 1,
+        total: games.length
+      });
+    }
+
+    const chess = new Chess();
+    const allTokens = game.moves.split(" ").filter(Boolean);
+
+    for (let ply = 0; ply < allTokens.length; ply += 1) {
+      if (missedTactics.length >= MAX_TACTICS) break;
+
+      const sideToMove: PlayerColor = ply % 2 === 0 ? "white" : "black";
+      const token = allTokens[ply];
+      const fenBefore = chess.fen();
+
+      if (sideToMove === userColor && !seenTacticFens.has(fenBefore)) {
+        // Quick heuristic: check if captures or checks exist
+        const legalMoves = chess.moves({ verbose: true });
+        const hasForcingMoves = legalMoves.some(
+          (m) => m.captured || m.san.includes("+") || m.san.includes("#")
+        );
+
+        if (hasForcingMoves) {
+          // Evaluate position before the move
+          const beforeEval = await stockfishClient.evaluateFen(fenBefore, engineDepth);
+
+          if (beforeEval && beforeEval.bestMove) {
+            // Check if best move is a forcing move (capture/check)
+            const bestMoveSan = sanForMove(fenBefore, beforeEval.bestMove);
+            const isBestMoveForcing =
+              bestMoveSan &&
+              (bestMoveSan.includes("x") || bestMoveSan.includes("+") || bestMoveSan.includes("#"));
+
+            if (isBestMoveForcing) {
+              // Check if user played a different move
+              const userUci = moveToUci(chess, token);
+
+              if (userUci && userUci !== beforeEval.bestMove) {
+                // Evaluate after user's move
+                const fenAfterUser = computeFenAfterMove(fenBefore, token);
+
+                if (fenAfterUser) {
+                  const afterEval = await stockfishClient.evaluateFen(fenAfterUser, engineDepth);
+
+                  if (afterEval) {
+                    const cpBefore = scoreToCpFromUserPerspective(
+                      beforeEval.cp,
+                      sideToMove,
+                      userColor
+                    );
+                    const opponentSide: PlayerColor = sideToMove === "white" ? "black" : "white";
+                    const cpAfterUser = scoreToCpFromUserPerspective(
+                      afterEval.cp,
+                      opponentSide,
+                      userColor
+                    );
+
+                    const cpLoss = cpBefore - cpAfterUser;
+
+                    // Skip if user was already heavily losing
+                    if (cpBefore < -300) {
+                      // Don't flag tactics when already lost
+                    } else if (cpLoss >= TACTIC_CP_THRESHOLD) {
+                      const fullMoveNumber = Math.floor(ply / 2) + 1;
+                      const tacticTags = deriveTacticTags({
+                        fenBefore,
+                        userMove: userUci,
+                        bestMove: beforeEval.bestMove,
+                        bestMoveSan: bestMoveSan,
+                        cpLoss,
+                        cpBefore
+                      });
+
+                      // Extract clock time for this ply (centiseconds → seconds)
+                      let timeRemainingSec: number | null = null;
+                      if (game.clocks && ply < game.clocks.length) {
+                        timeRemainingSec = Math.round(game.clocks[ply] / 100);
+                      }
+
+                      // Add time pressure tag if under 30 seconds
+                      if (typeof timeRemainingSec === "number" && timeRemainingSec <= 30) {
+                        tacticTags.push("Time Pressure");
+                      }
+
+                      missedTactics.push({
+                        fenBefore,
+                        fenAfter: fenAfterUser,
+                        userMove: userUci,
+                        bestMove: beforeEval.bestMove,
+                        cpBefore,
+                        cpAfter: cpAfterUser,
+                        cpLoss,
+                        sideToMove,
+                        userColor,
+                        gameIndex: gameIndex + 1,
+                        moveNumber: fullMoveNumber,
+                        tags: tacticTags,
+                        timeRemainingSec
+                      });
+
+                      seenTacticFens.add(fenBefore);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      const ok = applyMoveToken(chess, token);
+      if (!ok) break;
+    }
+  }
+
+  missedTactics.sort((a, b) => b.cpLoss - a.cpLoss);
+  } // end if (doTactics)
 
   emitProgress(options, {
     phase: "done",
-    message: `Analysis complete: ${leaks.length} repeated opening leaks found.`
+    message: `Analysis complete: ${leaks.length} opening leaks, ${missedTactics.length} missed tactics.`
   });
 
   return {
@@ -473,6 +939,7 @@ export async function analyzeOpeningLeaksInBrowser(
     gamesAnalyzed,
     repeatedPositions,
     leaks,
+    missedTactics,
     diagnostics: {
       gameTraces,
       positionTraces

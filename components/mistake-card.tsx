@@ -19,6 +19,11 @@ type MoveDetails = {
   san: string;
 };
 
+type MoveBadge = {
+  label: "Inaccuracy" | "Mistake" | "Blunder";
+  color: string;
+};
+
 type BoardSquare =
   | "a1"
   | "a2"
@@ -175,6 +180,12 @@ function formatPrincipalVariation(fen: string, uciMoves: string[]): string {
   }
 }
 
+function classifyLossBadge(cpLoss: number): MoveBadge {
+  if (cpLoss >= 280) return { label: "Blunder", color: "#ef4444" };
+  if (cpLoss >= 160) return { label: "Mistake", color: "#f59e0b" };
+  return { label: "Inaccuracy", color: "#f97316" };
+}
+
 function formatEval(valueCp: number, options?: { showPlus?: boolean }): string {
   const evalPawns = valueCp / 100;
   const rounded = Math.round(evalPawns * 100) / 100;
@@ -194,11 +205,14 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   const whiteEvalAfter = leak.sideToMove === "white" ? leak.evalAfter : -leak.evalAfter;
 
   const [fen, setFen] = useState(leak.fenBefore);
-  const [solved, setSolved] = useState(false);
   const [explaining, setExplaining] = useState(false);
   const [animating, setAnimating] = useState(false);
   const [explanation, setExplanation] = useState("");
+  const [fenCopied, setFenCopied] = useState(false);
+  const [boardInstance, setBoardInstance] = useState(0);
   const timerIds = useRef<number[]>([]);
+  const fenCopiedTimerRef = useRef<number | null>(null);
+  const moveBadge = useMemo(() => classifyLossBadge(leak.cpLoss), [leak.cpLoss]);
 
   const displayedEvalCp = useMemo(() => {
     if (fen === leak.fenAfter) return whiteEvalAfter;
@@ -213,8 +227,24 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   useEffect(() => {
     return () => {
       clearTimers();
+      if (fenCopiedTimerRef.current) {
+        window.clearTimeout(fenCopiedTimerRef.current);
+      }
     };
   }, []);
+
+  const copyFen = async () => {
+    try {
+      await navigator.clipboard.writeText(leak.fenBefore);
+      setFenCopied(true);
+      if (fenCopiedTimerRef.current) {
+        window.clearTimeout(fenCopiedTimerRef.current);
+      }
+      fenCopiedTimerRef.current = window.setTimeout(() => setFenCopied(false), 1200);
+    } catch {
+      setExplanation("Could not copy FEN to clipboard on this browser.");
+    }
+  };
 
   const customSquareStyles = useMemo(() => {
     if (animating) return {};
@@ -244,31 +274,26 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     return arrows;
   }, [animating, badMove, bestMove]);
 
-  const onDrop = (sourceSquare: string, targetSquare: string, piece: string) => {
-    if (animating) return false;
-    if (!bestMove) return false;
+  const customSquare = useMemo(() => {
+    return ((props: any) => {
+      const square = props?.square as string | undefined;
+      const showBadge = !animating && !!badMove && square === badMove.to;
 
-    const promotion = piece[1]?.toLowerCase() as PieceSymbol | undefined;
-    const moveMatches =
-      sourceSquare === bestMove.from &&
-      targetSquare === bestMove.to &&
-      (bestMove.promotion ? bestMove.promotion === promotion : true);
-
-    if (!moveMatches) return false;
-
-    const chess = new Chess(fen);
-    const result = chess.move({
-      from: sourceSquare,
-      to: targetSquare,
-      promotion: (bestMove.promotion as PieceSymbol | undefined) ?? promotion
-    });
-
-    if (!result) return false;
-
-    setFen(chess.fen());
-    setSolved(true);
-    return true;
-  };
+      return (
+        <div style={props?.style} className="relative h-full w-full">
+          {props?.children}
+          {showBadge ? (
+            <span
+              className="pointer-events-none absolute right-0.5 top-0.5 z-[40] rounded px-1 py-[1px] text-[9px] font-bold text-white shadow"
+              style={{ backgroundColor: moveBadge.color }}
+            >
+              {moveBadge.label}
+            </span>
+          ) : null}
+        </div>
+      );
+    }) as any;
+  }, [animating, badMove, moveBadge.color, moveBadge.label]);
 
   const moveToUci = (move: MoveDetails | null): string | null => {
     if (!move) return null;
@@ -281,7 +306,6 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     const chess = new Chess(startFen);
     setFen(chess.fen());
     setAnimating(true);
-    setSolved(false);
 
     const playable = uciMoves.slice(0, 10);
 
@@ -309,11 +333,19 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
       () => {
         setFen(leak.fenBefore);
         setAnimating(false);
+        setBoardInstance((value) => value + 1);
       },
       (playable.length + 1) * 2000 + 4000
     );
 
     timerIds.current.push(resetTimerId);
+  };
+
+  const stopAnimation = () => {
+    clearTimers();
+    setAnimating(false);
+    setFen(leak.fenBefore);
+    setBoardInstance((value) => value + 1);
   };
 
   const onExplainMistake = async () => {
@@ -443,103 +475,152 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   };
 
   return (
-    <article className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 shadow-lg shadow-black/20">
-      <div className="grid gap-4 md:grid-cols-[372px_1fr]">
-        <div className="mx-auto flex w-full max-w-[370px] shrink-0 items-start gap-2">
-          <EvalBar evalCp={displayedEvalCp} height={340} />
-          <Chessboard
-            id={boardId}
-            position={fen}
-            arePiecesDraggable={!solved && !!bestMove}
-            onPieceDrop={onDrop}
-            customSquareStyles={customSquareStyles}
-            customArrows={customArrows}
-            boardOrientation={boardOrientation}
-            boardWidth={340}
-            customDarkSquareStyle={{ backgroundColor: "#b58863" }}
-            customLightSquareStyle={{ backgroundColor: "#f0d9b5" }}
-          />
+    <article className="glass-card-hover overflow-hidden">
+      <div className="grid gap-0 md:grid-cols-[480px_1fr]">
+        {/* Board side */}
+        <div className="relative border-b border-white/[0.04] bg-white/[0.01] p-5 md:border-b-0 md:border-r">
+          <div className="mx-auto flex w-full max-w-[460px] items-start gap-3">
+            <EvalBar evalCp={displayedEvalCp} height={400} />
+            <div className="overflow-hidden rounded-xl">
+              <Chessboard
+                key={`${boardId}-${boardInstance}`}
+                id={boardId}
+                position={fen}
+                arePiecesDraggable={false}
+                customSquare={customSquare}
+                customSquareStyles={customSquareStyles}
+                customArrows={customArrows}
+                boardOrientation={boardOrientation}
+                boardWidth={400}
+                customDarkSquareStyle={{ backgroundColor: "#779952" }}
+                customLightSquareStyle={{ backgroundColor: "#edeed1" }}
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="space-y-3">
-          <h3 className="text-lg font-semibold text-white">Repeated Opening Leak</h3>
-          <p className="text-sm text-slate-300">
-            You reached this position <span className="font-semibold text-white">{leak.reachCount}</span> times and
-            played <span className="font-mono text-red-400">{leak.userMove}</span>{" "}
-            <span className="font-semibold text-white">{leak.moveCount}</span> times.
-          </p>
-
-          <div className="grid gap-2 text-sm text-slate-300 sm:grid-cols-2">
-            <p>
-              Eval Loss: <span className="font-semibold text-red-400">{formatEval(leak.cpLoss)}</span>
-            </p>
-            <p>
-              Eval before: <span className="font-semibold text-slate-100">{formatEval(leak.evalBefore, { showPlus: true })}</span>
-            </p>
-            <p>
-              Eval after: <span className="font-semibold text-slate-100">{formatEval(leak.evalAfter, { showPlus: true })}</span>
-            </p>
-            <p>
-              Best move: <span className="font-mono text-emerald-400">{bestMove?.san ?? "N/A"}</span>
-            </p>
-            <p>
-              Played move: <span className="font-mono text-red-400">{badMove?.san ?? leak.userMove}</span>
+        {/* Info side */}
+        <div className="space-y-5 p-5 md:p-6">
+          {/* Header */}
+          <div>
+            <div className="flex items-start justify-between gap-3">
+              <h3 className="text-lg font-bold text-white">Repeated Opening Leak</h3>
+              <span
+                className="shrink-0 rounded-lg px-2.5 py-1 text-xs font-bold text-white"
+                style={{ backgroundColor: moveBadge.color }}
+              >
+                {moveBadge.label}
+              </span>
+            </div>
+            <p className="mt-2 text-sm text-slate-400">
+              You reached this position <span className="font-semibold text-slate-200">{leak.reachCount}</span> times and
+              played <span className="font-mono text-red-400">{leak.userMove}</span>{" "}
+              <span className="font-semibold text-slate-200">{leak.moveCount}</span> times.
             </p>
           </div>
 
+          {/* Stats grid */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="stat-card py-3">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Eval Loss</p>
+              <p className="mt-0.5 text-lg font-bold text-red-400">{formatEval(leak.cpLoss)}</p>
+            </div>
+            <div className="stat-card py-3">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Eval Before</p>
+              <p className="mt-0.5 text-lg font-bold text-slate-200">{formatEval(leak.evalBefore, { showPlus: true })}</p>
+            </div>
+            <div className="stat-card py-3">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Eval After</p>
+              <p className="mt-0.5 text-lg font-bold text-slate-200">{formatEval(leak.evalAfter, { showPlus: true })}</p>
+            </div>
+            <div className="stat-card py-3">
+              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Best Move</p>
+              <p className="mt-0.5 text-lg font-bold text-emerald-400 font-mono">{bestMove?.san ?? "N/A"}</p>
+            </div>
+          </div>
+
+          {/* Tags */}
           {!!leak.tags?.length && (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               {leak.tags.map((tag) => (
-                <span
-                  key={`${leak.fenBefore}-${tag}`}
-                  className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-200"
-                >
+                <span key={`${leak.fenBefore}-${tag}`} className="tag-emerald text-[11px]">
                   {tag}
                 </span>
               ))}
             </div>
           )}
 
-          <p className="text-sm text-slate-400">
-            Puzzle: drag the best move on the board. {solved ? "Solved ✅" : "Not solved yet"}
+          <p className="text-xs text-slate-500">
+            <span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-400" />
+            Green = best move
+            <span className="mx-2 text-slate-600">|</span>
+            <span className="mr-1 inline-block h-2 w-2 rounded-full bg-red-400" />
+            Red = your move
           </p>
 
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              disabled={explaining || animating}
-              className="rounded-md bg-emerald-600 px-3 py-2 text-sm text-white transition hover:bg-emerald-500 disabled:opacity-60"
-              onClick={onExplainMistake}
-            >
-              {explaining ? "Explaining..." : animating ? "Animating..." : "Explain played move"}
-            </button>
+          {/* FEN block */}
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Position FEN</span>
+              <button
+                type="button"
+                onClick={copyFen}
+                className="btn-secondary h-7 px-2.5 text-[11px]"
+              >
+                {fenCopied ? "✓ Copied" : "Copy"}
+              </button>
+            </div>
+            <pre className="overflow-x-auto whitespace-pre-wrap break-all rounded-lg border border-white/[0.04] bg-white/[0.01] p-2.5 font-mono text-[11px] text-slate-500">
+              {leak.fenBefore}
+            </pre>
+          </div>
 
+          {/* Action buttons */}
+          <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
               disabled={explaining || animating}
-              className="rounded-md bg-emerald-800 px-3 py-2 text-sm text-white transition hover:bg-emerald-700 disabled:opacity-60"
+              className="btn-primary flex h-10 items-center gap-2 text-sm"
               onClick={onExplainBestMove}
             >
+              {explaining ? (
+                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              )}
               {explaining ? "Explaining..." : animating ? "Animating..." : "Explain best move"}
             </button>
 
-            {solved && (
-              <button
-                type="button"
-                className="rounded-md bg-slate-800 px-3 py-2 text-sm text-slate-100 transition hover:bg-slate-700"
-                onClick={() => {
-                  clearTimers();
-                  setFen(leak.fenBefore);
-                  setSolved(false);
-                  setAnimating(false);
-                }}
-              >
-                Reset puzzle
-              </button>
+            <button
+              type="button"
+              disabled={explaining || animating}
+              className="btn-secondary flex h-10 items-center gap-2 text-sm"
+              onClick={onExplainMistake}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              {explaining ? "..." : animating ? "..." : "Explain played move"}
+            </button>
+
+            {animating && (
+              <div className="ml-1 flex items-center gap-1 rounded-xl border border-white/[0.08] bg-white/[0.03] p-1">
+                <button
+                  type="button"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                  onClick={stopAnimation}
+                  title="Stop"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                </button>
+              </div>
             )}
           </div>
 
-          {explanation && <p className="rounded-md bg-slate-950/70 p-3 text-sm text-slate-200">{explanation}</p>}
+          {/* Explanation output */}
+          {explanation && (
+            <div className="animate-fade-in rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-sm text-slate-300">
+              {explanation}
+            </div>
+          )}
         </div>
       </div>
     </article>

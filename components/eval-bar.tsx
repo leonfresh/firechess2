@@ -18,17 +18,33 @@ export function EvalBar({ evalCp, height = 340 }: EvalBarProps) {
   const roundedPawns = Math.round(pawns * 10) / 10;
   const label = `${roundedPawns > 0 ? "+" : ""}${roundedPawns.toString()}`;
 
+  const isWhiteAdvantage = roundedPawns >= 0;
+
   return (
     <div className="flex flex-col items-center gap-2">
       <div
-        className="relative overflow-hidden rounded-md border border-slate-700"
-        style={{ width: 22, height }}
+        className="relative overflow-hidden rounded-lg border border-white/[0.08]"
+        style={{ width: 24, height }}
         aria-label="Evaluation bar"
       >
-        <div className="absolute inset-0 bg-slate-900" />
-        <div className="absolute left-0 top-0 w-full bg-slate-100" style={{ height: whiteHeight }} />
+        {/* Black side */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-800 to-slate-900" />
+        {/* White side */}
+        <div
+          className="absolute left-0 top-0 w-full transition-all duration-500 ease-out"
+          style={{
+            height: whiteHeight,
+            background: isWhiteAdvantage
+              ? "linear-gradient(to bottom, #f1f5f9, #e2e8f0)"
+              : "linear-gradient(to bottom, #e2e8f0, #cbd5e1)",
+          }}
+        />
+        {/* Center line indicator */}
+        <div className="absolute left-0 top-1/2 w-full border-t border-white/10" />
       </div>
-      <span className="text-xs font-mono text-slate-300">{label}</span>
+      <span className={`font-mono text-[10px] font-semibold ${isWhiteAdvantage ? "text-slate-300" : "text-slate-500"}`}>
+        {label}
+      </span>
     </div>
   );
 }

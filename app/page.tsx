@@ -1,28 +1,67 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { DrillMode } from "@/components/drill-mode";
+import { HeroDemoBoard } from "@/components/hero-demo-board";
 import { MistakeCard } from "@/components/mistake-card";
+import { TacticCard } from "@/components/tactic-card";
 import { analyzeOpeningLeaksInBrowser } from "@/lib/client-analysis";
 import type { AnalysisProgress } from "@/lib/client-analysis";
+import type { AnalysisSource, ScanMode } from "@/lib/client-analysis";
 import type { AnalyzeResponse } from "@/lib/types";
 
 type RequestState = "idle" | "loading" | "done" | "error";
 const PREFS_KEY = "firechess-user-prefs";
+const FREE_MAX_GAMES = 100;
+const FREE_MAX_DEPTH = 12;
+const LOCAL_PRO_HOTKEY_ENABLED = process.env.NEXT_PUBLIC_ENABLE_LOCAL_PRO_HOTKEY !== "false";
+const IS_DEV = process.env.NODE_ENV !== "production";
 
 export default function HomePage() {
   const [username, setUsername] = useState("");
   const [gameCount, setGameCount] = useState(100);
-  const [moveCount, setMoveCount] = useState(12);
-  const [cpThreshold, setCpThreshold] = useState(100);
-  const [engineDepth, setEngineDepth] = useState(10);
+  const [moveCount, setMoveCount] = useState(20);
+  const [cpThreshold, setCpThreshold] = useState(50);
+  const [engineDepth, setEngineDepth] = useState(12);
+  const [source, setSource] = useState<AnalysisSource>("lichess");
+  const [scanMode, setScanMode] = useState<ScanMode>("openings");
   const [lastRunConfig, setLastRunConfig] =
-    useState<{ maxGames: number; maxMoves: number; cpThreshold: number; engineDepth: number } | null>(null);
+    useState<{ maxGames: number; maxMoves: number; cpThreshold: number; engineDepth: number; source: AnalysisSource; scanMode: ScanMode } | null>(null);
   const [state, setState] = useState<RequestState>("idle");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [progressLogs, setProgressLogs] = useState<string[]>([]);
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
+  const [localProEnabled, setLocalProEnabled] = useState(false);
+  const hasProAccess = localProEnabled;
+  const gamesOverFreeLimit = gameCount > FREE_MAX_GAMES;
+  const depthOverFreeLimit = engineDepth > FREE_MAX_DEPTH;
+  const freeLimitsExceeded = !hasProAccess && (gamesOverFreeLimit || depthOverFreeLimit);
+
+  useEffect(() => {
+    if (!IS_DEV || !LOCAL_PRO_HOTKEY_ENABLED) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.code !== "Backquote") return;
+
+      const target = event.target as HTMLElement | null;
+      const tag = target?.tagName?.toLowerCase();
+      const isTypingField =
+        tag === "input" || tag === "textarea" || tag === "select" || !!target?.isContentEditable;
+
+      if (isTypingField) return;
+
+      setLocalProEnabled((prev) => {
+        const next = !prev;
+        setNotice(next ? "Local Pro mode enabled via ~ hotkey." : "Local Pro mode disabled.");
+        return next;
+      });
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   useEffect(() => {
     try {
@@ -34,6 +73,8 @@ export default function HomePage() {
         moveCount?: number;
         cpThreshold?: number;
         engineDepth?: number;
+        source?: AnalysisSource;
+        scanMode?: string;
       };
 
       if (typeof parsed.gameCount === "number") {
@@ -48,6 +89,12 @@ export default function HomePage() {
       if (typeof parsed.engineDepth === "number") {
         setEngineDepth(Math.min(24, Math.max(6, Math.floor(parsed.engineDepth))));
       }
+      if (parsed.source === "chesscom" || parsed.source === "lichess") {
+        setSource(parsed.source);
+      }
+      if (parsed.scanMode === "openings" || parsed.scanMode === "tactics" || parsed.scanMode === "both") {
+        setScanMode(parsed.scanMode as ScanMode);
+      }
     } catch {
       // ignore malformed localStorage
     }
@@ -61,15 +108,54 @@ export default function HomePage() {
           gameCount,
           moveCount,
           cpThreshold,
-          engineDepth
+          engineDepth,
+          source,
+          scanMode
         })
       );
     } catch {
       // ignore storage write failures
     }
-  }, [gameCount, moveCount, cpThreshold, engineDepth]);
+  }, [gameCount, moveCount, cpThreshold, engineDepth, source, scanMode]);
 
   const leaks = useMemo(() => result?.leaks ?? [], [result]);
+  const missedTactics = useMemo(() => result?.missedTactics ?? [], [result]);
+
+  // Motif clustering for missed tactics
+  const tacticMotifs = useMemo(() => {
+    if (missedTactics.length === 0) return [];
+
+    // Define motif categories with matching logic
+    const motifDefs: { name: string; icon: string; match: (t: typeof missedTactics[0]) => boolean }[] = [
+      { name: "Missed Mate", icon: "👑", match: (t) => t.tags.some((tag) => tag === "Missed Mate" || tag === "Winning Blunder") && (t.cpLoss >= 99000 || t.cpBefore >= 99000) },
+      { name: "Missed Check", icon: "⚡", match: (t) => t.tags.includes("Missed Check") },
+      { name: "Missed Capture", icon: "🗡️", match: (t) => t.tags.includes("Missed Capture") || t.tags.includes("Forcing Capture") },
+      { name: "Back Rank Threats", icon: "🏰", match: (t) => t.tags.includes("Back Rank") },
+      { name: "Knight Tactics", icon: "♞", match: (t) => t.tags.includes("Knight Fork?") },
+      { name: "Queen Tactics", icon: "♛", match: (t) => t.tags.includes("Queen Tactic") },
+      { name: "Converting Advantage", icon: "📈", match: (t) => t.tags.includes("Converting Advantage") },
+      { name: "Equal Position Misses", icon: "⚖️", match: (t) => t.tags.includes("Equal Position") },
+    ];
+
+    const groups: { name: string; icon: string; count: number; avgCpLoss: number; tactics: typeof missedTactics }[] = [];
+
+    for (const def of motifDefs) {
+      const matching = missedTactics.filter(def.match);
+      if (matching.length >= 1) {
+        const avgLoss = matching.reduce((sum, t) => sum + t.cpLoss, 0) / matching.length;
+        groups.push({
+          name: def.name,
+          icon: def.icon,
+          count: matching.length,
+          avgCpLoss: avgLoss,
+          tactics: matching
+        });
+      }
+    }
+
+    return groups.sort((a, b) => b.count - a.count);
+  }, [missedTactics]);
+
   const diagnostics = result?.diagnostics;
   const report = useMemo(() => {
     if (!diagnostics?.positionTraces?.length) return null;
@@ -168,11 +254,14 @@ export default function HomePage() {
     safeMoves: number,
     safeCpThreshold: number,
     safeDepth: number,
+    safeSource: AnalysisSource,
     reason?: string
   ) => {
     setNotice(reason ?? "Cloud eval disabled. Running local Stockfish analysis in your browser.");
     appendProgress("Using browser-side analysis...");
     const browserResult = await analyzeOpeningLeaksInBrowser(trimmed, {
+      source: safeSource,
+      scanMode,
       maxGames: safeGames,
       maxOpeningMoves: safeMoves,
       cpLossThreshold: safeCpThreshold,
@@ -193,12 +282,36 @@ export default function HomePage() {
       return;
     }
 
+    if (!hasProAccess && gameCount > FREE_MAX_GAMES) {
+      setError(
+        `Free plan supports up to ${FREE_MAX_GAMES} recent games per scan. Set games to ${FREE_MAX_GAMES} or less, or upgrade on /pricing.`
+      );
+      setState("error");
+      return;
+    }
+
+    if (!hasProAccess && engineDepth > FREE_MAX_DEPTH) {
+      setError(
+        `Free plan supports engine depth up to ${FREE_MAX_DEPTH}. Set depth to ${FREE_MAX_DEPTH} or less, or upgrade on /pricing.`
+      );
+      setState("error");
+      return;
+    }
+
     try {
       const safeGames = Math.min(500, Math.max(1, Math.floor(gameCount || 100)));
-      const safeMoves = Math.min(30, Math.max(1, Math.floor(moveCount || 12)));
-      const safeCpThreshold = Math.min(1000, Math.max(1, Math.floor(cpThreshold || 100)));
-      const safeDepth = Math.min(24, Math.max(6, Math.floor(engineDepth || 10)));
-      setLastRunConfig({ maxGames: safeGames, maxMoves: safeMoves, cpThreshold: safeCpThreshold, engineDepth: safeDepth });
+      const safeMoves = Math.min(30, Math.max(1, Math.floor(moveCount || 20)));
+      const safeCpThreshold = Math.min(1000, Math.max(1, Math.floor(cpThreshold || 50)));
+      const safeDepth = Math.min(24, Math.max(6, Math.floor(engineDepth || 12)));
+      const safeSource: AnalysisSource = source === "chesscom" ? "chesscom" : "lichess";
+      setLastRunConfig({
+        maxGames: safeGames,
+        maxMoves: safeMoves,
+        cpThreshold: safeCpThreshold,
+        engineDepth: safeDepth,
+        source: safeSource,
+        scanMode
+      });
 
       setState("loading");
       setError("");
@@ -206,10 +319,10 @@ export default function HomePage() {
       setResult(null);
       setProgressLogs(["Starting analysis..."]);
       appendProgress(
-        `Settings: up to ${safeGames} games, first ${safeMoves} moves, CP threshold > ${safeCpThreshold}, depth ${safeDepth}.`
+        `Settings: ${safeSource}, up to ${safeGames} games, first ${safeMoves} moves, CP threshold > ${safeCpThreshold}, depth ${safeDepth}.`
       );
 
-      await runBrowserAnalysis(trimmed, safeGames, safeMoves, safeCpThreshold, safeDepth);
+      await runBrowserAnalysis(trimmed, safeGames, safeMoves, safeCpThreshold, safeDepth, safeSource);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Unexpected error";
       if (/cannot reach lichess\.org|timed out|fetch failed|network/i.test(message)) {
@@ -224,262 +337,646 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen px-4 py-10 md:px-8">
-      <section className="mx-auto w-full max-w-4xl space-y-8">
-        <header className="space-y-3 text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl">Automated Opening Leak Scanner</h1>
-          <p className="mx-auto max-w-2xl text-sm text-slate-300 md:text-base">
-            Enter a Lichess username to scan recent games, detect repeated opening mistakes, and solve the correct move
-            as a puzzle.
-          </p>
-        </header>
+    <div className="relative min-h-screen">
+      {/* Animated floating orbs */}
+      <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+        <div className="animate-float absolute -left-32 top-20 h-96 w-96 rounded-full bg-emerald-500/[0.07] blur-[100px]" />
+        <div className="animate-float-delayed absolute -right-32 top-40 h-80 w-80 rounded-full bg-cyan-500/[0.06] blur-[100px]" />
+        <div className="animate-float absolute bottom-20 left-1/3 h-72 w-72 rounded-full bg-fuchsia-500/[0.05] blur-[100px]" />
+        <div className="animate-float-delayed absolute right-1/4 top-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-[80px]" />
+      </div>
 
-        <form
-          onSubmit={onSubmit}
-          className="mx-auto flex w-full max-w-2xl flex-col gap-3 rounded-xl border border-slate-800 bg-slate-900/80 p-4"
-        >
-          <div className="flex flex-col gap-3 md:flex-row">
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Lichess username"
-              className="h-11 flex-1 rounded-md border border-slate-700 bg-slate-950 px-4 text-slate-100 placeholder:text-slate-500"
-            />
-            <button
-              type="submit"
-              disabled={state === "loading"}
-              className="h-11 rounded-md bg-emerald-500 px-5 font-medium text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {state === "loading" ? "Scanning..." : "Scan Games"}
-            </button>
-          </div>
+      <div className="relative z-10 px-6 py-12 md:px-10">
+        <section className="mx-auto w-full max-w-6xl space-y-16">
 
-          <div className="grid gap-3 md:grid-cols-4">
-            <label className="text-sm text-slate-300">
-              Games to scan
-              <input
-                type="number"
-                min={1}
-                max={500}
-                value={gameCount}
-                onChange={(e) => setGameCount(Number(e.target.value))}
-                className="mt-1 h-11 w-full rounded-md border border-slate-700 bg-slate-950 px-4 text-slate-100"
-              />
-            </label>
-
-            <label className="text-sm text-slate-300">
-              Opening moves per game
-              <input
-                type="number"
-                min={1}
-                max={30}
-                value={moveCount}
-                onChange={(e) => setMoveCount(Number(e.target.value))}
-                className="mt-1 h-11 w-full rounded-md border border-slate-700 bg-slate-950 px-4 text-slate-100"
-              />
-            </label>
-
-            <label className="text-sm text-slate-300">
-              CP loss threshold
-              <input
-                type="number"
-                min={1}
-                max={1000}
-                value={cpThreshold}
-                onChange={(e) => setCpThreshold(Number(e.target.value))}
-                className="mt-1 h-11 w-full rounded-md border border-slate-700 bg-slate-950 px-4 text-slate-100"
-              />
-            </label>
-
-            <label className="text-sm text-slate-300">
-              Engine depth
-              <input
-                type="number"
-                min={6}
-                max={24}
-                value={engineDepth}
-                onChange={(e) => setEngineDepth(Number(e.target.value))}
-                className="mt-1 h-11 w-full rounded-md border border-slate-700 bg-slate-950 px-4 text-slate-100"
-              />
-            </label>
-          </div>
-        </form>
-
-        {state === "loading" && (
-          <div className="mx-auto w-full max-w-2xl rounded-xl border border-slate-800 bg-slate-900/70 p-4 text-sm text-slate-300">
-            <p className="mb-3">Running analysis pipeline...</p>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800">
-              <div className="h-full w-1/2 animate-pulse rounded-full bg-emerald-400" />
+          {/* ─── Hero Section ─── */}
+          <header className="animate-fade-in-up space-y-8 text-center">
+            <div className="flex items-center justify-center gap-3">
+              <Link
+                href="/pricing"
+                className="tag-emerald group gap-2 hover:shadow-glow-sm"
+              >
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                Upgrade to Pro
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" className="transition-transform group-hover:translate-x-0.5"><path d="M4.5 3L7.5 6L4.5 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+              </Link>
             </div>
-            <div className="mt-4 space-y-1 rounded-md bg-slate-950/70 p-3 font-mono text-xs text-slate-300">
-              {progressLogs.length === 0 ? (
-                <p>Waiting for progress updates...</p>
-              ) : (
-                progressLogs.map((log, index) => <p key={`${index}-${log}`}>• {log}</p>)
-              )}
+
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <span className="tag-fuchsia">
+                  <span className="text-sm">🔥</span> FireChess
+                </span>
+                <span className="tag-emerald">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                  Powered by Stockfish 18
+                </span>
+              </div>
+
+              <h1 className="mx-auto max-w-4xl text-4xl font-black leading-[1.1] tracking-tight md:text-6xl lg:text-7xl">
+                <span className="text-white">Stop repeating the </span>
+                <span className="gradient-text">same opening mistakes.</span>
+              </h1>
+
+              <p className="mx-auto max-w-2xl text-base text-slate-400 md:text-lg">
+                FireChess scans your games, finds repeated opening leaks, explains the better move, and drills you until the fix sticks.
+              </p>
             </div>
-          </div>
-        )}
 
-        {notice && state !== "loading" && (
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-200">{notice}</div>
-        )}
+            <HeroDemoBoard />
+          </header>
 
-        {state === "error" && (
-          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-300">{error}</div>
-        )}
-
-        {state === "done" && result && (
-          <section className="space-y-4">
-            {report && (
-              <div className="rounded-xl border border-fuchsia-500/30 bg-gradient-to-br from-fuchsia-500/10 via-emerald-500/10 to-cyan-500/10 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h2 className="text-base font-semibold text-white">📸 Share-Worthy Opening Report</h2>
-                  <span className="rounded-full border border-fuchsia-400/40 bg-fuchsia-500/10 px-2.5 py-1 text-xs font-medium text-fuchsia-200">
-                    {report.vibeTitle}
+          {/* ─── Control Center ─── */}
+          <form
+            onSubmit={onSubmit}
+            className="glass-card animate-fade-in-up mx-auto w-full max-w-5xl space-y-6 p-6 md:p-8"
+          >
+            {/* Header */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="flex items-center gap-2 text-xl font-bold text-white">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 text-sm">⚡</span>
+                  Control Center
+                </h2>
+                <p className="mt-1 text-sm text-slate-400">Configure your scan parameters</p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="tag-cyan text-[11px]">
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-400" />
+                  Browser analysis
+                </span>
+                {IS_DEV && LOCAL_PRO_HOTKEY_ENABLED && (
+                  <span
+                    className={`tag-pill text-[11px] ${
+                      localProEnabled
+                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                        : "border-white/10 bg-white/[0.03] text-slate-400"
+                    }`}
+                  >
+                    Pro: {localProEnabled ? "ON" : "OFF"} (~)
                   </span>
-                </div>
-
-                <div className="mt-3 grid gap-3 sm:grid-cols-4">
-                  <div className="rounded-md border border-slate-800 bg-slate-950/70 p-3">
-                    <p className="text-xs text-slate-400">🎯 Estimated Accuracy</p>
-                    <p className="text-xl font-bold text-emerald-300">{report.estimatedAccuracy.toFixed(1)}%</p>
-                  </div>
-                  <div className="rounded-md border border-slate-800 bg-slate-950/70 p-3">
-                    <p className="text-xs text-slate-400">🏆 Estimated Rating</p>
-                    <p className="text-xl font-bold text-emerald-300">{report.estimatedRating}</p>
-                  </div>
-                  <div className="rounded-md border border-slate-800 bg-slate-950/70 p-3">
-                    <p className="text-xs text-slate-400">📉 Avg Eval Loss</p>
-                    <p className="text-xl font-bold text-emerald-300">{(report.weightedCpLoss / 100).toFixed(2)}</p>
-                  </div>
-                  <div className="rounded-md border border-slate-800 bg-slate-950/70 p-3">
-                    <p className="text-xs text-slate-400">🚨 Severe Leak Rate</p>
-                    <p className="text-xl font-bold text-emerald-300">{(report.severeLeakRate * 100).toFixed(0)}%</p>
-                  </div>
-                </div>
-
-                <div className="mt-3 grid gap-3 sm:grid-cols-4">
-                  <div className="rounded-md border border-slate-800 bg-slate-950/70 p-3">
-                    <p className="text-xs text-slate-400">🧊 Consistency Score</p>
-                    <p className="text-xl font-bold text-cyan-300">{report.consistencyScore}/100</p>
-                  </div>
-                  <div className="rounded-md border border-slate-800 bg-slate-950/70 p-3">
-                    <p className="text-xs text-slate-400">💥 Peak Throw (P75)</p>
-                    <p className="text-xl font-bold text-cyan-300">{(report.p75CpLoss / 100).toFixed(2)}</p>
-                  </div>
-                  <div className="rounded-md border border-slate-800 bg-slate-950/70 p-3">
-                    <p className="text-xs text-slate-400">🧪 Sample Confidence</p>
-                    <p className="text-xl font-bold text-cyan-300">{report.confidence}%</p>
-                  </div>
-                  <div className="rounded-md border border-slate-800 bg-slate-950/70 p-3">
-                    <p className="text-xs text-slate-400">🕵️ Main Leak Vibe</p>
-                    <p className="text-sm font-bold text-cyan-300">{report.topTag}</p>
-                  </div>
-                </div>
-
-                <p className="mt-3 text-xs text-slate-300">
-                  Based on {report.sampleSize} repeated positions from this scan. These are opening-pattern estimates, not
-                  full-game engine accuracy.
-                </p>
-                <p className="mt-1 text-xs text-fuchsia-200/90">✨ Screenshot this card for your chess recap post.</p>
+                )}
               </div>
-            )}
-
-            <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 text-sm text-slate-300">
-              <p>
-                Games analyzed: <span className="font-semibold text-white">{result.gamesAnalyzed}</span>
-              </p>
-              {lastRunConfig && (
-                <p>
-                  Settings used: <span className="font-semibold text-white">{lastRunConfig.maxGames}</span> games, first{" "}
-                  <span className="font-semibold text-white">{lastRunConfig.maxMoves}</span> moves, CP threshold {">"}{" "}
-                  <span className="font-semibold text-white">{lastRunConfig.cpThreshold}</span>, depth{" "}
-                  <span className="font-semibold text-white">{lastRunConfig.engineDepth}</span>
-                </p>
-              )}
-              <p>
-                Repeated opening positions (≥3): <span className="font-semibold text-white">{result.repeatedPositions}</span>
-              </p>
-              <p>
-                Leaks found (Eval loss {">"} {((lastRunConfig?.cpThreshold ?? cpThreshold) / 100).toFixed(2)}):{" "}
-                <span className="font-semibold text-white">{result.leaks.length}</span>
-              </p>
-              {typeof maxObservedCpLoss === "number" && (
-                <p>
-                  Max observed eval loss: <span className="font-semibold text-white">{(maxObservedCpLoss / 100).toFixed(2)}</span>
-                </p>
-              )}
             </div>
 
-            {leaks.length === 0 ? (
-              <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 text-sm text-slate-300">
-                No repeated opening leaks found in the first {lastRunConfig?.maxMoves ?? moveCount} moves of your recent
-                games.
+            {/* Search bar */}
+            <div className="flex flex-col gap-3 md:flex-row">
+              <div className="relative flex-1">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-slate-500" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </div>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter your Lichess or Chess.com username"
+                  className="glass-input pl-11"
+                />
               </div>
-            ) : (
-              <div className="space-y-4">
-                {leaks.map((leak) => (
-                  <MistakeCard
-                    key={`${leak.fenBefore}-${leak.userMove}`}
-                    leak={leak}
-                    engineDepth={lastRunConfig?.engineDepth ?? engineDepth}
-                  />
-                ))}
+              <button
+                type="submit"
+                disabled={state === "loading" || freeLimitsExceeded}
+                className="btn-primary flex items-center justify-center gap-2"
+              >
+                {state === "loading" ? (
+                  <>
+                    <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                    Scanning...
+                  </>
+                ) : freeLimitsExceeded ? (
+                  "Upgrade for Pro limits"
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                    Scan Games
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Scan mode toggle */}
+            <div className="stat-card space-y-2 p-4">
+              <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Scan Mode</span>
+              <div className="grid h-10 grid-cols-3 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1">
+                <button
+                  type="button"
+                  onClick={() => setScanMode("openings")}
+                  className={`rounded-md text-xs font-semibold transition-all duration-200 ${
+                    scanMode === "openings"
+                      ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 shadow-glow-sm"
+                      : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
+                  }`}
+                >
+                  🔁 Openings
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setScanMode("tactics")}
+                  className={`rounded-md text-xs font-semibold transition-all duration-200 ${
+                    scanMode === "tactics"
+                      ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-glow-sm"
+                      : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
+                  }`}
+                >
+                  ⚡ Tactics
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setScanMode("both")}
+                  className={`rounded-md text-xs font-semibold transition-all duration-200 ${
+                    scanMode === "both"
+                      ? "bg-gradient-to-r from-fuchsia-500 to-fuchsia-600 text-white shadow-glow-sm"
+                      : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
+                  }`}
+                >
+                  Both
+                </button>
               </div>
-            )}
+              <p className="text-xs text-slate-500">
+                {scanMode === "openings" && "Finds repeated patterns in your first N moves"}
+                {scanMode === "tactics" && "Scans full games for missed forcing moves (slower)"}
+                {scanMode === "both" && "Runs both scans — most thorough but slowest"}
+              </p>
+            </div>
 
-            {diagnostics && (
-              <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-900/70 p-4 text-sm text-slate-300">
-                <h2 className="text-base font-semibold text-white">Detailed analysis logs</h2>
-
-                <details className="rounded-md border border-slate-800 bg-slate-950/60 p-3">
-                  <summary className="cursor-pointer font-medium text-slate-100">
-                    Game traces ({diagnostics.gameTraces.length})
-                  </summary>
-                  <div className="mt-3 max-h-80 space-y-2 overflow-auto font-mono text-xs text-slate-300">
-                    {diagnostics.gameTraces.map((trace) => (
-                      <div key={`game-${trace.gameIndex}`} className="rounded border border-slate-800 p-2">
-                        <p>
-                          #{trace.gameIndex} • {trace.userColor} • moves: {trace.openingMoves.length}
-                        </p>
-                        <p className="mt-1 break-words text-slate-400">
-                          {trace.openingMoves.length ? trace.openingMoves.join(" ") : "(no opening moves parsed)"}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </details>
-
-                <details className="rounded-md border border-slate-800 bg-slate-950/60 p-3">
-                  <summary className="cursor-pointer font-medium text-slate-100">
-                    Position eval traces ({diagnostics.positionTraces.length})
-                  </summary>
-                  <div className="mt-3 max-h-96 space-y-2 overflow-auto font-mono text-xs text-slate-300">
-                    {diagnostics.positionTraces.map((trace, index) => (
-                      <div key={`pos-${index}-${trace.fenBefore}`} className="rounded border border-slate-800 p-2">
-                        <p>
-                          reach={trace.reachCount}, userMove={trace.userMove}, best={trace.bestMove ?? "n/a"}, cpLoss={
-                            trace.cpLoss ?? "n/a"
-                          }, flagged={trace.flagged ? "yes" : "no"}
-                        </p>
-                        <p className="mt-1 text-slate-400">
-                          evalBefore={trace.evalBefore ?? "n/a"}, evalAfter={trace.evalAfter ?? "n/a"}
-                          {trace.skippedReason ? `, skipped=${trace.skippedReason}` : ""}
-                        </p>
-                        <p className="mt-1 break-all text-slate-500">fen={trace.fenBefore}</p>
-                      </div>
-                    ))}
-                  </div>
-                </details>
+            {/* Settings grid */}
+            <div className="grid gap-3 md:grid-cols-5">
+              <div className="stat-card space-y-2">
+                <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Source</span>
+                <div className="grid h-10 grid-cols-2 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1">
+                  <button
+                    type="button"
+                    onClick={() => setSource("lichess")}
+                    className={`rounded-md text-xs font-semibold transition-all duration-200 ${
+                      source === "lichess"
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 shadow-glow-sm"
+                        : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
+                    }`}
+                  >
+                    Lichess
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSource("chesscom")}
+                    className={`rounded-md text-xs font-semibold transition-all duration-200 ${
+                      source === "chesscom"
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 shadow-glow-sm"
+                        : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
+                    }`}
+                  >
+                    Chess.com
+                  </button>
+                </div>
               </div>
-            )}
 
-            {diagnostics && diagnostics.positionTraces.length > 0 && <DrillMode positions={diagnostics.positionTraces} />}
+              <div className="stat-card space-y-2">
+                <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Games</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={500}
+                  value={gameCount}
+                  onChange={(e) => setGameCount(Number(e.target.value))}
+                  className="glass-input h-10 text-sm"
+                />
+                {gamesOverFreeLimit && (
+                  <p className="text-xs font-medium text-amber-400">
+                    {!hasProAccess ? (
+                      <>Requires <Link href="/pricing" className="underline">Pro</Link></>
+                    ) : "Unlocked"}
+                  </p>
+                )}
+              </div>
+
+              <div className="stat-card space-y-2">
+                <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Moves</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={30}
+                  value={moveCount}
+                  onChange={(e) => setMoveCount(Number(e.target.value))}
+                  className="glass-input h-10 text-sm"
+                />
+              </div>
+
+              <div className="stat-card space-y-2">
+                <span className="text-xs font-medium uppercase tracking-wider text-slate-500">CP Threshold</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={1000}
+                  value={cpThreshold}
+                  onChange={(e) => setCpThreshold(Number(e.target.value))}
+                  className="glass-input h-10 text-sm"
+                />
+              </div>
+
+              <div className="stat-card space-y-2">
+                <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Depth</span>
+                <input
+                  type="number"
+                  min={6}
+                  max={24}
+                  value={engineDepth}
+                  onChange={(e) => setEngineDepth(Number(e.target.value))}
+                  className="glass-input h-10 text-sm"
+                />
+                {depthOverFreeLimit && (
+                  <p className="text-xs font-medium text-amber-400">
+                    {!hasProAccess ? (
+                      <>Requires <Link href="/pricing" className="underline">Pro</Link></>
+                    ) : "Unlocked"}
+                  </p>
+                )}
+              </div>
+            </div>
+          </form>
+
+          {/* ─── Feature Pills ─── */}
+          <section className="animate-fade-in mx-auto grid w-full max-w-5xl gap-4 sm:grid-cols-3">
+            {[
+              { icon: "🎯", title: "Pattern Detection", desc: "Spots positions you keep reaching and misplaying" },
+              { icon: "🧠", title: "Move Explanations", desc: "Shows why the engine move is superior to yours" },
+              { icon: "📸", title: "Share-Ready Reports", desc: "Screenshot-worthy performance analytics card" },
+            ].map((feature) => (
+              <div key={feature.title} className="glass-card-hover group flex items-start gap-4 p-5">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-xl transition-transform group-hover:scale-110">
+                  {feature.icon}
+                </span>
+                <div>
+                  <h3 className="font-semibold text-slate-100">{feature.title}</h3>
+                  <p className="mt-0.5 text-sm text-slate-400">{feature.desc}</p>
+                </div>
+              </div>
+            ))}
           </section>
-        )}
-      </section>
-    </main>
+
+          {/* ─── Loading State ─── */}
+          {state === "loading" && (
+            <div className="glass-card animate-scale-in mx-auto w-full max-w-3xl p-6">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
+                  <svg className="h-5 w-5 animate-spin text-emerald-400" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                </div>
+                <div>
+                  <p className="font-semibold text-white">Analyzing your games...</p>
+                  <p className="text-sm text-slate-400">This may take a moment depending on game count</p>
+                </div>
+              </div>
+              <div className="mt-5 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                <div className="progress-bar-animated h-full w-1/3 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500" />
+              </div>
+              <div className="mt-4 space-y-1 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 font-mono text-xs text-slate-400">
+                {progressLogs.length === 0 ? (
+                  <p className="animate-pulse">Waiting for progress updates...</p>
+                ) : (
+                  progressLogs.map((log, index) => (
+                    <p key={`${index}-${log}`} className="animate-fade-in">
+                      <span className="text-emerald-500">→</span> {log}
+                    </p>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ─── Notice ─── */}
+          {notice && state !== "loading" && (
+            <div className="glass-card animate-fade-in border-amber-500/20 p-5">
+              <div className="flex items-start gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-400">⚡</span>
+                <p className="text-sm text-amber-200">{notice}</p>
+              </div>
+            </div>
+          )}
+
+          {/* ─── Error ─── */}
+          {state === "error" && (
+            <div className="glass-card animate-scale-in border-red-500/20 p-5">
+              <div className="flex items-start gap-3">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-red-500/10 text-red-400">✕</span>
+                <p className="text-sm text-red-300">{error}</p>
+              </div>
+            </div>
+          )}
+
+          {/* ─── Results ─── */}
+          {state === "done" && result && (
+            <section className="animate-fade-in-up space-y-8">
+
+              {/* Report Card */}
+              {report && (
+                <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] p-6 md:p-8">
+                  {/* Decorative gradient background */}
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-fuchsia-500/[0.08] via-emerald-500/[0.05] to-cyan-500/[0.08]" />
+                  <div className="pointer-events-none absolute -right-20 -top-20 h-40 w-40 rounded-full bg-fuchsia-500/10 blur-[60px]" />
+                  <div className="pointer-events-none absolute -bottom-20 -left-20 h-40 w-40 rounded-full bg-emerald-500/10 blur-[60px]" />
+
+                  <div className="relative">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <h2 className="text-xl font-bold text-white">Opening Report</h2>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="tag-fuchsia">{report.vibeTitle}</span>
+                        <span className="tag-emerald">Stockfish 18</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 grid gap-3 sm:grid-cols-4">
+                      {[
+                        { label: "Accuracy", value: `${report.estimatedAccuracy.toFixed(1)}%`, color: "text-emerald-400" },
+                        { label: "Est. Rating", value: report.estimatedRating.toString(), color: "text-emerald-400" },
+                        { label: "Avg Eval Loss", value: (report.weightedCpLoss / 100).toFixed(2), color: "text-emerald-400" },
+                        { label: "Leak Rate", value: `${(report.severeLeakRate * 100).toFixed(0)}%`, color: "text-red-400" },
+                      ].map((stat) => (
+                        <div key={stat.label} className="stat-card">
+                          <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{stat.label}</p>
+                          <p className={`mt-1 text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-3 grid gap-3 sm:grid-cols-4">
+                      {[
+                        { label: "Consistency", value: `${report.consistencyScore}/100`, color: "text-cyan-400" },
+                        { label: "Peak Throw", value: (report.p75CpLoss / 100).toFixed(2), color: "text-cyan-400" },
+                        { label: "Confidence", value: `${report.confidence}%`, color: "text-cyan-400" },
+                        { label: "Main Pattern", value: report.topTag, color: "text-fuchsia-400", small: true },
+                      ].map((stat) => (
+                        <div key={stat.label} className="stat-card">
+                          <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{stat.label}</p>
+                          <p className={`mt-1 font-bold ${stat.color} ${"small" in stat ? "text-sm" : "text-2xl"}`}>{stat.value}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="section-divider mt-6" />
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-xs text-slate-500">
+                        Based on {report.sampleSize} positions &middot; Opening pattern estimates
+                      </p>
+                      <p className="text-xs text-fuchsia-400/80">✦ Screenshot this card for your chess recap</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Summary stats */}
+              <div className="glass-card p-5">
+                <div className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="flex items-center justify-between border-b border-white/[0.04] py-2 sm:border-0">
+                    <span className="text-slate-400">Games analyzed</span>
+                    <span className="font-semibold text-white">{result.gamesAnalyzed}</span>
+                  </div>
+                  {lastRunConfig && (
+                    <div className="flex items-center justify-between border-b border-white/[0.04] py-2 sm:border-0">
+                      <span className="text-slate-400">Source</span>
+                      <span className="font-semibold capitalize text-white">{lastRunConfig.source}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between border-b border-white/[0.04] py-2 sm:border-0">
+                    <span className="text-slate-400">Repeated positions</span>
+                    <span className="font-semibold text-white">{result.repeatedPositions}</span>
+                  </div>
+                  {(lastRunConfig?.scanMode !== "tactics") && (
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-slate-400">Leaks found</span>
+                      <span className="font-semibold text-emerald-400">{result.leaks.length}</span>
+                    </div>
+                  )}
+                  {(lastRunConfig?.scanMode !== "openings") && (
+                    <div className="flex items-center justify-between py-2">
+                      <span className="text-slate-400">Missed tactics</span>
+                      <span className="font-semibold text-amber-400">{missedTactics.length}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Opening Leaks Section */}
+              {(lastRunConfig?.scanMode !== "tactics") && (
+              <>
+              {/* Opening Leaks Section Header */}
+              <div className="glass-card border-emerald-500/15 bg-gradient-to-r from-emerald-500/[0.04] to-transparent p-6">
+                <div className="flex items-center gap-4">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/15 text-3xl shadow-lg shadow-emerald-500/10">🔁</span>
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-extrabold text-white tracking-tight">
+                      Repeated Opening Leaks
+                      {leaks.length > 0 && (
+                        <span className="ml-3 inline-flex items-center rounded-full bg-emerald-500/15 px-3 py-1 text-base font-bold text-emerald-400">
+                          {leaks.length}
+                        </span>
+                      )}
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Positions you keep reaching and making the same suboptimal move
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Leak cards */}
+              {leaks.length === 0 ? (
+                <div className="glass-card flex items-center gap-4 p-6">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-2xl">🎉</span>
+                  <div>
+                    <p className="font-semibold text-white">No repeated opening leaks found</p>
+                    <p className="text-sm text-slate-400">
+                      Great job! No patterns found in the first {lastRunConfig?.maxMoves ?? moveCount} moves.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {leaks.map((leak, idx) => (
+                    <div key={`${leak.fenBefore}-${leak.userMove}`} className="animate-fade-in-up" style={{ animationDelay: `${idx * 80}ms` }}>
+                      <MistakeCard
+                        leak={leak}
+                        engineDepth={lastRunConfig?.engineDepth ?? engineDepth}
+                      />
+                    </div>
+                  ))}
+
+                  {/* Opening Leaks Drill */}
+                  {diagnostics && diagnostics.positionTraces.length > 0 && (
+                    <DrillMode positions={diagnostics.positionTraces} />
+                  )}
+                </div>
+              )}
+              </>
+              )}
+
+              {/* Missed Tactics Section */}
+              {(lastRunConfig?.scanMode !== "openings") && (
+              <>
+              <div className="my-4">
+                <div className="section-divider" />
+              </div>
+              <div className="glass-card border-amber-500/15 bg-gradient-to-r from-amber-500/[0.04] to-transparent p-6">
+                <div className="flex items-center gap-4">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">⚡</span>
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-extrabold text-white tracking-tight">
+                      Missed Tactics
+                      {missedTactics.length > 0 && (
+                        <span className="ml-3 inline-flex items-center rounded-full bg-amber-500/15 px-3 py-1 text-base font-bold text-amber-400">
+                          {missedTactics.length}
+                        </span>
+                      )}
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Positions where you had a forcing move for ≥200cp material gain but missed it
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Motif Pattern Summary */}
+              {tacticMotifs.length > 0 && (
+                <div className="glass-card space-y-4 p-5">
+                  <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-400">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-400"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0022 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                    Pattern Analysis
+                  </h3>
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                    {tacticMotifs.map((motif) => (
+                      <div
+                        key={motif.name}
+                        className="flex items-center gap-3 rounded-xl border border-amber-500/10 bg-amber-500/[0.03] p-3 transition-all hover:border-amber-500/20 hover:bg-amber-500/[0.06]"
+                      >
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-lg">
+                          {motif.icon}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-semibold text-white">{motif.name}</p>
+                          <p className="text-xs text-slate-400">
+                            {motif.count}× missed
+                            {motif.avgCpLoss < 99000
+                              ? ` · avg −${(motif.avgCpLoss / 100).toFixed(1)}`
+                              : " · forced mate"
+                            }
+                          </p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-bold text-amber-400">
+                          {motif.count}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  {tacticMotifs.length >= 2 && (
+                    <p className="text-xs text-slate-500">
+                      💡 You have recurring weakness patterns — focus your training on the most frequent motifs above.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {missedTactics.length === 0 ? (
+                <div className="glass-card flex items-center gap-4 p-6">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 text-2xl">🎯</span>
+                  <div>
+                    <p className="font-semibold text-white">No missed tactics found</p>
+                    <p className="text-sm text-slate-400">
+                      You didn&apos;t miss any major forcing opportunities (≥200cp) in these games. Nice!
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {missedTactics.map((tactic, idx) => (
+                    <div
+                      key={`${tactic.fenBefore}-${tactic.userMove}-${tactic.gameIndex}`}
+                      className="animate-fade-in-up"
+                      style={{ animationDelay: `${idx * 80}ms` }}
+                    >
+                      <TacticCard
+                        tactic={tactic}
+                        engineDepth={lastRunConfig?.engineDepth ?? engineDepth}
+                      />
+                    </div>
+                  ))}
+
+                  {/* Tactics Drill */}
+                  <DrillMode positions={[]} tactics={missedTactics} />
+                </div>
+              )}
+              </>
+              )}
+
+              {/* Diagnostics */}
+              {diagnostics && (
+                <div className="glass-card space-y-4 p-6">
+                  <h2 className="flex items-center gap-2 text-base font-bold text-white">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-400"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+                    Analysis Logs
+                  </h2>
+
+                  <details className="group rounded-xl border border-white/[0.06] bg-white/[0.02]">
+                    <summary className="cursor-pointer select-none px-4 py-3 font-medium text-slate-200 transition-colors hover:text-white">
+                      <span className="inline-flex items-center gap-2">
+                        Game traces
+                        <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-xs text-slate-400">{diagnostics.gameTraces.length}</span>
+                      </span>
+                    </summary>
+                    <div className="max-h-80 space-y-2 overflow-auto border-t border-white/[0.04] p-4 font-mono text-xs text-slate-400">
+                      {diagnostics.gameTraces.map((trace) => (
+                        <div key={`game-${trace.gameIndex}`} className="rounded-lg border border-white/[0.04] bg-white/[0.01] p-3">
+                          <p className="text-slate-300">
+                            #{trace.gameIndex} &middot; {trace.userColor} &middot; {trace.openingMoves.length} moves
+                          </p>
+                          <p className="mt-1 break-words text-slate-500">
+                            {trace.openingMoves.length ? trace.openingMoves.join(" ") : "(no opening moves parsed)"}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+
+                  <details className="group rounded-xl border border-white/[0.06] bg-white/[0.02]">
+                    <summary className="cursor-pointer select-none px-4 py-3 font-medium text-slate-200 transition-colors hover:text-white">
+                      <span className="inline-flex items-center gap-2">
+                        Position traces
+                        <span className="rounded-full bg-white/[0.06] px-2 py-0.5 text-xs text-slate-400">{diagnostics.positionTraces.length}</span>
+                      </span>
+                    </summary>
+                    <div className="max-h-96 space-y-2 overflow-auto border-t border-white/[0.04] p-4 font-mono text-xs text-slate-400">
+                      {diagnostics.positionTraces.map((trace, index) => (
+                        <div key={`pos-${index}-${trace.fenBefore}`} className="rounded-lg border border-white/[0.04] bg-white/[0.01] p-3">
+                          <p className="text-slate-300">
+                            reach={trace.reachCount}, userMove={trace.userMove}, best={trace.bestMove ?? "n/a"}, cpLoss={
+                              trace.cpLoss ?? "n/a"
+                            }, flagged={trace.flagged ? "yes" : "no"}
+                          </p>
+                          <p className="mt-1 text-slate-500">
+                            evalBefore={trace.evalBefore ?? "n/a"}, evalAfter={trace.evalAfter ?? "n/a"}
+                            {trace.skippedReason ? `, skipped=${trace.skippedReason}` : ""}
+                          </p>
+                          <p className="mt-1 break-all text-slate-600">fen={trace.fenBefore}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                </div>
+              )}
+
+              {/* Combined Drill Mode */}
+              {diagnostics && (diagnostics.positionTraces.length > 0 || missedTactics.length > 0) && lastRunConfig?.scanMode === "both" && (
+                <div className="glass-card border-fuchsia-500/15 bg-gradient-to-r from-fuchsia-500/[0.04] to-transparent p-5">
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fuchsia-500/15 text-xl">🔥</span>
+                    <div>
+                      <h3 className="text-base font-bold text-white">Combined Drill</h3>
+                      <p className="text-xs text-slate-400">Practice both opening leaks and missed tactics together</p>
+                    </div>
+                  </div>
+                  <DrillMode positions={diagnostics.positionTraces} tactics={missedTactics} />
+                </div>
+              )}
+            </section>
+          )}
+        </section>
+      </div>
+    </div>
   );
 }
