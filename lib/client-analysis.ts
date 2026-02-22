@@ -59,6 +59,8 @@ type AnalyzeOptions = {
   engineDepth?: number;
   source?: AnalysisSource;
   scanMode?: ScanMode;
+  /** Cap the number of missed tactics returned (default 25) */
+  maxTactics?: number;
   onProgress?: (progress: AnalysisProgress) => void;
 };
 
@@ -776,7 +778,7 @@ export async function analyzeOpeningLeaksInBrowser(
   /* ── Phase: Missed Tactics Detection ─────────────────────────── */
 
   const TACTIC_CP_THRESHOLD = 200;
-  const MAX_TACTICS = 25;
+  const MAX_TACTICS = options?.maxTactics ?? 25;
   const missedTactics: MissedTactic[] = [];
 
   if (doTactics) {

@@ -9,8 +9,9 @@ const plans = [
     features: [
       "Up to 100 recent games per scan",
       "Engine depth up to 12",
-      "Core leak report + drill mode",
-      "Lichess + Chess.com source support"
+      "Full opening leak detection + drill mode",
+      "3 sample missed tactics per scan",
+      "Lichess + Chess.com support"
     ],
     cta: "Current baseline",
     highlight: false
@@ -22,9 +23,12 @@ const plans = [
     subtitle: "For serious improvers",
     features: [
       "Up to 500+ games per scan",
-      "Higher engine depth (13-24)",
-      "Priority analysis queue",
-      "Advanced report exports + share templates"
+      "Higher engine depth (13–24)",
+      "Full missed tactics scanner (up to 25)",
+      "Motif pattern analysis — find recurring weaknesses",
+      "Time pressure detection on missed tactics",
+      "Dedicated tactics drill mode",
+      "Separate scan modes (Openings / Tactics / Both)"
     ],
     cta: "Upgrade with Stripe",
     highlight: true
@@ -59,9 +63,9 @@ export default function PricingPage() {
 
             <div className="mx-auto mt-6 grid max-w-3xl gap-3 sm:grid-cols-3">
               {[
-                { icon: "📊", text: "Leak analytics + reports" },
+                { icon: "📊", text: "Opening leak analytics" },
+                { icon: "⚡", text: "Missed tactics scanner" },
                 { icon: "🧠", text: "Drill mode training" },
-                { icon: "⚙️", text: "Stockfish 18 analysis" },
               ].map((item) => (
                 <div key={item.text} className="glass-card flex items-center gap-3 px-4 py-3 text-sm text-slate-300">
                   <span className="text-lg">{item.icon}</span>
@@ -139,8 +143,13 @@ export default function PricingPage() {
                   {[
                     ["Recent games per scan", "Up to 100", "500+"],
                     ["Engine depth", "Up to 12", "Up to 24"],
-                    ["Advanced exports", "—", "✓"],
-                    ["Priority queue", "—", "✓"],
+                    ["Opening leak detection", "✓", "✓"],
+                    ["Opening drill mode", "✓", "✓"],
+                    ["Missed tactics", "3 samples", "Full (up to 25)"],
+                    ["Motif pattern analysis", "—", "✓"],
+                    ["Time pressure detection", "—", "✓"],
+                    ["Tactics drill mode", "—", "✓"],
+                    ["Scan mode selector", "Openings only", "Openings / Tactics / Both"],
                   ].map(([feature, free, pro]) => (
                     <tr key={feature} className="border-t border-white/[0.04]">
                       <td className="px-4 py-3 text-slate-400">{feature}</td>
@@ -159,14 +168,14 @@ export default function PricingPage() {
             <div className="relative">
               <h3 className="text-lg font-bold text-white">Why upgrading matters</h3>
               <p className="mt-2 text-sm text-slate-400">
-                Your support directly funds better FireChess: faster analysis, deeper opening intelligence, and more
-                practical training workflows for the whole chess community.
+                Pro gives you the full tactics scanner — find every missed fork, pin, and mate in your games.
+                Plus motif analysis to uncover your recurring blind spots, time pressure tracking, and dedicated drill modes to fix them.
               </p>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 {[
-                  { icon: "🚀", text: "Faster product iteration" },
-                  { icon: "🧪", text: "Better eval quality tooling" },
-                  { icon: "🧠", text: "More guided training features" },
+                  { icon: "⚡", text: "Full tactics scanning" },
+                  { icon: "📊", text: "Motif pattern insights" },
+                  { icon: "🎯", text: "Targeted drill training" },
                 ].map((item) => (
                   <div key={item.text} className="stat-card flex items-center gap-3 text-sm text-slate-300">
                     <span className="text-lg">{item.icon}</span>

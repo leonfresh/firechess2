@@ -15,6 +15,7 @@ type RequestState = "idle" | "loading" | "done" | "error";
 const PREFS_KEY = "firechess-user-prefs";
 const FREE_MAX_GAMES = 100;
 const FREE_MAX_DEPTH = 12;
+const FREE_TACTIC_SAMPLE = 3;
 const LOCAL_PRO_HOTKEY_ENABLED = process.env.NEXT_PUBLIC_ENABLE_LOCAL_PRO_HOTKEY !== "false";
 const IS_DEV = process.env.NODE_ENV !== "production";
 
@@ -259,13 +260,21 @@ export default function HomePage() {
   ) => {
     setNotice(reason ?? "Cloud eval disabled. Running local Stockfish analysis in your browser.");
     appendProgress("Using browser-side analysis...");
+    // Free users always get openings + a small tactics sample;
+    // Pro users get whichever mode they selected
+    const effectiveScanMode: ScanMode = !hasProAccess
+      ? "both"   // always run both so free users get a taste of tactics
+      : scanMode;
+    const effectiveMaxTactics = !hasProAccess ? FREE_TACTIC_SAMPLE : 25;
+
     const browserResult = await analyzeOpeningLeaksInBrowser(trimmed, {
       source: safeSource,
-      scanMode,
+      scanMode: effectiveScanMode,
       maxGames: safeGames,
       maxOpeningMoves: safeMoves,
       cpLossThreshold: safeCpThreshold,
       engineDepth: safeDepth,
+      maxTactics: effectiveMaxTactics,
       onProgress: onBrowserProgress
     });
     setResult(browserResult);
@@ -456,7 +465,12 @@ export default function HomePage() {
 
             {/* Scan mode toggle */}
             <div className="stat-card space-y-2 p-4">
-              <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Scan Mode</span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Scan Mode</span>
+                {!hasProAccess && (
+                  <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-400">Full tactics = Pro</span>
+                )}
+              </div>
               <div className="grid h-10 grid-cols-3 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1">
                 <button
                   type="button"
@@ -471,29 +485,41 @@ export default function HomePage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setScanMode("tactics")}
-                  className={`rounded-md text-xs font-semibold transition-all duration-200 ${
+                  onClick={() => {
+                    if (!hasProAccess) return;
+                    setScanMode("tactics");
+                  }}
+                  className={`relative rounded-md text-xs font-semibold transition-all duration-200 ${
                     scanMode === "tactics"
                       ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-glow-sm"
-                      : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
+                      : !hasProAccess
+                        ? "cursor-not-allowed text-slate-600"
+                        : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
                   }`}
                 >
                   ⚡ Tactics
+                  {!hasProAccess && <span className="ml-0.5 text-[9px]">🔒</span>}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setScanMode("both")}
-                  className={`rounded-md text-xs font-semibold transition-all duration-200 ${
+                  onClick={() => {
+                    if (!hasProAccess) return;
+                    setScanMode("both");
+                  }}
+                  className={`relative rounded-md text-xs font-semibold transition-all duration-200 ${
                     scanMode === "both"
                       ? "bg-gradient-to-r from-fuchsia-500 to-fuchsia-600 text-white shadow-glow-sm"
-                      : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
+                      : !hasProAccess
+                        ? "cursor-not-allowed text-slate-600"
+                        : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
                   }`}
                 >
                   Both
+                  {!hasProAccess && <span className="ml-0.5 text-[9px]">🔒</span>}
                 </button>
               </div>
               <p className="text-xs text-slate-500">
-                {scanMode === "openings" && "Finds repeated patterns in your first N moves"}
+                {scanMode === "openings" && (hasProAccess ? "Finds repeated patterns in your first N moves" : "Finds repeated patterns + a sample of missed tactics")}
                 {scanMode === "tactics" && "Scans full games for missed forcing moves (slower)"}
                 {scanMode === "both" && "Runs both scans — most thorough but slowest"}
               </p>
@@ -744,10 +770,10 @@ export default function HomePage() {
                       <span className="font-semibold text-emerald-400">{result.leaks.length}</span>
                     </div>
                   )}
-                  {(lastRunConfig?.scanMode !== "openings") && (
+                  {(lastRunConfig?.scanMode !== "openings" || !hasProAccess) && (
                     <div className="flex items-center justify-between py-2">
                       <span className="text-slate-400">Missed tactics</span>
-                      <span className="font-semibold text-amber-400">{missedTactics.length}</span>
+                      <span className="font-semibold text-amber-400">{missedTactics.length}{!hasProAccess && " (sample)"}</span>
                     </div>
                   )}
                 </div>
@@ -807,8 +833,7 @@ export default function HomePage() {
               </>
               )}
 
-              {/* Missed Tactics Section */}
-              {(lastRunConfig?.scanMode !== "openings") && (
+              {/* Missed Tactics Section — always shown since free users get sample tactics */}
               <>
               <div className="my-4">
                 <div className="section-divider" />
@@ -821,7 +846,7 @@ export default function HomePage() {
                       Missed Tactics
                       {missedTactics.length > 0 && (
                         <span className="ml-3 inline-flex items-center rounded-full bg-amber-500/15 px-3 py-1 text-base font-bold text-amber-400">
-                          {missedTactics.length}
+                          {missedTactics.length}{!hasProAccess && ` / ${FREE_TACTIC_SAMPLE} sample`}
                         </span>
                       )}
                     </h2>
@@ -832,8 +857,8 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Motif Pattern Summary */}
-              {tacticMotifs.length > 0 && (
+              {/* Motif Pattern Summary — Pro only */}
+              {hasProAccess && tacticMotifs.length > 0 && (
                 <div className="glass-card space-y-4 p-5">
                   <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-400">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-400"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0022 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
@@ -897,12 +922,39 @@ export default function HomePage() {
                     </div>
                   ))}
 
-                  {/* Tactics Drill */}
-                  <DrillMode positions={[]} tactics={missedTactics} />
+                  {/* Free user upgrade CTA */}
+                  {!hasProAccess && missedTactics.length >= FREE_TACTIC_SAMPLE && (
+                    <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.06] via-amber-600/[0.03] to-transparent p-8">
+                      <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-amber-500/10 blur-[60px]" />
+                      <div className="relative flex flex-col items-center gap-4 text-center">
+                        <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">🔒</span>
+                        <div>
+                          <h3 className="text-xl font-bold text-white">Unlock Full Tactics Scanner</h3>
+                          <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">
+                            You&apos;re seeing {FREE_TACTIC_SAMPLE} sample missed tactics. Pro unlocks the full scan with up to 25 missed tactics, motif pattern analysis, time pressure detection, and dedicated tactics drill mode.
+                          </p>
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+                          <Link
+                            href="/pricing"
+                            className="btn-amber flex h-11 items-center gap-2 px-6 text-sm font-bold"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                            Upgrade to Pro — $9/mo
+                          </Link>
+                          <span className="text-xs text-slate-500">Cancel anytime</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tactics Drill — only for Pro or if they have tactics */}
+                  {(hasProAccess || missedTactics.length > 0) && (
+                    <DrillMode positions={[]} tactics={missedTactics} />
+                  )}
                 </div>
               )}
               </>
-              )}
 
               {/* Diagnostics */}
               {diagnostics && (
@@ -961,7 +1013,7 @@ export default function HomePage() {
               )}
 
               {/* Combined Drill Mode */}
-              {diagnostics && (diagnostics.positionTraces.length > 0 || missedTactics.length > 0) && lastRunConfig?.scanMode === "both" && (
+              {diagnostics && (diagnostics.positionTraces.length > 0 || missedTactics.length > 0) && hasProAccess && lastRunConfig?.scanMode === "both" && (
                 <div className="glass-card border-fuchsia-500/15 bg-gradient-to-r from-fuchsia-500/[0.04] to-transparent p-5">
                   <div className="flex items-center gap-3 mb-3">
                     <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fuchsia-500/15 text-xl">🔥</span>
