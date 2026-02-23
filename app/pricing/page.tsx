@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useSession } from "@/components/session-provider";
+import { useState } from "react";
 
 const plans = [
   {
@@ -7,7 +11,7 @@ const plans = [
     price: "$0",
     subtitle: "Great for trying FireChess",
     features: [
-      "Up to 100 recent games per scan",
+      "Up to 200 recent games per scan",
       "Engine depth up to 12",
       "Full opening leak detection + drill mode",
       "3 sample missed tactics per scan",
@@ -22,7 +26,7 @@ const plans = [
     price: "$9/mo",
     subtitle: "For serious improvers",
     features: [
-      "Up to 500+ games per scan",
+      "Up to 1,000 games per scan",
       "Higher engine depth (13–24)",
       "Full missed tactics scanner (up to 25)",
       "Motif pattern analysis — find recurring weaknesses",
@@ -36,6 +40,28 @@ const plans = [
 ];
 
 export default function PricingPage() {
+  const { authenticated, plan } = useSession();
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+
+  const handleUpgrade = async () => {
+    if (!authenticated) {
+      window.location.href = "/auth/signin";
+      return;
+    }
+    setCheckoutLoading(true);
+    try {
+      const res = await fetch("/api/checkout", { method: "POST" });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch {
+      alert("Failed to start checkout. Please try again.");
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
   return (
     <div className="relative min-h-screen">
       {/* Animated orbs */}
@@ -77,34 +103,34 @@ export default function PricingPage() {
 
           {/* Plan Cards */}
           <div className="grid gap-6 md:grid-cols-2">
-            {plans.map((plan) => (
+            {plans.map((p) => (
               <article
-                key={plan.name}
+                key={p.name}
                 className={`glass-card-hover relative p-6 md:p-8 ${
-                  plan.highlight ? "border-emerald-500/20 shadow-glow" : ""
+                  p.highlight ? "border-emerald-500/20 shadow-glow" : ""
                 }`}
               >
-                {plan.highlight && (
+                {p.highlight && (
                   <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-b from-emerald-500/[0.06] to-transparent" />
                 )}
                 <div className="relative">
                   <div className="flex items-center justify-between">
                     <h2 className="text-2xl font-bold text-white">
-                      <span className="mr-2">{plan.icon}</span>
-                      {plan.name}
+                      <span className="mr-2">{p.icon}</span>
+                      {p.name}
                     </h2>
-                    {plan.highlight && (
+                    {p.highlight && (
                       <span className="tag-emerald text-[11px]">
                         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
                         Most popular
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-sm text-slate-400">{plan.subtitle}</p>
-                  <p className="mt-5 text-4xl font-black gradient-text-emerald">{plan.price}</p>
+                  <p className="mt-1 text-sm text-slate-400">{p.subtitle}</p>
+                  <p className="mt-5 text-4xl font-black gradient-text-emerald">{p.price}</p>
 
                   <ul className="mt-6 space-y-3">
-                    {plan.features.map((feature) => (
+                    {p.features.map((feature) => (
                       <li key={feature} className="flex items-start gap-3 text-sm text-slate-300">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="mt-0.5 shrink-0 text-emerald-400" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                         {feature}
@@ -114,13 +140,19 @@ export default function PricingPage() {
 
                   <button
                     type="button"
+                    disabled={checkoutLoading}
+                    onClick={p.highlight ? handleUpgrade : undefined}
                     className={`mt-8 w-full py-3 text-sm font-semibold transition-all duration-300 ${
-                      plan.highlight
+                      p.highlight
                         ? "btn-primary"
                         : "btn-secondary h-auto"
-                    }`}
+                    } disabled:opacity-50`}
                   >
-                    {plan.cta}
+                    {p.highlight && plan === "pro"
+                      ? "✓ Current plan"
+                      : p.highlight && checkoutLoading
+                      ? "Redirecting to Stripe..."
+                      : p.cta}
                   </button>
                 </div>
               </article>
@@ -141,7 +173,7 @@ export default function PricingPage() {
                 </thead>
                 <tbody className="text-slate-300">
                   {[
-                    ["Recent games per scan", "Up to 100", "500+"],
+                    ["Recent games per scan", "Up to 200", "Up to 1,000"],
                     ["Engine depth", "Up to 12", "Up to 24"],
                     ["Opening leak detection", "✓", "✓"],
                     ["Opening drill mode", "✓", "✓"],

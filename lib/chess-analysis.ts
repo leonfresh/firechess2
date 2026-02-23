@@ -389,7 +389,7 @@ export async function analyzeOpeningLeaks(
   username: string,
   options?: AnalyzeOptions
 ): Promise<{ gamesAnalyzed: number; repeatedPositions: number; leaks: RepeatedOpeningLeak[] }> {
-  const maxGames = clampInt(options?.maxGames, DEFAULT_MAX_GAMES, 1, 500);
+  const maxGames = clampInt(options?.maxGames, DEFAULT_MAX_GAMES, 1, 1000);
   const maxOpeningMoves = clampInt(options?.maxOpeningMoves, DEFAULT_MAX_OPENING_MOVES, 1, 30);
   const cpLossThreshold = clampInt(options?.cpLossThreshold, CP_LOSS_THRESHOLD, 1, 1000);
   const maxOpeningPlies = maxOpeningMoves * 2;

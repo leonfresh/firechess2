@@ -6,6 +6,7 @@ import { DrillMode } from "@/components/drill-mode";
 import { HeroDemoBoard } from "@/components/hero-demo-board";
 import { MistakeCard } from "@/components/mistake-card";
 import { TacticCard } from "@/components/tactic-card";
+import { useSession } from "@/components/session-provider";
 import { analyzeOpeningLeaksInBrowser } from "@/lib/client-analysis";
 import type { AnalysisProgress } from "@/lib/client-analysis";
 import type { AnalysisSource, ScanMode } from "@/lib/client-analysis";
@@ -13,15 +14,16 @@ import type { AnalyzeResponse } from "@/lib/types";
 
 type RequestState = "idle" | "loading" | "done" | "error";
 const PREFS_KEY = "firechess-user-prefs";
-const FREE_MAX_GAMES = 100;
+const FREE_MAX_GAMES = 200;
 const FREE_MAX_DEPTH = 12;
 const FREE_TACTIC_SAMPLE = 3;
 const LOCAL_PRO_HOTKEY_ENABLED = process.env.NEXT_PUBLIC_ENABLE_LOCAL_PRO_HOTKEY !== "false";
 const IS_DEV = process.env.NODE_ENV !== "production";
 
 export default function HomePage() {
+  const { plan: sessionPlan, authenticated } = useSession();
   const [username, setUsername] = useState("");
-  const [gameCount, setGameCount] = useState(100);
+  const [gameCount, setGameCount] = useState(200);
   const [moveCount, setMoveCount] = useState(20);
   const [cpThreshold, setCpThreshold] = useState(50);
   const [engineDepth, setEngineDepth] = useState(12);
@@ -35,7 +37,7 @@ export default function HomePage() {
   const [progressLogs, setProgressLogs] = useState<string[]>([]);
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
   const [localProEnabled, setLocalProEnabled] = useState(false);
-  const hasProAccess = localProEnabled;
+  const hasProAccess = sessionPlan === "pro" || localProEnabled;
   const gamesOverFreeLimit = gameCount > FREE_MAX_GAMES;
   const depthOverFreeLimit = engineDepth > FREE_MAX_DEPTH;
   const freeLimitsExceeded = !hasProAccess && (gamesOverFreeLimit || depthOverFreeLimit);
@@ -79,7 +81,7 @@ export default function HomePage() {
       };
 
       if (typeof parsed.gameCount === "number") {
-        setGameCount(Math.min(500, Math.max(1, Math.floor(parsed.gameCount))));
+        setGameCount(Math.min(1000, Math.max(1, Math.floor(parsed.gameCount))));
       }
       if (typeof parsed.moveCount === "number") {
         setMoveCount(Math.min(30, Math.max(1, Math.floor(parsed.moveCount))));
@@ -308,7 +310,7 @@ export default function HomePage() {
     }
 
     try {
-      const safeGames = Math.min(500, Math.max(1, Math.floor(gameCount || 100)));
+      const safeGames = Math.min(1000, Math.max(1, Math.floor(gameCount || 200)));
       const safeMoves = Math.min(30, Math.max(1, Math.floor(moveCount || 20)));
       const safeCpThreshold = Math.min(1000, Math.max(1, Math.floor(cpThreshold || 50)));
       const safeDepth = Math.min(24, Math.max(6, Math.floor(engineDepth || 12)));
@@ -560,7 +562,7 @@ export default function HomePage() {
                 <input
                   type="number"
                   min={1}
-                  max={500}
+                  max={1000}
                   value={gameCount}
                   onChange={(e) => setGameCount(Number(e.target.value))}
                   className="glass-input h-10 text-sm"

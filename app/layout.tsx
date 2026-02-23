@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./globals.css";
+import { SessionProvider } from "@/components/session-provider";
+import { AuthButton } from "@/components/auth-button";
 
 export const metadata: Metadata = {
   title: "FireChess - Opening Leak Scanner",
@@ -15,6 +17,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
+        <SessionProvider>
         <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#030712]/80 backdrop-blur-2xl">
           <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-4 md:px-10">
             <Link href="/" className="group inline-flex items-center gap-2.5 text-base font-bold text-white transition-colors hover:text-emerald-300">
@@ -34,6 +37,7 @@ export default function RootLayout({
               >
                 Pricing
               </Link>
+              <AuthButton />
             </div>
           </nav>
         </header>
@@ -51,6 +55,7 @@ export default function RootLayout({
             </div>
           </div>
         </footer>
+        </SessionProvider>
       </body>
     </html>
   );

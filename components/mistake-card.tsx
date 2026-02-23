@@ -6,6 +6,7 @@ import { stockfishClient } from "@/lib/stockfish-client";
 import { EvalBar } from "@/components/eval-bar";
 import { Chessboard } from "react-chessboard";
 import type { MoveSquare, RepeatedOpeningLeak } from "@/lib/types";
+import { fetchExplorerMoves, type ExplorerMove } from "@/lib/lichess-explorer";
 
 type MistakeCardProps = {
   leak: RepeatedOpeningLeak;
@@ -214,6 +215,27 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   const fenCopiedTimerRef = useRef<number | null>(null);
   const moveBadge = useMemo(() => classifyLossBadge(leak.cpLoss), [leak.cpLoss]);
 
+  /* ── Lichess explorer database pick ── */
+  const [dbPick, setDbPick] = useState<ExplorerMove | null>(null);
+  const dbPickMove = useMemo(
+    () => (dbPick ? deriveMoveDetails(leak.fenBefore, dbPick.uci) : null),
+    [dbPick, leak.fenBefore],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchExplorerMoves(leak.fenBefore, leak.sideToMove).then((result) => {
+      if (!cancelled && result.topPick) {
+        // Only show if the database pick differs from both the engine best and the user move
+        const isDifferent =
+          result.topPick.uci !== leak.bestMove &&
+          result.topPick.uci !== leak.userMove;
+        setDbPick(isDifferent ? result.topPick : null);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [leak.fenBefore, leak.sideToMove, leak.bestMove, leak.userMove]);
+
   const displayedEvalCp = useMemo(() => {
     if (fen === leak.fenAfter) return whiteEvalAfter;
     return whiteEvalBefore;
@@ -271,8 +293,13 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
       arrows.push([badMove.from, badMove.to, "rgba(239, 68, 68, 0.9)"]);
     }
 
+    // 3rd arrow: Lichess database pick (blue)
+    if (dbPickMove && isBoardSquare(dbPickMove.from) && isBoardSquare(dbPickMove.to)) {
+      arrows.push([dbPickMove.from, dbPickMove.to, "rgba(59, 130, 246, 0.85)"]);
+    }
+
     return arrows;
-  }, [animating, badMove, bestMove]);
+  }, [animating, badMove, bestMove, dbPickMove]);
 
   const customSquare = useMemo(() => {
     return ((props: any) => {
@@ -539,6 +566,27 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
             </div>
           </div>
 
+          {/* Lichess database pick */}
+          {dbPick && dbPickMove && (
+            <div className="flex items-center gap-3 rounded-xl border border-blue-500/20 bg-blue-500/[0.06] px-3.5 py-2.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/20">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgb(59,130,246)" strokeWidth="2">
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-blue-400/70">Database Pick</p>
+                <p className="mt-0.5 flex items-baseline gap-2">
+                  <span className="text-base font-bold text-blue-400 font-mono">{dbPickMove.san}</span>
+                  <span className="text-xs text-slate-400">
+                    {(dbPick.winRate * 100).toFixed(1)}% win · {dbPick.totalGames.toLocaleString()} games
+                  </span>
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Tags */}
           {!!leak.tags?.length && (
             <div className="flex flex-wrap gap-1.5">
@@ -556,6 +604,13 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
             <span className="mx-2 text-slate-600">|</span>
             <span className="mr-1 inline-block h-2 w-2 rounded-full bg-red-400" />
             Red = your move
+            {dbPick && (
+              <>
+                <span className="mx-2 text-slate-600">|</span>
+                <span className="mr-1 inline-block h-2 w-2 rounded-full bg-blue-500" />
+                Blue = database pick
+              </>
+            )}
           </p>
 
           {/* FEN block */}

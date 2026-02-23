@@ -66,7 +66,7 @@ type AnalyzeOptions = {
 
 const MIN_POSITION_REPEATS = 3;
 const CP_LOSS_THRESHOLD = 100;
-const DEFAULT_MAX_GAMES = 100;
+const DEFAULT_MAX_GAMES = 200;
 const DEFAULT_MAX_OPENING_MOVES = 12;
 
 function normalizeName(name: string): string {
@@ -522,7 +522,7 @@ export async function analyzeOpeningLeaksInBrowser(
   options?: AnalyzeOptions
 ): Promise<AnalyzeResponse> {
   const source: AnalysisSource = options?.source ?? "lichess";
-  const maxGames = clampInt(options?.maxGames, DEFAULT_MAX_GAMES, 1, 500);
+  const maxGames = clampInt(options?.maxGames, DEFAULT_MAX_GAMES, 1, 1000);
   const maxOpeningMoves = clampInt(options?.maxOpeningMoves, DEFAULT_MAX_OPENING_MOVES, 1, 30);
   const cpLossThreshold = clampInt(options?.cpLossThreshold, CP_LOSS_THRESHOLD, 1, 1000);
   const engineDepth = clampInt(options?.engineDepth, 10, 6, 24);
