@@ -1,20 +1,22 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { DrillMode } from "@/components/drill-mode";
 import { HeroDemoBoard } from "@/components/hero-demo-board";
 import { MistakeCard } from "@/components/mistake-card";
 import { TacticCard } from "@/components/tactic-card";
 import { useSession } from "@/components/session-provider";
+import { StrengthsRadar, RadarLegend, InsightCards, computeRadarData } from "@/components/radar-chart";
 import { analyzeOpeningLeaksInBrowser } from "@/lib/client-analysis";
 import type { AnalysisProgress } from "@/lib/client-analysis";
-import type { AnalysisSource, ScanMode } from "@/lib/client-analysis";
+import type { AnalysisSource, ScanMode, TimeControl } from "@/lib/client-analysis";
 import type { AnalyzeResponse } from "@/lib/types";
+import { fetchExplorerMoves } from "@/lib/lichess-explorer";
 
 type RequestState = "idle" | "loading" | "done" | "error";
 const PREFS_KEY = "firechess-user-prefs";
-const FREE_MAX_GAMES = 200;
+const FREE_MAX_GAMES = 300;
 const FREE_MAX_DEPTH = 12;
 const FREE_TACTIC_SAMPLE = 3;
 const LOCAL_PRO_HOTKEY_ENABLED = process.env.NEXT_PUBLIC_ENABLE_LOCAL_PRO_HOTKEY !== "false";
@@ -23,20 +25,22 @@ const IS_DEV = process.env.NODE_ENV !== "production";
 export default function HomePage() {
   const { plan: sessionPlan, authenticated } = useSession();
   const [username, setUsername] = useState("");
-  const [gameCount, setGameCount] = useState(200);
+  const [gameCount, setGameCount] = useState(300);
   const [moveCount, setMoveCount] = useState(20);
   const [cpThreshold, setCpThreshold] = useState(50);
   const [engineDepth, setEngineDepth] = useState(12);
   const [source, setSource] = useState<AnalysisSource>("lichess");
   const [scanMode, setScanMode] = useState<ScanMode>("openings");
+  const [speed, setSpeed] = useState<TimeControl[]>(["all"]);
   const [lastRunConfig, setLastRunConfig] =
-    useState<{ maxGames: number; maxMoves: number; cpThreshold: number; engineDepth: number; source: AnalysisSource; scanMode: ScanMode } | null>(null);
+    useState<{ maxGames: number; maxMoves: number; cpThreshold: number; engineDepth: number; source: AnalysisSource; scanMode: ScanMode; speed: TimeControl[] } | null>(null);
   const [state, setState] = useState<RequestState>("idle");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
-  const [progressLogs, setProgressLogs] = useState<string[]>([]);
+  const [progressInfo, setProgressInfo] = useState<{ message: string; detail?: string; percent: number; phase: string }>({ message: "", percent: 0, phase: "" });
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
   const [localProEnabled, setLocalProEnabled] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "duplicate" | "error">("idle");
   const hasProAccess = sessionPlan === "pro" || localProEnabled;
   const gamesOverFreeLimit = gameCount > FREE_MAX_GAMES;
   const depthOverFreeLimit = engineDepth > FREE_MAX_DEPTH;
@@ -78,10 +82,11 @@ export default function HomePage() {
         engineDepth?: number;
         source?: AnalysisSource;
         scanMode?: string;
+        speed?: string | string[];
       };
 
       if (typeof parsed.gameCount === "number") {
-        setGameCount(Math.min(1000, Math.max(1, Math.floor(parsed.gameCount))));
+        setGameCount(Math.min(5000, Math.max(1, Math.floor(parsed.gameCount))));
       }
       if (typeof parsed.moveCount === "number") {
         setMoveCount(Math.min(30, Math.max(1, Math.floor(parsed.moveCount))));
@@ -98,6 +103,17 @@ export default function HomePage() {
       if (parsed.scanMode === "openings" || parsed.scanMode === "tactics" || parsed.scanMode === "both") {
         setScanMode(parsed.scanMode as ScanMode);
       }
+      // Restore speed (supports both legacy single string and new array format)
+      if (Array.isArray(parsed.speed)) {
+        const valid = parsed.speed.filter((s): s is TimeControl =>
+          s === "all" || s === "bullet" || s === "blitz" || s === "rapid" || s === "classical"
+        );
+        if (valid.length > 0) setSpeed(valid);
+      } else if (typeof parsed.speed === "string") {
+        if (parsed.speed === "all" || parsed.speed === "bullet" || parsed.speed === "blitz" || parsed.speed === "rapid" || parsed.speed === "classical") {
+          setSpeed([parsed.speed as TimeControl]);
+        }
+      }
     } catch {
       // ignore malformed localStorage
     }
@@ -113,16 +129,47 @@ export default function HomePage() {
           cpThreshold,
           engineDepth,
           source,
-          scanMode
+          scanMode,
+          speed
         })
       );
     } catch {
       // ignore storage write failures
     }
-  }, [gameCount, moveCount, cpThreshold, engineDepth, source, scanMode]);
+  }, [gameCount, moveCount, cpThreshold, engineDepth, source, scanMode, speed]);
 
   const leaks = useMemo(() => result?.leaks ?? [], [result]);
   const missedTactics = useMemo(() => result?.missedTactics ?? [], [result]);
+
+  // DB-approved inaccuracy detection — exclude these FENs from drills
+  const [dbApprovedFens, setDbApprovedFens] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (leaks.length === 0) { setDbApprovedFens(new Set()); return; }
+    const inaccuracyLeaks = leaks.filter((l) => l.cpLoss < 100);
+    if (inaccuracyLeaks.length === 0) { setDbApprovedFens(new Set()); return; }
+    let cancelled = false;
+    (async () => {
+      const approved = new Set<string>();
+      // Check explorer in parallel (batches of 4 to avoid rate limits)
+      for (let i = 0; i < inaccuracyLeaks.length; i += 4) {
+        const batch = inaccuracyLeaks.slice(i, i + 4);
+        const results = await Promise.all(
+          batch.map((l) => fetchExplorerMoves(l.fenBefore, l.sideToMove).catch(() => null))
+        );
+        if (cancelled) return;
+        results.forEach((res, idx) => {
+          if (!res) return;
+          const leak = batch[idx];
+          const userMoveInDb = res.moves.find((m) => m.uci === leak.userMove);
+          if (userMoveInDb && userMoveInDb.totalGames >= 100 && userMoveInDb.winRate >= 0.45) {
+            approved.add(leak.fenBefore);
+          }
+        });
+      }
+      if (!cancelled) setDbApprovedFens(approved);
+    })();
+    return () => { cancelled = true; };
+  }, [leaks]);
 
   // Motif clustering for missed tactics
   const tacticMotifs = useMemo(() => {
@@ -181,10 +228,42 @@ export default function HomePage() {
     const severeLeakRate =
       valid.filter((trace) => (trace.cpLoss ?? 0) >= (lastRunConfig?.cpThreshold ?? cpThreshold)).length / valid.length;
 
-    const estimatedAccuracy = Math.min(99.5, Math.max(35, 100 - weightedCpLoss / 4));
-    const estimatedRating = Math.round(
-      Math.min(2800, Math.max(600, 700 + estimatedAccuracy * 22 - severeLeakRate * 320 - weightedCpLoss * 0.8))
-    );
+    // Accuracy: exponential decay — 15cp ≈ 88%, 30cp ≈ 78%, 60cp ≈ 61%
+    const estimatedAccuracy = Math.min(99.5, Math.max(25,
+      100 * Math.exp(-weightedCpLoss / 120)
+    ));
+
+    // Rating estimation:
+    // If we have the player's actual rating from the API, use it as the base
+    // and apply a small adjustment from the analysis signal.
+    // Otherwise fall back to the analysis-only estimate.
+    const actualRating = result?.playerRating;
+    let estimatedRating: number;
+
+    if (actualRating && actualRating > 0) {
+      // Analysis-based adjustment: good opening play nudges up, bad nudges down.
+      // Scale: ±200 max based on opening quality relative to their level.
+      const clampedLoss = Math.max(1, weightedCpLoss);
+      // "Expected" cp loss for their level (rough curve)
+      const expectedLoss = Math.max(2, 50 - actualRating / 60);
+      const diff = expectedLoss - clampedLoss; // positive = better than expected
+      const adjustment = Math.max(-200, Math.min(200, diff * 8));
+      const leakAdj = severeLeakRate * -150;
+      estimatedRating = Math.round(
+        Math.min(2800, Math.max(400, actualRating + adjustment + leakAdj))
+      );
+    } else {
+      // Fallback: pure analysis estimate (no actual rating available)
+      const clampedLoss = Math.max(2, weightedCpLoss);
+      const baseRating = 1800 - 400 * Math.log10(clampedLoss);
+      const leakPenalty = severeLeakRate * 400;
+      const sampleFactor = Math.min(1, valid.length / 50);
+      const rawRating = baseRating - leakPenalty;
+      const adjustedRating = 1200 + (rawRating - 1200) * sampleFactor;
+      estimatedRating = Math.round(
+        Math.min(2400, Math.max(400, adjustedRating))
+      );
+    }
 
     const consistencyScore = Math.max(1, Math.min(100, Math.round(100 - stdDevCpLoss / 4)));
     const confidence = Math.max(10, Math.min(99, Math.round((valid.length / 40) * 100)));
@@ -230,7 +309,7 @@ export default function HomePage() {
       sampleSize: valid.length,
       vibeTitle
     };
-  }, [diagnostics, lastRunConfig, cpThreshold, result?.leaks]);
+  }, [diagnostics, lastRunConfig, cpThreshold, result?.leaks, result?.playerRating]);
   const maxObservedCpLoss = useMemo(() => {
     const losses = diagnostics?.positionTraces
       .map((trace) => trace.cpLoss)
@@ -240,16 +319,78 @@ export default function HomePage() {
     return Math.max(...losses);
   }, [diagnostics]);
 
-  const appendProgress = (message: string) => {
-    setProgressLogs((prev) => {
-      const next = [...prev, message];
-      return next.slice(-8);
+  const onBrowserProgress = (progress: AnalysisProgress) => {
+    setProgressInfo({
+      message: progress.message,
+      detail: progress.detail,
+      percent: progress.percent,
+      phase: progress.phase,
     });
   };
 
-  const onBrowserProgress = (progress: AnalysisProgress) => {
-    appendProgress(progress.message);
-  };
+  /** Save analysis report to the user's account (called explicitly via button). */
+  const saveReportToAccount = useCallback(async () => {
+    if (!result || !report || !lastRunConfig) return;
+    setSaveStatus("saving");
+    try {
+      // Build a content hash for dedup (SHA-256 of key fields)
+      const hashInput = JSON.stringify({
+        u: result.username,
+        s: lastRunConfig.source,
+        m: lastRunConfig.scanMode,
+        g: result.gamesAnalyzed,
+        leakKeys: result.leaks.map((l) => `${l.fenBefore}:${l.userMove}`).sort(),
+        tacticKeys: result.missedTactics.map((t) => `${t.fenBefore}:${t.userMove}:${t.gameIndex}`).sort(),
+      });
+      const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(hashInput));
+      const contentHash = Array.from(new Uint8Array(hashBuffer))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+
+      const res = await fetch("/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chessUsername: result.username,
+          source: lastRunConfig.source,
+          scanMode: lastRunConfig.scanMode,
+          gamesAnalyzed: result.gamesAnalyzed,
+          maxGames: lastRunConfig.maxGames,
+          maxMoves: lastRunConfig.maxMoves,
+          cpThreshold: lastRunConfig.cpThreshold,
+          engineDepth: lastRunConfig.engineDepth,
+          // Use the client-side computed report values (same as displayed)
+          estimatedAccuracy: report.estimatedAccuracy,
+          estimatedRating: report.estimatedRating,
+          weightedCpLoss: report.weightedCpLoss,
+          severeLeakRate: report.severeLeakRate,
+          repeatedPositions: result.repeatedPositions,
+          leaks: result.leaks,
+          missedTactics: result.missedTactics,
+          diagnostics: result.diagnostics ?? null,
+          reportMeta: {
+            consistencyScore: report.consistencyScore,
+            p75CpLoss: report.p75CpLoss,
+            confidence: report.confidence,
+            topTag: report.topTag,
+            vibeTitle: report.vibeTitle,
+            sampleSize: report.sampleSize,
+          },
+          contentHash,
+        }),
+      });
+      const json = await res.json();
+      if (json.saved) {
+        setSaveStatus("saved");
+      } else if (json.reason === "duplicate") {
+        setSaveStatus("duplicate");
+      } else {
+        setSaveStatus("error");
+      }
+    } catch {
+      setSaveStatus("error");
+    }
+  }, [result, report, lastRunConfig]);
 
   const runBrowserAnalysis = async (
     trimmed: string,
@@ -258,20 +399,21 @@ export default function HomePage() {
     safeCpThreshold: number,
     safeDepth: number,
     safeSource: AnalysisSource,
-    reason?: string
+    reason?: string,
+    scanModeOverride?: ScanMode
   ) => {
     setNotice(reason ?? "Cloud eval disabled. Running local Stockfish analysis in your browser.");
-    appendProgress("Using browser-side analysis...");
     // Free users always get openings + a small tactics sample;
     // Pro users get whichever mode they selected
     const effectiveScanMode: ScanMode = !hasProAccess
       ? "both"   // always run both so free users get a taste of tactics
-      : scanMode;
+      : (scanModeOverride ?? scanMode);
     const effectiveMaxTactics = !hasProAccess ? FREE_TACTIC_SAMPLE : 25;
 
     const browserResult = await analyzeOpeningLeaksInBrowser(trimmed, {
       source: safeSource,
       scanMode: effectiveScanMode,
+      timeControl: speed,
       maxGames: safeGames,
       maxOpeningMoves: safeMoves,
       cpLossThreshold: safeCpThreshold,
@@ -310,7 +452,7 @@ export default function HomePage() {
     }
 
     try {
-      const safeGames = Math.min(1000, Math.max(1, Math.floor(gameCount || 200)));
+      const safeGames = Math.min(5000, Math.max(1, Math.floor(gameCount || 300)));
       const safeMoves = Math.min(30, Math.max(1, Math.floor(moveCount || 20)));
       const safeCpThreshold = Math.min(1000, Math.max(1, Math.floor(cpThreshold || 50)));
       const safeDepth = Math.min(24, Math.max(6, Math.floor(engineDepth || 12)));
@@ -321,17 +463,16 @@ export default function HomePage() {
         cpThreshold: safeCpThreshold,
         engineDepth: safeDepth,
         source: safeSource,
-        scanMode
+        scanMode,
+        speed
       });
 
       setState("loading");
       setError("");
       setNotice("");
       setResult(null);
-      setProgressLogs(["Starting analysis..."]);
-      appendProgress(
-        `Settings: ${safeSource}, up to ${safeGames} games, first ${safeMoves} moves, CP threshold > ${safeCpThreshold}, depth ${safeDepth}.`
-      );
+      setSaveStatus("idle");
+      setProgressInfo({ message: "🚀 Starting analysis", detail: `${safeSource === "chesscom" ? "Chess.com" : "Lichess"} · ${speed.includes("all") ? "All time controls" : speed.join(", ")} · ${safeGames} games · Depth ${safeDepth}`, percent: 0, phase: "fetch" });
 
       await runBrowserAnalysis(trimmed, safeGames, safeMoves, safeCpThreshold, safeDepth, safeSource);
     } catch (err) {
@@ -343,6 +484,36 @@ export default function HomePage() {
       } else {
         setError(message);
       }
+      setState("error");
+    }
+  };
+
+  /** Quick-switch: change scan mode and immediately re-run with the same settings */
+  const quickScanMode = async (mode: ScanMode) => {
+    const trimmed = username.trim();
+    if (!trimmed || !lastRunConfig) return;
+    setScanMode(mode);
+    setLastRunConfig({ ...lastRunConfig, scanMode: mode, speed: lastRunConfig.speed ?? speed });
+    setState("loading");
+    setError("");
+    setNotice("");
+    setResult(null);
+    setSaveStatus("idle");
+    setProgressInfo({ message: `🔄 Switching to ${mode} scan`, detail: "Re-analyzing with new scan mode...", percent: 0, phase: "fetch" });
+    try {
+      await runBrowserAnalysis(
+        trimmed,
+        lastRunConfig.maxGames,
+        lastRunConfig.maxMoves,
+        lastRunConfig.cpThreshold,
+        lastRunConfig.engineDepth,
+        lastRunConfig.source,
+        `Running ${mode} scan for ${trimmed}...`,
+        mode
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Unexpected error";
+      setError(message);
       setState("error");
     }
   };
@@ -527,96 +698,146 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* Settings grid */}
-            <div className="grid gap-3 md:grid-cols-5">
-              <div className="stat-card space-y-2">
-                <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Source</span>
-                <div className="grid h-10 grid-cols-2 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1">
-                  <button
-                    type="button"
-                    onClick={() => setSource("lichess")}
-                    className={`rounded-md text-xs font-semibold transition-all duration-200 ${
-                      source === "lichess"
-                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 shadow-glow-sm"
-                        : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
-                    }`}
-                  >
-                    Lichess
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSource("chesscom")}
-                    className={`rounded-md text-xs font-semibold transition-all duration-200 ${
-                      source === "chesscom"
-                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 shadow-glow-sm"
-                        : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
-                    }`}
-                  >
-                    Chess.com
-                  </button>
+            {/* Settings grid — row 1: toggles, row 2: number inputs */}
+            <div className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="stat-card space-y-2">
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Source</span>
+                  <div className="grid h-10 grid-cols-2 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1">
+                    <button
+                      type="button"
+                      onClick={() => setSource("lichess")}
+                      className={`rounded-md text-xs font-semibold transition-all duration-200 ${
+                        source === "lichess"
+                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 shadow-glow-sm"
+                          : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
+                      }`}
+                    >
+                      Lichess
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSource("chesscom")}
+                      className={`rounded-md text-xs font-semibold transition-all duration-200 ${
+                        source === "chesscom"
+                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 shadow-glow-sm"
+                          : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
+                      }`}
+                    >
+                      Chess.com
+                    </button>
+                  </div>
+                </div>
+
+                <div className="stat-card space-y-2">
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Time Control</span>
+                  <div className="grid h-10 grid-cols-5 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1">
+                    {([
+                      { value: "all" as const, label: "All" },
+                      { value: "bullet" as const, label: "Bullet" },
+                      { value: "blitz" as const, label: "Blitz" },
+                      { value: "rapid" as const, label: "Rapid" },
+                      { value: "classical" as const, label: "Classical" },
+                    ]).map((tc) => {
+                      const isActive = speed.includes(tc.value);
+                      return (
+                        <button
+                          key={tc.value}
+                          type="button"
+                          onClick={() => {
+                            if (tc.value === "all") {
+                              // "All" resets to just ["all"]
+                              setSpeed(["all"]);
+                            } else {
+                              setSpeed((prev) => {
+                                const withoutAll = prev.filter((s) => s !== "all");
+                                const next = withoutAll.includes(tc.value)
+                                  ? withoutAll.filter((s) => s !== tc.value)
+                                  : [...withoutAll, tc.value];
+                                // If nothing selected or all 4 specific ones selected, reset to "all"
+                                return next.length === 0 || next.length === 4 ? ["all"] : next;
+                              });
+                            }
+                          }}
+                          className={`rounded-md text-[11px] font-semibold transition-all duration-200 ${
+                            isActive
+                              ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 shadow-glow-sm"
+                              : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
+                          }`}
+                        >
+                          {tc.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {!speed.includes("all") && speed.length > 1 && (
+                    <p className="text-[10px] text-slate-500">{speed.length} time controls selected</p>
+                  )}
                 </div>
               </div>
 
-              <div className="stat-card space-y-2">
-                <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Games</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={1000}
-                  value={gameCount}
-                  onChange={(e) => setGameCount(Number(e.target.value))}
-                  className="glass-input h-10 text-sm"
-                />
-                {gamesOverFreeLimit && (
-                  <p className="text-xs font-medium text-amber-400">
-                    {!hasProAccess ? (
-                      <>Requires <Link href="/pricing" className="underline">Pro</Link></>
-                    ) : "Unlocked"}
-                  </p>
-                )}
-              </div>
+              <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
+                <div className="stat-card space-y-2">
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Games</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={hasProAccess ? 5000 : 300}
+                    value={gameCount}
+                    onChange={(e) => setGameCount(Number(e.target.value))}
+                    className="glass-input h-10 text-sm"
+                  />
+                  {gamesOverFreeLimit && (
+                    <p className="text-xs font-medium text-amber-400">
+                      {!hasProAccess ? (
+                        <>Requires <Link href="/pricing" className="underline">Pro</Link></>
+                      ) : gameCount > 1000 ? `${gameCount.toLocaleString()} games — may take a while` : "Unlocked"}
+                    </p>
+                  )}
+                </div>
 
-              <div className="stat-card space-y-2">
-                <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Moves</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={30}
-                  value={moveCount}
-                  onChange={(e) => setMoveCount(Number(e.target.value))}
-                  className="glass-input h-10 text-sm"
-                />
-              </div>
+                <div className="stat-card space-y-2">
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Moves</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={moveCount}
+                    onChange={(e) => setMoveCount(Number(e.target.value))}
+                    className="glass-input h-10 text-sm"
+                  />
+                </div>
 
-              <div className="stat-card space-y-2">
-                <span className="text-xs font-medium uppercase tracking-wider text-slate-500">CP Threshold</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={1000}
-                  value={cpThreshold}
-                  onChange={(e) => setCpThreshold(Number(e.target.value))}
-                  className="glass-input h-10 text-sm"
-                />
-              </div>
+                <div className="stat-card space-y-2">
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">CP Threshold</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={1000}
+                    value={cpThreshold}
+                    onChange={(e) => setCpThreshold(Number(e.target.value))}
+                    className="glass-input h-10 text-sm"
+                  />
+                </div>
 
-              <div className="stat-card space-y-2">
-                <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Depth</span>
-                <input
-                  type="number"
-                  min={6}
-                  max={24}
-                  value={engineDepth}
-                  onChange={(e) => setEngineDepth(Number(e.target.value))}
-                  className="glass-input h-10 text-sm"
-                />
-                {depthOverFreeLimit && (
-                  <p className="text-xs font-medium text-amber-400">
-                    {!hasProAccess ? (
-                      <>Requires <Link href="/pricing" className="underline">Pro</Link></>
-                    ) : "Unlocked"}
-                  </p>
-                )}
+                <div className="stat-card space-y-2">
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Depth</span>
+                  <input
+                    type="number"
+                    min={6}
+                    max={24}
+                    value={engineDepth}
+                    onChange={(e) => setEngineDepth(Number(e.target.value))}
+                    className="glass-input h-10 text-sm"
+                  />
+                  {depthOverFreeLimit && (
+                    <p className="text-xs font-medium text-amber-400">
+                      {!hasProAccess ? (
+                        <>Requires <Link href="/pricing" className="underline">Pro</Link></>
+                      ) : "Unlocked"}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </form>
@@ -643,28 +864,55 @@ export default function HomePage() {
           {/* ─── Loading State ─── */}
           {state === "loading" && (
             <div className="glass-card animate-scale-in mx-auto w-full max-w-3xl p-6">
+              {/* Header */}
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
                   <svg className="h-5 w-5 animate-spin text-emerald-400" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
                 </div>
-                <div>
-                  <p className="font-semibold text-white">Analyzing your games...</p>
-                  <p className="text-sm text-slate-400">This may take a moment depending on game count</p>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-white">{progressInfo.message || "Preparing analysis..."}</p>
+                  {progressInfo.detail && (
+                    <p className="truncate text-sm text-slate-400">{progressInfo.detail}</p>
+                  )}
                 </div>
+                <span className="shrink-0 rounded-lg bg-white/[0.06] px-2.5 py-1 font-mono text-xs font-medium text-slate-300">
+                  {progressInfo.percent}%
+                </span>
               </div>
-              <div className="mt-5 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
-                <div className="progress-bar-animated h-full w-1/3 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500" />
+
+              {/* Progress bar */}
+              <div className="mt-5 h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 transition-all duration-500 ease-out"
+                  style={{ width: `${progressInfo.percent}%` }}
+                />
               </div>
-              <div className="mt-4 space-y-1 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 font-mono text-xs text-slate-400">
-                {progressLogs.length === 0 ? (
-                  <p className="animate-pulse">Waiting for progress updates...</p>
-                ) : (
-                  progressLogs.map((log, index) => (
-                    <p key={`${index}-${log}`} className="animate-fade-in">
-                      <span className="text-emerald-500">→</span> {log}
-                    </p>
-                  ))
-                )}
+
+              {/* Phase steps */}
+              <div className="mt-4 flex items-center justify-between text-[11px] font-medium">
+                {[
+                  { key: "fetch", label: "Download", icon: "🌐" },
+                  { key: "parse", label: "Parse", icon: "📖" },
+                  { key: "eval",  label: "Evaluate", icon: "🧠" },
+                  { key: "tactics", label: "Tactics", icon: "⚔️" },
+                  { key: "done",  label: "Done", icon: "✅" },
+                ].map((step) => {
+                  const phases = ["fetch", "parse", "aggregate", "eval", "tactics", "done"];
+                  const currentIdx = phases.indexOf(progressInfo.phase);
+                  const stepIdx = phases.indexOf(step.key);
+                  const isActive = step.key === progressInfo.phase || (step.key === "eval" && progressInfo.phase === "aggregate");
+                  const isComplete = currentIdx > stepIdx || (step.key === "eval" && progressInfo.phase === "tactics");
+                  return (
+                    <div key={step.key} className={`flex flex-col items-center gap-1 transition-colors ${
+                      isActive ? "text-emerald-400" : isComplete ? "text-slate-400" : "text-slate-600"
+                    }`}>
+                      <span className="text-sm">{step.icon}</span>
+                      <span>{step.label}</span>
+                      {isActive && <span className="mt-0.5 h-0.5 w-4 rounded-full bg-emerald-400" />}
+                      {isComplete && <span className="mt-0.5 h-0.5 w-4 rounded-full bg-slate-500" />}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -692,6 +940,16 @@ export default function HomePage() {
           {/* ─── Results ─── */}
           {state === "done" && result && (
             <section className="animate-fade-in-up space-y-8">
+
+              {/* Report Heading */}
+              <div className="text-center">
+                <h1 className="text-3xl font-extrabold tracking-tight text-white md:text-4xl">
+                  Analysis for <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">{result.username}</span>
+                </h1>
+                <p className="mt-2 text-sm text-slate-400">
+                  {result.gamesAnalyzed} games scanned{result.playerRating ? ` · ${result.playerRating} rated` : ""} · {result.leaks.length} opening leak{result.leaks.length !== 1 ? "s" : ""} · {result.missedTactics.length} missed tactic{result.missedTactics.length !== 1 ? "s" : ""}
+                </p>
+              </div>
 
               {/* Report Card */}
               {report && (
@@ -747,6 +1005,110 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
+              )}
+
+              {/* Strengths Radar */}
+              {report && result && (
+                <div className="glass-card p-6">
+                  <div className="mb-4 flex items-center justify-between">
+                    <h2 className="text-lg font-bold text-white">Strengths & Weaknesses</h2>
+
+                    {/* Save to Dashboard button */}
+                    {saveStatus === "saved" ? (
+                      <span className="flex items-center gap-1.5 rounded-xl bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400">
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                        Saved
+                      </span>
+                    ) : saveStatus === "duplicate" ? (
+                      <span className="flex items-center gap-1.5 rounded-xl bg-amber-500/10 px-4 py-2 text-sm font-medium text-amber-400">
+                        Already saved
+                      </span>
+                    ) : saveStatus === "saving" ? (
+                      <span className="flex items-center gap-1.5 rounded-xl bg-white/5 px-4 py-2 text-sm text-white/40">
+                        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" />
+                          <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                        </svg>
+                        Saving…
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!authenticated) {
+                            window.location.href = "/auth/signin";
+                            return;
+                          }
+                          saveReportToAccount();
+                        }}
+                        className="flex items-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400 transition-all hover:border-emerald-500/40 hover:bg-emerald-500/20 hover:shadow-glow-sm"
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
+                        {authenticated ? "Save to Dashboard" : "Sign in to Save"}
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <StrengthsRadar
+                      accuracy={report.estimatedAccuracy}
+                      leakCount={result.leaks.length}
+                      repeatedPositions={result.repeatedPositions}
+                      tacticsCount={result.missedTactics.length}
+                      gamesAnalyzed={result.gamesAnalyzed}
+                      weightedCpLoss={report.weightedCpLoss}
+                      severeLeakRate={report.severeLeakRate}
+                      timeManagementScore={result.timeManagementScore}
+                    />
+                    <RadarLegend
+                      data={computeRadarData({
+                        accuracy: report.estimatedAccuracy,
+                        leakCount: result.leaks.length,
+                        repeatedPositions: result.repeatedPositions,
+                        tacticsCount: result.missedTactics.length,
+                        gamesAnalyzed: result.gamesAnalyzed,
+                        weightedCpLoss: report.weightedCpLoss,
+                        severeLeakRate: report.severeLeakRate,
+                        timeManagementScore: result.timeManagementScore,
+                      })}
+                      props={{
+                        accuracy: report.estimatedAccuracy,
+                        leakCount: result.leaks.length,
+                        repeatedPositions: result.repeatedPositions,
+                        tacticsCount: result.missedTactics.length,
+                        gamesAnalyzed: result.gamesAnalyzed,
+                        weightedCpLoss: report.weightedCpLoss,
+                        severeLeakRate: report.severeLeakRate,
+                        timeManagementScore: result.timeManagementScore,
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Deep Analysis — 6 Insight Cards */}
+              {result && report && (
+                <InsightCards
+                  data={computeRadarData({
+                    accuracy: report.estimatedAccuracy,
+                    leakCount: result.leaks.length,
+                    repeatedPositions: result.repeatedPositions,
+                    tacticsCount: result.missedTactics.length,
+                    gamesAnalyzed: result.gamesAnalyzed,
+                    weightedCpLoss: report.weightedCpLoss,
+                    severeLeakRate: report.severeLeakRate,
+                    timeManagementScore: result.timeManagementScore,
+                  })}
+                  props={{
+                    accuracy: report.estimatedAccuracy,
+                    leakCount: result.leaks.length,
+                    repeatedPositions: result.repeatedPositions,
+                    tacticsCount: result.missedTactics.length,
+                    gamesAnalyzed: result.gamesAnalyzed,
+                    weightedCpLoss: report.weightedCpLoss,
+                    severeLeakRate: report.severeLeakRate,
+                    timeManagementScore: result.timeManagementScore,
+                  }}
+                />
               )}
 
               {/* Summary stats */}
@@ -818,7 +1180,7 @@ export default function HomePage() {
               ) : (
                 <div className="space-y-6">
                   {leaks.map((leak, idx) => (
-                    <div key={`${leak.fenBefore}-${leak.userMove}`} className="animate-fade-in-up" style={{ animationDelay: `${idx * 80}ms` }}>
+                    <div key={`${leak.fenBefore}-${leak.userMove}-${idx}`} className="animate-fade-in-up" style={{ animationDelay: `${idx * 80}ms` }}>
                       <MistakeCard
                         leak={leak}
                         engineDepth={lastRunConfig?.engineDepth ?? engineDepth}
@@ -828,14 +1190,36 @@ export default function HomePage() {
 
                   {/* Opening Leaks Drill */}
                   {diagnostics && diagnostics.positionTraces.length > 0 && (
-                    <DrillMode positions={diagnostics.positionTraces} />
+                    <DrillMode positions={diagnostics.positionTraces} excludeFens={dbApprovedFens} />
                   )}
                 </div>
               )}
               </>
               )}
 
-              {/* Missed Tactics Section — always shown since free users get sample tactics */}
+              {/* CTA: after openings-only scan, suggest tactics scan */}
+              {hasProAccess && lastRunConfig?.scanMode === "openings" && (
+                <div className="glass-card flex flex-col items-center gap-4 border-amber-500/15 bg-gradient-to-r from-amber-500/[0.04] to-transparent p-6 text-center sm:flex-row sm:text-left">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">⚡</span>
+                  <div className="flex-1">
+                    <h3 className="text-base font-bold text-white">Want to find missed tactics too?</h3>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Your opening scan is complete. Run a tactics scan on the same games to find forcing moves you missed.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => quickScanMode("tactics")}
+                    className="btn-amber flex h-11 shrink-0 items-center gap-2 px-5 text-sm font-bold"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    Scan Tactics
+                  </button>
+                </div>
+              )}
+
+              {/* Missed Tactics Section — hidden for pro users in openings-only mode */}
+              {(lastRunConfig?.scanMode !== "openings" || !hasProAccess) && (
               <>
               <div className="my-4">
                 <div className="section-divider" />
@@ -942,9 +1326,9 @@ export default function HomePage() {
                             className="btn-amber flex h-11 items-center gap-2 px-6 text-sm font-bold"
                           >
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                            Upgrade to Pro — $9/mo
+                            Upgrade to Pro — <span className="line-through decoration-1 opacity-60">$8</span> $5/mo
                           </Link>
-                          <span className="text-xs text-slate-500">Cancel anytime</span>
+                          <span className="text-xs text-slate-500">Launch pricing · Cancel anytime</span>
                         </div>
                       </div>
                     </div>
@@ -952,11 +1336,33 @@ export default function HomePage() {
 
                   {/* Tactics Drill — only for Pro or if they have tactics */}
                   {(hasProAccess || missedTactics.length > 0) && (
-                    <DrillMode positions={[]} tactics={missedTactics} />
+                    <DrillMode positions={[]} tactics={missedTactics} excludeFens={dbApprovedFens} />
                   )}
                 </div>
               )}
               </>
+              )}
+
+              {/* CTA: after tactics-only scan, suggest openings scan */}
+              {hasProAccess && lastRunConfig?.scanMode === "tactics" && (
+                <div className="glass-card flex flex-col items-center gap-4 border-emerald-500/15 bg-gradient-to-r from-emerald-500/[0.04] to-transparent p-6 text-center sm:flex-row sm:text-left">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 text-3xl shadow-lg shadow-emerald-500/10">🔁</span>
+                  <div className="flex-1">
+                    <h3 className="text-base font-bold text-white">Want to find opening leaks too?</h3>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Your tactics scan is complete. Run an openings scan to find repeated patterns where you consistently play suboptimal moves.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => quickScanMode("openings")}
+                    className="btn-primary flex h-11 shrink-0 items-center gap-2 px-5 text-sm font-bold"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0022 16z"/></svg>
+                    Scan Openings
+                  </button>
+                </div>
+              )}
 
               {/* Diagnostics */}
               {diagnostics && (
@@ -1024,7 +1430,7 @@ export default function HomePage() {
                       <p className="text-xs text-slate-400">Practice both opening leaks and missed tactics together</p>
                     </div>
                   </div>
-                  <DrillMode positions={diagnostics.positionTraces} tactics={missedTactics} />
+                  <DrillMode positions={diagnostics.positionTraces} tactics={missedTactics} excludeFens={dbApprovedFens} />
                 </div>
               )}
             </section>

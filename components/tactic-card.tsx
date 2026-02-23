@@ -5,6 +5,7 @@ import { Chess, type PieceSymbol } from "chess.js";
 import { stockfishClient } from "@/lib/stockfish-client";
 import { EvalBar } from "@/components/eval-bar";
 import { Chessboard } from "react-chessboard";
+import { playSound } from "@/lib/sounds";
 import type { MissedTactic, MoveSquare } from "@/lib/types";
 
 type TacticCardProps = {
@@ -157,10 +158,13 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
   const severityColor = isMate ? "#dc2626" : tactic.cpLoss >= 600 ? "#ef4444" : tactic.cpLoss >= 400 ? "#f59e0b" : "#f97316";
   const severityLabel = isMate ? "Missed Mate" : tactic.cpLoss >= 600 ? "Critical" : tactic.cpLoss >= 400 ? "Major" : "Missed";
 
+  const [animEvalCp, setAnimEvalCp] = useState<number | null>(null);
+
   const displayedEvalCp = useMemo(() => {
+    if (animEvalCp !== null) return animEvalCp;
     if (fen === tactic.fenAfter) return whiteEvalAfter;
     return whiteEvalBefore;
-  }, [fen, tactic.fenAfter, whiteEvalAfter, whiteEvalBefore]);
+  }, [fen, tactic.fenAfter, whiteEvalAfter, whiteEvalBefore, animEvalCp]);
 
   const clearTimers = () => {
     timerIds.current.forEach((timerId) => window.clearTimeout(timerId));
@@ -233,28 +237,59 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
     const chess = new Chess(startFen);
     setFen(chess.fen());
     setAnimating(true);
-    const playable = uciMoves.slice(0, 10);
-    playable.forEach((uci, moveIndex) => {
+    setAnimEvalCp(whiteEvalBefore);
+
+    // Pre-compute FENs for each step
+    const steps: { uci: string; fen: string }[] = [];
+    const simChess = new Chess(startFen);
+    for (const uci of uciMoves.slice(0, 10)) {
+      if (!isUci(uci)) break;
+      const parsed = parseMove(uci);
+      if (!parsed) break;
+      const r = simChess.move({
+        from: parsed.from,
+        to: parsed.to,
+        promotion: parsed.promotion as PieceSymbol | undefined,
+      });
+      if (!r) break;
+      steps.push({ uci, fen: simChess.fen() });
+    }
+
+    steps.forEach((step, moveIndex) => {
       const timerId = window.setTimeout(() => {
-        if (!isUci(uci)) return;
-        const parsed = parseMove(uci);
+        const parsed = parseMove(step.uci);
         if (!parsed) return;
         const result = chess.move({
           from: parsed.from,
           to: parsed.to,
-          promotion: parsed.promotion as PieceSymbol | undefined
+          promotion: parsed.promotion as PieceSymbol | undefined,
         });
-        if (result) setFen(chess.fen());
+        if (result) {
+          setFen(chess.fen());
+          // Play appropriate move sound
+          if (/[+#]/.test(result.san)) playSound("check");
+          else if (result.captured) playSound("capture");
+          else playSound("move");
+          stockfishClient.evaluateFen(step.fen, 8).then((evalResult) => {
+            if (evalResult) {
+              const turn = new Chess(step.fen).turn();
+              const whiteEval = turn === "w" ? evalResult.cp : -evalResult.cp;
+              setAnimEvalCp(whiteEval);
+            }
+          }).catch(() => {});
+        }
       }, (moveIndex + 1) * 2000);
       timerIds.current.push(timerId);
     });
+
     const resetTimerId = window.setTimeout(
       () => {
         setFen(tactic.fenBefore);
         setAnimating(false);
+        setAnimEvalCp(null);
         setBoardInstance((v) => v + 1);
       },
-      (playable.length + 1) * 2000 + 4000
+      (steps.length + 1) * 2000 + 4000
     );
     timerIds.current.push(resetTimerId);
   };
@@ -262,6 +297,7 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
   const stopAnimation = () => {
     clearTimers();
     setAnimating(false);
+    setAnimEvalCp(null);
     setFen(tactic.fenBefore);
     setBoardInstance((v) => v + 1);
   };

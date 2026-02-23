@@ -8,8 +8,10 @@
 import {
   boolean,
   integer,
+  jsonb,
   pgTable,
   primaryKey,
+  real,
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
@@ -93,4 +95,54 @@ export const subscriptions = pgTable("subscription", {
   currentPeriodEnd: timestamp("currentPeriodEnd", { mode: "date" }),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
   updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow(),
+});
+
+/* ------------------------------------------------------------------ */
+/*  Custom: saved analysis reports                                      */
+/* ------------------------------------------------------------------ */
+
+export const reports = pgTable("report", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+
+  /* identifiers */
+  chessUsername: text("chessUsername").notNull(),
+  source: text("source").$type<"lichess" | "chesscom">().notNull(),
+  scanMode: text("scanMode")
+    .$type<"openings" | "tactics" | "both">()
+    .notNull()
+    .default("both"),
+
+  /* config snapshot */
+  gamesAnalyzed: integer("gamesAnalyzed").notNull().default(0),
+  maxGames: integer("maxGames"),
+  maxMoves: integer("maxMoves"),
+  cpThreshold: integer("cpThreshold"),
+  engineDepth: integer("engineDepth"),
+
+  /* summary metrics – stored denormalized for fast dashboard queries */
+  estimatedAccuracy: real("estimatedAccuracy"),
+  estimatedRating: real("estimatedRating"),
+  weightedCpLoss: real("weightedCpLoss"),
+  severeLeakRate: real("severeLeakRate"),
+  repeatedPositions: integer("repeatedPositions").default(0),
+  leakCount: integer("leakCount").default(0),
+  tacticsCount: integer("tacticsCount").default(0),
+
+  /* computed report card data */
+  reportMeta: jsonb("reportMeta"),
+
+  /* full payloads (for re-rendering report detail) */
+  leaks: jsonb("leaks").default([]),
+  missedTactics: jsonb("missedTactics").default([]),
+  diagnostics: jsonb("diagnostics"),
+
+  /* dedup: SHA-256 of (userId + chessUsername + source + scanMode + sorted game IDs summary) */
+  contentHash: text("contentHash"),
+
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
 });

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { signIn, signOut } from "next-auth/react";
 import { useSession } from "@/components/session-provider";
 import { useState, useRef, useEffect } from "react";
@@ -40,24 +41,19 @@ export function AuthButton() {
   }
 
   return (
-    <div className="relative" ref={menuRef}>
+    <>
+      <Link href="/dashboard" className="btn-secondary text-sm">
+        Dashboard
+      </Link>
+      <div className="relative" ref={menuRef}>
       <button
         type="button"
         onClick={() => setMenuOpen((prev) => !prev)}
         className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-sm text-white transition-all hover:border-white/[0.15] hover:bg-white/[0.08]"
       >
-        {user?.image ? (
-          <img
-            src={user.image}
-            alt=""
-            className="h-6 w-6 rounded-full"
-            referrerPolicy="no-referrer"
-          />
-        ) : (
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-xs font-bold text-emerald-400">
-            {(user?.name?.[0] ?? user?.email?.[0] ?? "?").toUpperCase()}
-          </div>
-        )}
+        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-xs font-bold text-emerald-400">
+          {(user?.name?.[0] ?? user?.email?.[0] ?? "?").toUpperCase()}
+        </div>
         <span className="max-w-[120px] truncate">{user?.name ?? user?.email ?? "Account"}</span>
         {plan === "pro" && (
           <span className="rounded bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
@@ -95,5 +91,6 @@ export function AuthButton() {
         </div>
       )}
     </div>
+    </>
   );
 }

@@ -89,6 +89,8 @@ const config: Config = {
         "glow-lg": "0 0 60px -10px rgba(16, 185, 129, 0.35)",
         "glow-emerald": "0 0 40px -10px rgba(16, 185, 129, 0.4)",
         "glow-fuchsia": "0 0 40px -10px rgba(217, 70, 239, 0.35)",
+        "glow-fire": "0 0 20px -3px rgba(251, 146, 60, 0.35), 0 0 40px -8px rgba(239, 68, 68, 0.2)",
+        "glow-fire-lg": "0 0 30px -3px rgba(251, 146, 60, 0.45), 0 0 60px -10px rgba(239, 68, 68, 0.25)",
         "inner-glow": "inset 0 1px 0 0 rgba(255,255,255,0.05)",
       },
     },

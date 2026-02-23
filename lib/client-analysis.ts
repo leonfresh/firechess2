@@ -14,8 +14,8 @@ type LichessGame = {
   moves?: string;
   clocks?: number[];
   players?: {
-    white?: { user?: { name?: string } };
-    black?: { user?: { name?: string } };
+    white?: { user?: { name?: string }; rating?: number };
+    black?: { user?: { name?: string }; rating?: number };
   };
 };
 
@@ -26,8 +26,9 @@ type ChessComArchiveList = {
 type ChessComGame = {
   pgn?: string;
   rules?: string;
-  white?: { username?: string };
-  black?: { username?: string };
+  time_class?: string;
+  white?: { username?: string; rating?: number };
+  black?: { username?: string; rating?: number };
 };
 
 type ChessComMonthArchive = {
@@ -38,18 +39,26 @@ type SourceGame = {
   moves: string;
   whiteName?: string;
   blackName?: string;
+  /** Player ratings if available from the source */
+  whiteRating?: number;
+  blackRating?: number;
   /** Clock times in centiseconds per half-move (ply), if available */
   clocks?: number[];
 };
 
 export type AnalysisSource = "lichess" | "chesscom";
 export type ScanMode = "openings" | "tactics" | "both";
+export type Speed = "bullet" | "blitz" | "rapid" | "classical";
+export type TimeControl = Speed | "all";
 
 export type AnalysisProgress = {
   phase: "fetch" | "parse" | "aggregate" | "eval" | "tactics" | "done";
   message: string;
+  detail?: string;
   current?: number;
   total?: number;
+  /** Overall progress 0-100 across all phases */
+  percent: number;
 };
 
 type AnalyzeOptions = {
@@ -59,6 +68,8 @@ type AnalyzeOptions = {
   engineDepth?: number;
   source?: AnalysisSource;
   scanMode?: ScanMode;
+  /** Filter games by time control — single value or array for multi-select (default "all") */
+  timeControl?: TimeControl | TimeControl[];
   /** Cap the number of missed tactics returned (default 25) */
   maxTactics?: number;
   onProgress?: (progress: AnalysisProgress) => void;
@@ -66,7 +77,7 @@ type AnalyzeOptions = {
 
 const MIN_POSITION_REPEATS = 3;
 const CP_LOSS_THRESHOLD = 100;
-const DEFAULT_MAX_GAMES = 200;
+const DEFAULT_MAX_GAMES = 300;
 const DEFAULT_MAX_OPENING_MOVES = 12;
 
 function normalizeName(name: string): string {
@@ -116,6 +127,8 @@ function sourceGamesFromLichess(games: LichessGame[]): SourceGame[] {
       moves: game.moves!.trim(),
       whiteName: game.players?.white?.user?.name,
       blackName: game.players?.black?.user?.name,
+      whiteRating: game.players?.white?.rating,
+      blackRating: game.players?.black?.rating,
       clocks: game.clocks
     }));
 }
@@ -218,6 +231,93 @@ async function fetchGamesNdjsonWithRetry(url: string, retries = 3): Promise<stri
   throw new Error("Browser cannot reach lichess.org (network timeout or block)");
 }
 
+/**
+ * Stream Lichess NDJSON and call onGame for each parsed game line,
+ * allowing real-time progress updates during download.
+ */
+async function streamLichessGames(
+  url: string,
+  maxGames: number,
+  onGame: (count: number) => void,
+  retries = 3
+): Promise<LichessGame[]> {
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      const response = await fetchWithTimeout(
+        url,
+        { headers: { Accept: "application/x-ndjson" }, cache: "no-store" },
+        60000 // longer timeout for streaming
+      );
+
+      if (!response.ok) {
+        if (attempt < retries && (response.status === 408 || response.status === 429 || response.status >= 500)) {
+          await sleep(500 * Math.pow(2, attempt));
+          continue;
+        }
+        throw new Error(`Lichess games request failed (${response.status})`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        // Fallback: no streaming support
+        const text = await response.text();
+        const games = parseGamesPayload(text);
+        onGame(games.length);
+        return games.slice(0, maxGames);
+      }
+
+      const decoder = new TextDecoder();
+      const games: LichessGame[] = [];
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? ""; // keep incomplete last line in buffer
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          try {
+            games.push(JSON.parse(trimmed) as LichessGame);
+            onGame(games.length);
+          } catch { /* skip malformed lines */ }
+
+          if (games.length >= maxGames) {
+            reader.cancel();
+            return games.slice(0, maxGames);
+          }
+        }
+      }
+
+      // Process any remaining buffer
+      if (buffer.trim()) {
+        try {
+          games.push(JSON.parse(buffer.trim()) as LichessGame);
+          onGame(games.length);
+        } catch { /* skip */ }
+      }
+
+      return games.slice(0, maxGames);
+    } catch (error) {
+      lastError = error;
+      if (attempt < retries) {
+        await sleep(500 * Math.pow(2, attempt));
+      }
+    }
+  }
+
+  if (lastError instanceof Error) {
+    throw new Error(`Browser cannot reach lichess.org (network timeout or block). Last error: ${lastError.message}`);
+  }
+  throw new Error("Browser cannot reach lichess.org (network timeout or block)");
+}
+
 async function fetchJsonWithRetry<T>(
   url: string,
   retries = 3,
@@ -287,9 +387,11 @@ async function fetchChessComGamesInReverse(
     const archiveUrl = archives[archiveIndex];
     emitProgress(options, {
       phase: "fetch",
-      message: `Chess.com archive ${archiveIndex + 1}/${archives.length}...`,
+      message: `📦 Downloading game archives`,
+      detail: `Archive ${archiveIndex + 1} of ${archives.length}`,
       current: archiveIndex + 1,
-      total: archives.length
+      total: archives.length,
+      percent: 2 + Math.round(((archiveIndex + 1) / archives.length) * 36),
     });
 
     const monthData = await fetchJsonWithRetry<ChessComMonthArchive>(archiveUrl, 3, 20000);
@@ -299,6 +401,19 @@ async function fetchChessComGamesInReverse(
       if (collected.length >= maxGames) break;
       if (game.rules && game.rules !== "chess") continue;
       if (!game.pgn) continue;
+
+      // Time control filter for Chess.com games
+      const tcRaw = options?.timeControl;
+      const tcArr = Array.isArray(tcRaw) ? tcRaw : tcRaw ? [tcRaw] : ["all"];
+      if (!tcArr.includes("all") && game.time_class) {
+        // Chess.com uses "daily" instead of "classical" — map classical → both "classical" and "rapid" for chess.com
+        const allowed = new Set<string>();
+        for (const tc of tcArr) {
+          if (tc === "classical") { allowed.add("rapid"); allowed.add("daily"); }
+          else allowed.add(tc);
+        }
+        if (!allowed.has(game.time_class)) continue;
+      }
 
       const whiteName = game.white?.username;
       const blackName = game.black?.username;
@@ -315,6 +430,8 @@ async function fetchChessComGamesInReverse(
         moves: parsed.moves,
         whiteName,
         blackName,
+        whiteRating: game.white?.rating,
+        blackRating: game.black?.rating,
         clocks: parsed.clocks.length > 0 ? parsed.clocks : undefined
       });
     }
@@ -522,7 +639,7 @@ export async function analyzeOpeningLeaksInBrowser(
   options?: AnalyzeOptions
 ): Promise<AnalyzeResponse> {
   const source: AnalysisSource = options?.source ?? "lichess";
-  const maxGames = clampInt(options?.maxGames, DEFAULT_MAX_GAMES, 1, 1000);
+  const maxGames = clampInt(options?.maxGames, DEFAULT_MAX_GAMES, 1, 5000);
   const maxOpeningMoves = clampInt(options?.maxOpeningMoves, DEFAULT_MAX_OPENING_MOVES, 1, 30);
   const cpLossThreshold = clampInt(options?.cpLossThreshold, CP_LOSS_THRESHOLD, 1, 1000);
   const engineDepth = clampInt(options?.engineDepth, 10, 6, 24);
@@ -536,7 +653,9 @@ export async function analyzeOpeningLeaksInBrowser(
   if (source === "chesscom") {
     emitProgress(options, {
       phase: "fetch",
-      message: "Downloading recent games from Chess.com archives..."
+      message: "🌐 Connecting to Chess.com",
+      detail: "Fetching your recent game archives...",
+      percent: 2,
     });
 
     try {
@@ -548,24 +667,51 @@ export async function analyzeOpeningLeaksInBrowser(
   } else {
     emitProgress(options, {
       phase: "fetch",
-      message: "Downloading recent games from Lichess..."
+      message: "🌐 Connecting to Lichess",
+      detail: "Streaming your recent games...",
+      percent: 2,
     });
 
-    const payload = await fetchGamesNdjsonWithRetry(
-      `https://lichess.org/api/games/user/${encodeURIComponent(username)}?max=${maxGames}&moves=true&tags=false&opening=false&clocks=true&evals=false&pgnInJson=false`,
+    // Build Lichess URL with optional time control filter (supports multi-select)
+    const tcRaw = options?.timeControl;
+    const tcArr = Array.isArray(tcRaw) ? tcRaw : tcRaw ? [tcRaw] : ["all"];
+    const lichessPerfs = tcArr
+      .filter((t): t is Speed => t !== "all")
+      .map((t) => t); // Lichess perfType values match our Speed type directly
+    const perfParam = lichessPerfs.length > 0
+      ? `&perfType=${lichessPerfs.join(",")}`
+      : "";
+    const lichessUrl = `https://lichess.org/api/games/user/${encodeURIComponent(username)}?max=${maxGames}&moves=true&opening=false&clocks=true&evals=false&pgnInJson=false${perfParam}`;
+
+    const lichessGames = await streamLichessGames(
+      lichessUrl,
+      maxGames,
+      (count) => {
+        emitProgress(options, {
+          phase: "fetch",
+          message: "🌐 Downloading from Lichess",
+          detail: `${count} of ${maxGames} games received`,
+          current: count,
+          total: maxGames,
+          percent: 2 + Math.round((count / maxGames) * 36),
+        });
+      },
       3
     );
 
-    games = sourceGamesFromLichess(parseGamesPayload(payload));
+    games = sourceGamesFromLichess(lichessGames);
   }
 
   emitProgress(options, {
     phase: "parse",
-    message: "Parsing games and extracting opening moves..."
+    message: "📖 Parsing games",
+    detail: `Extracting opening moves from ${games.length} games...`,
+    percent: 40,
   });
 
   const byFen = new Map<string, { totalReachCount: number; moveCounts: Map<string, number> }>();
   let gamesAnalyzed = 0;
+  const playerRatings: number[] = [];
   const gameTraces: GameOpeningTrace[] = [];
 
   if (doOpenings) {
@@ -575,9 +721,11 @@ export async function analyzeOpeningLeaksInBrowser(
     if (gameIndex % 10 === 0 || gameIndex === games.length - 1) {
       emitProgress(options, {
         phase: "parse",
-        message: `Processed ${gameIndex + 1}/${games.length} games...`,
+        message: `📖 Parsing games`,
+        detail: `${gameIndex + 1} of ${games.length} games processed`,
         current: gameIndex + 1,
-        total: games.length
+        total: games.length,
+        percent: 40 + Math.round(((gameIndex + 1) / games.length) * 15),
       });
     }
 
@@ -595,6 +743,10 @@ export async function analyzeOpeningLeaksInBrowser(
           : null;
 
     if (!userColor) continue;
+
+    // Collect player rating
+    const gameRating = userColor === "white" ? game.whiteRating : game.blackRating;
+    if (gameRating && gameRating > 0) playerRatings.push(gameRating);
 
     gamesAnalyzed += 1;
 
@@ -657,12 +809,16 @@ export async function analyzeOpeningLeaksInBrowser(
 
   emitProgress(options, {
     phase: "aggregate",
-    message: `Found ${repeatedEntries.length} repeated opening positions (min 3 games).`
+    message: `🔍 ${repeatedEntries.length} recurring positions found`,
+    detail: "Positions you've reached 3+ times — these are your opening habits",
+    percent: 56,
   });
 
   emitProgress(options, {
     phase: "eval",
-    message: `Evaluating positions with local Stockfish depth ${engineDepth} (no Lichess Cloud Eval).`
+    message: `🧠 Stockfish evaluation starting`,
+    detail: `Depth ${engineDepth} analysis on ${repeatedEntries.length} positions`,
+    percent: 58,
   });
 
   for (let index = 0; index < repeatedEntries.length; index += 1) {
@@ -673,9 +829,11 @@ export async function analyzeOpeningLeaksInBrowser(
     if (index % 5 === 0 || index === repeatedEntries.length - 1) {
       emitProgress(options, {
         phase: "eval",
-        message: `Evaluating position ${index + 1}/${repeatedEntries.length}...`,
+        message: `🧠 Evaluating positions`,
+        detail: `Position ${index + 1} of ${repeatedEntries.length}`,
         current: index + 1,
-        total: repeatedEntries.length
+        total: repeatedEntries.length,
+        percent: 58 + Math.round(((index + 1) / repeatedEntries.length) * 22),
       });
     }
 
@@ -785,7 +943,9 @@ export async function analyzeOpeningLeaksInBrowser(
 
   emitProgress(options, {
     phase: "tactics",
-    message: "Scanning games for missed tactics..."
+    message: "⚔️ Hunting for missed tactics",
+    detail: `Scanning ${games.length} games for blunders and missed wins...`,
+    percent: 81,
   });
 
   const seenTacticFens = new Set<string>();
@@ -809,12 +969,20 @@ export async function analyzeOpeningLeaksInBrowser(
 
     if (!userColor) continue;
 
+    // Collect rating if not already done via openings scan
+    if (!doOpenings) {
+      const gameRating = userColor === "white" ? game.whiteRating : game.blackRating;
+      if (gameRating && gameRating > 0) playerRatings.push(gameRating);
+    }
+
     if (gameIndex % 10 === 0 || gameIndex === games.length - 1) {
       emitProgress(options, {
         phase: "tactics",
-        message: `Scanning game ${gameIndex + 1}/${games.length} for missed tactics...`,
+        message: `⚔️ Scanning for missed tactics`,
+        detail: `Game ${gameIndex + 1} of ${games.length}`,
         current: gameIndex + 1,
-        total: games.length
+        total: games.length,
+        percent: 81 + Math.round(((gameIndex + 1) / games.length) * 16),
       });
     }
 
@@ -933,8 +1101,96 @@ export async function analyzeOpeningLeaksInBrowser(
 
   emitProgress(options, {
     phase: "done",
-    message: `Analysis complete: ${leaks.length} opening leaks, ${missedTactics.length} missed tactics.`
+    message: `✅ Analysis complete`,
+    detail: `Found ${leaks.length} opening leak${leaks.length !== 1 ? "s" : ""} and ${missedTactics.length} missed tactic${missedTactics.length !== 1 ? "s" : ""}`,
+    percent: 100,
   });
+
+  // Compute median player rating from games
+  const playerRating: number | null = playerRatings.length > 0
+    ? (() => {
+        const sorted = [...playerRatings].sort((a, b) => a - b);
+        const mid = Math.floor(sorted.length / 2);
+        return sorted.length % 2 === 0
+          ? Math.round((sorted[mid - 1] + sorted[mid]) / 2)
+          : sorted[mid];
+      })()
+    : null;
+
+  // ── Compute Time Management Score (0-100) from clock data ──
+  // Measures: consistency of move timing, avoiding time scrambles, not wasting time
+  const timeManagementScore = (() => {
+    const allMoveTimesMs: number[] = [];
+    let timeScrambleCount = 0;
+    let gamesWithClocks = 0;
+
+    for (const game of games) {
+      if (!game.clocks || game.clocks.length < 4) continue;
+      gamesWithClocks++;
+
+      const target = normalizeName(username);
+      const userColor: "white" | "black" | null =
+        game.whiteName && normalizeName(game.whiteName) === target ? "white"
+        : game.blackName && normalizeName(game.blackName) === target ? "black"
+        : null;
+      if (!userColor) continue;
+
+      // Extract user's clock values (every other ply starting at 0 for white, 1 for black)
+      const startPly = userColor === "white" ? 0 : 1;
+      const userClocks: number[] = [];
+      for (let p = startPly; p < game.clocks.length; p += 2) {
+        userClocks.push(game.clocks[p]); // centiseconds remaining
+      }
+
+      if (userClocks.length < 2) continue;
+
+      // Compute time spent per move (diff between consecutive own clocks)
+      // Note: clocks[i] is remaining time AFTER move i, so time spent = clocks[i-1] - clocks[i]
+      // (can be negative if increment is given — clamp to 0)
+      const startTime = userClocks[0]; // remaining after first move
+      for (let i = 1; i < userClocks.length; i++) {
+        const spent = Math.max(0, userClocks[i - 1] - userClocks[i]);
+        allMoveTimesMs.push(spent); // in centiseconds
+      }
+
+      // Check for time scramble: remaining time drops below 10% of initial time
+      const initialTime = userClocks[0]; // rough initial time (after move 1)
+      if (initialTime > 0) {
+        const minRemaining = Math.min(...userClocks);
+        if (minRemaining < initialTime * 0.1) {
+          timeScrambleCount++;
+        }
+      }
+    }
+
+    if (gamesWithClocks < 2 || allMoveTimesMs.length < 10) return null;
+
+    // Convert to seconds for readability
+    const moveTimesSec = allMoveTimesMs.map(c => c / 100);
+
+    // 1. Consistency: coefficient of variation (lower = more consistent = better)
+    const mean = moveTimesSec.reduce((s, v) => s + v, 0) / moveTimesSec.length;
+    const variance = moveTimesSec.reduce((s, v) => s + (v - mean) ** 2, 0) / moveTimesSec.length;
+    const cv = mean > 0 ? Math.sqrt(variance) / mean : 2;
+    // CV of ~0.5 = very consistent (90+), CV of ~1.5 = erratic (~40), CV of ~3+ = terrible
+    const consistencyScore = Math.max(0, Math.min(100, 100 * Math.exp(-cv * 0.8)));
+
+    // 2. Time scramble penalty: percentage of games with scrambles
+    const scrambleRate = timeScrambleCount / gamesWithClocks;
+    // 0% scrambles = 100, 20% = ~67, 50% = ~37
+    const scrambleScore = Math.max(0, Math.min(100, 100 * Math.exp(-scrambleRate * 2)));
+
+    // 3. Time waste: penalise if >30% of total time is spent in the first 5 moves
+    const earlyMoves = moveTimesSec.slice(0, Math.min(5, moveTimesSec.length));
+    const totalTime = moveTimesSec.reduce((s, v) => s + v, 0);
+    const earlyTime = earlyMoves.reduce((s, v) => s + v, 0);
+    const earlyRatio = totalTime > 0 ? earlyTime / totalTime : 0;
+    // 15% early = perfect (100), 30% = ~74, 50% = ~37
+    const wasteScore = Math.max(0, Math.min(100, 100 * Math.exp(-Math.max(0, earlyRatio - 0.15) * 5)));
+
+    // Weighted blend
+    return Math.round(consistencyScore * 0.45 + scrambleScore * 0.35 + wasteScore * 0.20);
+  })();
 
   return {
     username,
@@ -942,6 +1198,8 @@ export async function analyzeOpeningLeaksInBrowser(
     repeatedPositions,
     leaks,
     missedTactics,
+    playerRating,
+    timeManagementScore,
     diagnostics: {
       gameTraces,
       positionTraces

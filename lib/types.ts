@@ -83,6 +83,9 @@ export type AnalyzeResponse = {
   repeatedPositions: number;
   leaks: RepeatedOpeningLeak[];
   missedTactics: MissedTactic[];
+  playerRating?: number | null;
+  /** Time management score 0-100 computed from move clock data */
+  timeManagementScore?: number | null;
   diagnostics?: AnalysisDiagnostics;
   report?: AnalysisReport;
 };

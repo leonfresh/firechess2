@@ -8,10 +8,12 @@ const plans = [
   {
     icon: "🆓",
     name: "Free",
+    originalPrice: null as string | null,
     price: "$0",
     subtitle: "Great for trying FireChess",
+    badge: null as string | null,
     features: [
-      "Up to 200 recent games per scan",
+      "Up to 300 recent games per scan",
       "Engine depth up to 12",
       "Full opening leak detection + drill mode",
       "3 sample missed tactics per scan",
@@ -23,10 +25,12 @@ const plans = [
   {
     icon: "🚀",
     name: "Pro",
-    price: "$9/mo",
+    originalPrice: "$8",
+    price: "$5/mo",
     subtitle: "For serious improvers",
+    badge: "🔥 Launch pricing — 37% off",
     features: [
-      "Up to 1,000 games per scan",
+      "Up to 5,000 games per scan",
       "Higher engine depth (13–24)",
       "Full missed tactics scanner (up to 25)",
       "Motif pattern analysis — find recurring weaknesses",
@@ -86,6 +90,9 @@ export default function PricingPage() {
             <p className="mx-auto max-w-2xl text-base text-slate-400 md:text-lg">
               Start free, then unlock deeper analysis and bigger scan limits powered by Stockfish 18.
             </p>
+            <div className="mx-auto mt-3 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/[0.08] px-4 py-1.5 text-sm font-medium text-orange-300">
+              <span className="text-base">🔥</span> Launch pricing — lock in 37% off before it&apos;s gone
+            </div>
 
             <div className="mx-auto mt-6 grid max-w-3xl gap-3 sm:grid-cols-3">
               {[
@@ -127,7 +134,20 @@ export default function PricingPage() {
                     )}
                   </div>
                   <p className="mt-1 text-sm text-slate-400">{p.subtitle}</p>
-                  <p className="mt-5 text-4xl font-black gradient-text-emerald">{p.price}</p>
+                  {p.badge && (
+                    <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-orange-500/20 bg-orange-500/[0.08] px-3 py-1 text-xs font-semibold text-orange-300">
+                      {p.badge}
+                    </div>
+                  )}
+                  <div className="mt-4 flex items-baseline gap-3">
+                    {p.originalPrice && (
+                      <span className="text-2xl font-bold text-slate-500 line-through decoration-red-500/60 decoration-2">{p.originalPrice}</span>
+                    )}
+                    <p className="text-4xl font-black gradient-text-emerald">{p.price}</p>
+                  </div>
+                  {p.originalPrice && (
+                    <p className="mt-1 text-xs text-slate-500">Early adopters keep this rate forever</p>
+                  )}
 
                   <ul className="mt-6 space-y-3">
                     {p.features.map((feature) => (
@@ -173,7 +193,7 @@ export default function PricingPage() {
                 </thead>
                 <tbody className="text-slate-300">
                   {[
-                    ["Recent games per scan", "Up to 200", "Up to 1,000"],
+                    ["Recent games per scan", "Up to 300", "Up to 5,000"],
                     ["Engine depth", "Up to 12", "Up to 24"],
                     ["Opening leak detection", "✓", "✓"],
                     ["Opening drill mode", "✓", "✓"],
