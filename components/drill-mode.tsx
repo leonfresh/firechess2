@@ -6,7 +6,7 @@ import { EvalBar } from "@/components/eval-bar";
 import { Chessboard } from "react-chessboard";
 import { playSound, preloadSounds } from "@/lib/sounds";
 import { stockfishClient } from "@/lib/stockfish-client";
-import type { MissedTactic, PositionEvalTrace } from "@/lib/types";
+import type { EndgameMistake, MissedTactic, PositionEvalTrace } from "@/lib/types";
 
 type MoveBadge = {
   label: "Best" | "Good" | "Inaccuracy" | "Mistake" | "Blunder";
@@ -27,17 +27,18 @@ type DrillItem = {
   bestMove: string | null;
   cpLoss: number;
   evalBefore: number | null;
-  category: "opening" | "tactic";
+  category: "opening" | "tactic" | "endgame";
   label: string;
 };
 
 type DrillModeProps = {
   positions: PositionEvalTrace[];
   tactics?: MissedTactic[];
+  endgameMistakes?: EndgameMistake[];
   /** FENs to exclude from the drill (e.g. DB-approved inaccuracies) */
   excludeFens?: Set<string>;
   /** Optional label variant to customize button and header text */
-  variant?: "openings" | "tactics" | "combined";
+  variant?: "openings" | "tactics" | "endgames" | "combined";
 };
 
 type MoveDetails = {
@@ -94,7 +95,7 @@ function deriveMoveDetails(fen: string, move: string | null): MoveDetails | null
   }
 }
 
-export function DrillMode({ positions, tactics = [], excludeFens, variant }: DrillModeProps) {
+export function DrillMode({ positions, tactics = [], endgameMistakes = [], excludeFens, variant }: DrillModeProps) {
   const drillPositions = useMemo(() => {
     const openingItems: DrillItem[] = positions
       .filter((position) => position.flagged && typeof position.cpLoss === "number" && position.bestMove && !(excludeFens?.has(position.fenBefore)))
@@ -116,8 +117,17 @@ export function DrillMode({ positions, tactics = [], excludeFens, variant }: Dri
       label: `Tactic (−${(t.cpLoss / 100).toFixed(1)})`
     }));
 
-    return [...openingItems, ...tacticItems].sort((a, b) => b.cpLoss - a.cpLoss);
-  }, [positions, tactics, excludeFens]);
+    const endgameItems: DrillItem[] = endgameMistakes.map((e) => ({
+      fenBefore: e.fenBefore,
+      bestMove: e.bestMove,
+      cpLoss: e.cpLoss,
+      evalBefore: e.cpBefore,
+      category: "endgame" as const,
+      label: `${e.endgameType} Endgame (−${(e.cpLoss / 100).toFixed(1)})`
+    }));
+
+    return [...openingItems, ...tacticItems, ...endgameItems].sort((a, b) => b.cpLoss - a.cpLoss);
+  }, [positions, tactics, endgameMistakes, excludeFens]);
 
   const [isOpen, setIsOpen] = useState(false);
   const [index, setIndex] = useState(0);
@@ -333,10 +343,19 @@ export function DrillMode({ positions, tactics = [], excludeFens, variant }: Dri
   };
 
   // Derive label/icon based on variant or content
-  const drillVariant = variant ?? (positions.length > 0 && tactics.length > 0 ? "combined" : tactics.length > 0 ? "tactics" : "openings");
+  const drillVariant = variant ?? (
+    (positions.length > 0 && (tactics.length > 0 || endgameMistakes.length > 0)) || (tactics.length > 0 && endgameMistakes.length > 0)
+      ? "combined"
+      : endgameMistakes.length > 0
+        ? "endgames"
+        : tactics.length > 0
+          ? "tactics"
+          : "openings"
+  );
   const variantConfig = {
     openings: { label: "Drill Opening Leaks", icon: "🔁", accent: "emerald", emoji: "🎯" },
     tactics: { label: "Drill Missed Tactics", icon: "⚡", accent: "amber", emoji: "⚡" },
+    endgames: { label: "Drill Endgame Mistakes", icon: "♟️", accent: "sky", emoji: "♟️" },
     combined: { label: "Drill All Positions", icon: "🔥", accent: "fuchsia", emoji: "🎯" },
   }[drillVariant];
 
@@ -364,7 +383,9 @@ export function DrillMode({ positions, tactics = [], excludeFens, variant }: Dri
 
   const buttonClass = drillVariant === "tactics"
     ? "btn-amber flex h-12 items-center gap-2.5 text-sm"
-    : "btn-primary flex h-12 items-center gap-2.5 text-sm";
+    : drillVariant === "endgames"
+      ? "flex h-12 items-center gap-2.5 rounded-xl border border-sky-500/20 bg-sky-500/10 px-5 text-sm font-semibold text-sky-300 transition-all hover:bg-sky-500/20 hover:text-sky-200"
+      : "btn-primary flex h-12 items-center gap-2.5 text-sm";
 
   return (
     <section className="space-y-4">
@@ -465,9 +486,11 @@ export function DrillMode({ positions, tactics = [], excludeFens, variant }: Dri
                       <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${
                         current.category === "tactic"
                           ? "border-amber-500/20 bg-amber-500/10 text-amber-400"
-                          : "border-cyan-500/20 bg-cyan-500/10 text-cyan-400"
+                          : current.category === "endgame"
+                            ? "border-sky-500/20 bg-sky-500/10 text-sky-400"
+                            : "border-cyan-500/20 bg-cyan-500/10 text-cyan-400"
                       }`}>
-                        {current.category === "tactic" ? "⚡ Tactic" : "📖 Opening"}
+                        {current.category === "tactic" ? "⚡ Tactic" : current.category === "endgame" ? "♟️ Endgame" : "📖 Opening"}
                       </span>
                       {/* Difficulty badge */}
                       <span className={`rounded-full border px-2 py-0.5 text-xs font-medium ${getDifficulty(current.cpLoss).color}`}>

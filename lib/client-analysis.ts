@@ -2,6 +2,9 @@ import { Chess } from "chess.js";
 import { stockfishClient } from "@/lib/stockfish-client";
 import type {
   AnalyzeResponse,
+  EndgameMistake,
+  EndgameStats,
+  EndgameType,
   GameOpeningTrace,
   MissedTactic,
   MoveSquare,
@@ -27,6 +30,7 @@ type ChessComGame = {
   pgn?: string;
   rules?: string;
   time_class?: string;
+  end_time?: number;
   white?: { username?: string; rating?: number };
   black?: { username?: string; rating?: number };
 };
@@ -47,12 +51,12 @@ type SourceGame = {
 };
 
 export type AnalysisSource = "lichess" | "chesscom";
-export type ScanMode = "openings" | "tactics" | "both";
+export type ScanMode = "openings" | "tactics" | "endgames" | "both";
 export type Speed = "bullet" | "blitz" | "rapid" | "classical";
 export type TimeControl = Speed | "all";
 
 export type AnalysisProgress = {
-  phase: "fetch" | "parse" | "aggregate" | "eval" | "tactics" | "done";
+  phase: "fetch" | "parse" | "aggregate" | "eval" | "tactics" | "endgames" | "done";
   message: string;
   detail?: string;
   current?: number;
@@ -72,6 +76,10 @@ type AnalyzeOptions = {
   timeControl?: TimeControl | TimeControl[];
   /** Cap the number of missed tactics returned (default 25) */
   maxTactics?: number;
+  /** Cap the number of endgame mistakes returned (default 25) */
+  maxEndgames?: number;
+  /** Only include games played after this epoch timestamp (milliseconds) */
+  since?: number;
   onProgress?: (progress: AnalysisProgress) => void;
 };
 
@@ -373,7 +381,19 @@ async function fetchChessComGamesInReverse(
   const baseUrl = `https://api.chess.com/pub/player/${encodeURIComponent(username)}/games`;
 
   const archiveList = await fetchJsonWithRetry<ChessComArchiveList>(`${baseUrl}/archives`, 3, 15000);
-  const archives = [...(archiveList.archives ?? [])].reverse();
+  let archives = [...(archiveList.archives ?? [])].reverse();
+
+  // When a "since" filter is set, skip archives older than the target month
+  const sinceMs = options?.since;
+  if (sinceMs) {
+    const sinceDate = new Date(sinceMs);
+    const sinceYYYYMM = `${sinceDate.getUTCFullYear()}/${String(sinceDate.getUTCMonth() + 1).padStart(2, "0")}`;
+    archives = archives.filter((url) => {
+      // Archive URLs end in /YYYY/MM
+      const match = url.match(/\/(\d{4}\/\d{2})$/);
+      return match ? match[1] >= sinceYYYYMM : true;
+    });
+  }
 
   if (archives.length === 0) {
     return [];
@@ -401,6 +421,9 @@ async function fetchChessComGamesInReverse(
       if (collected.length >= maxGames) break;
       if (game.rules && game.rules !== "chess") continue;
       if (!game.pgn) continue;
+
+      // Skip games before the "since" date
+      if (sinceMs && game.end_time && game.end_time * 1000 < sinceMs) continue;
 
       // Time control filter for Chess.com games
       const tcRaw = options?.timeControl;
@@ -634,6 +657,97 @@ function findKingSquare(chess: Chess, color: "white" | "black"): string | null {
   return null;
 }
 
+/* ── Endgame Detection & Classification ────────────────────────── */
+
+/** Standard piece values for material counting (king excluded) */
+const PIECE_VALUE: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9 };
+
+/** Count total non-pawn material for one side (in standard piece-value units) */
+function countMaterial(chess: Chess, color: "w" | "b"): { pieces: number; pawns: number; counts: Record<string, number> } {
+  const board = chess.board();
+  let pieces = 0;
+  let pawns = 0;
+  const counts: Record<string, number> = { p: 0, n: 0, b: 0, r: 0, q: 0 };
+  for (let rank = 0; rank < 8; rank++) {
+    for (let file = 0; file < 8; file++) {
+      const sq = board[rank][file];
+      if (!sq || sq.color !== color || sq.type === "k") continue;
+      counts[sq.type] = (counts[sq.type] ?? 0) + 1;
+      if (sq.type === "p") { pawns++; } else { pieces += PIECE_VALUE[sq.type] ?? 0; }
+    }
+  }
+  return { pieces, pawns, counts };
+}
+
+/** Detect if a position is an endgame: both sides have ≤ 13 non-pawn material points */
+function isEndgame(chess: Chess): boolean {
+  const w = countMaterial(chess, "w");
+  const b = countMaterial(chess, "b");
+  return w.pieces <= 13 && b.pieces <= 13;
+}
+
+/** Classify the endgame type from piece configuration */
+function classifyEndgameType(chess: Chess): EndgameType {
+  const w = countMaterial(chess, "w");
+  const b = countMaterial(chess, "b");
+
+  const wc = w.counts;
+  const bc = b.counts;
+
+  // No pieces at all → pure pawn endgame
+  if (w.pieces === 0 && b.pieces === 0) return "Pawn";
+
+  // Opposite-color bishops: each side has exactly 1 bishop, no other pieces
+  if (w.pieces === 3 && b.pieces === 3 && wc.b === 1 && bc.b === 1 && wc.n === 0 && bc.n === 0 && wc.r === 0 && bc.r === 0 && wc.q === 0 && bc.q === 0) {
+    // Check if bishops are on opposite colors
+    const board = chess.board();
+    let wBishopDark = false;
+    let bBishopDark = false;
+    for (let rank = 0; rank < 8; rank++) {
+      for (let file = 0; file < 8; file++) {
+        const sq = board[rank][file];
+        if (sq?.type === "b") {
+          const isDark = (rank + file) % 2 === 0;
+          if (sq.color === "w") wBishopDark = isDark;
+          else bBishopDark = isDark;
+        }
+      }
+    }
+    if (wBishopDark !== bBishopDark) return "Opposite Bishops";
+  }
+
+  // Queen endgame: at least one side has a queen, no rooks/minors
+  const hasQueen = (wc.q ?? 0) > 0 || (bc.q ?? 0) > 0;
+  const noRooksOrMinors = (wc.r ?? 0) === 0 && (bc.r ?? 0) === 0 && (wc.n ?? 0) === 0 && (bc.n ?? 0) === 0 && (wc.b ?? 0) === 0 && (bc.b ?? 0) === 0;
+  if (hasQueen && noRooksOrMinors) return "Queen";
+
+  // Rook + minor: at least one side has rook AND (bishop or knight), no queens
+  const anyRook = (wc.r ?? 0) > 0 || (bc.r ?? 0) > 0;
+  const anyMinor = (wc.n ?? 0) > 0 || (bc.n ?? 0) > 0 || (wc.b ?? 0) > 0 || (bc.b ?? 0) > 0;
+  const noQueens = (wc.q ?? 0) === 0 && (bc.q ?? 0) === 0;
+  if (anyRook && anyMinor && noQueens) return "Rook + Minor";
+
+  // Pure rook endgame: only rooks, no minors/queens
+  if (anyRook && !anyMinor && noQueens) return "Rook";
+
+  // Minor piece endgame: only bishops/knights, no rooks/queens
+  if (!anyRook && anyMinor && noQueens) return "Minor Piece";
+
+  return "Other";
+}
+
+/** Determine the game result from the final FEN / move list. Returns 1 (white win), 0 (draw), -1 (black win) or null */
+function inferGameResult(chess: Chess): 1 | 0 | -1 | null {
+  if (chess.isCheckmate()) {
+    // The side to move is checkmated → the other side won
+    return chess.turn() === "w" ? -1 : 1;
+  }
+  if (chess.isDraw() || chess.isStalemate() || chess.isThreefoldRepetition() || chess.isInsufficientMaterial()) {
+    return 0;
+  }
+  return null; // game ended by resignation/timeout — can't tell from FEN alone
+}
+
 export async function analyzeOpeningLeaksInBrowser(
   username: string,
   options?: AnalyzeOptions
@@ -647,6 +761,7 @@ export async function analyzeOpeningLeaksInBrowser(
   const scanMode: ScanMode = options?.scanMode ?? "both";
   const doOpenings = scanMode === "openings" || scanMode === "both";
   const doTactics = scanMode === "tactics" || scanMode === "both";
+  const doEndgames = scanMode === "endgames" || scanMode === "both";
 
   let games: SourceGame[] = [];
 
@@ -681,7 +796,8 @@ export async function analyzeOpeningLeaksInBrowser(
     const perfParam = lichessPerfs.length > 0
       ? `&perfType=${lichessPerfs.join(",")}`
       : "";
-    const lichessUrl = `https://lichess.org/api/games/user/${encodeURIComponent(username)}?max=${maxGames}&moves=true&opening=false&clocks=true&evals=false&pgnInJson=false${perfParam}`;
+    const sinceParam = options?.since ? `&since=${options.since}` : "";
+    const lichessUrl = `https://lichess.org/api/games/user/${encodeURIComponent(username)}?max=${maxGames}&moves=true&opening=false&clocks=true&evals=false&pgnInJson=false${perfParam}${sinceParam}`;
 
     const lichessGames = await streamLichessGames(
       lichessUrl,
@@ -941,11 +1057,14 @@ export async function analyzeOpeningLeaksInBrowser(
 
   if (doTactics) {
 
+  const tacticsStart = doEndgames ? 73 : 81;
+  const tacticsSpan = doEndgames ? 12 : 16;
+
   emitProgress(options, {
     phase: "tactics",
     message: "⚔️ Hunting for missed tactics",
     detail: `Scanning ${games.length} games for blunders and missed wins...`,
-    percent: 81,
+    percent: tacticsStart,
   });
 
   const seenTacticFens = new Set<string>();
@@ -982,7 +1101,7 @@ export async function analyzeOpeningLeaksInBrowser(
         detail: `Game ${gameIndex + 1} of ${games.length}`,
         current: gameIndex + 1,
         total: games.length,
-        percent: 81 + Math.round(((gameIndex + 1) / games.length) * 16),
+        percent: tacticsStart + Math.round(((gameIndex + 1) / games.length) * tacticsSpan),
       });
     }
 
@@ -1099,10 +1218,224 @@ export async function analyzeOpeningLeaksInBrowser(
   missedTactics.sort((a, b) => b.cpLoss - a.cpLoss);
   } // end if (doTactics)
 
+  /* ── Phase: Endgame Analysis ────────────────────────────────── */
+
+  const ENDGAME_CP_THRESHOLD = 80; // flag endgame mistakes ≥ 80cp
+  const MAX_ENDGAME_MISTAKES = options?.maxEndgames ?? 25;
+  const endgameMistakes: EndgameMistake[] = [];
+
+  // Track conversion/hold data for stats
+  let wonEndgames = 0;      // endgames where user had eval > +150 at start
+  let convertedWins = 0;    // of those, how many were actually won
+  let slightlyWorse = 0;    // endgames where user had eval between -50 and -150
+  let heldDraws = 0;        // of those, how many were drawn
+  let totalEndgameCpLoss = 0;
+  let totalEndgameMoves = 0;
+  const typeStats = new Map<EndgameType, { count: number; totalCpLoss: number; mistakes: number }>();
+
+  if (doEndgames) {
+
+  const endgameStart = doTactics ? 86 : 81;
+  const endgameSpan = doTactics ? 11 : 16;
+
+  emitProgress(options, {
+    phase: "endgames",
+    message: "♟️ Scanning endgames",
+    detail: `Analysing endgame play across ${games.length} games...`,
+    percent: endgameStart,
+  });
+
+  for (let gameIndex = 0; gameIndex < games.length; gameIndex += 1) {
+    const game = games[gameIndex];
+    if (!game.moves) continue;
+
+    const target = normalizeName(username);
+    const userColor: PlayerColor | null =
+      game.whiteName && normalizeName(game.whiteName) === target
+        ? "white"
+        : game.blackName && normalizeName(game.blackName) === target
+          ? "black"
+          : null;
+    if (!userColor) continue;
+
+    // Collect rating if needed
+    if (!doOpenings && !doTactics) {
+      const gameRating = userColor === "white" ? game.whiteRating : game.blackRating;
+      if (gameRating && gameRating > 0) playerRatings.push(gameRating);
+    }
+
+    if (gameIndex % 10 === 0 || gameIndex === games.length - 1) {
+      emitProgress(options, {
+        phase: "endgames",
+        message: "♟️ Scanning endgames",
+        detail: `Game ${gameIndex + 1} of ${games.length}`,
+        current: gameIndex + 1,
+        total: games.length,
+        percent: endgameStart + Math.round(((gameIndex + 1) / games.length) * endgameSpan),
+      });
+    }
+
+    const chess = new Chess();
+    const allTokens = game.moves.split(" ").filter(Boolean);
+    let enteredEndgame = false;
+    let endgameStartEval: number | null = null;
+    let endgameType: EndgameType = "Other";
+
+    for (let ply = 0; ply < allTokens.length; ply += 1) {
+      const token = allTokens[ply];
+      const fenBefore = chess.fen();
+      const sideToMove: PlayerColor = ply % 2 === 0 ? "white" : "black";
+
+      // Check if we've entered the endgame
+      if (!enteredEndgame && isEndgame(chess)) {
+        enteredEndgame = true;
+        endgameType = classifyEndgameType(chess);
+
+        // Get eval at endgame start to track conversion
+        if (sideToMove === userColor) {
+          const startEv = await stockfishClient.evaluateFen(fenBefore, Math.min(engineDepth, 12));
+          if (startEv) {
+            endgameStartEval = scoreToCpFromUserPerspective(startEv.cp, sideToMove, userColor);
+          }
+        }
+      }
+
+      if (enteredEndgame && sideToMove === userColor) {
+        // Evaluate the user's endgame move
+        const beforeEval = await stockfishClient.evaluateFen(fenBefore, engineDepth);
+
+        if (beforeEval && beforeEval.bestMove) {
+          const userUci = moveToUci(chess, token);
+
+          if (userUci) {
+            const fenAfterUser = computeFenAfterMove(fenBefore, token);
+
+            if (fenAfterUser) {
+              const afterEval = await stockfishClient.evaluateFen(fenAfterUser, engineDepth);
+
+              if (afterEval) {
+                const cpBefore = scoreToCpFromUserPerspective(
+                  beforeEval.cp,
+                  sideToMove,
+                  userColor
+                );
+                const opponentSide: PlayerColor = sideToMove === "white" ? "black" : "white";
+                const cpAfterUser = scoreToCpFromUserPerspective(
+                  afterEval.cp,
+                  opponentSide,
+                  userColor
+                );
+
+                const cpLoss = Math.max(0, cpBefore - cpAfterUser);
+                totalEndgameCpLoss += cpLoss;
+                totalEndgameMoves += 1;
+
+                // Update type stats
+                const ts = typeStats.get(endgameType) ?? { count: 0, totalCpLoss: 0, mistakes: 0 };
+                ts.count += 1;
+                ts.totalCpLoss += cpLoss;
+
+                if (cpLoss >= ENDGAME_CP_THRESHOLD) {
+                  ts.mistakes += 1;
+
+                  if (endgameMistakes.length < MAX_ENDGAME_MISTAKES) {
+                    const fullMoveNumber = Math.floor(ply / 2) + 1;
+                    const tags: string[] = [];
+
+                    if (cpLoss >= 300) tags.push("Blunder");
+                    else if (cpLoss >= 150) tags.push("Mistake");
+                    else tags.push("Inaccuracy");
+
+                    // Add endgame-specific tags
+                    if (endgameType === "Pawn") tags.push("Pawn Endgame");
+                    else if (endgameType === "Rook") tags.push("Rook Endgame");
+                    else if (endgameType === "Opposite Bishops") tags.push("Opp. Bishops");
+
+                    // Check if it's a conversion failure (was winning, blundered)
+                    if (cpBefore > 150 && cpAfterUser < 50) tags.push("Failed Conversion");
+                    // Check for stalemate-related errors
+                    const afterChess = new Chess(fenAfterUser);
+                    if (afterChess.isStalemate()) tags.push("Stalemate!");
+
+                    endgameMistakes.push({
+                      fenBefore,
+                      fenAfter: fenAfterUser,
+                      userMove: userUci,
+                      bestMove: beforeEval.bestMove,
+                      cpBefore,
+                      cpAfter: cpAfterUser,
+                      cpLoss,
+                      sideToMove,
+                      userColor,
+                      gameIndex: gameIndex + 1,
+                      moveNumber: fullMoveNumber,
+                      endgameType,
+                      tags
+                    });
+                  }
+                }
+
+                typeStats.set(endgameType, ts);
+              }
+            }
+          }
+        }
+      }
+
+      const ok = applyMoveToken(chess, token);
+      if (!ok) break;
+    }
+
+    // Track conversion/hold for this game's endgame
+    if (enteredEndgame && endgameStartEval !== null) {
+      const gameResult = inferGameResult(chess);
+
+      if (endgameStartEval > 150) {
+        wonEndgames++;
+        if (gameResult !== null) {
+          const userWon = (userColor === "white" && gameResult === 1) || (userColor === "black" && gameResult === -1);
+          if (userWon) convertedWins++;
+        }
+      } else if (endgameStartEval >= -150 && endgameStartEval <= -50) {
+        slightlyWorse++;
+        if (gameResult !== null) {
+          const drew = gameResult === 0;
+          if (drew) heldDraws++;
+        }
+      }
+    }
+  }
+
+  endgameMistakes.sort((a, b) => b.cpLoss - a.cpLoss);
+  } // end if (doEndgames)
+
+  // Compute endgame stats
+  const endgameStats: EndgameStats | null = totalEndgameMoves > 0 ? (() => {
+    const byType: EndgameStats["byType"] = [];
+    let worstAvg = -1;
+    let weakestType: EndgameType | null = null;
+
+    for (const [type, data] of typeStats) {
+      const avg = data.count > 0 ? data.totalCpLoss / data.count : 0;
+      byType.push({ type, count: data.count, avgCpLoss: Math.round(avg), mistakes: data.mistakes });
+      if (avg > worstAvg && data.count >= 3) { worstAvg = avg; weakestType = type; }
+    }
+    byType.sort((a, b) => b.avgCpLoss - a.avgCpLoss);
+
+    return {
+      totalPositions: totalEndgameMoves,
+      avgCpLoss: Math.round(totalEndgameCpLoss / totalEndgameMoves),
+      conversionRate: wonEndgames >= 3 ? Math.round((convertedWins / wonEndgames) * 100) : null,
+      holdRate: slightlyWorse >= 3 ? Math.round((heldDraws / slightlyWorse) * 100) : null,
+      byType,
+      weakestType,
+    };
+  })() : null;
+
   emitProgress(options, {
     phase: "done",
     message: `✅ Analysis complete`,
-    detail: `Found ${leaks.length} opening leak${leaks.length !== 1 ? "s" : ""} and ${missedTactics.length} missed tactic${missedTactics.length !== 1 ? "s" : ""}`,
+    detail: `Found ${leaks.length} opening leak${leaks.length !== 1 ? "s" : ""}, ${missedTactics.length} missed tactic${missedTactics.length !== 1 ? "s" : ""}, and ${endgameMistakes.length} endgame mistake${endgameMistakes.length !== 1 ? "s" : ""}`,
     percent: 100,
   });
 
@@ -1198,6 +1531,8 @@ export async function analyzeOpeningLeaksInBrowser(
     repeatedPositions,
     leaks,
     missedTactics,
+    endgameMistakes,
+    endgameStats,
     playerRating,
     timeManagementScore,
     diagnostics: {

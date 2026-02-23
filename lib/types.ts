@@ -77,12 +77,59 @@ export type MissedTactic = {
   timeRemainingSec: number | null;
 };
 
+export type EndgameType =
+  | "Pawn"
+  | "Rook"
+  | "Rook + Minor"
+  | "Minor Piece"
+  | "Queen"
+  | "Opposite Bishops"
+  | "Other";
+
+export type EndgameMistake = {
+  fenBefore: string;
+  fenAfter: string;
+  userMove: string;
+  bestMove: string;
+  cpBefore: number;
+  cpAfter: number;
+  cpLoss: number;
+  sideToMove: PlayerColor;
+  userColor: PlayerColor;
+  gameIndex: number;
+  moveNumber: number;
+  endgameType: EndgameType;
+  tags: string[];
+};
+
+export type EndgameStats = {
+  /** Total endgame positions analysed */
+  totalPositions: number;
+  /** Average cpLoss per endgame move */
+  avgCpLoss: number;
+  /** Conversion rate: % of won positions actually won */
+  conversionRate: number | null;
+  /** Hold rate: % of slightly worse endgames held to draw */
+  holdRate: number | null;
+  /** Breakdown per endgame type */
+  byType: {
+    type: EndgameType;
+    count: number;
+    avgCpLoss: number;
+    mistakes: number;
+  }[];
+  /** The endgame type with the worst average performance */
+  weakestType: EndgameType | null;
+};
+
 export type AnalyzeResponse = {
   username: string;
   gamesAnalyzed: number;
   repeatedPositions: number;
   leaks: RepeatedOpeningLeak[];
   missedTactics: MissedTactic[];
+  endgameMistakes: EndgameMistake[];
+  endgameStats: EndgameStats | null;
   playerRating?: number | null;
   /** Time management score 0-100 computed from move clock data */
   timeManagementScore?: number | null;

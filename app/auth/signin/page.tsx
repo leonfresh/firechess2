@@ -83,7 +83,7 @@ export default function SignInPage() {
         </div>
 
         <p className="text-center text-xs text-slate-600">
-          By signing in, you agree to our terms of service.
+          By signing in, you agree to our <a href="/terms" className="text-emerald-400 hover:underline">Terms of Service</a> and <a href="/privacy" className="text-emerald-400 hover:underline">Privacy Policy</a>.
         </p>
       </div>
     </div>
