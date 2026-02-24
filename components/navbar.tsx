@@ -47,6 +47,7 @@ export function Navbar() {
     pathname === href || pathname.startsWith(href + "/");
 
   return (
+    <>
     <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#030712]/80 backdrop-blur-2xl">
       <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-3.5 md:px-10">
         {/* ── Logo ── */}
@@ -218,8 +219,9 @@ export function Navbar() {
           )}
         </button>
       </nav>
+    </header>
 
-      {/* ── Mobile slide-out menu ── */}
+      {/* ── Mobile slide-out menu (outside header to avoid backdrop-blur stacking context) ── */}
       {mobileOpen && (
         <>
           {/* Backdrop */}
@@ -331,6 +333,6 @@ export function Navbar() {
           </div>
         </>
       )}
-    </header>
+    </>
   );
 }
