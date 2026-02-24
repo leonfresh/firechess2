@@ -17,6 +17,7 @@ const plans = [
       "Engine depth up to 12",
       "Full opening leak detection + drill mode",
       "3 sample missed tactics per scan",
+      "3 sample endgame mistakes per scan",
       "Lichess + Chess.com support"
     ],
     cta: "Current baseline",
@@ -32,11 +33,12 @@ const plans = [
     features: [
       "Up to 5,000 games per scan",
       "Higher engine depth (13–24)",
-      "Full missed tactics scanner (up to 25)",
+      "Full missed tactics scanner (up to 50)",
+      "Full endgame mistake scanner (up to 50)",
       "Motif pattern analysis — find recurring weaknesses",
       "Time pressure detection on missed tactics",
-      "Dedicated tactics drill mode",
-      "Separate scan modes (Openings / Tactics / Both)"
+      "Dedicated tactics & endgame drill modes",
+      "Separate scan modes (Openings / Tactics / Endgames / All)"
     ],
     cta: "Upgrade with Stripe",
     highlight: true
@@ -94,10 +96,11 @@ export default function PricingPage() {
               <span className="text-base">🔥</span> Launch pricing — lock in 37% off before it&apos;s gone
             </div>
 
-            <div className="mx-auto mt-6 grid max-w-3xl gap-3 sm:grid-cols-3">
+              <div className="mx-auto mt-6 grid max-w-3xl gap-3 sm:grid-cols-2 md:grid-cols-4">
               {[
                 { icon: "📊", text: "Opening leak analytics" },
                 { icon: "⚡", text: "Missed tactics scanner" },
+                { icon: "♟️", text: "Endgame mistake scanner" },
                 { icon: "🧠", text: "Drill mode training" },
               ].map((item) => (
                 <div key={item.text} className="glass-card flex items-center gap-3 px-4 py-3 text-sm text-slate-300">
@@ -197,11 +200,13 @@ export default function PricingPage() {
                     ["Engine depth", "Up to 12", "Up to 24"],
                     ["Opening leak detection", "✓", "✓"],
                     ["Opening drill mode", "✓", "✓"],
-                    ["Missed tactics", "3 samples", "Full (up to 25)"],
+                    ["Missed tactics", "3 samples", "Full (up to 50)"],
+                    ["Endgame mistakes", "3 samples", "Full (up to 50)"],
                     ["Motif pattern analysis", "—", "✓"],
                     ["Time pressure detection", "—", "✓"],
                     ["Tactics drill mode", "—", "✓"],
-                    ["Scan mode selector", "Openings only", "Openings / Tactics / Both"],
+                    ["Endgame drill mode", "—", "✓"],
+                    ["Scan mode selector", "Openings only", "Openings / Tactics / Endgames / All"],
                   ].map(([feature, free, pro]) => (
                     <tr key={feature} className="border-t border-white/[0.04]">
                       <td className="px-4 py-3 text-slate-400">{feature}</td>
@@ -221,11 +226,13 @@ export default function PricingPage() {
               <h3 className="text-lg font-bold text-white">Why upgrading matters</h3>
               <p className="mt-2 text-sm text-slate-400">
                 Pro gives you the full tactics scanner — find every missed fork, pin, and mate in your games.
-                Plus motif analysis to uncover your recurring blind spots, time pressure tracking, and dedicated drill modes to fix them.
+                Plus endgame analysis to catch technique errors in won positions, motif analysis to uncover your recurring blind spots,
+                time pressure tracking, and dedicated drill modes to fix them all.
               </p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
                 {[
                   { icon: "⚡", text: "Full tactics scanning" },
+                  { icon: "♟️", text: "Endgame error detection" },
                   { icon: "📊", text: "Motif pattern insights" },
                   { icon: "🎯", text: "Targeted drill training" },
                 ].map((item) => (

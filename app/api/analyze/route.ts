@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
       gamesAnalyzed: result.gamesAnalyzed,
       repeatedPositions: result.repeatedPositions,
       leaks: result.leaks,
+      oneOffMistakes: [],
       missedTactics: [],
       endgameMistakes: [],
       endgameStats: null

@@ -4,9 +4,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess, type PieceSymbol } from "chess.js";
 import { EvalBar } from "@/components/eval-bar";
 import { Chessboard } from "react-chessboard";
+import type { Square as CbSquare, PromotionPieceOption } from "react-chessboard/dist/chessboard/types";
 import { playSound, preloadSounds } from "@/lib/sounds";
 import { stockfishClient } from "@/lib/stockfish-client";
-import type { EndgameMistake, MissedTactic, PositionEvalTrace } from "@/lib/types";
+import type { EndgameMistake, MissedTactic, PositionEvalTrace, RepeatedOpeningLeak } from "@/lib/types";
 
 type MoveBadge = {
   label: "Best" | "Good" | "Inaccuracy" | "Mistake" | "Blunder";
@@ -22,12 +23,24 @@ function classifyMoveBadge(cpLoss: number): MoveBadge {
   return { label: "Blunder", color: "#ef4444", accepted: false };
 }
 
+/** Tactical continuation: play out the combination after finding the first move */
+const CONTINUATION_MAX_USER_MOVES = 5;
+const CONTINUATION_EVAL_THRESHOLD = 400; // cp advantage to consider "converted"
+const CONTINUATION_DEPTH = 10;
+
+function isTerminalPosition(fenStr: string): boolean {
+  try {
+    const c = new Chess(fenStr);
+    return c.isCheckmate() || c.isStalemate() || c.isDraw() || c.isGameOver();
+  } catch { return true; }
+}
+
 type DrillItem = {
   fenBefore: string;
   bestMove: string | null;
   cpLoss: number;
   evalBefore: number | null;
-  category: "opening" | "tactic" | "endgame";
+  category: "opening" | "tactic" | "endgame" | "one-off";
   label: string;
 };
 
@@ -35,10 +48,11 @@ type DrillModeProps = {
   positions: PositionEvalTrace[];
   tactics?: MissedTactic[];
   endgameMistakes?: EndgameMistake[];
+  oneOffMistakes?: RepeatedOpeningLeak[];
   /** FENs to exclude from the drill (e.g. DB-approved inaccuracies) */
   excludeFens?: Set<string>;
   /** Optional label variant to customize button and header text */
-  variant?: "openings" | "tactics" | "endgames" | "combined";
+  variant?: "openings" | "tactics" | "endgames" | "one-off" | "combined";
 };
 
 type MoveDetails = {
@@ -95,7 +109,7 @@ function deriveMoveDetails(fen: string, move: string | null): MoveDetails | null
   }
 }
 
-export function DrillMode({ positions, tactics = [], endgameMistakes = [], excludeFens, variant }: DrillModeProps) {
+export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOffMistakes = [], excludeFens, variant }: DrillModeProps) {
   const drillPositions = useMemo(() => {
     const openingItems: DrillItem[] = positions
       .filter((position) => position.flagged && typeof position.cpLoss === "number" && position.bestMove && !(excludeFens?.has(position.fenBefore)))
@@ -126,8 +140,19 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
       label: `${e.endgameType} Endgame (−${(e.cpLoss / 100).toFixed(1)})`
     }));
 
-    return [...openingItems, ...tacticItems, ...endgameItems].sort((a, b) => b.cpLoss - a.cpLoss);
-  }, [positions, tactics, endgameMistakes, excludeFens]);
+    const oneOffItems: DrillItem[] = oneOffMistakes
+      .filter((o) => o.bestMove)
+      .map((o) => ({
+        fenBefore: o.fenBefore,
+        bestMove: o.bestMove,
+        cpLoss: o.cpLoss,
+        evalBefore: o.evalBefore,
+        category: "one-off" as const,
+        label: `One-Off (−${(o.cpLoss / 100).toFixed(1)})`
+      }));
+
+    return [...openingItems, ...tacticItems, ...endgameItems, ...oneOffItems].sort((a, b) => b.cpLoss - a.cpLoss);
+  }, [positions, tactics, endgameMistakes, oneOffMistakes, excludeFens]);
 
   const [isOpen, setIsOpen] = useState(false);
   const [index, setIndex] = useState(0);
@@ -143,11 +168,27 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
   const [evaluating, setEvaluating] = useState(false);
   const timerIds = useRef<number[]>([]);
 
+  // Tactical continuation: play out the full combination
+  const [continuationMode, setContinuationMode] = useState(false);
+  const [continuationBestMove, setContinuationBestMove] = useState<MoveDetails | null>(null);
+  const [awaitingOpponent, setAwaitingOpponent] = useState(false);
+  const [continuationMoveCount, setContinuationMoveCount] = useState(0);
+  const preMoveFenRef = useRef(drillPositions[0]?.fenBefore ?? "start");
+
+  // Click-to-move state
+  const [selectedSq, setSelectedSq] = useState<string | null>(null);
+  const [legalMoveSqs, setLegalMoveSqs] = useState<string[]>([]);
+  const [showPromoDialog, setShowPromoDialog] = useState(false);
+  const [promoFrom, setPromoFrom] = useState<string | null>(null);
+  const [promoTo, setPromoTo] = useState<string | null>(null);
+
   const current = drillPositions[index] ?? null;
   const bestMove = useMemo(
     () => (current ? deriveMoveDetails(current.fenBefore, current.bestMove) : null),
     [current]
   );
+  // In continuation mode, the best move comes from real-time Stockfish eval
+  const effectiveBestMove = continuationMode ? continuationBestMove : bestMove;
 
   const clearTimers = () => {
     timerIds.current.forEach((timer) => window.clearTimeout(timer));
@@ -167,6 +208,18 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
     setAttempts(0);
     setMoveBadge(null);
     setEvaluating(false);
+    // Reset click-to-move
+    setSelectedSq(null);
+    setLegalMoveSqs([]);
+    setShowPromoDialog(false);
+    setPromoFrom(null);
+    setPromoTo(null);
+    // Reset continuation
+    setContinuationMode(false);
+    setContinuationBestMove(null);
+    setAwaitingOpponent(false);
+    setContinuationMoveCount(0);
+    preMoveFenRef.current = current.fenBefore;
   }, [index, current?.fenBefore]);
 
   useEffect(() => {
@@ -180,12 +233,22 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
       if (e.key === "ArrowRight" || e.key === "n") goNext();
       else if (e.key === "ArrowLeft" || e.key === "p") setIndex((prev) => (prev - 1 + drillPositions.length) % drillPositions.length);
       else if (e.key === "h") {
-        if (bestMove && !solved) {
-          setHintSquare(bestMove.from);
+        if (effectiveBestMove && !solved && !awaitingOpponent) {
+          setHintSquare(effectiveBestMove.from);
           playSound("select");
         }
       } else if (e.key === "r") {
-        if (current) { setFen(current.fenBefore); setSolved(false); setFeedback(""); setHintSquare(null); }
+        if (current) {
+          setFen(current.fenBefore);
+          setSolved(false);
+          setFeedback("");
+          setHintSquare(null);
+          setContinuationMode(false);
+          setContinuationBestMove(null);
+          setAwaitingOpponent(false);
+          setContinuationMoveCount(0);
+          preMoveFenRef.current = current.fenBefore;
+        }
       } else if (e.key === "Escape") {
         clearTimers();
         setIsOpen(false);
@@ -193,9 +256,82 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [isOpen, bestMove, solved, current, drillPositions.length]);
+  }, [isOpen, effectiveBestMove, solved, awaitingOpponent, current, drillPositions.length]);
 
   const boardOrientation = current?.fenBefore.includes(" w ") ? "white" : "black";
+
+  /** Derive the side to move from the current board FEN */
+  const sideToMove = fen.includes(" w ") ? "w" : "b";
+
+  /** Select a piece or make a click-move */
+  const onSquareClick = (square: CbSquare, _piece?: unknown) => {
+    if (!current || !effectiveBestMove || evaluating || solved || awaitingOpponent) {
+      setSelectedSq(null);
+      setLegalMoveSqs([]);
+      return;
+    }
+
+    const chess = new Chess(fen);
+
+    // If a piece is already selected, try to move to the clicked square
+    if (selectedSq && selectedSq !== square) {
+      // Check if this is a legal destination
+      if (legalMoveSqs.includes(square)) {
+        const piece = chess.get(selectedSq as Parameters<Chess["get"]>[0]);
+        // Check for promotion
+        if (piece?.type === "p") {
+          const targetRank = parseInt(square[1]);
+          const isPromo = (piece.color === "w" && targetRank === 8) || (piece.color === "b" && targetRank === 1);
+          if (isPromo) {
+            // Show react-chessboard's promotion dialog
+            setPromoFrom(selectedSq);
+            setPromoTo(square);
+            setShowPromoDialog(true);
+            return;
+          }
+        }
+        // Regular move — use onDrop logic
+        const fakeColor = sideToMove === "w" ? "w" : "b";
+        const fakePiece = `${fakeColor}${(piece?.type ?? "p").toUpperCase()}`;
+        onDrop(selectedSq, square, fakePiece);
+        setSelectedSq(null);
+        setLegalMoveSqs([]);
+        return;
+      }
+    }
+
+    // Check if the clicked square has a piece of the side to move
+    const pieceOnSquare = chess.get(square as Parameters<Chess["get"]>[0]);
+    if (pieceOnSquare && pieceOnSquare.color === sideToMove) {
+      // Select this piece
+      setSelectedSq(square);
+      const moves = chess.moves({ square: square as Parameters<Chess["moves"]>[0]["square"], verbose: true });
+      setLegalMoveSqs(moves.map(m => m.to));
+    } else {
+      // Deselect
+      setSelectedSq(null);
+      setLegalMoveSqs([]);
+    }
+  };
+
+  /** Handle promotion piece selection from the built-in dialog */
+  const onPromotionPieceSelect = (piece?: PromotionPieceOption) => {
+    setShowPromoDialog(false);
+    if (!piece || !promoFrom || !promoTo) {
+      setSelectedSq(null);
+      setLegalMoveSqs([]);
+      return true;
+    }
+    const promoChar = piece[1]?.toLowerCase() ?? "q";
+    const fakePiece = piece;
+    // Build a fake piece string for onDrop (onDrop extracts promotion from piece[1])
+    onDrop(promoFrom, promoTo, fakePiece);
+    setSelectedSq(null);
+    setLegalMoveSqs([]);
+    setPromoFrom(null);
+    setPromoTo(null);
+    return true;
+  };
 
   const displayedEvalCp = useMemo(() => {
     if (!current || typeof current.evalBefore !== "number") return null;
@@ -207,12 +343,19 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
   };
 
   const onDrop = (sourceSquare: string, targetSquare: string, piece: string) => {
-    if (!current || !bestMove || evaluating || solved) return false;
+    if (!current || !effectiveBestMove || evaluating || solved || awaitingOpponent) return false;
+
+    // Clear click-to-move selection
+    setSelectedSq(null);
+    setLegalMoveSqs([]);
 
     const promotion = piece[1]?.toLowerCase();
 
+    // Capture the pre-move position for snap-back and eval comparison
+    const preFen = fen;
+
     // Try to apply the move — must be legal
-    const chess = new Chess(fen);
+    const chess = new Chess(preFen);
     const result = chess.move({
       from: sourceSquare,
       to: targetSquare,
@@ -222,6 +365,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
 
     // Play the move on the board immediately so it feels responsive
     const newFen = chess.fen();
+    preMoveFenRef.current = preFen;
     setFen(newFen);
 
     // Play appropriate sound
@@ -235,14 +379,14 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
 
     // Check if it's the exact best move
     const isExactBest =
-      sourceSquare === bestMove.from &&
-      targetSquare === bestMove.to &&
-      (bestMove.promotion ? bestMove.promotion === promotion : true);
+      sourceSquare === effectiveBestMove.from &&
+      targetSquare === effectiveBestMove.to &&
+      (effectiveBestMove.promotion ? effectiveBestMove.promotion === promotion : true);
 
     if (isExactBest) {
-      // Exact match — instant Best badge, no eval needed
+      // Exact match — instant Best badge
       setMoveBadge({ label: "Best", color: "#10b981", accepted: true });
-      markSolved();
+      handleAcceptedMove(newFen);
       return true;
     }
 
@@ -251,11 +395,11 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
     (async () => {
       try {
         // Evaluate the position AFTER the user's move and AFTER the best move
-        const bestChess = new Chess(current.fenBefore);
+        const bestChess = new Chess(preFen);
         const bm = bestChess.move({
-          from: bestMove.from,
-          to: bestMove.to,
-          promotion: bestMove.promotion as PieceSymbol | undefined,
+          from: effectiveBestMove.from,
+          to: effectiveBestMove.to,
+          promotion: effectiveBestMove.promotion as PieceSymbol | undefined,
         });
         if (!bm) {
           rejectMove("Evaluation error — try the best move", 0);
@@ -283,8 +427,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
         setMoveBadge(badge);
 
         if (badge.accepted) {
-          // Good enough — accept the move
-          markSolved();
+          handleAcceptedMove(newFen);
         } else {
           // Not good enough — snap back
           const newAttempts = attempts + 1;
@@ -303,9 +446,10 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
     return true;
   };
 
-  /** Accept the move, update streak/solved state, auto-advance */
+  /** Fully complete the puzzle — update streak, solvedSet, auto-advance */
   const markSolved = () => {
     setSolved(true);
+    setAwaitingOpponent(false);
     setStreak((s) => {
       const next = s + 1;
       setBestStreak((b) => Math.max(b, next));
@@ -322,6 +466,91 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
     timerIds.current.push(timer);
   };
 
+  /** For tactics: show "Correct!" flash, then continue the combination */
+  const handleAcceptedMove = (afterFen: string) => {
+    const isTactic = current?.category === "tactic";
+    const atMax = continuationMoveCount >= CONTINUATION_MAX_USER_MOVES - 1;
+    const terminal = isTerminalPosition(afterFen);
+
+    if (isTactic && !terminal && !atMax) {
+      // Flash "Correct!" briefly, then continue
+      setSolved(true);
+      setFeedback("");
+      setHintSquare(null);
+
+      clearTimers();
+      const timer = window.setTimeout(() => {
+        setSolved(false);
+        if (!continuationMode) setContinuationMode(true);
+        setContinuationMoveCount((prev) => prev + 1);
+        playOpponentAndSetup(afterFen);
+      }, 800);
+      timerIds.current.push(timer);
+    } else {
+      markSolved();
+    }
+  };
+
+  /** Play the opponent's best response, then set up the user's next move */
+  const playOpponentAndSetup = async (afterUserFen: string) => {
+    setAwaitingOpponent(true);
+    setMoveBadge(null);
+
+    try {
+      const posEval = await stockfishClient.evaluateFen(afterUserFen, CONTINUATION_DEPTH);
+      if (!posEval || !posEval.bestMove) { markSolved(); return; }
+
+      // Eval is from opponent's perspective → negate for user's
+      const userCp = -posEval.cp;
+      if (userCp >= CONTINUATION_EVAL_THRESHOLD || Math.abs(posEval.cp) >= 90000) {
+        // Advantage clearly converted or forced mate found
+        markSolved();
+        return;
+      }
+
+      const oppDetails = deriveMoveDetails(afterUserFen, posEval.bestMove);
+      if (!oppDetails) { markSolved(); return; }
+
+      // Brief pause, then play opponent's move
+      await new Promise<void>((resolve) => {
+        const t = window.setTimeout(resolve, 400);
+        timerIds.current.push(t);
+      });
+
+      const oChess = new Chess(afterUserFen);
+      const oResult = oChess.move({
+        from: oppDetails.from,
+        to: oppDetails.to,
+        promotion: oppDetails.promotion as PieceSymbol | undefined,
+      });
+      if (!oResult) { markSolved(); return; }
+
+      if (oResult.san.includes("+") || oResult.san.includes("#")) playSound("check");
+      else if (oResult.captured) playSound("capture");
+      else playSound("move");
+
+      const oFen = oChess.fen();
+      setFen(oFen);
+      preMoveFenRef.current = oFen;
+
+      if (oChess.isCheckmate() || oChess.isStalemate() || oChess.isDraw() || oChess.isGameOver()) {
+        markSolved();
+        return;
+      }
+
+      // Find the user's next best move
+      const nextEval = await stockfishClient.evaluateFen(oFen, CONTINUATION_DEPTH);
+      if (!nextEval || !nextEval.bestMove) { markSolved(); return; }
+
+      setContinuationBestMove(deriveMoveDetails(oFen, nextEval.bestMove));
+      setAwaitingOpponent(false);
+      setHintSquare(null);
+      setAttempts(0);
+    } catch {
+      markSolved();
+    }
+  };
+
   /** Reject the move, snap the board back, maybe auto-hint */
   const rejectMove = (msg: string, newAttempts: number) => {
     setAttempts(newAttempts);
@@ -332,30 +561,34 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
     // Snap the board back after a brief pause so the user sees the badge
     clearTimers();
     const snapTimer = window.setTimeout(() => {
-      if (current) setFen(current.fenBefore);
+      setFen(preMoveFenRef.current);
     }, 600);
     timerIds.current.push(snapTimer);
 
     // Auto-hint after 3 bad attempts
-    if (newAttempts >= 3 && bestMove) {
-      setHintSquare(bestMove.from);
+    if (newAttempts >= 3 && effectiveBestMove) {
+      setHintSquare(effectiveBestMove.from);
     }
   };
 
   // Derive label/icon based on variant or content
+  const sourceCount = [positions.length > 0, tactics.length > 0, endgameMistakes.length > 0, oneOffMistakes.length > 0].filter(Boolean).length;
   const drillVariant = variant ?? (
-    (positions.length > 0 && (tactics.length > 0 || endgameMistakes.length > 0)) || (tactics.length > 0 && endgameMistakes.length > 0)
+    sourceCount >= 2
       ? "combined"
       : endgameMistakes.length > 0
         ? "endgames"
         : tactics.length > 0
           ? "tactics"
-          : "openings"
+          : oneOffMistakes.length > 0
+            ? "one-off"
+            : "openings"
   );
   const variantConfig = {
     openings: { label: "Drill Opening Leaks", icon: "🔁", accent: "emerald", emoji: "🎯" },
     tactics: { label: "Drill Missed Tactics", icon: "⚡", accent: "amber", emoji: "⚡" },
     endgames: { label: "Drill Endgame Mistakes", icon: "♟️", accent: "sky", emoji: "♟️" },
+    "one-off": { label: "Drill One-Off Mistakes", icon: "⚡", accent: "amber", emoji: "⚡" },
     combined: { label: "Drill All Positions", icon: "🔥", accent: "fuchsia", emoji: "🎯" },
   }[drillVariant];
 
@@ -366,22 +599,57 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
     return { label: "Easy", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/20" };
   };
 
-  // Hint square highlight
+  // Hint square highlight + click-to-move highlighting
   const customSquareStyles = useMemo(() => {
-    if (!hintSquare || solved) return {};
-    return {
-      [hintSquare]: {
+    const styles: Record<string, React.CSSProperties> = {};
+
+    // Selection highlight
+    if (selectedSq && !solved) {
+      styles[selectedSq] = {
+        background: "rgba(255, 255, 0, 0.4)",
+      };
+    }
+
+    // Legal move dots
+    if (selectedSq && !solved) {
+      try {
+        const chess = new Chess(fen);
+        for (const sq of legalMoveSqs) {
+          const hasPiece = chess.get(sq as Parameters<Chess["get"]>[0]);
+          if (hasPiece) {
+            // Capture: ring highlight
+            styles[sq] = {
+              background: "radial-gradient(circle, transparent 55%, rgba(0,0,0,0.25) 55%)",
+              borderRadius: "50%",
+            };
+          } else {
+            // Empty: small dot
+            styles[sq] = {
+              background: "radial-gradient(circle, rgba(0,0,0,0.25) 25%, transparent 25%)",
+              borderRadius: "50%",
+            };
+          }
+        }
+      } catch { /* fen might be mid-transition */ }
+    }
+
+    // Hint from 'h' key
+    if (hintSquare && !solved) {
+      styles[hintSquare] = {
+        ...styles[hintSquare],
         background: "radial-gradient(circle, rgba(16,185,129,0.55) 30%, transparent 70%)",
         borderRadius: "50%",
-      },
-    };
-  }, [hintSquare, solved]);
+      };
+    }
+
+    return styles;
+  }, [hintSquare, solved, selectedSq, legalMoveSqs, fen]);
 
   const allSolved = solvedSet.size >= drillPositions.length;
 
   if (drillPositions.length === 0) return null;
 
-  const buttonClass = drillVariant === "tactics"
+  const buttonClass = drillVariant === "tactics" || drillVariant === "one-off"
     ? "btn-amber flex h-12 items-center gap-2.5 text-sm"
     : drillVariant === "endgames"
       ? "flex h-12 items-center gap-2.5 rounded-xl border border-sky-500/20 bg-sky-500/10 px-5 text-sm font-semibold text-sky-300 transition-all hover:bg-sky-500/20 hover:text-sky-200"
@@ -414,7 +682,9 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 text-xl">{variantConfig.emoji}</span>
                 <div>
                   <h2 className="text-xl font-bold text-white">{variantConfig.label}</h2>
-                  <p className="text-sm text-slate-400">Find the best move on the board</p>
+                  <p className="text-sm text-slate-400">
+                    {continuationMode ? "Play out the winning combination" : "Find the best move on the board"}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -462,7 +732,11 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
                     id={`drill-${index}`}
                     position={fen}
                     onPieceDrop={onDrop}
-                    arePiecesDraggable={!solved && !evaluating}
+                    onSquareClick={onSquareClick}
+                    onPromotionPieceSelect={onPromotionPieceSelect}
+                    showPromotionDialog={showPromoDialog}
+                    promotionToSquare={promoTo as CbSquare | undefined}
+                    arePiecesDraggable={!solved && !evaluating && !awaitingOpponent}
                     boardOrientation={boardOrientation as "white" | "black"}
                     boardWidth={440}
                     customDarkSquareStyle={{ backgroundColor: "#779952" }}
@@ -528,23 +802,15 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
                 <div className={`flex items-center gap-3 rounded-xl border p-4 transition-all duration-300 ${
                   solved
                     ? "border-emerald-500/20 bg-emerald-500/[0.06]"
+                    : awaitingOpponent
+                    ? "border-violet-500/20 bg-violet-500/[0.04]"
                     : feedback
                     ? "border-red-500/20 bg-red-500/[0.04]"
                     : evaluating
                     ? "border-cyan-500/20 bg-cyan-500/[0.04]"
                     : "border-white/[0.06] bg-white/[0.02]"
                 }`}>
-                  {evaluating ? (
-                    <>
-                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-500/20 text-lg">
-                        <svg className="h-5 w-5 animate-spin text-cyan-400" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="40 60" /></svg>
-                      </span>
-                      <div>
-                        <span className="font-semibold text-cyan-300">Evaluating your move...</span>
-                        <p className="text-xs text-slate-400">Stockfish is checking move quality</p>
-                      </div>
-                    </>
-                  ) : solved ? (
+                  {solved ? (
                     <>
                       <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/20 text-lg text-emerald-400">✓</span>
                       <div className="flex items-center gap-2">
@@ -557,7 +823,29 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
                             {moveBadge.label === "Best" ? "⭐ " : ""}{moveBadge.label}
                           </span>
                         )}
-                        <p className="text-xs text-slate-400">Auto-advancing...</p>
+                        <p className="text-xs text-slate-400">
+                          {continuationMode ? "Continue the combination..." : "Auto-advancing..."}
+                        </p>
+                      </div>
+                    </>
+                  ) : awaitingOpponent ? (
+                    <>
+                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/20 text-lg">
+                        <svg className="h-5 w-5 animate-spin text-violet-400" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="40 60" /></svg>
+                      </span>
+                      <div>
+                        <span className="font-semibold text-violet-300">Opponent is responding...</span>
+                        <p className="text-xs text-slate-400">Continue the combination after they move</p>
+                      </div>
+                    </>
+                  ) : evaluating ? (
+                    <>
+                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-500/20 text-lg">
+                        <svg className="h-5 w-5 animate-spin text-cyan-400" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="40 60" /></svg>
+                      </span>
+                      <div>
+                        <span className="font-semibold text-cyan-300">Evaluating your move...</span>
+                        <p className="text-xs text-slate-400">Stockfish is checking move quality</p>
                       </div>
                     </>
                   ) : feedback ? (
@@ -587,7 +875,11 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
                       </span>
                       <div>
                         <span className="text-slate-200">Your turn as <span className="font-semibold">{boardOrientation}</span></span>
-                        <p className="text-xs text-slate-500">Drag the best move on the board</p>
+                        <p className="text-xs text-slate-500">
+                          {continuationMode
+                            ? `Continue the combination! (move ${continuationMoveCount + 1})`
+                            : "Drag the best move on the board"}
+                        </p>
                       </div>
                     </>
                   )}
@@ -629,12 +921,12 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
                     type="button"
                     className="btn-secondary flex h-10 items-center gap-1.5 px-4 text-sm"
                     onClick={() => {
-                      if (bestMove && !solved) {
-                        setHintSquare(bestMove.from);
+                      if (effectiveBestMove && !solved && !awaitingOpponent) {
+                        setHintSquare(effectiveBestMove.from);
                         playSound("select");
                       }
                     }}
-                    disabled={solved || !bestMove}
+                    disabled={solved || !effectiveBestMove || awaitingOpponent}
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                     Hint
@@ -649,6 +941,11 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], exclu
                       setSolved(false);
                       setFeedback("");
                       setHintSquare(null);
+                      setContinuationMode(false);
+                      setContinuationBestMove(null);
+                      setAwaitingOpponent(false);
+                      setContinuationMoveCount(0);
+                      preMoveFenRef.current = current.fenBefore;
                     }}
                   >
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 105.64-12.36L1 10"/></svg>

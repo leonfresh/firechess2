@@ -27,6 +27,12 @@ export type RepeatedOpeningLeak = {
   evalAfter: number;
   sideToMove: PlayerColor;
   userColor: PlayerColor;
+  /** True when the Lichess DB considers this a known line with decent win rate */
+  dbApproved?: boolean;
+  /** DB win rate (0-1) when dbApproved */
+  dbWinRate?: number;
+  /** DB game count when dbApproved */
+  dbGames?: number;
 };
 
 export type GameOpeningTrace = {
@@ -45,7 +51,7 @@ export type PositionEvalTrace = {
   evalAfter: number | null;
   cpLoss: number | null;
   flagged: boolean;
-  skippedReason?: "invalid_move" | "missing_eval";
+  skippedReason?: "invalid_move" | "missing_eval" | "db_approved";
 };
 
 export type AnalysisDiagnostics = {
@@ -127,6 +133,7 @@ export type AnalyzeResponse = {
   gamesAnalyzed: number;
   repeatedPositions: number;
   leaks: RepeatedOpeningLeak[];
+  oneOffMistakes: RepeatedOpeningLeak[];
   missedTactics: MissedTactic[];
   endgameMistakes: EndgameMistake[];
   endgameStats: EndgameStats | null;

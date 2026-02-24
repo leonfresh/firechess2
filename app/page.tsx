@@ -15,6 +15,21 @@ import type { AnalysisSource, ScanMode, TimeControl } from "@/lib/client-analysi
 import type { AnalyzeResponse } from "@/lib/types";
 import { fetchExplorerMoves } from "@/lib/lichess-explorer";
 
+/* ── Inline help tooltip ── */
+function HelpTip({ text }: { text: string }) {
+  return (
+    <span className="group relative ml-1 inline-flex">
+      <span className="flex h-[15px] w-[15px] cursor-help items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-[9px] font-bold leading-none text-slate-500 transition-colors group-hover:border-emerald-500/30 group-hover:bg-emerald-500/10 group-hover:text-emerald-400">
+        ?
+      </span>
+      <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-48 -translate-x-1/2 rounded-lg border border-white/[0.08] bg-slate-900/95 px-3 py-2 text-[11px] font-normal normal-case leading-snug tracking-normal text-slate-300 opacity-0 shadow-xl backdrop-blur-sm transition-opacity group-hover:opacity-100">
+        {text}
+        <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-slate-900/95" />
+      </span>
+    </span>
+  );
+}
+
 type RequestState = "idle" | "loading" | "done" | "error";
 const PREFS_KEY = "firechess-user-prefs";
 const FREE_MAX_GAMES = 300;
@@ -154,8 +169,11 @@ export default function HomePage() {
   }, [gameCount, moveCount, cpThreshold, engineDepth, source, scanMode, speed, gameRangeMode, sinceDate]);
 
   const leaks = useMemo(() => result?.leaks ?? [], [result]);
+  /** Leak count excluding DB-approved sidelines — used for radar/scoring so sidelines don't penalize */
+  const realLeakCount = useMemo(() => leaks.filter(l => !l.dbApproved).length, [leaks]);
   const missedTactics = useMemo(() => result?.missedTactics ?? [], [result]);
   const endgameMistakes = useMemo(() => result?.endgameMistakes ?? [], [result]);
+  const oneOffMistakes = useMemo(() => result?.oneOffMistakes ?? [], [result]);
   const endgameStats = useMemo(() => result?.endgameStats ?? null, [result]);
 
   // DB-approved inaccuracy detection — exclude these FENs from drills
@@ -383,6 +401,7 @@ export default function HomePage() {
           severeLeakRate: report.severeLeakRate,
           repeatedPositions: result.repeatedPositions,
           leaks: result.leaks,
+          oneOffMistakes: result.oneOffMistakes,
           missedTactics: result.missedTactics,
           diagnostics: result.diagnostics ?? null,
           reportMeta: {
@@ -424,8 +443,8 @@ export default function HomePage() {
     // Respect the user's scan mode choice. When free users pick "All",
     // they get a limited taste of tactics + endgames (capped samples).
     const effectiveScanMode: ScanMode = scanModeOverride ?? scanMode;
-    const effectiveMaxTactics = !hasProAccess ? FREE_TACTIC_SAMPLE : 25;
-    const effectiveMaxEndgames = !hasProAccess ? FREE_ENDGAME_SAMPLE : 25;
+    const effectiveMaxTactics = !hasProAccess ? FREE_TACTIC_SAMPLE : 50;
+    const effectiveMaxEndgames = !hasProAccess ? FREE_ENDGAME_SAMPLE : 50;
 
     const browserResult = await analyzeOpeningLeaksInBrowser(trimmed, {
       source: safeSource,
@@ -477,9 +496,9 @@ export default function HomePage() {
     }
 
     try {
-      // When "since" mode, fetch up to the max limit and rely on the API date filter
+      // When "since" mode, use a high cap so the date filter is the real limiter
       const safeGames = gameRangeMode === "since"
-        ? (hasProAccess ? 5000 : FREE_MAX_GAMES)
+        ? 5000
         : Math.min(5000, Math.max(1, Math.floor(gameCount || 300)));
       const safeSince = gameRangeMode === "since" && sinceDate
         ? new Date(sinceDate).getTime()
@@ -728,7 +747,7 @@ export default function HomePage() {
             {/* Scan mode toggle */}
             <div className="stat-card space-y-2 p-4">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Scan Mode</span>
+                <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Scan Mode<HelpTip text="Choose what to analyze: openings finds repeated patterns, tactics finds missed forcing moves, endgames checks your technique, and All runs everything." /></span>
                 {!hasProAccess && (
                   <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-400">Full tactics = Pro</span>
                 )}
@@ -809,7 +828,7 @@ export default function HomePage() {
             <div className="space-y-3">
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="stat-card space-y-2">
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Source</span>
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Source<HelpTip text="Which chess platform to fetch your games from. Your username must match the platform you select." /></span>
                   <div className="grid h-10 grid-cols-2 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1">
                     <button
                       type="button"
@@ -837,7 +856,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="stat-card space-y-2">
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Time Control</span>
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Time Control<HelpTip text="Filter which game speeds to include. Pick specific ones or All. Multi-select is supported — click multiple to combine." /></span>
                   <div className="grid h-10 grid-cols-5 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1">
                     {([
                       { value: "all" as const, label: "All" },
@@ -886,7 +905,7 @@ export default function HomePage() {
               <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
                 <div className="stat-card space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Games</span>
+                    <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Games<HelpTip text="How many recent games to scan (Last N), or pick a start date (Since) to include all games from that point." /></span>
                     <div className="grid h-6 grid-cols-2 gap-0.5 rounded-md border border-white/[0.06] bg-white/[0.02] p-0.5">
                       <button
                         type="button"
@@ -943,7 +962,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="stat-card space-y-2">
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Moves</span>
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Moves<HelpTip text="How deep into the opening to scan (number of moves per side). Higher values catch later opening deviations but take longer." /></span>
                   <input
                     type="number"
                     min={1}
@@ -955,7 +974,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="stat-card space-y-2">
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">CP Threshold</span>
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">CP Threshold<HelpTip text="Minimum centipawn loss to flag a move as a mistake. Lower = stricter (catches inaccuracies). Default 50cp works well for most players." /></span>
                   <input
                     type="number"
                     min={1}
@@ -967,7 +986,7 @@ export default function HomePage() {
                 </div>
 
                 <div className="stat-card space-y-2">
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Depth</span>
+                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Depth<HelpTip text="Stockfish engine search depth. Higher = more accurate but slower. 12 is good for quick scans, 18+ for serious analysis. Pro unlocks up to 24." /></span>
                   <input
                     type="number"
                     min={6}
@@ -1322,7 +1341,7 @@ export default function HomePage() {
                   <div className="grid gap-6 md:grid-cols-2">
                     <StrengthsRadar
                       accuracy={report.estimatedAccuracy}
-                      leakCount={result.leaks.length}
+                      leakCount={realLeakCount}
                       repeatedPositions={result.repeatedPositions}
                       tacticsCount={result.missedTactics.length}
                       gamesAnalyzed={result.gamesAnalyzed}
@@ -1333,7 +1352,7 @@ export default function HomePage() {
                     <RadarLegend
                       data={computeRadarData({
                         accuracy: report.estimatedAccuracy,
-                        leakCount: result.leaks.length,
+                        leakCount: realLeakCount,
                         repeatedPositions: result.repeatedPositions,
                         tacticsCount: result.missedTactics.length,
                         gamesAnalyzed: result.gamesAnalyzed,
@@ -1343,7 +1362,7 @@ export default function HomePage() {
                       })}
                       props={{
                         accuracy: report.estimatedAccuracy,
-                        leakCount: result.leaks.length,
+                        leakCount: realLeakCount,
                         repeatedPositions: result.repeatedPositions,
                         tacticsCount: result.missedTactics.length,
                         gamesAnalyzed: result.gamesAnalyzed,
@@ -1361,7 +1380,7 @@ export default function HomePage() {
                 <InsightCards
                   data={computeRadarData({
                     accuracy: report.estimatedAccuracy,
-                    leakCount: result.leaks.length,
+                    leakCount: realLeakCount,
                     repeatedPositions: result.repeatedPositions,
                     tacticsCount: result.missedTactics.length,
                     gamesAnalyzed: result.gamesAnalyzed,
@@ -1371,7 +1390,7 @@ export default function HomePage() {
                   })}
                   props={{
                     accuracy: report.estimatedAccuracy,
-                    leakCount: result.leaks.length,
+                    leakCount: realLeakCount,
                     repeatedPositions: result.repeatedPositions,
                     tacticsCount: result.missedTactics.length,
                     gamesAnalyzed: result.gamesAnalyzed,
@@ -1465,6 +1484,44 @@ export default function HomePage() {
                   )}
                 </div>
               )}
+              </>
+              )}
+
+              {/* One-Off Opening Mistakes Section */}
+              {(lastRunConfig?.scanMode !== "tactics") && oneOffMistakes.length > 0 && (
+              <>
+              <div className="glass-card border-amber-500/15 bg-gradient-to-r from-amber-500/[0.04] to-transparent p-6">
+                <div className="flex items-center gap-4">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">⚡</span>
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-extrabold text-white tracking-tight">
+                      One-Off Opening Mistakes
+                      <span className="ml-3 inline-flex items-center rounded-full bg-amber-500/15 px-3 py-1 text-base font-bold text-amber-400">
+                        {oneOffMistakes.length}
+                      </span>
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Significant opening mistakes found in individual games — not repeated patterns, but worth reviewing
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-6">
+                {oneOffMistakes.map((leak, idx) => (
+                  <div key={`oneoff-${leak.fenBefore}-${leak.userMove}-${idx}`} className="animate-fade-in-up" style={{ animationDelay: `${idx * 80}ms` }}>
+                    <MistakeCard
+                      leak={leak}
+                      engineDepth={lastRunConfig?.engineDepth ?? engineDepth}
+                    />
+                  </div>
+                ))}
+
+                {/* One-Off Opening Mistakes Drill */}
+                {oneOffMistakes.length > 0 && (
+                  <DrillMode positions={[]} oneOffMistakes={oneOffMistakes} excludeFens={dbApprovedFens} />
+                )}
+              </div>
               </>
               )}
 
@@ -1588,7 +1645,7 @@ export default function HomePage() {
                         <div>
                           <h3 className="text-xl font-bold text-white">Unlock Full Tactics Scanner</h3>
                           <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">
-                            You&apos;re seeing {FREE_TACTIC_SAMPLE} sample missed tactics. Pro unlocks the full scan with up to 25 missed tactics, motif pattern analysis, time pressure detection, and dedicated tactics drill mode.
+                            You&apos;re seeing {FREE_TACTIC_SAMPLE} sample missed tactics. Pro unlocks the full scan with up to 50 missed tactics, motif pattern analysis, time pressure detection, and dedicated tactics drill mode.
                           </p>
                         </div>
                         <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
@@ -1854,7 +1911,7 @@ export default function HomePage() {
                       <p className="text-xs text-slate-400">Practice openings, tactics, and endgames together</p>
                     </div>
                   </div>
-                  <DrillMode positions={diagnostics.positionTraces} tactics={missedTactics} endgameMistakes={endgameMistakes} excludeFens={dbApprovedFens} />
+                  <DrillMode positions={diagnostics.positionTraces} tactics={missedTactics} endgameMistakes={endgameMistakes} oneOffMistakes={oneOffMistakes} excludeFens={dbApprovedFens} />
                 </div>
               )}
             </section>
