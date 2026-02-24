@@ -254,3 +254,68 @@ button {
 .progress-bar-animated {
   animation: progress-indeterminate 2s ease-in-out infinite;
 }
+
+/* ── Blog prose styling ── */
+.prose-firechess {
+  @apply text-slate-300 leading-relaxed;
+}
+.prose-firechess h1 {
+  @apply text-3xl font-bold text-white mt-10 mb-4;
+}
+.prose-firechess h2 {
+  @apply text-2xl font-bold text-white mt-10 mb-3 pb-2 border-b border-white/[0.06];
+}
+.prose-firechess h3 {
+  @apply text-xl font-semibold text-white mt-8 mb-2;
+}
+.prose-firechess h4 {
+  @apply text-lg font-semibold text-slate-200 mt-6 mb-2;
+}
+.prose-firechess p {
+  @apply mb-4 text-[15px];
+}
+.prose-firechess a {
+  @apply text-emerald-400 underline underline-offset-2 decoration-emerald-500/30 hover:decoration-emerald-400 transition-colors;
+}
+.prose-firechess strong {
+  @apply font-semibold text-white;
+}
+.prose-firechess em {
+  @apply text-slate-200;
+}
+.prose-firechess ul {
+  @apply mb-4 ml-5 list-disc space-y-1.5 text-[15px] marker:text-slate-600;
+}
+.prose-firechess ol {
+  @apply mb-4 ml-5 list-decimal space-y-1.5 text-[15px] marker:text-slate-500;
+}
+.prose-firechess li {
+  @apply pl-1;
+}
+.prose-firechess blockquote {
+  @apply my-4 border-l-2 border-emerald-500/40 bg-white/[0.02] rounded-r-lg pl-4 pr-3 py-3 text-slate-400 italic;
+}
+.prose-firechess code {
+  @apply rounded bg-white/[0.06] px-1.5 py-0.5 text-sm font-mono text-emerald-300;
+}
+.prose-firechess pre {
+  @apply my-4 overflow-x-auto rounded-xl border border-white/[0.06] bg-white/[0.03] p-4;
+}
+.prose-firechess pre code {
+  @apply bg-transparent p-0 text-slate-300;
+}
+.prose-firechess hr {
+  @apply my-8 border-white/[0.06];
+}
+.prose-firechess table {
+  @apply my-4 w-full text-sm;
+}
+.prose-firechess thead th {
+  @apply border-b border-white/[0.08] pb-2 text-left font-semibold text-white;
+}
+.prose-firechess tbody td {
+  @apply border-b border-white/[0.04] py-2 text-slate-400;
+}
+.prose-firechess img {
+  @apply my-6 rounded-xl;
+}

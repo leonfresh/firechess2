@@ -58,6 +58,13 @@ export default function RootLayout({
 
             <div className="flex items-center gap-2.5">
               <Link
+                href="/blog"
+                className="btn-secondary inline-flex items-center gap-1.5 text-sm"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>
+                Blog
+              </Link>
+              <Link
                 href="/about"
                 className="btn-secondary inline-flex items-center gap-1.5 text-sm"
               >
@@ -86,6 +93,8 @@ export default function RootLayout({
                 FireChess
               </div>
               <div className="flex items-center gap-3 text-xs text-slate-600">
+                <Link href="/blog" className="hover:text-slate-400 transition-colors">Blog</Link>
+                <span>&middot;</span>
                 <Link href="/about" className="hover:text-slate-400 transition-colors">About</Link>
                 <span>&middot;</span>
                 <Link href="/privacy" className="hover:text-slate-400 transition-colors">Privacy</Link>
