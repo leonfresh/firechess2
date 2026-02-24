@@ -234,6 +234,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   const [freeplayEvaluating, setFreeplayEvaluating] = useState(false);
   const [freeplayBadge, setFreeplayBadge] = useState<{ label: string; color: string } | null>(null);
   const freeplayBadgeTimer = useRef<number | null>(null);
+  const [fpLastMoveTo, setFpLastMoveTo] = useState<string | null>(null);
   // Click-to-move in freeplay
   const [fpSelectedSq, setFpSelectedSq] = useState<string | null>(null);
   const [fpLegalMoves, setFpLegalMoves] = useState<string[]>([]);
@@ -429,6 +430,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     setFreeplayBadge(null);
     setFpSelectedSq(null);
     setFpLegalMoves([]);
+    setFpLastMoveTo(null);
   };
 
   const exitFreeplay = () => {
@@ -439,6 +441,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     setFpSelectedSq(null);
     setFpLegalMoves([]);
     setShowFpPromo(false);
+    setFpLastMoveTo(null);
     setFen(leak.fenBefore);
     setBoardInstance((v) => v + 1);
   };
@@ -451,6 +454,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     setFpSelectedSq(null);
     setFpLegalMoves([]);
     setShowFpPromo(false);
+    setFpLastMoveTo(null);
     setBoardInstance((v) => v + 1);
   };
 
@@ -464,6 +468,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     setFreeplayBadge(null);
     setFpSelectedSq(null);
     setFpLegalMoves([]);
+    setFpLastMoveTo(null);
     // Re-evaluate the previous position
     stockfishClient.evaluateFen(prevFen, 10).then((ev) => {
       if (ev) {
@@ -489,6 +494,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
       setFreeplayHistory((prev) => [...prev, newFen]);
       setFpSelectedSq(null);
       setFpLegalMoves([]);
+      setFpLastMoveTo(targetSquare);
 
       // Sound
       if (result.san.includes("+") || result.san.includes("#")) playSound("check");
@@ -593,7 +599,21 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   const customSquare = useMemo(() => {
     return ((props: any) => {
       const square = props?.square as string | undefined;
-      const showBadge = !animating && !!badMove && square === badMove.to;
+      // In freeplay, show badge on destination square of last move
+      if (freeplayMode && fpLastMoveTo && square === fpLastMoveTo && freeplayBadge) {
+        return (
+          <div style={props?.style} className="relative h-full w-full">
+            {props?.children}
+            <span
+              className="pointer-events-none absolute right-0.5 top-0.5 z-[40] rounded px-1 py-[1px] text-[9px] font-bold text-white shadow"
+              style={{ backgroundColor: freeplayBadge.color }}
+            >
+              {freeplayBadge.label}
+            </span>
+          </div>
+        );
+      }
+      const showBadge = !freeplayMode && !animating && !!badMove && square === badMove.to;
 
       return (
         <div style={props?.style} className="relative h-full w-full">
@@ -609,7 +629,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
         </div>
       );
     }) as any;
-  }, [animating, badMove, moveBadge.color, moveBadge.label]);
+  }, [animating, badMove, moveBadge.color, moveBadge.label, freeplayMode, fpLastMoveTo, freeplayBadge]);
 
   const moveToUci = (move: MoveDetails | null): string | null => {
     if (!move) return null;
@@ -976,7 +996,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
         <div className="relative border-b border-white/[0.04] bg-white/[0.01] p-5 md:border-b-0 md:border-r">
           <div className="mx-auto flex w-full max-w-[460px] items-start gap-3">
             <EvalBar evalCp={displayedEvalCp} height={400} />
-            <div className="overflow-hidden rounded-xl">
+            <div className="w-[400px] overflow-hidden rounded-xl">
               <Chessboard
                 key={`${boardId}-${boardInstance}`}
                 id={boardId}
@@ -987,7 +1007,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                 onPromotionPieceSelect={freeplayMode ? onFreeplayPromoPick : undefined}
                 showPromotionDialog={freeplayMode && showFpPromo}
                 promotionToSquare={(freeplayMode && fpPromoTo) as CbSquare | undefined}
-                customSquare={freeplayMode ? undefined : customSquare}
+                customSquare={customSquare}
                 customSquareStyles={customSquareStyles}
                 customArrows={freeplayMode ? [] : customArrows}
                 boardOrientation={boardOrientation}

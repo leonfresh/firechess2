@@ -22,7 +22,7 @@ function HelpTip({ text }: { text: string }) {
       <span className="flex h-[15px] w-[15px] cursor-help items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-[9px] font-bold leading-none text-slate-500 transition-colors group-hover:border-emerald-500/30 group-hover:bg-emerald-500/10 group-hover:text-emerald-400">
         ?
       </span>
-      <span className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 w-48 -translate-x-1/2 rounded-lg border border-white/[0.08] bg-slate-900/95 px-3 py-2 text-[11px] font-normal normal-case leading-snug tracking-normal text-slate-300 opacity-0 shadow-xl backdrop-blur-sm transition-opacity group-hover:opacity-100">
+      <span className="pointer-events-none absolute bottom-full left-1/2 z-[9999] mb-2 w-48 -translate-x-1/2 rounded-lg border border-white/[0.08] bg-slate-900/95 px-3 py-2 text-[11px] font-normal normal-case leading-snug tracking-normal text-slate-300 opacity-0 shadow-xl backdrop-blur-sm transition-opacity group-hover:opacity-100">
         {text}
         <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-slate-900/95" />
       </span>
@@ -439,7 +439,7 @@ export default function HomePage() {
     scanModeOverride?: ScanMode,
     since?: number
   ) => {
-    setNotice(reason ?? "Cloud eval disabled. Running local Stockfish analysis in your browser.");
+    if (reason) setNotice(reason);
     // Respect the user's scan mode choice. When free users pick "All",
     // they get a limited taste of tactics + endgames (capped samples).
     const effectiveScanMode: ScanMode = scanModeOverride ?? scanMode;
