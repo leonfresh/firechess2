@@ -33,6 +33,10 @@ export type RepeatedOpeningLeak = {
   dbWinRate?: number;
   /** DB game count when dbApproved */
   dbGames?: number;
+  /** User's personal wins/draws/losses with this move */
+  userWins?: number;
+  userDraws?: number;
+  userLosses?: number;
 };
 
 export type GameOpeningTrace = {

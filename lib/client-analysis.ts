@@ -17,6 +17,8 @@ import type {
 type LichessGame = {
   moves?: string;
   clocks?: number[];
+  winner?: string; // "white" | "black" | absent for draw
+  status?: string;
   players?: {
     white?: { user?: { name?: string }; rating?: number };
     black?: { user?: { name?: string }; rating?: number };
@@ -32,13 +34,15 @@ type ChessComGame = {
   rules?: string;
   time_class?: string;
   end_time?: number;
-  white?: { username?: string; rating?: number };
-  black?: { username?: string; rating?: number };
+  white?: { username?: string; rating?: number; result?: string };
+  black?: { username?: string; rating?: number; result?: string };
 };
 
 type ChessComMonthArchive = {
   games?: ChessComGame[];
 };
+
+type GameOutcome = "white" | "black" | "draw";
 
 type SourceGame = {
   moves: string;
@@ -49,6 +53,8 @@ type SourceGame = {
   blackRating?: number;
   /** Clock times in centiseconds per half-move (ply), if available */
   clocks?: number[];
+  /** Game winner: "white" | "black" | "draw" */
+  winner?: GameOutcome;
 };
 
 export type AnalysisSource = "lichess" | "chesscom";
@@ -132,14 +138,21 @@ function parseGamesPayload(payload: string): LichessGame[] {
 function sourceGamesFromLichess(games: LichessGame[]): SourceGame[] {
   return games
     .filter((game) => typeof game.moves === "string" && game.moves.trim().length > 0)
-    .map((game) => ({
-      moves: game.moves!.trim(),
-      whiteName: game.players?.white?.user?.name,
-      blackName: game.players?.black?.user?.name,
-      whiteRating: game.players?.white?.rating,
-      blackRating: game.players?.black?.rating,
-      clocks: game.clocks
-    }));
+    .map((game) => {
+      let winner: GameOutcome | undefined;
+      if (game.winner === "white") winner = "white";
+      else if (game.winner === "black") winner = "black";
+      else if (game.status && game.status !== "started" && game.status !== "created") winner = "draw";
+      return {
+        moves: game.moves!.trim(),
+        whiteName: game.players?.white?.user?.name,
+        blackName: game.players?.black?.user?.name,
+        whiteRating: game.players?.white?.rating,
+        blackRating: game.players?.black?.rating,
+        clocks: game.clocks,
+        winner,
+      };
+    });
 }
 
 function parseMovesFromChessComPgn(pgn: string): { moves: string; clocks: number[] } | null {
@@ -450,13 +463,20 @@ async function fetchChessComGamesInReverse(
       const parsed = parseMovesFromChessComPgn(game.pgn);
       if (!parsed) continue;
 
+      // Determine winner from Chess.com result field
+      let winner: GameOutcome | undefined;
+      if (game.white?.result === "win") winner = "white";
+      else if (game.black?.result === "win") winner = "black";
+      else if (game.white?.result || game.black?.result) winner = "draw";
+
       collected.push({
         moves: parsed.moves,
         whiteName,
         blackName,
         whiteRating: game.white?.rating,
         blackRating: game.black?.rating,
-        clocks: parsed.clocks.length > 0 ? parsed.clocks : undefined
+        clocks: parsed.clocks.length > 0 ? parsed.clocks : undefined,
+        winner,
       });
     }
   }
@@ -968,7 +988,7 @@ export async function analyzeOpeningLeaksInBrowser(
     percent: 40,
   });
 
-  const byFen = new Map<string, { totalReachCount: number; moveCounts: Map<string, number> }>();
+  const byFen = new Map<string, { totalReachCount: number; moveCounts: Map<string, number>; moveOutcomes: Map<string, { w: number; d: number; l: number }> }>();
   let gamesAnalyzed = 0;
   const playerRatings: number[] = [];
   const gameTraces: GameOpeningTrace[] = [];
@@ -1021,11 +1041,20 @@ export async function analyzeOpeningLeaksInBrowser(
         const fenBefore = chess.fen();
         const existing = byFen.get(fenBefore) ?? {
           totalReachCount: 0,
-          moveCounts: new Map<string, number>()
+          moveCounts: new Map<string, number>(),
+          moveOutcomes: new Map<string, { w: number; d: number; l: number }>(),
         };
 
         existing.totalReachCount += 1;
         existing.moveCounts.set(token, (existing.moveCounts.get(token) ?? 0) + 1);
+
+        // Track game outcome per move
+        const outcomes = existing.moveOutcomes.get(token) ?? { w: 0, d: 0, l: 0 };
+        if (game.winner === userColor) outcomes.w += 1;
+        else if (game.winner === "draw") outcomes.d += 1;
+        else if (game.winner) outcomes.l += 1; // opponent won
+        existing.moveOutcomes.set(token, outcomes);
+
         byFen.set(fenBefore, existing);
       }
 
@@ -1208,6 +1237,9 @@ export async function analyzeOpeningLeaksInBrowser(
       dbApproved,
       dbWinRate,
       dbGames,
+      userWins: data.moveOutcomes.get(chosenMove)?.w ?? 0,
+      userDraws: data.moveOutcomes.get(chosenMove)?.d ?? 0,
+      userLosses: data.moveOutcomes.get(chosenMove)?.l ?? 0,
     });
   }
 
@@ -1315,6 +1347,9 @@ export async function analyzeOpeningLeaksInBrowser(
       evalAfter,
       sideToMove,
       userColor: sideToMove,
+      userWins: data.moveOutcomes.get(chosenMove)?.w ?? 0,
+      userDraws: data.moveOutcomes.get(chosenMove)?.d ?? 0,
+      userLosses: data.moveOutcomes.get(chosenMove)?.l ?? 0,
     });
   }
 

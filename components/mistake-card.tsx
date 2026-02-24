@@ -1374,6 +1374,38 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
             </div>
           </div>
 
+          {/* Your win rate with this line */}
+          {(() => {
+            const w = leak.userWins ?? 0;
+            const d = leak.userDraws ?? 0;
+            const l = leak.userLosses ?? 0;
+            const total = w + d + l;
+            if (total === 0) return null;
+            const pct = ((w + 0.5 * d) / total * 100).toFixed(0);
+            const barW = total > 0 ? (w / total * 100) : 0;
+            const barD = total > 0 ? (d / total * 100) : 0;
+            const barL = total > 0 ? (l / total * 100) : 0;
+            const pctNum = parseFloat(pct);
+            const pctColor = pctNum >= 55 ? "text-emerald-400" : pctNum >= 45 ? "text-amber-400" : "text-red-400";
+            return (
+              <div className="stat-card px-3.5 py-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Your Record With This Line</p>
+                  <p className={`text-sm font-bold ${pctColor}`}>{pct}%</p>
+                </div>
+                <div className="mt-2 flex gap-0.5 overflow-hidden rounded-full h-2">
+                  {barW > 0 && <div className="bg-emerald-500" style={{ width: `${barW}%` }} />}
+                  {barD > 0 && <div className="bg-slate-400" style={{ width: `${barD}%` }} />}
+                  {barL > 0 && <div className="bg-red-500" style={{ width: `${barL}%` }} />}
+                </div>
+                <div className="mt-1.5 flex items-center justify-between text-[10px] text-slate-500">
+                  <span><span className="font-semibold text-emerald-400">{w}W</span> · <span className="font-semibold text-slate-400">{d}D</span> · <span className="font-semibold text-red-400">{l}L</span></span>
+                  <span>{total} game{total !== 1 ? "s" : ""}</span>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Lichess Opening Explorer */}
           {explorerMoves.length > 0 && (
             <div className="space-y-2">
