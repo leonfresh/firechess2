@@ -1185,7 +1185,7 @@ export default function HomePage() {
                     type="button"
                     onClick={() => {
                       const text = `🔥 My FireChess analysis: ${report ? `${report.estimatedAccuracy.toFixed(1)}% accuracy` : `${result.gamesAnalyzed} games scanned`}${result.playerRating ? ` (${result.playerRating} rated)` : ""} — ${result.leaks.length} opening leaks, ${result.missedTactics.length} missed tactics found\n\nScan your games free at`;
-                      const url = "https://www.firechess.com";
+                      const url = "https://firechess.com";
                       window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, "_blank", "noopener");
                     }}
                     className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
@@ -1199,7 +1199,7 @@ export default function HomePage() {
                     type="button"
                     onClick={() => {
                       const title = `My FireChess Analysis: ${report ? `${report.estimatedAccuracy.toFixed(1)}% accuracy` : `${result.gamesAnalyzed} games`}${result.playerRating ? ` (${result.playerRating})` : ""} — ${result.leaks.length} leaks, ${result.missedTactics.length} missed tactics`;
-                      window.open(`https://www.reddit.com/submit?url=${encodeURIComponent("https://www.firechess.com")}&title=${encodeURIComponent(title)}`, "_blank", "noopener");
+                      window.open(`https://www.reddit.com/submit?url=${encodeURIComponent("https://firechess.com")}&title=${encodeURIComponent(title)}`, "_blank", "noopener");
                     }}
                     className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-orange-500/30 hover:bg-orange-500/[0.08] hover:text-orange-400"
                   >
