@@ -4,4 +4,4 @@ Disallow: /api/
 Disallow: /auth/
 Disallow: /dashboard
 
-Sitemap: https://firechess.com/sitemap.xml
+Sitemap: https://www.firechess.com/sitemap.xml

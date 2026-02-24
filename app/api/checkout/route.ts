@@ -65,8 +65,8 @@ export async function POST() {
       },
     ],
     metadata: { userId: session.user.id },
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://firechess.com"}/?upgraded=true`,
-    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://firechess.com"}/pricing`,
+    success_url: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://www.firechess.com"}/?upgraded=true`,
+    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://www.firechess.com"}/pricing`,
   });
 
   return NextResponse.json({ url: checkoutSession.url });

@@ -17,11 +17,11 @@ export const metadata: Metadata = {
     title: "FireChess - Chess Analysis & Opening Leak Scanner",
     description:
       "Scan your games for repeated mistakes, missed tactics, and endgame blunders. Powered by Stockfish 18.",
-    url: "https://firechess.com",
+    url: "https://www.firechess.com",
     siteName: "FireChess",
     images: [
       {
-        url: "https://firechess.com/firechess-logo.png",
+        url: "https://www.firechess.com/firechess-logo.png",
         width: 512,
         height: 512,
         alt: "FireChess Logo",
@@ -35,9 +35,9 @@ export const metadata: Metadata = {
     title: "FireChess - Chess Analysis & Opening Leak Scanner",
     description:
       "Scan your games for repeated mistakes, missed tactics, and endgame blunders. Free & powered by Stockfish 18.",
-    images: ["https://firechess.com/firechess-logo.png"],
+    images: ["https://www.firechess.com/firechess-logo.png"],
   },
-  metadataBase: new URL("https://firechess.com"),
+  metadataBase: new URL("https://www.firechess.com"),
 };
 
 export default function RootLayout({
