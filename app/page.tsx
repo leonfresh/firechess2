@@ -4,7 +4,6 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import Link from "next/link";
 import { DrillMode } from "@/components/drill-mode";
 import { HeroDemoBoard } from "@/components/hero-demo-board";
-import type { HeroDemoBoardHandle } from "@/components/hero-demo-board";
 import { MistakeCard } from "@/components/mistake-card";
 import { TacticCard } from "@/components/tactic-card";
 import { EndgameCard } from "@/components/endgame-card";
@@ -42,7 +41,8 @@ const IS_DEV = process.env.NODE_ENV !== "production";
 
 export default function HomePage() {
   const { plan: sessionPlan, authenticated } = useSession();
-  const heroBoardRef = useRef<HeroDemoBoardHandle>(null);
+  const [heroPhase, setHeroPhase] = useState<"idle" | "hiding" | "revealing">("idle");
+  const heroTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [username, setUsername] = useState("");
   const [gameRangeMode, setGameRangeMode] = useState<"count" | "since">("count");
   const [gameCount, setGameCount] = useState(300);
@@ -67,6 +67,19 @@ export default function HomePage() {
   const gamesOverFreeLimit = gameRangeMode === "count" && gameCount > FREE_MAX_GAMES;
   const depthOverFreeLimit = engineDepth > FREE_MAX_DEPTH;
   const freeLimitsExceeded = !hasProAccess && (gamesOverFreeLimit || depthOverFreeLimit);
+
+  /* ── Hero typography animation ── */
+  const heroAnim = (step: number) =>
+    heroPhase === "hiding" ? "hero-hide" : heroPhase === "revealing" ? `hero-reveal-${step}` : "";
+
+  const triggerHeroAnimation = useCallback(() => {
+    if (heroTimerRef.current) clearTimeout(heroTimerRef.current);
+    setHeroPhase("hiding");
+    heroTimerRef.current = setTimeout(() => {
+      setHeroPhase("revealing");
+      heroTimerRef.current = setTimeout(() => setHeroPhase("idle"), 3000);
+    }, 400);
+  }, []);
 
   useEffect(() => {
     if (!IS_DEV || !LOCAL_PRO_HOTKEY_ENABLED) return;
@@ -588,7 +601,7 @@ export default function HomePage() {
 
           {/* ─── Hero Section ─── */}
           <header className="animate-fade-in-up space-y-8 text-center">
-            <div className="flex items-center justify-center gap-3">
+            <div className={`flex items-center justify-center gap-3 ${heroAnim(1)}`}>
               <Link
                 href="/pricing"
                 className="tag-emerald group gap-2 hover:shadow-glow-sm"
@@ -600,7 +613,7 @@ export default function HomePage() {
             </div>
 
             <div className="space-y-4">
-              <div className="flex flex-wrap items-center justify-center gap-3">
+              <div className={`flex flex-wrap items-center justify-center gap-3 ${heroAnim(1)}`}>
                 <span className="tag-fuchsia">
                   <span className="text-sm">🔥</span> FireChess
                 </span>
@@ -611,7 +624,7 @@ export default function HomePage() {
                 <button
                   type="button"
                   className="tag-emerald cursor-pointer gap-1.5 transition-all hover:shadow-glow-sm active:scale-95"
-                  onClick={() => heroBoardRef.current?.playIntro()}
+                  onClick={triggerHeroAnimation}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                   Play Demo
@@ -619,16 +632,18 @@ export default function HomePage() {
               </div>
 
               <h1 className="mx-auto max-w-4xl text-4xl font-black leading-[1.1] tracking-tight md:text-6xl lg:text-7xl">
-                <span className="text-white">Stop making the </span>
-                <span className="gradient-text">same mistakes.</span>
+                <span className={`block text-white ${heroAnim(2)}`}>Stop making the </span>
+                <span className={`block gradient-text ${heroAnim(3)}`}>same mistakes.</span>
               </h1>
 
-              <p className="mx-auto max-w-2xl text-base text-slate-400 md:text-lg">
+              <p className={`mx-auto max-w-2xl text-base text-slate-400 md:text-lg ${heroAnim(4)}`}>
                 FireChess scans your <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text font-semibold text-transparent">openings</span>, <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text font-semibold text-transparent">tactics</span>, and <span className="bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text font-semibold text-transparent">endgames</span> — finds the mistakes you keep repeating, explains the better move, and drills you until the fix sticks.
               </p>
             </div>
 
-            <HeroDemoBoard ref={heroBoardRef} />
+            <div className={heroAnim(5)}>
+              <HeroDemoBoard />
+            </div>
           </header>
 
           {/* ─── Loading State ─── */}

@@ -254,6 +254,51 @@ button {
   animation: progress-indeterminate 2s ease-in-out infinite;
 }
 
+/* ── Hero typography entrance animation ── */
+@keyframes hero-blur-rise {
+  0% {
+    opacity: 0;
+    filter: blur(16px);
+    transform: translateY(40px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0px);
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes hero-glow-rise {
+  0% {
+    opacity: 0;
+    filter: blur(24px);
+    transform: translateY(30px) scale(0.9);
+  }
+  60% {
+    opacity: 1;
+    filter: blur(0px);
+    transform: translateY(-2px) scale(1.02);
+    text-shadow: 0 0 80px rgba(16, 185, 129, 0.6), 0 0 160px rgba(16, 185, 129, 0.25);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0px);
+    transform: translateY(0) scale(1);
+    text-shadow: 0 0 0px transparent;
+  }
+}
+
+.hero-hide {
+  opacity: 0 !important;
+  transition: opacity 0.3s ease-out;
+}
+
+.hero-reveal-1 { animation: hero-blur-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both; }
+.hero-reveal-2 { animation: hero-blur-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both; }
+.hero-reveal-3 { animation: hero-glow-rise 1.1s cubic-bezier(0.16, 1, 0.3, 1) 0.85s both; }
+.hero-reveal-4 { animation: hero-blur-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) 1.3s both; }
+.hero-reveal-5 { animation: hero-blur-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) 1.7s both; }
+
 /* ── Blog prose styling ── */
 .prose-firechess {
   @apply text-slate-300 leading-relaxed;
