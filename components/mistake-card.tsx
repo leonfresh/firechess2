@@ -184,8 +184,10 @@ function formatPrincipalVariation(fen: string, uciMoves: string[]): string {
   }
 }
 
-function classifyLossBadge(cpLoss: number, dbApproved?: boolean): MoveBadge {
-  if (dbApproved) return { label: "Sideline", color: "#6366f1" };
+function classifyLossBadge(cpLoss: number, dbApproved?: boolean, explorerMove?: ExplorerMove | null): MoveBadge {
+  // DB-approved from analysis OR card's own explorer lookup confirms sideline
+  const isSideline = dbApproved || (explorerMove && explorerMove.totalGames >= 50 && explorerMove.winRate >= 0.48);
+  if (isSideline) return { label: "Sideline", color: "#6366f1" };
   if (cpLoss >= 200) return { label: "Blunder", color: "#ef4444" };
   if (cpLoss >= 100) return { label: "Mistake", color: "#f59e0b" };
   return { label: "Inaccuracy", color: "#f97316" };
@@ -219,7 +221,6 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   const [boardInstance, setBoardInstance] = useState(0);
   const timerIds = useRef<number[]>([]);
   const fenCopiedTimerRef = useRef<number | null>(null);
-  const moveBadge = useMemo(() => classifyLossBadge(leak.cpLoss, leak.dbApproved), [leak.cpLoss, leak.dbApproved]);
 
   /* ── PV playback state ── */
   const [pvSteps, setPvSteps] = useState<{ uci: string; fen: string }[]>([]);
@@ -403,6 +404,10 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   const [dbPickApproved, setDbPickApproved] = useState(false);
   const [showExplorer, setShowExplorer] = useState(false);
   const [userMoveExplorerData, setUserMoveExplorerData] = useState<ExplorerMove | null>(null);
+  const moveBadge = useMemo(
+    () => classifyLossBadge(leak.cpLoss, leak.dbApproved, userMoveExplorerData),
+    [leak.cpLoss, leak.dbApproved, userMoveExplorerData],
+  );
   const dbPickMove = useMemo(
     () => (dbPick ? deriveMoveDetails(leak.fenBefore, dbPick.uci) : null),
     [dbPick, leak.fenBefore],
@@ -417,8 +422,10 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
       setExplorerTotal(result.totalGames);
 
       // Check if the user's move is in the explorer with decent stats
-      const userMoveInDb = filteredMoves.find((m) => m.uci === leak.userMove);
-      if (userMoveInDb && userMoveInDb.totalGames >= 100) {
+      const userMoveInDb = filteredMoves.find(
+        (m) => m.uci === leak.userMove || m.san === leak.userMove
+      );
+      if (userMoveInDb && userMoveInDb.totalGames >= 50) {
         setUserMoveExplorerData(userMoveInDb);
       }
 
@@ -1287,7 +1294,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
           <div>
             <div className="flex items-start justify-between gap-3">
               <h3 className="text-lg font-bold text-white">
-                {leak.dbApproved ? "Offbeat Sideline" : "Repeated Opening Leak"}
+                {moveBadge.label === "Sideline" ? "Offbeat Sideline" : "Repeated Opening Leak"}
               </h3>
               <span
                 className="shrink-0 rounded-lg px-2.5 py-1 text-xs font-bold text-white"
@@ -1303,28 +1310,32 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
             </p>
           </div>
 
-          {/* DB-approved offbeat sideline banner */}
-          {leak.dbApproved && leak.dbWinRate != null && (
-            <div className="flex items-center gap-3 rounded-xl border border-indigo-500/20 bg-indigo-500/[0.06] px-3.5 py-2.5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/20 text-lg">
-                📚
+          {/* Offbeat sideline banner — from analysis or card's explorer lookup */}
+          {moveBadge.label === "Sideline" && (() => {
+            const wr = leak.dbApproved && leak.dbWinRate != null ? leak.dbWinRate : userMoveExplorerData?.winRate;
+            const gm = leak.dbApproved && leak.dbGames != null ? leak.dbGames : userMoveExplorerData?.totalGames;
+            return wr != null && gm != null ? (
+              <div className="flex items-center gap-3 rounded-xl border border-indigo-500/20 bg-indigo-500/[0.06] px-3.5 py-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/20 text-lg">
+                  📚
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-indigo-400/70">
+                    Known Opening Line
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-400">
+                    Your move <span className="font-mono font-bold text-slate-300">{badMove?.san}</span> is played in{" "}
+                    <span className="font-semibold text-slate-300">{gm.toLocaleString()}</span> database games
+                    with a <span className="font-semibold text-indigo-400">{(wr * 100).toFixed(0)}%</span> win rate.
+                    The engine prefers a different approach, but this is a well-known sideline with practical results.
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-indigo-400/70">
-                  Known Opening Line
-                </p>
-                <p className="mt-0.5 text-xs text-slate-400">
-                  Your move <span className="font-mono font-bold text-slate-300">{badMove?.san}</span> is played in{" "}
-                  <span className="font-semibold text-slate-300">{(leak.dbGames ?? 0).toLocaleString()}</span> database games
-                  with a <span className="font-semibold text-indigo-400">{(leak.dbWinRate * 100).toFixed(0)}%</span> win rate.
-                  The engine prefers a different approach, but this is a well-known sideline with practical results.
-                </p>
-              </div>
-            </div>
-          )}
+            ) : null;
+          })()}
 
-          {/* Explorer-approved practical move banner (non-DB-approved inaccuracies) */}
-          {!leak.dbApproved && moveBadge.label === "Inaccuracy" && userMoveExplorerData && userMoveExplorerData.winRate >= 0.45 && (
+          {/* Low-confidence explorer note for non-sideline inaccuracies */}
+          {moveBadge.label === "Inaccuracy" && userMoveExplorerData && userMoveExplorerData.winRate >= 0.45 && (
             <div className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-3.5 py-2.5">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 text-sm">
                 ✅
