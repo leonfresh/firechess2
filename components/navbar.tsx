@@ -8,7 +8,6 @@ import { signIn, signOut } from "next-auth/react";
 import { useSession } from "@/components/session-provider";
 
 const NAV_LINKS = [
-  { href: "/blog", label: "Blog" },
   { href: "/about", label: "About" },
   { href: "/pricing", label: "Pro", accent: true },
 ];
