@@ -235,12 +235,160 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   const [freeplayBadge, setFreeplayBadge] = useState<{ label: string; color: string } | null>(null);
   const freeplayBadgeTimer = useRef<number | null>(null);
   const [fpLastMoveTo, setFpLastMoveTo] = useState<string | null>(null);
+  const [fpLastMoveFrom, setFpLastMoveFrom] = useState<string | null>(null);
   // Click-to-move in freeplay
   const [fpSelectedSq, setFpSelectedSq] = useState<string | null>(null);
   const [fpLegalMoves, setFpLegalMoves] = useState<string[]>([]);
   const [showFpPromo, setShowFpPromo] = useState(false);
   const [fpPromoFrom, setFpPromoFrom] = useState<string | null>(null);
   const [fpPromoTo, setFpPromoTo] = useState<string | null>(null);
+
+  /* ── Custom drag system (avoids react-chessboard position:fixed issues) ── */
+  const boardContainerRef = useRef<HTMLDivElement>(null);
+  const dragGhostRef = useRef<HTMLDivElement | null>(null);
+  const dragSourceSq = useRef<string | null>(null);
+  const isDragging = useRef(false);
+
+  /** Convert page coords to board square, respecting orientation */
+  const coordsToSquare = (pageX: number, pageY: number): string | null => {
+    const el = boardContainerRef.current;
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    const x = pageX - rect.left;
+    const y = pageY - rect.top;
+    const size = rect.width / 8;
+    let col = Math.floor(x / size);
+    let row = Math.floor(y / size);
+    if (col < 0 || col > 7 || row < 0 || row > 7) return null;
+    if (boardOrientation === "white") {
+      return `${String.fromCharCode(97 + col)}${8 - row}`;
+    } else {
+      return `${String.fromCharCode(97 + (7 - col))}${row + 1}`;
+    }
+  };
+
+  const cleanupDrag = () => {
+    if (dragGhostRef.current) {
+      dragGhostRef.current.remove();
+      dragGhostRef.current = null;
+    }
+    // Restore hidden piece opacity
+    const el = boardContainerRef.current;
+    if (el && dragSourceSq.current) {
+      const sq = el.querySelector(`[data-square="${dragSourceSq.current}"]`) as HTMLElement | null;
+      if (sq) {
+        const pieceEl = sq.querySelector("[data-piece]") as HTMLElement | null;
+        if (pieceEl) pieceEl.style.opacity = "1";
+      }
+    }
+    dragSourceSq.current = null;
+    isDragging.current = false;
+  };
+
+  const handleBoardPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!freeplayMode || freeplayEvaluating) return;
+    // Only primary button
+    if (e.button !== 0) return;
+
+    const square = coordsToSquare(e.clientX, e.clientY);
+    if (!square) return;
+
+    const chess = new Chess(fen);
+    const sideToMove = fen.includes(" w ") ? "w" : "b";
+    const pieceOnSquare = chess.get(square as Parameters<Chess["get"]>[0]);
+    if (!pieceOnSquare || pieceOnSquare.color !== sideToMove) return;
+
+    // Find the piece image in the square
+    const el = boardContainerRef.current;
+    if (!el) return;
+    const sqEl = el.querySelector(`[data-square="${square}"]`) as HTMLElement | null;
+    if (!sqEl) return;
+    const pieceEl = sqEl.querySelector("[data-piece]") as HTMLElement | null;
+    // Try to find an <img> or <svg> inside, or clone the whole piece element
+    const imgEl = sqEl.querySelector("img, svg") as HTMLElement | null;
+    const sourceEl = imgEl || pieceEl;
+    if (!sourceEl) return;
+
+    e.preventDefault();
+
+    // Create ghost
+    const ghost = document.createElement("div");
+    const rect = el.getBoundingClientRect();
+    const sqSize = rect.width / 8;
+    ghost.style.cssText = `
+      position: fixed;
+      z-index: 99999;
+      pointer-events: none;
+      width: ${sqSize}px;
+      height: ${sqSize}px;
+      transform: translate(-50%, -50%);
+      opacity: 0.9;
+    `;
+    const clone = sourceEl.cloneNode(true) as HTMLElement;
+    clone.style.width = "100%";
+    clone.style.height = "100%";
+    ghost.appendChild(clone);
+    document.body.appendChild(ghost);
+    ghost.style.left = `${e.clientX}px`;
+    ghost.style.top = `${e.clientY}px`;
+
+    // Hide original piece
+    if (pieceEl) pieceEl.style.opacity = "0";
+
+    dragGhostRef.current = ghost;
+    dragSourceSq.current = square;
+    isDragging.current = true;
+
+    // Also set selection highlight
+    const moves = chess.moves({ square: square as Parameters<Chess["moves"]>[0]["square"], verbose: true });
+    setFpSelectedSq(square);
+    setFpLegalMoves(moves.map(m => m.to));
+
+    // Capture pointer for smooth tracking
+    (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+  };
+
+  const handleBoardPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging.current || !dragGhostRef.current) return;
+    dragGhostRef.current.style.left = `${e.clientX}px`;
+    dragGhostRef.current.style.top = `${e.clientY}px`;
+  };
+
+  const handleBoardPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging.current || !dragSourceSq.current) return;
+
+    const targetSquare = coordsToSquare(e.clientX, e.clientY);
+    const sourceSquare = dragSourceSq.current;
+    cleanupDrag();
+
+    if (!targetSquare || targetSquare === sourceSquare) {
+      // No move — keep selection active for click-to-move
+      return;
+    }
+
+    // Check for promotion
+    const chess = new Chess(fen);
+    const piece = chess.get(sourceSquare as Parameters<Chess["get"]>[0]);
+    if (piece?.type === "p") {
+      const targetRank = parseInt(targetSquare[1]);
+      const isPromo = (piece.color === "w" && targetRank === 8) || (piece.color === "b" && targetRank === 1);
+      if (isPromo) {
+        setFpPromoFrom(sourceSquare);
+        setFpPromoTo(targetSquare);
+        setShowFpPromo(true);
+        return;
+      }
+    }
+
+    executeFreeplayMove(sourceSquare, targetSquare);
+    setFpSelectedSq(null);
+    setFpLegalMoves([]);
+  };
+
+  // Cleanup drag on unmount or mode change
+  useEffect(() => {
+    return () => { cleanupDrag(); };
+  }, [freeplayMode]);
 
   // Pre-compute coaching explanations once
   const coaching = useMemo<MoveExplanation>(
@@ -362,9 +510,41 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   };
 
   const customSquareStyles = useMemo(() => {
-    // Freeplay mode: show click-to-move highlights
+    // Freeplay mode: show click-to-move highlights, last-move highlight, and check highlight
     if (freeplayMode) {
       const styles: Record<string, React.CSSProperties> = {};
+
+      // Last-move highlights (subtle yellow tint like Lichess)
+      if (fpLastMoveFrom) {
+        styles[fpLastMoveFrom] = { backgroundColor: "rgba(255, 255, 0, 0.35)" };
+      }
+      if (fpLastMoveTo) {
+        styles[fpLastMoveTo] = { backgroundColor: "rgba(255, 255, 0, 0.42)" };
+      }
+
+      // Check highlight — red radial glow on king square
+      try {
+        const chess = new Chess(fen);
+        if (chess.isCheck()) {
+          const sideInCheck = chess.turn(); // 'w' or 'b'
+          const board = chess.board();
+          for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+              const piece = board[r][c];
+              if (piece && piece.type === "k" && piece.color === sideInCheck) {
+                const file = String.fromCharCode(97 + c);
+                const rank = String(8 - r);
+                const kingSq = `${file}${rank}`;
+                styles[kingSq] = {
+                  background: "radial-gradient(circle, rgba(239, 68, 68, 0.85) 0%, rgba(239, 68, 68, 0.45) 40%, rgba(239, 68, 68, 0.15) 70%, transparent 100%)",
+                };
+              }
+            }
+          }
+        }
+      } catch { /* ignore */ }
+
+      // Selection + legal move dots (drawn on top of last-move highlights)
       if (fpSelectedSq) {
         styles[fpSelectedSq] = { background: "rgba(255, 255, 0, 0.4)" };
         try {
@@ -388,7 +568,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
       [badMove.from]: { backgroundColor: "rgba(239, 68, 68, 0.45)" },
       [badMove.to]: { backgroundColor: "rgba(239, 68, 68, 0.45)" }
     };
-  }, [animating, badMove, freeplayMode, fpSelectedSq, fpLegalMoves, fen]);
+  }, [animating, badMove, freeplayMode, fpSelectedSq, fpLegalMoves, fen, fpLastMoveFrom, fpLastMoveTo]);
 
   const customArrows = useMemo(() => {
     if (animating) {
@@ -430,6 +610,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     setFreeplayBadge(null);
     setFpSelectedSq(null);
     setFpLegalMoves([]);
+    setFpLastMoveFrom(null);
     setFpLastMoveTo(null);
   };
 
@@ -441,6 +622,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     setFpSelectedSq(null);
     setFpLegalMoves([]);
     setShowFpPromo(false);
+    setFpLastMoveFrom(null);
     setFpLastMoveTo(null);
     setFen(leak.fenBefore);
     setBoardInstance((v) => v + 1);
@@ -454,6 +636,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     setFpSelectedSq(null);
     setFpLegalMoves([]);
     setShowFpPromo(false);
+    setFpLastMoveFrom(null);
     setFpLastMoveTo(null);
     setBoardInstance((v) => v + 1);
   };
@@ -468,6 +651,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     setFreeplayBadge(null);
     setFpSelectedSq(null);
     setFpLegalMoves([]);
+    setFpLastMoveFrom(null);
     setFpLastMoveTo(null);
     // Re-evaluate the previous position
     stockfishClient.evaluateFen(prevFen, 10).then((ev) => {
@@ -494,6 +678,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
       setFreeplayHistory((prev) => [...prev, newFen]);
       setFpSelectedSq(null);
       setFpLegalMoves([]);
+      setFpLastMoveFrom(sourceSquare);
       setFpLastMoveTo(targetSquare);
 
       // Sound
@@ -990,19 +1175,25 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   };
 
   return (
-    <article className="glass-card-hover overflow-hidden">
+    <article className="glass-card-hover">
       <div className="grid gap-0 md:grid-cols-[480px_1fr]">
         {/* Board side */}
         <div className="relative border-b border-white/[0.04] bg-white/[0.01] p-5 md:border-b-0 md:border-r">
           <div className="mx-auto flex w-full max-w-[460px] items-start gap-3">
             <EvalBar evalCp={displayedEvalCp} height={400} />
-            <div className="w-[400px] overflow-hidden rounded-xl">
+            <div
+              ref={boardContainerRef}
+              className="w-[400px]"
+              onPointerDown={handleBoardPointerDown}
+              onPointerMove={handleBoardPointerMove}
+              onPointerUp={handleBoardPointerUp}
+              style={{ touchAction: "none" }}
+            >
               <Chessboard
                 key={`${boardId}-${boardInstance}`}
                 id={boardId}
                 position={fen}
-                arePiecesDraggable={freeplayMode && !freeplayEvaluating}
-                onPieceDrop={freeplayMode ? onFreeplayDrop : undefined}
+                arePiecesDraggable={false}
                 onSquareClick={freeplayMode ? onFreeplaySquareClick : undefined}
                 onPromotionPieceSelect={freeplayMode ? onFreeplayPromoPick : undefined}
                 showPromotionDialog={freeplayMode && showFpPromo}
@@ -1014,6 +1205,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                 boardWidth={400}
                 customDarkSquareStyle={{ backgroundColor: "#779952" }}
                 customLightSquareStyle={{ backgroundColor: "#edeed1" }}
+                customBoardStyle={{ borderRadius: "12px", overflow: "hidden" }}
               />
             </div>
           </div>

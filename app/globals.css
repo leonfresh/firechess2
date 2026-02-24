@@ -73,7 +73,7 @@ button {
 /* Glassmorphism card utility */
 @layer components {
   .glass-card {
-    @apply relative overflow-hidden rounded-2xl border border-white/[0.08] backdrop-blur-xl;
+    @apply relative rounded-2xl border border-white/[0.08];
     background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.01) 100%);
     box-shadow:
       0 0 0 1px rgba(255,255,255,0.03) inset,
@@ -82,7 +82,8 @@ button {
   }
 
   .glass-card-hover {
-    @apply glass-card transition-all duration-300;
+    @apply glass-card;
+    transition: border-color 0.3s, box-shadow 0.3s;
   }
 
   .glass-card-hover:hover {
@@ -172,14 +173,13 @@ button {
   }
 
   .stat-card {
-    @apply relative overflow-hidden rounded-xl border border-white/[0.06] p-4 transition-all duration-300;
+    @apply relative rounded-xl border border-white/[0.06] p-4 transition-all duration-300;
     background: linear-gradient(135deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
     isolation: isolate;
   }
 
   .stat-card:hover {
     border-color: rgba(255,255,255,0.1);
-    transform: translateY(-1px);
   }
 
   .stat-card::before {
@@ -241,7 +241,7 @@ button {
 /* Smooth page transitions */
 @keyframes fade-in-up {
   0% { opacity: 0; transform: translateY(20px); }
-  100% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 1; transform: none; }
 }
 
 /* Progress bar animation */

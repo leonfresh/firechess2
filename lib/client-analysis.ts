@@ -1217,11 +1217,11 @@ export async function analyzeOpeningLeaksInBrowser(
     return b.cpLoss - a.cpLoss;
   });
 
-  /* ── One-off opening mistakes (positions reached 1-2 times with significant cpLoss) ── */
+  /* ── One-off opening mistakes (positions reached exactly 2 times with significant cpLoss) ── */
   const ONE_OFF_CP_THRESHOLD = 150; // higher bar since there's less data
   const MAX_ONE_OFFS = 20;
   const oneOffEntries = [...byFen.entries()].filter(
-    ([, data]) => data.totalReachCount >= 1 && data.totalReachCount < MIN_POSITION_REPEATS
+    ([, data]) => data.totalReachCount >= 2 && data.totalReachCount < MIN_POSITION_REPEATS
   );
 
   if (oneOffEntries.length > 0) {
@@ -1329,6 +1329,7 @@ export async function analyzeOpeningLeaksInBrowser(
   const SCREEN_CP_THRESHOLD = 100; // minimum CPL at screen depth to confirm at full depth
   const MAX_TACTICS = options?.maxTactics ?? 50;
   const missedTactics: MissedTactic[] = [];
+  let totalTacticsFound = 0;
 
   if (doTactics) {
 
@@ -1345,7 +1346,6 @@ export async function analyzeOpeningLeaksInBrowser(
   const seenTacticFens = new Set<string>();
 
   for (let gameIndex = 0; gameIndex < games.length; gameIndex += 1) {
-    if (missedTactics.length >= MAX_TACTICS) break;
 
     const game = games[gameIndex];
     if (!game.moves) continue;
@@ -1384,7 +1384,6 @@ export async function analyzeOpeningLeaksInBrowser(
     const allTokens = game.moves.split(" ").filter(Boolean);
 
     for (let ply = 0; ply < allTokens.length; ply += 1) {
-      if (missedTactics.length >= MAX_TACTICS) break;
 
       const sideToMove: PlayerColor = ply % 2 === 0 ? "white" : "black";
       const token = allTokens[ply];
@@ -1456,6 +1455,17 @@ export async function analyzeOpeningLeaksInBrowser(
 
           // If screen CPL is below threshold, skip — not a real tactic
           if (screenCpLoss < SCREEN_CP_THRESHOLD) {
+            const ok = applyMoveToken(chess, token);
+            if (!ok) break;
+            continue;
+          }
+
+          // Count this as a confirmed tactic at screen depth
+          totalTacticsFound++;
+
+          // If we already have enough detailed samples, skip full-depth confirmation
+          if (missedTactics.length >= MAX_TACTICS) {
+            seenTacticFens.add(fenBefore);
             const ok = applyMoveToken(chess, token);
             if (!ok) break;
             continue;
@@ -1580,7 +1590,11 @@ export async function analyzeOpeningLeaksInBrowser(
     percent: endgameStart,
   });
 
+  const ENDGAME_SCREEN_DEPTH = 8;
+
   for (let gameIndex = 0; gameIndex < games.length; gameIndex += 1) {
+    if (endgameMistakes.length >= MAX_ENDGAME_MISTAKES) break;
+
     const game = games[gameIndex];
     if (!game.moves) continue;
 
@@ -1651,14 +1665,66 @@ export async function analyzeOpeningLeaksInBrowser(
           continue;
         }
 
-        // Evaluate the user's endgame move
+        // Evaluate the user's endgame move — two-pass depth screening
+        // Pass 1: cheap screen at low depth
+        const screenBefore = await stockfishClient.evaluateFen(fenBefore, ENDGAME_SCREEN_DEPTH);
+        if (!screenBefore || !screenBefore.bestMove) {
+          totalEndgameMoves += 1;
+          const ok = applyMoveToken(chess, token);
+          if (!ok) break;
+          continue;
+        }
+
+        const userUci = moveToUci(chess, token);
+        // If user played the engine's top choice at screen depth, skip (no mistake)
+        if (!userUci || userUci === screenBefore.bestMove) {
+          totalEndgameMoves += 1;
+          const ok = applyMoveToken(chess, token);
+          if (!ok) break;
+          continue;
+        }
+
+        const fenAfterUser = computeFenAfterMove(fenBefore, token);
+        if (!fenAfterUser) {
+          totalEndgameMoves += 1;
+          const ok = applyMoveToken(chess, token);
+          if (!ok) break;
+          continue;
+        }
+
+        const screenAfter = await stockfishClient.evaluateFen(fenAfterUser, ENDGAME_SCREEN_DEPTH);
+        if (!screenAfter) {
+          totalEndgameMoves += 1;
+          const ok = applyMoveToken(chess, token);
+          if (!ok) break;
+          continue;
+        }
+
+        const screenCpBefore = scoreToCpFromUserPerspective(screenBefore.cp, sideToMove, userColor);
+        const screenOpponent: PlayerColor = sideToMove === "white" ? "black" : "white";
+        const screenCpAfter = scoreToCpFromUserPerspective(screenAfter.cp, screenOpponent, userColor);
+        const screenCpLoss = Math.max(0, screenCpBefore - screenCpAfter);
+
+        // If screen shows no significant loss, count as clean move and skip full depth
+        if (screenCpLoss < ENDGAME_CP_THRESHOLD * 0.6) {
+          totalEndgameCpLoss += screenCpLoss;
+          totalEndgameMoves += 1;
+          // Update type stats with screen values
+          const ts = typeStats.get(endgameType) ?? { count: 0, totalCpLoss: 0, mistakes: 0 };
+          ts.count += 1;
+          ts.totalCpLoss += screenCpLoss;
+          typeStats.set(endgameType, ts);
+          const ok = applyMoveToken(chess, token);
+          if (!ok) break;
+          continue;
+        }
+
+        // Pass 2: confirm at full depth
         const beforeEval = await stockfishClient.evaluateFen(fenBefore, engineDepth);
 
         if (beforeEval && beforeEval.bestMove) {
-          const userUci = moveToUci(chess, token);
 
           if (userUci) {
-            const fenAfterUser = computeFenAfterMove(fenBefore, token);
 
             if (fenAfterUser) {
               const afterEval = await stockfishClient.evaluateFen(fenAfterUser, engineDepth);
@@ -1882,6 +1948,7 @@ export async function analyzeOpeningLeaksInBrowser(
     leaks,
     oneOffMistakes,
     missedTactics,
+    totalTacticsFound,
     endgameMistakes,
     endgameStats,
     playerRating,

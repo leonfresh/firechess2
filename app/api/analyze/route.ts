@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
       leaks: result.leaks,
       oneOffMistakes: [],
       missedTactics: [],
+      totalTacticsFound: 0,
       endgameMistakes: [],
       endgameStats: null
     };

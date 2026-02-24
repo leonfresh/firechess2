@@ -135,6 +135,8 @@ export type AnalyzeResponse = {
   leaks: RepeatedOpeningLeak[];
   oneOffMistakes: RepeatedOpeningLeak[];
   missedTactics: MissedTactic[];
+  /** Total tactics found (may exceed missedTactics.length when capped) */
+  totalTacticsFound: number;
   endgameMistakes: EndgameMistake[];
   endgameStats: EndgameStats | null;
   playerRating?: number | null;

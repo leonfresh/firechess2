@@ -442,7 +442,9 @@ export default function HomePage() {
     if (reason) setNotice(reason);
     // Respect the user's scan mode choice. When free users pick "All",
     // they get a limited taste of tactics + endgames (capped samples).
-    const effectiveScanMode: ScanMode = scanModeOverride ?? scanMode;
+    // Free users always get "both" so they see sample tactics + endgames
+    // alongside openings results, regardless of their scan-mode pick.
+    const effectiveScanMode: ScanMode = scanModeOverride ?? (!hasProAccess ? "both" : scanMode);
     const effectiveMaxTactics = !hasProAccess ? FREE_TACTIC_SAMPLE : 50;
     const effectiveMaxEndgames = !hasProAccess ? FREE_ENDGAME_SAMPLE : 50;
 
@@ -1343,7 +1345,7 @@ export default function HomePage() {
                       accuracy={report.estimatedAccuracy}
                       leakCount={realLeakCount}
                       repeatedPositions={result.repeatedPositions}
-                      tacticsCount={result.missedTactics.length}
+                      tacticsCount={result.totalTacticsFound}
                       gamesAnalyzed={result.gamesAnalyzed}
                       weightedCpLoss={report.weightedCpLoss}
                       severeLeakRate={report.severeLeakRate}
@@ -1354,7 +1356,7 @@ export default function HomePage() {
                         accuracy: report.estimatedAccuracy,
                         leakCount: realLeakCount,
                         repeatedPositions: result.repeatedPositions,
-                        tacticsCount: result.missedTactics.length,
+                        tacticsCount: result.totalTacticsFound,
                         gamesAnalyzed: result.gamesAnalyzed,
                         weightedCpLoss: report.weightedCpLoss,
                         severeLeakRate: report.severeLeakRate,
@@ -1364,7 +1366,7 @@ export default function HomePage() {
                         accuracy: report.estimatedAccuracy,
                         leakCount: realLeakCount,
                         repeatedPositions: result.repeatedPositions,
-                        tacticsCount: result.missedTactics.length,
+                        tacticsCount: result.totalTacticsFound,
                         gamesAnalyzed: result.gamesAnalyzed,
                         weightedCpLoss: report.weightedCpLoss,
                         severeLeakRate: report.severeLeakRate,
@@ -1382,7 +1384,7 @@ export default function HomePage() {
                     accuracy: report.estimatedAccuracy,
                     leakCount: realLeakCount,
                     repeatedPositions: result.repeatedPositions,
-                    tacticsCount: result.missedTactics.length,
+                    tacticsCount: result.totalTacticsFound,
                     gamesAnalyzed: result.gamesAnalyzed,
                     weightedCpLoss: report.weightedCpLoss,
                     severeLeakRate: report.severeLeakRate,
@@ -1392,7 +1394,7 @@ export default function HomePage() {
                     accuracy: report.estimatedAccuracy,
                     leakCount: realLeakCount,
                     repeatedPositions: result.repeatedPositions,
-                    tacticsCount: result.missedTactics.length,
+                    tacticsCount: result.totalTacticsFound,
                     gamesAnalyzed: result.gamesAnalyzed,
                     weightedCpLoss: report.weightedCpLoss,
                     severeLeakRate: report.severeLeakRate,
