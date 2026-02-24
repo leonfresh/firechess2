@@ -593,7 +593,7 @@ export default function HomePage() {
               </h1>
 
               <p className="mx-auto max-w-2xl text-base text-slate-400 md:text-lg">
-                FireChess scans your openings, tactics, and endgames — finds the mistakes you keep repeating, explains the better move, and drills you until the fix sticks.
+                FireChess scans your <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text font-semibold text-transparent">openings</span>, <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text font-semibold text-transparent">tactics</span>, and <span className="bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text font-semibold text-transparent">endgames</span> — finds the mistakes you keep repeating, explains the better move, and drills you until the fix sticks.
               </p>
             </div>
 
