@@ -1204,8 +1204,8 @@ export async function analyzeOpeningLeaksInBrowser(
     if (!flagged) continue;
 
     // ── Database validation: check if the Lichess DB approves this move ──
-    // If the user's move is popular (≥50 games) with a decent win rate (≥48%),
-    // it's a known opening line — still show it but flag as an offbeat sideline.
+    // Formula-based: more games + higher win rate → higher CPL tolerance.
+    // e.g. Dutch (500K games, 50% WR) → dbScore ≈ 228, so CPL 51 is a sideline.
     let dbApproved = false;
     let dbWinRate: number | undefined;
     let dbGames: number | undefined;
@@ -1214,10 +1214,13 @@ export async function analyzeOpeningLeaksInBrowser(
       const dbMove = explorer.moves.find(
         (m) => m.san === chosenMove || m.uci === chosenMove
       );
-      if (dbMove && dbMove.totalGames >= 50 && dbMove.winRate >= 0.48) {
-        dbApproved = true;
-        dbWinRate = dbMove.winRate;
-        dbGames = dbMove.totalGames;
+      if (dbMove && dbMove.totalGames >= 50 && dbMove.winRate >= 0.40) {
+        const dbScore = Math.min(300, Math.log10(dbMove.totalGames) * 40 * (dbMove.winRate / 0.50));
+        if (cpLoss <= dbScore) {
+          dbApproved = true;
+          dbWinRate = dbMove.winRate;
+          dbGames = dbMove.totalGames;
+        }
       }
     } catch { /* explorer unavailable — proceed without DB data */ }
 
@@ -1315,7 +1318,7 @@ export async function analyzeOpeningLeaksInBrowser(
       moveCount: chosenCount,
     });
 
-    // DB validation
+    // DB validation — formula-based sideline detection
     let dbApproved = false;
     let dbWinRate: number | undefined;
     let dbGames: number | undefined;
@@ -1324,10 +1327,13 @@ export async function analyzeOpeningLeaksInBrowser(
       const dbMove = explorer.moves.find(
         (m) => m.san === chosenMove || m.uci === chosenMove
       );
-      if (dbMove && dbMove.totalGames >= 50 && dbMove.winRate >= 0.48) {
-        dbApproved = true;
-        dbWinRate = dbMove.winRate;
-        dbGames = dbMove.totalGames;
+      if (dbMove && dbMove.totalGames >= 50 && dbMove.winRate >= 0.40) {
+        const dbScore = Math.min(300, Math.log10(dbMove.totalGames) * 40 * (dbMove.winRate / 0.50));
+        if (cpLoss <= dbScore) {
+          dbApproved = true;
+          dbWinRate = dbMove.winRate;
+          dbGames = dbMove.totalGames;
+        }
       }
     } catch { /* skip */ }
 

@@ -185,9 +185,26 @@ function formatPrincipalVariation(fen: string, uciMoves: string[]): string {
 }
 
 function classifyLossBadge(cpLoss: number, dbApproved?: boolean, explorerMove?: ExplorerMove | null): MoveBadge {
-  // DB-approved from analysis OR card's own explorer lookup confirms sideline
-  const isSideline = dbApproved || (explorerMove && explorerMove.totalGames >= 50 && explorerMove.winRate >= 0.48);
-  if (isSideline) return { label: "Sideline", color: "#6366f1" };
+  // Analysis-side DB approval (exact threshold match)
+  if (dbApproved) return { label: "Sideline", color: "#6366f1" };
+
+  // Formula-based sideline detection:
+  // The more games in the DB and the higher the win rate, the more CPL
+  // is needed before we call the move an inaccuracy/mistake.
+  //   dbScore examples (winRate ≈ 0.50):
+  //     50 games  → ~65    |  500 games → ~108
+  //   5 000 games → ~148   | 50 000     → ~188
+  // 500 000 games → ~228   (capped at 300)
+  if (explorerMove && explorerMove.totalGames >= 50 && explorerMove.winRate >= 0.40) {
+    const dbScore = Math.min(
+      300,
+      Math.log10(explorerMove.totalGames) * 40 * (explorerMove.winRate / 0.50),
+    );
+    if (cpLoss <= dbScore) {
+      return { label: "Sideline", color: "#6366f1" };
+    }
+  }
+
   if (cpLoss >= 200) return { label: "Blunder", color: "#ef4444" };
   if (cpLoss >= 100) return { label: "Mistake", color: "#f59e0b" };
   return { label: "Inaccuracy", color: "#f97316" };
