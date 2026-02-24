@@ -460,8 +460,8 @@ export default function HomePage() {
     // Free users always get "both" so they see sample tactics + endgames
     // alongside openings results, regardless of their scan-mode pick.
     const effectiveScanMode: ScanMode = scanModeOverride ?? (!hasProAccess ? "both" : scanMode);
-    const effectiveMaxTactics = !hasProAccess ? FREE_TACTIC_SAMPLE : 50;
-    const effectiveMaxEndgames = !hasProAccess ? FREE_ENDGAME_SAMPLE : 50;
+    const effectiveMaxTactics = !hasProAccess ? FREE_TACTIC_SAMPLE : Infinity;
+    const effectiveMaxEndgames = !hasProAccess ? FREE_ENDGAME_SAMPLE : Infinity;
 
     const browserResult = await analyzeOpeningLeaksInBrowser(trimmed, {
       source: safeSource,
@@ -1672,7 +1672,7 @@ export default function HomePage() {
                         <div>
                           <h3 className="text-xl font-bold text-white">Unlock Full Tactics Scanner</h3>
                           <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">
-                            You&apos;re seeing {FREE_TACTIC_SAMPLE} sample missed tactics. Pro unlocks the full scan with up to 50 missed tactics, motif pattern analysis, time pressure detection, and dedicated tactics drill mode.
+                            You&apos;re seeing {FREE_TACTIC_SAMPLE} sample missed tactics. Pro unlocks the full scan with unlimited missed tactics, motif pattern analysis, time pressure detection, and dedicated tactics drill mode.
                           </p>
                         </div>
                         <div className="mt-2 flex flex-wrap items-center justify-center gap-3">

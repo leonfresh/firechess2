@@ -81,7 +81,7 @@ type AnalyzeOptions = {
   scanMode?: ScanMode;
   /** Filter games by time control — single value or array for multi-select (default "all") */
   timeControl?: TimeControl | TimeControl[];
-  /** Cap the number of missed tactics returned (default 50) */
+  /** Cap the number of missed tactics returned (default Infinity = no cap) */
   maxTactics?: number;
   /** Cap the number of endgame mistakes returned (default 50) */
   maxEndgames?: number;
@@ -1368,7 +1368,7 @@ export async function analyzeOpeningLeaksInBrowser(
   const TACTIC_CP_THRESHOLD = 200;
   const SCREEN_DEPTH = 8; // cheap pre-screen depth
   const SCREEN_CP_THRESHOLD = 100; // minimum CPL at screen depth to confirm at full depth
-  const MAX_TACTICS = options?.maxTactics ?? 50;
+  const MAX_TACTICS = options?.maxTactics ?? Infinity;
   const missedTactics: MissedTactic[] = [];
   let totalTacticsFound = doTactics ? 0 : -1; // -1 sentinel = tactics not scanned
 
@@ -1607,7 +1607,7 @@ export async function analyzeOpeningLeaksInBrowser(
   /* ── Phase: Endgame Analysis ────────────────────────────────── */
 
   const ENDGAME_CP_THRESHOLD = 80; // flag endgame mistakes ≥ 80cp
-  const MAX_ENDGAME_MISTAKES = options?.maxEndgames ?? 50;
+  const MAX_ENDGAME_MISTAKES = options?.maxEndgames ?? Infinity;
   const endgameMistakes: EndgameMistake[] = [];
 
   // Track conversion/hold data for stats
