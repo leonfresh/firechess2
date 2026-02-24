@@ -78,8 +78,13 @@ export function computeRadarData(props: RadarProps): RadarDimension[] {
   // 3. Tactical Eye — fewer missed tactics per game = better
   //    Exponential decay on per-game rate:
   //    0/game → 100, 1/game → 55, 2/game → 30, 4/game → 9
-  const tacticsPerGame = gamesAnalyzed > 0 ? tacticsCount / gamesAnalyzed : 0;
-  const dim3 = clamp(100 * Math.exp(-tacticsPerGame * 0.6));
+  //    When tactics weren't scanned (tacticsCount === -1), estimate from accuracy.
+  const dim3 = tacticsCount < 0
+    ? clamp(dim1 * 0.9)                               // proxy when no tactics scan
+    : (() => {
+        const tacticsPerGame = gamesAnalyzed > 0 ? tacticsCount / gamesAnalyzed : 0;
+        return clamp(100 * Math.exp(-tacticsPerGame * 0.6));
+      })();
 
   // 4. Composure — inverse severe leak rate, exponential
   //    2% → ~74, 5% → ~47, 10% → ~22, 25% → ~2

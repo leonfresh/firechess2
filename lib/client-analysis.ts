@@ -1329,7 +1329,7 @@ export async function analyzeOpeningLeaksInBrowser(
   const SCREEN_CP_THRESHOLD = 100; // minimum CPL at screen depth to confirm at full depth
   const MAX_TACTICS = options?.maxTactics ?? 50;
   const missedTactics: MissedTactic[] = [];
-  let totalTacticsFound = 0;
+  let totalTacticsFound = doTactics ? 0 : -1; // -1 sentinel = tactics not scanned
 
   if (doTactics) {
 
