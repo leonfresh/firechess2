@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "re
 import Link from "next/link";
 import { DrillMode } from "@/components/drill-mode";
 import { HeroDemoBoard } from "@/components/hero-demo-board";
+import type { HeroDemoBoardHandle } from "@/components/hero-demo-board";
 import { MistakeCard } from "@/components/mistake-card";
 import { TacticCard } from "@/components/tactic-card";
 import { EndgameCard } from "@/components/endgame-card";
@@ -41,6 +42,7 @@ const IS_DEV = process.env.NODE_ENV !== "production";
 
 export default function HomePage() {
   const { plan: sessionPlan, authenticated } = useSession();
+  const heroBoardRef = useRef<HeroDemoBoardHandle>(null);
   const [username, setUsername] = useState("");
   const [gameRangeMode, setGameRangeMode] = useState<"count" | "since">("count");
   const [gameCount, setGameCount] = useState(300);
@@ -606,6 +608,14 @@ export default function HomePage() {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
                   Powered by Stockfish 18
                 </span>
+                <button
+                  type="button"
+                  className="tag-emerald cursor-pointer gap-1.5 transition-all hover:shadow-glow-sm active:scale-95"
+                  onClick={() => heroBoardRef.current?.playIntro()}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Play Demo
+                </button>
               </div>
 
               <h1 className="mx-auto max-w-4xl text-4xl font-black leading-[1.1] tracking-tight md:text-6xl lg:text-7xl">
@@ -618,7 +628,7 @@ export default function HomePage() {
               </p>
             </div>
 
-            <HeroDemoBoard />
+            <HeroDemoBoard ref={heroBoardRef} />
           </header>
 
           {/* ─── Loading State ─── */}

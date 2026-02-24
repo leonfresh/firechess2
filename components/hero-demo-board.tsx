@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 
@@ -37,6 +37,41 @@ function MiniEvalBar({ evalCp, height }: { evalCp: number; height: number }) {
     </div>
   );
 }
+
+/* ── Opening animation sequence ── */
+// Italian Game → Fried Liver miniature-ish line
+const INTRO_MOVES = [
+  "e2e4", "e7e5",
+  "g1f3", "b8c6",
+  "f1c4", "g8f6",
+  "d2d3", "f8c5",
+  "c2c3", "d7d6",
+  "b2b4", "c5b6",
+  "a2a4", "a7a6",
+  "b1d2", "e8g8",
+  "e1g1", "d6d5",
+];
+
+// Approximate evals (cp from white POV) after each ply
+const INTRO_EVALS = [
+  20, 20,   // e4 e5
+  25, 25,   // Nf3 Nc6
+  15, 15,   // Bc4 Nf6
+  18, 10,   // d3 Bc5
+  20, 15,   // c3 d6
+  25, 18,   // b4 Bb6
+  30, 22,   // a4 a6
+  28, 20,   // Nbd2 O-O
+  35, 10,   // O-O d5
+];
+
+// Last-move highlight squares
+const INTRO_HIGHLIGHTS: { from: string; to: string }[] = INTRO_MOVES.map((uci) => ({
+  from: uci.slice(0, 2),
+  to: uci.slice(2, 4),
+}));
+
+/* ── Scenario carousel (unchanged) ── */
 
 type DemoScenario = {
   title: string;
@@ -195,7 +230,19 @@ function badgeColor(badge: DemoScenario["badge"]): string {
   return badge === "Mistake" ? "#f59e0b" : "#818cf8";
 }
 
-export function HeroDemoBoard() {
+export interface HeroDemoBoardHandle {
+  playIntro: () => void;
+}
+
+export const HeroDemoBoard = forwardRef<HeroDemoBoardHandle>(function HeroDemoBoard(_props, ref) {
+  const [mode, setMode] = useState<"intro" | "scenarios">("scenarios");
+  const [introFen, setIntroFen] = useState("start");
+  const [introPly, setIntroPly] = useState(-1); // -1 = hasn't started
+  const [introEval, setIntroEval] = useState(0);
+  const [introHighlight, setIntroHighlight] = useState<{ from: string; to: string } | null>(null);
+  const introTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const introChessRef = useRef<Chess>(new Chess());
+
   const [index, setIndex] = useState(0);
   const [autoplay, setAutoplay] = useState(true);
 
@@ -213,12 +260,60 @@ export function HeroDemoBoard() {
   useEffect(() => { setIndex(0); }, [scenarios]);
 
   useEffect(() => {
-    if (!autoplay) return;
+    if (!autoplay || mode !== "scenarios") return;
     const interval = window.setInterval(() => {
       setIndex((prev) => (prev + 1) % scenarios.length);
     }, 4500);
     return () => window.clearInterval(interval);
-  }, [autoplay, scenarios.length]);
+  }, [autoplay, scenarios.length, mode]);
+
+  // ── Intro animation step effect ──
+  useEffect(() => {
+    if (mode !== "intro") return;
+    if (introPly < 0) return; // waiting for first tick
+
+    if (introPly >= INTRO_MOVES.length) {
+      // Intro done → transition to scenario carousel
+      introTimerRef.current = setTimeout(() => {
+        setMode("scenarios");
+        setAutoplay(true);
+        setIndex(0);
+      }, 1200);
+      return () => { if (introTimerRef.current) clearTimeout(introTimerRef.current); };
+    }
+
+    const uci = INTRO_MOVES[introPly];
+    introTimerRef.current = setTimeout(() => {
+      const chess = introChessRef.current;
+      try {
+        chess.move({
+          from: uci.slice(0, 2),
+          to: uci.slice(2, 4),
+          promotion: (uci.slice(4, 5).toLowerCase() || undefined) as any,
+        });
+      } catch { /* skip invalid */ }
+      setIntroFen(chess.fen());
+      setIntroEval(INTRO_EVALS[introPly] ?? 0);
+      setIntroHighlight(INTRO_HIGHLIGHTS[introPly]);
+      setIntroPly((p) => p + 1);
+    }, introPly === 0 ? 600 : 750);
+
+    return () => { if (introTimerRef.current) clearTimeout(introTimerRef.current); };
+  }, [mode, introPly]);
+
+  // ── Play intro trigger ──
+  const playIntro = useCallback(() => {
+    // Reset chess state
+    introChessRef.current = new Chess();
+    setIntroFen("start");
+    setIntroPly(0);
+    setIntroEval(0);
+    setIntroHighlight(null);
+    setAutoplay(false);
+    setMode("intro");
+  }, []);
+
+  useImperativeHandle(ref, () => ({ playIntro }), [playIntro]);
 
   const goNext = () => { setAutoplay(false); setIndex((prev) => (prev + 1) % scenarios.length); };
   const goPrev = () => { setAutoplay(false); setIndex((prev) => (prev - 1 + scenarios.length) % scenarios.length); };
@@ -259,7 +354,19 @@ export function HeroDemoBoard() {
     return arr;
   }, [current]);
 
+  const introSquareStyles = useMemo(() => {
+    if (!introHighlight) return {};
+    return {
+      [introHighlight.from]: { backgroundColor: "rgba(255, 255, 100, 0.4)" },
+      [introHighlight.to]: { backgroundColor: "rgba(255, 255, 100, 0.5)" },
+    };
+  }, [introHighlight]);
+
   const boardOrientation = current.fen.includes(" b ") ? "black" : "white";
+
+  const isIntro = mode === "intro";
+  const moveNumber = Math.ceil(introPly / 2);
+  const totalMoves = Math.ceil(INTRO_MOVES.length / 2);
 
   return (
     <div className="mx-auto w-full max-w-[580px]">
@@ -269,132 +376,178 @@ export function HeroDemoBoard() {
           {/* Board side */}
           <div className="relative border-b border-white/[0.04] bg-white/[0.01] p-4 md:border-b-0 md:border-r">
             <div className="flex items-start gap-2">
-              <MiniEvalBar evalCp={current.evalBefore} height={320} />
-              <div className="overflow-hidden rounded-xl">
+              <MiniEvalBar evalCp={isIntro ? introEval : current.evalBefore} height={320} />
+              <div className="relative overflow-hidden rounded-xl">
                 <Chessboard
                   id="hero-demo-board"
-                  position={current.fen}
+                  position={isIntro ? introFen : current.fen}
                   arePiecesDraggable={false}
                   boardWidth={296}
-                  animationDuration={0}
-                  customSquare={customSquare}
-                  customSquareStyles={customSquareStyles}
-                  customArrows={arrows as any[]}
-                  boardOrientation={boardOrientation}
+                  animationDuration={isIntro ? 300 : 0}
+                  customSquare={isIntro ? undefined : customSquare}
+                  customSquareStyles={isIntro ? introSquareStyles : customSquareStyles}
+                  customArrows={isIntro ? [] : arrows as any[]}
+                  boardOrientation={isIntro ? "white" : boardOrientation}
                   customDarkSquareStyle={{ backgroundColor: "#779952" }}
                   customLightSquareStyle={{ backgroundColor: "#edeed1" }}
                 />
+                {isIntro && introPly > 0 && (
+                  <div className="absolute bottom-2 right-2 z-10 rounded-lg bg-black/60 px-2 py-1 text-[10px] font-bold text-white backdrop-blur-sm">
+                    Move {moveNumber} / {totalMoves}
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Arrow legend */}
-            <div className="mt-2 flex items-center gap-3 pl-[26px]">
-              <span className="flex items-center gap-1 text-[9px] text-slate-500">
-                <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" /> Best
-              </span>
-              <span className="flex items-center gap-1 text-[9px] text-slate-500">
-                <span className="inline-block h-2 w-2 rounded-full bg-red-500" /> Yours
-              </span>
-              {current.dbArrow && (
+            {!isIntro && (
+              <div className="mt-2 flex items-center gap-3 pl-[26px]">
                 <span className="flex items-center gap-1 text-[9px] text-slate-500">
-                  <span className="inline-block h-2 w-2 rounded-full bg-blue-500" /> DB pick
+                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" /> Best
                 </span>
-              )}
-            </div>
+                <span className="flex items-center gap-1 text-[9px] text-slate-500">
+                  <span className="inline-block h-2 w-2 rounded-full bg-red-500" /> Yours
+                </span>
+                {current.dbArrow && (
+                  <span className="flex items-center gap-1 text-[9px] text-slate-500">
+                    <span className="inline-block h-2 w-2 rounded-full bg-blue-500" /> DB pick
+                  </span>
+                )}
+              </div>
+            )}
+            {isIntro && (
+              <div className="mt-2 flex items-center gap-3 pl-[26px]">
+                <span className="text-[10px] font-medium text-slate-400">Italian Game — Giuoco Piano</span>
+              </div>
+            )}
           </div>
 
           {/* Info side */}
           <div className="space-y-3 p-4">
-            {/* Header */}
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold text-slate-200">{current.title}</span>
+            {isIntro ? (
+              /* ── Intro info panel ── */
+              <div className="flex h-full flex-col items-center justify-center text-center">
+                <span className="text-3xl">♟️</span>
+                <p className="mt-3 text-sm font-bold text-white">Italian Game</p>
+                <p className="mt-1 text-[11px] text-slate-400">Giuoco Piano</p>
+                <div className="mt-4 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-2">
+                  <p className="text-[10px] font-medium text-emerald-400">Live Analysis</p>
+                  <p className="mt-1 font-mono text-lg font-bold text-white">
+                    {introEval >= 0 ? "+" : ""}{(introEval / 100).toFixed(1)}
+                  </p>
+                </div>
+                <p className="mt-4 text-[10px] text-slate-500">
+                  {introPly >= INTRO_MOVES.length ? "Opening complete" : `Playing move ${moveNumber} of ${totalMoves}…`}
+                </p>
               </div>
-              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                <span
-                  className="shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-bold text-white"
-                  style={{ backgroundColor: badgeColor(current.badge) }}
-                >
-                  {current.tag}
-                </span>
-                {current.repeatedHabit && (
-                  <span className="rounded-md bg-fuchsia-500/15 px-1.5 py-0.5 text-[9px] font-bold text-fuchsia-400">Repeated Habit</span>
+            ) : (
+              /* ── Scenario info panel ── */
+              <>
+                {/* Header */}
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-slate-200">{current.title}</span>
+                  </div>
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                    <span
+                      className="shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-bold text-white"
+                      style={{ backgroundColor: badgeColor(current.badge) }}
+                    >
+                      {current.tag}
+                    </span>
+                    {current.repeatedHabit && (
+                      <span className="rounded-md bg-fuchsia-500/15 px-1.5 py-0.5 text-[9px] font-bold text-fuchsia-400">Repeated Habit</span>
+                    )}
+                  </div>
+                  <p className="mt-2 text-[11px] leading-snug text-slate-400">
+                    You reached this position <span className="font-semibold text-slate-200">{current.reachCount}</span> times
+                    and played <span className="font-mono text-red-400">{current.playedSan}</span>{" "}
+                    <span className="font-semibold text-slate-200">{current.moveCount}</span> times.
+                  </p>
+                </div>
+
+                {/* DB-approved banner */}
+                {current.dbApproved && (
+                  <div className="flex items-center gap-2 rounded-lg border border-indigo-500/20 bg-indigo-500/[0.06] px-2.5 py-1.5">
+                    <span className="text-sm">📚</span>
+                    <span className="text-[9px] font-medium text-indigo-400">Known Opening Line</span>
+                  </div>
                 )}
-              </div>
-              <p className="mt-2 text-[11px] leading-snug text-slate-400">
-                You reached this position <span className="font-semibold text-slate-200">{current.reachCount}</span> times
-                and played <span className="font-mono text-red-400">{current.playedSan}</span>{" "}
-                <span className="font-semibold text-slate-200">{current.moveCount}</span> times.
-              </p>
-            </div>
 
-            {/* DB-approved banner */}
-            {current.dbApproved && (
-              <div className="flex items-center gap-2 rounded-lg border border-indigo-500/20 bg-indigo-500/[0.06] px-2.5 py-1.5">
-                <span className="text-sm">📚</span>
-                <span className="text-[9px] font-medium text-indigo-400">Known Opening Line</span>
-              </div>
+                {/* Stat grid */}
+                <div className="grid grid-cols-2 gap-1.5">
+                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2 py-1.5">
+                    <p className="text-[8px] font-medium uppercase tracking-wider text-slate-500">Eval Loss</p>
+                    <p className="text-sm font-bold text-red-400">{formatEval(current.cpLoss)}</p>
+                  </div>
+                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2 py-1.5">
+                    <p className="text-[8px] font-medium uppercase tracking-wider text-slate-500">Eval Before</p>
+                    <p className="text-sm font-bold text-slate-200">{formatEval(current.evalBefore)}</p>
+                  </div>
+                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2 py-1.5">
+                    <p className="text-[8px] font-medium uppercase tracking-wider text-slate-500">Eval After</p>
+                    <p className="text-sm font-bold text-slate-200">{formatEval(current.evalAfter)}</p>
+                  </div>
+                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2 py-1.5">
+                    <p className="text-[8px] font-medium uppercase tracking-wider text-slate-500">Best Move</p>
+                    <p className="text-sm font-bold font-mono text-emerald-400">{current.bestSan}</p>
+                  </div>
+                </div>
+              </>
             )}
-
-            {/* Stat grid */}
-            <div className="grid grid-cols-2 gap-1.5">
-              <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2 py-1.5">
-                <p className="text-[8px] font-medium uppercase tracking-wider text-slate-500">Eval Loss</p>
-                <p className="text-sm font-bold text-red-400">{formatEval(current.cpLoss)}</p>
-              </div>
-              <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2 py-1.5">
-                <p className="text-[8px] font-medium uppercase tracking-wider text-slate-500">Eval Before</p>
-                <p className="text-sm font-bold text-slate-200">{formatEval(current.evalBefore)}</p>
-              </div>
-              <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2 py-1.5">
-                <p className="text-[8px] font-medium uppercase tracking-wider text-slate-500">Eval After</p>
-                <p className="text-sm font-bold text-slate-200">{formatEval(current.evalAfter)}</p>
-              </div>
-              <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2 py-1.5">
-                <p className="text-[8px] font-medium uppercase tracking-wider text-slate-500">Best Move</p>
-                <p className="text-sm font-bold font-mono text-emerald-400">{current.bestSan}</p>
-              </div>
-            </div>
           </div>
         </div>
 
         {/* Bottom controls bar */}
         <div className="flex items-center gap-2 border-t border-white/[0.04] px-4 py-2.5">
-          <button type="button" className="btn-secondary flex h-7 items-center gap-1 px-2.5 text-[11px]" onClick={goPrev}>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-            Prev
-          </button>
-          <button type="button" className="btn-secondary flex h-7 items-center gap-1 px-2.5 text-[11px]" onClick={goNext}>
-            Next
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-          </button>
-          <button
-            type="button"
-            className={`flex h-7 items-center gap-1.5 rounded-xl border px-2.5 text-[11px] font-medium transition-all duration-200 ${
-              autoplay
-                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300 shadow-glow-sm"
-                : "border-white/[0.1] bg-white/[0.04] text-slate-400 hover:bg-white/[0.06]"
-            }`}
-            onClick={() => setAutoplay((prev) => !prev)}
-          >
-            <span className={`h-1.5 w-1.5 rounded-full ${autoplay ? "animate-pulse bg-emerald-400" : "bg-slate-500"}`} />
-            {autoplay ? "Auto" : "Paused"}
-          </button>
-          {/* Dots indicator */}
-          <div className="ml-auto flex items-center gap-1">
-            {scenarios.map((_, i) => (
+          {isIntro ? (
+            <button
+              type="button"
+              className="btn-secondary flex h-7 items-center gap-1 px-3 text-[11px]"
+              onClick={() => { setMode("scenarios"); setAutoplay(true); setIndex(0); }}
+            >
+              Skip
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          ) : (
+            <>
+              <button type="button" className="btn-secondary flex h-7 items-center gap-1 px-2.5 text-[11px]" onClick={goPrev}>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                Prev
+              </button>
+              <button type="button" className="btn-secondary flex h-7 items-center gap-1 px-2.5 text-[11px]" onClick={goNext}>
+                Next
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
               <button
-                key={i}
                 type="button"
-                onClick={() => { setAutoplay(false); setIndex(i); }}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  i === index % scenarios.length ? "w-4 bg-emerald-400" : "w-1.5 bg-white/10 hover:bg-white/20"
+                className={`flex h-7 items-center gap-1.5 rounded-xl border px-2.5 text-[11px] font-medium transition-all duration-200 ${
+                  autoplay
+                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300 shadow-glow-sm"
+                    : "border-white/[0.1] bg-white/[0.04] text-slate-400 hover:bg-white/[0.06]"
                 }`}
-              />
-            ))}
-          </div>
+                onClick={() => setAutoplay((prev) => !prev)}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${autoplay ? "animate-pulse bg-emerald-400" : "bg-slate-500"}`} />
+                {autoplay ? "Auto" : "Paused"}
+              </button>
+              {/* Dots indicator */}
+              <div className="ml-auto flex items-center gap-1">
+                {scenarios.map((_, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => { setAutoplay(false); setIndex(i); }}
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
+                      i === index % scenarios.length ? "w-4 bg-emerald-400" : "w-1.5 bg-white/10 hover:bg-white/20"
+                    }`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
         </div>
       </article>
     </div>
   );
-}
+});
