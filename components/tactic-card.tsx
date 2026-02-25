@@ -215,19 +215,22 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
   const customSquare = useMemo(() => {
     return ((props: any) => {
       const square = props?.square as string | undefined;
-      const showBadge = !animating && !!bestMoveDetails && square === bestMoveDetails.to;
+      const showBadge = !animating && !!userMoveDetails && square === userMoveDetails.to;
       return (
         <div style={props?.style} className="relative h-full w-full">
           {props?.children}
           {showBadge ? (
-            <span className="pointer-events-none absolute right-0.5 top-0.5 z-[40] rounded px-1 py-[1px] text-[9px] font-bold text-white shadow bg-emerald-500">
-              Best
+            <span
+              className="pointer-events-none absolute right-0.5 top-0.5 z-[40] rounded px-1 py-[1px] text-[9px] font-bold text-white shadow"
+              style={{ backgroundColor: severityColor }}
+            >
+              {severityLabel}
             </span>
           ) : null}
         </div>
       );
     }) as any;
-  }, [animating, bestMoveDetails]);
+  }, [animating, userMoveDetails, severityColor, severityLabel]);
 
   const moveToUciStr = (move: MoveDetails | null): string | null => {
     if (!move) return null;
