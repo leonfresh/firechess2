@@ -155,6 +155,40 @@ export type MentalStats = {
   losses: number;
   /** Total draws */
   draws: number;
+
+  /* ── Pro-only advanced breakdowns ── */
+  /** Win rate as white (0-100) */
+  whiteWinRate?: number;
+  /** Win rate as black (0-100) */
+  blackWinRate?: number;
+  /** Games played as white */
+  whiteGames?: number;
+  /** Games played as black */
+  blackGames?: number;
+  /** % of losses that ended in ≤20 moves (early collapse) */
+  earlyLossRate?: number;
+  /** Draw rate: % of games that ended in a draw */
+  drawRate?: number;
+  /** Post-win win rate: % of games won immediately after a previous win */
+  postWinWinRate?: number;
+  /** Average move count in wins */
+  avgMovesWin?: number;
+  /** Average move count in losses */
+  avgMovesLoss?: number;
+  /** Longest win streak */
+  maxWinStreak?: number;
+  /** Longest loss streak */
+  maxLossStreak?: number;
+  /** Comeback rate: % of games where user was losing based on move count but still won (wins in long games) */
+  comebackRate?: number;
+  /** Decisiveness: % of games that ended decisively (not a draw) */
+  decisiveness?: number;
+  /** Emotional archetype label */
+  archetype?: string;
+  /** Rolling form: result of the last 10 games as W/L/D array */
+  recentForm?: ("W" | "L" | "D")[];
+  /** Mate finish rate: % of wins that ended in checkmate (vs resignation/timeout) */
+  mateFinishRate?: number;
 };
 
 export type AnalyzeResponse = {

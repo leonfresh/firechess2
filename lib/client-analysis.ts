@@ -2022,7 +2022,12 @@ export async function analyzeOpeningLeaksInBrowser(
 
     const target = normalizeName(username);
     type UserResult = "win" | "loss" | "draw";
-    type GameMeta = { result: UserResult; termination?: GameTermination };
+    type GameMeta = {
+      result: UserResult;
+      termination?: GameTermination;
+      userColor: "white" | "black";
+      moveCount: number; // total half-moves (plies) in the game
+    };
     const gameMetas: GameMeta[] = [];
 
     for (const game of games) {
@@ -2037,7 +2042,9 @@ export async function analyzeOpeningLeaksInBrowser(
       else if (game.winner === userColor) result = "win";
       else result = "loss";
 
-      gameMetas.push({ result, termination: game.termination });
+      const moveCount = game.moves ? game.moves.trim().split(/\s+/).length : 0;
+
+      gameMetas.push({ result, termination: game.termination, userColor, moveCount });
     }
 
     if (gameMetas.length < 3) return null;
@@ -2124,6 +2131,100 @@ export async function analyzeOpeningLeaksInBrowser(
       wins,
       losses,
       draws,
+
+      // ── Pro-only advanced breakdowns ──
+      // Color performance
+      whiteWinRate: (() => {
+        const wGames = gameMetas.filter(g => g.userColor === "white");
+        if (wGames.length === 0) return 0;
+        return Math.round((wGames.filter(g => g.result === "win").length / wGames.length) * 1000) / 10;
+      })(),
+      blackWinRate: (() => {
+        const bGames = gameMetas.filter(g => g.userColor === "black");
+        if (bGames.length === 0) return 0;
+        return Math.round((bGames.filter(g => g.result === "win").length / bGames.length) * 1000) / 10;
+      })(),
+      whiteGames: gameMetas.filter(g => g.userColor === "white").length,
+      blackGames: gameMetas.filter(g => g.userColor === "black").length,
+
+      // Early collapse: losses in ≤40 plies (20 full moves)
+      earlyLossRate: losses > 0
+        ? Math.round((gameMetas.filter(g => g.result === "loss" && g.moveCount <= 40).length / losses) * 1000) / 10
+        : 0,
+
+      // Draw rate
+      drawRate: total > 0 ? Math.round((draws / total) * 1000) / 10 : 0,
+
+      // Post-win momentum
+      postWinWinRate: (() => {
+        let postWinGames = 0;
+        let postWinWins = 0;
+        for (let i = 1; i < gameMetas.length; i++) {
+          if (gameMetas[i - 1].result === "win") {
+            postWinGames++;
+            if (gameMetas[i].result === "win") postWinWins++;
+          }
+        }
+        return postWinGames > 0 ? Math.round((postWinWins / postWinGames) * 1000) / 10 : 0;
+      })(),
+
+      // Average game length in wins vs losses (convert plies to full moves)
+      avgMovesWin: (() => {
+        const winGames = gameMetas.filter(g => g.result === "win" && g.moveCount > 0);
+        if (winGames.length === 0) return 0;
+        return Math.round(winGames.reduce((s, g) => s + g.moveCount, 0) / winGames.length / 2);
+      })(),
+      avgMovesLoss: (() => {
+        const lossGames = gameMetas.filter(g => g.result === "loss" && g.moveCount > 0);
+        if (lossGames.length === 0) return 0;
+        return Math.round(lossGames.reduce((s, g) => s + g.moveCount, 0) / lossGames.length / 2);
+      })(),
+
+      maxWinStreak,
+      maxLossStreak,
+
+      // Comeback rate: wins in games ≥60 plies (likely had to fight back)
+      comebackRate: wins > 0
+        ? Math.round((gameMetas.filter(g => g.result === "win" && g.moveCount >= 60).length / wins) * 1000) / 10
+        : 0,
+
+      // Decisiveness: % of non-draw games
+      decisiveness: total > 0 ? Math.round(((wins + losses) / total) * 1000) / 10 : 0,
+
+      // Mate finish rate: % of wins that ended in checkmate
+      mateFinishRate: wins > 0
+        ? Math.round((gameMetas.filter(g => g.result === "win" && g.termination === "mate").length / wins) * 1000) / 10
+        : 0,
+
+      // Recent form: last 10 games as W/L/D
+      recentForm: gameMetas.slice(-10).map(g =>
+        g.result === "win" ? "W" as const : g.result === "loss" ? "L" as const : "D" as const
+      ),
+
+      // Emotional archetype
+      archetype: (() => {
+        const winRate = total > 0 ? wins / total : 0;
+        const tiltPct = tiltRate;
+        const stab = stabilityScore;
+
+        // Grinder: high comeback + long avg wins
+        const avgWinMoves = gameMetas.filter(g => g.result === "win" && g.moveCount > 0);
+        const avgWM = avgWinMoves.length > 0
+          ? avgWinMoves.reduce((s, g) => s + g.moveCount, 0) / avgWinMoves.length / 2
+          : 30;
+
+        if (tiltPct >= 55) return "🔥 The Tilter";
+        if (stab >= 75 && winRate >= 0.55) return "🧊 Ice Veins";
+        if (stab >= 75 && winRate < 0.55) return "⚖️ The Rock";
+        if (maxLossStreak >= 6) return "📉 Spiral Risk";
+        if (maxWinStreak >= 7) return "🚀 Momentum Player";
+        if (avgWM >= 45) return "⚙️ The Grinder";
+        if (resignRate >= 70) return "🏳️ Quick Quitter";
+        if (draws / Math.max(1, total) >= 0.25) return "🤝 The Diplomat";
+        if (winRate >= 0.6) return "💪 The Closer";
+        if (postLossWinRate >= 50) return "🔄 Bounce-Back King";
+        return "🎯 The Competitor";
+      })(),
     };
   })();
 

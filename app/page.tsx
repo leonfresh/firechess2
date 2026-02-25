@@ -1470,6 +1470,181 @@ export default function HomePage() {
                       ))}
                     </div>
 
+                    {/* ── Pro-only Advanced Breakdowns ── */}
+                    {hasProAccess && (() => {
+                      const ms = result.mentalStats!;
+                      return (
+                        <>
+                          {/* Archetype + Recent Form */}
+                          <div className="mt-5 flex flex-wrap items-center gap-3">
+                            {ms.archetype && (
+                              <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/[0.1] px-4 py-1.5 text-sm font-semibold text-violet-300">
+                                {ms.archetype}
+                              </span>
+                            )}
+                            {ms.recentForm && ms.recentForm.length > 0 && (
+                              <div className="flex items-center gap-1">
+                                <span className="mr-1 text-[10px] font-medium uppercase tracking-wider text-slate-500">Last {ms.recentForm.length}</span>
+                                {ms.recentForm.map((r, i) => (
+                                  <span
+                                    key={i}
+                                    className={`flex h-5 w-5 items-center justify-center rounded text-[10px] font-bold ${
+                                      r === "W" ? "bg-emerald-500/20 text-emerald-400"
+                                      : r === "L" ? "bg-red-500/20 text-red-400"
+                                      : "bg-slate-500/20 text-slate-400"
+                                    }`}
+                                  >
+                                    {r}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Color Breakdown */}
+                          <div className="mt-4">
+                            <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-slate-500">Color Performance</p>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-3">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-sm">♔</div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-slate-400">White · {ms.whiteGames ?? 0} games</span>
+                                    <span className={`text-sm font-bold ${(ms.whiteWinRate ?? 0) >= 55 ? "text-emerald-400" : (ms.whiteWinRate ?? 0) >= 45 ? "text-amber-400" : "text-red-400"}`}>{ms.whiteWinRate ?? 0}%</span>
+                                  </div>
+                                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                                    <div className="h-full rounded-full bg-white/60 transition-all" style={{ width: `${ms.whiteWinRate ?? 0}%` }} />
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-3">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-700/50 text-sm">♚</div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-slate-400">Black · {ms.blackGames ?? 0} games</span>
+                                    <span className={`text-sm font-bold ${(ms.blackWinRate ?? 0) >= 55 ? "text-emerald-400" : (ms.blackWinRate ?? 0) >= 45 ? "text-amber-400" : "text-red-400"}`}>{ms.blackWinRate ?? 0}%</span>
+                                  </div>
+                                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                                    <div className="h-full rounded-full bg-slate-400/60 transition-all" style={{ width: `${ms.blackWinRate ?? 0}%` }} />
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Deep Breakdown Stats */}
+                          <div className="mt-4">
+                            <p className="mb-2 text-[10px] font-medium uppercase tracking-wider text-slate-500">Deep Breakdown</p>
+                            <div className="grid gap-3 sm:grid-cols-4">
+                              {[
+                                {
+                                  label: "Momentum",
+                                  value: `${ms.postWinWinRate ?? 0}%`,
+                                  sub: (ms.postWinWinRate ?? 0) >= 55 ? "Snowballs" : (ms.postWinWinRate ?? 0) >= 40 ? "Steady" : "Resets",
+                                  color: (ms.postWinWinRate ?? 0) >= 55 ? "text-emerald-400" : (ms.postWinWinRate ?? 0) >= 40 ? "text-amber-400" : "text-red-400",
+                                  help: "Win rate in the game after a win. High = you build momentum from victories.",
+                                },
+                                {
+                                  label: "Early Losses",
+                                  value: `${ms.earlyLossRate ?? 0}%`,
+                                  sub: (ms.earlyLossRate ?? 0) <= 15 ? "Rare" : (ms.earlyLossRate ?? 0) <= 30 ? "Some" : "Frequent",
+                                  color: (ms.earlyLossRate ?? 0) <= 15 ? "text-emerald-400" : (ms.earlyLossRate ?? 0) <= 30 ? "text-amber-400" : "text-red-400",
+                                  help: "Percentage of losses within the first 20 moves. High = early blunders or mental disengagement.",
+                                },
+                                {
+                                  label: "Comebacks",
+                                  value: `${ms.comebackRate ?? 0}%`,
+                                  sub: (ms.comebackRate ?? 0) >= 60 ? "Fighter" : (ms.comebackRate ?? 0) >= 35 ? "Average" : "Gives Up",
+                                  color: (ms.comebackRate ?? 0) >= 60 ? "text-emerald-400" : (ms.comebackRate ?? 0) >= 35 ? "text-amber-400" : "text-red-400",
+                                  help: "Percentage of wins that required 30+ moves — proxy for fighting from worse positions.",
+                                },
+                                {
+                                  label: "Mate Finish",
+                                  value: `${ms.mateFinishRate ?? 0}%`,
+                                  sub: (ms.mateFinishRate ?? 0) >= 40 ? "Ruthless" : (ms.mateFinishRate ?? 0) >= 20 ? "Normal" : "Rare",
+                                  color: (ms.mateFinishRate ?? 0) >= 40 ? "text-emerald-400" : (ms.mateFinishRate ?? 0) >= 20 ? "text-cyan-400" : "text-slate-400",
+                                  help: "Percentage of wins that ended in checkmate vs opponent resigning or flagging.",
+                                },
+                              ].map((stat) => (
+                                <div key={stat.label} className="stat-card">
+                                  <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{stat.label}<HelpTip text={stat.help} /></p>
+                                  <p className={`mt-1 text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                                  <p className={`mt-0.5 text-xs ${stat.color} opacity-70`}>{stat.sub}</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Game Length + Decisiveness + Streaks Row */}
+                          <div className="mt-3 grid gap-3 sm:grid-cols-4">
+                            {[
+                              {
+                                label: "Avg Win Length",
+                                value: `${ms.avgMovesWin ?? 0}`,
+                                sub: "moves",
+                                color: "text-emerald-400",
+                                help: "Average number of full moves in your wins.",
+                              },
+                              {
+                                label: "Avg Loss Length",
+                                value: `${ms.avgMovesLoss ?? 0}`,
+                                sub: "moves",
+                                color: "text-red-400",
+                                help: "Average number of full moves in your losses.",
+                              },
+                              {
+                                label: "Best Run",
+                                value: `${ms.maxWinStreak ?? 0}W`,
+                                sub: (ms.maxWinStreak ?? 0) >= 7 ? "Hot Streak" : (ms.maxWinStreak ?? 0) >= 4 ? "Solid" : "Short",
+                                color: "text-emerald-400",
+                                help: "Longest consecutive winning streak in the analysed games.",
+                              },
+                              {
+                                label: "Worst Run",
+                                value: `${ms.maxLossStreak ?? 0}L`,
+                                sub: (ms.maxLossStreak ?? 0) >= 6 ? "Danger Zone" : (ms.maxLossStreak ?? 0) >= 4 ? "Notable" : "Manageable",
+                                color: (ms.maxLossStreak ?? 0) >= 6 ? "text-red-400" : (ms.maxLossStreak ?? 0) >= 4 ? "text-amber-400" : "text-cyan-400",
+                                help: "Longest consecutive losing streak. Long streaks may indicate tilt.",
+                              },
+                            ].map((stat) => (
+                              <div key={stat.label} className="stat-card">
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{stat.label}<HelpTip text={stat.help} /></p>
+                                <p className={`mt-1 text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                                <p className={`mt-0.5 text-xs ${stat.color} opacity-70`}>{stat.sub}</p>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Decisiveness + Draw Rate */}
+                          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                            <div className="stat-card">
+                              <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Decisiveness<HelpTip text="Percentage of games that ended decisively (not a draw). High = aggressive, playing for the win." /></p>
+                              <p className={`mt-1 text-2xl font-bold ${(ms.decisiveness ?? 0) >= 85 ? "text-violet-400" : "text-cyan-400"}`}>{ms.decisiveness ?? 0}%</p>
+                              <p className={`mt-0.5 text-xs opacity-70 ${(ms.decisiveness ?? 0) >= 85 ? "text-violet-400" : "text-cyan-400"}`}>
+                                {(ms.decisiveness ?? 0) >= 85 ? "All or Nothing" : (ms.decisiveness ?? 0) >= 70 ? "Plays to Win" : "Draw-Prone"}
+                              </p>
+                            </div>
+                            <div className="stat-card">
+                              <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Draw Rate<HelpTip text="Percentage of games ending in a draw. Compare to your rating bracket average." /></p>
+                              <p className="mt-1 text-2xl font-bold text-slate-300">{ms.drawRate ?? 0}%</p>
+                              <p className="mt-0.5 text-xs text-slate-400 opacity-70">
+                                {(ms.drawRate ?? 0) >= 20 ? "Frequent Draws" : (ms.drawRate ?? 0) >= 8 ? "Average" : "Rarely Draws"}
+                              </p>
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
+
+                    {/* Pro upsell for free users */}
+                    {!hasProAccess && (
+                      <div className="mt-5 rounded-xl border border-violet-500/20 bg-violet-500/[0.04] px-4 py-3">
+                        <p className="text-xs text-slate-400">
+                          <span className="font-medium text-violet-400">🔒 Pro Breakdown</span> — Unlock color performance, emotional archetype, momentum analysis, comeback rate, game length trends, recent form, and streak details.
+                        </p>
+                      </div>
+                    )}
+
                     <div className="section-divider mt-6" />
                     <div className="mt-4">
                       <p className="text-xs text-slate-500">
