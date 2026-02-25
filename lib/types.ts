@@ -132,6 +132,31 @@ export type EndgameStats = {
   weakestType: EndgameType | null;
 };
 
+export type MentalStats = {
+  /** Overall mental stability score 0-100 */
+  stability: number;
+  /** Tilt rate: % of losses immediately followed by another loss */
+  tiltRate: number;
+  /** Post-loss bounce-back: win % in the game immediately after a loss */
+  postLossWinRate: number;
+  /** % of games lost on time */
+  timeoutRate: number;
+  /** Longest consecutive win or loss streak */
+  maxStreak: number;
+  /** Whether maxStreak is wins or losses */
+  streakType: "win" | "loss";
+  /** % of losses that ended in resignation */
+  resignRate: number;
+  /** Total games used for mental stats */
+  totalGames: number;
+  /** Total wins */
+  wins: number;
+  /** Total losses */
+  losses: number;
+  /** Total draws */
+  draws: number;
+};
+
 export type AnalyzeResponse = {
   username: string;
   gamesAnalyzed: number;
@@ -146,6 +171,8 @@ export type AnalyzeResponse = {
   playerRating?: number | null;
   /** Time management score 0-100 computed from move clock data */
   timeManagementScore?: number | null;
+  /** Mental / psychology stats computed from game outcomes */
+  mentalStats?: MentalStats | null;
   diagnostics?: AnalysisDiagnostics;
   report?: AnalysisReport;
 };

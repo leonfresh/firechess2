@@ -7,6 +7,7 @@ import type {
   EndgameStats,
   EndgameType,
   GameOpeningTrace,
+  MentalStats,
   MissedTactic,
   MoveSquare,
   PlayerColor,
@@ -44,6 +45,8 @@ type ChessComMonthArchive = {
 
 type GameOutcome = "white" | "black" | "draw";
 
+type GameTermination = "mate" | "resign" | "timeout" | "draw" | "stalemate" | "other";
+
 type SourceGame = {
   moves: string;
   whiteName?: string;
@@ -55,6 +58,8 @@ type SourceGame = {
   clocks?: number[];
   /** Game winner: "white" | "black" | "draw" */
   winner?: GameOutcome;
+  /** How the game ended */
+  termination?: GameTermination;
 };
 
 export type AnalysisSource = "lichess" | "chesscom";
@@ -143,6 +148,16 @@ function sourceGamesFromLichess(games: LichessGame[]): SourceGame[] {
       if (game.winner === "white") winner = "white";
       else if (game.winner === "black") winner = "black";
       else if (game.status && game.status !== "started" && game.status !== "created") winner = "draw";
+      // Map Lichess status to unified termination
+      let termination: GameTermination | undefined;
+      const st = game.status;
+      if (st === "mate") termination = "mate";
+      else if (st === "resign") termination = "resign";
+      else if (st === "outoftime" || st === "timeout") termination = "timeout";
+      else if (st === "stalemate") termination = "stalemate";
+      else if (st === "draw" || winner === "draw") termination = "draw";
+      else if (winner) termination = "other";
+
       return {
         moves: game.moves!.trim(),
         whiteName: game.players?.white?.user?.name,
@@ -151,6 +166,7 @@ function sourceGamesFromLichess(games: LichessGame[]): SourceGame[] {
         blackRating: game.players?.black?.rating,
         clocks: game.clocks,
         winner,
+        termination,
       };
     });
 }
@@ -469,6 +485,16 @@ async function fetchChessComGamesInReverse(
       else if (game.black?.result === "win") winner = "black";
       else if (game.white?.result || game.black?.result) winner = "draw";
 
+      // Map Chess.com result to unified termination
+      const loserResult = winner === "white" ? game.black?.result : winner === "black" ? game.white?.result : game.white?.result;
+      let termination: GameTermination | undefined;
+      if (loserResult === "checkmated") termination = "mate";
+      else if (loserResult === "resigned") termination = "resign";
+      else if (loserResult === "timeout" || loserResult === "abandoned") termination = "timeout";
+      else if (loserResult === "stalemate") termination = "stalemate";
+      else if (winner === "draw") termination = "draw";
+      else if (winner) termination = "other";
+
       collected.push({
         moves: parsed.moves,
         whiteName,
@@ -477,6 +503,7 @@ async function fetchChessComGamesInReverse(
         blackRating: game.black?.rating,
         clocks: parsed.clocks.length > 0 ? parsed.clocks : undefined,
         winner,
+        termination,
       });
     }
   }
@@ -1989,6 +2016,117 @@ export async function analyzeOpeningLeaksInBrowser(
     return Math.round(consistencyScore * 0.45 + scrambleScore * 0.35 + wasteScore * 0.20);
   })();
 
+  // ── Compute Mental / Psychology Stats from game outcomes ──
+  const mentalStats: MentalStats | null = (() => {
+    if (games.length < 3) return null;
+
+    const target = normalizeName(username);
+    type UserResult = "win" | "loss" | "draw";
+    type GameMeta = { result: UserResult; termination?: GameTermination };
+    const gameMetas: GameMeta[] = [];
+
+    for (const game of games) {
+      const userColor: "white" | "black" | null =
+        game.whiteName && normalizeName(game.whiteName) === target ? "white"
+        : game.blackName && normalizeName(game.blackName) === target ? "black"
+        : null;
+      if (!userColor) continue;
+
+      let result: UserResult;
+      if (!game.winner || game.winner === "draw") result = "draw";
+      else if (game.winner === userColor) result = "win";
+      else result = "loss";
+
+      gameMetas.push({ result, termination: game.termination });
+    }
+
+    if (gameMetas.length < 3) return null;
+
+    const total = gameMetas.length;
+    const wins = gameMetas.filter(g => g.result === "win").length;
+    const losses = gameMetas.filter(g => g.result === "loss").length;
+    const draws = gameMetas.filter(g => g.result === "draw").length;
+
+    // Tilt rate: after a loss, how often does the next game also result in a loss?
+    let postLossGames = 0;
+    let postLossLosses = 0;
+    let postLossWins = 0;
+    for (let i = 1; i < gameMetas.length; i++) {
+      if (gameMetas[i - 1].result === "loss") {
+        postLossGames++;
+        if (gameMetas[i].result === "loss") postLossLosses++;
+        if (gameMetas[i].result === "win") postLossWins++;
+      }
+    }
+    const tiltRate = postLossGames > 0 ? (postLossLosses / postLossGames) * 100 : 0;
+    const postLossWinRate = postLossGames > 0 ? (postLossWins / postLossGames) * 100 : 0;
+
+    // Timeout rate: % of games user lost on time
+    const userTimeouts = gameMetas.filter(g => g.result === "loss" && g.termination === "timeout").length;
+    const timeoutRate = total > 0 ? (userTimeouts / total) * 100 : 0;
+
+    // Resign rate: % of losses that were resignations
+    const userResigns = gameMetas.filter(g => g.result === "loss" && g.termination === "resign").length;
+    const resignRate = losses > 0 ? (userResigns / losses) * 100 : 0;
+
+    // Max streak (longest consecutive wins or losses)
+    let maxWinStreak = 0;
+    let maxLossStreak = 0;
+    let currentWinStreak = 0;
+    let currentLossStreak = 0;
+    for (const g of gameMetas) {
+      if (g.result === "win") {
+        currentWinStreak++;
+        currentLossStreak = 0;
+        maxWinStreak = Math.max(maxWinStreak, currentWinStreak);
+      } else if (g.result === "loss") {
+        currentLossStreak++;
+        currentWinStreak = 0;
+        maxLossStreak = Math.max(maxLossStreak, currentLossStreak);
+      } else {
+        currentWinStreak = 0;
+        currentLossStreak = 0;
+      }
+    }
+    const maxStreak = Math.max(maxWinStreak, maxLossStreak);
+    const streakType: "win" | "loss" = maxWinStreak >= maxLossStreak ? "win" : "loss";
+
+    // Stability score (0-100): based on how consistent results are.
+    // Use a sliding window of 5 games, measure std dev of score (1=win, 0.5=draw, 0=loss)
+    // High stability = low variance across windows = predictable performance
+    const scores: number[] = gameMetas.map(g => g.result === "win" ? 1 : g.result === "draw" ? 0.5 : 0);
+    const windowSize = Math.min(5, Math.floor(scores.length / 2));
+    let stabilityScore = 50;
+    if (windowSize >= 2) {
+      const windowAvgs: number[] = [];
+      for (let i = 0; i <= scores.length - windowSize; i++) {
+        const window = scores.slice(i, i + windowSize);
+        windowAvgs.push(window.reduce((s, v) => s + v, 0) / window.length);
+      }
+      if (windowAvgs.length >= 2) {
+        const wMean = windowAvgs.reduce((s, v) => s + v, 0) / windowAvgs.length;
+        const wVariance = windowAvgs.reduce((s, v) => s + (v - wMean) ** 2, 0) / windowAvgs.length;
+        const wStd = Math.sqrt(wVariance);
+        // std of 0 = perfect stability (100), std of 0.4+ = very unstable (~20)
+        stabilityScore = Math.max(0, Math.min(100, Math.round(100 * Math.exp(-wStd * 4))));
+      }
+    }
+
+    return {
+      stability: stabilityScore,
+      tiltRate: Math.round(tiltRate * 10) / 10,
+      postLossWinRate: Math.round(postLossWinRate * 10) / 10,
+      timeoutRate: Math.round(timeoutRate * 10) / 10,
+      maxStreak,
+      streakType,
+      resignRate: Math.round(resignRate * 10) / 10,
+      totalGames: total,
+      wins,
+      losses,
+      draws,
+    };
+  })();
+
   return {
     username,
     gamesAnalyzed,
@@ -2001,6 +2139,7 @@ export async function analyzeOpeningLeaksInBrowser(
     endgameStats,
     playerRating,
     timeManagementScore,
+    mentalStats,
     diagnostics: {
       gameTraces,
       positionTraces

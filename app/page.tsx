@@ -1346,13 +1346,13 @@ export default function HomePage() {
 
                     <div className="mt-6 grid gap-3 sm:grid-cols-4">
                       {[
-                        { label: "Accuracy", value: `${report.estimatedAccuracy.toFixed(1)}%`, color: "text-emerald-400" },
-                        { label: "Est. Rating", value: report.estimatedRating.toString(), color: "text-emerald-400" },
-                        { label: "Avg Eval Loss", value: (report.weightedCpLoss / 100).toFixed(2), color: "text-emerald-400" },
-                        { label: "Leak Rate", value: `${(report.severeLeakRate * 100).toFixed(0)}%`, color: "text-red-400" },
+                        { label: "Accuracy", value: `${report.estimatedAccuracy.toFixed(1)}%`, color: "text-emerald-400", help: "How closely your opening moves matched the engine's top choice, weighted by position importance." },
+                        { label: "Est. Rating", value: report.estimatedRating.toString(), color: "text-emerald-400", help: "Estimated Elo rating based on your opening play quality. Derived from accuracy and eval loss patterns." },
+                        { label: "Avg Eval Loss", value: (report.weightedCpLoss / 100).toFixed(2), color: "text-emerald-400", help: "Average centipawn loss per move. Lower is better — 0.00 means you played the engine's top choice every time." },
+                        { label: "Leak Rate", value: `${(report.severeLeakRate * 100).toFixed(0)}%`, color: "text-red-400", help: "Percentage of moves that were significant mistakes (losing ≥ the CP threshold). Lower is better." },
                       ].map((stat) => (
                         <div key={stat.label} className="stat-card">
-                          <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{stat.label}</p>
+                          <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{stat.label}<HelpTip text={stat.help} /></p>
                           <p className={`mt-1 text-2xl font-bold ${stat.color}`}>{stat.value}</p>
                         </div>
                       ))}
@@ -1360,13 +1360,13 @@ export default function HomePage() {
 
                     <div className="mt-3 grid gap-3 sm:grid-cols-4">
                       {[
-                        { label: "Consistency", value: `${report.consistencyScore}/100`, color: "text-cyan-400" },
-                        { label: "Peak Throw", value: (report.p75CpLoss / 100).toFixed(2), color: "text-cyan-400" },
-                        { label: "Confidence", value: `${report.confidence}%`, color: "text-cyan-400" },
-                        { label: "Main Pattern", value: report.topTag, color: "text-fuchsia-400", small: true },
+                        { label: "Consistency", value: `${report.consistencyScore}/100`, color: "text-cyan-400", help: "How steady your play is across all positions. 100 = perfectly uniform; lower scores mean erratic swings." },
+                        { label: "Peak Throw", value: (report.p75CpLoss / 100).toFixed(2), color: "text-cyan-400", help: "75th-percentile eval loss — captures your worst tendencies while ignoring rare outliers." },
+                        { label: "Confidence", value: `${report.confidence}%`, color: "text-cyan-400", help: "Statistical confidence in these results. More games analyzed = higher confidence." },
+                        { label: "Main Pattern", value: report.topTag, color: "text-fuchsia-400", small: true, help: "The most frequent weakness pattern detected across your opening positions." },
                       ].map((stat) => (
                         <div key={stat.label} className="stat-card">
-                          <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{stat.label}</p>
+                          <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{stat.label}<HelpTip text={stat.help} /></p>
                           <p className={`mt-1 font-bold ${stat.color} ${"small" in stat ? "text-sm" : "text-2xl"}`}>{stat.value}</p>
                         </div>
                       ))}
@@ -1378,6 +1378,103 @@ export default function HomePage() {
                         Based on {report.sampleSize} positions &middot; Opening pattern estimates
                       </p>
                       <p className="text-xs text-fuchsia-400/80">✦ Screenshot this card for your chess recap</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Mental / Psychology Stats */}
+              {result?.mentalStats && (
+                <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] p-6 md:p-8">
+                  {/* Decorative gradient background */}
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.08] via-amber-500/[0.05] to-rose-500/[0.08]" />
+                  <div className="pointer-events-none absolute -right-20 -top-20 h-40 w-40 rounded-full bg-violet-500/10 blur-[60px]" />
+                  <div className="pointer-events-none absolute -bottom-20 -left-20 h-40 w-40 rounded-full bg-amber-500/10 blur-[60px]" />
+
+                  <div className="relative">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <h2 className="text-xl font-bold text-white">Mental Game</h2>
+                      <div className="flex flex-wrap gap-2">
+                        <span className="inline-flex items-center gap-1 rounded-full border border-violet-500/20 bg-violet-500/[0.08] px-3 py-1 text-xs font-medium text-violet-400">🧠 Psychology</span>
+                        <span className="inline-flex items-center gap-1 rounded-full border border-slate-500/20 bg-slate-500/[0.08] px-3 py-1 text-xs font-medium text-slate-400">{result.mentalStats.totalGames} games · {result.mentalStats.wins}W {result.mentalStats.losses}L {result.mentalStats.draws}D</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                      {[
+                        {
+                          label: "Stability",
+                          value: `${result.mentalStats.stability}`,
+                          sub: result.mentalStats.stability >= 70 ? "Steady" : result.mentalStats.stability >= 40 ? "Average" : "Volatile",
+                          color: result.mentalStats.stability >= 70 ? "text-emerald-400" : result.mentalStats.stability >= 40 ? "text-amber-400" : "text-red-400",
+                          help: "Mental consistency between games. High = predictable performance, low = varies greatly between sessions.",
+                        },
+                        {
+                          label: "Tilt",
+                          value: `${result.mentalStats.tiltRate}%`,
+                          sub: result.mentalStats.tiltRate <= 30 ? "Resilient" : result.mentalStats.tiltRate <= 50 ? "Moderate" : "Tilts Often",
+                          color: result.mentalStats.tiltRate <= 30 ? "text-emerald-400" : result.mentalStats.tiltRate <= 50 ? "text-amber-400" : "text-red-400",
+                          help: "How often a loss is immediately followed by another loss. Lower is better — means you recover well.",
+                        },
+                        {
+                          label: "Post-Loss",
+                          value: `${result.mentalStats.postLossWinRate}%`,
+                          sub: result.mentalStats.postLossWinRate >= 40 ? "Recovers" : result.mentalStats.postLossWinRate >= 25 ? "Struggles" : "Spirals",
+                          color: result.mentalStats.postLossWinRate >= 40 ? "text-emerald-400" : result.mentalStats.postLossWinRate >= 25 ? "text-amber-400" : "text-red-400",
+                          help: "Win rate in the game immediately after a loss. High = strong bounce-back ability.",
+                        },
+                      ].map((stat) => (
+                        <div key={stat.label} className="stat-card">
+                          <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{stat.label}<HelpTip text={stat.help} /></p>
+                          <p className={`mt-1 text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                          <p className={`mt-0.5 text-xs ${stat.color} opacity-70`}>{stat.sub}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                      {[
+                        {
+                          label: "Timeouts",
+                          value: `${result.mentalStats.timeoutRate}%`,
+                          sub: result.mentalStats.timeoutRate <= 5 ? "Rare" : result.mentalStats.timeoutRate <= 15 ? "Sometimes" : "Frequent",
+                          color: result.mentalStats.timeoutRate <= 5 ? "text-cyan-400" : result.mentalStats.timeoutRate <= 15 ? "text-amber-400" : "text-red-400",
+                          help: "Percentage of games lost on time. High = possible time management issue.",
+                        },
+                        {
+                          label: "Max Streak",
+                          value: `${result.mentalStats.maxStreak}`,
+                          sub: (() => {
+                            const s = result.mentalStats!;
+                            const tag = s.streakType === "win" ? "Win" : "Loss";
+                            if (s.maxStreak <= 4) return `${tag} · Normal`;
+                            if (s.maxStreak <= 8) return `${tag} · Notable`;
+                            return `${tag} · Extreme`;
+                          })(),
+                          color: result.mentalStats.streakType === "win" ? "text-emerald-400" : "text-red-400",
+                          help: "Longest consecutive win or loss streak across the analysed games.",
+                        },
+                        {
+                          label: "Resigns",
+                          value: `${result.mentalStats.resignRate}%`,
+                          sub: result.mentalStats.resignRate <= 50 ? "Fights On" : result.mentalStats.resignRate <= 75 ? "Normal" : "Quick Quitter",
+                          color: result.mentalStats.resignRate <= 50 ? "text-cyan-400" : result.mentalStats.resignRate <= 75 ? "text-amber-400" : "text-red-400",
+                          help: "Percentage of losses that ended in resignation. Very high may indicate giving up too early.",
+                        },
+                      ].map((stat) => (
+                        <div key={stat.label} className="stat-card">
+                          <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{stat.label}<HelpTip text={stat.help} /></p>
+                          <p className={`mt-1 text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                          <p className={`mt-0.5 text-xs ${stat.color} opacity-70`}>{stat.sub}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="section-divider mt-6" />
+                    <div className="mt-4">
+                      <p className="text-xs text-slate-500">
+                        Based on {result.mentalStats.totalGames} game outcomes &middot; Psychology estimates
+                      </p>
                     </div>
                   </div>
                 </div>
