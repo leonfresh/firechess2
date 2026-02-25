@@ -1387,6 +1387,8 @@ export async function analyzeOpeningLeaksInBrowser(
   const seenTacticFens = new Set<string>();
 
   for (let gameIndex = 0; gameIndex < games.length; gameIndex += 1) {
+    // Early exit: if we already have enough detailed tactic samples, stop scanning
+    if (missedTactics.length >= MAX_TACTICS && MAX_TACTICS !== Infinity) break;
 
     const game = games[gameIndex];
     if (!game.moves) continue;
@@ -1691,6 +1693,13 @@ export async function analyzeOpeningLeaksInBrowser(
       }
 
       if (enteredEndgame && sideToMove === userColor) {
+        // Early exit: stop deep-scanning this game once we have enough endgame samples
+        if (endgameMistakes.length >= MAX_ENDGAME_MISTAKES && MAX_ENDGAME_MISTAKES !== Infinity) {
+          const ok = applyMoveToken(chess, token);
+          if (!ok) break;
+          continue;
+        }
+
         // Endgame move sampling: evaluate captures, checks, and every 2nd move
         const egLegalMoves = chess.moves({ verbose: true });
         const userMoveToken = token;

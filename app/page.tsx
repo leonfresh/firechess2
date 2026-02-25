@@ -596,8 +596,8 @@ export default function HomePage() {
         <div className="animate-float-delayed absolute right-1/4 top-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-[80px]" />
       </div>
 
-      <div className="relative z-10 px-6 py-12 md:px-10">
-        <section className="mx-auto w-full max-w-6xl space-y-16">
+      <div className="relative z-10 px-4 py-12 sm:px-6 md:px-10">
+        <section className="mx-auto w-full max-w-6xl space-y-16 overflow-x-hidden">
 
           {/* ─── Hero Section ─── */}
           <header className="animate-fade-in-up space-y-8 text-center">
@@ -674,7 +674,7 @@ export default function HomePage() {
               </div>
 
               {/* Phase steps */}
-              <div className="mt-4 flex items-center justify-between text-[11px] font-medium">
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-y-2 text-[11px] font-medium">
                 {[
                   { key: "fetch", label: "Download", icon: "🌐" },
                   { key: "parse", label: "Parse", icon: "📖" },
@@ -779,7 +779,7 @@ export default function HomePage() {
                   <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-400">Full tactics = Pro</span>
                 )}
               </div>
-              <div className="grid h-10 grid-cols-4 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1">
+              <div className="grid h-auto grid-cols-2 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1 sm:h-10 sm:grid-cols-4">
                 <button
                   type="button"
                   onClick={() => setScanMode("openings")}
@@ -884,7 +884,7 @@ export default function HomePage() {
 
                 <div className="stat-card space-y-2">
                   <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Time Control<HelpTip text="Filter which game speeds to include. Pick specific ones or All. Multi-select is supported — click multiple to combine." /></span>
-                  <div className="grid h-10 grid-cols-5 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1">
+                  <div className="grid h-auto grid-cols-3 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1 sm:h-10 sm:grid-cols-5">
                     {([
                       { value: "all" as const, label: "All" },
                       { value: "bullet" as const, label: "Bullet" },

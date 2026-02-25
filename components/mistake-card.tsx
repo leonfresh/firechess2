@@ -7,6 +7,7 @@ import { EvalBar } from "@/components/eval-bar";
 import { Chessboard } from "react-chessboard";
 import type { Square as CbSquare, PromotionPieceOption } from "react-chessboard/dist/chessboard/types";
 import { playSound } from "@/lib/sounds";
+import { useBoardSize } from "@/lib/use-board-size";
 import type { MoveSquare, RepeatedOpeningLeak } from "@/lib/types";
 import { fetchExplorerMoves, type ExplorerMove } from "@/lib/lichess-explorer";
 import { explainOpeningLeak, describeEndPosition, type MoveExplanation, type PositionExplanation } from "@/lib/position-explainer";
@@ -221,6 +222,7 @@ function formatEval(valueCp: number, options?: { showPlus?: boolean }): string {
 }
 
 export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
+  const { ref: boardSizeRef, size: boardSize } = useBoardSize(400);
   const badMove = useMemo(() => deriveMoveDetails(leak.fenBefore, leak.userMove), [leak.fenBefore, leak.userMove]);
   const bestMove = useMemo(() => deriveMoveDetails(leak.fenBefore, leak.bestMove), [leak.fenBefore, leak.bestMove]);
   const boardId = useMemo(() => `mistake-${leak.fenBefore.replace(/[^a-zA-Z0-9]/g, "-")}`, [leak.fenBefore]);
@@ -1200,14 +1202,14 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
 
   return (
     <article className="glass-card-hover">
-      <div className="grid gap-0 md:grid-cols-[480px_1fr]">
+      <div className="grid gap-0 md:grid-cols-[minmax(0,480px)_1fr]">
         {/* Board side */}
-        <div className="relative border-b border-white/[0.04] bg-white/[0.01] p-5 md:border-b-0 md:border-r">
-          <div className="mx-auto flex w-full max-w-[460px] items-start gap-3">
-            <EvalBar evalCp={displayedEvalCp} height={400} />
+        <div ref={boardSizeRef} className="relative border-b border-white/[0.04] bg-white/[0.01] p-3 sm:p-5 md:border-b-0 md:border-r">
+          <div className="mx-auto flex w-full max-w-[460px] items-start gap-2 sm:gap-3">
+            <EvalBar evalCp={displayedEvalCp} height={boardSize} />
             <div
               ref={boardContainerRef}
-              className="w-[400px]"
+              className="flex-1 min-w-0"
               onPointerDown={handleBoardPointerDown}
               onPointerMove={handleBoardPointerMove}
               onPointerUp={handleBoardPointerUp}
@@ -1226,7 +1228,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                 customSquareStyles={customSquareStyles}
                 customArrows={freeplayMode ? [] : customArrows}
                 boardOrientation={boardOrientation}
-                boardWidth={400}
+                boardWidth={boardSize}
                 customDarkSquareStyle={{ backgroundColor: "#779952" }}
                 customLightSquareStyle={{ backgroundColor: "#edeed1" }}
                 customBoardStyle={{ borderRadius: "12px", overflow: "hidden" }}

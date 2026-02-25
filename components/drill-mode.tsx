@@ -7,6 +7,7 @@ import { Chessboard } from "react-chessboard";
 import type { Square as CbSquare, PromotionPieceOption } from "react-chessboard/dist/chessboard/types";
 import { playSound, preloadSounds } from "@/lib/sounds";
 import { stockfishClient } from "@/lib/stockfish-client";
+import { useBoardSize } from "@/lib/use-board-size";
 import type { EndgameMistake, MissedTactic, PositionEvalTrace, RepeatedOpeningLeak } from "@/lib/types";
 
 type MoveBadge = {
@@ -110,6 +111,7 @@ function deriveMoveDetails(fen: string, move: string | null): MoveDetails | null
 }
 
 export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOffMistakes = [], excludeFens, variant }: DrillModeProps) {
+  const { ref: drillBoardRef, size: drillBoardSize } = useBoardSize(470);
   const drillPositions = useMemo(() => {
     const openingItems: DrillItem[] = positions
       .filter((position) => position.flagged && typeof position.cpLoss === "number" && position.bestMove && !(excludeFens?.has(position.fenBefore)))
@@ -723,10 +725,10 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
               </div>
             )}
 
-            <div className="grid gap-6 md:grid-cols-[520px_1fr] md:gap-8">
+            <div className="grid gap-6 md:grid-cols-[minmax(0,520px)_1fr] md:gap-8">
               {/* Board */}
-              <div className="relative mx-auto flex w-full max-w-[510px] shrink-0 items-start gap-3">
-                <EvalBar evalCp={displayedEvalCp} height={470} />
+              <div ref={drillBoardRef} className="relative mx-auto flex w-full max-w-[510px] shrink-0 items-start gap-2 sm:gap-3">
+                <EvalBar evalCp={displayedEvalCp} height={drillBoardSize} />
                 <div className="overflow-hidden rounded-xl shadow-lg shadow-black/30">
                   <Chessboard
                     id={`drill-${index}`}
@@ -738,7 +740,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
                     promotionToSquare={promoTo as CbSquare | undefined}
                     arePiecesDraggable={!solved && !evaluating && !awaitingOpponent}
                     boardOrientation={boardOrientation as "white" | "black"}
-                    boardWidth={470}
+                    boardWidth={drillBoardSize}
                     customDarkSquareStyle={{ backgroundColor: "#779952" }}
                     customLightSquareStyle={{ backgroundColor: "#edeed1" }}
                     customSquareStyles={customSquareStyles}

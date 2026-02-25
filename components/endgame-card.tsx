@@ -6,6 +6,7 @@ import { stockfishClient } from "@/lib/stockfish-client";
 import { EvalBar } from "@/components/eval-bar";
 import { Chessboard } from "react-chessboard";
 import { playSound } from "@/lib/sounds";
+import { useBoardSize } from "@/lib/use-board-size";
 import type { EndgameMistake, MoveSquare } from "@/lib/types";
 
 type EndgameCardProps = {
@@ -135,6 +136,7 @@ const ENDGAME_TYPE_ICON: Record<string, string> = {
 };
 
 export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
+  const { ref: boardSizeRef, size: boardSize } = useBoardSize(400);
   const userMoveDetails = useMemo(
     () => deriveMoveDetails(mistake.fenBefore, mistake.userMove),
     [mistake.fenBefore, mistake.userMove]
@@ -412,11 +414,11 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
 
   return (
     <article className="glass-card-hover overflow-hidden border-sky-500/10">
-      <div className="grid gap-0 md:grid-cols-[480px_1fr]">
+      <div className="grid gap-0 md:grid-cols-[minmax(0,480px)_1fr]">
         {/* Board side */}
-        <div className="relative border-b border-sky-500/[0.08] bg-sky-500/[0.02] p-5 md:border-b-0 md:border-r">
-          <div className="mx-auto flex w-full max-w-[460px] items-start gap-3">
-            <EvalBar evalCp={displayedEvalCp} height={400} />
+        <div ref={boardSizeRef} className="relative border-b border-sky-500/[0.08] bg-sky-500/[0.02] p-3 sm:p-5 md:border-b-0 md:border-r">
+          <div className="mx-auto flex w-full max-w-[460px] items-start gap-2 sm:gap-3">
+            <EvalBar evalCp={displayedEvalCp} height={boardSize} />
             <div className="overflow-hidden rounded-xl">
               <Chessboard
                 key={`${boardId}-${boardInstance}`}
@@ -427,7 +429,7 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
                 customSquareStyles={customSquareStyles}
                 customArrows={customArrows}
                 boardOrientation={boardOrientation}
-                boardWidth={400}
+                boardWidth={boardSize}
                 customDarkSquareStyle={{ backgroundColor: "#779952" }}
                 customLightSquareStyle={{ backgroundColor: "#edeed1" }}
               />

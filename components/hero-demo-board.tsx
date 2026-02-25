@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
+import { useBoardSize } from "@/lib/use-board-size";
 
 /* ── Mini eval bar (matches the real EvalBar look) ── */
 function MiniEvalBar({ evalCp, height }: { evalCp: number; height: number }) {
@@ -198,6 +199,7 @@ function badgeColor(badge: DemoScenario["badge"]): string {
 }
 
 export function HeroDemoBoard() {
+  const { ref: heroBoardRef, size: heroBoardSize } = useBoardSize(296);
   const [index, setIndex] = useState(0);
   const [autoplay, setAutoplay] = useState(true);
 
@@ -269,15 +271,15 @@ export function HeroDemoBoard() {
         <div className="grid gap-0 md:grid-cols-[1fr_230px]">
 
           {/* Board side */}
-          <div className="relative border-b border-white/[0.04] bg-white/[0.01] p-4 md:border-b-0 md:border-r">
+          <div ref={heroBoardRef} className="relative border-b border-white/[0.04] bg-white/[0.01] p-3 sm:p-4 md:border-b-0 md:border-r">
             <div className="flex items-start gap-2">
-              <MiniEvalBar evalCp={current.evalBefore} height={320} />
+              <MiniEvalBar evalCp={current.evalBefore} height={heroBoardSize} />
               <div className="relative overflow-hidden rounded-xl">
                 <Chessboard
                   id="hero-demo-board"
                   position={current.fen}
                   arePiecesDraggable={false}
-                  boardWidth={296}
+                  boardWidth={heroBoardSize}
                   animationDuration={0}
                   customSquare={customSquare}
                   customSquareStyles={customSquareStyles}
