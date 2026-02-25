@@ -49,7 +49,7 @@ export default function HomePage() {
   const [gameRangeMode, setGameRangeMode] = useState<"count" | "since">("count");
   const [gameCount, setGameCount] = useState(300);
   const [sinceDate, setSinceDate] = useState("");
-  const [moveCount, setMoveCount] = useState(20);
+  const [moveCount, setMoveCount] = useState(30);
   const [cpThreshold, setCpThreshold] = useState(50);
   const [engineDepth, setEngineDepth] = useState(12);
   const [source, setSource] = useState<AnalysisSource | null>(null);
@@ -1867,12 +1867,9 @@ export default function HomePage() {
                   <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/15 text-3xl shadow-lg shadow-emerald-500/10">🔁</span>
                   <div className="flex-1">
                     <h2 className="text-2xl font-extrabold text-white tracking-tight">
-                      Repeated Opening Leaks
-                      {leaks.length > 0 && (
-                        <span className="ml-3 inline-flex items-center rounded-full bg-emerald-500/15 px-3 py-1 text-base font-bold text-emerald-400">
-                          {leaks.length}
-                        </span>
-                      )}
+                      {leaks.length > 0
+                        ? <>You have <span className="text-emerald-400">{leaks.length}</span> Repeated Opening Leak{leaks.length !== 1 ? "s" : ""}</>
+                        : "Repeated Opening Leaks"}
                     </h2>
                     <p className="mt-1 text-sm text-slate-400">
                       Positions you keep reaching and making the same suboptimal move
