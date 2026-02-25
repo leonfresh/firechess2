@@ -419,6 +419,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   /* ── Lichess explorer database moves ── */
   const [explorerMoves, setExplorerMoves] = useState<ExplorerMove[]>([]);
   const [explorerTotal, setExplorerTotal] = useState(0);
+  const [explorerLoading, setExplorerLoading] = useState(true);
   const [dbPick, setDbPick] = useState<ExplorerMove | null>(null);
   const [dbPickApproved, setDbPickApproved] = useState(false);
   const [showExplorer, setShowExplorer] = useState(false);
@@ -434,11 +435,13 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
 
   useEffect(() => {
     let cancelled = false;
+    setExplorerLoading(true);
     fetchExplorerMoves(leak.fenBefore, leak.sideToMove).then(async (result) => {
       if (cancelled) return;
       const filteredMoves = result.moves.filter((m) => m.totalGames >= 10);
       setExplorerMoves(filteredMoves);
       setExplorerTotal(result.totalGames);
+      setExplorerLoading(false);
 
       // Check if the user's move is in the explorer with decent stats
       const userMoveInDb = filteredMoves.find(
@@ -1573,6 +1576,16 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                     )}
                   </div>
                   </>
+                  ) : explorerLoading ? (
+                  <div className="px-3.5 py-4 text-center">
+                    <div className="inline-flex items-center gap-2">
+                      <svg className="h-4 w-4 animate-spin text-blue-400" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      <p className="text-xs text-slate-400">Loading explorer data…</p>
+                    </div>
+                  </div>
                   ) : (
                   <div className="px-3.5 py-4 text-center">
                     <p className="text-xs text-slate-500">
