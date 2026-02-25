@@ -27,10 +27,32 @@ class StockfishClient {
   private async ensureReady(): Promise<void> {
     if (this.initialized) return;
 
-    this.worker = new Worker("/stockfish-18-lite.js", { type: "classic" });
+    try {
+      this.worker = new Worker("/stockfish-18-lite.js", { type: "classic" });
+    } catch (err) {
+      throw new Error(
+        "Failed to start the analysis engine. Your browser may not support WebAssembly workers."
+      );
+    }
 
-    await this.sendAndWaitFor("uci", (line) => line.trim() === "uciok");
-    await this.sendAndWaitFor("isready", (line) => line.trim() === "readyok");
+    try {
+      await this.sendAndWaitFor("uci", (line) => line.trim() === "uciok");
+      await this.sendAndWaitFor("isready", (line) => line.trim() === "readyok");
+    } catch (err) {
+      // Clean up the broken worker so a retry can attempt a fresh start
+      this.worker?.terminate();
+      this.worker = null;
+
+      const msg = err instanceof Error ? err.message : String(err);
+
+      if (msg.includes("doesn't parse") || msg.includes("CompileError") || msg.includes("Aborted")) {
+        throw new Error(
+          "The analysis engine failed to load (WASM error). " +
+          "Please try reloading the page. If the issue persists your browser may not fully support WebAssembly threads."
+        );
+      }
+      throw err;
+    }
 
     this.initialized = true;
   }

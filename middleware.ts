@@ -12,8 +12,8 @@ export const config = {
     /*
      * Match all paths except:
      * - _next/static, _next/image, favicon.ico (Next.js internals)
-     * - Public assets
+     * - Public assets (images, wasm, stockfish worker files, sounds, robots.txt)
      */
-    "/((?!_next/static|_next/image|favicon\\.ico|stockfish-18-lite\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|stockfish-18-lite\\.js|stockfish-18-lite\\.wasm|stockfish\\.wasm|stockfish\\.worker\\.js|robots\\.txt|sounds/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|wasm)$).*)",
   ],
 };
