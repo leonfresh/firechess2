@@ -14,6 +14,10 @@ class StockfishClient {
   private initialized = false;
   private evalCache = new Map<string, LocalEngineEval | null>();
   private queue: Promise<void> = Promise.resolve();
+  private _pendingTasks = 0;
+
+  /** Number of evaluation tasks currently queued or in-flight on this worker. */
+  get pendingTasks(): number { return this._pendingTasks; }
 
   private enqueue<T>(task: () => Promise<T>): Promise<T> {
     const run = this.queue.then(task, task);
@@ -175,23 +179,118 @@ class StockfishClient {
       }
     }
 
-    return this.enqueue(async () => {
-      if (this.evalCache.has(cacheKey)) {
-        return this.evalCache.get(cacheKey)!;
-      }
+    this._pendingTasks++;
+    try {
+      return await this.enqueue(async () => {
+        if (this.evalCache.has(cacheKey)) {
+          return this.evalCache.get(cacheKey)!;
+        }
 
-      const line = await this.analyzeFenInternal(fen, depth, 0);
-      const parsed = line ? { cp: line.cp, bestMove: line.bestMove } : null;
-      this.evalCache.set(cacheKey, parsed);
-      return parsed;
-    });
+        const line = await this.analyzeFenInternal(fen, depth, 0);
+        const parsed = line ? { cp: line.cp, bestMove: line.bestMove } : null;
+        this.evalCache.set(cacheKey, parsed);
+        return parsed;
+      });
+    } finally {
+      this._pendingTasks--;
+    }
   }
 
   async getPrincipalVariation(fen: string, maxPlies = 10, depth = 12): Promise<LocalEngineLine | null> {
-    return this.enqueue(async () => {
-      return this.analyzeFenInternal(fen, depth, maxPlies);
-    });
+    this._pendingTasks++;
+    try {
+      return await this.enqueue(async () => {
+        return this.analyzeFenInternal(fen, depth, maxPlies);
+      });
+    } finally {
+      this._pendingTasks--;
+    }
+  }
+
+  /** Terminate the underlying Web Worker and release resources. */
+  destroy(): void {
+    this.worker?.terminate();
+    this.worker = null;
+    this.initialized = false;
+    this.evalCache.clear();
+  }
+}
+
+/* ================================================================
+ * StockfishPool — distributes evaluations across N workers for
+ * parallel analysis. Falls back gracefully to a single worker
+ * when Web Workers or hardwareConcurrency are unavailable.
+ * ================================================================ */
+
+const DEFAULT_POOL_SIZE =
+  typeof navigator !== "undefined"
+    ? Math.min(navigator.hardwareConcurrency || 2, 4)
+    : 2;
+
+export class StockfishPool {
+  private workers: StockfishClient[] = [];
+  private evalCache = new Map<string, LocalEngineEval | null>();
+  /** Number of Stockfish Web Workers in the pool. */
+  readonly size: number;
+
+  constructor(size?: number) {
+    this.size = size ?? DEFAULT_POOL_SIZE;
+  }
+
+  private ensureWorkers(): void {
+    if (this.workers.length > 0) return;
+    for (let i = 0; i < this.size; i++) {
+      this.workers.push(new StockfishClient());
+    }
+  }
+
+  /** Pick the worker with the fewest pending tasks. */
+  private pickWorker(): StockfishClient {
+    this.ensureWorkers();
+    let best = this.workers[0];
+    for (let i = 1; i < this.workers.length; i++) {
+      if (this.workers[i].pendingTasks < best.pendingTasks) {
+        best = this.workers[i];
+      }
+    }
+    return best;
+  }
+
+  async evaluateFen(fen: string, depth = 10): Promise<LocalEngineEval | null> {
+    const cacheKey = `${fen}|d${depth}`;
+
+    if (this.evalCache.has(cacheKey)) {
+      return this.evalCache.get(cacheKey)!;
+    }
+
+    // Reuse a higher-depth cached result if available
+    for (const [key, val] of this.evalCache) {
+      if (!key.startsWith(`${fen}|d`)) continue;
+      const cachedDepth = parseInt(key.split("|d")[1], 10);
+      if (cachedDepth > depth && val) {
+        this.evalCache.set(cacheKey, val);
+        return val;
+      }
+    }
+
+    const worker = this.pickWorker();
+    const result = await worker.evaluateFen(fen, depth);
+    this.evalCache.set(cacheKey, result);
+    return result;
+  }
+
+  async getPrincipalVariation(fen: string, maxPlies = 10, depth = 12): Promise<LocalEngineLine | null> {
+    const worker = this.pickWorker();
+    return worker.getPrincipalVariation(fen, maxPlies, depth);
+  }
+
+  /** Terminate all workers and free resources. */
+  destroy(): void {
+    for (const w of this.workers) w.destroy();
+    this.workers = [];
+    this.evalCache.clear();
   }
 }
 
 export const stockfishClient = new StockfishClient();
+export const stockfishPool = new StockfishPool();

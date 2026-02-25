@@ -1,5 +1,5 @@
 import { Chess } from "chess.js";
-import { stockfishClient } from "@/lib/stockfish-client";
+import { stockfishPool } from "@/lib/stockfish-client";
 import { fetchExplorerMoves } from "@/lib/lichess-explorer";
 import type {
   AnalyzeResponse,
@@ -99,6 +99,27 @@ const MIN_POSITION_REPEATS = 3;
 const CP_LOSS_THRESHOLD = 100;
 const DEFAULT_MAX_GAMES = 300;
 const DEFAULT_MAX_OPENING_MOVES = 30;
+
+/**
+ * Process items concurrently with a fixed concurrency limit.
+ * Each "lane" picks the next unprocessed item, so all lanes stay busy.
+ */
+async function parallelForEach<T>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T, index: number) => Promise<void>
+): Promise<void> {
+  let nextIndex = 0;
+  const lane = async () => {
+    while (nextIndex < items.length) {
+      const i = nextIndex++;
+      await fn(items[i], i);
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, items.length) }, lane)
+  );
+}
 
 function normalizeName(name: string): string {
   return name.trim().toLowerCase();
@@ -1137,19 +1158,19 @@ export async function analyzeOpeningLeaksInBrowser(
     percent: 58,
   });
 
-  for (let index = 0; index < repeatedEntries.length; index += 1) {
-    const [fenBefore, data] = repeatedEntries[index];
-
+  let evalCompleted = 0;
+  await parallelForEach(repeatedEntries, stockfishPool.size, async ([fenBefore, data], index) => {
     repeatedPositions += 1;
+    evalCompleted++;
 
-    if (index % 5 === 0 || index === repeatedEntries.length - 1) {
+    if (evalCompleted % 5 === 0 || evalCompleted === repeatedEntries.length) {
       emitProgress(options, {
         phase: "eval",
         message: `🧠 Evaluating positions`,
-        detail: `Position ${index + 1} of ${repeatedEntries.length}`,
-        current: index + 1,
+        detail: `Position ${evalCompleted} of ${repeatedEntries.length}`,
+        current: evalCompleted,
         total: repeatedEntries.length,
-        percent: 58 + Math.round(((index + 1) / repeatedEntries.length) * 22),
+        percent: 58 + Math.round((evalCompleted / repeatedEntries.length) * 22),
       });
     }
 
@@ -1163,7 +1184,7 @@ export async function analyzeOpeningLeaksInBrowser(
       }
     }
 
-    if (!chosenMove) continue;
+    if (!chosenMove) return;
 
     const fenAfter = computeFenAfterMove(fenBefore, chosenMove);
     if (!fenAfter) {
@@ -1179,11 +1200,11 @@ export async function analyzeOpeningLeaksInBrowser(
         flagged: false,
         skippedReason: "invalid_move"
       });
-      continue;
+      return;
     }
 
     const sideToMove: PlayerColor = fenBefore.includes(" w ") ? "white" : "black";
-    const beforeEval = await stockfishClient.evaluateFen(fenBefore, engineDepth);
+    const beforeEval = await stockfishPool.evaluateFen(fenBefore, engineDepth);
 
     if (!beforeEval) {
       positionTraces.push({
@@ -1198,7 +1219,7 @@ export async function analyzeOpeningLeaksInBrowser(
         flagged: false,
         skippedReason: "missing_eval"
       });
-      continue;
+      return;
     }
 
     // Early-exit: if user played the engine's best move, skip the 2nd eval call
@@ -1215,10 +1236,10 @@ export async function analyzeOpeningLeaksInBrowser(
         cpLoss: 0,
         flagged: false
       });
-      continue;
+      return;
     }
 
-    const afterEval = await stockfishClient.evaluateFen(fenAfter, engineDepth);
+    const afterEval = await stockfishPool.evaluateFen(fenAfter, engineDepth);
 
     if (!afterEval) {
       positionTraces.push({
@@ -1233,7 +1254,7 @@ export async function analyzeOpeningLeaksInBrowser(
         flagged: false,
         skippedReason: "missing_eval"
       });
-      continue;
+      return;
     }
 
     const evalBefore = scoreToCpFromUserPerspective(beforeEval.cp, sideToMove, sideToMove);
@@ -1262,7 +1283,7 @@ export async function analyzeOpeningLeaksInBrowser(
       flagged
     });
 
-    if (!flagged) continue;
+    if (!flagged) return;
 
     // ── Database validation: check if the Lichess DB approves this move ──
     // Formula-based: more games + higher win rate → higher CPL tolerance.
@@ -1305,7 +1326,7 @@ export async function analyzeOpeningLeaksInBrowser(
       userDraws: data.moveOutcomes.get(chosenMove)?.d ?? 0,
       userLosses: data.moveOutcomes.get(chosenMove)?.l ?? 0,
     });
-  }
+  });
 
   // Real leaks first (sorted by cpLoss desc), then DB-approved sidelines
   leaks.sort((a, b) => {
@@ -1331,8 +1352,8 @@ export async function analyzeOpeningLeaksInBrowser(
     });
   }
 
-  for (let oIdx = 0; oIdx < oneOffEntries.length && oneOffMistakes.length < MAX_ONE_OFFS; oIdx++) {
-    const [fenBefore, data] = oneOffEntries[oIdx];
+  await parallelForEach(oneOffEntries, stockfishPool.size, async ([fenBefore, data], oIdx) => {
+    if (oneOffMistakes.length >= MAX_ONE_OFFS) return;
 
     let chosenMove = "";
     let chosenCount = -1;
@@ -1342,35 +1363,35 @@ export async function analyzeOpeningLeaksInBrowser(
         chosenCount = count;
       }
     }
-    if (!chosenMove) continue;
+    if (!chosenMove) return;
 
     const fenAfter = computeFenAfterMove(fenBefore, chosenMove);
-    if (!fenAfter) continue;
+    if (!fenAfter) return;
 
     const sideToMove: PlayerColor = fenBefore.includes(" w ") ? "white" : "black";
 
     // Quick screen at low depth first
-    const screenBefore = await stockfishClient.evaluateFen(fenBefore, ONE_OFF_SCREEN_DEPTH);
-    const screenAfter = await stockfishClient.evaluateFen(fenAfter, ONE_OFF_SCREEN_DEPTH);
-    if (!screenBefore || !screenAfter) continue;
+    const screenBefore = await stockfishPool.evaluateFen(fenBefore, ONE_OFF_SCREEN_DEPTH);
+    const screenAfter = await stockfishPool.evaluateFen(fenAfter, ONE_OFF_SCREEN_DEPTH);
+    if (!screenBefore || !screenAfter) return;
 
     const screenEvalBefore = scoreToCpFromUserPerspective(screenBefore.cp, sideToMove, sideToMove);
     const opponentToMove: PlayerColor = sideToMove === "white" ? "black" : "white";
     const screenEvalAfter = scoreToCpFromUserPerspective(screenAfter.cp, opponentToMove, sideToMove);
     const screenCpLoss = screenEvalBefore - screenEvalAfter;
 
-    if (screenCpLoss < ONE_OFF_CP_THRESHOLD) continue;
+    if (screenCpLoss < ONE_OFF_CP_THRESHOLD) return;
 
     // Confirm at full depth
-    const beforeEval = await stockfishClient.evaluateFen(fenBefore, engineDepth);
-    const afterEval = await stockfishClient.evaluateFen(fenAfter, engineDepth);
-    if (!beforeEval || !afterEval) continue;
+    const beforeEval = await stockfishPool.evaluateFen(fenBefore, engineDepth);
+    const afterEval = await stockfishPool.evaluateFen(fenAfter, engineDepth);
+    if (!beforeEval || !afterEval) return;
 
     const evalBefore = scoreToCpFromUserPerspective(beforeEval.cp, sideToMove, sideToMove);
     const evalAfter = scoreToCpFromUserPerspective(afterEval.cp, opponentToMove, sideToMove);
     const cpLoss = evalBefore - evalAfter;
 
-    if (cpLoss < ONE_OFF_CP_THRESHOLD) continue;
+    if (cpLoss < ONE_OFF_CP_THRESHOLD) return;
 
     const tags = deriveLeakTags({
       fenBefore,
@@ -1401,7 +1422,7 @@ export async function analyzeOpeningLeaksInBrowser(
     } catch { /* skip */ }
 
     // Don't flag DB-approved sidelines as one-off mistakes
-    if (dbApproved) continue;
+    if (dbApproved) return;
 
     oneOffMistakes.push({
       fenBefore,
@@ -1420,7 +1441,7 @@ export async function analyzeOpeningLeaksInBrowser(
       userDraws: data.moveOutcomes.get(chosenMove)?.d ?? 0,
       userLosses: data.moveOutcomes.get(chosenMove)?.l ?? 0,
     });
-  }
+  });
 
   oneOffMistakes.sort((a, b) => b.cpLoss - a.cpLoss);
 
@@ -1450,9 +1471,12 @@ export async function analyzeOpeningLeaksInBrowser(
 
   const seenTacticFens = new Set<string>();
 
-  for (let gameIndex = 0; gameIndex < games.length; gameIndex += 1) {
-    const game = games[gameIndex];
-    if (!game.moves) continue;
+  let tacticsGamesCompleted = 0;
+  await parallelForEach(
+    games.map((game, i) => ({ game, gameIndex: i })),
+    stockfishPool.size,
+    async ({ game, gameIndex }) => {
+    if (!game.moves) return;
 
     const whiteName = game.whiteName;
     const blackName = game.blackName;
@@ -1465,7 +1489,7 @@ export async function analyzeOpeningLeaksInBrowser(
           ? "black"
           : null;
 
-    if (!userColor) continue;
+    if (!userColor) return;
 
     // Collect rating if not already done via openings scan
     if (!doOpenings) {
@@ -1473,14 +1497,15 @@ export async function analyzeOpeningLeaksInBrowser(
       if (gameRating && gameRating > 0) playerRatings.push(gameRating);
     }
 
-    if (gameIndex % 10 === 0 || gameIndex === games.length - 1) {
+    tacticsGamesCompleted++;
+    if (tacticsGamesCompleted % 10 === 0 || tacticsGamesCompleted === games.length) {
       emitProgress(options, {
         phase: "tactics",
         message: `⚔️ Scanning for missed tactics`,
-        detail: `Game ${gameIndex + 1} of ${games.length}`,
-        current: gameIndex + 1,
+        detail: `Game ${tacticsGamesCompleted} of ${games.length}`,
+        current: tacticsGamesCompleted,
         total: games.length,
-        percent: tacticsStart + Math.round(((gameIndex + 1) / games.length) * tacticsSpan),
+        percent: tacticsStart + Math.round((tacticsGamesCompleted / games.length) * tacticsSpan),
       });
     }
 
@@ -1511,7 +1536,7 @@ export async function analyzeOpeningLeaksInBrowser(
         if (hasForcingMoves) {
           // === Two-pass depth screening ===
           // Pass 1: cheap screen at low depth
-          const screenBefore = await stockfishClient.evaluateFen(fenBefore, SCREEN_DEPTH);
+          const screenBefore = await stockfishPool.evaluateFen(fenBefore, SCREEN_DEPTH);
           if (!screenBefore || !screenBefore.bestMove) {
             const ok = applyMoveToken(chess, token);
             if (!ok) break;
@@ -1545,7 +1570,7 @@ export async function analyzeOpeningLeaksInBrowser(
             if (!ok) break;
             continue;
           }
-          const screenAfter = await stockfishClient.evaluateFen(screenFenAfter, SCREEN_DEPTH);
+          const screenAfter = await stockfishPool.evaluateFen(screenFenAfter, SCREEN_DEPTH);
           if (!screenAfter) {
             const ok = applyMoveToken(chess, token);
             if (!ok) break;
@@ -1576,7 +1601,7 @@ export async function analyzeOpeningLeaksInBrowser(
           }
 
           // === Pass 2: confirm at full depth ===
-          const beforeEval = await stockfishClient.evaluateFen(fenBefore, engineDepth);
+          const beforeEval = await stockfishPool.evaluateFen(fenBefore, engineDepth);
 
           if (beforeEval && beforeEval.bestMove) {
             const bestMoveSan = sanForMove(fenBefore, beforeEval.bestMove);
@@ -1591,7 +1616,7 @@ export async function analyzeOpeningLeaksInBrowser(
                 const fenAfterUser = computeFenAfterMove(fenBefore, token);
 
                 if (fenAfterUser) {
-                  const afterEval = await stockfishClient.evaluateFen(fenAfterUser, engineDepth);
+                  const afterEval = await stockfishPool.evaluateFen(fenAfterUser, engineDepth);
 
                   if (afterEval) {
                     const cpBefore = scoreToCpFromUserPerspective(
@@ -1662,7 +1687,7 @@ export async function analyzeOpeningLeaksInBrowser(
       const ok = applyMoveToken(chess, token);
       if (!ok) break;
     }
-  }
+  });
 
   missedTactics.sort((a, b) => b.cpLoss - a.cpLoss);
   } // end if (doTactics)
@@ -1696,11 +1721,14 @@ export async function analyzeOpeningLeaksInBrowser(
 
   const ENDGAME_SCREEN_DEPTH = 8;
 
-  for (let gameIndex = 0; gameIndex < games.length; gameIndex += 1) {
-    if (endgameMistakes.length >= MAX_ENDGAME_MISTAKES) break;
+  let endgameGamesCompleted = 0;
+  await parallelForEach(
+    games.map((game, i) => ({ game, gameIndex: i })),
+    stockfishPool.size,
+    async ({ game, gameIndex }) => {
+    if (endgameMistakes.length >= MAX_ENDGAME_MISTAKES) return;
 
-    const game = games[gameIndex];
-    if (!game.moves) continue;
+    if (!game.moves) return;
 
     const target = normalizeName(username);
     const userColor: PlayerColor | null =
@@ -1709,7 +1737,7 @@ export async function analyzeOpeningLeaksInBrowser(
         : game.blackName && normalizeName(game.blackName) === target
           ? "black"
           : null;
-    if (!userColor) continue;
+    if (!userColor) return;
 
     // Collect rating if needed
     if (!doOpenings && !doTactics) {
@@ -1717,14 +1745,15 @@ export async function analyzeOpeningLeaksInBrowser(
       if (gameRating && gameRating > 0) playerRatings.push(gameRating);
     }
 
-    if (gameIndex % 10 === 0 || gameIndex === games.length - 1) {
+    endgameGamesCompleted++;
+    if (endgameGamesCompleted % 10 === 0 || endgameGamesCompleted === games.length) {
       emitProgress(options, {
         phase: "endgames",
         message: "♟️ Scanning endgames",
-        detail: `Game ${gameIndex + 1} of ${games.length}`,
-        current: gameIndex + 1,
+        detail: `Game ${endgameGamesCompleted} of ${games.length}`,
+        current: endgameGamesCompleted,
         total: games.length,
-        percent: endgameStart + Math.round(((gameIndex + 1) / games.length) * endgameSpan),
+        percent: endgameStart + Math.round((endgameGamesCompleted / games.length) * endgameSpan),
       });
     }
 
@@ -1746,7 +1775,7 @@ export async function analyzeOpeningLeaksInBrowser(
 
         // Get eval at endgame start to track conversion
         if (sideToMove === userColor) {
-          const startEv = await stockfishClient.evaluateFen(fenBefore, Math.min(engineDepth, 12));
+          const startEv = await stockfishPool.evaluateFen(fenBefore, Math.min(engineDepth, 12));
           if (startEv) {
             endgameStartEval = scoreToCpFromUserPerspective(startEv.cp, sideToMove, userColor);
           }
@@ -1778,7 +1807,7 @@ export async function analyzeOpeningLeaksInBrowser(
 
         // Evaluate the user's endgame move — two-pass depth screening
         // Pass 1: cheap screen at low depth
-        const screenBefore = await stockfishClient.evaluateFen(fenBefore, ENDGAME_SCREEN_DEPTH);
+        const screenBefore = await stockfishPool.evaluateFen(fenBefore, ENDGAME_SCREEN_DEPTH);
         if (!screenBefore || !screenBefore.bestMove) {
           totalEndgameMoves += 1;
           const ok = applyMoveToken(chess, token);
@@ -1803,7 +1832,7 @@ export async function analyzeOpeningLeaksInBrowser(
           continue;
         }
 
-        const screenAfter = await stockfishClient.evaluateFen(fenAfterUser, ENDGAME_SCREEN_DEPTH);
+        const screenAfter = await stockfishPool.evaluateFen(fenAfterUser, ENDGAME_SCREEN_DEPTH);
         if (!screenAfter) {
           totalEndgameMoves += 1;
           const ok = applyMoveToken(chess, token);
@@ -1831,14 +1860,14 @@ export async function analyzeOpeningLeaksInBrowser(
         }
 
         // Pass 2: confirm at full depth
-        const beforeEval = await stockfishClient.evaluateFen(fenBefore, engineDepth);
+        const beforeEval = await stockfishPool.evaluateFen(fenBefore, engineDepth);
 
         if (beforeEval && beforeEval.bestMove) {
 
           if (userUci) {
 
             if (fenAfterUser) {
-              const afterEval = await stockfishClient.evaluateFen(fenAfterUser, engineDepth);
+              const afterEval = await stockfishPool.evaluateFen(fenAfterUser, engineDepth);
 
               if (afterEval) {
                 const cpBefore = scoreToCpFromUserPerspective(
@@ -1931,7 +1960,7 @@ export async function analyzeOpeningLeaksInBrowser(
         }
       }
     }
-  }
+  });
 
   endgameMistakes.sort((a, b) => b.cpLoss - a.cpLoss);
   } // end if (doEndgames)
