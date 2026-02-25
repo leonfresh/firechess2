@@ -13,10 +13,7 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: [
-          // "credentialless" enables SharedArrayBuffer (needed for Stockfish
-          // WASM threads) while still allowing cross-origin fetch() to APIs
-          // like explorer.lichess.ovh and api.chess.com that don't send CORP.
-          { key: "Cross-Origin-Embedder-Policy", value: "credentialless" },
+          { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" }
         ]
       },

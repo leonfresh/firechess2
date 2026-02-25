@@ -436,7 +436,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     let cancelled = false;
     fetchExplorerMoves(leak.fenBefore, leak.sideToMove).then(async (result) => {
       if (cancelled) return;
-      const filteredMoves = result.moves.filter((m) => m.totalGames >= 50);
+      const filteredMoves = result.moves.filter((m) => m.totalGames >= 10);
       setExplorerMoves(filteredMoves);
       setExplorerTotal(result.totalGames);
 
@@ -1426,7 +1426,6 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
           })()}
 
           {/* Lichess Opening Explorer */}
-          {explorerMoves.length > 0 && (
             <div className="space-y-2">
               <button
                 type="button"
@@ -1442,7 +1441,9 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                 <div className="min-w-0 flex-1">
                   <p className="text-[10px] font-medium uppercase tracking-wider text-blue-400/70">Opening Explorer</p>
                   <p className="mt-0.5 text-xs text-slate-400">
-                    What other players chose here · {explorerTotal.toLocaleString()} games in database
+                    {explorerTotal > 0
+                      ? `What other players chose here · ${explorerTotal.toLocaleString()} games in database`
+                      : "See what other players chose in this position"}
                   </p>
                 </div>
                 <svg
@@ -1456,6 +1457,8 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
 
               {showExplorer && (
                 <div className="animate-fade-in overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.02]">
+                  {explorerMoves.length > 0 ? (
+                  <>
                   {/* Info tooltip */}
                   <div className="border-b border-white/[0.04] px-3.5 py-2">
                     <p className="text-[11px] text-slate-500">
@@ -1569,6 +1572,15 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                       </span>
                     )}
                   </div>
+                  </>
+                  ) : (
+                  <div className="px-3.5 py-4 text-center">
+                    <p className="text-xs text-slate-500">
+                      This position is too deep or rare for the Lichess database.
+                      No games with enough occurrences found.
+                    </p>
+                  </div>
+                  )}
                 </div>
               )}
 
@@ -1594,7 +1606,6 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                 </div>
               )}
             </div>
-          )}
 
           {/* Tags */}
           {!!leak.tags?.length && (
