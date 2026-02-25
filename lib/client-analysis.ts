@@ -1366,7 +1366,8 @@ export async function analyzeOpeningLeaksInBrowser(
   /* ── Phase: Missed Tactics Detection ─────────────────────────── */
 
   const TACTIC_CP_THRESHOLD = 200;
-  const SCREEN_DEPTH = 8; // cheap pre-screen depth
+  // When tactics is a side-scan (openings mode), use cheaper screen depth for speed
+  const SCREEN_DEPTH = (scanMode === "openings") ? 5 : 8;
   const SCREEN_CP_THRESHOLD = 100; // minimum CPL at screen depth to confirm at full depth
   const MAX_TACTICS = options?.maxTactics ?? Infinity;
   const missedTactics: MissedTactic[] = [];

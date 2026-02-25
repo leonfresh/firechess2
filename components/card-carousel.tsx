@@ -78,31 +78,33 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
   return (
     <div className="space-y-3">
       {/* Navigation header */}
-      <div className="flex items-center justify-between px-1">
+      <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
         <button
           type="button"
           onClick={goPrev}
           disabled={activeIndex === 0}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.04] text-slate-400 transition-colors hover:bg-white/[0.08] hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:pointer-events-none"
           aria-label="Previous card"
         >
-          <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L9.832 10l2.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
           </svg>
+          Prev
         </button>
 
-        <span className="text-xs font-medium tabular-nums text-slate-400">
-          {activeIndex + 1} <span className="text-slate-600">/</span> {total}
+        <span className="text-sm font-semibold tabular-nums text-white">
+          {activeIndex + 1} <span className="text-slate-500">of</span> {total}
         </span>
 
         <button
           type="button"
           onClick={goNext}
           disabled={activeIndex === total - 1}
-          className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.04] text-slate-400 transition-colors hover:bg-white/[0.08] hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:pointer-events-none"
           aria-label="Next card"
         >
-          <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+          Next
+          <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L10.168 10 6.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
           </svg>
         </button>
@@ -140,6 +142,34 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
               aria-label={`Go to card ${i + 1}`}
             />
           ))}
+        </div>
+      )}
+
+      {/* Bottom navigation hint */}
+      {total > 1 && (
+        <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+          <button
+            type="button"
+            onClick={goPrev}
+            disabled={activeIndex === 0}
+            className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-white/[0.08] hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+          >
+            <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L9.832 10l2.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+            </svg>
+            Prev Position
+          </button>
+          <button
+            type="button"
+            onClick={goNext}
+            disabled={activeIndex === total - 1}
+            className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-white/[0.08] hover:text-white disabled:opacity-30 disabled:pointer-events-none"
+          >
+            Next Position
+            <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L10.168 10 6.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+            </svg>
+          </button>
         </div>
       )}
 
