@@ -7,6 +7,8 @@ import { HeroDemoBoard } from "@/components/hero-demo-board";
 import { MistakeCard } from "@/components/mistake-card";
 import { TacticCard } from "@/components/tactic-card";
 import { EndgameCard } from "@/components/endgame-card";
+import { CardCarousel, ViewModeToggle } from "@/components/card-carousel";
+import type { CardViewMode } from "@/components/card-carousel";
 import { useSession } from "@/components/session-provider";
 import { StrengthsRadar, RadarLegend, InsightCards, computeRadarData } from "@/components/radar-chart";
 import { analyzeOpeningLeaksInBrowser } from "@/lib/client-analysis";
@@ -53,6 +55,10 @@ export default function HomePage() {
   const [source, setSource] = useState<AnalysisSource | null>(null);
   const [scanMode, setScanMode] = useState<ScanMode>("openings");
   const [speed, setSpeed] = useState<TimeControl[]>(["all"]);
+  const [cardViewMode, setCardViewMode] = useState<CardViewMode>(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 640) return "carousel";
+    return "list";
+  });
   const [lastRunConfig, setLastRunConfig] =
     useState<{ maxGames: number; maxMoves: number; cpThreshold: number; engineDepth: number; source: AnalysisSource; scanMode: ScanMode; speed: TimeControl[] } | null>(null);
   const [state, setState] = useState<RequestState>("idle");
@@ -120,6 +126,7 @@ export default function HomePage() {
         speed?: string | string[];
         gameRangeMode?: string;
         sinceDate?: string;
+        cardViewMode?: string;
       };
 
       if (parsed.gameRangeMode === "count" || parsed.gameRangeMode === "since") {
@@ -142,6 +149,9 @@ export default function HomePage() {
       }
       if (parsed.source === "chesscom" || parsed.source === "lichess") {
         setSource(parsed.source);
+      }
+      if (parsed.cardViewMode === "carousel" || parsed.cardViewMode === "list") {
+        setCardViewMode(parsed.cardViewMode);
       }
       if (parsed.scanMode === "openings" || parsed.scanMode === "tactics" || parsed.scanMode === "endgames" || parsed.scanMode === "both") {
         setScanMode(parsed.scanMode as ScanMode);
@@ -175,13 +185,14 @@ export default function HomePage() {
           scanMode,
           speed,
           gameRangeMode,
-          sinceDate
+          sinceDate,
+          cardViewMode
         })
       );
     } catch {
       // ignore storage write failures
     }
-  }, [gameCount, moveCount, cpThreshold, engineDepth, source, scanMode, speed, gameRangeMode, sinceDate]);
+  }, [gameCount, moveCount, cpThreshold, engineDepth, source, scanMode, speed, gameRangeMode, sinceDate, cardViewMode]);
 
   const leaks = useMemo(() => result?.leaks ?? [], [result]);
   /** Leak count excluding DB-approved sidelines — used for radar/scoring so sidelines don't penalize */
@@ -1473,6 +1484,11 @@ export default function HomePage() {
                 </div>
               </div>
 
+              {/* View mode toggle */}
+              <div className="flex items-center justify-end">
+                <ViewModeToggle mode={cardViewMode} onChange={setCardViewMode} />
+              </div>
+
               {/* Opening Leaks Section */}
               {(lastRunConfig?.scanMode !== "tactics") && (
               <>
@@ -1508,21 +1524,22 @@ export default function HomePage() {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-6">
+                <CardCarousel
+                  viewMode={cardViewMode}
+                  footer={
+                    diagnostics && diagnostics.positionTraces.length > 0
+                      ? <DrillMode positions={diagnostics.positionTraces} excludeFens={dbApprovedFens} />
+                      : undefined
+                  }
+                >
                   {leaks.map((leak, idx) => (
-                    <div key={`${leak.fenBefore}-${leak.userMove}-${idx}`} className="animate-fade-in-up" style={{ animationDelay: `${idx * 80}ms` }}>
-                      <MistakeCard
-                        leak={leak}
-                        engineDepth={lastRunConfig?.engineDepth ?? engineDepth}
-                      />
-                    </div>
+                    <MistakeCard
+                      key={`${leak.fenBefore}-${leak.userMove}-${idx}`}
+                      leak={leak}
+                      engineDepth={lastRunConfig?.engineDepth ?? engineDepth}
+                    />
                   ))}
-
-                  {/* Opening Leaks Drill */}
-                  {diagnostics && diagnostics.positionTraces.length > 0 && (
-                    <DrillMode positions={diagnostics.positionTraces} excludeFens={dbApprovedFens} />
-                  )}
-                </div>
+                </CardCarousel>
               )}
               </>
               )}
@@ -1547,21 +1564,22 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="space-y-6">
+              <CardCarousel
+                viewMode={cardViewMode}
+                footer={
+                  oneOffMistakes.length > 0
+                    ? <DrillMode positions={[]} oneOffMistakes={oneOffMistakes} excludeFens={dbApprovedFens} />
+                    : undefined
+                }
+              >
                 {oneOffMistakes.map((leak, idx) => (
-                  <div key={`oneoff-${leak.fenBefore}-${leak.userMove}-${idx}`} className="animate-fade-in-up" style={{ animationDelay: `${idx * 80}ms` }}>
-                    <MistakeCard
-                      leak={leak}
-                      engineDepth={lastRunConfig?.engineDepth ?? engineDepth}
-                    />
-                  </div>
+                  <MistakeCard
+                    key={`oneoff-${leak.fenBefore}-${leak.userMove}-${idx}`}
+                    leak={leak}
+                    engineDepth={lastRunConfig?.engineDepth ?? engineDepth}
+                  />
                 ))}
-
-                {/* One-Off Opening Mistakes Drill */}
-                {oneOffMistakes.length > 0 && (
-                  <DrillMode positions={[]} oneOffMistakes={oneOffMistakes} excludeFens={dbApprovedFens} />
-                )}
-              </div>
+              </CardCarousel>
               </>
               )}
 
@@ -1662,51 +1680,48 @@ export default function HomePage() {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {missedTactics.map((tactic, idx) => (
-                    <div
+                <CardCarousel
+                  viewMode={cardViewMode}
+                  footer={
+                    <>
+                      {!hasProAccess && missedTactics.length >= FREE_TACTIC_SAMPLE && (
+                        <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.06] via-amber-600/[0.03] to-transparent p-8">
+                          <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-amber-500/10 blur-[60px]" />
+                          <div className="relative flex flex-col items-center gap-4 text-center">
+                            <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">🔒</span>
+                            <div>
+                              <h3 className="text-xl font-bold text-white">Unlock Full Tactics Scanner</h3>
+                              <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">
+                                You&apos;re seeing {FREE_TACTIC_SAMPLE} sample missed tactics. Pro unlocks the full scan with unlimited missed tactics, motif pattern analysis, time pressure detection, and dedicated tactics drill mode.
+                              </p>
+                            </div>
+                            <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+                              <Link
+                                href="/pricing"
+                                className="btn-amber flex h-11 items-center gap-2 px-6 text-sm font-bold"
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                                Upgrade to Pro — <span className="line-through decoration-1 opacity-60">$8</span> $5/mo
+                              </Link>
+                              <span className="text-xs text-slate-500">Launch pricing · Cancel anytime</span>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {(hasProAccess || missedTactics.length > 0) && (
+                        <DrillMode positions={[]} tactics={missedTactics} excludeFens={dbApprovedFens} />
+                      )}
+                    </>
+                  }
+                >
+                  {missedTactics.map((tactic) => (
+                    <TacticCard
                       key={`${tactic.fenBefore}-${tactic.userMove}-${tactic.gameIndex}`}
-                      className="animate-fade-in-up"
-                      style={{ animationDelay: `${idx * 80}ms` }}
-                    >
-                      <TacticCard
-                        tactic={tactic}
-                        engineDepth={lastRunConfig?.engineDepth ?? engineDepth}
-                      />
-                    </div>
+                      tactic={tactic}
+                      engineDepth={lastRunConfig?.engineDepth ?? engineDepth}
+                    />
                   ))}
-
-                  {/* Free user upgrade CTA */}
-                  {!hasProAccess && missedTactics.length >= FREE_TACTIC_SAMPLE && (
-                    <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.06] via-amber-600/[0.03] to-transparent p-8">
-                      <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-amber-500/10 blur-[60px]" />
-                      <div className="relative flex flex-col items-center gap-4 text-center">
-                        <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">🔒</span>
-                        <div>
-                          <h3 className="text-xl font-bold text-white">Unlock Full Tactics Scanner</h3>
-                          <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">
-                            You&apos;re seeing {FREE_TACTIC_SAMPLE} sample missed tactics. Pro unlocks the full scan with unlimited missed tactics, motif pattern analysis, time pressure detection, and dedicated tactics drill mode.
-                          </p>
-                        </div>
-                        <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
-                          <Link
-                            href="/pricing"
-                            className="btn-amber flex h-11 items-center gap-2 px-6 text-sm font-bold"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                            Upgrade to Pro — <span className="line-through decoration-1 opacity-60">$8</span> $5/mo
-                          </Link>
-                          <span className="text-xs text-slate-500">Launch pricing · Cancel anytime</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Tactics Drill — only for Pro or if they have tactics */}
-                  {(hasProAccess || missedTactics.length > 0) && (
-                    <DrillMode positions={[]} tactics={missedTactics} excludeFens={dbApprovedFens} />
-                  )}
-                </div>
+                </CardCarousel>
               )}
               </>
               )}
@@ -1841,25 +1856,22 @@ export default function HomePage() {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {endgameMistakes.map((mistake, idx) => (
-                    <div
+                <CardCarousel
+                  viewMode={cardViewMode}
+                  footer={
+                    hasProAccess && endgameMistakes.length > 0
+                      ? <DrillMode positions={[]} tactics={[]} endgameMistakes={endgameMistakes} excludeFens={dbApprovedFens} />
+                      : undefined
+                  }
+                >
+                  {endgameMistakes.map((mistake) => (
+                    <EndgameCard
                       key={`${mistake.fenBefore}-${mistake.userMove}-${mistake.gameIndex}`}
-                      className="animate-fade-in-up"
-                      style={{ animationDelay: `${idx * 80}ms` }}
-                    >
-                      <EndgameCard
-                        mistake={mistake}
-                        engineDepth={lastRunConfig?.engineDepth ?? engineDepth}
-                      />
-                    </div>
+                      mistake={mistake}
+                      engineDepth={lastRunConfig?.engineDepth ?? engineDepth}
+                    />
                   ))}
-
-                  {/* Endgame Drill */}
-                  {hasProAccess && endgameMistakes.length > 0 && (
-                    <DrillMode positions={[]} tactics={[]} endgameMistakes={endgameMistakes} excludeFens={dbApprovedFens} />
-                  )}
-                </div>
+                </CardCarousel>
               )}
               </>
               )}
