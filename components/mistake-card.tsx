@@ -1788,10 +1788,16 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                         key={tab}
                         type="button"
                         onClick={() => {
+                          // Stop any existing animation/explanation before switching tabs
+                          if (animating) stopAnimation();
+                          setExplaining(false);
                           setActiveExplainTab(tab);
-                          if (tab === "played") onExplainMistake();
-                          else if (tab === "best") onExplainBestMove();
-                          else if (tab === "db") onExplainDbMove();
+                          // Use setTimeout to let the state clear before starting new explanation
+                          setTimeout(() => {
+                            if (tab === "played") onExplainMistake();
+                            else if (tab === "best") onExplainBestMove();
+                            else if (tab === "db") onExplainDbMove();
+                          }, 50);
                         }}
                         className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                           activeExplainTab === tab

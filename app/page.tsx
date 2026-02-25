@@ -68,6 +68,8 @@ export default function HomePage() {
   const [result, setResult] = useState<AnalyzeResponse | null>(null);
   const [localProEnabled, setLocalProEnabled] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "duplicate" | "error">("idle");
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reportRef = useRef<HTMLElement>(null);
   const hasProAccess = sessionPlan === "pro" || localProEnabled;
   const gamesOverFreeLimit = gameRangeMode === "count" && gameCount > FREE_MAX_GAMES;
@@ -489,6 +491,14 @@ export default function HomePage() {
     });
     setResult(browserResult);
     setState("done");
+
+    // Toast + smooth scroll to report
+    setToast("✅ Your report is ready!");
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 4000);
+    setTimeout(() => {
+      reportRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 300);
   };
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -1198,6 +1208,18 @@ export default function HomePage() {
             </div>
           )}
 
+          {/* ─── Toast ─── */}
+          {toast && (
+            <div className="fixed bottom-6 left-1/2 z-[9999] -translate-x-1/2 animate-fade-in">
+              <div className="flex items-center gap-2.5 rounded-2xl border border-emerald-500/30 bg-slate-900/95 px-5 py-3 shadow-2xl backdrop-blur-sm">
+                <span className="text-sm font-medium text-emerald-300">{toast}</span>
+                <button type="button" onClick={() => setToast(null)} className="ml-1 text-slate-500 hover:text-slate-300 transition-colors">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* ─── Results ─── */}
           {state === "done" && result && (
             <section ref={reportRef} className="animate-fade-in-up space-y-8">
@@ -1636,14 +1658,88 @@ export default function HomePage() {
                       );
                     })()}
 
-                    {/* Pro upsell for free users */}
-                    {!hasProAccess && (
-                      <div className="mt-5 rounded-xl border border-violet-500/20 bg-violet-500/[0.04] px-4 py-3">
-                        <p className="text-xs text-slate-400">
-                          <span className="font-medium text-violet-400">🔒 Pro Breakdown</span> — Unlock color performance, emotional archetype, momentum analysis, comeback rate, game length trends, recent form, and streak details.
-                        </p>
-                      </div>
-                    )}
+                    {/* Pro upsell — blurred preview cards */}
+                    {!hasProAccess && (() => {
+                      const ms = result.mentalStats!;
+                      return (
+                        <div className="relative mt-5">
+                          {/* Blurred cards */}
+                          <div className="select-none blur-[6px] pointer-events-none">
+                            {/* Archetype + Recent Form row */}
+                            <div className="flex flex-wrap items-center gap-3">
+                              <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/[0.1] px-4 py-1.5 text-sm font-semibold text-violet-300">
+                                🧊 Ice Veins
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <span className="mr-1 text-[10px] font-medium uppercase tracking-wider text-slate-500">Last 10</span>
+                                {["W","L","W","W","D","L","W","W","L","W"].map((r, i) => (
+                                  <span key={i} className={`flex h-5 w-5 items-center justify-center rounded text-[10px] font-bold ${r === "W" ? "bg-emerald-500/20 text-emerald-400" : r === "L" ? "bg-red-500/20 text-red-400" : "bg-slate-500/20 text-slate-400"}`}>{r}</span>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Color performance row */}
+                            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                              <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-3">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/10 text-sm">♔</div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-slate-400">White · 42 games</span>
+                                    <span className="text-sm font-bold text-emerald-400">58.3%</span>
+                                  </div>
+                                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]"><div className="h-full w-[58%] rounded-full bg-white/60" /></div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-3">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-700/50 text-sm">♚</div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center justify-between">
+                                    <span className="text-xs text-slate-400">Black · 38 games</span>
+                                    <span className="text-sm font-bold text-amber-400">47.2%</span>
+                                  </div>
+                                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]"><div className="h-full w-[47%] rounded-full bg-slate-400/60" /></div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Deep breakdown stat cards */}
+                            <div className="mt-3 grid gap-3 sm:grid-cols-4">
+                              {["Momentum", "Early Losses", "Comebacks", "Mate Finish"].map((label) => (
+                                <div key={label} className="stat-card">
+                                  <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{label}</p>
+                                  <p className="mt-1 text-2xl font-bold text-emerald-400">42%</p>
+                                  <p className="mt-0.5 text-xs text-emerald-400 opacity-70">Average</p>
+                                </div>
+                              ))}
+                            </div>
+
+                            <div className="mt-3 grid gap-3 sm:grid-cols-4">
+                              {["Avg Win Len", "Avg Loss Len", "Best Run", "Worst Run"].map((label) => (
+                                <div key={label} className="stat-card">
+                                  <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{label}</p>
+                                  <p className="mt-1 text-2xl font-bold text-cyan-400">28</p>
+                                  <p className="mt-0.5 text-xs text-cyan-400 opacity-70">moves</p>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Overlay unlock CTA */}
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <div className="rounded-2xl border border-violet-500/30 bg-slate-900/90 px-6 py-4 text-center shadow-2xl backdrop-blur-sm">
+                              <p className="text-lg font-bold text-white">🔒 Pro Mental Breakdown</p>
+                              <p className="mt-1.5 max-w-xs text-xs text-slate-400">Unlock your emotional archetype, color win rates, momentum analysis, comeback rate, game length trends, and streak details.</p>
+                              <a
+                                href="/pricing"
+                                className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-violet-600 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-violet-500"
+                              >
+                                Upgrade to Pro
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
 
                     <div className="section-divider mt-6" />
                     <div className="mt-4">
