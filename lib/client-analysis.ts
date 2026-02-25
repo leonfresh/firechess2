@@ -1387,9 +1387,6 @@ export async function analyzeOpeningLeaksInBrowser(
   const seenTacticFens = new Set<string>();
 
   for (let gameIndex = 0; gameIndex < games.length; gameIndex += 1) {
-    // Early exit: if we already have enough detailed tactic samples, stop scanning
-    if (missedTactics.length >= MAX_TACTICS && MAX_TACTICS !== Infinity) break;
-
     const game = games[gameIndex];
     if (!game.moves) continue;
 
