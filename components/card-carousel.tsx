@@ -132,7 +132,7 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
           <button
             type="button"
             onClick={goPrev}
-            className="absolute left-0 top-1/2 z-10 -translate-y-1/2 flex h-10 w-7 items-center justify-center rounded-r-xl bg-black/50 text-white/60 backdrop-blur-sm transition-all hover:w-9 hover:bg-black/70 hover:text-white"
+            className="absolute left-0 top-[200px] z-10 flex h-10 w-7 items-center justify-center rounded-r-xl bg-black/50 text-white/60 backdrop-blur-sm transition-all hover:w-9 hover:bg-black/70 hover:text-white"
             aria-label="Previous card"
           >
             <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
@@ -146,7 +146,7 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
           <button
             type="button"
             onClick={goNext}
-            className="absolute right-0 top-1/2 z-10 -translate-y-1/2 flex h-10 w-7 items-center justify-center rounded-l-xl bg-black/50 text-white/60 backdrop-blur-sm transition-all hover:w-9 hover:bg-black/70 hover:text-white"
+            className="absolute right-0 top-[200px] z-10 flex h-10 w-7 items-center justify-center rounded-l-xl bg-black/50 text-white/60 backdrop-blur-sm transition-all hover:w-9 hover:bg-black/70 hover:text-white"
             aria-label="Next card"
           >
             <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
