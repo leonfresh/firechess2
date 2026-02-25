@@ -50,7 +50,7 @@ export default function HomePage() {
   const [moveCount, setMoveCount] = useState(20);
   const [cpThreshold, setCpThreshold] = useState(50);
   const [engineDepth, setEngineDepth] = useState(12);
-  const [source, setSource] = useState<AnalysisSource>("lichess");
+  const [source, setSource] = useState<AnalysisSource | null>(null);
   const [scanMode, setScanMode] = useState<ScanMode>("openings");
   const [speed, setSpeed] = useState<TimeControl[]>(["all"]);
   const [lastRunConfig, setLastRunConfig] =
@@ -485,7 +485,13 @@ export default function HomePage() {
 
     const trimmed = username.trim();
     if (!trimmed) {
-      setError("Please enter a Lichess username.");
+      setError("Please enter your chess username.");
+      setState("error");
+      return;
+    }
+
+    if (!source) {
+      setError("Please select a platform — Lichess or Chess.com.");
       setState("error");
       return;
     }
@@ -523,7 +529,7 @@ export default function HomePage() {
       const safeMoves = Math.min(30, Math.max(1, Math.floor(moveCount || 20)));
       const safeCpThreshold = Math.min(1000, Math.max(1, Math.floor(cpThreshold || 50)));
       const safeDepth = Math.min(24, Math.max(6, Math.floor(engineDepth || 12)));
-      const safeSource: AnalysisSource = source === "chesscom" ? "chesscom" : "lichess";
+      const safeSource: AnalysisSource = source!;
       setLastRunConfig({
         maxGames: safeGames,
         maxMoves: safeMoves,
@@ -856,7 +862,11 @@ export default function HomePage() {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="stat-card space-y-2">
                   <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Source<HelpTip text="Which chess platform to fetch your games from. Your username must match the platform you select." /></span>
-                  <div className="grid h-10 grid-cols-2 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1">
+                  <div className={`grid h-10 grid-cols-2 gap-1 rounded-lg border p-1 transition-colors duration-200 ${
+                    !source
+                      ? "border-amber-500/30 bg-amber-500/[0.06] ring-1 ring-amber-500/20"
+                      : "border-white/[0.06] bg-white/[0.02]"
+                  }`}>
                     <button
                       type="button"
                       onClick={() => setSource("lichess")}
@@ -880,6 +890,9 @@ export default function HomePage() {
                       Chess.com
                     </button>
                   </div>
+                  {!source && (
+                    <p className="text-[11px] font-medium text-amber-400/80">← Pick your platform</p>
+                  )}
                 </div>
 
                 <div className="stat-card space-y-2">
@@ -1438,7 +1451,7 @@ export default function HomePage() {
                   {lastRunConfig && (
                     <div className="flex items-center justify-between border-b border-white/[0.04] py-2 sm:border-0">
                       <span className="text-slate-400">Source</span>
-                      <span className="font-semibold capitalize text-white">{lastRunConfig.source}</span>
+                      <span className="font-semibold text-white">{lastRunConfig.source === "chesscom" ? "Chess.com" : "Lichess"}</span>
                     </div>
                   )}
                   <div className="flex items-center justify-between border-b border-white/[0.04] py-2 sm:border-0">
