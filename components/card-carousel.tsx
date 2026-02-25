@@ -110,20 +110,50 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
         </button>
       </div>
 
-      {/* Scrollable card track */}
-      <div
-        ref={scrollRef}
-        className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        {children.map((child, idx) => (
-          <div
-            key={idx}
-            data-idx={idx}
-            className="w-full flex-shrink-0 snap-center"
+      {/* Scrollable card track with edge arrow hints */}
+      <div className="relative">
+        <div
+          ref={scrollRef}
+          className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        >
+          {children.map((child, idx) => (
+            <div
+              key={idx}
+              data-idx={idx}
+              className="w-full flex-shrink-0 snap-center"
+            >
+              {child}
+            </div>
+          ))}
+        </div>
+
+        {/* Left arrow hint */}
+        {activeIndex > 0 && (
+          <button
+            type="button"
+            onClick={goPrev}
+            className="absolute left-0 top-1/2 z-10 -translate-y-1/2 flex h-10 w-7 items-center justify-center rounded-r-xl bg-black/50 text-white/60 backdrop-blur-sm transition-all hover:w-9 hover:bg-black/70 hover:text-white"
+            aria-label="Previous card"
           >
-            {child}
-          </div>
-        ))}
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L9.832 10l2.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+            </svg>
+          </button>
+        )}
+
+        {/* Right arrow hint */}
+        {activeIndex < total - 1 && (
+          <button
+            type="button"
+            onClick={goNext}
+            className="absolute right-0 top-1/2 z-10 -translate-y-1/2 flex h-10 w-7 items-center justify-center rounded-l-xl bg-black/50 text-white/60 backdrop-blur-sm transition-all hover:w-9 hover:bg-black/70 hover:text-white"
+            aria-label="Next card"
+          >
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L10.168 10 6.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Dot indicators (max 12 dots, collapse for large sets) */}

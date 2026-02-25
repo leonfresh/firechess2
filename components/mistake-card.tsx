@@ -424,6 +424,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   const [dbPickApproved, setDbPickApproved] = useState(false);
   const [showExplorer, setShowExplorer] = useState(false);
   const [userMoveExplorerData, setUserMoveExplorerData] = useState<ExplorerMove | null>(null);
+  const [openingName, setOpeningName] = useState<string | null>(null);
   const moveBadge = useMemo(
     () => classifyLossBadge(leak.cpLoss, leak.dbApproved, userMoveExplorerData),
     [leak.cpLoss, leak.dbApproved, userMoveExplorerData],
@@ -442,6 +443,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
       setExplorerMoves(filteredMoves);
       setExplorerTotal(result.totalGames);
       setExplorerLoading(false);
+      if (result.openingName) setOpeningName(result.openingName);
 
       // Check if the user's move is in the explorer with decent stats
       const userMoveInDb = filteredMoves.find(
@@ -1317,6 +1319,9 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
             <div className="flex items-start justify-between gap-3">
               <h3 className="text-lg font-bold text-white">
                 {moveBadge.label === "Sideline" ? "Offbeat Sideline" : "Repeated Opening Leak"}
+                {openingName && (
+                  <span className="ml-1 text-sm font-medium text-slate-400"> — {openingName}</span>
+                )}
               </h3>
               <span
                 className="shrink-0 rounded-lg px-2.5 py-1 text-xs font-bold text-white"

@@ -27,6 +27,10 @@ export type ExplorerResult = {
   totalGames: number;
   /** The strongest database pick (outlier), or null if nothing qualifies. */
   topPick: ExplorerMove | null;
+  /** Opening name from the Lichess database, e.g. "Dutch Defense" */
+  openingName?: string;
+  /** ECO code, e.g. "A80" */
+  openingEco?: string;
 };
 
 /* ------------------------------------------------------------------ */
@@ -129,7 +133,7 @@ export async function fetchExplorerMoves(
   fen: string,
   sideToMove: "white" | "black",
 ): Promise<ExplorerResult> {
-  const empty: ExplorerResult = { moves: [], totalGames: 0, topPick: null };
+  const empty: ExplorerResult = { moves: [], totalGames: 0, topPick: null, openingName: undefined, openingEco: undefined };
 
   // Check cache first
   const key = cacheKey(fen, sideToMove);
@@ -166,6 +170,9 @@ export async function fetchExplorerMoves(
             return empty;
           }
 
+          const openingName: string | undefined = data.opening?.name || undefined;
+          const openingEco: string | undefined = data.opening?.eco || undefined;
+
           const moves: ExplorerMove[] = (data.moves as any[]).map((m) => {
             const w = Number(m.white) || 0;
             const d = Number(m.draws) || 0;
@@ -187,7 +194,7 @@ export async function fetchExplorerMoves(
           /* ---------- Outlier detection ---------- */
           const qualifying = moves.filter((m) => m.totalGames >= MIN_GAMES);
           if (qualifying.length === 0) {
-            const result = { moves, totalGames, topPick: null };
+            const result = { moves, totalGames, topPick: null, openingName, openingEco };
             cache.set(key, { result, timestamp: Date.now() });
             return result;
           }
@@ -213,6 +220,8 @@ export async function fetchExplorerMoves(
             moves,
             totalGames,
             topPick: isOutlier ? best : null,
+            openingName,
+            openingEco,
           };
           cache.set(key, { result, timestamp: Date.now() });
           return result;

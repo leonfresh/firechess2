@@ -1124,13 +1124,13 @@ export default function HomePage() {
                     time: "1w",
                   },
                   {
-                    name: "Elena V.",
-                    handle: "@elenavchess",
-                    platform: "𝕏",
-                    rating: "1290 Chess.com",
+                    name: "montgomery_r",
+                    handle: "Hacker News",
+                    platform: "HN",
+                    rating: "",
                     avatar: "♗",
-                    text: "Finally something that explains WHY a move is bad, not just that it is. The engine lines with explanations helped me understand my openings so much better. Worth every penny.",
-                    time: "3d",
+                    text: "Brilliant idea, really useful — I've often thought 'I wonder what my better move is in this oft-repeated opening' and this tells me. The radar was surprising too — it told me my play falls off a cliff when I'm in a worse position. I would have guessed I'm quite good at battling on, so that was an eye opener.",
+                    time: "2h",
                   },
                   {
                     name: "James K.",
@@ -1165,7 +1165,7 @@ export default function HomePage() {
                           <span className="text-sm font-semibold text-slate-100">{t.name}</span>
                           <span className="text-[10px] text-slate-500">{t.platform}</span>
                         </div>
-                        <p className="text-xs text-slate-500">{t.handle} · {t.rating}</p>
+                        <p className="text-xs text-slate-500">{t.handle}{t.rating ? ` · ${t.rating}` : ""}</p>
                       </div>
                       <span className="text-[10px] text-slate-600">{t.time}</span>
                     </div>
