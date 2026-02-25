@@ -71,6 +71,7 @@ export default function HomePage() {
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reportRef = useRef<HTMLElement>(null);
+  const pngRef = useRef<HTMLDivElement>(null);
   const hasProAccess = sessionPlan === "pro" || localProEnabled;
   const gamesOverFreeLimit = gameRangeMode === "count" && gameCount > FREE_MAX_GAMES;
   const depthOverFreeLimit = engineDepth > FREE_MAX_DEPTH;
@@ -557,7 +558,7 @@ export default function HomePage() {
         cpThreshold: safeCpThreshold,
         engineDepth: safeDepth,
         source: safeSource,
-        scanMode,
+        scanMode: scanModeOverride ?? (!hasProAccess ? "both" : scanMode),
         speed
       });
 
@@ -1318,7 +1319,7 @@ export default function HomePage() {
                   <button
                     type="button"
                     onClick={async () => {
-                      const el = reportRef.current;
+                      const el = pngRef.current;
                       if (!el) return;
                       const btn = document.activeElement as HTMLButtonElement;
                       const origHTML = btn?.innerHTML;
@@ -1348,6 +1349,9 @@ export default function HomePage() {
                   </button>
                 </div>
               </div>
+
+              {/* ── PNG-exportable region ── */}
+              <div ref={pngRef} className="space-y-8">
 
               {/* Report Card */}
               {report && (
@@ -1821,6 +1825,8 @@ export default function HomePage() {
                 </div>
               )}
 
+              </div>{/* end pngRef wrapper */}
+
               {/* Summary stats */}
               <div className="glass-card p-5">
                 <div className="grid gap-x-8 gap-y-2 text-sm sm:grid-cols-2 lg:grid-cols-4">
@@ -1918,10 +1924,7 @@ export default function HomePage() {
                   <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">⚡</span>
                   <div className="flex-1">
                     <h2 className="text-2xl font-extrabold text-white tracking-tight">
-                      One-Off Opening Mistakes
-                      <span className="ml-3 inline-flex items-center rounded-full bg-amber-500/15 px-3 py-1 text-base font-bold text-amber-400">
-                        {oneOffMistakes.length}
-                      </span>
+                      You have <span className="text-amber-400">{oneOffMistakes.length}</span> One-Off Opening Mistake{oneOffMistakes.length !== 1 ? "s" : ""}
                     </h2>
                     <p className="mt-1 text-sm text-slate-400">
                       Significant opening mistakes found in individual games — not repeated patterns, but worth reviewing
