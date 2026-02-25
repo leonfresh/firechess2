@@ -21,6 +21,7 @@ const plans = [
       "Strengths & Weaknesses radar",
       "Basic mental game stats (stability, tilt, post-loss)",
       "Opening Explorer on every card",
+      "Move explanations (Best / Played / DB move)",
       "Lichess + Chess.com support"
     ],
     cta: "Current baseline",
@@ -43,8 +44,7 @@ const plans = [
       "Dedicated tactics & endgame drill modes",
       "Separate scan modes (Openings / Tactics / Endgames / All)",
       "Full Mental Game breakdown — archetype, color stats, momentum, streaks",
-      "Save reports to dashboard & track progress",
-      "AI-powered move explanations (Best / Played / DB move)"
+      "Save reports to dashboard & track progress"
     ],
     cta: "Upgrade with Stripe",
     highlight: true
@@ -208,7 +208,7 @@ export default function PricingPage() {
                     ["Opening drill mode", "✓", "✓"],
                     ["Strengths & Weaknesses radar", "✓", "✓"],
                     ["Opening Explorer (Lichess DB)", "✓", "✓"],
-                    ["AI move explanations", "✓", "✓"],
+                    ["Move explanations", "✓", "✓"],
                     ["Missed tactics", "3 samples", "Unlimited"],
                     ["Endgame mistakes", "3 samples", "Unlimited"],
                     ["Motif pattern analysis", "—", "✓"],
@@ -238,9 +238,12 @@ export default function PricingPage() {
               <div>
                 <h3 className="text-xl font-bold text-white">Built solo, with love for chess</h3>
                 <p className="mt-3 text-sm leading-relaxed text-slate-400">
-                  FireChess is built and maintained by one person — a chess player and developer who got frustrated
-                  with the lack of good multi-game analysis tools. There&apos;s no VC funding, no team of 20, no enterprise
-                  sales pipeline. Just me, Stockfish, and a lot of late nights.
+                  FireChess is built and maintained by one person — a{" "}
+                  <a href="https://lichess.org/@/LeonFresh" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">
+                    ~2200 rapid player on Lichess
+                  </a>{" "}
+                  and developer who got frustrated with the lack of good multi-game analysis tools.
+                  There&apos;s no VC funding, no team of 20, no enterprise sales pipeline. Just me, Stockfish, and a lot of late nights.
                 </p>
                 <p className="mt-3 text-sm leading-relaxed text-slate-400">
                   Your $5/month directly funds server costs, Stockfish engine improvements, and lets me keep
@@ -248,7 +251,11 @@ export default function PricingPage() {
                   making FireChess better instead of worrying about keeping the lights on.
                 </p>
                 <p className="mt-3 text-sm leading-relaxed text-slate-400">
-                  I read every piece of feedback (shoutout to the HN crowd). If something&apos;s broken or missing,
+                  I read every piece of feedback (shoutout to the{" "}
+                  <a href="https://www.reddit.com/r/chessbeginners/" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">
+                    r/chessbeginners
+                  </a>{" "}
+                  crowd). If something&apos;s broken or missing,
                   I usually ship a fix within hours. That&apos;s the solo dev advantage — no tickets, no sprints, just results.
                 </p>
               </div>
