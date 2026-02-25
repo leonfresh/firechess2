@@ -222,9 +222,13 @@ class StockfishClient {
  * when Web Workers or hardwareConcurrency are unavailable.
  * ================================================================ */
 
+const isMobile =
+  typeof navigator !== "undefined" &&
+  /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+
 const DEFAULT_POOL_SIZE =
   typeof navigator !== "undefined"
-    ? Math.min(navigator.hardwareConcurrency || 2, 4)
+    ? Math.min(navigator.hardwareConcurrency || 2, isMobile ? 2 : 4)
     : 2;
 
 export class StockfishPool {
