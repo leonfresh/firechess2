@@ -1201,10 +1201,10 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   };
 
   return (
-    <article className="glass-card-hover">
+    <article className="glass-card-hover overflow-hidden">
       <div className="grid gap-0 md:grid-cols-[minmax(0,480px)_1fr]">
         {/* Board side */}
-        <div ref={boardSizeRef} className="relative border-b border-white/[0.04] bg-white/[0.01] p-3 sm:p-5 md:border-b-0 md:border-r">
+        <div ref={boardSizeRef} className="relative overflow-hidden border-b border-white/[0.04] bg-white/[0.01] p-3 sm:p-5 md:border-b-0 md:border-r">
           <div className="mx-auto flex w-full max-w-[460px] items-start gap-2 sm:gap-3">
             <EvalBar evalCp={displayedEvalCp} height={boardSize} />
             <div

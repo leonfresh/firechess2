@@ -410,7 +410,7 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
     <article className="glass-card-hover overflow-hidden border-amber-500/10">
       <div className="grid gap-0 md:grid-cols-[minmax(0,480px)_1fr]">
         {/* Board side */}
-        <div ref={boardSizeRef} className="relative border-b border-amber-500/[0.08] bg-amber-500/[0.02] p-3 sm:p-5 md:border-b-0 md:border-r">
+        <div ref={boardSizeRef} className="relative overflow-hidden border-b border-amber-500/[0.08] bg-amber-500/[0.02] p-3 sm:p-5 md:border-b-0 md:border-r">
           <div className="mx-auto flex w-full max-w-[460px] items-start gap-2 sm:gap-3">
             <EvalBar evalCp={displayedEvalCp} height={boardSize} />
             <div className="overflow-hidden rounded-xl">

@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from "react";
 
 /**
  * Returns a responsive board width that fits inside the container element.
- * Falls back to `fallback` until the ref is mounted.
+ * Accounts for the container's own padding, the eval-bar (24px) and the
+ * flex gap.  Falls back to `fallback` until the ref is mounted.
  */
 export function useBoardSize(fallback = 400) {
   const ref = useRef<HTMLDivElement>(null);
@@ -15,9 +16,16 @@ export function useBoardSize(fallback = 400) {
     if (!el) return;
 
     const update = () => {
-      // Available width minus eval-bar (24px) and gap (12px)
-      const available = el.clientWidth - 36;
-      // Clamp between 260 (small phones) and the fallback max
+      const cs = getComputedStyle(el);
+      const px =
+        parseFloat(cs.paddingLeft || "0") +
+        parseFloat(cs.paddingRight || "0");
+      // Content width inside padding
+      const contentWidth = el.clientWidth - px;
+      // Subtract eval-bar (24px) + gap (gap-2 = 8px on mobile, gap-3 = 12px sm+)
+      // Use 12px to be safe — board may be ≤4px smaller on mobile but never overflows
+      const evalBarOverhead = 24 + 12;
+      const available = contentWidth - evalBarOverhead;
       setSize(Math.max(260, Math.min(available, fallback)));
     };
 
