@@ -165,6 +165,16 @@ class StockfishClient {
       return this.evalCache.get(cacheKey)!;
     }
 
+    // Reuse a higher-depth cached result if available (higher depth ⊇ lower depth accuracy)
+    for (const [key, val] of this.evalCache) {
+      if (!key.startsWith(`${fen}|d`)) continue;
+      const cachedDepth = parseInt(key.split("|d")[1], 10);
+      if (cachedDepth > depth && val) {
+        this.evalCache.set(cacheKey, val);
+        return val;
+      }
+    }
+
     return this.enqueue(async () => {
       if (this.evalCache.has(cacheKey)) {
         return this.evalCache.get(cacheKey)!;

@@ -1184,9 +1184,43 @@ export async function analyzeOpeningLeaksInBrowser(
 
     const sideToMove: PlayerColor = fenBefore.includes(" w ") ? "white" : "black";
     const beforeEval = await stockfishClient.evaluateFen(fenBefore, engineDepth);
+
+    if (!beforeEval) {
+      positionTraces.push({
+        fenBefore,
+        userMove: chosenMove,
+        bestMove: null,
+        reachCount: data.totalReachCount,
+        moveCount: chosenCount,
+        evalBefore: null,
+        evalAfter: null,
+        cpLoss: null,
+        flagged: false,
+        skippedReason: "missing_eval"
+      });
+      continue;
+    }
+
+    // Early-exit: if user played the engine's best move, skip the 2nd eval call
+    const bestMoveSan = sanForMove(fenBefore, beforeEval.bestMove);
+    if (bestMoveSan && bestMoveSan === chosenMove) {
+      positionTraces.push({
+        fenBefore,
+        userMove: chosenMove,
+        bestMove: beforeEval.bestMove,
+        reachCount: data.totalReachCount,
+        moveCount: chosenCount,
+        evalBefore: scoreToCpFromUserPerspective(beforeEval.cp, sideToMove, sideToMove),
+        evalAfter: null,
+        cpLoss: 0,
+        flagged: false
+      });
+      continue;
+    }
+
     const afterEval = await stockfishClient.evaluateFen(fenAfter, engineDepth);
 
-    if (!beforeEval || !afterEval) {
+    if (!afterEval) {
       positionTraces.push({
         fenBefore,
         userMove: chosenMove,
@@ -1282,9 +1316,11 @@ export async function analyzeOpeningLeaksInBrowser(
   /* ── One-off opening mistakes (positions reached exactly 2 times with significant cpLoss) ── */
   const ONE_OFF_CP_THRESHOLD = 150; // higher bar since there's less data
   const MAX_ONE_OFFS = 20;
+  const MAX_ONE_OFF_SCREENS = 60; // cap positions to screen for speed
+  const ONE_OFF_SCREEN_DEPTH = 5; // cheaper screen pass
   const oneOffEntries = [...byFen.entries()].filter(
     ([, data]) => data.totalReachCount >= 2 && data.totalReachCount < MIN_POSITION_REPEATS
-  );
+  ).slice(0, MAX_ONE_OFF_SCREENS);
 
   if (oneOffEntries.length > 0) {
     emitProgress(options, {
@@ -1314,8 +1350,8 @@ export async function analyzeOpeningLeaksInBrowser(
     const sideToMove: PlayerColor = fenBefore.includes(" w ") ? "white" : "black";
 
     // Quick screen at low depth first
-    const screenBefore = await stockfishClient.evaluateFen(fenBefore, 8);
-    const screenAfter = await stockfishClient.evaluateFen(fenAfter, 8);
+    const screenBefore = await stockfishClient.evaluateFen(fenBefore, ONE_OFF_SCREEN_DEPTH);
+    const screenAfter = await stockfishClient.evaluateFen(fenAfter, ONE_OFF_SCREEN_DEPTH);
     if (!screenBefore || !screenAfter) continue;
 
     const screenEvalBefore = scoreToCpFromUserPerspective(screenBefore.cp, sideToMove, sideToMove);

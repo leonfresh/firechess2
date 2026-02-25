@@ -207,7 +207,7 @@ export function StrengthsRadar(props: RadarProps) {
  * Each card shows the score, verdict, deep analysis, practical meaning,
  * and a 3-step structured improvement plan.
  */
-export function InsightCards({ data, props }: { data: RadarDimension[]; props: RadarProps }) {
+export function InsightCards({ data, props, hasProAccess = false }: { data: RadarDimension[]; props: RadarProps; hasProAccess?: boolean }) {
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
 
   const toggleCard = (dim: string) => {
@@ -316,22 +316,37 @@ export function InsightCards({ data, props }: { data: RadarDimension[]; props: R
                 {/* Expand toggle */}
                 <button
                   type="button"
-                  onClick={() => toggleCard(d.dimension)}
-                  className="mt-3 flex items-center gap-1.5 text-[11px] font-medium text-white/40 transition-colors hover:text-white/70"
+                  onClick={() => hasProAccess ? toggleCard(d.dimension) : undefined}
+                  className={`mt-3 flex items-center gap-1.5 text-[11px] font-medium transition-colors ${
+                    hasProAccess
+                      ? "text-white/40 hover:text-white/70"
+                      : "text-violet-400/60 hover:text-violet-400/80"
+                  }`}
                 >
-                  <svg
-                    className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                  </svg>
-                  {isOpen ? "Show less" : "Full analysis & study plan"}
+                  {hasProAccess ? (
+                    <>
+                      <svg
+                        className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                      {isOpen ? "Show less" : "Full analysis & study plan"}
+                    </>
+                  ) : (
+                    <a href="/pricing" className="flex items-center gap-1.5 text-violet-400/70 hover:text-violet-400">
+                      <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      </svg>
+                      Pro: Full analysis & study plan
+                    </a>
+                  )}
                 </button>
               </div>
 
-              {/* Expanded deep content */}
-              {isOpen && (
+              {/* Expanded deep content — Pro only */}
+              {isOpen && hasProAccess && (
                 <div className="animate-fade-in border-t border-white/[0.06] px-5 pb-5 pt-4 space-y-4">
                   {/* Deep analysis */}
                   <div>
