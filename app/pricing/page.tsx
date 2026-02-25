@@ -18,6 +18,9 @@ const plans = [
       "Full opening leak detection + drill mode",
       "3 sample missed tactics per scan",
       "3 sample endgame mistakes per scan",
+      "Strengths & Weaknesses radar",
+      "Basic mental game stats (stability, tilt, post-loss)",
+      "Opening Explorer on every card",
       "Lichess + Chess.com support"
     ],
     cta: "Current baseline",
@@ -38,7 +41,10 @@ const plans = [
       "Motif pattern analysis — find recurring weaknesses",
       "Time pressure detection on missed tactics",
       "Dedicated tactics & endgame drill modes",
-      "Separate scan modes (Openings / Tactics / Endgames / All)"
+      "Separate scan modes (Openings / Tactics / Endgames / All)",
+      "Full Mental Game breakdown — archetype, color stats, momentum, streaks",
+      "Save reports to dashboard & track progress",
+      "AI-powered move explanations (Best / Played / DB move)"
     ],
     cta: "Upgrade with Stripe",
     highlight: true
@@ -98,10 +104,10 @@ export default function PricingPage() {
 
               <div className="mx-auto mt-6 grid max-w-3xl gap-3 sm:grid-cols-2 md:grid-cols-4">
               {[
-                { icon: "📊", text: "Opening leak analytics" },
+                { icon: "📊", text: "Opening leak detection" },
                 { icon: "⚡", text: "Missed tactics scanner" },
-                { icon: "♟️", text: "Endgame mistake scanner" },
-                { icon: "🧠", text: "Drill mode training" },
+                { icon: "♟️", text: "Endgame mistake finder" },
+                { icon: "🧠", text: "Mental game analysis" },
               ].map((item) => (
                 <div key={item.text} className="glass-card flex items-center gap-3 px-4 py-3 text-sm text-slate-300">
                   <span className="text-lg">{item.icon}</span>
@@ -200,12 +206,18 @@ export default function PricingPage() {
                     ["Engine depth", "Up to 12", "Up to 24"],
                     ["Opening leak detection", "✓", "✓"],
                     ["Opening drill mode", "✓", "✓"],
+                    ["Strengths & Weaknesses radar", "✓", "✓"],
+                    ["Opening Explorer (Lichess DB)", "✓", "✓"],
+                    ["AI move explanations", "✓", "✓"],
                     ["Missed tactics", "3 samples", "Unlimited"],
                     ["Endgame mistakes", "3 samples", "Unlimited"],
                     ["Motif pattern analysis", "—", "✓"],
                     ["Time pressure detection", "—", "✓"],
                     ["Tactics drill mode", "—", "✓"],
                     ["Endgame drill mode", "—", "✓"],
+                    ["Mental game: basic stats", "✓", "✓"],
+                    ["Mental game: full breakdown", "—", "✓ (archetype, color, streaks, form)"],
+                    ["Save reports to dashboard", "—", "✓"],
                     ["Scan mode selector", "Openings only", "Openings / Tactics / Endgames / All"],
                   ].map(([feature, free, pro]) => (
                     <tr key={feature} className="border-t border-white/[0.04]">
@@ -219,22 +231,33 @@ export default function PricingPage() {
             </div>
           </div>
 
-          {/* Why upgrade */}
+          {/* Why upgrade — solo dev story */}
           <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] p-6 md:p-8">
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-emerald-500/[0.06] via-cyan-500/[0.04] to-fuchsia-500/[0.06]" />
-            <div className="relative">
-              <h3 className="text-lg font-bold text-white">Why upgrading matters</h3>
-              <p className="mt-2 text-sm text-slate-400">
-                Pro gives you the full tactics scanner — find every missed fork, pin, and mate in your games.
-                Plus endgame analysis to catch technique errors in won positions, motif analysis to uncover your recurring blind spots,
-                time pressure tracking, and dedicated drill modes to fix them all.
-              </p>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.06] via-amber-500/[0.04] to-emerald-500/[0.06]" />
+            <div className="relative space-y-5">
+              <div>
+                <h3 className="text-xl font-bold text-white">Built solo, with love for chess</h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-400">
+                  FireChess is built and maintained by one person — a chess player and developer who got frustrated
+                  with the lack of good multi-game analysis tools. There&apos;s no VC funding, no team of 20, no enterprise
+                  sales pipeline. Just me, Stockfish, and a lot of late nights.
+                </p>
+                <p className="mt-3 text-sm leading-relaxed text-slate-400">
+                  Your $5/month directly funds server costs, Stockfish engine improvements, and lets me keep
+                  building features like the ones you see here. Every Pro subscriber means I can spend more time
+                  making FireChess better instead of worrying about keeping the lights on.
+                </p>
+                <p className="mt-3 text-sm leading-relaxed text-slate-400">
+                  I read every piece of feedback (shoutout to the HN crowd). If something&apos;s broken or missing,
+                  I usually ship a fix within hours. That&apos;s the solo dev advantage — no tickets, no sprints, just results.
+                </p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
                 {[
-                  { icon: "⚡", text: "Full tactics scanning" },
-                  { icon: "♟️", text: "Endgame error detection" },
-                  { icon: "📊", text: "Motif pattern insights" },
-                  { icon: "🎯", text: "Targeted drill training" },
+                  { icon: "🧑‍💻", text: "Solo developer" },
+                  { icon: "⚡", text: "Ship fixes in hours" },
+                  { icon: "💬", text: "Direct feedback loop" },
+                  { icon: "♟️", text: "Made by a chess player" },
                 ].map((item) => (
                   <div key={item.text} className="stat-card flex items-center gap-3 text-sm text-slate-300">
                     <span className="text-lg">{item.icon}</span>
@@ -247,41 +270,67 @@ export default function PricingPage() {
 
           {/* Roadmap */}
           <div className="glass-card p-6 md:p-8">
-            <h3 className="text-lg font-bold text-white">Development roadmap</h3>
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white">What&apos;s next</h3>
+              <span className="rounded-full border border-slate-500/20 bg-slate-500/[0.08] px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">Roadmap</span>
+            </div>
+            <p className="mt-2 text-sm text-slate-400">Realistic next milestones — what I&apos;m actively working on and what&apos;s coming soon.</p>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               {[
                 {
                   priority: true,
-                  title: "Coaching mode",
-                  desc: "Personalized drills, weakness tracking, and coach-style feedback loops."
+                  status: "In progress",
+                  title: "Progress tracking over time",
+                  desc: "Compare your reports week-over-week. See if your leak count, accuracy, and radar scores are improving with trend charts on your dashboard."
+                },
+                {
+                  priority: true,
+                  status: "In progress",
+                  title: "Smarter move explanations",
+                  desc: "Better AI-generated explanations for why the engine's move is better — with plans, threats, and positional concepts instead of just engine lines."
                 },
                 {
                   priority: false,
-                  title: "Study packs & exports",
-                  desc: "Auto-generate practice sets by opening family and mistake severity."
+                  status: "Next up",
+                  title: "PGN import & export",
+                  desc: "Upload PGN files directly instead of fetching from Lichess/Chess.com. Export your analysis as annotated PGN to study in other tools."
                 },
                 {
                   priority: false,
-                  title: "Progress timeline",
-                  desc: "See if your opening leaks are shrinking week by week with trend charts."
+                  status: "Next up",
+                  title: "Opening repertoire builder",
+                  desc: "Auto-generate a repertoire from your actual games. See which lines you play, where you deviate, and suggested improvements."
                 },
                 {
                   priority: false,
-                  title: "Coach/team dashboards",
-                  desc: "Multi-player management for coaches and training groups."
+                  status: "Planned",
+                  title: "Study collections & spaced repetition",
+                  desc: "Save positions into study sets. Practice them with spaced repetition so you actually remember the correct moves."
+                },
+                {
+                  priority: false,
+                  status: "Exploring",
+                  title: "Coaching tools & team dashboards",
+                  desc: "Multi-student management for coaches. Share reports, assign homework positions, and track student progress."
                 },
               ].map((item, i) => (
                 <article
                   key={item.title}
                   className={`stat-card ${item.priority ? "border-emerald-500/20" : ""}`}
                 >
-                  {item.priority && (
-                    <span className="tag-emerald mb-3 text-[10px]">
-                      <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-                      PRIORITY
-                    </span>
-                  )}
-                  <h4 className="text-base font-semibold text-white">{i + 1}) {item.title}</h4>
+                  <div className="flex items-center gap-2 mb-2">
+                    {item.priority ? (
+                      <span className="tag-emerald text-[10px]">
+                        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+                        {item.status.toUpperCase()}
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 rounded-full border border-slate-500/20 bg-slate-500/[0.06] px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                        {item.status}
+                      </span>
+                    )}
+                  </div>
+                  <h4 className="text-base font-semibold text-white">{item.title}</h4>
                   <p className="mt-1 text-sm text-slate-400">{item.desc}</p>
                 </article>
               ))}
