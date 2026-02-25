@@ -99,6 +99,292 @@ function formatPrincipalVariation(fen: string, uciMoves: string[]): string {
   }
 }
 
+/** Compute per-step board annotations during PV animation. */
+function computeStepAnnotations(
+  fenBefore: string,
+  fenAfterMove: string,
+  moveFrom: string,
+  moveTo: string,
+  san: string,
+  isGoodSide: boolean,
+  captured: string | undefined,
+  tacticTags: string[],
+): {
+  arrows: [BoardSquare, BoardSquare, string?][];
+  highlights: Record<string, { backgroundColor?: string; boxShadow?: string }>;
+  badges: Record<string, { label: string; color: string }>;
+} {
+  const moveColor = isGoodSide
+    ? "rgba(34, 197, 94, 0.9)"
+    : "rgba(239, 68, 68, 0.85)";
+  const moveBg = isGoodSide
+    ? "rgba(34, 197, 94, 0.25)"
+    : "rgba(239, 68, 68, 0.18)";
+
+  const arrows: [BoardSquare, BoardSquare, string?][] = [];
+  const highlights: Record<string, { backgroundColor?: string; boxShadow?: string }> = {};
+  const badges: Record<string, { label: string; color: string }> = {};
+
+  if (isBoardSquare(moveFrom) && isBoardSquare(moveTo)) {
+    arrows.push([moveFrom, moveTo, moveColor]);
+  }
+  highlights[moveFrom] = { backgroundColor: moveBg };
+  highlights[moveTo] = { backgroundColor: moveBg };
+
+  const tagSet = new Set(tacticTags);
+
+  try {
+    const chess = new Chess(fenAfterMove);
+    const piece = chess.get(moveTo as Parameters<Chess["get"]>[0]);
+    const movedType = piece?.type;
+    const movedColor = piece?.color;
+    const oppColor = movedColor === "w" ? "b" : "w";
+    const PV: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 100 };
+
+    // ── Check / Checkmate ──
+    if (chess.isCheckmate()) {
+      for (const row of chess.board()) {
+        for (const sq of row) {
+          if (sq && sq.type === "k" && sq.color === chess.turn()) {
+            highlights[sq.square] = {
+              backgroundColor: "rgba(239, 68, 68, 0.6)",
+              boxShadow: "inset 0 0 14px rgba(239, 68, 68, 0.8)",
+            };
+            badges[sq.square] = { label: "Checkmate!", color: "#dc2626" };
+          }
+        }
+      }
+    } else if (chess.isCheck()) {
+      for (const row of chess.board()) {
+        for (const sq of row) {
+          if (sq && sq.type === "k" && sq.color === chess.turn()) {
+            highlights[sq.square] = {
+              backgroundColor: "rgba(239, 68, 68, 0.5)",
+              boxShadow: "inset 0 0 12px rgba(239, 68, 68, 0.6)",
+            };
+            badges[sq.square] = { label: "Check!", color: "#dc2626" };
+          }
+        }
+      }
+    }
+
+    // ── Threats from the moved piece (fork / attack detection) ──
+    if (piece) {
+      const parts = fenAfterMove.split(" ");
+      if (parts[1] !== piece.color) {
+        parts[1] = piece.color;
+        try {
+          const flipped = new Chess(parts.join(" "));
+          const moves = flipped.moves({ verbose: true, square: moveTo as any });
+          const attacks = moves
+            .filter((m) => m.captured && m.from === moveTo)
+            .map((m) => ({ sq: m.to, val: PV[m.captured!] ?? 0, piece: m.captured! }))
+            .filter((a) => a.val >= 3);
+
+          if (attacks.length >= 2) {
+            // Fork
+            const label = movedType === "n" ? "Knight Fork!"
+              : movedType === "q" ? "Queen Fork!"
+              : movedType === "p" ? "Pawn Fork!"
+              : "Fork!";
+            badges[moveTo] = { label, color: "#f59e0b" };
+            for (const a of attacks) {
+              highlights[a.sq] = {
+                backgroundColor: "rgba(245, 158, 11, 0.4)",
+                boxShadow: "inset 0 0 8px rgba(245, 158, 11, 0.5)",
+              };
+              if (isBoardSquare(moveTo) && isBoardSquare(a.sq)) {
+                arrows.push([moveTo as BoardSquare, a.sq as BoardSquare, "rgba(245, 158, 11, 0.7)"]);
+              }
+            }
+          } else if (attacks.length === 1 && attacks[0].val >= 5) {
+            highlights[attacks[0].sq] = { backgroundColor: "rgba(245, 158, 11, 0.35)" };
+            if (isBoardSquare(moveTo) && isBoardSquare(attacks[0].sq)) {
+              arrows.push([
+                moveTo as BoardSquare,
+                attacks[0].sq as BoardSquare,
+                "rgba(245, 158, 11, 0.6)",
+              ]);
+            }
+          }
+        } catch { /* skip */ }
+      }
+    }
+
+    // ── Discovered Attack — highlight the unmasked line ──
+    if ((tagSet.has("Discovered Attack") || (chess.isCheck() && movedType !== "n" && movedType !== "q")) && piece) {
+      // find sliders of the mover's color that now attack opponent pieces through the vacated square
+      try {
+        const parts2 = fenAfterMove.split(" ");
+        parts2[1] = movedColor!;
+        const flipped2 = new Chess(parts2.join(" "));
+        for (const row of chess.board()) {
+          for (const sq of row) {
+            if (sq && sq.color === movedColor && (sq.type === "b" || sq.type === "r" || sq.type === "q") && sq.square !== moveTo) {
+              const sliderMoves = flipped2.moves({ verbose: true, square: sq.square as any });
+              const hitsOpp = sliderMoves.filter(m => m.captured && m.from === sq.square);
+              for (const hit of hitsOpp) {
+                const targetPiece = chess.get(hit.to as any);
+                if (targetPiece && targetPiece.color === oppColor && PV[targetPiece.type] >= 3) {
+                  if (!badges[sq.square]) badges[sq.square] = { label: "Discovery!", color: "#a855f7" };
+                  highlights[hit.to] = {
+                    backgroundColor: "rgba(168, 85, 247, 0.35)",
+                    boxShadow: "inset 0 0 8px rgba(168, 85, 247, 0.4)",
+                  };
+                  if (isBoardSquare(sq.square) && isBoardSquare(hit.to)) {
+                    arrows.push([sq.square as BoardSquare, hit.to as BoardSquare, "rgba(168, 85, 247, 0.7)"]);
+                  }
+                }
+              }
+            }
+          }
+        }
+      } catch { /* skip */ }
+    }
+
+    // ── Pin detection — highlight pinned piece ──
+    if (tagSet.has("Pin") || tagSet.has("Tactical Pattern")) {
+      try {
+        // A pinned piece can't move (or limited moves). Check opponent pieces that have fewer legal moves
+        const oppMoves = chess.moves({ verbose: true });
+        // Find opponent pieces with 0 legal moves from their square (they might be pinned)
+        const pieceSqs = new Map<string, number>();
+        for (const m of oppMoves) pieceSqs.set(m.from, (pieceSqs.get(m.from) ?? 0) + 1);
+        // Look for pieces on the line between a slider and king — simplified via tag hint
+      } catch { /* skip */ }
+    }
+
+    // ── Skewer — tag-based highlight ──
+    if (tagSet.has("Skewer") && piece && (movedType === "r" || movedType === "b" || movedType === "q")) {
+      if (!badges[moveTo]) badges[moveTo] = { label: "Skewer!", color: "#ec4899" };
+    }
+
+    // ── Sacrifice ──
+    if (tagSet.has("Sacrifice")) {
+      try {
+        const beforeChess = new Chess(fenBefore);
+        const sacrificePiece = beforeChess.get(moveFrom as any);
+        if (sacrificePiece && captured) {
+          if (PV[sacrificePiece.type] > PV[captured] + 1) {
+            badges[moveTo] = { label: "Sacrifice!", color: "#8b5cf6" };
+            highlights[moveTo] = {
+              backgroundColor: "rgba(139, 92, 246, 0.35)",
+              boxShadow: "inset 0 0 10px rgba(139, 92, 246, 0.5)",
+            };
+          }
+        }
+      } catch { /* skip */ }
+    }
+
+    // ── Hanging Piece — highlight the piece left hanging ──
+    if (tagSet.has("Hanging Piece") && isGoodSide) {
+      // The moved piece may now be undefended — highlight it
+      highlights[moveTo] = {
+        backgroundColor: "rgba(239, 68, 68, 0.35)",
+        boxShadow: "inset 0 0 8px rgba(239, 68, 68, 0.4)",
+      };
+      if (!badges[moveTo]) badges[moveTo] = { label: "Hanging!", color: "#ef4444" };
+    }
+
+    // ── En Passant ──
+    if (movedType === "p" && san.includes("x") && !captured) {
+      // En passant capture — the captured pawn was on a different square
+      const epSquare = moveTo[0] + moveFrom[1]; // captured pawn's square
+      if (isBoardSquare(epSquare)) {
+        highlights[epSquare] = {
+          backgroundColor: "rgba(245, 158, 11, 0.4)",
+          boxShadow: "inset 0 0 8px rgba(245, 158, 11, 0.4)",
+        };
+        badges[epSquare] = { label: "e.p.", color: "#f59e0b" };
+      }
+    }
+    if (tagSet.has("En Passant") && !Object.values(badges).some(b => b.label === "e.p.")) {
+      if (!badges[moveTo]) badges[moveTo] = { label: "En Passant", color: "#f59e0b" };
+    }
+
+    // ── Promotion ──
+    if (san.includes("=") || tagSet.has("Promotion") || tagSet.has("Underpromotion")) {
+      const promoMatch = san.match(/=([QRBN])/);
+      if (promoMatch) {
+        const promoLabel = tagSet.has("Underpromotion") ? `Underpromotes!` : `Promotes!`;
+        if (!badges[moveTo]) badges[moveTo] = { label: promoLabel, color: "#22c55e" };
+        highlights[moveTo] = {
+          backgroundColor: "rgba(34, 197, 94, 0.35)",
+          boxShadow: "inset 0 0 10px rgba(34, 197, 94, 0.5)",
+        };
+      }
+    }
+
+    // ── Advanced Pawn ──
+    if (tagSet.has("Advanced Pawn") && movedType === "p") {
+      const rank = parseInt(moveTo[1]);
+      const isAdvanced = movedColor === "w" ? rank >= 6 : rank <= 3;
+      if (isAdvanced && !badges[moveTo]) {
+        badges[moveTo] = { label: "Passed!", color: "#22c55e" };
+      }
+    }
+
+    // ── Exposed King ──
+    if (tagSet.has("Exposed King") && isGoodSide) {
+      // Find the user's king and highlight — moving a shield pawn
+      for (const row of chess.board()) {
+        for (const sq of row) {
+          if (sq && sq.type === "k" && sq.color === movedColor) {
+            highlights[sq.square] = {
+              backgroundColor: "rgba(239, 68, 68, 0.3)",
+              boxShadow: "inset 0 0 10px rgba(239, 68, 68, 0.4)",
+            };
+            if (!badges[sq.square]) badges[sq.square] = { label: "Exposed!", color: "#ef4444" };
+          }
+        }
+      }
+    }
+
+    // ── King Safety ──
+    if (tagSet.has("King Safety") && !tagSet.has("Exposed King")) {
+      // Generic king safety concern — subtle highlight
+      for (const row of chess.board()) {
+        for (const sq of row) {
+          if (sq && sq.type === "k" && sq.color === (isGoodSide ? movedColor : oppColor)) {
+            if (!highlights[sq.square]) {
+              highlights[sq.square] = { backgroundColor: "rgba(239, 68, 68, 0.2)" };
+            }
+          }
+        }
+      }
+    }
+
+    // ── Castling ──
+    if (tagSet.has("Castling") && san.startsWith("O")) {
+      if (!badges[moveTo]) badges[moveTo] = { label: "Castles", color: "#3b82f6" };
+    }
+
+    // ── Center Control ──
+    if (tagSet.has("Center Control") && ["d4","d5","e4","e5"].includes(moveTo)) {
+      if (!badges[moveTo]) badges[moveTo] = { label: "Center!", color: "#3b82f6" };
+    }
+
+    // ── Capture badge (fallback when no other badge present) ──
+    if (captured && !badges[moveTo]) {
+      const sym =
+        captured === "q"
+          ? "♛"
+          : captured === "r"
+            ? "♜"
+            : captured === "b"
+              ? "♝"
+              : captured === "n"
+                ? "♞"
+                : null;
+      if (sym) badges[moveTo] = { label: `Wins ${sym}`, color: "#22c55e" };
+    }
+  } catch {
+    /* best effort */
+  }
+
+  return { arrows, highlights, badges };
+}
+
 const MATE_THRESHOLD = 99000;
 
 function isMateScore(cp: number): boolean {
@@ -162,6 +448,11 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
 
   const [animEvalCp, setAnimEvalCp] = useState<number | null>(null);
 
+  // Per-step annotations shown during PV animation
+  const [animArrows, setAnimArrows] = useState<[BoardSquare, BoardSquare, string?][]>([]);
+  const [animSquareStyles, setAnimSquareStyles] = useState<Record<string, { backgroundColor?: string; boxShadow?: string }>>({});
+  const [animBadges, setAnimBadges] = useState<Record<string, { label: string; color: string }>>({});
+
   const displayedEvalCp = useMemo(() => {
     if (animEvalCp !== null) return animEvalCp;
     if (fen === tactic.fenAfter) return whiteEvalAfter;
@@ -192,16 +483,16 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
   };
 
   const customSquareStyles = useMemo(() => {
-    if (animating) return {};
+    if (animating) return animSquareStyles;
     if (!userMoveDetails) return {};
     return {
       [userMoveDetails.from]: { backgroundColor: "rgba(245, 158, 11, 0.40)" },
       [userMoveDetails.to]: { backgroundColor: "rgba(245, 158, 11, 0.40)" }
     };
-  }, [animating, userMoveDetails]);
+  }, [animating, animSquareStyles, userMoveDetails]);
 
   const customArrows = useMemo(() => {
-    if (animating) return [] as [BoardSquare, BoardSquare, string?][];
+    if (animating) return animArrows;
     const arrows: [BoardSquare, BoardSquare, string?][] = [];
     if (bestMoveDetails && isBoardSquare(bestMoveDetails.from) && isBoardSquare(bestMoveDetails.to)) {
       arrows.push([bestMoveDetails.from, bestMoveDetails.to, "rgba(34, 197, 94, 0.9)"]);
@@ -210,27 +501,29 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
       arrows.push([userMoveDetails.from, userMoveDetails.to, "rgba(245, 158, 11, 0.9)"]);
     }
     return arrows;
-  }, [animating, userMoveDetails, bestMoveDetails]);
+  }, [animating, animArrows, userMoveDetails, bestMoveDetails]);
 
   const customSquare = useMemo(() => {
     return ((props: any) => {
       const square = props?.square as string | undefined;
-      const showBadge = !animating && !!userMoveDetails && square === userMoveDetails.to;
+      const animBadge = animating && square ? animBadges[square] : null;
+      const showSeverity = !animating && !!userMoveDetails && square === userMoveDetails.to;
+      const badge = animBadge ?? (showSeverity ? { label: severityLabel, color: severityColor } : null);
       return (
         <div style={props?.style} className="relative h-full w-full">
           {props?.children}
-          {showBadge ? (
+          {badge ? (
             <span
               className="pointer-events-none absolute right-0.5 top-0.5 z-[40] rounded px-1 py-[1px] text-[9px] font-bold text-white shadow"
-              style={{ backgroundColor: severityColor }}
+              style={{ backgroundColor: badge.color }}
             >
-              {severityLabel}
+              {badge.label}
             </span>
           ) : null}
         </div>
       );
     }) as any;
-  }, [animating, userMoveDetails, severityColor, severityLabel]);
+  }, [animating, animBadges, userMoveDetails, severityColor, severityLabel]);
 
   const moveToUciStr = (move: MoveDetails | null): string | null => {
     if (!move) return null;
@@ -243,6 +536,11 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
     setFen(chess.fen());
     setAnimating(true);
     setAnimEvalCp(whiteEvalBefore);
+    setAnimArrows([]);
+    setAnimSquareStyles({});
+    setAnimBadges({});
+
+    const userColorChar = tactic.userColor === "white" ? "w" : "b";
 
     // Pre-compute FENs for each step
     const steps: { uci: string; fen: string }[] = [];
@@ -264,6 +562,7 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
       const timerId = window.setTimeout(() => {
         const parsed = parseMove(step.uci);
         if (!parsed) return;
+        const fenBeforeStep = chess.fen();
         const result = chess.move({
           from: parsed.from,
           to: parsed.to,
@@ -271,6 +570,23 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
         });
         if (result) {
           setFen(chess.fen());
+
+          // Compute tactical annotations for this step
+          const isGoodSide = result.color === userColorChar;
+          const ann = computeStepAnnotations(
+            fenBeforeStep,
+            chess.fen(),
+            result.from,
+            result.to,
+            result.san,
+            isGoodSide,
+            result.captured,
+            tactic.tags,
+          );
+          setAnimArrows(ann.arrows);
+          setAnimSquareStyles(ann.highlights);
+          setAnimBadges(ann.badges);
+
           // Play appropriate move sound
           if (/[+#]/.test(result.san)) playSound("check");
           else if (result.captured) playSound("capture");
@@ -292,6 +608,9 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
         setFen(tactic.fenBefore);
         setAnimating(false);
         setAnimEvalCp(null);
+        setAnimArrows([]);
+        setAnimSquareStyles({});
+        setAnimBadges({});
         setBoardInstance((v) => v + 1);
       },
       (steps.length + 1) * 2000 + 4000
@@ -303,6 +622,9 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
     clearTimers();
     setAnimating(false);
     setAnimEvalCp(null);
+    setAnimArrows([]);
+    setAnimSquareStyles({});
+    setAnimBadges({});
     setFen(tactic.fenBefore);
     setBoardInstance((v) => v + 1);
   };

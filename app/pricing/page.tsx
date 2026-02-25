@@ -22,6 +22,7 @@ const plans = [
       "Basic mental game stats (stability, tilt, post-loss)",
       "Opening Explorer on every card",
       "Move explanations (Best / Played / DB move)",
+      "Save reports to dashboard & track progress",
       "Lichess + Chess.com support"
     ],
     cta: "Current baseline",
@@ -44,8 +45,7 @@ const plans = [
       "Dedicated tactics & endgame drill modes",
       "Separate scan modes (Openings / Tactics / Endgames / All)",
       "Full Mental Game breakdown — archetype, color stats, momentum, streaks",
-      "Deep Analysis — full study plans & coaching tips per dimension",
-      "Save reports to dashboard & track progress"
+      "Deep Analysis — full study plans & coaching tips per dimension"
     ],
     cta: "Upgrade with Stripe",
     highlight: true
@@ -219,7 +219,7 @@ export default function PricingPage() {
                     ["Endgame drill mode", "—", "✓"],
                     ["Mental game: basic stats", "✓", "✓"],
                     ["Mental game: full breakdown", "—", "✓ (archetype, color, streaks, form)"],
-                    ["Save reports to dashboard", "—", "✓"],
+                    ["Save reports to dashboard", "✓", "✓"],
                     ["Scan mode selector", "Openings only", "Openings / Tactics / Endgames / All"],
                   ].map(([feature, free, pro]) => (
                     <tr key={feature} className="border-t border-white/[0.04]">
