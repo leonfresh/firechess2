@@ -16,7 +16,7 @@ function MiniEvalBar({ evalCp, height }: { evalCp: number; height: number }) {
   return (
     <div
       className="relative shrink-0 overflow-hidden rounded-lg"
-      style={{ width: 22, height }}
+      style={{ width: 26, height }}
     >
       {/* Black side */}
       <div
@@ -30,7 +30,7 @@ function MiniEvalBar({ evalCp, height }: { evalCp: number; height: number }) {
       />
       {/* Label */}
       <span
-        className={`absolute inset-x-0 text-center text-[9px] font-bold leading-none ${
+        className={`absolute inset-x-0 text-center text-[10px] font-bold leading-none ${
           evalCp >= 0 ? "bottom-1 text-[#312e2b]" : "top-1 text-[#f0d9b5]"
         }`}
       >
@@ -200,7 +200,7 @@ function badgeColor(badge: DemoScenario["badge"]): string {
 }
 
 export function HeroDemoBoard() {
-  const { ref: heroBoardRef, size: heroBoardSize } = useBoardSize(296);
+  const { ref: heroBoardRef, size: heroBoardSize } = useBoardSize(380);
   const boardTheme = useBoardTheme();
   const [index, setIndex] = useState(0);
   const [autoplay, setAutoplay] = useState(true);
@@ -268,15 +268,15 @@ export function HeroDemoBoard() {
   const boardOrientation = current.fen.includes(" b ") ? "black" : "white";
 
   return (
-    <div className="mx-auto w-full max-w-[580px]">
+    <div className="mx-auto w-full max-w-[740px]">
       <article className="glass-card-hover group relative overflow-hidden">
-        <div className="grid gap-0 md:grid-cols-[1fr_230px]">
+        <div className="grid gap-0 md:grid-cols-[1fr_280px]">
 
           {/* Board side */}
-          <div ref={heroBoardRef} className="relative border-b border-white/[0.04] bg-white/[0.01] p-3 sm:p-4 md:border-b-0 md:border-r">
-            <div className="flex items-start gap-2">
+          <div ref={heroBoardRef} className="relative border-b border-white/[0.04] bg-white/[0.01] p-4 sm:p-5 md:border-b-0 md:border-r">
+            <div className="flex items-start gap-2.5">
               <MiniEvalBar evalCp={current.evalBefore} height={heroBoardSize} />
-              <div className="relative overflow-hidden rounded-xl">
+              <div className="relative overflow-hidden rounded-xl shadow-lg shadow-black/30">
                 <Chessboard
                   id="hero-demo-board"
                   position={current.fen}
@@ -294,71 +294,75 @@ export function HeroDemoBoard() {
             </div>
 
             {/* Arrow legend */}
-            <div className="mt-2 flex items-center gap-3 pl-[26px]">
-              <span className="flex items-center gap-1 text-[9px] text-slate-500">
-                <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" /> Best
+            <div className="mt-3 flex items-center gap-4 pl-[30px]">
+              <span className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500" /> Best move
               </span>
-              <span className="flex items-center gap-1 text-[9px] text-slate-500">
-                <span className="inline-block h-2 w-2 rounded-full bg-red-500" /> Yours
+              <span className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" /> Your move
               </span>
               {current.dbArrow && (
-                <span className="flex items-center gap-1 text-[9px] text-slate-500">
-                  <span className="inline-block h-2 w-2 rounded-full bg-blue-500" /> DB pick
+                <span className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-blue-500" /> DB pick
                 </span>
               )}
             </div>
           </div>
 
           {/* Info side */}
-          <div className="space-y-3 p-4">
-                {/* Header */}
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-semibold text-slate-200">{current.title}</span>
-                  </div>
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                    <span
-                      className="shrink-0 rounded-lg px-2 py-0.5 text-[10px] font-bold text-white"
-                      style={{ backgroundColor: badgeColor(current.badge) }}
-                    >
-                      {current.tag}
+          <div className="flex flex-col gap-3 p-4 sm:p-5">
+                {/* Header badge row */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span
+                    className="shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-bold text-white shadow-sm"
+                    style={{ backgroundColor: badgeColor(current.badge) }}
+                  >
+                    {current.tag}
+                  </span>
+                  {current.repeatedHabit && (
+                    <span className="flex items-center gap-1 rounded-lg bg-fuchsia-500/15 px-2 py-1 text-[10px] font-bold text-fuchsia-400">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+                      Repeated
                     </span>
-                    {current.repeatedHabit && (
-                      <span className="rounded-md bg-fuchsia-500/15 px-1.5 py-0.5 text-[9px] font-bold text-fuchsia-400">Repeated Habit</span>
-                    )}
-                  </div>
-                  <p className="mt-2 text-[11px] leading-snug text-slate-400">
-                    You reached this position <span className="font-semibold text-slate-200">{current.reachCount}</span> times
-                    and played <span className="font-mono text-red-400">{current.playedSan}</span>{" "}
-                    <span className="font-semibold text-slate-200">{current.moveCount}</span> times.
-                  </p>
+                  )}
+                  {current.dbApproved && (
+                    <span className="flex items-center gap-1 rounded-lg bg-indigo-500/15 px-2 py-1 text-[10px] font-bold text-indigo-400">
+                      📚 Known Line
+                    </span>
+                  )}
                 </div>
 
-                {/* DB-approved banner */}
-                {current.dbApproved && (
-                  <div className="flex items-center gap-2 rounded-lg border border-indigo-500/20 bg-indigo-500/[0.06] px-2.5 py-1.5">
-                    <span className="text-sm">📚</span>
-                    <span className="text-[9px] font-medium text-indigo-400">Known Opening Line</span>
+                {/* KEY INSIGHT — big highlighted callout */}
+                <div className="rounded-xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-3.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Pattern Detected</p>
+                  <p className="mt-1.5 text-[13px] leading-snug text-slate-200">
+                    You reached this position{" "}
+                    <span className="rounded-md bg-amber-500/15 px-1.5 py-0.5 font-bold text-amber-400">{current.reachCount}×</span>{" "}
+                    and played{" "}
+                    <span className="rounded-md bg-red-500/15 px-1.5 py-0.5 font-mono font-bold text-red-400">{current.playedSan}</span>{" "}
+                    <span className="rounded-md bg-amber-500/15 px-1.5 py-0.5 font-bold text-amber-400">{current.moveCount}×</span>
+                  </p>
+                  <div className="mt-2.5 flex items-center gap-2">
+                    <span className="text-[10px] text-slate-500">Better:</span>
+                    <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 font-mono text-sm font-bold text-emerald-400">{current.bestSan}</span>
                   </div>
-                )}
+                </div>
 
-                {/* Stat grid */}
-                <div className="grid grid-cols-2 gap-1.5">
-                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2 py-1.5">
-                    <p className="text-[8px] font-medium uppercase tracking-wider text-slate-500">Eval Loss</p>
-                    <p className="text-sm font-bold text-red-400">{formatEval(current.cpLoss)}</p>
+                {/* Eval comparison bar */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Eval Shift</span>
+                    <span className="rounded-md bg-red-500/10 px-2 py-0.5 text-xs font-bold text-red-400">{formatEval(current.cpLoss)} lost</span>
                   </div>
-                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2 py-1.5">
-                    <p className="text-[8px] font-medium uppercase tracking-wider text-slate-500">Eval Before</p>
-                    <p className="text-sm font-bold text-slate-200">{formatEval(current.evalBefore)}</p>
-                  </div>
-                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2 py-1.5">
-                    <p className="text-[8px] font-medium uppercase tracking-wider text-slate-500">Eval After</p>
-                    <p className="text-sm font-bold text-slate-200">{formatEval(current.evalAfter)}</p>
-                  </div>
-                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2 py-1.5">
-                    <p className="text-[8px] font-medium uppercase tracking-wider text-slate-500">Best Move</p>
-                    <p className="text-sm font-bold font-mono text-emerald-400">{current.bestSan}</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-center">
+                      <p className="text-[9px] font-medium uppercase tracking-wider text-slate-500">Before</p>
+                      <p className="text-base font-bold text-slate-200">{formatEval(current.evalBefore)}</p>
+                    </div>
+                    <div className="rounded-lg border border-red-500/20 bg-red-500/[0.04] px-3 py-2 text-center">
+                      <p className="text-[9px] font-medium uppercase tracking-wider text-slate-500">After</p>
+                      <p className="text-base font-bold text-red-400">{formatEval(current.evalAfter)}</p>
+                    </div>
                   </div>
                 </div>
 
@@ -366,18 +370,18 @@ export function HeroDemoBoard() {
         </div>
 
         {/* Bottom controls bar */}
-        <div className="flex items-center gap-2 border-t border-white/[0.04] px-4 py-2.5">
-              <button type="button" className="btn-secondary flex h-7 items-center gap-1 px-2.5 text-[11px]" onClick={goPrev}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+        <div className="flex items-center gap-2.5 border-t border-white/[0.04] px-4 sm:px-5 py-3">
+              <button type="button" className="btn-secondary flex h-8 items-center gap-1 px-3 text-xs" onClick={goPrev}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
                 Prev
               </button>
-              <button type="button" className="btn-secondary flex h-7 items-center gap-1 px-2.5 text-[11px]" onClick={goNext}>
+              <button type="button" className="btn-secondary flex h-8 items-center gap-1 px-3 text-xs" onClick={goNext}>
                 Next
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
               </button>
               <button
                 type="button"
-                className={`flex h-7 items-center gap-1.5 rounded-xl border px-2.5 text-[11px] font-medium transition-all duration-200 ${
+                className={`flex h-8 items-center gap-1.5 rounded-xl border px-3 text-xs font-medium transition-all duration-200 ${
                   autoplay
                     ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300 shadow-glow-sm"
                     : "border-white/[0.1] bg-white/[0.04] text-slate-400 hover:bg-white/[0.06]"
@@ -388,14 +392,14 @@ export function HeroDemoBoard() {
                 {autoplay ? "Auto" : "Paused"}
               </button>
               {/* Dots indicator */}
-              <div className="ml-auto flex items-center gap-1">
+              <div className="ml-auto flex items-center gap-1.5">
                 {scenarios.map((_, i) => (
                   <button
                     key={i}
                     type="button"
                     onClick={() => { setAutoplay(false); setIndex(i); }}
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                      i === index % scenarios.length ? "w-4 bg-emerald-400" : "w-1.5 bg-white/10 hover:bg-white/20"
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      i === index % scenarios.length ? "w-5 bg-emerald-400" : "w-2 bg-white/10 hover:bg-white/20"
                     }`}
                   />
                 ))}

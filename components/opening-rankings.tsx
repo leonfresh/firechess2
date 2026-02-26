@@ -4,11 +4,13 @@
  * OpeningRankings — shows ALL openings the user played across the scan,
  * with mini board positions, color badges, and win/draw/loss stats.
  * Sorted from lowest win rate to highest.
+ *
+ * Opening names come from the scan data (Lichess API / Chess.com PGN headers)
+ * — no extra API calls needed.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Chessboard } from "react-chessboard";
-import { fetchExplorerMoves } from "@/lib/lichess-explorer";
 import type { OpeningSummary, PlayerColor } from "@/lib/types";
 
 /* ------------------------------------------------------------------ */
@@ -66,104 +68,39 @@ function winRateLabel(wr: number) {
 /* ------------------------------------------------------------------ */
 
 export function OpeningRankings({ openingSummaries }: Props) {
-  /* ── 1. Group summaries by (FEN + userColor) ── */
-  const grouped = useMemo(() => {
-    const map = new Map<
-      string,
-      { fen: string; userColor: PlayerColor; games: number; wins: number; draws: number; losses: number }
-    >();
-
-    for (const s of openingSummaries) {
-      const key = `${s.fen}::${s.userColor}`;
-      const agg = map.get(key) ?? { fen: s.fen, userColor: s.userColor, games: 0, wins: 0, draws: 0, losses: 0 };
-      agg.games++;
-      if (s.result === "win") agg.wins++;
-      else if (s.result === "draw") agg.draws++;
-      else agg.losses++;
-      map.set(key, agg);
-    }
-
-    return map;
-  }, [openingSummaries]);
-
-  /* ── 2. Collect unique FENs for name lookups ── */
-  const uniqueFens = useMemo(() => {
-    const fens = new Set<string>();
-    for (const [, agg] of grouped) fens.add(agg.fen);
-    return Array.from(fens);
-  }, [grouped]);
-
-  /* ── 3. Fetch opening names from Lichess explorer ── */
-  const [openingNames, setOpeningNames] = useState<Map<string, string>>(new Map());
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (uniqueFens.length === 0) {
-      setLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    const fetchNames = async () => {
-      const names = new Map<string, string>();
-
-      // Batch in groups of 4 to respect rate limits
-      for (let i = 0; i < uniqueFens.length; i += 4) {
-        if (cancelled) break;
-        const batch = uniqueFens.slice(i, i + 4);
-        await Promise.allSettled(
-          batch.map(async (fen) => {
-            const side = fen.includes(" w ") ? "white" : "black";
-            try {
-              const result = await fetchExplorerMoves(fen, side as PlayerColor);
-              if (result.openingName) names.set(fen, result.openingName);
-            } catch { /* non-critical */ }
-          }),
-        );
-      }
-
-      if (!cancelled) {
-        setOpeningNames(names);
-        setLoading(false);
-      }
-    };
-
-    fetchNames();
-    return () => {
-      cancelled = true;
-    };
-  }, [uniqueFens]);
-
-  /* ── 4. Build final sorted rankings ── */
+  /* ── Build rankings from props (no async, no API calls) ── */
   const rankings: OpeningEntry[] = useMemo(() => {
-    if (loading) return [];
+    // Build a FEN→openingName lookup from summaries that have names
+    const fenToName = new Map<string, string>();
+    for (const s of openingSummaries) {
+      if (s.openingName && !fenToName.has(s.fen)) {
+        fenToName.set(s.fen, s.openingName);
+      }
+    }
 
-    // Merge entries that share the same (opening name + color)
+    // Group by (opening name + userColor), aggregating W/D/L
     const byNameColor = new Map<string, OpeningEntry>();
 
-    for (const [, agg] of grouped) {
-      const name = openingNames.get(agg.fen) ?? "Unknown Opening";
-      const mergeKey = `${name}::${agg.userColor}`;
+    for (const s of openingSummaries) {
+      const name = fenToName.get(s.fen) ?? "Unknown Opening";
+      const mergeKey = `${name}::${s.userColor}`;
       const existing = byNameColor.get(mergeKey);
 
       if (existing) {
-        existing.games += agg.games;
-        existing.wins += agg.wins;
-        existing.draws += agg.draws;
-        existing.losses += agg.losses;
-        // Keep the FEN with the most games as the representative
-        const existingGames = grouped.get(`${existing.fen}::${existing.userColor}`)?.games ?? 0;
-        if (agg.games > existingGames) existing.fen = agg.fen;
+        existing.games++;
+        if (s.result === "win") existing.wins++;
+        else if (s.result === "draw") existing.draws++;
+        else existing.losses++;
       } else {
         byNameColor.set(mergeKey, {
           key: mergeKey,
-          fen: agg.fen,
-          userColor: agg.userColor,
+          fen: s.fen,
+          userColor: s.userColor,
           name,
-          games: agg.games,
-          wins: agg.wins,
-          draws: agg.draws,
-          losses: agg.losses,
+          games: 1,
+          wins: s.result === "win" ? 1 : 0,
+          draws: s.result === "draw" ? 1 : 0,
+          losses: s.result === "loss" ? 1 : 0,
           winRate: 0,
         });
       }
@@ -177,28 +114,10 @@ export function OpeningRankings({ openingSummaries }: Props) {
     // Sort by win rate ascending (worst first)
     result.sort((a, b) => a.winRate - b.winRate || b.games - a.games);
     return result;
-  }, [loading, grouped, openingNames]);
+  }, [openingSummaries]);
 
   /* ── Early returns ── */
-  if (openingSummaries.length === 0) return null;
-
-  if (loading) {
-    return (
-      <div className="glass-card border-indigo-500/15 bg-gradient-to-r from-indigo-500/[0.04] to-transparent p-6">
-        <div className="flex items-center gap-4">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/15 text-3xl shadow-lg shadow-indigo-500/10 animate-pulse">
-            📊
-          </span>
-          <div className="flex-1">
-            <h2 className="text-xl font-extrabold tracking-tight text-white">Opening Rankings</h2>
-            <p className="mt-1 animate-pulse text-sm text-slate-400">Identifying your openings…</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (rankings.length === 0) return null;
+  if (openingSummaries.length === 0 || rankings.length === 0) return null;
 
   const totalGames = openingSummaries.length;
   const worst = rankings[0];

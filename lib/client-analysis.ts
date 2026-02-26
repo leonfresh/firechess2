@@ -25,6 +25,7 @@ type LichessGame = {
     white?: { user?: { name?: string }; rating?: number };
     black?: { user?: { name?: string }; rating?: number };
   };
+  opening?: { eco?: string; name?: string };
 };
 
 type ChessComArchiveList = {
@@ -61,6 +62,8 @@ type SourceGame = {
   winner?: GameOutcome;
   /** How the game ended */
   termination?: GameTermination;
+  /** Opening name if available from source (Lichess or Chess.com PGN) */
+  openingName?: string;
 };
 
 export type AnalysisSource = "lichess" | "chesscom";
@@ -189,8 +192,19 @@ function sourceGamesFromLichess(games: LichessGame[]): SourceGame[] {
         clocks: game.clocks,
         winner,
         termination,
+        openingName: game.opening?.name,
       };
     });
+}
+
+function extractOpeningFromPgn(pgn: string): string | undefined {
+  // Try [Opening "..."] header first
+  const openingMatch = pgn.match(/\[Opening\s+"([^"]+)"\]/);
+  if (openingMatch?.[1]) return openingMatch[1];
+  // Try [ECOUrl "..."] and extract from the URL path
+  const ecoUrlMatch = pgn.match(/\[ECOUrl\s+"[^"]*\/([^"]+)"\]/);
+  if (ecoUrlMatch?.[1]) return ecoUrlMatch[1].replace(/-/g, " ");
+  return undefined;
 }
 
 function parseMovesFromChessComPgn(pgn: string): { moves: string; clocks: number[] } | null {
@@ -526,6 +540,7 @@ async function fetchChessComGamesInReverse(
         clocks: parsed.clocks.length > 0 ? parsed.clocks : undefined,
         winner,
         termination,
+        openingName: extractOpeningFromPgn(game.pgn!),
       });
     }
   }
@@ -1040,7 +1055,7 @@ export async function analyzeOpeningLeaksInBrowser(
       ? `&perfType=${lichessPerfs.join(",")}`
       : "";
     const sinceParam = options?.since ? `&since=${options.since}` : "";
-    const lichessUrl = `https://lichess.org/api/games/user/${encodeURIComponent(username)}?max=${maxGames}&moves=true&opening=false&clocks=true&evals=false&pgnInJson=false${perfParam}${sinceParam}`;
+    const lichessUrl = `https://lichess.org/api/games/user/${encodeURIComponent(username)}?max=${maxGames}&moves=true&opening=true&clocks=true&evals=false&pgnInJson=false${perfParam}${sinceParam}`;
 
     const hasSinceFilter = !!options?.since;
     const lichessGames = await streamLichessGames(
@@ -1161,7 +1176,7 @@ export async function analyzeOpeningLeaksInBrowser(
         (!game.winner || game.winner === "draw") ? "draw"
         : game.winner === userColor ? "win"
         : "loss";
-      openingSummaries.push({ fen: openingIdentityFen, userColor, result: outcome });
+      openingSummaries.push({ fen: openingIdentityFen, userColor, result: outcome, openingName: game.openingName });
     }
 
     gameTraces.push({

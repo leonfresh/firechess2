@@ -53,6 +53,8 @@ export type OpeningSummary = {
   userColor: PlayerColor;
   /** Game outcome from the user's perspective */
   result: "win" | "draw" | "loss";
+  /** Opening name from source API (Lichess / Chess.com PGN) */
+  openingName?: string;
 };
 
 export type PositionEvalTrace = {
