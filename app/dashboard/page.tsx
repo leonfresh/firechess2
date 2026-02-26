@@ -18,6 +18,14 @@ import { TacticCard } from "@/components/tactic-card";
 import { StudyPlanWidget } from "@/components/study-plan";
 import { AchievementsPanel, type AchievementCtx } from "@/components/achievements";
 import { GoalWidget } from "@/components/goal-widget";
+import { DailyChallenge } from "@/components/daily-challenge";
+import { ProgressHighlights } from "@/components/progress-highlights";
+import { RepertoirePanel } from "@/components/opening-repertoire";
+import { PercentileWidget } from "@/components/percentile-widget";
+import { CoinShop } from "@/components/coin-shop";
+import { useCoinBalance } from "@/lib/use-coins";
+import { useProfileTitle } from "@/lib/use-coins";
+import { earnCoins } from "@/lib/coins";
 import {
   StrengthsRadar,
   RadarLegend,
@@ -118,6 +126,8 @@ function delta(a: number | null, b: number | null): string {
 
 export default function DashboardPage() {
   const { authenticated, loading: sessionLoading, user, plan } = useSession();
+  const profileTitle = useProfileTitle();
+  const coinBalance = useCoinBalance();
   const [reports, setReports] = useState<SavedReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -238,6 +248,11 @@ export default function DashboardPage() {
     return Math.floor(diff / (1000 * 60 * 60 * 24));
   }, [latest]);
 
+  // All missed tactics across all filtered reports (for Daily Challenge)
+  const allTactics = useMemo(() => {
+    return filtered.flatMap((r) => r.missedTactics ?? []);
+  }, [filtered]);
+
   // Achievement context
   const achievementCtx: AchievementCtx = useMemo(() => {
     const allAccuracies = reports.map((r) => r.estimatedAccuracy).filter((a): a is number => a != null);
@@ -337,6 +352,16 @@ export default function DashboardPage() {
               {(plan === "pro" || plan === "lifetime") && (
                 <span className={`text-xs ${plan === "lifetime" ? "tag-amber" : "tag-emerald"}`}>{plan === "lifetime" ? "LIFETIME" : "PRO"}</span>
               )}
+              {profileTitle && (
+                <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${profileTitle.badgeClass}`}>
+                  {profileTitle.name}
+                </span>
+              )}
+              {coinBalance > 0 && (
+                <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-bold text-amber-400">
+                  <span>🪙</span> {coinBalance.toLocaleString()}
+                </span>
+              )}
             </div>
             <p className="text-sm text-white/40">
               {user?.name ? `${user.name}'s` : "Your"} chess analysis overview
@@ -414,6 +439,13 @@ export default function DashboardPage() {
             </div>
           )}
 
+          {/* ─── Progress Highlights (rescan improvement) ─── */}
+          {latest && previous && filtered.length >= 2 && (
+            <div className="animate-fade-in-up" style={{ animationDelay: "0.13s" }}>
+              <ProgressHighlights latest={latest} previous={previous} />
+            </div>
+          )}
+
           {/* ─── Study Plan ─── */}
           <div className="animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
             <StudyPlanWidget
@@ -421,6 +453,13 @@ export default function DashboardPage() {
               source={selectedUser !== "__all__" ? selectedUser.split("__")[1] : undefined}
             />
           </div>
+
+          {/* ─── Daily Challenge ─── */}
+          {allTactics.length > 0 && (
+            <div className="animate-fade-in-up" style={{ animationDelay: "0.16s" }}>
+              <DailyChallenge allTactics={allTactics} />
+            </div>
+          )}
 
           {/* ─── Goal + Achievements row ─── */}
           <div className="grid gap-6 lg:grid-cols-2">
@@ -432,6 +471,19 @@ export default function DashboardPage() {
             </div>
             <div className="glass-card animate-fade-in-up p-6" style={{ animationDelay: "0.18s" }}>
               <AchievementsPanel ctx={achievementCtx} />
+            </div>
+          </div>
+
+          {/* ─── Percentile + Repertoire row ─── */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="animate-fade-in-up" style={{ animationDelay: "0.19s" }}>
+              <PercentileWidget
+                accuracy={latest?.estimatedAccuracy ?? null}
+                rating={latest?.estimatedRating ?? null}
+              />
+            </div>
+            <div className="animate-fade-in-up" style={{ animationDelay: "0.20s" }}>
+              <RepertoirePanel />
             </div>
           </div>
 
@@ -596,6 +648,11 @@ export default function DashboardPage() {
                 </>
               )}
             </div>
+          </div>
+
+          {/* ─── Coin Shop ─── */}
+          <div className="animate-fade-in-up" style={{ animationDelay: "0.38s" }}>
+            <CoinShop />
           </div>
 
           {/* ─── Key Metrics Comparison (latest vs previous) ─── */}

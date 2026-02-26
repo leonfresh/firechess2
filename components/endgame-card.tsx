@@ -7,6 +7,7 @@ import { EvalBar } from "@/components/eval-bar";
 import { Chessboard } from "react-chessboard";
 import { playSound } from "@/lib/sounds";
 import { useBoardSize } from "@/lib/use-board-size";
+import { useBoardTheme } from "@/lib/use-coins";
 import type { EndgameMistake, MoveSquare } from "@/lib/types";
 
 type EndgameCardProps = {
@@ -170,6 +171,7 @@ const ENDGAME_TIPS: Record<string, string> = {
 
 export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
   const { ref: boardSizeRef, size: boardSize } = useBoardSize(400);
+  const boardTheme = useBoardTheme();
   const userMoveDetails = useMemo(
     () => deriveMoveDetails(mistake.fenBefore, mistake.userMove),
     [mistake.fenBefore, mistake.userMove]
@@ -466,8 +468,8 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
                 customArrows={customArrows}
                 boardOrientation={boardOrientation}
                 boardWidth={boardSize}
-                customDarkSquareStyle={{ backgroundColor: "#779952" }}
-                customLightSquareStyle={{ backgroundColor: "#edeed1" }}
+                customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+                customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
               />
             </div>
           </div>

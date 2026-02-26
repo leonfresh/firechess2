@@ -7,6 +7,7 @@ import { useState, useRef, useEffect } from "react";
 import { signIn, signOut } from "next-auth/react";
 import { useSession } from "@/components/session-provider";
 import { LATEST_VERSION } from "@/lib/constants";
+import { useCoinBalance } from "@/lib/use-coins";
 
 const NAV_LINKS = [
   { href: "/about", label: "About" },
@@ -15,6 +16,7 @@ const NAV_LINKS = [
 export function Navbar() {
   const pathname = usePathname();
   const { loading, authenticated, user, plan, isAdmin } = useSession();
+  const coinBalance = useCoinBalance();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -149,6 +151,18 @@ export function Navbar() {
             </button>
           ) : (
             <>
+              {/* Coin balance */}
+              {coinBalance > 0 && (
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-1 rounded-lg bg-amber-500/10 px-2.5 py-1.5 text-xs font-bold text-amber-400 transition-colors hover:bg-amber-500/15"
+                  title="Your coin balance"
+                >
+                  <span>🪙</span>
+                  {coinBalance.toLocaleString()}
+                </Link>
+              )}
+
               <Link
                 href="/dashboard"
                 className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${

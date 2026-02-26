@@ -18,6 +18,7 @@ import type { AnalysisSource, ScanMode, TimeControl } from "@/lib/client-analysi
 import type { AnalyzeResponse } from "@/lib/types";
 import { fetchExplorerMoves } from "@/lib/lichess-explorer";
 import { shareReportCard } from "@/lib/share-report";
+import { earnCoins } from "@/lib/coins";
 
 /* ── Inline help tooltip ── */
 function HelpTip({ text }: { text: string }) {
@@ -453,6 +454,10 @@ export default function HomePage() {
       const json = await res.json();
       if (json.saved || json.reason === "duplicate") {
         setSaveStatus(json.saved ? "saved" : "duplicate");
+        // Award coins for saving a scan
+        if (json.saved) {
+          try { earnCoins("scan_complete"); } catch {}
+        }
         // Auto-generate a study plan (works for both new saves and duplicates)
         try {
           const planRes = await fetch("/api/study-plan", {

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { earnCoins } from "@/lib/coins";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
@@ -261,6 +262,29 @@ export function AchievementsPanel({ ctx }: { ctx: AchievementCtx }) {
     }
     return { unlocked: u, locked: l };
   }, [ctx]);
+
+  // Award coins for newly unlocked achievements
+  const awardedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const key = "fc-achievements-awarded";
+    try {
+      const stored = JSON.parse(localStorage.getItem(key) ?? "[]") as string[];
+      awardedRef.current = new Set(stored);
+    } catch {}
+
+    let changed = false;
+    for (const a of unlocked) {
+      if (!awardedRef.current.has(a.id)) {
+        awardedRef.current.add(a.id);
+        earnCoins("achievement");
+        changed = true;
+      }
+    }
+    if (changed) {
+      localStorage.setItem(key, JSON.stringify([...awardedRef.current]));
+    }
+  }, [unlocked]);
 
   const displayed: (AchievementDef & { unlocked: boolean })[] = showAll ? [...unlocked, ...locked] : unlocked.length > 0 ? unlocked : locked.slice(0, 4);
 

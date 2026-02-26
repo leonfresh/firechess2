@@ -11,6 +11,8 @@ import { useBoardSize } from "@/lib/use-board-size";
 import type { MoveSquare, RepeatedOpeningLeak } from "@/lib/types";
 import { fetchExplorerMoves, type ExplorerMove } from "@/lib/lichess-explorer";
 import { explainOpeningLeak, describeEndPosition, type MoveExplanation, type PositionExplanation } from "@/lib/position-explainer";
+import { SaveToRepertoireButton } from "@/components/opening-repertoire";
+import { useBoardTheme } from "@/lib/use-coins";
 
 type MistakeCardProps = {
   leak: RepeatedOpeningLeak;
@@ -223,6 +225,7 @@ function formatEval(valueCp: number, options?: { showPlus?: boolean }): string {
 
 export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   const { ref: boardSizeRef, size: boardSize } = useBoardSize(480);
+  const boardTheme = useBoardTheme();
   const badMove = useMemo(() => deriveMoveDetails(leak.fenBefore, leak.userMove), [leak.fenBefore, leak.userMove]);
   const bestMove = useMemo(() => deriveMoveDetails(leak.fenBefore, leak.bestMove), [leak.fenBefore, leak.bestMove]);
   const boardId = useMemo(() => `mistake-${leak.fenBefore.replace(/[^a-zA-Z0-9]/g, "-")}`, [leak.fenBefore]);
@@ -1234,8 +1237,8 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                 customArrows={freeplayMode ? [] : customArrows}
                 boardOrientation={boardOrientation}
                 boardWidth={boardSize}
-                customDarkSquareStyle={{ backgroundColor: "#779952" }}
-                customLightSquareStyle={{ backgroundColor: "#edeed1" }}
+                customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+                customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
                 customBoardStyle={{ borderRadius: "12px", overflow: "hidden" }}
               />
             </div>
@@ -1638,6 +1641,21 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                   {tag}
                 </span>
               ))}
+            </div>
+          )}
+
+          {/* Save to Repertoire */}
+          {leak.bestMove && (
+            <div className="flex items-center">
+              <SaveToRepertoireButton
+                fen={leak.fenBefore}
+                correctMove={typeof leak.bestMove === "string" ? leak.bestMove : ""}
+                userMove={leak.userMove}
+                tags={leak.tags ?? []}
+                sideToMove={leak.sideToMove}
+                userColor={leak.userColor}
+                cpLoss={leak.cpLoss}
+              />
             </div>
           )}
 

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { earnCoins } from "@/lib/coins";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
@@ -99,6 +100,11 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
 
   async function toggleTask(taskId: string, completed: boolean) {
     setTogglingIds((prev) => new Set(prev).add(taskId));
+
+    // Award coins for completing a task
+    if (completed) {
+      try { earnCoins("study_task"); } catch {}
+    }
 
     // Optimistic update
     setTasks((prev) =>

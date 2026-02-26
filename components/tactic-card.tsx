@@ -7,6 +7,7 @@ import { EvalBar } from "@/components/eval-bar";
 import { Chessboard } from "react-chessboard";
 import { playSound } from "@/lib/sounds";
 import { useBoardSize } from "@/lib/use-board-size";
+import { useBoardTheme } from "@/lib/use-coins";
 import type { MissedTactic, MoveSquare } from "@/lib/types";
 
 type TacticCardProps = {
@@ -417,6 +418,7 @@ function formatEvalLoss(cpLoss: number): string {
 
 export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
   const { ref: boardSizeRef, size: boardSize } = useBoardSize(400);
+  const boardTheme = useBoardTheme();
   const userMoveDetails = useMemo(
     () => deriveMoveDetails(tactic.fenBefore, tactic.userMove),
     [tactic.fenBefore, tactic.userMove]
@@ -749,8 +751,8 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
                 customArrows={customArrows}
                 boardOrientation={boardOrientation}
                 boardWidth={boardSize}
-                customDarkSquareStyle={{ backgroundColor: "#779952" }}
-                customLightSquareStyle={{ backgroundColor: "#edeed1" }}
+                customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+                customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
               />
             </div>
           </div>

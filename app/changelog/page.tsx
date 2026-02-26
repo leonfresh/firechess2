@@ -26,8 +26,17 @@ const CHANGELOG: ChangeEntry[] = [
     date: "Feb 27, 2026",
     title: "Study Plans, Opening Rankings & Retention Upgrades",
     description:
-      "Personalised study plans, opening rankings with mini boards, mental-game stats saved to your dashboard, plus a full retention suite: achievements, goals, rescan reminders, shareable report cards, and weekly email digests.",
+      "Personalised study plans, opening rankings with mini boards, mental-game stats saved to your dashboard, plus a full retention suite: achievements, goals, rescan reminders, shareable report cards, weekly email digests, daily challenge puzzles, progress highlights, opening repertoire, percentile comparison, and a coin economy with a cosmetic shop.",
     changes: [
+      { type: "feature", text: "Coin Economy — earn virtual coins from scans (+15), daily challenges (+10/+3), study tasks (+5), achievements (+20), and repertoire saves (+2)" },
+      { type: "feature", text: "Coin Shop — spend earned coins on 10 board colour themes (Ocean, Midnight, Coral, Walnut, Ice, Royal, Neon, Candy, Ember) and 6 profile titles" },
+      { type: "feature", text: "Board Themes — purchased themes apply instantly to every chessboard across the app (drill mode, tactic cards, mistake cards, endgame cards, daily challenge, repertoire, hero board)" },
+      { type: "feature", text: "Profile Titles — equippable titles (Chess Student, Tactician, Strategist, Master Analyst, Elite Scholar, Grandmaster) shown as a badge on the dashboard header" },
+      { type: "feature", text: "Coin balance badge in the navbar — shows your current coin count next to the Dashboard link" },
+      { type: "feature", text: "Daily Challenge — a daily puzzle from your own missed tactics, with streak tracking and answer reveal, right on the dashboard" },
+      { type: "feature", text: "Progress Highlights — celebratory banners show what improved since your last scan (accuracy, rating, fewer leaks, sharper tactics, etc.)" },
+      { type: "feature", text: "Opening Repertoire — save correct moves from any leak card to build a personal opening repertoire you can review on the dashboard" },
+      { type: "feature", text: "Percentile Comparison — see how your accuracy and rating rank against all FireChess users with visual progress bars and motivational messages" },
       { type: "feature", text: "Study Plan system — after every scan a weekly study plan is generated with targeted tasks based on your weaknesses" },
       { type: "feature", text: "Per-player study plans — each chess username gets its own independent study plan with separate streaks and progress" },
       { type: "feature", text: "Opening Rankings — new section showing all your openings with mini chessboards, colour badges, W/D/L record, sorted by win-rate (lowest first)" },
