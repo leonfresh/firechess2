@@ -6,6 +6,7 @@ import { useState } from "react";
 
 const plans = [
   {
+    id: "free" as const,
     icon: "🆓",
     name: "Free",
     originalPrice: null as string | null,
@@ -16,8 +17,9 @@ const plans = [
       "Up to 300 recent games per scan",
       "Engine depth up to 12",
       "Full opening leak detection + drill mode",
-      "3 sample missed tactics per scan",
-      "3 sample endgame mistakes per scan",
+      "Up to 10 missed tactics per scan",
+      "Up to 10 endgame mistakes per scan",
+      "All scan modes (Openings / Tactics / Endgames / All)",
       "Strengths & Weaknesses radar + insight scores",
       "Basic mental game stats (stability, tilt, post-loss)",
       "Opening Explorer on every card",
@@ -29,6 +31,7 @@ const plans = [
     highlight: false
   },
   {
+    id: "pro" as const,
     icon: "🚀",
     name: "Pro",
     originalPrice: "$8",
@@ -43,27 +46,47 @@ const plans = [
       "Motif pattern analysis — find recurring weaknesses",
       "Time pressure detection on missed tactics",
       "Dedicated tactics & endgame drill modes",
-      "Separate scan modes (Openings / Tactics / Endgames / All)",
       "Full Mental Game breakdown — archetype, color stats, momentum, streaks",
       "Deep Analysis — full study plans & coaching tips per dimension"
     ],
     cta: "Upgrade with Stripe",
     highlight: true
+  },
+  {
+    id: "lifetime" as const,
+    icon: "♾️",
+    name: "Lifetime",
+    originalPrice: null as string | null,
+    price: "$59",
+    subtitle: "Pay once, keep Pro forever",
+    badge: "⚡ Founding member pricing",
+    features: [
+      "Everything in Pro — forever",
+      "One-time payment, no recurring fees",
+      "Lock in before price increases",
+      "Support an indie dev building for chess players",
+    ],
+    cta: "Get Lifetime Access",
+    highlight: false
   }
 ];
 
 export default function PricingPage() {
   const { authenticated, plan } = useSession();
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState<"pro" | "lifetime" | null>(null);
 
-  const handleUpgrade = async () => {
+  const handleUpgrade = async (checkoutPlan: "pro" | "lifetime" = "pro") => {
     if (!authenticated) {
       window.location.href = "/auth/signin";
       return;
     }
-    setCheckoutLoading(true);
+    setCheckoutLoading(checkoutPlan);
     try {
-      const res = await fetch("/api/checkout", { method: "POST" });
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(checkoutPlan === "lifetime" ? { plan: "lifetime" } : {}),
+      });
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
@@ -71,9 +94,11 @@ export default function PricingPage() {
     } catch {
       alert("Failed to start checkout. Please try again.");
     } finally {
-      setCheckoutLoading(false);
+      setCheckoutLoading(null);
     }
   };
+
+  const isPro = plan === "pro" || plan === "lifetime";
 
   return (
     <div className="relative min-h-screen">
@@ -99,8 +124,17 @@ export default function PricingPage() {
             <p className="mx-auto max-w-2xl text-base text-slate-400 md:text-lg">
               Start free, then unlock deeper analysis and bigger scan limits powered by Stockfish 18.
             </p>
-            <div className="mx-auto mt-3 inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/[0.08] px-4 py-1.5 text-sm font-medium text-orange-300">
-              <span className="text-base">🔥</span> Launch pricing — lock in 37% off before it&apos;s gone
+            <div className="mx-auto mt-6 max-w-2xl rounded-2xl border border-orange-500/20 bg-gradient-to-r from-orange-500/[0.08] to-amber-500/[0.06] p-5 text-left">
+              <div className="flex items-start gap-4">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-orange-500/15 text-2xl">🔥</span>
+                <div>
+                  <h3 className="text-base font-bold text-white">Launch Pricing — 37% off</h3>
+                  <p className="mt-1 text-sm text-slate-400">
+                    FireChess is brand new. Subscribe now at <span className="font-semibold text-orange-300">$5/mo instead of $8/mo</span> and
+                    keep that rate forever — even when the price goes up. Or grab <span className="font-semibold text-amber-300">Lifetime access for a one-time $59</span>.
+                  </p>
+                </div>
+              </div>
             </div>
 
               <div className="mx-auto mt-6 grid max-w-3xl gap-3 sm:grid-cols-2 md:grid-cols-4">
@@ -119,16 +153,19 @@ export default function PricingPage() {
           </header>
 
           {/* Plan Cards */}
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-3">
             {plans.map((p) => (
               <article
                 key={p.name}
                 className={`glass-card-hover relative p-6 md:p-8 ${
-                  p.highlight ? "border-emerald-500/20 shadow-glow" : ""
+                  p.highlight ? "border-emerald-500/20 shadow-glow" : p.id === "lifetime" ? "border-amber-500/20" : ""
                 }`}
               >
                 {p.highlight && (
                   <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-b from-emerald-500/[0.06] to-transparent" />
+                )}
+                {p.id === "lifetime" && (
+                  <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-b from-amber-500/[0.06] to-transparent" />
                 )}
                 <div className="relative">
                   <div className="flex items-center justify-between">
@@ -145,7 +182,11 @@ export default function PricingPage() {
                   </div>
                   <p className="mt-1 text-sm text-slate-400">{p.subtitle}</p>
                   {p.badge && (
-                    <div className="mt-3 inline-flex items-center gap-1.5 rounded-full border border-orange-500/20 bg-orange-500/[0.08] px-3 py-1 text-xs font-semibold text-orange-300">
+                    <div className={`mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${
+                      p.id === "lifetime"
+                        ? "border-amber-500/20 bg-amber-500/[0.08] text-amber-300"
+                        : "border-orange-500/20 bg-orange-500/[0.08] text-orange-300"
+                    }`}>
                       {p.badge}
                     </div>
                   )}
@@ -154,15 +195,18 @@ export default function PricingPage() {
                       <span className="text-2xl font-bold text-slate-500 line-through decoration-red-500/60 decoration-2">{p.originalPrice}</span>
                     )}
                     <p className="text-4xl font-black gradient-text-emerald">{p.price}</p>
+                    {p.id === "lifetime" && (
+                      <span className="text-sm text-slate-500">one-time</span>
+                    )}
                   </div>
                   {p.originalPrice && (
-                    <p className="mt-1 text-xs text-slate-500">Early adopters keep this rate forever</p>
+                    <p className="mt-2 text-sm font-medium text-orange-300/80">🔒 Early adopters keep this rate forever</p>
                   )}
 
                   <ul className="mt-6 space-y-3">
                     {p.features.map((feature) => (
                       <li key={feature} className="flex items-start gap-3 text-sm text-slate-300">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="mt-0.5 shrink-0 text-emerald-400" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className={`mt-0.5 shrink-0 ${p.id === "lifetime" ? "text-amber-400" : "text-emerald-400"}`} strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
                         {feature}
                       </li>
                     ))}
@@ -170,19 +214,29 @@ export default function PricingPage() {
 
                   <button
                     type="button"
-                    disabled={checkoutLoading}
-                    onClick={p.highlight ? handleUpgrade : undefined}
+                    disabled={!!checkoutLoading}
+                    onClick={
+                      p.id === "pro" ? () => handleUpgrade("pro")
+                        : p.id === "lifetime" ? () => handleUpgrade("lifetime")
+                        : undefined
+                    }
                     className={`mt-8 w-full py-3 text-sm font-semibold transition-all duration-300 ${
-                      p.highlight
+                      p.id === "pro"
                         ? "btn-primary"
-                        : "btn-secondary h-auto"
+                        : p.id === "lifetime"
+                          ? "rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-slate-950 shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 hover:brightness-110"
+                          : "btn-secondary h-auto"
                     } disabled:opacity-50`}
                   >
-                    {p.highlight && plan === "pro"
-                      ? "✓ Current plan"
-                      : p.highlight && checkoutLoading
-                      ? "Redirecting to Stripe..."
-                      : p.cta}
+                    {(p.id === "pro" || p.id === "lifetime") && isPro
+                      ? plan === "lifetime"
+                        ? "♾️ Lifetime member"
+                        : p.id === "lifetime"
+                          ? "Switch to Lifetime"
+                          : "✓ Current plan"
+                      : checkoutLoading === p.id
+                        ? "Redirecting to Stripe..."
+                        : p.cta}
                   </button>
                 </div>
               </article>
@@ -199,33 +253,36 @@ export default function PricingPage() {
                     <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">Feature</th>
                     <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">Free</th>
                     <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-emerald-400">Pro</th>
+                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-amber-400">Lifetime</th>
                   </tr>
                 </thead>
                 <tbody className="text-slate-300">
                   {[
-                    ["Recent games per scan", "Up to 300", "Up to 5,000"],
-                    ["Engine depth", "Up to 12", "Up to 24"],
-                    ["Opening leak detection", "✓", "✓"],
-                    ["Opening drill mode", "✓", "✓"],
-                    ["Strengths & Weaknesses radar", "✓", "✓"],
-                    ["Deep Analysis insight scores", "✓ (scores only)", "✓ + study plans & coaching tips"],
-                    ["Opening Explorer (Lichess DB)", "✓", "✓"],
-                    ["Move explanations", "✓", "✓"],
-                    ["Missed tactics", "3 samples", "Unlimited"],
-                    ["Endgame mistakes", "3 samples", "Unlimited"],
-                    ["Motif pattern analysis", "—", "✓"],
-                    ["Time pressure detection", "—", "✓"],
-                    ["Tactics drill mode", "—", "✓"],
-                    ["Endgame drill mode", "—", "✓"],
-                    ["Mental game: basic stats", "✓", "✓"],
-                    ["Mental game: full breakdown", "—", "✓ (archetype, color, streaks, form)"],
-                    ["Save reports to dashboard", "✓", "✓"],
-                    ["Scan mode selector", "Openings only", "Openings / Tactics / Endgames / All"],
-                  ].map(([feature, free, pro]) => (
+                    ["Recent games per scan", "Up to 300", "Up to 5,000", "Up to 5,000"],
+                    ["Engine depth", "Up to 12", "Up to 24", "Up to 24"],
+                    ["Opening leak detection", "✓", "✓", "✓"],
+                    ["Opening drill mode", "✓", "✓", "✓"],
+                    ["Scan mode selector", "All modes", "All modes", "All modes"],
+                    ["Strengths & Weaknesses radar", "✓", "✓", "✓"],
+                    ["Deep Analysis insight scores", "✓ (scores only)", "✓ + study plans & coaching tips", "✓ + study plans & coaching tips"],
+                    ["Opening Explorer (Lichess DB)", "✓", "✓", "✓"],
+                    ["Move explanations", "✓", "✓", "✓"],
+                    ["Missed tactics", "Up to 10 per scan", "Unlimited", "Unlimited"],
+                    ["Endgame mistakes", "Up to 10 per scan", "Unlimited", "Unlimited"],
+                    ["Motif pattern analysis", "—", "✓", "✓"],
+                    ["Time pressure detection", "—", "✓", "✓"],
+                    ["Tactics drill mode", "—", "✓", "✓"],
+                    ["Endgame drill mode", "—", "✓", "✓"],
+                    ["Mental game: basic stats", "✓", "✓", "✓"],
+                    ["Mental game: full breakdown", "—", "✓ (archetype, color, streaks, form)", "✓"],
+                    ["Save reports to dashboard", "✓", "✓", "✓"],
+                    ["Recurring cost", "—", "$5/month", "$59 one-time"],
+                  ].map(([feature, free, pro, lifetime]) => (
                     <tr key={feature} className="border-t border-white/[0.04]">
                       <td className="px-4 py-3 text-slate-400">{feature}</td>
                       <td className="px-4 py-3">{free}</td>
                       <td className="px-4 py-3 font-medium text-emerald-300">{pro}</td>
+                      <td className="px-4 py-3 font-medium text-amber-300">{lifetime}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -248,7 +305,7 @@ export default function PricingPage() {
                   There&apos;s no VC funding, no team of 20, no enterprise sales pipeline. Just me, Stockfish, and a lot of late nights.
                 </p>
                 <p className="mt-3 text-sm leading-relaxed text-slate-400">
-                  Your $5/month directly funds server costs, Stockfish engine improvements, and lets me keep
+                  Your $5/month (or $59 lifetime) directly funds server costs, Stockfish engine improvements, and lets me keep
                   building features like the ones you see here. Every Pro subscriber means I can spend more time
                   making FireChess better instead of worrying about keeping the lights on.
                 </p>

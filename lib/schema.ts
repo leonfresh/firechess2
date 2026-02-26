@@ -87,7 +87,7 @@ export const subscriptions = pgTable("subscription", {
     .references(() => users.id, { onDelete: "cascade" }),
   stripeCustomerId: text("stripeCustomerId"),
   stripeSubscriptionId: text("stripeSubscriptionId"),
-  plan: text("plan").$type<"free" | "pro">().notNull().default("free"),
+  plan: text("plan").$type<"free" | "pro" | "lifetime">().notNull().default("free"),
   status: text("status")
     .$type<"active" | "canceled" | "past_due" | "incomplete" | "trialing">()
     .notNull()

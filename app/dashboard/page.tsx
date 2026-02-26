@@ -271,8 +271,8 @@ export default function DashboardPage() {
               <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
                 Dashboard
               </h1>
-              {plan === "pro" && (
-                <span className="tag-emerald text-xs">PRO</span>
+              {(plan === "pro" || plan === "lifetime") && (
+                <span className={`text-xs ${plan === "lifetime" ? "tag-amber" : "tag-emerald"}`}>{plan === "lifetime" ? "LIFETIME" : "PRO"}</span>
               )}
             </div>
             <p className="text-sm text-white/40">

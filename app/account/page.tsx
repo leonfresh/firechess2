@@ -42,7 +42,8 @@ export default function AccountPage() {
     }
   };
 
-  const isPro = plan === "pro";
+  const isPro = plan === "pro" || plan === "lifetime";
+  const isLifetime = plan === "lifetime";
   const isActive = subscriptionStatus === "active" || subscriptionStatus === "trialing";
 
   return (
@@ -92,9 +93,11 @@ export default function AccountPage() {
                 {/* Plan badge */}
                 <span
                   className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold ${
-                    isPro
-                      ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400"
-                      : "bg-white/[0.06] text-slate-400"
+                    isLifetime
+                      ? "bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-400"
+                      : isPro
+                        ? "bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 text-emerald-400"
+                        : "bg-white/[0.06] text-slate-400"
                   }`}
                 >
                   {isPro && (
@@ -102,11 +105,11 @@ export default function AccountPage() {
                       <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm0 2h14v2H5v-2z" />
                     </svg>
                   )}
-                  {isPro ? "Pro" : "Free"}
+                  {isLifetime ? "Lifetime" : isPro ? "Pro" : "Free"}
                 </span>
 
                 {/* Status */}
-                {isPro && (
+                {isPro && !isLifetime && (
                   <span
                     className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
                       isActive
@@ -131,7 +134,18 @@ export default function AccountPage() {
 
               {/* Plan details */}
               <div className="mt-4 rounded-xl bg-white/[0.03] p-4">
-                {isPro ? (
+                {isLifetime ? (
+                  <div className="space-y-2 text-sm text-slate-300">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Plan</span>
+                      <span className="text-amber-400">Lifetime — Founding Member</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Status</span>
+                      <span className="text-emerald-400">Active forever</span>
+                    </div>
+                  </div>
+                ) : isPro ? (
                   <div className="space-y-2 text-sm text-slate-300">
                     <div className="flex justify-between">
                       <span className="text-slate-500">Plan</span>
@@ -150,9 +164,9 @@ export default function AccountPage() {
                       You&apos;re on the <span className="font-medium text-white">Free</span> plan.
                     </p>
                     <ul className="mt-2 space-y-1 text-xs text-slate-500">
-                      <li>• 25 games per scan</li>
-                      <li>• 3 endgame samples</li>
-                      <li>• Basic analysis depth</li>
+                      <li>• Up to 300 games per scan</li>
+                      <li>• Up to 10 tactics & endgame results per scan</li>
+                      <li>• Engine depth up to 12</li>
                     </ul>
                   </div>
                 )}
@@ -160,7 +174,11 @@ export default function AccountPage() {
 
               {/* Actions */}
               <div className="mt-5 flex flex-wrap gap-3">
-                {isPro ? (
+                {isLifetime ? (
+                  <span className="inline-flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-4 py-2.5 text-sm font-medium text-amber-400">
+                    ♾️ Lifetime member — no billing to manage
+                  </span>
+                ) : isPro ? (
                   <button
                     type="button"
                     onClick={openPortal}

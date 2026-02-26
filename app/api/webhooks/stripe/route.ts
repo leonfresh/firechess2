@@ -39,14 +39,17 @@ export async function POST(req: NextRequest) {
   }
 
   switch (event.type) {
-    /* ── Checkout completed — activate Pro ── */
+    /* ── Checkout completed — activate Pro or Lifetime ── */
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.metadata?.userId;
       if (!userId) break;
 
-      const subscriptionId =
-        typeof session.subscription === "string"
+      const isLifetime = session.metadata?.plan === "lifetime";
+
+      const subscriptionId = isLifetime
+        ? null
+        : typeof session.subscription === "string"
           ? session.subscription
           : session.subscription?.id;
 
@@ -56,7 +59,7 @@ export async function POST(req: NextRequest) {
           userId,
           stripeCustomerId: typeof session.customer === "string" ? session.customer : session.customer?.id ?? null,
           stripeSubscriptionId: subscriptionId ?? null,
-          plan: "pro",
+          plan: isLifetime ? "lifetime" : "pro",
           status: "active",
         })
         .onConflictDoUpdate({
@@ -64,7 +67,7 @@ export async function POST(req: NextRequest) {
           set: {
             stripeCustomerId: typeof session.customer === "string" ? session.customer : session.customer?.id ?? null,
             stripeSubscriptionId: subscriptionId ?? null,
-            plan: "pro",
+            plan: isLifetime ? "lifetime" : "pro",
             status: "active",
             updatedAt: new Date(),
           },
@@ -77,6 +80,14 @@ export async function POST(req: NextRequest) {
       const sub = event.data.object as Stripe.Subscription;
       const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
       if (!customerId) break;
+
+      // Don't downgrade lifetime users
+      const [existing] = await db
+        .select({ plan: subscriptions.plan })
+        .from(subscriptions)
+        .where(eq(subscriptions.stripeCustomerId, customerId))
+        .limit(1);
+      if (existing?.plan === "lifetime") break;
 
       const isPro = sub.status === "active" || sub.status === "trialing";
       const periodEndTs = (sub as any).current_period_end as number | undefined;
@@ -96,11 +107,19 @@ export async function POST(req: NextRequest) {
       break;
     }
 
-    /* ── Subscription deleted — revert to free ── */
+    /* ── Subscription deleted — revert to free (but not lifetime) ── */
     case "customer.subscription.deleted": {
       const sub = event.data.object as Stripe.Subscription;
       const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
       if (!customerId) break;
+
+      // Don't downgrade lifetime users
+      const [existingDel] = await db
+        .select({ plan: subscriptions.plan })
+        .from(subscriptions)
+        .where(eq(subscriptions.stripeCustomerId, customerId))
+        .limit(1);
+      if (existingDel?.plan === "lifetime") break;
 
       await db
         .update(subscriptions)

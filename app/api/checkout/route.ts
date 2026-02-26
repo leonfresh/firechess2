@@ -3,9 +3,12 @@
  *
  * Requires an authenticated session. Attaches the user ID as metadata
  * so the webhook can link the subscription back to our DB.
+ *
+ * Body (optional): { "plan": "lifetime" } — creates a one-time payment
+ * checkout for the $59 lifetime deal instead of a monthly subscription.
  */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { subscriptions } from "@/lib/schema";
@@ -16,10 +19,19 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-01-27.acacia" as any,
 });
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Parse optional body for plan type
+  let isLifetime = false;
+  try {
+    const body = await req.json();
+    isLifetime = body?.plan === "lifetime";
+  } catch {
+    // No body or invalid JSON — default to monthly subscription
   }
 
   // Check for existing Stripe customer
@@ -55,9 +67,41 @@ export async function POST() {
       });
   }
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://firechess.com";
+
+  if (isLifetime) {
+    // One-time payment for lifetime Pro
+    const checkoutSession = await stripe.checkout.sessions.create({
+      customer: customerId,
+      mode: "payment",
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: "FireChess Pro — Lifetime Access",
+              description: "One-time payment. Full Pro features forever — no recurring fees.",
+            },
+            unit_amount: 5900, // $59.00
+          },
+          quantity: 1,
+        },
+      ],
+      payment_intent_data: {
+        description: "FireChess Lifetime Pro — one-time payment, never expires",
+      },
+      metadata: { userId: session.user.id, plan: "lifetime" },
+      success_url: `${appUrl}/?upgraded=true`,
+      cancel_url: `${appUrl}/pricing`,
+    });
+    return NextResponse.json({ url: checkoutSession.url });
+  }
+
+  // Monthly subscription
   const checkoutSession = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: "subscription",
+    allow_promotion_codes: true,
     line_items: [
       {
         price: process.env.STRIPE_PRICE_PRO_MONTHLY!,
@@ -65,8 +109,8 @@ export async function POST() {
       },
     ],
     metadata: { userId: session.user.id },
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://firechess.com"}/?upgraded=true`,
-    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL ?? "https://firechess.com"}/pricing`,
+    success_url: `${appUrl}/?upgraded=true`,
+    cancel_url: `${appUrl}/pricing`,
   });
 
   return NextResponse.json({ url: checkoutSession.url });

@@ -72,7 +72,7 @@ export default function HomePage() {
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reportRef = useRef<HTMLElement>(null);
   const pngRef = useRef<HTMLDivElement>(null);
-  const hasProAccess = sessionPlan === "pro" || localProEnabled;
+  const hasProAccess = sessionPlan === "pro" || sessionPlan === "lifetime" || localProEnabled;
   const gamesOverFreeLimit = gameRangeMode === "count" && gameCount > FREE_MAX_GAMES;
   const depthOverFreeLimit = engineDepth > FREE_MAX_DEPTH;
   const freeLimitsExceeded = !hasProAccess && (gamesOverFreeLimit || depthOverFreeLimit);

@@ -5,10 +5,26 @@ import { useState } from "react";
 
 export default function SignInPage() {
   const [loading, setLoading] = useState<string | null>(null);
+  const [email, setEmail] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
 
   const handleSignIn = async (provider: string) => {
     setLoading(provider);
     await signIn(provider, { callbackUrl: "/" });
+  };
+
+  const handleMagicLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) return;
+    setLoading("resend");
+    try {
+      await signIn("resend", { email: email.trim(), callbackUrl: "/", redirect: false });
+      setEmailSent(true);
+    } catch {
+      // signIn may throw on network error
+    } finally {
+      setLoading(null);
+    }
   };
 
   return (
@@ -81,6 +97,59 @@ export default function SignInPage() {
             Continue with Lichess
           </button>
         </div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3">
+          <div className="h-px flex-1 bg-white/[0.08]" />
+          <span className="text-xs text-slate-500">or sign in with email</span>
+          <div className="h-px flex-1 bg-white/[0.08]" />
+        </div>
+
+        {/* Magic link form */}
+        {emailSent ? (
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] p-5 text-center">
+            <span className="text-2xl">✉️</span>
+            <h3 className="mt-2 text-base font-semibold text-white">Check your email</h3>
+            <p className="mt-1 text-sm text-slate-400">
+              We sent a sign-in link to <span className="font-medium text-white">{email}</span>. Click the link to sign in — no password needed.
+            </p>
+            <button
+              type="button"
+              onClick={() => { setEmailSent(false); setEmail(""); }}
+              className="mt-4 text-xs text-emerald-400 hover:underline"
+            >
+              Use a different email
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleMagicLink} className="space-y-3">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+              className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-3.5 text-sm text-white placeholder-slate-500 outline-none transition-all focus:border-emerald-500/40 focus:ring-1 focus:ring-emerald-500/20"
+            />
+            <button
+              type="submit"
+              disabled={!!loading || !email.trim()}
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-3.5 text-sm font-semibold text-slate-950 transition-all hover:shadow-glow-sm disabled:opacity-50"
+            >
+              {loading === "resend" ? (
+                <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+              ) : (
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              )}
+              Send magic link
+            </button>
+          </form>
+        )}
 
         <p className="text-center text-xs text-slate-600">
           By signing in, you agree to our <a href="/terms" className="text-emerald-400 hover:underline">Terms of Service</a> and <a href="/privacy" className="text-emerald-400 hover:underline">Privacy Policy</a>.

@@ -19,8 +19,8 @@ type SessionState = {
   loading: boolean;
   /** User is signed in */
   authenticated: boolean;
-  /** "pro" or "free" */
-  plan: "free" | "pro";
+  /** "pro", "lifetime", or "free" */
+  plan: "free" | "pro" | "lifetime";
   /** Stripe subscription status */
   subscriptionStatus: string;
   /** User info (null if not authenticated) */

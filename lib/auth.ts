@@ -9,6 +9,7 @@
 
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
+import Resend from "next-auth/providers/resend";
 import type { OAuthConfig } from "next-auth/providers";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "@/lib/db";
@@ -55,7 +56,13 @@ function Lichess(): OAuthConfig<any> {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db),
-  providers: [Google, Lichess],
+  providers: [
+    Google,
+    Lichess,
+    Resend({
+      from: process.env.AUTH_RESEND_FROM ?? "FireChess <noreply@firechess.com>",
+    }),
+  ],
   pages: {
     signIn: "/auth/signin",
   },
