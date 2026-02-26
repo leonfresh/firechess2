@@ -1317,31 +1317,52 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
 
         {/* Info side */}
         <div className="space-y-5 p-5 md:p-6">
-          {/* Header */}
+          {/* Header badge row */}
           <div>
-            <div className="flex items-start justify-between gap-3">
-              <h3 className="text-lg font-bold text-white">
-                {moveBadge.label === "Sideline" ? "Offbeat Sideline" : "Repeated Opening Leak"}
-                {openingName && (
-                  <span className="ml-1 text-sm font-medium text-slate-400"> — {openingName}</span>
-                )}
-              </h3>
+            <div className="flex flex-wrap items-center gap-2">
               <span
-                className="shrink-0 rounded-lg px-2.5 py-1 text-xs font-bold text-white"
+                className="shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-bold text-white shadow-sm"
                 style={{ backgroundColor: moveBadge.color }}
               >
                 {moveBadge.label}
               </span>
+              {leak.reachCount > 1 && leak.moveCount > 1 && (
+                <span className="flex items-center gap-1 rounded-lg bg-fuchsia-500/15 px-2 py-1 text-[10px] font-bold text-fuchsia-400">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+                  Repeated
+                </span>
+              )}
+              {moveBadge.label === "Sideline" && (() => {
+                const wr = leak.dbApproved && leak.dbWinRate != null ? leak.dbWinRate : userMoveExplorerData?.winRate;
+                return wr != null ? (
+                  <span className="flex items-center gap-1 rounded-lg bg-indigo-500/15 px-2 py-1 text-[10px] font-bold text-indigo-400">
+                    📚 Known Line
+                  </span>
+                ) : null;
+              })()}
+              {openingName && (
+                <span className="rounded-lg bg-white/[0.04] px-2 py-1 text-[10px] font-medium text-slate-400">{openingName}</span>
+              )}
             </div>
-            <div className="mt-3 flex items-center gap-2 rounded-xl border border-orange-500/20 bg-orange-500/[0.06] px-3.5 py-2.5">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-orange-500/15 text-lg">🔁</span>
-              <p className="text-sm text-slate-300">
-                You reached this position{" "}
-                <span className="rounded-md bg-white/[0.08] px-1.5 py-0.5 font-bold text-orange-300">{leak.reachCount}×</span>{" "}
-                and played{" "}
-                <span className="rounded-md bg-red-500/15 px-1.5 py-0.5 font-mono font-bold text-red-400">{badMove?.san ?? leak.userMove}</span>{" "}
-                <span className="rounded-md bg-white/[0.08] px-1.5 py-0.5 font-bold text-orange-300">{leak.moveCount}×</span>
-              </p>
+
+            <h3 className="mt-2 text-lg font-bold text-white">
+              {moveBadge.label === "Sideline" ? "Offbeat Sideline" : "Repeated Opening Leak"}
+            </h3>
+          </div>
+
+          {/* KEY INSIGHT — Pattern Detected callout (hero-style) */}
+          <div className="rounded-xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Pattern Detected</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-slate-200">
+              You reached this position{" "}
+              <span className="rounded-md bg-amber-500/15 px-1.5 py-0.5 font-bold text-amber-400">{leak.reachCount}×</span>{" "}
+              and played{" "}
+              <span className="rounded-md bg-red-500/15 px-1.5 py-0.5 font-mono font-bold text-red-400">{badMove?.san ?? leak.userMove}</span>{" "}
+              <span className="rounded-md bg-amber-500/15 px-1.5 py-0.5 font-bold text-amber-400">{leak.moveCount}×</span>
+            </p>
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-[10px] text-slate-500">Better:</span>
+              <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 font-mono text-sm font-bold text-emerald-400">{bestMove?.san ?? "N/A"}</span>
             </div>
           </div>
 
@@ -1389,23 +1410,21 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
             </div>
           )}
 
-          {/* Stats grid */}
-          <div className="grid grid-cols-2 gap-2">
-            <div className="stat-card py-3">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Eval Loss</p>
-              <p className="mt-0.5 text-lg font-bold text-red-400">{formatEval(leak.cpLoss)}</p>
+          {/* Eval Shift (hero-style) */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Eval Shift</span>
+              <span className="rounded-md bg-red-500/10 px-2 py-0.5 text-xs font-bold text-red-400">{formatEval(leak.cpLoss)} lost</span>
             </div>
-            <div className="stat-card py-3">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Eval Before</p>
-              <p className="mt-0.5 text-lg font-bold text-slate-200">{formatEval(whiteEvalBefore, { showPlus: true })}</p>
-            </div>
-            <div className="stat-card py-3">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Eval After</p>
-              <p className="mt-0.5 text-lg font-bold text-slate-200">{formatEval(whiteEvalAfter, { showPlus: true })}</p>
-            </div>
-            <div className="stat-card py-3">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Best Move</p>
-              <p className="mt-0.5 text-lg font-bold text-emerald-400 font-mono">{bestMove?.san ?? "N/A"}</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] px-3 py-2.5 text-center">
+                <p className="text-[9px] font-medium uppercase tracking-wider text-slate-500">Before</p>
+                <p className="mt-0.5 text-lg font-bold text-slate-200">{formatEval(whiteEvalBefore, { showPlus: true })}</p>
+              </div>
+              <div className="rounded-lg border border-red-500/20 bg-red-500/[0.04] px-3 py-2.5 text-center">
+                <p className="text-[9px] font-medium uppercase tracking-wider text-slate-500">After</p>
+                <p className="mt-0.5 text-lg font-bold text-red-400">{formatEval(whiteEvalAfter, { showPlus: true })}</p>
+              </div>
             </div>
           </div>
 

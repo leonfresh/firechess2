@@ -11,6 +11,7 @@
 
 import { useMemo } from "react";
 import { Chessboard } from "react-chessboard";
+import { useBoardTheme } from "@/lib/use-coins";
 import type { OpeningSummary, PlayerColor } from "@/lib/types";
 
 /* ------------------------------------------------------------------ */
@@ -68,6 +69,8 @@ function winRateLabel(wr: number) {
 /* ------------------------------------------------------------------ */
 
 export function OpeningRankings({ openingSummaries }: Props) {
+  const boardTheme = useBoardTheme();
+
   /* ── Build rankings from props (no async, no API calls) ── */
   const rankings: OpeningEntry[] = useMemo(() => {
     // Build a FEN→openingName lookup from summaries that have names
@@ -106,7 +109,7 @@ export function OpeningRankings({ openingSummaries }: Props) {
       }
     }
 
-    const result = Array.from(byNameColor.values());
+    const result = Array.from(byNameColor.values()).filter((r) => r.games >= 5);
     for (const r of result) {
       r.winRate = r.games > 0 ? Math.round((r.wins / r.games) * 100) : 0;
     }
@@ -178,7 +181,7 @@ export function OpeningRankings({ openingSummaries }: Props) {
 
               {/* Mini board */}
               <div
-                className="shrink-0 overflow-hidden rounded-lg border border-white/[0.08]"
+                className="shrink-0 border border-white/[0.08]"
                 style={{ width: 72, height: 72 }}
               >
                 <Chessboard
@@ -188,8 +191,8 @@ export function OpeningRankings({ openingSummaries }: Props) {
                   arePiecesDraggable={false}
                   boardOrientation={entry.userColor}
                   animationDuration={0}
-                  customDarkSquareStyle={{ backgroundColor: "#374151" }}
-                  customLightSquareStyle={{ backgroundColor: "#6b7280" }}
+                  customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+                  customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
                 />
               </div>
 
