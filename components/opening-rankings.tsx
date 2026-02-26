@@ -164,30 +164,46 @@ export function OpeningRankings({ openingSummaries }: Props) {
         </div>
       </div>
 
-      {/* ── Rankings list ── */}
-      <div className="space-y-2">
+      {/* ── Rankings grid (2-col on md+) ── */}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {rankings.map((entry, idx) => (
           <div
             key={entry.key}
             className="group rounded-xl border border-white/[0.06] bg-gradient-to-r from-white/[0.02] to-transparent p-3 transition-all duration-200 hover:border-white/[0.1] hover:bg-white/[0.03]"
           >
-            <div className="flex items-center gap-3">
-              {/* Rank badge */}
+            {/* Top row: rank badge + name + color + win-rate label */}
+            <div className="mb-2 flex items-center gap-2">
               <div
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-black ${winRateBadgeBg(entry.winRate)} ${winRateColor(entry.winRate)}`}
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[10px] font-black ${winRateBadgeBg(entry.winRate)} ${winRateColor(entry.winRate)}`}
               >
                 #{idx + 1}
               </div>
+              <h3 className="min-w-0 flex-1 truncate text-sm font-bold text-white">{entry.name}</h3>
+              <span
+                className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                  entry.userColor === "white"
+                    ? "bg-white/10 text-white"
+                    : "bg-slate-600/30 text-slate-300"
+                }`}
+              >
+                {entry.userColor === "white" ? "♔" : "♚"}{" "}
+                {entry.userColor === "white" ? "White" : "Black"}
+              </span>
+              <span className={`hidden shrink-0 text-xs font-semibold sm:inline ${winRateColor(entry.winRate)}`}>
+                {winRateLabel(entry.winRate)}
+              </span>
+            </div>
 
-              {/* Mini board */}
+            <div className="flex items-center gap-3">
+              {/* Board — larger */}
               <div
                 className="shrink-0 border border-white/[0.08]"
-                style={{ width: 72, height: 72 }}
+                style={{ width: 120, height: 120 }}
               >
                 <Chessboard
                   id={`opening-rank-${idx}`}
                   position={entry.fen}
-                  boardWidth={72}
+                  boardWidth={120}
                   arePiecesDraggable={false}
                   boardOrientation={entry.userColor}
                   animationDuration={0}
@@ -198,50 +214,35 @@ export function OpeningRankings({ openingSummaries }: Props) {
 
               {/* Info column */}
               <div className="min-w-0 flex-1">
-                {/* Name + color badge */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="truncate text-sm font-bold text-white">{entry.name}</h3>
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                      entry.userColor === "white"
-                        ? "bg-white/10 text-white"
-                        : "bg-slate-600/30 text-slate-300"
-                    }`}
-                  >
-                    {entry.userColor === "white" ? "♔" : "♚"}{" "}
-                    {entry.userColor === "white" ? "White" : "Black"}
-                  </span>
-                </div>
-
                 {/* Win rate bar */}
-                <div className="mt-1.5 flex items-center gap-3">
-                  <div className="h-1.5 flex-1 rounded-full bg-white/[0.06]">
+                <div className="flex items-center gap-3">
+                  <div className="h-2 flex-1 rounded-full bg-white/[0.06]">
                     <div
-                      className={`h-1.5 rounded-full ${winRateBarBg(entry.winRate)} transition-all duration-700`}
+                      className={`h-2 rounded-full ${winRateBarBg(entry.winRate)} transition-all duration-700`}
                       style={{ width: `${Math.max(entry.winRate, 2)}%` }}
                     />
                   </div>
-                  <span className={`min-w-[3ch] text-right text-xs font-bold ${winRateColor(entry.winRate)}`}>
+                  <span className={`min-w-[3ch] text-right text-sm font-bold ${winRateColor(entry.winRate)}`}>
                     {entry.winRate}%
                   </span>
                 </div>
 
                 {/* W / D / L stats */}
-                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500">
-                  <span>
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
+                  <span className="font-medium text-slate-400">
                     {entry.games} game{entry.games !== 1 ? "s" : ""}
                   </span>
-                  <span className="text-emerald-400/70">+{entry.wins}</span>
-                  <span className="text-slate-400/70">={entry.draws}</span>
-                  <span className="text-red-400/70">&minus;{entry.losses}</span>
+                  <span className="text-emerald-400/70">+{entry.wins}W</span>
+                  <span className="text-slate-400/70">={entry.draws}D</span>
+                  <span className="text-red-400/70">&minus;{entry.losses}L</span>
                 </div>
-              </div>
 
-              {/* Win rate label (desktop) */}
-              <div className="hidden shrink-0 text-right sm:block">
-                <span className={`text-xs font-semibold ${winRateColor(entry.winRate)}`}>
-                  {winRateLabel(entry.winRate)}
-                </span>
+                {/* Win rate label (mobile) */}
+                <div className="mt-2 sm:hidden">
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${winRateBadgeBg(entry.winRate)} ${winRateColor(entry.winRate)}`}>
+                    {winRateLabel(entry.winRate)}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
