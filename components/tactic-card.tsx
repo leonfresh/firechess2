@@ -837,6 +837,28 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
             </div>
           )}
 
+          {/* Coaching tip */}
+          <div className="rounded-xl border border-amber-500/[0.08] bg-amber-500/[0.02] p-3">
+            <p className="flex items-start gap-2 text-xs leading-relaxed text-slate-400">
+              <span className="mt-0.5 shrink-0 text-amber-400">💡</span>
+              <span>
+                {isMate
+                  ? "Before every move, ask: \"Can I give check? Can I checkmate?\" Build the habit of scanning for mate patterns first."
+                  : typeof tactic.timeRemainingSec === "number" && tactic.timeRemainingSec <= 30
+                    ? "This tactic was missed under time pressure. Practice blitz tactics puzzles to improve your speed pattern recognition."
+                    : tactic.tags.includes("Missed Capture") || tactic.tags.includes("Forcing Capture")
+                      ? "Always evaluate captures before quiet moves. Ask \"What does this capture actually win?\" — count the exchange carefully."
+                      : tactic.tags.includes("Knight Fork?")
+                        ? "Knight forks are one of the most common tactical patterns. Look for squares where a knight attacks two or more pieces simultaneously."
+                        : tactic.tags.includes("Back Rank")
+                          ? "Back rank weaknesses are deadly. Always check if your back rank has an escape square — consider h3/h6 luft moves proactively."
+                          : tactic.tags.includes("Pin") || tactic.tags.includes("Skewer")
+                            ? "Pins and skewers exploit piece alignment along a rank, file, or diagonal. Before moving, check if any pieces are aligned with your king or queen."
+                            : "Before committing to a move, apply the \"CCT\" checklist: Checks, Captures, Threats. This simple habit catches most tactics."}
+              </span>
+            </p>
+          </div>
+
           <p className="text-xs text-slate-500">
             <span className="mr-1 inline-block h-2 w-2 rounded-full bg-emerald-400" />
             Green = winning move

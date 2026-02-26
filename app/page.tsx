@@ -2126,6 +2126,77 @@ export default function HomePage() {
                 </div>
               </div>
 
+              {/* Tactics Overview Stats */}
+              {missedTactics.length > 0 && (
+                <div className="glass-card space-y-4 p-5">
+                  <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-400">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-400"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 14.3"/></svg>
+                    Tactics Overview
+                  </h3>
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                    <div className="stat-card py-3">
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Total Missed</p>
+                      <p className="mt-0.5 text-lg font-bold text-amber-400">{missedTactics.length}</p>
+                    </div>
+                    <div className="stat-card py-3">
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Total Eval Lost</p>
+                      <p className="mt-0.5 text-lg font-bold text-red-400">
+                        −{(missedTactics.reduce((s, t) => s + (t.cpLoss < 99000 ? t.cpLoss : 0), 0) / 100).toFixed(1)}
+                      </p>
+                    </div>
+                    <div className="stat-card py-3">
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Worst Miss</p>
+                      <p className="mt-0.5 text-lg font-bold text-red-400">
+                        {missedTactics.some(t => t.cpLoss >= 99000) ? "Mate" : `−${(Math.max(...missedTactics.map(t => t.cpLoss)) / 100).toFixed(1)}`}
+                      </p>
+                    </div>
+                    <div className="stat-card py-3">
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Under Time Pressure</p>
+                      <p className={`mt-0.5 text-lg font-bold ${missedTactics.filter(t => typeof t.timeRemainingSec === "number" && t.timeRemainingSec <= 30).length > 0 ? "text-red-400" : "text-emerald-400"}`}>
+                        {missedTactics.filter(t => typeof t.timeRemainingSec === "number" && t.timeRemainingSec <= 30).length}
+                        <span className="text-xs font-normal text-slate-500"> / {missedTactics.length}</span>
+                      </p>
+                    </div>
+                  </div>
+                  {/* Diagnostic insight */}
+                  {(() => {
+                    const timePressureCount = missedTactics.filter(t => typeof t.timeRemainingSec === "number" && t.timeRemainingSec <= 30).length;
+                    const timePressureRate = missedTactics.length > 0 ? timePressureCount / missedTactics.length : 0;
+                    const matesMissed = missedTactics.filter(t => t.cpLoss >= 99000).length;
+                    const avgLoss = missedTactics.reduce((s, t) => s + (t.cpLoss < 99000 ? t.cpLoss : 0), 0) / Math.max(1, missedTactics.filter(t => t.cpLoss < 99000).length);
+                    if (matesMissed >= 2) return (
+                      <div className="rounded-xl border border-red-500/10 bg-red-500/[0.03] p-3">
+                        <p className="text-xs leading-relaxed text-slate-400">
+                          <span className="font-semibold text-red-300">⚠️ You missed {matesMissed} forced mate{matesMissed > 1 ? "s" : ""}.</span>{" "}
+                          Practice mate-in-1 and mate-in-2 puzzles daily to build pattern recognition. Missed mates are the costliest tactical errors.
+                        </p>
+                      </div>
+                    );
+                    if (timePressureRate > 0.4 && timePressureCount >= 2) return (
+                      <div className="rounded-xl border border-red-500/10 bg-red-500/[0.03] p-3">
+                        <p className="text-xs leading-relaxed text-slate-400">
+                          <span className="font-semibold text-red-300">⏰ {(timePressureRate * 100).toFixed(0)}% of your missed tactics happened under time pressure (&le;30s).</span>{" "}
+                          Consider playing longer time controls or practicing blitz tactics puzzles to improve speed recognition.
+                        </p>
+                      </div>
+                    );
+                    if (avgLoss > 400) return (
+                      <div className="rounded-xl border border-amber-500/10 bg-amber-500/[0.03] p-3">
+                        <p className="text-xs leading-relaxed text-slate-400">
+                          <span className="font-semibold text-amber-300">💡 Average missed tactic is worth ~{(avgLoss / 100).toFixed(1)} pawns.</span>{" "}
+                          These are significant material swings. Slow down and scan for checks, captures, and threats before committing to a move.
+                        </p>
+                      </div>
+                    );
+                    return (
+                      <p className="text-xs text-slate-500">
+                        💡 Review each missed tactic below and practice the winning pattern. Use &ldquo;Show winning line&rdquo; to understand the forcing sequence.
+                      </p>
+                    );
+                  })()}
+                </div>
+              )}
+
               {/* Motif Pattern Summary — Pro only */}
               {hasProAccess && tacticMotifs.length > 0 && (
                 <div className="glass-card space-y-4 p-5">
@@ -2326,7 +2397,7 @@ export default function HomePage() {
                   {endgameStats.byType.length > 0 && (
                     <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                       {endgameStats.byType.map((t) => {
-                        const icon = ({ "Pawn": "♟", "Rook": "♜", "Rook + Minor": "♜♝", "Minor Piece": "♝", "Queen": "♛", "Opposite Bishops": "♗♝", "Other": "♔" } as Record<string, string>)[t.type] ?? "♔";
+                        const icon = ({ "Pawn": "♟", "Rook": "♜", "Rook + Bishop": "♜♝", "Rook + Knight": "♜♞", "Rook + Minor": "♜♝", "Knight vs Knight": "♞♞", "Bishop vs Bishop": "♝♝", "Knight vs Bishop": "♞♝", "Bishop vs Knight": "♝♞", "Bishop + Knight": "♝♞", "Two Bishops": "♝♝", "Two Knights": "♞♞", "Minor Piece": "♝", "Queen": "♛", "Queen + Rook": "♛♜", "Queen + Minor": "♛♝", "Opposite Bishops": "♗♝", "Complex": "♔" } as Record<string, string>)[t.type] ?? "♔";
                         const isWeakest = t.type === endgameStats.weakestType;
                         return (
                           <div
@@ -2356,9 +2427,57 @@ export default function HomePage() {
                   )}
 
                   {endgameStats.weakestType && (
-                    <p className="text-xs text-slate-500">
-                      💡 Your weakest endgame type is <span className="font-semibold text-sky-400">{endgameStats.weakestType}</span> — focus your training on these positions.
-                    </p>
+                    <div className="rounded-xl border border-red-500/10 bg-red-500/[0.03] p-4">
+                      <p className="text-sm font-semibold text-red-300">
+                        ⚠️ Weakest area: {endgameStats.weakestType} Endgame
+                      </p>
+                      <p className="mt-1 text-xs leading-relaxed text-slate-400">
+                        {({
+                          "Pawn": "Practice king activity and passed pawn creation. Study the opposition and key squares — counting tempi is critical.",
+                          "Rook": "Study the Lucena and Philidor positions. Keep your rook active and behind passed pawns. Rook activity > material.",
+                          "Rook + Bishop": "Focus on restricting the opposing bishop. Use your rook to target fixed pawns and create penetration points.",
+                          "Rook + Knight": "Knights need outposts. In open positions the rook dominates — choose your pawn structure wisely.",
+                          "Rook + Minor": "Coordinate your pieces. The minor piece often defends while the rook does the attacking. Avoid passive setups.",
+                          "Knight vs Knight": "These play like pawn endgames. Focus on king centralisation and creating a passed pawn race.",
+                          "Bishop vs Bishop": "Fix enemy pawns on your bishop's colour. Practice creating targets and using your king actively.",
+                          "Knight vs Bishop": "If you have the knight, keep pawns locked. If the bishop, open the position and exploit your range.",
+                          "Bishop vs Knight": "Use the bishop's long range. Keep the position open and attack pawns on both sides of the board.",
+                          "Bishop + Knight": "Practice the B+N checkmate pattern. Coordinate both pieces to restrict the enemy king.",
+                          "Two Bishops": "The bishop pair thrives in open positions. Avoid trading one bishop — use both diagonals to dominate.",
+                          "Two Knights": "Focus on pawn promotion as two knights alone can't checkmate. Support passed pawns with your knights.",
+                          "Minor Piece": "Piece activity and pawn structure are key. Study which minor piece is better in your typical pawn structures.",
+                          "Queen": "Centralise your queen and watch for perpetual check resources. King safety is paramount — passed pawns decide.",
+                          "Queen + Rook": "Look for back-rank threats and queen+rook batteries. Watch for stalemate tricks when defending.",
+                          "Queen + Minor": "Use the queen's mobility to create threats while the minor piece controls key squares.",
+                          "Opposite Bishops": "Very drawish — the attacker usually needs pawns on both sides. Build fortresses when defending.",
+                          "Complex": "Simplify when ahead, complicate when behind. Prioritise king safety and piece coordination.",
+                        } as Record<string, string>)[endgameStats.weakestType] ?? "Focus on endgame training for this type."}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Additional overview stats */}
+                  {endgameMistakes.length > 0 && (
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      <div className="stat-card py-3">
+                        <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Mistake Rate</p>
+                        <p className={`mt-0.5 text-lg font-bold ${endgameStats.totalPositions > 0 && (endgameMistakes.length / endgameStats.totalPositions) <= 0.1 ? "text-emerald-400" : (endgameMistakes.length / endgameStats.totalPositions) <= 0.25 ? "text-amber-400" : "text-red-400"}`}>
+                          {endgameStats.totalPositions > 0 ? ((endgameMistakes.length / endgameStats.totalPositions) * 100).toFixed(0) : 0}%
+                        </p>
+                      </div>
+                      <div className="stat-card py-3">
+                        <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Worst Blunder</p>
+                        <p className="mt-0.5 text-lg font-bold text-red-400">
+                          −{(Math.max(...endgameMistakes.map(m => m.cpLoss)) / 100).toFixed(1)}
+                        </p>
+                      </div>
+                      <div className="stat-card py-3">
+                        <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Failed Conversions</p>
+                        <p className="mt-0.5 text-lg font-bold text-amber-400">
+                          {endgameMistakes.filter(m => m.tags.includes("Failed Conversion")).length}
+                        </p>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}

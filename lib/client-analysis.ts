@@ -901,12 +901,16 @@ function classifyEndgameType(chess: Chess): EndgameType {
   const wc = w.counts;
   const bc = b.counts;
 
+  const wN = wc.n ?? 0, wB = wc.b ?? 0, wR = wc.r ?? 0, wQ = wc.q ?? 0;
+  const bN = bc.n ?? 0, bB = bc.b ?? 0, bR = bc.r ?? 0, bQ = bc.q ?? 0;
+  const totalN = wN + bN, totalB = wB + bB, totalR = wR + bR, totalQ = wQ + bQ;
+  const totalMinors = totalN + totalB;
+
   // No pieces at all → pure pawn endgame
   if (w.pieces === 0 && b.pieces === 0) return "Pawn";
 
   // Opposite-color bishops: each side has exactly 1 bishop, no other pieces
-  if (w.pieces === 3 && b.pieces === 3 && wc.b === 1 && bc.b === 1 && wc.n === 0 && bc.n === 0 && wc.r === 0 && bc.r === 0 && wc.q === 0 && bc.q === 0) {
-    // Check if bishops are on opposite colors
+  if (totalB === 2 && totalN === 0 && totalR === 0 && totalQ === 0 && wB === 1 && bB === 1) {
     const board = chess.board();
     let wBishopDark = false;
     let bBishopDark = false;
@@ -923,24 +927,56 @@ function classifyEndgameType(chess: Chess): EndgameType {
     if (wBishopDark !== bBishopDark) return "Opposite Bishops";
   }
 
-  // Queen endgame: at least one side has a queen, no rooks/minors
-  const hasQueen = (wc.q ?? 0) > 0 || (bc.q ?? 0) > 0;
-  const noRooksOrMinors = (wc.r ?? 0) === 0 && (bc.r ?? 0) === 0 && (wc.n ?? 0) === 0 && (bc.n ?? 0) === 0 && (wc.b ?? 0) === 0 && (bc.b ?? 0) === 0;
-  if (hasQueen && noRooksOrMinors) return "Queen";
+  // Queen + Rook (heavy piece endgame)
+  if (totalQ > 0 && totalR > 0 && totalMinors === 0) return "Queen + Rook";
 
-  // Rook + minor: at least one side has rook AND (bishop or knight), no queens
-  const anyRook = (wc.r ?? 0) > 0 || (bc.r ?? 0) > 0;
-  const anyMinor = (wc.n ?? 0) > 0 || (bc.n ?? 0) > 0 || (wc.b ?? 0) > 0 || (bc.b ?? 0) > 0;
-  const noQueens = (wc.q ?? 0) === 0 && (bc.q ?? 0) === 0;
-  if (anyRook && anyMinor && noQueens) return "Rook + Minor";
+  // Queen + Minor
+  if (totalQ > 0 && totalMinors > 0 && totalR === 0) return "Queen + Minor";
+
+  // Pure queen endgame: queens, no rooks/minors
+  if (totalQ > 0 && totalR === 0 && totalMinors === 0) return "Queen";
+
+  // Rook + Bishop (rooks + bishops, no knights/queens)
+  if (totalR > 0 && totalB > 0 && totalN === 0 && totalQ === 0) return "Rook + Bishop";
+
+  // Rook + Knight (rooks + knights, no bishops/queens)
+  if (totalR > 0 && totalN > 0 && totalB === 0 && totalQ === 0) return "Rook + Knight";
+
+  // Rook + minor (mixed minors with rooks, no queens)
+  if (totalR > 0 && totalMinors > 0 && totalQ === 0) return "Rook + Minor";
 
   // Pure rook endgame: only rooks, no minors/queens
-  if (anyRook && !anyMinor && noQueens) return "Rook";
+  if (totalR > 0 && totalMinors === 0 && totalQ === 0) return "Rook";
 
-  // Minor piece endgame: only bishops/knights, no rooks/queens
-  if (!anyRook && anyMinor && noQueens) return "Minor Piece";
+  // Minor piece endgames — specific types
+  if (totalR === 0 && totalQ === 0 && totalMinors > 0) {
+    // Two Bishops (bishop pair vs anything)
+    if ((wB === 2 && bB === 0 && bN === 0) || (bB === 2 && wB === 0 && wN === 0)) return "Two Bishops";
+    if (wB === 2 || bB === 2) return "Two Bishops";
 
-  return "Other";
+    // Two Knights
+    if (totalN >= 2 && totalB === 0) return "Two Knights";
+
+    // Bishop + Knight vs K (or pawns)
+    if ((wB === 1 && wN === 1 && bB === 0 && bN === 0) || (bB === 1 && bN === 1 && wB === 0 && wN === 0)) return "Bishop + Knight";
+
+    // Knight vs Knight
+    if (totalN === 2 && totalB === 0 && wN === 1 && bN === 1) return "Knight vs Knight";
+
+    // Bishop vs Bishop (same color or mixed — opposite bishops handled above)
+    if (totalB === 2 && totalN === 0 && wB === 1 && bB === 1) return "Bishop vs Bishop";
+
+    // Knight vs Bishop
+    if (totalN === 1 && totalB === 1) {
+      if (wN === 1 && bB === 1) return "Knight vs Bishop";
+      if (wB === 1 && bN === 1) return "Bishop vs Knight";
+    }
+
+    // Generic minor piece fallback
+    return "Minor Piece";
+  }
+
+  return "Complex";
 }
 
 /** Determine the game result from the final FEN / move list. Returns 1 (white win), 0 (draw), -1 (black win) or null */
@@ -1778,7 +1814,7 @@ export async function analyzeOpeningLeaksInBrowser(
     const allTokens = game.moves.split(" ").filter(Boolean);
     let enteredEndgame = false;
     let endgameStartEval: number | null = null;
-    let endgameType: EndgameType = "Other";
+    let endgameType: EndgameType = "Complex";
 
     for (let ply = 0; ply < allTokens.length; ply += 1) {
       const token = allTokens[ply];
@@ -1920,9 +1956,7 @@ export async function analyzeOpeningLeaksInBrowser(
                     else tags.push("Inaccuracy");
 
                     // Add endgame-specific tags
-                    if (endgameType === "Pawn") tags.push("Pawn Endgame");
-                    else if (endgameType === "Rook") tags.push("Rook Endgame");
-                    else if (endgameType === "Opposite Bishops") tags.push("Opp. Bishops");
+                    if (endgameType !== "Complex") tags.push(endgameType + " Endgame");
 
                     // Check if it's a conversion failure (was winning, blundered)
                     if (cpBefore > 150 && cpAfterUser < 50) tags.push("Failed Conversion");

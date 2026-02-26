@@ -100,11 +100,22 @@ export type MissedTactic = {
 export type EndgameType =
   | "Pawn"
   | "Rook"
+  | "Rook + Bishop"
+  | "Rook + Knight"
   | "Rook + Minor"
+  | "Knight vs Knight"
+  | "Bishop vs Bishop"
+  | "Knight vs Bishop"
+  | "Bishop vs Knight"
+  | "Bishop + Knight"
+  | "Two Bishops"
+  | "Two Knights"
   | "Minor Piece"
   | "Queen"
+  | "Queen + Rook"
+  | "Queen + Minor"
   | "Opposite Bishops"
-  | "Other";
+  | "Complex";
 
 export type EndgameMistake = {
   fenBefore: string;

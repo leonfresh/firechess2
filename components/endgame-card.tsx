@@ -128,11 +128,44 @@ function formatEvalLoss(cpLoss: number): string {
 const ENDGAME_TYPE_ICON: Record<string, string> = {
   "Pawn": "♟",
   "Rook": "♜",
+  "Rook + Bishop": "♜♝",
+  "Rook + Knight": "♜♞",
   "Rook + Minor": "♜♝",
+  "Knight vs Knight": "♞♞",
+  "Bishop vs Bishop": "♝♝",
+  "Knight vs Bishop": "♞♝",
+  "Bishop vs Knight": "♝♞",
+  "Bishop + Knight": "♝♞",
+  "Two Bishops": "♝♝",
+  "Two Knights": "♞♞",
   "Minor Piece": "♝",
   "Queen": "♛",
+  "Queen + Rook": "♛♜",
+  "Queen + Minor": "♛♝",
   "Opposite Bishops": "♗♝",
-  "Other": "♔",
+  "Complex": "♔",
+};
+
+/** Quick endgame tips per type — shown on each card */
+const ENDGAME_TIPS: Record<string, string> = {
+  "Pawn": "King activity is everything in pawn endgames. Centralise your king and create a passed pawn. Count tempi carefully — one move can decide the game.",
+  "Rook": "Keep your rook active and behind passed pawns (yours or your opponent's). The Lucena and Philidor positions are essential knowledge here.",
+  "Rook + Bishop": "The bishop pair with rooks favours the side with more space. Restrict the opponent's bishop to a bad diagonal and use your rook to attack weak pawns.",
+  "Rook + Knight": "Knights struggle in open positions with rooks. Keep the position closed if you have the knight; open it if you're playing against one.",
+  "Rook + Minor": "Coordinate your rook and minor piece. The minor piece often defends while the rook attacks — don't let them get passive.",
+  "Knight vs Knight": "Knight endgames closely resemble pawn endgames. King position and pawn structure matter more than the knights themselves.",
+  "Bishop vs Bishop": "Same-colour bishop endgames can be very technical. Try to fix your opponent's pawns on your bishop's colour to create targets.",
+  "Knight vs Bishop": "Knights are strong in closed positions with fixed pawns. If you have the knight, keep pawns locked; if the bishop, open the position.",
+  "Bishop vs Knight": "Bishops excel in open positions. Keep the position fluid, use your long-range piece to attack pawns on both sides of the board.",
+  "Bishop + Knight": "The bishop + knight checkmate pattern requires practice. In general, coordinate both pieces to control key squares and restrict the enemy king.",
+  "Two Bishops": "The bishop pair is a powerful advantage. Keep the position open and use both diagonals to dominate. Avoid trading one bishop away.",
+  "Two Knights": "Two knights alone cannot force checkmate (without opponent's pawns). Focus on creating and promoting passed pawns instead.",
+  "Minor Piece": "Minor piece endgames are highly sensitive to pawn structure. Choose the right piece exchanges and keep your minor piece active.",
+  "Queen": "In queen endgames, king safety is paramount. Centralise your queen and look for perpetual check resources. Passed pawns are key assets.",
+  "Queen + Rook": "Heavy piece endgames are tactical. Look for back rank threats and queen+rook battery formations. Don't forget stalemate tricks when defending.",
+  "Queen + Minor": "Use your queen's mobility with the minor piece's tactical potential. Knights create fork threats; bishops support long-range queen operations.",
+  "Opposite Bishops": "Opposite-colour bishop endgames are very drawish. The attacker needs a two-pawn advantage or a passed pawn on both sides to win. Fortresses are common.",
+  "Complex": "Complex endgames require calculation. Simplify when ahead, complicate when behind. Prioritise king safety and piece activity.",
 };
 
 export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
@@ -512,6 +545,16 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
                   {tag}
                 </span>
               ))}
+            </div>
+          )}
+
+          {/* Endgame tip */}
+          {ENDGAME_TIPS[mistake.endgameType] && (
+            <div className="rounded-xl border border-sky-500/[0.08] bg-sky-500/[0.02] p-3">
+              <p className="flex items-start gap-2 text-xs leading-relaxed text-slate-400">
+                <span className="mt-0.5 shrink-0 text-sky-400">💡</span>
+                <span><span className="font-semibold text-sky-300">{mistake.endgameType} tip:</span> {ENDGAME_TIPS[mistake.endgameType]}</span>
+              </p>
             </div>
           )}
 
