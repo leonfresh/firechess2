@@ -36,8 +36,8 @@ type RequestState = "idle" | "loading" | "done" | "error";
 const PREFS_KEY = "firechess-user-prefs";
 const FREE_MAX_GAMES = 300;
 const FREE_MAX_DEPTH = 12;
-const FREE_TACTIC_SAMPLE = 3;
-const FREE_ENDGAME_SAMPLE = 3;
+const FREE_TACTIC_SAMPLE = 10;
+const FREE_ENDGAME_SAMPLE = 10;
 const LOCAL_PRO_HOTKEY_ENABLED = process.env.NEXT_PUBLIC_ENABLE_LOCAL_PRO_HOTKEY !== "false";
 const IS_DEV = process.env.NODE_ENV !== "production";
 
@@ -471,9 +471,9 @@ export default function HomePage() {
     if (reason) setNotice(reason);
     // Respect the user's scan mode choice. When free users pick "All",
     // they get a limited taste of tactics + endgames (capped samples).
-    // Free users always get "both" so they see sample tactics + endgames
-    // alongside openings results, regardless of their scan-mode pick.
-    const effectiveScanMode: ScanMode = scanModeOverride ?? (!hasProAccess ? "both" : scanMode);
+    // Free users can now pick any scan mode; results are capped by
+    // FREE_TACTIC_SAMPLE / FREE_ENDGAME_SAMPLE instead.
+    const effectiveScanMode: ScanMode = scanModeOverride ?? scanMode;
     const effectiveMaxTactics = !hasProAccess ? FREE_TACTIC_SAMPLE : Infinity;
     const effectiveMaxEndgames = !hasProAccess ? FREE_ENDGAME_SAMPLE : Infinity;
 
@@ -558,7 +558,7 @@ export default function HomePage() {
         cpThreshold: safeCpThreshold,
         engineDepth: safeDepth,
         source: safeSource,
-        scanMode: scanModeOverride ?? (!hasProAccess ? "both" : scanMode),
+        scanMode: scanModeOverride ?? scanMode,
         speed
       });
 
@@ -822,60 +822,51 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (!hasProAccess) return;
                     setScanMode("tactics");
                   }}
                   className={`relative rounded-md text-xs font-semibold transition-all duration-200 ${
                     scanMode === "tactics"
                       ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-glow-sm"
-                      : !hasProAccess
-                        ? "cursor-not-allowed text-slate-600"
-                        : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
+                      : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
                   }`}
                 >
                   ⚡ Tactics
-                  {!hasProAccess && <span className="ml-0.5 text-[9px]">🔒</span>}
+                  {!hasProAccess && <span className="ml-0.5 text-[9px] text-amber-400/60">sample</span>}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    if (!hasProAccess) return;
                     setScanMode("endgames");
                   }}
                   className={`relative rounded-md text-xs font-semibold transition-all duration-200 ${
                     scanMode === "endgames"
                       ? "bg-gradient-to-r from-sky-500 to-sky-600 text-slate-950 shadow-glow-sm"
-                      : !hasProAccess
-                        ? "cursor-not-allowed text-slate-600"
-                        : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
+                      : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
                   }`}
                 >
                   ♟️ Endgames
-                  {!hasProAccess && <span className="ml-0.5 text-[9px]">🔒</span>}
+                  {!hasProAccess && <span className="ml-0.5 text-[9px] text-sky-400/60">sample</span>}
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    if (!hasProAccess) return;
                     setScanMode("both");
                   }}
                   className={`relative rounded-md text-xs font-semibold transition-all duration-200 ${
                     scanMode === "both"
                       ? "bg-gradient-to-r from-fuchsia-500 to-fuchsia-600 text-white shadow-glow-sm"
-                      : !hasProAccess
-                        ? "cursor-not-allowed text-slate-600"
-                        : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
+                      : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
                   }`}
                 >
                   🔥 All
-                  {!hasProAccess && <span className="ml-0.5 text-[9px]">🔒</span>}
+                  {!hasProAccess && <span className="ml-0.5 text-[9px] text-fuchsia-400/60">sample</span>}
                 </button>
               </div>
               <p className="text-xs text-slate-500">
-                {scanMode === "openings" && (hasProAccess ? "Finds repeated patterns in your first N moves" : "Finds repeated patterns + a sample of missed tactics")}
-                {scanMode === "tactics" && "Scans full games for missed forcing moves (slower)"}
-                {scanMode === "endgames" && "Analyses your endgame technique — conversions, holds & accuracy"}
-                {scanMode === "both" && "Runs all scans — most thorough but slowest"}
+                {scanMode === "openings" && "Finds repeated patterns in your first N moves"}
+                {scanMode === "tactics" && (hasProAccess ? "Scans full games for missed forcing moves (slower)" : `Scans for missed tactics — free users see up to ${FREE_TACTIC_SAMPLE} results`)}
+                {scanMode === "endgames" && (hasProAccess ? "Analyses your endgame technique — conversions, holds & accuracy" : `Analyses endgame technique — free users see up to ${FREE_ENDGAME_SAMPLE} results`)}
+                {scanMode === "both" && (hasProAccess ? "Runs all scans — most thorough but slowest" : `Runs all scans — free users see up to ${FREE_TACTIC_SAMPLE} tactics & ${FREE_ENDGAME_SAMPLE} endgame results`)}
               </p>
             </div>
 
@@ -1850,7 +1841,7 @@ export default function HomePage() {
                       <span className="font-semibold text-emerald-400">{result.leaks.length}</span>
                     </div>
                   )}
-                  {(lastRunConfig?.scanMode !== "openings" || !hasProAccess) && (
+                  {(lastRunConfig?.scanMode === "tactics" || lastRunConfig?.scanMode === "both") && (
                     <div className="flex items-center justify-between py-2">
                       <span className="text-slate-400">Missed tactics</span>
                       <span className="font-semibold text-amber-400">{missedTactics.length}{!hasProAccess && " (sample)"}</span>
@@ -1953,7 +1944,7 @@ export default function HomePage() {
               )}
 
               {/* CTA: after openings-only scan, suggest tactics scan */}
-              {hasProAccess && lastRunConfig?.scanMode === "openings" && (
+              {lastRunConfig?.scanMode === "openings" && (
                 <div className="glass-card flex flex-col items-center gap-4 border-amber-500/15 bg-gradient-to-r from-amber-500/[0.04] to-transparent p-6 text-center sm:flex-row sm:text-left">
                   <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">⚡</span>
                   <div className="flex-1">
@@ -1973,8 +1964,8 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* Missed Tactics Section — hidden for pro users in openings-only mode */}
-              {(lastRunConfig?.scanMode !== "openings" || !hasProAccess) && (
+              {/* Missed Tactics Section — shown when tactics were scanned */}
+              {(lastRunConfig?.scanMode === "tactics" || lastRunConfig?.scanMode === "both") && (
               <>
               <div className="my-4">
                 <div className="section-divider" />
@@ -2096,7 +2087,7 @@ export default function HomePage() {
               )}
 
               {/* CTA: after tactics-only scan, suggest openings scan */}
-              {hasProAccess && lastRunConfig?.scanMode === "tactics" && (
+              {lastRunConfig?.scanMode === "tactics" && (
                 <div className="glass-card flex flex-col items-center gap-4 border-emerald-500/15 bg-gradient-to-r from-emerald-500/[0.04] to-transparent p-6 text-center sm:flex-row sm:text-left">
                   <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 text-3xl shadow-lg shadow-emerald-500/10">🔁</span>
                   <div className="flex-1">
@@ -2246,7 +2237,7 @@ export default function HomePage() {
               )}
 
               {/* CTA: after endgames-only scan, suggest other scans */}
-              {hasProAccess && lastRunConfig?.scanMode === "endgames" && (
+              {lastRunConfig?.scanMode === "endgames" && (
                 <div className="glass-card flex flex-col items-center gap-4 border-emerald-500/15 bg-gradient-to-r from-emerald-500/[0.04] to-transparent p-6 text-center sm:flex-row sm:text-left">
                   <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 text-3xl shadow-lg shadow-emerald-500/10">🔥</span>
                   <div className="flex-1">
