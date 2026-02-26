@@ -579,6 +579,22 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
     }
 
     case "Tactical Eye": {
+      // When tactics weren't scanned (sentinel -1), show an estimated / proxy message
+      if (tacticsCount < 0) {
+        return {
+          verdict: "Not Scanned",
+          desc: "Tactics weren't included in this scan. Run a scan with tactics enabled for precise data.",
+          tip: "Run a full scan (openings + tactics) or a tactics-only scan to get accurate tactical eye metrics.",
+          keyStat: { icon: "⚡", label: "Estimated", value: `Score estimated from accuracy (${value}/100)` },
+          analysis: "This score is estimated from your overall move accuracy because tactics weren't scanned separately. Without dedicated tactical analysis, we can't count exactly how many forcing moves you missed. The estimate gives a rough idea, but a proper tactics scan will reveal specific missed forks, pins, skewers, and other patterns.",
+          meaning: "To get actionable tactical insights — including which specific motifs you miss most and concrete study recommendations — enable the tactics scan. This is where most players find the biggest improvement opportunities.",
+          studyPlan: [
+            "Run a new scan with the tactics option enabled to get precise missed-tactic counts and motif breakdowns.",
+            "In the meantime, a daily habit of 10-15 tactical puzzles on Lichess or Chess Tempo will keep your pattern recognition sharp.",
+            "Before every move in your games, spend 5 seconds checking for checks, captures, and threats — for both sides.",
+          ],
+        };
+      }
       const perGame = gamesAnalyzed > 0 ? (tacticsCount / gamesAnalyzed).toFixed(1) : "0";
       if (value >= 80)
         return {

@@ -651,22 +651,47 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
 
   if (drillPositions.length === 0) return null;
 
-  const buttonClass = drillVariant === "tactics" || drillVariant === "one-off"
-    ? "btn-amber flex h-12 items-center gap-2.5 text-sm"
-    : drillVariant === "endgames"
-      ? "flex h-12 items-center gap-2.5 rounded-xl border border-sky-500/20 bg-sky-500/10 px-5 text-sm font-semibold text-sky-300 transition-all hover:bg-sky-500/20 hover:text-sky-200"
-      : "btn-primary flex h-12 items-center gap-2.5 text-sm";
+  const accentMap = {
+    openings: { border: "border-emerald-500/20", bg: "from-emerald-500/[0.06] to-emerald-500/[0.02]", glow: "bg-emerald-500/10", iconBg: "bg-emerald-500/15 shadow-emerald-500/10", text: "text-emerald-400", btnBg: "bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-500/25", pillBg: "bg-emerald-500/15 text-emerald-300" },
+    tactics: { border: "border-amber-500/20", bg: "from-amber-500/[0.06] to-amber-500/[0.02]", glow: "bg-amber-500/10", iconBg: "bg-amber-500/15 shadow-amber-500/10", text: "text-amber-400", btnBg: "bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/25", pillBg: "bg-amber-500/15 text-amber-300" },
+    endgames: { border: "border-sky-500/20", bg: "from-sky-500/[0.06] to-sky-500/[0.02]", glow: "bg-sky-500/10", iconBg: "bg-sky-500/15 shadow-sky-500/10", text: "text-sky-400", btnBg: "bg-sky-500/15 hover:bg-sky-500/25 border-sky-500/25", pillBg: "bg-sky-500/15 text-sky-300" },
+    "one-off": { border: "border-amber-500/20", bg: "from-amber-500/[0.06] to-amber-500/[0.02]", glow: "bg-amber-500/10", iconBg: "bg-amber-500/15 shadow-amber-500/10", text: "text-amber-400", btnBg: "bg-amber-500/15 hover:bg-amber-500/25 border-amber-500/25", pillBg: "bg-amber-500/15 text-amber-300" },
+    combined: { border: "border-fuchsia-500/20", bg: "from-fuchsia-500/[0.06] to-fuchsia-500/[0.02]", glow: "bg-fuchsia-500/10", iconBg: "bg-fuchsia-500/15 shadow-fuchsia-500/10", text: "text-fuchsia-400", btnBg: "bg-fuchsia-500/15 hover:bg-fuchsia-500/25 border-fuchsia-500/25", pillBg: "bg-fuchsia-500/15 text-fuchsia-300" },
+  };
+  const accent = accentMap[drillVariant];
+
+  const subtitleMap = {
+    openings: "Practice the correct moves for your recurring opening mistakes",
+    tactics: "Solve the tactics you missed in your games — your own puzzles",
+    endgames: "Replay endgame positions and find the winning technique",
+    "one-off": "Practice one-off mistakes from individual games",
+    combined: "Openings, tactics & endgames in one session",
+  };
 
   return (
     <section className="space-y-4">
       <button
         type="button"
-        className={buttonClass}
+        className={`group relative w-full overflow-hidden rounded-2xl border ${accent.border} bg-gradient-to-r ${accent.bg} p-5 text-left transition-all hover:scale-[1.005] active:scale-[0.995]`}
         onClick={() => setIsOpen(true)}
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-        {variantConfig.label}
-        <span className="rounded-full bg-slate-950/30 px-2 py-0.5 text-xs">{drillPositions.length} cards</span>
+        {/* Decorative glow */}
+        <div className={`pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full ${accent.glow} blur-[60px]`} />
+        <div className="relative flex items-center gap-4">
+          <span className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${accent.iconBg} text-2xl shadow-lg`}>
+            {variantConfig.emoji}
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2.5">
+              <h3 className="text-base font-bold text-white">{variantConfig.label}</h3>
+              <span className={`rounded-full ${accent.pillBg} px-2.5 py-0.5 text-xs font-semibold`}>{drillPositions.length} {drillPositions.length === 1 ? "card" : "cards"}</span>
+            </div>
+            <p className="mt-0.5 text-sm text-slate-400">{subtitleMap[drillVariant]}</p>
+          </div>
+          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${accent.btnBg} transition-colors`}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={`${accent.text} transition-transform group-hover:translate-x-0.5`}><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          </div>
+        </div>
       </button>
 
       {isOpen && current && (

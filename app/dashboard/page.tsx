@@ -15,6 +15,7 @@ import Link from "next/link";
 import { useSession } from "@/components/session-provider";
 import { MistakeCard } from "@/components/mistake-card";
 import { TacticCard } from "@/components/tactic-card";
+import { StudyPlanWidget } from "@/components/study-plan";
 import {
   StrengthsRadar,
   RadarLegend,
@@ -325,6 +326,11 @@ export default function DashboardPage() {
               value={totalTactics.toLocaleString()}
               icon="⚡"
             />
+          </div>
+
+          {/* ─── Study Plan ─── */}
+          <div className="animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
+            <StudyPlanWidget userPlan={plan} />
           </div>
 
           {/* ─── Main Grid: Radar + Progress ─── */}

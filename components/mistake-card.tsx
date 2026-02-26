@@ -222,7 +222,7 @@ function formatEval(valueCp: number, options?: { showPlus?: boolean }): string {
 }
 
 export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
-  const { ref: boardSizeRef, size: boardSize } = useBoardSize(400);
+  const { ref: boardSizeRef, size: boardSize } = useBoardSize(480);
   const badMove = useMemo(() => deriveMoveDetails(leak.fenBefore, leak.userMove), [leak.fenBefore, leak.userMove]);
   const bestMove = useMemo(() => deriveMoveDetails(leak.fenBefore, leak.bestMove), [leak.fenBefore, leak.bestMove]);
   const boardId = useMemo(() => `mistake-${leak.fenBefore.replace(/[^a-zA-Z0-9]/g, "-")}`, [leak.fenBefore]);
@@ -1207,7 +1207,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
 
   return (
     <article className="glass-card-hover overflow-hidden">
-      <div className="grid gap-0 md:grid-cols-[minmax(0,480px)_1fr]">
+      <div className="grid gap-0 md:grid-cols-[minmax(0,520px)_1fr]">
         {/* Board side */}
         <div ref={boardSizeRef} className="relative overflow-hidden border-b border-white/[0.04] bg-white/[0.01] p-3 sm:p-5 md:border-b-0 md:border-r">
           <div className="mx-auto flex w-full max-w-[460px] items-start gap-2 sm:gap-3">
@@ -1330,11 +1330,16 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                 {moveBadge.label}
               </span>
             </div>
-            <p className="mt-2 text-sm text-slate-400">
-              You reached this position <span className="font-semibold text-slate-200">{leak.reachCount}</span> times and
-              played <span className="font-mono text-red-400">{leak.userMove}</span>{" "}
-              <span className="font-semibold text-slate-200">{leak.moveCount}</span> times.
-            </p>
+            <div className="mt-3 flex items-center gap-2 rounded-xl border border-orange-500/20 bg-orange-500/[0.06] px-3.5 py-2.5">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-orange-500/15 text-lg">🔁</span>
+              <p className="text-sm text-slate-300">
+                You reached this position{" "}
+                <span className="rounded-md bg-white/[0.08] px-1.5 py-0.5 font-bold text-orange-300">{leak.reachCount}×</span>{" "}
+                and played{" "}
+                <span className="rounded-md bg-red-500/15 px-1.5 py-0.5 font-mono font-bold text-red-400">{badMove?.san ?? leak.userMove}</span>{" "}
+                <span className="rounded-md bg-white/[0.08] px-1.5 py-0.5 font-bold text-orange-300">{leak.moveCount}×</span>
+              </p>
+            </div>
           </div>
 
           {/* Offbeat sideline banner — from analysis or card's explorer lookup */}

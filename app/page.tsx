@@ -10,6 +10,7 @@ import { EndgameCard } from "@/components/endgame-card";
 import { CardCarousel, ViewModeToggle } from "@/components/card-carousel";
 import type { CardViewMode } from "@/components/card-carousel";
 import { useSession } from "@/components/session-provider";
+import { OpeningRankings } from "@/components/opening-rankings";
 import { StrengthsRadar, RadarLegend, InsightCards, computeRadarData } from "@/components/radar-chart";
 import { analyzeOpeningLeaksInBrowser } from "@/lib/client-analysis";
 import type { AnalysisProgress } from "@/lib/client-analysis";
@@ -36,6 +37,7 @@ type RequestState = "idle" | "loading" | "done" | "error";
 const PREFS_KEY = "firechess-user-prefs";
 const FREE_MAX_GAMES = 300;
 const FREE_MAX_DEPTH = 12;
+const FREE_MAX_MOVES = 30;
 const FREE_TACTIC_SAMPLE = 10;
 const FREE_ENDGAME_SAMPLE = 10;
 const LOCAL_PRO_HOTKEY_ENABLED = process.env.NEXT_PUBLIC_ENABLE_LOCAL_PRO_HOTKEY !== "false";
@@ -75,7 +77,8 @@ export default function HomePage() {
   const hasProAccess = sessionPlan === "pro" || sessionPlan === "lifetime" || localProEnabled;
   const gamesOverFreeLimit = gameRangeMode === "count" && gameCount > FREE_MAX_GAMES;
   const depthOverFreeLimit = engineDepth > FREE_MAX_DEPTH;
-  const freeLimitsExceeded = !hasProAccess && (gamesOverFreeLimit || depthOverFreeLimit);
+  const movesOverFreeLimit = moveCount > FREE_MAX_MOVES;
+  const freeLimitsExceeded = !hasProAccess && (gamesOverFreeLimit || depthOverFreeLimit || movesOverFreeLimit);
 
   /* ── Hero typography animation ── */
   const heroAnim = (step: number) =>
@@ -447,6 +450,26 @@ export default function HomePage() {
       const json = await res.json();
       if (json.saved) {
         setSaveStatus("saved");
+        // Auto-generate a study plan from the saved report
+        try {
+          await fetch("/api/study-plan", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              reportId: json.id,
+              topLeakOpenings: [], // Will be enriched server-side later
+              accuracy: report.estimatedAccuracy,
+              leakCount: result.leaks.length,
+              repeatedPositions: result.repeatedPositions,
+              tacticsCount: result.totalTacticsFound,
+              gamesAnalyzed: result.gamesAnalyzed,
+              weightedCpLoss: report.weightedCpLoss,
+              severeLeakRate: report.severeLeakRate,
+              estimatedRating: report.estimatedRating,
+              scanMode: lastRunConfig.scanMode,
+            }),
+          });
+        } catch { /* study plan generation is non-critical */ }
       } else if (json.reason === "duplicate") {
         setSaveStatus("duplicate");
       } else {
@@ -548,7 +571,7 @@ export default function HomePage() {
       const safeSince = gameRangeMode === "since" && sinceDate
         ? new Date(sinceDate).getTime()
         : undefined;
-      const safeMoves = Math.min(30, Math.max(1, Math.floor(moveCount || 20)));
+      const safeMoves = Math.min(hasProAccess ? 40 : FREE_MAX_MOVES, Math.max(1, Math.floor(moveCount || 20)));
       const safeCpThreshold = Math.min(1000, Math.max(1, Math.floor(cpThreshold || 50)));
       const safeDepth = Math.min(24, Math.max(6, Math.floor(engineDepth || 12)));
       const safeSource: AnalysisSource = source!;
@@ -1019,11 +1042,16 @@ export default function HomePage() {
                   <input
                     type="number"
                     min={1}
-                    max={30}
+                    max={hasProAccess ? 40 : FREE_MAX_MOVES}
                     value={moveCount}
                     onChange={(e) => setMoveCount(Number(e.target.value))}
                     className="glass-input h-10 text-sm"
                   />
+                  {!hasProAccess && movesOverFreeLimit && (
+                    <p className="text-xs font-medium text-amber-400">
+                      Free capped at {FREE_MAX_MOVES}. <Link href="/pricing" className="underline">Upgrade</Link> for up to 40.
+                    </p>
+                  )}
                 </div>
 
                 <div className="stat-card space-y-2">
@@ -1490,6 +1518,7 @@ export default function HomePage() {
                     <div className="mt-6 grid gap-3 sm:grid-cols-3">
                       {[
                         {
+                          icon: "🧘",
                           label: "Stability",
                           value: `${result.mentalStats.stability}`,
                           sub: result.mentalStats.stability >= 70 ? "Steady" : result.mentalStats.stability >= 40 ? "Average" : "Volatile",
@@ -1497,6 +1526,7 @@ export default function HomePage() {
                           help: "Mental consistency between games. High = predictable performance, low = varies greatly between sessions.",
                         },
                         {
+                          icon: "🌡️",
                           label: "Tilt",
                           value: `${result.mentalStats.tiltRate}%`,
                           sub: result.mentalStats.tiltRate <= 30 ? "Resilient" : result.mentalStats.tiltRate <= 50 ? "Moderate" : "Tilts Often",
@@ -1504,6 +1534,7 @@ export default function HomePage() {
                           help: "How often a loss is immediately followed by another loss. Lower is better — means you recover well.",
                         },
                         {
+                          icon: "💪",
                           label: "Post-Loss",
                           value: `${result.mentalStats.postLossWinRate}%`,
                           sub: result.mentalStats.postLossWinRate >= 40 ? "Recovers" : result.mentalStats.postLossWinRate >= 25 ? "Struggles" : "Spirals",
@@ -1512,7 +1543,10 @@ export default function HomePage() {
                         },
                       ].map((stat) => (
                         <div key={stat.label} className="stat-card">
-                          <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{stat.label}<HelpTip text={stat.help} /></p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-base">{stat.icon}</span>
+                            <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{stat.label}<HelpTip text={stat.help} /></p>
+                          </div>
                           <p className={`mt-1 text-2xl font-bold ${stat.color}`}>{stat.value}</p>
                           <p className={`mt-0.5 text-xs ${stat.color} opacity-70`}>{stat.sub}</p>
                         </div>
@@ -1522,6 +1556,7 @@ export default function HomePage() {
                     <div className="mt-3 grid gap-3 sm:grid-cols-3">
                       {[
                         {
+                          icon: "⏱️",
                           label: "Timeouts",
                           value: `${result.mentalStats.timeoutRate}%`,
                           sub: result.mentalStats.timeoutRate <= 5 ? "Rare" : result.mentalStats.timeoutRate <= 15 ? "Sometimes" : "Frequent",
@@ -1529,6 +1564,7 @@ export default function HomePage() {
                           help: "Percentage of games lost on time. High = possible time management issue.",
                         },
                         {
+                          icon: "🔥",
                           label: "Max Streak",
                           value: `${result.mentalStats.maxStreak}`,
                           sub: (() => {
@@ -1542,6 +1578,7 @@ export default function HomePage() {
                           help: "Longest consecutive win or loss streak across the analysed games.",
                         },
                         {
+                          icon: "🏳️",
                           label: "Resigns",
                           value: `${result.mentalStats.resignRate}%`,
                           sub: result.mentalStats.resignRate <= 50 ? "Fights On" : result.mentalStats.resignRate <= 75 ? "Normal" : "Quick Quitter",
@@ -1550,7 +1587,10 @@ export default function HomePage() {
                         },
                       ].map((stat) => (
                         <div key={stat.label} className="stat-card">
-                          <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{stat.label}<HelpTip text={stat.help} /></p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-base">{stat.icon}</span>
+                            <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{stat.label}<HelpTip text={stat.help} /></p>
+                          </div>
                           <p className={`mt-1 text-2xl font-bold ${stat.color}`}>{stat.value}</p>
                           <p className={`mt-0.5 text-xs ${stat.color} opacity-70`}>{stat.sub}</p>
                         </div>
@@ -1625,6 +1665,7 @@ export default function HomePage() {
                             <div className="grid gap-3 sm:grid-cols-4">
                               {[
                                 {
+                                  icon: "🚀",
                                   label: "Momentum",
                                   value: `${ms.postWinWinRate ?? 0}%`,
                                   sub: (ms.postWinWinRate ?? 0) >= 55 ? "Snowballs" : (ms.postWinWinRate ?? 0) >= 40 ? "Steady" : "Resets",
@@ -1632,6 +1673,7 @@ export default function HomePage() {
                                   help: "Win rate in the game after a win. High = you build momentum from victories.",
                                 },
                                 {
+                                  icon: "💥",
                                   label: "Early Losses",
                                   value: `${ms.earlyLossRate ?? 0}%`,
                                   sub: (ms.earlyLossRate ?? 0) <= 15 ? "Rare" : (ms.earlyLossRate ?? 0) <= 30 ? "Some" : "Frequent",
@@ -1639,6 +1681,7 @@ export default function HomePage() {
                                   help: "Percentage of losses within the first 20 moves. High = early blunders or mental disengagement.",
                                 },
                                 {
+                                  icon: "↩️",
                                   label: "Comebacks",
                                   value: `${ms.comebackRate ?? 0}%`,
                                   sub: (ms.comebackRate ?? 0) >= 60 ? "Fighter" : (ms.comebackRate ?? 0) >= 35 ? "Average" : "Gives Up",
@@ -1646,6 +1689,7 @@ export default function HomePage() {
                                   help: "Percentage of wins that required 30+ moves — proxy for fighting from worse positions.",
                                 },
                                 {
+                                  icon: "⚔️",
                                   label: "Mate Finish",
                                   value: `${ms.mateFinishRate ?? 0}%`,
                                   sub: (ms.mateFinishRate ?? 0) >= 40 ? "Ruthless" : (ms.mateFinishRate ?? 0) >= 20 ? "Normal" : "Rare",
@@ -1654,7 +1698,10 @@ export default function HomePage() {
                                 },
                               ].map((stat) => (
                                 <div key={stat.label} className="stat-card">
-                                  <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{stat.label}<HelpTip text={stat.help} /></p>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-base">{stat.icon}</span>
+                                    <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{stat.label}<HelpTip text={stat.help} /></p>
+                                  </div>
                                   <p className={`mt-1 text-2xl font-bold ${stat.color}`}>{stat.value}</p>
                                   <p className={`mt-0.5 text-xs ${stat.color} opacity-70`}>{stat.sub}</p>
                                 </div>
@@ -1666,6 +1713,7 @@ export default function HomePage() {
                           <div className="mt-3 grid gap-3 sm:grid-cols-4">
                             {[
                               {
+                                icon: "✅",
                                 label: "Avg Win Length",
                                 value: `${ms.avgMovesWin ?? 0}`,
                                 sub: "moves",
@@ -1673,6 +1721,7 @@ export default function HomePage() {
                                 help: "Average number of full moves in your wins.",
                               },
                               {
+                                icon: "❌",
                                 label: "Avg Loss Length",
                                 value: `${ms.avgMovesLoss ?? 0}`,
                                 sub: "moves",
@@ -1680,6 +1729,7 @@ export default function HomePage() {
                                 help: "Average number of full moves in your losses.",
                               },
                               {
+                                icon: "📈",
                                 label: "Best Run",
                                 value: `${ms.maxWinStreak ?? 0}W`,
                                 sub: (ms.maxWinStreak ?? 0) >= 7 ? "Hot Streak" : (ms.maxWinStreak ?? 0) >= 4 ? "Solid" : "Short",
@@ -1687,6 +1737,7 @@ export default function HomePage() {
                                 help: "Longest consecutive winning streak in the analysed games.",
                               },
                               {
+                                icon: "📉",
                                 label: "Worst Run",
                                 value: `${ms.maxLossStreak ?? 0}L`,
                                 sub: (ms.maxLossStreak ?? 0) >= 6 ? "Danger Zone" : (ms.maxLossStreak ?? 0) >= 4 ? "Notable" : "Manageable",
@@ -1695,7 +1746,10 @@ export default function HomePage() {
                               },
                             ].map((stat) => (
                               <div key={stat.label} className="stat-card">
-                                <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{stat.label}<HelpTip text={stat.help} /></p>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-base">{stat.icon}</span>
+                                  <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">{stat.label}<HelpTip text={stat.help} /></p>
+                                </div>
                                 <p className={`mt-1 text-2xl font-bold ${stat.color}`}>{stat.value}</p>
                                 <p className={`mt-0.5 text-xs ${stat.color} opacity-70`}>{stat.sub}</p>
                               </div>
@@ -1705,14 +1759,20 @@ export default function HomePage() {
                           {/* Decisiveness + Draw Rate */}
                           <div className="mt-3 grid gap-3 sm:grid-cols-2">
                             <div className="stat-card">
-                              <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Decisiveness<HelpTip text="Percentage of games that ended decisively (not a draw). High = aggressive, playing for the win." /></p>
+                              <div className="flex items-center gap-2">
+                                <span className="text-base">⚔️</span>
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Decisiveness<HelpTip text="Percentage of games that ended decisively (not a draw). High = aggressive, playing for the win." /></p>
+                              </div>
                               <p className={`mt-1 text-2xl font-bold ${(ms.decisiveness ?? 0) >= 85 ? "text-violet-400" : "text-cyan-400"}`}>{ms.decisiveness ?? 0}%</p>
                               <p className={`mt-0.5 text-xs opacity-70 ${(ms.decisiveness ?? 0) >= 85 ? "text-violet-400" : "text-cyan-400"}`}>
                                 {(ms.decisiveness ?? 0) >= 85 ? "All or Nothing" : (ms.decisiveness ?? 0) >= 70 ? "Plays to Win" : "Draw-Prone"}
                               </p>
                             </div>
                             <div className="stat-card">
-                              <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Draw Rate<HelpTip text="Percentage of games ending in a draw. Compare to your rating bracket average." /></p>
+                              <div className="flex items-center gap-2">
+                                <span className="text-base">🤝</span>
+                                <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Draw Rate<HelpTip text="Percentage of games ending in a draw. Compare to your rating bracket average." /></p>
+                              </div>
                               <p className="mt-1 text-2xl font-bold text-slate-300">{ms.drawRate ?? 0}%</p>
                               <p className="mt-0.5 text-xs text-slate-400 opacity-70">
                                 {(ms.drawRate ?? 0) >= 20 ? "Frequent Draws" : (ms.drawRate ?? 0) >= 8 ? "Average" : "Rarely Draws"}
@@ -1943,6 +2003,11 @@ export default function HomePage() {
               </>
               )}
 
+              {/* Opening Health Rankings */}
+              {(lastRunConfig?.scanMode !== "tactics") && (leaks.length > 0 || oneOffMistakes.length > 0) && (
+                <OpeningRankings leaks={leaks} oneOffMistakes={oneOffMistakes} />
+              )}
+
               {/* CTA: after openings-only scan, suggest tactics scan */}
               {lastRunConfig?.scanMode === "openings" && (
                 <div className="glass-card flex flex-col items-center gap-4 border-amber-500/15 bg-gradient-to-r from-amber-500/[0.04] to-transparent p-6 text-center sm:flex-row sm:text-left">
@@ -1960,6 +2025,27 @@ export default function HomePage() {
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                     Scan Tactics
+                  </button>
+                </div>
+              )}
+
+              {/* CTA: after openings-only scan, suggest endgame scan */}
+              {lastRunConfig?.scanMode === "openings" && (
+                <div className="glass-card flex flex-col items-center gap-4 border-sky-500/15 bg-gradient-to-r from-sky-500/[0.04] to-transparent p-6 text-center sm:flex-row sm:text-left">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-sky-500/15 text-3xl shadow-lg shadow-sky-500/10">♟️</span>
+                  <div className="flex-1">
+                    <h3 className="text-base font-bold text-white">Want to find endgame mistakes too?</h3>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Your opening scan is complete. Run an endgame scan to catch mistakes in king &amp; pawn endings, rook endgames, and more.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => quickScanMode("endgames")}
+                    className="flex h-11 shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 px-5 text-sm font-bold text-white shadow-lg shadow-sky-500/20 transition hover:shadow-sky-500/30"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    Scan Endgames
                   </button>
                 </div>
               )}
@@ -2103,6 +2189,27 @@ export default function HomePage() {
                   >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0022 16z"/></svg>
                     Scan Openings
+                  </button>
+                </div>
+              )}
+
+              {/* CTA: after tactics-only scan, suggest endgame scan */}
+              {lastRunConfig?.scanMode === "tactics" && (
+                <div className="glass-card flex flex-col items-center gap-4 border-sky-500/15 bg-gradient-to-r from-sky-500/[0.04] to-transparent p-6 text-center sm:flex-row sm:text-left">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-sky-500/15 text-3xl shadow-lg shadow-sky-500/10">♟️</span>
+                  <div className="flex-1">
+                    <h3 className="text-base font-bold text-white">Want to find endgame mistakes too?</h3>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Your tactics scan is complete. Run an endgame scan to catch mistakes in king &amp; pawn endings, rook endgames, and more.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => quickScanMode("endgames")}
+                    className="flex h-11 shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 px-5 text-sm font-bold text-white shadow-lg shadow-sky-500/20 transition hover:shadow-sky-500/30"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    Scan Endgames
                   </button>
                 </div>
               )}
@@ -2350,9 +2457,10 @@ export default function HomePage() {
                     <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
                       {[
                         { icon: "📈", label: "Progress charts" },
+                        { icon: "�", label: "Study plan" },
                         { icon: "🔁", label: "Compare scans" },
                         { icon: "🎯", label: "Track accuracy" },
-                        { icon: "⚡", label: "Spot trends" },
+                        { icon: "🔥", label: "Daily streaks" },
                       ].map((f) => (
                         <span key={f.label} className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-300">
                           {f.icon} {f.label}
@@ -2401,14 +2509,18 @@ export default function HomePage() {
                 <div className="flex flex-col items-center gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.04] p-8 text-center">
                   <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/15 text-2xl">✅</span>
                   <p className="text-lg font-bold text-white">Report saved to your Dashboard</p>
-                  <p className="max-w-md text-sm text-slate-400">Run another scan in a few weeks and compare to see how much you&apos;ve improved.</p>
-                  <Link
-                    href="/dashboard"
-                    className="mt-2 inline-flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-400 transition-all hover:border-emerald-500/40 hover:bg-emerald-500/20"
-                  >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
-                    View Dashboard
-                  </Link>
+                  <p className="max-w-md text-sm text-slate-400">
+                    A personalized study plan has been generated based on your weaknesses. Check your dashboard to start your weekly training.
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+                    <Link
+                      href="/dashboard"
+                      className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-400 transition-all hover:border-emerald-500/40 hover:bg-emerald-500/20"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                      View Dashboard & Study Plan
+                    </Link>
+                  </div>
                 </div>
               )}
             </section>

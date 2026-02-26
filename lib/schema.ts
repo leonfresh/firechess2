@@ -187,3 +187,82 @@ export const ticketReplies = pgTable("ticket_reply", {
   emailSent: boolean("emailSent").notNull().default(false),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
 });
+
+/* ------------------------------------------------------------------ */
+/*  Custom: study plans & tasks (retention / improvement tracking)      */
+/* ------------------------------------------------------------------ */
+
+export const studyPlans = pgTable("study_plan", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  reportId: text("reportId").references(() => reports.id, { onDelete: "set null" }),
+
+  /** Human-readable title, e.g. "Week of Feb 27 — Fix Italian Game leaks" */
+  title: text("title").notNull(),
+
+  /** Snapshot of weaknesses used to generate this plan */
+  weaknesses: jsonb("weaknesses").$type<{
+    accuracy?: number;
+    leakCount?: number;
+    tacticsPerGame?: number;
+    severeLeakRate?: number;
+    topLeakOpenings?: string[];
+  }>(),
+
+  /** Overall progress 0–100 derived from tasks */
+  progress: integer("progress").notNull().default(0),
+
+  /** Daily streak tracking */
+  currentStreak: integer("currentStreak").notNull().default(0),
+  longestStreak: integer("longestStreak").notNull().default(0),
+  lastActivityDate: text("lastActivityDate"),
+
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow(),
+});
+
+export const studyTasks = pgTable("study_task", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  planId: text("planId")
+    .notNull()
+    .references(() => studyPlans.id, { onDelete: "cascade" }),
+
+  /** Category: opening, tactic, endgame, habit, puzzle */
+  category: text("category")
+    .$type<"opening" | "tactic" | "endgame" | "habit" | "puzzle" | "review">()
+    .notNull(),
+
+  /** Short title, e.g. "Drill Italian Game leaks" */
+  title: text("title").notNull(),
+
+  /** Longer description with specific instructions */
+  description: text("description").notNull(),
+
+  /** Priority 1 (highest) – 5 (lowest) */
+  priority: integer("priority").notNull().default(3),
+
+  /** Whether this repeats daily vs one-time */
+  recurring: boolean("recurring").notNull().default(false),
+
+  /** Day index within the plan (1-7 for weekly plans) */
+  dayIndex: integer("dayIndex"),
+
+  /** Completion tracking */
+  completed: boolean("completed").notNull().default(false),
+  completedAt: timestamp("completedAt", { mode: "date" }),
+
+  /** Optional link (e.g. lichess puzzle URL, drill link) */
+  link: text("link"),
+
+  /** Icon emoji */
+  icon: text("icon").notNull().default("📝"),
+
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+});
