@@ -1,114 +1,104 @@
 "use client";
 
 /**
- * OpeningRankings — ranks all the user's openings from weakest to strongest
- * based on aggregated leak data and win/loss stats.
+ * OpeningRankings — shows ALL openings the user played across the scan,
+ * with mini board positions, color badges, and win/draw/loss stats.
+ * Sorted from lowest win rate to highest.
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { Chessboard } from "react-chessboard";
 import { fetchExplorerMoves } from "@/lib/lichess-explorer";
-import type { RepeatedOpeningLeak } from "@/lib/types";
+import type { OpeningSummary, PlayerColor } from "@/lib/types";
 
-type OpeningAgg = {
+/* ------------------------------------------------------------------ */
+/*  Types                                                              */
+/* ------------------------------------------------------------------ */
+
+type OpeningEntry = {
+  key: string;
+  fen: string;
+  userColor: PlayerColor;
   name: string;
-  fens: Set<string>;
-  totalLeaks: number;
-  totalOneOffs: number;
-  avgCpLoss: number;
-  worstCpLoss: number;
-  totalGames: number;    // sum of reachCount across positions
-  userWins: number;
-  userDraws: number;
-  userLosses: number;
-  /** Computed health score 0-100 (higher = better) */
-  health: number;
+  games: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  winRate: number; // 0-100
 };
 
 type Props = {
-  leaks: RepeatedOpeningLeak[];
-  oneOffMistakes: RepeatedOpeningLeak[];
+  openingSummaries: OpeningSummary[];
 };
 
-function clamp(v: number, lo = 0, hi = 100) {
-  return Math.max(lo, Math.min(hi, v));
-}
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                            */
+/* ------------------------------------------------------------------ */
 
-/** Compute a health score from aggregate stats. */
-function computeHealth(agg: {
-  avgCpLoss: number;
-  worstCpLoss: number;
-  totalLeaks: number;
-  totalOneOffs: number;
-  userWins: number;
-  userDraws: number;
-  userLosses: number;
-}): number {
-  // 1. CPL penalty: lower avg CPL = better (0-80 maps to 100-20)
-  const cplScore = clamp(100 - agg.avgCpLoss * 1.0);
-
-  // 2. Frequency penalty: more leaks = worse
-  const leakPenalty = Math.min(40, (agg.totalLeaks + agg.totalOneOffs * 0.5) * 8);
-
-  // 3. Win rate bonus
-  const total = agg.userWins + agg.userDraws + agg.userLosses;
-  const winRate = total > 0 ? (agg.userWins + agg.userDraws * 0.5) / total : 0.5;
-  const winBonus = (winRate - 0.5) * 40; // ±20
-
-  return clamp(Math.round(cplScore - leakPenalty + winBonus));
-}
-
-function healthColor(h: number) {
-  if (h >= 70) return "text-emerald-400";
-  if (h >= 45) return "text-amber-400";
+function winRateColor(wr: number) {
+  if (wr >= 55) return "text-emerald-400";
+  if (wr >= 45) return "text-amber-400";
   return "text-red-400";
 }
-function healthBg(h: number) {
-  if (h >= 70) return "bg-emerald-500/15";
-  if (h >= 45) return "bg-amber-500/15";
-  return "bg-red-500/15";
-}
-function healthBorder(h: number) {
-  if (h >= 70) return "border-emerald-500/20";
-  if (h >= 45) return "border-amber-500/20";
-  return "border-red-500/20";
-}
-function healthBarBg(h: number) {
-  if (h >= 70) return "bg-emerald-400";
-  if (h >= 45) return "bg-amber-400";
+
+function winRateBarBg(wr: number) {
+  if (wr >= 55) return "bg-emerald-400";
+  if (wr >= 45) return "bg-amber-400";
   return "bg-red-400";
 }
-function healthLabel(h: number) {
-  if (h >= 80) return "Excellent";
-  if (h >= 65) return "Solid";
-  if (h >= 50) return "Shaky";
-  if (h >= 35) return "Weak";
-  return "Critical";
-}
-function healthIcon(h: number) {
-  if (h >= 70) return "✅";
-  if (h >= 45) return "⚠️";
-  return "🔴";
+
+function winRateBadgeBg(wr: number) {
+  if (wr >= 55) return "bg-emerald-500/15";
+  if (wr >= 45) return "bg-amber-500/15";
+  return "bg-red-500/15";
 }
 
-export function OpeningRankings({ leaks, oneOffMistakes }: Props) {
-  const allPositions = useMemo(() => {
-    const all = [...leaks, ...oneOffMistakes];
-    // Deduplicate by FEN
-    const map = new Map<string, RepeatedOpeningLeak[]>();
-    for (const item of all) {
-      const arr = map.get(item.fenBefore) ?? [];
-      arr.push(item);
-      map.set(item.fenBefore, arr);
+function winRateLabel(wr: number) {
+  if (wr >= 65) return "Strong";
+  if (wr >= 55) return "Good";
+  if (wr >= 45) return "Even";
+  if (wr >= 35) return "Weak";
+  return "Struggling";
+}
+
+/* ------------------------------------------------------------------ */
+/*  Component                                                          */
+/* ------------------------------------------------------------------ */
+
+export function OpeningRankings({ openingSummaries }: Props) {
+  /* ── 1. Group summaries by (FEN + userColor) ── */
+  const grouped = useMemo(() => {
+    const map = new Map<
+      string,
+      { fen: string; userColor: PlayerColor; games: number; wins: number; draws: number; losses: number }
+    >();
+
+    for (const s of openingSummaries) {
+      const key = `${s.fen}::${s.userColor}`;
+      const agg = map.get(key) ?? { fen: s.fen, userColor: s.userColor, games: 0, wins: 0, draws: 0, losses: 0 };
+      agg.games++;
+      if (s.result === "win") agg.wins++;
+      else if (s.result === "draw") agg.draws++;
+      else agg.losses++;
+      map.set(key, agg);
     }
-    return map;
-  }, [leaks, oneOffMistakes]);
 
+    return map;
+  }, [openingSummaries]);
+
+  /* ── 2. Collect unique FENs for name lookups ── */
+  const uniqueFens = useMemo(() => {
+    const fens = new Set<string>();
+    for (const [, agg] of grouped) fens.add(agg.fen);
+    return Array.from(fens);
+  }, [grouped]);
+
+  /* ── 3. Fetch opening names from Lichess explorer ── */
   const [openingNames, setOpeningNames] = useState<Map<string, string>>(new Map());
   const [loading, setLoading] = useState(true);
 
-  // Fetch opening names for all unique FENs
   useEffect(() => {
-    if (allPositions.size === 0) {
+    if (uniqueFens.length === 0) {
       setLoading(false);
       return;
     }
@@ -116,21 +106,19 @@ export function OpeningRankings({ leaks, oneOffMistakes }: Props) {
     let cancelled = false;
     const fetchNames = async () => {
       const names = new Map<string, string>();
-      const fens = Array.from(allPositions.keys());
 
-      // Batch in groups of 4 to not overload API
-      for (let i = 0; i < fens.length; i += 4) {
+      // Batch in groups of 4 to respect rate limits
+      for (let i = 0; i < uniqueFens.length; i += 4) {
         if (cancelled) break;
-        const batch = fens.slice(i, i + 4);
-        const results = await Promise.allSettled(
+        const batch = uniqueFens.slice(i, i + 4);
+        await Promise.allSettled(
           batch.map(async (fen) => {
-            const items = allPositions.get(fen)!;
-            const side = items[0].sideToMove;
-            const result = await fetchExplorerMoves(fen, side);
-            if (result.openingName) {
-              names.set(fen, result.openingName);
-            }
-          })
+            const side = fen.includes(" w ") ? "white" : "black";
+            try {
+              const result = await fetchExplorerMoves(fen, side as PlayerColor);
+              if (result.openingName) names.set(fen, result.openingName);
+            } catch { /* non-critical */ }
+          }),
         );
       }
 
@@ -141,85 +129,69 @@ export function OpeningRankings({ leaks, oneOffMistakes }: Props) {
     };
 
     fetchNames();
-    return () => { cancelled = true; };
-  }, [allPositions]);
+    return () => {
+      cancelled = true;
+    };
+  }, [uniqueFens]);
 
-  // Aggregate by opening name
-  const rankings = useMemo(() => {
+  /* ── 4. Build final sorted rankings ── */
+  const rankings: OpeningEntry[] = useMemo(() => {
     if (loading) return [];
 
-    const byOpening = new Map<string, {
-      fens: Set<string>;
-      leaks: RepeatedOpeningLeak[];
-      oneOffs: RepeatedOpeningLeak[];
-    }>();
+    // Merge entries that share the same (opening name + color)
+    const byNameColor = new Map<string, OpeningEntry>();
 
-    for (const [fen, items] of allPositions) {
-      const name = openingNames.get(fen) ?? "Unknown Opening";
-      let agg = byOpening.get(name);
-      if (!agg) {
-        agg = { fens: new Set(), leaks: [], oneOffs: [] };
-        byOpening.set(name, agg);
-      }
-      agg.fens.add(fen);
-      for (const item of items) {
-        const isLeak = leaks.includes(item);
-        if (isLeak) agg.leaks.push(item);
-        else agg.oneOffs.push(item);
+    for (const [, agg] of grouped) {
+      const name = openingNames.get(agg.fen) ?? "Unknown Opening";
+      const mergeKey = `${name}::${agg.userColor}`;
+      const existing = byNameColor.get(mergeKey);
+
+      if (existing) {
+        existing.games += agg.games;
+        existing.wins += agg.wins;
+        existing.draws += agg.draws;
+        existing.losses += agg.losses;
+        // Keep the FEN with the most games as the representative
+        const existingGames = grouped.get(`${existing.fen}::${existing.userColor}`)?.games ?? 0;
+        if (agg.games > existingGames) existing.fen = agg.fen;
+      } else {
+        byNameColor.set(mergeKey, {
+          key: mergeKey,
+          fen: agg.fen,
+          userColor: agg.userColor,
+          name,
+          games: agg.games,
+          wins: agg.wins,
+          draws: agg.draws,
+          losses: agg.losses,
+          winRate: 0,
+        });
       }
     }
 
-    const result: OpeningAgg[] = [];
-    for (const [name, agg] of byOpening) {
-      const allItems = [...agg.leaks, ...agg.oneOffs];
-      const totalCp = allItems.reduce((s, l) => s + l.cpLoss, 0);
-      const avgCp = allItems.length > 0 ? totalCp / allItems.length : 0;
-      const worstCp = allItems.reduce((s, l) => Math.max(s, l.cpLoss), 0);
-      const totalGames = allItems.reduce((s, l) => s + l.reachCount, 0);
-      const uw = allItems.reduce((s, l) => s + (l.userWins ?? 0), 0);
-      const ud = allItems.reduce((s, l) => s + (l.userDraws ?? 0), 0);
-      const ul = allItems.reduce((s, l) => s + (l.userLosses ?? 0), 0);
-
-      const health = computeHealth({
-        avgCpLoss: avgCp,
-        worstCpLoss: worstCp,
-        totalLeaks: agg.leaks.length,
-        totalOneOffs: agg.oneOffs.length,
-        userWins: uw,
-        userDraws: ud,
-        userLosses: ul,
-      });
-
-      result.push({
-        name,
-        fens: agg.fens,
-        totalLeaks: agg.leaks.length,
-        totalOneOffs: agg.oneOffs.length,
-        avgCpLoss: Math.round(avgCp),
-        worstCpLoss: Math.round(worstCp),
-        totalGames,
-        userWins: uw,
-        userDraws: ud,
-        userLosses: ul,
-        health,
-      });
+    const result = Array.from(byNameColor.values());
+    for (const r of result) {
+      r.winRate = r.games > 0 ? Math.round((r.wins / r.games) * 100) : 0;
     }
 
-    // Sort weakest first
-    result.sort((a, b) => a.health - b.health);
+    // Sort by win rate ascending (worst first)
+    result.sort((a, b) => a.winRate - b.winRate || b.games - a.games);
     return result;
-  }, [loading, allPositions, openingNames, leaks]);
+  }, [loading, grouped, openingNames]);
 
-  if (allPositions.size === 0) return null;
+  /* ── Early returns ── */
+  if (openingSummaries.length === 0) return null;
 
   if (loading) {
     return (
       <div className="glass-card border-indigo-500/15 bg-gradient-to-r from-indigo-500/[0.04] to-transparent p-6">
         <div className="flex items-center gap-4">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/15 text-3xl shadow-lg shadow-indigo-500/10 animate-pulse">📊</span>
+          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/15 text-3xl shadow-lg shadow-indigo-500/10 animate-pulse">
+            📊
+          </span>
           <div className="flex-1">
-            <h2 className="text-xl font-extrabold text-white tracking-tight">Opening Health Rankings</h2>
-            <p className="mt-1 text-sm text-slate-400 animate-pulse">Identifying your openings…</p>
+            <h2 className="text-xl font-extrabold tracking-tight text-white">Opening Rankings</h2>
+            <p className="mt-1 animate-pulse text-sm text-slate-400">Identifying your openings…</p>
           </div>
         </div>
       </div>
@@ -228,18 +200,21 @@ export function OpeningRankings({ leaks, oneOffMistakes }: Props) {
 
   if (rankings.length === 0) return null;
 
-  const weakest = rankings[0];
-  const strongest = rankings[rankings.length - 1];
+  const totalGames = openingSummaries.length;
+  const worst = rankings[0];
+  const best = rankings[rankings.length - 1];
 
   return (
     <div className="space-y-3">
-      {/* Section header */}
+      {/* ── Section header ── */}
       <div className="glass-card border-indigo-500/15 bg-gradient-to-r from-indigo-500/[0.04] to-transparent p-6">
         <div className="flex items-center gap-4">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/15 text-3xl shadow-lg shadow-indigo-500/10">📊</span>
+          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-500/15 text-3xl shadow-lg shadow-indigo-500/10">
+            📊
+          </span>
           <div className="flex-1">
-            <h2 className="text-xl font-extrabold text-white tracking-tight">
-              Opening Health Rankings
+            <h2 className="text-xl font-extrabold tracking-tight text-white">
+              Opening Rankings
               <span className="ml-3 inline-flex items-center rounded-full bg-indigo-500/15 px-3 py-1 text-sm font-bold text-indigo-400">
                 {rankings.length} opening{rankings.length !== 1 ? "s" : ""}
               </span>
@@ -247,78 +222,108 @@ export function OpeningRankings({ leaks, oneOffMistakes }: Props) {
             <p className="mt-1 text-sm text-slate-400">
               {rankings.length >= 2 ? (
                 <>
-                  Weakest: <span className="font-semibold text-red-400">{weakest.name}</span> ({weakest.health}/100)
+                  Lowest:{" "}
+                  <span className="font-semibold text-red-400">
+                    {worst.name} ({worst.winRate}%)
+                  </span>
                   {" · "}
-                  Strongest: <span className="font-semibold text-emerald-400">{strongest.name}</span> ({strongest.health}/100)
+                  Highest:{" "}
+                  <span className="font-semibold text-emerald-400">
+                    {best.name} ({best.winRate}%)
+                  </span>
+                  {" · "}
+                  <span className="text-slate-500">{totalGames} games total</span>
                 </>
               ) : (
-                <>Your openings ranked by overall health — mistakes, frequency, and outcomes.</>
+                <>All your openings ranked by win rate — lowest to highest.</>
               )}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Rankings list */}
+      {/* ── Rankings list ── */}
       <div className="space-y-2">
-        {rankings.map((opening, idx) => {
-          const total = opening.userWins + opening.userDraws + opening.userLosses;
-          const winPct = total > 0 ? Math.round((opening.userWins / total) * 100) : null;
+        {rankings.map((entry, idx) => (
+          <div
+            key={entry.key}
+            className="group rounded-xl border border-white/[0.06] bg-gradient-to-r from-white/[0.02] to-transparent p-3 transition-all duration-200 hover:border-white/[0.1] hover:bg-white/[0.03]"
+          >
+            <div className="flex items-center gap-3">
+              {/* Rank badge */}
+              <div
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-black ${winRateBadgeBg(entry.winRate)} ${winRateColor(entry.winRate)}`}
+              >
+                #{idx + 1}
+              </div>
 
-          return (
-            <div
-              key={opening.name}
-              className={`group rounded-xl border ${healthBorder(opening.health)} bg-gradient-to-r from-white/[0.02] to-transparent p-4 transition-all duration-200 hover:bg-white/[0.03]`}
-            >
-              <div className="flex items-center gap-4">
-                {/* Rank number */}
-                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${healthBg(opening.health)} text-sm font-black ${healthColor(opening.health)}`}>
-                  #{idx + 1}
-                </div>
+              {/* Mini board */}
+              <div
+                className="shrink-0 overflow-hidden rounded-lg border border-white/[0.08]"
+                style={{ width: 72, height: 72 }}
+              >
+                <Chessboard
+                  id={`opening-rank-${idx}`}
+                  position={entry.fen}
+                  boardWidth={72}
+                  arePiecesDraggable={false}
+                  boardOrientation={entry.userColor}
+                  animationDuration={0}
+                  customDarkSquareStyle={{ backgroundColor: "#374151" }}
+                  customLightSquareStyle={{ backgroundColor: "#6b7280" }}
+                />
+              </div>
 
-                {/* Info */}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="truncate font-bold text-white text-sm sm:text-base">{opening.name}</h3>
-                    <span className="text-sm">{healthIcon(opening.health)}</span>
-                  </div>
-
-                  {/* Health bar */}
-                  <div className="mt-1.5 flex items-center gap-3">
-                    <div className="h-1.5 flex-1 rounded-full bg-white/[0.06]">
-                      <div
-                        className={`h-1.5 rounded-full ${healthBarBg(opening.health)} transition-all duration-700`}
-                        style={{ width: `${opening.health}%` }}
-                      />
-                    </div>
-                    <span className={`text-xs font-bold ${healthColor(opening.health)}`}>{opening.health}</span>
-                  </div>
-
-                  {/* Stats row */}
-                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
-                    <span>{opening.totalLeaks} leak{opening.totalLeaks !== 1 ? "s" : ""}</span>
-                    {opening.totalOneOffs > 0 && (
-                      <span>{opening.totalOneOffs} one-off{opening.totalOneOffs !== 1 ? "s" : ""}</span>
-                    )}
-                    <span>avg {opening.avgCpLoss}cp loss</span>
-                    {winPct !== null && total >= 2 && (
-                      <span className={winPct >= 55 ? "text-emerald-400/70" : winPct >= 45 ? "text-amber-400/70" : "text-red-400/70"}>
-                        {winPct}% win rate ({total} games)
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Health label */}
-                <div className="hidden shrink-0 text-right sm:block">
-                  <span className={`text-xs font-semibold ${healthColor(opening.health)}`}>
-                    {healthLabel(opening.health)}
+              {/* Info column */}
+              <div className="min-w-0 flex-1">
+                {/* Name + color badge */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="truncate text-sm font-bold text-white">{entry.name}</h3>
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                      entry.userColor === "white"
+                        ? "bg-white/10 text-white"
+                        : "bg-slate-600/30 text-slate-300"
+                    }`}
+                  >
+                    {entry.userColor === "white" ? "♔" : "♚"}{" "}
+                    {entry.userColor === "white" ? "White" : "Black"}
                   </span>
                 </div>
+
+                {/* Win rate bar */}
+                <div className="mt-1.5 flex items-center gap-3">
+                  <div className="h-1.5 flex-1 rounded-full bg-white/[0.06]">
+                    <div
+                      className={`h-1.5 rounded-full ${winRateBarBg(entry.winRate)} transition-all duration-700`}
+                      style={{ width: `${Math.max(entry.winRate, 2)}%` }}
+                    />
+                  </div>
+                  <span className={`min-w-[3ch] text-right text-xs font-bold ${winRateColor(entry.winRate)}`}>
+                    {entry.winRate}%
+                  </span>
+                </div>
+
+                {/* W / D / L stats */}
+                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-slate-500">
+                  <span>
+                    {entry.games} game{entry.games !== 1 ? "s" : ""}
+                  </span>
+                  <span className="text-emerald-400/70">+{entry.wins}</span>
+                  <span className="text-slate-400/70">={entry.draws}</span>
+                  <span className="text-red-400/70">&minus;{entry.losses}</span>
+                </div>
+              </div>
+
+              {/* Win rate label (desktop) */}
+              <div className="hidden shrink-0 text-right sm:block">
+                <span className={`text-xs font-semibold ${winRateColor(entry.winRate)}`}>
+                  {winRateLabel(entry.winRate)}
+                </span>
               </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </div>
   );

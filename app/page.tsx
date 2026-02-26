@@ -56,6 +56,7 @@ export default function HomePage() {
   const [engineDepth, setEngineDepth] = useState(12);
   const [source, setSource] = useState<AnalysisSource | null>(null);
   const [scanMode, setScanMode] = useState<ScanMode>("openings");
+  const [includeTactics, setIncludeTactics] = useState(false);
   const [speed, setSpeed] = useState<TimeControl[]>(["all"]);
   const [cardViewMode, setCardViewMode] = useState<CardViewMode>(() => {
     if (typeof window !== "undefined" && window.innerWidth < 640) return "carousel";
@@ -436,6 +437,7 @@ export default function HomePage() {
           oneOffMistakes: result.oneOffMistakes,
           missedTactics: result.missedTactics,
           diagnostics: result.diagnostics ?? null,
+          mentalStats: result.mentalStats ?? null,
           reportMeta: {
             consistencyScore: report.consistencyScore,
             p75CpLoss: report.p75CpLoss,
@@ -448,16 +450,16 @@ export default function HomePage() {
         }),
       });
       const json = await res.json();
-      if (json.saved) {
-        setSaveStatus("saved");
-        // Auto-generate a study plan from the saved report
+      if (json.saved || json.reason === "duplicate") {
+        setSaveStatus(json.saved ? "saved" : "duplicate");
+        // Auto-generate a study plan (works for both new saves and duplicates)
         try {
-          await fetch("/api/study-plan", {
+          const planRes = await fetch("/api/study-plan", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               reportId: json.id,
-              topLeakOpenings: [], // Will be enriched server-side later
+              topLeakOpenings: [],
               accuracy: report.estimatedAccuracy,
               leakCount: result.leaks.length,
               repeatedPositions: result.repeatedPositions,
@@ -469,9 +471,8 @@ export default function HomePage() {
               scanMode: lastRunConfig.scanMode,
             }),
           });
-        } catch { /* study plan generation is non-critical */ }
-      } else if (json.reason === "duplicate") {
-        setSaveStatus("duplicate");
+          if (!planRes.ok) console.warn("Study plan generation failed:", await planRes.text());
+        } catch (e) { console.warn("Study plan generation error:", e); }
       } else {
         setSaveStatus("error");
       }
@@ -496,7 +497,9 @@ export default function HomePage() {
     // they get a limited taste of tactics + endgames (capped samples).
     // Free users can now pick any scan mode; results are capped by
     // FREE_TACTIC_SAMPLE / FREE_ENDGAME_SAMPLE instead.
-    const effectiveScanMode: ScanMode = scanModeOverride ?? scanMode;
+    const baseScanMode: ScanMode = scanModeOverride ?? scanMode;
+    const effectiveScanMode: ScanMode =
+      baseScanMode === "openings" && includeTactics ? "both" : baseScanMode;
     const effectiveMaxTactics = !hasProAccess ? FREE_TACTIC_SAMPLE : Infinity;
     const effectiveMaxEndgames = !hasProAccess ? FREE_ENDGAME_SAMPLE : Infinity;
 
@@ -886,11 +889,31 @@ export default function HomePage() {
                 </button>
               </div>
               <p className="text-xs text-slate-500">
-                {scanMode === "openings" && "Finds repeated patterns in your first N moves"}
+                {scanMode === "openings" && (includeTactics ? "Opening patterns + missed tactics — slower but more thorough" : "Finds repeated patterns in your first N moves")}
                 {scanMode === "tactics" && (hasProAccess ? "Scans full games for missed forcing moves (slower)" : `Scans for missed tactics — free users see up to ${FREE_TACTIC_SAMPLE} results`)}
                 {scanMode === "endgames" && (hasProAccess ? "Analyses your endgame technique — conversions, holds & accuracy" : `Analyses endgame technique — free users see up to ${FREE_ENDGAME_SAMPLE} results`)}
                 {scanMode === "both" && (hasProAccess ? "Runs all scans — most thorough but slowest" : `Runs all scans — free users see up to ${FREE_TACTIC_SAMPLE} tactics & ${FREE_ENDGAME_SAMPLE} endgame results`)}
               </p>
+
+              {/* Tactics toggle — visible only in openings mode */}
+              {scanMode === "openings" && (
+                <label className="mt-1.5 flex cursor-pointer items-center gap-2 select-none">
+                  <div className="relative">
+                    <input
+                      type="checkbox"
+                      checked={includeTactics}
+                      onChange={() => setIncludeTactics((v) => !v)}
+                      className="peer sr-only"
+                    />
+                    <div className="h-5 w-9 rounded-full bg-white/[0.08] transition-colors peer-checked:bg-amber-500/60" />
+                    <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-slate-300 transition-transform peer-checked:translate-x-4 peer-checked:bg-white" />
+                  </div>
+                  <span className="text-xs text-slate-400">
+                    Also scan for tactics
+                    {!hasProAccess && <span className="ml-1 text-amber-400/60">(sample)</span>}
+                  </span>
+                </label>
+              )}
             </div>
 
             {/* Settings grid — row 1: toggles, row 2: number inputs */}
@@ -2004,8 +2027,8 @@ export default function HomePage() {
               )}
 
               {/* Opening Health Rankings */}
-              {(lastRunConfig?.scanMode !== "tactics") && (leaks.length > 0 || oneOffMistakes.length > 0) && (
-                <OpeningRankings leaks={leaks} oneOffMistakes={oneOffMistakes} />
+              {(lastRunConfig?.scanMode !== "tactics") && result?.openingSummaries && result.openingSummaries.length > 0 && (
+                <OpeningRankings openingSummaries={result.openingSummaries} />
               )}
 
               {/* CTA: after openings-only scan, suggest tactics scan */}
@@ -2453,19 +2476,36 @@ export default function HomePage() {
                         : "Create a free account to save reports, compare scans over time, and watch your accuracy and tactics improve week over week."}
                     </p>
 
-                    {/* Feature pills */}
-                    <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-                      {[
-                        { icon: "📈", label: "Progress charts" },
-                        { icon: "�", label: "Study plan" },
-                        { icon: "🔁", label: "Compare scans" },
-                        { icon: "🎯", label: "Track accuracy" },
-                        { icon: "🔥", label: "Daily streaks" },
-                      ].map((f) => (
-                        <span key={f.label} className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-300">
-                          {f.icon} {f.label}
-                        </span>
-                      ))}
+                    {/* Feature highlights — cards */}
+                    <div className="mt-6 grid w-full max-w-lg gap-3 sm:grid-cols-2">
+                      <div className="flex items-center gap-3 rounded-xl border border-violet-500/20 bg-violet-500/[0.06] px-4 py-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-500/15 text-lg">📋</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-white">Study Plan</p>
+                          <p className="text-[11px] text-slate-400">Weekly tasks based on your weaknesses</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.06] px-4 py-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-500/15 text-lg">📈</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-white">Progress Charts</p>
+                          <p className="text-[11px] text-slate-400">Compare accuracy across scans</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-4 py-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-lg">🔥</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-white">Daily Streaks</p>
+                          <p className="text-[11px] text-slate-400">Build consistency with daily goals</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-3">
+                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-lg">🎯</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-white">Track Accuracy</p>
+                          <p className="text-[11px] text-slate-400">Watch your rating estimates improve</p>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Action button */}

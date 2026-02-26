@@ -22,6 +22,25 @@ interface ChangeEntry {
 
 const CHANGELOG: ChangeEntry[] = [
   {
+    version: 7,
+    date: "Feb 27, 2026",
+    title: "Study Plans, Opening Rankings & Scan Upgrades",
+    description:
+      "Personalised study plans generated from your scan results, a full opening rankings view with mini boards, mental-game stats saved to your dashboard, tactics toggle inside openings mode, and a bunch of quality-of-life fixes.",
+    changes: [
+      { type: "feature", text: "Study Plan system — after every scan a weekly study plan is generated with targeted tasks based on your weaknesses" },
+      { type: "feature", text: "Opening Rankings — new section showing all your openings with mini chessboards, colour badges, W/D/L record, sorted by win-rate (lowest first)" },
+      { type: "feature", text: "Mental Game stats now saved to dashboard — composure, tilt score, and archetype persist across sessions" },
+      { type: "feature", text: "Tactics toggle in Openings mode — flip a switch to also scan for missed tactics without leaving openings mode" },
+      { type: "design", text: "Save-to-Dashboard CTA redesigned — feature pills replaced with a 2×2 card grid (Study Plan, Progress Charts, Daily Streaks, Track Accuracy)" },
+      { type: "improvement", text: "Pro gating applied to Study Plan and Drill Mode — free users see a preview, Pro unlocks full access" },
+      { type: "improvement", text: "Drill button cards replaced plain text buttons — each drill option is now a styled card with icon + description" },
+      { type: "improvement", text: "Free user opening move cap raised from 15 to 30 moves" },
+      { type: "fix", text: "Study plan now generates correctly even when a duplicate report is saved" },
+      { type: "fix", text: "Tactical Eye radar dimension no longer shows NaN when no tactics are found" },
+    ],
+  },
+  {
     version: 6,
     date: "Feb 26, 2026",
     title: "Feedback System + Admin Panel",

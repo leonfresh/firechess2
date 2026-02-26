@@ -8,6 +8,7 @@ import type {
   EndgameType,
   GameOpeningTrace,
   MentalStats,
+  OpeningSummary,
   MissedTactic,
   MoveSquare,
   PlayerColor,
@@ -1040,6 +1041,9 @@ export async function analyzeOpeningLeaksInBrowser(
   let gamesAnalyzed = 0;
   const playerRatings: number[] = [];
   const gameTraces: GameOpeningTrace[] = [];
+  const openingSummaries: OpeningSummary[] = [];
+  /** Ply at which to snapshot the FEN for opening identification */
+  const OPENING_ID_PLY = 8;
 
   if (doOpenings) {
   for (let gameIndex = 0; gameIndex < games.length; gameIndex += 1) {
@@ -1080,6 +1084,7 @@ export async function analyzeOpeningLeaksInBrowser(
     const chess = new Chess();
     const moveTokens = game.moves.split(" ").filter(Boolean).slice(0, maxOpeningPlies);
     const openingMovesPlayed: string[] = [];
+    let openingIdentityFen: string | null = null;
 
     for (let ply = 0; ply < moveTokens.length; ply += 1) {
       const sideToMove: PlayerColor = ply % 2 === 0 ? "white" : "black";
@@ -1109,6 +1114,18 @@ export async function analyzeOpeningLeaksInBrowser(
       const ok = applyMoveToken(chess, token);
       if (!ok) break;
       openingMovesPlayed.push(token);
+
+      // Capture FEN for opening identification (at OPENING_ID_PLY or last available ply)
+      if (ply < OPENING_ID_PLY) openingIdentityFen = chess.fen();
+    }
+
+    // Record opening summary if we have enough moves (at least 4 plies = 2 full moves)
+    if (openingIdentityFen && openingMovesPlayed.length >= 4) {
+      const outcome: "win" | "draw" | "loss" =
+        (!game.winner || game.winner === "draw") ? "draw"
+        : game.winner === userColor ? "win"
+        : "loss";
+      openingSummaries.push({ fen: openingIdentityFen, userColor, result: outcome });
     }
 
     gameTraces.push({
@@ -2306,6 +2323,7 @@ export async function analyzeOpeningLeaksInBrowser(
     playerRating,
     timeManagementScore,
     mentalStats,
+    openingSummaries: openingSummaries.length > 0 ? openingSummaries : undefined,
     diagnostics: {
       gameTraces,
       positionTraces

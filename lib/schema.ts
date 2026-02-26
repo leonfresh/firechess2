@@ -140,6 +140,7 @@ export const reports = pgTable("report", {
   leaks: jsonb("leaks").default([]),
   missedTactics: jsonb("missedTactics").default([]),
   diagnostics: jsonb("diagnostics"),
+  mentalStats: jsonb("mentalStats"),
 
   /* dedup: SHA-256 of (userId + chessUsername + source + scanMode + sorted game IDs summary) */
   contentHash: text("contentHash"),

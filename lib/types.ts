@@ -45,6 +45,16 @@ export type GameOpeningTrace = {
   openingMoves: string[];
 };
 
+/** Per-game opening summary for the Opening Rankings component */
+export type OpeningSummary = {
+  /** Representative FEN after ~8 opening plies */
+  fen: string;
+  /** User's color in this game */
+  userColor: PlayerColor;
+  /** Game outcome from the user's perspective */
+  result: "win" | "draw" | "loss";
+};
+
 export type PositionEvalTrace = {
   fenBefore: string;
   userMove: string;
@@ -207,6 +217,8 @@ export type AnalyzeResponse = {
   timeManagementScore?: number | null;
   /** Mental / psychology stats computed from game outcomes */
   mentalStats?: MentalStats | null;
+  /** Per-game opening summaries for the Opening Rankings view */
+  openingSummaries?: OpeningSummary[];
   diagnostics?: AnalysisDiagnostics;
   report?: AnalysisReport;
 };
