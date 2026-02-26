@@ -17,17 +17,26 @@ import { generateStudyPlan, type PlanInput } from "@/lib/study-plan-generator";
 /* ------------------------------------------------------------------ */
 /*  GET — fetch active study plan + tasks                               */
 /* ------------------------------------------------------------------ */
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Get the active plan
+  const { searchParams } = new URL(req.url);
+  const username = searchParams.get("username");
+  const source = searchParams.get("source");
+
+  // Build where conditions — always scope to user + active
+  const conditions = [eq(studyPlans.userId, session.user.id), eq(studyPlans.active, true)];
+  if (username) conditions.push(eq(studyPlans.chessUsername, username));
+  if (source) conditions.push(eq(studyPlans.source, source as "lichess" | "chesscom"));
+
+  // Get the active plan (optionally scoped to a chess username)
   const plans = await db
     .select()
     .from(studyPlans)
-    .where(and(eq(studyPlans.userId, session.user.id), eq(studyPlans.active, true)))
+    .where(and(...conditions))
     .orderBy(desc(studyPlans.createdAt))
     .limit(1);
 
@@ -63,10 +72,14 @@ export async function POST(req: NextRequest) {
 
   let reportId: string | undefined;
   let planInput: PlanInput;
+  let chessUsername: string | null = null;
+  let planSource: string | null = null;
 
   try {
     const body = await req.json();
     reportId = body.reportId;
+    chessUsername = body.chessUsername ?? null;
+    planSource = body.source ?? null;
 
     // If reportId provided, load from DB; otherwise use body data directly
     if (reportId) {
@@ -80,6 +93,10 @@ export async function POST(req: NextRequest) {
       if (!report) {
         return NextResponse.json({ error: "Report not found" }, { status: 404 });
       }
+
+      // Inherit username/source from the report if not provided
+      if (!chessUsername) chessUsername = report.chessUsername;
+      if (!planSource) planSource = report.source;
 
       planInput = {
         accuracy: report.estimatedAccuracy,
@@ -100,11 +117,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   }
 
-  // Deactivate any existing active plans
+  // Deactivate existing active plans for this username+source (not all plans)
+  const deactivateConditions = [eq(studyPlans.userId, session.user.id), eq(studyPlans.active, true)];
+  if (chessUsername) deactivateConditions.push(eq(studyPlans.chessUsername, chessUsername));
+  if (planSource) deactivateConditions.push(eq(studyPlans.source, planSource as "lichess" | "chesscom"));
+
   const existingPlans = await db
     .select({ id: studyPlans.id })
     .from(studyPlans)
-    .where(and(eq(studyPlans.userId, session.user.id), eq(studyPlans.active, true)));
+    .where(and(...deactivateConditions));
 
   for (const ep of existingPlans) {
     await db
@@ -122,6 +143,8 @@ export async function POST(req: NextRequest) {
     .values({
       userId: session.user.id,
       reportId: reportId ?? null,
+      chessUsername,
+      source: planSource as "lichess" | "chesscom" | null,
       title: generated.title,
       weaknesses: generated.weaknesses,
       progress: 0,

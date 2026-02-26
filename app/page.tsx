@@ -17,6 +17,7 @@ import type { AnalysisProgress } from "@/lib/client-analysis";
 import type { AnalysisSource, ScanMode, TimeControl } from "@/lib/client-analysis";
 import type { AnalyzeResponse } from "@/lib/types";
 import { fetchExplorerMoves } from "@/lib/lichess-explorer";
+import { shareReportCard } from "@/lib/share-report";
 
 /* ── Inline help tooltip ── */
 function HelpTip({ text }: { text: string }) {
@@ -459,6 +460,8 @@ export default function HomePage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               reportId: json.id,
+              chessUsername: result.username,
+              source: lastRunConfig.source,
               topLeakOpenings: [],
               accuracy: report.estimatedAccuracy,
               leakCount: result.leaks.length,
@@ -1389,6 +1392,31 @@ export default function HomePage() {
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                     Download PNG
                   </button>
+
+                  {/* Share Report Card (Canvas-generated image) */}
+                  {report && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        shareReportCard({
+                          username: result.username,
+                          source: lastRunConfig?.source ?? "lichess",
+                          accuracy: report.estimatedAccuracy,
+                          estimatedRating: report.estimatedRating,
+                          avgCpLoss: report.weightedCpLoss,
+                          severeLeakRate: report.severeLeakRate,
+                          gamesAnalyzed: result.gamesAnalyzed,
+                          leakCount: result.leaks.length,
+                          tacticsCount: result.missedTactics.length,
+                          vibeTitle: report.vibeTitle,
+                        });
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-violet-500/20 bg-gradient-to-r from-violet-500/10 to-fuchsia-500/10 px-4 py-2.5 text-sm font-medium text-violet-300 transition-all hover:border-violet-500/40 hover:from-violet-500/15 hover:to-fuchsia-500/15 hover:text-violet-200 hover:shadow-glow-sm"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 16l4 4m0 0l4-4m-4 4V4m14 4l-4-4m0 0l-4 4m4-4v16" /></svg>
+                      Share Card
+                    </button>
+                  )}
                 </div>
               </div>
 

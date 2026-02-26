@@ -95,6 +95,7 @@ export const subscriptions = pgTable("subscription", {
   currentPeriodEnd: timestamp("currentPeriodEnd", { mode: "date" }),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
   updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow(),
+  weeklyDigest: boolean("weeklyDigest").notNull().default(true),
 });
 
 /* ------------------------------------------------------------------ */
@@ -201,6 +202,10 @@ export const studyPlans = pgTable("study_plan", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   reportId: text("reportId").references(() => reports.id, { onDelete: "set null" }),
+
+  /** Chess username + source this plan is for */
+  chessUsername: text("chessUsername"),
+  source: text("source").$type<"lichess" | "chesscom">(),
 
   /** Human-readable title, e.g. "Week of Feb 27 — Fix Italian Game leaks" */
   title: text("title").notNull(),

@@ -16,6 +16,8 @@ import { useSession } from "@/components/session-provider";
 import { MistakeCard } from "@/components/mistake-card";
 import { TacticCard } from "@/components/tactic-card";
 import { StudyPlanWidget } from "@/components/study-plan";
+import { AchievementsPanel, type AchievementCtx } from "@/components/achievements";
+import { GoalWidget } from "@/components/goal-widget";
 import {
   StrengthsRadar,
   RadarLegend,
@@ -120,7 +122,12 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [selectedUser, setSelectedUser] = useState<string>("__all__");
+  const [selectedUser, setSelectedUser] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("fc-dashboard-player") ?? "__all__";
+    }
+    return "__all__";
+  });
 
   async function handleDeleteReport(id: string) {
     if (!confirm("Delete this report? This cannot be undone.")) return;
@@ -160,12 +167,39 @@ export default function DashboardPage() {
     return Array.from(seen.values());
   }, [reports]);
 
-  // Auto-select first user when reports load (if still on "all")
+  // Persist selection to localStorage
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("fc-dashboard-player", selectedUser);
+    }
+  }, [selectedUser]);
+
+  // Auto-select: prefer user's session name → localStorage → first user if only one
+  useEffect(() => {
+    if (userOptions.length === 0) return;
+    const saved = typeof window !== "undefined" ? localStorage.getItem("fc-dashboard-player") : null;
+
+    // If the saved value is a valid option, keep it
+    if (saved && saved !== "__all__" && userOptions.some((u) => `${u.username}__${u.source}` === saved)) {
+      if (selectedUser !== saved) setSelectedUser(saved);
+      return;
+    }
+
+    // Try to match the signed-in user's name to a chess username
+    if (user?.name && selectedUser === "__all__") {
+      const match = userOptions.find((u) => u.username.toLowerCase() === user.name!.toLowerCase());
+      if (match) {
+        setSelectedUser(`${match.username}__${match.source}`);
+        return;
+      }
+    }
+
+    // Fall back: auto-select if only one player
     if (selectedUser === "__all__" && userOptions.length === 1) {
       setSelectedUser(`${userOptions[0].username}__${userOptions[0].source}`);
     }
-  }, [userOptions, selectedUser]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userOptions]);
 
   // Filtered reports for stats / charts
   const filtered = useMemo(() => {
@@ -196,6 +230,34 @@ export default function DashboardPage() {
   const totalGames = filtered.reduce((s, r) => s + r.gamesAnalyzed, 0);
   const totalLeaks = filtered.reduce((s, r) => s + (r.leakCount ?? 0), 0);
   const totalTactics = filtered.reduce((s, r) => s + (r.tacticsCount ?? 0), 0);
+
+  // Days since last scan (for rescan reminder)
+  const daysSinceLastScan = useMemo(() => {
+    if (!latest) return null;
+    const diff = Date.now() - new Date(latest.createdAt).getTime();
+    return Math.floor(diff / (1000 * 60 * 60 * 24));
+  }, [latest]);
+
+  // Achievement context
+  const achievementCtx: AchievementCtx = useMemo(() => {
+    const allAccuracies = reports.map((r) => r.estimatedAccuracy).filter((a): a is number => a != null);
+    const allRatings = reports.map((r) => r.estimatedRating).filter((r): r is number => r != null);
+    const uniqueUsernames = new Set(reports.map((r) => `${r.chessUsername}__${r.source}`)).size;
+    return {
+      totalReports: reports.length,
+      totalGames: reports.reduce((s, r) => s + r.gamesAnalyzed, 0),
+      totalLeaks: reports.reduce((s, r) => s + (r.leakCount ?? 0), 0),
+      totalTactics: reports.reduce((s, r) => s + (r.tacticsCount ?? 0), 0),
+      bestAccuracy: allAccuracies.length > 0 ? Math.max(...allAccuracies) : null,
+      bestRating: allRatings.length > 0 ? Math.max(...allRatings) : null,
+      longestStudyStreak: 0, // will be filled by study plan widget later
+      studyPlanProgress: 0,
+      uniqueUsernames,
+      scanModes: [...new Set(reports.map((r) => r.scanMode))],
+      latestAccuracy: latest?.estimatedAccuracy ?? null,
+      previousAccuracy: previous?.estimatedAccuracy ?? null,
+    };
+  }, [reports, latest, previous]);
 
   /* ─── loading / auth states ─── */
   if (sessionLoading || loading) {
@@ -328,9 +390,49 @@ export default function DashboardPage() {
             />
           </div>
 
+          {/* ─── Rescan Reminder ─── */}
+          {daysSinceLastScan != null && daysSinceLastScan >= 7 && (
+            <div className="animate-fade-in-up rounded-2xl border border-amber-500/20 bg-gradient-to-r from-amber-500/[0.06] via-amber-500/[0.03] to-transparent p-4" style={{ animationDelay: "0.12s" }}>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-xl">⏰</span>
+                  <div>
+                    <p className="text-sm font-bold text-white">Time for a new scan!</p>
+                    <p className="text-xs text-slate-400">
+                      It&apos;s been {daysSinceLastScan} day{daysSinceLastScan !== 1 ? "s" : ""} since your last analysis. Run a fresh scan to track improvement.
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href="/"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-amber-500/15 transition-all hover:brightness-110"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  New Scan
+                </Link>
+              </div>
+            </div>
+          )}
+
           {/* ─── Study Plan ─── */}
           <div className="animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
-            <StudyPlanWidget userPlan={plan} />
+            <StudyPlanWidget
+              chessUsername={selectedUser !== "__all__" ? selectedUser.split("__")[0] : undefined}
+              source={selectedUser !== "__all__" ? selectedUser.split("__")[1] : undefined}
+            />
+          </div>
+
+          {/* ─── Goal + Achievements row ─── */}
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="animate-fade-in-up" style={{ animationDelay: "0.17s" }}>
+              <GoalWidget
+                currentAccuracy={latest?.estimatedAccuracy ?? null}
+                currentRating={latest?.estimatedRating ?? null}
+              />
+            </div>
+            <div className="glass-card animate-fade-in-up p-6" style={{ animationDelay: "0.18s" }}>
+              <AchievementsPanel ctx={achievementCtx} />
+            </div>
           </div>
 
           {/* ─── Main Grid: Radar + Progress ─── */}

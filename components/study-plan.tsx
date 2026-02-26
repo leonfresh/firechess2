@@ -7,8 +7,6 @@ import Link from "next/link";
 /*  Types                                                               */
 /* ------------------------------------------------------------------ */
 
-type UserPlan = "free" | "pro" | "lifetime";
-
 type StudyPlan = {
   id: string;
   title: string;
@@ -76,8 +74,7 @@ function streakMessage(streak: number) {
 /*  Component                                                           */
 /* ------------------------------------------------------------------ */
 
-export function StudyPlanWidget({ userPlan = "free" }: { userPlan?: UserPlan }) {
-  const isPro = userPlan === "pro" || userPlan === "lifetime";
+export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: string; source?: string; userPlan?: string }) {
   const [plan, setPlan] = useState<StudyPlan | null>(null);
   const [tasks, setTasks] = useState<StudyTask[]>([]);
   const [loading, setLoading] = useState(true);
@@ -86,13 +83,17 @@ export function StudyPlanWidget({ userPlan = "free" }: { userPlan?: UserPlan }) 
 
   const fetchPlan = useCallback(async () => {
     try {
-      const res = await fetch("/api/study-plan");
+      const params = new URLSearchParams();
+      if (chessUsername) params.set("username", chessUsername);
+      if (source) params.set("source", source);
+      const qs = params.toString();
+      const res = await fetch(`/api/study-plan${qs ? `?${qs}` : ""}`);
       const data = await res.json();
       setPlan(data.plan ?? null);
       setTasks(data.tasks ?? []);
     } catch { /* ignore */ }
     setLoading(false);
-  }, []);
+  }, [chessUsername, source]);
 
   useEffect(() => { fetchPlan(); }, [fetchPlan]);
 
@@ -229,24 +230,14 @@ export function StudyPlanWidget({ userPlan = "free" }: { userPlan?: UserPlan }) 
 
           {/* Streak + Stats */}
           <div className="mt-4 flex flex-wrap gap-3">
-            {isPro ? (
-              <div className="flex items-center gap-2 rounded-lg border border-orange-500/15 bg-orange-500/[0.06] px-3 py-1.5">
-                <span className="text-base">🔥</span>
-                <div>
-                  <div className="text-sm font-bold text-orange-400">{plan.currentStreak} day{plan.currentStreak !== 1 ? "s" : ""}</div>
-                  <div className="text-[10px] text-orange-400/60">{streakMessage(plan.currentStreak)}</div>
-                </div>
+            <div className="flex items-center gap-2 rounded-lg border border-orange-500/15 bg-orange-500/[0.06] px-3 py-1.5">
+              <span className="text-base">🔥</span>
+              <div>
+                <div className="text-sm font-bold text-orange-400">{plan.currentStreak} day{plan.currentStreak !== 1 ? "s" : ""}</div>
+                <div className="text-[10px] text-orange-400/60">{streakMessage(plan.currentStreak)}</div>
               </div>
-            ) : (
-              <div className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5">
-                <span className="text-base">🔥</span>
-                <div>
-                  <div className="text-sm font-bold text-white/30">Streaks</div>
-                  <div className="text-[10px] text-white/20">Pro feature</div>
-                </div>
-              </div>
-            )}
-            {isPro && plan.longestStreak > 0 && (
+            </div>
+            {plan.longestStreak > 0 && (
               <div className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5">
                 <span className="text-base">🏆</span>
                 <div>
@@ -255,7 +246,7 @@ export function StudyPlanWidget({ userPlan = "free" }: { userPlan?: UserPlan }) 
                 </div>
               </div>
             )}
-            {isPro && plan.weaknesses && plan.weaknesses.topLeakOpenings && plan.weaknesses.topLeakOpenings.length > 0 && (
+            {plan.weaknesses && plan.weaknesses.topLeakOpenings && plan.weaknesses.topLeakOpenings.length > 0 && (
               <div className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5">
                 <span className="text-base">🎯</span>
                 <div>
@@ -295,57 +286,25 @@ export function StudyPlanWidget({ userPlan = "free" }: { userPlan?: UserPlan }) 
         <div className="space-y-2">
           <div className="flex items-center gap-2 px-1">
             <span className="text-xs font-semibold uppercase tracking-wider text-violet-400/70">This Week</span>
-            {!isPro && <span className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[9px] font-bold uppercase text-violet-400">Pro</span>}
             <span className="h-px flex-1 bg-white/[0.06]" />
           </div>
-          {isPro ? (
-            <div className="space-y-2">
-              {weeklyTasks.map((task) => (
-                <TaskRow
-                  key={task.id}
-                  task={task}
-                  toggling={togglingIds.has(task.id)}
-                  expanded={expandedTaskId === task.id}
-                  onToggle={() => toggleTask(task.id, !task.completed)}
-                  onExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="relative">
-              {/* Blurred preview of first 2 tasks */}
-              <div className="space-y-2 blur-[6px] select-none pointer-events-none">
-                {weeklyTasks.slice(0, 2).map((task) => (
-                  <div key={task.id} className="rounded-xl border border-white/[0.04] bg-white/[0.025] p-3.5">
-                    <div className="flex items-center gap-3">
-                      <div className="h-6 w-6 rounded-md border-2 border-white/15 bg-white/[0.03]" />
-                      <span className="text-lg">{task.icon}</span>
-                      <span className="text-sm font-semibold text-white">{task.title}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {/* Pro CTA overlay */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center rounded-xl">
-                <div className="rounded-2xl border border-violet-500/20 bg-slate-900/95 px-6 py-4 text-center shadow-xl backdrop-blur-sm">
-                  <p className="text-sm font-bold text-white">Full weekly plan is Pro-only</p>
-                  <p className="mt-1 text-xs text-slate-400">Unlock {weeklyTasks.length} personalized tasks, streak tracking & opening-specific drills</p>
-                  <Link
-                    href="/pricing"
-                    className="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-violet-500/20 transition-all hover:brightness-110"
-                  >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                    Upgrade to Pro
-                  </Link>
-                </div>
-              </div>
-            </div>
-          )}
+          <div className="space-y-2">
+            {weeklyTasks.map((task) => (
+              <TaskRow
+                key={task.id}
+                task={task}
+                toggling={togglingIds.has(task.id)}
+                expanded={expandedTaskId === task.id}
+                onToggle={() => toggleTask(task.id, !task.completed)}
+                onExpand={() => setExpandedTaskId(expandedTaskId === task.id ? null : task.id)}
+              />
+            ))}
+          </div>
         </div>
       )}
 
-      {/* 100% celebration — Pro sees full, free sees a softer message */}
-      {isPro && plan.progress === 100 && (
+      {/* 100% celebration */}
+      {plan.progress === 100 && (
         <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/[0.06] to-cyan-500/[0.06] p-5 text-center">
           <p className="text-lg font-bold text-emerald-300">🎉 All tasks complete!</p>
           <p className="mt-1 text-sm text-slate-400">
@@ -355,14 +314,6 @@ export function StudyPlanWidget({ userPlan = "free" }: { userPlan?: UserPlan }) 
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             New Scan
           </Link>
-        </div>
-      )}
-      {!isPro && recurringTasks.length > 0 && recurringTasks.every((t) => t.completed) && (
-        <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/[0.06] to-cyan-500/[0.06] p-5 text-center">
-          <p className="text-lg font-bold text-emerald-300">✅ Daily habits done!</p>
-          <p className="mt-1 text-sm text-slate-400">
-            Nice work! Upgrade to Pro to unlock the full weekly study plan with personalized tasks.
-          </p>
         </div>
       )}
     </div>
