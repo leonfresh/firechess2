@@ -25,6 +25,8 @@ type SessionState = {
   subscriptionStatus: string;
   /** User info (null if not authenticated) */
   user: UserInfo | null;
+  /** Whether the user is an admin */
+  isAdmin: boolean;
   /** Force refetch (e.g. after checkout) */
   refresh: () => void;
 };
@@ -35,6 +37,7 @@ const SessionContext = createContext<SessionState>({
   plan: "free",
   subscriptionStatus: "active",
   user: null,
+  isAdmin: false,
   refresh: () => {},
 });
 
@@ -49,6 +52,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     plan: "free",
     subscriptionStatus: "active",
     user: null,
+    isAdmin: false,
   });
 
   const fetchSession = () => {
@@ -61,10 +65,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           plan: json.plan ?? "free",
           subscriptionStatus: json.subscriptionStatus ?? "active",
           user: json.user ?? null,
+          isAdmin: !!json.isAdmin,
         });
       })
       .catch(() => {
-        setData({ authenticated: false, plan: "free", subscriptionStatus: "active", user: null });
+        setData({ authenticated: false, plan: "free", subscriptionStatus: "active", user: null, isAdmin: false });
       })
       .finally(() => setLoading(false));
   };

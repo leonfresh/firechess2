@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { signIn, signOut } from "next-auth/react";
 import { useSession } from "@/components/session-provider";
+import { LATEST_VERSION } from "@/lib/constants";
 
 const NAV_LINKS = [
   { href: "/about", label: "About" },
@@ -14,10 +15,21 @@ const NAV_LINKS = [
 
 export function Navbar() {
   const pathname = usePathname();
-  const { loading, authenticated, user, plan } = useSession();
+  const { loading, authenticated, user, plan, isAdmin } = useSession();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const [hasUnseenChanges, setHasUnseenChanges] = useState(false);
+
+  // Check for unseen changelog
+  useEffect(() => {
+    try {
+      const seen = parseInt(localStorage.getItem("firechess_changelog_seen") ?? "0", 10);
+      setHasUnseenChanges(seen < LATEST_VERSION);
+    } catch {
+      setHasUnseenChanges(true);
+    }
+  }, [pathname]);
 
   // Close profile dropdown on outside click
   useEffect(() => {
@@ -94,6 +106,36 @@ export function Navbar() {
               </Link>
             ),
           )}
+
+          {/* Dev Notes link */}
+          <Link
+            href="/changelog"
+            className={`relative rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+              isActive("/changelog")
+                ? "text-white bg-white/[0.06]"
+                : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+            }`}
+          >
+            Dev Notes
+            {authenticated && hasUnseenChanges && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+              </span>
+            )}
+          </Link>
+
+          {/* Feedback link */}
+          <Link
+            href="/feedback"
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+              isActive("/feedback")
+                ? "text-white bg-white/[0.06]"
+                : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+            }`}
+          >
+            Feedback
+          </Link>
         </div>
 
         {/* ── Desktop right side (auth) ── */}
@@ -134,9 +176,9 @@ export function Navbar() {
                   <span className="max-w-[100px] truncate text-sm">
                     {user?.name ?? user?.email ?? "Account"}
                   </span>
-                  {plan === "pro" && (
+                  {(plan === "pro" || plan === "lifetime") && (
                     <span className="rounded bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
-                      Pro
+                      {plan === "lifetime" ? "∞" : "Pro"}
                     </span>
                   )}
                   <svg
@@ -162,10 +204,40 @@ export function Navbar() {
                     <div className="p-1.5">
                       <div className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-slate-400">
                         <span>Plan</span>
-                        <span className={plan === "pro" ? "font-semibold text-emerald-400" : "text-slate-500"}>
-                          {plan === "pro" ? "Pro" : "Free"}
+                        <span className={plan === "pro" || plan === "lifetime" ? "font-semibold text-emerald-400" : "text-slate-500"}>
+                          {plan === "lifetime" ? "Lifetime" : plan === "pro" ? "Pro" : "Free"}
                         </span>
                       </div>
+
+                      <Link
+                        href="/changelog"
+                        onClick={() => setProfileOpen(false)}
+                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                      >
+                        <span className="relative">
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                          </svg>
+                          {hasUnseenChanges && (
+                            <span className="absolute -right-1 -top-1 flex h-2 w-2">
+                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                              <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                            </span>
+                          )}
+                        </span>
+                        Dev Notes{hasUnseenChanges ? " — New!" : ""}
+                      </Link>
+
+                      <Link
+                        href="/feedback"
+                        onClick={() => setProfileOpen(false)}
+                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                        </svg>
+                        Feedback
+                      </Link>
 
                       <Link
                         href="/account"
@@ -178,6 +250,19 @@ export function Navbar() {
                         </svg>
                         Account &amp; Billing
                       </Link>
+
+                      {isAdmin && (
+                        <Link
+                          href="/admin/feedback"
+                          onClick={() => setProfileOpen(false)}
+                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-orange-400 transition-colors hover:bg-orange-500/10 hover:text-orange-300"
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                          </svg>
+                          Admin Panel
+                        </Link>
+                      )}
 
                       <button
                         type="button"
@@ -254,9 +339,9 @@ export function Navbar() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-white">{user.name ?? "User"}</p>
                   <p className="truncate text-xs text-slate-500">{user.email}</p>
-                  {plan === "pro" && (
+                  {(plan === "pro" || plan === "lifetime") && (
                     <span className="mt-0.5 inline-block rounded bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
-                      Pro
+                      {plan === "lifetime" ? "Lifetime" : "Pro"}
                     </span>
                   )}
                 </div>
@@ -268,12 +353,17 @@ export function Navbar() {
               {[
                 { href: "/", label: "Home" },
                 ...NAV_LINKS,
+                { href: "/feedback", label: "Feedback" },
                 ...(authenticated
                   ? [
                       { href: "/dashboard", label: "Dashboard" },
+                      { href: "/changelog", label: "Dev Notes" },
                       { href: "/account", label: "Account & Billing" },
+                      ...(isAdmin ? [{ href: "/admin/feedback", label: "Admin Panel" }] : []),
                     ]
-                  : []),
+                  : [
+                      { href: "/changelog", label: "Dev Notes" },
+                    ]),
               ].map((link) => (
                 <Link
                   key={link.href}
@@ -289,7 +379,15 @@ export function Navbar() {
                       <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm0 2h14v2H5v-2z" />
                     </svg>
                   )}
-                  {link.label}
+                  <span className="relative">
+                    {link.label}
+                    {link.label === "Dev Notes" && authenticated && hasUnseenChanges && (
+                      <span className="absolute -right-3 top-0 flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                      </span>
+                    )}
+                  </span>
                 </Link>
               ))}
             </div>

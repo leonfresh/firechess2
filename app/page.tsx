@@ -2326,6 +2326,91 @@ export default function HomePage() {
                   <DrillMode positions={diagnostics.positionTraces} tactics={missedTactics} endgameMistakes={endgameMistakes} oneOffMistakes={oneOffMistakes} excludeFens={dbApprovedFens} />
                 </div>
               )}
+
+              {/* ─── Save to Dashboard CTA ─── */}
+              {saveStatus !== "saved" && saveStatus !== "duplicate" && (
+                <div className="relative overflow-hidden rounded-2xl border border-cyan-500/20 p-8 md:p-10">
+                  {/* Decorative background */}
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-cyan-500/[0.08] via-emerald-500/[0.04] to-fuchsia-500/[0.08]" />
+                  <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-cyan-500/10 blur-[80px]" />
+                  <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-emerald-500/10 blur-[80px]" />
+
+                  <div className="relative flex flex-col items-center text-center">
+                    <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-cyan-500/15 text-3xl shadow-lg shadow-cyan-500/10">📊</span>
+                    <h3 className="mt-5 text-2xl font-extrabold text-white md:text-3xl">
+                      {authenticated ? "Save this report to your Dashboard" : "Track your improvement over time"}
+                    </h3>
+                    <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-slate-400">
+                      {authenticated
+                        ? "Save your analysis and compare future scans side-by-side. Watch your accuracy climb, leak count drop, and tactics sharpen — all from your personal dashboard."
+                        : "Create a free account to save reports, compare scans over time, and watch your accuracy and tactics improve week over week."}
+                    </p>
+
+                    {/* Feature pills */}
+                    <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+                      {[
+                        { icon: "📈", label: "Progress charts" },
+                        { icon: "🔁", label: "Compare scans" },
+                        { icon: "🎯", label: "Track accuracy" },
+                        { icon: "⚡", label: "Spot trends" },
+                      ].map((f) => (
+                        <span key={f.label} className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-300">
+                          {f.icon} {f.label}
+                        </span>
+                      ))}
+                    </div>
+
+                    {/* Action button */}
+                    <div className="mt-7">
+                      {saveStatus === "saving" ? (
+                        <span className="inline-flex items-center gap-2 rounded-2xl bg-cyan-600/20 px-8 py-3.5 text-sm font-semibold text-cyan-300">
+                          <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" />
+                            <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                          </svg>
+                          Saving…
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (!authenticated) { window.location.href = "/auth/signin"; return; }
+                            saveReportToAccount();
+                          }}
+                          className="inline-flex items-center gap-2.5 rounded-2xl bg-gradient-to-r from-cyan-600 to-emerald-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-cyan-500/20 transition-all hover:shadow-xl hover:shadow-cyan-500/30 hover:brightness-110"
+                        >
+                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
+                          {authenticated ? "Save to Dashboard" : "Sign in to Save — it\u2019s free"}
+                        </button>
+                      )}
+                    </div>
+
+                    {saveStatus === "error" && (
+                      <p className="mt-3 text-xs text-red-400">Something went wrong — please try again.</p>
+                    )}
+
+                    {!authenticated && (
+                      <p className="mt-4 text-xs text-slate-500">No credit card required · Google, Lichess, or email sign-in</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Already-saved confirmation (replaces the CTA) */}
+              {(saveStatus === "saved" || saveStatus === "duplicate") && (
+                <div className="flex flex-col items-center gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.04] p-8 text-center">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/15 text-2xl">✅</span>
+                  <p className="text-lg font-bold text-white">Report saved to your Dashboard</p>
+                  <p className="max-w-md text-sm text-slate-400">Run another scan in a few weeks and compare to see how much you&apos;ve improved.</p>
+                  <Link
+                    href="/dashboard"
+                    className="mt-2 inline-flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-400 transition-all hover:border-emerald-500/40 hover:bg-emerald-500/20"
+                  >
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                    View Dashboard
+                  </Link>
+                </div>
+              )}
             </section>
           )}
         </section>

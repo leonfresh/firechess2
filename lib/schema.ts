@@ -146,3 +146,25 @@ export const reports = pgTable("report", {
 
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
 });
+
+/* ------------------------------------------------------------------ */
+/*  Custom: user feedback / support                                     */
+/* ------------------------------------------------------------------ */
+
+export const feedback = pgTable("feedback", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("userId").references(() => users.id, { onDelete: "set null" }),
+  email: text("email"),
+  category: text("category")
+    .$type<"bug" | "feature" | "question" | "other">()
+    .notNull()
+    .default("other"),
+  message: text("message").notNull(),
+  status: text("status")
+    .$type<"new" | "read" | "resolved">()
+    .notNull()
+    .default("new"),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+});

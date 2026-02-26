@@ -15,6 +15,7 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { db } from "@/lib/db";
 import { subscriptions } from "@/lib/schema";
 import { eq } from "drizzle-orm";
+import { isAdmin as checkIsAdmin } from "@/lib/admin";
 
 /** Custom Lichess OAuth2 provider — PKCE, no client secret. */
 function Lichess(): OAuthConfig<any> {
@@ -73,7 +74,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const path = nextUrl.pathname;
 
       // Public routes — always allowed
-      const publicPaths = ["/", "/pricing", "/auth", "/dashboard", "/account", "/blog", "/about"];
+      const publicPaths = ["/", "/pricing", "/auth", "/dashboard", "/account", "/blog", "/about", "/changelog", "/feedback", "/admin", "/terms", "/privacy"];
       const isPublic =
         publicPaths.some((p) => path === p || path.startsWith(p + "/")) ||
         path.startsWith("/api/auth") ||
@@ -96,8 +97,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         .where(eq(subscriptions.userId, user.id))
         .limit(1);
 
-      (session as any).plan = sub?.plan ?? "free";
+      const admin = await checkIsAdmin(user.id);
+
+      // Admin always gets lifetime
+      const plan = admin ? "lifetime" : (sub?.plan ?? "free");
+
+      (session as any).plan = plan;
       (session as any).subscriptionStatus = sub?.status ?? "active";
+      (session as any).isAdmin = admin;
 
       return session;
     },

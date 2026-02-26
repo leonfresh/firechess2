@@ -6,8 +6,9 @@ import "next-auth";
 
 declare module "next-auth" {
   interface Session {
-    plan: "free" | "pro";
+    plan: "free" | "pro" | "lifetime";
     subscriptionStatus: "active" | "canceled" | "past_due" | "incomplete" | "trialing";
+    isAdmin: boolean;
     user: {
       id: string;
       name?: string | null;

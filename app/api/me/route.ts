@@ -18,6 +18,7 @@ export async function GET() {
     authenticated: true,
     plan: (session as any).plan ?? "free",
     subscriptionStatus: (session as any).subscriptionStatus ?? "active",
+    isAdmin: (session as any).isAdmin ?? false,
     user: {
       id: session.user.id,
       name: session.user.name,
