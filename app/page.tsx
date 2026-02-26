@@ -558,7 +558,7 @@ export default function HomePage() {
         cpThreshold: safeCpThreshold,
         engineDepth: safeDepth,
         source: safeSource,
-        scanMode: scanModeOverride ?? scanMode,
+        scanMode,
         speed
       });
 
