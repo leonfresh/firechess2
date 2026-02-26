@@ -19,8 +19,10 @@ const CATEGORIES = [
 export default function FeedbackPage() {
   const { authenticated, user } = useSession();
   const [category, setCategory] = useState<string>("feature");
+  const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [email, setEmail] = useState("");
+  const [ticketId, setTicketId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +42,7 @@ export default function FeedbackPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           category,
+          subject: subject.trim() || undefined,
           message: message.trim(),
           email: authenticated ? undefined : email || undefined,
         }),
@@ -48,6 +51,8 @@ export default function FeedbackPage() {
         const data = await res.json();
         throw new Error(data.error || "Something went wrong");
       }
+      const data = await res.json();
+      setTicketId(data.ticketId ?? null);
       setSubmitted(true);
     } catch (err: any) {
       setError(err.message);
@@ -74,18 +79,28 @@ export default function FeedbackPage() {
           <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-8 text-center">
             <div className="mb-4 text-5xl">✅</div>
             <h2 className="text-xl font-semibold text-emerald-400">
-              Thanks for your feedback!
+              Ticket Created!
             </h2>
             <p className="mt-2 text-zinc-400">
               We&apos;ll review your submission and follow up if needed.
             </p>
+            {authenticated && ticketId && (
+              <Link
+                href={`/support/${ticketId}`}
+                className="mt-4 inline-block text-sm text-orange-400 hover:underline"
+              >
+                View your ticket →
+              </Link>
+            )}
 
             <div className="mt-8 flex items-center justify-center gap-4">
               <button
                 onClick={() => {
                   setSubmitted(false);
                   setMessage("");
+                  setSubject("");
                   setCategory("feature");
+                  setTicketId(null);
                 }}
                 className="rounded-lg border border-zinc-700 px-5 py-2.5 text-sm font-medium text-zinc-300 transition hover:border-zinc-500 hover:text-white"
               >
@@ -125,6 +140,25 @@ export default function FeedbackPage() {
                 ))}
               </div>
             </fieldset>
+
+            {/* Subject */}
+            <div>
+              <label
+                htmlFor="subject"
+                className="mb-2 block text-sm font-medium text-zinc-300"
+              >
+                Subject{" "}
+                <span className="text-zinc-500">(optional)</span>
+              </label>
+              <input
+                id="subject"
+                type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="Brief summary of your issue or idea"
+                className="w-full rounded-xl border border-zinc-700/60 bg-zinc-800/40 px-4 py-3 text-sm text-white placeholder-zinc-500 transition focus:border-orange-500/60 focus:outline-none focus:ring-1 focus:ring-orange-500/40"
+              />
+            </div>
 
             {/* Message */}
             <div>

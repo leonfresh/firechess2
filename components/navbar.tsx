@@ -10,7 +10,6 @@ import { LATEST_VERSION } from "@/lib/constants";
 
 const NAV_LINKS = [
   { href: "/about", label: "About" },
-  { href: "/pricing", label: "Pro", accent: true },
 ];
 
 export function Navbar() {
@@ -78,21 +77,7 @@ export function Navbar() {
 
         {/* ── Desktop nav links ── */}
         <div className="hidden items-center gap-1 md:flex">
-          {NAV_LINKS.map((link) =>
-            link.accent ? (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`ml-1 inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-3.5 py-1.5 text-sm font-semibold text-slate-950 transition-all duration-200 hover:shadow-glow-sm ${
-                  isActive(link.href) ? "shadow-glow-sm" : ""
-                }`}
-              >
-                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm0 2h14v2H5v-2z" />
-                </svg>
-                {link.label}
-              </Link>
-            ) : (
+          {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -104,8 +89,7 @@ export function Navbar() {
               >
                 {link.label}
               </Link>
-            ),
-          )}
+          ))}
 
           {/* Dev Notes link */}
           <Link
@@ -135,6 +119,19 @@ export function Navbar() {
             }`}
           >
             Feedback
+          </Link>
+
+          {/* Pro link (last) */}
+          <Link
+            href="/pricing"
+            className={`ml-1 inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-3.5 py-1.5 text-sm font-semibold text-slate-950 transition-all duration-200 hover:shadow-glow-sm ${
+              isActive("/pricing") ? "shadow-glow-sm" : ""
+            }`}
+          >
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm0 2h14v2H5v-2z" />
+            </svg>
+            Pro
           </Link>
         </div>
 
@@ -237,6 +234,17 @@ export function Navbar() {
                           <path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                         </svg>
                         Feedback
+                      </Link>
+
+                      <Link
+                        href="/support"
+                        onClick={() => setProfileOpen(false)}
+                        className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        My Tickets
                       </Link>
 
                       <Link
@@ -358,12 +366,14 @@ export function Navbar() {
                   ? [
                       { href: "/dashboard", label: "Dashboard" },
                       { href: "/changelog", label: "Dev Notes" },
+                      { href: "/support", label: "My Tickets" },
                       { href: "/account", label: "Account & Billing" },
                       ...(isAdmin ? [{ href: "/admin/feedback", label: "Admin Panel" }] : []),
                     ]
                   : [
                       { href: "/changelog", label: "Dev Notes" },
                     ]),
+                { href: "/pricing", label: "Pro" },
               ].map((link) => (
                 <Link
                   key={link.href}

@@ -44,7 +44,8 @@ export default function TermsPage() {
           <ul className="list-inside list-disc space-y-1 text-slate-400">
             <li>Pro subscriptions are billed monthly through Stripe.</li>
             <li>You may cancel at any time — access continues until the end of the billing period.</li>
-            <li>Refunds are handled on a case-by-case basis. Contact support@firechess.com.</li>
+            <li>Refunds are handled on a case-by-case basis.{" "}
+              <Link href="/feedback" className="text-emerald-400 hover:underline">Contact support</Link>.</li>
             <li>Prices may change with 30 days&apos; notice to existing subscribers.</li>
           </ul>
         </section>
@@ -90,7 +91,8 @@ export default function TermsPage() {
           <h2 className="mb-3 text-lg font-bold text-white">9. Termination</h2>
           <p>
             We reserve the right to suspend or terminate accounts that violate these terms.
-            You may delete your account at any time by contacting support@firechess.com.
+            You may delete your account at any time by{" "}
+            <Link href="/feedback" className="text-emerald-400 hover:underline">contacting support</Link>.
           </p>
         </section>
 
@@ -105,8 +107,8 @@ export default function TermsPage() {
         <section>
           <h2 className="mb-3 text-lg font-bold text-white">11. Contact</h2>
           <p>
-            Questions? Email us at{" "}
-            <span className="text-emerald-400">support@firechess.com</span>.
+            Questions?{" "}
+            <Link href="/feedback" className="text-emerald-400 hover:underline">Contact us through our support page</Link>.
           </p>
         </section>
       </div>

@@ -22,7 +22,20 @@ interface ChangeEntry {
 
 const CHANGELOG: ChangeEntry[] = [
   {
-    version: 4,
+    version: 6,
+    date: "Feb 26, 2026",
+    title: "Feedback System + Admin Panel",
+    description:
+      "Users can now submit feedback directly from the app. Admin panel added for reviewing and managing submissions.",
+    changes: [
+      { type: "feature", text: "New /feedback page with category picker (Bug, Feature Request, Question, Other) and message form" },
+      { type: "feature", text: "Admin-only feedback viewer at /admin/feedback with status management (New → Read → Resolved)" },
+      { type: "improvement", text: "Feedback link added to navbar, profile dropdown, and mobile menu" },
+      { type: "improvement", text: "Admin users see an Admin Panel link in the profile dropdown" },
+    ],
+  },
+  {
+    version: 5,
     date: "Feb 26, 2026",
     title: "Deep Analysis Cards Redesign",
     description:
@@ -35,7 +48,7 @@ const CHANGELOG: ChangeEntry[] = [
     ],
   },
   {
-    version: 3,
+    version: 4,
     date: "Feb 26, 2026",
     title: "Save Report CTA + Dashboard Incentive",
     description:
@@ -47,7 +60,7 @@ const CHANGELOG: ChangeEntry[] = [
     ],
   },
   {
-    version: 2,
+    version: 3,
     date: "Feb 26, 2026",
     title: "Magic Link Sign-in & Lifetime Plan",
     description:
@@ -61,14 +74,40 @@ const CHANGELOG: ChangeEntry[] = [
     ],
   },
   {
-    version: 1,
+    version: 2,
     date: "Feb 26, 2026",
-    title: "Free Trial Coupon Support",
+    title: "Promotion Codes & Free Tier Improvements",
     description:
-      "Added support for Stripe promotion codes at checkout. Use coupon TRYFIRECHESS for a free first month.",
+      "Stripe checkout now supports promotion codes, and the free tier got more generous sample limits.",
     changes: [
-      { type: "feature", text: "Promo code field now appears at Stripe checkout (allow_promotion_codes)" },
-      { type: "improvement", text: "Free tier now shows 10 sample tactics and 10 sample endgames" },
+      { type: "feature", text: "Promo code field now appears at Stripe checkout" },
+      { type: "improvement", text: "Free tier now shows 10 sample tactics and 10 sample endgames per scan" },
+    ],
+  },
+  {
+    version: 1,
+    date: "Feb 24, 2026",
+    title: "Initial Release — Stop Making the Same Mistakes",
+    description:
+      "The first public release of FireChess. Scan hundreds of your Lichess or Chess.com games and discover the patterns holding you back — all powered by Stockfish 18 running privately in your browser.",
+    changes: [
+      { type: "feature", text: "Opening Leak Detection — find repeated positions where you consistently play the wrong move, with drill mode to practice the correct lines" },
+      { type: "feature", text: "Missed Tactics Scanner — surface forks, pins, skewers, and combinations you overlooked across your games, with motif tagging" },
+      { type: "feature", text: "Endgame Mistake Scanner — catch losing moves in rook, pawn, and minor piece endgames with position-by-position breakdowns" },
+      { type: "feature", text: "Strengths & Weaknesses Radar — six-dimension profile (Accuracy, Opening Prep, Tactical Eye, Composure, Time Mgmt, Resilience) with tiered insight cards" },
+      { type: "feature", text: "Report Card — letter grades (S/A/B/C/D/F) for overall accuracy with estimated rating, centipawn loss, and severe leak rate" },
+      { type: "feature", text: "Mental Game Stats — composure score, tilt detection, post-loss performance tracking, and player archetype classification" },
+      { type: "feature", text: "Interactive Drill Mode — practice your opening leaks with a real board, move-by-move hints, and sound effects" },
+      { type: "feature", text: "Opening Explorer integration — every mistake card links to the Lichess opening database for that position" },
+      { type: "feature", text: "Move Explanations — see Best Move, Your Move, and Database Move with plain-English reasoning for each flagged position" },
+      { type: "feature", text: "Eval Bar — real-time engine evaluation bar on every interactive board" },
+      { type: "feature", text: "Scan Modes — choose between Openings, Tactics, Endgames, or scan everything at once" },
+      { type: "feature", text: "Dashboard — save reports and track your progress over time with comparison charts" },
+      { type: "feature", text: "Lichess + Chess.com support — works with both platforms, fetches games from public APIs" },
+      { type: "feature", text: "Stockfish 18 WASM — all analysis runs client-side in your browser via WebAssembly, no data sent to servers" },
+      { type: "feature", text: "Multi-worker scanning — parallel Stockfish workers for faster analysis (auto-scales to device cores)" },
+      { type: "feature", text: "Google + Lichess OAuth sign-in — authenticate with your existing accounts" },
+      { type: "feature", text: "Free + Pro tiers with Stripe billing — free tier for up to 300 games, Pro for up to 5,000 with deeper analysis" },
     ],
   },
 ];

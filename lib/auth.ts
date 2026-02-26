@@ -74,7 +74,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const path = nextUrl.pathname;
 
       // Public routes — always allowed
-      const publicPaths = ["/", "/pricing", "/auth", "/dashboard", "/account", "/blog", "/about", "/changelog", "/feedback", "/admin", "/terms", "/privacy"];
+      const publicPaths = ["/", "/pricing", "/auth", "/dashboard", "/account", "/blog", "/about", "/changelog", "/feedback", "/admin", "/terms", "/privacy", "/support"];
       const isPublic =
         publicPaths.some((p) => path === p || path.startsWith(p + "/")) ||
         path.startsWith("/api/auth") ||

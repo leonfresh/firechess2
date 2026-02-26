@@ -66,8 +66,8 @@ export default function PrivacyPage() {
           <h2 className="mb-3 text-lg font-bold text-white">6. Data Retention & Deletion</h2>
           <p>
             You can delete your saved reports from the Dashboard at any time. If you wish to
-            delete your account entirely, contact us at{" "}
-            <span className="text-emerald-400">support@firechess.com</span>.
+            delete your account entirely,{" "}
+            <Link href="/feedback" className="text-emerald-400 hover:underline">contact us through our support page</Link>.
           </p>
         </section>
 
@@ -90,8 +90,8 @@ export default function PrivacyPage() {
         <section>
           <h2 className="mb-3 text-lg font-bold text-white">9. Contact</h2>
           <p>
-            Questions about this policy? Email us at{" "}
-            <span className="text-emerald-400">support@firechess.com</span>.
+            Questions about this policy?{" "}
+            <Link href="/feedback" className="text-emerald-400 hover:underline">Contact us through our support page</Link>.
           </p>
         </section>
       </div>

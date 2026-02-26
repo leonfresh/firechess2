@@ -157,6 +157,7 @@ export const feedback = pgTable("feedback", {
     .$defaultFn(() => crypto.randomUUID()),
   userId: text("userId").references(() => users.id, { onDelete: "set null" }),
   email: text("email"),
+  subject: text("subject"),
   category: text("category")
     .$type<"bug" | "feature" | "question" | "other">()
     .notNull()
@@ -166,5 +167,23 @@ export const feedback = pgTable("feedback", {
     .$type<"new" | "read" | "resolved">()
     .notNull()
     .default("new"),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+});
+
+/* ------------------------------------------------------------------ */
+/*  Custom: ticket replies (threaded support conversations)             */
+/* ------------------------------------------------------------------ */
+
+export const ticketReplies = pgTable("ticket_reply", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  feedbackId: text("feedbackId")
+    .notNull()
+    .references(() => feedback.id, { onDelete: "cascade" }),
+  userId: text("userId").references(() => users.id, { onDelete: "set null" }),
+  isAdmin: boolean("isAdmin").notNull().default(false),
+  message: text("message").notNull(),
+  emailSent: boolean("emailSent").notNull().default(false),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
 });
