@@ -43,7 +43,7 @@ export const COIN_REWARDS: Record<
   daily_wrong:     { amount: 3,  label: "Daily Challenge — attempted" },
   daily_streak:    { amount: 2,  label: "Daily streak bonus" },
   study_task:      { amount: 5,  label: "Study task completed" },
-  scan_complete:   { amount: 15, label: "Scan saved" },
+  scan_complete:   { amount: 5,  label: "Scan saved" },
   achievement:     { amount: 20, label: "Achievement unlocked" },
   repertoire_save: { amount: 2,  label: "Move saved to repertoire" },
 };
@@ -55,7 +55,9 @@ export const COIN_REWARDS: Record<
 const KEY_BALANCE = "fc-coins";
 const KEY_LOG     = "fc-coin-log";
 const KEY_SHOP    = "fc-coin-shop";
+const KEY_SCAN_DAY = "fc-scan-coin-day";
 const MAX_LOG     = 50;
+const MAX_SCAN_REWARDS_PER_DAY = 3;
 
 /** Read current coin balance. */
 export function getBalance(): number {
@@ -73,8 +75,23 @@ export function getLog(): CoinTransaction[] {
   }
 }
 
-/** Award coins for an activity. Returns new balance. */
+/** Award coins for an activity. Returns new balance (0 if capped). */
 export function earnCoins(reason: Exclude<CoinReason, "shop_purchase">): number {
+  // Daily cap for scan rewards — max 3 per day
+  if (reason === "scan_complete") {
+    const today = new Date().toISOString().slice(0, 10);
+    const raw = localStorage.getItem(KEY_SCAN_DAY);
+    let scanDay = { date: "", count: 0 };
+    try { scanDay = raw ? JSON.parse(raw) : scanDay; } catch {}
+    if (scanDay.date === today) {
+      if (scanDay.count >= MAX_SCAN_REWARDS_PER_DAY) return 0; // capped
+      scanDay.count++;
+    } else {
+      scanDay = { date: today, count: 1 };
+    }
+    localStorage.setItem(KEY_SCAN_DAY, JSON.stringify(scanDay));
+  }
+
   const { amount, label } = COIN_REWARDS[reason];
   const balance = getBalance() + amount;
   localStorage.setItem(KEY_BALANCE, String(balance));

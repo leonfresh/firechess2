@@ -62,7 +62,7 @@ const CHANGELOG: ChangeEntry[] = [
     description:
       "Personalised study plans, opening rankings with mini boards, mental-game stats saved to your dashboard, plus a full retention suite: achievements, goals, rescan reminders, shareable report cards, weekly email digests, daily challenge puzzles, progress highlights, opening repertoire, percentile comparison, and a coin economy with a cosmetic shop.",
     changes: [
-      { type: "feature", text: "Coin Economy — earn virtual coins from scans (+15), daily challenges (+10/+3), study tasks (+5), achievements (+20), and repertoire saves (+2)" },
+      { type: "feature", text: "Coin Economy — earn virtual coins from scans (+5, up to 3×/day), daily challenges (+10/+3), study tasks (+5), achievements (+20), and repertoire saves (+2)" },
       { type: "feature", text: "Coin Shop — spend earned coins on 10 board colour themes (Ocean, Midnight, Coral, Walnut, Ice, Royal, Neon, Candy, Ember) and 6 profile titles" },
       { type: "feature", text: "Board Themes — purchased themes apply instantly to every chessboard across the app (drill mode, tactic cards, mistake cards, endgame cards, daily challenge, repertoire, hero board)" },
       { type: "feature", text: "Profile Titles — equippable titles (Chess Student, Tactician, Strategist, Master Analyst, Elite Scholar, Grandmaster) shown as a badge on the dashboard header" },

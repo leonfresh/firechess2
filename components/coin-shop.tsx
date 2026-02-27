@@ -320,7 +320,7 @@ export function CoinShop() {
         </h3>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           <EarnInfo icon="🧩" label="Daily Challenge" amount="+10" />
-          <EarnInfo icon="📊" label="Run a Scan" amount="+15" />
+          <EarnInfo icon="📊" label="Save a Scan" amount="+5" />
           <EarnInfo icon="🏅" label="Achievement" amount="+20" />
           <EarnInfo icon="✅" label="Study Task" amount="+5" />
         </div>

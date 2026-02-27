@@ -271,7 +271,7 @@ export default function HomePage() {
 
     for (const def of motifDefs) {
       const matching = missedTactics.filter(def.match);
-      if (matching.length >= 1) {
+      if (matching.length >= 2) {
         const avgLoss = matching.reduce((sum, t) => sum + t.cpLoss, 0) / matching.length;
         groups.push({
           name: def.name,
@@ -1998,7 +1998,7 @@ export default function HomePage() {
               </div>
 
               {/* Opening Leaks Section */}
-              {(lastRunConfig?.scanMode !== "tactics") && (
+              {(lastRunConfig?.scanMode === "openings" || lastRunConfig?.scanMode === "both") && (
               <>
               {/* Opening Leaks Section Header */}
               <button type="button" onClick={() => setOpeningsOpen(o => !o)} className="glass-card border-emerald-500/15 bg-gradient-to-r from-emerald-500/[0.04] to-transparent p-6 w-full text-left cursor-pointer transition-colors hover:border-emerald-500/25">
@@ -2089,7 +2089,7 @@ export default function HomePage() {
               </>)}
 
               {/* Opening Health Rankings */}
-              {(lastRunConfig?.scanMode !== "tactics") && result?.openingSummaries && result.openingSummaries.length > 0 && (
+              {(lastRunConfig?.scanMode === "openings" || lastRunConfig?.scanMode === "both") && result?.openingSummaries && result.openingSummaries.length > 0 && (
                 <OpeningRankings openingSummaries={result.openingSummaries} />
               )}
 

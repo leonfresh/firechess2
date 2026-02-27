@@ -12,7 +12,7 @@
  *   6. Resilience     — survival despite bad positions (low severe rate + decent accuracy)
  */
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Radar,
   RadarChart,
@@ -208,16 +208,22 @@ export function StrengthsRadar(props: RadarProps) {
  * and a 3-step structured improvement plan.
  */
 export function InsightCards({ data, props, hasProAccess = false }: { data: RadarDimension[]; props: RadarProps; hasProAccess?: boolean }) {
-  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
+  const [modalDim, setModalDim] = useState<string | null>(null);
 
-  const toggleCard = (dim: string) => {
-    setExpandedCards((prev) => {
-      const next = new Set(prev);
-      if (next.has(dim)) next.delete(dim);
-      else next.add(dim);
-      return next;
-    });
-  };
+  // Close modal on Escape
+  const handleEscape = useCallback((e: KeyboardEvent) => {
+    if (e.key === "Escape") setModalDim(null);
+  }, []);
+  useEffect(() => {
+    if (modalDim) {
+      document.addEventListener("keydown", handleEscape);
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+      document.body.style.overflow = "";
+    };
+  }, [modalDim, handleEscape]);
 
   // Overall summary
   const avg = Math.round(data.reduce((s, d) => s + d.value, 0) / data.length);
@@ -243,6 +249,14 @@ export function InsightCards({ data, props, hasProAccess = false }: { data: Rada
     v >= 75 ? "bg-emerald-400" : v >= 50 ? "bg-cyan-400" : v >= 30 ? "bg-amber-400" : "bg-red-400";
   const ringColor = (v: number) =>
     v >= 75 ? "ring-emerald-500/30" : v >= 50 ? "ring-cyan-500/30" : v >= 30 ? "ring-amber-500/30" : "ring-red-500/30";
+  const solidBg = (v: number) =>
+    v >= 75 ? "bg-emerald-500" : v >= 50 ? "bg-cyan-500" : v >= 30 ? "bg-amber-500" : "bg-red-500";
+
+  // Modal data
+  const modalData = modalDim ? data.find(d => d.dimension === modalDim) : null;
+  const modalInsight = modalData ? getDimInsight(modalData.dimension, modalData.value, props) : null;
+  const modalIcon = modalData ? (DIM_ICONS[modalData.dimension] ?? "📈") : "";
+  const modalSubtitle = modalData ? (DIM_SUBTITLE[modalData.dimension] ?? "") : "";
 
   return (
     <div className="space-y-6">
@@ -274,7 +288,6 @@ export function InsightCards({ data, props, hasProAccess = false }: { data: Rada
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {data.map((d, i) => {
           const insight = getDimInsight(d.dimension, d.value, props);
-          const isOpen = expandedCards.has(d.dimension);
           const icon = DIM_ICONS[d.dimension] ?? "📈";
           const subtitle = DIM_SUBTITLE[d.dimension] ?? "";
 
@@ -313,111 +326,185 @@ export function InsightCards({ data, props, hasProAccess = false }: { data: Rada
                 {/* Short description */}
                 <p className="mt-3 text-[12px] leading-relaxed text-slate-400">{insight.desc}</p>
 
-                {/* Expand toggle */}
-                <button
-                  type="button"
-                  onClick={() => hasProAccess ? toggleCard(d.dimension) : undefined}
-                  className={`mt-3 flex items-center gap-1.5 text-[11px] font-medium transition-colors ${
-                    hasProAccess
-                      ? "text-white/40 hover:text-white/70"
-                      : "text-violet-400/60 hover:text-violet-400/80"
-                  }`}
-                >
-                  {hasProAccess ? (
-                    <>
-                      <svg
-                        className={`h-3.5 w-3.5 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
-                      {isOpen ? "Show less" : `Full ${d.dimension} analysis & study plan`}
-                    </>
-                  ) : (
-                    <a href="/pricing" className="flex items-center gap-1.5 text-violet-400/70 hover:text-violet-400">
-                      <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                      </svg>
-                      Pro: Full {d.dimension} analysis & study plan
-                    </a>
-                  )}
-                </button>
+                {/* CTA Button */}
+                {hasProAccess ? (
+                  <button
+                    type="button"
+                    onClick={() => setModalDim(d.dimension)}
+                    className={`mt-4 flex w-full items-center justify-center gap-2 rounded-xl border ${borderForValue(d.value)} ${scoreBg(d.value)} px-4 py-2.5 text-xs font-bold ${scoreColor(d.value)} transition-all hover:brightness-125`}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/><path d="M12 9v6"/></svg>
+                    Full Analysis & Study Plan
+                  </button>
+                ) : (
+                  <a
+                    href="/pricing"
+                    className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-violet-500/20 bg-violet-500/10 px-4 py-2.5 text-xs font-bold text-violet-400 transition-all hover:bg-violet-500/20 hover:border-violet-500/30"
+                  >
+                    <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                    </svg>
+                    Pro: Full Analysis & Study Plan
+                  </a>
+                )}
               </div>
-
-              {/* Expanded deep content — Pro only */}
-              {isOpen && hasProAccess && (
-                <div className="animate-fade-in border-t border-white/[0.06] px-5 pb-5 pt-4 space-y-3">
-
-                  {/* Key stat highlight pill */}
-                  {insight.keyStat && (
-                    <div className="flex items-center gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-2.5">
-                      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${scoreBg(d.value)} text-sm font-bold ${scoreColor(d.value)}`}>
-                        {insight.keyStat.icon}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">{insight.keyStat.label}</p>
-                        <p className={`text-sm font-bold ${scoreColor(d.value)}`}>{insight.keyStat.value}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Detailed Analysis card */}
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-500/10 text-xs">🔍</span>
-                      <h4 className="text-[11px] font-bold uppercase tracking-wider text-white/60">Detailed Analysis</h4>
-                    </div>
-                    <p className="text-[12px] leading-relaxed text-slate-400">{insight.analysis}</p>
-                  </div>
-
-                  {/* What This Means card */}
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-500/10 text-xs">💡</span>
-                      <h4 className="text-[11px] font-bold uppercase tracking-wider text-white/60">What This Means</h4>
-                    </div>
-                    <p className="text-[12px] leading-relaxed text-slate-400">{insight.meaning}</p>
-                  </div>
-
-                  {/* Study Plan — each step as its own card */}
-                  <div>
-                    <div className="mb-2 flex items-center gap-2 px-0.5">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-500/10 text-xs">📋</span>
-                      <h4 className="text-[11px] font-bold uppercase tracking-wider text-emerald-400/70">Study Plan</h4>
-                    </div>
-                    <div className="space-y-2">
-                      {insight.studyPlan.map((step, si) => (
-                        <div key={si} className={`group flex gap-3 rounded-xl border p-3.5 transition-all ${
-                          si === 0
-                            ? `${borderForValue(d.value)} bg-gradient-to-r ${bgGrad(d.value)}`
-                            : "border-white/[0.06] bg-white/[0.02]"
-                        }`}>
-                          <span className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[11px] font-bold ${scoreBg(d.value)} ${scoreColor(d.value)}`}>
-                            {si + 1}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <p className="text-[12px] font-medium leading-relaxed text-slate-300">{step}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Quick Tip card — accent colored */}
-                  <div className={`flex gap-3 rounded-xl ${scoreBg(d.value)} border ${borderForValue(d.value)} p-3.5`}>
-                    <span className="mt-0.5 text-base">⚡</span>
-                    <div>
-                      <p className={`mb-1 text-[10px] font-bold uppercase tracking-wider ${scoreColor(d.value)}`}>Quick Win</p>
-                      <p className="text-[12px] font-medium leading-relaxed text-slate-300">{insight.tip}</p>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           );
         })}
       </div>
+
+      {/* ─── Deep Analysis Modal ─── */}
+      {modalDim && modalData && modalInsight && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={() => setModalDim(null)}>
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+
+          {/* Modal content */}
+          <div
+            className="relative z-10 max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-white/[0.1] bg-slate-950 shadow-2xl shadow-black/50"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close button */}
+            <button
+              type="button"
+              onClick={() => setModalDim(null)}
+              className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+            </button>
+
+            {/* Modal header */}
+            <div className={`border-b border-white/[0.06] bg-gradient-to-r ${bgGrad(modalData.value)} p-6 sm:p-8`}>
+              <div className="flex items-center gap-4">
+                <span className={`flex h-16 w-16 items-center justify-center rounded-2xl ${scoreBg(modalData.value)} text-3xl ring-2 ${ringColor(modalData.value)}`}>
+                  {modalIcon}
+                </span>
+                <div className="flex-1">
+                  <h2 className="text-2xl font-extrabold text-white">{modalData.dimension}</h2>
+                  <p className="text-sm text-slate-400">{modalSubtitle}</p>
+                </div>
+                <div className="text-right">
+                  <div className={`text-4xl font-black ${scoreColor(modalData.value)}`}>{modalData.value}</div>
+                  <p className={`text-sm font-bold ${scoreColor(modalData.value)} opacity-80`}>{modalInsight.verdict}</p>
+                </div>
+              </div>
+
+              {/* Full-width score bar */}
+              <div className="mt-5 h-2.5 w-full rounded-full bg-white/[0.06]">
+                <div
+                  className={`h-2.5 rounded-full ${barBg(modalData.value)} transition-all duration-1000`}
+                  style={{ width: `${modalData.value}%` }}
+                />
+              </div>
+              <div className="mt-1.5 flex items-center justify-between">
+                <span className="text-[10px] font-medium text-red-400/60">0</span>
+                <span className="text-[10px] font-medium text-slate-500">50</span>
+                <span className="text-[10px] font-medium text-emerald-400/60">100</span>
+              </div>
+            </div>
+
+            {/* Modal body — 2-column layout on desktop */}
+            <div className="grid gap-6 p-6 sm:p-8 md:grid-cols-2">
+              {/* Left column — stats & analysis */}
+              <div className="space-y-4">
+                {/* Key stat card */}
+                {modalInsight.keyStat && (
+                  <div className={`flex items-center gap-3 rounded-xl border ${borderForValue(modalData.value)} bg-gradient-to-r ${bgGrad(modalData.value)} p-4`}>
+                    <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${scoreBg(modalData.value)} text-xl font-bold ${scoreColor(modalData.value)}`}>
+                      {modalInsight.keyStat.icon}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{modalInsight.keyStat.label}</p>
+                      <p className={`text-base font-bold ${scoreColor(modalData.value)}`}>{modalInsight.keyStat.value}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Detailed Analysis */}
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-500/10 text-sm">🔍</span>
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-white/60">Detailed Analysis</h3>
+                  </div>
+                  <p className="text-sm leading-relaxed text-slate-400">{modalInsight.analysis}</p>
+                </div>
+
+                {/* What This Means */}
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+                  <div className="mb-3 flex items-center gap-2">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-500/10 text-sm">💡</span>
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-white/60">What This Means</h3>
+                  </div>
+                  <p className="text-sm leading-relaxed text-slate-400">{modalInsight.meaning}</p>
+                </div>
+              </div>
+
+              {/* Right column — study plan & quick win */}
+              <div className="space-y-4">
+                {/* Study Plan */}
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+                  <div className="mb-4 flex items-center gap-2">
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 text-sm">📋</span>
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-400/70">Study Plan</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {modalInsight.studyPlan.map((step, si) => (
+                      <div key={si} className={`flex gap-3 rounded-xl border p-4 transition-all ${
+                        si === 0
+                          ? `${borderForValue(modalData.value)} bg-gradient-to-r ${bgGrad(modalData.value)}`
+                          : "border-white/[0.06] bg-white/[0.02]"
+                      }`}>
+                        <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${
+                          si === 0 ? `${solidBg(modalData.value)} text-white` : `${scoreBg(modalData.value)} ${scoreColor(modalData.value)}`
+                        }`}>
+                          {si + 1}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium leading-relaxed text-slate-300">{step}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Quick Win card — accent colored */}
+                <div className={`flex gap-3 rounded-xl ${scoreBg(modalData.value)} border ${borderForValue(modalData.value)} p-5`}>
+                  <span className="mt-0.5 text-xl">⚡</span>
+                  <div>
+                    <p className={`mb-1.5 text-xs font-bold uppercase tracking-wider ${scoreColor(modalData.value)}`}>Quick Win</p>
+                    <p className="text-sm font-medium leading-relaxed text-slate-300">{modalInsight.tip}</p>
+                  </div>
+                </div>
+
+                {/* Score context — all dimensions mini comparison */}
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
+                  <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">How This Compares</h3>
+                  <div className="space-y-2">
+                    {data.map((dd) => (
+                      <div key={dd.dimension} className="flex items-center gap-3">
+                        <span className="w-20 truncate text-xs text-slate-500">{dd.dimension}</span>
+                        <div className="flex-1">
+                          <div className="h-1.5 w-full rounded-full bg-white/[0.06]">
+                            <div
+                              className={`h-1.5 rounded-full ${
+                                dd.dimension === modalData.dimension ? barBg(dd.value) : "bg-white/20"
+                              } transition-all duration-500`}
+                              style={{ width: `${dd.value}%` }}
+                            />
+                          </div>
+                        </div>
+                        <span className={`w-8 text-right text-xs font-bold ${
+                          dd.dimension === modalData.dimension ? scoreColor(dd.value) : "text-slate-500"
+                        }`}>{dd.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }/**

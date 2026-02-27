@@ -2151,13 +2151,15 @@ export async function analyzeOpeningLeaksInBrowser(
       if (avg > worstAvg && data.count >= 3) { worstAvg = avg; weakestType = type; }
     }
     byType.sort((a, b) => b.avgCpLoss - a.avgCpLoss);
+    // Filter out categories with only 1 position — too small a sample to rank reliably
+    const rankedByType = byType.filter(t => t.count >= 2);
 
     return {
       totalPositions: totalEndgameMoves,
       avgCpLoss: Math.round(totalEndgameCpLoss / totalEndgameMoves),
       conversionRate: wonEndgames >= 3 ? Math.round((convertedWins / wonEndgames) * 100) : null,
       holdRate: slightlyWorse >= 3 ? Math.round((heldDraws / slightlyWorse) * 100) : null,
-      byType,
+      byType: rankedByType,
       weakestType,
     };
   })() : null;
