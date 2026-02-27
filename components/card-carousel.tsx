@@ -47,12 +47,14 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
     return () => observer.disconnect();
   }, [viewMode, total]);
 
-  /* ── Scroll to a specific card ── */
+  /* ── Scroll to a specific card (horizontal only, no page scroll) ── */
   const scrollTo = useCallback((idx: number) => {
     const el = scrollRef.current;
     if (!el) return;
     const card = el.querySelector<HTMLElement>(`[data-idx="${idx}"]`);
-    card?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    if (!card) return;
+    const left = card.offsetLeft - el.offsetLeft - (el.clientWidth - card.offsetWidth) / 2;
+    el.scrollTo({ left: Math.max(0, left), behavior: "smooth" });
   }, []);
 
   const goPrev = () => { const i = Math.max(0, activeIndex - 1); setActiveIndex(i); scrollTo(i); };

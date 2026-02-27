@@ -8,6 +8,7 @@ import { Chessboard } from "react-chessboard";
 import { playSound } from "@/lib/sounds";
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
+import { ExplanationModal, type SimpleExplanation } from "@/components/explanation-modal";
 import type { EndgameMistake, MoveSquare } from "@/lib/types";
 
 type EndgameCardProps = {
@@ -202,6 +203,7 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
     bestMove?: string;
     context?: string;
   } | null>(null);
+  const [explainModalOpen, setExplainModalOpen] = useState(false);
   const [fenCopied, setFenCopied] = useState(false);
   const [boardInstance, setBoardInstance] = useState(0);
   const timerIds = useRef<number[]>([]);
@@ -655,12 +657,16 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
             <div className="animate-fade-in space-y-2">
               {endgameCards ? (
                 <>
-                  {/* Move + Impact card */}
-                  <div className={`rounded-xl border p-3 ${
-                    endgameCards.type === "best"
-                      ? "border-emerald-500/20 bg-emerald-500/[0.04]"
-                      : "border-red-500/20 bg-red-500/[0.04]"
-                  }`}>
+                  {/* Compact preview — click to open modal */}
+                  <button
+                    type="button"
+                    onClick={() => setExplainModalOpen(true)}
+                    className={`w-full text-left rounded-xl border p-3 transition-all hover:brightness-110 cursor-pointer ${
+                      endgameCards.type === "best"
+                        ? "border-emerald-500/20 bg-emerald-500/[0.04]"
+                        : "border-red-500/20 bg-red-500/[0.04]"
+                    }`}
+                  >
                     <div className="flex items-center justify-between gap-3">
                       <p className={`text-sm font-semibold ${
                         endgameCards.type === "best" ? "text-emerald-300" : "text-red-300"
@@ -679,43 +685,11 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
                     }`}>
                       {endgameCards.impact}
                     </p>
-                  </div>
-
-                  {/* Context card (Failed Conversion) */}
-                  {endgameCards.context && (
-                    <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-3">
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-amber-500/60 mb-1">
-                        ⚠️ {endgameCards.context}
-                      </p>
-                      <p className="text-[13px] text-amber-300">
-                        You had a winning position but failed to convert the advantage.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Best move reminder (consequence mode) */}
-                  {endgameCards.bestMove && (
-                    <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.03] p-3">
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-emerald-500/60 mb-1">
-                        🎯 Better move
-                      </p>
-                      <p className="text-sm font-medium text-emerald-300">
-                        {endgameCards.bestMove}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Engine line card */}
-                  {endgameCards.line && (
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                      <p className="mb-1 text-[10px] font-medium uppercase tracking-wider text-slate-500">
-                        📋 {endgameCards.type === "best" ? "Best line" : "After your move"}
-                      </p>
-                      <p className="text-[13px] font-mono leading-relaxed text-slate-300 break-words">
-                        {endgameCards.line}
-                      </p>
-                    </div>
-                  )}
+                    <p className="mt-2 flex items-center gap-1 text-[11px] text-slate-500">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+                      Tap to see full explanation
+                    </p>
+                  </button>
                 </>
               ) : (
                 <div className="rounded-xl border border-sky-500/[0.08] bg-sky-500/[0.02] p-4 text-sm text-slate-300">
@@ -724,6 +698,20 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
               )}
             </div>
           )}
+
+          {/* Explanation Modal */}
+          <ExplanationModal
+            open={explainModalOpen}
+            onClose={() => setExplainModalOpen(false)}
+            variant="endgame"
+            simpleExplanation={endgameCards as SimpleExplanation | null}
+            plainExplanation={explanation || undefined}
+            title={endgameCards?.type === "best"
+              ? `Best Move: ${bestMoveDetails?.san ?? mistake.bestMove}`
+              : `Your Move: ${userMoveDetails?.san ?? mistake.userMove}`
+            }
+            subtitle={`${mistake.endgameType} endgame — lost ~${formatEvalLoss(mistake.cpLoss)} eval`}
+          />
         </div>
       </div>
     </article>

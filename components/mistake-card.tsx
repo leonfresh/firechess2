@@ -13,6 +13,7 @@ import { fetchExplorerMoves, type ExplorerMove } from "@/lib/lichess-explorer";
 import { explainOpeningLeak, describeEndPosition, type MoveExplanation, type PositionExplanation } from "@/lib/position-explainer";
 import { SaveToRepertoireButton } from "@/components/opening-repertoire";
 import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
+import { ExplanationModal } from "@/components/explanation-modal";
 
 type MistakeCardProps = {
   leak: RepeatedOpeningLeak;
@@ -251,6 +252,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   const [explanation, setExplanation] = useState("");
   const [richExplanation, setRichExplanation] = useState<PositionExplanation | null>(null);
   const [activeExplainTab, setActiveExplainTab] = useState<"played" | "best" | "db" | null>(null);
+  const [explainModalOpen, setExplainModalOpen] = useState(false);
   const [fenCopied, setFenCopied] = useState(false);
   const [boardInstance, setBoardInstance] = useState(0);
   const timerIds = useRef<number[]>([]);
@@ -1836,7 +1838,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
             )}
           </div>
 
-          {/* Rich coaching explanation */}
+          {/* Rich coaching explanation — compact preview + modal */}
           {(richExplanation || explanation) && (
             <div className="animate-fade-in space-y-3">
               {richExplanation ? (
@@ -1872,14 +1874,18 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                     ))}
                   </div>
 
-                  {/* Move + Eval card */}
-                  <div className={`rounded-xl border p-3 ${
-                    activeExplainTab === "played"
-                      ? "border-red-500/20 bg-red-500/[0.04]"
-                      : activeExplainTab === "best"
-                        ? "border-emerald-500/20 bg-emerald-500/[0.04]"
-                        : "border-blue-500/20 bg-blue-500/[0.04]"
-                  }`}>
+                  {/* Compact preview card — click to open modal */}
+                  <button
+                    type="button"
+                    onClick={() => setExplainModalOpen(true)}
+                    className={`w-full text-left rounded-xl border p-3 transition-all hover:brightness-110 cursor-pointer ${
+                      activeExplainTab === "played"
+                        ? "border-red-500/20 bg-red-500/[0.04]"
+                        : activeExplainTab === "best"
+                          ? "border-emerald-500/20 bg-emerald-500/[0.04]"
+                          : "border-blue-500/20 bg-blue-500/[0.04]"
+                    }`}
+                  >
                     <div className="flex items-center justify-between gap-3">
                       <p className="text-sm font-medium text-slate-200" dangerouslySetInnerHTML={{
                         __html: (richExplanation.moveDescription ?? richExplanation.headline)
@@ -1902,98 +1908,55 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                     }`}>
                       {richExplanation.headline}
                     </p>
-                  </div>
 
-                  {/* Theme cards */}
-                  {richExplanation.themeCards && richExplanation.themeCards.length > 0 && (
-                    <div className="grid gap-2">
-                      {richExplanation.themeCards.map((card, i) => (
-                        <div
-                          key={i}
-                          className={`flex items-start gap-3 rounded-xl border p-3 ${
-                            card.severity === "critical"
-                              ? "border-red-500/20 bg-red-500/[0.04]"
-                              : card.severity === "warning"
-                                ? "border-amber-500/20 bg-amber-500/[0.04]"
-                                : activeExplainTab === "best"
-                                  ? "border-emerald-500/15 bg-emerald-500/[0.03]"
-                                  : "border-white/[0.08] bg-white/[0.02]"
-                          }`}
-                        >
-                          <span className="mt-0.5 text-base leading-none">{card.icon}</span>
-                          <div className="min-w-0 flex-1">
-                            <p className={`text-xs font-semibold ${
-                              card.severity === "critical"
-                                ? "text-red-400"
-                                : card.severity === "warning"
-                                  ? "text-amber-400"
-                                  : activeExplainTab === "best"
-                                    ? "text-emerald-400"
-                                    : "text-slate-300"
-                            }`}>
-                              {card.label}
-                            </p>
-                            {card.description && (
-                              <p className="mt-0.5 text-[11px] leading-snug text-slate-400">
-                                {card.description}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Coaching card */}
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                    <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-slate-500">
-                      💡 Coaching
-                    </p>
-                    <p className="text-[13px] leading-relaxed text-slate-300" dangerouslySetInnerHTML={{
-                      __html: richExplanation.coaching
-                        .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>')
-                    }} />
-                  </div>
-
-                  {/* Takeaway card */}
-                  {richExplanation.takeaway && (
-                    <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-3">
-                      <p className="mb-1 text-[10px] font-medium uppercase tracking-wider text-amber-500/60">
-                        🎯 Takeaway
-                      </p>
-                      <p className="text-[13px] font-medium leading-snug text-amber-300">
-                        {richExplanation.takeaway.replace(/\*\*/g, "")}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Details (expandable observations) */}
-                  {richExplanation.observations.length > 0 && (
-                    <details className="group rounded-xl border border-white/[0.06] bg-white/[0.02]">
-                      <summary className="cursor-pointer select-none px-3 py-2 text-[10px] font-medium uppercase tracking-wider text-slate-500 transition-colors hover:text-slate-400">
-                        ▸ Details ({richExplanation.observations.length})
-                      </summary>
-                      <div className="space-y-1.5 border-t border-white/[0.06] px-3 pb-3 pt-2">
-                        {richExplanation.observations.map((obs, i) => (
-                          <p
-                            key={i}
-                            className="flex items-start gap-2 text-xs text-slate-400"
-                          >
-                            <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-slate-600" />
-                            <span dangerouslySetInnerHTML={{
-                              __html: obs.replace(/\*\*(.+?)\*\*/g, '<strong class="text-slate-300">$1</strong>')
-                            }} />
-                          </p>
+                    {/* Theme pills preview (max 3) */}
+                    {richExplanation.themeCards && richExplanation.themeCards.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {richExplanation.themeCards.slice(0, 3).map((card, i) => (
+                          <span key={i} className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-0.5 text-[10px] font-medium text-slate-400">
+                            {card.icon} {card.label}
+                          </span>
                         ))}
+                        {richExplanation.themeCards.length > 3 && (
+                          <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] text-slate-500">
+                            +{richExplanation.themeCards.length - 3} more
+                          </span>
+                        )}
                       </div>
-                    </details>
-                  )}
+                    )}
+
+                    {/* Expand hint */}
+                    <p className="mt-2 flex items-center gap-1 text-[11px] text-slate-500">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+                      Tap to see full explanation
+                    </p>
+                  </button>
                 </>
               ) : (
                 <p className="text-sm text-slate-300">{explanation}</p>
               )}
             </div>
           )}
+
+          {/* Explanation Modal */}
+          <ExplanationModal
+            open={explainModalOpen}
+            onClose={() => setExplainModalOpen(false)}
+            variant="opening"
+            activeTab={activeExplainTab}
+            richExplanation={richExplanation}
+            plainExplanation={explanation || undefined}
+            title={
+              activeExplainTab === "played"
+                ? `Your Move: ${badMove?.san ?? leak.userMove}`
+                : activeExplainTab === "best"
+                  ? `Best Move: ${bestMove?.san ?? "?"}`
+                  : activeExplainTab === "db"
+                    ? `DB Move: ${dbPickMove?.san ?? "?"}`
+                    : "Move Explanation"
+            }
+            subtitle={richExplanation?.headline}
+          />
         </div>
       </div>
     </article>

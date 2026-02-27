@@ -8,6 +8,7 @@ import { Chessboard } from "react-chessboard";
 import { playSound } from "@/lib/sounds";
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
+import { ExplanationModal, type SimpleExplanation } from "@/components/explanation-modal";
 import type { MissedTactic, MoveSquare } from "@/lib/types";
 
 type TacticCardProps = {
@@ -448,6 +449,7 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
     line?: string;
     bestMove?: string;
   } | null>(null);
+  const [explainModalOpen, setExplainModalOpen] = useState(false);
   const [fenCopied, setFenCopied] = useState(false);
   const [boardInstance, setBoardInstance] = useState(0);
   const timerIds = useRef<number[]>([]);
@@ -955,12 +957,16 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
             <div className="animate-fade-in space-y-2">
               {tacticCards ? (
                 <>
-                  {/* Move + Impact card */}
-                  <div className={`rounded-xl border p-3 ${
-                    tacticCards.type === "winning"
-                      ? "border-emerald-500/20 bg-emerald-500/[0.04]"
-                      : "border-red-500/20 bg-red-500/[0.04]"
-                  }`}>
+                  {/* Compact preview — click to open modal */}
+                  <button
+                    type="button"
+                    onClick={() => setExplainModalOpen(true)}
+                    className={`w-full text-left rounded-xl border p-3 transition-all hover:brightness-110 cursor-pointer ${
+                      tacticCards.type === "winning"
+                        ? "border-emerald-500/20 bg-emerald-500/[0.04]"
+                        : "border-red-500/20 bg-red-500/[0.04]"
+                    }`}
+                  >
                     <div className="flex items-center justify-between gap-3">
                       <p className={`text-sm font-semibold ${
                         tacticCards.type === "winning" ? "text-emerald-300" : "text-red-300"
@@ -975,31 +981,11 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
                         </span>
                       )}
                     </div>
-                  </div>
-
-                  {/* Best move reminder (punishment mode) */}
-                  {tacticCards.bestMove && (
-                    <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.03] p-3">
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-emerald-500/60 mb-1">
-                        🎯 Winning move
-                      </p>
-                      <p className="text-sm font-medium text-emerald-300">
-                        {tacticCards.bestMove}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Engine line card */}
-                  {tacticCards.line && (
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                      <p className="mb-1 text-[10px] font-medium uppercase tracking-wider text-slate-500">
-                        📋 {tacticCards.type === "winning" ? "Winning line" : "After your move"}
-                      </p>
-                      <p className="text-[13px] font-mono leading-relaxed text-slate-300 break-words">
-                        {tacticCards.line}
-                      </p>
-                    </div>
-                  )}
+                    <p className="mt-2 flex items-center gap-1 text-[11px] text-slate-500">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+                      Tap to see full explanation
+                    </p>
+                  </button>
                 </>
               ) : (
                 <div className="rounded-xl border border-amber-500/[0.08] bg-amber-500/[0.02] p-4 text-sm text-slate-300">
@@ -1008,6 +994,20 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
               )}
             </div>
           )}
+
+          {/* Explanation Modal */}
+          <ExplanationModal
+            open={explainModalOpen}
+            onClose={() => setExplainModalOpen(false)}
+            variant="tactic"
+            simpleExplanation={tacticCards as SimpleExplanation | null}
+            plainExplanation={explanation || undefined}
+            title={tacticCards?.type === "winning"
+              ? `Winning Move: ${bestMoveDetails?.san ?? tactic.bestMove}`
+              : `Your Move: ${userMoveDetails?.san ?? tactic.userMove}`
+            }
+            subtitle={isMate ? "Missed forced mate" : `Missed ${formatEvalLoss(tactic.cpLoss)} eval gain`}
+          />
         </div>
       </div>
     </article>
