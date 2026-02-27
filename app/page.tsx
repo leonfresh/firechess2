@@ -1311,7 +1311,7 @@ export default function HomePage() {
           )}
 
           {/* ─── Daily Login Popup ─── */}
-          {state !== "loading" && (
+          {state !== "loading" && authenticated && (
             <DailyLoginPopup />
           )}
 
