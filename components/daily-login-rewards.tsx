@@ -360,8 +360,8 @@ export function DailyLoginPopup() {
         onClick={() => setOpen(false)}
       />
 
-      {/* Modal card */}
-      <div className="relative z-10 w-full max-w-md animate-fade-in-up">
+      {/* Modal card — solid bg so it's not transparent over the backdrop */}
+      <div className="relative z-10 w-full max-w-md animate-fade-in-up rounded-2xl bg-slate-900/95 shadow-2xl ring-1 ring-white/10">
         {/* Close button */}
         <button
           type="button"
