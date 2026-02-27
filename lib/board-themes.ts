@@ -185,3 +185,106 @@ export function getBoardStyles(): {
     customLightSquareStyle: { backgroundColor: theme.lightSquare },
   };
 }
+
+/* ================================================================== */
+/*  Eval Bar Skins                                                      */
+/* ================================================================== */
+
+export type EvalBarSkin = {
+  id: string;
+  name: string;
+  price: number;
+  /** Gradient colours for the white (advantage) side */
+  whiteGradient: [string, string];
+  /** Gradient colours for the black (advantage) side */
+  blackGradient: [string, string];
+  /** Two colours for shop card preview swatch */
+  preview: [string, string];
+};
+
+export const EVAL_BAR_SKINS: EvalBarSkin[] = [
+  {
+    id: "eval-default",
+    name: "Classic",
+    price: 0,
+    whiteGradient: ["#f1f5f9", "#e2e8f0"],
+    blackGradient: ["#1e293b", "#0f172a"],
+    preview: ["#f1f5f9", "#1e293b"],
+  },
+  {
+    id: "eval-emerald",
+    name: "Emerald",
+    price: 40,
+    whiteGradient: ["#d1fae5", "#a7f3d0"],
+    blackGradient: ["#064e3b", "#022c22"],
+    preview: ["#d1fae5", "#064e3b"],
+  },
+  {
+    id: "eval-amber",
+    name: "Amber Gold",
+    price: 60,
+    whiteGradient: ["#fef3c7", "#fde68a"],
+    blackGradient: ["#78350f", "#451a03"],
+    preview: ["#fef3c7", "#78350f"],
+  },
+  {
+    id: "eval-rose",
+    name: "Rose Quartz",
+    price: 80,
+    whiteGradient: ["#ffe4e6", "#fecdd3"],
+    blackGradient: ["#881337", "#4c0519"],
+    preview: ["#ffe4e6", "#881337"],
+  },
+  {
+    id: "eval-cyber",
+    name: "Cyber",
+    price: 100,
+    whiteGradient: ["#67e8f9", "#22d3ee"],
+    blackGradient: ["#164e63", "#083344"],
+    preview: ["#67e8f9", "#164e63"],
+  },
+  {
+    id: "eval-purple",
+    name: "Royal Purple",
+    price: 120,
+    whiteGradient: ["#e9d5ff", "#c4b5fd"],
+    blackGradient: ["#581c87", "#3b0764"],
+    preview: ["#e9d5ff", "#581c87"],
+  },
+];
+
+/* ─── Active eval skin (localStorage) ─── */
+
+const KEY_ACTIVE_EVAL_SKIN = "fc-eval-skin";
+
+export function getActiveEvalSkinId(): string {
+  if (typeof window === "undefined") return "eval-default";
+  return localStorage.getItem(KEY_ACTIVE_EVAL_SKIN) ?? "eval-default";
+}
+
+export function getActiveEvalSkin(): EvalBarSkin {
+  const id = getActiveEvalSkinId();
+  return EVAL_BAR_SKINS.find((s) => s.id === id) ?? EVAL_BAR_SKINS[0];
+}
+
+export function setActiveEvalSkin(id: string): void {
+  localStorage.setItem(KEY_ACTIVE_EVAL_SKIN, id);
+  window.dispatchEvent(new CustomEvent("fc-eval-skin-changed", { detail: id }));
+}
+
+/* ================================================================== */
+/*  Board Coordinates toggle                                            */
+/* ================================================================== */
+
+const KEY_SHOW_COORDS = "fc-board-coords";
+
+export function getShowCoordinates(): boolean {
+  if (typeof window === "undefined") return true;
+  const v = localStorage.getItem(KEY_SHOW_COORDS);
+  return v === null ? true : v === "1";
+}
+
+export function setShowCoordinates(show: boolean): void {
+  localStorage.setItem(KEY_SHOW_COORDS, show ? "1" : "0");
+  window.dispatchEvent(new CustomEvent("fc-coords-changed", { detail: show }));
+}

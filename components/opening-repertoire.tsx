@@ -13,7 +13,7 @@ import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 import { useBoardSize } from "@/lib/use-board-size";
 import { earnCoins } from "@/lib/coins";
-import { useBoardTheme } from "@/lib/use-coins";
+import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
@@ -266,6 +266,7 @@ function RepertoireRow({
 }) {
   const { ref: boardRef, size: boardSize } = useBoardSize(200);
   const boardTheme = useBoardTheme();
+  const showCoords = useShowCoordinates();
 
   const openingName = entry.tags.find(
     (t) =>
@@ -334,6 +335,7 @@ function RepertoireRow({
                 arePiecesDraggable={false}
                 customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
                 customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                showBoardNotation={showCoords}
               />
             </div>
 

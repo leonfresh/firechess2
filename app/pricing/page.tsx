@@ -349,6 +349,101 @@ export default function PricingPage() {
             </div>
           </div>
 
+          {/* Recent Dev Notes */}
+          <div className="glass-card overflow-hidden p-6 md:p-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fuchsia-500/15 text-xl">📋</span>
+                <div>
+                  <h3 className="text-lg font-bold text-white">Dev Notes</h3>
+                  <p className="text-xs text-slate-500">What&apos;s new — actively maintained by one dev</p>
+                </div>
+              </div>
+              <Link
+                href="/changelog"
+                className="hidden items-center gap-1.5 rounded-full border border-fuchsia-500/20 bg-fuchsia-500/[0.08] px-3 py-1.5 text-xs font-medium text-fuchsia-300 transition-colors hover:bg-fuchsia-500/[0.15] sm:inline-flex"
+              >
+                View all
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </Link>
+            </div>
+
+            <div className="mt-5 space-y-3">
+              {[
+                {
+                  version: 9,
+                  date: "Feb 27, 2026",
+                  title: "Collapsible Sections & Mate Eval Fix",
+                  highlights: [
+                    "Report sections are now collapsible in list view",
+                    "Eval displays correctly show \"Mate in X\" instead of 999+",
+                  ],
+                  tag: "latest" as const,
+                },
+                {
+                  version: 8,
+                  date: "Feb 27, 2026",
+                  title: "Endgame & Tactics Fixes, Opening QoL",
+                  highlights: [
+                    "Endgame conversion rate fixed — was undercounting by ~90%",
+                    "Ranked category breakdowns for endgames and tactics",
+                  ],
+                  tag: null,
+                },
+                {
+                  version: 7,
+                  date: "Feb 27, 2026",
+                  title: "Study Plans, Coin Economy & Retention Suite",
+                  highlights: [
+                    "Coin economy + cosmetic shop with board themes & titles",
+                    "Daily challenge, progress highlights, opening repertoire",
+                  ],
+                  tag: null,
+                },
+              ].map((entry) => (
+                <Link
+                  key={entry.version}
+                  href="/changelog"
+                  className="group flex gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 transition-all hover:border-fuchsia-500/20 hover:bg-white/[0.04]"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-fuchsia-500/10 text-sm font-bold text-fuchsia-400">
+                    v{entry.version}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="truncate text-sm font-semibold text-white group-hover:text-fuchsia-300">{entry.title}</h4>
+                      {entry.tag === "latest" && (
+                        <span className="shrink-0 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                          Latest
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-0.5 text-[11px] text-slate-500">{entry.date}</p>
+                    <ul className="mt-1.5 space-y-0.5">
+                      {entry.highlights.map((h) => (
+                        <li key={h} className="flex items-start gap-1.5 text-xs text-slate-400">
+                          <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-fuchsia-500/40" />
+                          {h}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <svg className="mt-1 h-4 w-4 shrink-0 text-slate-600 transition-colors group-hover:text-fuchsia-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              ))}
+            </div>
+
+            <Link
+              href="/changelog"
+              className="mt-4 flex items-center justify-center gap-1.5 text-sm font-medium text-fuchsia-400 transition-colors hover:text-fuchsia-300 sm:hidden"
+            >
+              View all updates
+              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+            </Link>
+          </div>
+
           {/* Roadmap */}
           <div className="glass-card p-6 md:p-8">
             <div className="flex items-center justify-between">

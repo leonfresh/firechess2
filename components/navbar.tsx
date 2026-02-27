@@ -10,7 +10,6 @@ import { LATEST_VERSION } from "@/lib/constants";
 import { useCoinBalance } from "@/lib/use-coins";
 
 const NAV_LINKS = [
-  { href: "/blog", label: "Blog" },
   { href: "/about", label: "About" },
 ];
 
@@ -80,19 +79,40 @@ export function Navbar() {
 
         {/* ── Desktop nav links ── */}
         <div className="hidden items-center gap-1 md:flex">
-          {NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  isActive(link.href)
-                    ? "text-white bg-white/[0.06]"
-                    : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
-                }`}
-              >
-                {link.label}
-              </Link>
-          ))}
+          {/* About dropdown with Blog */}
+          <div className="group relative">
+            <Link
+              href="/about"
+              className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                isActive("/about") || isActive("/blog")
+                  ? "text-white bg-white/[0.06]"
+                  : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+              }`}
+            >
+              About
+              <svg className="h-3 w-3 text-slate-500 transition-transform group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><polyline points="6 9 12 15 18 9" /></svg>
+            </Link>
+            <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
+              <div className="min-w-[140px] rounded-xl border border-white/[0.08] bg-[#0a0f1a] p-1.5 shadow-xl shadow-black/40">
+                <Link
+                  href="/about"
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive("/about") ? "text-white bg-white/[0.06]" : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
+                  }`}
+                >
+                  About
+                </Link>
+                <Link
+                  href="/blog"
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive("/blog") ? "text-white bg-white/[0.06]" : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
+                  }`}
+                >
+                  Blog
+                </Link>
+              </div>
+            </div>
+          </div>
 
           {/* Dev Notes link */}
           <Link
@@ -376,6 +396,7 @@ export function Navbar() {
               {[
                 { href: "/", label: "Home" },
                 ...NAV_LINKS,
+                { href: "/blog", label: "Blog" },
                 { href: "/feedback", label: "Feedback" },
                 ...(authenticated
                   ? [

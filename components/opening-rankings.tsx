@@ -11,7 +11,7 @@
 
 import { useMemo } from "react";
 import { Chessboard } from "react-chessboard";
-import { useBoardTheme } from "@/lib/use-coins";
+import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
 import type { OpeningSummary, PlayerColor } from "@/lib/types";
 
 /* ------------------------------------------------------------------ */
@@ -70,6 +70,7 @@ function winRateLabel(wr: number) {
 
 export function OpeningRankings({ openingSummaries }: Props) {
   const boardTheme = useBoardTheme();
+  const showCoords = useShowCoordinates();
 
   /* ── Build rankings from props (no async, no API calls) ── */
   const rankings: OpeningEntry[] = useMemo(() => {
@@ -209,6 +210,7 @@ export function OpeningRankings({ openingSummaries }: Props) {
                   animationDuration={0}
                   customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
                   customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                  showBoardNotation={showCoords}
                 />
               </div>
 

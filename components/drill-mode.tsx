@@ -9,7 +9,7 @@ import { playSound, preloadSounds } from "@/lib/sounds";
 import { stockfishClient } from "@/lib/stockfish-client";
 import { useBoardSize } from "@/lib/use-board-size";
 import type { EndgameMistake, MissedTactic, PositionEvalTrace, RepeatedOpeningLeak } from "@/lib/types";
-import { useBoardTheme } from "@/lib/use-coins";
+import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
 
 type MoveBadge = {
   label: "Best" | "Good" | "Inaccuracy" | "Mistake" | "Blunder";
@@ -114,6 +114,7 @@ function deriveMoveDetails(fen: string, move: string | null): MoveDetails | null
 export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOffMistakes = [], excludeFens, variant }: DrillModeProps) {
   const { ref: drillBoardRef, size: drillBoardSize } = useBoardSize(470);
   const boardTheme = useBoardTheme();
+  const showCoords = useShowCoordinates();
   const drillPositions = useMemo(() => {
     const openingItems: DrillItem[] = positions
       .filter((position) => position.flagged && typeof position.cpLoss === "number" && position.bestMove && !(excludeFens?.has(position.fenBefore)))
@@ -344,6 +345,19 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
 
   const goNext = () => {
     setIndex((prev) => (prev + 1) % drillPositions.length);
+  };
+
+  /** Show legal move dots when the user starts dragging a piece */
+  const onPieceDragBegin = (_piece: string, sourceSquare: CbSquare) => {
+    if (!current || !effectiveBestMove || evaluating || solved || awaitingOpponent) return;
+    try {
+      const chess = new Chess(fen);
+      const moves = chess.moves({ square: sourceSquare as Parameters<Chess["moves"]>[0]["square"], verbose: true });
+      if (moves.length > 0) {
+        setSelectedSq(sourceSquare);
+        setLegalMoveSqs(moves.map(m => m.to));
+      }
+    } catch { /* ignore */ }
   };
 
   const onDrop = (sourceSquare: string, targetSquare: string, piece: string) => {
@@ -761,6 +775,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
                     id={`drill-${index}`}
                     position={fen}
                     onPieceDrop={onDrop}
+                    onPieceDragBegin={onPieceDragBegin}
                     onSquareClick={onSquareClick}
                     onPromotionPieceSelect={onPromotionPieceSelect}
                     showPromotionDialog={showPromoDialog}
@@ -771,6 +786,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
                     customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
                     customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
                     customSquareStyles={customSquareStyles}
+                    showBoardNotation={showCoords}
                   />
                 </div>
               </div>

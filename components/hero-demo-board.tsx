@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 import { useBoardSize } from "@/lib/use-board-size";
-import { useBoardTheme } from "@/lib/use-coins";
+import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
 
 /* ── Mini eval bar (matches the real EvalBar look) ── */
 function MiniEvalBar({ evalCp, height }: { evalCp: number; height: number }) {
@@ -202,6 +202,7 @@ function badgeColor(badge: DemoScenario["badge"]): string {
 export function HeroDemoBoard() {
   const { ref: heroBoardRef, size: heroBoardSize } = useBoardSize(380);
   const boardTheme = useBoardTheme();
+  const showCoords = useShowCoordinates();
   const [index, setIndex] = useState(0);
   const [autoplay, setAutoplay] = useState(true);
 
@@ -289,6 +290,7 @@ export function HeroDemoBoard() {
                   boardOrientation={boardOrientation}
                   customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
                   customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                  showBoardNotation={showCoords}
                 />
               </div>
             </div>

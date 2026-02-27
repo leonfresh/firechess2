@@ -1,5 +1,7 @@
 "use client";
 
+import { useEvalBarSkin } from "@/lib/use-coins";
+
 type EvalBarProps = {
   evalCp: number | null;
   height?: number;
@@ -10,6 +12,7 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 export function EvalBar({ evalCp, height = 340 }: EvalBarProps) {
+  const skin = useEvalBarSkin();
   const cp = typeof evalCp === "number" ? evalCp : 0;
   const pawns = cp / 100;
   const normalized = clamp(pawns, -4, 4);
@@ -30,15 +33,18 @@ export function EvalBar({ evalCp, height = 340 }: EvalBarProps) {
         aria-label="Evaluation bar"
       >
         {/* Black side */}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-800 to-slate-900" />
+        <div
+          className="absolute inset-0"
+          style={{ background: `linear-gradient(to bottom, ${skin.blackGradient[0]}, ${skin.blackGradient[1]})` }}
+        />
         {/* White side */}
         <div
           className="absolute left-0 top-0 w-full transition-all duration-500 ease-out"
           style={{
             height: whiteHeight,
             background: isWhiteAdvantage
-              ? "linear-gradient(to bottom, #f1f5f9, #e2e8f0)"
-              : "linear-gradient(to bottom, #e2e8f0, #cbd5e1)",
+              ? `linear-gradient(to bottom, ${skin.whiteGradient[0]}, ${skin.whiteGradient[1]})`
+              : `linear-gradient(to bottom, ${skin.whiteGradient[1]}, ${skin.whiteGradient[0]})`,
           }}
         />
         {/* Center line indicator */}

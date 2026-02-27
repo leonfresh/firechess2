@@ -10,8 +10,11 @@ import { getBalance, getLog, type CoinTransaction } from "@/lib/coins";
 import {
   getActiveTheme,
   getActiveTitle,
+  getActiveEvalSkin,
+  getShowCoordinates,
   type BoardTheme,
   type ProfileTitle,
+  type EvalBarSkin,
 } from "@/lib/board-themes";
 
 /* ------------------------------------------------------------------ */
@@ -82,4 +85,38 @@ export function useProfileTitle(): ProfileTitle | null {
   }, []);
 
   return title;
+}
+
+/* ------------------------------------------------------------------ */
+/*  useEvalBarSkin — reactive eval bar skin                             */
+/* ------------------------------------------------------------------ */
+
+export function useEvalBarSkin(): EvalBarSkin {
+  const [skin, setSkin] = useState<EvalBarSkin>(() => getActiveEvalSkin());
+
+  useEffect(() => {
+    setSkin(getActiveEvalSkin());
+    const handler = () => setSkin(getActiveEvalSkin());
+    window.addEventListener("fc-eval-skin-changed", handler);
+    return () => window.removeEventListener("fc-eval-skin-changed", handler);
+  }, []);
+
+  return skin;
+}
+
+/* ------------------------------------------------------------------ */
+/*  useShowCoordinates — reactive board notation toggle                  */
+/* ------------------------------------------------------------------ */
+
+export function useShowCoordinates(): boolean {
+  const [show, setShow] = useState(true);
+
+  useEffect(() => {
+    setShow(getShowCoordinates());
+    const handler = (e: Event) => setShow((e as CustomEvent).detail as boolean);
+    window.addEventListener("fc-coords-changed", handler);
+    return () => window.removeEventListener("fc-coords-changed", handler);
+  }, []);
+
+  return show;
 }
