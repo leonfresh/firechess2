@@ -440,6 +440,14 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
   const [explaining, setExplaining] = useState(false);
   const [animating, setAnimating] = useState(false);
   const [explanation, setExplanation] = useState("");
+  const [tacticCards, setTacticCards] = useState<{
+    type: "winning" | "punishment";
+    move: string;
+    impact: string;
+    evalAfter?: string;
+    line?: string;
+    bestMove?: string;
+  } | null>(null);
   const [fenCopied, setFenCopied] = useState(false);
   const [boardInstance, setBoardInstance] = useState(0);
   const timerIds = useRef<number[]>([]);
@@ -636,6 +644,7 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
     if (explaining || animating) return;
     setExplaining(true);
     setExplanation("");
+    setTacticCards(null);
     try {
       const bestUci = moveToUciStr(bestMoveDetails);
       if (!bestUci) {
@@ -657,21 +666,24 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
         setExplanation("Could not apply the winning move for this position.");
         return;
       }
-      let evalAfterBestText = "";
+      let evalAfterBestStr: string | undefined;
       const bestEval = await stockfishClient.evaluateFen(bestFenChess.fen(), engineDepth);
       if (bestEval) {
-        evalAfterBestText = ` Eval after best move: ${formatEval(bestEval.cp, { showPlus: true })} (side to move).`;
+        evalAfterBestStr = formatEval(bestEval.cp, { showPlus: true });
       }
       const continuation = await stockfishClient.getPrincipalVariation(bestFenChess.fen(), 9, engineDepth);
       const bestContinuationMoves = continuation?.pvMoves ?? [];
       const pvText = formatPrincipalVariation(tactic.fenBefore, [bestUci, ...bestContinuationMoves]);
       const gainText = isMate
         ? "leads to forced mate"
-        : `gains about ${formatEvalLoss(tactic.cpLoss)} eval through a forcing sequence`;
-      setExplanation(
-        `The winning move ${bestMoveDetails?.san ?? tactic.bestMove} ${gainText}.${evalAfterBestText} ` +
-          `Winning line: ${pvText || "not available"}.`
-      );
+        : `gains about ${formatEvalLoss(tactic.cpLoss)} eval`;
+      setTacticCards({
+        type: "winning",
+        move: bestMoveDetails?.san ?? tactic.bestMove,
+        impact: gainText,
+        evalAfter: evalAfterBestStr,
+        line: pvText || undefined,
+      });
       const fullBestLine = [bestUci, ...bestContinuationMoves];
       if (fullBestLine.length > 0) animateSequence(tactic.fenBefore, fullBestLine);
     } catch (error) {
@@ -686,6 +698,7 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
     if (explaining || animating) return;
     setExplaining(true);
     setExplanation("");
+    setTacticCards(null);
     try {
       const playedUci = moveToUciStr(userMoveDetails);
       if (!playedUci) {
@@ -716,13 +729,15 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
       const continuation = formatPrincipalVariation(afterPlayed.fen(), line.pvMoves);
       if (continuation) sanLine.push(continuation);
       const missedText = isMate
-        ? "and missed a forced mate"
-        : `and missed a ${formatEvalLoss(tactic.cpLoss)} eval gain`;
-      setExplanation(
-        `You played ${userMoveDetails?.san ?? tactic.userMove} ${missedText}. ` +
-          `The winning move was ${bestMoveDetails?.san ?? tactic.bestMove}. ` +
-          `What happens after your move: ${sanLine.length ? sanLine.join(" ") : "not available"}.`
-      );
+        ? "missed a forced mate"
+        : `missed a ${formatEvalLoss(tactic.cpLoss)} eval gain`;
+      setTacticCards({
+        type: "punishment",
+        move: userMoveDetails?.san ?? tactic.userMove,
+        impact: missedText,
+        bestMove: bestMoveDetails?.san ?? tactic.bestMove,
+        line: sanLine.length ? sanLine.join(" ") : undefined,
+      });
       if (line.pvMoves.length > 0) {
         animateSequence(tactic.fenBefore, [playedUci, ...line.pvMoves]);
       }
@@ -936,9 +951,61 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
           </div>
 
           {/* Explanation output */}
-          {explanation && (
-            <div className="animate-fade-in rounded-xl border border-amber-500/[0.08] bg-amber-500/[0.02] p-4 text-sm text-slate-300">
-              {explanation}
+          {(tacticCards || explanation) && (
+            <div className="animate-fade-in space-y-2">
+              {tacticCards ? (
+                <>
+                  {/* Move + Impact card */}
+                  <div className={`rounded-xl border p-3 ${
+                    tacticCards.type === "winning"
+                      ? "border-emerald-500/20 bg-emerald-500/[0.04]"
+                      : "border-red-500/20 bg-red-500/[0.04]"
+                  }`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className={`text-sm font-semibold ${
+                        tacticCards.type === "winning" ? "text-emerald-300" : "text-red-300"
+                      }`}>
+                        {tacticCards.type === "winning" ? "✓ " : "✗ "}
+                        <strong className="text-white">{tacticCards.move}</strong>
+                        {" — "}{tacticCards.impact}
+                      </p>
+                      {tacticCards.evalAfter && (
+                        <span className="shrink-0 rounded-md bg-emerald-500/15 px-2 py-0.5 text-[11px] font-mono font-bold tabular-nums text-emerald-400">
+                          {tacticCards.evalAfter}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Best move reminder (punishment mode) */}
+                  {tacticCards.bestMove && (
+                    <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.03] p-3">
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-emerald-500/60 mb-1">
+                        🎯 Winning move
+                      </p>
+                      <p className="text-sm font-medium text-emerald-300">
+                        {tacticCards.bestMove}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Engine line card */}
+                  {tacticCards.line && (
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                      <p className="mb-1 text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                        📋 {tacticCards.type === "winning" ? "Winning line" : "After your move"}
+                      </p>
+                      <p className="text-[13px] font-mono leading-relaxed text-slate-300 break-words">
+                        {tacticCards.line}
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="rounded-xl border border-amber-500/[0.08] bg-amber-500/[0.02] p-4 text-sm text-slate-300">
+                  {explanation}
+                </div>
+              )}
             </div>
           )}
         </div>

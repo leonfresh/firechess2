@@ -1838,7 +1838,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
 
           {/* Rich coaching explanation */}
           {(richExplanation || explanation) && (
-            <div className="animate-fade-in space-y-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="animate-fade-in space-y-3">
               {richExplanation ? (
                 <>
                   {/* Tab header */}
@@ -1848,11 +1848,9 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                         key={tab}
                         type="button"
                         onClick={() => {
-                          // Stop any existing animation/explanation before switching tabs
                           if (animating) stopAnimation();
                           setExplaining(false);
                           setActiveExplainTab(tab);
-                          // Use setTimeout to let the state clear before starting new explanation
                           setTimeout(() => {
                             if (tab === "played") onExplainMistake();
                             else if (tab === "best") onExplainBestMove();
@@ -1874,60 +1872,121 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                     ))}
                   </div>
 
-                  {/* Headline badge */}
-                  <div className={`inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-bold ${
+                  {/* Move + Eval card */}
+                  <div className={`rounded-xl border p-3 ${
                     activeExplainTab === "played"
-                      ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                      ? "border-red-500/20 bg-red-500/[0.04]"
                       : activeExplainTab === "best"
-                        ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                        : "bg-blue-500/10 text-blue-400 border border-blue-500/20"
+                        ? "border-emerald-500/20 bg-emerald-500/[0.04]"
+                        : "border-blue-500/20 bg-blue-500/[0.04]"
                   }`}>
-                    {activeExplainTab === "played" ? "✗" : activeExplainTab === "best" ? "✓" : "📊"}
-                    {" "}{richExplanation.headline}
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium text-slate-200" dangerouslySetInnerHTML={{
+                        __html: (richExplanation.moveDescription ?? richExplanation.headline)
+                          .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>')
+                      }} />
+                      {richExplanation.evalShift && (
+                        <span className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-mono font-bold tabular-nums ${
+                          activeExplainTab === "played"
+                            ? "bg-red-500/15 text-red-400"
+                            : activeExplainTab === "best"
+                              ? "bg-emerald-500/15 text-emerald-400"
+                              : "bg-blue-500/15 text-blue-400"
+                        }`}>
+                          {richExplanation.evalShift}
+                        </span>
+                      )}
+                    </div>
+                    <p className={`mt-1 text-[11px] font-medium ${
+                      activeExplainTab === "played" ? "text-red-400/70" : activeExplainTab === "best" ? "text-emerald-400/70" : "text-blue-400/70"
+                    }`}>
+                      {richExplanation.headline}
+                    </p>
                   </div>
 
-                  {/* Coaching paragraph */}
-                  <p className="text-sm leading-relaxed text-slate-300" dangerouslySetInnerHTML={{
-                    __html: richExplanation.coaching
-                      .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>')
-                  }} />
-
-                  {/* Theme tags */}
-                  {richExplanation.themes.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5">
-                      {richExplanation.themes.map((theme) => (
-                        <span
-                          key={theme}
-                          className={`rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${
-                            activeExplainTab === "played"
-                              ? "border-red-500/20 bg-red-500/10 text-red-400"
-                              : activeExplainTab === "best"
-                                ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-400"
-                                : "border-blue-500/20 bg-blue-500/10 text-blue-400"
+                  {/* Theme cards */}
+                  {richExplanation.themeCards && richExplanation.themeCards.length > 0 && (
+                    <div className="grid gap-2">
+                      {richExplanation.themeCards.map((card, i) => (
+                        <div
+                          key={i}
+                          className={`flex items-start gap-3 rounded-xl border p-3 ${
+                            card.severity === "critical"
+                              ? "border-red-500/20 bg-red-500/[0.04]"
+                              : card.severity === "warning"
+                                ? "border-amber-500/20 bg-amber-500/[0.04]"
+                                : activeExplainTab === "best"
+                                  ? "border-emerald-500/15 bg-emerald-500/[0.03]"
+                                  : "border-white/[0.08] bg-white/[0.02]"
                           }`}
                         >
-                          {theme}
-                        </span>
+                          <span className="mt-0.5 text-base leading-none">{card.icon}</span>
+                          <div className="min-w-0 flex-1">
+                            <p className={`text-xs font-semibold ${
+                              card.severity === "critical"
+                                ? "text-red-400"
+                                : card.severity === "warning"
+                                  ? "text-amber-400"
+                                  : activeExplainTab === "best"
+                                    ? "text-emerald-400"
+                                    : "text-slate-300"
+                            }`}>
+                              {card.label}
+                            </p>
+                            {card.description && (
+                              <p className="mt-0.5 text-[11px] leading-snug text-slate-400">
+                                {card.description}
+                              </p>
+                            )}
+                          </div>
+                        </div>
                       ))}
                     </div>
                   )}
 
-                  {/* Detailed observations */}
-                  {richExplanation.observations.length > 0 && (
-                    <div className="space-y-1.5 border-t border-white/[0.06] pt-3">
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Details</p>
-                      {richExplanation.observations.map((obs, i) => (
-                        <p
-                          key={i}
-                          className="flex items-start gap-2 text-xs text-slate-400"
-                        >
-                          <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-slate-600" />
-                          <span dangerouslySetInnerHTML={{
-                            __html: obs.replace(/\*\*(.+?)\*\*/g, '<strong class="text-slate-300">$1</strong>')
-                          }} />
-                        </p>
-                      ))}
+                  {/* Coaching card */}
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                    <p className="mb-1.5 text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                      💡 Coaching
+                    </p>
+                    <p className="text-[13px] leading-relaxed text-slate-300" dangerouslySetInnerHTML={{
+                      __html: richExplanation.coaching
+                        .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>')
+                    }} />
+                  </div>
+
+                  {/* Takeaway card */}
+                  {richExplanation.takeaway && (
+                    <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-3">
+                      <p className="mb-1 text-[10px] font-medium uppercase tracking-wider text-amber-500/60">
+                        🎯 Takeaway
+                      </p>
+                      <p className="text-[13px] font-medium leading-snug text-amber-300">
+                        {richExplanation.takeaway.replace(/\*\*/g, "")}
+                      </p>
                     </div>
+                  )}
+
+                  {/* Details (expandable observations) */}
+                  {richExplanation.observations.length > 0 && (
+                    <details className="group rounded-xl border border-white/[0.06] bg-white/[0.02]">
+                      <summary className="cursor-pointer select-none px-3 py-2 text-[10px] font-medium uppercase tracking-wider text-slate-500 transition-colors hover:text-slate-400">
+                        ▸ Details ({richExplanation.observations.length})
+                      </summary>
+                      <div className="space-y-1.5 border-t border-white/[0.06] px-3 pb-3 pt-2">
+                        {richExplanation.observations.map((obs, i) => (
+                          <p
+                            key={i}
+                            className="flex items-start gap-2 text-xs text-slate-400"
+                          >
+                            <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-slate-600" />
+                            <span dangerouslySetInnerHTML={{
+                              __html: obs.replace(/\*\*(.+?)\*\*/g, '<strong class="text-slate-300">$1</strong>')
+                            }} />
+                          </p>
+                        ))}
+                      </div>
+                    </details>
                   )}
                 </>
               ) : (

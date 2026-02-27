@@ -193,6 +193,15 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
   const [explaining, setExplaining] = useState(false);
   const [animating, setAnimating] = useState(false);
   const [explanation, setExplanation] = useState("");
+  const [endgameCards, setEndgameCards] = useState<{
+    type: "best" | "consequence";
+    move: string;
+    impact: string;
+    evalAfter?: string;
+    line?: string;
+    bestMove?: string;
+    context?: string;
+  } | null>(null);
   const [fenCopied, setFenCopied] = useState(false);
   const [boardInstance, setBoardInstance] = useState(0);
   const timerIds = useRef<number[]>([]);
@@ -352,6 +361,7 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
     if (explaining || animating) return;
     setExplaining(true);
     setExplanation("");
+    setEndgameCards(null);
     try {
       const bestUci = moveToUciStr(bestMoveDetails);
       if (!bestUci) {
@@ -373,20 +383,21 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
         setExplanation("Could not apply the best move for this position.");
         return;
       }
-      let evalAfterBestText = "";
+      let evalAfterBestStr: string | undefined;
       const bestEval = await stockfishClient.evaluateFen(bestFenChess.fen(), engineDepth);
       if (bestEval) {
-        evalAfterBestText = ` Eval after best move: ${formatEval(bestEval.cp, { showPlus: true })}.`;
+        evalAfterBestStr = formatEval(bestEval.cp, { showPlus: true });
       }
       const continuation = await stockfishClient.getPrincipalVariation(bestFenChess.fen(), 9, engineDepth);
       const bestContinuationMoves = continuation?.pvMoves ?? [];
       const pvText = formatPrincipalVariation(mistake.fenBefore, [bestUci, ...bestContinuationMoves]);
-
-      const lossText = `loses about ${formatEvalLoss(mistake.cpLoss)} eval`;
-      setExplanation(
-        `The best endgame move was ${bestMoveDetails?.san ?? mistake.bestMove}. Your move ${userMoveDetails?.san ?? mistake.userMove} ${lossText}.${evalAfterBestText} ` +
-          `Best line: ${pvText || "not available"}.`
-      );
+      setEndgameCards({
+        type: "best",
+        move: bestMoveDetails?.san ?? mistake.bestMove,
+        impact: `Your move ${userMoveDetails?.san ?? mistake.userMove} loses about ${formatEvalLoss(mistake.cpLoss)} eval`,
+        evalAfter: evalAfterBestStr,
+        line: pvText || undefined,
+      });
       const fullBestLine = [bestUci, ...bestContinuationMoves];
       if (fullBestLine.length > 0) animateSequence(mistake.fenBefore, fullBestLine);
     } catch (error) {
@@ -401,6 +412,7 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
     if (explaining || animating) return;
     setExplaining(true);
     setExplanation("");
+    setEndgameCards(null);
     try {
       const playedUci = moveToUciStr(userMoveDetails);
       if (!playedUci) {
@@ -434,12 +446,16 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
       const failedConversion = mistake.tags.includes("Failed Conversion");
       const contextText = failedConversion
         ? "You had a winning position but failed to convert."
-        : `Your move lost about ${formatEvalLoss(mistake.cpLoss)} eval in this ${mistake.endgameType} endgame.`;
+        : `Lost about ${formatEvalLoss(mistake.cpLoss)} eval in this ${mistake.endgameType} endgame.`;
 
-      setExplanation(
-        `${contextText} You played ${userMoveDetails?.san ?? mistake.userMove}, but ${bestMoveDetails?.san ?? mistake.bestMove} was better. ` +
-          `After your move: ${sanLine.length ? sanLine.join(" ") : "not available"}.`
-      );
+      setEndgameCards({
+        type: "consequence",
+        move: userMoveDetails?.san ?? mistake.userMove,
+        impact: contextText,
+        bestMove: bestMoveDetails?.san ?? mistake.bestMove,
+        line: sanLine.length ? sanLine.join(" ") : undefined,
+        context: failedConversion ? "Failed Conversion" : undefined,
+      });
       if (line.pvMoves.length > 0) {
         animateSequence(mistake.fenBefore, [playedUci, ...line.pvMoves]);
       }
@@ -635,9 +651,77 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
           </div>
 
           {/* Explanation output */}
-          {explanation && (
-            <div className="animate-fade-in rounded-xl border border-sky-500/[0.08] bg-sky-500/[0.02] p-4 text-sm text-slate-300">
-              {explanation}
+          {(endgameCards || explanation) && (
+            <div className="animate-fade-in space-y-2">
+              {endgameCards ? (
+                <>
+                  {/* Move + Impact card */}
+                  <div className={`rounded-xl border p-3 ${
+                    endgameCards.type === "best"
+                      ? "border-emerald-500/20 bg-emerald-500/[0.04]"
+                      : "border-red-500/20 bg-red-500/[0.04]"
+                  }`}>
+                    <div className="flex items-center justify-between gap-3">
+                      <p className={`text-sm font-semibold ${
+                        endgameCards.type === "best" ? "text-emerald-300" : "text-red-300"
+                      }`}>
+                        {endgameCards.type === "best" ? "✓ Best: " : "✗ "}
+                        <strong className="text-white">{endgameCards.move}</strong>
+                      </p>
+                      {endgameCards.evalAfter && (
+                        <span className="shrink-0 rounded-md bg-emerald-500/15 px-2 py-0.5 text-[11px] font-mono font-bold tabular-nums text-emerald-400">
+                          {endgameCards.evalAfter}
+                        </span>
+                      )}
+                    </div>
+                    <p className={`mt-1 text-[11px] ${
+                      endgameCards.type === "best" ? "text-emerald-400/70" : "text-red-400/70"
+                    }`}>
+                      {endgameCards.impact}
+                    </p>
+                  </div>
+
+                  {/* Context card (Failed Conversion) */}
+                  {endgameCards.context && (
+                    <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-3">
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-amber-500/60 mb-1">
+                        ⚠️ {endgameCards.context}
+                      </p>
+                      <p className="text-[13px] text-amber-300">
+                        You had a winning position but failed to convert the advantage.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Best move reminder (consequence mode) */}
+                  {endgameCards.bestMove && (
+                    <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.03] p-3">
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-emerald-500/60 mb-1">
+                        🎯 Better move
+                      </p>
+                      <p className="text-sm font-medium text-emerald-300">
+                        {endgameCards.bestMove}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Engine line card */}
+                  {endgameCards.line && (
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                      <p className="mb-1 text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                        📋 {endgameCards.type === "best" ? "Best line" : "After your move"}
+                      </p>
+                      <p className="text-[13px] font-mono leading-relaxed text-slate-300 break-words">
+                        {endgameCards.line}
+                      </p>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="rounded-xl border border-sky-500/[0.08] bg-sky-500/[0.02] p-4 text-sm text-slate-300">
+                  {explanation}
+                </div>
+              )}
             </div>
           )}
         </div>

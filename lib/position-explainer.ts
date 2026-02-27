@@ -16,6 +16,13 @@ import { Chess, type PieceSymbol, type Color, type Square } from "chess.js";
 
 /* ────────────────────────── Types ────────────────────────── */
 
+export type ThemeCard = {
+  icon: string;
+  label: string;
+  description: string;
+  severity: "critical" | "warning" | "info";
+};
+
 export type PositionExplanation = {
   /** One-liner summary suitable for a badge */
   headline: string;
@@ -25,6 +32,14 @@ export type PositionExplanation = {
   themes: string[];
   /** Specific observations about the position */
   observations: string[];
+  /** Structured theme cards for card-based UI */
+  themeCards?: ThemeCard[];
+  /** One-sentence actionable takeaway */
+  takeaway?: string;
+  /** Move description: "You played Nf3, moving your knight from g1 to f3" */
+  moveDescription?: string;
+  /** Eval shift text: "+0.3 → -2.1" */
+  evalShift?: string;
 };
 
 export type MoveExplanation = {
@@ -2193,6 +2208,209 @@ function pieceActivity(chess: Chess, color: Color): { active: string[]; passive:
   return { active, passive };
 }
 
+/* ────────────── Position Speed / Tempo Analysis ────────────── */
+
+type PositionSpeed = {
+  /** 0-100 scale: 0 = frozen/closed, 100 = explosive/critical */
+  score: number;
+  label: "Frozen" | "Slow" | "Moderate" | "Fast" | "Critical";
+  factors: string[];
+  /** Brief coaching sentence about position speed */
+  summary: string;
+};
+
+/**
+ * Evaluate the "speed" of a position — how urgently action is needed.
+ * Factors: open/closed structure, king exposure, piece tension,
+ * material imbalance, available forcing moves, advanced passed pawns.
+ */
+function analyzePositionSpeed(chess: Chess, perspective: Color): PositionSpeed {
+  let score = 50; // baseline: moderate
+  const factors: string[] = [];
+  const allPieces = getAllPieces(chess);
+  const opp = oppColor(perspective);
+
+  // ── 1. Open vs Closed Structure (±20) ──
+  const pawns = allPieces.filter(p => p.type === "p");
+  const centralPawns = pawns.filter(p => {
+    const f = fileIdx(p.square);
+    return f >= 2 && f <= 5;
+  });
+  // Count locked pawn pairs (pawns directly facing each other)
+  let lockedPairs = 0;
+  for (const p of centralPawns) {
+    const f = fileIdx(p.square);
+    const r = rankIdx(p.square);
+    const oppDir = p.color === "w" ? 1 : -1;
+    if (centralPawns.some(op =>
+      op.color !== p.color && fileIdx(op.square) === f && rankIdx(op.square) === r + oppDir
+    )) {
+      lockedPairs++;
+    }
+  }
+  // Count open/semi-open files
+  let openFileCount = 0;
+  for (let f = 0; f < 8; f++) {
+    const friendlyP = pawns.filter(p => p.color === perspective && fileIdx(p.square) === f);
+    const enemyP = pawns.filter(p => p.color === opp && fileIdx(p.square) === f);
+    if (friendlyP.length === 0 && enemyP.length === 0) openFileCount++;
+    else if (friendlyP.length === 0 || enemyP.length === 0) openFileCount += 0.5;
+  }
+
+  if (lockedPairs >= 4) {
+    score -= 20;
+    factors.push("locked central pawns slow the position down");
+  } else if (lockedPairs >= 2) {
+    score -= 8;
+    factors.push("partially blocked center");
+  }
+  if (openFileCount >= 4) {
+    score += 15;
+    factors.push("many open files accelerate piece activity");
+  } else if (openFileCount >= 2) {
+    score += 6;
+    factors.push("some open lines available");
+  }
+  if (pawns.length <= 8) {
+    score += 5; // fewer pawns = more open
+  }
+
+  // ── 2. King Danger (±25) ──
+  const ks = kingSafetyScore(chess, perspective);
+  const oppKs = kingSafetyScore(chess, opp);
+
+  if (oppKs.score <= 40) {
+    score += 20;
+    factors.push("opponent's king is exposed — attack potential is high");
+  } else if (oppKs.score <= 65) {
+    score += 10;
+    factors.push("opponent's king has some weaknesses");
+  }
+  if (ks.score <= 40) {
+    score += 15; // danger for us also speeds things up (must act now)
+    factors.push("your own king is vulnerable — urgency to act or defend");
+  } else if (ks.score <= 65) {
+    score += 5;
+    factors.push("your king has minor weaknesses");
+  }
+
+  // ── 3. Forcing Moves Available (±15) ──
+  let checkCount = 0;
+  let captureCount = 0;
+  let threatCount = 0;
+  try {
+    if (chess.turn() === perspective) {
+      const moves = chess.moves({ verbose: true });
+      for (const m of moves) {
+        if (m.san.includes("+") || m.san.includes("#")) checkCount++;
+        if (m.captured) captureCount++;
+      }
+      // Count pieces attacked by opponent that are undefended
+      const oppMoves = chess.moves({ verbose: true });
+      threatCount = checkCount; // checks are direct threats
+    }
+  } catch {}
+
+  if (checkCount >= 3) {
+    score += 12;
+    factors.push("multiple checking possibilities create tactical tension");
+  } else if (checkCount >= 1) {
+    score += 4;
+  }
+  if (captureCount >= 5) {
+    score += 10;
+    factors.push("many captures available — the position is tactically charged");
+  } else if (captureCount >= 3) {
+    score += 5;
+  }
+
+  // ── 4. Material Imbalance (±8) ──
+  const mat = materialBalance(chess);
+  const sideAdv = perspective === "w" ? mat : -mat;
+  if (Math.abs(sideAdv) >= 3) {
+    score += 8;
+    factors.push(sideAdv > 0
+      ? "material advantage — convert before the opponent consolidates"
+      : "material deficit — must create counterplay immediately"
+    );
+  }
+
+  // ── 5. Advanced Passed Pawns (±10) ──
+  const ps = pawnStructure(chess, perspective);
+  const oppPs = pawnStructure(chess, opp);
+  const advancedPassed = ps.assets.filter(a => a.includes("advanced"));
+  const oppAdvancedPassed = oppPs.assets.filter(a => a.includes("advanced"));
+  if (advancedPassed.length > 0 || oppAdvancedPassed.length > 0) {
+    score += 10;
+    factors.push("advanced passed pawn(s) demand immediate attention");
+  }
+
+  // ── 6. Queens on the board (±6) ──
+  const queens = allPieces.filter(p => p.type === "q");
+  if (queens.length >= 2) {
+    score += 6;
+    factors.push("both queens on the board increase attacking potential");
+  } else if (queens.length === 0) {
+    score -= 6;
+    factors.push("no queens — the position tends toward slow maneuvering");
+  }
+
+  // Clamp
+  score = Math.max(0, Math.min(100, score));
+
+  // Label
+  const label: PositionSpeed["label"] =
+    score >= 80 ? "Critical" :
+    score >= 60 ? "Fast" :
+    score >= 40 ? "Moderate" :
+    score >= 20 ? "Slow" :
+    "Frozen";
+
+  // Summary
+  let summary: string;
+  if (score >= 80) {
+    summary = "This position is on fire — every tempo matters. Forcing moves (checks, captures, threats) should be prioritized. Sometimes a sacrifice is worth it just to maintain the initiative.";
+  } else if (score >= 60) {
+    summary = "The position is fast-paced with concrete threats to calculate. Act with purpose — slow moves can let the opponent seize the initiative.";
+  } else if (score >= 40) {
+    summary = "A balanced tempo — concrete threats exist but there's time for improving moves too. Look for ways to increase pressure before the opponent stabilizes.";
+  } else if (score >= 20) {
+    summary = "The position is slow and strategic. Piece maneuvering and long-term planning matter more than tactics here. Pawn breaks will be the key to opening things up.";
+  } else {
+    summary = "The position is completely locked up. Look for pawn breaks or piece rerouting to make progress. Patience and subtle improvements are critical.";
+  }
+
+  return { score, label, factors, summary };
+}
+
+/**
+ * Compare speed before and after a move to explain tempo impact.
+ */
+function analyzeSpeedChange(
+  fenBefore: string,
+  fenAfter: string,
+  moverColor: Color,
+): { speedBefore: PositionSpeed; speedAfter: PositionSpeed; delta: number; commentary: string | null } {
+  const before = new Chess(fenBefore);
+  const after = new Chess(fenAfter);
+  const speedBefore = analyzePositionSpeed(before, moverColor);
+  const speedAfter = analyzePositionSpeed(after, moverColor);
+  const delta = speedAfter.score - speedBefore.score;
+
+  let commentary: string | null = null;
+  if (delta >= 20) {
+    commentary = `This move dramatically increases the speed of the position (${speedBefore.label} → ${speedAfter.label}). The tempo has shifted — forcing play is now required.`;
+  } else if (delta >= 10) {
+    commentary = `This raises the tempo of the position (${speedBefore.label} → ${speedAfter.label}). The game is becoming more concrete.`;
+  } else if (delta <= -20) {
+    commentary = `This slows the position down significantly (${speedBefore.label} → ${speedAfter.label}). The urgency has been defused — the game becomes more strategic.`;
+  } else if (delta <= -10) {
+    commentary = `This cools down the position (${speedBefore.label} → ${speedAfter.label}). There's less immediate tension now.`;
+  }
+
+  return { speedBefore, speedAfter, delta, commentary };
+}
+
 /* ────────────── Bishop Pair Detection ────────────── */
 
 function hasBishopPair(chess: Chess, color: Color): boolean {
@@ -2705,6 +2923,7 @@ function buildPlayedMoveExplanation(
 ): PositionExplanation {
   const observations: string[] = [];
   const themeNames: string[] = themes.map(t => t.name);
+  let takeawayStr = "";
 
   let headline = "";
   const cpLossPawns = (cpLoss / 100).toFixed(1);
@@ -2855,6 +3074,55 @@ function buildPlayedMoveExplanation(
     sentences.push(`You played **${userSan}**, losing approximately ${cpLossPawns} pawns of evaluation.`);
   }
 
+  // ── Position Speed / Tempo analysis ──
+  let speedCard: ThemeCard | null = null;
+  try {
+    if (fenAfterUser) {
+      const { speedBefore, speedAfter, delta, commentary } = analyzeSpeedChange(fenBefore, fenAfterUser, new Chess(fenBefore).turn());
+
+      // Always add a speed observation if the position is notably fast or slow
+      if (speedBefore.score >= 60) {
+        observations.push(`🏎️ **Position speed: ${speedBefore.label}** — ${speedBefore.summary}`);
+      } else if (speedBefore.score <= 25) {
+        observations.push(`🐢 **Position speed: ${speedBefore.label}** — ${speedBefore.summary}`);
+      }
+
+      // Did this move change the speed?
+      if (commentary) {
+        sentences.push(commentary);
+        themeNames.push("Tempo Shift");
+      }
+
+      // If the position was fast and the player slowed it down (bad in fast positions)
+      if (speedBefore.score >= 60 && delta <= -10) {
+        speedCard = {
+          icon: "🐢",
+          label: "Slowed the Position",
+          description: `The position demanded fast, concrete play (${speedBefore.label}), but this move cools things down. In sharp positions, slow moves lose the initiative.`,
+          severity: cpLoss >= 200 ? "critical" : "warning",
+        };
+      }
+      // If the position was slow and the player needlessly sharpened it (could be bad)
+      else if (speedBefore.score <= 35 && delta >= 15 && cpLoss >= 100) {
+        speedCard = {
+          icon: "⚡",
+          label: "Rushed in a Slow Position",
+          description: `The position was ${speedBefore.label.toLowerCase()} and strategic, but this move needlessly sharpens play. In closed positions, patience and maneuvering are usually better than forcing the issue.`,
+          severity: "warning",
+        };
+      }
+      // Neutral speed info for dramatic positions
+      else if (speedBefore.score >= 75) {
+        speedCard = {
+          icon: "🏎️",
+          label: `Position Speed: ${speedBefore.label}`,
+          description: speedBefore.factors.slice(0, 2).join(". ") + ".",
+          severity: "info",
+        };
+      }
+    }
+  } catch {}
+
   // ── Coaching Intelligence enrichment ──
   if (ctx) {
     // Principle violations → highly instructive
@@ -2871,13 +3139,75 @@ function buildPlayedMoveExplanation(
     // Actionable takeaway → lesson to remember
     const takeaway = generateCoachingTakeaway(ctx.profile, ctx.violations, themes, cpLoss);
     observations.push(takeaway);
+    takeawayStr = takeaway;
   }
+
+  // Build structured theme cards
+  const themeCards: ThemeCard[] = [];
+  const THEME_ICONS: Record<string, string> = {
+    "Walks Into Fork": "🍴", "Walks Into Pin": "📌", "Back-Rank Mate Threat": "💀",
+    "Hangs Material": "🎯", "Material Loss": "📉", "King Safety": "👑",
+    "Center Abandonment": "🏛️", "Piece Retreat": "⬅️", "Pawn Structure": "🧱",
+    "Squandered Advantage": "💨", "Decisive Error": "⚡", "Discovered Attack": "🔓",
+    "Skewer": "🗡️", "Overloaded Piece": "⚖️", "Trapped Piece": "🪤",
+    "Zugzwang": "♟️", "Tempo Shift": "🏎️",
+  };
+  for (const t of themes) {
+    themeCards.push({
+      icon: THEME_ICONS[t.name] ?? "⚠️",
+      label: t.name,
+      description: t.description,
+      severity: cpLoss >= 300 ? "critical" : cpLoss >= 150 ? "warning" : "info",
+    });
+  }
+  if (ctx) {
+    for (const v of ctx.violations.slice(0, 2)) {
+      if (!themeCards.some(c => c.label === v.principle)) {
+        themeCards.push({
+          icon: "📖",
+          label: v.principle,
+          description: v.explanation,
+          severity: "warning",
+        });
+      }
+    }
+  }
+  // Add speed card if generated
+  if (speedCard) {
+    themeCards.push(speedCard);
+  }
+
+  // Eval shift text
+  const fmtEval = (cp: number) => {
+    const p = cp / 100;
+    return `${p >= 0 ? "+" : ""}${(Math.round(p * 10) / 10).toFixed(1)}`;
+  };
+  const evalShift = `${fmtEval(evalBefore)} → ${fmtEval(evalAfter)}`;
+
+  // Move description
+  let moveDescription = `You played **${userSan}**`;
+  try {
+    const b = new Chess(fenBefore);
+    const fromS = userUci.slice(0, 2) as Square;
+    const toS = userUci.slice(2, 4) as Square;
+    const mp = pieceAt(b, fromS);
+    const cp2 = pieceAt(b, toS);
+    if (mp) {
+      moveDescription = cp2
+        ? `**${userSan}** — captured the ${pieceName(cp2.type)} on ${toS} with your ${pieceName(mp.type)}`
+        : `**${userSan}** — moved your ${pieceName(mp.type)} from ${fromS} to ${toS}`;
+    }
+  } catch {}
 
   return {
     headline,
     coaching: sentences.join(" "),
     themes: [...new Set(themeNames)],
     observations,
+    themeCards,
+    takeaway: takeawayStr || undefined,
+    moveDescription,
+    evalShift,
   };
 }
 
@@ -3038,6 +3368,61 @@ function buildBestMoveExplanation(
     sentences.push(`The engine recommends **${bestSan}** to maintain the best position.`);
   }
 
+  // ── Position Speed / Tempo analysis for best move ──
+  let bestSpeedCard: ThemeCard | null = null;
+  try {
+    const beforeChess = new Chess(fenBefore);
+    const moverColor = beforeChess.turn();
+    const speedBefore = analyzePositionSpeed(beforeChess, moverColor);
+
+    if (fenAfterBest) {
+      const { speedAfter, delta, commentary } = analyzeSpeedChange(fenBefore, fenAfterBest, moverColor);
+
+      // Explain why the best move increases speed (e.g. sacrifices for initiative)
+      if (delta >= 15) {
+        // Check if this move is a sacrifice
+        const fromSq = bestUci!.slice(0, 2) as Square;
+        const toSq = bestUci!.slice(2, 4) as Square;
+        const movedP = pieceAt(beforeChess, fromSq);
+        const capturedP = pieceAt(beforeChess, toSq);
+        const isSacrifice = movedP && capturedP &&
+          PIECE_VALUES[movedP.type] > PIECE_VALUES[capturedP.type];
+
+        if (isSacrifice) {
+          sentences.push(`This sacrifice is justified because it dramatically increases the speed of the position — when the position becomes sharp and forcing, the initiative can be worth more than material.`);
+          themeNames.push("Tempo Sacrifice");
+          bestSpeedCard = {
+            icon: "🔥",
+            label: "Tempo Sacrifice",
+            description: `Sacrificing material to accelerate the attack and seize the initiative (${speedBefore.label} → ${speedAfter.label}). In fast positions, every tempo counts more than a pawn.`,
+            severity: "info",
+          };
+        } else if (commentary) {
+          sentences.push(commentary);
+          bestSpeedCard = {
+            icon: "🏎️",
+            label: `Increases Tempo (${speedBefore.label} → ${speedAfter.label})`,
+            description: `This move speeds up the position — concrete play is now demanded.`,
+            severity: "info",
+          };
+        }
+      }
+
+      // Add general speed context for fast positions
+      if (!bestSpeedCard && speedBefore.score >= 65) {
+        observations.push(`🏎️ **Position speed: ${speedBefore.label}** — ${speedBefore.summary}`);
+        bestSpeedCard = {
+          icon: "🏎️",
+          label: `Position Speed: ${speedBefore.label}`,
+          description: speedBefore.factors.slice(0, 2).join(". ") + ".",
+          severity: "info",
+        };
+      } else if (!bestSpeedCard && speedBefore.score <= 25) {
+        observations.push(`🐢 **Position speed: ${speedBefore.label}** — ${speedBefore.summary}`);
+      }
+    }
+  } catch {}
+
   // ── Coaching Intelligence: explain the thought process for finding this move ──
   if (ctx && bestUci) {
     try {
@@ -3076,11 +3461,69 @@ function buildBestMoveExplanation(
     headline = "Engine recommendation";
   }
 
+  // Build structured theme cards for best move
+  const themeCards: ThemeCard[] = [];
+  const BEST_THEME_ICONS: Record<string, string> = {
+    "Development": "📦", "Center Control": "🏛️", "King Safety": "👑",
+    "Castling": "🏰", "Initiative": "⚡", "Open File": "🗂️",
+    "Bishop Pair": "✝️", "Material Gain": "🎯", "Pin": "📌",
+    "Defense": "🛡️", "Converting": "🏆", "Fork": "🍴",
+    "Discovered Attack": "🔓", "Skewer": "🗡️",
+    "Tempo Sacrifice": "🔥", "Tempo Shift": "🏎️",
+  };
+  for (const t of themes) {
+    themeCards.push({
+      icon: BEST_THEME_ICONS[t.name] ?? "✨",
+      label: t.name,
+      description: t.description,
+      severity: "info",
+    });
+  }
+  // Add positional themes as cards
+  for (const name of [...new Set(themeNames)]) {
+    if (!themeCards.some(c => c.label === name) && !themes.some(t => t.name === name)) {
+      themeCards.push({
+        icon: BEST_THEME_ICONS[name] ?? "✅",
+        label: name,
+        description: sentences.find(s => s.toLowerCase().includes(name.toLowerCase().split(" ")[0])) ?? "",
+        severity: "info",
+      });
+    }
+  }
+  // Add speed card if generated
+  if (bestSpeedCard) {
+    themeCards.push(bestSpeedCard);
+  }
+
+  // Move description
+  let moveDescription = `Best: **${bestSan}**`;
+  try {
+    const b = new Chess(fenBefore);
+    const fromS = bestUci.slice(0, 2) as Square;
+    const toS = bestUci.slice(2, 4) as Square;
+    const mp = pieceAt(b, fromS);
+    const cp2 = pieceAt(b, toS);
+    if (mp) {
+      moveDescription = cp2
+        ? `**${bestSan}** — capture the ${pieceName(cp2.type)} on ${toS} with your ${pieceName(mp.type)}`
+        : bestSan.startsWith("O-O")
+          ? `**${bestSan}** — castle to safety`
+          : `**${bestSan}** — place your ${pieceName(mp.type)} on ${toS}`;
+    }
+  } catch {}
+
+  // Find the thought-process observation as takeaway
+  const thoughtObs = observations.find(o => o.startsWith("🧠"));
+  const takeaway = thoughtObs?.replace(/^🧠\s*/, "").replace(/\*\*/g, "") ?? undefined;
+
   return {
     headline,
     coaching: sentences.join(" "),
     themes: [...new Set(themeNames)],
     observations,
+    themeCards,
+    takeaway,
+    moveDescription,
   };
 }
 
