@@ -690,7 +690,7 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
       });
       const fullBestLine = [bestUci, ...bestContinuationMoves];
       setAnimLineUci(fullBestLine);
-      if (fullBestLine.length > 0) animateSequence(tactic.fenBefore, fullBestLine);
+      setExplainModalOpen(true);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to explain this position.";
       setExplanation(message);
@@ -744,11 +744,9 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
         bestMove: bestMoveDetails?.san ?? tactic.bestMove,
         line: sanLine.length ? sanLine.join(" ") : undefined,
       });
-      if (line.pvMoves.length > 0) {
-        const fullLine = [playedUci, ...line.pvMoves];
-        setAnimLineUci(fullLine);
-        animateSequence(tactic.fenBefore, fullLine);
-      }
+      const fullLine = [playedUci, ...line.pvMoves];
+      setAnimLineUci(fullLine);
+      setExplainModalOpen(true);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to explain this position.";
       setExplanation(message);
@@ -1011,6 +1009,7 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
             fen={tactic.fenBefore}
             uciMoves={animLineUci}
             boardOrientation={boardOrientation}
+            autoPlay
             title={tacticCards?.type === "winning"
               ? `Winning Move: ${bestMoveDetails?.san ?? tactic.bestMove}`
               : `Your Move: ${userMoveDetails?.san ?? tactic.userMove}`

@@ -1056,9 +1056,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
       } : prev);
 
       setAnimLineUci(fullMistakeLine);
-      if (line.pvMoves.length > 0) {
-        animateSequence(leak.fenBefore, fullMistakeLine);
-      }
+      setExplainModalOpen(true);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to explain this position.";
       setExplanation(message);
@@ -1134,9 +1132,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
       }
 
       setAnimLineUci(fullBestLine);
-      if (fullBestLine.length > 0) {
-        animateSequence(leak.fenBefore, fullBestLine);
-      }
+      setExplainModalOpen(true);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to explain this position.";
       setExplanation(message);
@@ -1218,9 +1214,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
 
       const fullLine = [dbUci, ...contMoves];
       setAnimLineUci(fullLine);
-      if (fullLine.length > 0) {
-        animateSequence(leak.fenBefore, fullLine);
-      }
+      setExplainModalOpen(true);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to explain this position.";
       setExplanation(message);
@@ -1956,6 +1950,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
             fen={leak.fenBefore}
             uciMoves={animLineUci}
             boardOrientation={boardOrientation}
+            autoPlay
             title={
               activeExplainTab === "played"
                 ? `Your Move: ${badMove?.san ?? leak.userMove}`

@@ -2341,6 +2341,41 @@ export async function analyzeOpeningLeaksInBrowser(
             if (isKnownTactic) complexity += 30;
             if (legalMoves.length >= 30) complexity += 10; // many options
             if (pieceCount <= 8 && fullMoveNumber >= 25) complexity += 15; // endgame tech
+
+            // King safety: open king (missing pawn shield) = natural to think longer
+            {
+              const ourColor = userColor === "white" ? "w" : "b";
+              const board = chess.board();
+              const kingSquare = (() => {
+                for (let r = 0; r < 8; r++)
+                  for (let c = 0; c < 8; c++) {
+                    const p = board[r][c];
+                    if (p && p.type === "k" && p.color === ourColor) return { r, c };
+                  }
+                return null;
+              })();
+              if (kingSquare) {
+                // Check pawns directly shielding the king (row in front, ±1 col)
+                const shieldRow = ourColor === "w" ? kingSquare.r - 1 : kingSquare.r + 1;
+                if (shieldRow >= 0 && shieldRow < 8) {
+                  let shieldPawns = 0;
+                  for (let dc = -1; dc <= 1; dc++) {
+                    const sc = kingSquare.c + dc;
+                    if (sc >= 0 && sc < 8) {
+                      const sq = board[shieldRow][sc];
+                      if (sq && sq.type === "p" && sq.color === ourColor) shieldPawns++;
+                    }
+                  }
+                  // Missing 2+ shield pawns = exposed king, bump complexity
+                  if (shieldPawns <= 1 && fullMoveNumber > 10 && pieceCount > 10) {
+                    complexity += 20;
+                  }
+                }
+                // Also check if opponent has pieces aimed at king area (checks available)
+                if (checks.length > 0) complexity += 10;
+              }
+            }
+
             complexity = Math.min(100, complexity);
 
             // Cross reference with missed tactics to get cpLoss + bestMove

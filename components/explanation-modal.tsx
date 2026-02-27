@@ -45,6 +45,8 @@ export type ExplanationModalProps = {
   uciMoves?: string[];
   /** Board orientation */
   boardOrientation?: "white" | "black";
+  /** Auto-start playback after a short delay when the modal opens */
+  autoPlay?: boolean;
 };
 
 /* ─── Helpers ─── */
@@ -107,6 +109,7 @@ export function ExplanationModal({
   fen: startFen,
   uciMoves,
   boardOrientation = "white",
+  autoPlay,
 }: ExplanationModalProps) {
   /* ── Board theming ── */
   const boardTheme = useBoardTheme();
@@ -149,10 +152,17 @@ export function ExplanationModal({
       setStepIdx(-1);
       setPlaying(false);
       setEvalCp(null);
+
+      // Auto-start playback after a short delay
+      if (autoPlay && steps.length > 0) {
+        const t = setTimeout(() => setPlaying(true), 1500);
+        return () => clearTimeout(t);
+      }
     }
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, startFen, uciMoves]);
 
   /* ── Auto-play timer ── */

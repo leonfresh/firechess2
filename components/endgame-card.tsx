@@ -404,7 +404,7 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
       });
       const fullBestLine = [bestUci, ...bestContinuationMoves];
       setAnimLineUci(fullBestLine);
-      if (fullBestLine.length > 0) animateSequence(mistake.fenBefore, fullBestLine);
+      setExplainModalOpen(true);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to explain this position.";
       setExplanation(message);
@@ -462,11 +462,9 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
         line: sanLine.length ? sanLine.join(" ") : undefined,
         context: failedConversion ? "Failed Conversion" : undefined,
       });
-      if (line.pvMoves.length > 0) {
-        const fullLine = [playedUci, ...line.pvMoves];
-        setAnimLineUci(fullLine);
-        animateSequence(mistake.fenBefore, fullLine);
-      }
+      const fullLine = [playedUci, ...line.pvMoves];
+      setAnimLineUci(fullLine);
+      setExplainModalOpen(true);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to explain this position.";
       setExplanation(message);
@@ -715,6 +713,7 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
             fen={mistake.fenBefore}
             uciMoves={animLineUci}
             boardOrientation={boardOrientation}
+            autoPlay
             title={endgameCards?.type === "best"
               ? `Best Move: ${bestMoveDetails?.san ?? mistake.bestMove}`
               : `Your Move: ${userMoveDetails?.san ?? mistake.userMove}`
