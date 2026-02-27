@@ -2731,15 +2731,30 @@ export default function HomePage() {
                   ))}
                 </CardCarousel>
               ) : (
+                <>
+                  {/* Free preview: first 3 cards */}
+                  {timeManagement.moments.length > 0 && (
+                    <CardCarousel viewMode={cardViewMode}>
+                      {timeManagement.moments.slice(0, 3).map((moment) => (
+                        <TimeCard
+                          key={`${moment.fen}-${moment.userMove}-${moment.gameIndex}`}
+                          moment={moment}
+                        />
+                      ))}
+                    </CardCarousel>
+                  )}
+
+                  {/* Upgrade CTA for the rest */}
+                  {timeManagement.moments.length > 3 && (
                 <div className="relative overflow-hidden rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/[0.06] via-violet-600/[0.03] to-transparent p-8">
                   <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-violet-500/10 blur-[60px]" />
                   <div className="relative flex flex-col items-center gap-4 text-center">
                     <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-500/15 text-3xl shadow-lg shadow-violet-500/10">⏱️</span>
                     <div>
-                      <h3 className="text-xl font-bold text-white">Unlock Time Management Analysis</h3>
+                      <h3 className="text-xl font-bold text-white">Unlock All Time Management Moments</h3>
                       <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">
-                        See exactly where you wasted time on simple positions and rushed through critical moments.
-                        Upgrade to Pro or try it once with coins.
+                        {timeManagement.moments.length - 3} more moment{timeManagement.moments.length - 3 !== 1 ? "s" : ""} found.
+                        Upgrade to Pro or unlock with coins to see the full breakdown.
                       </p>
                     </div>
                     <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
@@ -2774,19 +2789,10 @@ export default function HomePage() {
                         <span>🪙</span> Unlock for 30 Coins
                       </button>
                     </div>
-                    {/* Preview: show 1 card blurred */}
-                    <div className="relative mt-4 w-full">
-                      <div className="pointer-events-none select-none blur-[6px]">
-                        <TimeCard moment={timeManagement.moments[0]} />
-                      </div>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="rounded-full bg-black/60 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm">
-                          🔒 {timeManagement.moments.length} moment{timeManagement.moments.length !== 1 ? "s" : ""} found
-                        </span>
-                      </div>
-                    </div>
                   </div>
                 </div>
+                  )}
+                </>
               )}
               </>
               )}
