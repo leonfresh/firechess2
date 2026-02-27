@@ -253,6 +253,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   const [richExplanation, setRichExplanation] = useState<PositionExplanation | null>(null);
   const [activeExplainTab, setActiveExplainTab] = useState<"played" | "best" | "db" | null>(null);
   const [explainModalOpen, setExplainModalOpen] = useState(false);
+  const [animLineUci, setAnimLineUci] = useState<string[]>([]);
   const [fenCopied, setFenCopied] = useState(false);
   const [boardInstance, setBoardInstance] = useState(0);
   const timerIds = useRef<number[]>([]);
@@ -1000,6 +1001,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     setExplanation("");
     setRichExplanation(null);
     setActiveExplainTab("played");
+    setAnimLineUci([]);
 
     try {
       const playedUci = moveToUci(badMove);
@@ -1053,6 +1055,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
         ]
       } : prev);
 
+      setAnimLineUci(fullMistakeLine);
       if (line.pvMoves.length > 0) {
         animateSequence(leak.fenBefore, fullMistakeLine);
       }
@@ -1071,6 +1074,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     setExplanation("");
     setRichExplanation(null);
     setActiveExplainTab("best");
+    setAnimLineUci([]);
 
     try {
       const bestUci = moveToUci(bestMove);
@@ -1129,6 +1133,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
         } : prev);
       }
 
+      setAnimLineUci(fullBestLine);
       if (fullBestLine.length > 0) {
         animateSequence(leak.fenBefore, fullBestLine);
       }
@@ -1147,6 +1152,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     setExplanation("");
     setRichExplanation(null);
     setActiveExplainTab("db");
+    setAnimLineUci([]);
 
     try {
       const dbUci = `${dbPickMove.from}${dbPickMove.to}${dbPickMove.promotion ?? ""}`;
@@ -1211,6 +1217,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
       });
 
       const fullLine = [dbUci, ...contMoves];
+      setAnimLineUci(fullLine);
       if (fullLine.length > 0) {
         animateSequence(leak.fenBefore, fullLine);
       }
@@ -1946,6 +1953,9 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
             activeTab={activeExplainTab}
             richExplanation={richExplanation}
             plainExplanation={explanation || undefined}
+            fen={leak.fenBefore}
+            uciMoves={animLineUci}
+            boardOrientation={boardOrientation}
             title={
               activeExplainTab === "played"
                 ? `Your Move: ${badMove?.san ?? leak.userMove}`

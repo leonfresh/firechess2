@@ -216,6 +216,62 @@ export type MentalStats = {
   mateFinishRate?: number;
 };
 
+/* ── Time Management types ── */
+
+export type TimeVerdict = "justified" | "wasted" | "rushed" | "neutral";
+
+/** A single notable moment of time usage in a game */
+export type TimeMoment = {
+  /** 1-based game index (matches gameIndex on tactics / endgames) */
+  gameIndex: number;
+  /** Full move number (1-based) */
+  moveNumber: number;
+  /** FEN before the move */
+  fen: string;
+  /** User's move in UCI */
+  userMove: string;
+  /** User's side */
+  userColor: PlayerColor;
+  /** Seconds spent on this move */
+  timeSpentSec: number;
+  /** Seconds remaining on the clock after this move */
+  timeRemainingSec: number;
+  /** How complex the position was (0-100) based on eval swings / forcing moves */
+  complexity: number;
+  /** Whether the time usage was appropriate */
+  verdict: TimeVerdict;
+  /** Human-readable explanation of why time was well/poorly spent */
+  reason: string;
+  /** CP loss on this move (null if unknown) */
+  cpLoss: number | null;
+  /** Was the position tactical (forcing moves available)? */
+  isTactical: boolean;
+  /** Eval before the move from user perspective (centipawns) */
+  evalBefore: number | null;
+  /** Best move UCI (from engine) */
+  bestMove: string | null;
+};
+
+/** Aggregate time management report */
+export type TimeManagementReport = {
+  /** Overall score 0-100 */
+  score: number;
+  /** Notable time moments sorted by impact */
+  moments: TimeMoment[];
+  /** Number of games that had clock data */
+  gamesWithClockData: number;
+  /** Average seconds spent per move across all games */
+  avgTimePerMove: number;
+  /** How many games had a time scramble (< 10% time remaining) */
+  timeScrambleCount: number;
+  /** Number of moments where extra time was justified */
+  justifiedThinks: number;
+  /** Number of moments where time was wasted on simple positions */
+  wastedThinks: number;
+  /** Number of moments where user moved too fast in complex positions */
+  rushedMoves: number;
+};
+
 export type AnalyzeResponse = {
   username: string;
   gamesAnalyzed: number;
@@ -230,6 +286,8 @@ export type AnalyzeResponse = {
   playerRating?: number | null;
   /** Time management score 0-100 computed from move clock data */
   timeManagementScore?: number | null;
+  /** Detailed time management report with per-move breakdown */
+  timeManagement?: TimeManagementReport | null;
   /** Mental / psychology stats computed from game outcomes */
   mentalStats?: MentalStats | null;
   /** Per-game opening summaries for the Opening Rankings view */

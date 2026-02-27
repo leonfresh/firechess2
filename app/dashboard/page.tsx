@@ -23,6 +23,7 @@ import { ProgressHighlights } from "@/components/progress-highlights";
 import { RepertoirePanel } from "@/components/opening-repertoire";
 import { PercentileWidget } from "@/components/percentile-widget";
 import { CoinShop } from "@/components/coin-shop";
+import { DailyLoginRewards } from "@/components/daily-login-rewards";
 import { useCoinBalance } from "@/lib/use-coins";
 import { useProfileTitle } from "@/lib/use-coins";
 import { earnCoins } from "@/lib/coins";
@@ -452,6 +453,11 @@ export default function DashboardPage() {
               chessUsername={selectedUser !== "__all__" ? selectedUser.split("__")[0] : undefined}
               source={selectedUser !== "__all__" ? selectedUser.split("__")[1] : undefined}
             />
+          </div>
+
+          {/* ─── Daily Login Rewards ─── */}
+          <div className="animate-fade-in-up" style={{ animationDelay: "0.155s" }}>
+            <DailyLoginRewards />
           </div>
 
           {/* ─── Daily Challenge ─── */}

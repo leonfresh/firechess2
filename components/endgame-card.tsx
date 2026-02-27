@@ -204,6 +204,7 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
     context?: string;
   } | null>(null);
   const [explainModalOpen, setExplainModalOpen] = useState(false);
+  const [animLineUci, setAnimLineUci] = useState<string[]>([]);
   const [fenCopied, setFenCopied] = useState(false);
   const [boardInstance, setBoardInstance] = useState(0);
   const timerIds = useRef<number[]>([]);
@@ -364,6 +365,7 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
     setExplaining(true);
     setExplanation("");
     setEndgameCards(null);
+    setAnimLineUci([]);
     try {
       const bestUci = moveToUciStr(bestMoveDetails);
       if (!bestUci) {
@@ -401,6 +403,7 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
         line: pvText || undefined,
       });
       const fullBestLine = [bestUci, ...bestContinuationMoves];
+      setAnimLineUci(fullBestLine);
       if (fullBestLine.length > 0) animateSequence(mistake.fenBefore, fullBestLine);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to explain this position.";
@@ -415,6 +418,7 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
     setExplaining(true);
     setExplanation("");
     setEndgameCards(null);
+    setAnimLineUci([]);
     try {
       const playedUci = moveToUciStr(userMoveDetails);
       if (!playedUci) {
@@ -459,7 +463,9 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
         context: failedConversion ? "Failed Conversion" : undefined,
       });
       if (line.pvMoves.length > 0) {
-        animateSequence(mistake.fenBefore, [playedUci, ...line.pvMoves]);
+        const fullLine = [playedUci, ...line.pvMoves];
+        setAnimLineUci(fullLine);
+        animateSequence(mistake.fenBefore, fullLine);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to explain this position.";
@@ -706,6 +712,9 @@ export function EndgameCard({ mistake, engineDepth }: EndgameCardProps) {
             variant="endgame"
             simpleExplanation={endgameCards as SimpleExplanation | null}
             plainExplanation={explanation || undefined}
+            fen={mistake.fenBefore}
+            uciMoves={animLineUci}
+            boardOrientation={boardOrientation}
             title={endgameCards?.type === "best"
               ? `Best Move: ${bestMoveDetails?.san ?? mistake.bestMove}`
               : `Your Move: ${userMoveDetails?.san ?? mistake.userMove}`

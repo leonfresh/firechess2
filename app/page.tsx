@@ -7,6 +7,8 @@ import { HeroDemoBoard } from "@/components/hero-demo-board";
 import { MistakeCard } from "@/components/mistake-card";
 import { TacticCard } from "@/components/tactic-card";
 import { EndgameCard } from "@/components/endgame-card";
+import { TimeCard } from "@/components/time-card";
+import { DailyLoginPopup } from "@/components/daily-login-rewards";
 import { CardCarousel, ViewModeToggle } from "@/components/card-carousel";
 import type { CardViewMode } from "@/components/card-carousel";
 import { useSession } from "@/components/session-provider";
@@ -18,7 +20,7 @@ import type { AnalysisSource, ScanMode, TimeControl } from "@/lib/client-analysi
 import type { AnalyzeResponse } from "@/lib/types";
 import { fetchExplorerMoves } from "@/lib/lichess-explorer";
 import { shareReportCard } from "@/lib/share-report";
-import { earnCoins } from "@/lib/coins";
+import { earnCoins, spendCoins, hasPurchased, getBalance } from "@/lib/coins";
 
 /* ── Inline help tooltip ── */
 function HelpTip({ text }: { text: string }) {
@@ -80,6 +82,8 @@ export default function HomePage() {
   const [openingsOpen, setOpeningsOpen] = useState(true);
   const [tacticsOpen, setTacticsOpen] = useState(true);
   const [endgamesOpen, setEndgamesOpen] = useState(true);
+  const [timeManagementOpen, setTimeManagementOpen] = useState(true);
+  const [timeUnlocked, setTimeUnlocked] = useState(false);
   const reportRef = useRef<HTMLElement>(null);
   const pngRef = useRef<HTMLDivElement>(null);
   const hasProAccess = sessionPlan === "pro" || sessionPlan === "lifetime" || localProEnabled;
@@ -220,6 +224,14 @@ export default function HomePage() {
   const endgameMistakes = useMemo(() => result?.endgameMistakes ?? [], [result]);
   const oneOffMistakes = useMemo(() => result?.oneOffMistakes ?? [], [result]);
   const endgameStats = useMemo(() => result?.endgameStats ?? null, [result]);
+  const timeManagement = useMemo(() => result?.timeManagement ?? null, [result]);
+
+  // Check if user has unlocked time management with coins
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setTimeUnlocked(hasPurchased("time-management-unlock"));
+    }
+  }, [result]);
 
   // DB-approved inaccuracy detection — exclude these FENs from drills
   const [dbApprovedFens, setDbApprovedFens] = useState<Set<string>>(new Set());
@@ -1296,6 +1308,11 @@ export default function HomePage() {
                 </button>
               </div>
             </div>
+          )}
+
+          {/* ─── Daily Login Popup ─── */}
+          {state !== "loading" && (
+            <DailyLoginPopup />
           )}
 
           {/* ─── Results ─── */}
@@ -2630,6 +2647,150 @@ export default function HomePage() {
                     Scan All
                   </button>
                 </div>
+              )}
+
+              {/* ─── Time Management Section ─── */}
+              {timeManagement && timeManagement.moments.length > 0 && (
+              <>
+              <div className="my-4">
+                <div className="section-divider" />
+              </div>
+              <button type="button" onClick={() => setTimeManagementOpen(o => !o)} className="glass-card border-violet-500/15 bg-gradient-to-r from-violet-500/[0.04] to-transparent p-6 w-full text-left cursor-pointer transition-colors hover:border-violet-500/25">
+                <div className="flex items-center gap-4">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-500/15 text-3xl shadow-lg shadow-violet-500/10">⏱️</span>
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-extrabold text-white tracking-tight">
+                      Time Management
+                      <span className="ml-3 inline-flex items-center rounded-full bg-violet-500/15 px-3 py-1 text-base font-bold text-violet-400">
+                        {timeManagement.moments.length} moment{timeManagement.moments.length !== 1 ? "s" : ""}
+                      </span>
+                      {!hasProAccess && !timeUnlocked && (
+                        <span className="ml-2 inline-flex items-center rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-bold text-amber-400">
+                          🪙 Pro
+                        </span>
+                      )}
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Moments where your clock usage was exceptional or cost you — time wasted, rushed moves, and justified thinks
+                    </p>
+                  </div>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`shrink-0 text-slate-400 transition-transform duration-200 ${timeManagementOpen ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </button>
+
+              {timeManagementOpen && (
+              <>
+              {/* Time Management Overview Stats */}
+              <div className="glass-card space-y-4 p-5">
+                <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-400">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-violet-400"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Time Overview
+                </h3>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+                  <div className="stat-card py-3">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Score</p>
+                    <p className={`mt-0.5 text-lg font-bold ${timeManagement.score >= 70 ? "text-emerald-400" : timeManagement.score >= 45 ? "text-amber-400" : "text-red-400"}`}>
+                      {timeManagement.score}/100
+                    </p>
+                  </div>
+                  <div className="stat-card py-3">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Avg / Move</p>
+                    <p className="mt-0.5 text-lg font-bold text-slate-200">{timeManagement.avgTimePerMove.toFixed(1)}s</p>
+                  </div>
+                  <div className="stat-card py-3">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Justified Thinks</p>
+                    <p className="mt-0.5 text-lg font-bold text-emerald-400">{timeManagement.justifiedThinks}</p>
+                  </div>
+                  <div className="stat-card py-3">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Time Wasted</p>
+                    <p className="mt-0.5 text-lg font-bold text-red-400">{timeManagement.wastedThinks}</p>
+                  </div>
+                  <div className="stat-card py-3">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Rushed Moves</p>
+                    <p className="mt-0.5 text-lg font-bold text-amber-400">{timeManagement.rushedMoves}</p>
+                  </div>
+                </div>
+                {timeManagement.timeScrambleCount > 0 && (
+                  <div className="flex items-center gap-2 rounded-lg border border-red-500/15 bg-red-500/[0.05] px-3 py-2">
+                    <span className="text-base">🚨</span>
+                    <p className="text-xs text-red-400">
+                      <span className="font-semibold">{timeManagement.timeScrambleCount}</span> of {timeManagement.gamesWithClockData} games had time scrambles (clock below 10% of starting time)
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Time moment cards — gated for free users */}
+              {hasProAccess || timeUnlocked ? (
+                <CardCarousel viewMode={cardViewMode}>
+                  {timeManagement.moments.map((moment) => (
+                    <TimeCard
+                      key={`${moment.fen}-${moment.userMove}-${moment.gameIndex}`}
+                      moment={moment}
+                    />
+                  ))}
+                </CardCarousel>
+              ) : (
+                <div className="relative overflow-hidden rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/[0.06] via-violet-600/[0.03] to-transparent p-8">
+                  <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-violet-500/10 blur-[60px]" />
+                  <div className="relative flex flex-col items-center gap-4 text-center">
+                    <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-500/15 text-3xl shadow-lg shadow-violet-500/10">⏱️</span>
+                    <div>
+                      <h3 className="text-xl font-bold text-white">Unlock Time Management Analysis</h3>
+                      <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">
+                        See exactly where you wasted time on simple positions and rushed through critical moments.
+                        Upgrade to Pro or try it once with coins.
+                      </p>
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+                      <Link
+                        href="/pricing"
+                        className="btn-primary flex h-11 items-center gap-2 px-6 text-sm font-bold"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        Upgrade to Pro
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const cost = 30;
+                          const balance = getBalance();
+                          if (balance < cost) {
+                            setToast(`Not enough coins (${balance}/${cost}) — earn more by completing daily challenges and study tasks!`);
+                            if (toastTimer.current) clearTimeout(toastTimer.current);
+                            toastTimer.current = setTimeout(() => setToast(null), 3000);
+                            return;
+                          }
+                          const ok = spendCoins(cost, "time-management-unlock");
+                          if (ok) {
+                            setTimeUnlocked(true);
+                            setToast("🎉 Time Management unlocked! Spend wisely.");
+                            if (toastTimer.current) clearTimeout(toastTimer.current);
+                            toastTimer.current = setTimeout(() => setToast(null), 3000);
+                          }
+                        }}
+                        className="flex h-11 items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-5 text-sm font-bold text-amber-400 transition hover:bg-amber-500/20"
+                      >
+                        <span>🪙</span> Unlock for 30 Coins
+                      </button>
+                    </div>
+                    {/* Preview: show 1 card blurred */}
+                    <div className="relative mt-4 w-full">
+                      <div className="pointer-events-none select-none blur-[6px]">
+                        <TimeCard moment={timeManagement.moments[0]} />
+                      </div>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="rounded-full bg-black/60 px-4 py-2 text-sm font-semibold text-white backdrop-blur-sm">
+                          🔒 {timeManagement.moments.length} moment{timeManagement.moments.length !== 1 ? "s" : ""} found
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+              </>
+              )}
+              </>
               )}
 
               {/* Diagnostics */}

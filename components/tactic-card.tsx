@@ -450,6 +450,7 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
     bestMove?: string;
   } | null>(null);
   const [explainModalOpen, setExplainModalOpen] = useState(false);
+  const [animLineUci, setAnimLineUci] = useState<string[]>([]);
   const [fenCopied, setFenCopied] = useState(false);
   const [boardInstance, setBoardInstance] = useState(0);
   const timerIds = useRef<number[]>([]);
@@ -647,6 +648,7 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
     setExplaining(true);
     setExplanation("");
     setTacticCards(null);
+    setAnimLineUci([]);
     try {
       const bestUci = moveToUciStr(bestMoveDetails);
       if (!bestUci) {
@@ -687,6 +689,7 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
         line: pvText || undefined,
       });
       const fullBestLine = [bestUci, ...bestContinuationMoves];
+      setAnimLineUci(fullBestLine);
       if (fullBestLine.length > 0) animateSequence(tactic.fenBefore, fullBestLine);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to explain this position.";
@@ -701,6 +704,7 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
     setExplaining(true);
     setExplanation("");
     setTacticCards(null);
+    setAnimLineUci([]);
     try {
       const playedUci = moveToUciStr(userMoveDetails);
       if (!playedUci) {
@@ -741,7 +745,9 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
         line: sanLine.length ? sanLine.join(" ") : undefined,
       });
       if (line.pvMoves.length > 0) {
-        animateSequence(tactic.fenBefore, [playedUci, ...line.pvMoves]);
+        const fullLine = [playedUci, ...line.pvMoves];
+        setAnimLineUci(fullLine);
+        animateSequence(tactic.fenBefore, fullLine);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to explain this position.";
@@ -1002,6 +1008,9 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
             variant="tactic"
             simpleExplanation={tacticCards as SimpleExplanation | null}
             plainExplanation={explanation || undefined}
+            fen={tactic.fenBefore}
+            uciMoves={animLineUci}
+            boardOrientation={boardOrientation}
             title={tacticCards?.type === "winning"
               ? `Winning Move: ${bestMoveDetails?.san ?? tactic.bestMove}`
               : `Your Move: ${userMoveDetails?.san ?? tactic.userMove}`

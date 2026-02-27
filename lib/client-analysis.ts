@@ -13,7 +13,10 @@ import type {
   MoveSquare,
   PlayerColor,
   PositionEvalTrace,
-  RepeatedOpeningLeak
+  RepeatedOpeningLeak,
+  TimeMoment,
+  TimeManagementReport,
+  TimeVerdict,
 } from "@/lib/types";
 
 type LichessGame = {
@@ -2257,6 +2260,222 @@ export async function analyzeOpeningLeaksInBrowser(
     return Math.round(consistencyScore * 0.45 + scrambleScore * 0.35 + wasteScore * 0.20);
   })();
 
+  // ── Compute detailed Time Management Report with per-move moments ──
+  const timeManagement: TimeManagementReport | null = (() => {
+    if (timeManagementScore == null) return null;
+
+    const target = normalizeName(username);
+    const moments: TimeMoment[] = [];
+    let totalSpentSec = 0;
+    let totalMoves = 0;
+    let scrambleCount = 0;
+    let gamesWithClocks = 0;
+
+    // Pre-build a set of missed-tactic FENs for cross-referencing
+    const tacticFenSet = new Set(missedTactics.map(t => t.fenBefore));
+
+    for (let gameIndex = 0; gameIndex < games.length; gameIndex++) {
+      const game = games[gameIndex];
+      if (!game.clocks || game.clocks.length < 4) continue;
+      gamesWithClocks++;
+
+      const userColor: PlayerColor | null =
+        game.whiteName && normalizeName(game.whiteName) === target ? "white"
+        : game.blackName && normalizeName(game.blackName) === target ? "black"
+        : null;
+      if (!userColor) continue;
+
+      const startPly = userColor === "white" ? 0 : 1;
+      const userClocks: number[] = [];
+      for (let p = startPly; p < game.clocks.length; p += 2) {
+        userClocks.push(game.clocks[p]); // centiseconds remaining
+      }
+      if (userClocks.length < 2) continue;
+
+      // Detect time scramble for this game
+      const initialTime = userClocks[0];
+      if (initialTime > 0 && Math.min(...userClocks) < initialTime * 0.1) {
+        scrambleCount++;
+      }
+
+      // Walk the game moves to pair clock data with position info
+      const allTokens = (game.moves ?? "").split(" ").filter(Boolean);
+      const chess = new Chess();
+      let userMoveIdx = 0; // index into userClocks
+
+      for (let ply = 0; ply < allTokens.length; ply++) {
+        const sideToMove: PlayerColor = ply % 2 === 0 ? "white" : "black";
+        const fenBefore = chess.fen();
+        const token = allTokens[ply];
+
+        if (sideToMove === userColor) {
+          // Compute time spent (this is userMoveIdx+1 vs userMoveIdx)
+          // userClocks[0] is remaining after first user move, etc.
+          if (userMoveIdx > 0 && userMoveIdx < userClocks.length) {
+            const spent = Math.max(0, userClocks[userMoveIdx - 1] - userClocks[userMoveIdx]) / 100;
+            const remaining = userClocks[userMoveIdx] / 100;
+            const fullMoveNumber = Math.floor(ply / 2) + 1;
+
+            totalSpentSec += spent;
+            totalMoves++;
+
+            // Assess position complexity using lightweight heuristics:
+            // 1. Are there forcing moves (captures, checks)?
+            // 2. Is this a known missed-tactic position?
+            // 3. Move number (opening = low complexity for time)
+            // 4. Piece count (endgame = potentially complex)
+            const legalMoves = chess.moves({ verbose: true });
+            const captures = legalMoves.filter(m => m.captured);
+            const checks = legalMoves.filter(m => m.san.includes("+") || m.san.includes("#"));
+            const hasForcingMoves = captures.length > 0 || checks.length > 0;
+            const boardPieces = chess.board().flat().filter(Boolean);
+            const pieceCount = boardPieces.length;
+            const isTactical = hasForcingMoves && (captures.length >= 2 || checks.length >= 1);
+            const isKnownTactic = tacticFenSet.has(fenBefore);
+
+            // Complexity 0-100
+            let complexity = 30; // baseline
+            if (fullMoveNumber <= 6) complexity = 10; // book territory, should be fast
+            else if (fullMoveNumber <= 12) complexity = 25; // early middlegame
+            if (isTactical) complexity += 25;
+            if (isKnownTactic) complexity += 30;
+            if (legalMoves.length >= 30) complexity += 10; // many options
+            if (pieceCount <= 8 && fullMoveNumber >= 25) complexity += 15; // endgame tech
+            complexity = Math.min(100, complexity);
+
+            // Cross reference with missed tactics to get cpLoss + bestMove
+            const matchingTactic = missedTactics.find(
+              t => t.fenBefore === fenBefore && t.gameIndex === gameIndex + 1
+            );
+            const cpLoss = matchingTactic?.cpLoss ?? null;
+            const bestMove = matchingTactic?.bestMove ?? null;
+
+            // Compute average time per move so far for this game
+            const gameMoveTimesSoFar: number[] = [];
+            for (let j = 1; j <= userMoveIdx && j < userClocks.length; j++) {
+              gameMoveTimesSoFar.push(Math.max(0, userClocks[j - 1] - userClocks[j]) / 100);
+            }
+            const gameAvg = gameMoveTimesSoFar.length > 0
+              ? gameMoveTimesSoFar.reduce((s, v) => s + v, 0) / gameMoveTimesSoFar.length
+              : spent;
+
+            // Determine verdict
+            let verdict: TimeVerdict = "neutral";
+            let reason = "";
+
+            // WASTED: spent >3× game average on a simple position (complexity < 30)
+            if (spent > gameAvg * 3 && complexity < 30 && spent > 5) {
+              verdict = "wasted";
+              if (fullMoveNumber <= 6) {
+                reason = `Spent ${spent.toFixed(1)}s on move ${fullMoveNumber} — deep in book territory where theory is well established. Save time for critical moments.`;
+              } else {
+                reason = `Spent ${spent.toFixed(1)}s on a straightforward position (complexity ${complexity}/100). Your game average is ${gameAvg.toFixed(1)}s — this cost you valuable clock time.`;
+              }
+            }
+            // RUSHED: spent <40% of game average on a complex position (complexity ≥ 60)
+            else if (spent < gameAvg * 0.4 && complexity >= 60 && spent < 10) {
+              verdict = "rushed";
+              if (isKnownTactic) {
+                reason = `Only ${spent.toFixed(1)}s on a critical tactical moment (you missed a tactic here${cpLoss ? ` losing ${(cpLoss / 100).toFixed(1)} pawns` : ""}). This position deserved deep calculation.`;
+              } else {
+                reason = `Only ${spent.toFixed(1)}s on a complex position with ${legalMoves.length} legal moves and forcing options. Slowing down here could have found better moves.`;
+              }
+            }
+            // JUSTIFIED: spent significant time and got it right (no cpLoss or low cpLoss) on complex position
+            else if (spent > gameAvg * 1.5 && complexity >= 50 && (cpLoss === null || cpLoss < 50)) {
+              verdict = "justified";
+              if (isKnownTactic) {
+                reason = `Invested ${spent.toFixed(1)}s on a tactical position and found the right idea. Good time allocation on a critical moment.`;
+              } else {
+                reason = `Spent ${spent.toFixed(1)}s on a complex position (complexity ${complexity}/100) and played accurately. This is exactly when to invest time.`;
+              }
+            }
+
+            // Only record notable moments (not neutral ones or very short games)
+            if (verdict !== "neutral" && allTokens.length >= 10) {
+              // Get user move as UCI
+              let userMoveUci = token;
+              try {
+                const tempChess = new Chess(fenBefore);
+                if (isUciMove(token)) {
+                  const result = tempChess.move({
+                    from: token.slice(0, 2),
+                    to: token.slice(2, 4),
+                    promotion: token.slice(4, 5) || undefined,
+                  });
+                  if (result) userMoveUci = `${result.from}${result.to}${result.promotion ?? ""}`;
+                } else {
+                  const result = tempChess.move(token);
+                  if (result) userMoveUci = `${result.from}${result.to}${result.promotion ?? ""}`;
+                }
+              } catch { /* keep original */ }
+
+              moments.push({
+                gameIndex: gameIndex + 1,
+                moveNumber: fullMoveNumber,
+                fen: fenBefore,
+                userMove: userMoveUci,
+                userColor,
+                timeSpentSec: Math.round(spent * 10) / 10,
+                timeRemainingSec: Math.round(remaining),
+                complexity,
+                verdict,
+                reason,
+                cpLoss,
+                isTactical,
+                evalBefore: matchingTactic?.cpBefore ?? null,
+                bestMove,
+              });
+            }
+          }
+          userMoveIdx++;
+        }
+
+        // Apply the move
+        try {
+          if (isUciMove(token)) {
+            chess.move({
+              from: token.slice(0, 2),
+              to: token.slice(2, 4),
+              promotion: token.slice(4, 5) || undefined,
+            });
+          } else {
+            chess.move(token);
+          }
+        } catch {
+          break;
+        }
+      }
+    }
+
+    if (moments.length === 0 && gamesWithClocks < 2) return null;
+
+    // Sort: wasted/rushed first (bad moments), then justified (good moments)
+    const verdictOrder: Record<TimeVerdict, number> = { wasted: 0, rushed: 1, justified: 2, neutral: 3 };
+    moments.sort((a, b) => {
+      const vd = verdictOrder[a.verdict] - verdictOrder[b.verdict];
+      if (vd !== 0) return vd;
+      // Within same verdict, sort by impact (time spent descending for wasted, cpLoss for rushed)
+      if (a.verdict === "wasted") return b.timeSpentSec - a.timeSpentSec;
+      if (a.verdict === "rushed") return (b.cpLoss ?? 0) - (a.cpLoss ?? 0);
+      return b.complexity - a.complexity;
+    });
+
+    // Cap at 30 moments to keep payload reasonable
+    const cappedMoments = moments.slice(0, 30);
+
+    return {
+      score: timeManagementScore,
+      moments: cappedMoments,
+      gamesWithClockData: gamesWithClocks,
+      avgTimePerMove: totalMoves > 0 ? Math.round((totalSpentSec / totalMoves) * 10) / 10 : 0,
+      timeScrambleCount: scrambleCount,
+      justifiedThinks: moments.filter(m => m.verdict === "justified").length,
+      wastedThinks: moments.filter(m => m.verdict === "wasted").length,
+      rushedMoves: moments.filter(m => m.verdict === "rushed").length,
+    };
+  })();
+
   // ── Compute Mental / Psychology Stats from game outcomes ──
   const mentalStats: MentalStats | null = (() => {
     if (games.length < 3) return null;
@@ -2481,6 +2700,7 @@ export async function analyzeOpeningLeaksInBrowser(
     endgameStats,
     playerRating,
     timeManagementScore,
+    timeManagement,
     mentalStats,
     openingSummaries: openingSummaries.length > 0 ? openingSummaries : undefined,
     diagnostics: {
