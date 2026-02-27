@@ -1088,7 +1088,9 @@ export async function analyzeOpeningLeaksInBrowser(
     percent: 40,
   });
 
-  const byFen = new Map<string, { totalReachCount: number; moveCounts: Map<string, number>; moveOutcomes: Map<string, { w: number; d: number; l: number }> }>();
+  const byFen = new Map<string, { totalReachCount: number; moveCounts: Map<string, number>; moveOutcomes: Map<string, { w: number; d: number; l: number }>; openingName?: string }>();
+  /** Track the last known opening name for each FEN (from source API) */
+  const fenOpeningName = new Map<string, string>();
   let gamesAnalyzed = 0;
   const playerRatings: number[] = [];
   const gameTraces: GameOpeningTrace[] = [];
@@ -1137,12 +1139,21 @@ export async function analyzeOpeningLeaksInBrowser(
     const openingMovesPlayed: string[] = [];
     let openingIdentityFen: string | null = null;
 
+    // Track last known opening name as we walk through plies
+    let lastKnownOpening = game.openingName;
+
     for (let ply = 0; ply < moveTokens.length; ply += 1) {
       const sideToMove: PlayerColor = ply % 2 === 0 ? "white" : "black";
       const token = moveTokens[ply];
 
       if (sideToMove === userColor) {
         const fenBefore = chess.fen();
+
+        // Associate the last known opening name with this FEN
+        if (lastKnownOpening && !fenOpeningName.has(fenBefore)) {
+          fenOpeningName.set(fenBefore, lastKnownOpening);
+        }
+
         const existing = byFen.get(fenBefore) ?? {
           totalReachCount: 0,
           moveCounts: new Map<string, number>(),
@@ -1393,6 +1404,7 @@ export async function analyzeOpeningLeaksInBrowser(
       userWins: data.moveOutcomes.get(chosenMove)?.w ?? 0,
       userDraws: data.moveOutcomes.get(chosenMove)?.d ?? 0,
       userLosses: data.moveOutcomes.get(chosenMove)?.l ?? 0,
+      openingName: fenOpeningName.get(fenBefore),
     });
   });
 
@@ -1508,6 +1520,7 @@ export async function analyzeOpeningLeaksInBrowser(
       userWins: data.moveOutcomes.get(chosenMove)?.w ?? 0,
       userDraws: data.moveOutcomes.get(chosenMove)?.d ?? 0,
       userLosses: data.moveOutcomes.get(chosenMove)?.l ?? 0,
+      openingName: fenOpeningName.get(fenBefore),
     });
   });
 

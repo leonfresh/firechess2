@@ -37,6 +37,8 @@ export type RepeatedOpeningLeak = {
   userWins?: number;
   userDraws?: number;
   userLosses?: number;
+  /** Opening name from source API (last known name for this position) */
+  openingName?: string;
 };
 
 export type GameOpeningTrace = {

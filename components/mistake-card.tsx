@@ -427,7 +427,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   const [dbPickApproved, setDbPickApproved] = useState(false);
   const [showExplorer, setShowExplorer] = useState(false);
   const [userMoveExplorerData, setUserMoveExplorerData] = useState<ExplorerMove | null>(null);
-  const [openingName, setOpeningName] = useState<string | null>(null);
+  const [openingName, setOpeningName] = useState<string | null>(leak.openingName ?? null);
   const moveBadge = useMemo(
     () => classifyLossBadge(leak.cpLoss, leak.dbApproved, userMoveExplorerData),
     [leak.cpLoss, leak.dbApproved, userMoveExplorerData],
