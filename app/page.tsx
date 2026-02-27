@@ -273,7 +273,7 @@ export default function HomePage() {
       }
     }
 
-    return groups.sort((a, b) => b.count - a.count);
+    return groups.sort((a, b) => b.avgCpLoss - a.avgCpLoss);
   }, [missedTactics]);
 
   const diagnostics = result?.diagnostics;
@@ -2209,30 +2209,55 @@ export default function HomePage() {
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-400"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0022 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
                     Pattern Analysis
                   </h3>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Ranked Worst → Best</p>
                   <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {tacticMotifs.map((motif) => (
-                      <div
-                        key={motif.name}
-                        className="flex items-center gap-3 rounded-xl border border-amber-500/10 bg-amber-500/[0.03] p-3 transition-all hover:border-amber-500/20 hover:bg-amber-500/[0.06]"
-                      >
-                        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-lg">
-                          {motif.icon}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold text-white">{motif.name}</p>
-                          <p className="text-xs text-slate-400">
-                            {motif.count}× missed
-                            {motif.avgCpLoss < 99000
-                              ? ` · avg −${(motif.avgCpLoss / 100).toFixed(1)}`
-                              : " · forced mate"
-                            }
-                          </p>
+                    {tacticMotifs.map((motif, idx) => {
+                      const total = tacticMotifs.length;
+                      const isWorst = idx === 0;
+                      const isBest = idx === total - 1;
+                      const ratio = total > 1 ? idx / (total - 1) : 0.5;
+                      const rankColor = ratio >= 0.7 ? "text-emerald-400" : ratio >= 0.3 ? "text-amber-400" : "text-red-400";
+                      const borderClass = isWorst
+                        ? "border-red-500/20 bg-red-500/[0.06]"
+                        : isBest
+                          ? "border-emerald-500/20 bg-emerald-500/[0.04]"
+                          : "border-white/[0.06] bg-white/[0.02]";
+                      const badgeBg = isWorst
+                        ? "bg-red-500/15"
+                        : isBest
+                          ? "bg-emerald-500/15"
+                          : "bg-white/[0.06]";
+                      return (
+                        <div
+                          key={motif.name}
+                          className={`flex items-center gap-3 rounded-xl border p-3 transition-all hover:border-white/[0.12] ${borderClass}`}
+                        >
+                          <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-black ${badgeBg} ${rankColor}`}>
+                            #{idx + 1}
+                          </div>
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] text-lg">
+                            {motif.icon}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold text-white">
+                              {motif.name}
+                              {isWorst && <span className="ml-1.5 rounded bg-red-500/15 px-1.5 py-0.5 text-[10px] font-bold text-red-400">WEAKEST</span>}
+                              {isBest && total > 1 && <span className="ml-1.5 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400">BEST</span>}
+                            </p>
+                            <p className="text-xs text-slate-400">
+                              {motif.count}× missed
+                              {motif.avgCpLoss < 99000
+                                ? <> · avg <span className={rankColor}>−{(motif.avgCpLoss / 100).toFixed(1)}</span></>
+                                : " · forced mate"
+                              }
+                            </p>
+                          </div>
+                          <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${badgeBg} ${rankColor}`}>
+                            {motif.count}
+                          </span>
                         </div>
-                        <span className="shrink-0 rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-bold text-amber-400">
-                          {motif.count}
-                        </span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                   {tacticMotifs.length >= 2 && (
                     <p className="text-xs text-slate-500">
@@ -2398,36 +2423,55 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  {/* By-type breakdown */}
+                  {/* By-type breakdown — ranked worst to best */}
                   {endgameStats.byType.length > 0 && (
-                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                      {endgameStats.byType.map((t) => {
-                        const icon = ({ "Pawn": "♟", "Rook": "♜", "Rook + Bishop": "♜♝", "Rook + Knight": "♜♞", "Rook + Minor": "♜♝", "Knight vs Knight": "♞♞", "Bishop vs Bishop": "♝♝", "Knight vs Bishop": "♞♝", "Bishop vs Knight": "♝♞", "Bishop + Knight": "♝♞", "Two Bishops": "♝♝", "Two Knights": "♞♞", "Minor Piece": "♝", "Queen": "♛", "Queen + Rook": "♛♜", "Queen + Minor": "♛♝", "Opposite Bishops": "♗♝", "Complex": "♔" } as Record<string, string>)[t.type] ?? "♔";
-                        const isWeakest = t.type === endgameStats.weakestType;
-                        return (
-                          <div
-                            key={t.type}
-                            className={`flex items-center gap-3 rounded-xl border p-3 transition-all ${
-                              isWeakest
-                                ? "border-red-500/20 bg-red-500/[0.04] hover:border-red-500/30"
-                                : "border-sky-500/10 bg-sky-500/[0.03] hover:border-sky-500/20 hover:bg-sky-500/[0.06]"
-                            }`}
-                          >
-                            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-500/10 text-lg">
-                              {icon}
-                            </span>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-semibold text-white">
-                                {t.type}
-                                {isWeakest && <span className="ml-1.5 text-[10px] font-bold text-red-400">WEAKEST</span>}
-                              </p>
-                              <p className="text-xs text-slate-400">
-                                {t.count} position{t.count !== 1 ? "s" : ""} · avg −{(t.avgCpLoss / 100).toFixed(2)} · {t.mistakes} mistake{t.mistakes !== 1 ? "s" : ""}
-                              </p>
+                    <div>
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Ranked Worst → Best</p>
+                      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        {endgameStats.byType.map((t, idx) => {
+                          const icon = ({ "Pawn": "♟", "Rook": "♜", "Rook + Bishop": "♜♝", "Rook + Knight": "♜♞", "Rook + Minor": "♜♝", "Knight vs Knight": "♞♞", "Bishop vs Bishop": "♝♝", "Knight vs Bishop": "♞♝", "Bishop vs Knight": "♝♞", "Bishop + Knight": "♝♞", "Two Bishops": "♝♝", "Two Knights": "♞♞", "Minor Piece": "♝", "Queen": "♛", "Queen + Rook": "♛♜", "Queen + Minor": "♛♝", "Opposite Bishops": "♗♝", "Complex": "♔" } as Record<string, string>)[t.type] ?? "♔";
+                          const total = endgameStats.byType.length;
+                          const isWeakest = idx === 0;
+                          const isBest = idx === total - 1;
+                          // Color gradient: worst (red) → middle (amber) → best (emerald)
+                          const ratio = total > 1 ? idx / (total - 1) : 0.5;
+                          const rankColor = ratio >= 0.7 ? "text-emerald-400" : ratio >= 0.3 ? "text-amber-400" : "text-red-400";
+                          const borderClass = isWeakest
+                            ? "border-red-500/20 bg-red-500/[0.06]"
+                            : isBest
+                              ? "border-emerald-500/20 bg-emerald-500/[0.04]"
+                              : "border-white/[0.06] bg-white/[0.02]";
+                          const badgeBg = isWeakest
+                            ? "bg-red-500/15"
+                            : isBest
+                              ? "bg-emerald-500/15"
+                              : "bg-white/[0.06]";
+                          return (
+                            <div
+                              key={t.type}
+                              className={`flex items-center gap-3 rounded-xl border p-3 transition-all hover:border-white/[0.12] ${borderClass}`}
+                            >
+                              {/* Rank number */}
+                              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-black ${badgeBg} ${rankColor}`}>
+                                #{idx + 1}
+                              </div>
+                              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] text-lg">
+                                {icon}
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-semibold text-white">
+                                  {t.type}
+                                  {isWeakest && <span className="ml-1.5 rounded bg-red-500/15 px-1.5 py-0.5 text-[10px] font-bold text-red-400">WEAKEST</span>}
+                                  {isBest && <span className="ml-1.5 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400">BEST</span>}
+                                </p>
+                                <p className="text-xs text-slate-400">
+                                  {t.count} position{t.count !== 1 ? "s" : ""} · avg <span className={rankColor}>−{(t.avgCpLoss / 100).toFixed(2)}</span> · {t.mistakes} mistake{t.mistakes !== 1 ? "s" : ""}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
 

@@ -1854,12 +1854,11 @@ export async function analyzeOpeningLeaksInBrowser(
         enteredEndgame = true;
         endgameType = classifyEndgameType(chess);
 
-        // Get eval at endgame start to track conversion
-        if (sideToMove === userColor) {
-          const startEv = await stockfishPool.evaluateFen(fenBefore, Math.min(engineDepth, 12));
-          if (startEv) {
-            endgameStartEval = scoreToCpFromUserPerspective(startEv.cp, sideToMove, userColor);
-          }
+        // Get eval at endgame start to track conversion/hold — always evaluate,
+        // regardless of whose move it is (previous code skipped ~50% of games)
+        const startEv = await stockfishPool.evaluateFen(fenBefore, Math.min(engineDepth, 12));
+        if (startEv) {
+          endgameStartEval = scoreToCpFromUserPerspective(startEv.cp, sideToMove, userColor);
         }
       }
 
@@ -2022,21 +2021,21 @@ export async function analyzeOpeningLeaksInBrowser(
     }
 
     // Track conversion/hold for this game's endgame
-    if (enteredEndgame && endgameStartEval !== null) {
-      const gameResult = inferGameResult(chess);
+    // Use game.winner from the source API (Lichess/Chess.com) instead of
+    // inferGameResult which can only detect checkmate/stalemate from FEN
+    // and misses resignation/timeout (the vast majority of games).
+    if (enteredEndgame && endgameStartEval !== null && game.winner) {
+      const userWon = game.winner === userColor;
+      const drew = game.winner === "draw";
 
-      if (endgameStartEval > 150) {
+      if (endgameStartEval > 100) {
+        // User had a winning advantage at endgame start
         wonEndgames++;
-        if (gameResult !== null) {
-          const userWon = (userColor === "white" && gameResult === 1) || (userColor === "black" && gameResult === -1);
-          if (userWon) convertedWins++;
-        }
-      } else if (endgameStartEval >= -150 && endgameStartEval <= -50) {
+        if (userWon) convertedWins++;
+      } else if (endgameStartEval >= -200 && endgameStartEval <= -50) {
+        // User was slightly worse — did they hold?
         slightlyWorse++;
-        if (gameResult !== null) {
-          const drew = gameResult === 0;
-          if (drew) heldDraws++;
-        }
+        if (drew || userWon) heldDraws++;
       }
     }
   });

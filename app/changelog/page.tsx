@@ -22,6 +22,26 @@ interface ChangeEntry {
 
 const CHANGELOG: ChangeEntry[] = [
   {
+    version: 8,
+    date: "Feb 27, 2026",
+    title: "Endgame & Tactics Fixes, Opening Quality-of-Life",
+    description:
+      "Major endgame stat fix, ranked category breakdowns for both endgames and tactics, improved opening name coverage, bigger Opening Rankings boards, and hero/card design upgrades.",
+    changes: [
+      { type: "fix", text: "Endgame conversion rate & hold rate fixed — was showing ~11% even for GMs because game outcomes from resignation/timeout were silently ignored (only checkmate/stalemate were counted)" },
+      { type: "fix", text: "Endgame start eval now captured regardless of whose turn it is — previously skipped ~50% of endgames" },
+      { type: "improvement", text: "Endgame categories now ranked worst \u2192 best with numbered badges (#1, #2\u2026), red/amber/green color gradient, and WEAKEST / BEST labels" },
+      { type: "improvement", text: "Tactic motif patterns now ranked worst \u2192 best by average CP loss (instead of by count) with the same numbered badge + color gradient system" },
+      { type: "improvement", text: "Opening leak cards now show the opening name immediately from source data (Lichess/Chess.com) instead of waiting for the Explorer API" },
+      { type: "improvement", text: "Opening Rankings boards enlarged from 72px to 120px with a 2-column grid layout on desktop" },
+      { type: "design", text: "Hero demo board enlarged and redesigned with Pattern Detected callout, Eval Shift section, and horizontal badge row" },
+      { type: "design", text: "Opening leak cards redesigned with hero-style Pattern Detected gradient callout and Before/After eval comparison" },
+      { type: "fix", text: "Opening Rankings no longer stuck on loading — removed serial Lichess Explorer API calls, now renders instantly from scan data" },
+      { type: "fix", text: "Opening Rankings boards no longer clip pieces (removed rounded corners) and use the user\u2019s board theme" },
+      { type: "improvement", text: "Opening Rankings require at least 5 games per opening to appear (filters out noise)" },
+    ],
+  },
+  {
     version: 7,
     date: "Feb 27, 2026",
     title: "Study Plans, Opening Rankings & Retention Upgrades",
