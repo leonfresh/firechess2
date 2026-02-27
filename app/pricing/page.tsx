@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSession } from "@/components/session-provider";
 import { useState } from "react";
+import { deferOnboarding } from "@/components/onboarding-tour";
 
 const plans = [
   {
@@ -77,6 +78,7 @@ export default function PricingPage() {
 
   const handleUpgrade = async (checkoutPlan: "pro" | "lifetime" = "pro") => {
     if (!authenticated) {
+      deferOnboarding(); // Don't show onboarding tour right after pricing sign-up
       window.location.href = "/auth/signin";
       return;
     }

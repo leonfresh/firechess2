@@ -24,6 +24,7 @@ import { RepertoirePanel } from "@/components/opening-repertoire";
 import { PercentileWidget } from "@/components/percentile-widget";
 import { CoinShop } from "@/components/coin-shop";
 import { DailyLoginRewards } from "@/components/daily-login-rewards";
+import { OnboardingTour } from "@/components/onboarding-tour";
 import { useCoinBalance } from "@/lib/use-coins";
 import { useProfileTitle } from "@/lib/use-coins";
 import { earnCoins } from "@/lib/coins";
@@ -393,7 +394,7 @@ export default function DashboardPage() {
           )}
 
           {/* ─── Stat Cards ─── */}
-          <div className="animate-fade-in-up grid grid-cols-2 gap-4 md:grid-cols-4" style={{ animationDelay: "0.1s" }}>
+          <div data-tour="stats" className="animate-fade-in-up grid grid-cols-2 gap-4 md:grid-cols-4" style={{ animationDelay: "0.1s" }}>
             <StatCard
               label="Reports"
               value={filtered.length}
@@ -448,7 +449,7 @@ export default function DashboardPage() {
           )}
 
           {/* ─── Study Plan ─── */}
-          <div className="animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
+          <div data-tour="study-plan" className="animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
             <StudyPlanWidget
               chessUsername={selectedUser !== "__all__" ? selectedUser.split("__")[0] : undefined}
               source={selectedUser !== "__all__" ? selectedUser.split("__")[1] : undefined}
@@ -456,19 +457,19 @@ export default function DashboardPage() {
           </div>
 
           {/* ─── Daily Login Rewards ─── */}
-          <div className="animate-fade-in-up" style={{ animationDelay: "0.155s" }}>
+          <div data-tour="daily-login" className="animate-fade-in-up" style={{ animationDelay: "0.155s" }}>
             <DailyLoginRewards />
           </div>
 
           {/* ─── Daily Challenge ─── */}
           {allTactics.length > 0 && (
-            <div className="animate-fade-in-up" style={{ animationDelay: "0.16s" }}>
+            <div data-tour="daily-challenge" className="animate-fade-in-up" style={{ animationDelay: "0.16s" }}>
               <DailyChallenge allTactics={allTactics} />
             </div>
           )}
 
           {/* ─── Goal + Achievements row ─── */}
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div data-tour="goals" className="grid gap-6 lg:grid-cols-2">
             <div className="animate-fade-in-up" style={{ animationDelay: "0.17s" }}>
               <GoalWidget
                 currentAccuracy={latest?.estimatedAccuracy ?? null}
@@ -497,7 +498,7 @@ export default function DashboardPage() {
           <div className="grid gap-6 lg:grid-cols-2">
 
             {/* Radar */}
-            <div className="glass-card animate-fade-in-up space-y-4 p-6" style={{ animationDelay: "0.2s" }}>
+            <div data-tour="radar" className="glass-card animate-fade-in-up space-y-4 p-6" style={{ animationDelay: "0.2s" }}>
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold text-white">Strengths & Weaknesses</h2>
                 <span className="text-xs text-white/30">Latest report</span>
@@ -512,7 +513,7 @@ export default function DashboardPage() {
             </div>
 
             {/* Progress Chart */}
-            <div className="glass-card animate-fade-in-up space-y-4 p-6" style={{ animationDelay: "0.3s" }}>
+            <div data-tour="progress" className="glass-card animate-fade-in-up space-y-4 p-6" style={{ animationDelay: "0.3s" }}>
               <h2 className="text-lg font-semibold text-white">Progress Over Time</h2>
 
               {progressData.length < 2 ? (
@@ -657,7 +658,7 @@ export default function DashboardPage() {
           </div>
 
           {/* ─── Coin Shop ─── */}
-          <div className="animate-fade-in-up" style={{ animationDelay: "0.38s" }}>
+          <div data-tour="coin-shop" className="animate-fade-in-up" style={{ animationDelay: "0.38s" }}>
             <CoinShop />
           </div>
 
@@ -695,7 +696,7 @@ export default function DashboardPage() {
           )}
 
           {/* ─── Report History ─── */}
-          <div className="animate-fade-in-up space-y-4" style={{ animationDelay: "0.5s" }}>
+          <div data-tour="reports" className="animate-fade-in-up space-y-4" style={{ animationDelay: "0.5s" }}>
             <h2 className="text-lg font-semibold text-white">Report History</h2>
             <div className="space-y-3">
               {reports.map((r, i) => (
@@ -712,6 +713,9 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
+
+          {/* ─── Onboarding Tour ─── */}
+          <OnboardingTour />
 
         </div>
       </div>
