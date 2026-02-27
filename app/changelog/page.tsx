@@ -22,6 +22,20 @@ interface ChangeEntry {
 
 const CHANGELOG: ChangeEntry[] = [
   {
+    version: 9,
+    date: "Feb 27, 2026",
+    title: "Collapsible Sections & Mate Eval Fix",
+    description:
+      "Report sections are now collapsible in list view to save vertical space, and eval displays throughout the app correctly show \"Mate in X\" instead of nonsensical 999+ values.",
+    changes: [
+      { type: "improvement", text: "Opening Leaks, Missed Tactics, and Endgame Analysis sections are now collapsible — click the header to toggle open/closed" },
+      { type: "improvement", text: "Chevron icon on each section header rotates to indicate open/closed state with a smooth animation" },
+      { type: "fix", text: "Opening leak cards no longer show \"990.0\" or \"999+\" for mate scores — now correctly displays \"+M3\", \"-Mate\", etc." },
+      { type: "fix", text: "Eval bar label now shows \"M3\" / \"Mate\" for mate positions instead of raw centipawn values like \"+990.0\"" },
+      { type: "fix", text: "Endgame \"Worst Blunder\" stat now shows \"Mate\" when the worst miss was a missed mate (matches the tactics section behaviour)" },
+    ],
+  },
+  {
     version: 8,
     date: "Feb 27, 2026",
     title: "Endgame & Tactics Fixes, Opening Quality-of-Life",
