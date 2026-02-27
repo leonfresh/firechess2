@@ -416,7 +416,7 @@ export default function DashboardPage() {
           </div>
 
           {/* ─── Rescan Reminder ─── */}
-          {daysSinceLastScan != null && daysSinceLastScan >= 7 && (
+          {daysSinceLastScan != null && daysSinceLastScan >= 3 && (
             <div className="animate-fade-in-up rounded-2xl border border-amber-500/20 bg-gradient-to-r from-amber-500/[0.06] via-amber-500/[0.03] to-transparent p-4" style={{ animationDelay: "0.12s" }}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">

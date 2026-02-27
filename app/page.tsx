@@ -75,6 +75,11 @@ export default function HomePage() {
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "duplicate" | "error">("idle");
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [copyLinkLabel, setCopyLinkLabel] = useState("Copy Link");
+  const [welcomeBack, setWelcomeBack] = useState<string | null>(null);
+  const [openingsOpen, setOpeningsOpen] = useState(true);
+  const [tacticsOpen, setTacticsOpen] = useState(true);
+  const [endgamesOpen, setEndgamesOpen] = useState(true);
   const reportRef = useRef<HTMLElement>(null);
   const pngRef = useRef<HTMLDivElement>(null);
   const hasProAccess = sessionPlan === "pro" || sessionPlan === "lifetime" || localProEnabled;
@@ -159,6 +164,10 @@ export default function HomePage() {
       if (parsed.source === "chesscom" || parsed.source === "lichess") {
         setSource(parsed.source);
       }
+      if (typeof (parsed as any).username === "string" && (parsed as any).username) {
+        setUsername((parsed as any).username);
+        setWelcomeBack((parsed as any).username);
+      }
       if (parsed.cardViewMode === "carousel" || parsed.cardViewMode === "list") {
         setCardViewMode(parsed.cardViewMode);
       }
@@ -195,13 +204,14 @@ export default function HomePage() {
           speed,
           gameRangeMode,
           sinceDate,
-          cardViewMode
+          cardViewMode,
+          username: username.trim() || undefined
         })
       );
     } catch {
       // ignore storage write failures
     }
-  }, [gameCount, moveCount, cpThreshold, engineDepth, source, scanMode, speed, gameRangeMode, sinceDate, cardViewMode]);
+  }, [gameCount, moveCount, cpThreshold, engineDepth, source, scanMode, speed, gameRangeMode, sinceDate, cardViewMode, username]);
 
   const leaks = useMemo(() => result?.leaks ?? [], [result]);
   /** Leak count excluding DB-approved sidelines — used for radar/scoring so sidelines don't penalize */
@@ -798,6 +808,23 @@ export default function HomePage() {
               </div>
             </div>
 
+            {/* Welcome back prompt */}
+            {welcomeBack && state === "idle" && !result && (
+              <div className="flex items-center gap-3 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.05] px-4 py-3">
+                <span className="text-lg">👋</span>
+                <p className="flex-1 text-sm text-slate-300">
+                  Welcome back! Ready to scan <span className="font-semibold text-white">{welcomeBack}</span> again?
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setWelcomeBack(null)}
+                  className="text-slate-500 hover:text-slate-300 transition-colors"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+            )}
+
             {/* Search bar */}
             <div className="flex flex-col gap-3 md:flex-row">
               <div className="relative flex-1">
@@ -823,7 +850,7 @@ export default function HomePage() {
                     Scanning...
                   </>
                 ) : freeLimitsExceeded ? (
-                  "Upgrade for Pro limits"
+                  <Link href="/pricing" className="text-inherit no-underline">Upgrade for Pro limits</Link>
                 ) : (
                   <>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
@@ -1355,14 +1382,13 @@ export default function HomePage() {
                     type="button"
                     onClick={() => {
                       navigator.clipboard.writeText(window.location.href);
-                      const btn = document.activeElement as HTMLButtonElement;
-                      const orig = btn?.textContent;
-                      if (btn) { btn.textContent = "Copied!"; setTimeout(() => { btn.textContent = orig ?? "Copy Link"; }, 1500); }
+                      setCopyLinkLabel("Copied!");
+                      setTimeout(() => setCopyLinkLabel("Copy Link"), 1500);
                     }}
                     className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
                   >
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-                    Copy Link
+                    {copyLinkLabel}
                   </button>
 
                   {/* Download PNG */}
@@ -1975,7 +2001,7 @@ export default function HomePage() {
               {(lastRunConfig?.scanMode !== "tactics") && (
               <>
               {/* Opening Leaks Section Header */}
-              <div className="glass-card border-emerald-500/15 bg-gradient-to-r from-emerald-500/[0.04] to-transparent p-6">
+              <button type="button" onClick={() => setOpeningsOpen(o => !o)} className="glass-card border-emerald-500/15 bg-gradient-to-r from-emerald-500/[0.04] to-transparent p-6 w-full text-left cursor-pointer transition-colors hover:border-emerald-500/25">
                 <div className="flex items-center gap-4">
                   <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/15 text-3xl shadow-lg shadow-emerald-500/10">🔁</span>
                   <div className="flex-1">
@@ -1988,10 +2014,12 @@ export default function HomePage() {
                       Positions you keep reaching and making the same suboptimal move
                     </p>
                   </div>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`shrink-0 text-slate-400 transition-transform duration-200 ${openingsOpen ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
-              </div>
+              </button>
 
               {/* Leak cards */}
+              {openingsOpen && (<>
               {leaks.length === 0 ? (
                 <div className="glass-card flex items-center gap-4 p-6">
                   <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-2xl">🎉</span>
@@ -2024,7 +2052,7 @@ export default function HomePage() {
               )}
 
               {/* One-Off Opening Mistakes Section */}
-              {(lastRunConfig?.scanMode !== "tactics") && oneOffMistakes.length > 0 && (
+              {oneOffMistakes.length > 0 && (
               <>
               <div className="glass-card border-amber-500/15 bg-gradient-to-r from-amber-500/[0.04] to-transparent p-6">
                 <div className="flex items-center gap-4">
@@ -2058,6 +2086,7 @@ export default function HomePage() {
               </CardCarousel>
               </>
               )}
+              </>)}
 
               {/* Opening Health Rankings */}
               {(lastRunConfig?.scanMode !== "tactics") && result?.openingSummaries && result.openingSummaries.length > 0 && (
@@ -2112,7 +2141,7 @@ export default function HomePage() {
               <div className="my-4">
                 <div className="section-divider" />
               </div>
-              <div className="glass-card border-amber-500/15 bg-gradient-to-r from-amber-500/[0.04] to-transparent p-6">
+              <button type="button" onClick={() => setTacticsOpen(o => !o)} className="glass-card border-amber-500/15 bg-gradient-to-r from-amber-500/[0.04] to-transparent p-6 w-full text-left cursor-pointer transition-colors hover:border-amber-500/25">
                 <div className="flex items-center gap-4">
                   <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">⚡</span>
                   <div className="flex-1">
@@ -2128,9 +2157,11 @@ export default function HomePage() {
                       Positions where you had a forcing move for ≥200cp material gain but missed it
                     </p>
                   </div>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`shrink-0 text-slate-400 transition-transform duration-200 ${tacticsOpen ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
-              </div>
+              </button>
 
+              {tacticsOpen && (<>
               {/* Tactics Overview Stats */}
               {missedTactics.length > 0 && (
                 <div className="glass-card space-y-4 p-5">
@@ -2323,6 +2354,7 @@ export default function HomePage() {
               )}
               </>
               )}
+              </>)}
 
               {/* CTA: after tactics-only scan, suggest openings scan */}
               {lastRunConfig?.scanMode === "tactics" && (
@@ -2372,7 +2404,7 @@ export default function HomePage() {
               <div className="my-4">
                 <div className="section-divider" />
               </div>
-              <div className="glass-card border-sky-500/15 bg-gradient-to-r from-sky-500/[0.04] to-transparent p-6">
+              <button type="button" onClick={() => setEndgamesOpen(o => !o)} className="glass-card border-sky-500/15 bg-gradient-to-r from-sky-500/[0.04] to-transparent p-6 w-full text-left cursor-pointer transition-colors hover:border-sky-500/25">
                 <div className="flex items-center gap-4">
                   <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-500/15 text-3xl shadow-lg shadow-sky-500/10">♟️</span>
                   <div className="flex-1">
@@ -2388,9 +2420,11 @@ export default function HomePage() {
                       Endgame positions where your technique cost eval — conversions, holds & accuracy
                     </p>
                   </div>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`shrink-0 text-slate-400 transition-transform duration-200 ${endgamesOpen ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
-              </div>
+              </button>
 
+              {endgamesOpen && (<>
               {/* Endgame Stats Overview */}
               {endgameStats && (
                 <div className="glass-card space-y-4 p-5">
@@ -2517,7 +2551,7 @@ export default function HomePage() {
                       <div className="stat-card py-3">
                         <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Worst Blunder</p>
                         <p className="mt-0.5 text-lg font-bold text-red-400">
-                          −{(Math.max(...endgameMistakes.map(m => m.cpLoss)) / 100).toFixed(1)}
+                          {endgameMistakes.some(m => m.cpLoss >= 99000) ? "Mate" : `−${(Math.max(...endgameMistakes.map(m => m.cpLoss)) / 100).toFixed(1)}`}
                         </p>
                       </div>
                       <div className="stat-card py-3">
@@ -2559,8 +2593,23 @@ export default function HomePage() {
                   ))}
                 </CardCarousel>
               )}
+
+              {/* Endgame upsell for free users */}
+              {!hasProAccess && endgameMistakes.length >= FREE_ENDGAME_SAMPLE && (
+                <div className="glass-card flex flex-col items-center gap-4 border-amber-500/15 bg-gradient-to-r from-amber-500/[0.04] to-transparent p-5 text-center sm:flex-row sm:text-left">
+                  <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-2xl">🔓</span>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-white">Showing {FREE_ENDGAME_SAMPLE} of your endgame mistakes</p>
+                    <p className="mt-0.5 text-xs text-slate-400">Upgrade to Pro for unlimited endgame analysis, drill mode, and coaching tips.</p>
+                  </div>
+                  <Link href="/pricing" className="btn-primary flex h-10 shrink-0 items-center gap-2 px-5 text-sm font-bold">
+                    Unlock All
+                  </Link>
+                </div>
+              )}
               </>
               )}
+              </>)}
 
               {/* CTA: after endgames-only scan, suggest other scans */}
               {lastRunConfig?.scanMode === "endgames" && (
@@ -2763,6 +2812,43 @@ export default function HomePage() {
           )}
         </section>
       </div>
+
+      {/* ─── Sticky Save Bar ─── */}
+      {state === "done" && result && saveStatus !== "saved" && saveStatus !== "duplicate" && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.08] bg-slate-950/90 backdrop-blur-lg">
+          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
+            <p className="text-sm text-slate-300">
+              <span className="font-semibold text-white">{result.leaks.length} leaks</span> &middot; <span className="font-semibold text-white">{result.missedTactics.length} tactics</span>
+              {result.endgameMistakes.length > 0 && <> &middot; <span className="font-semibold text-white">{result.endgameMistakes.length} endgame</span></>}
+              {" "} found — save to track improvement
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                if (!authenticated) { window.location.href = "/auth/signin"; return; }
+                saveReportToAccount();
+              }}
+              disabled={saveStatus === "saving"}
+              className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-600 to-emerald-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-cyan-500/20 transition-all hover:brightness-110 disabled:opacity-50"
+            >
+              {saveStatus === "saving" ? (
+                <>
+                  <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" />
+                    <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                  </svg>
+                  Saving…
+                </>
+              ) : (
+                <>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
+                  {authenticated ? "Save Report" : "Sign in to Save"}
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -27,7 +27,7 @@ const plans = [
       "Save reports to dashboard & track progress",
       "Lichess + Chess.com support"
     ],
-    cta: "Current baseline",
+    cta: "Get Started Free",
     highlight: false
   },
   {
@@ -56,7 +56,7 @@ const plans = [
     id: "lifetime" as const,
     icon: "♾️",
     name: "Lifetime",
-    originalPrice: null as string | null,
+    originalPrice: "$99",
     price: "$59",
     subtitle: "Pay once, keep Pro forever",
     badge: "⚡ Founding member pricing",
@@ -133,6 +133,7 @@ export default function PricingPage() {
                     FireChess is brand new. Subscribe now at <span className="font-semibold text-orange-300">$5/mo instead of $8/mo</span> and
                     keep that rate forever — even when the price goes up. Or grab <span className="font-semibold text-amber-300">Lifetime access for a one-time $59</span>.
                   </p>
+                  <p className="mt-2 text-xs font-medium text-orange-400/80">⏰ Launch pricing won&apos;t last forever — lock it in while you can.</p>
                 </div>
               </div>
             </div>
@@ -151,6 +152,12 @@ export default function PricingPage() {
               ))}
             </div>
           </header>
+
+          {/* Social proof */}
+          <div className="mx-auto flex max-w-md items-center justify-center gap-2 rounded-full border border-emerald-500/15 bg-emerald-500/[0.06] px-5 py-2.5 text-sm text-slate-300">
+            <span className="text-emerald-400">🔥</span>
+            <span>Trusted by <span className="font-semibold text-white">hundreds</span> of chess improvers</span>
+          </div>
 
           {/* Plan Cards */}
           <div className="grid gap-6 md:grid-cols-3">
@@ -235,7 +242,15 @@ export default function PricingPage() {
                           ? "Switch to Lifetime"
                           : "✓ Current plan"
                       : checkoutLoading === p.id
-                        ? "Redirecting to Stripe..."
+                        ? (
+                          <span className="inline-flex items-center gap-2">
+                            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                            Redirecting to Stripe...
+                          </span>
+                        )
                         : p.cta}
                   </button>
                 </div>

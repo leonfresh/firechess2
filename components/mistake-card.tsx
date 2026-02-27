@@ -213,7 +213,18 @@ function classifyLossBadge(cpLoss: number, dbApproved?: boolean, explorerMove?: 
   return { label: "Inaccuracy", color: "#f97316" };
 }
 
+const MATE_THRESHOLD = 99000;
+
+function isMateScore(cp: number): boolean {
+  return Math.abs(cp) >= MATE_THRESHOLD;
+}
+
 function formatEval(valueCp: number, options?: { showPlus?: boolean }): string {
+  if (isMateScore(valueCp)) {
+    const n = 100000 - Math.abs(valueCp);
+    const sign = valueCp > 0 ? "+" : "-";
+    return n <= 0 ? `${sign}Mate` : `${sign}M${n}`;
+  }
   const evalPawns = valueCp / 100;
   const rounded = Math.round(evalPawns * 100) / 100;
   const text = rounded.toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");

@@ -15,10 +15,12 @@ export function EvalBar({ evalCp, height = 340 }: EvalBarProps) {
   const normalized = clamp(pawns, -4, 4);
   const whiteRatio = 0.5 + normalized / 8;
   const whiteHeight = `${Math.round(whiteRatio * 100)}%`;
-  const roundedPawns = Math.round(pawns * 10) / 10;
-  const label = `${roundedPawns > 0 ? "+" : ""}${roundedPawns.toString()}`;
+  const isMate = Math.abs(cp) >= 99000;
+  const label = isMate
+    ? (() => { const n = 100000 - Math.abs(cp); const sign = cp > 0 ? "+" : "-"; return n <= 0 ? `${sign}Mate` : `${sign}M${n}`; })()
+    : `${pawns > 0 ? "+" : ""}${(Math.round(pawns * 10) / 10).toString()}`;
 
-  const isWhiteAdvantage = roundedPawns >= 0;
+  const isWhiteAdvantage = cp >= 0;
 
   return (
     <div className="flex flex-col items-center gap-2">

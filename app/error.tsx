@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 
 export default function ErrorPage({
   error,
@@ -30,6 +31,9 @@ export default function ErrorPage({
         >
           Try Again
         </button>
+        <Link href="/" className="text-sm text-slate-500 hover:text-slate-300 transition-colors">
+          ← Back to Home
+        </Link>
       </div>
     </div>
   );

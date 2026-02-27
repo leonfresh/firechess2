@@ -17,6 +17,13 @@ export default function NotFound() {
         >
           Back to Home
         </Link>
+        <div className="flex items-center justify-center gap-4 text-xs text-slate-500">
+          <Link href="/blog" className="hover:text-slate-300 transition-colors">Blog</Link>
+          <span>·</span>
+          <Link href="/pricing" className="hover:text-slate-300 transition-colors">Pricing</Link>
+          <span>·</span>
+          <Link href="/about" className="hover:text-slate-300 transition-colors">About</Link>
+        </div>
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import { LATEST_VERSION } from "@/lib/constants";
 import { useCoinBalance } from "@/lib/use-coins";
 
 const NAV_LINKS = [
+  { href: "/blog", label: "Blog" },
   { href: "/about", label: "About" },
 ];
 

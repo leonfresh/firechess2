@@ -152,6 +152,10 @@ export default function SignInPage() {
         )}
 
         <p className="text-center text-xs text-slate-600">
+          <span className="text-slate-500">Chess.com users:</span> Use Google or email sign-in above, then enter your Chess.com username when scanning.
+        </p>
+
+        <p className="text-center text-xs text-slate-600">
           By signing in, you agree to our <a href="/terms" className="text-emerald-400 hover:underline">Terms of Service</a> and <a href="/privacy" className="text-emerald-400 hover:underline">Privacy Policy</a>.
         </p>
       </div>
