@@ -17,6 +17,8 @@ import type {
 } from "@/lib/types";
 
 type LichessGame = {
+  id?: string;
+  createdAt?: number;
   moves?: string;
   clocks?: number[];
   winner?: string; // "white" | "black" | absent for draw
@@ -51,6 +53,8 @@ type GameTermination = "mate" | "resign" | "timeout" | "draw" | "stalemate" | "o
 
 type SourceGame = {
   moves: string;
+  /** When the game was played (epoch ms) — for incremental caching */
+  playedAt?: number;
   whiteName?: string;
   blackName?: string;
   /** Player ratings if available from the source */
@@ -185,6 +189,7 @@ function sourceGamesFromLichess(games: LichessGame[]): SourceGame[] {
 
       return {
         moves: game.moves!.trim(),
+        playedAt: game.createdAt,
         whiteName: game.players?.white?.user?.name,
         blackName: game.players?.black?.user?.name,
         whiteRating: game.players?.white?.rating,
@@ -533,6 +538,7 @@ async function fetchChessComGamesInReverse(
 
       collected.push({
         moves: parsed.moves,
+        playedAt: game.end_time ? game.end_time * 1000 : undefined,
         whiteName,
         blackName,
         whiteRating: game.white?.rating,
@@ -565,6 +571,53 @@ function normalizeUci(move: string | null): MoveSquare | null {
     to: move.slice(2, 4),
     promotion: move.slice(4, 5) || undefined
   };
+}
+
+/* ── Game cache ─────────────────────────────────────── */
+
+const GAME_CACHE_PREFIX = "fc-gcache-";
+const GAME_CACHE_MAX_GAMES = 1000;
+const GAME_CACHE_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
+
+type GameCacheEntry = {
+  savedAt: number;
+  games: SourceGame[];
+};
+
+function gameCacheKey(username: string, source: string, tc: string[]): string {
+  return `${GAME_CACHE_PREFIX}${source}-${username.toLowerCase()}-${[...tc].sort().join(",")}`;
+}
+
+/** Fingerprint for dedup: player names + first 80 chars of moves */
+function gameFingerprint(g: SourceGame): string {
+  return `${(g.whiteName ?? "").toLowerCase()}|${(g.blackName ?? "").toLowerCase()}|${g.moves.slice(0, 80)}`;
+}
+
+function loadGameCache(username: string, source: string, tc: string[]): GameCacheEntry | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(gameCacheKey(username, source, tc));
+    if (!raw) return null;
+    const entry: GameCacheEntry = JSON.parse(raw);
+    if (Date.now() - entry.savedAt > GAME_CACHE_MAX_AGE_MS) {
+      localStorage.removeItem(gameCacheKey(username, source, tc));
+      return null;
+    }
+    return entry;
+  } catch {
+    return null;
+  }
+}
+
+function saveGameCache(username: string, source: string, tc: string[], games: SourceGame[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    const trimmed = games.slice(0, GAME_CACHE_MAX_GAMES);
+    const entry: GameCacheEntry = { savedAt: Date.now(), games: trimmed };
+    localStorage.setItem(gameCacheKey(username, source, tc), JSON.stringify(entry));
+  } catch {
+    // localStorage quota exceeded — silently skip
+  }
 }
 
 function sanForMove(fen: string, move: string | null): string | null {
@@ -1023,16 +1076,38 @@ export async function analyzeOpeningLeaksInBrowser(
 
   let games: SourceGame[] = [];
 
+  // ── Game cache: avoid re-downloading games we already have ──
+  const tcRaw = options?.timeControl;
+  const tcArr = Array.isArray(tcRaw) ? tcRaw : tcRaw ? [tcRaw] : ["all"];
+  const cache = loadGameCache(username, source, tcArr);
+
+  // Determine effective "since" for incremental fetch
+  let fetchSince = options?.since ?? 0;
+  if (cache && cache.games.length > 0) {
+    const cachedNewestAt = Math.max(...cache.games.map(g => g.playedAt ?? 0));
+    if (cachedNewestAt > 0) {
+      fetchSince = Math.max(fetchSince, cachedNewestAt + 1);
+    }
+    emitProgress(options, {
+      phase: "fetch",
+      message: "💾 Found cached games",
+      detail: `${cache.games.length} games from previous scan — checking for new ones`,
+      percent: 1,
+    });
+  }
+
   if (source === "chesscom") {
     emitProgress(options, {
       phase: "fetch",
       message: "🌐 Connecting to Chess.com",
-      detail: "Fetching your recent game archives...",
+      detail: cache ? "Fetching new games only..." : "Fetching your recent game archives...",
       percent: 2,
     });
 
     try {
-      games = await fetchChessComGamesInReverse(username, maxGames, options);
+      // Pass cache-aware since to avoid re-downloading known games
+      const fetchOpts = fetchSince > 0 ? { ...options, since: fetchSince } : options;
+      games = await fetchChessComGamesInReverse(username, maxGames, fetchOpts);
     } catch (error) {
       const message = error instanceof Error ? error.message : "unknown error";
       throw new Error(`Browser cannot reach api.chess.com. Last error: ${message}`);
@@ -1041,23 +1116,21 @@ export async function analyzeOpeningLeaksInBrowser(
     emitProgress(options, {
       phase: "fetch",
       message: "🌐 Connecting to Lichess",
-      detail: "Streaming your recent games...",
+      detail: cache ? "Fetching new games only..." : "Streaming your recent games...",
       percent: 2,
     });
 
     // Build Lichess URL with optional time control filter (supports multi-select)
-    const tcRaw = options?.timeControl;
-    const tcArr = Array.isArray(tcRaw) ? tcRaw : tcRaw ? [tcRaw] : ["all"];
     const lichessPerfs = tcArr
       .filter((t): t is Speed => t !== "all")
       .map((t) => t); // Lichess perfType values match our Speed type directly
     const perfParam = lichessPerfs.length > 0
       ? `&perfType=${lichessPerfs.join(",")}`
       : "";
-    const sinceParam = options?.since ? `&since=${options.since}` : "";
+    const sinceParam = fetchSince > 0 ? `&since=${fetchSince}` : "";
     const lichessUrl = `https://lichess.org/api/games/user/${encodeURIComponent(username)}?max=${maxGames}&moves=true&opening=true&clocks=true&evals=false&pgnInJson=false${perfParam}${sinceParam}`;
 
-    const hasSinceFilter = !!options?.since;
+    const hasSinceFilter = fetchSince > 0;
     const lichessGames = await streamLichessGames(
       lichessUrl,
       maxGames,
@@ -1066,7 +1139,7 @@ export async function analyzeOpeningLeaksInBrowser(
           phase: "fetch",
           message: "🌐 Downloading from Lichess",
           detail: hasSinceFilter
-            ? `${count} games received so far`
+            ? `${count} new games received so far`
             : `${count} of ${maxGames} games received`,
           current: count,
           total: hasSinceFilter ? undefined : maxGames,
@@ -1080,6 +1153,29 @@ export async function analyzeOpeningLeaksInBrowser(
 
     games = sourceGamesFromLichess(lichessGames);
   }
+
+  // ── Merge with cached games (dedup by fingerprint) ──
+  const newGameCount = games.length;
+  if (cache && cache.games.length > 0 && games.length < maxGames) {
+    const fingerprints = new Set(games.map(gameFingerprint));
+    let additions = cache.games.filter(g => !fingerprints.has(gameFingerprint(g)));
+    // Apply user's original since filter to cached games
+    if (options?.since) {
+      additions = additions.filter(g => !g.playedAt || g.playedAt >= options.since!);
+    }
+    if (additions.length > 0) {
+      games = [...games, ...additions].slice(0, maxGames);
+      emitProgress(options, {
+        phase: "fetch",
+        message: `💾 ${newGameCount} new + ${additions.length} cached`,
+        detail: `${games.length} total games ready for analysis`,
+        percent: 39,
+      });
+    }
+  }
+
+  // Save merged games to cache for next time
+  saveGameCache(username, source, tcArr, games);
 
   emitProgress(options, {
     phase: "parse",
