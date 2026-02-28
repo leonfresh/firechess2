@@ -560,23 +560,38 @@ function PuzzleModal({
       setSelectedSq(sq);
       setLegalMoveSqs(moves.map((m) => m.to));
 
-      // Find the piece visual rendered by react-chessboard
-      const sqEl = cbEl.querySelector(`[data-square="${sq}"]`) as HTMLElement | null;
-      if (!sqEl) return;
-      const pieceWrapper = sqEl.querySelector("[data-piece]") as HTMLElement | null;
+      // Find the piece element under the pointer by peeking through the overlay
+      const overlayEl = e.currentTarget as HTMLElement;
+      overlayEl.style.pointerEvents = "none";
+      const els = document.elementsFromPoint(e.clientX, e.clientY);
+      overlayEl.style.pointerEvents = "";
+
+      // Walk the elements to find the [data-piece] wrapper or an SVG/img inside it
+      let pieceWrapper: HTMLElement | null = null;
+      for (const el of els) {
+        const dp = (el as HTMLElement).closest?.("[data-piece]") as HTMLElement | null;
+        if (dp) { pieceWrapper = dp; break; }
+      }
       if (!pieceWrapper) return;
 
-      // Clone the inner visual (SVG or img), not the wrapper div
-      const innerVisual = pieceWrapper.querySelector("svg") ?? pieceWrapper.querySelector("img");
+      // Clone the entire piece wrapper (preserves all nested SVGs/images)
       const ghost = document.createElement("div");
-      if (innerVisual) {
-        const clone = innerVisual.cloneNode(true) as HTMLElement;
-        // Ensure SVG fills the ghost container
-        clone.setAttribute("width", String(sqSize));
-        clone.setAttribute("height", String(sqSize));
-        clone.style.display = "block";
-        ghost.appendChild(clone);
+      const pieceClone = pieceWrapper.cloneNode(true) as HTMLElement;
+      // Reset the wrapper's inline style so the clone is just the visual
+      pieceClone.style.cssText = `width:${sqSize}px;height:${sqSize}px;display:flex;align-items:center;justify-content:center;`;
+      // Make sure inner SVG/img fills the space
+      const innerSvg = pieceClone.querySelector("svg");
+      if (innerSvg) {
+        innerSvg.setAttribute("width", String(sqSize));
+        innerSvg.setAttribute("height", String(sqSize));
+        innerSvg.style.display = "block";
       }
+      const innerImg = pieceClone.querySelector("img");
+      if (innerImg) {
+        innerImg.style.width = `${sqSize}px`;
+        innerImg.style.height = `${sqSize}px`;
+      }
+      ghost.appendChild(pieceClone);
       ghost.style.cssText = `
         position: fixed;
         pointer-events: none;
