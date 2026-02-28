@@ -258,6 +258,19 @@ function PuzzleModal({
   const [promoFrom, setPromoFrom] = useState<string | null>(null);
   const [promoTo, setPromoTo] = useState<string | null>(null);
   const [solved, setSolved] = useState(0);
+
+  // Memoize side-to-move so isDraggablePiece doesn't instantiate Chess per piece
+  const sideToMove = useMemo(() => {
+    try { return new Chess(fen).turn(); } catch { return "w"; }
+  }, [fen]);
+
+  const isDraggablePiece = useCallback(
+    ({ piece }: { piece: string }) => {
+      if (state !== "solving") return false;
+      return piece.startsWith(sideToMove === "w" ? "w" : "b");
+    },
+    [state, sideToMove]
+  );
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -636,8 +649,8 @@ function PuzzleModal({
 
         <div className="grid gap-6 md:grid-cols-[minmax(0,560px)_1fr] md:gap-8">
           {/* Board */}
-          <div ref={boardRef} className="relative mx-auto flex w-full max-w-[560px] shrink-0 items-start">
-            <div className="relative w-full rounded-xl shadow-lg shadow-black/30">
+          <div ref={boardRef} className="relative mx-auto flex w-full max-w-[560px] shrink-0 items-start" style={{ willChange: "transform" }}>
+            <div className="relative w-full rounded-xl">
               <Chessboard
                 id={`puzzle-${puzzle?.puzzle.id ?? "none"}`}
                 position={fen}
@@ -648,14 +661,7 @@ function PuzzleModal({
                 showPromotionDialog={showPromoDialog}
                 promotionToSquare={promoTo as CbSquare | undefined}
                 arePiecesDraggable={state === "solving"}
-                isDraggablePiece={({ piece }) => {
-                  if (state !== "solving") return false;
-                  try {
-                    const chess = new Chess(fen);
-                    const turn = chess.turn();
-                    return piece.startsWith(turn === "w" ? "w" : "b");
-                  } catch { return false; }
-                }}
+                isDraggablePiece={isDraggablePiece}
                 boardOrientation={orientation}
                 boardWidth={boardSize}
                 animationDuration={200}
