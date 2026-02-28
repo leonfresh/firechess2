@@ -22,6 +22,42 @@ interface ChangeEntry {
 
 const CHANGELOG: ChangeEntry[] = [
   {
+    version: 12,
+    date: "Mar 1, 2026",
+    title: "Game Cache Fix",
+    description:
+      "Switching from a lower to higher game count (e.g. 300 → 2000) now correctly fetches the additional games instead of silently reusing the smaller cache.",
+    changes: [
+      { type: "fix", text: "Increasing game count no longer skips older games — cache is only reused when it already covers the requested count" },
+      { type: "fix", text: "Cache merge logic no longer backfills stale games when a full re-fetch was performed" },
+      { type: "fix", text: "Game cache limit raised from 1,000 to 5,000 to match Pro tier max games" },
+    ],
+  },
+  {
+    version: 11,
+    date: "Mar 1, 2026",
+    title: "Puzzle Promotion Fix & Hint Button",
+    description:
+      "Personalized puzzles now handle promotions correctly and include a hint button to nudge you toward the right move.",
+    changes: [
+      { type: "fix", text: "Promotion puzzles now auto-queen when the solution expects a queen promotion — promo dialog only appears for underpromotion puzzles" },
+      { type: "feature", text: "Hint button highlights the source square of the expected move with a green glow" },
+    ],
+  },
+  {
+    version: 10,
+    date: "Mar 1, 2026",
+    title: "Personalized Puzzles",
+    description:
+      "Practice puzzles generated from your own missed tactics. Positions are pulled from your Lichess puzzle history and presented inline with drag-and-drop solving.",
+    changes: [
+      { type: "feature", text: "Personalized Puzzles section — solve tactics from your own games directly in the report" },
+      { type: "feature", text: "Puzzles fetched from Lichess puzzle activity API based on your username" },
+      { type: "feature", text: "Inline expandable board with drag-and-drop moves, move validation, and success/fail feedback" },
+      { type: "feature", text: "Puzzle counter and navigation — work through your set one by one" },
+    ],
+  },
+  {
     version: 9,
     date: "Feb 27, 2026",
     title: "Collapsible Sections & Mate Eval Fix",
