@@ -649,8 +649,7 @@ function PuzzleModal({
 
         <div className="grid gap-6 md:grid-cols-[minmax(0,560px)_1fr] md:gap-8">
           {/* Board */}
-          <div ref={boardRef} className="relative mx-auto flex w-full max-w-[560px] shrink-0 items-start" style={{ willChange: "transform" }}>
-            <div className="relative w-full rounded-xl">
+          <div ref={boardRef} className="relative mx-auto w-full max-w-[560px] shrink-0">
               <Chessboard
                 id={`puzzle-${puzzle?.puzzle.id ?? "none"}`}
                 position={fen}
@@ -670,7 +669,6 @@ function PuzzleModal({
                 customSquareStyles={customSquareStyles}
                 showBoardNotation={showCoords}
               />
-            </div>
           </div>
 
           {/* Right panel */}
@@ -788,13 +786,19 @@ type PersonalizedPuzzlesProps = {
   tactics: MissedTactic[];
   endgames: EndgameMistake[];
   leaks?: RepeatedOpeningLeak[];
+  onExpandedChange?: (expanded: boolean) => void;
 };
 
-export function PersonalizedPuzzles({ tactics, endgames, leaks }: PersonalizedPuzzlesProps) {
+export function PersonalizedPuzzles({ tactics, endgames, leaks, onExpandedChange }: PersonalizedPuzzlesProps) {
   const [puzzles, setPuzzles] = useState<LichessPuzzle[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+
+  // Notify parent when expanded state changes
+  useEffect(() => {
+    onExpandedChange?.(expanded);
+  }, [expanded, onExpandedChange]);
 
   const themes = useMemo(() => extractThemes(tactics, endgames, leaks), [tactics, endgames, leaks]);
 
