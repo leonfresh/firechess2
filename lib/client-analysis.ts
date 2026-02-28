@@ -114,6 +114,7 @@ const DEFAULT_MAX_OPENING_MOVES = 30;
 /**
  * Process items concurrently with a fixed concurrency limit.
  * Each "lane" picks the next unprocessed item, so all lanes stay busy.
+ * Yields to the browser event loop periodically to prevent UI freezes.
  */
 async function parallelForEach<T>(
   items: T[],
@@ -121,10 +122,18 @@ async function parallelForEach<T>(
   fn: (item: T, index: number) => Promise<void>
 ): Promise<void> {
   let nextIndex = 0;
+  const yieldToMain = () => new Promise<void>((r) => setTimeout(r, 0));
   const lane = async () => {
+    let sinceYield = 0;
     while (nextIndex < items.length) {
       const i = nextIndex++;
       await fn(items[i], i);
+      sinceYield++;
+      // Yield to browser every 4 tasks to keep UI responsive
+      if (sinceYield >= 4) {
+        sinceYield = 0;
+        await yieldToMain();
+      }
     }
   };
   await Promise.all(
@@ -1200,6 +1209,11 @@ export async function analyzeOpeningLeaksInBrowser(
   if (doOpenings) {
   for (let gameIndex = 0; gameIndex < games.length; gameIndex += 1) {
     const game = games[gameIndex];
+
+    // Yield to browser every 20 games to prevent UI freeze
+    if (gameIndex > 0 && gameIndex % 20 === 0) {
+      await new Promise<void>((r) => setTimeout(r, 0));
+    }
 
     if (gameIndex % 10 === 0 || gameIndex === games.length - 1) {
       emitProgress(options, {

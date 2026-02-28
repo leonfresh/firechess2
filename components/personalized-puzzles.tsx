@@ -560,38 +560,23 @@ function PuzzleModal({
       setSelectedSq(sq);
       setLegalMoveSqs(moves.map((m) => m.to));
 
-      // Find the piece element under the pointer by peeking through the overlay
-      const overlayEl = e.currentTarget as HTMLElement;
-      overlayEl.style.pointerEvents = "none";
-      const els = document.elementsFromPoint(e.clientX, e.clientY);
-      overlayEl.style.pointerEvents = "";
+      // Find the piece SVG on this square via direct DOM query
+      const sqEl = cbEl.querySelector(`[data-square="${sq}"]`) as HTMLElement | null;
+      const pieceSvg = sqEl?.querySelector("svg");
+      const pieceWrapper = sqEl?.querySelector("[data-piece]") as HTMLElement | null;
 
-      // Walk the elements to find the [data-piece] wrapper or an SVG/img inside it
-      let pieceWrapper: HTMLElement | null = null;
-      for (const el of els) {
-        const dp = (el as HTMLElement).closest?.("[data-piece]") as HTMLElement | null;
-        if (dp) { pieceWrapper = dp; break; }
-      }
-      if (!pieceWrapper) return;
-
-      // Clone the entire piece wrapper (preserves all nested SVGs/images)
+      // Build ghost — convert the SVG to a data-URI image (avoids React clone issues)
       const ghost = document.createElement("div");
-      const pieceClone = pieceWrapper.cloneNode(true) as HTMLElement;
-      // Reset the wrapper's inline style so the clone is just the visual
-      pieceClone.style.cssText = `width:${sqSize}px;height:${sqSize}px;display:flex;align-items:center;justify-content:center;`;
-      // Make sure inner SVG/img fills the space
-      const innerSvg = pieceClone.querySelector("svg");
-      if (innerSvg) {
-        innerSvg.setAttribute("width", String(sqSize));
-        innerSvg.setAttribute("height", String(sqSize));
-        innerSvg.style.display = "block";
+      if (pieceSvg) {
+        const svgStr = new XMLSerializer().serializeToString(pieceSvg);
+        const img = document.createElement("img");
+        img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgStr)}`;
+        img.style.width = `${sqSize}px`;
+        img.style.height = `${sqSize}px`;
+        img.style.display = "block";
+        img.draggable = false;
+        ghost.appendChild(img);
       }
-      const innerImg = pieceClone.querySelector("img");
-      if (innerImg) {
-        innerImg.style.width = `${sqSize}px`;
-        innerImg.style.height = `${sqSize}px`;
-      }
-      ghost.appendChild(pieceClone);
       ghost.style.cssText = `
         position: fixed;
         pointer-events: none;
