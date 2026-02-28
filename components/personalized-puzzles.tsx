@@ -421,13 +421,11 @@ function PuzzleModal({
   );
 
   const onDrop = useCallback(
-    (from: string, to: string, piece: string) => {
-      setSelectedSq(null);
-      setLegalMoveSqs([]);
-      const promo = piece?.[1]?.toLowerCase();
-      return attemptMove(from, to, promo === "q" ? undefined : promo);
+    (_from: string, _to: string, _piece: string) => {
+      // Drag is handled by our custom pointer system — reject library drops
+      return false;
     },
-    [attemptMove]
+    []
   );
 
   const onSquareClick = useCallback(
@@ -477,19 +475,190 @@ function PuzzleModal({
     [state, puzzle, fen, selectedSq, legalMoveSqs, attemptMove]
   );
 
-  const onPieceDragBegin = useCallback(
-    (_piece: string, sourceSquare: CbSquare) => {
-      if (state !== "solving") return;
-      try {
-        const chess = new Chess(fen);
-        const moves = chess.moves({ square: sourceSquare as any, verbose: true });
-        if (moves.length > 0) {
-          setSelectedSq(sourceSquare);
-          setLegalMoveSqs(moves.map((m) => m.to));
-        }
-      } catch { /* */ }
+  /* ── Custom drag system (handles both taps and drags) ── */
+  const dragRef = useRef<{
+    square: string;
+    ghost: HTMLElement | null;
+    boardRect: DOMRect;
+    sqSize: number;
+    startX: number;
+    startY: number;
+    didDrag: boolean;
+    origPiece: HTMLElement | null;
+  } | null>(null);
+
+  /** Find board element & metrics */
+  const getBoardMetrics = useCallback(() => {
+    const boardEl = boardRef.current;
+    if (!boardEl) return null;
+    const cbEl = boardEl.querySelector("[data-boardid]") as HTMLElement | null;
+    if (!cbEl) return null;
+    const bRect = cbEl.getBoundingClientRect();
+    return { cbEl, bRect, sqSize: bRect.width / 8 };
+  }, []);
+
+  const squareFromPointer = useCallback(
+    (clientX: number, clientY: number, bRect: DOMRect, sqSize: number): string | null => {
+      const relX = clientX - bRect.left;
+      const relY = clientY - bRect.top;
+      if (relX < 0 || relY < 0 || relX >= bRect.width || relY >= bRect.height) return null;
+      const col = Math.floor(relX / sqSize);
+      const row = Math.floor(relY / sqSize);
+      if (orientation === "white") {
+        return String.fromCharCode(97 + col) + String(8 - row);
+      } else {
+        return String.fromCharCode(97 + (7 - col)) + String(row + 1);
+      }
     },
-    [state, fen]
+    [orientation]
+  );
+
+  const onPointerDownBoard = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      if (state !== "solving" || !puzzle) return;
+      const metrics = getBoardMetrics();
+      if (!metrics) return;
+      const { cbEl, bRect, sqSize } = metrics;
+
+      const sq = squareFromPointer(e.clientX, e.clientY, bRect, sqSize);
+      if (!sq) return;
+
+      const chess = new Chess(fen);
+      const piece = chess.get(sq as Parameters<Chess["get"]>[0]);
+      const sideToMove = chess.turn();
+
+      // ── Tap on non-own square: route through click-move logic ──
+      if (!piece || piece.color !== sideToMove) {
+        // If we have a selected piece and this is a legal destination → move
+        if (selectedSq && legalMoveSqs.includes(sq)) {
+          const selPiece = chess.get(selectedSq as Parameters<Chess["get"]>[0]);
+          if (selPiece?.type === "p") {
+            const rank = parseInt(sq[1]);
+            const isPromo = (selPiece.color === "w" && rank === 8) || (selPiece.color === "b" && rank === 1);
+            if (isPromo) {
+              setPromoFrom(selectedSq);
+              setPromoTo(sq);
+              setShowPromoDialog(true);
+              return;
+            }
+          }
+          attemptMove(selectedSq, sq);
+          setSelectedSq(null);
+          setLegalMoveSqs([]);
+        } else {
+          setSelectedSq(null);
+          setLegalMoveSqs([]);
+        }
+        return;
+      }
+
+      // ── Tap/drag on own piece ──
+      const moves = chess.moves({ square: sq as any, verbose: true });
+      if (moves.length === 0) return;
+
+      // Select piece & show legal moves immediately
+      setSelectedSq(sq);
+      setLegalMoveSqs(moves.map((m) => m.to));
+
+      // Find the piece image rendered by react-chessboard
+      const sqEl = cbEl.querySelector(`[data-square="${sq}"]`) as HTMLElement | null;
+      if (!sqEl) return;
+      const pieceImg = sqEl.querySelector("[data-piece]")
+        ?? sqEl.querySelector("img")
+        ?? sqEl.querySelector("svg");
+      if (!pieceImg) return;
+
+      // Create ghost (invisible until movement threshold)
+      const ghost = (pieceImg as HTMLElement).cloneNode(true) as HTMLElement;
+      ghost.style.cssText = `
+        position: fixed;
+        pointer-events: none;
+        z-index: 99999;
+        width: ${sqSize}px;
+        height: ${sqSize}px;
+        transform: translate(${e.clientX - sqSize / 2}px, ${e.clientY - sqSize / 2}px);
+        will-change: transform;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4));
+        transition: none;
+        opacity: 0;
+      `;
+      document.body.appendChild(ghost);
+
+      dragRef.current = {
+        square: sq,
+        ghost,
+        boardRect: bRect,
+        sqSize,
+        startX: e.clientX,
+        startY: e.clientY,
+        didDrag: false,
+        origPiece: pieceImg as HTMLElement,
+      };
+
+      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    },
+    [state, puzzle, fen, squareFromPointer, getBoardMetrics, selectedSq, legalMoveSqs, attemptMove]
+  );
+
+  const onPointerMoveBoard = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      const drag = dragRef.current;
+      if (!drag || !drag.ghost) return;
+      const { ghost, sqSize, startX, startY } = drag;
+
+      // 4px movement threshold before activating drag visual
+      if (!drag.didDrag) {
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        if (dx * dx + dy * dy < 16) return; // < 4px
+        drag.didDrag = true;
+        ghost.style.opacity = "1";
+        if (drag.origPiece) drag.origPiece.style.opacity = "0";
+      }
+
+      ghost.style.transform = `translate(${e.clientX - sqSize / 2}px, ${e.clientY - sqSize / 2}px)`;
+    },
+    []
+  );
+
+  const onPointerUpBoard = useCallback(
+    (e: React.PointerEvent<HTMLDivElement>) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+      dragRef.current = null;
+
+      // Remove ghost
+      if (drag.ghost) drag.ghost.remove();
+
+      // Re-show original piece
+      if (drag.origPiece) drag.origPiece.style.opacity = "";
+
+      // ── Tap (no drag movement): keep selection, don't attempt move ──
+      if (!drag.didDrag) return;
+
+      // ── Drag completed: determine target square and attempt move ──
+      const to = squareFromPointer(e.clientX, e.clientY, drag.boardRect, drag.sqSize);
+      if (to && to !== drag.square && legalMoveSqs.includes(to)) {
+        try {
+          const chess = new Chess(fen);
+          const piece = chess.get(drag.square as Parameters<Chess["get"]>[0]);
+          if (piece?.type === "p") {
+            const rank = parseInt(to[1]);
+            const isPromo = (piece.color === "w" && rank === 8) || (piece.color === "b" && rank === 1);
+            if (isPromo) {
+              setPromoFrom(drag.square);
+              setPromoTo(to);
+              setShowPromoDialog(true);
+              return;
+            }
+          }
+        } catch { /* */ }
+        attemptMove(drag.square, to);
+        setSelectedSq(null);
+        setLegalMoveSqs([]);
+      }
+    },
+    [squareFromPointer, legalMoveSqs, fen, attemptMove]
   );
 
   const onPromotionPieceSelect = useCallback(
@@ -635,17 +804,16 @@ function PuzzleModal({
         <div className="grid gap-6 md:grid-cols-[minmax(0,480px)_1fr] md:gap-8">
           {/* Board */}
           <div ref={boardRef} className="relative mx-auto flex w-full max-w-[480px] shrink-0 items-start">
-            <div className="w-full overflow-hidden rounded-xl shadow-lg shadow-black/30">
+            <div className="relative w-full overflow-hidden rounded-xl shadow-lg shadow-black/30">
               <Chessboard
                 id={`puzzle-${puzzle?.puzzle.id ?? "none"}`}
                 position={fen}
                 onPieceDrop={onDrop}
-                onPieceDragBegin={onPieceDragBegin}
                 onSquareClick={onSquareClick}
                 onPromotionPieceSelect={onPromotionPieceSelect}
                 showPromotionDialog={showPromoDialog}
                 promotionToSquare={promoTo as CbSquare | undefined}
-                arePiecesDraggable={state === "solving"}
+                arePiecesDraggable={false}
                 boardOrientation={orientation}
                 boardWidth={boardSize}
                 animationDuration={200}
@@ -654,6 +822,17 @@ function PuzzleModal({
                 customSquareStyles={customSquareStyles}
                 showBoardNotation={showCoords}
               />
+              {/* Custom drag overlay */}
+              {state === "solving" && (
+                <div
+                  className="absolute inset-0"
+                  style={{ touchAction: "none", zIndex: 10, cursor: "grab" }}
+                  onPointerDown={onPointerDownBoard}
+                  onPointerMove={onPointerMoveBoard}
+                  onPointerUp={onPointerUpBoard}
+                  onPointerCancel={onPointerUpBoard}
+                />
+              )}
             </div>
           </div>
 
