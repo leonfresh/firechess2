@@ -594,7 +594,7 @@ function PuzzleModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4"
       style={{ isolation: "isolate" }}
     >
       <div
@@ -649,7 +649,7 @@ function PuzzleModal({
         <div className="grid gap-6 md:grid-cols-[minmax(0,480px)_1fr] md:gap-8">
           {/* Board */}
           <div ref={boardRef} className="relative mx-auto flex w-full max-w-[480px] shrink-0 items-start">
-            <div className="relative w-full overflow-hidden rounded-xl shadow-lg shadow-black/30">
+            <div className="relative w-full rounded-xl shadow-lg shadow-black/30">
               <Chessboard
                 id={`puzzle-${puzzle?.puzzle.id ?? "none"}`}
                 position={fen}
