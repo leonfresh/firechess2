@@ -120,24 +120,56 @@ function extractThemes(
 }
 
 /** Convert PGN moves to a FEN at a given ply */
-function pgnToFen(pgn: string, ply: number): string {
-  const chess = new Chess();
-  // Strip move numbers (1. 2. 12.), result tokens, and comments so
-  // we only count actual half-moves when iterating to `ply`.
-  const moves = pgn
+function parsePgnMoves(pgn: string): string[] {
+  return pgn
     .replace(/\{[^}]*\}/g, "")          // {comments}
     .replace(/\d+\.{3}/g, "")           // 1...
     .replace(/\d+\./g, "")              // 1.
     .split(/\s+/)
     .filter(t => t.length > 0 && !/^(1-0|0-1|1\/2-1\/2|\*)$/.test(t));
-  for (let i = 0; i < Math.min(ply, moves.length); i++) {
-    try {
-      chess.move(moves[i]);
-    } catch {
-      break;
-    }
+}
+
+/**
+ * Sets up the puzzle position.
+ * - Position at `initialPly` is BEFORE the trigger move.
+ * - The trigger move is `pgnMoves[initialPly]` (from the game PGN).
+ * - `solution[0]` is the solver's first move (after the trigger).
+ */
+function setupPuzzlePosition(pgn: string, initialPly: number): {
+  preTriggerFen: string;
+  postTriggerFen: string;
+  triggerFrom: string;
+  triggerTo: string;
+  solverColor: "white" | "black";
+} {
+  const chess = new Chess();
+  const moves = parsePgnMoves(pgn);
+
+  // Play to initialPly to get position before trigger
+  for (let i = 0; i < Math.min(initialPly, moves.length); i++) {
+    try { chess.move(moves[i]); } catch { break; }
   }
-  return chess.fen();
+  const preTriggerFen = chess.fen();
+
+  // Play the trigger move from PGN (NOT solution[0])
+  let triggerFrom = "";
+  let triggerTo = "";
+  let postTriggerFen = preTriggerFen;
+  if (initialPly < moves.length) {
+    try {
+      const result = chess.move(moves[initialPly]);
+      if (result) {
+        triggerFrom = result.from;
+        triggerTo = result.to;
+        postTriggerFen = chess.fen();
+      }
+    } catch { /* trigger move failed */ }
+  }
+
+  // Solver is whoever moves AFTER the trigger
+  const solverColor = new Chess(postTriggerFen).turn() === "w" ? "white" : "black";
+
+  return { preTriggerFen, postTriggerFen, triggerFrom, triggerTo, solverColor };
 }
 
 /** Human-readable theme labels */
@@ -231,55 +263,53 @@ function PuzzleModal({
   const [loadingMore, setLoadingMore] = useState(false);
   const [wrongMove, setWrongMove] = useState<{ from: string; to: string } | null>(null);
   const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
+  const puzzleSetupRef = useRef<{
+    postTriggerFen: string;
+    triggerFrom: string;
+    triggerTo: string;
+  } | null>(null);
 
   const puzzle = queue[currentIdx] ?? null;
 
   // Load initial position when puzzle changes
   useEffect(() => {
     if (!puzzle) return;
-    const initialFen = pgnToFen(puzzle.game.pgn, puzzle.puzzle.initialPly);
-    setFen(initialFen);
-    setSolutionIdx(0);
+    const setup = setupPuzzlePosition(puzzle.game.pgn, puzzle.puzzle.initialPly);
+
+    // Start at pre-trigger position (the trigger animates after a delay)
+    setFen(setup.preTriggerFen);
+    setSolutionIdx(0); // solution[0] is the solver's FIRST move
     setState("setup");
     setSelectedSq(null);
     setLegalMoveSqs([]);
     setWrongMove(null);
     setLastMove(null);
+    setOrientation(setup.solverColor);
 
-    // The solver plays OPPOSITE of who moves at initialPly
-    // (solution[0] is the opponent's trigger move before the puzzle)
-    const chess = new Chess(initialFen);
-    setOrientation(chess.turn() === "w" ? "black" : "white");
+    // Save trigger info for the animation effect
+    puzzleSetupRef.current = {
+      postTriggerFen: setup.postTriggerFen,
+      triggerFrom: setup.triggerFrom,
+      triggerTo: setup.triggerTo,
+    };
 
     preloadSounds();
   }, [puzzle]);
 
-  // Auto-play opponent's trigger move (solution[0]) after a brief delay
+  // Auto-play the trigger move (from PGN, NOT solution[0]) after a brief delay
   useEffect(() => {
-    if (state !== "setup" || !fen || !puzzle) return;
+    if (state !== "setup" || !puzzle || !puzzleSetupRef.current) return;
+    const trigger = puzzleSetupRef.current;
     const timer = setTimeout(() => {
-      try {
-        const chess = new Chess(fen);
-        const triggerMove = puzzle.puzzle.solution[0];
-        if (triggerMove) {
-          chess.move({
-            from: triggerMove.slice(0, 2),
-            to: triggerMove.slice(2, 4),
-            promotion: triggerMove.slice(4, 5) || undefined,
-          } as any);
-          setFen(chess.fen());
-          setLastMove({ from: triggerMove.slice(0, 2), to: triggerMove.slice(2, 4) });
-          setSolutionIdx(1); // Player must find solution[1]
-          setState("solving");
-          playSound("move");
-        }
-      } catch {
-        setState("solving");
-        setSolutionIdx(0);
+      setFen(trigger.postTriggerFen);
+      if (trigger.triggerFrom && trigger.triggerTo) {
+        setLastMove({ from: trigger.triggerFrom, to: trigger.triggerTo });
       }
+      setState("solving");
+      playSound("move");
     }, 600);
     return () => clearTimeout(timer);
-  }, [state, fen, puzzle]);
+  }, [state, puzzle]);
 
   // Close on Escape
   useEffect(() => {
@@ -313,10 +343,11 @@ function PuzzleModal({
 
         // Reset after a moment
         setTimeout(() => {
-          // Rebuild position up to current solution index
-          const resetFen = pgnToFen(puzzle.game.pgn, puzzle.puzzle.initialPly);
-          const chess = new Chess(resetFen);
-          for (let i = 0; i <= solutionIdx - 1 && i < puzzle.puzzle.solution.length; i++) {
+          // Rebuild position: start from post-trigger, replay solution moves
+          const postTrigger = puzzleSetupRef.current?.postTriggerFen;
+          if (!postTrigger) return;
+          const chess = new Chess(postTrigger);
+          for (let i = 0; i < solutionIdx && i < puzzle.puzzle.solution.length; i++) {
             const m = puzzle.puzzle.solution[i];
             try {
               chess.move({
