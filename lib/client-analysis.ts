@@ -872,14 +872,14 @@ function deriveTacticTags(args: {
   cpBefore: number;
 }): string[] {
   const tags: string[] = [];
-  const { fenBefore, bestMoveSan, cpLoss, cpBefore } = args;
+  const { fenBefore, userMove, bestMove, bestMoveSan, cpLoss, cpBefore } = args;
 
-  // Severity
+  // ── Severity ──
   if (cpLoss >= 600) tags.push("Winning Blunder");
   else if (cpLoss >= 400) tags.push("Major Miss");
   else tags.push("Tactical Miss");
 
-  // Type of tactic
+  // ── Mate / Check / Capture classification ──
   if (bestMoveSan.includes("#")) {
     tags.push("Missed Mate");
   } else if (bestMoveSan.includes("+") && bestMoveSan.includes("x")) {
@@ -890,28 +890,171 @@ function deriveTacticTags(args: {
     tags.push("Missed Capture");
   }
 
-  // Context
+  // ── Context ──
   if (cpBefore >= 200) {
     tags.push("Converting Advantage");
   } else if (cpBefore >= -50 && cpBefore <= 50) {
     tags.push("Equal Position");
+  } else if (cpBefore <= -100) {
+    tags.push("Defensive Resource");
   }
 
-  // Piece type from SAN
-  try {
-    if (bestMoveSan.startsWith("N") && bestMoveSan.includes("x")) {
-      tags.push("Knight Fork?");
-    } else if (bestMoveSan.startsWith("Q") && bestMoveSan.includes("x")) {
-      tags.push("Queen Tactic");
-    }
-  } catch {
-    // best-effort
-  }
-
-  // Check if it's a back-rank or king attack pattern
+  // ── Detailed motif detection via board analysis ──
   try {
     const chess = new Chess(fenBefore);
     const sideToMove = chess.turn() === "w" ? "white" : "black";
+    const bestParsed = normalizeUci(bestMove);
+    const userParsed = normalizeUci(userMove);
+
+    // --- Game phase ---
+    const boardPieces = chess.board().flat().filter(Boolean);
+    const totalPieces = boardPieces.length;
+    const queens = boardPieces.filter(p => p?.type === "q").length;
+    const fullMoveNumber = Number(chess.fen().split(" ")[5] ?? "1");
+
+    if (fullMoveNumber <= 12 && totalPieces >= 28) {
+      tags.push("Opening");
+    } else if (totalPieces <= 12 || (queens === 0 && totalPieces <= 16)) {
+      tags.push("Endgame");
+    } else {
+      tags.push("Middlegame");
+    }
+
+    if (bestParsed) {
+      const testChess = new Chess(fenBefore);
+      const result = testChess.move({
+        from: bestParsed.from,
+        to: bestParsed.to,
+        promotion: bestParsed.promotion as "q" | "r" | "b" | "n" | undefined,
+      } as any);
+
+      if (result) {
+        const movedPiece = result.piece;
+        const oppColor = testChess.turn(); // after move, it's opponent's turn
+
+        // --- Fork detection ---
+        // The moved piece now attacks 2+ opponent pieces worth 3+
+        const movesFromDest = testChess.moves({ verbose: true, square: bestParsed.to as any });
+        const attackedPieces = movesFromDest.filter(
+          (m) => m.captured && m.from === bestParsed!.to
+        );
+        if (attackedPieces.length >= 2) {
+          if (movedPiece === "n") tags.push("Knight Fork");
+          else if (movedPiece === "q") tags.push("Queen Fork");
+          else if (movedPiece === "p") tags.push("Pawn Fork");
+          else tags.push("Fork");
+        }
+
+        // --- Discovered attack ---
+        if (testChess.isCheck() && result.san.includes("+")) {
+          // The move gives check but the piece itself isn't a natural checker from that square
+          if (movedPiece !== "q" && movedPiece !== "r" && movedPiece !== "b") {
+            tags.push("Discovered Attack");
+          } else {
+            // For sliders, check if a different piece is giving check
+            const kingSquare = findKingSquare(testChess, oppColor === "w" ? "white" : "black");
+            if (kingSquare) {
+              // If the moved piece isn't aligned with the king, it's discovered
+              const df = Math.abs(bestParsed.to.charCodeAt(0) - kingSquare.charCodeAt(0));
+              const dr = Math.abs(parseInt(bestParsed.to[1]) - parseInt(kingSquare[1]));
+              const aligned = df === 0 || dr === 0 || df === dr;
+              if (!aligned) tags.push("Discovered Attack");
+            }
+          }
+        }
+
+        // --- Discovered check (via piece move that unmasks a slider) ---
+        if (testChess.isCheck() && movedPiece === "p") {
+          tags.push("Discovered Check");
+        }
+
+        // --- Double check ---
+        if (testChess.isCheck()) {
+          // Count how many pieces give check
+          const oppKingSq = findKingSquare(testChess, oppColor === "w" ? "white" : "black");
+          if (oppKingSq) {
+            const attackerColor = oppColor === "w" ? "b" : "w";
+            let checkerCount = 0;
+            const allSquares = testChess.board().flat().filter(Boolean);
+            for (const sq of allSquares) {
+              if (sq && sq.color === attackerColor) {
+                const pieceMoves = testChess.moves({ verbose: true, square: sq.square as any });
+                if (pieceMoves.some(m => m.to === oppKingSq)) checkerCount++;
+              }
+            }
+            if (checkerCount >= 2) tags.push("Double Check");
+          }
+        }
+
+        // --- Pin detection ---
+        // After best move, check if an opponent piece is pinned
+        const oppSquares = testChess.board().flat().filter(
+          (sq) => sq && sq.color === oppColor
+        );
+        for (const sq of oppSquares) {
+          if (!sq || sq.type === "k") continue;
+          // A piece is pinned if removing it would expose the king to check
+          // Lightweight: check if it has fewer legal moves than pseudo-legal moves
+          const legalMoves = testChess.moves({ verbose: true, square: sq.square as any });
+          if (legalMoves.length === 0 && sq.type !== "p") {
+            // Piece can't move at all — likely pinned (or blocked, but pins are more common for non-pawns)
+            tags.push("Pin");
+            break;
+          }
+        }
+
+        // --- Skewer detection ---
+        // If best move is a slider attacking through a valuable piece to one behind
+        if (movedPiece === "r" || movedPiece === "b" || movedPiece === "q") {
+          if (result.captured) {
+            // After capturing, check if the slider now attacks another piece on the same line
+            const continuations = testChess.moves({ verbose: true, square: bestParsed.to as any });
+            const furtherCaptures = continuations.filter((m) => m.captured && m.from === bestParsed!.to);
+            if (furtherCaptures.length > 0) tags.push("Skewer");
+          }
+        }
+
+        // --- Trapped piece ---
+        // Best move captures a piece that had no escape squares
+        if (result.captured) {
+          const capturedType = result.captured;
+          if (capturedType !== "p" && capturedType !== "k") {
+            // Check if the captured piece had moves before the best move
+            const priorChess = new Chess(fenBefore);
+            const victimMoves = priorChess.moves({ verbose: true }).filter(
+              (m) => m.from === bestParsed!.to
+            );
+            if (victimMoves.length <= 1) tags.push("Trapped Piece");
+          }
+        }
+
+        // --- Sacrifice ---
+        if (bestParsed) {
+          const srcPiece = new Chess(fenBefore).get(bestParsed.from as any);
+          const destPiece = new Chess(fenBefore).get(bestParsed.to as any);
+          if (srcPiece && destPiece) {
+            const pv: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+            if (pv[srcPiece.type] > pv[destPiece.type] + 1) {
+              tags.push("Sacrifice");
+            }
+          } else if (srcPiece && !destPiece && !result.captured) {
+            // Non-capture move with a big piece to a square under attack
+            const oppMoves = testChess.moves({ verbose: true });
+            const isHanging = oppMoves.some((m) => m.to === bestParsed!.to && m.captured);
+            if (isHanging && srcPiece.type !== "p") tags.push("Sacrifice");
+          }
+        }
+
+        // --- Zwischenzug (intermediate move) ---
+        // Best move is a check or capture but NOT the most "obvious" recapture
+        if (result.san.includes("+") && !result.captured) {
+          // Check without capturing — could be an in-between move
+          tags.push("Zwischenzug");
+        }
+      }
+    }
+
+    // --- Back rank ---
     const oppKingSquare = findKingSquare(chess, sideToMove === "white" ? "black" : "white");
     if (oppKingSquare) {
       const rank = oppKingSquare.charAt(1);
@@ -921,11 +1064,56 @@ function deriveTacticTags(args: {
         }
       }
     }
+
+    // --- Hanging piece (user left a piece hanging) ---
+    if (cpLoss >= 200 && userParsed) {
+      const movedPiece = chess.get(userParsed.from as any);
+      if (movedPiece && movedPiece.type !== "p" && movedPiece.type !== "k") {
+        tags.push("Hanging Piece");
+      }
+    }
+
+    // --- Overloaded piece ---
+    // User moved a piece that was defending multiple things
+    if (cpLoss >= 200 && userParsed) {
+      const priorMoves = chess.moves({ verbose: true, square: userParsed.from as any });
+      const defendedSquares = priorMoves.filter((m) => m.captured).length;
+      if (defendedSquares >= 2) tags.push("Overloaded Piece");
+    }
+
+    // --- Deflection ---
+    // Best move forces an opponent piece away from a key defensive square
+    if (bestParsed && bestMoveSan.includes("x")) {
+      // Capturing a defender — check if the captured piece was defending something
+      const capturedSquare = bestParsed.to;
+      const preChess = new Chess(fenBefore);
+      const defenderMoves = preChess.moves({ verbose: true }).filter(
+        (m) => m.from === capturedSquare && m.captured
+      );
+      if (defenderMoves.length >= 1) tags.push("Deflection");
+    }
+
+    // --- Promotion ---
+    if (bestMove.length === 5) {
+      const promo = bestMove[4];
+      if (promo === "q") tags.push("Missed Promotion");
+      else tags.push("Missed Underpromotion");
+    }
+
+    // --- Pawn break ---
+    if (bestParsed) {
+      const srcPiece = chess.get(bestParsed.from as any);
+      if (srcPiece?.type === "p" && bestMoveSan.includes("x")) {
+        tags.push("Pawn Break");
+      }
+    }
+
   } catch {
-    // best-effort
+    // best-effort — keep whatever tags we have
   }
 
-  return tags.slice(0, 3);
+  // Deduplicate and cap at 5 tags
+  return [...new Set(tags)].slice(0, 5);
 }
 
 function findKingSquare(chess: Chess, color: "white" | "black"): string | null {
