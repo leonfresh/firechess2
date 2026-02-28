@@ -1,21 +1,26 @@
 ﻿"use client";
 
 /**
- * PersonalizedPuzzles â€” Fetches Lichess puzzles based on the user's
+ * PersonalizedPuzzles — Fetches Lichess puzzles based on the user's
  * detected weaknesses from their scan (tactic tags, endgame types, motifs).
  *
- * Opens a modal with a single board that cycles through puzzles of different
- * weakness themes. Supports click-to-move with legal move indicators.
+ * Uses chessground (Lichess's own board) for lag-free CSS-transform drag.
+ * Supports click-to-move with legal move indicators, promotion, and hints.
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Chess } from "chess.js";
-import { Chessboard } from "react-chessboard";
-import type { Square as CbSquare, PromotionPieceOption } from "react-chessboard/dist/chessboard/types";
+import { Chessground } from "chessground";
+import type { Api as CgApi } from "chessground/api";
+import type { Key, Color as CgColor, Dests } from "chessground/types";
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
 import type { MissedTactic, EndgameMistake, RepeatedOpeningLeak } from "@/lib/types";
+
+/* chessground CSS — base layout + default piece set */
+import "chessground/assets/chessground.base.css";
+import "chessground/assets/chessground.cburnett.css";
 
 /* ------------------------------------------------------------------ */
 /*  Tag â†’ Lichess theme mapping                                         */
@@ -172,6 +177,19 @@ function setupPuzzlePosition(pgn: string, initialPly: number): {
   return { preTriggerFen, postTriggerFen, triggerFrom, triggerTo, solverColor };
 }
 
+/** Compute legal move destinations for chessground's movable.dests */
+function getLegalDests(fen: string): Dests {
+  const chess = new Chess(fen);
+  const dests = new Map<Key, Key[]>();
+  for (const move of chess.moves({ verbose: true })) {
+    const from = move.from as Key;
+    if (!dests.has(from)) dests.set(from, []);
+    const arr = dests.get(from)!;
+    if (!arr.includes(move.to as Key)) arr.push(move.to as Key);
+  }
+  return dests;
+}
+
 /** Human-readable theme labels */
 const THEME_LABELS: Record<string, string> = {
   fork: "Forks",
@@ -231,7 +249,7 @@ type PuzzleState = "setup" | "solving" | "correct" | "wrong";
 /*  Puzzle Modal  single board cycling through themes                   */
 /* ------------------------------------------------------------------ */
 
-function PuzzleModal({
+function PuzzleBoard({
   puzzles: initialPuzzles,
   themes,
   onClose,
@@ -246,349 +264,302 @@ function PuzzleModal({
   const boardTheme = useBoardTheme();
   const showCoords = useShowCoordinates();
 
+  /* chessground refs */
+  const cgContainerRef = useRef<HTMLDivElement>(null);
+  const cgApiRef = useRef<CgApi | null>(null);
+
+  /* puzzle state */
   const [queue, setQueue] = useState<LichessPuzzle[]>(initialPuzzles);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [fen, setFen] = useState("");
   const [solutionIdx, setSolutionIdx] = useState(0);
   const [state, setState] = useState<PuzzleState>("setup");
   const [orientation, setOrientation] = useState<"white" | "black">("white");
-  const [selectedSq, setSelectedSq] = useState<string | null>(null);
-  const [legalMoveSqs, setLegalMoveSqs] = useState<string[]>([]);
-  const [showPromoDialog, setShowPromoDialog] = useState(false);
-  const [promoFrom, setPromoFrom] = useState<string | null>(null);
-  const [promoTo, setPromoTo] = useState<string | null>(null);
   const [solved, setSolved] = useState(0);
-
-  // Memoize side-to-move so isDraggablePiece doesn't instantiate Chess per piece
-  const sideToMove = useMemo(() => {
-    try { return new Chess(fen).turn(); } catch { return "w"; }
-  }, [fen]);
-
-  const isDraggablePiece = useCallback(
-    ({ piece }: { piece: string }) => {
-      if (state !== "solving") return false;
-      return piece.startsWith(sideToMove === "w" ? "w" : "b");
-    },
-    [state, sideToMove]
-  );
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [wrongMove, setWrongMove] = useState<{ from: string; to: string } | null>(null);
-  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
+  const [lastMove, setLastMove] = useState<[Key, Key] | null>(null);
+  const [showPromo, setShowPromo] = useState<{ from: Key; to: Key } | null>(null);
+  const [hintSquare, setHintSquare] = useState<Key | null>(null);
+
   const puzzleSetupRef = useRef<{
     postTriggerFen: string;
     triggerFrom: string;
     triggerTo: string;
   } | null>(null);
 
-  const puzzle = queue[currentIdx] ?? null;
+  /* Stable refs for chessground callbacks (avoids stale closures) */
+  const fenRef = useRef(fen);
+  fenRef.current = fen;
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const solutionIdxRef = useRef(solutionIdx);
+  solutionIdxRef.current = solutionIdx;
 
-  // Load initial position when puzzle changes
+  const puzzle = queue[currentIdx] ?? null;
+  const puzzleRef = useRef(puzzle);
+  puzzleRef.current = puzzle;
+
+  /** Push new config into chessground */
+  const syncBoard = useCallback((currentFen: string, currentState: PuzzleState) => {
+    const cg = cgApiRef.current;
+    if (!cg) return;
+    const chess = new Chess(currentFen);
+    const turn = chess.turn() === "w" ? "white" : "black";
+    const canMove = currentState === "solving";
+    cg.set({
+      fen: currentFen.split(" ")[0],
+      turnColor: turn as CgColor,
+      check: chess.inCheck() ? (turn as CgColor) : undefined,
+      movable: {
+        free: false,
+        color: canMove ? (turn as CgColor) : undefined,
+        dests: canMove ? getLegalDests(currentFen) : new Map(),
+        showDests: true,
+      },
+    });
+  }, []);
+
+  /** Core move-validation & puzzle-advance logic */
+  const attemptMove = useCallback(
+    (from: string, to: string, promotion?: string) => {
+      if (stateRef.current !== "solving" || !puzzleRef.current) return false;
+      const pz = puzzleRef.current;
+      const curFen = fenRef.current;
+      const curSolIdx = solutionIdxRef.current;
+
+      const expected = pz.puzzle.solution[curSolIdx];
+      if (!expected) return false;
+
+      const expectedBase = expected.slice(0, 4);
+      const expectedPromo = expected.slice(4, 5);
+
+      /* Handle promotion: auto-queen when the solution expects queen,
+         show picker for underpromotion, and always pass promo to match */
+      if (from + to === expectedBase && expectedPromo && !promotion) {
+        if (expectedPromo === "q") {
+          promotion = "q";
+        } else {
+          setShowPromo({ from: from as Key, to: to as Key });
+          return false;
+        }
+      }
+
+      const matches =
+        from + to === expectedBase &&
+        (!expectedPromo || promotion === expectedPromo);
+
+      if (!matches) {
+        /* Wrong move — flash red, then reset */
+        setState("wrong");
+        setStreak(0);
+        setHintSquare(null);
+        playSound("wrong");
+
+        setTimeout(() => {
+          const postTrigger = puzzleSetupRef.current?.postTriggerFen;
+          if (!postTrigger) return;
+          const chess = new Chess(postTrigger);
+          for (let i = 0; i < curSolIdx && i < pz.puzzle.solution.length; i++) {
+            const m = pz.puzzle.solution[i];
+            try {
+              chess.move({ from: m.slice(0, 2), to: m.slice(2, 4), promotion: m.slice(4, 5) || undefined } as Parameters<Chess["move"]>[0]);
+            } catch { break; }
+          }
+          const resetFen = chess.fen();
+          setFen(resetFen);
+          setState("solving");
+          syncBoard(resetFen, "solving");
+        }, 800);
+        return false;
+      }
+
+      /* Correct move — apply */
+      try {
+        const chess = new Chess(curFen);
+        chess.move({ from: expected.slice(0, 2), to: expected.slice(2, 4), promotion: expectedPromo || undefined } as Parameters<Chess["move"]>[0]);
+        const newFen = chess.fen();
+        setFen(newFen);
+        setLastMove([expected.slice(0, 2) as Key, expected.slice(2, 4) as Key]);
+        setHintSquare(null);
+        playSound("move");
+
+        const nextIdx = curSolIdx + 1;
+
+        if (nextIdx >= pz.puzzle.solution.length) {
+          /* Puzzle solved */
+          setState("correct");
+          setSolved((s) => s + 1);
+          setStreak((s) => { const ns = s + 1; setBestStreak((b) => Math.max(b, ns)); return ns; });
+          setSolutionIdx(nextIdx);
+          syncBoard(newFen, "correct");
+          playSound("correct");
+          return true;
+        }
+
+        /* Opponent response after short delay */
+        setSolutionIdx(nextIdx);
+        syncBoard(newFen, "setup"); // disable moves during opp turn
+
+        setTimeout(() => {
+          const oppMove = pz.puzzle.solution[nextIdx];
+          if (!oppMove) return;
+          try {
+            const c2 = new Chess(newFen);
+            c2.move({ from: oppMove.slice(0, 2), to: oppMove.slice(2, 4), promotion: oppMove.slice(4, 5) || undefined } as Parameters<Chess["move"]>[0]);
+            const oppFen = c2.fen();
+            setFen(oppFen);
+            setLastMove([oppMove.slice(0, 2) as Key, oppMove.slice(2, 4) as Key]);
+            setSolutionIdx(nextIdx + 1);
+            playSound("move");
+            syncBoard(oppFen, "solving");
+          } catch { /* */ }
+        }, 400);
+
+        return true;
+      } catch { return false; }
+    },
+    [syncBoard],
+  );
+
+  /* ---- Mount chessground once ---- */
+  useEffect(() => {
+    const el = cgContainerRef.current;
+    if (!el || cgApiRef.current) return;
+
+    const cg = Chessground(el, {
+      fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
+      orientation: orientation as CgColor,
+      coordinates: showCoords,
+      animation: { enabled: true, duration: 200 },
+      draggable: { enabled: true, showGhost: true },
+      selectable: { enabled: true },
+      movable: {
+        free: false,
+        color: undefined,
+        dests: new Map(),
+        showDests: true,
+        events: {
+          after: (orig: Key, dest: Key) => {
+            /* Detect pawn promotion */
+            const curFen = fenRef.current;
+            try {
+              const chess = new Chess(curFen);
+              const piece = chess.get(orig as Parameters<Chess["get"]>[0]);
+              if (piece?.type === "p") {
+                const rank = parseInt(dest[1]);
+                const isPromo = (piece.color === "w" && rank === 8) || (piece.color === "b" && rank === 1);
+                if (isPromo) {
+                  const pz = puzzleRef.current;
+                  const solIdx = solutionIdxRef.current;
+                  if (pz) {
+                    const expected = pz.puzzle.solution[solIdx];
+                    const expectedPromo = expected?.slice(4, 5);
+                    if (expectedPromo && expectedPromo !== "q") {
+                      /* Underpromotion puzzle → show picker, revert board */
+                      setShowPromo({ from: orig, to: dest });
+                      cgApiRef.current?.set({ fen: curFen.split(" ")[0] });
+                      return;
+                    }
+                  }
+                  /* Auto-queen */
+                  attemptMove(orig, dest, "q");
+                  return;
+                }
+              }
+            } catch { /* */ }
+            attemptMove(orig, dest);
+          },
+        },
+      },
+      premovable: { enabled: false },
+      highlight: { lastMove: true, check: true },
+    });
+
+    cgApiRef.current = cg;
+    return () => { cg.destroy(); cgApiRef.current = null; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* Keep orientation in sync */
+  useEffect(() => { cgApiRef.current?.set({ orientation: orientation as CgColor }); }, [orientation]);
+  /* Keep coordinates setting in sync */
+  useEffect(() => { cgApiRef.current?.set({ coordinates: showCoords }); }, [showCoords]);
+  /* Keep lastMove highlight in sync */
+  useEffect(() => { cgApiRef.current?.set({ lastMove: lastMove ?? undefined }); }, [lastMove]);
+
+  /* ---- Load puzzle position ---- */
   useEffect(() => {
     if (!puzzle) return;
     const setup = setupPuzzlePosition(puzzle.game.pgn, puzzle.puzzle.initialPly);
 
-    // Start at pre-trigger position (the trigger animates after a delay)
     setFen(setup.preTriggerFen);
-    setSolutionIdx(0); // solution[0] is the solver's FIRST move
+    setSolutionIdx(0);
     setState("setup");
-    setSelectedSq(null);
-    setLegalMoveSqs([]);
-    setWrongMove(null);
     setLastMove(null);
     setOrientation(setup.solverColor);
+    setShowPromo(null);
+    setHintSquare(null);
 
-    // Save trigger info for the animation effect
     puzzleSetupRef.current = {
       postTriggerFen: setup.postTriggerFen,
       triggerFrom: setup.triggerFrom,
       triggerTo: setup.triggerTo,
     };
 
+    const cg = cgApiRef.current;
+    if (cg) {
+      cg.set({
+        fen: setup.preTriggerFen.split(" ")[0],
+        orientation: setup.solverColor as CgColor,
+        lastMove: undefined,
+        movable: { free: false, color: undefined, dests: new Map() },
+      });
+    }
     preloadSounds();
   }, [puzzle]);
 
-  // Auto-play the trigger move (from PGN, NOT solution[0]) after a brief delay
+  /* ---- Auto-play trigger move ---- */
   useEffect(() => {
     if (state !== "setup" || !puzzle || !puzzleSetupRef.current) return;
     const trigger = puzzleSetupRef.current;
     const timer = setTimeout(() => {
       setFen(trigger.postTriggerFen);
       if (trigger.triggerFrom && trigger.triggerTo) {
-        setLastMove({ from: trigger.triggerFrom, to: trigger.triggerTo });
+        setLastMove([trigger.triggerFrom as Key, trigger.triggerTo as Key]);
       }
       setState("solving");
       playSound("move");
+      syncBoard(trigger.postTriggerFen, "solving");
     }, 600);
     return () => clearTimeout(timer);
-  }, [state, puzzle]);
+  }, [state, puzzle, syncBoard]);
 
+  /* ---- Hint ---- */
+  const handleHint = useCallback(() => {
+    if (state !== "solving" || !puzzle) return;
+    const expected = puzzle.puzzle.solution[solutionIdx];
+    if (!expected) return;
+    setHintSquare(expected.slice(0, 2) as Key);
+  }, [state, puzzle, solutionIdx]);
 
+  /* ---- Promotion choice ---- */
+  const handlePromoChoice = useCallback((role: string) => {
+    if (!showPromo) return;
+    setShowPromo(null);
+    attemptMove(showPromo.from, showPromo.to, role);
+  }, [showPromo, attemptMove]);
 
-  const attemptMove = useCallback(
-    (from: string, to: string, promotion?: string) => {
-      if (state !== "solving" || !puzzle) return false;
-
-      const expected = puzzle.puzzle.solution[solutionIdx];
-      if (!expected) return false;
-
-      const attemptUci = from + to + (promotion ?? "");
-      const expectedBase = expected.slice(0, 4);
-      const expectedPromo = expected.slice(4, 5);
-
-      const matches =
-        from + to === expectedBase &&
-        (!expectedPromo || promotion === expectedPromo || (!promotion && expectedPromo === "q"));
-
-      if (!matches) {
-        setState("wrong");
-        setStreak(0);
-        setWrongMove({ from, to });
-        playSound("wrong");
-
-        // Reset after a moment
-        setTimeout(() => {
-          // Rebuild position: start from post-trigger, replay solution moves
-          const postTrigger = puzzleSetupRef.current?.postTriggerFen;
-          if (!postTrigger) return;
-          const chess = new Chess(postTrigger);
-          for (let i = 0; i < solutionIdx && i < puzzle.puzzle.solution.length; i++) {
-            const m = puzzle.puzzle.solution[i];
-            try {
-              chess.move({
-                from: m.slice(0, 2),
-                to: m.slice(2, 4),
-                promotion: m.slice(4, 5) || undefined,
-              } as any);
-            } catch { break; }
-          }
-          setFen(chess.fen());
-          setState("solving");
-          setWrongMove(null);
-        }, 1000);
-        return false;
-      }
-
-      // Correct move
-      try {
-        const chess = new Chess(fen);
-        chess.move({
-          from: expected.slice(0, 2),
-          to: expected.slice(2, 4),
-          promotion: expected.slice(4, 5) || undefined,
-        } as any);
-        const newFen = chess.fen();
-        setFen(newFen);
-        setLastMove({ from: expected.slice(0, 2), to: expected.slice(2, 4) });
-        playSound("move");
-
-        const nextIdx = solutionIdx + 1;
-
-        if (nextIdx >= puzzle.puzzle.solution.length) {
-          // Puzzle complete!
-          setState("correct");
-          setSolved((s) => s + 1);
-          setStreak((s) => {
-            const ns = s + 1;
-            setBestStreak((b) => Math.max(b, ns));
-            return ns;
-          });
-          playSound("correct");
-          return true;
-        }
-
-        // Play opponent's response
-        setSolutionIdx(nextIdx);
-        setTimeout(() => {
-          const oppMove = puzzle.puzzle.solution[nextIdx];
-          if (oppMove) {
-            try {
-              const c2 = new Chess(newFen);
-              c2.move({
-                from: oppMove.slice(0, 2),
-                to: oppMove.slice(2, 4),
-                promotion: oppMove.slice(4, 5) || undefined,
-              } as any);
-              setFen(c2.fen());
-              setLastMove({ from: oppMove.slice(0, 2), to: oppMove.slice(2, 4) });
-              setSolutionIdx(nextIdx + 1);
-              playSound("move");
-            } catch { /* */ }
-          }
-        }, 400);
-
-        return true;
-      } catch {
-        return false;
-      }
-    },
-    [state, solutionIdx, fen, puzzle]
-  );
-
-  const onDrop = useCallback(
-    (from: string, to: string, _piece: string) => {
-      if (state !== "solving" || !puzzle) return false;
-      const chess = new Chess(fen);
-      const piece = chess.get(from as Parameters<Chess["get"]>[0]);
-      // Check promotion
-      if (piece?.type === "p") {
-        const rank = parseInt(to[1]);
-        const isPromo = (piece.color === "w" && rank === 8) || (piece.color === "b" && rank === 1);
-        if (isPromo) {
-          setPromoFrom(from);
-          setPromoTo(to);
-          setShowPromoDialog(true);
-          return false; // don't apply yet — wait for promotion choice
-        }
-      }
-      attemptMove(from, to);
-      setSelectedSq(null);
-      setLegalMoveSqs([]);
-      return false; // we handle position via fen state, not the lib
-    },
-    [state, puzzle, fen, attemptMove]
-  );
-
-  const onPieceDragBegin = useCallback(
-    (_piece: string, sourceSquare: string) => {
-      if (state !== "solving" || !puzzle) return;
-      const chess = new Chess(fen);
-      const p = chess.get(sourceSquare as Parameters<Chess["get"]>[0]);
-      if (!p || p.color !== chess.turn()) return;
-      const moves = chess.moves({ square: sourceSquare as any, verbose: true });
-      setSelectedSq(sourceSquare);
-      setLegalMoveSqs(moves.map((m) => m.to));
-    },
-    [state, puzzle, fen]
-  );
-
-  const onSquareClick = useCallback(
-    (square: CbSquare) => {
-      if (state !== "solving" || !puzzle) {
-        setSelectedSq(null);
-        setLegalMoveSqs([]);
-        return;
-      }
-
-      const chess = new Chess(fen);
-
-      // If a piece is selected  try to move
-      if (selectedSq && selectedSq !== square) {
-        if (legalMoveSqs.includes(square)) {
-          const piece = chess.get(selectedSq as Parameters<Chess["get"]>[0]);
-          // Check promotion
-          if (piece?.type === "p") {
-            const rank = parseInt(square[1]);
-            const isPromo = (piece.color === "w" && rank === 8) || (piece.color === "b" && rank === 1);
-            if (isPromo) {
-              setPromoFrom(selectedSq);
-              setPromoTo(square);
-              setShowPromoDialog(true);
-              return;
-            }
-          }
-          attemptMove(selectedSq, square);
-          setSelectedSq(null);
-          setLegalMoveSqs([]);
-          return;
-        }
-      }
-
-      // Select piece
-      const pieceOnSq = chess.get(square as Parameters<Chess["get"]>[0]);
-      const sideToMove = chess.turn();
-      if (pieceOnSq && pieceOnSq.color === sideToMove) {
-        setSelectedSq(square);
-        const moves = chess.moves({ square: square as any, verbose: true });
-        setLegalMoveSqs(moves.map((m) => m.to));
-      } else {
-        setSelectedSq(null);
-        setLegalMoveSqs([]);
-      }
-    },
-    [state, puzzle, fen, selectedSq, legalMoveSqs, attemptMove]
-  );
-
-
-
-  const onPromotionPieceSelect = useCallback(
-    (piece?: PromotionPieceOption) => {
-      setShowPromoDialog(false);
-      if (!piece || !promoFrom || !promoTo) {
-        setSelectedSq(null);
-        setLegalMoveSqs([]);
-        return true;
-      }
-      const promo = piece[1]?.toLowerCase() ?? "q";
-      attemptMove(promoFrom, promoTo, promo);
-      setSelectedSq(null);
-      setLegalMoveSqs([]);
-      setPromoFrom(null);
-      setPromoTo(null);
-      return true;
-    },
-    [promoFrom, promoTo, attemptMove]
-  );
-
-  // Legal move dot styles
-  const customSquareStyles = useMemo(() => {
-    const styles: Record<string, React.CSSProperties> = {};
-
-    // Last move highlight
-    if (lastMove) {
-      const lmColor = "rgba(255, 255, 0, 0.35)";
-      styles[lastMove.from] = { background: lmColor };
-      styles[lastMove.to] = { background: lmColor };
-    }
-
-    // Selection highlight
-    if (selectedSq && state === "solving") {
-      styles[selectedSq] = { background: "rgba(255, 255, 0, 0.4)" };
-    }
-
-    // Legal move dots
-    if (selectedSq && state === "solving") {
-      try {
-        const chess = new Chess(fen);
-        for (const sq of legalMoveSqs) {
-          const hasPiece = chess.get(sq as Parameters<Chess["get"]>[0]);
-          if (hasPiece) {
-            styles[sq] = {
-              background: "radial-gradient(circle, transparent 55%, rgba(0,0,0,0.25) 55%)",
-              borderRadius: "50%",
-            };
-          } else {
-            styles[sq] = {
-              background: "radial-gradient(circle, rgba(0,0,0,0.25) 25%, transparent 25%)",
-              borderRadius: "50%",
-            };
-          }
-        }
-      } catch { /* */ }
-    }
-
-    // Wrong move highlight
-    if (wrongMove) {
-      styles[wrongMove.from] = { ...styles[wrongMove.from], background: "rgba(239,68,68,0.4)" };
-      styles[wrongMove.to] = { ...styles[wrongMove.to], background: "rgba(239,68,68,0.4)" };
-    }
-
-    return styles;
-  }, [selectedSq, legalMoveSqs, fen, state, wrongMove, lastMove]);
-
+  /* ---- Next puzzle ---- */
   const goNext = useCallback(async () => {
     if (currentIdx + 1 < queue.length) {
       setCurrentIdx((i) => i + 1);
     } else {
-      // Fetch more puzzles
       setLoadingMore(true);
       try {
         const more = await onLoadMore();
-        if (more.length > 0) {
-          setQueue((q) => [...q, ...more]);
-          setCurrentIdx((i) => i + 1);
-        }
+        if (more.length > 0) { setQueue((q) => [...q, ...more]); setCurrentIdx((i) => i + 1); }
       } catch { /* */ }
       setLoadingMore(false);
     }
@@ -650,25 +621,60 @@ function PuzzleModal({
         <div className="grid gap-6 md:grid-cols-[minmax(0,560px)_1fr] md:gap-8">
           {/* Board */}
           <div ref={boardRef} className="relative mx-auto w-full max-w-[560px] shrink-0">
-              <Chessboard
-                id={`puzzle-${puzzle?.puzzle.id ?? "none"}`}
-                position={fen}
-                onPieceDrop={onDrop}
-                onSquareClick={onSquareClick}
-                onPieceDragBegin={onPieceDragBegin}
-                onPromotionPieceSelect={onPromotionPieceSelect}
-                showPromotionDialog={showPromoDialog}
-                promotionToSquare={promoTo as CbSquare | undefined}
-                arePiecesDraggable={state === "solving"}
-                isDraggablePiece={isDraggablePiece}
-                boardOrientation={orientation}
-                boardWidth={boardSize}
-                animationDuration={200}
-                customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-                customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
-                customSquareStyles={customSquareStyles}
-                showBoardNotation={showCoords}
-              />
+            <div
+              className="cg-board-wrap"
+              style={{
+                width: boardSize,
+                height: boardSize,
+                "--cg-dark": boardTheme.darkSquare,
+                "--cg-light": boardTheme.lightSquare,
+              } as React.CSSProperties}
+            >
+              <div ref={cgContainerRef} style={{ width: "100%", height: "100%" }} />
+
+              {/* Hint highlight overlay */}
+              {hintSquare && (
+                <div
+                  className="pointer-events-none absolute animate-pulse rounded-sm"
+                  style={{
+                    width: `${boardSize / 8}px`,
+                    height: `${boardSize / 8}px`,
+                    left: `${((orientation === "white"
+                      ? "abcdefgh".indexOf(hintSquare[0])
+                      : 7 - "abcdefgh".indexOf(hintSquare[0])) * boardSize) / 8}px`,
+                    bottom: `${((orientation === "white"
+                      ? parseInt(hintSquare[1]) - 1
+                      : 8 - parseInt(hintSquare[1])) * boardSize) / 8}px`,
+                    background: "rgba(16, 185, 129, 0.5)",
+                    boxShadow: "0 0 12px rgba(16, 185, 129, 0.6)",
+                    zIndex: 10,
+                  }}
+                />
+              )}
+
+              {/* Promotion picker overlay */}
+              {showPromo && (
+                <div
+                  className="absolute inset-0 z-20 flex items-center justify-center bg-black/50"
+                  onClick={(e) => { e.stopPropagation(); setShowPromo(null); }}
+                >
+                  <div className="flex gap-2 rounded-xl bg-slate-800 p-3 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                    {["q", "r", "b", "n"].map((role) => (
+                      <button
+                        key={role}
+                        type="button"
+                        onClick={() => handlePromoChoice(role)}
+                        className="flex h-14 w-14 items-center justify-center rounded-lg bg-slate-700 text-3xl transition-colors hover:bg-slate-600"
+                      >
+                        {orientation === "white"
+                          ? { q: "\u2655", r: "\u2656", b: "\u2657", n: "\u2658" }[role]
+                          : { q: "\u265B", r: "\u265C", b: "\u265D", n: "\u265E" }[role]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Right panel */}
@@ -751,6 +757,16 @@ function PuzzleModal({
 
             {/* Actions */}
             <div className="mt-auto flex flex-wrap gap-2">
+              {state === "solving" && (
+                <button
+                  type="button"
+                  onClick={handleHint}
+                  className="flex items-center gap-1.5 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-4 py-2.5 text-xs font-medium text-amber-400 transition-colors hover:bg-amber-500/[0.12] hover:text-amber-300"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                  Hint
+                </button>
+              )}
               {state === "correct" && (
                 <button
                   type="button"
@@ -934,7 +950,7 @@ export function PersonalizedPuzzles({ tactics, endgames, leaks, onExpandedChange
           </div>
         </div>
         ) : (
-          <PuzzleModal
+          <PuzzleBoard
             puzzles={puzzles}
             themes={themes}
             onClose={() => setExpanded(false)}

@@ -360,3 +360,54 @@ button {
 .prose-firechess img {
   @apply my-6 rounded-xl;
 }
+
+/* ── Chessground custom board colors ── */
+/* Board background: checkerboard via CSS gradients using our theme CSS vars */
+.cg-board-wrap cg-board {
+  background-color: var(--cg-light, #f0d9b5);
+  background-image:
+    linear-gradient(45deg, var(--cg-dark, #b58863) 25%, transparent 25%, transparent 75%, var(--cg-dark, #b58863) 75%),
+    linear-gradient(45deg, var(--cg-dark, #b58863) 25%, transparent 25%, transparent 75%, var(--cg-dark, #b58863) 75%);
+  background-size: 25% 25%;
+  background-position: 0 0, 12.5% 12.5%;
+}
+
+/* Interactive square highlights (same as Lichess brown theme) */
+cg-board square.move-dest {
+  background: radial-gradient(rgba(20, 85, 30, 0.5) 22%, #208530 0, rgba(0,0,0,0.3) 0, rgba(0,0,0,0) 0);
+}
+cg-board square.oc.move-dest {
+  background: radial-gradient(transparent 0%, transparent 80%, rgba(20, 85, 0, 0.3) 80%);
+}
+cg-board square.move-dest:hover {
+  background: rgba(20, 85, 30, 0.3);
+}
+cg-board square.last-move {
+  background-color: rgba(155, 199, 0, 0.41);
+}
+cg-board square.selected {
+  background-color: rgba(20, 85, 30, 0.5);
+}
+cg-board square.check {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 0, 0, 1) 0%,
+    rgba(231, 0, 0, 1) 25%,
+    rgba(169, 0, 0, 0) 89%,
+    rgba(158, 0, 0, 0) 100%
+  );
+}
+
+/* Coordinate label colors */
+.cg-board-wrap .orientation-white .ranks :nth-child(odd),
+.cg-board-wrap .orientation-white .files :nth-child(even),
+.cg-board-wrap .orientation-black .ranks :nth-child(even),
+.cg-board-wrap .orientation-black .files :nth-child(odd) {
+  color: rgba(72, 72, 72, 0.8);
+}
+.cg-board-wrap .orientation-white .ranks :nth-child(even),
+.cg-board-wrap .orientation-white .files :nth-child(odd),
+.cg-board-wrap .orientation-black .ranks :nth-child(odd),
+.cg-board-wrap .orientation-black .files :nth-child(even) {
+  color: rgba(255, 255, 255, 0.8);
+}
