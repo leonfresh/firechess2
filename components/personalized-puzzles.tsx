@@ -560,16 +560,23 @@ function PuzzleModal({
       setSelectedSq(sq);
       setLegalMoveSqs(moves.map((m) => m.to));
 
-      // Find the piece image rendered by react-chessboard
+      // Find the piece visual rendered by react-chessboard
       const sqEl = cbEl.querySelector(`[data-square="${sq}"]`) as HTMLElement | null;
       if (!sqEl) return;
-      const pieceImg = sqEl.querySelector("[data-piece]")
-        ?? sqEl.querySelector("img")
-        ?? sqEl.querySelector("svg");
-      if (!pieceImg) return;
+      const pieceWrapper = sqEl.querySelector("[data-piece]") as HTMLElement | null;
+      if (!pieceWrapper) return;
 
-      // Create ghost (invisible until movement threshold)
-      const ghost = (pieceImg as HTMLElement).cloneNode(true) as HTMLElement;
+      // Clone the inner visual (SVG or img), not the wrapper div
+      const innerVisual = pieceWrapper.querySelector("svg") ?? pieceWrapper.querySelector("img");
+      const ghost = document.createElement("div");
+      if (innerVisual) {
+        const clone = innerVisual.cloneNode(true) as HTMLElement;
+        // Ensure SVG fills the ghost container
+        clone.setAttribute("width", String(sqSize));
+        clone.setAttribute("height", String(sqSize));
+        clone.style.display = "block";
+        ghost.appendChild(clone);
+      }
       ghost.style.cssText = `
         position: fixed;
         pointer-events: none;
@@ -592,7 +599,7 @@ function PuzzleModal({
         startX: e.clientX,
         startY: e.clientY,
         didDrag: false,
-        origPiece: pieceImg as HTMLElement,
+        origPiece: pieceWrapper,
       };
 
       (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
