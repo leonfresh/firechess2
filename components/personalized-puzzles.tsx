@@ -13,7 +13,7 @@ import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
-import type { MissedTactic, EndgameMistake } from "@/lib/types";
+import type { MissedTactic, EndgameMistake, RepeatedOpeningLeak } from "@/lib/types";
 
 /* ------------------------------------------------------------------ */
 /*  Tag → Lichess theme mapping                                         */
@@ -70,7 +70,8 @@ const ENDGAME_TYPE_TO_LICHESS: Record<string, string> = {
 
 function extractThemes(
   tactics: MissedTactic[],
-  endgames: EndgameMistake[]
+  endgames: EndgameMistake[],
+  leaks?: RepeatedOpeningLeak[]
 ): string[] {
   const themeCount = new Map<string, number>();
 
@@ -80,6 +81,18 @@ function extractThemes(
       const lichessTheme = TAG_TO_LICHESS[tag];
       if (lichessTheme) {
         themeCount.set(lichessTheme, (themeCount.get(lichessTheme) ?? 0) + 1);
+      }
+    }
+  }
+
+  // Count opening leak tag occurrences
+  if (leaks) {
+    for (const l of leaks) {
+      for (const tag of l.tags ?? []) {
+        const lichessTheme = TAG_TO_LICHESS[tag];
+        if (lichessTheme) {
+          themeCount.set(lichessTheme, (themeCount.get(lichessTheme) ?? 0) + 1);
+        }
       }
     }
   }
@@ -392,15 +405,16 @@ function PuzzleCard({ puzzle }: { puzzle: LichessPuzzle }) {
 type PersonalizedPuzzlesProps = {
   tactics: MissedTactic[];
   endgames: EndgameMistake[];
+  leaks?: RepeatedOpeningLeak[];
 };
 
-export function PersonalizedPuzzles({ tactics, endgames }: PersonalizedPuzzlesProps) {
+export function PersonalizedPuzzles({ tactics, endgames, leaks }: PersonalizedPuzzlesProps) {
   const [puzzles, setPuzzles] = useState<LichessPuzzle[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fetched, setFetched] = useState(false);
 
-  const themes = useMemo(() => extractThemes(tactics, endgames), [tactics, endgames]);
+  const themes = useMemo(() => extractThemes(tactics, endgames, leaks), [tactics, endgames, leaks]);
 
   const fetchPuzzles = useCallback(async () => {
     if (themes.length === 0) return;

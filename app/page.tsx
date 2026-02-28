@@ -1977,8 +1977,8 @@ export default function HomePage() {
               )}
 
               {/* ─── Personalized Puzzles ─── */}
-              {(missedTactics.length > 0 || endgameMistakes.length > 0) && (
-                <PersonalizedPuzzles tactics={missedTactics} endgames={endgameMistakes} />
+              {(missedTactics.length > 0 || endgameMistakes.length > 0 || leaks.length > 0) && (
+                <PersonalizedPuzzles tactics={missedTactics} endgames={endgameMistakes} leaks={leaks} />
               )}
 
               </div>{/* end pngRef wrapper */}
@@ -2054,13 +2054,9 @@ export default function HomePage() {
                   </div>
                 </div>
               ) : (
+                <>
                 <CardCarousel
                   viewMode={cardViewMode}
-                  footer={
-                    diagnostics && diagnostics.positionTraces.length > 0
-                      ? <DrillMode positions={diagnostics.positionTraces} excludeFens={dbApprovedFens} />
-                      : undefined
-                  }
                 >
                   {leaks.map((leak, idx) => (
                     <MistakeCard
@@ -2070,6 +2066,43 @@ export default function HomePage() {
                     />
                   ))}
                 </CardCarousel>
+
+                {/* Opening Drill CTA */}
+                {diagnostics && diagnostics.positionTraces.length > 0 && (
+                  <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 p-8 md:p-10">
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-emerald-500/[0.08] via-cyan-500/[0.04] to-transparent" />
+                    <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-emerald-500/10 blur-[80px]" />
+                    <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-cyan-500/10 blur-[80px]" />
+                    <div className="relative flex flex-col items-center text-center">
+                      <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/15 text-3xl shadow-lg shadow-emerald-500/10">🔁</span>
+                      <h3 className="mt-5 text-2xl font-extrabold text-white md:text-3xl">Drill Your Opening Leaks</h3>
+                      <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-slate-400">
+                        Practice the correct moves for every recurring leak until they&apos;re automatic. The drill feeds you each position and checks if you play the right move.
+                      </p>
+                      <div className="mt-6 grid w-full max-w-lg gap-3 sm:grid-cols-3">
+                        <div className="flex flex-col items-center gap-2 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] px-4 py-3">
+                          <span className="text-lg">🎯</span>
+                          <p className="text-xs font-bold text-white">Your Real Mistakes</p>
+                          <p className="text-[10px] text-slate-500">From your actual games</p>
+                        </div>
+                        <div className="flex flex-col items-center gap-2 rounded-xl border border-cyan-500/15 bg-cyan-500/[0.04] px-4 py-3">
+                          <span className="text-lg">♟️</span>
+                          <p className="text-xs font-bold text-white">Interactive Board</p>
+                          <p className="text-[10px] text-slate-500">Play the correct move</p>
+                        </div>
+                        <div className="flex flex-col items-center gap-2 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] px-4 py-3">
+                          <span className="text-lg">📈</span>
+                          <p className="text-xs font-bold text-white">Build Muscle Memory</p>
+                          <p className="text-[10px] text-slate-500">Repeat until automatic</p>
+                        </div>
+                      </div>
+                      <div className="mt-7 w-full max-w-md">
+                        <DrillMode positions={diagnostics.positionTraces} excludeFens={dbApprovedFens} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                </>
               )}
               </>
               )}
@@ -2093,11 +2126,6 @@ export default function HomePage() {
 
               <CardCarousel
                 viewMode={cardViewMode}
-                footer={
-                  oneOffMistakes.length > 0
-                    ? <DrillMode positions={[]} oneOffMistakes={oneOffMistakes} excludeFens={dbApprovedFens} />
-                    : undefined
-                }
               >
                 {oneOffMistakes.map((leak, idx) => (
                   <MistakeCard
@@ -2107,6 +2135,23 @@ export default function HomePage() {
                   />
                 ))}
               </CardCarousel>
+
+              {/* One-Off Drill CTA */}
+              <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 p-8 md:p-10">
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-amber-500/[0.08] via-orange-500/[0.04] to-transparent" />
+                <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-amber-500/10 blur-[80px]" />
+                <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-orange-500/10 blur-[80px]" />
+                <div className="relative flex flex-col items-center text-center">
+                  <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">⚡</span>
+                  <h3 className="mt-5 text-2xl font-extrabold text-white md:text-3xl">Drill One-Off Mistakes</h3>
+                  <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-slate-400">
+                    These mistakes happened once but cost real elo. Drill the correct response so you never fall for them again.
+                  </p>
+                  <div className="mt-7 w-full max-w-md">
+                    <DrillMode positions={[]} oneOffMistakes={oneOffMistakes} excludeFens={dbApprovedFens} />
+                  </div>
+                </div>
+              </div>
               </>
               )}
               </>)}
@@ -2332,39 +2377,9 @@ export default function HomePage() {
                   </div>
                 </div>
               ) : (
+                <>
                 <CardCarousel
                   viewMode={cardViewMode}
-                  footer={
-                    <>
-                      {!hasProAccess && missedTactics.length >= FREE_TACTIC_SAMPLE && (
-                        <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.06] via-amber-600/[0.03] to-transparent p-8">
-                          <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-amber-500/10 blur-[60px]" />
-                          <div className="relative flex flex-col items-center gap-4 text-center">
-                            <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">🔒</span>
-                            <div>
-                              <h3 className="text-xl font-bold text-white">Unlock Full Tactics Scanner</h3>
-                              <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">
-                                You&apos;re seeing {FREE_TACTIC_SAMPLE} sample missed tactics. Pro unlocks the full scan with unlimited missed tactics, motif pattern analysis, time pressure detection, and dedicated tactics drill mode.
-                              </p>
-                            </div>
-                            <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
-                              <Link
-                                href="/pricing"
-                                className="btn-amber flex h-11 items-center gap-2 px-6 text-sm font-bold"
-                              >
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                                Upgrade to Pro — <span className="line-through decoration-1 opacity-60">$8</span> $5/mo
-                              </Link>
-                              <span className="text-xs text-slate-500">Launch pricing · Cancel anytime</span>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      {(hasProAccess || missedTactics.length > 0) && (
-                        <DrillMode positions={[]} tactics={missedTactics} excludeFens={dbApprovedFens} />
-                      )}
-                    </>
-                  }
                 >
                   {missedTactics.map((tactic) => (
                     <TacticCard
@@ -2374,6 +2389,69 @@ export default function HomePage() {
                     />
                   ))}
                 </CardCarousel>
+
+                {/* Tactics upsell for free users */}
+                {!hasProAccess && missedTactics.length >= FREE_TACTIC_SAMPLE && (
+                  <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.06] via-amber-600/[0.03] to-transparent p-8">
+                    <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-amber-500/10 blur-[60px]" />
+                    <div className="relative flex flex-col items-center gap-4 text-center">
+                      <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">🔒</span>
+                      <div>
+                        <h3 className="text-xl font-bold text-white">Unlock Full Tactics Scanner</h3>
+                        <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">
+                          You&apos;re seeing {FREE_TACTIC_SAMPLE} sample missed tactics. Pro unlocks the full scan with unlimited missed tactics, motif pattern analysis, time pressure detection, and dedicated tactics drill mode.
+                        </p>
+                      </div>
+                      <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+                        <Link
+                          href="/pricing"
+                          className="btn-amber flex h-11 items-center gap-2 px-6 text-sm font-bold"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                          Upgrade to Pro — <span className="line-through decoration-1 opacity-60">$8</span> $5/mo
+                        </Link>
+                        <span className="text-xs text-slate-500">Launch pricing · Cancel anytime</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tactics Drill CTA */}
+                {(hasProAccess || missedTactics.length > 0) && (
+                  <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 p-8 md:p-10">
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-amber-500/[0.08] via-orange-500/[0.04] to-transparent" />
+                    <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-amber-500/10 blur-[80px]" />
+                    <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-orange-500/10 blur-[80px]" />
+                    <div className="relative flex flex-col items-center text-center">
+                      <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">⚔️</span>
+                      <h3 className="mt-5 text-2xl font-extrabold text-white md:text-3xl">Drill Your Missed Tactics</h3>
+                      <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-slate-400">
+                        These are tactics from YOUR games — forks, pins, and combinations you missed. Drill them until the patterns click.
+                      </p>
+                      <div className="mt-6 grid w-full max-w-lg gap-3 sm:grid-cols-3">
+                        <div className="flex flex-col items-center gap-2 rounded-xl border border-amber-500/15 bg-amber-500/[0.04] px-4 py-3">
+                          <span className="text-lg">🎯</span>
+                          <p className="text-xs font-bold text-white">Your Missed Tactics</p>
+                          <p className="text-[10px] text-slate-500">Not random puzzles</p>
+                        </div>
+                        <div className="flex flex-col items-center gap-2 rounded-xl border border-orange-500/15 bg-orange-500/[0.04] px-4 py-3">
+                          <span className="text-lg">♟️</span>
+                          <p className="text-xs font-bold text-white">Find the Best Move</p>
+                          <p className="text-[10px] text-slate-500">Interactive solving</p>
+                        </div>
+                        <div className="flex flex-col items-center gap-2 rounded-xl border border-amber-500/15 bg-amber-500/[0.04] px-4 py-3">
+                          <span className="text-lg">🧠</span>
+                          <p className="text-xs font-bold text-white">Pattern Recognition</p>
+                          <p className="text-[10px] text-slate-500">Train your weak spots</p>
+                        </div>
+                      </div>
+                      <div className="mt-7 w-full max-w-md">
+                        <DrillMode positions={[]} tactics={missedTactics} excludeFens={dbApprovedFens} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                </>
               )}
               </>
               )}
@@ -2599,13 +2677,9 @@ export default function HomePage() {
                   </div>
                 </div>
               ) : (
+                <>
                 <CardCarousel
                   viewMode={cardViewMode}
-                  footer={
-                    hasProAccess && endgameMistakes.length > 0
-                      ? <DrillMode positions={[]} tactics={[]} endgameMistakes={endgameMistakes} excludeFens={dbApprovedFens} />
-                      : undefined
-                  }
                 >
                   {endgameMistakes.map((mistake) => (
                     <EndgameCard
@@ -2615,6 +2689,43 @@ export default function HomePage() {
                     />
                   ))}
                 </CardCarousel>
+
+                {/* Endgame Drill CTA */}
+                {hasProAccess && endgameMistakes.length > 0 && (
+                  <div className="relative overflow-hidden rounded-2xl border border-sky-500/20 p-8 md:p-10">
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-sky-500/[0.08] via-blue-500/[0.04] to-transparent" />
+                    <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-sky-500/10 blur-[80px]" />
+                    <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-blue-500/10 blur-[80px]" />
+                    <div className="relative flex flex-col items-center text-center">
+                      <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-500/15 text-3xl shadow-lg shadow-sky-500/10">♔</span>
+                      <h3 className="mt-5 text-2xl font-extrabold text-white md:text-3xl">Drill Your Endgame Mistakes</h3>
+                      <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-slate-400">
+                        Endgames are where games are won and lost. Replay your actual endgame blunders and learn the winning technique.
+                      </p>
+                      <div className="mt-6 grid w-full max-w-lg gap-3 sm:grid-cols-3">
+                        <div className="flex flex-col items-center gap-2 rounded-xl border border-sky-500/15 bg-sky-500/[0.04] px-4 py-3">
+                          <span className="text-lg">🎯</span>
+                          <p className="text-xs font-bold text-white">Your Endgame Errors</p>
+                          <p className="text-[10px] text-slate-500">Positions you botched</p>
+                        </div>
+                        <div className="flex flex-col items-center gap-2 rounded-xl border border-blue-500/15 bg-blue-500/[0.04] px-4 py-3">
+                          <span className="text-lg">♟️</span>
+                          <p className="text-xs font-bold text-white">Find the Win</p>
+                          <p className="text-[10px] text-slate-500">Convert your advantage</p>
+                        </div>
+                        <div className="flex flex-col items-center gap-2 rounded-xl border border-sky-500/15 bg-sky-500/[0.04] px-4 py-3">
+                          <span className="text-lg">📈</span>
+                          <p className="text-xs font-bold text-white">Stop Throwing Games</p>
+                          <p className="text-[10px] text-slate-500">Solid technique</p>
+                        </div>
+                      </div>
+                      <div className="mt-7 w-full max-w-md">
+                        <DrillMode positions={[]} tactics={[]} endgameMistakes={endgameMistakes} excludeFens={dbApprovedFens} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                </>
               )}
 
               {/* Endgame upsell for free users */}
@@ -2863,15 +2974,37 @@ export default function HomePage() {
 
               {/* Combined Drill Mode */}
               {diagnostics && (diagnostics.positionTraces.length > 0 || missedTactics.length > 0 || endgameMistakes.length > 0) && hasProAccess && lastRunConfig?.scanMode === "both" && (
-                <div className="glass-card border-fuchsia-500/15 bg-gradient-to-r from-fuchsia-500/[0.04] to-transparent p-5">
-                  <div className="flex items-center gap-3 mb-3">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fuchsia-500/15 text-xl">🔥</span>
-                    <div>
-                      <h3 className="text-base font-bold text-white">Combined Drill</h3>
-                      <p className="text-xs text-slate-400">Practice openings, tactics, and endgames together</p>
+                <div className="relative overflow-hidden rounded-2xl border border-fuchsia-500/20 p-8 md:p-10">
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-fuchsia-500/[0.08] via-violet-500/[0.04] to-transparent" />
+                  <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-fuchsia-500/10 blur-[80px]" />
+                  <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-violet-500/10 blur-[80px]" />
+                  <div className="relative flex flex-col items-center text-center">
+                    <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-fuchsia-500/15 text-3xl shadow-lg shadow-fuchsia-500/10">🔥</span>
+                    <h3 className="mt-5 text-2xl font-extrabold text-white md:text-3xl">Combined Drill Mode</h3>
+                    <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-slate-400">
+                      Practice everything in one session — opening leaks, missed tactics, and endgame blunders from your actual games, all in one drill.
+                    </p>
+                    <div className="mt-6 grid w-full max-w-lg gap-3 sm:grid-cols-3">
+                      <div className="flex flex-col items-center gap-2 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] px-4 py-3">
+                        <span className="text-lg">📖</span>
+                        <p className="text-xs font-bold text-white">Openings</p>
+                        <p className="text-[10px] text-slate-500">{diagnostics.positionTraces.filter(t => t.flagged).length} positions</p>
+                      </div>
+                      <div className="flex flex-col items-center gap-2 rounded-xl border border-amber-500/15 bg-amber-500/[0.04] px-4 py-3">
+                        <span className="text-lg">⚔️</span>
+                        <p className="text-xs font-bold text-white">Tactics</p>
+                        <p className="text-[10px] text-slate-500">{missedTactics.length} missed</p>
+                      </div>
+                      <div className="flex flex-col items-center gap-2 rounded-xl border border-sky-500/15 bg-sky-500/[0.04] px-4 py-3">
+                        <span className="text-lg">♔</span>
+                        <p className="text-xs font-bold text-white">Endgames</p>
+                        <p className="text-[10px] text-slate-500">{endgameMistakes.length} mistakes</p>
+                      </div>
+                    </div>
+                    <div className="mt-7 w-full max-w-md">
+                      <DrillMode positions={diagnostics.positionTraces} tactics={missedTactics} endgameMistakes={endgameMistakes} oneOffMistakes={oneOffMistakes} excludeFens={dbApprovedFens} />
                     </div>
                   </div>
-                  <DrillMode positions={diagnostics.positionTraces} tactics={missedTactics} endgameMistakes={endgameMistakes} oneOffMistakes={oneOffMistakes} excludeFens={dbApprovedFens} />
                 </div>
               )}
 
