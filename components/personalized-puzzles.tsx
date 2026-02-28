@@ -242,7 +242,7 @@ function PuzzleModal({
   onClose: () => void;
   onLoadMore: () => Promise<LichessPuzzle[]>;
 }) {
-  const { ref: boardRef, size: boardSize } = useBoardSize(480);
+  const { ref: boardRef, size: boardSize } = useBoardSize(560);
   const boardTheme = useBoardTheme();
   const showCoords = useShowCoordinates();
 
@@ -311,14 +311,7 @@ function PuzzleModal({
     return () => clearTimeout(timer);
   }, [state, puzzle]);
 
-  // Close on Escape
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [onClose]);
+
 
   const attemptMove = useCallback(
     (from: string, to: string, promotion?: string) => {
@@ -593,15 +586,10 @@ function PuzzleModal({
   const progress = queue.length > 0 ? ((solved / Math.max(queue.length, solved + 1)) * 100) : 0;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 p-4"
-      style={{ isolation: "isolate" }}
-    >
       <div
-        className="animate-fade-in w-full max-w-[1100px] rounded-2xl border border-white/[0.08] p-5 md:p-8"
+        className="w-full rounded-2xl p-5 md:p-8"
         style={{
           background: "linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(15,23,42,0.95) 100%)",
-          boxShadow: "0 0 0 1px rgba(255,255,255,0.03) inset, 0 20px 60px -12px rgba(0,0,0,0.5)",
         }}
       >
         {/* Header */}
@@ -646,9 +634,9 @@ function PuzzleModal({
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-[minmax(0,480px)_1fr] md:gap-8">
+        <div className="grid gap-6 md:grid-cols-[minmax(0,560px)_1fr] md:gap-8">
           {/* Board */}
-          <div ref={boardRef} className="relative mx-auto flex w-full max-w-[480px] shrink-0 items-start">
+          <div ref={boardRef} className="relative mx-auto flex w-full max-w-[560px] shrink-0 items-start">
             <div className="relative w-full rounded-xl shadow-lg shadow-black/30">
               <Chessboard
                 id={`puzzle-${puzzle?.puzzle.id ?? "none"}`}
@@ -783,7 +771,6 @@ function PuzzleModal({
           </div>
         </div>
       </div>
-    </div>
   );
 }
 
@@ -801,7 +788,7 @@ export function PersonalizedPuzzles({ tactics, endgames, leaks }: PersonalizedPu
   const [puzzles, setPuzzles] = useState<LichessPuzzle[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   const themes = useMemo(() => extractThemes(tactics, endgames, leaks), [tactics, endgames, leaks]);
 
@@ -829,7 +816,7 @@ export function PersonalizedPuzzles({ tactics, endgames, leaks }: PersonalizedPu
     const fetched = await fetchPuzzles();
     if (fetched.length > 0) {
       setPuzzles(fetched);
-      setModalOpen(true);
+      setExpanded(true);
     }
   }, [fetchPuzzles]);
 
@@ -851,11 +838,11 @@ export function PersonalizedPuzzles({ tactics, endgames, leaks }: PersonalizedPu
   if (themes.length === 0) return null;
 
   return (
-    <>
-      <div className="space-y-4">
-        {/* Big CTA */}
-        <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 p-8 md:p-10">
-          {/* Decorative background */}
+    <div className="space-y-4">
+      <div className="relative rounded-2xl border border-emerald-500/20">
+        {!expanded || puzzles.length === 0 ? (
+          <div className="relative overflow-hidden rounded-2xl p-8 md:p-10">
+            {/* Decorative background */}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-emerald-500/[0.08] via-cyan-500/[0.04] to-violet-500/[0.08]" />
           <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-emerald-500/10 blur-[80px]" />
           <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-cyan-500/10 blur-[80px]" />
@@ -936,17 +923,15 @@ export function PersonalizedPuzzles({ tactics, endgames, leaks }: PersonalizedPu
             )}
           </div>
         </div>
+        ) : (
+          <PuzzleModal
+            puzzles={puzzles}
+            themes={themes}
+            onClose={() => setExpanded(false)}
+            onLoadMore={handleLoadMore}
+          />
+        )}
       </div>
-
-      {/* Modal */}
-      {modalOpen && puzzles.length > 0 && (
-        <PuzzleModal
-          puzzles={puzzles}
-          themes={themes}
-          onClose={() => setModalOpen(false)}
-          onLoadMore={handleLoadMore}
-        />
-      )}
-    </>
+    </div>
   );
 }
