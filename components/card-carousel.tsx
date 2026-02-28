@@ -24,6 +24,9 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
     if (activeIndex >= total) setActiveIndex(Math.max(0, total - 1));
   }, [total, activeIndex]);
 
+  /* ── Virtualisation window: only mount cards within ±1 of active ── */
+  const RENDER_WINDOW = 1; // cards on each side of the active card to render
+
   /* ── Observe which card is snapped into view ── */
   useEffect(() => {
     if (viewMode !== "carousel") return;
@@ -60,13 +63,13 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
   const goPrev = () => { const i = Math.max(0, activeIndex - 1); setActiveIndex(i); scrollTo(i); };
   const goNext = () => { const i = Math.min(total - 1, activeIndex + 1); setActiveIndex(i); scrollTo(i); };
 
-  /* ── List mode: plain vertical stack ── */
+  /* ── List mode: plain vertical stack (cap animation delay at 8 items) ── */
   if (viewMode === "list") {
     return (
       <>
         <div className="space-y-6">
           {children.map((child, idx) => (
-            <div key={idx} className="animate-fade-in-up" style={{ animationDelay: `${idx * 80}ms` }}>
+            <div key={idx} className="animate-fade-in-up" style={{ animationDelay: `${Math.min(idx, 8) * 80}ms` }}>
               {child}
             </div>
           ))}
@@ -118,15 +121,21 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
           ref={scrollRef}
           className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
-          {children.map((child, idx) => (
-            <div
-              key={idx}
-              data-idx={idx}
-              className="w-full flex-shrink-0 snap-center"
-            >
-              {child}
-            </div>
-          ))}
+          {children.map((child, idx) => {
+            const inWindow = Math.abs(idx - activeIndex) <= RENDER_WINDOW;
+            return (
+              <div
+                key={idx}
+                data-idx={idx}
+                className="w-full flex-shrink-0 snap-center"
+              >
+                {inWindow ? child : (
+                  /* Lightweight placeholder — preserves scroll width without mounting heavy card */
+                  <div className="aspect-[4/3] w-full rounded-xl bg-white/[0.02]" />
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* Left arrow hint */}
