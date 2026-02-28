@@ -588,7 +588,7 @@ function normalizeUci(move: string | null): MoveSquare | null {
 /* ── Game cache ─────────────────────────────────────── */
 
 const GAME_CACHE_PREFIX = "fc-gcache-";
-const GAME_CACHE_MAX_GAMES = 1000;
+const GAME_CACHE_MAX_GAMES = 5000;
 const GAME_CACHE_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
 
 type GameCacheEntry = {
@@ -1095,7 +1095,11 @@ export async function analyzeOpeningLeaksInBrowser(
 
   // Determine effective "since" for incremental fetch
   let fetchSince = options?.since ?? 0;
-  if (cache && cache.games.length > 0) {
+  // Only use incremental fetch if cache already covers the requested game count.
+  // If the user asks for MORE games than we have cached, do a full fetch so we
+  // pick up the older games the cache doesn't contain.
+  const cacheCoversRequest = cache && cache.games.length >= maxGames;
+  if (cache && cache.games.length > 0 && cacheCoversRequest) {
     const cachedNewestAt = Math.max(...cache.games.map(g => g.playedAt ?? 0));
     if (cachedNewestAt > 0) {
       fetchSince = Math.max(fetchSince, cachedNewestAt + 1);
@@ -1104,6 +1108,13 @@ export async function analyzeOpeningLeaksInBrowser(
       phase: "fetch",
       message: "💾 Found cached games",
       detail: `${cache.games.length} games from previous scan — checking for new ones`,
+      percent: 1,
+    });
+  } else if (cache && cache.games.length > 0) {
+    emitProgress(options, {
+      phase: "fetch",
+      message: "🔄 Fetching more games",
+      detail: `You requested ${maxGames} games but only ${cache.games.length} were cached — doing a full fetch`,
       percent: 1,
     });
   }
@@ -1167,8 +1178,10 @@ export async function analyzeOpeningLeaksInBrowser(
   }
 
   // ── Merge with cached games (dedup by fingerprint) ──
+  // Only merge when we used incremental fetch (cache covered the request).
+  // If we did a full re-fetch, the fresh results are authoritative.
   const newGameCount = games.length;
-  if (cache && cache.games.length > 0 && games.length < maxGames) {
+  if (cacheCoversRequest && cache && cache.games.length > 0 && games.length < maxGames) {
     const fingerprints = new Set(games.map(gameFingerprint));
     let additions = cache.games.filter(g => !fingerprints.has(gameFingerprint(g)));
     // Apply user's original since filter to cached games
