@@ -21,6 +21,7 @@ import type { AnalyzeResponse } from "@/lib/types";
 import { fetchExplorerMoves } from "@/lib/lichess-explorer";
 import { shareReportCard } from "@/lib/share-report";
 import { earnCoins, spendCoins, hasPurchased, getBalance } from "@/lib/coins";
+import { PersonalizedPuzzles } from "@/components/personalized-puzzles";
 
 /* ── Inline help tooltip ── */
 function HelpTip({ text }: { text: string }) {
@@ -1973,6 +1974,11 @@ export default function HomePage() {
                     </div>
                   </div>
                 </div>
+              )}
+
+              {/* ─── Personalized Puzzles ─── */}
+              {(missedTactics.length > 0 || endgameMistakes.length > 0) && (
+                <PersonalizedPuzzles tactics={missedTactics} endgames={endgameMistakes} />
               )}
 
               </div>{/* end pngRef wrapper */}

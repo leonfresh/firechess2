@@ -196,6 +196,19 @@ export function generateStudyPlan(input: PlanInput): {
     });
   }
 
+  // ── Personalized puzzle training ──
+  if (tactics > 0) {
+    tasks.push({
+      category: "puzzle",
+      title: "Solve personalized puzzles",
+      description: `Your scan found specific weakness patterns (forks, pins, back-rank threats, etc.). Scroll to the "Practice Your Weak Spots" section in your report and load puzzles that target YOUR missed patterns — not generic training.`,
+      priority: 2,
+      recurring: false,
+      dayIndex: 3,
+      icon: "🧩",
+    });
+  }
+
   // ── Blunder reduction tasks ──
   if (severe > 0.03) {
     tasks.push({
