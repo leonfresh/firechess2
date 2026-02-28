@@ -193,20 +193,37 @@ export function OnboardingTour() {
   const pad = 8; // padding around the spotlight
 
   /* ── Tooltip position ── */
-  const placement = current.placement ?? "bottom";
-  let tooltipStyle: React.CSSProperties = {};
+  const tooltipW = Math.min(320, window.innerWidth - 32);
+  const tooltipEstH = 170; // conservative estimate of tooltip height
+  const gap = 12;
+  const margin = 16; // min distance from screen edge
+
   const centerX = rect.left + rect.width / 2;
+  const clampedLeft = Math.max(margin, Math.min(centerX - tooltipW / 2, window.innerWidth - tooltipW - margin));
+
+  // Decide placement: prefer the step's declared side, but flip if it would go off-screen
+  let placement = current.placement ?? "bottom";
+  const spaceBelow = window.innerHeight - (rect.bottom + pad + gap);
+  const spaceAbove = rect.top - pad - gap;
+
+  if (placement === "bottom" && spaceBelow < tooltipEstH && spaceAbove > spaceBelow) {
+    placement = "top";
+  } else if (placement === "top" && spaceAbove < tooltipEstH && spaceBelow > spaceAbove) {
+    placement = "bottom";
+  }
+
+  let tooltipStyle: React.CSSProperties = { width: tooltipW };
 
   if (placement === "bottom") {
-    tooltipStyle = {
-      top: rect.bottom + pad + 12,
-      left: Math.max(16, Math.min(centerX - 160, window.innerWidth - 336)),
-    };
+    const top = rect.bottom + pad + gap;
+    // Clamp so it doesn't go below viewport
+    tooltipStyle.top = Math.min(top, window.innerHeight - tooltipEstH - margin);
+    tooltipStyle.left = clampedLeft;
   } else if (placement === "top") {
-    tooltipStyle = {
-      bottom: window.innerHeight - rect.top + pad + 12,
-      left: Math.max(16, Math.min(centerX - 160, window.innerWidth - 336)),
-    };
+    const bottom = window.innerHeight - rect.top + pad + gap;
+    // Clamp so it doesn't go above viewport
+    tooltipStyle.bottom = Math.min(bottom, window.innerHeight - tooltipEstH - margin);
+    tooltipStyle.left = clampedLeft;
   }
 
   return (
@@ -261,7 +278,7 @@ export function OnboardingTour() {
       <div
         ref={tooltipRef}
         className="absolute animate-fade-in-up rounded-2xl border border-white/10 bg-slate-900/95 p-5 shadow-2xl backdrop-blur-sm"
-        style={{ ...tooltipStyle, width: 320, pointerEvents: "auto" }}
+        style={{ ...tooltipStyle, pointerEvents: "auto" }}
       >
         {/* Step indicator */}
         <div className="mb-3 flex items-center justify-between">
