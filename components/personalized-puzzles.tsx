@@ -122,7 +122,14 @@ function extractThemes(
 /** Convert PGN moves to a FEN at a given ply */
 function pgnToFen(pgn: string, ply: number): string {
   const chess = new Chess();
-  const moves = pgn.split(" ");
+  // Strip move numbers (1. 2. 12.), result tokens, and comments so
+  // we only count actual half-moves when iterating to `ply`.
+  const moves = pgn
+    .replace(/\{[^}]*\}/g, "")          // {comments}
+    .replace(/\d+\.{3}/g, "")           // 1...
+    .replace(/\d+\./g, "")              // 1.
+    .split(/\s+/)
+    .filter(t => t.length > 0 && !/^(1-0|0-1|1\/2-1\/2|\*)$/.test(t));
   for (let i = 0; i < Math.min(ply, moves.length); i++) {
     try {
       chess.move(moves[i]);
@@ -223,6 +230,7 @@ function PuzzleModal({
   const [bestStreak, setBestStreak] = useState(0);
   const [loadingMore, setLoadingMore] = useState(false);
   const [wrongMove, setWrongMove] = useState<{ from: string; to: string } | null>(null);
+  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
 
   const puzzle = queue[currentIdx] ?? null;
 
@@ -236,6 +244,7 @@ function PuzzleModal({
     setSelectedSq(null);
     setLegalMoveSqs([]);
     setWrongMove(null);
+    setLastMove(null);
 
     // The solver plays OPPOSITE of who moves at initialPly
     // (solution[0] is the opponent's trigger move before the puzzle)
@@ -259,6 +268,7 @@ function PuzzleModal({
             promotion: triggerMove.slice(4, 5) || undefined,
           } as any);
           setFen(chess.fen());
+          setLastMove({ from: triggerMove.slice(0, 2), to: triggerMove.slice(2, 4) });
           setSolutionIdx(1); // Player must find solution[1]
           setState("solving");
           playSound("move");
@@ -333,6 +343,7 @@ function PuzzleModal({
         } as any);
         const newFen = chess.fen();
         setFen(newFen);
+        setLastMove({ from: expected.slice(0, 2), to: expected.slice(2, 4) });
         playSound("move");
 
         const nextIdx = solutionIdx + 1;
@@ -363,6 +374,7 @@ function PuzzleModal({
                 promotion: oppMove.slice(4, 5) || undefined,
               } as any);
               setFen(c2.fen());
+              setLastMove({ from: oppMove.slice(0, 2), to: oppMove.slice(2, 4) });
               setSolutionIdx(nextIdx + 1);
               playSound("move");
             } catch { /* */ }
@@ -472,6 +484,13 @@ function PuzzleModal({
   const customSquareStyles = useMemo(() => {
     const styles: Record<string, React.CSSProperties> = {};
 
+    // Last move highlight
+    if (lastMove) {
+      const lmColor = "rgba(255, 255, 0, 0.35)";
+      styles[lastMove.from] = { background: lmColor };
+      styles[lastMove.to] = { background: lmColor };
+    }
+
     // Selection highlight
     if (selectedSq && state === "solving") {
       styles[selectedSq] = { background: "rgba(255, 255, 0, 0.4)" };
@@ -505,7 +524,7 @@ function PuzzleModal({
     }
 
     return styles;
-  }, [selectedSq, legalMoveSqs, fen, state, wrongMove]);
+  }, [selectedSq, legalMoveSqs, fen, state, wrongMove, lastMove]);
 
   const goNext = useCallback(async () => {
     if (currentIdx + 1 < queue.length) {
@@ -543,10 +562,12 @@ function PuzzleModal({
         {/* Header */}
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 text-xl"></span>
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-cyan-500/20">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-emerald-400"><path d="M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 1-.837.276c-.47-.07-.802-.48-.968-.925a2.501 2.501 0 1 0-3.214 3.214c.446.166.855.497.925.968a.979.979 0 0 1-.276.837l-1.61 1.61a2.404 2.404 0 0 1-1.705.707 2.402 2.402 0 0 1-1.704-.706l-1.568-1.568a1.026 1.026 0 0 0-.877-.29c-.493.074-.84.504-1.02.968a2.5 2.5 0 1 1-3.237-3.237c.464-.18.894-.527.967-1.02a1.026 1.026 0 0 0-.289-.877l-1.568-1.568A2.402 2.402 0 0 1 1.998 12c0-.617.236-1.234.706-1.704L4.315 8.685a.98.98 0 0 1 .837-.276c.47.07.802.48.968.925a2.501 2.501 0 1 0 3.214-3.214c-.446-.166-.855-.497-.925-.968a.979.979 0 0 1 .276-.837l1.61-1.61a2.404 2.404 0 0 1 1.705-.707c.617 0 1.234.236 1.704.706l1.568 1.568c.23.23.556.338.877.29.493-.074.84-.504 1.02-.968a2.5 2.5 0 1 1 3.237 3.237c-.464.18-.894.527-.967 1.02Z" /></svg>
+            </span>
             <div>
               <h2 className="text-xl font-bold text-white">Personalized Puzzles</h2>
-              <p className="text-sm text-slate-400">Find the best move  matched to your weaknesses</p>
+              <p className="text-sm text-slate-400">Find the best move — matched to your weaknesses</p>
             </div>
           </div>
           <button
@@ -567,7 +588,7 @@ function PuzzleModal({
           <div className="h-4 w-px bg-white/10" />
           <div className="flex items-center gap-1.5">
             <span className="text-xs text-slate-500">Streak</span>
-            <span className="text-sm font-bold text-orange-400"> {streak}</span>
+            <span className="text-sm font-bold text-orange-400">{"\uD83D\uDD25"} {streak}</span>
           </div>
           <div className="h-4 w-px bg-white/10" />
           <div className="flex items-center gap-1.5">
@@ -787,12 +808,14 @@ export function PersonalizedPuzzles({ tactics, endgames, leaks }: PersonalizedPu
           <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-cyan-500/10 blur-[80px]" />
 
           <div className="relative flex flex-col items-center text-center">
-            <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/15 text-3xl shadow-lg shadow-emerald-500/10"></span>
+            <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/15 shadow-lg shadow-emerald-500/10">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="text-emerald-400"><path d="M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 1-.837.276c-.47-.07-.802-.48-.968-.925a2.501 2.501 0 1 0-3.214 3.214c.446.166.855.497.925.968a.979.979 0 0 1-.276.837l-1.61 1.61a2.404 2.404 0 0 1-1.705.707 2.402 2.402 0 0 1-1.704-.706l-1.568-1.568a1.026 1.026 0 0 0-.877-.29c-.493.074-.84.504-1.02.968a2.5 2.5 0 1 1-3.237-3.237c.464-.18.894-.527.967-1.02a1.026 1.026 0 0 0-.289-.877l-1.568-1.568A2.402 2.402 0 0 1 1.998 12c0-.617.236-1.234.706-1.704L4.315 8.685a.98.98 0 0 1 .837-.276c.47.07.802.48.968.925a2.501 2.501 0 1 0 3.214-3.214c-.446-.166-.855-.497-.925-.968a.979.979 0 0 1 .276-.837l1.61-1.61a2.404 2.404 0 0 1 1.705-.707c.617 0 1.234.236 1.704.706l1.568 1.568c.23.23.556.338.877.29.493-.074.84-.504 1.02-.968a2.5 2.5 0 1 1 3.237 3.237c-.464.18-.894.527-.967 1.02Z" /></svg>
+            </span>
             <h3 className="mt-5 text-2xl font-extrabold text-white md:text-3xl">
               Practice Your Weak Spots
             </h3>
             <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-slate-400">
-              We found patterns you struggle with. Load personalized Lichess puzzles that target your exact weaknesses  forks you miss, pins you overlook, endgames you botch.
+              We found patterns you struggle with. Load personalized Lichess puzzles that target your exact weaknesses — forks you miss, pins you overlook, endgames you botch.
             </p>
 
             {/* Weakness chips */}
@@ -811,17 +834,17 @@ export function PersonalizedPuzzles({ tactics, endgames, leaks }: PersonalizedPu
             {/* Feature highlights */}
             <div className="mt-6 grid w-full max-w-lg gap-3 sm:grid-cols-3">
               <div className="flex flex-col items-center gap-2 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] px-4 py-3">
-                <span className="text-lg"></span>
+                <span className="text-lg">{"\uD83C\uDFAF"}</span>
                 <p className="text-xs font-bold text-white">Targeted Training</p>
                 <p className="text-[10px] text-slate-500">Matched to your scan</p>
               </div>
               <div className="flex flex-col items-center gap-2 rounded-xl border border-cyan-500/15 bg-cyan-500/[0.04] px-4 py-3">
-                <span className="text-lg"></span>
+                <span className="text-lg">{"\u265F\uFE0F"}</span>
                 <p className="text-xs font-bold text-white">Interactive Board</p>
                 <p className="text-[10px] text-slate-500">Click or drag to solve</p>
               </div>
               <div className="flex flex-col items-center gap-2 rounded-xl border border-violet-500/15 bg-violet-500/[0.04] px-4 py-3">
-                <span className="text-lg"></span>
+                <span className="text-lg">{"\u267E\uFE0F"}</span>
                 <p className="text-xs font-bold text-white">Unlimited & Free</p>
                 <p className="text-[10px] text-slate-500">Powered by Lichess</p>
               </div>
@@ -841,7 +864,7 @@ export function PersonalizedPuzzles({ tactics, endgames, leaks }: PersonalizedPu
                       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" />
                       <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                     </svg>
-                    Loading Puzzles
+                    Loading Puzzles…
                   </>
                 ) : (
                   <>
