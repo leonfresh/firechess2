@@ -11,6 +11,7 @@ import { useCoinBalance } from "@/lib/use-coins";
 
 const NAV_LINKS = [
   { href: "/about", label: "About" },
+  { href: "/train", label: "Training" },
 ];
 
 export function Navbar() {
@@ -77,7 +78,7 @@ export function Navbar() {
           <span className="tracking-tight">FireChess</span>
         </Link>
 
-        {/* ── Desktop nav links ── */}
+        {/* ── Desktop nav links + Training ── */}
         <div className="hidden items-center gap-1 md:flex">
           {/* About dropdown with Blog */}
           <div className="group relative">
@@ -193,17 +194,6 @@ export function Navbar() {
                 }`}
               >
                 Dashboard
-              </Link>
-
-              <Link
-                href="/train"
-                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  isActive("/train")
-                    ? "text-white bg-white/[0.06]"
-                    : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
-                }`}
-              >
-                Training
               </Link>
 
               {/* Profile dropdown */}
@@ -454,7 +444,6 @@ export function Navbar() {
                 ...(authenticated
                   ? [
                       { href: "/dashboard", label: "Dashboard" },
-                      { href: "/train", label: "Training" },
                       { href: "/changelog", label: "Dev Notes" },
                       { href: "/support", label: "My Tickets" },
                       { href: "/account", label: "Account & Billing" },

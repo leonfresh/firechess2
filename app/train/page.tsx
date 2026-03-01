@@ -940,17 +940,39 @@ export default function TrainPage() {
 
         {/* Not signed in */}
         {!isLoading && !authenticated && (
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-12 text-center">
-            <p className="text-lg font-semibold text-white">Sign in to start training</p>
-            <p className="mt-2 text-sm text-slate-400">
-              Training modes are personalized based on your saved scan reports.
-            </p>
-            <Link
-              href="/auth/signin"
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-fuchsia-600 to-cyan-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:shadow-fuchsia-500/25"
-            >
-              Sign in
-            </Link>
+          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-8 sm:p-12">
+            <div className="mx-auto max-w-lg text-center">
+              <div className="mb-4 text-4xl">🔒</div>
+              <p className="text-xl font-bold text-white">Sign in to unlock training</p>
+              <p className="mt-3 text-sm leading-relaxed text-slate-400">
+                Training modes are built from <span className="text-white font-medium">your actual games</span>. We analyze your scan reports to find the tactics you miss,
+                openings you leak, and endgames you struggle with — then generate drills that target those exact weaknesses.
+              </p>
+              <div className="mt-5 grid grid-cols-2 gap-3 text-left sm:grid-cols-3">
+                {[
+                  { icon: "🎯", label: "Your worst tactics" },
+                  { icon: "📖", label: "Your opening leaks" },
+                  { icon: "♚", label: "Your weak endgames" },
+                  { icon: "🔍", label: "Your game positions" },
+                  { icon: "⚡", label: "Timed puzzle rush" },
+                  { icon: "❤️", label: "3 retries per puzzle" },
+                ].map((f) => (
+                  <div key={f.label} className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                    <span className="text-base">{f.icon}</span>
+                    <span className="text-xs text-slate-300">{f.label}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+                <Link
+                  href="/auth/signin"
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-fuchsia-600 to-cyan-600 px-6 py-3 text-sm font-semibold text-white shadow-lg transition-all hover:shadow-fuchsia-500/25 active:scale-95"
+                >
+                  Sign in to start
+                </Link>
+                <span className="text-xs text-slate-500">Free accounts can use Speed Drill</span>
+              </div>
+            </div>
           </div>
         )}
 

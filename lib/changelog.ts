@@ -15,6 +15,23 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: 13,
+    date: "Mar 2, 2026",
+    title: "Training Center",
+    description:
+      "A dedicated Training page with 5 modes that target your weaknesses — practice puzzles, drill openings, spot your own blunders, and sharpen endgames.",
+    changes: [
+      { type: "feature", text: "Weakness Trainer — puzzles targeting your worst tactical motifs from scan reports" },
+      { type: "feature", text: "Speed Drill — timed puzzle rush (3 or 5 min) to build pattern recognition under pressure" },
+      { type: "feature", text: "Blunder Spotter — find the best move in positions from your own games" },
+      { type: "feature", text: "Opening Trainer — practice the correct moves in your recurring opening leaks" },
+      { type: "feature", text: "Endgame Gym — targeted puzzles for your weakest endgame types" },
+      { type: "improvement", text: "3 retry attempts per puzzle — wrong moves shake the board and cost a life instead of instant fail" },
+      { type: "improvement", text: "Bigger board (480px), turn indicator, hearts UI for remaining tries" },
+      { type: "improvement", text: "Training is accessible without login — Speed Drill works for everyone, other modes unlock after a scan" },
+    ],
+  },
+  {
     version: 12,
     date: "Mar 1, 2026",
     title: "Game Cache Fix",
