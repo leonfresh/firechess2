@@ -318,7 +318,7 @@ type PuzzleBoardProps = {
 
 function PuzzleBoard({ fen, solutionMoves, orientation, onSolved, onFailed, showHint }: PuzzleBoardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { ref: boardRef, size: boardSize } = useBoardSize(480);
+  const { ref: boardRef, size: boardSize } = useBoardSize(720, { evalBar: false });
   const boardTheme = useBoardTheme();
   const [game, setGame] = useState(() => new Chess(fen));
   const [moveIndex, setMoveIndex] = useState(0);
@@ -519,7 +519,7 @@ type SimpleBoardProps = {
 };
 
 function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
-  const { ref: boardRef, size: boardSize } = useBoardSize(480);
+  const { ref: boardRef, size: boardSize } = useBoardSize(720, { evalBar: false });
   const boardTheme = useBoardTheme();
   const [game] = useState(() => new Chess(position.fen));
   const [status, setStatus] = useState<"playing" | "correct" | "wrong">("playing");

@@ -11,7 +11,6 @@ import { useCoinBalance } from "@/lib/use-coins";
 
 const NAV_LINKS = [
   { href: "/about", label: "About" },
-  { href: "/train", label: "Training" },
 ];
 
 export function Navbar() {
@@ -78,23 +77,23 @@ export function Navbar() {
           <span className="tracking-tight">FireChess</span>
         </Link>
 
-        {/* ── Desktop nav links + Training ── */}
+        {/* ── Desktop nav links ── */}
         <div className="hidden items-center gap-1 md:flex">
-          {/* About dropdown with Blog */}
+          {/* Pages dropdown (About, Blog, Feedback) */}
           <div className="group relative">
-            <Link
-              href="/about"
+            <button
+              type="button"
               className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                isActive("/about") || isActive("/blog")
+                isActive("/about") || isActive("/blog") || isActive("/feedback")
                   ? "text-white bg-white/[0.06]"
                   : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
               }`}
             >
-              About
+              Pages
               <svg className="h-3 w-3 text-slate-500 transition-transform group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><polyline points="6 9 12 15 18 9" /></svg>
-            </Link>
+            </button>
             <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
-              <div className="min-w-[140px] rounded-xl border border-white/[0.08] bg-[#0a0f1a] p-1.5 shadow-xl shadow-black/40">
+              <div className="min-w-[160px] rounded-xl border border-white/[0.08] bg-[#0a0f1a] p-1.5 shadow-xl shadow-black/40">
                 <Link
                   href="/about"
                   className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
@@ -111,9 +110,29 @@ export function Navbar() {
                 >
                   Blog
                 </Link>
+                <Link
+                  href="/feedback"
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive("/feedback") ? "text-white bg-white/[0.06]" : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
+                  }`}
+                >
+                  Feedback
+                </Link>
               </div>
             </div>
           </div>
+
+          {/* Training link */}
+          <Link
+            href="/train"
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+              isActive("/train")
+                ? "text-white bg-white/[0.06]"
+                : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+            }`}
+          >
+            Training
+          </Link>
 
           {/* Dev Notes link */}
           <Link
@@ -131,18 +150,6 @@ export function Navbar() {
                 <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
               </span>
             )}
-          </Link>
-
-          {/* Feedback link */}
-          <Link
-            href="/feedback"
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              isActive("/feedback")
-                ? "text-white bg-white/[0.06]"
-                : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
-            }`}
-          >
-            Feedback
           </Link>
 
           {/* Pro link (last) */}
