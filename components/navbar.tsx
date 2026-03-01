@@ -89,7 +89,7 @@ export function Navbar() {
                   : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
               }`}
             >
-              Pages
+              More
               <svg className="h-3 w-3 text-slate-500 transition-transform group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><polyline points="6 9 12 15 18 9" /></svg>
             </button>
             <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
