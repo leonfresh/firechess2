@@ -296,6 +296,15 @@ button {
 .hero-reveal-4 { animation: hero-blur-rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) 1.3s both; }
 .hero-reveal-5 { animation: hero-blur-rise 0.9s cubic-bezier(0.16, 1, 0.3, 1) 1.7s both; }
 
+/* ── Training board shake ── */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
 /* ── Blog prose styling ── */
 .prose-firechess {
   @apply text-slate-300 leading-relaxed;

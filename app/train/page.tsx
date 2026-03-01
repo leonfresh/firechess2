@@ -172,21 +172,46 @@ function uniqueThemes(motifs: { theme: string }[], max: number): string[] {
   return result;
 }
 
-/** Build blunder positions from own game tactics */
+/** Build blunder positions from own game tactics AND opening leaks */
 function buildBlunderPositions(reports: SavedReport[]): DrillPosition[] {
   const positions: DrillPosition[] = [];
+  const seenFens = new Set<string>();
+
+  // From missed tactics (threshold lowered to catch more positions)
   for (const r of reports) {
     for (const t of r.missedTactics ?? []) {
-      if (t.fenBefore && t.bestMove && t.cpLoss >= 100) {
+      if (t.fenBefore && t.bestMove && t.cpLoss >= 50) {
+        if (!seenFens.has(t.fenBefore)) {
+          seenFens.add(t.fenBefore);
+          positions.push({
+            fen: t.fenBefore,
+            bestMove: t.bestMove,
+            label: (t.tags ?? []).join(", ") || "Tactic",
+            cpLoss: t.cpLoss,
+          });
+        }
+      }
+    }
+  }
+
+  // Also pull significant opening leaks as blunder positions (cpLoss >= 80)
+  for (const r of reports) {
+    for (const leak of r.leaks ?? []) {
+      const fen = leak.fen ?? leak.fenBefore;
+      const best = leak.bestMove ?? leak.correctMoves?.[0];
+      const cp = leak.cpLoss ?? leak.avgCpLoss;
+      if (fen && best && cp >= 80 && !seenFens.has(fen)) {
+        seenFens.add(fen);
         positions.push({
-          fen: t.fenBefore,
-          bestMove: t.bestMove,
-          label: (t.tags ?? []).join(", ") || "Tactic",
-          cpLoss: t.cpLoss,
+          fen,
+          bestMove: best,
+          label: leak.openingName ?? leak.opening ?? "Opening blunder",
+          cpLoss: cp,
         });
       }
     }
   }
+
   // Shuffle
   for (let i = positions.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -293,18 +318,20 @@ type PuzzleBoardProps = {
 
 function PuzzleBoard({ fen, solutionMoves, orientation, onSolved, onFailed, showHint }: PuzzleBoardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { ref: boardRef, size: boardSize } = useBoardSize(380);
+  const { ref: boardRef, size: boardSize } = useBoardSize(480);
   const boardTheme = useBoardTheme();
   const [game, setGame] = useState(() => new Chess(fen));
   const [moveIndex, setMoveIndex] = useState(0);
   const [status, setStatus] = useState<"playing" | "correct" | "wrong">("playing");
   const [hintSquare, setHintSquare] = useState<string | null>(null);
+  const [attempts, setAttempts] = useState(0);
+  const MAX_ATTEMPTS = 3;
+  const [shaking, setShaking] = useState(false);
 
   // Apply initial "setup" move (opponent's move from the puzzle)
   useEffect(() => {
     preloadSounds();
     if (solutionMoves.length === 0) return;
-    // The first move in a Lichess puzzle is the opponent's move (setup)
     const setupMove = solutionMoves[0];
     const parsed = parseUci(setupMove);
     const newGame = new Chess(fen);
@@ -315,7 +342,6 @@ function PuzzleBoard({ fen, solutionMoves, orientation, onSolved, onFailed, show
         setGame(new Chess(newGame.fen()));
         setMoveIndex(1);
       } catch {
-        // Invalid setup move — skip
         setMoveIndex(1);
       }
     }, 600);
@@ -339,10 +365,7 @@ function PuzzleBoard({ fen, solutionMoves, orientation, onSolved, onFailed, show
       const expected = solutionMoves[moveIndex];
       if (!expected) return false;
 
-      const userUci = squareToUci(from, to);
       const expectedParsed = parseUci(expected);
-
-      // Check if move matches (with or without promotion)
       const matchesBase = from === expectedParsed.from && to === expectedParsed.to;
 
       if (matchesBase) {
@@ -358,7 +381,6 @@ function PuzzleBoard({ fen, solutionMoves, orientation, onSolved, onFailed, show
 
         const nextIndex = moveIndex + 1;
 
-        // Check if puzzle is complete (user moves are odd indices)
         if (nextIndex >= solutionMoves.length) {
           setStatus("correct");
           playSound("correct");
@@ -366,7 +388,6 @@ function PuzzleBoard({ fen, solutionMoves, orientation, onSolved, onFailed, show
           return true;
         }
 
-        // Play opponent's response
         const opponentMove = solutionMoves[nextIndex];
         const opParsed = parseUci(opponentMove);
         setTimeout(() => {
@@ -377,23 +398,33 @@ function PuzzleBoard({ fen, solutionMoves, orientation, onSolved, onFailed, show
             setGame(new Chess(g.fen()));
             setMoveIndex(nextIndex + 1);
           } catch {
-            // If opponent's move fails, puzzle is done
             setStatus("correct");
             onSolved();
           }
         }, 400);
 
         setMoveIndex(nextIndex);
+        setAttempts(0); // reset attempts on correct move
         return true;
       }
 
-      // Wrong move
+      // Wrong move — retry logic
       playSound("wrong");
-      setStatus("wrong");
-      onFailed();
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
+      setShaking(true);
+      setTimeout(() => setShaking(false), 500);
+
+      if (newAttempts >= MAX_ATTEMPTS) {
+        // Out of tries — show answer and fail
+        setStatus("wrong");
+        onFailed();
+      }
+      // Otherwise stay on "playing" — let user retry
+
       return false;
     },
-    [game, moveIndex, solutionMoves, status, onSolved, onFailed]
+    [game, moveIndex, solutionMoves, status, onSolved, onFailed, attempts]
   );
 
   const customSquareStyles: Record<string, React.CSSProperties> = {};
@@ -404,7 +435,6 @@ function PuzzleBoard({ fen, solutionMoves, orientation, onSolved, onFailed, show
     };
   }
   if (status === "correct") {
-    // Highlight last move destination
     const lastMove = solutionMoves[solutionMoves.length - 1];
     if (lastMove) {
       customSquareStyles[lastMove.slice(2, 4)] = {
@@ -425,10 +455,15 @@ function PuzzleBoard({ fen, solutionMoves, orientation, onSolved, onFailed, show
   }
 
   return (
-    <div ref={boardRef} className="flex gap-2 sm:gap-3">
+    <div ref={boardRef} className="flex flex-col items-center gap-3">
+      {/* Turn indicator */}
+      <div className="flex items-center gap-2 text-xs">
+        <div className={`h-3 w-3 rounded-full ${orientation === "white" ? "bg-white border border-slate-400" : "bg-slate-800 border border-slate-500"}`} />
+        <span className="text-slate-400">Your turn as {orientation}</span>
+      </div>
       <div
         style={{ width: boardSize, height: boardSize }}
-        className="shrink-0 overflow-hidden rounded-xl shadow-2xl"
+        className={`shrink-0 overflow-hidden rounded-xl shadow-2xl transition-transform ${shaking ? "animate-[shake_0.3s_ease-in-out]" : ""}`}
       >
         <Chessboard
           id="train-board"
@@ -443,6 +478,32 @@ function PuzzleBoard({ fen, solutionMoves, orientation, onSolved, onFailed, show
           customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
         />
       </div>
+      {/* Attempts remaining */}
+      {status === "playing" && (
+        <div className="flex items-center gap-1.5">
+          {Array.from({ length: MAX_ATTEMPTS }).map((_, i) => (
+            <span
+              key={i}
+              className={`text-base transition-all ${i < MAX_ATTEMPTS - attempts ? "opacity-100" : "opacity-20 scale-75"}`}
+            >
+              ❤️
+            </span>
+          ))}
+          {attempts > 0 && (
+            <span className="ml-2 text-xs text-red-400/80">
+              {MAX_ATTEMPTS - attempts} {MAX_ATTEMPTS - attempts === 1 ? "try" : "tries"} left
+            </span>
+          )}
+        </div>
+      )}
+      {status === "wrong" && (
+        <p className="text-sm font-medium text-red-400">
+          Out of tries — the correct move is shown above
+        </p>
+      )}
+      {status === "correct" && (
+        <p className="text-sm font-medium text-emerald-400">✓ Correct!</p>
+      )}
     </div>
   );
 }
@@ -458,10 +519,13 @@ type SimpleBoardProps = {
 };
 
 function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
-  const { ref: boardRef, size: boardSize } = useBoardSize(380);
+  const { ref: boardRef, size: boardSize } = useBoardSize(480);
   const boardTheme = useBoardTheme();
   const [game] = useState(() => new Chess(position.fen));
   const [status, setStatus] = useState<"playing" | "correct" | "wrong">("playing");
+  const [attempts, setAttempts] = useState(0);
+  const MAX_ATTEMPTS = 3;
+  const [shaking, setShaking] = useState(false);
   const orientation = game.turn() === "w" ? "white" : "black";
 
   const expected = parseUci(position.bestMove);
@@ -485,12 +549,22 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
         onResult(true);
         return true;
       }
+
+      // Wrong move — retry logic
       playSound("wrong");
-      setStatus("wrong");
-      onResult(false);
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
+      setShaking(true);
+      setTimeout(() => setShaking(false), 500);
+
+      if (newAttempts >= MAX_ATTEMPTS) {
+        setStatus("wrong");
+        onResult(false);
+      }
+
       return false;
     },
-    [game, expected, status, onResult]
+    [game, expected, status, onResult, attempts]
   );
 
   const customSquareStyles: Record<string, React.CSSProperties> = {};
@@ -510,10 +584,15 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
   }
 
   return (
-    <div ref={boardRef} className="flex gap-2 sm:gap-3">
+    <div ref={boardRef} className="flex flex-col items-center gap-3">
+      {/* Turn indicator */}
+      <div className="flex items-center gap-2 text-xs">
+        <div className={`h-3 w-3 rounded-full ${orientation === "white" ? "bg-white border border-slate-400" : "bg-slate-800 border border-slate-500"}`} />
+        <span className="text-slate-400">Your turn as {orientation}</span>
+      </div>
       <div
         style={{ width: boardSize, height: boardSize }}
-        className="shrink-0 overflow-hidden rounded-xl shadow-2xl"
+        className={`shrink-0 overflow-hidden rounded-xl shadow-2xl transition-transform ${shaking ? "animate-[shake_0.3s_ease-in-out]" : ""}`}
       >
         <Chessboard
           id="simple-train-board"
@@ -528,6 +607,32 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
           customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
         />
       </div>
+      {/* Attempts remaining */}
+      {status === "playing" && (
+        <div className="flex items-center gap-1.5">
+          {Array.from({ length: MAX_ATTEMPTS }).map((_, i) => (
+            <span
+              key={i}
+              className={`text-base transition-all ${i < MAX_ATTEMPTS - attempts ? "opacity-100" : "opacity-20 scale-75"}`}
+            >
+              ❤️
+            </span>
+          ))}
+          {attempts > 0 && (
+            <span className="ml-2 text-xs text-red-400/80">
+              {MAX_ATTEMPTS - attempts} {MAX_ATTEMPTS - attempts === 1 ? "try" : "tries"} left
+            </span>
+          )}
+        </div>
+      )}
+      {status === "wrong" && (
+        <p className="text-sm font-medium text-red-400">
+          Out of tries — the correct move is shown above
+        </p>
+      )}
+      {status === "correct" && (
+        <p className="text-sm font-medium text-emerald-400">✓ Correct!</p>
+      )}
     </div>
   );
 }
@@ -784,7 +889,7 @@ export default function TrainPage() {
         <div className="animate-float-delayed absolute -right-32 top-40 h-80 w-80 rounded-full bg-cyan-500/[0.05] blur-[100px]" />
       </div>
 
-      <div className="relative z-10 mx-auto max-w-4xl px-5 py-12 md:px-10 md:py-16">
+      <div className="relative z-10 mx-auto max-w-5xl px-5 py-12 md:px-10 md:py-16">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
@@ -932,7 +1037,13 @@ export default function TrainPage() {
                     )}
                     {actuallyDisabled && (
                       <p className="mt-3 text-[11px] text-slate-500">
-                        {reports.length === 0 ? "Requires a scan report" : "No data available"}
+                        {reports.length === 0
+                          ? "Requires a scan report"
+                          : mode.id === "blunder"
+                          ? "Run a scan with tactics analysis to unlock"
+                          : mode.id === "opening"
+                          ? "Run an opening scan to unlock"
+                          : "No data available"}
                       </p>
                     )}
                   </button>
