@@ -195,6 +195,17 @@ export function Navbar() {
                 Dashboard
               </Link>
 
+              <Link
+                href="/train"
+                className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                  isActive("/train")
+                    ? "text-white bg-white/[0.06]"
+                    : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+                }`}
+              >
+                Training
+              </Link>
+
               {/* Profile dropdown */}
               <div className="relative" ref={profileRef}>
                 <button
@@ -202,7 +213,22 @@ export function Navbar() {
                   onClick={() => setProfileOpen((p) => !p)}
                   className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.04] px-2.5 py-1.5 text-sm text-white transition-all hover:border-white/[0.15] hover:bg-white/[0.08]"
                 >
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-xs font-bold text-emerald-400">
+                  {user?.image ? (
+                    <img
+                      src={user.image}
+                      alt=""
+                      className="h-6 w-6 rounded-full object-cover"
+                      crossOrigin="anonymous"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        const el = e.currentTarget;
+                        el.style.display = "none";
+                        const fb = el.nextElementSibling as HTMLElement | null;
+                        if (fb) fb.style.display = "flex";
+                      }}
+                    />
+                  ) : null}
+                  <div className={`${user?.image ? "hidden" : "flex"} h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-xs font-bold text-emerald-400`}>
                     {(user?.name?.[0] ?? user?.email?.[0] ?? "?").toUpperCase()}
                   </div>
                   <span className="max-w-[100px] truncate text-sm">
@@ -388,7 +414,22 @@ export function Navbar() {
             {/* User info (if signed in) */}
             {authenticated && user && (
               <div className="mb-5 mt-2 flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/20 text-sm font-bold text-emerald-400">
+                {user.image ? (
+                  <img
+                    src={user.image}
+                    alt=""
+                    className="h-10 w-10 rounded-full object-cover"
+                    crossOrigin="anonymous"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const el = e.currentTarget;
+                      el.style.display = "none";
+                      const fb = el.nextElementSibling as HTMLElement | null;
+                      if (fb) fb.style.display = "flex";
+                    }}
+                  />
+                ) : null}
+                <div className={`${user.image ? "hidden" : "flex"} h-10 w-10 items-center justify-center rounded-full bg-emerald-500/20 text-sm font-bold text-emerald-400`}>
                   {(user.name?.[0] ?? user.email?.[0] ?? "?").toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -413,6 +454,7 @@ export function Navbar() {
                 ...(authenticated
                   ? [
                       { href: "/dashboard", label: "Dashboard" },
+                      { href: "/train", label: "Training" },
                       { href: "/changelog", label: "Dev Notes" },
                       { href: "/support", label: "My Tickets" },
                       { href: "/account", label: "Account & Billing" },

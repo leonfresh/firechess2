@@ -468,6 +468,30 @@ export default function DashboardPage() {
             </div>
           )}
 
+          {/* ─── Training CTA ─── */}
+          <Link
+            href="/train"
+            className="animate-fade-in-up group block rounded-2xl border border-white/[0.06] bg-gradient-to-r from-fuchsia-500/[0.08] to-cyan-500/[0.08] p-5 transition-all hover:border-fuchsia-500/20 hover:shadow-lg"
+            style={{ animationDelay: "0.165s" }}
+          >
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-fuchsia-500/15 text-2xl">
+                🎯
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="text-base font-bold text-white group-hover:text-fuchsia-300">
+                  Training Center
+                </h3>
+                <p className="mt-0.5 text-xs text-slate-400">
+                  Practice puzzles targeting your weaknesses. Speed drills, opening trainer, endgame gym, and more.
+                </p>
+              </div>
+              <svg className="h-5 w-5 shrink-0 text-slate-600 transition-all group-hover:translate-x-0.5 group-hover:text-fuchsia-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+          </Link>
+
           {/* ─── Goal + Achievements row ─── */}
           <div data-tour="goals" className="grid gap-6 lg:grid-cols-2">
             <div className="animate-fade-in-up" style={{ animationDelay: "0.17s" }}>

@@ -69,7 +69,22 @@ export default function AccountPage() {
                 Profile
               </h2>
               <div className="mt-4 flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/20 text-2xl font-bold text-emerald-400">
+                {user?.image ? (
+                  <img
+                    src={user.image}
+                    alt=""
+                    className="h-14 w-14 rounded-full object-cover"
+                    crossOrigin="anonymous"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const el = e.currentTarget;
+                      el.style.display = "none";
+                      const fb = el.nextElementSibling as HTMLElement | null;
+                      if (fb) fb.style.display = "flex";
+                    }}
+                  />
+                ) : null}
+                <div className={`${user?.image ? "hidden" : "flex"} h-14 w-14 items-center justify-center rounded-full bg-emerald-500/20 text-2xl font-bold text-emerald-400`}>
                   {(user?.name?.[0] ?? user?.email?.[0] ?? "?").toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
