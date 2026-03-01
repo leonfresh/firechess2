@@ -172,6 +172,18 @@ export default function AdminUsersPage() {
       {/* User table */}
       {!fetching && users.length > 0 && (
         <div className="space-y-2">
+          {/* Column headings */}
+          <div className="hidden items-center gap-3 px-4 py-1 sm:flex">
+            <div className="w-8" /> {/* avatar spacer */}
+            <div className="min-w-0 flex-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">User</div>
+            <div className="w-28 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Login</div>
+            <div className="w-16 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-500">Reports</div>
+            <div className="w-20 text-right text-[10px] font-semibold uppercase tracking-wider text-slate-500">Last Seen</div>
+            <div className="w-16 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-500">Plan</div>
+            <div className="w-20 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-500">Action</div>
+            <div className="w-4" /> {/* chevron spacer */}
+          </div>
+
           {users.map((user) => {
             const expanded = expandedUser === user.id;
             return (
@@ -185,17 +197,7 @@ export default function AdminUsersPage() {
                   onClick={() => setExpandedUser(expanded ? null : user.id)}
                 >
                   {/* Avatar */}
-                  {user.image ? (
-                    <img
-                      src={user.image}
-                      alt=""
-                      className="h-8 w-8 rounded-full border border-white/10"
-                    />
-                  ) : (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-slate-500">
-                      {(user.name?.[0] ?? user.email?.[0] ?? "?").toUpperCase()}
-                    </div>
-                  )}
+                  <UserAvatar user={user} />
 
                   {/* Name & email */}
                   <div className="min-w-0 flex-1">
@@ -208,7 +210,7 @@ export default function AdminUsersPage() {
                   </div>
 
                   {/* Providers */}
-                  <div className="hidden items-center gap-1 sm:flex">
+                  <div className="hidden w-28 items-center gap-1 sm:flex">
                     {user.providers.map((p) => {
                       const meta = PROVIDER_LABELS[p.provider] ?? {
                         label: p.provider,
@@ -228,26 +230,26 @@ export default function AdminUsersPage() {
                   </div>
 
                   {/* Reports count */}
-                  <div className="hidden text-center sm:block" title="Reports saved">
+                  <div className="hidden w-16 text-center sm:block" title="Reports saved">
                     <p className="text-xs font-semibold text-white">{user.reportCount}</p>
-                    <p className="text-[9px] text-slate-500">reports</p>
                   </div>
 
                   {/* Last active */}
-                  <div className="hidden text-right sm:block" title={user.lastSession ? `Session: ${formatDate(user.lastSession)}` : "No session"}>
+                  <div className="hidden w-20 text-right sm:block" title={user.lastSession ? `Session: ${formatDate(user.lastSession)}` : "No session"}>
                     <p className="text-[11px] text-slate-400">{timeAgo(user.lastSession)}</p>
-                    <p className="text-[9px] text-slate-500">last seen</p>
                   </div>
 
                   {/* Plan badge */}
-                  <span
-                    className={`rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase ${PLAN_STYLES[user.plan] ?? PLAN_STYLES.free}`}
-                  >
-                    {user.plan}
-                  </span>
+                  <div className="w-16 text-center">
+                    <span
+                      className={`inline-block rounded-full border px-2.5 py-0.5 text-[10px] font-semibold uppercase ${PLAN_STYLES[user.plan] ?? PLAN_STYLES.free}`}
+                    >
+                      {user.plan}
+                    </span>
+                  </div>
 
                   {/* Action buttons */}
-                  <div className="flex gap-1">
+                  <div className="flex w-20 justify-center gap-1">
                     {user.plan === "free" ? (
                       <button
                         onClick={(e) => { e.stopPropagation(); setPlan(user.id, "pro"); }}
@@ -347,6 +349,31 @@ function Detail({ label, value, mono }: { label: string; value: React.ReactNode;
       <p className={`mt-0.5 text-xs text-slate-300 ${mono ? "font-mono text-[10px] break-all" : ""}`}>
         {value}
       </p>
+    </div>
+  );
+}
+
+function UserAvatar({ user }: { user: UserRow }) {
+  const [imgError, setImgError] = useState(false);
+  const fallbackChar = (user.name?.[0] ?? user.email?.[0] ?? "?").toUpperCase();
+
+  if (user.image && !imgError) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={user.image}
+        alt=""
+        crossOrigin="anonymous"
+        referrerPolicy="no-referrer"
+        onError={() => setImgError(true)}
+        className="h-8 w-8 shrink-0 rounded-full border border-white/10 object-cover"
+      />
+    );
+  }
+
+  return (
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs text-slate-500">
+      {fallbackChar}
     </div>
   );
 }

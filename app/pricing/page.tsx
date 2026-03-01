@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSession } from "@/components/session-provider";
 import { useState } from "react";
 import { deferOnboarding } from "@/components/onboarding-tour";
+import { CHANGELOG } from "@/lib/changelog";
 
 const plans = [
   {
@@ -371,38 +372,7 @@ export default function PricingPage() {
             </div>
 
             <div className="mt-5 space-y-3">
-              {[
-                {
-                  version: 9,
-                  date: "Feb 27, 2026",
-                  title: "Collapsible Sections & Mate Eval Fix",
-                  highlights: [
-                    "Report sections are now collapsible in list view",
-                    "Eval displays correctly show \"Mate in X\" instead of 999+",
-                  ],
-                  tag: "latest" as const,
-                },
-                {
-                  version: 8,
-                  date: "Feb 27, 2026",
-                  title: "Endgame & Tactics Fixes, Opening QoL",
-                  highlights: [
-                    "Endgame conversion rate fixed — was undercounting by ~90%",
-                    "Ranked category breakdowns for endgames and tactics",
-                  ],
-                  tag: null,
-                },
-                {
-                  version: 7,
-                  date: "Feb 27, 2026",
-                  title: "Study Plans, Coin Economy & Retention Suite",
-                  highlights: [
-                    "Coin economy + cosmetic shop with board themes & titles",
-                    "Daily challenge, progress highlights, opening repertoire",
-                  ],
-                  tag: null,
-                },
-              ].map((entry) => (
+              {CHANGELOG.slice(0, 3).map((entry, i) => (
                 <Link
                   key={entry.version}
                   href="/changelog"
@@ -414,7 +384,7 @@ export default function PricingPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <h4 className="truncate text-sm font-semibold text-white group-hover:text-fuchsia-300">{entry.title}</h4>
-                      {entry.tag === "latest" && (
+                      {i === 0 && (
                         <span className="shrink-0 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
                           Latest
                         </span>
@@ -422,10 +392,10 @@ export default function PricingPage() {
                     </div>
                     <p className="mt-0.5 text-[11px] text-slate-500">{entry.date}</p>
                     <ul className="mt-1.5 space-y-0.5">
-                      {entry.highlights.map((h) => (
-                        <li key={h} className="flex items-start gap-1.5 text-xs text-slate-400">
+                      {entry.changes.slice(0, 2).map((c) => (
+                        <li key={c.text} className="flex items-start gap-1.5 text-xs text-slate-400">
                           <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-fuchsia-500/40" />
-                          {h}
+                          {c.text}
                         </li>
                       ))}
                     </ul>
