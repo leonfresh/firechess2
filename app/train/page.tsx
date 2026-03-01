@@ -309,48 +309,52 @@ const MODES: {
 
 type PuzzleBoardProps = {
   fen: string;
-  solutionMoves: string[]; // UCI moves in order
+  triggerMove: string | null; // UCI move from PGN (opponent's last move before puzzle)
+  solutionMoves: string[]; // UCI moves the user must find (all are user/opponent alternating)
   orientation: "white" | "black";
   onSolved: () => void;
   onFailed: () => void;
   showHint?: boolean;
 };
 
-function PuzzleBoard({ fen, solutionMoves, orientation, onSolved, onFailed, showHint }: PuzzleBoardProps) {
+function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, onFailed, showHint }: PuzzleBoardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { ref: boardRef, size: boardSize } = useBoardSize(720, { evalBar: false });
   const boardTheme = useBoardTheme();
   const [game, setGame] = useState(() => new Chess(fen));
-  const [moveIndex, setMoveIndex] = useState(0);
+  const [moveIndex, setMoveIndex] = useState(-1); // -1 = waiting for trigger move
   const [status, setStatus] = useState<"playing" | "correct" | "wrong">("playing");
   const [hintSquare, setHintSquare] = useState<string | null>(null);
   const [attempts, setAttempts] = useState(0);
   const MAX_ATTEMPTS = 3;
   const [shaking, setShaking] = useState(false);
 
-  // Apply initial "setup" move (opponent's move from the puzzle)
+  // Apply initial "trigger" move (opponent's last move from the PGN, before puzzle starts)
   useEffect(() => {
     preloadSounds();
-    if (solutionMoves.length === 0) return;
-    const setupMove = solutionMoves[0];
-    const parsed = parseUci(setupMove);
+    if (!triggerMove) {
+      // No trigger move — user starts solving immediately
+      setMoveIndex(0);
+      return;
+    }
+    const parsed = parseUci(triggerMove);
     const newGame = new Chess(fen);
     const timer = setTimeout(() => {
       try {
         newGame.move({ from: parsed.from, to: parsed.to, promotion: parsed.promotion });
         playSound("move");
         setGame(new Chess(newGame.fen()));
-        setMoveIndex(1);
       } catch {
-        setMoveIndex(1);
+        // Invalid trigger move — skip
       }
+      setMoveIndex(0); // solution starts at index 0
     }, 600);
     return () => clearTimeout(timer);
-  }, [fen, solutionMoves]);
+  }, [fen, triggerMove]);
 
   // Show hint
   useEffect(() => {
-    if (showHint && status === "playing" && moveIndex < solutionMoves.length) {
+    if (showHint && status === "playing" && moveIndex >= 0 && moveIndex < solutionMoves.length) {
       const expected = solutionMoves[moveIndex];
       setHintSquare(expected.slice(0, 2));
     } else {
@@ -360,7 +364,7 @@ function PuzzleBoard({ fen, solutionMoves, orientation, onSolved, onFailed, show
 
   const handleDrop = useCallback(
     (from: CbSquare, to: CbSquare) => {
-      if (status !== "playing") return false;
+      if (status !== "playing" || moveIndex < 0) return false;
 
       const expected = solutionMoves[moveIndex];
       if (!expected) return false;
@@ -850,32 +854,47 @@ export default function TrainPage() {
   // ─── Puzzle rendering helpers ───
 
   const currentPuzzleData = puzzles[currentPuzzle] ?? null;
-  const puzzleFen = useMemo(() => {
+
+  // Build the puzzle position: preTriggerFen (before the last opponent move),
+  // triggerMove (the opponent's move that sets up the puzzle), and the solution
+  // moves the user must find.  Matches the approach in personalized-puzzles.tsx.
+  const puzzleSetup = useMemo(() => {
     if (!currentPuzzleData) return null;
-    // Reconstruct FEN from PGN up to initialPly
     try {
       const game = new Chess();
       const pgn = currentPuzzleData.game.pgn;
       game.loadPgn(pgn);
       const history = game.history({ verbose: true });
       const targetPly = currentPuzzleData.puzzle.initialPly;
+
+      // Replay up to initialPly to get preTriggerFen
       const rebuild = new Chess();
       for (let i = 0; i < Math.min(targetPly, history.length); i++) {
         rebuild.move(history[i].san);
       }
-      return rebuild.fen();
+      const preTriggerFen = rebuild.fen();
+
+      // The trigger move is the move AT initialPly in the PGN (opponent's last move)
+      let triggerMove: string | null = null;
+      let postTriggerFen = preTriggerFen;
+      if (targetPly < history.length) {
+        const m = history[targetPly];
+        triggerMove = m.from + m.to + (m.promotion ?? "");
+        rebuild.move(m.san);
+        postTriggerFen = rebuild.fen();
+      }
+
+      // Solver color = whoever moves AFTER the trigger
+      const solverColor: "white" | "black" = new Chess(postTriggerFen).turn() === "w" ? "white" : "black";
+
+      return { preTriggerFen, postTriggerFen, triggerMove, solverColor };
     } catch {
       return null;
     }
   }, [currentPuzzleData]);
 
-  const puzzleOrientation = useMemo(() => {
-    if (!puzzleFen) return "white" as const;
-    const chess = new Chess(puzzleFen);
-    // After the setup move from the puzzle, the solving side is the one whose turn it is
-    // The first solution move is the opponent's, so the solver is the one who moves second
-    return chess.turn() === "w" ? "black" : "white";
-  }, [puzzleFen]);
+  const puzzleFen = puzzleSetup?.preTriggerFen ?? null;
+  const puzzleOrientation = puzzleSetup?.solverColor ?? ("white" as const);
 
   // ─── Render ───
 
@@ -1182,7 +1201,8 @@ export default function TrainPage() {
                     </div>
                     <PuzzleBoard
                       key={`${currentPuzzleData.puzzle.id}-${currentPuzzle}`}
-                      fen={puzzleFen}
+                      fen={puzzleFen!}
+                      triggerMove={puzzleSetup?.triggerMove ?? null}
                       solutionMoves={currentPuzzleData.puzzle.solution}
                       orientation={puzzleOrientation}
                       onSolved={handlePuzzleSolved}

@@ -79,7 +79,50 @@ export function Navbar() {
 
         {/* ── Desktop nav links ── */}
         <div className="hidden items-center gap-1 md:flex">
-          {/* Pages dropdown (About, Blog, Feedback) */}
+          {/* Pro link */}
+          <Link
+            href="/pricing"
+            className={`inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-3.5 py-1.5 text-sm font-semibold text-slate-950 transition-all duration-200 hover:shadow-glow-sm ${
+              isActive("/pricing") ? "shadow-glow-sm" : ""
+            }`}
+          >
+            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm0 2h14v2H5v-2z" />
+            </svg>
+            Pro
+          </Link>
+
+          {/* Dev Notes link */}
+          <Link
+            href="/changelog"
+            className={`relative rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+              isActive("/changelog")
+                ? "text-white bg-white/[0.06]"
+                : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+            }`}
+          >
+            Dev Notes
+            {authenticated && hasUnseenChanges && (
+              <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
+              </span>
+            )}
+          </Link>
+
+          {/* Training link */}
+          <Link
+            href="/train"
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+              isActive("/train")
+                ? "text-white bg-white/[0.06]"
+                : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+            }`}
+          >
+            Training
+          </Link>
+
+          {/* More dropdown (About, Blog, Feedback) */}
           <div className="group relative">
             <button
               type="button"
@@ -121,49 +164,6 @@ export function Navbar() {
               </div>
             </div>
           </div>
-
-          {/* Training link */}
-          <Link
-            href="/train"
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              isActive("/train")
-                ? "text-white bg-white/[0.06]"
-                : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
-            }`}
-          >
-            Training
-          </Link>
-
-          {/* Dev Notes link */}
-          <Link
-            href="/changelog"
-            className={`relative rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              isActive("/changelog")
-                ? "text-white bg-white/[0.06]"
-                : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
-            }`}
-          >
-            Dev Notes
-            {authenticated && hasUnseenChanges && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
-              </span>
-            )}
-          </Link>
-
-          {/* Pro link (last) */}
-          <Link
-            href="/pricing"
-            className={`ml-1 inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-3.5 py-1.5 text-sm font-semibold text-slate-950 transition-all duration-200 hover:shadow-glow-sm ${
-              isActive("/pricing") ? "shadow-glow-sm" : ""
-            }`}
-          >
-            <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm0 2h14v2H5v-2z" />
-            </svg>
-            Pro
-          </Link>
         </div>
 
         {/* ── Desktop right side (auth) ── */}
