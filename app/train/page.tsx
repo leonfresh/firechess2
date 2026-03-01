@@ -304,6 +304,48 @@ const MODES: {
 ];
 
 /* ------------------------------------------------------------------ */
+/*  Move result indicator (Lichess-style ✓/✗ on the square)            */
+/* ------------------------------------------------------------------ */
+
+function MoveIndicator({
+  square,
+  type,
+  orientation,
+  boardSize,
+}: {
+  square: string;
+  type: "correct" | "wrong";
+  orientation: "white" | "black";
+  boardSize: number;
+}) {
+  const file = square.charCodeAt(0) - 97;
+  const rank = parseInt(square[1]) - 1;
+  const sqSize = boardSize / 8;
+  const x = orientation === "white" ? file * sqSize : (7 - file) * sqSize;
+  const y = orientation === "white" ? (7 - rank) * sqSize : rank * sqSize;
+  const size = Math.max(18, Math.round(sqSize * 0.36));
+
+  return (
+    <div
+      className="pointer-events-none absolute z-20 flex items-center justify-center rounded-full font-bold shadow-lg"
+      style={{
+        left: x + sqSize - size - 2,
+        top: y + 2,
+        width: size,
+        height: size,
+        fontSize: size * 0.65,
+        lineHeight: 1,
+        backgroundColor: type === "correct" ? "#22c55e" : "#ef4444",
+        color: "#fff",
+        animation: "indicator-pop 0.15s ease-out",
+      }}
+    >
+      {type === "correct" ? "✓" : "✗"}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  PuzzleBoard — reusable interactive puzzle-solving board             */
 /* ------------------------------------------------------------------ */
 
@@ -328,6 +370,7 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
   const [attempts, setAttempts] = useState(0);
   const MAX_ATTEMPTS = 3;
   const [shaking, setShaking] = useState(false);
+  const [moveIndicator, setMoveIndicator] = useState<{ square: string; type: "correct" | "wrong" } | null>(null);
 
   // Apply initial "trigger" move (opponent's last move from the PGN, before puzzle starts)
   useEffect(() => {
@@ -382,6 +425,7 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
         }
         playSound(newGame.isCheck() ? "check" : "move");
         setGame(new Chess(newGame.fen()));
+        setMoveIndicator({ square: to, type: "correct" });
 
         const nextIndex = moveIndex + 1;
 
@@ -395,6 +439,7 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
         const opponentMove = solutionMoves[nextIndex];
         const opParsed = parseUci(opponentMove);
         setTimeout(() => {
+          setMoveIndicator(null);
           const g = new Chess(newGame.fen());
           try {
             g.move({ from: opParsed.from, to: opParsed.to, promotion: opParsed.promotion });
@@ -414,10 +459,12 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
 
       // Wrong move — retry logic
       playSound("wrong");
+      setMoveIndicator({ square: to, type: "wrong" });
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
       setShaking(true);
       setTimeout(() => setShaking(false), 500);
+      setTimeout(() => setMoveIndicator(null), 800);
 
       if (newAttempts >= MAX_ATTEMPTS) {
         // Out of tries — show answer and fail
@@ -467,7 +514,7 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
       </div>
       <div
         style={{ width: boardSize, height: boardSize }}
-        className={`shrink-0 overflow-hidden rounded-xl shadow-2xl transition-transform ${shaking ? "animate-[shake_0.3s_ease-in-out]" : ""}`}
+        className={`relative shrink-0 overflow-hidden rounded-xl shadow-2xl transition-transform ${shaking ? "animate-[shake_0.3s_ease-in-out]" : ""}`}
       >
         <Chessboard
           id="train-board"
@@ -481,6 +528,14 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
           customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
           customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
         />
+        {moveIndicator && (
+          <MoveIndicator
+            square={moveIndicator.square}
+            type={moveIndicator.type}
+            orientation={orientation}
+            boardSize={boardSize}
+          />
+        )}
       </div>
       {/* Attempts remaining */}
       {status === "playing" && (
@@ -530,6 +585,7 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
   const [attempts, setAttempts] = useState(0);
   const MAX_ATTEMPTS = 3;
   const [shaking, setShaking] = useState(false);
+  const [moveIndicator, setMoveIndicator] = useState<{ square: string; type: "correct" | "wrong" } | null>(null);
   const orientation = game.turn() === "w" ? "white" : "black";
 
   const expected = parseUci(position.bestMove);
@@ -549,6 +605,7 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
           return false;
         }
         playSound("correct");
+        setMoveIndicator({ square: to, type: "correct" });
         setStatus("correct");
         onResult(true);
         return true;
@@ -556,10 +613,12 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
 
       // Wrong move — retry logic
       playSound("wrong");
+      setMoveIndicator({ square: to, type: "wrong" });
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
       setShaking(true);
       setTimeout(() => setShaking(false), 500);
+      setTimeout(() => setMoveIndicator(null), 800);
 
       if (newAttempts >= MAX_ATTEMPTS) {
         setStatus("wrong");
@@ -596,7 +655,7 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
       </div>
       <div
         style={{ width: boardSize, height: boardSize }}
-        className={`shrink-0 overflow-hidden rounded-xl shadow-2xl transition-transform ${shaking ? "animate-[shake_0.3s_ease-in-out]" : ""}`}
+        className={`relative shrink-0 overflow-hidden rounded-xl shadow-2xl transition-transform ${shaking ? "animate-[shake_0.3s_ease-in-out]" : ""}`}
       >
         <Chessboard
           id="simple-train-board"
@@ -610,6 +669,14 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
           customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
           customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
         />
+        {moveIndicator && (
+          <MoveIndicator
+            square={moveIndicator.square}
+            type={moveIndicator.type}
+            orientation={orientation}
+            boardSize={boardSize}
+          />
+        )}
       </div>
       {/* Attempts remaining */}
       {status === "playing" && (
@@ -1192,8 +1259,8 @@ export default function TrainPage() {
                 {!loadingPuzzles && puzzleFen && currentPuzzleData && (
                   <div className="flex flex-col items-center gap-4">
                     <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <span className="rounded bg-white/[0.06] px-2 py-0.5 font-mono">
-                        {currentPuzzleData.matchedTheme}
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-3 py-1 text-xs font-semibold text-fuchsia-300">
+                        🎯 {currentPuzzleData.matchedTheme}
                       </span>
                       {activeMode !== "speed" && (
                         <span>Puzzle {currentPuzzle + 1} of {puzzles.length}</span>
@@ -1234,8 +1301,8 @@ export default function TrainPage() {
                 {drillPositions.length > 0 && currentDrill < drillPositions.length && (
                   <div className="flex flex-col items-center gap-4">
                     <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <span className="rounded bg-white/[0.06] px-2 py-0.5">
-                        {drillPositions[currentDrill].label}
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">
+                        {activeMode === "blunder" ? "🔍" : "📖"} {drillPositions[currentDrill].label}
                       </span>
                       <span>Position {currentDrill + 1} of {drillPositions.length}</span>
                       {drillPositions[currentDrill].cpLoss != null && (
