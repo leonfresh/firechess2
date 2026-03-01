@@ -279,6 +279,11 @@ export default function HomePage() {
       { name: "Queen Tactics", icon: "♛", match: (t) => t.tags.includes("Queen Tactic") },
       { name: "Converting Advantage", icon: "📈", match: (t) => t.tags.includes("Converting Advantage") },
       { name: "Equal Position Misses", icon: "⚖️", match: (t) => t.tags.includes("Equal Position") },
+      { name: "Unnecessary Captures", icon: "🚫", match: (t) => t.tags.includes("Unnecessary Capture") },
+      { name: "Premature Trades", icon: "🤝", match: (t) => t.tags.includes("Premature Trade") },
+      { name: "Released Tension", icon: "💨", match: (t) => t.tags.includes("Released Tension") },
+      { name: "Passive Retreats", icon: "🐢", match: (t) => t.tags.includes("Passive Retreat") },
+      { name: "Trading Advantage", icon: "📉", match: (t) => t.tags.includes("Trading Advantage") },
     ];
 
     const groups: { name: string; icon: string; count: number; avgCpLoss: number; tactics: typeof missedTactics }[] = [];
@@ -728,7 +733,7 @@ export default function HomePage() {
             </div>
 
             <div className={heroAnim(5)}>
-              <HeroDemoBoard />
+              <HeroDemoBoard paused={puzzleBoardOpen} />
             </div>
           </header>
 

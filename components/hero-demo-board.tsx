@@ -199,7 +199,7 @@ function badgeColor(badge: DemoScenario["badge"]): string {
   return badge === "Mistake" ? "#f59e0b" : "#818cf8";
 }
 
-export function HeroDemoBoard() {
+export function HeroDemoBoard({ paused }: { paused?: boolean }) {
   const { ref: heroBoardRef, size: heroBoardSize } = useBoardSize(380);
   const boardTheme = useBoardTheme();
   const showCoords = useShowCoordinates();
@@ -220,34 +220,38 @@ export function HeroDemoBoard() {
   useEffect(() => { setIndex(0); }, [scenarios]);
 
   useEffect(() => {
-    if (!autoplay) return;
+    if (!autoplay || paused) return;
     const interval = window.setInterval(() => {
       setIndex((prev) => (prev + 1) % scenarios.length);
     }, 4500);
     return () => window.clearInterval(interval);
-  }, [autoplay, scenarios.length]);
+  }, [autoplay, paused, scenarios.length]);
 
   const goNext = () => { setAutoplay(false); setIndex((prev) => (prev + 1) % scenarios.length); };
   const goPrev = () => { setAutoplay(false); setIndex((prev) => (prev - 1 + scenarios.length) % scenarios.length); };
 
-  const customSquare = ((props: any) => {
-    const square = props?.square as string | undefined;
+  const customSquare = useMemo(() => {
     const targetSq = current.mistakeArrow?.[1];
-    const showBadge = square === targetSq;
-    return (
-      <div style={props?.style} className="relative h-full w-full">
-        {props?.children}
-        {showBadge && (
-          <span
-            className="pointer-events-none absolute right-0.5 top-0.5 z-[40] rounded px-1 py-[1px] text-[8px] font-bold text-white shadow"
-            style={{ backgroundColor: badgeColor(current.badge) }}
-          >
-            {current.badge}
-          </span>
-        )}
-      </div>
-    );
-  }) as any;
+    const badge = current.badge;
+    const Sq = (props: any) => {
+      const square = props?.square as string | undefined;
+      const showBadge = square === targetSq;
+      return (
+        <div style={props?.style} className="relative h-full w-full">
+          {props?.children}
+          {showBadge && (
+            <span
+              className="pointer-events-none absolute right-0.5 top-0.5 z-[40] rounded px-1 py-[1px] text-[8px] font-bold text-white shadow"
+              style={{ backgroundColor: badgeColor(badge) }}
+            >
+              {badge}
+            </span>
+          )}
+        </div>
+      );
+    };
+    return Sq;
+  }, [current.mistakeArrow, current.badge]) as any;
 
   // Custom highlighted squares for the bad move (red tint)
   const customSquareStyles = useMemo(() => {

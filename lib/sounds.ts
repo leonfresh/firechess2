@@ -10,8 +10,8 @@ const SOUND_PATHS: Record<SoundName, string> = {
   capture: "/sounds/Capture.mp3",
   check: "/sounds/Check.mp3",
   select: "/sounds/Select.mp3",
-  correct: "/sounds/Move.mp3",   // reuse move for correct
-  wrong: "/sounds/Select.mp3",   // reuse select for wrong
+  correct: "/sounds/Correct.mp3",
+  wrong: "/sounds/Wrong.mp3",
 };
 
 const audioCache = new Map<SoundName, HTMLAudioElement>();

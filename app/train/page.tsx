@@ -85,6 +85,15 @@ const MOTIF_TO_THEME: Record<string, string> = {
   "Forcing Capture": "crushing",
   "Winning Blunder": "crushing",
   "Major Miss": "crushing",
+  // Positional patterns → closest puzzle themes
+  "Unnecessary Capture": "hangingPiece",
+  "Premature Trade": "trappedPiece",
+  "Released Tension": "hangingPiece",
+  "Passive Retreat": "trappedPiece",
+  "Trading Advantage": "crushing",
+  "Weakened Pawn Structure": "hangingPiece",
+  "King Exposure": "kingsideAttack",
+  "Wrong Recapture": "hangingPiece",
 };
 
 const ENDGAME_TO_THEME: Record<string, string> = {
@@ -423,7 +432,7 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
         } catch {
           return false;
         }
-        playSound(newGame.isCheck() ? "check" : "move");
+        playSound("correct");
         setGame(new Chess(newGame.fen()));
         setMoveIndicator({ square: to, type: "correct" });
 
@@ -431,7 +440,6 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
 
         if (nextIndex >= solutionMoves.length) {
           setStatus("correct");
-          playSound("correct");
           onSolved();
           return true;
         }
@@ -467,9 +475,21 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
       setTimeout(() => setMoveIndicator(null), 800);
 
       if (newAttempts >= MAX_ATTEMPTS) {
-        // Out of tries — show answer and fail
+        // Out of tries — animate the correct move so user can see it
         setStatus("wrong");
-        onFailed();
+        const correctMove = solutionMoves[moveIndex];
+        if (correctMove) {
+          const cp = parseUci(correctMove);
+          setTimeout(() => {
+            const g = new Chess(game.fen());
+            try {
+              g.move({ from: cp.from, to: cp.to, promotion: cp.promotion });
+              setGame(new Chess(g.fen()));
+            } catch {}
+          }, 600);
+        }
+        // Wait for user to see the answer before advancing
+        setTimeout(() => onFailed(), 2500);
       }
       // Otherwise stay on "playing" — let user retry
 
@@ -580,7 +600,7 @@ type SimpleBoardProps = {
 function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
   const { ref: boardRef, size: boardSize } = useBoardSize(720, { evalBar: false });
   const boardTheme = useBoardTheme();
-  const [game] = useState(() => new Chess(position.fen));
+  const [game, setGame] = useState(() => new Chess(position.fen));
   const [status, setStatus] = useState<"playing" | "correct" | "wrong">("playing");
   const [attempts, setAttempts] = useState(0);
   const MAX_ATTEMPTS = 3;
@@ -605,6 +625,7 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
           return false;
         }
         playSound("correct");
+        setGame(new Chess(newGame.fen()));
         setMoveIndicator({ square: to, type: "correct" });
         setStatus("correct");
         onResult(true);
@@ -622,7 +643,16 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
 
       if (newAttempts >= MAX_ATTEMPTS) {
         setStatus("wrong");
-        onResult(false);
+        // Animate the correct move so user can see it
+        setTimeout(() => {
+          const g = new Chess(game.fen());
+          try {
+            g.move({ from: expected.from, to: expected.to, promotion: expected.promotion });
+            setGame(new Chess(g.fen()));
+          } catch {}
+        }, 600);
+        // Wait for user to see the answer before advancing
+        setTimeout(() => onResult(false), 2500);
       }
 
       return false;
@@ -865,23 +895,22 @@ export default function TrainPage() {
   // Handle puzzle failed
   const handlePuzzleFailed = useCallback(() => {
     setFailed((f) => f + 1);
-    setTimeout(() => {
-      if (activeMode === "speed" && speedActive) {
-        const themes = weakMotifs.length > 0
-          ? uniqueThemes(weakMotifs, 4)
-          : ["fork", "pin", "sacrifice", "hangingPiece"];
-        fetchPuzzles(themes, 6);
-      } else {
-        setCurrentPuzzle((p) => {
-          if (p + 1 >= puzzles.length) {
-            setSessionDone(true);
-            return p;
-          }
-          return p + 1;
-        });
-      }
-      setShowHint(false);
-    }, 2000);
+    // Board already waited 2.5s to show the answer before calling this
+    if (activeMode === "speed" && speedActive) {
+      const themes = weakMotifs.length > 0
+        ? uniqueThemes(weakMotifs, 4)
+        : ["fork", "pin", "sacrifice", "hangingPiece"];
+      fetchPuzzles(themes, 6);
+    } else {
+      setCurrentPuzzle((p) => {
+        if (p + 1 >= puzzles.length) {
+          setSessionDone(true);
+          return p;
+        }
+        return p + 1;
+      });
+    }
+    setShowHint(false);
   }, [activeMode, speedActive, weakMotifs, fetchPuzzles, puzzles.length]);
 
   // Handle drill result (blunder/opening)
@@ -894,6 +923,8 @@ export default function TrainPage() {
       } else {
         setFailed((f) => f + 1);
       }
+      // Board already waited before calling this for wrong answers
+      const delay = correct ? 1500 : 300;
       setTimeout(() => {
         setCurrentDrill((d) => {
           if (d + 1 >= drillPositions.length) {

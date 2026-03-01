@@ -831,7 +831,126 @@ function deriveLeakTags(args: {
           const pFile = userParsed.from.charCodeAt(0) - "a".charCodeAt(0);
           if (Math.abs(kFile - pFile) <= 1) {
             tags.add("Exposed King");
+            tags.add("King Exposure");
           }
+        }
+      }
+    }
+
+    // ═══ Positional pattern detection ═══
+
+    if (userParsed && bestParsed) {
+      const userTarget = chess.get(userParsed.to as Parameters<Chess["get"]>[0]);
+      const userPiece = chess.get(userParsed.from as Parameters<Chess["get"]>[0]);
+      const bestTarget = chess.get(bestParsed.to as Parameters<Chess["get"]>[0]);
+      const bestPiece = chess.get(bestParsed.from as Parameters<Chess["get"]>[0]);
+      const isUserCapture = !!userTarget;
+      const isBestCapture = !!bestTarget;
+      const pv: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+
+      // --- Unnecessary Capture: user captures but best move doesn't ---
+      if (isUserCapture && !isBestCapture) {
+        tags.add("Unnecessary Capture");
+      }
+
+      // --- Premature Trade: user captures piece of equal/greater value, best doesn't ---
+      if (isUserCapture && userPiece && userTarget) {
+        const userPieceVal = pv[userPiece.type] ?? 0;
+        const capturedVal = pv[userTarget.type] ?? 0;
+        if (Math.abs(userPieceVal - capturedVal) <= 1 && capturedVal >= 3 && !isBestCapture) {
+          tags.add("Premature Trade");
+        }
+      }
+
+      // --- Released Tension: user pawn captures pawn, best doesn't ---
+      if (userPiece?.type === "p" && userTarget?.type === "p" && !isBestCapture) {
+        tags.add("Released Tension");
+      }
+
+      // --- Premature Pawn Break: user pushes pawn 2 squares or into center tension, best doesn't ---
+      if (userPiece?.type === "p" && !isUserCapture && bestPiece?.type !== "p") {
+        const fromRank = parseInt(userParsed.from[1]);
+        const toRank = parseInt(userParsed.to[1]);
+        const isPush2 = Math.abs(toRank - fromRank) === 2;
+        const toFile = userParsed.to.charCodeAt(0) - 97;
+        const isCentralFile = toFile >= 2 && toFile <= 5; // c-f files
+        if (isPush2 && isCentralFile && cpLoss >= 50) {
+          tags.add("Premature Pawn Break");
+        }
+      }
+
+      // --- Passive Retreat: user moves piece backward, best doesn't ---
+      if (userPiece && userPiece.type !== "p" && userPiece.type !== "k") {
+        const userFromRank = parseInt(userParsed.from[1]);
+        const userToRank = parseInt(userParsed.to[1]);
+        const isRetreat = userPiece.color === "w" ? userToRank < userFromRank : userToRank > userFromRank;
+        const backRank = userPiece.color === "w" ? userToRank <= 2 : userToRank >= 7;
+        if (isRetreat && backRank && cpLoss >= 60) {
+          tags.add("Passive Retreat");
+        }
+      }
+
+      // --- Trading Advantage: eval was clearly positive but user initiates trade ---
+      if (isUserCapture && userPiece && userTarget) {
+        const userPieceVal = pv[userPiece.type] ?? 0;
+        const capturedVal = pv[userTarget.type] ?? 0;
+        // Equal-value trade (e.g. knight takes knight) while ahead
+        if (Math.abs(userPieceVal - capturedVal) <= 1 && capturedVal >= 3) {
+          // We don't have evalBefore in this context directly, but if cpLoss >= 80
+          // and the trade was equal, the position was likely favorable
+          if (cpLoss >= 80) {
+            tags.add("Trading Advantage");
+          }
+        }
+      }
+
+      // --- Weakened Pawn Structure: user pawn move creates doubled/isolated pawns ---
+      if (userPiece?.type === "p" && isUserCapture) {
+        try {
+          const afterChess = new Chess(fenBefore);
+          afterChess.move({ from: userParsed.from, to: userParsed.to, promotion: userParsed.promotion } as any);
+          const board = afterChess.board().flat().filter(Boolean);
+          const myPawns = board.filter(p => p && p.type === "p" && p.color === userPiece!.color);
+          const pawnFiles = myPawns.map(p => p!.square.charCodeAt(0));
+          // Check for doubled pawns on the capture file
+          const captureFile = userParsed.to.charCodeAt(0);
+          const pawnsOnFile = pawnFiles.filter(f => f === captureFile).length;
+          if (pawnsOnFile >= 2) {
+            tags.add("Weakened Pawn Structure");
+          }
+        } catch { /* best effort */ }
+      }
+
+      // --- Wrong Recapture: user recaptures but toward the edge instead of center ---
+      if (isUserCapture && userPiece) {
+        const toFile = userParsed.to.charCodeAt(0) - 97; // 0=a, 7=h
+        const fromFile = userParsed.from.charCodeAt(0) - 97;
+        const centerDist = Math.abs(toFile - 3.5);
+        const fromCenterDist = Math.abs(fromFile - 3.5);
+        // Recapturing away from center when best move recaptures toward center
+        if (isBestCapture && centerDist > fromCenterDist + 0.5) {
+          tags.add("Wrong Recapture");
+        }
+      }
+
+      // --- Missed Development: user moves already-developed piece, best develops new ---
+      if (fullMoveNumber <= 15 && totalPieces >= 26) {
+        const backRankUser = userPiece?.color === "w" ? "1" : "8";
+        const bestFromRank = bestParsed.from[1];
+        const userFromRank = userParsed.from[1];
+        // Best move brings a piece from the back rank, user doesn't
+        if (bestFromRank === backRankUser && userFromRank !== backRankUser) {
+          if (bestPiece && bestPiece.type !== "p" && bestPiece.type !== "k") {
+            tags.add("Missed Development");
+          }
+        }
+      }
+
+      // --- Piece Activity: user puts piece on rim (a/h file) ---
+      if (userPiece && userPiece.type !== "p" && userPiece.type !== "k") {
+        const toFile = userParsed.to[0];
+        if ((toFile === "a" || toFile === "h") && cpLoss >= 40) {
+          tags.add("Piece Activity");
         }
       }
     }
@@ -843,7 +962,7 @@ function deriveLeakTags(args: {
     tags.add("Inaccuracy");
   }
 
-  return [...tags].slice(0, 5);
+  return [...tags].slice(0, 8);
 }
 
 /**
@@ -1108,12 +1227,62 @@ function deriveTacticTags(args: {
       }
     }
 
+    // ═══ Positional pattern detection ═══
+    if (userParsed && bestParsed) {
+      const userTarget = chess.get(userParsed.to as any);
+      const userPiece = chess.get(userParsed.from as any);
+      const bestTargetPiece = chess.get(bestParsed.to as any);
+      const bestSrcPiece = chess.get(bestParsed.from as any);
+      const isUserCapture = !!userTarget;
+      const isBestCap = !!bestTargetPiece;
+      const pvMap: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+
+      // Unnecessary Capture: user captures but best doesn't
+      if (isUserCapture && !isBestCap) {
+        tags.push("Unnecessary Capture");
+      }
+
+      // Premature Trade: user initiates equal-value trade, best doesn't
+      if (isUserCapture && userPiece && userTarget) {
+        const uVal = pvMap[userPiece.type] ?? 0;
+        const tVal = pvMap[userTarget.type] ?? 0;
+        if (Math.abs(uVal - tVal) <= 1 && tVal >= 3 && !isBestCap) {
+          tags.push("Premature Trade");
+        }
+      }
+
+      // Released Tension: user pawn takes pawn, best doesn't
+      if (userPiece?.type === "p" && userTarget?.type === "p" && !isBestCap) {
+        tags.push("Released Tension");
+      }
+
+      // Trading Advantage: equal trade while position was good (big cp loss suggests ahead)
+      if (isUserCapture && userPiece && userTarget && cpBefore >= 100) {
+        const uVal = pvMap[userPiece.type] ?? 0;
+        const tVal = pvMap[userTarget.type] ?? 0;
+        if (Math.abs(uVal - tVal) <= 1 && tVal >= 3) {
+          tags.push("Trading Advantage");
+        }
+      }
+
+      // Passive Retreat
+      if (userPiece && userPiece.type !== "p" && userPiece.type !== "k") {
+        const fromR = parseInt(userParsed.from[1]);
+        const toR = parseInt(userParsed.to[1]);
+        const isRetreat = userPiece.color === "w" ? toR < fromR : toR > fromR;
+        const backRank = userPiece.color === "w" ? toR <= 2 : toR >= 7;
+        if (isRetreat && backRank && cpLoss >= 60) {
+          tags.push("Passive Retreat");
+        }
+      }
+    }
+
   } catch {
     // best-effort — keep whatever tags we have
   }
 
-  // Deduplicate and cap at 5 tags
-  return [...new Set(tags)].slice(0, 5);
+  // Deduplicate and cap at 8 tags
+  return [...new Set(tags)].slice(0, 8);
 }
 
 function findKingSquare(chess: Chess, color: "white" | "black"): string | null {

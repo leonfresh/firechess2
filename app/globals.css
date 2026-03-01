@@ -312,6 +312,22 @@ button {
   100% { transform: scale(1); opacity: 1; }
 }
 
+/* ── Chessboard drag-piece cursor fix ── */
+/* Hide the browser-generated drag ghost (square cursor artifact) */
+[data-testid="drag-layer"],
+.react-chessboard-dragging {
+  cursor: grabbing !important;
+}
+/* Ensure piece squares use grab cursor */
+[data-square] img,
+[data-square] svg {
+  cursor: grab;
+}
+[data-square]:active img,
+[data-square]:active svg {
+  cursor: grabbing;
+}
+
 /* ── Blog prose styling ── */
 .prose-firechess {
   @apply text-slate-300 leading-relaxed;
