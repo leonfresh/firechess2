@@ -3016,7 +3016,7 @@ export default function HomePage() {
               )}
 
               {/* ─── Positional Patterns Section ─── */}
-              {positionalMotifs.length > 0 && (
+              {(lastRunConfig?.scanMode === "openings" || lastRunConfig?.scanMode === "both") && (
               <>
               <div className="my-4">
                 <div className="section-divider" />
@@ -3027,12 +3027,16 @@ export default function HomePage() {
                   <div className="flex-1">
                     <h2 className="text-2xl font-extrabold text-white tracking-tight">
                       Positional Patterns
-                      <span className="ml-3 inline-flex items-center rounded-full bg-amber-500/15 px-3 py-1 text-base font-bold text-amber-400">
-                        {positionalMotifs.length} pattern{positionalMotifs.length !== 1 ? "s" : ""}
-                      </span>
+                      {positionalMotifs.length > 0 && (
+                        <span className="ml-3 inline-flex items-center rounded-full bg-amber-500/15 px-3 py-1 text-base font-bold text-amber-400">
+                          {positionalMotifs.length} pattern{positionalMotifs.length !== 1 ? "s" : ""}
+                        </span>
+                      )}
                     </h2>
                     <p className="mt-1 text-sm text-slate-400">
-                      Recurring positional mistakes detected across your games — with GM wisdom to help you improve
+                      {positionalMotifs.length > 0
+                        ? "Recurring positional mistakes detected across your games — with GM wisdom to help you improve"
+                        : "Positional coaching based on your opening choices — unnecessary captures, premature trades, passive retreats, and more"}
                     </p>
                   </div>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`shrink-0 text-slate-400 transition-transform duration-200 ${positionalOpen ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
@@ -3041,6 +3045,20 @@ export default function HomePage() {
 
               {positionalOpen && (
               <div className="space-y-3">
+                {positionalMotifs.length === 0 ? (
+                  <div className="glass-card border-amber-500/10 p-6">
+                    <div className="flex flex-col items-center gap-3 text-center">
+                      <span className="text-3xl">✨</span>
+                      <h3 className="text-base font-bold text-white">No positional patterns detected</h3>
+                      <p className="max-w-md text-sm text-slate-400">
+                        Your openings look positionally sound in this scan! FireChess checks for unnecessary captures, premature trades,
+                        released tension, passive retreats, pawn structure issues, and more. Scan more games or use the &ldquo;All&rdquo;
+                        mode for a deeper look.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                <>
                 {positionalMotifs.map((motif) => {
                   const pattern = POSITIONAL_PATTERNS.find(p => motif.name.startsWith(p.label) || motif.name.includes(p.tag));
                   const quote = pattern?.quote;
@@ -3102,6 +3120,8 @@ export default function HomePage() {
                       </span>
                     </p>
                   </div>
+                )}
+                </>
                 )}
               </div>
               )}
