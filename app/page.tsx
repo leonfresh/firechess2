@@ -319,6 +319,7 @@ export default function HomePage() {
       { name: "King Exposure", icon: "👑", positional: true, match: (t) => t.tags.includes("King Exposure") },
       { name: "Piece Activity", icon: "📊", positional: true, match: (t) => t.tags.includes("Piece Activity") },
       { name: "Premature Pawn Breaks", icon: "⚔️", positional: true, match: (t) => t.tags.includes("Premature Pawn Break") },
+      { name: "General Inaccuracy", icon: "⚠️", positional: true, match: (t) => t.tags.includes("Inaccuracy") },
     ];
 
     const groups: { name: string; icon: string; count: number; avgCpLoss: number; tactics: typeof missedTactics }[] = [];
@@ -357,6 +358,7 @@ export default function HomePage() {
     "Unnecessary Captures", "Premature Trades", "Released Tension", "Passive Retreats",
     "Trading Advantage", "Greedy Pawn Grabs", "Weakened Pawn Structure", "Wrong Recaptures",
     "Missed Development", "King Exposure", "Piece Activity", "Premature Pawn Breaks",
+    "General Inaccuracy",
   ]);
 
   const tacticalMotifs = useMemo(() => tacticMotifs.filter(m => !POSITIONAL_MOTIF_NAMES.has(m.name)), [tacticMotifs]);

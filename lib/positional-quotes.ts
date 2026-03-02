@@ -127,6 +127,14 @@ export const POSITIONAL_PATTERNS: PositionalPattern[] = [
     author: "GM Garry Kasparov",
     color: "orange",
   },
+  {
+    tag: "Inaccuracy",
+    label: "General Inaccuracy",
+    icon: "⚠️",
+    quote: "Every chess master was once a beginner. Small inaccuracies compound into lost games.",
+    author: "GM Irving Chernev",
+    color: "slate",
+  },
 ];
 
 const patternMap = new Map(POSITIONAL_PATTERNS.map((p) => [p.tag, p]));
