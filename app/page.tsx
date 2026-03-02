@@ -316,6 +316,9 @@ export default function HomePage() {
       { name: "Weakened Pawn Structure", icon: "🏚️", positional: true, match: (t) => t.tags.includes("Weakened Pawn Structure") },
       { name: "Wrong Recaptures", icon: "↩️", positional: true, match: (t) => t.tags.includes("Wrong Recapture") },
       { name: "Missed Development", icon: "🐌", positional: true, match: (t) => t.tags.includes("Missed Development") },
+      { name: "King Exposure", icon: "👑", positional: true, match: (t) => t.tags.includes("King Exposure") },
+      { name: "Piece Activity", icon: "📊", positional: true, match: (t) => t.tags.includes("Piece Activity") },
+      { name: "Premature Pawn Breaks", icon: "⚔️", positional: true, match: (t) => t.tags.includes("Premature Pawn Break") },
     ];
 
     const groups: { name: string; icon: string; count: number; avgCpLoss: number; tactics: typeof missedTactics }[] = [];
@@ -350,17 +353,15 @@ export default function HomePage() {
   }, [missedTactics, leaks, oneOffMistakes]);
 
   // Separate tactical motifs (for Pattern Analysis) from positional motifs (for dedicated section)
-  const tacticalMotifs = useMemo(() => tacticMotifs.filter(m => ![
+  const POSITIONAL_MOTIF_NAMES = new Set([
     "Unnecessary Captures", "Premature Trades", "Released Tension", "Passive Retreats",
     "Trading Advantage", "Greedy Pawn Grabs", "Weakened Pawn Structure", "Wrong Recaptures",
-    "Missed Development",
-  ].includes(m.name)), [tacticMotifs]);
+    "Missed Development", "King Exposure", "Piece Activity", "Premature Pawn Breaks",
+  ]);
 
-  const positionalMotifs = useMemo(() => tacticMotifs.filter(m => [
-    "Unnecessary Captures", "Premature Trades", "Released Tension", "Passive Retreats",
-    "Trading Advantage", "Greedy Pawn Grabs", "Weakened Pawn Structure", "Wrong Recaptures",
-    "Missed Development",
-  ].includes(m.name)), [tacticMotifs]);
+  const tacticalMotifs = useMemo(() => tacticMotifs.filter(m => !POSITIONAL_MOTIF_NAMES.has(m.name)), [tacticMotifs]);
+
+  const positionalMotifs = useMemo(() => tacticMotifs.filter(m => POSITIONAL_MOTIF_NAMES.has(m.name)), [tacticMotifs]);
 
   const diagnostics = result?.diagnostics;
   const report = useMemo(() => {

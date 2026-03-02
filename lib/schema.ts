@@ -139,6 +139,7 @@ export const reports = pgTable("report", {
 
   /* full payloads (for re-rendering report detail) */
   leaks: jsonb("leaks").default([]),
+  oneOffMistakes: jsonb("oneOffMistakes").default([]),
   missedTactics: jsonb("missedTactics").default([]),
   diagnostics: jsonb("diagnostics"),
   mentalStats: jsonb("mentalStats"),
