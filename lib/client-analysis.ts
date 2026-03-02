@@ -1772,7 +1772,17 @@ export async function analyzeOpeningLeaksInBrowser(
 
   const leaks: RepeatedOpeningLeak[] = [];
   const oneOffMistakes: RepeatedOpeningLeak[] = [];
+  const positionalFindings: { fenBefore: string; userMove: string; bestMove: string | null; cpLoss: number; tags: string[] }[] = [];
   const positionTraces: PositionEvalTrace[] = [];
+
+  // Tags that count as positional patterns (lower cpLoss threshold)
+  const POSITIONAL_TAGS = new Set([
+    "Unnecessary Capture", "Premature Trade", "Released Tension",
+    "Passive Retreat", "Trading Advantage", "Greedy Pawn Grab",
+    "Premature Pawn Break", "Weakened Pawn Structure", "Wrong Recapture",
+    "Missed Development", "Piece Activity", "King Exposure",
+    "Neglected Castling", "Aimless Move", "Overextended Pawn", "Center Neglect",
+  ]);
   let repeatedPositions = 0;
 
   if (doOpenings) {
@@ -1917,7 +1927,13 @@ export async function analyzeOpeningLeaksInBrowser(
       flagged
     });
 
-    if (!flagged) return;
+    if (!flagged) {
+      // Even if not flagged as a main leak, capture positional patterns at lower cpLoss
+      if (cpLoss >= 15 && tags.some(t => POSITIONAL_TAGS.has(t))) {
+        positionalFindings.push({ fenBefore, userMove: chosenMove, bestMove: beforeEval.bestMove, cpLoss, tags });
+      }
+      return;
+    }
 
     // ── Database validation: check if the Lichess DB approves this move ──
     // Formula-based: more games + higher win rate → higher CPL tolerance.
@@ -3185,6 +3201,7 @@ export async function analyzeOpeningLeaksInBrowser(
     repeatedPositions,
     leaks,
     oneOffMistakes,
+    positionalFindings: positionalFindings.length > 0 ? positionalFindings : undefined,
     missedTactics,
     totalTacticsFound,
     endgameMistakes,

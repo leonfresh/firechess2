@@ -272,12 +272,23 @@ export type TimeManagementReport = {
   rushedMoves: number;
 };
 
+/** Lightweight positional-only finding (below the main cpLoss threshold) */
+export type PositionalFinding = {
+  fenBefore: string;
+  userMove: string;
+  bestMove: string | null;
+  cpLoss: number;
+  tags: string[];
+};
+
 export type AnalyzeResponse = {
   username: string;
   gamesAnalyzed: number;
   repeatedPositions: number;
   leaks: RepeatedOpeningLeak[];
   oneOffMistakes: RepeatedOpeningLeak[];
+  /** Positional-pattern findings below the main cpLoss threshold */
+  positionalFindings?: PositionalFinding[];
   missedTactics: MissedTactic[];
   /** Total tactics found (may exceed missedTactics.length when capped) */
   totalTacticsFound: number;

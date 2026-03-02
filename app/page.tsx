@@ -227,6 +227,7 @@ export default function HomePage() {
   const missedTactics = useMemo(() => result?.missedTactics ?? [], [result]);
   const endgameMistakes = useMemo(() => result?.endgameMistakes ?? [], [result]);
   const oneOffMistakes = useMemo(() => result?.oneOffMistakes ?? [], [result]);
+  const positionalFindings = useMemo(() => result?.positionalFindings ?? [], [result]);
   const endgameStats = useMemo(() => result?.endgameStats ?? null, [result]);
   const timeManagement = useMemo(() => result?.timeManagement ?? null, [result]);
 
@@ -284,6 +285,11 @@ export default function HomePage() {
     for (const o of oneOffMistakes) {
       if (o.tags?.length) {
         allPositions.push({ tags: o.tags, cpLoss: o.cpLoss, fenBefore: o.fenBefore });
+      }
+    }
+    for (const pf of positionalFindings) {
+      if (pf.tags?.length) {
+        allPositions.push({ tags: pf.tags, cpLoss: pf.cpLoss, fenBefore: pf.fenBefore });
       }
     }
 
@@ -355,7 +361,7 @@ export default function HomePage() {
     }
 
     return groups.sort((a, b) => b.avgCpLoss - a.avgCpLoss);
-  }, [missedTactics, leaks, oneOffMistakes]);
+  }, [missedTactics, leaks, oneOffMistakes, positionalFindings]);
 
   // Separate tactical motifs (for Pattern Analysis) from positional motifs (for dedicated section)
   const POSITIONAL_MOTIF_NAMES = new Set([
