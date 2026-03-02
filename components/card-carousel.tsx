@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 /* ── Types ── */
 export type CardViewMode = "carousel" | "list" | "grid";
@@ -25,12 +26,12 @@ function GridModal({ children, onClose }: { children: ReactNode; onClose: () => 
     };
   }, [onClose]);
 
-  return (
-    <div className="fixed inset-0 z-[100] overflow-hidden" onClick={onClose}>
+  const modal = (
+    <div className="fixed inset-0 z-[9999] overflow-hidden" onClick={onClose}>
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-      {/* Scroll container — only this scrolls */}
-      <div className="absolute inset-0 overflow-y-auto">
+      {/* Scroll container — only this div scrolls, overscroll-behavior prevents page scroll bleed */}
+      <div className="absolute inset-0 overflow-y-auto overscroll-contain">
         <div className="flex min-h-full items-start justify-center p-3 sm:p-6 py-8 sm:py-12">
           {/* Modal */}
           <div
@@ -53,6 +54,8 @@ function GridModal({ children, onClose }: { children: ReactNode; onClose: () => 
       </div>
     </div>
   );
+
+  return typeof document !== "undefined" ? createPortal(modal, document.body) : null;
 }
 
 /* ── Component ── */

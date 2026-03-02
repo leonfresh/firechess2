@@ -2127,8 +2127,7 @@ export default function HomePage() {
               </div>
 
               {/* View mode toggle */}
-              <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-                <span className="text-sm font-medium text-slate-400">View Mode</span>
+              <div className="flex items-center justify-center rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
                 <ViewModeToggle mode={cardViewMode} onChange={setCardViewMode} />
               </div>
 
@@ -3320,29 +3319,28 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* Already-saved confirmation + viral share CTA */}
+              {/* Already-saved confirmation */}
               {(saveStatus === "saved" || saveStatus === "duplicate") && (
-                <div className="space-y-6">
-                  {/* Saved confirmation */}
-                  <div className="flex flex-col items-center gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.04] p-8 text-center">
-                    <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/15 text-2xl">✅</span>
-                    <p className="text-lg font-bold text-white">Report saved to your Dashboard</p>
-                    <p className="max-w-md text-sm text-slate-400">
-                      A personalized study plan has been generated based on your weaknesses. Check your dashboard to start your weekly training.
-                    </p>
-                    <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
-                      <Link
-                        href="/dashboard"
-                        className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-400 transition-all hover:border-emerald-500/40 hover:bg-emerald-500/20"
-                      >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
-                        View Dashboard & Study Plan
-                      </Link>
-                    </div>
+                <div className="flex flex-col items-center gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.04] p-8 text-center">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/15 text-2xl">✅</span>
+                  <p className="text-lg font-bold text-white">Report saved to your Dashboard</p>
+                  <p className="max-w-md text-sm text-slate-400">
+                    A personalized study plan has been generated based on your weaknesses. Check your dashboard to start your weekly training.
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+                    <Link
+                      href="/dashboard"
+                      className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-400 transition-all hover:border-emerald-500/40 hover:bg-emerald-500/20"
+                    >
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                      View Dashboard & Study Plan
+                    </Link>
                   </div>
+                </div>
+              )}
 
-                  {/* Viral share CTA */}
-                  <div className="relative overflow-hidden rounded-2xl border border-violet-500/20 p-8 md:p-10">
+              {/* Viral share CTA — always visible */}
+              <div className="relative overflow-hidden rounded-2xl border border-violet-500/20 p-8 md:p-10">
                     <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.06] via-fuchsia-500/[0.04] to-cyan-500/[0.06]" />
                     <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-violet-500/10 blur-[80px]" />
                     <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-fuchsia-500/10 blur-[80px]" />
@@ -3451,8 +3449,6 @@ export default function HomePage() {
                       </p>
                     </div>
                   </div>
-                </div>
-              )}
             </section>
           )}
         </section>
