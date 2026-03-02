@@ -801,23 +801,55 @@ function deriveLeakTags(args: {
     if (cpLoss >= 100 && userParsed) {
       try {
         const afterChess = new Chess(fenBefore);
-        afterChess.move({ from: userParsed.from, to: userParsed.to, promotion: userParsed.promotion } as any);
-        // Check if opponent can capture a piece (the engine's best reply is a capture)
-        if (bestParsed) {
-          const bestReplyTarget = afterChess.get(bestParsed.to as Parameters<Chess["get"]>[0]);
-          if (bestReplyTarget && bestReplyTarget.type !== "k") {
-            const pv: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
-            if (pv[bestReplyTarget.type] >= 3) {
-              tags.add("Hanging Piece");
+        const userResult = afterChess.move({ from: userParsed.from, to: userParsed.to, promotion: userParsed.promotion } as any);
+        if (userResult) {
+          const userColor = userResult.color;
+          const oppColor = userColor === "w" ? "b" : "w";
+
+          // Check if the piece the user moved lands on an attacked square without adequate defense
+          const movedPiece = userResult;
+          if (movedPiece.piece !== "p" && movedPiece.piece !== "k") {
+            // Count opponent attackers on the destination square
+            const oppAttackers = afterChess.moves({ verbose: true }).filter(m => m.to === userParsed!.to);
+            if (oppAttackers.length > 0) {
+              // Check if the piece is defended: play opponent capture, see if user can recapture
+              const testChess = new Chess(afterChess.fen());
+              const oppCapture = testChess.move({ from: oppAttackers[0].from, to: oppAttackers[0].to } as any);
+              if (oppCapture) {
+                const defenders = testChess.moves({ verbose: true }).filter(m => m.to === userParsed!.to);
+                const pv: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+                const pieceVal = pv[movedPiece.piece] ?? 3;
+                const attackerVal = pv[oppAttackers[0].piece] ?? 1;
+                // Hanging = no defenders, or attacker is worth less than piece and no adequate defense
+                if (defenders.length === 0 || (attackerVal < pieceVal && defenders.length < oppAttackers.length)) {
+                  tags.add("Hanging Piece");
+                }
+              }
             }
           }
-        }
-        // Also tag if user moved a piece to a square where it's immediately attacked
-        const movedPiece = chess.get(userParsed.from as Parameters<Chess["get"]>[0]);
-        if (movedPiece && movedPiece.type !== "p" && movedPiece.type !== "k") {
-          const attackers = afterChess.moves({ verbose: true }).filter(m => m.to === userParsed!.to && m.captured);
-          if (attackers.length > 0) {
-            tags.add("Hanging Piece");
+
+          // Also check if user's move exposed another piece (left a piece undefended)
+          const boardAfter = afterChess.board().flat().filter(Boolean);
+          const myPieces = boardAfter.filter(p => p && p.color === userColor && p.type !== "k" && p.type !== "p");
+          const oppMoves = afterChess.moves({ verbose: true });
+          for (const piece of myPieces) {
+            if (!piece) continue;
+            const attackersOnPiece = oppMoves.filter(m => m.to === piece.square && m.captured);
+            if (attackersOnPiece.length > 0) {
+              const pv: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+              if (pv[piece.type] >= 3) {
+                // Check if piece is defended
+                const testChess2 = new Chess(afterChess.fen());
+                const capResult = testChess2.move({ from: attackersOnPiece[0].from, to: attackersOnPiece[0].to } as any);
+                if (capResult) {
+                  const defenders2 = testChess2.moves({ verbose: true }).filter(m => m.to === piece!.square);
+                  if (defenders2.length === 0) {
+                    tags.add("Hanging Piece");
+                    break;
+                  }
+                }
+              }
+            }
           }
         }
       } catch { /* best effort */ }

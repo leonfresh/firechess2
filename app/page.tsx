@@ -22,6 +22,7 @@ import { fetchExplorerMoves } from "@/lib/lichess-explorer";
 import { shareReportCard } from "@/lib/share-report";
 import { earnCoins, spendCoins, hasPurchased, getBalance } from "@/lib/coins";
 import { POSITIONAL_PATTERNS } from "@/lib/positional-quotes";
+import { explainOpeningLeak } from "@/lib/position-explainer";
 import { PersonalizedPuzzles } from "@/components/personalized-puzzles";
 import { Chessboard } from "react-chessboard";
 import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
@@ -92,6 +93,7 @@ export default function HomePage() {
   const [timeManagementOpen, setTimeManagementOpen] = useState(true);
   const [positionalOpen, setPositionalOpen] = useState(true);
   const [expandedMotifs, setExpandedMotifs] = useState<Set<string>>(new Set());
+  const [posExplain, setPosExplain] = useState<Record<string, string>>({});
   const [timeUnlocked, setTimeUnlocked] = useState(false);
   const reportRef = useRef<HTMLElement>(null);
   const pngRef = useRef<HTMLDivElement>(null);
@@ -3200,6 +3202,19 @@ export default function HomePage() {
                               // Determine orientation from FEN — if " b " in FEN, black to move means user is black
                               const sideToMove = ex.fenBefore.includes(" b ") ? "black" : "white";
 
+                              const exKey = `${motif.name}-${ei}`;
+                              const explainText = posExplain[exKey];
+                              const onExplain = () => {
+                                if (explainText) { setPosExplain(prev => { const n = { ...prev }; delete n[exKey]; return n; }); return; }
+                                try {
+                                  const coaching = explainOpeningLeak(ex.fenBefore, ex.userMove ?? "", ex.bestMove ?? null, ex.cpLoss, 0, -ex.cpLoss);
+                                  const text = coaching.played.coaching || coaching.played.headline || "No explanation available.";
+                                  setPosExplain(prev => ({ ...prev, [exKey]: text }));
+                                } catch {
+                                  setPosExplain(prev => ({ ...prev, [exKey]: "Could not explain this position." }));
+                                }
+                              };
+
                               return (
                                 <div key={`${ex.fenBefore}-${ei}`} className="flex flex-col items-center gap-1.5">
                                   <div className="w-full max-w-[180px] aspect-square rounded-lg overflow-hidden border border-white/[0.08]">
@@ -3231,6 +3246,18 @@ export default function HomePage() {
                                       </span>
                                     )}
                                   </div>
+                                  <button
+                                    type="button"
+                                    onClick={onExplain}
+                                    className="text-[10px] font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
+                                  >
+                                    {explainText ? "Hide" : "Explain"}
+                                  </button>
+                                  {explainText && (
+                                    <p className="mt-0.5 max-w-[180px] text-[10px] leading-snug text-slate-400 text-center">
+                                      {explainText}
+                                    </p>
+                                  )}
                                 </div>
                               );
                             })}
