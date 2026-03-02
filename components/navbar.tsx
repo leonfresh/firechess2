@@ -94,7 +94,7 @@ export function Navbar() {
         </Link>
 
         {/* ── Desktop nav links ── */}
-        <div className="hidden items-center gap-1 md:flex">
+        <div className="hidden items-center gap-1 lg:flex">
           {/* Pro link */}
           <Link
             href="/pricing"
@@ -138,25 +138,12 @@ export function Navbar() {
             Training
           </Link>
 
-          {/* Leaderboard link */}
-          <Link
-            href="/leaderboard"
-            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              isActive("/leaderboard")
-                ? "text-amber-400 bg-amber-500/[0.08]"
-                : "text-slate-400 hover:text-amber-400 hover:bg-amber-500/[0.04]"
-            }`}
-          >
-            🏆
-            Leaderboard
-          </Link>
-
-          {/* More dropdown (About, Blog, Feedback) */}
+          {/* More dropdown (About, Blog, Feedback, Leaderboard) */}
           <div className="group relative">
             <button
               type="button"
               className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                isActive("/about") || isActive("/blog") || isActive("/feedback")
+                isActive("/about") || isActive("/blog") || isActive("/feedback") || isActive("/leaderboard")
                   ? "text-white bg-white/[0.06]"
                   : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
               }`}
@@ -196,13 +183,21 @@ export function Navbar() {
                     </span>
                   )}
                 </Link>
+                <Link
+                  href="/leaderboard"
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive("/leaderboard") ? "text-amber-400 bg-amber-500/[0.08]" : "text-slate-400 hover:text-amber-400 hover:bg-amber-500/[0.06]"
+                  }`}
+                >
+                  🏆 Leaderboard
+                </Link>
               </div>
             </div>
           </div>
         </div>
 
         {/* ── Desktop right side (auth) ── */}
-        <div className="hidden items-center gap-2.5 md:flex">
+        <div className="hidden items-center gap-2.5 lg:flex">
           {loading ? (
             <div className="h-9 w-20 animate-pulse rounded-lg bg-white/[0.06]" />
           ) : !authenticated ? (
@@ -424,7 +419,7 @@ export function Navbar() {
         <button
           type="button"
           onClick={() => setMobileOpen((p) => !p)}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white md:hidden"
+          className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white lg:hidden"
           aria-label="Toggle menu"
         >
           {mobileOpen ? (
@@ -445,12 +440,12 @@ export function Navbar() {
         <>
           {/* Backdrop */}
           <div
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden"
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
             onClick={() => setMobileOpen(false)}
           />
 
           {/* Panel */}
-          <div className="fixed inset-y-0 right-0 z-50 w-72 overflow-y-auto border-l border-white/[0.06] bg-[#0a0f1a] px-5 py-5 md:hidden">
+          <div className="fixed inset-y-0 right-0 z-50 w-72 overflow-y-auto border-l border-white/[0.06] bg-[#0a0f1a] px-5 py-5 lg:hidden">
             {/* Close button */}
             <div className="flex justify-end">
               <button
