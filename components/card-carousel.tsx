@@ -23,7 +23,7 @@ function GridModal({ children, onClose }: { children: ReactNode; onClose: () => 
 
   return (
     <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/80 backdrop-blur-sm p-4 sm:p-8" onClick={onClose}>
-      <div className="relative w-full max-w-2xl animate-fade-in-up" onClick={e => e.stopPropagation()}>
+      <div className="relative w-full max-w-5xl animate-fade-in-up" onClick={e => e.stopPropagation()}>
         <button
           type="button"
           onClick={onClose}
@@ -119,7 +119,7 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
               style={{ animationDelay: `${Math.min(idx, 12) * 50}ms` }}
             >
               {/* Preview: scaled-down card clipped to fixed height */}
-              <div className="pointer-events-none h-[220px] origin-top-left scale-[0.52] overflow-hidden" style={{ width: "192%" }}>
+              <div className="pointer-events-none h-[320px] origin-top-left scale-[0.52] overflow-hidden" style={{ width: "192%" }}>
                 {child}
               </div>
               {/* Gradient fade at bottom */}
