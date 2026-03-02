@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
-import { users, accounts, subscriptions, reports, sessions, studyPlans } from "@/lib/schema";
+import { users, accounts, subscriptions, reports, sessions, studyPlans, userCoins } from "@/lib/schema";
 import { eq, or, ilike, sql, desc, count, max, sum } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
   const userIds = rows.map((r) => r.id);
 
   // Batch fetch: accounts (providers), report counts, latest session, study stats
-  const [accountRows, reportRows, sessionRows, studyRows] = await Promise.all([
+  const [accountRows, reportRows, sessionRows, studyRows, coinRows] = await Promise.all([
     userIds.length > 0
       ? db
           .select({
@@ -93,6 +93,15 @@ export async function GET(req: NextRequest) {
           .where(sql`${studyPlans.userId} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`)
           .groupBy(studyPlans.userId)
       : [],
+    userIds.length > 0
+      ? db
+          .select({
+            userId: userCoins.userId,
+            balance: userCoins.balance,
+          })
+          .from(userCoins)
+          .where(sql`${userCoins.userId} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`)
+      : [],
   ]);
 
   // Build lookup maps
@@ -115,6 +124,11 @@ export async function GET(req: NextRequest) {
   const sessionByUser = new Map<string, string | null>();
   for (const s of sessionRows) {
     sessionByUser.set(s.userId, s.latestExpiry ? new Date(s.latestExpiry).toISOString() : null);
+  }
+
+  const coinsByUser = new Map<string, number>();
+  for (const c of coinRows) {
+    coinsByUser.set(c.userId, Number(c.balance ?? 0));
   }
 
   const studyByUser = new Map<string, { planCount: number; currentStreak: number; longestStreak: number; avgProgress: number }>();
@@ -148,6 +162,7 @@ export async function GET(req: NextRequest) {
     currentStreak: studyByUser.get(r.id)?.currentStreak ?? 0,
     longestStreak: studyByUser.get(r.id)?.longestStreak ?? 0,
     avgStudyProgress: studyByUser.get(r.id)?.avgProgress ?? 0,
+    coins: coinsByUser.get(r.id) ?? 0,
   }));
 
   return NextResponse.json({ users: result, total: result.length });

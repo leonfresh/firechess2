@@ -31,6 +31,7 @@ type UserRow = {
   currentStreak: number;
   longestStreak: number;
   avgStudyProgress: number;
+  coins: number;
 };
 
 const PROVIDER_LABELS: Record<string, { label: string; icon: string; color: string }> = {
@@ -335,7 +336,7 @@ export default function AdminUsersPage() {
                             : "0"
                         } />
                         <Detail label="Coins" value={
-                          <span className="text-slate-500 italic">Client-side only</span>
+                          <span className="text-amber-400 font-bold">🪙 {user.coins.toLocaleString()}</span>
                         } />
                       </div>
                     </div>
