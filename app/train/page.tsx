@@ -94,6 +94,7 @@ const MOTIF_TO_THEME: Record<string, string> = {
   "Weakened Pawn Structure": "hangingPiece",
   "King Exposure": "kingsideAttack",
   "Wrong Recapture": "hangingPiece",
+  "Greedy Pawn Grab": "hangingPiece",
 };
 
 const ENDGAME_TO_THEME: Record<string, string> = {

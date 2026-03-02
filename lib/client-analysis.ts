@@ -890,6 +890,13 @@ function deriveLeakTags(args: {
         }
       }
 
+      // --- Greedy Pawn Grab: non-pawn captures a pawn but best move develops / doesn't capture ---
+      if (isUserCapture && userPiece && userTarget?.type === "p" && userPiece.type !== "p" && userPiece.type !== "k") {
+        if (!isBestCapture && cpLoss >= 40) {
+          tags.add("Greedy Pawn Grab");
+        }
+      }
+
       // --- Trading Advantage: eval was clearly positive but user initiates trade ---
       if (isUserCapture && userPiece && userTarget) {
         const userPieceVal = pv[userPiece.type] ?? 0;
@@ -1273,6 +1280,13 @@ function deriveTacticTags(args: {
         const backRank = userPiece.color === "w" ? toR <= 2 : toR >= 7;
         if (isRetreat && backRank && cpLoss >= 60) {
           tags.push("Passive Retreat");
+        }
+      }
+
+      // Greedy Pawn Grab: non-pawn captures a pawn but best move doesn't capture
+      if (isUserCapture && userPiece && userTarget?.type === "p" && userPiece.type !== "p" && userPiece.type !== "k") {
+        if (!isBestCap && cpLoss >= 40) {
+          tags.push("Greedy Pawn Grab");
         }
       }
     }

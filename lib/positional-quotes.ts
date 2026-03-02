@@ -119,6 +119,14 @@ export const POSITIONAL_PATTERNS: PositionalPattern[] = [
     author: "GM Aron Nimzowitsch",
     color: "teal",
   },
+  {
+    tag: "Greedy Pawn Grab",
+    label: "Greedy Pawn Grab",
+    icon: "🍕",
+    quote: "The punishment for grabbing pawns is usually a lost tempo, and tempi are worth more than pawns.",
+    author: "GM Garry Kasparov",
+    color: "orange",
+  },
 ];
 
 const patternMap = new Map(POSITIONAL_PATTERNS.map((p) => [p.tag, p]));

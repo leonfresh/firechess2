@@ -284,6 +284,7 @@ export default function HomePage() {
       { name: "Released Tension", icon: "💨", match: (t) => t.tags.includes("Released Tension") },
       { name: "Passive Retreats", icon: "🐢", match: (t) => t.tags.includes("Passive Retreat") },
       { name: "Trading Advantage", icon: "📉", match: (t) => t.tags.includes("Trading Advantage") },
+      { name: "Greedy Pawn Grabs", icon: "🍕", match: (t) => t.tags.includes("Greedy Pawn Grab") },
     ];
 
     const groups: { name: string; icon: string; count: number; avgCpLoss: number; tactics: typeof missedTactics }[] = [];
