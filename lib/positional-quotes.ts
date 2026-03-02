@@ -135,6 +135,38 @@ export const POSITIONAL_PATTERNS: PositionalPattern[] = [
     author: "GM Irving Chernev",
     color: "slate",
   },
+  {
+    tag: "Neglected Castling",
+    label: "Neglected Castling",
+    icon: "🏰",
+    quote: "Castle early and often — a king in the center is a target, not a ruler.",
+    author: "GM Reuben Fine",
+    color: "blue",
+  },
+  {
+    tag: "Aimless Move",
+    label: "Aimless Moves",
+    icon: "🌀",
+    quote: "Every move must have a purpose. If you can't explain why you played it, you shouldn't have.",
+    author: "GM Savielly Tartakower",
+    color: "violet",
+  },
+  {
+    tag: "Overextended Pawn",
+    label: "Overextended Pawns",
+    icon: "📏",
+    quote: "Pawns cannot move backwards. Every pawn move creates a permanent weakness.",
+    author: "GM Siegbert Tarrasch",
+    color: "red",
+  },
+  {
+    tag: "Center Neglect",
+    label: "Center Neglect",
+    icon: "🎯",
+    quote: "The player who controls the center controls the game.",
+    author: "GM Wilhelm Steinitz",
+    color: "teal",
+  },
 ];
 
 const patternMap = new Map(POSITIONAL_PATTERNS.map((p) => [p.tag, p]));

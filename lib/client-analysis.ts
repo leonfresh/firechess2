@@ -821,19 +821,24 @@ function deriveLeakTags(args: {
       }
     }
 
-    // Exposed King (user moves king shield pawn)
-    if (cpLoss >= 100 && userParsed) {
+    // Exposed King (user moves king shield pawn or king walks into open)
+    if (cpLoss >= 40 && userParsed) {
       const uPiece = chess.get(userParsed.from as Parameters<Chess["get"]>[0]);
       if (uPiece?.type === "p") {
         const kingPos = chess.board().flat().find(p => p?.type === "k" && p.color === uPiece.color);
         if (kingPos) {
           const kFile = kingPos.square.charCodeAt(0) - "a".charCodeAt(0);
           const pFile = userParsed.from.charCodeAt(0) - "a".charCodeAt(0);
-          if (Math.abs(kFile - pFile) <= 1) {
+          if (Math.abs(kFile - pFile) <= 2) {
             tags.add("Exposed King");
             tags.add("King Exposure");
           }
         }
+      }
+      // Also tag king moves that walk into the open
+      if (uPiece?.type === "k" && cpLoss >= 50) {
+        tags.add("Exposed King");
+        tags.add("King Exposure");
       }
     }
 
@@ -857,7 +862,8 @@ function deriveLeakTags(args: {
       if (isUserCapture && userPiece && userTarget) {
         const userPieceVal = pv[userPiece.type] ?? 0;
         const capturedVal = pv[userTarget.type] ?? 0;
-        if (Math.abs(userPieceVal - capturedVal) <= 1 && capturedVal >= 3 && !isBestCapture) {
+        // Include any equal-value exchange the engine didn't want (pawns too)
+        if (Math.abs(userPieceVal - capturedVal) <= 1 && capturedVal >= 1 && !isBestCapture) {
           tags.add("Premature Trade");
         }
       }
@@ -867,14 +873,18 @@ function deriveLeakTags(args: {
         tags.add("Released Tension");
       }
 
-      // --- Premature Pawn Break: user pushes pawn 2 squares or into center tension, best doesn't ---
+      // --- Premature Pawn Break: user pushes pawn into center tension, best doesn't ---
       if (userPiece?.type === "p" && !isUserCapture && bestPiece?.type !== "p") {
         const fromRank = parseInt(userParsed.from[1]);
         const toRank = parseInt(userParsed.to[1]);
         const isPush2 = Math.abs(toRank - fromRank) === 2;
         const toFile = userParsed.to.charCodeAt(0) - 97;
-        const isCentralFile = toFile >= 2 && toFile <= 5; // c-f files
-        if (isPush2 && isCentralFile && cpLoss >= 50) {
+        const isCentralFile = toFile >= 1 && toFile <= 6; // b-g files
+        if (isPush2 && isCentralFile && cpLoss >= 25) {
+          tags.add("Premature Pawn Break");
+        }
+        // Also catch single-square pawn pushes that are positionally wrong
+        if (!isPush2 && isCentralFile && cpLoss >= 40) {
           tags.add("Premature Pawn Break");
         }
       }
@@ -884,15 +894,15 @@ function deriveLeakTags(args: {
         const userFromRank = parseInt(userParsed.from[1]);
         const userToRank = parseInt(userParsed.to[1]);
         const isRetreat = userPiece.color === "w" ? userToRank < userFromRank : userToRank > userFromRank;
-        const backRank = userPiece.color === "w" ? userToRank <= 2 : userToRank >= 7;
-        if (isRetreat && backRank && cpLoss >= 60) {
+        // Any retreat (not just back rank) counts if it costs enough
+        if (isRetreat && cpLoss >= 30) {
           tags.add("Passive Retreat");
         }
       }
 
       // --- Greedy Pawn Grab: non-pawn captures a pawn but best move develops / doesn't capture ---
       if (isUserCapture && userPiece && userTarget?.type === "p" && userPiece.type !== "p" && userPiece.type !== "k") {
-        if (!isBestCapture && cpLoss >= 40) {
+        if (!isBestCapture && cpLoss >= 20) {
           tags.add("Greedy Pawn Grab");
         }
       }
@@ -901,11 +911,9 @@ function deriveLeakTags(args: {
       if (isUserCapture && userPiece && userTarget) {
         const userPieceVal = pv[userPiece.type] ?? 0;
         const capturedVal = pv[userTarget.type] ?? 0;
-        // Equal-value trade (e.g. knight takes knight) while ahead
-        if (Math.abs(userPieceVal - capturedVal) <= 1 && capturedVal >= 3) {
-          // We don't have evalBefore in this context directly, but if cpLoss >= 80
-          // and the trade was equal, the position was likely favorable
-          if (cpLoss >= 80) {
+        // Equal-value trade while ahead — lower bar, also include pawn-for-pawn
+        if (Math.abs(userPieceVal - capturedVal) <= 1 && capturedVal >= 1) {
+          if (cpLoss >= 40) {
             tags.add("Trading Advantage");
           }
         }
@@ -941,23 +949,73 @@ function deriveLeakTags(args: {
       }
 
       // --- Missed Development: user moves already-developed piece, best develops new ---
-      if (fullMoveNumber <= 15 && totalPieces >= 26) {
+      if (fullMoveNumber <= 20 && totalPieces >= 22) {
         const backRankUser = userPiece?.color === "w" ? "1" : "8";
+        const secondRank = userPiece?.color === "w" ? "2" : "7";
         const bestFromRank = bestParsed.from[1];
         const userFromRank = userParsed.from[1];
         // Best move brings a piece from the back rank, user doesn't
-        if (bestFromRank === backRankUser && userFromRank !== backRankUser) {
+        if ((bestFromRank === backRankUser || bestFromRank === secondRank) && userFromRank !== backRankUser && userFromRank !== secondRank) {
           if (bestPiece && bestPiece.type !== "p" && bestPiece.type !== "k") {
+            tags.add("Missed Development");
+          }
+        }
+        // Also: user moves the same piece twice in the opening
+        if (userPiece && userPiece.type !== "p" && userPiece.type !== "k" && fullMoveNumber <= 12) {
+          if (userFromRank !== backRankUser && bestFromRank === backRankUser) {
             tags.add("Missed Development");
           }
         }
       }
 
-      // --- Piece Activity: user puts piece on rim (a/h file) ---
+      // --- Piece Activity: user puts piece on rim or far corner ---
       if (userPiece && userPiece.type !== "p" && userPiece.type !== "k") {
         const toFile = userParsed.to[0];
-        if ((toFile === "a" || toFile === "h") && cpLoss >= 40) {
+        const toRankNum = parseInt(userParsed.to[1]);
+        const isRim = toFile === "a" || toFile === "h";
+        const isCorner = isRim && (toRankNum === 1 || toRankNum === 8);
+        if ((isRim && cpLoss >= 20) || (isCorner && cpLoss >= 10)) {
           tags.add("Piece Activity");
+        }
+      }
+
+      // --- Neglected Castling: user hasn't castled, best move castles ---
+      if ((bestSan === "O-O" || bestSan === "O-O-O") && userSan !== "O-O" && userSan !== "O-O-O") {
+        tags.add("Neglected Castling");
+      }
+
+      // --- Aimless Move: piece moves and returns to same color complex / doesn't improve ---
+      if (userPiece && userPiece.type !== "p" && userPiece.type !== "k" && !isUserCapture) {
+        const fromFile = userParsed.from.charCodeAt(0) - 97;
+        const toFile = userParsed.to.charCodeAt(0) - 97;
+        const fromRank = parseInt(userParsed.from[1]);
+        const toRank = parseInt(userParsed.to[1]);
+        const fromCenter = Math.abs(fromFile - 3.5) + Math.abs(fromRank - 4.5);
+        const toCenter = Math.abs(toFile - 3.5) + Math.abs(toRank - 4.5);
+        // Moving away from center with no capture
+        if (toCenter > fromCenter + 1 && cpLoss >= 25) {
+          tags.add("Aimless Move");
+        }
+      }
+
+      // --- Overextended Pawns: user pushes a pawn past the 5th/4th rank with no support ---
+      if (userPiece?.type === "p" && !isUserCapture) {
+        const toRankNum = parseInt(userParsed.to[1]);
+        const isOverextended = userPiece.color === "w" ? toRankNum >= 6 : toRankNum <= 3;
+        if (isOverextended && cpLoss >= 25) {
+          tags.add("Overextended Pawn");
+        }
+      }
+
+      // --- Center Neglect: best move targets center, user plays on the wing ---
+      if (bestParsed && userParsed) {
+        const bestToFile = bestParsed.to.charCodeAt(0) - 97;
+        const bestToRank = parseInt(bestParsed.to[1]);
+        const userToFile = userParsed.to.charCodeAt(0) - 97;
+        const bestCenterDist = Math.abs(bestToFile - 3.5) + Math.abs(bestToRank - 4.5);
+        const userCenterDist = Math.abs(userToFile - 3.5) + Math.abs(parseInt(userParsed.to[1]) - 4.5);
+        if (bestCenterDist <= 2 && userCenterDist >= 4 && cpLoss >= 30) {
+          tags.add("Center Neglect");
         }
       }
     }
