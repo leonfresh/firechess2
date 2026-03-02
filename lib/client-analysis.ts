@@ -2031,6 +2031,22 @@ export async function analyzeOpeningLeaksInBrowser(
     const screenEvalAfter = scoreToCpFromUserPerspective(screenAfter.cp, opponentToMove, sideToMove);
     const screenCpLoss = screenEvalBefore - screenEvalAfter;
 
+    // Capture positional patterns even below ONE_OFF_CP_THRESHOLD
+    if (screenCpLoss >= 15 && screenCpLoss < ONE_OFF_CP_THRESHOLD) {
+      const posTags = deriveLeakTags({
+        fenBefore,
+        userMove: chosenMove,
+        bestMove: screenBefore.bestMove,
+        cpLoss: screenCpLoss,
+        reachCount: data.totalReachCount,
+        moveCount: chosenCount,
+      });
+      if (posTags.some(t => POSITIONAL_TAGS.has(t))) {
+        positionalFindings.push({ fenBefore, userMove: chosenMove, bestMove: screenBefore.bestMove, cpLoss: screenCpLoss, tags: posTags });
+      }
+      return; // not a big enough mistake for one-off leak
+    }
+
     if (screenCpLoss < ONE_OFF_CP_THRESHOLD) return;
 
     // Confirm at full depth
@@ -2096,6 +2112,61 @@ export async function analyzeOpeningLeaksInBrowser(
   });
 
   oneOffMistakes.sort((a, b) => b.cpLoss - a.cpLoss);
+
+  /* ── Positional scan for single-occurrence positions (count=1) ── */
+  const MAX_POSITIONAL_SCREENS = 80;
+  const POSITIONAL_SCREEN_DEPTH = 5;
+  const singleEntries = [...byFen.entries()]
+    .filter(([, data]) => data.totalReachCount === 1)
+    .slice(0, MAX_POSITIONAL_SCREENS);
+
+  if (singleEntries.length > 0 && positionalFindings.length < 30) {
+    emitProgress(options, {
+      phase: "eval",
+      message: "🎯 Scanning for positional patterns",
+      detail: `Checking ${singleEntries.length} positions for positional motifs`,
+      percent: 84,
+    });
+
+    await parallelForEach(singleEntries, stockfishPool.size, async ([fenBefore, data]) => {
+      if (positionalFindings.length >= 30) return;
+
+      let chosenMove = "";
+      let chosenCount = -1;
+      for (const [move, cnt] of data.moveCounts.entries()) {
+        if (cnt > chosenCount) { chosenMove = move; chosenCount = cnt; }
+      }
+      if (!chosenMove) return;
+
+      const fenAfter = computeFenAfterMove(fenBefore, chosenMove);
+      if (!fenAfter) return;
+
+      const sideToMove: PlayerColor = fenBefore.includes(" w ") ? "white" : "black";
+
+      const scBefore = await stockfishPool.evaluateFen(fenBefore, POSITIONAL_SCREEN_DEPTH);
+      const scAfter = await stockfishPool.evaluateFen(fenAfter, POSITIONAL_SCREEN_DEPTH);
+      if (!scBefore || !scAfter) return;
+
+      const scEvalBefore = scoreToCpFromUserPerspective(scBefore.cp, sideToMove, sideToMove);
+      const oppToMove: PlayerColor = sideToMove === "white" ? "black" : "white";
+      const scEvalAfter = scoreToCpFromUserPerspective(scAfter.cp, oppToMove, sideToMove);
+      const scCpLoss = scEvalBefore - scEvalAfter;
+
+      if (scCpLoss < 10 || scCpLoss > 300) return; // only positional range
+
+      const posTags = deriveLeakTags({
+        fenBefore,
+        userMove: chosenMove,
+        bestMove: scBefore.bestMove,
+        cpLoss: scCpLoss,
+        reachCount: 1,
+        moveCount: chosenCount,
+      });
+      if (posTags.some(t => POSITIONAL_TAGS.has(t))) {
+        positionalFindings.push({ fenBefore, userMove: chosenMove, bestMove: scBefore.bestMove, cpLoss: scCpLoss, tags: posTags });
+      }
+    });
+  }
 
   } // end if (doOpenings)
 

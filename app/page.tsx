@@ -176,7 +176,7 @@ export default function HomePage() {
         setUsername((parsed as any).username);
         setWelcomeBack((parsed as any).username);
       }
-      if (parsed.cardViewMode === "carousel" || parsed.cardViewMode === "list") {
+      if (parsed.cardViewMode === "carousel" || parsed.cardViewMode === "list" || parsed.cardViewMode === "grid") {
         setCardViewMode(parsed.cardViewMode);
       }
       if (parsed.scanMode === "openings" || parsed.scanMode === "tactics" || parsed.scanMode === "endgames" || parsed.scanMode === "both") {
@@ -2127,7 +2127,8 @@ export default function HomePage() {
               </div>
 
               {/* View mode toggle */}
-              <div className="flex items-center justify-end">
+              <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+                <span className="text-sm font-medium text-slate-400">View Mode</span>
                 <ViewModeToggle mode={cardViewMode} onChange={setCardViewMode} />
               </div>
 
