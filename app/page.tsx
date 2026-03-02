@@ -3320,22 +3320,136 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* Already-saved confirmation (replaces the CTA) */}
+              {/* Already-saved confirmation + viral share CTA */}
               {(saveStatus === "saved" || saveStatus === "duplicate") && (
-                <div className="flex flex-col items-center gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.04] p-8 text-center">
-                  <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/15 text-2xl">✅</span>
-                  <p className="text-lg font-bold text-white">Report saved to your Dashboard</p>
-                  <p className="max-w-md text-sm text-slate-400">
-                    A personalized study plan has been generated based on your weaknesses. Check your dashboard to start your weekly training.
-                  </p>
-                  <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
-                    <Link
-                      href="/dashboard"
-                      className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-400 transition-all hover:border-emerald-500/40 hover:bg-emerald-500/20"
-                    >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
-                      View Dashboard & Study Plan
-                    </Link>
+                <div className="space-y-6">
+                  {/* Saved confirmation */}
+                  <div className="flex flex-col items-center gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.04] p-8 text-center">
+                    <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/15 text-2xl">✅</span>
+                    <p className="text-lg font-bold text-white">Report saved to your Dashboard</p>
+                    <p className="max-w-md text-sm text-slate-400">
+                      A personalized study plan has been generated based on your weaknesses. Check your dashboard to start your weekly training.
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+                      <Link
+                        href="/dashboard"
+                        className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-5 py-2.5 text-sm font-semibold text-emerald-400 transition-all hover:border-emerald-500/40 hover:bg-emerald-500/20"
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                        View Dashboard & Study Plan
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Viral share CTA */}
+                  <div className="relative overflow-hidden rounded-2xl border border-violet-500/20 p-8 md:p-10">
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.06] via-fuchsia-500/[0.04] to-cyan-500/[0.06]" />
+                    <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-violet-500/10 blur-[80px]" />
+                    <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-fuchsia-500/10 blur-[80px]" />
+
+                    <div className="relative flex flex-col items-center text-center">
+                      <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-500/15 text-3xl shadow-lg shadow-violet-500/10">🔥</span>
+
+                      <h3 className="mt-5 text-2xl font-extrabold text-white md:text-3xl">
+                        Challenge Your Chess Friends
+                      </h3>
+                      <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-slate-400">
+                        Think you had a good report? Share your results and challenge your friends to beat your accuracy score. Who has fewer opening leaks?
+                      </p>
+
+                      {/* Stats preview */}
+                      {report && (
+                        <div className="mt-6 grid w-full max-w-md gap-3 grid-cols-3">
+                          <div className="flex flex-col items-center gap-1 rounded-xl border border-violet-500/15 bg-violet-500/[0.04] px-3 py-3">
+                            <span className={`text-2xl font-black tabular-nums ${report.estimatedAccuracy >= 80 ? "text-emerald-400" : report.estimatedAccuracy >= 60 ? "text-amber-400" : "text-red-400"}`}>
+                              {report.estimatedAccuracy.toFixed(0)}%
+                            </span>
+                            <p className="text-[10px] font-medium text-slate-500">Accuracy</p>
+                          </div>
+                          <div className="flex flex-col items-center gap-1 rounded-xl border border-fuchsia-500/15 bg-fuchsia-500/[0.04] px-3 py-3">
+                            <span className="text-2xl font-black tabular-nums text-fuchsia-400">{result.leaks.length}</span>
+                            <p className="text-[10px] font-medium text-slate-500">Leaks</p>
+                          </div>
+                          <div className="flex flex-col items-center gap-1 rounded-xl border border-cyan-500/15 bg-cyan-500/[0.04] px-3 py-3">
+                            <span className="text-2xl font-black tabular-nums text-cyan-400">{result.missedTactics.length}</span>
+                            <p className="text-[10px] font-medium text-slate-500">Missed Tactics</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Share buttons — big and prominent */}
+                      <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+                        {/* Share on X */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const acc = report ? `${report.estimatedAccuracy.toFixed(1)}% accuracy` : `${result.gamesAnalyzed} games scanned`;
+                            const text = `🔥 Just analyzed my chess games on FireChess:\n\n${acc}${result.playerRating ? ` (${result.playerRating})` : ""}\n📊 ${result.leaks.length} opening leaks\n⚔️ ${result.missedTactics.length} missed tactics\n${report?.vibeTitle ? `\n"${report.vibeTitle}"\n` : ""}\nCan you beat my score? Scan yours free 👇`;
+                            window.open(`https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent("https://firechess.com")}`, "_blank", "noopener");
+                          }}
+                          className="inline-flex items-center gap-2 rounded-xl bg-white/[0.08] px-6 py-3 text-sm font-bold text-white transition-all hover:bg-white/[0.14] hover:shadow-lg"
+                        >
+                          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+                          Post on X
+                        </button>
+
+                        {/* Share on Reddit */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const title = `🔥 My FireChess Analysis: ${report ? `${report.estimatedAccuracy.toFixed(1)}% accuracy` : `${result.gamesAnalyzed} games`}${result.playerRating ? ` (${result.playerRating})` : ""} — can you beat this?`;
+                            window.open(`https://www.reddit.com/submit?url=${encodeURIComponent("https://firechess.com")}&title=${encodeURIComponent(title)}`, "_blank", "noopener");
+                          }}
+                          className="inline-flex items-center gap-2 rounded-xl bg-orange-500/10 px-6 py-3 text-sm font-bold text-orange-400 transition-all hover:bg-orange-500/20 hover:shadow-lg"
+                        >
+                          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z" /></svg>
+                          r/chess
+                        </button>
+
+                        {/* Share Image */}
+                        {report && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              shareReportCard({
+                                username: result.username,
+                                source: lastRunConfig?.source ?? "lichess",
+                                accuracy: report.estimatedAccuracy,
+                                estimatedRating: report.estimatedRating,
+                                avgCpLoss: report.weightedCpLoss,
+                                severeLeakRate: report.severeLeakRate,
+                                gamesAnalyzed: result.gamesAnalyzed,
+                                leakCount: result.leaks.length,
+                                tacticsCount: result.missedTactics.length,
+                                vibeTitle: report.vibeTitle,
+                              });
+                            }}
+                            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-500/15 to-fuchsia-500/15 px-6 py-3 text-sm font-bold text-violet-300 transition-all hover:from-violet-500/25 hover:to-fuchsia-500/25 hover:shadow-lg"
+                          >
+                            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            Share Report Card
+                          </button>
+                        )}
+
+                        {/* Copy link */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            navigator.clipboard.writeText("https://firechess.com");
+                            setCopyLinkLabel("Copied!");
+                            setTimeout(() => setCopyLinkLabel("Copy Link"), 1500);
+                          }}
+                          className="inline-flex items-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.04] px-6 py-3 text-sm font-bold text-slate-300 transition-all hover:bg-white/[0.08] hover:text-white"
+                        >
+                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                          {copyLinkLabel}
+                        </button>
+                      </div>
+
+                      <p className="mt-5 text-xs text-slate-600">
+                        💡 Players who share get their friends analyzing too — and you can compare progress on your dashboards
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
