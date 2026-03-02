@@ -7,7 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
-import { users, accounts, subscriptions, reports, sessions, studyPlans, studyTasks } from "@/lib/schema";
+import { users, accounts, subscriptions, reports, sessions, studyPlans } from "@/lib/schema";
 import { eq, or, ilike, sql, desc, count, max, sum } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
