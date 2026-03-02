@@ -891,31 +891,44 @@ function deriveLeakTags(args: {
     // ═══ Positional pattern detection ═══
 
     if (userParsed && bestParsed) {
-      const userTarget = chess.get(userParsed.to as Parameters<Chess["get"]>[0]);
+      // Validate moves by actually playing them to get accurate capture info
+      let userMoveResult: ReturnType<Chess["move"]> | null = null;
+      try {
+        const testChess = new Chess(fenBefore);
+        userMoveResult = testChess.move({ from: userParsed.from, to: userParsed.to, promotion: userParsed.promotion } as any);
+      } catch { /* ignore */ }
+
+      let bestMoveResult: ReturnType<Chess["move"]> | null = null;
+      try {
+        const testChess2 = new Chess(fenBefore);
+        bestMoveResult = testChess2.move({ from: bestParsed.from, to: bestParsed.to, promotion: bestParsed.promotion } as any);
+      } catch { /* ignore */ }
+
       const userPiece = chess.get(userParsed.from as Parameters<Chess["get"]>[0]);
-      const bestTarget = chess.get(bestParsed.to as Parameters<Chess["get"]>[0]);
       const bestPiece = chess.get(bestParsed.from as Parameters<Chess["get"]>[0]);
-      const isUserCapture = !!userTarget;
-      const isBestCapture = !!bestTarget;
+      // Use chess.js move result to determine captures accurately
+      const isUserCapture = !!userMoveResult?.captured;
+      const isBestCapture = !!bestMoveResult?.captured;
+      const userCapturedType = userMoveResult?.captured;
       const pv: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
 
       // --- Unnecessary Capture: user captures but best move doesn't ---
-      if (isUserCapture && !isBestCapture) {
+      if (isUserCapture && !isBestCapture && cpLoss >= 15) {
         tags.add("Unnecessary Capture");
       }
 
       // --- Premature Trade: user captures piece of equal/greater value, best doesn't ---
-      if (isUserCapture && userPiece && userTarget) {
+      if (isUserCapture && userPiece && userCapturedType) {
         const userPieceVal = pv[userPiece.type] ?? 0;
-        const capturedVal = pv[userTarget.type] ?? 0;
+        const capturedVal = pv[userCapturedType] ?? 0;
         // Include any equal-value exchange the engine didn't want (pawns too)
-        if (Math.abs(userPieceVal - capturedVal) <= 1 && capturedVal >= 1 && !isBestCapture) {
+        if (Math.abs(userPieceVal - capturedVal) <= 1 && capturedVal >= 1 && !isBestCapture && cpLoss >= 15) {
           tags.add("Premature Trade");
         }
       }
 
       // --- Released Tension: user pawn captures pawn, best doesn't ---
-      if (userPiece?.type === "p" && userTarget?.type === "p" && !isBestCapture) {
+      if (userPiece?.type === "p" && userCapturedType === "p" && !isBestCapture && cpLoss >= 15) {
         tags.add("Released Tension");
       }
 
@@ -926,11 +939,11 @@ function deriveLeakTags(args: {
         const isPush2 = Math.abs(toRank - fromRank) === 2;
         const toFile = userParsed.to.charCodeAt(0) - 97;
         const isCentralFile = toFile >= 1 && toFile <= 6; // b-g files
-        if (isPush2 && isCentralFile && cpLoss >= 15) {
+        if (isPush2 && isCentralFile && cpLoss >= 20) {
           tags.add("Premature Pawn Break");
         }
         // Also catch single-square pawn pushes that are positionally wrong
-        if (!isPush2 && isCentralFile && cpLoss >= 20) {
+        if (!isPush2 && isCentralFile && cpLoss >= 25) {
           tags.add("Premature Pawn Break");
         }
       }
@@ -941,25 +954,25 @@ function deriveLeakTags(args: {
         const userToRank = parseInt(userParsed.to[1]);
         const isRetreat = userPiece.color === "w" ? userToRank < userFromRank : userToRank > userFromRank;
         // Any retreat (not just back rank) counts if it costs enough
-        if (isRetreat && cpLoss >= 15) {
+        if (isRetreat && cpLoss >= 20) {
           tags.add("Passive Retreat");
         }
       }
 
       // --- Greedy Pawn Grab: non-pawn captures a pawn but best move develops / doesn't capture ---
-      if (isUserCapture && userPiece && userTarget?.type === "p" && userPiece.type !== "p" && userPiece.type !== "k") {
-        if (!isBestCapture && cpLoss >= 10) {
+      if (isUserCapture && userPiece && userCapturedType === "p" && userPiece.type !== "p" && userPiece.type !== "k") {
+        if (!isBestCapture && cpLoss >= 25) {
           tags.add("Greedy Pawn Grab");
         }
       }
 
       // --- Trading Advantage: eval was clearly positive but user initiates trade ---
-      if (isUserCapture && userPiece && userTarget) {
+      if (isUserCapture && userPiece && userCapturedType) {
         const userPieceVal = pv[userPiece.type] ?? 0;
-        const capturedVal = pv[userTarget.type] ?? 0;
-        // Equal-value trade while ahead — lower bar, also include pawn-for-pawn
+        const capturedVal = pv[userCapturedType] ?? 0;
+        // Equal-value trade while ahead
         if (Math.abs(userPieceVal - capturedVal) <= 1 && capturedVal >= 1) {
-          if (cpLoss >= 20) {
+          if (cpLoss >= 25) {
             tags.add("Trading Advantage");
           }
         }
@@ -1020,7 +1033,7 @@ function deriveLeakTags(args: {
         const toRankNum = parseInt(userParsed.to[1]);
         const isRim = toFile === "a" || toFile === "h";
         const isCorner = isRim && (toRankNum === 1 || toRankNum === 8);
-        if ((isRim && cpLoss >= 10) || (isCorner && cpLoss >= 5)) {
+        if ((isRim && cpLoss >= 20) || (isCorner && cpLoss >= 15)) {
           tags.add("Piece Activity");
         }
       }
@@ -1986,7 +1999,9 @@ export async function analyzeOpeningLeaksInBrowser(
 
     if (!flagged) {
       // Even if not flagged as a main leak, capture positional patterns at lower cpLoss
-      if (cpLoss >= 15 && tags.some(t => POSITIONAL_TAGS.has(t))) {
+      // Skip if engine's best move is the same as the user's move (noise at low depth)
+      const userUci = moveToUci(new Chess(fenBefore), chosenMove);
+      if (cpLoss >= 15 && tags.some(t => POSITIONAL_TAGS.has(t)) && userUci !== beforeEval.bestMove) {
         positionalFindings.push({ fenBefore, userMove: chosenMove, bestMove: beforeEval.bestMove, cpLoss, tags });
       }
       return;
@@ -2090,16 +2105,20 @@ export async function analyzeOpeningLeaksInBrowser(
 
     // Capture positional patterns even below ONE_OFF_CP_THRESHOLD
     if (screenCpLoss >= 15 && screenCpLoss < ONE_OFF_CP_THRESHOLD) {
-      const posTags = deriveLeakTags({
-        fenBefore,
-        userMove: chosenMove,
-        bestMove: screenBefore.bestMove,
-        cpLoss: screenCpLoss,
-        reachCount: data.totalReachCount,
-        moveCount: chosenCount,
-      });
-      if (posTags.some(t => POSITIONAL_TAGS.has(t))) {
-        positionalFindings.push({ fenBefore, userMove: chosenMove, bestMove: screenBefore.bestMove, cpLoss: screenCpLoss, tags: posTags });
+      // Skip if engine's best move is the same as the user's move (noise at low depth)
+      const userUci = moveToUci(new Chess(fenBefore), chosenMove);
+      if (userUci !== screenBefore.bestMove) {
+        const posTags = deriveLeakTags({
+          fenBefore,
+          userMove: chosenMove,
+          bestMove: screenBefore.bestMove,
+          cpLoss: screenCpLoss,
+          reachCount: data.totalReachCount,
+          moveCount: chosenCount,
+        });
+        if (posTags.some(t => POSITIONAL_TAGS.has(t))) {
+          positionalFindings.push({ fenBefore, userMove: chosenMove, bestMove: screenBefore.bestMove, cpLoss: screenCpLoss, tags: posTags });
+        }
       }
       return; // not a big enough mistake for one-off leak
     }
@@ -2209,7 +2228,11 @@ export async function analyzeOpeningLeaksInBrowser(
       const scEvalAfter = scoreToCpFromUserPerspective(scAfter.cp, oppToMove, sideToMove);
       const scCpLoss = scEvalBefore - scEvalAfter;
 
-      if (scCpLoss < 5 || scCpLoss > 300) return; // lowered from 10 — catch more subtle patterns
+      if (scCpLoss < 15 || scCpLoss > 300) return; // minimum 15cp to avoid depth-5 noise
+
+      // Skip if engine's best move is the same as the user's move
+      const userUci = moveToUci(new Chess(fenBefore), chosenMove);
+      if (userUci === scBefore.bestMove) return;
 
       const posTags = deriveLeakTags({
         fenBefore,

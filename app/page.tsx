@@ -25,6 +25,7 @@ import { POSITIONAL_PATTERNS } from "@/lib/positional-quotes";
 import { PersonalizedPuzzles } from "@/components/personalized-puzzles";
 import { Chessboard } from "react-chessboard";
 import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
+import { Chess } from "chess.js";
 import { useBoardTheme } from "@/lib/use-coins";
 
 /* ── Inline help tooltip ── */
@@ -3175,13 +3176,27 @@ export default function HomePage() {
                         <div className="border-t border-white/[0.06] bg-white/[0.015] px-5 py-4">
                           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                             {motif.examples.map((ex, ei) => {
-                              const uFrom = ex.userMove?.substring(0, 2) ?? "";
-                              const uTo = ex.userMove?.substring(2, 4) ?? "";
-                              const bFrom = ex.bestMove?.substring(0, 2) ?? "";
-                              const bTo = ex.bestMove?.substring(2, 4) ?? "";
+                              // Resolve move squares from FEN — handles both UCI and SAN
+                              const resolveMove = (fen: string, move: string | null | undefined): { from: string; to: string; san: string } | null => {
+                                if (!move) return null;
+                                try {
+                                  const c = new Chess(fen);
+                                  // Try UCI first
+                                  if (/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(move)) {
+                                    const r = c.move({ from: move.slice(0, 2), to: move.slice(2, 4), promotion: (move[4] || undefined) as any });
+                                    if (r) return { from: r.from, to: r.to, san: r.san };
+                                  }
+                                  // Fall back to SAN
+                                  const r = c.move(move);
+                                  if (r) return { from: r.from, to: r.to, san: r.san };
+                                } catch {}
+                                return null;
+                              };
+                              const userR = resolveMove(ex.fenBefore, ex.userMove);
+                              const bestR = resolveMove(ex.fenBefore, ex.bestMove);
                               const arrows: [CbSquare, CbSquare, string][] = [];
-                              if (uFrom && uTo) arrows.push([uFrom as CbSquare, uTo as CbSquare, "rgba(239, 68, 68, 0.85)"]);
-                              if (bFrom && bTo) arrows.push([bFrom as CbSquare, bTo as CbSquare, "rgba(34, 197, 94, 0.85)"]);
+                              if (userR) arrows.push([userR.from as CbSquare, userR.to as CbSquare, "rgba(239, 68, 68, 0.85)"]);
+                              if (bestR) arrows.push([bestR.from as CbSquare, bestR.to as CbSquare, "rgba(34, 197, 94, 0.85)"]);
                               // Determine orientation from FEN — if " b " in FEN, black to move means user is black
                               const sideToMove = ex.fenBefore.includes(" b ") ? "black" : "white";
 
@@ -3205,9 +3220,14 @@ export default function HomePage() {
                                     <span className="text-[10px] font-bold text-red-400">
                                       −{(ex.cpLoss / 100).toFixed(1)}
                                     </span>
-                                    {ex.userMove && (
+                                    {userR && (
                                       <span className="ml-1.5 text-[10px] text-slate-500">
-                                        played <span className="font-mono text-red-400/80">{ex.userMove}</span>
+                                        played <span className="font-mono text-red-400/80">{userR.san}</span>
+                                      </span>
+                                    )}
+                                    {bestR && (
+                                      <span className="ml-1 text-[10px] text-slate-500">
+                                        best <span className="font-mono text-emerald-400/80">{bestR.san}</span>
                                       </span>
                                     )}
                                   </div>
