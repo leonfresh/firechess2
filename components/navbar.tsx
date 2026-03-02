@@ -21,6 +21,7 @@ export function Navbar() {
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const [hasUnseenChanges, setHasUnseenChanges] = useState(false);
+  const [unreadMessages, setUnreadMessages] = useState(0);
 
   // Check for unseen changelog
   useEffect(() => {
@@ -31,6 +32,21 @@ export function Navbar() {
       setHasUnseenChanges(true);
     }
   }, [pathname]);
+
+  // Poll for unread support messages
+  useEffect(() => {
+    if (!authenticated) return;
+    let cancelled = false;
+    const check = () => {
+      fetch("/api/feedback/unread")
+        .then((r) => r.json())
+        .then((d) => { if (!cancelled) setUnreadMessages(d.count ?? 0); })
+        .catch(() => {});
+    };
+    check();
+    const interval = setInterval(check, 60_000); // re-check every 60s
+    return () => { cancelled = true; clearInterval(interval); };
+  }, [authenticated, pathname]);
 
   // Close profile dropdown on outside click
   useEffect(() => {
@@ -160,6 +176,12 @@ export function Navbar() {
                   }`}
                 >
                   Feedback
+                  {unreadMessages > 0 && (
+                    <span className="flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-orange-500" />
+                    </span>
+                  )}
                 </Link>
               </div>
             </div>
@@ -210,6 +232,12 @@ export function Navbar() {
                   onClick={() => setProfileOpen((p) => !p)}
                   className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.04] px-2.5 py-1.5 text-sm text-white transition-all hover:border-white/[0.15] hover:bg-white/[0.08]"
                 >
+                  {unreadMessages > 0 && (
+                    <span className="absolute -right-1 -top-1 z-10 flex h-2.5 w-2.5">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75" />
+                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-orange-500" />
+                    </span>
+                  )}
                   {user?.image ? (
                     <img
                       src={user.image}
@@ -299,10 +327,18 @@ export function Navbar() {
                         onClick={() => setProfileOpen(false)}
                         className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
                       >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                        My Tickets
+                        <span className="relative">
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                          {!isAdmin && unreadMessages > 0 && (
+                            <span className="absolute -right-1.5 -top-1.5 flex h-2 w-2">
+                              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75" />
+                              <span className="relative inline-flex h-2 w-2 rounded-full bg-orange-500" />
+                            </span>
+                          )}
+                        </span>
+                        My Tickets{!isAdmin && unreadMessages > 0 ? ` (${unreadMessages})` : ""}
                       </Link>
 
                       <Link
@@ -324,10 +360,18 @@ export function Navbar() {
                           onClick={() => setProfileOpen(false)}
                           className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-orange-400 transition-colors hover:bg-orange-500/10 hover:text-orange-300"
                         >
-                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                          </svg>
-                          Admin Panel
+                          <span className="relative">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                            {unreadMessages > 0 && (
+                              <span className="absolute -right-1.5 -top-1.5 flex h-2 w-2">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75" />
+                                <span className="relative inline-flex h-2 w-2 rounded-full bg-orange-500" />
+                              </span>
+                            )}
+                          </span>
+                          Admin Panel{unreadMessages > 0 ? ` (${unreadMessages})` : ""}
                         </Link>
                         <Link
                           href="/admin/users"
@@ -481,6 +525,12 @@ export function Navbar() {
                       <span className="absolute -right-3 top-0 flex h-2 w-2">
                         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
                         <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                      </span>
+                    )}
+                    {(link.label === "My Tickets" || link.label === "Admin Panel" || link.label === "Feedback") && unreadMessages > 0 && (
+                      <span className="absolute -right-3 top-0 flex h-2 w-2">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-orange-500" />
                       </span>
                     )}
                   </span>

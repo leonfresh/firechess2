@@ -265,13 +265,34 @@ export default function HomePage() {
     return () => { cancelled = true; };
   }, [leaks]);
 
-  // Motif clustering for missed tactics
+  // Motif clustering — combine missed tactics AND opening leaks
   const tacticMotifs = useMemo(() => {
-    if (missedTactics.length === 0) return [];
+    // Build a unified array of tagged positions from both sources
+    type TaggedPosition = { tags: string[]; cpLoss: number; fenBefore: string };
+    const allPositions: TaggedPosition[] = [];
+
+    for (const t of missedTactics) {
+      allPositions.push({ tags: t.tags, cpLoss: t.cpLoss, fenBefore: t.fenBefore });
+    }
+    for (const l of leaks) {
+      if (l.tags?.length) {
+        allPositions.push({ tags: l.tags, cpLoss: l.cpLoss, fenBefore: l.fenBefore });
+      }
+    }
+
+    if (allPositions.length === 0) return [];
+
+    // Positional pattern tags that should surface even with 1 occurrence
+    const positionalTags = new Set([
+      "Unnecessary Capture", "Premature Trade", "Released Tension",
+      "Passive Retreat", "Trading Advantage", "Greedy Pawn Grab",
+      "Premature Pawn Break", "Weakened Pawn Structure", "Wrong Recapture",
+      "Missed Development", "Piece Activity", "King Exposure",
+    ]);
 
     // Define motif categories with matching logic
-    const motifDefs: { name: string; icon: string; match: (t: typeof missedTactics[0]) => boolean }[] = [
-      { name: "Missed Mate", icon: "👑", match: (t) => t.tags.some((tag) => tag === "Missed Mate" || tag === "Winning Blunder") && (t.cpLoss >= 99000 || t.cpBefore >= 99000) },
+    const motifDefs: { name: string; icon: string; positional?: boolean; match: (t: TaggedPosition) => boolean }[] = [
+      { name: "Missed Mate", icon: "👑", match: (t) => t.tags.some((tag) => tag === "Missed Mate" || tag === "Winning Blunder") && (t.cpLoss >= 99000) },
       { name: "Missed Check", icon: "⚡", match: (t) => t.tags.includes("Missed Check") },
       { name: "Missed Capture", icon: "🗡️", match: (t) => t.tags.includes("Missed Capture") || t.tags.includes("Forcing Capture") },
       { name: "Back Rank Threats", icon: "🏰", match: (t) => t.tags.includes("Back Rank") },
@@ -279,32 +300,47 @@ export default function HomePage() {
       { name: "Queen Tactics", icon: "♛", match: (t) => t.tags.includes("Queen Tactic") },
       { name: "Converting Advantage", icon: "📈", match: (t) => t.tags.includes("Converting Advantage") },
       { name: "Equal Position Misses", icon: "⚖️", match: (t) => t.tags.includes("Equal Position") },
-      { name: "Unnecessary Captures", icon: "🚫", match: (t) => t.tags.includes("Unnecessary Capture") },
-      { name: "Premature Trades", icon: "🤝", match: (t) => t.tags.includes("Premature Trade") },
-      { name: "Released Tension", icon: "💨", match: (t) => t.tags.includes("Released Tension") },
-      { name: "Passive Retreats", icon: "🐢", match: (t) => t.tags.includes("Passive Retreat") },
-      { name: "Trading Advantage", icon: "📉", match: (t) => t.tags.includes("Trading Advantage") },
-      { name: "Greedy Pawn Grabs", icon: "🍕", match: (t) => t.tags.includes("Greedy Pawn Grab") },
+      { name: "Unnecessary Captures", icon: "🚫", positional: true, match: (t) => t.tags.includes("Unnecessary Capture") },
+      { name: "Premature Trades", icon: "🤝", positional: true, match: (t) => t.tags.includes("Premature Trade") },
+      { name: "Released Tension", icon: "💨", positional: true, match: (t) => t.tags.includes("Released Tension") },
+      { name: "Passive Retreats", icon: "🐢", positional: true, match: (t) => t.tags.includes("Passive Retreat") },
+      { name: "Trading Advantage", icon: "📉", positional: true, match: (t) => t.tags.includes("Trading Advantage") },
+      { name: "Greedy Pawn Grabs", icon: "🍕", positional: true, match: (t) => t.tags.includes("Greedy Pawn Grab") },
+      { name: "Weakened Pawn Structure", icon: "🏚️", positional: true, match: (t) => t.tags.includes("Weakened Pawn Structure") },
+      { name: "Wrong Recaptures", icon: "↩️", positional: true, match: (t) => t.tags.includes("Wrong Recapture") },
+      { name: "Missed Development", icon: "🐌", positional: true, match: (t) => t.tags.includes("Missed Development") },
     ];
 
     const groups: { name: string; icon: string; count: number; avgCpLoss: number; tactics: typeof missedTactics }[] = [];
 
     for (const def of motifDefs) {
-      const matching = missedTactics.filter(def.match);
-      if (matching.length >= 2) {
+      // Deduplicate by FEN so the same position from leaks+tactics isn't double-counted
+      const seen = new Set<string>();
+      const matching: TaggedPosition[] = [];
+      for (const p of allPositions) {
+        if (def.match(p) && !seen.has(p.fenBefore)) {
+          seen.add(p.fenBefore);
+          matching.push(p);
+        }
+      }
+      // Positional patterns show with 1+ occurrence, tactical patterns need 2+
+      const minCount = def.positional ? 1 : 2;
+      if (matching.length >= minCount) {
         const avgLoss = matching.reduce((sum, t) => sum + t.cpLoss, 0) / matching.length;
+        // For the tactics array, only include actual MissedTactic objects (for card rendering)
+        const tacticMatches = missedTactics.filter(def.match);
         groups.push({
           name: def.name,
           icon: def.icon,
           count: matching.length,
           avgCpLoss: avgLoss,
-          tactics: matching
+          tactics: tacticMatches
         });
       }
     }
 
     return groups.sort((a, b) => b.avgCpLoss - a.avgCpLoss);
-  }, [missedTactics]);
+  }, [missedTactics, leaks]);
 
   const diagnostics = result?.diagnostics;
   const report = useMemo(() => {
