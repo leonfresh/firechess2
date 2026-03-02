@@ -14,7 +14,6 @@ import { explainOpeningLeak, describeEndPosition, type MoveExplanation, type Pos
 import { SaveToRepertoireButton } from "@/components/opening-repertoire";
 import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
 import { ExplanationModal } from "@/components/explanation-modal";
-import { getMatchingPatterns } from "@/lib/positional-quotes";
 
 type MistakeCardProps = {
   leak: RepeatedOpeningLeak;
@@ -1679,27 +1678,6 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
               ))}
             </div>
           )}
-
-          {/* Positional pattern GM quote */}
-          {(() => {
-            const patterns = getMatchingPatterns(leak.tags ?? []);
-            if (patterns.length === 0) return null;
-            const p = patterns[0];
-            return (
-              <div className="rounded-lg border border-amber-500/20 bg-amber-500/[0.04] px-3 py-2.5">
-                <div className="flex items-start gap-2">
-                  <span className="mt-0.5 text-base">{p.icon}</span>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-amber-300">{p.label}</p>
-                    <p className="mt-1 text-xs italic leading-relaxed text-slate-300">
-                      &ldquo;{p.quote}&rdquo;
-                    </p>
-                    <p className="mt-0.5 text-[10px] text-slate-500">— {p.author}</p>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
 
           {/* Save to Repertoire */}
           {leak.bestMove && (

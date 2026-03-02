@@ -6,7 +6,6 @@ import { stockfishClient } from "@/lib/stockfish-client";
 import { EvalBar } from "@/components/eval-bar";
 import { Chessboard } from "react-chessboard";
 import { playSound } from "@/lib/sounds";
-import { getMatchingPatterns } from "@/lib/positional-quotes";
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
 import { ExplanationModal, type SimpleExplanation } from "@/components/explanation-modal";
@@ -862,25 +861,6 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
               )}
             </div>
           )}
-
-          {/* Positional pattern GM quote */}
-          {(() => {
-            const patterns = getMatchingPatterns(tactic.tags ?? []);
-            if (patterns.length === 0) return null;
-            const p = patterns[0];
-            return (
-              <div className="rounded-lg border border-amber-500/20 bg-amber-500/[0.04] px-3 py-2.5">
-                <div className="flex items-start gap-2">
-                  <span className="mt-0.5 text-base">{p.icon}</span>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-amber-300">{p.label}</p>
-                    <p className="mt-1 text-xs italic leading-relaxed text-slate-300">&ldquo;{p.quote}&rdquo;</p>
-                    <p className="mt-0.5 text-[10px] text-slate-500">— {p.author}</p>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
 
           {/* Coaching tip */}
           <div className="rounded-xl border border-amber-500/[0.08] bg-amber-500/[0.02] p-3">

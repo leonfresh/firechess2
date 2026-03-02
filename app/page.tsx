@@ -21,6 +21,7 @@ import type { AnalyzeResponse } from "@/lib/types";
 import { fetchExplorerMoves } from "@/lib/lichess-explorer";
 import { shareReportCard } from "@/lib/share-report";
 import { earnCoins, spendCoins, hasPurchased, getBalance } from "@/lib/coins";
+import { POSITIONAL_PATTERNS } from "@/lib/positional-quotes";
 import { PersonalizedPuzzles } from "@/components/personalized-puzzles";
 
 /* ── Inline help tooltip ── */
@@ -85,6 +86,7 @@ export default function HomePage() {
   const [endgamesOpen, setEndgamesOpen] = useState(true);
   const [puzzleBoardOpen, setPuzzleBoardOpen] = useState(false);
   const [timeManagementOpen, setTimeManagementOpen] = useState(true);
+  const [positionalOpen, setPositionalOpen] = useState(true);
   const [timeUnlocked, setTimeUnlocked] = useState(false);
   const reportRef = useRef<HTMLElement>(null);
   const pngRef = useRef<HTMLDivElement>(null);
@@ -341,6 +343,19 @@ export default function HomePage() {
 
     return groups.sort((a, b) => b.avgCpLoss - a.avgCpLoss);
   }, [missedTactics, leaks]);
+
+  // Separate tactical motifs (for Pattern Analysis) from positional motifs (for dedicated section)
+  const tacticalMotifs = useMemo(() => tacticMotifs.filter(m => ![
+    "Unnecessary Captures", "Premature Trades", "Released Tension", "Passive Retreats",
+    "Trading Advantage", "Greedy Pawn Grabs", "Weakened Pawn Structure", "Wrong Recaptures",
+    "Missed Development",
+  ].includes(m.name)), [tacticMotifs]);
+
+  const positionalMotifs = useMemo(() => tacticMotifs.filter(m => [
+    "Unnecessary Captures", "Premature Trades", "Released Tension", "Passive Retreats",
+    "Trading Advantage", "Greedy Pawn Grabs", "Weakened Pawn Structure", "Wrong Recaptures",
+    "Missed Development",
+  ].includes(m.name)), [tacticMotifs]);
 
   const diagnostics = result?.diagnostics;
   const report = useMemo(() => {
@@ -2378,8 +2393,8 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* Motif Pattern Summary — Pro only */}
-              {hasProAccess && tacticMotifs.length > 0 && (
+              {/* Tactical Motif Pattern Summary — Pro only */}
+              {hasProAccess && tacticalMotifs.length > 0 && (
                 <div className="glass-card space-y-4 p-5">
                   <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-400">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-400"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 002 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0022 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
@@ -2387,8 +2402,8 @@ export default function HomePage() {
                   </h3>
                   <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Ranked Worst → Best</p>
                   <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                    {tacticMotifs.map((motif, idx) => {
-                      const total = tacticMotifs.length;
+                    {tacticalMotifs.map((motif, idx) => {
+                      const total = tacticalMotifs.length;
                       const isWorst = idx === 0;
                       const isBest = idx === total - 1;
                       const ratio = total > 1 ? idx / (total - 1) : 0.5;
@@ -2435,7 +2450,7 @@ export default function HomePage() {
                       );
                     })}
                   </div>
-                  {tacticMotifs.length >= 2 && (
+                  {tacticalMotifs.length >= 2 && (
                     <p className="text-xs text-slate-500">
                       💡 You have recurring weakness patterns — focus your training on the most frequent motifs above.
                     </p>
@@ -2989,6 +3004,99 @@ export default function HomePage() {
                 </>
               )}
               </>
+              )}
+              </>
+              )}
+
+              {/* ─── Positional Patterns Section ─── */}
+              {positionalMotifs.length > 0 && (
+              <>
+              <div className="my-4">
+                <div className="section-divider" />
+              </div>
+              <button type="button" onClick={() => setPositionalOpen(o => !o)} className="glass-card border-amber-500/15 bg-gradient-to-r from-amber-500/[0.04] to-transparent p-6 w-full text-left cursor-pointer transition-colors hover:border-amber-500/25">
+                <div className="flex items-center gap-4">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">🧠</span>
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-extrabold text-white tracking-tight">
+                      Positional Patterns
+                      <span className="ml-3 inline-flex items-center rounded-full bg-amber-500/15 px-3 py-1 text-base font-bold text-amber-400">
+                        {positionalMotifs.length} pattern{positionalMotifs.length !== 1 ? "s" : ""}
+                      </span>
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Recurring positional mistakes detected across your games — with GM wisdom to help you improve
+                    </p>
+                  </div>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`shrink-0 text-slate-400 transition-transform duration-200 ${positionalOpen ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </button>
+
+              {positionalOpen && (
+              <div className="space-y-3">
+                {positionalMotifs.map((motif) => {
+                  const pattern = POSITIONAL_PATTERNS.find(p => motif.name.startsWith(p.label) || motif.name.includes(p.tag));
+                  const quote = pattern?.quote;
+                  const author = pattern?.author;
+                  const icon = pattern?.icon ?? motif.icon;
+                  const colorMap: Record<string, string> = {
+                    amber: "border-amber-500/20 bg-amber-500/[0.04]",
+                    orange: "border-orange-500/20 bg-orange-500/[0.04]",
+                    rose: "border-rose-500/20 bg-rose-500/[0.04]",
+                    red: "border-red-500/20 bg-red-500/[0.04]",
+                    slate: "border-slate-500/20 bg-slate-500/[0.04]",
+                    violet: "border-violet-500/20 bg-violet-500/[0.04]",
+                    yellow: "border-yellow-500/20 bg-yellow-500/[0.04]",
+                    blue: "border-blue-500/20 bg-blue-500/[0.04]",
+                    cyan: "border-cyan-500/20 bg-cyan-500/[0.04]",
+                    indigo: "border-indigo-500/20 bg-indigo-500/[0.04]",
+                    teal: "border-teal-500/20 bg-teal-500/[0.04]",
+                  };
+                  const borderClass = colorMap[pattern?.color ?? "amber"] ?? colorMap.amber;
+                  const ratio = motif.avgCpLoss < 99000 ? motif.avgCpLoss : 0;
+                  const severityColor = ratio >= 15000 ? "text-red-400" : ratio >= 8000 ? "text-amber-400" : "text-yellow-400";
+
+                  return (
+                    <div key={motif.name} className={`glass-card ${borderClass} p-5`}>
+                      <div className="flex items-start gap-4">
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/[0.06] text-2xl">{icon}</span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-3">
+                            <h3 className="text-lg font-bold text-white">{motif.name}</h3>
+                            <span className={`rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs font-bold ${severityColor}`}>
+                              {motif.count}× detected
+                            </span>
+                            {motif.avgCpLoss < 99000 && (
+                              <span className="text-xs text-slate-500">
+                                avg −{(motif.avgCpLoss / 100).toFixed(1)} pawns
+                              </span>
+                            )}
+                          </div>
+                          {quote && (
+                            <blockquote className="mt-3 border-l-2 border-amber-500/30 pl-4">
+                              <p className="text-sm italic leading-relaxed text-slate-300">
+                                &ldquo;{quote}&rdquo;
+                              </p>
+                              <p className="mt-1 text-xs text-slate-500">— {author}</p>
+                            </blockquote>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {positionalMotifs.length >= 2 && (
+                  <div className="glass-card border-amber-500/10 p-4">
+                    <p className="flex items-start gap-2 text-sm text-slate-400">
+                      <span className="mt-0.5 shrink-0 text-amber-400">💡</span>
+                      <span>
+                        These patterns often repeat unconsciously. Awareness is the first step — try to catch yourself <em>before</em> making the move.
+                        Head to the <Link href="/train" className="text-amber-400 underline underline-offset-2 hover:text-amber-300">Training Center</Link> to practice positions with these exact patterns.
+                      </span>
+                    </p>
+                  </div>
+                )}
+              </div>
               )}
               </>
               )}
