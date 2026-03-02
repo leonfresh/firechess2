@@ -607,7 +607,11 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
   const MAX_ATTEMPTS = 3;
   const [shaking, setShaking] = useState(false);
   const [moveIndicator, setMoveIndicator] = useState<{ square: string; type: "correct" | "wrong" } | null>(null);
-  const orientation = game.turn() === "w" ? "white" : "black";
+  // Lock orientation at mount — don't recalculate after correct moves
+  const [orientation] = useState<"white" | "black">(() => {
+    const chess = new Chess(position.fen);
+    return chess.turn() === "w" ? "white" : "black";
+  });
 
   const expected = parseUci(position.bestMove);
 
@@ -745,7 +749,8 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
 
 export default function TrainPage() {
   const { authenticated, loading: sessionLoading, user } = useSession();
-  const [reports, setReports] = useState<SavedReport[]>([]);
+  const [allReports, setAllReports] = useState<SavedReport[]>([]);
+  const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [loadingReports, setLoadingReports] = useState(true);
   const [activeMode, setActiveMode] = useState<Mode | null>(null);
   const [puzzles, setPuzzles] = useState<PuzzleData[]>([]);
@@ -778,10 +783,30 @@ export default function TrainPage() {
     }
     fetch("/api/reports")
       .then((r) => r.json())
-      .then((data) => setReports(data.reports ?? []))
+      .then((data) => {
+        const reps = data.reports ?? [];
+        setAllReports(reps);
+        // Auto-select the most recently scanned user
+        if (reps.length > 0) {
+          setSelectedUser(reps[0].chessUsername);
+        }
+      })
       .catch(() => {})
       .finally(() => setLoadingReports(false));
   }, [authenticated, sessionLoading]);
+
+  // Unique chess usernames across all reports
+  const usernames = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of allReports) if (r.chessUsername) set.add(r.chessUsername);
+    return [...set];
+  }, [allReports]);
+
+  // Filter reports to selected user
+  const reports = useMemo(() => {
+    if (!selectedUser) return allReports;
+    return allReports.filter(r => r.chessUsername === selectedUser);
+  }, [allReports, selectedUser]);
 
   const weakMotifs = useMemo(() => getWeakMotifs(reports), [reports]);
   const weakEndgames = useMemo(() => getWeakEndgames(reports), [reports]);
@@ -1097,6 +1122,27 @@ export default function TrainPage() {
         {/* Mode selection */}
         {!isLoading && authenticated && !activeMode && (
           <div className="space-y-6">
+            {/* User selector — shown when reports span multiple chess usernames */}
+            {usernames.length > 1 && (
+              <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+                <span className="text-sm text-slate-400">Training data for:</span>
+                <select
+                  value={selectedUser ?? ""}
+                  onChange={(e) => setSelectedUser(e.target.value)}
+                  className="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-1.5 text-sm font-medium text-white outline-none transition-colors hover:border-white/20 focus:border-fuchsia-500/50"
+                >
+                  {usernames.map((u) => (
+                    <option key={u} value={u} className="bg-slate-900 text-white">
+                      {u}
+                    </option>
+                  ))}
+                </select>
+                <span className="text-xs text-slate-500">
+                  {reports.length} report{reports.length !== 1 ? "s" : ""}
+                </span>
+              </div>
+            )}
+
             {/* Weakness summary */}
             {reports.length > 0 && weakMotifs.length > 0 && (
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">

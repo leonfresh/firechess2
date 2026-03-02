@@ -267,9 +267,9 @@ export default function HomePage() {
     return () => { cancelled = true; };
   }, [leaks]);
 
-  // Motif clustering — combine missed tactics AND opening leaks
+  // Motif clustering — combine missed tactics, opening leaks, AND one-off mistakes
   const tacticMotifs = useMemo(() => {
-    // Build a unified array of tagged positions from both sources
+    // Build a unified array of tagged positions from all sources
     type TaggedPosition = { tags: string[]; cpLoss: number; fenBefore: string };
     const allPositions: TaggedPosition[] = [];
 
@@ -279,6 +279,11 @@ export default function HomePage() {
     for (const l of leaks) {
       if (l.tags?.length) {
         allPositions.push({ tags: l.tags, cpLoss: l.cpLoss, fenBefore: l.fenBefore });
+      }
+    }
+    for (const o of oneOffMistakes) {
+      if (o.tags?.length) {
+        allPositions.push({ tags: o.tags, cpLoss: o.cpLoss, fenBefore: o.fenBefore });
       }
     }
 
@@ -342,7 +347,7 @@ export default function HomePage() {
     }
 
     return groups.sort((a, b) => b.avgCpLoss - a.avgCpLoss);
-  }, [missedTactics, leaks]);
+  }, [missedTactics, leaks, oneOffMistakes]);
 
   // Separate tactical motifs (for Pattern Analysis) from positional motifs (for dedicated section)
   const tacticalMotifs = useMemo(() => tacticMotifs.filter(m => ![
@@ -2199,55 +2204,6 @@ export default function HomePage() {
               </>
               )}
 
-              {/* One-Off Opening Mistakes Section */}
-              {oneOffMistakes.length > 0 && (
-              <>
-              <div className="glass-card border-amber-500/15 bg-gradient-to-r from-amber-500/[0.04] to-transparent p-6">
-                <div className="flex items-center gap-4">
-                  <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">⚡</span>
-                  <div className="flex-1">
-                    <h2 className="text-2xl font-extrabold text-white tracking-tight">
-                      You have <span className="text-amber-400">{oneOffMistakes.length}</span> One-Off Opening Mistake{oneOffMistakes.length !== 1 ? "s" : ""}
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-400">
-                      Significant opening mistakes found in individual games — not repeated patterns, but worth reviewing
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <CardCarousel
-                viewMode={cardViewMode}
-              >
-                {oneOffMistakes.map((leak, idx) => (
-                  <MistakeCard
-                    key={`oneoff-${leak.fenBefore}-${leak.userMove}-${idx}`}
-                    leak={leak}
-                    engineDepth={lastRunConfig?.engineDepth ?? engineDepth}
-                  />
-                ))}
-              </CardCarousel>
-
-              {/* One-Off Drill CTA */}
-              <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 p-8 md:p-10">
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-amber-500/[0.08] via-orange-500/[0.04] to-transparent" />
-                <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-amber-500/10 blur-[80px]" />
-                <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-orange-500/10 blur-[80px]" />
-                <div className="relative flex flex-col items-center text-center">
-                  <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">⚡</span>
-                  <h3 className="mt-5 text-2xl font-extrabold text-white md:text-3xl">Drill One-Off Mistakes</h3>
-                  <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-slate-400">
-                    These mistakes happened once but cost real elo. Drill the correct response so you never fall for them again.
-                  </p>
-                  <div className="mt-7 w-full max-w-md">
-                    <DrillMode positions={[]} oneOffMistakes={oneOffMistakes} excludeFens={dbApprovedFens} />
-                  </div>
-                </div>
-              </div>
-              </>
-              )}
-              </>)}
-
               {/* ─── Positional Patterns Section ─── */}
               {positionalMotifs.length > 0 && (
               <>
@@ -2301,7 +2257,7 @@ export default function HomePage() {
                       <div className="flex items-start gap-4">
                         <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/[0.06] text-2xl">{icon}</span>
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3 flex-wrap">
                             <h3 className="text-lg font-bold text-white">{motif.name}</h3>
                             <span className={`rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs font-bold ${severityColor}`}>
                               {motif.count}× detected
@@ -2340,6 +2296,55 @@ export default function HomePage() {
               )}
               </>
               )}
+
+              {/* One-Off Opening Mistakes Section */}
+              {oneOffMistakes.length > 0 && (
+              <>
+              <div className="glass-card border-amber-500/15 bg-gradient-to-r from-amber-500/[0.04] to-transparent p-6">
+                <div className="flex items-center gap-4">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">⚡</span>
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-extrabold text-white tracking-tight">
+                      You have <span className="text-amber-400">{oneOffMistakes.length}</span> One-Off Opening Mistake{oneOffMistakes.length !== 1 ? "s" : ""}
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Significant opening mistakes found in individual games — not repeated patterns, but worth reviewing
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <CardCarousel
+                viewMode={cardViewMode}
+              >
+                {oneOffMistakes.map((leak, idx) => (
+                  <MistakeCard
+                    key={`oneoff-${leak.fenBefore}-${leak.userMove}-${idx}`}
+                    leak={leak}
+                    engineDepth={lastRunConfig?.engineDepth ?? engineDepth}
+                  />
+                ))}
+              </CardCarousel>
+
+              {/* One-Off Drill CTA */}
+              <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 p-8 md:p-10">
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-amber-500/[0.08] via-orange-500/[0.04] to-transparent" />
+                <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-amber-500/10 blur-[80px]" />
+                <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-orange-500/10 blur-[80px]" />
+                <div className="relative flex flex-col items-center text-center">
+                  <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">⚡</span>
+                  <h3 className="mt-5 text-2xl font-extrabold text-white md:text-3xl">Drill One-Off Mistakes</h3>
+                  <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-slate-400">
+                    These mistakes happened once but cost real elo. Drill the correct response so you never fall for them again.
+                  </p>
+                  <div className="mt-7 w-full max-w-md">
+                    <DrillMode positions={[]} oneOffMistakes={oneOffMistakes} excludeFens={dbApprovedFens} />
+                  </div>
+                </div>
+              </div>
+              </>
+              )}
+              </>)}
 
               {/* Opening Health Rankings */}
               {(lastRunConfig?.scanMode === "openings" || lastRunConfig?.scanMode === "both") && result?.openingSummaries && result.openingSummaries.length > 0 && (
@@ -2988,7 +2993,7 @@ export default function HomePage() {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-violet-400"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                   Time Overview
                 </h3>
-                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+                <div className="grid grid-cols-2 gap-2 lg:grid-cols-5">
                   <div className="stat-card py-3">
                     <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Score</p>
                     <p className={`mt-0.5 text-lg font-bold ${timeManagement.score >= 70 ? "text-emerald-400" : timeManagement.score >= 45 ? "text-amber-400" : "text-red-400"}`}>
@@ -3022,28 +3027,28 @@ export default function HomePage() {
                 )}
               </div>
 
-              {/* Time moment cards — gated for free users */}
+              {/* Time moment cards — 2-column grid on desktop, gated for free users */}
               {hasProAccess || timeUnlocked ? (
-                <CardCarousel viewMode={cardViewMode}>
+                <div className="grid gap-4 lg:grid-cols-2">
                   {timeManagement.moments.map((moment) => (
                     <TimeCard
                       key={`${moment.fen}-${moment.userMove}-${moment.gameIndex}`}
                       moment={moment}
                     />
                   ))}
-                </CardCarousel>
+                </div>
               ) : (
                 <>
                   {/* Free preview: first 3 cards */}
                   {timeManagement.moments.length > 0 && (
-                    <CardCarousel viewMode={cardViewMode}>
+                    <div className="grid gap-4 lg:grid-cols-2">
                       {timeManagement.moments.slice(0, 3).map((moment) => (
                         <TimeCard
                           key={`${moment.fen}-${moment.userMove}-${moment.gameIndex}`}
                           moment={moment}
                         />
                       ))}
-                    </CardCarousel>
+                    </div>
                   )}
 
                   {/* Upgrade CTA for the rest */}
