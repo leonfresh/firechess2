@@ -24,8 +24,13 @@ type UserRow = {
   weeklyDigest: boolean;
   providers: Provider[];
   reportCount: number;
+  totalGamesAnalyzed: number;
   lastReport: string | null;
   lastSession: string | null;
+  studyPlans: number;
+  currentStreak: number;
+  longestStreak: number;
+  avgStudyProgress: number;
 };
 
 const PROVIDER_LABELS: Record<string, { label: string; icon: string; color: string }> = {
@@ -306,6 +311,29 @@ export default function AdminUsersPage() {
                             }).join(", ")
                           : "None"
                       } />
+                    </div>
+
+                    {/* Training & Activity Stats */}
+                    <div className="mt-3 border-t border-white/[0.06] pt-3">
+                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">🏋️ Training &amp; Activity</p>
+                      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                        <Detail label="Total Games Analyzed" value={String(user.totalGamesAnalyzed)} />
+                        <Detail label="Study Plans" value={String(user.studyPlans)} />
+                        <Detail label="Avg Study Progress" value={`${user.avgStudyProgress}%`} />
+                        <Detail label="Current Streak" value={
+                          user.currentStreak > 0
+                            ? <span className="text-emerald-400">🔥 {user.currentStreak} day{user.currentStreak !== 1 ? "s" : ""}</span>
+                            : "0"
+                        } />
+                        <Detail label="Longest Streak" value={
+                          user.longestStreak > 0
+                            ? <span className="text-amber-400">🏆 {user.longestStreak} day{user.longestStreak !== 1 ? "s" : ""}</span>
+                            : "0"
+                        } />
+                        <Detail label="Coins" value={
+                          <span className="text-slate-500 italic">Client-side only</span>
+                        } />
+                      </div>
                     </div>
 
                     {/* Quick plan actions */}

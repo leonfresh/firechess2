@@ -7,8 +7,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
-import { users, accounts, subscriptions, reports, sessions } from "@/lib/schema";
-import { eq, or, ilike, sql, desc, count, max } from "drizzle-orm";
+import { users, accounts, subscriptions, reports, sessions, studyPlans, studyTasks } from "@/lib/schema";
+import { eq, or, ilike, sql, desc, count, max, sum } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -46,8 +46,8 @@ export async function GET(req: NextRequest) {
   // Get login providers for each user
   const userIds = rows.map((r) => r.id);
 
-  // Batch fetch: accounts (providers), report counts, latest session
-  const [accountRows, reportRows, sessionRows] = await Promise.all([
+  // Batch fetch: accounts (providers), report counts, latest session, study stats
+  const [accountRows, reportRows, sessionRows, studyRows] = await Promise.all([
     userIds.length > 0
       ? db
           .select({
@@ -64,6 +64,7 @@ export async function GET(req: NextRequest) {
             userId: reports.userId,
             reportCount: count(reports.id),
             lastReport: max(reports.createdAt),
+            totalGames: sum(reports.gamesAnalyzed),
           })
           .from(reports)
           .where(sql`${reports.userId} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`)
@@ -79,6 +80,19 @@ export async function GET(req: NextRequest) {
           .where(sql`${sessions.userId} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`)
           .groupBy(sessions.userId)
       : [],
+    userIds.length > 0
+      ? db
+          .select({
+            userId: studyPlans.userId,
+            planCount: count(studyPlans.id),
+            currentStreak: max(studyPlans.currentStreak),
+            longestStreak: max(studyPlans.longestStreak),
+            totalProgress: sum(studyPlans.progress),
+          })
+          .from(studyPlans)
+          .where(sql`${studyPlans.userId} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`)
+          .groupBy(studyPlans.userId)
+      : [],
   ]);
 
   // Build lookup maps
@@ -89,17 +103,29 @@ export async function GET(req: NextRequest) {
     providersByUser.set(a.userId, list);
   }
 
-  const reportsByUser = new Map<string, { count: number; lastReport: string | null }>();
+  const reportsByUser = new Map<string, { count: number; lastReport: string | null; totalGames: number }>();
   for (const r of reportRows) {
     reportsByUser.set(r.userId, {
       count: Number(r.reportCount),
       lastReport: r.lastReport ? new Date(r.lastReport).toISOString() : null,
+      totalGames: Number(r.totalGames ?? 0),
     });
   }
 
   const sessionByUser = new Map<string, string | null>();
   for (const s of sessionRows) {
     sessionByUser.set(s.userId, s.latestExpiry ? new Date(s.latestExpiry).toISOString() : null);
+  }
+
+  const studyByUser = new Map<string, { planCount: number; currentStreak: number; longestStreak: number; avgProgress: number }>();
+  for (const s of studyRows) {
+    const pc = Number(s.planCount) || 1;
+    studyByUser.set(s.userId, {
+      planCount: pc,
+      currentStreak: Number(s.currentStreak ?? 0),
+      longestStreak: Number(s.longestStreak ?? 0),
+      avgProgress: Math.round((Number(s.totalProgress ?? 0)) / pc),
+    });
   }
 
   const result = rows.map((r) => ({
@@ -115,8 +141,13 @@ export async function GET(req: NextRequest) {
     weeklyDigest: r.weeklyDigest ?? true,
     providers: providersByUser.get(r.id) ?? [],
     reportCount: reportsByUser.get(r.id)?.count ?? 0,
+    totalGamesAnalyzed: reportsByUser.get(r.id)?.totalGames ?? 0,
     lastReport: reportsByUser.get(r.id)?.lastReport ?? null,
     lastSession: sessionByUser.get(r.id) ?? null,
+    studyPlans: studyByUser.get(r.id)?.planCount ?? 0,
+    currentStreak: studyByUser.get(r.id)?.currentStreak ?? 0,
+    longestStreak: studyByUser.get(r.id)?.longestStreak ?? 0,
+    avgStudyProgress: studyByUser.get(r.id)?.avgProgress ?? 0,
   }));
 
   return NextResponse.json({ users: result, total: result.length });
