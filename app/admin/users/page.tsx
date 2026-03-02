@@ -265,7 +265,11 @@ export default function AdminUsersPage() {
                       </button>
                     ) : (
                       <button
-                        onClick={(e) => { e.stopPropagation(); setPlan(user.id, "free"); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (!window.confirm(`Revoke Pro from ${user.name || user.email}? This will set them back to the free plan.`)) return;
+                          setPlan(user.id, "free");
+                        }}
                         disabled={updating === user.id}
                         className="rounded-md bg-red-500/20 px-2.5 py-1 text-[11px] font-medium text-red-400 transition hover:bg-red-500/30 disabled:opacity-50"
                       >
