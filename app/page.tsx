@@ -540,6 +540,7 @@ export default function HomePage() {
           diagnostics: result.diagnostics ?? null,
           mentalStats: result.mentalStats ?? null,
           timeManagement: result.timeManagement ?? null,
+          playerRating: result.playerRating ?? null,
           reportMeta: {
             consistencyScore: report.consistencyScore,
             p75CpLoss: report.p75CpLoss,

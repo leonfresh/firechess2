@@ -145,6 +145,10 @@ export const reports = pgTable("report", {
   mentalStats: jsonb("mentalStats"),
   timeManagement: jsonb("timeManagement"),
 
+  /* composite leaderboard score (0–1000, higher is better) */
+  firechessScore: real("firechessScore"),
+  playerRating: integer("playerRating"),
+
   /* dedup: SHA-256 of (userId + chessUsername + source + scanMode + sorted game IDs summary) */
   contentHash: text("contentHash"),
 

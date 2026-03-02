@@ -138,6 +138,19 @@ export function Navbar() {
             Training
           </Link>
 
+          {/* Leaderboard link */}
+          <Link
+            href="/leaderboard"
+            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+              isActive("/leaderboard")
+                ? "text-amber-400 bg-amber-500/[0.08]"
+                : "text-slate-400 hover:text-amber-400 hover:bg-amber-500/[0.04]"
+            }`}
+          >
+            🏆
+            Leaderboard
+          </Link>
+
           {/* More dropdown (About, Blog, Feedback) */}
           <div className="group relative">
             <button
@@ -491,6 +504,7 @@ export function Navbar() {
                 { href: "/", label: "Home" },
                 ...NAV_LINKS,
                 { href: "/blog", label: "Blog" },
+                { href: "/leaderboard", label: "🏆 Leaderboard" },
                 { href: "/feedback", label: "Feedback" },
                 ...(authenticated
                   ? [

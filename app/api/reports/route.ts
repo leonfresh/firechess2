@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
     mentalStats,
     timeManagement,
     contentHash,
+    playerRating,
   } = body;
 
   if (!chessUsername || !source) {
@@ -83,6 +84,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ saved: false, reason: "duplicate", id: dup.id });
     }
   }
+
+  // Compute composite FireChess Score (0–1000)
+  const acc = typeof estimatedAccuracy === "number" ? estimatedAccuracy : 50;
+  const lc = leaks?.length ?? 0;
+  const tc = missedTactics?.length ?? 0;
+  const ga = gamesAnalyzed ?? 0;
+  const cpl = typeof weightedCpLoss === "number" ? weightedCpLoss : 50;
+  const rawScore = acc * 8 - cpl * 2 - lc * 3 - tc * 4 + Math.min(ga, 50) * 0.5;
+  const firechessScore = Math.round(Math.max(0, Math.min(1000, rawScore)) * 10) / 10;
 
   const [inserted] = await db
     .insert(reports)
@@ -111,6 +121,8 @@ export async function POST(req: NextRequest) {
       mentalStats: mentalStats ?? null,
       timeManagement: timeManagement ?? null,
       contentHash: contentHash ?? null,
+      firechessScore,
+      playerRating: typeof playerRating === "number" ? playerRating : null,
     })
     .returning({ id: reports.id });
 
