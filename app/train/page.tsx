@@ -223,8 +223,10 @@ function buildBlunderPositions(reports: SavedReport[]): DrillPosition[] {
   }
 
   // Also pull significant opening leaks as blunder positions (cpLoss >= 80)
+  // Skip DB-approved sidelines (e.g. Dutch Defense) — only train real mistakes
   for (const r of reports) {
     for (const leak of r.leaks ?? []) {
+      if (leak.dbApproved) continue;
       const fen = leak.fen ?? leak.fenBefore;
       const best = leak.bestMove ?? leak.correctMoves?.[0];
       const cp = leak.cpLoss ?? leak.avgCpLoss;
@@ -254,6 +256,8 @@ function buildOpeningPositions(reports: SavedReport[]): DrillPosition[] {
   const seenFens = new Set<string>();
   for (const r of reports) {
     for (const leak of r.leaks ?? []) {
+      // Skip DB-approved sidelines — only train genuine opening mistakes
+      if (leak.dbApproved) continue;
       const fen = leak.fen ?? leak.fenBefore;
       if (!fen || seenFens.has(fen)) continue;
       seenFens.add(fen);
@@ -445,6 +449,8 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
   const MAX_ATTEMPTS = 3;
   const [shaking, setShaking] = useState(false);
   const [moveIndicator, setMoveIndicator] = useState<{ square: string; type: "correct" | "wrong" } | null>(null);
+  // Track opponent's last move for highlighting
+  const [opponentLastMove, setOpponentLastMove] = useState<{ from: string; to: string } | null>(null);
 
   // Apply initial "trigger" move (opponent's last move from the PGN, before puzzle starts)
   useEffect(() => {
@@ -452,6 +458,7 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
     if (!triggerMove) {
       // No trigger move — user starts solving immediately
       setMoveIndex(0);
+      setOpponentLastMove(null);
       return;
     }
     const parsed = parseUci(triggerMove);
@@ -461,6 +468,7 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
         newGame.move({ from: parsed.from, to: parsed.to, promotion: parsed.promotion });
         playSound("move");
         setGame(new Chess(newGame.fen()));
+        setOpponentLastMove({ from: parsed.from, to: parsed.to });
       } catch {
         // Invalid trigger move — skip
       }
@@ -519,6 +527,7 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
             playSound(g.isCheck() ? "check" : "move");
             setGame(new Chess(g.fen()));
             setMoveIndex(nextIndex + 1);
+            setOpponentLastMove({ from: opParsed.from, to: opParsed.to });
           } catch {
             setStatus("correct");
             onSolved();
@@ -564,6 +573,15 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
   );
 
   const customSquareStyles: Record<string, React.CSSProperties> = {};
+  // Highlight opponent's last move (from/to squares)
+  if (opponentLastMove && status === "playing") {
+    customSquareStyles[opponentLastMove.from] = {
+      backgroundColor: "rgba(255, 170, 0, 0.35)",
+    };
+    customSquareStyles[opponentLastMove.to] = {
+      backgroundColor: "rgba(255, 170, 0, 0.45)",
+    };
+  }
   if (hintSquare) {
     customSquareStyles[hintSquare] = {
       boxShadow: "inset 0 0 20px 6px rgba(34, 197, 94, 0.5)",

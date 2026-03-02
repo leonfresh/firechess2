@@ -180,6 +180,9 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
   const [continuationMoveCount, setContinuationMoveCount] = useState(0);
   const preMoveFenRef = useRef(drillPositions[0]?.fenBefore ?? "start");
 
+  // Track opponent's last move for highlighting
+  const [opponentLastMove, setOpponentLastMove] = useState<{ from: string; to: string } | null>(null);
+
   // Click-to-move state
   const [selectedSq, setSelectedSq] = useState<string | null>(null);
   const [legalMoveSqs, setLegalMoveSqs] = useState<string[]>([]);
@@ -224,6 +227,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
     setContinuationBestMove(null);
     setAwaitingOpponent(false);
     setContinuationMoveCount(0);
+    setOpponentLastMove(null);
     preMoveFenRef.current = current.fenBefore;
   }, [index, current?.fenBefore]);
 
@@ -550,6 +554,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
       const oFen = oChess.fen();
       setFen(oFen);
       preMoveFenRef.current = oFen;
+      setOpponentLastMove({ from: oppDetails.from, to: oppDetails.to });
 
       if (oChess.isCheckmate() || oChess.isStalemate() || oChess.isDraw() || oChess.isGameOver()) {
         markSolved();
@@ -617,9 +622,19 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
     return { label: "Easy", color: "bg-emerald-500/20 text-emerald-400 border-emerald-500/20" };
   };
 
-  // Hint square highlight + click-to-move highlighting
+  // Hint square highlight + click-to-move highlighting + opponent last move
   const customSquareStyles = useMemo(() => {
     const styles: Record<string, React.CSSProperties> = {};
+
+    // Highlight opponent's last move (from/to squares) in amber
+    if (opponentLastMove && !solved) {
+      styles[opponentLastMove.from] = {
+        backgroundColor: "rgba(255, 170, 0, 0.35)",
+      };
+      styles[opponentLastMove.to] = {
+        backgroundColor: "rgba(255, 170, 0, 0.45)",
+      };
+    }
 
     // Selection highlight
     if (selectedSq && !solved) {
@@ -661,7 +676,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
     }
 
     return styles;
-  }, [hintSquare, solved, selectedSq, legalMoveSqs, fen]);
+  }, [hintSquare, solved, selectedSq, legalMoveSqs, fen, opponentLastMove]);
 
   const allSolved = solvedSet.size >= drillPositions.length;
 
