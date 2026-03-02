@@ -15,6 +15,24 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: 14,
+    date: "Mar 2, 2026",
+    title: "Positional Pattern Detector & Training Fixes",
+    description:
+      "The analysis engine now detects positional mistakes — not just tactical blunders — and pairs each pattern with a GM quote to explain the concept.",
+    changes: [
+      { type: "feature", text: "Positional pattern detector — identifies Unnecessary Captures, Premature Trades, Released Tension, Passive Retreats, Greedy Pawn Grabs, and more" },
+      { type: "feature", text: "GM wisdom quotes on each pattern — Igor Smirnov, Kasparov, Nimzowitsch, Capablanca, Tarrasch, and others" },
+      { type: "feature", text: "\"Greedy Pawn Grab\" detector — flags when you snatch a pawn with a piece and lose critical tempo" },
+      { type: "improvement", text: "Positional patterns appear in the motif breakdown on the homepage and feed into training puzzles" },
+      { type: "fix", text: "Training coin rewards reduced to 2 per puzzle (was 5) with a daily cap of 20 — no more infinite coin farming" },
+      { type: "fix", text: "Coin counter now shows actual coins earned instead of total balance" },
+      { type: "fix", text: "Correct moves in training now keep the piece on the destination square instead of reverting" },
+      { type: "fix", text: "After 3 wrong tries, the correct move animates on the board so you can learn from it" },
+      { type: "fix", text: "Correct / Wrong sound effects now play in training puzzles" },
+    ],
+  },
+  {
     version: 13,
     date: "Mar 2, 2026",
     title: "Training Center",
