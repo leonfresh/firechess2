@@ -167,6 +167,14 @@ export const POSITIONAL_PATTERNS: PositionalPattern[] = [
     author: "GM Wilhelm Steinitz",
     color: "teal",
   },
+  {
+    tag: "Hanging Piece",
+    label: "Hanging Pieces",
+    icon: "💀",
+    quote: "Loose pieces drop off. Always check if your pieces are defended before moving.",
+    author: "GM Dan Heisman",
+    color: "red",
+  },
 ];
 
 const patternMap = new Map(POSITIONAL_PATTERNS.map((p) => [p.tag, p]));

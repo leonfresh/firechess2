@@ -23,6 +23,9 @@ import { shareReportCard } from "@/lib/share-report";
 import { earnCoins, spendCoins, hasPurchased, getBalance } from "@/lib/coins";
 import { POSITIONAL_PATTERNS } from "@/lib/positional-quotes";
 import { PersonalizedPuzzles } from "@/components/personalized-puzzles";
+import { Chessboard } from "react-chessboard";
+import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
+import { useBoardTheme } from "@/lib/use-coins";
 
 /* ── Inline help tooltip ── */
 function HelpTip({ text }: { text: string }) {
@@ -87,9 +90,11 @@ export default function HomePage() {
   const [puzzleBoardOpen, setPuzzleBoardOpen] = useState(false);
   const [timeManagementOpen, setTimeManagementOpen] = useState(true);
   const [positionalOpen, setPositionalOpen] = useState(true);
+  const [expandedMotifs, setExpandedMotifs] = useState<Set<string>>(new Set());
   const [timeUnlocked, setTimeUnlocked] = useState(false);
   const reportRef = useRef<HTMLElement>(null);
   const pngRef = useRef<HTMLDivElement>(null);
+  const boardTheme = useBoardTheme();
   const hasProAccess = sessionPlan === "pro" || sessionPlan === "lifetime" || localProEnabled;
   const gamesOverFreeLimit = gameRangeMode === "count" && gameCount > FREE_MAX_GAMES;
   const depthOverFreeLimit = engineDepth > FREE_MAX_DEPTH;
@@ -271,25 +276,25 @@ export default function HomePage() {
   // Motif clustering — combine missed tactics, opening leaks, AND one-off mistakes
   const tacticMotifs = useMemo(() => {
     // Build a unified array of tagged positions from all sources
-    type TaggedPosition = { tags: string[]; cpLoss: number; fenBefore: string };
+    type TaggedPosition = { tags: string[]; cpLoss: number; fenBefore: string; userMove?: string; bestMove?: string | null };
     const allPositions: TaggedPosition[] = [];
 
     for (const t of missedTactics) {
-      allPositions.push({ tags: t.tags, cpLoss: t.cpLoss, fenBefore: t.fenBefore });
+      allPositions.push({ tags: t.tags, cpLoss: t.cpLoss, fenBefore: t.fenBefore, userMove: t.userMove, bestMove: t.bestMove });
     }
     for (const l of leaks) {
       if (l.tags?.length) {
-        allPositions.push({ tags: l.tags, cpLoss: l.cpLoss, fenBefore: l.fenBefore });
+        allPositions.push({ tags: l.tags, cpLoss: l.cpLoss, fenBefore: l.fenBefore, userMove: l.userMove, bestMove: l.bestMove });
       }
     }
     for (const o of oneOffMistakes) {
       if (o.tags?.length) {
-        allPositions.push({ tags: o.tags, cpLoss: o.cpLoss, fenBefore: o.fenBefore });
+        allPositions.push({ tags: o.tags, cpLoss: o.cpLoss, fenBefore: o.fenBefore, userMove: o.userMove, bestMove: o.bestMove });
       }
     }
     for (const pf of positionalFindings) {
       if (pf.tags?.length) {
-        allPositions.push({ tags: pf.tags, cpLoss: pf.cpLoss, fenBefore: pf.fenBefore });
+        allPositions.push({ tags: pf.tags, cpLoss: pf.cpLoss, fenBefore: pf.fenBefore, userMove: pf.userMove, bestMove: pf.bestMove });
       }
     }
 
@@ -301,10 +306,12 @@ export default function HomePage() {
       "Passive Retreat", "Trading Advantage", "Greedy Pawn Grab",
       "Premature Pawn Break", "Weakened Pawn Structure", "Wrong Recapture",
       "Missed Development", "Piece Activity", "King Exposure",
+      "Hanging Piece",
     ]);
 
     // Define motif categories with matching logic
     const motifDefs: { name: string; icon: string; positional?: boolean; match: (t: TaggedPosition) => boolean }[] = [
+      { name: "Hanging Pieces", icon: "💀", positional: true, match: (t) => t.tags.includes("Hanging Piece") },
       { name: "Missed Mate", icon: "👑", match: (t) => t.tags.some((tag) => tag === "Missed Mate" || tag === "Winning Blunder") && (t.cpLoss >= 99000) },
       { name: "Missed Check", icon: "⚡", match: (t) => t.tags.includes("Missed Check") },
       { name: "Missed Capture", icon: "🗡️", match: (t) => t.tags.includes("Missed Capture") || t.tags.includes("Forcing Capture") },
@@ -332,7 +339,7 @@ export default function HomePage() {
       { name: "Center Neglect", icon: "🎯", positional: true, match: (t) => t.tags.includes("Center Neglect") },
     ];
 
-    const groups: { name: string; icon: string; count: number; avgCpLoss: number; tactics: typeof missedTactics }[] = [];
+    const groups: { name: string; icon: string; count: number; avgCpLoss: number; tactics: typeof missedTactics; examples: TaggedPosition[] }[] = [];
 
     for (const def of motifDefs) {
       // Deduplicate by FEN so the same position from leaks+tactics isn't double-counted
@@ -355,7 +362,8 @@ export default function HomePage() {
           icon: def.icon,
           count: matching.length,
           avgCpLoss: avgLoss,
-          tactics: tacticMatches
+          tactics: tacticMatches,
+          examples: matching.sort((a, b) => b.cpLoss - a.cpLoss).slice(0, 6),
         });
       }
     }
@@ -369,6 +377,7 @@ export default function HomePage() {
     "Trading Advantage", "Greedy Pawn Grabs", "Weakened Pawn Structure", "Wrong Recaptures",
     "Missed Development", "King Exposure", "Piece Activity", "Premature Pawn Breaks",
     "General Inaccuracy", "Neglected Castling", "Aimless Moves", "Overextended Pawns", "Center Neglect",
+    "Hanging Pieces",
   ]);
 
   const tacticalMotifs = useMemo(() => tacticMotifs.filter(m => !POSITIONAL_MOTIF_NAMES.has(m.name)), [tacticMotifs]);
@@ -3094,32 +3103,107 @@ export default function HomePage() {
                   const ratio = motif.avgCpLoss < 99000 ? motif.avgCpLoss : 0;
                   const severityColor = ratio >= 15000 ? "text-red-400" : ratio >= 8000 ? "text-amber-400" : "text-yellow-400";
 
+                  const isExpanded = expandedMotifs.has(motif.name);
+                  const toggleExpand = () => setExpandedMotifs(prev => {
+                    const next = new Set(prev);
+                    if (next.has(motif.name)) next.delete(motif.name);
+                    else next.add(motif.name);
+                    return next;
+                  });
+                  const hasExamples = motif.examples.length > 0;
+
                   return (
-                    <div key={motif.name} className={`glass-card ${borderClass} p-5`}>
-                      <div className="flex items-start gap-4">
-                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/[0.06] text-2xl">{icon}</span>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-3 flex-wrap">
-                            <h3 className="text-lg font-bold text-white">{motif.name}</h3>
-                            <span className={`rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs font-bold ${severityColor}`}>
-                              {motif.count}× detected
-                            </span>
-                            {motif.avgCpLoss < 99000 && (
-                              <span className="text-xs text-slate-500">
-                                avg −{(motif.avgCpLoss / 100).toFixed(1)} pawns
+                    <div key={motif.name} className={`glass-card ${borderClass} overflow-hidden`}>
+                      <div className="p-5">
+                        <div className="flex items-start gap-4">
+                          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/[0.06] text-2xl">{icon}</span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <h3 className="text-lg font-bold text-white">{motif.name}</h3>
+                              <span className={`rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs font-bold ${severityColor}`}>
+                                {motif.count}× detected
                               </span>
+                              {motif.avgCpLoss < 99000 && (
+                                <span className="text-xs text-slate-500">
+                                  avg −{(motif.avgCpLoss / 100).toFixed(1)} pawns
+                                </span>
+                              )}
+                            </div>
+                            {quote && (
+                              <blockquote className="mt-3 border-l-2 border-amber-500/30 pl-4">
+                                <p className="text-sm italic leading-relaxed text-slate-300">
+                                  &ldquo;{quote}&rdquo;
+                                </p>
+                                <p className="mt-1 text-xs text-slate-500">— {author}</p>
+                              </blockquote>
+                            )}
+                            {hasExamples && (
+                              <button
+                                type="button"
+                                onClick={toggleExpand}
+                                className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
+                                {isExpanded ? "Hide" : "Show"} {motif.examples.length} example{motif.examples.length !== 1 ? "s" : ""} from your games
+                              </button>
                             )}
                           </div>
-                          {quote && (
-                            <blockquote className="mt-3 border-l-2 border-amber-500/30 pl-4">
-                              <p className="text-sm italic leading-relaxed text-slate-300">
-                                &ldquo;{quote}&rdquo;
-                              </p>
-                              <p className="mt-1 text-xs text-slate-500">— {author}</p>
-                            </blockquote>
-                          )}
                         </div>
                       </div>
+
+                      {/* Batch example positions */}
+                      {isExpanded && hasExamples && (
+                        <div className="border-t border-white/[0.06] bg-white/[0.015] px-5 py-4">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {motif.examples.map((ex, ei) => {
+                              const uFrom = ex.userMove?.substring(0, 2) ?? "";
+                              const uTo = ex.userMove?.substring(2, 4) ?? "";
+                              const bFrom = ex.bestMove?.substring(0, 2) ?? "";
+                              const bTo = ex.bestMove?.substring(2, 4) ?? "";
+                              const arrows: [CbSquare, CbSquare, string][] = [];
+                              if (uFrom && uTo) arrows.push([uFrom as CbSquare, uTo as CbSquare, "rgba(239, 68, 68, 0.85)"]);
+                              if (bFrom && bTo) arrows.push([bFrom as CbSquare, bTo as CbSquare, "rgba(34, 197, 94, 0.85)"]);
+                              // Determine orientation from FEN — if " b " in FEN, black to move means user is black
+                              const sideToMove = ex.fenBefore.includes(" b ") ? "black" : "white";
+
+                              return (
+                                <div key={`${ex.fenBefore}-${ei}`} className="flex flex-col items-center gap-1.5">
+                                  <div className="w-full max-w-[180px] aspect-square rounded-lg overflow-hidden border border-white/[0.08]">
+                                    <Chessboard
+                                      id={`pos-ex-${motif.name}-${ei}`}
+                                      position={ex.fenBefore}
+                                      arePiecesDraggable={false}
+                                      boardWidth={180}
+                                      customArrows={arrows}
+                                      boardOrientation={sideToMove === "black" ? "black" : "white"}
+                                      customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+                                      customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                                      customBoardStyle={{ borderRadius: "0px" }}
+                                      showBoardNotation={false}
+                                    />
+                                  </div>
+                                  <div className="text-center">
+                                    <span className="text-[10px] font-bold text-red-400">
+                                      −{(ex.cpLoss / 100).toFixed(1)}
+                                    </span>
+                                    {ex.userMove && (
+                                      <span className="ml-1.5 text-[10px] text-slate-500">
+                                        played <span className="font-mono text-red-400/80">{ex.userMove}</span>
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div className="mt-3 flex items-center gap-2 text-[10px] text-slate-500">
+                            <span className="inline-block h-2 w-4 rounded-sm" style={{ backgroundColor: "rgba(239, 68, 68, 0.85)" }} />
+                            <span>Your move</span>
+                            <span className="inline-block h-2 w-4 rounded-sm ml-2" style={{ backgroundColor: "rgba(34, 197, 94, 0.85)" }} />
+                            <span>Best move</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}

@@ -769,12 +769,30 @@ function deriveLeakTags(args: {
       } catch { /* best effort */ }
     }
 
-    // Hanging piece: user's move might leave something hanging
-    if (cpLoss >= 200 && userParsed) {
-      const movedPiece = chess.get(userParsed.from as Parameters<Chess["get"]>[0]);
-      if (movedPiece && movedPiece.type !== "p" && movedPiece.type !== "k") {
-        tags.add("Hanging Piece");
-      }
+    // Hanging piece: after user's move, does a piece become undefended and attackable?
+    if (cpLoss >= 100 && userParsed) {
+      try {
+        const afterChess = new Chess(fenBefore);
+        afterChess.move({ from: userParsed.from, to: userParsed.to, promotion: userParsed.promotion } as any);
+        // Check if opponent can capture a piece (the engine's best reply is a capture)
+        if (bestParsed) {
+          const bestReplyTarget = afterChess.get(bestParsed.to as Parameters<Chess["get"]>[0]);
+          if (bestReplyTarget && bestReplyTarget.type !== "k") {
+            const pv: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+            if (pv[bestReplyTarget.type] >= 3) {
+              tags.add("Hanging Piece");
+            }
+          }
+        }
+        // Also tag if user moved a piece to a square where it's immediately attacked
+        const movedPiece = chess.get(userParsed.from as Parameters<Chess["get"]>[0]);
+        if (movedPiece && movedPiece.type !== "p" && movedPiece.type !== "k") {
+          const attackers = afterChess.moves({ verbose: true }).filter(m => m.to === userParsed!.to && m.captured);
+          if (attackers.length > 0) {
+            tags.add("Hanging Piece");
+          }
+        }
+      } catch { /* best effort */ }
     }
 
     // En passant
@@ -880,11 +898,11 @@ function deriveLeakTags(args: {
         const isPush2 = Math.abs(toRank - fromRank) === 2;
         const toFile = userParsed.to.charCodeAt(0) - 97;
         const isCentralFile = toFile >= 1 && toFile <= 6; // b-g files
-        if (isPush2 && isCentralFile && cpLoss >= 25) {
+        if (isPush2 && isCentralFile && cpLoss >= 15) {
           tags.add("Premature Pawn Break");
         }
         // Also catch single-square pawn pushes that are positionally wrong
-        if (!isPush2 && isCentralFile && cpLoss >= 40) {
+        if (!isPush2 && isCentralFile && cpLoss >= 20) {
           tags.add("Premature Pawn Break");
         }
       }
@@ -895,14 +913,14 @@ function deriveLeakTags(args: {
         const userToRank = parseInt(userParsed.to[1]);
         const isRetreat = userPiece.color === "w" ? userToRank < userFromRank : userToRank > userFromRank;
         // Any retreat (not just back rank) counts if it costs enough
-        if (isRetreat && cpLoss >= 30) {
+        if (isRetreat && cpLoss >= 15) {
           tags.add("Passive Retreat");
         }
       }
 
       // --- Greedy Pawn Grab: non-pawn captures a pawn but best move develops / doesn't capture ---
       if (isUserCapture && userPiece && userTarget?.type === "p" && userPiece.type !== "p" && userPiece.type !== "k") {
-        if (!isBestCapture && cpLoss >= 20) {
+        if (!isBestCapture && cpLoss >= 10) {
           tags.add("Greedy Pawn Grab");
         }
       }
@@ -913,7 +931,7 @@ function deriveLeakTags(args: {
         const capturedVal = pv[userTarget.type] ?? 0;
         // Equal-value trade while ahead — lower bar, also include pawn-for-pawn
         if (Math.abs(userPieceVal - capturedVal) <= 1 && capturedVal >= 1) {
-          if (cpLoss >= 40) {
+          if (cpLoss >= 20) {
             tags.add("Trading Advantage");
           }
         }
@@ -974,7 +992,7 @@ function deriveLeakTags(args: {
         const toRankNum = parseInt(userParsed.to[1]);
         const isRim = toFile === "a" || toFile === "h";
         const isCorner = isRim && (toRankNum === 1 || toRankNum === 8);
-        if ((isRim && cpLoss >= 20) || (isCorner && cpLoss >= 10)) {
+        if ((isRim && cpLoss >= 10) || (isCorner && cpLoss >= 5)) {
           tags.add("Piece Activity");
         }
       }
@@ -993,7 +1011,7 @@ function deriveLeakTags(args: {
         const fromCenter = Math.abs(fromFile - 3.5) + Math.abs(fromRank - 4.5);
         const toCenter = Math.abs(toFile - 3.5) + Math.abs(toRank - 4.5);
         // Moving away from center with no capture
-        if (toCenter > fromCenter + 1 && cpLoss >= 25) {
+        if (toCenter > fromCenter + 1 && cpLoss >= 15) {
           tags.add("Aimless Move");
         }
       }
@@ -1002,7 +1020,7 @@ function deriveLeakTags(args: {
       if (userPiece?.type === "p" && !isUserCapture) {
         const toRankNum = parseInt(userParsed.to[1]);
         const isOverextended = userPiece.color === "w" ? toRankNum >= 6 : toRankNum <= 3;
-        if (isOverextended && cpLoss >= 25) {
+        if (isOverextended && cpLoss >= 15) {
           tags.add("Overextended Pawn");
         }
       }
@@ -1014,7 +1032,7 @@ function deriveLeakTags(args: {
         const userToFile = userParsed.to.charCodeAt(0) - 97;
         const bestCenterDist = Math.abs(bestToFile - 3.5) + Math.abs(bestToRank - 4.5);
         const userCenterDist = Math.abs(userToFile - 3.5) + Math.abs(parseInt(userParsed.to[1]) - 4.5);
-        if (bestCenterDist <= 2 && userCenterDist >= 4 && cpLoss >= 30) {
+        if (bestCenterDist <= 2 && userCenterDist >= 4 && cpLoss >= 15) {
           tags.add("Center Neglect");
         }
       }
@@ -1250,11 +1268,21 @@ function deriveTacticTags(args: {
     }
 
     // --- Hanging piece (user left a piece hanging) ---
-    if (cpLoss >= 200 && userParsed) {
-      const movedPiece = chess.get(userParsed.from as any);
-      if (movedPiece && movedPiece.type !== "p" && movedPiece.type !== "k") {
-        tags.push("Hanging Piece");
-      }
+    if (cpLoss >= 100 && userParsed) {
+      try {
+        const afterChess = new Chess(fenBefore);
+        afterChess.move({ from: userParsed.from, to: userParsed.to, promotion: userParsed.promotion } as any);
+        // Check if opponent can capture a piece for free
+        const oppMoves = afterChess.moves({ verbose: true });
+        const freeCaptures = oppMoves.filter(m => {
+          if (!m.captured) return false;
+          const pv: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+          return pv[m.captured] >= 3; // at least a minor piece hanging
+        });
+        if (freeCaptures.length > 0) {
+          tags.push("Hanging Piece");
+        }
+      } catch { /* best effort */ }
     }
 
     // --- Overloaded piece ---
@@ -1782,6 +1810,7 @@ export async function analyzeOpeningLeaksInBrowser(
     "Premature Pawn Break", "Weakened Pawn Structure", "Wrong Recapture",
     "Missed Development", "Piece Activity", "King Exposure",
     "Neglected Castling", "Aimless Move", "Overextended Pawn", "Center Neglect",
+    "Hanging Piece",
   ]);
   let repeatedPositions = 0;
 
@@ -1986,9 +2015,9 @@ export async function analyzeOpeningLeaksInBrowser(
   });
 
   /* ── One-off opening mistakes (positions reached exactly 2 times with significant cpLoss) ── */
-  const ONE_OFF_CP_THRESHOLD = 150; // higher bar since there's less data
-  const MAX_ONE_OFFS = 20;
-  const MAX_ONE_OFF_SCREENS = 60; // cap positions to screen for speed
+  const ONE_OFF_CP_THRESHOLD = 100; // lowered from 150 — catch more habits
+  const MAX_ONE_OFFS = 30;
+  const MAX_ONE_OFF_SCREENS = 100; // was 60 — scan more positions
   const ONE_OFF_SCREEN_DEPTH = 5; // cheaper screen pass
   const oneOffEntries = [...byFen.entries()].filter(
     ([, data]) => data.totalReachCount >= 2 && data.totalReachCount < MIN_POSITION_REPEATS
@@ -2114,13 +2143,13 @@ export async function analyzeOpeningLeaksInBrowser(
   oneOffMistakes.sort((a, b) => b.cpLoss - a.cpLoss);
 
   /* ── Positional scan for single-occurrence positions (count=1) ── */
-  const MAX_POSITIONAL_SCREENS = 80;
+  const MAX_POSITIONAL_SCREENS = 150; // was 80
   const POSITIONAL_SCREEN_DEPTH = 5;
   const singleEntries = [...byFen.entries()]
     .filter(([, data]) => data.totalReachCount === 1)
     .slice(0, MAX_POSITIONAL_SCREENS);
 
-  if (singleEntries.length > 0 && positionalFindings.length < 30) {
+  if (singleEntries.length > 0 && positionalFindings.length < 60) {
     emitProgress(options, {
       phase: "eval",
       message: "🎯 Scanning for positional patterns",
@@ -2129,7 +2158,7 @@ export async function analyzeOpeningLeaksInBrowser(
     });
 
     await parallelForEach(singleEntries, stockfishPool.size, async ([fenBefore, data]) => {
-      if (positionalFindings.length >= 30) return;
+      if (positionalFindings.length >= 60) return;
 
       let chosenMove = "";
       let chosenCount = -1;
@@ -2152,7 +2181,7 @@ export async function analyzeOpeningLeaksInBrowser(
       const scEvalAfter = scoreToCpFromUserPerspective(scAfter.cp, oppToMove, sideToMove);
       const scCpLoss = scEvalBefore - scEvalAfter;
 
-      if (scCpLoss < 10 || scCpLoss > 300) return; // only positional range
+      if (scCpLoss < 5 || scCpLoss > 300) return; // lowered from 10 — catch more subtle patterns
 
       const posTags = deriveLeakTags({
         fenBefore,
