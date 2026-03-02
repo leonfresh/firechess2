@@ -632,17 +632,42 @@ function saveGameCache(username: string, source: string, tc: string[], games: So
   }
 }
 
-function sanForMove(fen: string, move: string | null): string | null {
-  const parsed = normalizeUci(move);
-  if (!parsed) return null;
-
+/**
+ * Parse a move (UCI like "e2e4" or SAN like "Nf3") into from/to/promotion squares.
+ * Returns null if the move is invalid for the given position.
+ */
+function parseMoveToSquares(fen: string, move: string | null): MoveSquare | null {
+  if (!move) return null;
+  // Try UCI first
+  const uciParsed = normalizeUci(move);
+  if (uciParsed) return uciParsed;
+  // Fall back to SAN
   try {
     const chess = new Chess(fen);
-    const result = chess.move({
-      from: parsed.from,
-      to: parsed.to,
-      promotion: parsed.promotion as "q" | "r" | "b" | "n" | undefined
-    });
+    const result = chess.move(move);
+    if (!result) return null;
+    return { from: result.from, to: result.to, promotion: result.promotion ?? undefined };
+  } catch {
+    return null;
+  }
+}
+
+function sanForMove(fen: string, move: string | null): string | null {
+  if (!move) return null;
+  try {
+    const chess = new Chess(fen);
+    // Try UCI-style first
+    const uciParsed = normalizeUci(move);
+    if (uciParsed) {
+      const result = chess.move({
+        from: uciParsed.from,
+        to: uciParsed.to,
+        promotion: uciParsed.promotion as "q" | "r" | "b" | "n" | undefined
+      });
+      return result?.san ?? null;
+    }
+    // Fall back to SAN (move might already be SAN)
+    const result = chess.move(move);
     return result?.san ?? null;
   } catch {
     return null;
@@ -661,6 +686,10 @@ function deriveLeakTags(args: {
   const { fenBefore, userMove, bestMove, cpLoss, reachCount, moveCount } = args;
   const userSan = sanForMove(fenBefore, userMove);
   const bestSan = sanForMove(fenBefore, bestMove);
+
+  // Parse moves to from/to squares — handles both UCI and SAN
+  const userParsedEarly = parseMoveToSquares(fenBefore, userMove);
+  const bestParsedEarly = parseMoveToSquares(fenBefore, bestMove);
 
   // === Severity ===
   if (cpLoss >= 600) tags.add("Crushing");
@@ -716,17 +745,16 @@ function deriveLeakTags(args: {
     }
 
     // Promotion
-    if (userMove.length === 5) {
-      const promo = userMove[4];
-      if (promo === "q") tags.add("Promotion");
+    if (userParsedEarly?.promotion) {
+      if (userParsedEarly.promotion === "q") tags.add("Promotion");
       else tags.add("Underpromotion");
     }
-    if (bestMove && bestMove.length === 5) {
+    if (bestParsedEarly?.promotion) {
       tags.add("Promotion");
     }
 
-    const bestParsed = normalizeUci(bestMove);
-    const userParsed = normalizeUci(userMove);
+    const bestParsed = bestParsedEarly;
+    const userParsed = userParsedEarly;
     const centerSquares = new Set(["d4", "e4", "d5", "e5"]);
 
     if (bestParsed && userParsed && centerSquares.has(bestParsed.to) && !centerSquares.has(userParsed.to)) {

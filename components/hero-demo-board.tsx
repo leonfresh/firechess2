@@ -5,6 +5,7 @@ import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
+import type { RepeatedOpeningLeak } from "@/lib/types";
 
 /* ── Mini eval bar (matches the real EvalBar look) ── */
 function MiniEvalBar({ evalCp, height }: { evalCp: number; height: number }) {
@@ -174,17 +175,43 @@ const SCENARIOS: DemoScenario[] = [
   },
 ];
 
-function moveToArrow(fen: string, uci: string, color: string): [string, string, string?] | null {
-  if (!uci || uci.length < 4) return null;
+function moveToArrow(fen: string, move: string, color: string): [string, string, string?] | null {
+  if (!move) return null;
   try {
     const chess = new Chess(fen);
-    const result = chess.move({
-      from: uci.slice(0, 2),
-      to: uci.slice(2, 4),
-      promotion: (uci.slice(4, 5).toLowerCase() || undefined) as "q" | "r" | "b" | "n" | undefined,
-    });
+    // Try UCI first
+    if (/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(move)) {
+      const result = chess.move({
+        from: move.slice(0, 2),
+        to: move.slice(2, 4),
+        promotion: (move.slice(4, 5).toLowerCase() || undefined) as "q" | "r" | "b" | "n" | undefined,
+      });
+      if (result?.from && result?.to) return [result.from, result.to, color];
+    }
+    // Fall back to SAN
+    const result = chess.move(move);
     if (!result?.from || !result?.to) return null;
     return [result.from, result.to, color];
+  } catch {
+    return null;
+  }
+}
+
+/** Convert a move (UCI or SAN) to SAN notation for display */
+function toSan(fen: string, move: string | null): string | null {
+  if (!move) return null;
+  try {
+    const chess = new Chess(fen);
+    if (/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(move)) {
+      const result = chess.move({
+        from: move.slice(0, 2),
+        to: move.slice(2, 4),
+        promotion: (move.slice(4, 5).toLowerCase() || undefined) as "q" | "r" | "b" | "n" | undefined,
+      });
+      return result?.san ?? null;
+    }
+    const result = chess.move(move);
+    return result?.san ?? null;
   } catch {
     return null;
   }
@@ -199,7 +226,52 @@ function badgeColor(badge: DemoScenario["badge"]): string {
   return badge === "Mistake" ? "#f59e0b" : "#818cf8";
 }
 
-export function HeroDemoBoard({ paused }: { paused?: boolean }) {
+/** Convert user report leaks into demo scenarios */
+function leaksToScenarios(leaks: RepeatedOpeningLeak[]): DemoScenario[] {
+  // Pick the most interesting leaks — mix of mistakes and sidelines
+  const mistakes = leaks.filter((l) => !l.dbApproved && l.cpLoss >= 30).sort((a, b) => b.cpLoss - a.cpLoss);
+  const sidelines = leaks.filter((l) => l.dbApproved).sort((a, b) => b.reachCount - a.reachCount);
+
+  const picked: RepeatedOpeningLeak[] = [];
+  // Alternate between mistakes and sidelines, up to 6 total
+  const mMax = Math.min(mistakes.length, 4);
+  const sMax = Math.min(sidelines.length, 3);
+  let mi = 0, si = 0;
+  while (picked.length < 6 && (mi < mMax || si < sMax)) {
+    if (mi < mMax) picked.push(mistakes[mi++]);
+    if (picked.length < 6 && si < sMax) picked.push(sidelines[si++]);
+  }
+
+  return picked
+    .map((l): DemoScenario | null => {
+      const playedSan = toSan(l.fenBefore, l.userMove);
+      const bestSan = toSan(l.fenBefore, l.bestMove);
+      if (!playedSan || !bestSan) return null;
+
+      const isSideline = !!l.dbApproved;
+      return {
+        title: isSideline ? "Offbeat Sideline" : "Repeated Opening Leak",
+        tag: isSideline ? "Sideline" : "Mistake",
+        tagColor: isSideline ? "indigo" : "amber",
+        fen: l.fenBefore,
+        bestMove: l.bestMove ?? "",
+        playedMove: l.userMove,
+        playedSan,
+        bestSan,
+        badge: isSideline ? "Sideline" : "Mistake",
+        evalBefore: l.evalBefore,
+        evalAfter: l.evalAfter,
+        cpLoss: l.cpLoss,
+        reachCount: l.reachCount,
+        moveCount: l.moveCount,
+        repeatedHabit: l.reachCount > 0 && l.moveCount / l.reachCount >= 0.7,
+        dbApproved: !!l.dbApproved,
+      };
+    })
+    .filter((s): s is DemoScenario => s !== null);
+}
+
+export function HeroDemoBoard({ paused, userLeaks }: { paused?: boolean; userLeaks?: RepeatedOpeningLeak[] }) {
   const { ref: heroBoardRef, size: heroBoardSize } = useBoardSize(380);
   const boardTheme = useBoardTheme();
   const showCoords = useShowCoordinates();
@@ -207,13 +279,16 @@ export function HeroDemoBoard({ paused }: { paused?: boolean }) {
   const [autoplay, setAutoplay] = useState(true);
 
   const scenarios = useMemo(() => {
-    return SCENARIOS.map((s) => ({
+    const base = (userLeaks?.length ? leaksToScenarios(userLeaks) : []).length > 0
+      ? leaksToScenarios(userLeaks!)
+      : SCENARIOS;
+    return base.map((s) => ({
       ...s,
       bestArrow: moveToArrow(s.fen, s.bestMove, "rgba(34,197,94,0.95)"),
       mistakeArrow: moveToArrow(s.fen, s.playedMove, "rgba(239,68,68,0.95)"),
       dbArrow: s.dbPick ? moveToArrow(s.fen, s.dbPick.uci, "rgba(59,130,246,0.85)") : null,
     }));
-  }, []);
+  }, [userLeaks]);
 
   const current = useMemo(() => scenarios[index % scenarios.length], [index, scenarios]);
 

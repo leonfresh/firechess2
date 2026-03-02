@@ -17,7 +17,7 @@ import { StrengthsRadar, RadarLegend, InsightCards, computeRadarData } from "@/c
 import { analyzeOpeningLeaksInBrowser } from "@/lib/client-analysis";
 import type { AnalysisProgress } from "@/lib/client-analysis";
 import type { AnalysisSource, ScanMode, TimeControl } from "@/lib/client-analysis";
-import type { AnalyzeResponse } from "@/lib/types";
+import type { AnalyzeResponse, RepeatedOpeningLeak } from "@/lib/types";
 import { fetchExplorerMoves } from "@/lib/lichess-explorer";
 import { shareReportCard } from "@/lib/share-report";
 import { earnCoins, spendCoins, hasPurchased, getBalance } from "@/lib/coins";
@@ -225,6 +225,25 @@ export default function HomePage() {
       // ignore storage write failures
     }
   }, [gameCount, moveCount, cpThreshold, engineDepth, source, scanMode, speed, gameRangeMode, sinceDate, cardViewMode, username]);
+
+  /* ── Fetch latest saved report leaks for personalized hero board ── */
+  const [heroLeaks, setHeroLeaks] = useState<RepeatedOpeningLeak[]>([]);
+  useEffect(() => {
+    if (!authenticated) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/reports");
+        if (!res.ok) return;
+        const json = await res.json();
+        const latest = json.reports?.[0];
+        if (!cancelled && latest?.leaks?.length) {
+          setHeroLeaks(latest.leaks as RepeatedOpeningLeak[]);
+        }
+      } catch { /* silent */ }
+    })();
+    return () => { cancelled = true; };
+  }, [authenticated]);
 
   const leaks = useMemo(() => result?.leaks ?? [], [result]);
   /** Leak count excluding DB-approved sidelines — used for radar/scoring so sidelines don't penalize */
@@ -814,7 +833,7 @@ export default function HomePage() {
             </div>
 
             <div className={heroAnim(5)}>
-              <HeroDemoBoard paused={puzzleBoardOpen} />
+              <HeroDemoBoard paused={puzzleBoardOpen} userLeaks={heroLeaks} />
             </div>
           </header>
 
