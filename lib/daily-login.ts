@@ -132,6 +132,13 @@ export function claimDailyReward(): { reward: DayReward; newBalance: number; sta
     } catch { /* ignore */ }
 
     window.dispatchEvent(new CustomEvent("fc-coins-changed", { detail: newBalance }));
+
+    // Background DB sync
+    fetch("/api/coins", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "earn", reason: "daily_streak" }),
+    }).catch(() => {});
   }
 
   const newState: LoginState = {

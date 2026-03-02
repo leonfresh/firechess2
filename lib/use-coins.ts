@@ -5,8 +5,8 @@
  * Listens for custom events so all components update in sync.
  */
 
-import { useEffect, useState, useCallback } from "react";
-import { getBalance, getLog, type CoinTransaction } from "@/lib/coins";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { getBalance, getLog, syncCoinsFromDb, type CoinTransaction } from "@/lib/coins";
 import {
   getActiveTheme,
   getActiveTitle,
@@ -23,9 +23,17 @@ import {
 
 export function useCoinBalance(): number {
   const [balance, setBalance] = useState(0);
+  const syncedRef = useRef(false);
 
   useEffect(() => {
     setBalance(getBalance());
+
+    // Sync from DB on first mount (fire-and-forget)
+    if (!syncedRef.current) {
+      syncedRef.current = true;
+      syncCoinsFromDb().catch(() => {});
+    }
+
     const handler = (e: Event) => {
       setBalance((e as CustomEvent).detail as number);
     };

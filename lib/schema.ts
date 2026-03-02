@@ -274,3 +274,27 @@ export const studyTasks = pgTable("study_task", {
 
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
 });
+
+/* ------------------------------------------------------------------ */
+/*  Custom: coin economy (server-authoritative)                         */
+/* ------------------------------------------------------------------ */
+
+export const userCoins = pgTable("user_coins", {
+  userId: text("userId")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  balance: integer("balance").notNull().default(0),
+  updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow(),
+});
+
+export const coinPurchases = pgTable("coin_purchase", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  itemId: text("itemId").notNull(),
+  amount: integer("amount").notNull(),
+  purchasedAt: timestamp("purchasedAt", { mode: "date" }).defaultNow(),
+});

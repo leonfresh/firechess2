@@ -4,10 +4,10 @@
  * Coins are earned from activities throughout the app and can be spent
  * in the Coin Shop on cosmetic items (board themes, profile titles).
  *
- * Storage: localStorage keys
- *   - "fc-coins"       → number (balance)
- *   - "fc-coin-log"    → CoinTransaction[] (recent history, capped at 50)
- *   - "fc-coin-shop"   → string[] (purchased item IDs)
+ * Storage: localStorage (instant cache) + Neon DB (authoritative, via /api/coins).
+ * On page load the DB state is fetched and overwrites localStorage.
+ * Every earn/spend writes to localStorage immediately (for UI speed)
+ * and fires a background POST to /api/coins so the DB stays in sync.
  */
 
 /* ------------------------------------------------------------------ */
@@ -57,9 +57,87 @@ const KEY_LOG     = "fc-coin-log";
 const KEY_SHOP    = "fc-coin-shop";
 const KEY_SCAN_DAY = "fc-scan-coin-day";
 const KEY_STUDY_DAY = "fc-study-coin-day";
+const KEY_SYNCED  = "fc-coins-synced";
 const MAX_LOG     = 50;
 const MAX_SCAN_REWARDS_PER_DAY = 3;
 const MAX_STUDY_REWARDS_PER_DAY = 20;
+
+/* ------------------------------------------------------------------ */
+/*  DB sync helpers (fire-and-forget)                                   */
+/* ------------------------------------------------------------------ */
+
+/** Background POST to /api/coins — never throws. */
+function dbEarn(reason: string): void {
+  fetch("/api/coins", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "earn", reason }),
+  }).catch(() => {/* offline / unauthenticated — localStorage only */});
+}
+
+/** Background spend to /api/coins — never throws. */
+function dbSpend(amount: number, itemId: string): void {
+  fetch("/api/coins", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "spend", amount, itemId }),
+  }).catch(() => {});
+}
+
+/**
+ * Sync from DB → localStorage on page load.
+ * If the user has never synced, migrates localStorage → DB first.
+ * Returns { balance, purchases } from the authoritative source.
+ */
+export async function syncCoinsFromDb(): Promise<{ balance: number; purchases: string[] } | null> {
+  if (typeof window === "undefined") return null;
+
+  const alreadySynced = localStorage.getItem(KEY_SYNCED);
+
+  if (!alreadySynced) {
+    // First time: push localStorage state to DB (migration)
+    const localBalance = getBalance();
+    const localPurchases = getPurchased();
+    try {
+      const res = await fetch("/api/coins", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "sync", balance: localBalance, purchases: localPurchases }),
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      // Write DB-authoritative state back to localStorage
+      localStorage.setItem(KEY_BALANCE, String(data.balance ?? 0));
+      if (data.purchases?.length) {
+        localStorage.setItem(KEY_SHOP, JSON.stringify(data.purchases));
+      }
+      localStorage.setItem(KEY_SYNCED, "1");
+      window.dispatchEvent(new CustomEvent("fc-coins-changed", { detail: data.balance ?? 0 }));
+      return { balance: data.balance ?? 0, purchases: data.purchases ?? [] };
+    } catch {
+      return null; // offline — stay on localStorage
+    }
+  }
+
+  // Already synced before — fetch latest from DB
+  try {
+    const res = await fetch("/api/coins");
+    if (!res.ok) return null;
+    const data = await res.json();
+    localStorage.setItem(KEY_BALANCE, String(data.balance ?? 0));
+    if (data.purchases?.length) {
+      localStorage.setItem(KEY_SHOP, JSON.stringify(data.purchases));
+    }
+    window.dispatchEvent(new CustomEvent("fc-coins-changed", { detail: data.balance ?? 0 }));
+    return { balance: data.balance ?? 0, purchases: data.purchases ?? [] };
+  } catch {
+    return null;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Public API (unchanged signatures — callers don't need changes)      */
+/* ------------------------------------------------------------------ */
 
 /** Read current coin balance. */
 export function getBalance(): number {
@@ -120,6 +198,10 @@ export function earnCoins(reason: Exclude<CoinReason, "shop_purchase">): number 
 
   // Dispatch custom event so UI can react instantly
   window.dispatchEvent(new CustomEvent("fc-coins-changed", { detail: balance }));
+
+  // Background DB sync
+  dbEarn(reason);
+
   return amount;
 }
 
@@ -149,6 +231,10 @@ export function spendCoins(amount: number, itemId: string): boolean {
   }
 
   window.dispatchEvent(new CustomEvent("fc-coins-changed", { detail: newBalance }));
+
+  // Background DB sync
+  dbSpend(amount, itemId);
+
   return true;
 }
 
