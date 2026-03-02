@@ -26,24 +26,29 @@ function GridModal({ children, onClose }: { children: ReactNode; onClose: () => 
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] overflow-hidden" onClick={onClose}>
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-      {/* Modal */}
-      <div
-        className="relative z-10 max-h-[95vh] w-full max-w-5xl overflow-y-auto rounded-3xl border border-white/[0.1] bg-slate-950 shadow-2xl shadow-black/50 animate-fade-in-up"
-        onClick={e => e.stopPropagation()}
-      >
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white"
-          aria-label="Close"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
-        </button>
-        <div className="p-4 sm:p-6">
-          {children}
+      {/* Scroll container — only this scrolls */}
+      <div className="absolute inset-0 overflow-y-auto">
+        <div className="flex min-h-full items-start justify-center p-3 sm:p-6 py-8 sm:py-12">
+          {/* Modal */}
+          <div
+            className="relative z-10 w-full max-w-5xl rounded-3xl border border-white/[0.1] bg-slate-950 shadow-2xl shadow-black/50 animate-fade-in-up"
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white"
+              aria-label="Close"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+            </button>
+            <div className="p-4 sm:p-6">
+              {children}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -130,12 +135,14 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
               className="group relative overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.02] transition-all hover:border-white/[0.15] hover:bg-white/[0.04] animate-fade-in-up text-left"
               style={{ animationDelay: `${Math.min(idx, 12) * 50}ms` }}
             >
-              {/* Preview: scaled-down card clipped to fixed height */}
-              <div className="pointer-events-none h-[360px] origin-top-left scale-[0.55] overflow-hidden" style={{ width: "182%" }}>
-                {child}
+              {/* Preview: scaled-down card clipped to visible area */}
+              <div className="pointer-events-none h-[280px] overflow-hidden">
+                <div className="origin-top-left scale-[0.48]" style={{ width: "208%" }}>
+                  {child}
+                </div>
               </div>
               {/* Gradient fade at bottom */}
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#0a0a0f] via-[#0a0a0f]/80 to-transparent" />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent" />
               {/* Expand overlay */}
               <div className="absolute inset-x-0 bottom-0 flex items-center justify-center pb-3 pt-8">
                 <span className="flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-white/80 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
