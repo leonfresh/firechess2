@@ -27,29 +27,24 @@ function GridModal({ children, onClose }: { children: ReactNode; onClose: () => 
   }, [onClose]);
 
   const modal = (
-    <div className="fixed inset-0 z-[9999] overflow-hidden" onClick={onClose}>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4" onClick={onClose}>
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-      {/* Scroll container — only this div scrolls, overscroll-behavior prevents page scroll bleed */}
-      <div className="absolute inset-0 overflow-y-auto overscroll-contain">
-        <div className="flex min-h-full items-start justify-center p-3 sm:p-6 py-8 sm:py-12">
-          {/* Modal */}
-          <div
-            className="relative z-10 w-full max-w-5xl rounded-3xl border border-white/[0.1] bg-slate-950 shadow-2xl shadow-black/50 animate-fade-in-up"
-            onClick={e => e.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={onClose}
-              className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white"
-              aria-label="Close"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
-            </button>
-            <div className="p-4 sm:p-6">
-              {children}
-            </div>
-          </div>
+      {/* Modal — scroll lives on the card itself, matching ExplanationModal */}
+      <div
+        className="relative z-10 max-h-[95vh] w-full max-w-5xl overflow-y-auto rounded-3xl border border-white/[0.1] bg-slate-950 shadow-2xl shadow-black/50 animate-fade-in-up"
+        onClick={e => e.stopPropagation()}
+      >
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white"
+          aria-label="Close"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+        </button>
+        <div className="p-4 sm:p-6">
+          {children}
         </div>
       </div>
     </div>
