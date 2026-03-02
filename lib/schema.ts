@@ -142,6 +142,7 @@ export const reports = pgTable("report", {
   missedTactics: jsonb("missedTactics").default([]),
   diagnostics: jsonb("diagnostics"),
   mentalStats: jsonb("mentalStats"),
+  timeManagement: jsonb("timeManagement"),
 
   /* dedup: SHA-256 of (userId + chessUsername + source + scanMode + sorted game IDs summary) */
   contentHash: text("contentHash"),

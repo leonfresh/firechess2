@@ -9,6 +9,7 @@
  *   3. Blunder Spotter — find the best move from your own game positions
  *   4. Opening Trainer — practice your opening leaks
  *   5. Endgame Gym — practice your weakest endgame types
+ *   6. Time Pressure — revisit rushed/overthought moments with a timer
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -27,7 +28,7 @@ import { earnCoins } from "@/lib/coins";
 /*  Types                                                               */
 /* ------------------------------------------------------------------ */
 
-type Mode = "weakness" | "speed" | "blunder" | "opening" | "endgame";
+type Mode = "weakness" | "speed" | "blunder" | "opening" | "endgame" | "time";
 
 type SavedReport = {
   id: string;
@@ -35,6 +36,7 @@ type SavedReport = {
   leaks: any[];
   missedTactics: any[];
   diagnostics: any;
+  timeManagement: any;
   createdAt: string;
 };
 
@@ -57,6 +59,22 @@ type DrillPosition = {
   bestMove: string;
   label: string;
   cpLoss?: number;
+};
+
+type TimePressurePosition = {
+  fen: string;
+  bestMove: string;
+  userMove: string;
+  userColor: "white" | "black";
+  timeSpentSec: number;
+  verdict: "wasted" | "rushed";
+  reason: string;
+  cpLoss: number | null;
+  complexity: number;
+  isTactical: boolean;
+  evalBefore: number | null;
+  moveNumber: number;
+  gameIndex: number;
 };
 
 /* ------------------------------------------------------------------ */
@@ -253,6 +271,44 @@ function buildOpeningPositions(reports: SavedReport[]): DrillPosition[] {
   return positions;
 }
 
+/** Build time-pressure drill positions from time management moments */
+function buildTimePositions(reports: SavedReport[]): TimePressurePosition[] {
+  const positions: TimePressurePosition[] = [];
+  const seenFens = new Set<string>();
+  for (const r of reports) {
+    const moments = r.timeManagement?.moments;
+    if (!Array.isArray(moments)) continue;
+    for (const m of moments) {
+      if (m.verdict !== "wasted" && m.verdict !== "rushed") continue;
+      if (!m.fen || !m.bestMove) continue;
+      if (seenFens.has(m.fen)) continue;
+      seenFens.add(m.fen);
+      positions.push({
+        fen: m.fen,
+        bestMove: m.bestMove,
+        userMove: m.userMove,
+        userColor: m.userColor,
+        timeSpentSec: m.timeSpentSec,
+        verdict: m.verdict,
+        reason: m.reason,
+        cpLoss: m.cpLoss,
+        complexity: m.complexity,
+        isTactical: m.isTactical,
+        evalBefore: m.evalBefore,
+        moveNumber: m.moveNumber,
+        gameIndex: m.gameIndex,
+      });
+    }
+  }
+  // Sort by worst first: rushed with high cpLoss, wasted with most time
+  positions.sort((a, b) => {
+    const aScore = (a.cpLoss ?? 0) + (a.verdict === "wasted" ? a.timeSpentSec * 10 : 0);
+    const bScore = (b.cpLoss ?? 0) + (b.verdict === "wasted" ? b.timeSpentSec * 10 : 0);
+    return bScore - aScore;
+  });
+  return positions;
+}
+
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
@@ -309,6 +365,14 @@ const MODES: {
     description: "Sharpen your weakest endgame types with targeted puzzles",
     icon: "♚",
     gradient: "from-cyan-500/20 to-blue-500/20",
+    needsReport: true,
+  },
+  {
+    id: "time",
+    title: "Time Pressure",
+    description: "Revisit moments where you rushed or overthought — with a timer",
+    icon: "⏱️",
+    gradient: "from-violet-500/20 to-purple-500/20",
     needsReport: true,
   },
 ];
@@ -744,6 +808,228 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  TimePressureBoard — timed position replay for time management      */
+/* ------------------------------------------------------------------ */
+
+type TimePressureBoardProps = {
+  position: TimePressurePosition;
+  onResult: (correct: boolean, thinkTimeSec: number) => void;
+  showHint?: boolean;
+};
+
+function TimePressureBoard({ position, onResult, showHint }: TimePressureBoardProps) {
+  const { ref: boardRef, size: boardSize } = useBoardSize(720, { evalBar: false });
+  const boardTheme = useBoardTheme();
+  const [game, setGame] = useState(() => new Chess(position.fen));
+  const [status, setStatus] = useState<"playing" | "correct" | "wrong">("playing");
+  const [attempts, setAttempts] = useState(0);
+  const MAX_ATTEMPTS = 3;
+  const [shaking, setShaking] = useState(false);
+  const [moveIndicator, setMoveIndicator] = useState<{ square: string; type: "correct" | "wrong" } | null>(null);
+  const orientation = position.userColor;
+
+  // Timer
+  const [thinkTime, setThinkTime] = useState(0);
+  const thinkTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startTimeRef = useRef(Date.now());
+
+  const expected = parseUci(position.bestMove);
+
+  useEffect(() => {
+    preloadSounds();
+    startTimeRef.current = Date.now();
+    thinkTimerRef.current = setInterval(() => {
+      setThinkTime(Math.floor((Date.now() - startTimeRef.current) / 1000));
+    }, 200);
+    return () => {
+      if (thinkTimerRef.current) clearInterval(thinkTimerRef.current);
+    };
+  }, []);
+
+  const stopTimer = useCallback(() => {
+    if (thinkTimerRef.current) {
+      clearInterval(thinkTimerRef.current);
+      thinkTimerRef.current = null;
+    }
+  }, []);
+
+  const handleDrop = useCallback(
+    (from: CbSquare, to: CbSquare) => {
+      if (status !== "playing") return false;
+      if (from === expected.from && to === expected.to) {
+        const newGame = new Chess(game.fen());
+        try {
+          newGame.move({ from, to, promotion: expected.promotion ?? "q" });
+        } catch {
+          return false;
+        }
+        playSound("correct");
+        setGame(new Chess(newGame.fen()));
+        setMoveIndicator({ square: to, type: "correct" });
+        setStatus("correct");
+        stopTimer();
+        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+        onResult(true, elapsed);
+        return true;
+      }
+
+      // Wrong move
+      playSound("wrong");
+      setMoveIndicator({ square: to, type: "wrong" });
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
+      setShaking(true);
+      setTimeout(() => setShaking(false), 500);
+      setTimeout(() => setMoveIndicator(null), 800);
+
+      if (newAttempts >= MAX_ATTEMPTS) {
+        setStatus("wrong");
+        stopTimer();
+        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
+        setTimeout(() => {
+          const g = new Chess(game.fen());
+          try {
+            g.move({ from: expected.from, to: expected.to, promotion: expected.promotion });
+            setGame(new Chess(g.fen()));
+          } catch {}
+        }, 600);
+        setTimeout(() => onResult(false, elapsed), 2500);
+      }
+
+      return false;
+    },
+    [game, expected, status, onResult, attempts, stopTimer]
+  );
+
+  const customSquareStyles: Record<string, React.CSSProperties> = {};
+  if (showHint && status === "playing") {
+    customSquareStyles[expected.from] = {
+      boxShadow: "inset 0 0 20px 6px rgba(34, 197, 94, 0.5)",
+      borderRadius: "4px",
+    };
+  }
+  if (status === "wrong") {
+    customSquareStyles[expected.from] = {
+      boxShadow: "inset 0 0 16px 4px rgba(239, 68, 68, 0.5)",
+    };
+    customSquareStyles[expected.to] = {
+      boxShadow: "inset 0 0 16px 4px rgba(34, 197, 94, 0.5)",
+    };
+  }
+
+  // Compute time comparison
+  const originalTimeSec = position.timeSpentSec;
+  const verdictLabel = position.verdict === "rushed" ? "You rushed this" : "You overthought this";
+  const verdictColor = position.verdict === "rushed" ? "text-red-400" : "text-amber-400";
+
+  return (
+    <div ref={boardRef} className="flex flex-col items-center gap-3">
+      {/* Timer + Context */}
+      <div className="flex items-center gap-4 text-sm">
+        <div className="flex items-center gap-2 rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-1.5">
+          <svg className="h-4 w-4 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className={`font-mono font-bold ${thinkTime > originalTimeSec * 2 ? "text-red-400" : "text-violet-300"}`}>
+            {formatTime(thinkTime)}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <span>Original:</span>
+          <span className="font-mono font-medium text-slate-400">{formatTime(originalTimeSec)}</span>
+        </div>
+      </div>
+
+      {/* Turn indicator */}
+      <div className="flex items-center gap-2 text-xs">
+        <div className={`h-3 w-3 rounded-full ${orientation === "white" ? "bg-white border border-slate-400" : "bg-slate-800 border border-slate-500"}`} />
+        <span className="text-slate-400">Your turn as {orientation}</span>
+        <span className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-bold ${position.verdict === "rushed" ? "bg-red-500/15 text-red-400" : "bg-amber-500/15 text-amber-400"}`}>
+          {verdictLabel}
+        </span>
+      </div>
+
+      <div
+        style={{ width: boardSize, height: boardSize }}
+        className={`relative shrink-0 overflow-hidden rounded-xl shadow-2xl transition-transform ${shaking ? "animate-[shake_0.3s_ease-in-out]" : ""}`}
+      >
+        <Chessboard
+          id="time-pressure-board"
+          position={game.fen()}
+          onPieceDrop={handleDrop}
+          boardOrientation={orientation}
+          boardWidth={boardSize}
+          animationDuration={200}
+          arePiecesDraggable={status === "playing"}
+          customSquareStyles={customSquareStyles}
+          customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+          customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+        />
+        {moveIndicator && (
+          <MoveIndicator
+            square={moveIndicator.square}
+            type={moveIndicator.type}
+            orientation={orientation}
+            boardSize={boardSize}
+          />
+        )}
+      </div>
+
+      {/* Attempts remaining */}
+      {status === "playing" && (
+        <div className="flex items-center gap-1.5">
+          {Array.from({ length: MAX_ATTEMPTS }).map((_, i) => (
+            <span
+              key={i}
+              className={`text-base transition-all ${i < MAX_ATTEMPTS - attempts ? "opacity-100" : "opacity-20 scale-75"}`}
+            >
+              ❤️
+            </span>
+          ))}
+          {attempts > 0 && (
+            <span className="ml-2 text-xs text-red-400/80">
+              {MAX_ATTEMPTS - attempts} {MAX_ATTEMPTS - attempts === 1 ? "try" : "tries"} left
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Result feedback */}
+      {status !== "playing" && (
+        <div className="w-full max-w-md space-y-2 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+          {status === "correct" ? (
+            <p className="text-sm font-medium text-emerald-400">✓ Correct!</p>
+          ) : (
+            <p className="text-sm font-medium text-red-400">Out of tries — the correct move is shown above</p>
+          )}
+          <div className="flex items-center gap-4 text-xs">
+            <div>
+              <span className="text-slate-500">Your time: </span>
+              <span className="font-mono font-bold text-white">{formatTime(thinkTime)}</span>
+            </div>
+            <div>
+              <span className="text-slate-500">Original: </span>
+              <span className={`font-mono font-bold ${verdictColor}`}>{formatTime(originalTimeSec)}</span>
+            </div>
+            {thinkTime < originalTimeSec && position.verdict === "wasted" && status === "correct" && (
+              <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+                ⚡ {originalTimeSec - thinkTime}s faster!
+              </span>
+            )}
+          </div>
+          <p className="text-xs leading-relaxed text-slate-400">{position.reason}</p>
+          {position.cpLoss != null && position.cpLoss > 0 && (
+            <p className="text-xs text-red-400/70">
+              Original move lost −{(position.cpLoss / 100).toFixed(1)} pawns
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Main page component                                                */
 /* ------------------------------------------------------------------ */
 
@@ -770,6 +1056,9 @@ export default function TrainPage() {
   // Blunder / opening positions
   const [drillPositions, setDrillPositions] = useState<DrillPosition[]>([]);
   const [currentDrill, setCurrentDrill] = useState(0);
+
+  // Time pressure drill
+  const [currentTimeDrill, setCurrentTimeDrill] = useState(0);
 
   // Session complete
   const [sessionDone, setSessionDone] = useState(false);
@@ -812,6 +1101,7 @@ export default function TrainPage() {
   const weakEndgames = useMemo(() => getWeakEndgames(reports), [reports]);
   const blunderPositions = useMemo(() => buildBlunderPositions(reports), [reports]);
   const openingPositions = useMemo(() => buildOpeningPositions(reports), [reports]);
+  const timePositions = useMemo(() => buildTimePositions(reports), [reports]);
 
   // Fetch puzzles for a set of themes
   const fetchPuzzles = useCallback(async (themes: string[], count = 5) => {
@@ -867,9 +1157,13 @@ export default function TrainPage() {
           ? uniqueThemes(weakEndgames, 4)
           : ["pawnEndgame", "rookEndgame", "bishopEndgame", "knightEndgame"];
         await fetchPuzzles(themes, 5);
+      } else if (mode === "time") {
+        setDrillPositions([]); // clear generic drills
+        setCurrentDrill(0);
+        setCurrentTimeDrill(0);
       }
     },
-    [weakMotifs, weakEndgames, blunderPositions, openingPositions, fetchPuzzles, speedTime]
+    [weakMotifs, weakEndgames, blunderPositions, openingPositions, timePositions, fetchPuzzles, speedTime]
   );
 
   // Speed drill timer
@@ -965,6 +1259,31 @@ export default function TrainPage() {
     [drillPositions.length]
   );
 
+  // Handle time drill result
+  const handleTimeDrillResult = useCallback(
+    (correct: boolean, _thinkTimeSec: number) => {
+      if (correct) {
+        setSolved((s) => s + 1);
+        const coins = earnCoins("study_task");
+        if (coins > 0) setCoinsEarned((c) => c + coins);
+      } else {
+        setFailed((f) => f + 1);
+      }
+      setTimeout(() => {
+        setCurrentTimeDrill((d) => {
+          const max = Math.min(timePositions.length, 10);
+          if (d + 1 >= max) {
+            setSessionDone(true);
+            return d;
+          }
+          return d + 1;
+        });
+        setShowHint(false);
+      }, correct ? 2500 : 500); // longer delay to read feedback
+    },
+    [timePositions.length]
+  );
+
   // Back to mode select
   const goBack = () => {
     setActiveMode(null);
@@ -972,6 +1291,7 @@ export default function TrainPage() {
     setDrillPositions([]);
     setSessionDone(false);
     setSpeedActive(false);
+    setCurrentTimeDrill(0);
     if (timerRef.current) clearInterval(timerRef.current);
   };
 
@@ -1098,7 +1418,7 @@ export default function TrainPage() {
                   { icon: "♚", label: "Your weak endgames" },
                   { icon: "🔍", label: "Your game positions" },
                   { icon: "⚡", label: "Timed puzzle rush" },
-                  { icon: "❤️", label: "3 retries per puzzle" },
+                  { icon: "⏱️", label: "Time pressure drill" },
                 ].map((f) => (
                   <div key={f.label} className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
                     <span className="text-base">{f.icon}</span>
@@ -1184,6 +1504,7 @@ export default function TrainPage() {
                 const hasData =
                   mode.id === "blunder" ? blunderPositions.length > 0 :
                   mode.id === "opening" ? openingPositions.length > 0 :
+                  mode.id === "time" ? timePositions.length > 0 :
                   true;
                 const actuallyDisabled = disabled || (mode.needsReport && !hasData && mode.id !== "weakness" && mode.id !== "endgame");
 
@@ -1213,6 +1534,11 @@ export default function TrainPage() {
                     {mode.id === "endgame" && weakEndgames.length > 0 && (
                       <p className="mt-2 text-[11px] text-slate-500">Focus: {weakEndgames.slice(0, 2).map(e => e.type).join(", ")}</p>
                     )}
+                    {mode.id === "time" && timePositions.length > 0 && (
+                      <p className="mt-2 text-[11px] text-slate-500">
+                        {timePositions.filter(p => p.verdict === "rushed").length} rushed, {timePositions.filter(p => p.verdict === "wasted").length} overthought
+                      </p>
+                    )}
                     {!actuallyDisabled && (
                       <div className="mt-4 flex items-center gap-1 text-xs font-medium text-white/60 transition-colors group-hover:text-white">
                         Start training
@@ -1229,6 +1555,8 @@ export default function TrainPage() {
                           ? "Run a scan with tactics analysis to unlock"
                           : mode.id === "opening"
                           ? "Run an opening scan to unlock"
+                          : mode.id === "time"
+                          ? "Run a scan with clock data to unlock"
                           : "No data available"}
                       </p>
                     )}
@@ -1393,6 +1721,40 @@ export default function TrainPage() {
                       key={`drill-${currentDrill}`}
                       position={drillPositions[currentDrill]}
                       onResult={handleDrillResult}
+                      showHint={showHint}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Time pressure training mode */}
+            {activeMode === "time" && (
+              <>
+                {timePositions.length === 0 && (
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-8 text-center">
+                    <p className="text-sm text-slate-400">
+                      No time management moments found. Run a scan with games that have clock data.
+                    </p>
+                  </div>
+                )}
+                {timePositions.length > 0 && currentTimeDrill < Math.min(timePositions.length, 10) && (
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${
+                        timePositions[currentTimeDrill].verdict === "rushed"
+                          ? "border-red-500/30 bg-red-500/10 text-red-300"
+                          : "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                      }`}>
+                        ⏱️ {timePositions[currentTimeDrill].verdict === "rushed" ? "Rushed Move" : "Time Wasted"}
+                      </span>
+                      <span>Position {currentTimeDrill + 1} of {Math.min(timePositions.length, 10)}</span>
+                      <span className="text-slate-600">Move {timePositions[currentTimeDrill].moveNumber}</span>
+                    </div>
+                    <TimePressureBoard
+                      key={`time-${currentTimeDrill}`}
+                      position={timePositions[currentTimeDrill]}
+                      onResult={handleTimeDrillResult}
                       showHint={showHint}
                     />
                   </div>

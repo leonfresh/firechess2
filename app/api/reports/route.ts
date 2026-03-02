@@ -57,6 +57,7 @@ export async function POST(req: NextRequest) {
     diagnostics,
     reportMeta,
     mentalStats,
+    timeManagement,
     contentHash,
   } = body;
 
@@ -106,6 +107,7 @@ export async function POST(req: NextRequest) {
       missedTactics: missedTactics ?? [],
       diagnostics: diagnostics ?? null,
       mentalStats: mentalStats ?? null,
+      timeManagement: timeManagement ?? null,
       contentHash: contentHash ?? null,
     })
     .returning({ id: reports.id });
