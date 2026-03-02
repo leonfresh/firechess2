@@ -2817,6 +2817,34 @@ export async function analyzeOpeningLeaksInBrowser(
     // Pre-build a set of missed-tactic FENs for cross-referencing
     const tacticFenSet = new Set(missedTactics.map(t => t.fenBefore));
 
+    // Build a map of FEN → { bestMove, cpLoss, evalBefore } from ALL analysis sources
+    // so time moments can always show the engine move
+    const moveDataByFen = new Map<string, { bestMove: string | null; cpLoss: number | null; evalBefore: number | null }>();
+    // Leaks + one-offs (lowest priority — overwritten by tactics if both match)
+    for (const leak of [...leaks, ...oneOffMistakes]) {
+      moveDataByFen.set(leak.fenBefore, {
+        bestMove: leak.bestMove,
+        cpLoss: leak.cpLoss,
+        evalBefore: leak.evalBefore,
+      });
+    }
+    // Endgame mistakes
+    for (const eg of endgameMistakes) {
+      moveDataByFen.set(eg.fenBefore, {
+        bestMove: eg.bestMove,
+        cpLoss: eg.cpLoss,
+        evalBefore: eg.cpBefore,
+      });
+    }
+    // Missed tactics (highest priority — overwrites leaks/endgames)
+    for (const t of missedTactics) {
+      moveDataByFen.set(t.fenBefore, {
+        bestMove: t.bestMove,
+        cpLoss: t.cpLoss,
+        evalBefore: t.cpBefore,
+      });
+    }
+
     for (let gameIndex = 0; gameIndex < games.length; gameIndex++) {
       const game = games[gameIndex];
       if (!game.clocks || game.clocks.length < 4) continue;
@@ -2921,12 +2949,12 @@ export async function analyzeOpeningLeaksInBrowser(
 
             complexity = Math.min(100, complexity);
 
-            // Cross reference with missed tactics to get cpLoss + bestMove
-            const matchingTactic = missedTactics.find(
-              t => t.fenBefore === fenBefore && t.gameIndex === gameIndex + 1
-            );
-            const cpLoss = matchingTactic?.cpLoss ?? null;
-            const bestMove = matchingTactic?.bestMove ?? null;
+            // Cross reference with ALL analysis sources to get cpLoss + bestMove
+            const moveData = moveDataByFen.get(fenBefore);
+            const cpLoss = moveData?.cpLoss ?? null;
+            const bestMove = moveData?.bestMove ?? null;
+            const evalBefore = moveData?.evalBefore ?? null;
+            const isKnownMistake = moveData != null;
 
             // Compute average time per move so far for this game
             const gameMoveTimesSoFar: number[] = [];
@@ -2946,6 +2974,8 @@ export async function analyzeOpeningLeaksInBrowser(
               verdict = "wasted";
               if (fullMoveNumber <= 6) {
                 reason = `Spent ${spent.toFixed(1)}s on move ${fullMoveNumber} — deep in book territory where theory is well established. Save time for critical moments.`;
+              } else if (cpLoss && cpLoss >= 50) {
+                reason = `Spent ${spent.toFixed(1)}s on a straightforward position (complexity ${complexity}/100) and still lost ${(cpLoss / 100).toFixed(1)} pawns. Your game average is ${gameAvg.toFixed(1)}s — time wasted without finding the right move.`;
               } else {
                 reason = `Spent ${spent.toFixed(1)}s on a straightforward position (complexity ${complexity}/100). Your game average is ${gameAvg.toFixed(1)}s — this cost you valuable clock time.`;
               }
@@ -3001,7 +3031,7 @@ export async function analyzeOpeningLeaksInBrowser(
                 reason,
                 cpLoss,
                 isTactical,
-                evalBefore: matchingTactic?.cpBefore ?? null,
+                evalBefore,
                 bestMove,
               });
             }
