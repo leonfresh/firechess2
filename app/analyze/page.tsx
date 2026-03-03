@@ -136,6 +136,67 @@ type PgnParseResult = {
   headers: Record<string, string>;
 };
 
+/**
+ * Resolve ambiguous SAN notation by matching against legal moves.
+ * Many PGN databases omit disambiguation (e.g. "Re1" when both rooks can reach e1).
+ * This tries all legal moves to find one matching the piece type + destination.
+ */
+function resolveAmbiguousMove(chess: InstanceType<typeof Chess>, token: string) {
+  // Parse the SAN token to extract piece type and destination square
+  const cleaned = token.replace(/[+#!?]+$/, ""); // strip check/mate/annotation markers
+
+  // Handle castling
+  if (cleaned === "O-O" || cleaned === "O-O-O") return null;
+
+  // Parse piece and destination from SAN (e.g. "Re1" → piece=R, to=e1)
+  const sanMatch = cleaned.match(/^([KQRBN])?([a-h])?([1-8])?(x)?([a-h][1-8])(=[QRBN])?$/);
+  if (!sanMatch) return null;
+
+  const pieceChar = (sanMatch[1] ?? "P").toLowerCase(); // default to pawn
+  const targetSquare = sanMatch[5];
+  const promotion = sanMatch[6]?.slice(1).toLowerCase();
+
+  // Map piece char to chess.js piece type
+  const pieceMap: Record<string, string> = { p: "p", k: "k", q: "q", r: "r", b: "b", n: "n" };
+  const pieceType = pieceMap[pieceChar];
+  if (!pieceType) return null;
+
+  // Get all legal moves and filter to those matching piece + destination
+  const legalMoves = chess.moves({ verbose: true });
+  const candidates = legalMoves.filter(m =>
+    m.piece === pieceType &&
+    m.to === targetSquare &&
+    (!promotion || m.promotion === promotion)
+  );
+
+  if (candidates.length === 1) {
+    // Unambiguous match found — make the move
+    return chess.move(candidates[0].san);
+  }
+
+  // If there are multiple candidates, try to narrow down using any partial disambiguation in the token
+  if (candidates.length > 1 && (sanMatch[2] || sanMatch[3])) {
+    const fileHint = sanMatch[2]; // e.g. "d" in "Rde1"
+    const rankHint = sanMatch[3]; // e.g. "1" in "R1e4"
+    const narrowed = candidates.filter(m =>
+      (!fileHint || m.from[0] === fileHint) &&
+      (!rankHint || m.from[1] === rankHint)
+    );
+    if (narrowed.length === 1) {
+      return chess.move(narrowed[0].san);
+    }
+  }
+
+  // If exactly 0 or still ambiguous, try each candidate and pick the first
+  // that succeeds (some PGN sources just emit the move and expect the engine to figure it out)
+  if (candidates.length > 1) {
+    // Try the first candidate
+    return chess.move(candidates[0].san);
+  }
+
+  return null;
+}
+
 function parsePgn(pgn: string): PgnParseResult | { error: string } {
   try {
     // Extract headers
@@ -196,7 +257,19 @@ function parsePgn(pgn: string): PgnParseResult | { error: string } {
       const fullMove = parseInt(fenBefore.split(" ")[5] ?? "1");
 
       try {
-        const result = chess.move(token);
+        let result: ReturnType<typeof chess.move> | null = null;
+        try {
+          result = chess.move(token);
+        } catch {
+          // chess.js throws on invalid/ambiguous moves — try resolution below
+        }
+
+        // If the move failed, try to resolve ambiguous notation.
+        // Some PGN sources omit disambiguation (e.g. "Re1" when "Rde1" is needed).
+        if (!result) {
+          result = resolveAmbiguousMove(chess, token);
+        }
+
         if (!result) {
           return { error: `Illegal move "${token}" at move ${fullMove}${color === "w" ? "" : "..."} — the position does not allow this move.` };
         }
@@ -204,6 +277,16 @@ function parsePgn(pgn: string): PgnParseResult | { error: string } {
         const uci = `${result.from}${result.to}${result.promotion ?? ""}`;
         moves.push({ san: result.san, uci, fenBefore, fenAfter, color, moveNumber: fullMove });
       } catch {
+        // Retry ambiguous move resolution in the catch path too
+        try {
+          const resolved = resolveAmbiguousMove(chess, token);
+          if (resolved) {
+            const fenAfter = chess.fen();
+            const uci = `${resolved.from}${resolved.to}${resolved.promotion ?? ""}`;
+            moves.push({ san: resolved.san, uci, fenBefore, fenAfter, color, moveNumber: fullMove });
+            continue;
+          }
+        } catch { /* fall through */ }
         return { error: `Invalid move "${token}" at move ${fullMove}${color === "w" ? "" : "..."} — the PGN may be corrupted or use a non-standard format.` };
       }
     }
@@ -220,6 +303,13 @@ export default function AnalyzePage() {
   /* ── PGN input state ── */
   const [pgnText, setPgnText] = useState("");
   const [error, setError] = useState("");
+
+  /* ── Game loader state ── */
+  const [loadUsername, setLoadUsername] = useState("");
+  const [loadSource, setLoadSource] = useState<"lichess" | "chesscom">("lichess");
+  const [loadingGames, setLoadingGames] = useState(false);
+  const [recentGames, setRecentGames] = useState<{ white: string; black: string; date: string; result: string; pgn: string; event?: string }[]>([]);
+  const [loadError, setLoadError] = useState("");
 
   /* ── Analysis state ── */
   const [analyzing, setAnalyzing] = useState(false);
@@ -250,6 +340,92 @@ export default function AnalyzePage() {
 
   /* ── Preload sounds ── */
   useEffect(() => { preloadSounds(); }, []);
+
+  /* ── Load recent games from Lichess / Chess.com ── */
+  const fetchRecentGames = useCallback(async () => {
+    const username = loadUsername.trim();
+    if (!username) { setLoadError("Enter a username"); return; }
+    setLoadingGames(true);
+    setLoadError("");
+    setRecentGames([]);
+
+    try {
+      if (loadSource === "lichess") {
+        // Lichess: fetch last 10 games as PGN text, then split
+        const url = `https://lichess.org/api/games/user/${encodeURIComponent(username)}?max=10&moves=true&opening=true&clocks=true&evals=false&pgnInBody=true`;
+        const res = await fetch(url, { headers: { Accept: "application/x-chess-pgn" } });
+        if (!res.ok) {
+          if (res.status === 404) throw new Error("User not found on Lichess");
+          throw new Error(`Lichess API error (${res.status})`);
+        }
+        const text = await res.text();
+        // Split multi-game PGN by double newline before [Event
+        const games = text.split(/\n\n(?=\[Event )/).filter(g => g.trim());
+        if (games.length === 0) throw new Error("No games found for this user");
+        const parsed = games.map(pgn => {
+          const headers: Record<string, string> = {};
+          const headerLines = pgn.match(/\[(\w+)\s+"([^"]*)"\]/g) ?? [];
+          for (const line of headerLines) {
+            const m = line.match(/\[(\w+)\s+"([^"]*)"\]/);
+            if (m) headers[m[1]] = m[2];
+          }
+          return {
+            white: headers.White ?? "?",
+            black: headers.Black ?? "?",
+            date: headers.UTCDate ?? headers.Date ?? "?",
+            result: headers.Result ?? "?",
+            event: headers.Event,
+            pgn: pgn.trim(),
+          };
+        });
+        setRecentGames(parsed);
+      } else {
+        // Chess.com: fetch latest archive then extract last 10
+        const archRes = await fetch(`https://api.chess.com/pub/player/${encodeURIComponent(username)}/games/archives`);
+        if (!archRes.ok) {
+          if (archRes.status === 404) throw new Error("User not found on Chess.com");
+          throw new Error(`Chess.com API error (${archRes.status})`);
+        }
+        const archData = await archRes.json();
+        const archives: string[] = archData.archives ?? [];
+        if (archives.length === 0) throw new Error("No games found for this user");
+
+        // Fetch the most recent archive
+        const latestUrl = archives[archives.length - 1];
+        const gamesRes = await fetch(latestUrl);
+        if (!gamesRes.ok) throw new Error("Failed to fetch games from Chess.com");
+        const gamesData = await gamesRes.json();
+        const allGames: { pgn?: string; white?: { username?: string; rating?: number }; black?: { username?: string; rating?: number }; end_time?: number }[] = gamesData.games ?? [];
+
+        // Take last 10 (most recent)
+        const last10 = allGames.filter(g => g.pgn).slice(-10).reverse();
+        if (last10.length === 0) throw new Error("No games with PGN found");
+
+        const parsed = last10.map(g => {
+          const pgn = g.pgn!;
+          const headers: Record<string, string> = {};
+          const headerLines = pgn.match(/\[(\w+)\s+"([^"]*)"\]/g) ?? [];
+          for (const line of headerLines) {
+            const m = line.match(/\[(\w+)\s+"([^"]*)"\]/);
+            if (m) headers[m[1]] = m[2];
+          }
+          return {
+            white: headers.White ?? g.white?.username ?? "?",
+            black: headers.Black ?? g.black?.username ?? "?",
+            date: headers.UTCDate ?? headers.Date ?? (g.end_time ? new Date(g.end_time * 1000).toISOString().slice(0, 10) : "?"),
+            result: headers.Result ?? "?",
+            event: headers.Event,
+            pgn: pgn.trim(),
+          };
+        });
+        setRecentGames(parsed);
+      }
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Failed to load games");
+    } finally {
+      setLoadingGames(false);
+    }
+  }, [loadUsername, loadSource]);
 
   /* ── Derived state ── */
   const currentFen = useMemo(() => {
@@ -639,6 +815,87 @@ export default function AnalyzePage() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* ── Load from Lichess / Chess.com ── */}
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-4">
+              <p className="text-center text-xs font-medium text-slate-500">Or load your recent games:</p>
+
+              <div className="flex gap-2">
+                {/* Source toggle */}
+                <div className="inline-flex rounded-xl border border-white/[0.08] bg-white/[0.03] p-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => { setLoadSource("lichess"); setRecentGames([]); setLoadError(""); }}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${loadSource === "lichess" ? "bg-white/[0.1] text-white shadow-sm" : "text-slate-500 hover:text-slate-300"}`}
+                  >
+                    Lichess
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setLoadSource("chesscom"); setRecentGames([]); setLoadError(""); }}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${loadSource === "chesscom" ? "bg-white/[0.1] text-white shadow-sm" : "text-slate-500 hover:text-slate-300"}`}
+                  >
+                    Chess.com
+                  </button>
+                </div>
+
+                {/* Username input */}
+                <input
+                  type="text"
+                  value={loadUsername}
+                  onChange={(e) => setLoadUsername(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") fetchRecentGames(); }}
+                  placeholder={loadSource === "lichess" ? "Lichess username" : "Chess.com username"}
+                  className="flex-1 min-w-0 rounded-xl border border-white/[0.08] bg-black/40 px-3 py-1.5 text-sm text-slate-200 placeholder-slate-600 outline-none transition-colors focus:border-blue-500/40"
+                />
+
+                {/* Fetch button */}
+                <button
+                  type="button"
+                  onClick={fetchRecentGames}
+                  disabled={loadingGames}
+                  className="shrink-0 rounded-xl bg-white/[0.06] px-4 py-1.5 text-xs font-bold text-slate-300 transition-all hover:bg-white/[0.1] hover:text-white disabled:opacity-50 cursor-pointer"
+                >
+                  {loadingGames ? (
+                    <span className="flex items-center gap-1.5">
+                      <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4" strokeLinecap="round"/></svg>
+                      Loading
+                    </span>
+                  ) : "Load"}
+                </button>
+              </div>
+
+              {loadError && <p className="text-xs text-red-400">{loadError}</p>}
+
+              {/* Game list */}
+              {recentGames.length > 0 && (
+                <div className="space-y-1.5 max-h-72 overflow-y-auto rounded-xl border border-white/[0.06] bg-black/30 p-2">
+                  {recentGames.map((game, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => { setPgnText(game.pgn); setRecentGames([]); }}
+                      className="group flex w-full items-center gap-3 rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 text-left transition-all hover:border-blue-500/20 hover:bg-blue-500/[0.04] cursor-pointer"
+                    >
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-xs font-bold text-slate-400 group-hover:bg-blue-500/10 group-hover:text-blue-300">
+                        {idx + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-slate-300 group-hover:text-blue-300 truncate">
+                          {game.white} vs {game.black}
+                        </p>
+                        <p className="text-[10px] text-slate-500 truncate">
+                          {game.date} · {game.result}{game.event ? ` · ${game.event}` : ""}
+                        </p>
+                      </div>
+                      <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${game.result === "1-0" ? "border-white/10 text-white" : game.result === "0-1" ? "border-slate-600 text-slate-400" : "border-slate-700 text-slate-500"}`}>
+                        {game.result}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

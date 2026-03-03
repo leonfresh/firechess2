@@ -3317,28 +3317,28 @@ export default function HomePage() {
                 )}
               </div>
 
-              {/* Time moment cards — 2-column grid on desktop, gated for free users */}
+              {/* Time moment cards — using CardCarousel for list/grid/swipe, gated for free users */}
               {hasProAccess || timeUnlocked ? (
-                <div className="grid gap-4 lg:grid-cols-2">
+                <CardCarousel viewMode={cardViewMode}>
                   {timeManagement.moments.map((moment) => (
                     <TimeCard
                       key={`${moment.fen}-${moment.userMove}-${moment.gameIndex}`}
                       moment={moment}
                     />
                   ))}
-                </div>
+                </CardCarousel>
               ) : (
                 <>
                   {/* Free preview: first 3 cards */}
                   {timeManagement.moments.length > 0 && (
-                    <div className="grid gap-4 lg:grid-cols-2">
+                    <CardCarousel viewMode={cardViewMode}>
                       {timeManagement.moments.slice(0, 3).map((moment) => (
                         <TimeCard
                           key={`${moment.fen}-${moment.userMove}-${moment.gameIndex}`}
                           moment={moment}
                         />
                       ))}
-                    </div>
+                    </CardCarousel>
                   )}
 
                   {/* Upgrade CTA for the rest */}
