@@ -121,6 +121,16 @@ const CLASSIFICATION_EMOJI: Record<MoveClassification, string> = {
   blunder: "💀",
 };
 
+const CLASSIFICATION_BADGE_COLORS: Record<MoveClassification, string> = {
+  brilliant: "rgba(6,182,212,0.9)",
+  best: "rgba(16,185,129,0.85)",
+  good: "rgba(16,185,129,0.6)",
+  book: "rgba(148,163,184,0.7)",
+  inaccuracy: "rgba(245,158,11,0.85)",
+  mistake: "rgba(249,115,22,0.9)",
+  blunder: "rgba(239,68,68,0.9)",
+};
+
 function formatEval(cp: number): string {
   if (Math.abs(cp) >= 99000) {
     const n = 100000 - Math.abs(cp);
@@ -377,7 +387,7 @@ export default function AnalyzePage() {
   } | null>(null);
 
   /* ── Hooks ── */
-  const { ref: boardRef, size: boardSize } = useBoardSize(360);
+  const { ref: boardRef, size: boardSize } = useBoardSize(540);
   const boardTheme = useBoardTheme();
   const showCoords = useShowCoordinates();
   const moveListRef = useRef<HTMLDivElement>(null);
@@ -487,6 +497,47 @@ export default function AnalyzePage() {
   }, [selectedMoveIdx, analyzedMoves]);
 
   const selectedMove = selectedMoveIdx >= 0 ? analyzedMoves[selectedMoveIdx] : null;
+
+  /* ── Board overlay: highlight from/to squares & show accuracy badge ── */
+  const analyzeSquareStyles = useMemo<Record<string, React.CSSProperties>>(() => {
+    if (!selectedMove) return {};
+    const from = selectedMove.uci.slice(0, 2);
+    const to = selectedMove.uci.slice(2, 4);
+    const cls = selectedMove.classification;
+    const isRed = cls === "blunder" || cls === "mistake";
+    const isYellow = cls === "inaccuracy";
+    const color = isRed
+      ? "rgba(239, 68, 68, 0.35)"
+      : isYellow
+        ? "rgba(245, 158, 11, 0.3)"
+        : "rgba(34, 197, 94, 0.25)";
+    return {
+      [from]: { backgroundColor: color },
+      [to]: { backgroundColor: color },
+    };
+  }, [selectedMove]);
+
+  const analyzeCustomSquare = useMemo(() => {
+    return ((props: any) => {
+      const sq = props?.square as string | undefined;
+      const to = selectedMove?.uci.slice(2, 4);
+      const showBadge = sq === to && selectedMove;
+      return (
+        <div style={props?.style} className="relative h-full w-full">
+          {props?.children}
+          {showBadge && (
+            <span
+              className="pointer-events-none absolute -right-0.5 -top-0.5 z-[40] flex h-5 w-5 items-center justify-center rounded-full text-[11px] shadow-lg"
+              style={{ backgroundColor: CLASSIFICATION_BADGE_COLORS[selectedMove.classification] }}
+              title={selectedMove.classification}
+            >
+              {CLASSIFICATION_EMOJI[selectedMove.classification]}
+            </span>
+          )}
+        </div>
+      );
+    }) as any;
+  }, [selectedMove]);
 
   /* ── Summary stats ── */
   const summary = useMemo(() => {
@@ -1035,6 +1086,8 @@ export default function AnalyzePage() {
                         customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
                         customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
                         showBoardNotation={showCoords}
+                        customSquareStyles={analyzeSquareStyles}
+                        customSquare={analyzeCustomSquare}
                       />
                     </div>
                   </div>
@@ -1526,9 +1579,39 @@ export default function AnalyzePage() {
                   </div>
                 )}
 
+                {/* Share buttons */}
+                {(() => {
+                  const shareText = `🔥 My chess performance report:\n\n⚪ ${whiteName} — ${whiteElo} Elo (${whiteInfo.title})\n⚫ ${blackName} — ${blackElo} Elo (${blackInfo.title})\n\nAnalyzed on firechess.com — free game analysis powered by Stockfish`;
+                  const shareUrl = "https://firechess.com/analyze";
+                  const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+                  const fbUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}&quote=${encodeURIComponent(shareText)}`;
+                  return (
+                    <div className="flex items-center justify-center gap-2 pt-1">
+                      <a
+                        href={xUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex h-9 items-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.05] px-4 text-xs font-bold text-white transition-all hover:bg-white/[0.12] hover:scale-105"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" /></svg>
+                        Share on X
+                      </a>
+                      <a
+                        href={fbUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex h-9 items-center gap-2 rounded-xl border border-blue-500/20 bg-blue-500/10 px-4 text-xs font-bold text-blue-400 transition-all hover:bg-blue-500/20 hover:scale-105"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>
+                        Facebook
+                      </a>
+                    </div>
+                  );
+                })()}
+
                 {/* Footer CTA */}
                 <p className="text-center text-[10px] text-slate-600 pt-2">
-                  🔥 firechess.club &middot; free game analysis powered by Stockfish
+                  🔥 firechess.com &middot; free game analysis powered by Stockfish
                 </p>
               </div>
             </div>
