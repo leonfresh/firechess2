@@ -2623,50 +2623,50 @@ export default function HomePage() {
                     <OpeningRankings openingSummaries={result.openingSummaries} />
                   )}
 
+                  {/* CTA: after openings-only scan, suggest tactics scan */}
+                  {lastRunConfig?.scanMode === "openings" && (
+                    <div className="glass-card flex flex-col items-center gap-4 border-amber-500/15 bg-gradient-to-r from-amber-500/[0.04] to-transparent p-6 text-center sm:flex-row sm:text-left">
+                      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">⚡</span>
+                      <div className="flex-1">
+                        <h3 className="text-base font-bold text-white">Want to find missed tactics too?</h3>
+                        <p className="mt-1 text-sm text-slate-400">
+                          Your opening scan is complete. Run a tactics scan on the same games to find forcing moves you missed.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => quickScanMode("tactics")}
+                        className="btn-amber flex h-11 shrink-0 items-center gap-2 px-5 text-sm font-bold"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        Scan Tactics
+                      </button>
+                    </div>
+                  )}
+
+                  {/* CTA: after openings-only scan, suggest endgame scan */}
+                  {lastRunConfig?.scanMode === "openings" && (
+                    <div className="glass-card flex flex-col items-center gap-4 border-sky-500/15 bg-gradient-to-r from-sky-500/[0.04] to-transparent p-6 text-center sm:flex-row sm:text-left">
+                      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-sky-500/15 text-3xl shadow-lg shadow-sky-500/10">♟️</span>
+                      <div className="flex-1">
+                        <h3 className="text-base font-bold text-white">Want to find endgame mistakes too?</h3>
+                        <p className="mt-1 text-sm text-slate-400">
+                          Your opening scan is complete. Run an endgame scan to catch mistakes in king &amp; pawn endings, rook endgames, and more.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => quickScanMode("endgames")}
+                        className="flex h-11 shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 px-5 text-sm font-bold text-white shadow-lg shadow-sky-500/20 transition hover:shadow-sky-500/30"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                        Scan Endgames
+                      </button>
+                    </div>
+                  )}
+
                 </div>
               </div>
-              )}
-
-              {/* CTA: after openings-only scan, suggest tactics scan */}
-              {lastRunConfig?.scanMode === "openings" && (
-                <div className="glass-card flex flex-col items-center gap-4 border-amber-500/15 bg-gradient-to-r from-amber-500/[0.04] to-transparent p-6 text-center sm:flex-row sm:text-left">
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">⚡</span>
-                  <div className="flex-1">
-                    <h3 className="text-base font-bold text-white">Want to find missed tactics too?</h3>
-                    <p className="mt-1 text-sm text-slate-400">
-                      Your opening scan is complete. Run a tactics scan on the same games to find forcing moves you missed.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => quickScanMode("tactics")}
-                    className="btn-amber flex h-11 shrink-0 items-center gap-2 px-5 text-sm font-bold"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                    Scan Tactics
-                  </button>
-                </div>
-              )}
-
-              {/* CTA: after openings-only scan, suggest endgame scan */}
-              {lastRunConfig?.scanMode === "openings" && (
-                <div className="glass-card flex flex-col items-center gap-4 border-sky-500/15 bg-gradient-to-r from-sky-500/[0.04] to-transparent p-6 text-center sm:flex-row sm:text-left">
-                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-sky-500/15 text-3xl shadow-lg shadow-sky-500/10">♟️</span>
-                  <div className="flex-1">
-                    <h3 className="text-base font-bold text-white">Want to find endgame mistakes too?</h3>
-                    <p className="mt-1 text-sm text-slate-400">
-                      Your opening scan is complete. Run an endgame scan to catch mistakes in king &amp; pawn endings, rook endgames, and more.
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => quickScanMode("endgames")}
-                    className="flex h-11 shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-sky-500 to-cyan-500 px-5 text-sm font-bold text-white shadow-lg shadow-sky-500/20 transition hover:shadow-sky-500/30"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                    Scan Endgames
-                  </button>
-                </div>
               )}
 
               {/* Missed Tactics Section — shown when tactics were scanned */}
@@ -3612,8 +3612,8 @@ export default function HomePage() {
                             <p className="text-[10px] font-medium text-slate-500">Leaks</p>
                           </div>
                           <div className="flex flex-col items-center gap-1 rounded-xl border border-cyan-500/15 bg-cyan-500/[0.04] px-3 py-3">
-                            <span className="text-2xl font-black tabular-nums text-cyan-400">{result.missedTactics.length}</span>
-                            <p className="text-[10px] font-medium text-slate-500">Missed Tactics</p>
+                            <span className="text-2xl font-black tabular-nums text-cyan-400">{report.estimatedRating}</span>
+                            <p className="text-[10px] font-medium text-slate-500">Est. Elo</p>
                           </div>
                         </div>
                       )}
