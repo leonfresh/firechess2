@@ -2916,7 +2916,7 @@ export async function analyzeOpeningLeaksInBrowser(
   })();
 
   // ── Compute detailed Time Management Report with per-move moments ──
-  const timeManagement: TimeManagementReport | null = (() => {
+  const timeManagement: TimeManagementReport | null = await (async () => {
     if (timeManagementScore == null) return null;
 
     const target = normalizeName(username);
@@ -3172,6 +3172,29 @@ export async function analyzeOpeningLeaksInBrowser(
     }
 
     if (moments.length === 0 && gamesWithClocks < 2) return null;
+
+    // ── Evaluate positions that lack engine bestMove data ──
+    // For moments where bestMove fell back to userMove (no analysis overlap),
+    // run a lightweight Stockfish eval to get the engine's actual best move.
+    const TIME_EVAL_DEPTH = 10;
+    const needsEval = moments.filter(m => m.bestMove === m.userMove);
+    if (needsEval.length > 0) {
+      await parallelForEach(needsEval, stockfishPool.size, async (m) => {
+        try {
+          const evalResult = await stockfishPool.evaluateFen(m.fen, TIME_EVAL_DEPTH);
+          if (evalResult?.bestMove) {
+            m.bestMove = evalResult.bestMove;
+            // Also update cpLoss/evalBefore if we didn't have them
+            if (m.evalBefore == null && evalResult.cp != null) {
+              const sideToMove = m.fen.includes(" w ") ? "white" : "black";
+              m.evalBefore = m.userColor === sideToMove
+                ? evalResult.cp
+                : -evalResult.cp;
+            }
+          }
+        } catch { /* keep existing fallback */ }
+      });
+    }
 
     // Sort: wasted/rushed first (bad moments), then justified (good moments)
     const verdictOrder: Record<TimeVerdict, number> = { wasted: 0, rushed: 1, justified: 2, neutral: 3 };

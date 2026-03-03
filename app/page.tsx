@@ -630,6 +630,14 @@ export default function HomePage() {
     }
   }, [result, report, lastRunConfig]);
 
+  // Auto-save report when analysis completes for authenticated users
+  useEffect(() => {
+    if (state === "done" && authenticated && result && report && lastRunConfig && saveStatus === "idle") {
+      saveReportToAccount();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, authenticated, result, report, lastRunConfig, saveStatus]);
+
   const runBrowserAnalysis = async (
     trimmed: string,
     safeGames: number,

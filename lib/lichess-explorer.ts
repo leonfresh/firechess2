@@ -1,7 +1,7 @@
 /**
  * Lichess Opening Explorer API integration.
  *
- * Queries https://explorer.lichess.ovh/lichess for a given FEN and returns
+ * Queries https://explorer.lichess.org/lichess for a given FEN and returns
  * move-level statistics. Identifies "outlier" moves — those that appear in
  * 100+ games and have a win-rate significantly above the field — so they
  * can be highlighted as database recommendations on the board.
@@ -37,7 +37,7 @@ export type ExplorerResult = {
 /*  Constants                                                          */
 /* ------------------------------------------------------------------ */
 
-const API_BASE = "https://explorer.lichess.ovh/lichess";
+const API_BASE = "https://explorer.lichess.org/lichess";
 
 /** Only consider moves with at least this many games. */
 const MIN_GAMES = 100;
@@ -155,6 +155,9 @@ export async function fetchExplorerMoves(
         url.searchParams.set("fen", fen);
         url.searchParams.set("speeds", "bullet,blitz,rapid,classical");
         url.searchParams.set("ratings", "1600,1800,2000,2200,2500");
+        url.searchParams.set("topGames", "0");
+        url.searchParams.set("recentGames", "0");
+        url.searchParams.set("source", "analysis");
 
         const res = await fetch(url.toString(), {
           headers: { Accept: "application/json" },
@@ -228,7 +231,7 @@ export async function fetchExplorerMoves(
         }
 
         // Retryable status codes: 429, 5xx
-        if (attempt < MAX_RETRIES && (res.status === 429 || res.status >= 500)) {
+        if (attempt < MAX_RETRIES && (res.status === 401 || res.status === 429 || res.status >= 500)) {
           const retryAfter = Number(res.headers.get("retry-after") ?? "0");
           const backoffMs = retryAfter > 0
             ? retryAfter * 1000

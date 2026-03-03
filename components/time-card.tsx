@@ -262,6 +262,17 @@ export function TimeCard({ moment }: TimeCardProps) {
                 customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
               />
             </div>
+            {/* Arrow legend */}
+            {bestArrows.length > 0 && (
+              <div className="mt-1 flex items-center gap-3 text-[10px] text-slate-500">
+                <span className="flex items-center gap-1">
+                  <span className="inline-block h-1.5 w-4 rounded-sm" style={{ backgroundColor: config.arrowColor }} /> Your move
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="inline-block h-1.5 w-4 rounded-sm bg-emerald-500/50" /> Best move
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Analysis info */}

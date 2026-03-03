@@ -33,6 +33,7 @@ type Mode = "weakness" | "speed" | "blunder" | "opening" | "endgame" | "time";
 type SavedReport = {
   id: string;
   chessUsername: string;
+  scanMode: string;
   leaks: any[];
   missedTactics: any[];
   diagnostics: any;
@@ -1121,6 +1122,14 @@ export default function TrainPage() {
   const openingPositions = useMemo(() => buildOpeningPositions(reports), [reports]);
   const timePositions = useMemo(() => buildTimePositions(reports), [reports]);
 
+  // Which scan types has the user saved for this username?
+  const hasTacticsScan = useMemo(() =>
+    reports.some(r => r.scanMode === "tactics" || r.scanMode === "both"), [reports]);
+  const hasEndgameScan = useMemo(() =>
+    reports.some(r => r.scanMode === "endgames" || r.scanMode === "both"), [reports]);
+  const hasOpeningScan = useMemo(() =>
+    reports.some(r => r.scanMode === "openings" || r.scanMode === "both" || !r.scanMode), [reports]);
+
   // Fetch puzzles for a set of themes
   const fetchPuzzles = useCallback(async (themes: string[], count = 5) => {
     setLoadingPuzzles(true);
@@ -1515,16 +1524,48 @@ export default function TrainPage() {
               </div>
             )}
 
+            {reports.length > 0 && (!hasTacticsScan || !hasEndgameScan) && (
+              <div className="rounded-xl border border-blue-500/20 bg-blue-500/[0.05] p-4">
+                <p className="text-sm text-blue-300">
+                  <strong>Unlock more training modes</strong> — {[
+                    !hasTacticsScan && "run a tactics scan for Weakness Trainer & Blunder Spotter",
+                    !hasEndgameScan && "run an endgame scan for Endgame Gym",
+                  ].filter(Boolean).join("; ")}.
+                  Reports auto-save after each scan.
+                </p>
+              </div>
+            )}
+
             {/* Mode cards */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {MODES.map((mode) => {
-                const disabled = mode.needsReport && reports.length === 0;
-                const hasData =
-                  mode.id === "blunder" ? blunderPositions.length > 0 :
-                  mode.id === "opening" ? openingPositions.length > 0 :
-                  mode.id === "time" ? timePositions.length > 0 :
-                  true;
-                const actuallyDisabled = disabled || (mode.needsReport && !hasData && mode.id !== "weakness" && mode.id !== "endgame");
+                const noReports = mode.needsReport && reports.length === 0;
+
+                // Each mode requires a specific scan type to have meaningful data
+                const missingScanType =
+                  mode.id === "weakness" ? !hasTacticsScan :
+                  mode.id === "blunder" ? !hasTacticsScan && blunderPositions.length === 0 :
+                  mode.id === "opening" ? !hasOpeningScan :
+                  mode.id === "endgame" ? !hasEndgameScan :
+                  mode.id === "time" ? timePositions.length === 0 :
+                  false;
+
+                const actuallyDisabled = noReports || (mode.needsReport && missingScanType && mode.id !== "speed");
+
+                // Build a helpful disabled message
+                const disabledMessage = noReports
+                  ? "Requires a scan report"
+                  : mode.id === "weakness"
+                  ? "Run a tactics scan to unlock personalized motifs"
+                  : mode.id === "blunder"
+                  ? "Run a tactics scan to unlock — need missed tactic positions"
+                  : mode.id === "opening"
+                  ? "Run an opening scan to unlock"
+                  : mode.id === "endgame"
+                  ? "Run an endgame scan to unlock personalized endgame types"
+                  : mode.id === "time"
+                  ? "Run a scan with clock data to unlock"
+                  : "No data available";
 
                 return (
                   <button
@@ -1567,15 +1608,7 @@ export default function TrainPage() {
                     )}
                     {actuallyDisabled && (
                       <p className="mt-3 text-[11px] text-slate-500">
-                        {reports.length === 0
-                          ? "Requires a scan report"
-                          : mode.id === "blunder"
-                          ? "Run a scan with tactics analysis to unlock"
-                          : mode.id === "opening"
-                          ? "Run an opening scan to unlock"
-                          : mode.id === "time"
-                          ? "Run a scan with clock data to unlock"
-                          : "No data available"}
+                        {disabledMessage}
                       </p>
                     )}
                   </button>
