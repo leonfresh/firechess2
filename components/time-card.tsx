@@ -171,17 +171,21 @@ export function TimeCard({ moment }: TimeCardProps) {
     return styles;
   }, [moment.userMove, config.squareBg]);
 
-  // Arrow showing the user's move
+  // Arrow showing the user's move — red if wrong, green if matches best
+  const userMoveMatchesBest = moment.bestMove && moment.bestMove === moment.userMove;
   const arrows = useMemo(() => {
     const parsed = parseMove(moment.userMove);
     if (!parsed) return [];
     if (isBoardSquare(parsed.from) && isBoardSquare(parsed.to)) {
-      return [[parsed.from, parsed.to, config.arrowColor]] as [BoardSquare, BoardSquare, string?][];
+      const color = userMoveMatchesBest
+        ? "rgba(34, 197, 94, 0.9)"
+        : "rgba(239, 68, 68, 0.85)";
+      return [[parsed.from, parsed.to, color]] as [BoardSquare, BoardSquare, string?][];
     }
     return [];
-  }, [moment.userMove, config.arrowColor]);
+  }, [moment.userMove, userMoveMatchesBest]);
 
-  // Best move arrow (if different)
+  // Best move arrow (green, only if different from user move)
   const bestArrows = useMemo(() => {
     if (!moment.bestMove || moment.bestMove === moment.userMove) return [];
     const parsed = parseMove(moment.bestMove);
@@ -263,7 +267,7 @@ export function TimeCard({ moment }: TimeCardProps) {
           {bestArrows.length > 0 && (
             <div className="mx-auto mt-2 flex w-full max-w-[460px] items-center gap-3 pl-[27px] text-[10px] text-slate-500">
               <span className="flex items-center gap-1">
-                <span className="inline-block h-1.5 w-4 rounded-sm" style={{ backgroundColor: config.arrowColor }} /> Your move
+                <span className="inline-block h-1.5 w-4 rounded-sm" style={{ backgroundColor: "rgba(239, 68, 68, 0.85)" }} /> Your move
               </span>
               <span className="flex items-center gap-1">
                 <span className="inline-block h-1.5 w-4 rounded-sm" style={{ backgroundColor: "rgba(34, 197, 94, 0.9)" }} /> Best move

@@ -3223,8 +3223,8 @@ export async function analyzeOpeningLeaksInBrowser(
       return b.complexity - a.complexity;
     });
 
-    // Cap at 30 moments to keep payload reasonable
-    const cappedMoments = moments.slice(0, 30);
+    // Cap at 200 moments to keep payload reasonable
+    const cappedMoments = moments.slice(0, 200);
 
     return {
       score: timeManagementScore,
