@@ -1129,6 +1129,8 @@ export default function TrainPage() {
     reports.some(r => r.scanMode === "endgames" || r.scanMode === "both"), [reports]);
   const hasOpeningScan = useMemo(() =>
     reports.some(r => r.scanMode === "openings" || r.scanMode === "both" || !r.scanMode), [reports]);
+  const hasTimeScan = useMemo(() =>
+    reports.some(r => r.scanMode === "time-management" || r.scanMode === "both"), [reports]);
 
   // Fetch puzzles for a set of themes
   const fetchPuzzles = useCallback(async (themes: string[], count = 5) => {
@@ -1524,12 +1526,13 @@ export default function TrainPage() {
               </div>
             )}
 
-            {reports.length > 0 && (!hasTacticsScan || !hasEndgameScan) && (
+            {reports.length > 0 && (!hasTacticsScan || !hasEndgameScan || !hasTimeScan) && (
               <div className="rounded-xl border border-blue-500/20 bg-blue-500/[0.05] p-4">
                 <p className="text-sm text-blue-300">
                   <strong>Unlock more training modes</strong> — {[
                     !hasTacticsScan && "run a tactics scan for Weakness Trainer & Blunder Spotter",
                     !hasEndgameScan && "run an endgame scan for Endgame Gym",
+                    !hasTimeScan && "run a time management scan for Time Pressure drills",
                   ].filter(Boolean).join("; ")}.
                   Reports auto-save after each scan.
                 </p>
@@ -1547,7 +1550,7 @@ export default function TrainPage() {
                   mode.id === "blunder" ? !hasTacticsScan && blunderPositions.length === 0 :
                   mode.id === "opening" ? !hasOpeningScan :
                   mode.id === "endgame" ? !hasEndgameScan :
-                  mode.id === "time" ? timePositions.length === 0 :
+                  mode.id === "time" ? !hasTimeScan && timePositions.length === 0 :
                   false;
 
                 const actuallyDisabled = noReports || (mode.needsReport && missingScanType && mode.id !== "speed");
@@ -1564,7 +1567,7 @@ export default function TrainPage() {
                   : mode.id === "endgame"
                   ? "Run an endgame scan to unlock personalized endgame types"
                   : mode.id === "time"
-                  ? "Run a scan with clock data to unlock"
+                  ? "Run a time management scan to unlock"
                   : "No data available";
 
                 return (

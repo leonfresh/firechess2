@@ -114,7 +114,7 @@ export const reports = pgTable("report", {
   chessUsername: text("chessUsername").notNull(),
   source: text("source").$type<"lichess" | "chesscom">().notNull(),
   scanMode: text("scanMode")
-    .$type<"openings" | "tactics" | "both">()
+    .$type<"openings" | "tactics" | "endgames" | "time-management" | "both">()
     .notNull()
     .default("both"),
 

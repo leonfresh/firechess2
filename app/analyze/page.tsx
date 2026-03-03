@@ -22,6 +22,7 @@ import { stockfishPool } from "@/lib/stockfish-client";
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
+import { SAMPLE_GAMES } from "@/lib/sample-games";
 
 /* ────────────────────────── Types ────────────────────────── */
 
@@ -104,11 +105,21 @@ const CLASSIFICATION_BORDER: Record<MoveClassification, string> = {
 
 function classifyMove(cpLoss: number, isBestMove: boolean): MoveClassification {
   if (isBestMove) return "best";
-  if (cpLoss <= 10) return "good";
-  if (cpLoss <= 50) return "inaccuracy";
-  if (cpLoss <= 150) return "mistake";
+  if (cpLoss <= 25) return "good";
+  if (cpLoss <= 75) return "inaccuracy";
+  if (cpLoss <= 200) return "mistake";
   return "blunder";
 }
+
+const CLASSIFICATION_EMOJI: Record<MoveClassification, string> = {
+  brilliant: "💎",
+  best: "✅",
+  good: "👍",
+  book: "📖",
+  inaccuracy: "⚠️",
+  mistake: "❌",
+  blunder: "💀",
+};
 
 function formatEval(cp: number): string {
   if (Math.abs(cp) >= 99000) {
@@ -120,11 +131,13 @@ function formatEval(cp: number): string {
   return `${pawns > 0 ? "+" : ""}${(Math.round(pawns * 10) / 10).toFixed(1)}`;
 }
 
-function parsePgn(pgn: string): { moves: { san: string; uci: string; fenBefore: string; fenAfter: string; color: "w" | "b"; moveNumber: number }[]; headers: Record<string, string> } | null {
-  try {
-    const game = new Chess();
-    game.loadPgn(pgn);
+type PgnParseResult = {
+  moves: { san: string; uci: string; fenBefore: string; fenAfter: string; color: "w" | "b"; moveNumber: number }[];
+  headers: Record<string, string>;
+};
 
+function parsePgn(pgn: string): PgnParseResult | { error: string } {
+  try {
     // Extract headers
     const headers: Record<string, string> = {};
     const headerLines = pgn.match(/\[(\w+)\s+"([^"]*)"\]/g) ?? [];
@@ -133,30 +146,71 @@ function parsePgn(pgn: string): { moves: { san: string; uci: string; fenBefore: 
       if (match) headers[match[1]] = match[2];
     }
 
-    // Replay to get FEN at each position
-    const history = game.history({ verbose: true });
-    const replay = new Chess();
-    const moves: { san: string; uci: string; fenBefore: string; fenAfter: string; color: "w" | "b"; moveNumber: number }[] = [];
+    // Try chess.js loadPgn first (handles standard PGN best)
+    try {
+      const game = new Chess();
+      game.loadPgn(pgn);
+      const history = game.history({ verbose: true });
+      const replay = new Chess();
+      const moves: PgnParseResult["moves"] = [];
 
-    for (const move of history) {
-      const fenBefore = replay.fen();
-      const uci = `${move.from}${move.to}${move.promotion ?? ""}`;
-      replay.move(move.san);
-      const fenAfter = replay.fen();
+      for (const move of history) {
+        const fenBefore = replay.fen();
+        const uci = `${move.from}${move.to}${move.promotion ?? ""}`;
+        replay.move(move.san);
+        const fenAfter = replay.fen();
+        const fullMove = parseInt(fenBefore.split(" ")[5] ?? "1");
+        moves.push({ san: move.san, uci, fenBefore, fenAfter, color: move.color, moveNumber: fullMove });
+      }
+
+      return { moves, headers };
+    } catch {
+      // loadPgn failed — fall back to manual parsing for better error messages
+    }
+
+    // Manual replay: strip headers, comments, variations, NAGs, and result
+    let moveText = pgn
+      .replace(/\[.*?\]\s*/g, "")        // remove header tags
+      .replace(/\{[^}]*\}/g, "")         // remove comments
+      .replace(/\([^)]*\)/g, "")         // remove variations (single-level)
+      .replace(/\$\d+/g, "")             // remove NAGs ($1, $2, etc.)
+      .replace(/\b(1-0|0-1|1\/2-1\/2|\*)\s*$/, "") // remove game result
+      .trim();
+
+    // Tokenise: split on whitespace, drop move numbers like "1." "12..."
+    const tokens = moveText.split(/\s+/).filter(t => t && !/^\d+\.+$/.test(t));
+
+    if (tokens.length === 0) {
+      return { error: "No moves found in PGN." };
+    }
+
+    const chess = new Chess();
+    const moves: PgnParseResult["moves"] = [];
+
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i];
+      // Skip result tokens that might appear mid-text
+      if (/^(1-0|0-1|1\/2-1\/2|\*)$/.test(token)) continue;
+      const fenBefore = chess.fen();
+      const color = chess.turn();
       const fullMove = parseInt(fenBefore.split(" ")[5] ?? "1");
-      moves.push({
-        san: move.san,
-        uci,
-        fenBefore,
-        fenAfter,
-        color: move.color,
-        moveNumber: fullMove,
-      });
+
+      try {
+        const result = chess.move(token);
+        if (!result) {
+          return { error: `Illegal move "${token}" at move ${fullMove}${color === "w" ? "" : "..."} — the position does not allow this move.` };
+        }
+        const fenAfter = chess.fen();
+        const uci = `${result.from}${result.to}${result.promotion ?? ""}`;
+        moves.push({ san: result.san, uci, fenBefore, fenAfter, color, moveNumber: fullMove });
+      } catch {
+        return { error: `Invalid move "${token}" at move ${fullMove}${color === "w" ? "" : "..."} — the PGN may be corrupted or use a non-standard format.` };
+      }
     }
 
     return { moves, headers };
   } catch {
-    return null;
+    return { error: "Could not parse PGN. Please check the format and try again." };
   }
 }
 
@@ -277,8 +331,12 @@ export default function AnalyzePage() {
     }
 
     const parsed = parsePgn(trimmed);
-    if (!parsed || parsed.moves.length === 0) {
-      setError("Could not parse PGN. Please check the format and try again.");
+    if ("error" in parsed) {
+      setError(parsed.error);
+      return;
+    }
+    if (parsed.moves.length === 0) {
+      setError("No moves found in PGN. Please check the format and try again.");
       return;
     }
 
@@ -564,13 +622,23 @@ export default function AnalyzePage() {
             </div>
 
             {/* Sample PGN buttons */}
-            <div className="text-center">
-              <button
-                onClick={() => setPgnText(`[Event "World Championship"]\n[Site "Reykjavik"]\n[Date "1972.07.23"]\n[White "Fischer, Robert J."]\n[Black "Spassky, Boris V."]\n[Result "1-0"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bb5 a6 4. Ba4 Nf6 5. O-O Be7 6. Re1 b5 7. Bb3 d6 8. c3 O-O 9. h3 Nb8 10. d4 Nbd7 11. Nbd2 Bb7 12. Bc2 Re8 13. Nf1 Bf8 14. Ng3 g6 15. Bg5 h6 16. Bd2 Bg7 17. a4 c5 18. d5 c4 19. b4 Nh5 20. Nxh5 gxh5 21. g3 Nf6 22. Nh4 Qd7 23. f3 Nh7 24. Be3 Ng5 25. Qd2 f5 26. Bf2 Qf7 27. Be1 bxa4 28. Bxa4 a5 29. Bb5 Ra7 30. Bc6 Bxc6 31. dxc6 fxe4 32. fxe4 d5 33. Nf5 Bf6 34. bxa5 d4 35. Rf1 Raa8 36. a6 dxc3 37. Qxc3 Qd7 38. a7 Qd2 39. Qxd2 Nf3+ 40. Rxf3 Bxa1 41. a8=Q Rxa8 1-0`)}
-                className="text-xs text-blue-400/60 transition-colors hover:text-blue-400"
-              >
-                Load sample game (Fischer vs Spassky 1972)
-              </button>
+            <div className="space-y-3">
+              <p className="text-center text-xs font-medium text-slate-500">Or load a famous game:</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {SAMPLE_GAMES.map((game) => (
+                  <button
+                    key={game.label}
+                    onClick={() => setPgnText(game.pgn)}
+                    className="group flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-left transition-all hover:border-blue-500/20 hover:bg-blue-500/[0.04]"
+                  >
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-sm group-hover:bg-blue-500/10">♟</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-slate-300 group-hover:text-blue-300 truncate">{game.label}</p>
+                      <p className="text-[10px] text-slate-500 truncate">{game.description}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
@@ -685,10 +753,10 @@ export default function AnalyzePage() {
             )}
 
             {/* Main analysis area: Board + Move list */}
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[auto_1fr]">
+            <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px]">
               {/* Board column */}
               <div className="flex flex-col items-center gap-3">
-                <div ref={boardRef} className="w-full max-w-[520px]">
+                <div ref={boardRef} className="w-full max-w-[640px]">
                   <div className="flex items-start gap-2 sm:gap-3">
                     <EvalBar evalCp={currentEval} height={boardSize} />
                     <div className="overflow-hidden rounded-xl">
@@ -745,7 +813,7 @@ export default function AnalyzePage() {
 
                 {/* Current move info */}
                 {selectedMove && (
-                  <div className={`w-full max-w-[520px] rounded-xl border ${CLASSIFICATION_BORDER[selectedMove.classification]} ${CLASSIFICATION_BG[selectedMove.classification]} p-3`}>
+                  <div className={`w-full max-w-[640px] rounded-xl border ${CLASSIFICATION_BORDER[selectedMove.classification]} ${CLASSIFICATION_BG[selectedMove.classification]} p-3`}>
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
                         <span className={`text-lg font-black font-mono ${CLASSIFICATION_COLORS[selectedMove.classification]}`}>
@@ -756,6 +824,7 @@ export default function AnalyzePage() {
                             {CLASSIFICATION_ICONS[selectedMove.classification]}
                           </span>
                         )}
+                        <span className="text-sm">{CLASSIFICATION_EMOJI[selectedMove.classification]}</span>
                         <span className="text-xs capitalize text-slate-400">{selectedMove.classification}</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -801,7 +870,7 @@ export default function AnalyzePage() {
               </div>
 
               {/* Move list column */}
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden flex flex-col" style={{ maxHeight: boardSize + 120 }}>
+              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden flex flex-col w-[280px] lg:w-auto" style={{ maxHeight: boardSize + 120 }}>
                 <div className="border-b border-white/[0.06] px-4 py-2.5">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Moves</h3>
                 </div>
@@ -829,7 +898,7 @@ export default function AnalyzePage() {
                               <button
                                 data-move-idx={whiteMove.idx}
                                 onClick={() => setSelectedMoveIdx(whiteMove.idx)}
-                                className={`flex items-center gap-1 rounded-md px-2 py-0.5 text-left text-xs font-mono transition-colors ${
+                                className={`relative flex items-center gap-1 rounded-md px-2 py-0.5 text-left text-xs font-mono transition-colors ${
                                   selectedMoveIdx === whiteMove.idx
                                     ? `${CLASSIFICATION_BG[whiteMove.classification]} ${CLASSIFICATION_COLORS[whiteMove.classification]} font-bold`
                                     : "text-slate-300 hover:bg-white/[0.06]"
@@ -841,6 +910,9 @@ export default function AnalyzePage() {
                                     {CLASSIFICATION_ICONS[whiteMove.classification]}
                                   </span>
                                 )}
+                                <span className="absolute -top-1.5 -right-1 text-[9px] leading-none" title={whiteMove.classification}>
+                                  {CLASSIFICATION_EMOJI[whiteMove.classification]}
+                                </span>
                               </button>
                             ) : (
                               <div />
@@ -850,7 +922,7 @@ export default function AnalyzePage() {
                               <button
                                 data-move-idx={blackMove.idx}
                                 onClick={() => setSelectedMoveIdx(blackMove.idx)}
-                                className={`flex items-center gap-1 rounded-md px-2 py-0.5 text-left text-xs font-mono transition-colors ${
+                                className={`relative flex items-center gap-1 rounded-md px-2 py-0.5 text-left text-xs font-mono transition-colors ${
                                   selectedMoveIdx === blackMove.idx
                                     ? `${CLASSIFICATION_BG[blackMove.classification]} ${CLASSIFICATION_COLORS[blackMove.classification]} font-bold`
                                     : "text-slate-300 hover:bg-white/[0.06]"
@@ -862,6 +934,9 @@ export default function AnalyzePage() {
                                     {CLASSIFICATION_ICONS[blackMove.classification]}
                                   </span>
                                 )}
+                                <span className="absolute -top-1.5 -right-1 text-[9px] leading-none" title={blackMove.classification}>
+                                  {CLASSIFICATION_EMOJI[blackMove.classification]}
+                                </span>
                               </button>
                             ) : (
                               <div />

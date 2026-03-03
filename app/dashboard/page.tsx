@@ -852,7 +852,22 @@ function ReportRow({
       ? "Openings"
       : r.scanMode === "tactics"
         ? "Tactics"
-        : "Full Scan";
+        : r.scanMode === "endgames"
+          ? "Endgames"
+          : r.scanMode === "time-management"
+            ? "Time Mgmt"
+            : "Full Scan";
+
+  const modeTagColor =
+    r.scanMode === "openings"
+      ? "bg-cyan-500/10 text-cyan-400"
+      : r.scanMode === "tactics"
+        ? "bg-amber-500/10 text-amber-400"
+        : r.scanMode === "endgames"
+          ? "bg-sky-500/10 text-sky-400"
+          : r.scanMode === "time-management"
+            ? "bg-violet-500/10 text-violet-400"
+            : "bg-white/5 text-white/40";
 
   return (
     <div className="glass-card relative overflow-hidden">
@@ -873,7 +888,7 @@ function ReportRow({
               {r.chessUsername}
             </span>
             <span className="text-xs text-white/30">{sourceIcon}</span>
-            <span className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-white/40">
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${modeTagColor}`}>
               {modeLabel}
             </span>
           </div>

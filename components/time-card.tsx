@@ -1,11 +1,14 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { Chess, type PieceSymbol } from "chess.js";
 import { EvalBar } from "@/components/eval-bar";
+import { ExplanationModal } from "@/components/explanation-modal";
 import { Chessboard } from "react-chessboard";
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
+import { explainMoves } from "@/lib/position-explainer";
+import type { PositionExplanation } from "@/lib/position-explainer";
 import type { TimeMoment, MoveSquare } from "@/lib/types";
 
 type TimeCardProps = {
@@ -129,6 +132,9 @@ export function TimeCard({ moment }: TimeCardProps) {
   const boardTheme = useBoardTheme();
   const showCoords = useShowCoordinates();
   const [fenCopied, setFenCopied] = useState(false);
+  const [explainOpen, setExplainOpen] = useState(false);
+  const [explainData, setExplainData] = useState<PositionExplanation | null>(null);
+  const [explaining, setExplaining] = useState(false);
 
   const config = VERDICT_CONFIG[moment.verdict];
   const boardOrientation = moment.userColor === "black" ? "black" : "white";
@@ -198,6 +204,28 @@ export function TimeCard({ moment }: TimeCardProps) {
       setTimeout(() => setFenCopied(false), 1200);
     } catch { /* ignore */ }
   };
+
+  /** Open the rich explanation modal */
+  const openExplain = useCallback(async () => {
+    if (explaining) return;
+    setExplaining(true);
+    try {
+      const evalAfter = moment.evalBefore != null && moment.cpLoss != null
+        ? moment.evalBefore - moment.cpLoss
+        : moment.evalBefore ?? 0;
+      const result = explainMoves(
+        moment.fen,
+        moment.userMove,
+        moment.bestMove ?? null,
+        moment.cpLoss ?? 0,
+        moment.evalBefore ?? 0,
+        evalAfter,
+      );
+      setExplainData(result.played);
+      setExplainOpen(true);
+    } catch { /* silently fail */ }
+    setExplaining(false);
+  }, [moment, explaining]);
 
   // Complexity bar
   const complexityColor =
@@ -321,27 +349,66 @@ export function TimeCard({ moment }: TimeCardProps) {
               </div>
             </div>
 
-            {/* Copy FEN */}
-            <button
-              type="button"
-              onClick={copyFen}
-              className="flex items-center gap-1.5 self-start rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-xs text-slate-400 transition hover:bg-white/[0.05] hover:text-slate-200"
-            >
-              {fenCopied ? (
-                <>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-emerald-400"><polyline points="20 6 9 17 4 12"/></svg>
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                  Copy FEN
-                </>
-              )}
-            </button>
+            {/* Actions */}
+            <div className="flex flex-wrap items-center gap-2">
+              {/* Explain button */}
+              <button
+                type="button"
+                onClick={openExplain}
+                disabled={explaining}
+                className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
+                  config.borderColor
+                } ${config.bgColor} ${config.color} hover:brightness-125 disabled:opacity-50`}
+              >
+                {explaining ? (
+                  <>
+                    <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" strokeDasharray="31.4 31.4" strokeLinecap="round" /></svg>
+                    Analyzing…
+                  </>
+                ) : (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    Explain
+                  </>
+                )}
+              </button>
+
+              {/* Copy FEN */}
+              <button
+                type="button"
+                onClick={copyFen}
+                className="flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-xs text-slate-400 transition hover:bg-white/[0.05] hover:text-slate-200"
+              >
+                {fenCopied ? (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-emerald-400"><polyline points="20 6 9 17 4 12"/></svg>
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                    Copy FEN
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
+
+      {/* Explanation Modal */}
+      <ExplanationModal
+        open={explainOpen}
+        onClose={() => setExplainOpen(false)}
+        variant="tactic"
+        richExplanation={explainData}
+        fen={moment.fen}
+        uciMoves={[moment.userMove]}
+        boardOrientation={boardOrientation}
+        autoPlay
+        title={`Your Move: ${userSan ?? moment.userMove}`}
+        subtitle={explainData?.headline ?? moment.reason}
+      />
     </div>
   );
 }

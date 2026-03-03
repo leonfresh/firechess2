@@ -196,7 +196,7 @@ export default function HomePage() {
       if (parsed.cardViewMode === "carousel" || parsed.cardViewMode === "list" || parsed.cardViewMode === "grid") {
         setCardViewMode(parsed.cardViewMode);
       }
-      if (parsed.scanMode === "openings" || parsed.scanMode === "tactics" || parsed.scanMode === "endgames" || parsed.scanMode === "both") {
+      if (parsed.scanMode === "openings" || parsed.scanMode === "tactics" || parsed.scanMode === "endgames" || parsed.scanMode === "both" || parsed.scanMode === "time-management") {
         setScanMode(parsed.scanMode as ScanMode);
       }
       // Restore speed (supports both legacy single string and new array format)
@@ -1002,12 +1002,12 @@ export default function HomePage() {
             {/* Scan mode toggle */}
             <div className="stat-card space-y-2 p-4">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Scan Mode<HelpTip text="Choose what to analyze: openings finds repeated patterns, tactics finds missed forcing moves, endgames checks your technique, and All runs everything." /></span>
+                <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Scan Mode<HelpTip text="Choose what to analyze: openings finds repeated patterns, tactics finds missed forcing moves, endgames checks your technique, time management analyses your clock usage, and All runs everything (except time mgmt)." /></span>
                 {!hasProAccess && (
                   <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-400">Full tactics = Pro</span>
                 )}
               </div>
-              <div className="grid h-auto grid-cols-2 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1 sm:h-10 sm:grid-cols-4">
+              <div className="grid h-auto grid-cols-2 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1 sm:h-10 sm:grid-cols-5">
                 <button
                   type="button"
                   onClick={() => setScanMode("openings")}
@@ -1061,12 +1061,26 @@ export default function HomePage() {
                   🔥 All
                   {!hasProAccess && <span className="ml-0.5 text-[9px] text-fuchsia-400/60">sample</span>}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setScanMode("time-management");
+                  }}
+                  className={`relative rounded-md text-xs font-semibold transition-all duration-200 ${
+                    scanMode === "time-management"
+                      ? "bg-gradient-to-r from-violet-500 to-violet-600 text-white shadow-glow-sm"
+                      : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
+                  }`}
+                >
+                  ⏱️ Time
+                </button>
               </div>
               <p className="text-xs text-slate-500">
                 {scanMode === "openings" && (includeTactics ? "Opening patterns + missed tactics — slower but more thorough" : "Finds repeated patterns in your first N moves")}
                 {scanMode === "tactics" && (hasProAccess ? "Scans full games for missed forcing moves (slower)" : `Scans for missed tactics — free users see up to ${FREE_TACTIC_SAMPLE} results`)}
                 {scanMode === "endgames" && (hasProAccess ? "Analyses your endgame technique — conversions, holds & accuracy" : `Analyses endgame technique — free users see up to ${FREE_ENDGAME_SAMPLE} results`)}
                 {scanMode === "both" && (hasProAccess ? "Runs all scans — most thorough but slowest" : `Runs all scans — free users see up to ${FREE_TACTIC_SAMPLE} tactics & ${FREE_ENDGAME_SAMPLE} endgame results`)}
+                {scanMode === "time-management" && "Analyses your clock usage — finds rushed moves, wasted time, and time scrambles"}
               </p>
 
               {/* Tactics toggle — visible only in openings mode */}

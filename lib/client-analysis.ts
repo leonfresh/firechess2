@@ -74,12 +74,12 @@ type SourceGame = {
 };
 
 export type AnalysisSource = "lichess" | "chesscom";
-export type ScanMode = "openings" | "tactics" | "endgames" | "both";
+export type ScanMode = "openings" | "tactics" | "endgames" | "time-management" | "both";
 export type Speed = "bullet" | "blitz" | "rapid" | "classical";
 export type TimeControl = Speed | "all";
 
 export type AnalysisProgress = {
-  phase: "fetch" | "parse" | "aggregate" | "eval" | "tactics" | "endgames" | "done";
+  phase: "fetch" | "parse" | "aggregate" | "eval" | "tactics" | "endgames" | "time" | "done";
   message: string;
   detail?: string;
   current?: number;
@@ -1615,6 +1615,7 @@ export async function analyzeOpeningLeaksInBrowser(
   const doOpenings = scanMode === "openings" || scanMode === "both";
   const doTactics = scanMode === "tactics" || scanMode === "both";
   const doEndgames = scanMode === "endgames" || scanMode === "both";
+  const doTimeOnly = scanMode === "time-management";
 
   let games: SourceGame[] = [];
 
@@ -2842,6 +2843,14 @@ export async function analyzeOpeningLeaksInBrowser(
 
   // ── Compute Time Management Score (0-100) from clock data ──
   // Measures: consistency of move timing, avoiding time scrambles, not wasting time
+  if (doTimeOnly) {
+    emitProgress(options, {
+      phase: "time",
+      message: "⏱️ Analysing time management",
+      detail: `Scanning clock data from ${games.length} games...`,
+      percent: 60,
+    });
+  }
   const timeManagementScore = (() => {
     const allMoveTimesMs: number[] = [];
     let timeScrambleCount = 0;
