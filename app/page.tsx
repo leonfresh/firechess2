@@ -539,7 +539,7 @@ export default function HomePage() {
 
   /** Save analysis report to the user's account (called explicitly via button). */
   const saveReportToAccount = useCallback(async () => {
-    if (!result || !report || !lastRunConfig) return;
+    if (!result || !lastRunConfig) return;
     setSaveStatus("saving");
     try {
       // Build a content hash for dedup (SHA-256 of key fields)
@@ -569,10 +569,10 @@ export default function HomePage() {
           cpThreshold: lastRunConfig.cpThreshold,
           engineDepth: lastRunConfig.engineDepth,
           // Use the client-side computed report values (same as displayed)
-          estimatedAccuracy: report.estimatedAccuracy,
-          estimatedRating: report.estimatedRating,
-          weightedCpLoss: report.weightedCpLoss,
-          severeLeakRate: report.severeLeakRate,
+          estimatedAccuracy: report?.estimatedAccuracy ?? null,
+          estimatedRating: report?.estimatedRating ?? null,
+          weightedCpLoss: report?.weightedCpLoss ?? null,
+          severeLeakRate: report?.severeLeakRate ?? null,
           repeatedPositions: result.repeatedPositions,
           leaks: result.leaks,
           oneOffMistakes: result.oneOffMistakes,
@@ -581,14 +581,14 @@ export default function HomePage() {
           mentalStats: result.mentalStats ?? null,
           timeManagement: result.timeManagement ?? null,
           playerRating: result.playerRating ?? null,
-          reportMeta: {
+          reportMeta: report ? {
             consistencyScore: report.consistencyScore,
             p75CpLoss: report.p75CpLoss,
             confidence: report.confidence,
             topTag: report.topTag,
             vibeTitle: report.vibeTitle,
             sampleSize: report.sampleSize,
-          },
+          } : null,
           contentHash,
         }),
       });
@@ -609,14 +609,14 @@ export default function HomePage() {
               chessUsername: result.username,
               source: lastRunConfig.source,
               topLeakOpenings: [],
-              accuracy: report.estimatedAccuracy,
+              accuracy: report?.estimatedAccuracy ?? 50,
               leakCount: result.leaks.length,
               repeatedPositions: result.repeatedPositions,
               tacticsCount: result.totalTacticsFound,
               gamesAnalyzed: result.gamesAnalyzed,
-              weightedCpLoss: report.weightedCpLoss,
-              severeLeakRate: report.severeLeakRate,
-              estimatedRating: report.estimatedRating,
+              weightedCpLoss: report?.weightedCpLoss ?? 0,
+              severeLeakRate: report?.severeLeakRate ?? 0,
+              estimatedRating: report?.estimatedRating ?? null,
               scanMode: lastRunConfig.scanMode,
             }),
           });
@@ -629,14 +629,6 @@ export default function HomePage() {
       setSaveStatus("error");
     }
   }, [result, report, lastRunConfig]);
-
-  // Auto-save report when analysis completes for authenticated users
-  useEffect(() => {
-    if (state === "done" && authenticated && result && report && lastRunConfig && saveStatus === "idle") {
-      saveReportToAccount();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, authenticated, result, report, lastRunConfig, saveStatus]);
 
   const runBrowserAnalysis = async (
     trimmed: string,
@@ -3397,6 +3389,25 @@ export default function HomePage() {
                   </div>
                 </div>
                   )}
+
+                  {/* Time Pressure Training CTA */}
+                  <div className="glass-card flex flex-col items-center gap-4 border-violet-500/15 bg-gradient-to-r from-violet-500/[0.04] to-transparent p-6 text-center sm:flex-row sm:text-left">
+                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-500/15 text-3xl shadow-lg shadow-violet-500/10">🎯</span>
+                    <div className="flex-1">
+                      <h3 className="text-base font-bold text-white">Practice under time pressure</h3>
+                      <p className="mt-1 text-sm text-slate-400">
+                        Head to the Training Center to replay your rushed and overthought positions under simulated clock pressure.
+                        <span className="ml-1 text-amber-400">Save this report first to unlock Time Pressure training.</span>
+                      </p>
+                    </div>
+                    <Link
+                      href="/train"
+                      className="flex h-11 shrink-0 items-center gap-2 rounded-xl border border-violet-500/20 bg-violet-500/10 px-5 text-sm font-bold text-violet-400 transition hover:border-violet-500/40 hover:bg-violet-500/20"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                      Time Pressure Training
+                    </Link>
+                  </div>
                 </>
               )}
               </>
@@ -3514,6 +3525,9 @@ export default function HomePage() {
                       {authenticated
                         ? "Save your analysis and compare future scans side-by-side. Watch your accuracy climb, leak count drop, and tactics sharpen — all from your personal dashboard."
                         : "Create a free account to save reports, compare scans over time, and watch your accuracy and tactics improve week over week."}
+                    </p>
+                    <p className="mx-auto mt-2 max-w-lg text-xs text-amber-400/80">
+                      💡 Training modes (Weakness Trainer, Endgame Gym, Time Pressure) require saved reports to generate personalized exercises.
                     </p>
 
                     {/* Feature highlights — cards */}
@@ -3726,7 +3740,7 @@ export default function HomePage() {
             <p className="text-sm text-slate-300">
               <span className="font-semibold text-white">{result.leaks.length} leaks</span> &middot; <span className="font-semibold text-white">{result.missedTactics.length} tactics</span>
               {result.endgameMistakes.length > 0 && <> &middot; <span className="font-semibold text-white">{result.endgameMistakes.length} endgame</span></>}
-              {" "} found — save to track improvement
+              {" "} found — save to unlock training modes
             </p>
             <button
               type="button"

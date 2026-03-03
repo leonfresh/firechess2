@@ -86,7 +86,7 @@ const VERDICT_CONFIG = {
     gradientFrom: "from-red-500/[0.06]",
     tagBg: "bg-red-500/15",
     tagText: "text-red-400",
-    arrowColor: "rgba(239, 68, 68, 0.7)",
+    arrowColor: "rgba(239, 68, 68, 0.9)",
     squareBg: "rgba(239, 68, 68, 0.2)",
   },
   rushed: {
@@ -98,7 +98,7 @@ const VERDICT_CONFIG = {
     gradientFrom: "from-amber-500/[0.06]",
     tagBg: "bg-amber-500/15",
     tagText: "text-amber-400",
-    arrowColor: "rgba(245, 158, 11, 0.7)",
+    arrowColor: "rgba(245, 158, 11, 0.9)",
     squareBg: "rgba(245, 158, 11, 0.2)",
   },
   justified: {
@@ -110,7 +110,7 @@ const VERDICT_CONFIG = {
     gradientFrom: "from-emerald-500/[0.06]",
     tagBg: "bg-emerald-500/15",
     tagText: "text-emerald-400",
-    arrowColor: "rgba(34, 197, 94, 0.7)",
+    arrowColor: "rgba(34, 197, 94, 0.9)",
     squareBg: "rgba(34, 197, 94, 0.2)",
   },
   neutral: {
@@ -122,7 +122,7 @@ const VERDICT_CONFIG = {
     gradientFrom: "from-slate-500/[0.06]",
     tagBg: "bg-slate-500/15",
     tagText: "text-slate-400",
-    arrowColor: "rgba(148, 163, 184, 0.7)",
+    arrowColor: "rgba(148, 163, 184, 0.9)",
     squareBg: "rgba(148, 163, 184, 0.2)",
   },
 } as const;
@@ -187,7 +187,7 @@ export function TimeCard({ moment }: TimeCardProps) {
     const parsed = parseMove(moment.bestMove);
     if (!parsed) return [];
     if (isBoardSquare(parsed.from) && isBoardSquare(parsed.to)) {
-      return [[parsed.from, parsed.to, "rgba(34, 197, 94, 0.5)"]] as [BoardSquare, BoardSquare, string?][];
+      return [[parsed.from, parsed.to, "rgba(34, 197, 94, 0.9)"]] as [BoardSquare, BoardSquare, string?][];
     }
     return [];
   }, [moment.bestMove, moment.userMove]);
@@ -235,48 +235,15 @@ export function TimeCard({ moment }: TimeCardProps) {
     "bg-slate-400";
 
   return (
-    <div className={`glass-card overflow-hidden ${config.borderColor} bg-gradient-to-br ${config.gradientFrom} to-transparent`}>
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-white/[0.06] px-5 py-3">
-        <div className="flex items-center gap-3">
-          <span className={`flex h-10 w-10 items-center justify-center rounded-xl ${config.bgColor} text-xl`}>
-            {config.icon}
-          </span>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className={`text-sm font-bold ${config.color}`}>{config.label}</span>
-              <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${config.tagBg} ${config.tagText}`}>
-                Game {moment.gameIndex}
-              </span>
-              {moment.isTactical && (
-                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
-                  Tactical
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-slate-500">
-              Move {moment.moveNumber} · {moment.userColor === "white" ? "White" : "Black"}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3">
-          {/* Time badge */}
-          <div className="text-right">
-            <p className={`text-lg font-bold ${config.color}`}>{formatTime(moment.timeSpentSec)}</p>
-            <p className="text-[10px] text-slate-500">{formatTime(moment.timeRemainingSec)} left</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Board + Info */}
-      <div className="p-4">
-        <div className="flex flex-col gap-4 lg:flex-row">
-          {/* Board */}
-          <div ref={boardSizeRef} className="relative shrink-0" style={{ width: "min(100%, 320px)" }}>
-            <div className="flex">
-              {moment.evalBefore != null && (
-                <EvalBar evalCp={whiteEval} height={boardSize} />
-              )}
+    <div className={`glass-card-hover overflow-hidden ${config.borderColor} bg-gradient-to-br ${config.gradientFrom} to-transparent`}>
+      <div className="grid gap-0 md:grid-cols-[minmax(0,520px)_1fr]">
+        {/* Board side */}
+        <div ref={boardSizeRef} className="relative overflow-hidden border-b border-white/[0.04] bg-white/[0.01] p-3 sm:p-5 md:border-b-0 md:border-r">
+          <div className="mx-auto flex w-full max-w-[460px] items-start gap-2 sm:gap-3">
+            {moment.evalBefore != null && (
+              <EvalBar evalCp={whiteEval} height={boardSize} />
+            )}
+            <div className="flex-1 min-w-0">
               <Chessboard
                 id={`time-${moment.gameIndex}-${moment.moveNumber}`}
                 position={moment.fen}
@@ -288,110 +255,140 @@ export function TimeCard({ moment }: TimeCardProps) {
                 showBoardNotation={showCoords}
                 customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
                 customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                customBoardStyle={{ borderRadius: "12px", overflow: "hidden" }}
               />
             </div>
-            {/* Arrow legend */}
-            {bestArrows.length > 0 && (
-              <div className="mt-1 flex items-center gap-3 text-[10px] text-slate-500">
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-1.5 w-4 rounded-sm" style={{ backgroundColor: config.arrowColor }} /> Your move
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="inline-block h-1.5 w-4 rounded-sm bg-emerald-500/50" /> Best move
-                </span>
-              </div>
-            )}
           </div>
+          {/* Arrow legend */}
+          {bestArrows.length > 0 && (
+            <div className="mx-auto mt-2 flex w-full max-w-[460px] items-center gap-3 pl-[27px] text-[10px] text-slate-500">
+              <span className="flex items-center gap-1">
+                <span className="inline-block h-1.5 w-4 rounded-sm" style={{ backgroundColor: config.arrowColor }} /> Your move
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block h-1.5 w-4 rounded-sm" style={{ backgroundColor: "rgba(34, 197, 94, 0.9)" }} /> Best move
+              </span>
+            </div>
+          )}
+        </div>
 
-          {/* Analysis info */}
-          <div className="flex min-w-0 flex-1 flex-col gap-3">
-            {/* Your move */}
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Your Move</p>
-              <div className="mt-1 flex items-center gap-2">
-                <span className={`text-xl font-bold ${moment.verdict === "justified" ? "text-emerald-400" : moment.cpLoss && moment.cpLoss >= 100 ? "text-red-400" : "text-slate-200"}`}>
-                  {userSan ?? moment.userMove}
+        {/* Info side */}
+        <div className="space-y-5 p-5 md:p-6">
+          {/* Header badge row */}
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={`shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-bold text-white shadow-sm ${config.bgColor}`}>
+                {config.icon} {config.label}
+              </span>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${config.tagBg} ${config.tagText}`}>
+                Game {moment.gameIndex}
+              </span>
+              {moment.isTactical && (
+                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
+                  Tactical
                 </span>
-                {moment.cpLoss != null && moment.cpLoss > 0 && (
-                  <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-bold text-red-400">
-                    −{(moment.cpLoss / 100).toFixed(1)}
-                  </span>
-                )}
-              </div>
-              {bestSan && moment.bestMove !== moment.userMove && (
-                <p className="mt-1 text-xs text-slate-500">
-                  Best: <span className="font-semibold text-emerald-400">{bestSan}</span>
-                </p>
               )}
             </div>
+            <h3 className="mt-2 text-lg font-bold text-white">
+              Move {moment.moveNumber} · {moment.userColor === "white" ? "White" : "Black"}
+            </h3>
+          </div>
 
-            {/* Time analysis */}
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Time Analysis</p>
-              <p className="mt-2 text-sm leading-relaxed text-slate-300">{moment.reason}</p>
+          {/* Time insight callout */}
+          <div className="rounded-xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Time Insight</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-slate-200">
+              Spent{" "}
+              <span className={`rounded-md px-1.5 py-0.5 font-bold ${config.tagBg} ${config.tagText}`}>{formatTime(moment.timeSpentSec)}</span>{" "}
+              on this move with{" "}
+              <span className="rounded-md bg-white/[0.06] px-1.5 py-0.5 font-bold text-slate-300">{formatTime(moment.timeRemainingSec)}</span>{" "}
+              remaining on the clock.
+            </p>
+            <div className="mt-3 flex items-center gap-2">
+              <span className="text-[10px] text-slate-500">Played:</span>
+              <span className={`rounded-md px-2 py-0.5 font-mono text-sm font-bold ${moment.verdict === "justified" ? "bg-emerald-500/15 text-emerald-400" : moment.cpLoss && moment.cpLoss >= 100 ? "bg-red-500/15 text-red-400" : "bg-white/[0.06] text-slate-200"}`}>
+                {userSan ?? moment.userMove}
+              </span>
+              {moment.cpLoss != null && moment.cpLoss > 0 && (
+                <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-xs font-bold text-red-400">
+                  −{(moment.cpLoss / 100).toFixed(1)}
+                </span>
+              )}
+              {bestSan && moment.bestMove !== moment.userMove && (
+                <>
+                  <span className="text-[10px] text-slate-500">Best:</span>
+                  <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 font-mono text-sm font-bold text-emerald-400">{bestSan}</span>
+                </>
+              )}
             </div>
+          </div>
 
-            {/* Complexity meter */}
-            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-              <div className="flex items-center justify-between">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Position Complexity</p>
-                <span className="text-xs font-bold text-slate-300">{moment.complexity}/100</span>
-              </div>
-              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
-                <div
-                  className={`h-full rounded-full transition-all ${complexityColor}`}
-                  style={{ width: `${moment.complexity}%` }}
-                />
-              </div>
-              <div className="mt-1 flex justify-between text-[10px] text-slate-600">
-                <span>Simple</span>
-                <span>Critical</span>
-              </div>
+          {/* Time analysis reasoning */}
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Time Analysis</p>
+            <p className="mt-2 text-sm leading-relaxed text-slate-300">{moment.reason}</p>
+          </div>
+
+          {/* Complexity meter */}
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Position Complexity</p>
+              <span className="text-xs font-bold text-slate-300">{moment.complexity}/100</span>
             </div>
-
-            {/* Actions */}
-            <div className="flex flex-wrap items-center gap-2">
-              {/* Explain button */}
-              <button
-                type="button"
-                onClick={openExplain}
-                disabled={explaining}
-                className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
-                  config.borderColor
-                } ${config.bgColor} ${config.color} hover:brightness-125 disabled:opacity-50`}
-              >
-                {explaining ? (
-                  <>
-                    <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" strokeDasharray="31.4 31.4" strokeLinecap="round" /></svg>
-                    Analyzing…
-                  </>
-                ) : (
-                  <>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                    Explain
-                  </>
-                )}
-              </button>
-
-              {/* Copy FEN */}
-              <button
-                type="button"
-                onClick={copyFen}
-                className="flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-xs text-slate-400 transition hover:bg-white/[0.05] hover:text-slate-200"
-              >
-                {fenCopied ? (
-                  <>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-emerald-400"><polyline points="20 6 9 17 4 12"/></svg>
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                    Copy FEN
-                  </>
-                )}
-              </button>
+            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+              <div
+                className={`h-full rounded-full transition-all ${complexityColor}`}
+                style={{ width: `${moment.complexity}%` }}
+              />
             </div>
+            <div className="mt-1 flex justify-between text-[10px] text-slate-600">
+              <span>Simple</span>
+              <span>Critical</span>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Explain button */}
+            <button
+              type="button"
+              onClick={openExplain}
+              disabled={explaining}
+              className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
+                config.borderColor
+              } ${config.bgColor} ${config.color} hover:brightness-125 disabled:opacity-50`}
+            >
+              {explaining ? (
+                <>
+                  <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" strokeDasharray="31.4 31.4" strokeLinecap="round" /></svg>
+                  Analyzing…
+                </>
+              ) : (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  Explain
+                </>
+              )}
+            </button>
+
+            {/* Copy FEN */}
+            <button
+              type="button"
+              onClick={copyFen}
+              className="flex items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-1.5 text-xs text-slate-400 transition hover:bg-white/[0.05] hover:text-slate-200"
+            >
+              {fenCopied ? (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-emerald-400"><polyline points="20 6 9 17 4 12"/></svg>
+                  Copied!
+                </>
+              ) : (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                  Copy FEN
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>
