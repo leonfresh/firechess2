@@ -235,19 +235,19 @@ export default function DashboardPage() {
   const latest = filtered[0] ?? null;
   const previous = filtered[1] ?? null;
 
-  // Exclude time-management reports from progress/radar (they don't have accuracy/cpLoss)
-  const filteredNonTime = useMemo(() => {
-    return filtered.filter((r) => r.scanMode !== "time-management");
+  // Only include openings / both scans for progress/radar (tactics & time-management don't produce accuracy)
+  const filteredForProgress = useMemo(() => {
+    return filtered.filter((r) => r.scanMode === "openings" || r.scanMode === "both");
   }, [filtered]);
 
-  // Latest non-time-management report for radar
-  const latestNonTimeMgmt = filteredNonTime[0] ?? null;
-  const previousNonTimeMgmt = filteredNonTime[1] ?? null;
+  // Latest openings-based report for radar / accuracy metrics
+  const latestNonTimeMgmt = filteredForProgress[0] ?? null;
+  const previousNonTimeMgmt = filteredForProgress[1] ?? null;
 
   // Progress data for line chart (oldest → newest, with timestamps for date axis)
-  // Only include reports that have accuracy/cpLoss (exclude time-management)
+  // Only include reports that have accuracy/cpLoss (openings / both scans)
   const progressData = useMemo(() => {
-    return [...filteredNonTime]
+    return [...filteredForProgress]
       .reverse()
       .map((r) => ({
         timestamp: new Date(r.createdAt).getTime(),
@@ -256,7 +256,7 @@ export default function DashboardPage() {
         rating: r.estimatedRating ?? 0,
         cpLoss: r.weightedCpLoss ?? 0,
       }));
-  }, [filteredNonTime]);
+  }, [filteredForProgress]);
 
   // Aggregate stats
   const totalGames = filtered.reduce((s, r) => s + r.gamesAnalyzed, 0);
@@ -462,7 +462,7 @@ export default function DashboardPage() {
           )}
 
           {/* ─── Progress Highlights (rescan improvement) ─── */}
-          {latestNonTimeMgmt && previousNonTimeMgmt && filteredNonTime.length >= 2 && (
+          {latestNonTimeMgmt && previousNonTimeMgmt && filteredForProgress.length >= 2 && (
             <div className="animate-fade-in-up" style={{ animationDelay: "0.13s" }}>
               <ProgressHighlights latest={latestNonTimeMgmt} previous={previousNonTimeMgmt} />
             </div>

@@ -2485,8 +2485,14 @@ export async function analyzeOpeningLeaksInBrowser(
 
                       // Extract clock time for this ply (centiseconds → seconds)
                       let timeRemainingSec: number | null = null;
+                      let initialTimeSec: number | null = null;
                       if (game.clocks && ply < game.clocks.length) {
                         timeRemainingSec = Math.round(game.clocks[ply] / 100);
+                        // Initial time: first clock reading for the user's color
+                        const initPly = userColor === "white" ? 0 : 1;
+                        if (initPly < game.clocks.length) {
+                          initialTimeSec = Math.round(game.clocks[initPly] / 100);
+                        }
                       }
 
                       // Add time pressure tag if under 30 seconds
@@ -2507,7 +2513,8 @@ export async function analyzeOpeningLeaksInBrowser(
                         gameIndex: gameIndex + 1,
                         moveNumber: fullMoveNumber,
                         tags: tacticTags,
-                        timeRemainingSec
+                        timeRemainingSec,
+                        initialTimeSec,
                       });
 
                       seenTacticFens.add(fenBefore);

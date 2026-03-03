@@ -1389,6 +1389,9 @@ export default function TrainPage() {
               <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
                 {activeMode ? MODES.find((m) => m.id === activeMode)?.title : "Training"}
               </h1>
+              <span className="rounded-md bg-fuchsia-500/20 border border-fuchsia-500/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-fuchsia-300">
+                Beta
+              </span>
               {activeMode && (
                 <span className="text-2xl">{MODES.find((m) => m.id === activeMode)?.icon}</span>
               )}
@@ -1867,6 +1870,18 @@ export default function TrainPage() {
                 Choose Mode
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Beta feedback CTA */}
+        {!activeMode && (
+          <div className="mt-12 rounded-xl border border-white/[0.06] bg-white/[0.02] p-6 text-center">
+            <p className="text-sm text-slate-400">
+              🧪 Training is in <span className="font-semibold text-fuchsia-300">Beta</span> — if you caught a bug or something feels off,{" "}
+              <a href="/feedback" className="font-medium text-fuchsia-400 underline decoration-fuchsia-400/30 underline-offset-2 transition-colors hover:text-fuchsia-300">
+                please leave feedback
+              </a>.
+            </p>
           </div>
         )}
       </div>

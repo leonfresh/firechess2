@@ -89,8 +89,9 @@ export default function HomePage() {
   const [copyLinkLabel, setCopyLinkLabel] = useState("Copy Link");
   const [welcomeBack, setWelcomeBack] = useState<string | null>(null);
   const [leakTab, setLeakTab] = useState<"repeated" | "one-off">("repeated");
-  const [openingFolder, setOpeningFolder] = useState<"mistakes" | "patterns" | "rankings">("mistakes");
+  const [openingFolder, setOpeningFolder] = useState<"mistakes" | "rankings">("mistakes");
   const [tacticsOpen, setTacticsOpen] = useState(true);
+  const [patternsOpen, setPatternsOpen] = useState(true);
   const [endgamesOpen, setEndgamesOpen] = useState(true);
   const [puzzleBoardOpen, setPuzzleBoardOpen] = useState(false);
   const [timeManagementOpen, setTimeManagementOpen] = useState(true);
@@ -2210,25 +2211,6 @@ export default function HomePage() {
                     )}
                   </button>
 
-                  {/* Patterns tab */}
-                  <button
-                    type="button"
-                    onClick={() => setOpeningFolder("patterns")}
-                    className={`group relative flex items-center gap-2 rounded-t-xl px-5 py-3 text-sm font-bold transition-all cursor-pointer ${
-                      openingFolder === "patterns"
-                        ? "bg-white/[0.06] text-white border border-white/[0.1] border-b-transparent z-10 shadow-[0_-4px_20px_-6px_rgba(245,158,11,0.15)]"
-                        : "bg-white/[0.02] text-slate-500 border border-white/[0.05] border-b-white/[0.1] hover:text-slate-300 hover:bg-white/[0.04]"
-                    }`}
-                  >
-                    <span className="text-base">🧠</span>
-                    <span className="hidden sm:inline">Patterns</span>
-                    {positionalMotifs.length > 0 && (
-                      <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${openingFolder === "patterns" ? "bg-amber-500/20 text-amber-400" : "bg-white/[0.06] text-slate-500"}`}>
-                        {positionalMotifs.length}
-                      </span>
-                    )}
-                  </button>
-
                   {/* Rankings tab — only if data exists */}
                   {result?.openingSummaries && result.openingSummaries.length > 0 && (
                     <button
@@ -2359,279 +2341,6 @@ export default function HomePage() {
                   )}
                   </>)}
 
-                  {/* ── Patterns folder ── */}
-                  {openingFolder === "patterns" && (
-                  <div className="space-y-3">
-                    {positionalMotifs.length === 0 ? (
-                      <div className="glass-card border-amber-500/10 p-6">
-                        <div className="flex flex-col items-center gap-3 text-center">
-                          <span className="text-3xl">✨</span>
-                          <h3 className="text-base font-bold text-white">No positional patterns detected</h3>
-                          <p className="max-w-md text-sm text-slate-400">
-                            Your openings look positionally sound in this scan! FireChess checks for unnecessary captures, premature trades,
-                            released tension, passive retreats, pawn structure issues, and more. Scan more games or use the &ldquo;All&rdquo;
-                            mode for a deeper look.
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                    <>
-                    {positionalMotifs.map((motif) => {
-                      const pattern = POSITIONAL_PATTERNS.find(p => motif.name.startsWith(p.label) || motif.name.includes(p.tag));
-                      const quote = pattern?.quote;
-                      const author = pattern?.author;
-                      const icon = pattern?.icon ?? motif.icon;
-                      const colorMap: Record<string, string> = {
-                        amber: "border-amber-500/20 bg-amber-500/[0.04]",
-                        orange: "border-orange-500/20 bg-orange-500/[0.04]",
-                        rose: "border-rose-500/20 bg-rose-500/[0.04]",
-                        red: "border-red-500/20 bg-red-500/[0.04]",
-                        slate: "border-slate-500/20 bg-slate-500/[0.04]",
-                        violet: "border-violet-500/20 bg-violet-500/[0.04]",
-                        yellow: "border-yellow-500/20 bg-yellow-500/[0.04]",
-                        blue: "border-blue-500/20 bg-blue-500/[0.04]",
-                        cyan: "border-cyan-500/20 bg-cyan-500/[0.04]",
-                        indigo: "border-indigo-500/20 bg-indigo-500/[0.04]",
-                        teal: "border-teal-500/20 bg-teal-500/[0.04]",
-                      };
-                      const borderClass = colorMap[pattern?.color ?? "amber"] ?? colorMap.amber;
-                      const ratio = motif.avgCpLoss < 99000 ? motif.avgCpLoss : 0;
-                      const severityColor = ratio >= 15000 ? "text-red-400" : ratio >= 8000 ? "text-amber-400" : "text-yellow-400";
-
-                      const isExpanded = expandedMotifs.has(motif.name);
-                      const toggleExpand = () => setExpandedMotifs(prev => {
-                        const next = new Set(prev);
-                        if (next.has(motif.name)) next.delete(motif.name);
-                        else next.add(motif.name);
-                        return next;
-                      });
-                      const hasExamples = motif.examples.length > 0;
-
-                      return (
-                        <div key={motif.name} className={`glass-card ${borderClass} overflow-hidden`}>
-                          <div className="p-5">
-                            <div className="flex items-start gap-4">
-                              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/[0.06] text-2xl">{icon}</span>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center gap-3 flex-wrap">
-                                  <h3 className="text-lg font-bold text-white">{motif.name}</h3>
-                                  <span className={`rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs font-bold ${severityColor}`}>
-                                    {motif.count}× detected
-                                  </span>
-                                  {motif.avgCpLoss < 99000 && (
-                                    <span className="text-xs text-slate-500">
-                                      avg −{(motif.avgCpLoss / 100).toFixed(1)} pawns
-                                    </span>
-                                  )}
-                                </div>
-                                {quote && (
-                                  <blockquote className="mt-3 border-l-2 border-amber-500/30 pl-4">
-                                    <p className="text-sm italic leading-relaxed text-slate-300">
-                                      &ldquo;{quote}&rdquo;
-                                    </p>
-                                    <p className="mt-1 text-xs text-slate-500">— {author}</p>
-                                  </blockquote>
-                                )}
-                                {hasExamples && (
-                                  <button
-                                    type="button"
-                                    onClick={toggleExpand}
-                                    className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
-                                  >
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
-                                    {isExpanded ? "Hide" : "Show"} {motif.examples.length} example{motif.examples.length !== 1 ? "s" : ""} from your games
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Batch example positions */}
-                          {isExpanded && hasExamples && (
-                            <div className="border-t border-white/[0.06] bg-white/[0.015] px-5 py-4">
-                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                                {motif.examples.map((ex, ei) => {
-                                  // Resolve move squares from FEN — handles both UCI and SAN
-                                  const resolveMove = (fen: string, move: string | null | undefined): { from: string; to: string; san: string } | null => {
-                                    if (!move) return null;
-                                    try {
-                                      const c = new Chess(fen);
-                                      // Try UCI first
-                                      if (/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(move)) {
-                                        const r = c.move({ from: move.slice(0, 2), to: move.slice(2, 4), promotion: (move[4] || undefined) as any });
-                                        if (r) return { from: r.from, to: r.to, san: r.san };
-                                      }
-                                      // Fall back to SAN
-                                      const r = c.move(move);
-                                      if (r) return { from: r.from, to: r.to, san: r.san };
-                                    } catch {}
-                                    return null;
-                                  };
-                                  const userR = resolveMove(ex.fenBefore, ex.userMove);
-                                  const bestR = resolveMove(ex.fenBefore, ex.bestMove);
-                                  const arrows: [CbSquare, CbSquare, string][] = [];
-                                  if (userR) arrows.push([userR.from as CbSquare, userR.to as CbSquare, "rgba(239, 68, 68, 0.85)"]);
-                                  if (bestR) arrows.push([bestR.from as CbSquare, bestR.to as CbSquare, "rgba(34, 197, 94, 0.85)"]);
-                                  // Determine orientation from FEN — if " b " in FEN, black to move means user is black
-                                  const sideToMove = ex.fenBefore.includes(" b ") ? "black" : "white";
-
-                                  const exKey = `${motif.name}-${ei}`;
-                                  const isExplaining = posExplaining === exKey;
-                                  const onExplain = async () => {
-                                    if (isExplaining) return;
-                                    setPosExplaining(exKey);
-                                    try {
-                                      const coaching = explainOpeningLeak(ex.fenBefore, ex.userMove ?? "", ex.bestMove ?? null, ex.cpLoss, 0, -ex.cpLoss);
-                                      const rich: PositionExplanation = { ...coaching.played };
-
-                                      // Play user's move to get post-move FEN
-                                      const playedUci = ex.userMove ?? "";
-                                      const afterPlayed = new Chess(ex.fenBefore);
-                                      const uciMatch = /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(playedUci);
-                                      let playedSan = playedUci;
-                                      if (uciMatch) {
-                                        const r = afterPlayed.move({ from: playedUci.slice(0, 2), to: playedUci.slice(2, 4), promotion: (playedUci[4] || undefined) as PieceSymbol | undefined });
-                                        if (r) playedSan = r.san;
-                                      } else {
-                                        const r = afterPlayed.move(playedUci);
-                                        if (r) playedSan = r.san;
-                                      }
-
-                                      // Get Stockfish PV after the played move
-                                      let fullMistakeLine = [playedUci];
-                                      try {
-                                        const line = await stockfishClient.getPrincipalVariation(afterPlayed.fen(), 10, 12);
-                                        if (line) {
-                                          // Format PV as SAN for the coaching text
-                                          const sanTokens: string[] = [playedSan];
-                                          const pvSim = new Chess(afterPlayed.fen());
-                                          for (const uci of line.pvMoves) {
-                                            if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci)) break;
-                                            const mn = pvSim.moveNumber();
-                                            const side = pvSim.turn();
-                                            const mr = pvSim.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: (uci[4] || undefined) as PieceSymbol | undefined });
-                                            if (!mr) break;
-                                            sanTokens.push(side === "w" ? `${mn}.${mr.san}` : `${mn}...${mr.san}`);
-                                          }
-                                          rich.observations = [
-                                            ...rich.observations,
-                                            `**Engine punishment line**: ${sanTokens.join(" ")}`,
-                                          ];
-                                          fullMistakeLine = [playedUci, ...line.pvMoves];
-
-                                          // Compute final FEN for position outlook
-                                          try {
-                                            const finalSim = new Chess(ex.fenBefore);
-                                            for (const u of fullMistakeLine) {
-                                              if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(u)) break;
-                                              const r2 = finalSim.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: (u[4] || undefined) as PieceSymbol | undefined });
-                                              if (!r2) break;
-                                            }
-                                            const userP = sideToMove === "white" ? "w" as const : "b" as const;
-                                            const finalEval = await stockfishClient.evaluateFen(finalSim.fen(), 8);
-                                            const outlook = describeEndPosition(finalSim.fen(), userP, finalEval?.cp ?? null);
-                                            if (outlook.summary) rich.observations.push(`**Position outlook**: ${outlook.summary}`);
-                                            for (const d of outlook.details) rich.observations.push(`  · ${d}`);
-                                          } catch { /* skip outlook */ }
-                                        }
-                                      } catch { /* skip PV */ }
-
-                                      setPosExplainRich(rich);
-                                      setPosExplainAnimUci(fullMistakeLine);
-                                      setPosExplainFen(ex.fenBefore);
-                                      setPosExplainOrientation(sideToMove === "black" ? "black" : "white");
-                                      setPosExplainTitle(`Your Move: ${playedSan}`);
-                                      setPosExplainSubtitle(rich.headline);
-                                      setPosExplainModalOpen(true);
-                                    } catch { /* silently fail */ }
-                                    setPosExplaining(null);
-                                  };
-
-                                  return (
-                                    <div key={`${ex.fenBefore}-${ei}`} className="flex flex-col items-center gap-1.5">
-                                      <div className="w-full max-w-[180px] aspect-square rounded-lg overflow-hidden border border-white/[0.08]">
-                                        <Chessboard
-                                          id={`pos-ex-${motif.name}-${ei}`}
-                                          position={ex.fenBefore}
-                                          arePiecesDraggable={false}
-                                          boardWidth={180}
-                                          customArrows={arrows}
-                                          boardOrientation={sideToMove === "black" ? "black" : "white"}
-                                          customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-                                          customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
-                                          customBoardStyle={{ borderRadius: "0px" }}
-                                          showBoardNotation={false}
-                                        />
-                                      </div>
-                                      <div className="text-center">
-                                        <span className="text-[10px] font-bold text-red-400">
-                                          −{(ex.cpLoss / 100).toFixed(1)}
-                                        </span>
-                                        {userR && (
-                                          <span className="ml-1.5 text-[10px] text-slate-500">
-                                            played <span className="font-mono text-red-400/80">{userR.san}</span>
-                                          </span>
-                                        )}
-                                        {bestR && (
-                                          <span className="ml-1 text-[10px] text-slate-500">
-                                            best <span className="font-mono text-emerald-400/80">{bestR.san}</span>
-                                          </span>
-                                        )}
-                                      </div>
-                                      <button
-                                        type="button"
-                                        onClick={onExplain}
-                                        disabled={isExplaining}
-                                        className="text-[10px] font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-wait"
-                                      >
-                                        {isExplaining ? "Loading…" : "Explain"}
-                                      </button>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                              <div className="mt-3 flex items-center gap-2 text-[10px] text-slate-500">
-                                <span className="inline-block h-2 w-4 rounded-sm" style={{ backgroundColor: "rgba(239, 68, 68, 0.85)" }} />
-                                <span>Your move</span>
-                                <span className="inline-block h-2 w-4 rounded-sm ml-2" style={{ backgroundColor: "rgba(34, 197, 94, 0.85)" }} />
-                                <span>Best move</span>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                    {positionalMotifs.length >= 2 && (
-                      <div className="glass-card border-amber-500/10 p-4">
-                        <p className="flex items-start gap-2 text-sm text-slate-400">
-                          <span className="mt-0.5 shrink-0 text-amber-400">💡</span>
-                          <span>
-                            These patterns often repeat unconsciously. Awareness is the first step — try to catch yourself <em>before</em> making the move.
-                            Head to the <Link href="/train" className="text-amber-400 underline underline-offset-2 hover:text-amber-300">Training Center</Link> to practice positions with these exact patterns.
-                          </span>
-                        </p>
-                      </div>
-                    )}
-                    </>
-                    )}
-
-                    {/* Positional motif explanation modal (shared) */}
-                    <ExplanationModal
-                      open={posExplainModalOpen}
-                      onClose={() => setPosExplainModalOpen(false)}
-                      variant="opening"
-                      activeTab="played"
-                      richExplanation={posExplainRich}
-                      fen={posExplainFen}
-                      uciMoves={posExplainAnimUci}
-                      boardOrientation={posExplainOrientation}
-                      autoPlay
-                      title={posExplainTitle}
-                      subtitle={posExplainSubtitle}
-                    />
-                  </div>
-                  )}
-
                   {/* ── Rankings folder ── */}
                   {openingFolder === "rankings" && result?.openingSummaries && result.openingSummaries.length > 0 && (
                     <OpeningRankings openingSummaries={result.openingSummaries} />
@@ -2679,8 +2388,303 @@ export default function HomePage() {
                     </div>
                   )}
 
+                  {/* CTA: suggest time management scan */}
+                  {lastRunConfig?.scanMode === "openings" && (
+                    <div className="glass-card flex flex-col items-center gap-4 border-violet-500/15 bg-gradient-to-r from-violet-500/[0.04] to-transparent p-6 text-center sm:flex-row sm:text-left">
+                      <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-500/15 text-3xl shadow-lg shadow-violet-500/10">⏱️</span>
+                      <div className="flex-1">
+                        <h3 className="text-base font-bold text-white">Want to analyze your time management?</h3>
+                        <p className="mt-1 text-sm text-slate-400">
+                          Find rushed moves, wasted thinks, and time scrambles. See how your clock usage impacts your results.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => quickScanMode("time-management")}
+                        className="flex h-11 shrink-0 items-center gap-2 rounded-xl border border-violet-500/20 bg-violet-500/10 px-5 text-sm font-bold text-violet-400 transition hover:border-violet-500/40 hover:bg-violet-500/20"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        Scan Time
+                      </button>
+                    </div>
+                  )}
+
                 </div>
               </div>
+              )}
+
+              {/* ─── Positional Patterns — Standalone Section ─── */}
+              {(lastRunConfig?.scanMode === "openings" || lastRunConfig?.scanMode === "both") && positionalMotifs.length > 0 && (
+              <>
+              <div className="my-4">
+                <div className="section-divider" />
+              </div>
+              <button type="button" onClick={() => setPatternsOpen(o => !o)} className="glass-card border-amber-500/15 bg-gradient-to-r from-amber-500/[0.04] to-transparent p-6 w-full text-left cursor-pointer transition-colors hover:border-amber-500/25">
+                <div className="flex items-center gap-4">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">🧠</span>
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-extrabold text-white tracking-tight">
+                      Positional Patterns
+                      <span className="ml-3 inline-flex items-center rounded-full bg-amber-500/15 px-3 py-1 text-base font-bold text-amber-400">
+                        {positionalMotifs.length}
+                      </span>
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Recurring positional habits detected across your games — premature trades, released tension, passive retreats, and more
+                    </p>
+                  </div>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`shrink-0 text-slate-400 transition-transform duration-200 ${patternsOpen ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+              </button>
+
+              {patternsOpen && (
+              <div className="space-y-3">
+                {positionalMotifs.map((motif) => {
+                  const pattern = POSITIONAL_PATTERNS.find(p => motif.name.startsWith(p.label) || motif.name.includes(p.tag));
+                  const quote = pattern?.quote;
+                  const author = pattern?.author;
+                  const icon = pattern?.icon ?? motif.icon;
+                  const colorMap: Record<string, string> = {
+                    amber: "border-amber-500/20 bg-amber-500/[0.04]",
+                    orange: "border-orange-500/20 bg-orange-500/[0.04]",
+                    rose: "border-rose-500/20 bg-rose-500/[0.04]",
+                    red: "border-red-500/20 bg-red-500/[0.04]",
+                    slate: "border-slate-500/20 bg-slate-500/[0.04]",
+                    violet: "border-violet-500/20 bg-violet-500/[0.04]",
+                    yellow: "border-yellow-500/20 bg-yellow-500/[0.04]",
+                    blue: "border-blue-500/20 bg-blue-500/[0.04]",
+                    cyan: "border-cyan-500/20 bg-cyan-500/[0.04]",
+                    indigo: "border-indigo-500/20 bg-indigo-500/[0.04]",
+                    teal: "border-teal-500/20 bg-teal-500/[0.04]",
+                  };
+                  const borderClass = colorMap[pattern?.color ?? "amber"] ?? colorMap.amber;
+                  const ratio = motif.avgCpLoss < 99000 ? motif.avgCpLoss : 0;
+                  const severityColor = ratio >= 15000 ? "text-red-400" : ratio >= 8000 ? "text-amber-400" : "text-yellow-400";
+
+                  const isExpanded = expandedMotifs.has(motif.name);
+                  const toggleExpand = () => setExpandedMotifs(prev => {
+                    const next = new Set(prev);
+                    if (next.has(motif.name)) next.delete(motif.name);
+                    else next.add(motif.name);
+                    return next;
+                  });
+                  const hasExamples = motif.examples.length > 0;
+
+                  return (
+                    <div key={motif.name} className={`glass-card ${borderClass} overflow-hidden`}>
+                      <div className="p-5">
+                        <div className="flex items-start gap-4">
+                          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/[0.06] text-2xl">{icon}</span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <h3 className="text-lg font-bold text-white">{motif.name}</h3>
+                              <span className={`rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs font-bold ${severityColor}`}>
+                                {motif.count}× detected
+                              </span>
+                              {motif.avgCpLoss < 99000 && (
+                                <span className="text-xs text-slate-500">
+                                  avg −{(motif.avgCpLoss / 100).toFixed(1)} pawns
+                                </span>
+                              )}
+                            </div>
+                            {quote && (
+                              <blockquote className="mt-3 border-l-2 border-amber-500/30 pl-4">
+                                <p className="text-sm italic leading-relaxed text-slate-300">
+                                  &ldquo;{quote}&rdquo;
+                                </p>
+                                <p className="mt-1 text-xs text-slate-500">— {author}</p>
+                              </blockquote>
+                            )}
+                            {hasExamples && (
+                              <button
+                                type="button"
+                                onClick={toggleExpand}
+                                className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
+                                {isExpanded ? "Hide" : "Show"} {motif.examples.length} example{motif.examples.length !== 1 ? "s" : ""} from your games
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Batch example positions */}
+                      {isExpanded && hasExamples && (
+                        <div className="border-t border-white/[0.06] bg-white/[0.015] px-5 py-4">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {motif.examples.map((ex, ei) => {
+                              const resolveMove = (fen: string, move: string | null | undefined): { from: string; to: string; san: string } | null => {
+                                if (!move) return null;
+                                try {
+                                  const c = new Chess(fen);
+                                  if (/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(move)) {
+                                    const r = c.move({ from: move.slice(0, 2), to: move.slice(2, 4), promotion: (move[4] || undefined) as any });
+                                    if (r) return { from: r.from, to: r.to, san: r.san };
+                                  }
+                                  const r = c.move(move);
+                                  if (r) return { from: r.from, to: r.to, san: r.san };
+                                } catch {}
+                                return null;
+                              };
+                              const userR = resolveMove(ex.fenBefore, ex.userMove);
+                              const bestR = resolveMove(ex.fenBefore, ex.bestMove);
+                              const arrows: [CbSquare, CbSquare, string][] = [];
+                              if (userR) arrows.push([userR.from as CbSquare, userR.to as CbSquare, "rgba(239, 68, 68, 0.85)"]);
+                              if (bestR) arrows.push([bestR.from as CbSquare, bestR.to as CbSquare, "rgba(34, 197, 94, 0.85)"]);
+                              const sideToMove = ex.fenBefore.includes(" b ") ? "black" : "white";
+
+                              const exKey = `${motif.name}-${ei}`;
+                              const isExplaining = posExplaining === exKey;
+                              const onExplain = async () => {
+                                if (isExplaining) return;
+                                setPosExplaining(exKey);
+                                try {
+                                  const coaching = explainOpeningLeak(ex.fenBefore, ex.userMove ?? "", ex.bestMove ?? null, ex.cpLoss, 0, -ex.cpLoss);
+                                  const rich: PositionExplanation = { ...coaching.played };
+
+                                  const playedUci = ex.userMove ?? "";
+                                  const afterPlayed = new Chess(ex.fenBefore);
+                                  const uciMatch = /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(playedUci);
+                                  let playedSan = playedUci;
+                                  if (uciMatch) {
+                                    const r = afterPlayed.move({ from: playedUci.slice(0, 2), to: playedUci.slice(2, 4), promotion: (playedUci[4] || undefined) as PieceSymbol | undefined });
+                                    if (r) playedSan = r.san;
+                                  } else {
+                                    const r = afterPlayed.move(playedUci);
+                                    if (r) playedSan = r.san;
+                                  }
+
+                                  let fullMistakeLine = [playedUci];
+                                  try {
+                                    const line = await stockfishClient.getPrincipalVariation(afterPlayed.fen(), 10, 12);
+                                    if (line) {
+                                      const sanTokens: string[] = [playedSan];
+                                      const pvSim = new Chess(afterPlayed.fen());
+                                      for (const uci of line.pvMoves) {
+                                        if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci)) break;
+                                        const mn = pvSim.moveNumber();
+                                        const side = pvSim.turn();
+                                        const mr = pvSim.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: (uci[4] || undefined) as PieceSymbol | undefined });
+                                        if (!mr) break;
+                                        sanTokens.push(side === "w" ? `${mn}.${mr.san}` : `${mn}...${mr.san}`);
+                                      }
+                                      rich.observations = [
+                                        ...rich.observations,
+                                        `**Engine punishment line**: ${sanTokens.join(" ")}`,
+                                      ];
+                                      fullMistakeLine = [playedUci, ...line.pvMoves];
+
+                                      try {
+                                        const finalSim = new Chess(ex.fenBefore);
+                                        for (const u of fullMistakeLine) {
+                                          if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(u)) break;
+                                          const r2 = finalSim.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: (u[4] || undefined) as PieceSymbol | undefined });
+                                          if (!r2) break;
+                                        }
+                                        const userP = sideToMove === "white" ? "w" as const : "b" as const;
+                                        const finalEval = await stockfishClient.evaluateFen(finalSim.fen(), 8);
+                                        const outlook = describeEndPosition(finalSim.fen(), userP, finalEval?.cp ?? null);
+                                        if (outlook.summary) rich.observations.push(`**Position outlook**: ${outlook.summary}`);
+                                        for (const d of outlook.details) rich.observations.push(`  · ${d}`);
+                                      } catch { /* skip outlook */ }
+                                    }
+                                  } catch { /* skip PV */ }
+
+                                  setPosExplainRich(rich);
+                                  setPosExplainAnimUci(fullMistakeLine);
+                                  setPosExplainFen(ex.fenBefore);
+                                  setPosExplainOrientation(sideToMove === "black" ? "black" : "white");
+                                  setPosExplainTitle(`Your Move: ${playedSan}`);
+                                  setPosExplainSubtitle(rich.headline);
+                                  setPosExplainModalOpen(true);
+                                } catch { /* silently fail */ }
+                                setPosExplaining(null);
+                              };
+
+                              return (
+                                <div key={`${ex.fenBefore}-${ei}`} className="flex flex-col items-center gap-1.5">
+                                  <div className="w-full max-w-[180px] aspect-square rounded-lg overflow-hidden border border-white/[0.08]">
+                                    <Chessboard
+                                      id={`pos-ex-${motif.name}-${ei}`}
+                                      position={ex.fenBefore}
+                                      arePiecesDraggable={false}
+                                      boardWidth={180}
+                                      customArrows={arrows}
+                                      boardOrientation={sideToMove === "black" ? "black" : "white"}
+                                      customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+                                      customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                                      customBoardStyle={{ borderRadius: "0px" }}
+                                      showBoardNotation={false}
+                                    />
+                                  </div>
+                                  <div className="text-center">
+                                    <span className="text-[10px] font-bold text-red-400">
+                                      −{(ex.cpLoss / 100).toFixed(1)}
+                                    </span>
+                                    {userR && (
+                                      <span className="ml-1.5 text-[10px] text-slate-500">
+                                        played <span className="font-mono text-red-400/80">{userR.san}</span>
+                                      </span>
+                                    )}
+                                    {bestR && (
+                                      <span className="ml-1 text-[10px] text-slate-500">
+                                        best <span className="font-mono text-emerald-400/80">{bestR.san}</span>
+                                      </span>
+                                    )}
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={onExplain}
+                                    disabled={isExplaining}
+                                    className="text-[10px] font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-wait"
+                                  >
+                                    {isExplaining ? "Loading…" : "Explain"}
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                          <div className="mt-3 flex items-center gap-2 text-[10px] text-slate-500">
+                            <span className="inline-block h-2 w-4 rounded-sm" style={{ backgroundColor: "rgba(239, 68, 68, 0.85)" }} />
+                            <span>Your move</span>
+                            <span className="inline-block h-2 w-4 rounded-sm ml-2" style={{ backgroundColor: "rgba(34, 197, 94, 0.85)" }} />
+                            <span>Best move</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                {positionalMotifs.length >= 2 && (
+                  <div className="glass-card border-amber-500/10 p-4">
+                    <p className="flex items-start gap-2 text-sm text-slate-400">
+                      <span className="mt-0.5 shrink-0 text-amber-400">💡</span>
+                      <span>
+                        These patterns often repeat unconsciously. Awareness is the first step — try to catch yourself <em>before</em> making the move.
+                        Head to the <Link href="/train" className="text-amber-400 underline underline-offset-2 hover:text-amber-300">Training Center</Link> to practice positions with these exact patterns.
+                      </span>
+                    </p>
+                  </div>
+                )}
+
+                {/* Positional motif explanation modal (shared) */}
+                <ExplanationModal
+                  open={posExplainModalOpen}
+                  onClose={() => setPosExplainModalOpen(false)}
+                  variant="opening"
+                  activeTab="played"
+                  richExplanation={posExplainRich}
+                  fen={posExplainFen}
+                  uciMoves={posExplainAnimUci}
+                  boardOrientation={posExplainOrientation}
+                  autoPlay
+                  title={posExplainTitle}
+                  subtitle={posExplainSubtitle}
+                />
+              </div>
+              )}
+              </>
               )}
 
               {/* Missed Tactics Section — shown when tactics were scanned */}
@@ -2979,6 +2983,27 @@ export default function HomePage() {
                 </div>
               )}
 
+              {/* CTA: after tactics-only scan, suggest time management scan */}
+              {lastRunConfig?.scanMode === "tactics" && (
+                <div className="glass-card flex flex-col items-center gap-4 border-violet-500/15 bg-gradient-to-r from-violet-500/[0.04] to-transparent p-6 text-center sm:flex-row sm:text-left">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-500/15 text-3xl shadow-lg shadow-violet-500/10">⏱️</span>
+                  <div className="flex-1">
+                    <h3 className="text-base font-bold text-white">Want to analyze your time management?</h3>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Find rushed moves, wasted thinks, and time scrambles. See how your clock usage impacts your results.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => quickScanMode("time-management")}
+                    className="flex h-11 shrink-0 items-center gap-2 rounded-xl border border-violet-500/20 bg-violet-500/10 px-5 text-sm font-bold text-violet-400 transition hover:border-violet-500/40 hover:bg-violet-500/20"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Scan Time
+                  </button>
+                </div>
+              )}
+
               {/* ─── Endgame Section ─── */}
               {(lastRunConfig?.scanMode === "endgames" || lastRunConfig?.scanMode === "both") && (
               <>
@@ -3246,8 +3271,50 @@ export default function HomePage() {
                 </div>
               )}
 
+              {/* CTA: after endgames-only scan, suggest time management scan */}
+              {lastRunConfig?.scanMode === "endgames" && (
+                <div className="glass-card flex flex-col items-center gap-4 border-violet-500/15 bg-gradient-to-r from-violet-500/[0.04] to-transparent p-6 text-center sm:flex-row sm:text-left">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-500/15 text-3xl shadow-lg shadow-violet-500/10">⏱️</span>
+                  <div className="flex-1">
+                    <h3 className="text-base font-bold text-white">Want to analyze your time management?</h3>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Find rushed moves, wasted thinks, and time scrambles. See how your clock usage impacts your results.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => quickScanMode("time-management")}
+                    className="flex h-11 shrink-0 items-center gap-2 rounded-xl border border-violet-500/20 bg-violet-500/10 px-5 text-sm font-bold text-violet-400 transition hover:border-violet-500/40 hover:bg-violet-500/20"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Scan Time
+                  </button>
+                </div>
+              )}
+
+              {/* CTA: after any non-time scan, suggest time management scan */}
+              {lastRunConfig?.scanMode === "both" && (
+                <div className="glass-card flex flex-col items-center gap-4 border-violet-500/15 bg-gradient-to-r from-violet-500/[0.04] to-transparent p-6 text-center sm:flex-row sm:text-left">
+                  <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-500/15 text-3xl shadow-lg shadow-violet-500/10">⏱️</span>
+                  <div className="flex-1">
+                    <h3 className="text-base font-bold text-white">Want to analyze your time management?</h3>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Find rushed moves, wasted thinks, and time scrambles. See how your clock usage impacts your results.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => quickScanMode("time-management")}
+                    className="flex h-11 shrink-0 items-center gap-2 rounded-xl border border-violet-500/20 bg-violet-500/10 px-5 text-sm font-bold text-violet-400 transition hover:border-violet-500/40 hover:bg-violet-500/20"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Scan Time
+                  </button>
+                </div>
+              )}
+
               {/* ─── Time Management Section ─── */}
-              {timeManagement && timeManagement.moments.length > 0 && (
+              {lastRunConfig?.scanMode === "time-management" && timeManagement && timeManagement.moments.length > 0 && (
               <>
               <div className="my-4">
                 <div className="section-divider" />

@@ -99,6 +99,8 @@ export type MissedTactic = {
   tags: string[];
   /** Seconds remaining on the clock when the tactic was missed (null if unknown) */
   timeRemainingSec: number | null;
+  /** Initial game time in seconds for this player (null if unknown) */
+  initialTimeSec: number | null;
 };
 
 export type EndgameType =

@@ -847,18 +847,25 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
                   {tag}
                 </span>
               ))}
-              {typeof tactic.timeRemainingSec === "number" && tactic.timeRemainingSec <= 30 && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-red-500/20 bg-red-500/10 px-2.5 py-1 text-[11px] font-semibold text-red-400">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  Time Pressure ({tactic.timeRemainingSec}s left)
-                </span>
-              )}
-              {typeof tactic.timeRemainingSec === "number" && tactic.timeRemainingSec > 30 && (
-                <span className="inline-flex items-center gap-1 rounded-full border border-slate-500/20 bg-slate-500/10 px-2.5 py-1 text-[11px] font-semibold text-slate-400">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                  {tactic.timeRemainingSec}s on clock
-                </span>
-              )}
+              {typeof tactic.timeRemainingSec === "number" && (() => {
+                const secs = tactic.timeRemainingSec!;
+                const mins = Math.floor(secs / 60);
+                const rem = secs % 60;
+                const timeStr = mins > 0 ? `${mins}:${String(rem).padStart(2, "0")}` : `${secs}s`;
+                const pct = typeof tactic.initialTimeSec === "number" && tactic.initialTimeSec > 0
+                  ? Math.round((secs / tactic.initialTimeSec) * 100)
+                  : null;
+                const isLow = secs <= 30;
+                const borderColor = isLow ? "border-red-500/20" : "border-slate-500/20";
+                const bgColor = isLow ? "bg-red-500/10" : "bg-slate-500/10";
+                const textColor = isLow ? "text-red-400" : "text-slate-400";
+                return (
+                  <span className={`inline-flex items-center gap-1 rounded-full border ${borderColor} ${bgColor} px-2.5 py-1 text-[11px] font-semibold ${textColor}`}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    {isLow ? "Time Pressure" : "Clock"}: {timeStr}{pct !== null ? ` (${pct}% left)` : ""}
+                  </span>
+                );
+              })()}
             </div>
           )}
 
