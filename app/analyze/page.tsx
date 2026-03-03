@@ -103,8 +103,38 @@ const CLASSIFICATION_BORDER: Record<MoveClassification, string> = {
   blunder: "border-red-500/30",
 };
 
-function classifyMove(cpLoss: number, isBestMove: boolean): MoveClassification {
+function classifyMove(
+  cpLoss: number,
+  isBestMove: boolean,
+  evalBeforeMover: number,
+  evalAfterMover: number,
+): MoveClassification {
   if (isBestMove) return "best";
+
+  // Winning-side leniency: when the player is already heavily winning
+  // and is STILL winning after the move, relax the classification.
+  // e.g. sacrificing a rook when you're up a queen+rook vs lone king
+  // shouldn't be called a blunder — you're still completely winning.
+  const stillWinning = evalAfterMover >= 400;
+  const wasWinning = evalBeforeMover >= 400;
+
+  if (wasWinning && stillWinning) {
+    // Position was winning and still is — be very lenient
+    if (cpLoss <= 50) return "good";
+    if (cpLoss <= 200) return "inaccuracy";
+    // Even huge cp losses are at most a "mistake" if still totally winning
+    return "mistake";
+  }
+
+  if (wasWinning && evalAfterMover >= 200) {
+    // Was winning and still significantly ahead — moderate leniency
+    if (cpLoss <= 35) return "good";
+    if (cpLoss <= 120) return "inaccuracy";
+    if (cpLoss <= 300) return "mistake";
+    return "blunder";
+  }
+
+  // Standard thresholds for normal positions
   if (cpLoss <= 25) return "good";
   if (cpLoss <= 75) return "inaccuracy";
   if (cpLoss <= 200) return "mistake";
@@ -373,6 +403,7 @@ export default function AnalyzePage() {
 
   /* ── Navigation state ── */
   const [selectedMoveIdx, setSelectedMoveIdx] = useState(-1); // -1 = starting position
+  const prevMoveIdxRef = useRef(-1);
   const [boardOrientation, setBoardOrientation] = useState<"white" | "black">("white");
 
   /* ── Explain modal state ── */
@@ -480,6 +511,10 @@ export default function AnalyzePage() {
       setLoadingGames(false);
     }
   }, [loadUsername, loadSource]);
+
+  // Track whether move navigation is sequential (±1) to enable/disable animation
+  const isSequentialNav = Math.abs(selectedMoveIdx - prevMoveIdxRef.current) <= 1;
+  useEffect(() => { prevMoveIdxRef.current = selectedMoveIdx; }, [selectedMoveIdx]);
 
   /* ── Derived state ── */
   const currentFen = useMemo(() => {
@@ -705,7 +740,7 @@ export default function AnalyzePage() {
         bestMove: bestResult?.bestMove ?? null,
         bestMoveSan,
         cpLoss,
-        classification: classifyMove(cpLoss, !!isBestMove),
+        classification: classifyMove(cpLoss, !!isBestMove, evalBeforeMover, evalAfterMover),
         color: move.color,
         moveNumber: move.moveNumber,
         pvMoves: pvResult?.pvMoves ?? [],
@@ -1076,13 +1111,14 @@ export default function AnalyzePage() {
                     <EvalBar evalCp={currentEval} height={boardSize} />
                     <div className="overflow-hidden rounded-xl">
                       <Chessboard
+                        key={isSequentialNav ? "seq" : `jump-${selectedMoveIdx}`}
                         id="analyze-board"
                         position={currentFen}
                         boardOrientation={boardOrientation}
                         boardWidth={boardSize}
                         arePiecesDraggable={false}
                         onPieceDrop={onPieceDrop}
-                        animationDuration={200}
+                        animationDuration={isSequentialNav ? 200 : 0}
                         customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
                         customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
                         showBoardNotation={showCoords}
