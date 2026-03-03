@@ -137,61 +137,100 @@ type PgnParseResult = {
 };
 
 /**
- * Resolve ambiguous SAN notation by matching against legal moves.
- * Many PGN databases omit disambiguation (e.g. "Re1" when both rooks can reach e1).
- * This tries all legal moves to find one matching the piece type + destination.
+ * Parse a SAN token into its component parts (piece, destination, capture, promotion).
+ * Handles moves like "Re1", "Rxd4", "Nbd7", "exd5", "O-O", "e8=Q" etc.
  */
-function resolveAmbiguousMove(chess: InstanceType<typeof Chess>, token: string) {
-  // Parse the SAN token to extract piece type and destination square
-  const cleaned = token.replace(/[+#!?]+$/, ""); // strip check/mate/annotation markers
+function parseSanToken(token: string) {
+  const cleaned = token.replace(/[+#!?]+$/, "");
+  if (cleaned === "O-O" || cleaned === "O-O-O") return null; // castling
 
-  // Handle castling
-  if (cleaned === "O-O" || cleaned === "O-O-O") return null;
+  // Flexible regex: piece?, disambig file?, disambig rank?, capture?, dest square, promotion?
+  const m = cleaned.match(/^([KQRBN])?([a-h])?([1-8])?(x)?([a-h][1-8])(=[QRBN])?$/);
+  if (!m) return null;
 
-  // Parse piece and destination from SAN (e.g. "Re1" → piece=R, to=e1)
-  const sanMatch = cleaned.match(/^([KQRBN])?([a-h])?([1-8])?(x)?([a-h][1-8])(=[QRBN])?$/);
-  if (!sanMatch) return null;
+  return {
+    piece: (m[1] ?? "P").toLowerCase(),
+    fileHint: m[2] ?? null,
+    rankHint: m[3] ?? null,
+    capture: !!m[4],
+    target: m[5],
+    promotion: m[6]?.slice(1).toLowerCase() ?? null,
+  };
+}
 
-  const pieceChar = (sanMatch[1] ?? "P").toLowerCase(); // default to pawn
-  const targetSquare = sanMatch[5];
-  const promotion = sanMatch[6]?.slice(1).toLowerCase();
+/**
+ * Resolve ambiguous SAN notation by matching against legal moves.
+ * When multiple candidates exist, uses look-ahead to find which move
+ * allows the rest of the game to continue (up to 6 moves ahead).
+ */
+function resolveAmbiguousMove(
+  chess: InstanceType<typeof Chess>,
+  token: string,
+  remainingTokens: string[] = [],
+) {
+  const parsed = parseSanToken(token);
+  if (!parsed) return null;
 
-  // Map piece char to chess.js piece type
   const pieceMap: Record<string, string> = { p: "p", k: "k", q: "q", r: "r", b: "b", n: "n" };
-  const pieceType = pieceMap[pieceChar];
+  const pieceType = pieceMap[parsed.piece];
   if (!pieceType) return null;
 
-  // Get all legal moves and filter to those matching piece + destination
   const legalMoves = chess.moves({ verbose: true });
-  const candidates = legalMoves.filter(m =>
+  let candidates = legalMoves.filter(m =>
     m.piece === pieceType &&
-    m.to === targetSquare &&
-    (!promotion || m.promotion === promotion)
+    m.to === parsed.target &&
+    (!parsed.promotion || m.promotion === parsed.promotion)
   );
 
-  if (candidates.length === 1) {
-    // Unambiguous match found — make the move
-    return chess.move(candidates[0].san);
-  }
-
-  // If there are multiple candidates, try to narrow down using any partial disambiguation in the token
-  if (candidates.length > 1 && (sanMatch[2] || sanMatch[3])) {
-    const fileHint = sanMatch[2]; // e.g. "d" in "Rde1"
-    const rankHint = sanMatch[3]; // e.g. "1" in "R1e4"
+  // Narrow with disambiguation hints
+  if (candidates.length > 1 && (parsed.fileHint || parsed.rankHint)) {
     const narrowed = candidates.filter(m =>
-      (!fileHint || m.from[0] === fileHint) &&
-      (!rankHint || m.from[1] === rankHint)
+      (!parsed.fileHint || m.from[0] === parsed.fileHint) &&
+      (!parsed.rankHint || m.from[1] === parsed.rankHint)
     );
-    if (narrowed.length === 1) {
-      return chess.move(narrowed[0].san);
-    }
+    if (narrowed.length >= 1) candidates = narrowed;
   }
 
-  // If exactly 0 or still ambiguous, try each candidate and pick the first
-  // that succeeds (some PGN sources just emit the move and expect the engine to figure it out)
-  if (candidates.length > 1) {
-    // Try the first candidate
+  if (candidates.length === 1) {
     return chess.move(candidates[0].san);
+  }
+
+  // Multiple candidates — use look-ahead to find the correct one
+  if (candidates.length > 1) {
+    const lookAhead = remainingTokens
+      .filter(t => !/^(1-0|0-1|1\/2-1\/2|\*)$/.test(t))
+      .slice(0, 6);
+
+    for (const cand of candidates) {
+      const probe = new Chess(chess.fen());
+      try {
+        probe.move(cand.san);
+        let ok = true;
+        for (const futureToken of lookAhead) {
+          try {
+            const r = probe.move(futureToken);
+            if (!r) { ok = false; break; }
+          } catch {
+            // Also try resolving this future move
+            const fp = parseSanToken(futureToken);
+            if (!fp) { ok = false; break; }
+            const fpt = pieceMap[fp.piece];
+            const fl = probe.moves({ verbose: true }).filter(m =>
+              m.piece === fpt && m.to === fp.target && (!fp.promotion || m.promotion === fp.promotion)
+            );
+            if (fl.length >= 1) {
+              try { probe.move(fl[0].san); } catch { ok = false; break; }
+            } else { ok = false; break; }
+          }
+        }
+        if (ok) {
+          return chess.move(cand.san);
+        }
+      } catch { /* this candidate doesn't work */ }
+    }
+
+    // Fallback: just try the first
+    try { return chess.move(candidates[0].san); } catch { /* */ }
   }
 
   return null;
@@ -267,7 +306,7 @@ function parsePgn(pgn: string): PgnParseResult | { error: string } {
         // If the move failed, try to resolve ambiguous notation.
         // Some PGN sources omit disambiguation (e.g. "Re1" when "Rde1" is needed).
         if (!result) {
-          result = resolveAmbiguousMove(chess, token);
+          result = resolveAmbiguousMove(chess, token, tokens.slice(i + 1));
         }
 
         if (!result) {
@@ -279,7 +318,7 @@ function parsePgn(pgn: string): PgnParseResult | { error: string } {
       } catch {
         // Retry ambiguous move resolution in the catch path too
         try {
-          const resolved = resolveAmbiguousMove(chess, token);
+          const resolved = resolveAmbiguousMove(chess, token, tokens.slice(i + 1));
           if (resolved) {
             const fenAfter = chess.fen();
             const uci = `${resolved.from}${resolved.to}${resolved.promotion ?? ""}`;
@@ -310,6 +349,11 @@ export default function AnalyzePage() {
   const [loadingGames, setLoadingGames] = useState(false);
   const [recentGames, setRecentGames] = useState<{ white: string; black: string; date: string; result: string; pgn: string; event?: string }[]>([]);
   const [loadError, setLoadError] = useState("");
+  const [gameLoaderOpen, setGameLoaderOpen] = useState(false);
+
+  /* ── Elo report modal state ── */
+  const [eloReportOpen, setEloReportOpen] = useState(false);
+  const eloReportShownRef = useRef(false);
 
   /* ── Analysis state ── */
   const [analyzing, setAnalyzing] = useState(false);
@@ -497,6 +541,38 @@ export default function AnalyzePage() {
     ];
   }, [analyzedMoves]);
 
+  /* ── Estimated Elo from ACPL ── */
+  const eloEstimate = useMemo(() => {
+    if (!summary) return null;
+    // ACPL to Elo mapping (rough heuristic)
+    const acplToElo = (acpl: number) => {
+      if (acpl <= 10) return 2700;
+      if (acpl <= 15) return 2500;
+      if (acpl <= 20) return 2300;
+      if (acpl <= 30) return 2100;
+      if (acpl <= 40) return 1900;
+      if (acpl <= 50) return 1700;
+      if (acpl <= 65) return 1500;
+      if (acpl <= 80) return 1300;
+      if (acpl <= 100) return 1100;
+      if (acpl <= 130) return 900;
+      return 700;
+    };
+    const whiteElo = acplToElo(summary.white.acpl);
+    const blackElo = acplToElo(summary.black.acpl);
+    return { white: whiteElo, black: blackElo };
+  }, [summary]);
+
+  /* ── Auto-show elo report when analysis finishes ── */
+  useEffect(() => {
+    if (!analyzing && summary && eloEstimate && !eloReportShownRef.current) {
+      eloReportShownRef.current = true;
+      // Small delay so the board has time to render
+      const t = setTimeout(() => setEloReportOpen(true), 600);
+      return () => clearTimeout(t);
+    }
+  }, [analyzing, summary, eloEstimate]);
+
   /* ── Start analysis ── */
   const analyzeGame = useCallback(async () => {
     setError("");
@@ -517,6 +593,8 @@ export default function AnalyzePage() {
     }
 
     setAnalyzing(true);
+    eloReportShownRef.current = false;
+    setEloReportOpen(false);
     setAnalyzedMoves([]);
     setSelectedMoveIdx(-1);
     setGameHeaders(parsed.headers);
@@ -818,85 +896,14 @@ export default function AnalyzePage() {
             </div>
 
             {/* ── Load from Lichess / Chess.com ── */}
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 space-y-4">
-              <p className="text-center text-xs font-medium text-slate-500">Or load your recent games:</p>
-
-              <div className="flex gap-2">
-                {/* Source toggle */}
-                <div className="inline-flex rounded-xl border border-white/[0.08] bg-white/[0.03] p-1 shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => { setLoadSource("lichess"); setRecentGames([]); setLoadError(""); }}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${loadSource === "lichess" ? "bg-white/[0.1] text-white shadow-sm" : "text-slate-500 hover:text-slate-300"}`}
-                  >
-                    Lichess
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setLoadSource("chesscom"); setRecentGames([]); setLoadError(""); }}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${loadSource === "chesscom" ? "bg-white/[0.1] text-white shadow-sm" : "text-slate-500 hover:text-slate-300"}`}
-                  >
-                    Chess.com
-                  </button>
-                </div>
-
-                {/* Username input */}
-                <input
-                  type="text"
-                  value={loadUsername}
-                  onChange={(e) => setLoadUsername(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter") fetchRecentGames(); }}
-                  placeholder={loadSource === "lichess" ? "Lichess username" : "Chess.com username"}
-                  className="flex-1 min-w-0 rounded-xl border border-white/[0.08] bg-black/40 px-3 py-1.5 text-sm text-slate-200 placeholder-slate-600 outline-none transition-colors focus:border-blue-500/40"
-                />
-
-                {/* Fetch button */}
-                <button
-                  type="button"
-                  onClick={fetchRecentGames}
-                  disabled={loadingGames}
-                  className="shrink-0 rounded-xl bg-white/[0.06] px-4 py-1.5 text-xs font-bold text-slate-300 transition-all hover:bg-white/[0.1] hover:text-white disabled:opacity-50 cursor-pointer"
-                >
-                  {loadingGames ? (
-                    <span className="flex items-center gap-1.5">
-                      <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="31.4" strokeLinecap="round"/></svg>
-                      Loading
-                    </span>
-                  ) : "Load"}
-                </button>
-              </div>
-
-              {loadError && <p className="text-xs text-red-400">{loadError}</p>}
-
-              {/* Game list */}
-              {recentGames.length > 0 && (
-                <div className="space-y-1.5 max-h-72 overflow-y-auto rounded-xl border border-white/[0.06] bg-black/30 p-2">
-                  {recentGames.map((game, idx) => (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => { setPgnText(game.pgn); setRecentGames([]); }}
-                      className="group flex w-full items-center gap-3 rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 text-left transition-all hover:border-blue-500/20 hover:bg-blue-500/[0.04] cursor-pointer"
-                    >
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-xs font-bold text-slate-400 group-hover:bg-blue-500/10 group-hover:text-blue-300">
-                        {idx + 1}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-slate-300 group-hover:text-blue-300 truncate">
-                          {game.white} vs {game.black}
-                        </p>
-                        <p className="text-[10px] text-slate-500 truncate">
-                          {game.date} · {game.result}{game.event ? ` · ${game.event}` : ""}
-                        </p>
-                      </div>
-                      <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${game.result === "1-0" ? "border-white/10 text-white" : game.result === "0-1" ? "border-slate-600 text-slate-400" : "border-slate-700 text-slate-500"}`}>
-                        {game.result}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => setGameLoaderOpen(true)}
+              className="w-full rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 text-center transition-all hover:border-blue-500/20 hover:bg-blue-500/[0.04] cursor-pointer"
+            >
+              <p className="text-xs font-medium text-slate-500">Or load your recent games from</p>
+              <p className="mt-1 text-sm font-bold text-blue-400">Lichess / Chess.com →</p>
+            </button>
           </div>
         )}
 
@@ -1061,11 +1068,23 @@ export default function AnalyzePage() {
                     title="Flip board (F)">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 16V4m0 0L3 8m4-4l4 4m6 4v12m0 0l4-4m-4 4l-4-4"/></svg>
                   </button>
-                  <button onClick={() => { setAnalyzedMoves([]); setGameHeaders({}); setSelectedMoveIdx(-1); }}
+                  <button onClick={() => { setAnalyzedMoves([]); setGameHeaders({}); setSelectedMoveIdx(-1); eloReportShownRef.current = false; }}
                     className="flex h-8 items-center justify-center gap-1.5 rounded-lg bg-white/[0.06] px-3 text-xs font-medium text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white"
                     title="New game">
                     New game
                   </button>
+                  <button onClick={() => setGameLoaderOpen(true)}
+                    className="flex h-8 items-center justify-center gap-1.5 rounded-lg bg-white/[0.06] px-3 text-xs font-medium text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white"
+                    title="Load a game from Lichess or Chess.com">
+                    📥 Load
+                  </button>
+                  {summary && !analyzing && (
+                    <button onClick={() => setEloReportOpen(true)}
+                      className="flex h-8 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/20 px-3 text-xs font-bold text-purple-300 transition-colors hover:from-purple-500/30 hover:to-pink-500/30"
+                      title="View Elo Report">
+                      🔥 Elo Report
+                    </button>
+                  )}
                 </div>
 
                 {/* Current move info */}
@@ -1274,6 +1293,248 @@ export default function AnalyzePage() {
         boardOrientation={boardOrientation}
         autoPlay
       />
+
+      {/* ── Game Loader Modal ── */}
+      {gameLoaderOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={() => setGameLoaderOpen(false)}>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          <div
+            className="relative z-10 w-full max-w-lg rounded-3xl border border-white/[0.1] bg-slate-950 p-6 shadow-2xl animate-fade-in-up"
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setGameLoaderOpen(false)}
+              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+            </button>
+
+            <h3 className="mb-4 text-lg font-bold text-white">📥 Load Recent Games</h3>
+
+            <div className="space-y-4">
+              <div className="flex gap-2">
+                <div className="inline-flex rounded-xl border border-white/[0.08] bg-white/[0.03] p-1 shrink-0">
+                  <button type="button" onClick={() => { setLoadSource("lichess"); setRecentGames([]); setLoadError(""); }}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${loadSource === "lichess" ? "bg-white/[0.1] text-white shadow-sm" : "text-slate-500 hover:text-slate-300"}`}>
+                    Lichess
+                  </button>
+                  <button type="button" onClick={() => { setLoadSource("chesscom"); setRecentGames([]); setLoadError(""); }}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${loadSource === "chesscom" ? "bg-white/[0.1] text-white shadow-sm" : "text-slate-500 hover:text-slate-300"}`}>
+                    Chess.com
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  value={loadUsername}
+                  onChange={(e) => setLoadUsername(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") fetchRecentGames(); }}
+                  placeholder={loadSource === "lichess" ? "Lichess username" : "Chess.com username"}
+                  className="flex-1 min-w-0 rounded-xl border border-white/[0.08] bg-black/40 px-3 py-1.5 text-sm text-slate-200 placeholder-slate-600 outline-none focus:border-blue-500/40"
+                />
+                <button type="button" onClick={fetchRecentGames} disabled={loadingGames}
+                  className="shrink-0 rounded-xl bg-white/[0.06] px-4 py-1.5 text-xs font-bold text-slate-300 hover:bg-white/[0.1] hover:text-white disabled:opacity-50 cursor-pointer">
+                  {loadingGames ? "..." : "Load"}
+                </button>
+              </div>
+
+              {loadError && <p className="text-xs text-red-400">{loadError}</p>}
+
+              {recentGames.length > 0 && (
+                <div className="space-y-1.5 max-h-80 overflow-y-auto rounded-xl border border-white/[0.06] bg-black/30 p-2">
+                  {recentGames.map((game, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        setPgnText(game.pgn);
+                        setRecentGames([]);
+                        setGameLoaderOpen(false);
+                        // If we already had analysis, clear it
+                        if (analyzedMoves.length > 0) {
+                          setAnalyzedMoves([]);
+                          setGameHeaders({});
+                          setSelectedMoveIdx(-1);
+                          eloReportShownRef.current = false;
+                        }
+                      }}
+                      className="group flex w-full items-center gap-3 rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 text-left transition-all hover:border-blue-500/20 hover:bg-blue-500/[0.04] cursor-pointer"
+                    >
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-xs font-bold text-slate-400 group-hover:bg-blue-500/10 group-hover:text-blue-300">
+                        {idx + 1}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-bold text-slate-300 group-hover:text-blue-300 truncate">
+                          {game.white} vs {game.black}
+                        </p>
+                        <p className="text-[10px] text-slate-500 truncate">
+                          {game.date} · {game.result}{game.event ? ` · ${game.event}` : ""}
+                        </p>
+                      </div>
+                      <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${game.result === "1-0" ? "border-white/10 text-white" : game.result === "0-1" ? "border-slate-600 text-slate-400" : "border-slate-700 text-slate-500"}`}>
+                        {game.result}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {recentGames.length === 0 && !loadingGames && !loadError && (
+                <p className="text-center text-xs text-slate-600 py-4">Enter your username and hit Load to see your last 10 games</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Viral Elo Report Modal ── */}
+      {eloReportOpen && summary && eloEstimate && (() => {
+        const whiteElo = eloEstimate.white;
+        const blackElo = eloEstimate.black;
+        const whiteName = gameHeaders.White ?? "White";
+        const blackName = gameHeaders.Black ?? "Black";
+        const whiteAcc = summary.white.accuracy;
+        const blackAcc = summary.black.accuracy;
+
+        const getEloTitle = (elo: number) => {
+          if (elo >= 2700) return { title: "SUPER GM", emoji: "👑", vibe: "Bro you play like Magnus??? No cap this is ELITE 🔥", color: "from-yellow-400 to-amber-500" };
+          if (elo >= 2500) return { title: "GRANDMASTER", emoji: "🏆", vibe: "Actual GM energy rn 😤 the opponents are NOT ready", color: "from-amber-400 to-orange-500" };
+          if (elo >= 2300) return { title: "MASTER", emoji: "⚡", vibe: "Main character energy tbh 💅 lowkey cracked at chess", color: "from-orange-400 to-red-500" };
+          if (elo >= 2100) return { title: "EXPERT", emoji: "🎯", vibe: "This goes HARD 🔥 you're cooking and they can't handle it", color: "from-red-400 to-pink-500" };
+          if (elo >= 1900) return { title: "CLASS A", emoji: "💪", vibe: "Solid gameplay no cap 😤 you're on that sigma grindset", color: "from-pink-400 to-purple-500" };
+          if (elo >= 1700) return { title: "CLASS B", emoji: "🧠", vibe: "POV: you chose violence on the board 😈 keep grinding bestie", color: "from-purple-400 to-violet-500" };
+          if (elo >= 1500) return { title: "CLUB PLAYER", emoji: "♟️", vibe: "Not bad fr fr 💀 the vibes are immaculate, keep it up", color: "from-violet-400 to-blue-500" };
+          if (elo >= 1300) return { title: "INTERMEDIATE", emoji: "📈", vibe: "The glow-up arc is starting 🌱 you're gonna be cracked soon", color: "from-blue-400 to-cyan-500" };
+          if (elo >= 1100) return { title: "IMPROVING", emoji: "🌟", vibe: "It's giving... potential bestie 💫 the grind doesn't stop", color: "from-cyan-400 to-teal-500" };
+          if (elo >= 900) return { title: "BEGINNER+", emoji: "🎮", vibe: "OK we all start somewhere 😭 but the hustle is real", color: "from-teal-400 to-emerald-500" };
+          return { title: "NEWBIE", emoji: "🐣", vibe: "Fresh account energy 💀 but slay queen/king, you'll get there", color: "from-emerald-400 to-green-500" };
+        };
+
+        const whiteInfo = getEloTitle(whiteElo);
+        const blackInfo = getEloTitle(blackElo);
+
+        return (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={() => setEloReportOpen(false)}>
+            <div className="absolute inset-0 bg-black/85 backdrop-blur-md" />
+            <div
+              className="relative z-10 w-full max-w-md overflow-hidden rounded-3xl border border-white/[0.1] bg-slate-950 shadow-2xl animate-fade-in-up"
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header gradient */}
+              <div className="relative overflow-hidden bg-gradient-to-br from-purple-600/30 via-pink-600/20 to-blue-600/30 px-6 pt-8 pb-6">
+                <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-purple-500/20 blur-[60px]" />
+                <div className="pointer-events-none absolute -left-10 -bottom-10 h-40 w-40 rounded-full bg-pink-500/20 blur-[60px]" />
+
+                <button
+                  type="button"
+                  onClick={() => setEloReportOpen(false)}
+                  className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.1] text-white/60 transition hover:bg-white/[0.2] hover:text-white"
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                </button>
+
+                <div className="text-center">
+                  <p className="text-xs font-bold uppercase tracking-widest text-purple-300/80">✨ Performance Report ✨</p>
+                  <h2 className="mt-2 text-3xl font-black text-white">Estimated Elo</h2>
+                  <p className="mt-1 text-xs text-white/50">based on this game&apos;s accuracy</p>
+                </div>
+              </div>
+
+              {/* Player cards */}
+              <div className="space-y-3 p-6">
+                {/* White */}
+                <div className={`rounded-2xl border border-white/[0.08] bg-gradient-to-r ${whiteInfo.color} bg-opacity-10 p-4`} style={{ background: `linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))` }}>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.1] text-2xl">{whiteInfo.emoji}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-sm bg-white border border-white/30" />
+                        <p className="text-sm font-bold text-white">{whiteName}</p>
+                      </div>
+                      <div className="mt-0.5 flex items-baseline gap-2">
+                        <span className={`text-2xl font-black bg-gradient-to-r ${whiteInfo.color} bg-clip-text text-transparent`}>{whiteElo}</span>
+                        <span className={`rounded-full bg-gradient-to-r ${whiteInfo.color} px-2 py-0.5 text-[10px] font-black text-white`}>{whiteInfo.title}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-black text-white">{whiteAcc}%</p>
+                      <p className="text-[10px] text-slate-500">accuracy</p>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-xs text-slate-400 italic">&ldquo;{whiteInfo.vibe}&rdquo;</p>
+                </div>
+
+                {/* VS divider */}
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 border-t border-white/[0.06]" />
+                  <span className="text-xs font-black text-slate-600">VS</span>
+                  <div className="flex-1 border-t border-white/[0.06]" />
+                </div>
+
+                {/* Black */}
+                <div className={`rounded-2xl border border-white/[0.08] p-4`} style={{ background: `linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01))` }}>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/[0.06] text-2xl">{blackInfo.emoji}</div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <div className="h-3 w-3 rounded-sm bg-slate-700 border border-white/20" />
+                        <p className="text-sm font-bold text-white">{blackName}</p>
+                      </div>
+                      <div className="mt-0.5 flex items-baseline gap-2">
+                        <span className={`text-2xl font-black bg-gradient-to-r ${blackInfo.color} bg-clip-text text-transparent`}>{blackElo}</span>
+                        <span className={`rounded-full bg-gradient-to-r ${blackInfo.color} px-2 py-0.5 text-[10px] font-black text-white`}>{blackInfo.title}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-black text-white">{blackAcc}%</p>
+                      <p className="text-[10px] text-slate-500">accuracy</p>
+                    </div>
+                  </div>
+                  <p className="mt-2 text-xs text-slate-400 italic">&ldquo;{blackInfo.vibe}&rdquo;</p>
+                </div>
+
+                {/* Move breakdown badges */}
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">White Moves</p>
+                    <div className="flex flex-wrap gap-1">
+                      {summary.white.brilliant > 0 && <span className="rounded-full bg-cyan-500/15 px-1.5 py-0.5 text-[10px] font-bold text-cyan-400">🤯 {summary.white.brilliant}</span>}
+                      {summary.white.best > 0 && <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400">✅ {summary.white.best}</span>}
+                      {summary.white.blunder > 0 && <span className="rounded-full bg-red-500/15 px-1.5 py-0.5 text-[10px] font-bold text-red-400">💀 {summary.white.blunder}</span>}
+                      {summary.white.mistake > 0 && <span className="rounded-full bg-orange-500/15 px-1.5 py-0.5 text-[10px] font-bold text-orange-400">😬 {summary.white.mistake}</span>}
+                      {summary.white.inaccuracy > 0 && <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-bold text-amber-400">🤔 {summary.white.inaccuracy}</span>}
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Black Moves</p>
+                    <div className="flex flex-wrap gap-1">
+                      {summary.black.brilliant > 0 && <span className="rounded-full bg-cyan-500/15 px-1.5 py-0.5 text-[10px] font-bold text-cyan-400">🤯 {summary.black.brilliant}</span>}
+                      {summary.black.best > 0 && <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400">✅ {summary.black.best}</span>}
+                      {summary.black.blunder > 0 && <span className="rounded-full bg-red-500/15 px-1.5 py-0.5 text-[10px] font-bold text-red-400">💀 {summary.black.blunder}</span>}
+                      {summary.black.mistake > 0 && <span className="rounded-full bg-orange-500/15 px-1.5 py-0.5 text-[10px] font-bold text-orange-400">😬 {summary.black.mistake}</span>}
+                      {summary.black.inaccuracy > 0 && <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-bold text-amber-400">🤔 {summary.black.inaccuracy}</span>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Result */}
+                {gameHeaders.Result && (
+                  <div className="text-center">
+                    <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-1.5 text-sm font-black text-white">
+                      {gameHeaders.Result === "1-0" ? "⚪ White Wins" : gameHeaders.Result === "0-1" ? "⚫ Black Wins" : "🤝 Draw"}
+                    </span>
+                  </div>
+                )}
+
+                {/* Footer CTA */}
+                <p className="text-center text-[10px] text-slate-600 pt-2">
+                  🔥 firechess.club &middot; free game analysis powered by Stockfish
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
