@@ -3144,7 +3144,10 @@ export async function analyzeOpeningLeaksInBrowser(
                 cpLoss,
                 isTactical,
                 evalBefore,
-                bestMove,
+                // Fall back to user's own move when no analysis bestMove exists.
+                // For "wasted" moments the user played correctly (just took too long),
+                // so their move IS the right answer for the training puzzle.
+                bestMove: bestMove ?? userMoveUci,
               });
             }
           }

@@ -22,11 +22,13 @@ import { fetchExplorerMoves } from "@/lib/lichess-explorer";
 import { shareReportCard } from "@/lib/share-report";
 import { earnCoins, spendCoins, hasPurchased, getBalance } from "@/lib/coins";
 import { POSITIONAL_PATTERNS } from "@/lib/positional-quotes";
-import { explainOpeningLeak } from "@/lib/position-explainer";
+import { explainOpeningLeak, describeEndPosition, type PositionExplanation } from "@/lib/position-explainer";
+import { ExplanationModal } from "@/components/explanation-modal";
+import { stockfishClient } from "@/lib/stockfish-client";
 import { PersonalizedPuzzles } from "@/components/personalized-puzzles";
 import { Chessboard } from "react-chessboard";
 import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
-import { Chess } from "chess.js";
+import { Chess, type PieceSymbol } from "chess.js";
 import { useBoardTheme } from "@/lib/use-coins";
 
 /* ── Inline help tooltip ── */
@@ -86,15 +88,21 @@ export default function HomePage() {
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [copyLinkLabel, setCopyLinkLabel] = useState("Copy Link");
   const [welcomeBack, setWelcomeBack] = useState<string | null>(null);
-  const [openingsOpen, setOpeningsOpen] = useState(true);
   const [leakTab, setLeakTab] = useState<"repeated" | "one-off">("repeated");
+  const [openingFolder, setOpeningFolder] = useState<"mistakes" | "patterns" | "rankings">("mistakes");
   const [tacticsOpen, setTacticsOpen] = useState(true);
   const [endgamesOpen, setEndgamesOpen] = useState(true);
   const [puzzleBoardOpen, setPuzzleBoardOpen] = useState(false);
   const [timeManagementOpen, setTimeManagementOpen] = useState(true);
-  const [positionalOpen, setPositionalOpen] = useState(true);
   const [expandedMotifs, setExpandedMotifs] = useState<Set<string>>(new Set());
-  const [posExplain, setPosExplain] = useState<Record<string, string>>({});
+  const [posExplainModalOpen, setPosExplainModalOpen] = useState(false);
+  const [posExplainRich, setPosExplainRich] = useState<PositionExplanation | null>(null);
+  const [posExplainAnimUci, setPosExplainAnimUci] = useState<string[]>([]);
+  const [posExplainFen, setPosExplainFen] = useState("");
+  const [posExplainOrientation, setPosExplainOrientation] = useState<"white" | "black">("white");
+  const [posExplainTitle, setPosExplainTitle] = useState("");
+  const [posExplainSubtitle, setPosExplainSubtitle] = useState<string | undefined>();
+  const [posExplaining, setPosExplaining] = useState<string | null>(null);
   const [timeUnlocked, setTimeUnlocked] = useState(false);
   const reportRef = useRef<HTMLElement>(null);
   const pngRef = useRef<HTMLDivElement>(null);
@@ -2164,369 +2172,459 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Opening Leaks Section */}
+              {/* ─── Opening Analysis — Folder Tabs ─── */}
               {(lastRunConfig?.scanMode === "openings" || lastRunConfig?.scanMode === "both") && (
-              <>
-              {/* Opening Mistakes Section Header */}
-              <button type="button" onClick={() => setOpeningsOpen(o => !o)} className="glass-card border-emerald-500/15 bg-gradient-to-r from-emerald-500/[0.04] to-transparent p-6 w-full text-left cursor-pointer transition-colors hover:border-emerald-500/25">
-                <div className="flex items-center gap-4">
-                  <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-emerald-500/15 text-3xl shadow-lg shadow-emerald-500/10">📖</span>
-                  <div className="flex-1">
-                    <h2 className="text-2xl font-extrabold text-white tracking-tight">
-                      Opening Mistakes
-                      {(leaks.length + oneOffMistakes.length) > 0 && (
-                        <span className="ml-3 inline-flex items-center rounded-full bg-emerald-500/15 px-3 py-1 text-base font-bold text-emerald-400">
-                          {leaks.length + oneOffMistakes.length}
-                        </span>
-                      )}
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-400">
-                      Repeated leaks and one-off mistakes found in your opening play
-                    </p>
-                  </div>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`shrink-0 text-slate-400 transition-transform duration-200 ${openingsOpen ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
+              <div>
+                {/* Folder tab bar */}
+                <div className="flex items-end gap-0.5 px-1">
+                  {/* Mistakes tab */}
+                  <button
+                    type="button"
+                    onClick={() => setOpeningFolder("mistakes")}
+                    className={`group relative flex items-center gap-2 rounded-t-xl px-5 py-3 text-sm font-bold transition-all cursor-pointer ${
+                      openingFolder === "mistakes"
+                        ? "bg-white/[0.06] text-white border border-white/[0.1] border-b-transparent z-10 shadow-[0_-4px_20px_-6px_rgba(16,185,129,0.15)]"
+                        : "bg-white/[0.02] text-slate-500 border border-white/[0.05] border-b-white/[0.1] hover:text-slate-300 hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    <span className="text-base">📖</span>
+                    <span className="hidden sm:inline">Mistakes</span>
+                    {(leaks.length + oneOffMistakes.length) > 0 && (
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${openingFolder === "mistakes" ? "bg-emerald-500/20 text-emerald-400" : "bg-white/[0.06] text-slate-500"}`}>
+                        {leaks.length + oneOffMistakes.length}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Patterns tab */}
+                  <button
+                    type="button"
+                    onClick={() => setOpeningFolder("patterns")}
+                    className={`group relative flex items-center gap-2 rounded-t-xl px-5 py-3 text-sm font-bold transition-all cursor-pointer ${
+                      openingFolder === "patterns"
+                        ? "bg-white/[0.06] text-white border border-white/[0.1] border-b-transparent z-10 shadow-[0_-4px_20px_-6px_rgba(245,158,11,0.15)]"
+                        : "bg-white/[0.02] text-slate-500 border border-white/[0.05] border-b-white/[0.1] hover:text-slate-300 hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    <span className="text-base">🧠</span>
+                    <span className="hidden sm:inline">Patterns</span>
+                    {positionalMotifs.length > 0 && (
+                      <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${openingFolder === "patterns" ? "bg-amber-500/20 text-amber-400" : "bg-white/[0.06] text-slate-500"}`}>
+                        {positionalMotifs.length}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Rankings tab — only if data exists */}
+                  {result?.openingSummaries && result.openingSummaries.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setOpeningFolder("rankings")}
+                      className={`group relative flex items-center gap-2 rounded-t-xl px-5 py-3 text-sm font-bold transition-all cursor-pointer ${
+                        openingFolder === "rankings"
+                          ? "bg-white/[0.06] text-white border border-white/[0.1] border-b-transparent z-10 shadow-[0_-4px_20px_-6px_rgba(99,102,241,0.15)]"
+                          : "bg-white/[0.02] text-slate-500 border border-white/[0.05] border-b-white/[0.1] hover:text-slate-300 hover:bg-white/[0.04]"
+                      }`}
+                    >
+                      <span className="text-base">📊</span>
+                      <span className="hidden sm:inline">Rankings</span>
+                    </button>
+                  )}
+
+                  {/* Fill remaining space with bottom border */}
+                  <div className="flex-1 border-b border-white/[0.1]" />
                 </div>
-              </button>
 
-              {/* Opening Mistakes content */}
-              {openingsOpen && (<>
-              {leaks.length === 0 && oneOffMistakes.length === 0 ? (
-                <div className="glass-card flex items-center gap-4 p-6">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-2xl">🎉</span>
-                  <div>
-                    <p className="font-semibold text-white">No opening mistakes found</p>
-                    <p className="text-sm text-slate-400">
-                      Great job! No significant mistakes in the first {lastRunConfig?.maxMoves ?? moveCount} moves.
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <>
-                {/* Pill toggle — Repeated / One-Off */}
-                {leaks.length > 0 && oneOffMistakes.length > 0 && (
-                  <div className="flex items-center justify-center">
-                    <div className="inline-flex rounded-xl border border-white/[0.08] bg-white/[0.03] p-1">
-                      <button
-                        type="button"
-                        onClick={() => setLeakTab("repeated")}
-                        className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${leakTab === "repeated" ? "bg-emerald-500/15 text-emerald-400 shadow-sm" : "text-slate-400 hover:text-slate-200"}`}
-                      >
-                        🔁 Repeated
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${leakTab === "repeated" ? "bg-emerald-500/20 text-emerald-400" : "bg-white/[0.06] text-slate-500"}`}>
-                          {leaks.length}
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setLeakTab("one-off")}
-                        className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${leakTab === "one-off" ? "bg-amber-500/15 text-amber-400 shadow-sm" : "text-slate-400 hover:text-slate-200"}`}
-                      >
-                        ⚡ One-Off
-                        <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${leakTab === "one-off" ? "bg-amber-500/20 text-amber-400" : "bg-white/[0.06] text-slate-500"}`}>
-                          {oneOffMistakes.length}
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                )}
+                {/* Folder body */}
+                <div className="rounded-b-2xl rounded-tr-2xl border border-white/[0.1] border-t-0 bg-white/[0.03] p-5 space-y-5 shadow-[0_20px_60px_-12px_rgba(0,0,0,0.5)]">
 
-                {/* Repeated Leaks tab */}
-                {(leakTab === "repeated" || oneOffMistakes.length === 0) && leaks.length > 0 && (
-                  <CardCarousel viewMode={cardViewMode}>
-                    {leaks.map((leak, idx) => (
-                      <MistakeCard
-                        key={`${leak.fenBefore}-${leak.userMove}-${idx}`}
-                        leak={leak}
-                        engineDepth={lastRunConfig?.engineDepth ?? engineDepth}
-                      />
-                    ))}
-                  </CardCarousel>
-                )}
-
-                {/* One-Off tab */}
-                {(leakTab === "one-off" || leaks.length === 0) && oneOffMistakes.length > 0 && (
-                  <CardCarousel viewMode={cardViewMode}>
-                    {oneOffMistakes.map((leak, idx) => (
-                      <MistakeCard
-                        key={`oneoff-${leak.fenBefore}-${leak.userMove}-${idx}`}
-                        leak={leak}
-                        engineDepth={lastRunConfig?.engineDepth ?? engineDepth}
-                      />
-                    ))}
-                  </CardCarousel>
-                )}
-
-                {/* Single Drill CTA — covers both repeated + one-off */}
-                {(diagnostics?.positionTraces.length ?? 0) > 0 && (
-                  <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 p-8 md:p-10">
-                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-emerald-500/[0.08] via-cyan-500/[0.04] to-transparent" />
-                    <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-emerald-500/10 blur-[80px]" />
-                    <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-cyan-500/10 blur-[80px]" />
-                    <div className="relative flex flex-col items-center text-center">
-                      <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/15 text-3xl shadow-lg shadow-emerald-500/10">📖</span>
-                      <h3 className="mt-5 text-2xl font-extrabold text-white md:text-3xl">Drill Your Opening Mistakes</h3>
-                      <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-slate-400">
-                        Practice the correct moves for every opening mistake until they&apos;re automatic. The drill feeds you each position and checks if you play the right move.
-                      </p>
-                      <div className="mt-6 grid w-full max-w-lg gap-3 sm:grid-cols-3">
-                        <div className="flex flex-col items-center gap-2 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] px-4 py-3">
-                          <span className="text-lg">🎯</span>
-                          <p className="text-xs font-bold text-white">Your Real Mistakes</p>
-                          <p className="text-[10px] text-slate-500">From your actual games</p>
-                        </div>
-                        <div className="flex flex-col items-center gap-2 rounded-xl border border-cyan-500/15 bg-cyan-500/[0.04] px-4 py-3">
-                          <span className="text-lg">♟️</span>
-                          <p className="text-xs font-bold text-white">Interactive Board</p>
-                          <p className="text-[10px] text-slate-500">Play the correct move</p>
-                        </div>
-                        <div className="flex flex-col items-center gap-2 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] px-4 py-3">
-                          <span className="text-lg">📈</span>
-                          <p className="text-xs font-bold text-white">Build Muscle Memory</p>
-                          <p className="text-[10px] text-slate-500">Repeat until automatic</p>
-                        </div>
-                      </div>
-                      <div className="mt-7 w-full max-w-md">
-                        <DrillMode positions={diagnostics?.positionTraces ?? []} oneOffMistakes={oneOffMistakes} excludeFens={dbApprovedFens} />
+                  {/* ── Mistakes folder ── */}
+                  {openingFolder === "mistakes" && (<>
+                  {leaks.length === 0 && oneOffMistakes.length === 0 ? (
+                    <div className="glass-card flex items-center gap-4 p-6">
+                      <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-500/10 text-2xl">🎉</span>
+                      <div>
+                        <p className="font-semibold text-white">No opening mistakes found</p>
+                        <p className="text-sm text-slate-400">
+                          Great job! No significant mistakes in the first {lastRunConfig?.maxMoves ?? moveCount} moves.
+                        </p>
                       </div>
                     </div>
-                  </div>
-                )}
-                </>
-              )}
-              </>
-              )}
+                  ) : (
+                    <>
+                    {/* Pill toggle — Repeated / One-Off */}
+                    {leaks.length > 0 && oneOffMistakes.length > 0 && (
+                      <div className="flex items-center justify-center">
+                        <div className="inline-flex rounded-xl border border-white/[0.08] bg-white/[0.03] p-1">
+                          <button
+                            type="button"
+                            onClick={() => setLeakTab("repeated")}
+                            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${leakTab === "repeated" ? "bg-emerald-500/15 text-emerald-400 shadow-sm" : "text-slate-400 hover:text-slate-200"}`}
+                          >
+                            🔁 Repeated
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${leakTab === "repeated" ? "bg-emerald-500/20 text-emerald-400" : "bg-white/[0.06] text-slate-500"}`}>
+                              {leaks.length}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setLeakTab("one-off")}
+                            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all ${leakTab === "one-off" ? "bg-amber-500/15 text-amber-400 shadow-sm" : "text-slate-400 hover:text-slate-200"}`}
+                          >
+                            ⚡ One-Off
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${leakTab === "one-off" ? "bg-amber-500/20 text-amber-400" : "bg-white/[0.06] text-slate-500"}`}>
+                              {oneOffMistakes.length}
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
 
-              {/* ─── Positional Patterns Section ─── */}
-              <>
-              <button type="button" onClick={() => setPositionalOpen(o => !o)} className="glass-card border-amber-500/15 bg-gradient-to-r from-amber-500/[0.04] to-transparent p-6 w-full text-left cursor-pointer transition-colors hover:border-amber-500/25">
-                <div className="flex items-center gap-4">
-                  <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">🧠</span>
-                  <div className="flex-1">
-                    <h2 className="text-2xl font-extrabold text-white tracking-tight">
-                      Positional Patterns
-                      {positionalMotifs.length > 0 && (
-                        <span className="ml-3 inline-flex items-center rounded-full bg-amber-500/15 px-3 py-1 text-base font-bold text-amber-400">
-                          {positionalMotifs.length} pattern{positionalMotifs.length !== 1 ? "s" : ""}
-                        </span>
-                      )}
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-400">
-                      {positionalMotifs.length > 0
-                        ? "Recurring positional mistakes detected across your games — with GM wisdom to help you improve"
-                        : "Positional coaching based on your opening choices — unnecessary captures, premature trades, passive retreats, and more"}
-                    </p>
-                  </div>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`shrink-0 text-slate-400 transition-transform duration-200 ${positionalOpen ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-              </button>
+                    {/* Repeated Leaks tab */}
+                    {(leakTab === "repeated" || oneOffMistakes.length === 0) && leaks.length > 0 && (
+                      <CardCarousel viewMode={cardViewMode}>
+                        {leaks.map((leak, idx) => (
+                          <MistakeCard
+                            key={`${leak.fenBefore}-${leak.userMove}-${idx}`}
+                            leak={leak}
+                            engineDepth={lastRunConfig?.engineDepth ?? engineDepth}
+                          />
+                        ))}
+                      </CardCarousel>
+                    )}
 
-              {positionalOpen && (
-              <div className="space-y-3">
-                {positionalMotifs.length === 0 ? (
-                  <div className="glass-card border-amber-500/10 p-6">
-                    <div className="flex flex-col items-center gap-3 text-center">
-                      <span className="text-3xl">✨</span>
-                      <h3 className="text-base font-bold text-white">No positional patterns detected</h3>
-                      <p className="max-w-md text-sm text-slate-400">
-                        Your openings look positionally sound in this scan! FireChess checks for unnecessary captures, premature trades,
-                        released tension, passive retreats, pawn structure issues, and more. Scan more games or use the &ldquo;All&rdquo;
-                        mode for a deeper look.
-                      </p>
-                    </div>
-                  </div>
-                ) : (
-                <>
-                {positionalMotifs.map((motif) => {
-                  const pattern = POSITIONAL_PATTERNS.find(p => motif.name.startsWith(p.label) || motif.name.includes(p.tag));
-                  const quote = pattern?.quote;
-                  const author = pattern?.author;
-                  const icon = pattern?.icon ?? motif.icon;
-                  const colorMap: Record<string, string> = {
-                    amber: "border-amber-500/20 bg-amber-500/[0.04]",
-                    orange: "border-orange-500/20 bg-orange-500/[0.04]",
-                    rose: "border-rose-500/20 bg-rose-500/[0.04]",
-                    red: "border-red-500/20 bg-red-500/[0.04]",
-                    slate: "border-slate-500/20 bg-slate-500/[0.04]",
-                    violet: "border-violet-500/20 bg-violet-500/[0.04]",
-                    yellow: "border-yellow-500/20 bg-yellow-500/[0.04]",
-                    blue: "border-blue-500/20 bg-blue-500/[0.04]",
-                    cyan: "border-cyan-500/20 bg-cyan-500/[0.04]",
-                    indigo: "border-indigo-500/20 bg-indigo-500/[0.04]",
-                    teal: "border-teal-500/20 bg-teal-500/[0.04]",
-                  };
-                  const borderClass = colorMap[pattern?.color ?? "amber"] ?? colorMap.amber;
-                  const ratio = motif.avgCpLoss < 99000 ? motif.avgCpLoss : 0;
-                  const severityColor = ratio >= 15000 ? "text-red-400" : ratio >= 8000 ? "text-amber-400" : "text-yellow-400";
+                    {/* One-Off tab */}
+                    {(leakTab === "one-off" || leaks.length === 0) && oneOffMistakes.length > 0 && (
+                      <CardCarousel viewMode={cardViewMode}>
+                        {oneOffMistakes.map((leak, idx) => (
+                          <MistakeCard
+                            key={`oneoff-${leak.fenBefore}-${leak.userMove}-${idx}`}
+                            leak={leak}
+                            engineDepth={lastRunConfig?.engineDepth ?? engineDepth}
+                          />
+                        ))}
+                      </CardCarousel>
+                    )}
 
-                  const isExpanded = expandedMotifs.has(motif.name);
-                  const toggleExpand = () => setExpandedMotifs(prev => {
-                    const next = new Set(prev);
-                    if (next.has(motif.name)) next.delete(motif.name);
-                    else next.add(motif.name);
-                    return next;
-                  });
-                  const hasExamples = motif.examples.length > 0;
-
-                  return (
-                    <div key={motif.name} className={`glass-card ${borderClass} overflow-hidden`}>
-                      <div className="p-5">
-                        <div className="flex items-start gap-4">
-                          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/[0.06] text-2xl">{icon}</span>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-3 flex-wrap">
-                              <h3 className="text-lg font-bold text-white">{motif.name}</h3>
-                              <span className={`rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs font-bold ${severityColor}`}>
-                                {motif.count}× detected
-                              </span>
-                              {motif.avgCpLoss < 99000 && (
-                                <span className="text-xs text-slate-500">
-                                  avg −{(motif.avgCpLoss / 100).toFixed(1)} pawns
-                                </span>
-                              )}
+                    {/* Drill CTA */}
+                    {(diagnostics?.positionTraces.length ?? 0) > 0 && (
+                      <div className="relative overflow-hidden rounded-2xl border border-emerald-500/20 p-8 md:p-10">
+                        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-emerald-500/[0.08] via-cyan-500/[0.04] to-transparent" />
+                        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-emerald-500/10 blur-[80px]" />
+                        <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-cyan-500/10 blur-[80px]" />
+                        <div className="relative flex flex-col items-center text-center">
+                          <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/15 text-3xl shadow-lg shadow-emerald-500/10">📖</span>
+                          <h3 className="mt-5 text-2xl font-extrabold text-white md:text-3xl">Drill Your Opening Mistakes</h3>
+                          <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-slate-400">
+                            Practice the correct moves for every opening mistake until they&apos;re automatic. The drill feeds you each position and checks if you play the right move.
+                          </p>
+                          <div className="mt-6 grid w-full max-w-lg gap-3 sm:grid-cols-3">
+                            <div className="flex flex-col items-center gap-2 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] px-4 py-3">
+                              <span className="text-lg">🎯</span>
+                              <p className="text-xs font-bold text-white">Your Real Mistakes</p>
+                              <p className="text-[10px] text-slate-500">From your actual games</p>
                             </div>
-                            {quote && (
-                              <blockquote className="mt-3 border-l-2 border-amber-500/30 pl-4">
-                                <p className="text-sm italic leading-relaxed text-slate-300">
-                                  &ldquo;{quote}&rdquo;
-                                </p>
-                                <p className="mt-1 text-xs text-slate-500">— {author}</p>
-                              </blockquote>
-                            )}
-                            {hasExamples && (
-                              <button
-                                type="button"
-                                onClick={toggleExpand}
-                                className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
-                                {isExpanded ? "Hide" : "Show"} {motif.examples.length} example{motif.examples.length !== 1 ? "s" : ""} from your games
-                              </button>
-                            )}
+                            <div className="flex flex-col items-center gap-2 rounded-xl border border-cyan-500/15 bg-cyan-500/[0.04] px-4 py-3">
+                              <span className="text-lg">♟️</span>
+                              <p className="text-xs font-bold text-white">Interactive Board</p>
+                              <p className="text-[10px] text-slate-500">Play the correct move</p>
+                            </div>
+                            <div className="flex flex-col items-center gap-2 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] px-4 py-3">
+                              <span className="text-lg">📈</span>
+                              <p className="text-xs font-bold text-white">Build Muscle Memory</p>
+                              <p className="text-[10px] text-slate-500">Repeat until automatic</p>
+                            </div>
+                          </div>
+                          <div className="mt-7 w-full max-w-md">
+                            <DrillMode positions={diagnostics?.positionTraces ?? []} oneOffMistakes={oneOffMistakes} excludeFens={dbApprovedFens} />
                           </div>
                         </div>
                       </div>
+                    )}
+                    </>
+                  )}
+                  </>)}
 
-                      {/* Batch example positions */}
-                      {isExpanded && hasExamples && (
-                        <div className="border-t border-white/[0.06] bg-white/[0.015] px-5 py-4">
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            {motif.examples.map((ex, ei) => {
-                              // Resolve move squares from FEN — handles both UCI and SAN
-                              const resolveMove = (fen: string, move: string | null | undefined): { from: string; to: string; san: string } | null => {
-                                if (!move) return null;
-                                try {
-                                  const c = new Chess(fen);
-                                  // Try UCI first
-                                  if (/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(move)) {
-                                    const r = c.move({ from: move.slice(0, 2), to: move.slice(2, 4), promotion: (move[4] || undefined) as any });
-                                    if (r) return { from: r.from, to: r.to, san: r.san };
-                                  }
-                                  // Fall back to SAN
-                                  const r = c.move(move);
-                                  if (r) return { from: r.from, to: r.to, san: r.san };
-                                } catch {}
-                                return null;
-                              };
-                              const userR = resolveMove(ex.fenBefore, ex.userMove);
-                              const bestR = resolveMove(ex.fenBefore, ex.bestMove);
-                              const arrows: [CbSquare, CbSquare, string][] = [];
-                              if (userR) arrows.push([userR.from as CbSquare, userR.to as CbSquare, "rgba(239, 68, 68, 0.85)"]);
-                              if (bestR) arrows.push([bestR.from as CbSquare, bestR.to as CbSquare, "rgba(34, 197, 94, 0.85)"]);
-                              // Determine orientation from FEN — if " b " in FEN, black to move means user is black
-                              const sideToMove = ex.fenBefore.includes(" b ") ? "black" : "white";
+                  {/* ── Patterns folder ── */}
+                  {openingFolder === "patterns" && (
+                  <div className="space-y-3">
+                    {positionalMotifs.length === 0 ? (
+                      <div className="glass-card border-amber-500/10 p-6">
+                        <div className="flex flex-col items-center gap-3 text-center">
+                          <span className="text-3xl">✨</span>
+                          <h3 className="text-base font-bold text-white">No positional patterns detected</h3>
+                          <p className="max-w-md text-sm text-slate-400">
+                            Your openings look positionally sound in this scan! FireChess checks for unnecessary captures, premature trades,
+                            released tension, passive retreats, pawn structure issues, and more. Scan more games or use the &ldquo;All&rdquo;
+                            mode for a deeper look.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                    <>
+                    {positionalMotifs.map((motif) => {
+                      const pattern = POSITIONAL_PATTERNS.find(p => motif.name.startsWith(p.label) || motif.name.includes(p.tag));
+                      const quote = pattern?.quote;
+                      const author = pattern?.author;
+                      const icon = pattern?.icon ?? motif.icon;
+                      const colorMap: Record<string, string> = {
+                        amber: "border-amber-500/20 bg-amber-500/[0.04]",
+                        orange: "border-orange-500/20 bg-orange-500/[0.04]",
+                        rose: "border-rose-500/20 bg-rose-500/[0.04]",
+                        red: "border-red-500/20 bg-red-500/[0.04]",
+                        slate: "border-slate-500/20 bg-slate-500/[0.04]",
+                        violet: "border-violet-500/20 bg-violet-500/[0.04]",
+                        yellow: "border-yellow-500/20 bg-yellow-500/[0.04]",
+                        blue: "border-blue-500/20 bg-blue-500/[0.04]",
+                        cyan: "border-cyan-500/20 bg-cyan-500/[0.04]",
+                        indigo: "border-indigo-500/20 bg-indigo-500/[0.04]",
+                        teal: "border-teal-500/20 bg-teal-500/[0.04]",
+                      };
+                      const borderClass = colorMap[pattern?.color ?? "amber"] ?? colorMap.amber;
+                      const ratio = motif.avgCpLoss < 99000 ? motif.avgCpLoss : 0;
+                      const severityColor = ratio >= 15000 ? "text-red-400" : ratio >= 8000 ? "text-amber-400" : "text-yellow-400";
 
-                              const exKey = `${motif.name}-${ei}`;
-                              const explainText = posExplain[exKey];
-                              const onExplain = () => {
-                                if (explainText) { setPosExplain(prev => { const n = { ...prev }; delete n[exKey]; return n; }); return; }
-                                try {
-                                  const coaching = explainOpeningLeak(ex.fenBefore, ex.userMove ?? "", ex.bestMove ?? null, ex.cpLoss, 0, -ex.cpLoss);
-                                  const text = coaching.played.coaching || coaching.played.headline || "No explanation available.";
-                                  setPosExplain(prev => ({ ...prev, [exKey]: text }));
-                                } catch {
-                                  setPosExplain(prev => ({ ...prev, [exKey]: "Could not explain this position." }));
-                                }
-                              };
+                      const isExpanded = expandedMotifs.has(motif.name);
+                      const toggleExpand = () => setExpandedMotifs(prev => {
+                        const next = new Set(prev);
+                        if (next.has(motif.name)) next.delete(motif.name);
+                        else next.add(motif.name);
+                        return next;
+                      });
+                      const hasExamples = motif.examples.length > 0;
 
-                              return (
-                                <div key={`${ex.fenBefore}-${ei}`} className="flex flex-col items-center gap-1.5">
-                                  <div className="w-full max-w-[180px] aspect-square rounded-lg overflow-hidden border border-white/[0.08]">
-                                    <Chessboard
-                                      id={`pos-ex-${motif.name}-${ei}`}
-                                      position={ex.fenBefore}
-                                      arePiecesDraggable={false}
-                                      boardWidth={180}
-                                      customArrows={arrows}
-                                      boardOrientation={sideToMove === "black" ? "black" : "white"}
-                                      customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-                                      customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
-                                      customBoardStyle={{ borderRadius: "0px" }}
-                                      showBoardNotation={false}
-                                    />
-                                  </div>
-                                  <div className="text-center">
-                                    <span className="text-[10px] font-bold text-red-400">
-                                      −{(ex.cpLoss / 100).toFixed(1)}
+                      return (
+                        <div key={motif.name} className={`glass-card ${borderClass} overflow-hidden`}>
+                          <div className="p-5">
+                            <div className="flex items-start gap-4">
+                              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/[0.06] text-2xl">{icon}</span>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-3 flex-wrap">
+                                  <h3 className="text-lg font-bold text-white">{motif.name}</h3>
+                                  <span className={`rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs font-bold ${severityColor}`}>
+                                    {motif.count}× detected
+                                  </span>
+                                  {motif.avgCpLoss < 99000 && (
+                                    <span className="text-xs text-slate-500">
+                                      avg −{(motif.avgCpLoss / 100).toFixed(1)} pawns
                                     </span>
-                                    {userR && (
-                                      <span className="ml-1.5 text-[10px] text-slate-500">
-                                        played <span className="font-mono text-red-400/80">{userR.san}</span>
-                                      </span>
-                                    )}
-                                    {bestR && (
-                                      <span className="ml-1 text-[10px] text-slate-500">
-                                        best <span className="font-mono text-emerald-400/80">{bestR.san}</span>
-                                      </span>
-                                    )}
-                                  </div>
-                                  <button
-                                    type="button"
-                                    onClick={onExplain}
-                                    className="text-[10px] font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
-                                  >
-                                    {explainText ? "Hide" : "Explain"}
-                                  </button>
-                                  {explainText && (
-                                    <p className="mt-0.5 max-w-[180px] text-[10px] leading-snug text-slate-400 text-center">
-                                      {explainText}
-                                    </p>
                                   )}
                                 </div>
-                              );
-                            })}
+                                {quote && (
+                                  <blockquote className="mt-3 border-l-2 border-amber-500/30 pl-4">
+                                    <p className="text-sm italic leading-relaxed text-slate-300">
+                                      &ldquo;{quote}&rdquo;
+                                    </p>
+                                    <p className="mt-1 text-xs text-slate-500">— {author}</p>
+                                  </blockquote>
+                                )}
+                                {hasExamples && (
+                                  <button
+                                    type="button"
+                                    onClick={toggleExpand}
+                                    className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
+                                  >
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
+                                    {isExpanded ? "Hide" : "Show"} {motif.examples.length} example{motif.examples.length !== 1 ? "s" : ""} from your games
+                                  </button>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                          <div className="mt-3 flex items-center gap-2 text-[10px] text-slate-500">
-                            <span className="inline-block h-2 w-4 rounded-sm" style={{ backgroundColor: "rgba(239, 68, 68, 0.85)" }} />
-                            <span>Your move</span>
-                            <span className="inline-block h-2 w-4 rounded-sm ml-2" style={{ backgroundColor: "rgba(34, 197, 94, 0.85)" }} />
-                            <span>Best move</span>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-                {positionalMotifs.length >= 2 && (
-                  <div className="glass-card border-amber-500/10 p-4">
-                    <p className="flex items-start gap-2 text-sm text-slate-400">
-                      <span className="mt-0.5 shrink-0 text-amber-400">💡</span>
-                      <span>
-                        These patterns often repeat unconsciously. Awareness is the first step — try to catch yourself <em>before</em> making the move.
-                        Head to the <Link href="/train" className="text-amber-400 underline underline-offset-2 hover:text-amber-300">Training Center</Link> to practice positions with these exact patterns.
-                      </span>
-                    </p>
-                  </div>
-                )}
-                </>
-                )}
-              </div>
-              )}
-              </>
-              </>)}
 
-              {/* Opening Health Rankings */}
-              {(lastRunConfig?.scanMode === "openings" || lastRunConfig?.scanMode === "both") && result?.openingSummaries && result.openingSummaries.length > 0 && (
-                <OpeningRankings openingSummaries={result.openingSummaries} />
+                          {/* Batch example positions */}
+                          {isExpanded && hasExamples && (
+                            <div className="border-t border-white/[0.06] bg-white/[0.015] px-5 py-4">
+                              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                {motif.examples.map((ex, ei) => {
+                                  // Resolve move squares from FEN — handles both UCI and SAN
+                                  const resolveMove = (fen: string, move: string | null | undefined): { from: string; to: string; san: string } | null => {
+                                    if (!move) return null;
+                                    try {
+                                      const c = new Chess(fen);
+                                      // Try UCI first
+                                      if (/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(move)) {
+                                        const r = c.move({ from: move.slice(0, 2), to: move.slice(2, 4), promotion: (move[4] || undefined) as any });
+                                        if (r) return { from: r.from, to: r.to, san: r.san };
+                                      }
+                                      // Fall back to SAN
+                                      const r = c.move(move);
+                                      if (r) return { from: r.from, to: r.to, san: r.san };
+                                    } catch {}
+                                    return null;
+                                  };
+                                  const userR = resolveMove(ex.fenBefore, ex.userMove);
+                                  const bestR = resolveMove(ex.fenBefore, ex.bestMove);
+                                  const arrows: [CbSquare, CbSquare, string][] = [];
+                                  if (userR) arrows.push([userR.from as CbSquare, userR.to as CbSquare, "rgba(239, 68, 68, 0.85)"]);
+                                  if (bestR) arrows.push([bestR.from as CbSquare, bestR.to as CbSquare, "rgba(34, 197, 94, 0.85)"]);
+                                  // Determine orientation from FEN — if " b " in FEN, black to move means user is black
+                                  const sideToMove = ex.fenBefore.includes(" b ") ? "black" : "white";
+
+                                  const exKey = `${motif.name}-${ei}`;
+                                  const isExplaining = posExplaining === exKey;
+                                  const onExplain = async () => {
+                                    if (isExplaining) return;
+                                    setPosExplaining(exKey);
+                                    try {
+                                      const coaching = explainOpeningLeak(ex.fenBefore, ex.userMove ?? "", ex.bestMove ?? null, ex.cpLoss, 0, -ex.cpLoss);
+                                      const rich: PositionExplanation = { ...coaching.played };
+
+                                      // Play user's move to get post-move FEN
+                                      const playedUci = ex.userMove ?? "";
+                                      const afterPlayed = new Chess(ex.fenBefore);
+                                      const uciMatch = /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(playedUci);
+                                      let playedSan = playedUci;
+                                      if (uciMatch) {
+                                        const r = afterPlayed.move({ from: playedUci.slice(0, 2), to: playedUci.slice(2, 4), promotion: (playedUci[4] || undefined) as PieceSymbol | undefined });
+                                        if (r) playedSan = r.san;
+                                      } else {
+                                        const r = afterPlayed.move(playedUci);
+                                        if (r) playedSan = r.san;
+                                      }
+
+                                      // Get Stockfish PV after the played move
+                                      let fullMistakeLine = [playedUci];
+                                      try {
+                                        const line = await stockfishClient.getPrincipalVariation(afterPlayed.fen(), 10, 12);
+                                        if (line) {
+                                          // Format PV as SAN for the coaching text
+                                          const sanTokens: string[] = [playedSan];
+                                          const pvSim = new Chess(afterPlayed.fen());
+                                          for (const uci of line.pvMoves) {
+                                            if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(uci)) break;
+                                            const mn = pvSim.moveNumber();
+                                            const side = pvSim.turn();
+                                            const mr = pvSim.move({ from: uci.slice(0, 2), to: uci.slice(2, 4), promotion: (uci[4] || undefined) as PieceSymbol | undefined });
+                                            if (!mr) break;
+                                            sanTokens.push(side === "w" ? `${mn}.${mr.san}` : `${mn}...${mr.san}`);
+                                          }
+                                          rich.observations = [
+                                            ...rich.observations,
+                                            `**Engine punishment line**: ${sanTokens.join(" ")}`,
+                                          ];
+                                          fullMistakeLine = [playedUci, ...line.pvMoves];
+
+                                          // Compute final FEN for position outlook
+                                          try {
+                                            const finalSim = new Chess(ex.fenBefore);
+                                            for (const u of fullMistakeLine) {
+                                              if (!/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(u)) break;
+                                              const r2 = finalSim.move({ from: u.slice(0, 2), to: u.slice(2, 4), promotion: (u[4] || undefined) as PieceSymbol | undefined });
+                                              if (!r2) break;
+                                            }
+                                            const userP = sideToMove === "white" ? "w" as const : "b" as const;
+                                            const finalEval = await stockfishClient.evaluateFen(finalSim.fen(), 8);
+                                            const outlook = describeEndPosition(finalSim.fen(), userP, finalEval?.cp ?? null);
+                                            if (outlook.summary) rich.observations.push(`**Position outlook**: ${outlook.summary}`);
+                                            for (const d of outlook.details) rich.observations.push(`  · ${d}`);
+                                          } catch { /* skip outlook */ }
+                                        }
+                                      } catch { /* skip PV */ }
+
+                                      setPosExplainRich(rich);
+                                      setPosExplainAnimUci(fullMistakeLine);
+                                      setPosExplainFen(ex.fenBefore);
+                                      setPosExplainOrientation(sideToMove === "black" ? "black" : "white");
+                                      setPosExplainTitle(`Your Move: ${playedSan}`);
+                                      setPosExplainSubtitle(rich.headline);
+                                      setPosExplainModalOpen(true);
+                                    } catch { /* silently fail */ }
+                                    setPosExplaining(null);
+                                  };
+
+                                  return (
+                                    <div key={`${ex.fenBefore}-${ei}`} className="flex flex-col items-center gap-1.5">
+                                      <div className="w-full max-w-[180px] aspect-square rounded-lg overflow-hidden border border-white/[0.08]">
+                                        <Chessboard
+                                          id={`pos-ex-${motif.name}-${ei}`}
+                                          position={ex.fenBefore}
+                                          arePiecesDraggable={false}
+                                          boardWidth={180}
+                                          customArrows={arrows}
+                                          boardOrientation={sideToMove === "black" ? "black" : "white"}
+                                          customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+                                          customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                                          customBoardStyle={{ borderRadius: "0px" }}
+                                          showBoardNotation={false}
+                                        />
+                                      </div>
+                                      <div className="text-center">
+                                        <span className="text-[10px] font-bold text-red-400">
+                                          −{(ex.cpLoss / 100).toFixed(1)}
+                                        </span>
+                                        {userR && (
+                                          <span className="ml-1.5 text-[10px] text-slate-500">
+                                            played <span className="font-mono text-red-400/80">{userR.san}</span>
+                                          </span>
+                                        )}
+                                        {bestR && (
+                                          <span className="ml-1 text-[10px] text-slate-500">
+                                            best <span className="font-mono text-emerald-400/80">{bestR.san}</span>
+                                          </span>
+                                        )}
+                                      </div>
+                                      <button
+                                        type="button"
+                                        onClick={onExplain}
+                                        disabled={isExplaining}
+                                        className="text-[10px] font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-wait"
+                                      >
+                                        {isExplaining ? "Loading…" : "Explain"}
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <div className="mt-3 flex items-center gap-2 text-[10px] text-slate-500">
+                                <span className="inline-block h-2 w-4 rounded-sm" style={{ backgroundColor: "rgba(239, 68, 68, 0.85)" }} />
+                                <span>Your move</span>
+                                <span className="inline-block h-2 w-4 rounded-sm ml-2" style={{ backgroundColor: "rgba(34, 197, 94, 0.85)" }} />
+                                <span>Best move</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {positionalMotifs.length >= 2 && (
+                      <div className="glass-card border-amber-500/10 p-4">
+                        <p className="flex items-start gap-2 text-sm text-slate-400">
+                          <span className="mt-0.5 shrink-0 text-amber-400">💡</span>
+                          <span>
+                            These patterns often repeat unconsciously. Awareness is the first step — try to catch yourself <em>before</em> making the move.
+                            Head to the <Link href="/train" className="text-amber-400 underline underline-offset-2 hover:text-amber-300">Training Center</Link> to practice positions with these exact patterns.
+                          </span>
+                        </p>
+                      </div>
+                    )}
+                    </>
+                    )}
+
+                    {/* Positional motif explanation modal (shared) */}
+                    <ExplanationModal
+                      open={posExplainModalOpen}
+                      onClose={() => setPosExplainModalOpen(false)}
+                      variant="opening"
+                      activeTab="played"
+                      richExplanation={posExplainRich}
+                      fen={posExplainFen}
+                      uciMoves={posExplainAnimUci}
+                      boardOrientation={posExplainOrientation}
+                      autoPlay
+                      title={posExplainTitle}
+                      subtitle={posExplainSubtitle}
+                    />
+                  </div>
+                  )}
+
+                  {/* ── Rankings folder ── */}
+                  {openingFolder === "rankings" && result?.openingSummaries && result.openingSummaries.length > 0 && (
+                    <OpeningRankings openingSummaries={result.openingSummaries} />
+                  )}
+
+                </div>
+              </div>
               )}
 
               {/* CTA: after openings-only scan, suggest tactics scan */}
