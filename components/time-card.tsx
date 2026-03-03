@@ -197,7 +197,7 @@ export function TimeCard({ moment }: TimeCardProps) {
   }, [moment.bestMove, moment.userMove]);
 
   const allArrows = useMemo(
-    () => [...arrows, ...bestArrows],
+    () => [...bestArrows, ...arrows],
     [arrows, bestArrows]
   );
 
@@ -292,6 +292,12 @@ export function TimeCard({ moment }: TimeCardProps) {
                   Tactical
                 </span>
               )}
+              {userMoveMatchesBest && (
+                <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  Engine Approved
+                </span>
+              )}
             </div>
             <h3 className="mt-2 text-lg font-bold text-white">
               Move {moment.moveNumber} · {moment.userColor === "white" ? "White" : "Black"}
@@ -323,6 +329,12 @@ export function TimeCard({ moment }: TimeCardProps) {
                   <span className="text-[10px] text-slate-500">Best:</span>
                   <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 font-mono text-sm font-bold text-emerald-400">{bestSan}</span>
                 </>
+              )}
+              {userMoveMatchesBest && (
+                <span className="flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-400">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  Top engine move
+                </span>
               )}
             </div>
           </div>

@@ -95,6 +95,7 @@ export default function HomePage() {
   const [endgamesOpen, setEndgamesOpen] = useState(true);
   const [puzzleBoardOpen, setPuzzleBoardOpen] = useState(false);
   const [timeManagementOpen, setTimeManagementOpen] = useState(true);
+  const [timeVerdictTab, setTimeVerdictTab] = useState<"all" | "wasted" | "rushed" | "justified">("all");
   const [expandedMotifs, setExpandedMotifs] = useState<Set<string>>(new Set());
   const [posExplainModalOpen, setPosExplainModalOpen] = useState(false);
   const [posExplainRich, setPosExplainRich] = useState<PositionExplanation | null>(null);
@@ -3384,32 +3385,79 @@ export default function HomePage() {
                 )}
               </div>
 
+              {/* Verdict filter tabs */}
+              {(() => {
+                const wastedCount = timeManagement.moments.filter(m => m.verdict === "wasted").length;
+                const rushedCount = timeManagement.moments.filter(m => m.verdict === "rushed").length;
+                const justifiedCount = timeManagement.moments.filter(m => m.verdict === "justified").length;
+                const tabs = [
+                  { key: "all" as const, label: "All", count: timeManagement.moments.length, icon: "📊", color: "text-violet-400", bg: "bg-violet-500/15", activeBg: "bg-violet-500/20", border: "border-violet-500/30" },
+                  { key: "wasted" as const, label: "Time Wasted", count: wastedCount, icon: "⏳", color: "text-red-400", bg: "bg-red-500/15", activeBg: "bg-red-500/20", border: "border-red-500/30" },
+                  { key: "rushed" as const, label: "Rushed", count: rushedCount, icon: "💨", color: "text-amber-400", bg: "bg-amber-500/15", activeBg: "bg-amber-500/20", border: "border-amber-500/30" },
+                  { key: "justified" as const, label: "Well-Timed", count: justifiedCount, icon: "✅", color: "text-emerald-400", bg: "bg-emerald-500/15", activeBg: "bg-emerald-500/20", border: "border-emerald-500/30" },
+                ];
+                return (
+                  <div className="flex flex-wrap gap-2">
+                    {tabs.map(t => (
+                      <button
+                        key={t.key}
+                        onClick={() => setTimeVerdictTab(t.key)}
+                        disabled={t.count === 0 && t.key !== "all"}
+                        className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${
+                          timeVerdictTab === t.key
+                            ? `${t.border} ${t.activeBg} ${t.color}`
+                            : "border-white/[0.06] bg-white/[0.03] text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
+                        } disabled:opacity-30 disabled:cursor-not-allowed`}
+                      >
+                        <span>{t.icon}</span>
+                        <span>{t.label}</span>
+                        <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${timeVerdictTab === t.key ? t.bg : "bg-white/[0.06]"}`}>{t.count}</span>
+                      </button>
+                    ))}
+                  </div>
+                );
+              })()}
+
               {/* Time moment cards — using CardCarousel for list/grid/swipe, gated for free users */}
-              {hasProAccess || timeUnlocked ? (
-                <CardCarousel viewMode={cardViewMode}>
-                  {timeManagement.moments.map((moment) => (
-                    <TimeCard
-                      key={`${moment.fen}-${moment.userMove}-${moment.gameIndex}`}
-                      moment={moment}
-                    />
-                  ))}
-                </CardCarousel>
-              ) : (
-                <>
-                  {/* Free preview: first 3 cards */}
-                  {timeManagement.moments.length > 0 && (
+              {(() => {
+                const filteredMoments = timeVerdictTab === "all"
+                  ? timeManagement.moments
+                  : timeManagement.moments.filter(m => m.verdict === timeVerdictTab);
+                return hasProAccess || timeUnlocked ? (
+                  filteredMoments.length > 0 ? (
                     <CardCarousel viewMode={cardViewMode}>
-                      {timeManagement.moments.slice(0, 3).map((moment) => (
+                      {filteredMoments.map((moment) => (
                         <TimeCard
                           key={`${moment.fen}-${moment.userMove}-${moment.gameIndex}`}
                           moment={moment}
                         />
                       ))}
                     </CardCarousel>
-                  )}
+                  ) : (
+                    <div className="glass-card flex items-center justify-center p-8 text-sm text-slate-500">
+                      No moments in this category
+                    </div>
+                  )
+                ) : (
+                  <>
+                    {/* Free preview: first 3 cards */}
+                    {filteredMoments.length > 0 ? (
+                      <CardCarousel viewMode={cardViewMode}>
+                        {filteredMoments.slice(0, 3).map((moment) => (
+                          <TimeCard
+                            key={`${moment.fen}-${moment.userMove}-${moment.gameIndex}`}
+                            moment={moment}
+                          />
+                        ))}
+                      </CardCarousel>
+                    ) : (
+                      <div className="glass-card flex items-center justify-center p-8 text-sm text-slate-500">
+                        No moments in this category
+                      </div>
+                    )}
 
                   {/* Upgrade CTA for the rest */}
-                  {timeManagement.moments.length > 3 && (
+                  {filteredMoments.length > 3 && (
                 <div className="relative overflow-hidden rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/[0.06] via-violet-600/[0.03] to-transparent p-8">
                   <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-violet-500/10 blur-[60px]" />
                   <div className="relative flex flex-col items-center gap-4 text-center">
@@ -3476,7 +3524,8 @@ export default function HomePage() {
                     </Link>
                   </div>
                 </>
-              )}
+              );
+              })()}
               </>
               )}
               </>
