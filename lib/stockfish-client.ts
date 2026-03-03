@@ -13,6 +13,8 @@ class StockfishClient {
   private worker: Worker | null = null;
   private initialized = false;
   private evalCache = new Map<string, LocalEngineEval | null>();
+  /** Tracks the highest depth evaluated for each FEN to avoid O(n) cache scans */
+  private maxDepthPerFen = new Map<string, number>();
   private queue: Promise<void> = Promise.resolve();
   private _pendingTasks = 0;
 
@@ -170,10 +172,11 @@ class StockfishClient {
     }
 
     // Reuse a higher-depth cached result if available (higher depth ⊇ lower depth accuracy)
-    for (const [key, val] of this.evalCache) {
-      if (!key.startsWith(`${fen}|d`)) continue;
-      const cachedDepth = parseInt(key.split("|d")[1], 10);
-      if (cachedDepth > depth && val) {
+    const maxCached = this.maxDepthPerFen.get(fen) ?? 0;
+    if (maxCached > depth) {
+      const higherKey = `${fen}|d${maxCached}`;
+      const val = this.evalCache.get(higherKey);
+      if (val) {
         this.evalCache.set(cacheKey, val);
         return val;
       }
@@ -189,6 +192,9 @@ class StockfishClient {
         const line = await this.analyzeFenInternal(fen, depth, 0);
         const parsed = line ? { cp: line.cp, bestMove: line.bestMove } : null;
         this.evalCache.set(cacheKey, parsed);
+        // Track max depth for fast higher-depth lookups
+        const prevMax = this.maxDepthPerFen.get(fen) ?? 0;
+        if (depth > prevMax) this.maxDepthPerFen.set(fen, depth);
         return parsed;
       });
     } finally {
@@ -213,6 +219,7 @@ class StockfishClient {
     this.worker = null;
     this.initialized = false;
     this.evalCache.clear();
+    this.maxDepthPerFen.clear();
   }
 }
 
@@ -234,6 +241,8 @@ const DEFAULT_POOL_SIZE =
 export class StockfishPool {
   private workers: StockfishClient[] = [];
   private evalCache = new Map<string, LocalEngineEval | null>();
+  /** Tracks the highest depth evaluated for each FEN to avoid O(n) cache scans */
+  private maxDepthPerFen = new Map<string, number>();
   /** Number of Stockfish Web Workers in the pool. */
   readonly size: number;
 
@@ -268,10 +277,11 @@ export class StockfishPool {
     }
 
     // Reuse a higher-depth cached result if available
-    for (const [key, val] of this.evalCache) {
-      if (!key.startsWith(`${fen}|d`)) continue;
-      const cachedDepth = parseInt(key.split("|d")[1], 10);
-      if (cachedDepth > depth && val) {
+    const maxCached = this.maxDepthPerFen.get(fen) ?? 0;
+    if (maxCached > depth) {
+      const higherKey = `${fen}|d${maxCached}`;
+      const val = this.evalCache.get(higherKey);
+      if (val) {
         this.evalCache.set(cacheKey, val);
         return val;
       }
@@ -280,6 +290,9 @@ export class StockfishPool {
     const worker = this.pickWorker();
     const result = await worker.evaluateFen(fen, depth);
     this.evalCache.set(cacheKey, result);
+    // Track max depth for fast higher-depth lookups
+    const prevMax = this.maxDepthPerFen.get(fen) ?? 0;
+    if (depth > prevMax) this.maxDepthPerFen.set(fen, depth);
     return result;
   }
 
@@ -293,6 +306,7 @@ export class StockfishPool {
     for (const w of this.workers) w.destroy();
     this.workers = [];
     this.evalCache.clear();
+    this.maxDepthPerFen.clear();
   }
 }
 

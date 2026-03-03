@@ -2235,6 +2235,69 @@ export default function HomePage() {
                 {/* Folder body */}
                 <div className="rounded-b-2xl rounded-tr-2xl border border-white/[0.1] border-t-0 bg-white/[0.03] p-5 space-y-5 shadow-[0_20px_60px_-12px_rgba(0,0,0,0.5)]">
 
+                  {/* Coach Insight — Openings */}
+                  {openingFolder === "mistakes" && (() => {
+                    const repeatedCount = leaks.length;
+                    const oneOffCount = oneOffMistakes.length;
+                    const totalLeaks = repeatedCount + oneOffCount;
+                    const totalEvalLost = [...leaks, ...oneOffMistakes].reduce((s, l) => s + (l.cpLoss ?? 0), 0);
+                    const avgLoss = totalLeaks > 0 ? totalEvalLost / totalLeaks : 0;
+
+                    let headline = "";
+                    let headlineColor = "gradient-text-emerald";
+                    const lines: { text: string; type: "positive" | "improve" }[] = [];
+
+                    if (totalLeaks === 0) {
+                      headline = "Your openings are bulletproof.";
+                    } else if (repeatedCount >= 3) {
+                      headline = "The same opening traps keep catching you.";
+                      headlineColor = "gradient-text-amber";
+                    } else if (avgLoss > 100) {
+                      headline = "Your opening mistakes are expensive.";
+                      headlineColor = "gradient-text-amber";
+                    } else if (totalLeaks <= 2) {
+                      headline = "Just a couple of opening rough edges.";
+                    } else {
+                      headline = "Some opening patterns to clean up.";
+                      headlineColor = "gradient-text-amber";
+                    }
+
+                    // Positives
+                    if (repeatedCount === 0 && oneOffCount > 0) lines.push({ text: "No recurring mistakes — each error was a one-off, suggesting solid opening knowledge.", type: "positive" });
+                    if (totalLeaks <= 2 && result.gamesAnalyzed >= 5) lines.push({ text: `Only ${totalLeaks} mistake${totalLeaks !== 1 ? "s" : ""} across ${result.gamesAnalyzed} games — your preparation is paying off.`, type: "positive" });
+                    if (totalLeaks === 0) lines.push({ text: `Clean opening play across all ${result.gamesAnalyzed} games. Your repertoire is well-prepared.`, type: "positive" });
+
+                    // Improvements
+                    if (repeatedCount >= 2) lines.push({ text: `${repeatedCount} repeated mistakes — you're falling into the same traps. Use the drill mode below to build muscle memory.`, type: "improve" });
+                    if (oneOffCount >= 3) lines.push({ text: `${oneOffCount} one-off inaccuracies. Broaden your preparation to cover sidelines you're encountering.`, type: "improve" });
+                    if (avgLoss > 100 && totalLeaks > 0) lines.push({ text: `Averaging ${(avgLoss / 100).toFixed(1)} pawns lost per mistake — these are costing you games before the middlegame.`, type: "improve" });
+                    if (repeatedCount >= 1 && oneOffCount >= 1) lines.push({ text: "Focus on the repeated leaks first — fixing those gives the biggest return per study hour.", type: "improve" });
+
+                    const positives = lines.filter(l => l.type === "positive");
+                    const improvements = lines.filter(l => l.type === "improve");
+                    const displayLines = [...positives, ...improvements].slice(0, 3);
+
+                    return displayLines.length > 0 ? (
+                      <div className="coach-insight rounded-xl border border-emerald-500/10 bg-gradient-to-br from-emerald-500/[0.06] to-teal-500/[0.03] px-5 py-5">
+                        <p className={`coach-headline text-lg font-extrabold tracking-tight sm:text-xl ${headlineColor}`}>
+                          {headline}
+                        </p>
+                        <div className="mt-3 space-y-2">
+                          {displayLines.map((line, i) => (
+                            <div key={i} className={`coach-line-${i + 1} flex items-start gap-2`}>
+                              <span className={`mt-0.5 text-xs ${line.type === "positive" ? "text-emerald-400" : "text-slate-500"}`}>
+                                {line.type === "positive" ? "✦" : "▸"}
+                              </span>
+                              <p className={`text-sm leading-relaxed ${line.type === "positive" ? "text-emerald-300/90" : "text-slate-400"}`}>
+                                {line.text}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
+
                   {/* ── Mistakes folder ── */}
                   {openingFolder === "mistakes" && (<>
                   {leaks.length === 0 && oneOffMistakes.length === 0 ? (
@@ -2747,40 +2810,67 @@ export default function HomePage() {
                       </p>
                     </div>
                   </div>
-                  {/* Diagnostic insight */}
+                  {/* Coach Insight — Tactics */}
                   {(() => {
                     const timePressureCount = missedTactics.filter(t => typeof t.timeRemainingSec === "number" && t.timeRemainingSec <= 30).length;
                     const timePressureRate = missedTactics.length > 0 ? timePressureCount / missedTactics.length : 0;
                     const matesMissed = missedTactics.filter(t => t.cpLoss >= 99000).length;
-                    const avgLoss = missedTactics.reduce((s, t) => s + (t.cpLoss < 99000 ? t.cpLoss : 0), 0) / Math.max(1, missedTactics.filter(t => t.cpLoss < 99000).length);
-                    if (matesMissed >= 2) return (
-                      <div className="rounded-xl border border-red-500/10 bg-red-500/[0.03] p-3">
-                        <p className="text-xs leading-relaxed text-slate-400">
-                          <span className="font-semibold text-red-300">⚠️ You missed {matesMissed} forced mate{matesMissed > 1 ? "s" : ""}.</span>{" "}
-                          Practice mate-in-1 and mate-in-2 puzzles daily to build pattern recognition. Missed mates are the costliest tactical errors.
-                        </p>
-                      </div>
-                    );
-                    if (timePressureRate > 0.4 && timePressureCount >= 2) return (
-                      <div className="rounded-xl border border-red-500/10 bg-red-500/[0.03] p-3">
-                        <p className="text-xs leading-relaxed text-slate-400">
-                          <span className="font-semibold text-red-300">⏰ {(timePressureRate * 100).toFixed(0)}% of your missed tactics happened under time pressure (&le;30s).</span>{" "}
-                          Consider playing longer time controls or practicing blitz tactics puzzles to improve speed recognition.
-                        </p>
-                      </div>
-                    );
-                    if (avgLoss > 400) return (
-                      <div className="rounded-xl border border-amber-500/10 bg-amber-500/[0.03] p-3">
-                        <p className="text-xs leading-relaxed text-slate-400">
-                          <span className="font-semibold text-amber-300">💡 Average missed tactic is worth ~{(avgLoss / 100).toFixed(1)} pawns.</span>{" "}
-                          These are significant material swings. Slow down and scan for checks, captures, and threats before committing to a move.
-                        </p>
-                      </div>
-                    );
+                    const nonMateTactics = missedTactics.filter(t => t.cpLoss < 99000);
+                    const avgLoss = nonMateTactics.reduce((s, t) => s + t.cpLoss, 0) / Math.max(1, nonMateTactics.length);
+                    const totalMissed = missedTactics.length;
+
+                    let headline = "";
+                    let headlineColor = "gradient-text-amber";
+                    const lines: { text: string; type: "positive" | "improve" }[] = [];
+
+                    if (totalMissed <= 2 && matesMissed === 0) {
+                      headline = "Sharp tactical vision.";
+                      headlineColor = "gradient-text-emerald";
+                    } else if (matesMissed >= 2) {
+                      headline = "Forced mates are slipping through.";
+                    } else if (timePressureRate > 0.5 && timePressureCount >= 2) {
+                      headline = "Time pressure is blinding your tactics.";
+                    } else if (avgLoss > 500) {
+                      headline = "You're leaving pieces on the table.";
+                    } else if (totalMissed >= 5) {
+                      headline = "Too many tactics going unnoticed.";
+                    } else {
+                      headline = "A few tactical gaps to patch.";
+                    }
+
+                    // Positives
+                    if (matesMissed === 0 && totalMissed > 0) lines.push({ text: "You didn't miss any forced checkmates — your mating pattern awareness is solid.", type: "positive" });
+                    if (timePressureCount === 0 && totalMissed > 0) lines.push({ text: "None of your misses were under time pressure — you're keeping composure on the clock.", type: "positive" });
+                    if (totalMissed <= 3 && totalMissed > 0 && avgLoss < 300) lines.push({ text: "Only minor tactical edges missed — you're finding most of the key moments.", type: "positive" });
+
+                    // Improvements
+                    if (matesMissed >= 1) lines.push({ text: `${matesMissed} forced mate${matesMissed > 1 ? "s" : ""} missed. Practice mate-in-2/3 puzzles daily — these are the costliest oversights.`, type: "improve" });
+                    if (timePressureRate > 0.4 && timePressureCount >= 2) lines.push({ text: `${(timePressureRate * 100).toFixed(0)}% of misses happened with ≤30s on the clock. Try longer time controls or blitz puzzle drills.`, type: "improve" });
+                    if (avgLoss > 400 && nonMateTactics.length >= 2) lines.push({ text: `Average miss is worth ${(avgLoss / 100).toFixed(1)} pawns. Before each move, scan for checks, captures, and threats.`, type: "improve" });
+                    if (totalMissed >= 5) lines.push({ text: `${totalMissed} missed tactics across your games — dedicate 15 min daily to rated puzzles to sharpen pattern recognition.`, type: "improve" });
+
+                    const positives = lines.filter(l => l.type === "positive");
+                    const improvements = lines.filter(l => l.type === "improve");
+                    const displayLines = [...positives, ...improvements].slice(0, 3);
+
                     return (
-                      <p className="text-xs text-slate-500">
-                        💡 Review each missed tactic below and practice the winning pattern. Use &ldquo;Show winning line&rdquo; to understand the forcing sequence.
-                      </p>
+                      <div className="coach-insight rounded-xl border border-amber-500/10 bg-gradient-to-br from-amber-500/[0.06] to-orange-500/[0.03] px-5 py-5">
+                        <p className={`coach-headline text-lg font-extrabold tracking-tight sm:text-xl ${headlineColor}`}>
+                          {headline}
+                        </p>
+                        <div className="mt-3 space-y-2">
+                          {displayLines.map((line, i) => (
+                            <div key={i} className={`coach-line-${i + 1} flex items-start gap-2`}>
+                              <span className={`mt-0.5 text-xs ${line.type === "positive" ? "text-emerald-400" : "text-slate-500"}`}>
+                                {line.type === "positive" ? "✦" : "▸"}
+                              </span>
+                              <p className={`text-sm leading-relaxed ${line.type === "positive" ? "text-emerald-300/90" : "text-slate-400"}`}>
+                                {line.text}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     );
                   })()}
                 </div>
@@ -3063,6 +3153,68 @@ export default function HomePage() {
                       </p>
                     </div>
                   </div>
+
+                  {/* Coach Insight — Endgames */}
+                  {(() => {
+                    const { totalPositions, avgCpLoss, conversionRate, holdRate, weakestType } = endgameStats;
+                    const mistakeCount = endgameMistakes.length;
+                    const mistakeRate = totalPositions > 0 ? mistakeCount / totalPositions : 0;
+
+                    let headline = "";
+                    let headlineColor = "gradient-text-sky";
+                    const lines: { text: string; type: "positive" | "improve" }[] = [];
+
+                    if (avgCpLoss <= 20 && mistakeRate <= 0.1) {
+                      headline = "Your endgame technique is rock-solid.";
+                      headlineColor = "gradient-text-emerald";
+                    } else if (conversionRate != null && conversionRate < 40) {
+                      headline = "You're letting winning endgames slip away.";
+                    } else if (holdRate != null && holdRate < 30) {
+                      headline = "Defensive endgames need work.";
+                    } else if (avgCpLoss > 60) {
+                      headline = "Endgame inaccuracies are adding up.";
+                    } else if (mistakeRate > 0.25) {
+                      headline = "Too many endgame errors for your level.";
+                    } else {
+                      headline = "Decent endgame play with room to grow.";
+                    }
+
+                    // Positives
+                    if (conversionRate != null && conversionRate >= 70) lines.push({ text: `${conversionRate.toFixed(0)}% conversion rate — you're cashing in winning positions reliably.`, type: "positive" });
+                    if (holdRate != null && holdRate >= 60) lines.push({ text: `${holdRate.toFixed(0)}% hold rate in worse positions — impressive defensive resilience.`, type: "positive" });
+                    if (avgCpLoss <= 25 && totalPositions >= 3) lines.push({ text: `Only ${(avgCpLoss / 100).toFixed(2)} avg centipawn loss — your endgame moves are near-engine quality.`, type: "positive" });
+                    if (mistakeRate <= 0.1 && mistakeCount > 0) lines.push({ text: `Only ${mistakeCount} mistake${mistakeCount !== 1 ? "s" : ""} across ${totalPositions} positions — very clean technique.`, type: "positive" });
+
+                    // Improvements
+                    if (conversionRate != null && conversionRate < 50) lines.push({ text: `Converting only ${conversionRate.toFixed(0)}% of winning endgames. Study technique games to learn how to press advantages home.`, type: "improve" });
+                    if (holdRate != null && holdRate < 40) lines.push({ text: `Holding only ${holdRate.toFixed(0)}% of worse positions. Practice fortress setups and learn when draws are achievable.`, type: "improve" });
+                    if (weakestType) lines.push({ text: `${weakestType} endgames are your weakest area. Targeted practice here will yield the biggest rating gains.`, type: "improve" });
+                    if (avgCpLoss > 60) lines.push({ text: `Averaging ${(avgCpLoss / 100).toFixed(2)} centipawn loss — slow down in endgames and calculate one move deeper.`, type: "improve" });
+
+                    const positives = lines.filter(l => l.type === "positive");
+                    const improvements = lines.filter(l => l.type === "improve");
+                    const displayLines = [...positives, ...improvements].slice(0, 3);
+
+                    return totalPositions > 0 && displayLines.length > 0 ? (
+                      <div className="coach-insight rounded-xl border border-sky-500/10 bg-gradient-to-br from-sky-500/[0.06] to-cyan-500/[0.03] px-5 py-5">
+                        <p className={`coach-headline text-lg font-extrabold tracking-tight sm:text-xl ${headlineColor}`}>
+                          {headline}
+                        </p>
+                        <div className="mt-3 space-y-2">
+                          {displayLines.map((line, i) => (
+                            <div key={i} className={`coach-line-${i + 1} flex items-start gap-2`}>
+                              <span className={`mt-0.5 text-xs ${line.type === "positive" ? "text-emerald-400" : "text-slate-500"}`}>
+                                {line.type === "positive" ? "✦" : "▸"}
+                              </span>
+                              <p className={`text-sm leading-relaxed ${line.type === "positive" ? "text-emerald-300/90" : "text-slate-400"}`}>
+                                {line.text}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null;
+                  })()}
 
                   {/* By-type breakdown — ranked worst to best */}
                   {endgameStats.byType.length > 0 && (
@@ -3384,6 +3536,68 @@ export default function HomePage() {
                   </div>
                 )}
               </div>
+
+              {/* Coach Insight — Time Management */}
+              {(() => {
+                const { score, wastedThinks, rushedMoves, justifiedThinks, avgTimePerMove, timeScrambleCount, moments, gamesWithClockData } = timeManagement;
+                const total = moments.length;
+                const rushRatio = total > 0 ? rushedMoves / total : 0;
+                const wasteRatio = total > 0 ? wastedThinks / total : 0;
+
+                let headline = "";
+                let headlineColor = "gradient-text-violet";
+                const lines: { text: string; type: "positive" | "improve" }[] = [];
+
+                if (score >= 75) {
+                  headline = "Your clock management is a weapon.";
+                  headlineColor = "gradient-text-emerald";
+                } else if (wasteRatio > rushRatio && wastedThinks >= 3) {
+                  headline = "You're overthinking quiet positions.";
+                } else if (rushRatio > wasteRatio && rushedMoves >= 3) {
+                  headline = "Slow down — speed is costing you.";
+                } else if (score >= 50) {
+                  headline = "Room to sharpen your clock sense.";
+                } else {
+                  headline = "Your clock is working against you.";
+                }
+
+                // Positive lines
+                if (justifiedThinks >= 3) lines.push({ text: `${justifiedThinks} moments where you invested time wisely — great instinct for critical positions.`, type: "positive" });
+                if (timeScrambleCount === 0 && gamesWithClockData >= 3) lines.push({ text: "You avoided time scrambles across all games — excellent composure.", type: "positive" });
+                if (avgTimePerMove >= 8 && avgTimePerMove <= 25 && score >= 60) lines.push({ text: `Averaging ${avgTimePerMove.toFixed(1)}s per move — a healthy, sustainable pace.`, type: "positive" });
+
+                // Improvement lines
+                if (wastedThinks >= 3) lines.push({ text: `${wastedThinks} moments of overthinking on non-critical positions. Trust your intuition more on forced or simple moves.`, type: "improve" });
+                if (rushedMoves >= 3) lines.push({ text: `${rushedMoves} rushed decisions in complex positions. When the position is sharp, invest an extra 5-10 seconds.`, type: "improve" });
+                if (timeScrambleCount >= 2) lines.push({ text: `${timeScrambleCount} games ended in time trouble. Budget your clock more evenly across the game.`, type: "improve" });
+                if (avgTimePerMove < 5 && score < 60) lines.push({ text: `Only ${avgTimePerMove.toFixed(1)}s per move on average — try to slow down in middlegame complications.`, type: "improve" });
+                if (avgTimePerMove > 30) lines.push({ text: `${avgTimePerMove.toFixed(1)}s per move is high — practice pattern recognition to make routine decisions faster.`, type: "improve" });
+
+                // Cap at 3 lines, prioritize positives first then improvements
+                const positives = lines.filter(l => l.type === "positive");
+                const improvements = lines.filter(l => l.type === "improve");
+                const displayLines = [...positives, ...improvements].slice(0, 3);
+
+                return displayLines.length > 0 ? (
+                  <div className="coach-insight rounded-xl border border-violet-500/10 bg-gradient-to-br from-violet-500/[0.06] to-purple-500/[0.03] px-5 py-5">
+                    <p className={`coach-headline text-lg font-extrabold tracking-tight sm:text-xl ${headlineColor}`}>
+                      {headline}
+                    </p>
+                    <div className="mt-3 space-y-2">
+                      {displayLines.map((line, i) => (
+                        <div key={i} className={`coach-line-${i + 1} flex items-start gap-2`}>
+                          <span className={`mt-0.5 text-xs ${line.type === "positive" ? "text-emerald-400" : "text-slate-500"}`}>
+                            {line.type === "positive" ? "✦" : "▸"}
+                          </span>
+                          <p className={`text-sm leading-relaxed ${line.type === "positive" ? "text-emerald-300/90" : "text-slate-400"}`}>
+                            {line.text}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null;
+              })()}
 
               {/* Verdict filter tabs */}
               {(() => {

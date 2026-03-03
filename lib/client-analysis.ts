@@ -2350,6 +2350,11 @@ export async function analyzeOpeningLeaksInBrowser(
 
     for (let ply = 0; ply < allTokens.length; ply += 1) {
 
+      // Yield to browser periodically to prevent UI freeze during long games
+      if (ply > 0 && ply % 60 === 0) {
+        await new Promise<void>((r) => setTimeout(r, 0));
+      }
+
       const sideToMove: PlayerColor = ply % 2 === 0 ? "white" : "black";
       const token = allTokens[ply];
       const fenBefore = chess.fen();
@@ -2607,6 +2612,11 @@ export async function analyzeOpeningLeaksInBrowser(
     let endgameType: EndgameType = "Complex";
 
     for (let ply = 0; ply < allTokens.length; ply += 1) {
+      // Yield to browser periodically to prevent UI freeze during long games
+      if (ply > 0 && ply % 60 === 0) {
+        await new Promise<void>((r) => setTimeout(r, 0));
+      }
+
       const token = allTokens[ply];
       const fenBefore = chess.fen();
       const sideToMove: PlayerColor = ply % 2 === 0 ? "white" : "black";
@@ -2975,6 +2985,12 @@ export async function analyzeOpeningLeaksInBrowser(
 
     for (let gameIndex = 0; gameIndex < games.length; gameIndex++) {
       const game = games[gameIndex];
+
+      // Yield to browser every 5 games to prevent UI freeze
+      if (gameIndex > 0 && gameIndex % 5 === 0) {
+        await new Promise<void>((r) => setTimeout(r, 0));
+      }
+
       if (!game.clocks || game.clocks.length < 4) continue;
       gamesWithClocks++;
 
@@ -3006,6 +3022,11 @@ export async function analyzeOpeningLeaksInBrowser(
         const sideToMove: PlayerColor = ply % 2 === 0 ? "white" : "black";
         const fenBefore = chess.fen();
         const token = allTokens[ply];
+
+        // Yield to browser periodically to prevent UI freeze
+        if (ply > 0 && ply % 40 === 0) {
+          await new Promise<void>((r) => setTimeout(r, 0));
+        }
 
         if (sideToMove === userColor) {
           // Compute time spent (this is userMoveIdx+1 vs userMoveIdx)
@@ -3146,6 +3167,11 @@ export async function analyzeOpeningLeaksInBrowser(
                 }
               } catch { /* keep original */ }
 
+              // Skip rushed moments where the user played the top engine move —
+              // these are almost always forced/obvious moves (recaptures, etc.)
+              if (verdict === "rushed" && bestMove && userMoveUci === bestMove) {
+                // not a real rush — it was a forcing move
+              } else
               moments.push({
                 gameIndex: gameIndex + 1,
                 moveNumber: fullMoveNumber,
