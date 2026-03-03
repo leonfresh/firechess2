@@ -78,6 +78,16 @@ type SavedReport = {
     vibeTitle?: string;
     sampleSize?: number;
   } | null;
+  timeManagement: {
+    score: number;
+    moments: any[];
+    gamesWithClockData: number;
+    avgTimePerMove: number;
+    timeScrambleCount: number;
+    justifiedThinks: number;
+    wastedThinks: number;
+    rushedMoves: number;
+  } | null;
   createdAt: string;
 };
 
@@ -225,9 +235,19 @@ export default function DashboardPage() {
   const latest = filtered[0] ?? null;
   const previous = filtered[1] ?? null;
 
+  // Exclude time-management reports from progress/radar (they don't have accuracy/cpLoss)
+  const filteredNonTime = useMemo(() => {
+    return filtered.filter((r) => r.scanMode !== "time-management");
+  }, [filtered]);
+
+  // Latest non-time-management report for radar
+  const latestNonTimeMgmt = filteredNonTime[0] ?? null;
+  const previousNonTimeMgmt = filteredNonTime[1] ?? null;
+
   // Progress data for line chart (oldest → newest, with timestamps for date axis)
+  // Only include reports that have accuracy/cpLoss (exclude time-management)
   const progressData = useMemo(() => {
-    return [...filtered]
+    return [...filteredNonTime]
       .reverse()
       .map((r) => ({
         timestamp: new Date(r.createdAt).getTime(),
@@ -236,7 +256,7 @@ export default function DashboardPage() {
         rating: r.estimatedRating ?? 0,
         cpLoss: r.weightedCpLoss ?? 0,
       }));
-  }, [filtered]);
+  }, [filteredNonTime]);
 
   // Aggregate stats
   const totalGames = filtered.reduce((s, r) => s + r.gamesAnalyzed, 0);
@@ -271,10 +291,10 @@ export default function DashboardPage() {
       studyPlanProgress: 0,
       uniqueUsernames,
       scanModes: [...new Set(reports.map((r) => r.scanMode))],
-      latestAccuracy: latest?.estimatedAccuracy ?? null,
-      previousAccuracy: previous?.estimatedAccuracy ?? null,
+      latestAccuracy: latestNonTimeMgmt?.estimatedAccuracy ?? null,
+      previousAccuracy: previousNonTimeMgmt?.estimatedAccuracy ?? null,
     };
-  }, [reports, latest, previous]);
+  }, [reports, latestNonTimeMgmt, previousNonTimeMgmt]);
 
   /* ─── loading / auth states ─── */
   if (sessionLoading || loading) {
@@ -442,9 +462,9 @@ export default function DashboardPage() {
           )}
 
           {/* ─── Progress Highlights (rescan improvement) ─── */}
-          {latest && previous && filtered.length >= 2 && (
+          {latestNonTimeMgmt && previousNonTimeMgmt && filteredNonTime.length >= 2 && (
             <div className="animate-fade-in-up" style={{ animationDelay: "0.13s" }}>
-              <ProgressHighlights latest={latest} previous={previous} />
+              <ProgressHighlights latest={latestNonTimeMgmt} previous={previousNonTimeMgmt} />
             </div>
           )}
 
@@ -496,8 +516,8 @@ export default function DashboardPage() {
           <div data-tour="goals" className="grid gap-6 lg:grid-cols-2">
             <div className="animate-fade-in-up" style={{ animationDelay: "0.17s" }}>
               <GoalWidget
-                currentAccuracy={latest?.estimatedAccuracy ?? null}
-                currentRating={latest?.estimatedRating ?? null}
+                currentAccuracy={latestNonTimeMgmt?.estimatedAccuracy ?? null}
+                currentRating={latestNonTimeMgmt?.estimatedRating ?? null}
               />
             </div>
             <div className="glass-card animate-fade-in-up p-6" style={{ animationDelay: "0.18s" }}>
@@ -509,8 +529,8 @@ export default function DashboardPage() {
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="animate-fade-in-up" style={{ animationDelay: "0.19s" }}>
               <PercentileWidget
-                accuracy={latest?.estimatedAccuracy ?? null}
-                rating={latest?.estimatedRating ?? null}
+                accuracy={latestNonTimeMgmt?.estimatedAccuracy ?? null}
+                rating={latestNonTimeMgmt?.estimatedRating ?? null}
               />
             </div>
             <div className="animate-fade-in-up" style={{ animationDelay: "0.20s" }}>
@@ -528,10 +548,10 @@ export default function DashboardPage() {
                 <span className="text-xs text-white/30">Latest report</span>
               </div>
 
-              {latest && (
+              {latestNonTimeMgmt && (
                 <>
-                  <StrengthsRadar {...radarPropsFrom(latest)} />
-                  <RadarLegend data={computeRadarData(radarPropsFrom(latest))} props={radarPropsFrom(latest)} />
+                  <StrengthsRadar {...radarPropsFrom(latestNonTimeMgmt)} />
+                  <RadarLegend data={computeRadarData(radarPropsFrom(latestNonTimeMgmt))} props={radarPropsFrom(latestNonTimeMgmt)} />
                 </>
               )}
             </div>
@@ -553,8 +573,8 @@ export default function DashboardPage() {
                     <div className="mb-2 flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full bg-emerald-400" />
                       <span className="text-xs font-medium text-white/50">Accuracy</span>
-                      {latest && previous && (
-                        <DeltaBadge value={delta(latest.estimatedAccuracy, previous.estimatedAccuracy)} />
+                      {latestNonTimeMgmt && previousNonTimeMgmt && (
+                        <DeltaBadge value={delta(latestNonTimeMgmt.estimatedAccuracy, previousNonTimeMgmt.estimatedAccuracy)} />
                       )}
                     </div>
                     <ResponsiveContainer width="100%" height={120}>
@@ -618,8 +638,8 @@ export default function DashboardPage() {
                     <div className="mb-2 flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full bg-cyan-400" />
                       <span className="text-xs font-medium text-white/50">Avg CP Loss</span>
-                      {latest && previous && (
-                        <DeltaBadge value={delta(latest.weightedCpLoss, previous.weightedCpLoss)} invert />
+                      {latestNonTimeMgmt && previousNonTimeMgmt && (
+                        <DeltaBadge value={delta(latestNonTimeMgmt.weightedCpLoss, previousNonTimeMgmt.weightedCpLoss)} invert />
                       )}
                     </div>
                     <ResponsiveContainer width="100%" height={120}>
@@ -834,9 +854,12 @@ function ReportRow({
   onDelete: () => void;
 }) {
   const r = report;
+  const isTimeMgmt = r.scanMode === "time-management";
   const rProps = radarPropsFrom(r);
   const radarData = computeRadarData(rProps);
-  const avg = Math.round(radarData.reduce((s, d) => s + d.value, 0) / radarData.length);
+  const radarAvg = Math.round(radarData.reduce((s, d) => s + d.value, 0) / radarData.length);
+  // For time management, show the time management score; for others, the radar average
+  const avg = isTimeMgmt ? (r.timeManagement?.score ?? 0) : radarAvg;
   const avgColor =
     avg >= 75
       ? "text-emerald-400"
@@ -894,19 +917,32 @@ function ReportRow({
           </div>
           <div className="mt-0.5 flex items-center gap-3 text-xs text-white/30">
             <span>{r.gamesAnalyzed} games</span>
-            <span>·</span>
-            <span>{r.leakCount ?? 0} leaks</span>
-            <span>·</span>
-            <span>{r.tacticsCount ?? 0} tactics</span>
+            {r.scanMode === "time-management" ? (
+              <>
+                <span>·</span>
+                <span>{r.timeManagement?.moments.length ?? 0} moments</span>
+                <span>·</span>
+                <span>Score: {r.timeManagement?.score ?? "—"}/100</span>
+              </>
+            ) : (
+              <>
+                <span>·</span>
+                <span>{r.leakCount ?? 0} leaks</span>
+                <span>·</span>
+                <span>{r.tacticsCount ?? 0} tactics</span>
+              </>
+            )}
           </div>
         </div>
 
         <div className="flex-shrink-0 text-right">
           <div className="text-xs text-white/30">{formatDate(r.createdAt)}</div>
           <div className="mt-1 text-xs text-white/20">
-            {r.estimatedAccuracy != null
-              ? `${r.estimatedAccuracy.toFixed(1)}% acc`
-              : ""}
+            {r.scanMode === "time-management"
+              ? r.timeManagement ? `${r.timeManagement.score}/100 score` : ""
+              : r.estimatedAccuracy != null
+                ? `${r.estimatedAccuracy.toFixed(1)}% acc`
+                : ""}
           </div>
         </div>
 
@@ -943,8 +979,75 @@ function ReportRow({
 
       {expanded && (
         <div className="border-t border-white/5 p-6 space-y-6">
-          {/* Report Card (same layout as scanner) */}
-          {r.estimatedAccuracy != null && (
+          {/* Time Management Report */}
+          {r.scanMode === "time-management" && r.timeManagement && (
+            <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] p-6">
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.08] via-purple-500/[0.05] to-cyan-500/[0.08]" />
+              <div className="relative space-y-5">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="text-lg font-bold text-white">⏱️ Time Management Report</h3>
+                  <span className="rounded-full bg-violet-500/10 px-2.5 py-0.5 text-[10px] font-bold text-violet-400">Time Mgmt</span>
+                </div>
+
+                {/* Score + overview stats */}
+                <div className="grid gap-3 sm:grid-cols-5">
+                  <div className="stat-card py-3">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Score</p>
+                    <p className={`mt-0.5 text-2xl font-bold ${r.timeManagement.score >= 70 ? "text-emerald-400" : r.timeManagement.score >= 45 ? "text-amber-400" : "text-red-400"}`}>
+                      {r.timeManagement.score}/100
+                    </p>
+                  </div>
+                  <div className="stat-card py-3">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Avg / Move</p>
+                    <p className="mt-0.5 text-2xl font-bold text-slate-200">{r.timeManagement.avgTimePerMove.toFixed(1)}s</p>
+                  </div>
+                  <div className="stat-card py-3">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Justified Thinks</p>
+                    <p className="mt-0.5 text-2xl font-bold text-emerald-400">{r.timeManagement.justifiedThinks}</p>
+                  </div>
+                  <div className="stat-card py-3">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Time Wasted</p>
+                    <p className="mt-0.5 text-2xl font-bold text-red-400">{r.timeManagement.wastedThinks}</p>
+                  </div>
+                  <div className="stat-card py-3">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Rushed</p>
+                    <p className="mt-0.5 text-2xl font-bold text-amber-400">{r.timeManagement.rushedMoves}</p>
+                  </div>
+                </div>
+
+                {/* Time scramble warning */}
+                {r.timeManagement.timeScrambleCount > 0 && (
+                  <div className="flex items-center gap-2 rounded-lg border border-red-500/15 bg-red-500/[0.05] px-3 py-2">
+                    <span className="text-base">🚨</span>
+                    <p className="text-xs text-red-400">
+                      <span className="font-semibold">{r.timeManagement.timeScrambleCount}</span> of {r.timeManagement.gamesWithClockData} games had time scrambles
+                    </p>
+                  </div>
+                )}
+
+                {/* Moments count */}
+                <div className="flex flex-wrap items-center gap-3 text-xs text-white/30">
+                  <span>{r.gamesAnalyzed} games</span>
+                  <span>·</span>
+                  <span>{r.timeManagement.gamesWithClockData} with clock data</span>
+                  <span>·</span>
+                  <span>{r.timeManagement.moments.length} notable moments</span>
+                  <span>·</span>
+                  <span>{r.source}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Time Management — no-data fallback */}
+          {r.scanMode === "time-management" && !r.timeManagement && (
+            <div className="flex items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.02] p-8">
+              <p className="text-sm text-white/40">No time management data was saved for this report.</p>
+            </div>
+          )}
+
+          {/* Standard Report Card (non-time-management) */}
+          {r.scanMode !== "time-management" && r.estimatedAccuracy != null && (
             <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] p-6">
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-fuchsia-500/[0.08] via-emerald-500/[0.05] to-cyan-500/[0.08]" />
               <div className="relative">
@@ -987,6 +1090,7 @@ function ReportRow({
             </div>
           )}
 
+          {r.scanMode !== "time-management" && (
           <div className="grid gap-6 md:grid-cols-2">
             {/* Radar */}
             <div>
@@ -1011,6 +1115,7 @@ function ReportRow({
               </div>
             </div>
           </div>
+          )}
 
           {/* Opening Leaks */}
           {r.leaks && r.leaks.length > 0 && (
