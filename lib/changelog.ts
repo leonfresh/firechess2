@@ -15,6 +15,70 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: 18,
+    date: "Mar 4, 2026",
+    title: "Patterns Standalone Section & Time Management CTA",
+    description:
+      "Positional Patterns is now its own collapsible section instead of a tab, and every scan mode cross-sells Time Management.",
+    changes: [
+      { type: "improvement", text: "Positional Patterns moved out of the Opening Analysis folder tabs into a standalone collapsible section with its own header — easier to find and always visible" },
+      { type: "feature", text: "Time Management CTA — after any non-time scan (openings, tactics, endgames, or all) a card suggests running a time management scan" },
+      { type: "improvement", text: "Time Management results no longer appear inside openings/tactics/endgames scans — it has its own dedicated scan mode now" },
+      { type: "improvement", text: "Training page tagged as BETA with a feedback CTA linking to /feedback" },
+      { type: "fix", text: "Dashboard progress charts and radar now only include openings/both scans — tactics-only and endgame-only scans no longer drag accuracy down to 0" },
+    ],
+  },
+  {
+    version: 17,
+    date: "Mar 3, 2026",
+    title: "Time Management Scan Mode & Clock Insights",
+    description:
+      "A dedicated Time Management scan mode that analyses your clock usage across games — finds rushed moves, wasted thinks, justified pauses, and time scrambles.",
+    changes: [
+      { type: "feature", text: "Time Management scan mode — analyses clock data to find rushed moves, wasted time, justified thinks, and time scrambles" },
+      { type: "feature", text: "Time Management score (0–100), avg time per move, and per-moment breakdown with verdict cards" },
+      { type: "feature", text: "Time Card grid layout — score, avg/move, justified thinks, wasted time, rushed moves, and time scramble count" },
+      { type: "feature", text: "Missed tactics now show clock info — time remaining (mm:ss) and percentage of game time left when the tactic was missed" },
+      { type: "feature", text: "Time Pressure Training mode in Training Center — replay rushed and overthought positions under simulated clock pressure" },
+      { type: "improvement", text: "Dashboard report history shows time management score, avg/move, and key stats for time-management reports" },
+      { type: "fix", text: "Time management reports excluded from progress-over-time charts and radar (no accuracy/cpLoss data)" },
+    ],
+  },
+  {
+    version: 16,
+    date: "Mar 3, 2026",
+    title: "PGN Game Analyzer",
+    description:
+      "Paste or upload a PGN file to analyze any chess game — your own games, famous historical games, or tournament games. Full move-by-move analysis with the same engine.",
+    changes: [
+      { type: "feature", text: "PGN Game Analyzer page (/analyze) — paste PGN text or upload .pgn files for full move-by-move analysis" },
+      { type: "feature", text: "Chess.com-style move badges — !! Brilliant, ! Great, ✓ Best, ⊘ Inaccuracy, ? Mistake, ?? Blunder on every move" },
+      { type: "feature", text: "Interactive analysis board with eval bar, move list, and navigable move history" },
+      { type: "feature", text: "Sample PGNs — Fischer–Spassky 1972 Game 6 and other classic games available as one-click presets" },
+      { type: "feature", text: "Lichess / Chess.com game loader modal — paste a game URL to import and analyze it directly" },
+      { type: "fix", text: "PGN parser handles SAN disambiguation with look-ahead — correctly parses complex games like Fischer–Spassky" },
+      { type: "fix", text: "Aggressive inaccuracy threshold fixed — minor eval shifts no longer flagged as inaccuracies" },
+    ],
+  },
+  {
+    version: 15,
+    date: "Mar 3, 2026",
+    title: "Share Your Results & Board Upgrades",
+    description:
+      "Viral Elo Report share modal, accuracy badges on board pieces, bigger boards everywhere, and multiple UI polish fixes.",
+    changes: [
+      { type: "feature", text: "Viral Elo Report modal — shareable card with your estimated rating, accuracy grade, and key stats" },
+      { type: "feature", text: "Share buttons — post your report to X (Twitter) and Facebook with one click" },
+      { type: "feature", text: "Accuracy badges on board pieces — each piece shows its move classification (!!, !, ?, ??) directly on the board" },
+      { type: "feature", text: "Folder tab UI for Opening Analysis — Mistakes, Patterns, and Rankings organized into a clean tabbed layout" },
+      { type: "improvement", text: "Analysis board 1.5× bigger with a narrower move list — more space for the position" },
+      { type: "improvement", text: "Arrow colors fixed — red for your move, green for best move consistently across all boards" },
+      { type: "fix", text: "Save button now works for all scan modes (tactics-only, endgames-only, time-management)" },
+      { type: "fix", text: "firechess.club links updated to firechess.com throughout the app" },
+      { type: "fix", text: "Opening Explorer fallback fix — no longer crashes when Lichess API returns empty data" },
+    ],
+  },
+  {
     version: 14,
     date: "Mar 2, 2026",
     title: "Positional Pattern Detector & Training Fixes",
