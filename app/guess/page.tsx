@@ -510,6 +510,31 @@ export default function GuessTheMovePage() {
     }) as any;
   }, [guessBadge]);
 
+  // ── Cooking meter: rolling average of last N guesses ──
+  const cookingLevel = useMemo(() => {
+    if (guesses.length === 0) return 0;
+    const window = guesses.slice(-10); // last 10 guesses
+    const pts = window.reduce((s, g) => {
+      if (g.result === "correct") return s + 2;
+      if (g.result === "close") return s + 1;
+      // bonus for engine-rated quality
+      if (g.userRating === "best" || g.userRating === "excellent") return s + 1.5;
+      if (g.userRating === "good") return s + 0.5;
+      return s;
+    }, 0);
+    return Math.min(100, Math.round((pts / (window.length * 2)) * 100));
+  }, [guesses]);
+
+  const cookingLabel = useMemo(() => {
+    if (guesses.length === 0) return { text: "Warming up…", emoji: "🍳", color: "text-slate-400" };
+    if (cookingLevel >= 90) return { text: "ABSOLUTELY COOKING", emoji: "🔥", color: "text-red-400" };
+    if (cookingLevel >= 75) return { text: "You're on fire!", emoji: "🔥", color: "text-orange-400" };
+    if (cookingLevel >= 60) return { text: "Locked in", emoji: "😤", color: "text-amber-400" };
+    if (cookingLevel >= 40) return { text: "Getting warmer", emoji: "🌡️", color: "text-yellow-400" };
+    if (cookingLevel >= 20) return { text: "Simmering", emoji: "🫕", color: "text-blue-400" };
+    return { text: "Stone cold", emoji: "🥶", color: "text-cyan-400" };
+  }, [guesses.length, cookingLevel]);
+
   // ── Move number for display ──
   const currentMoveNumber = Math.floor(currentMoveIdx / 2) + 1;
   const currentSide = currentMoveIdx % 2 === 0 ? "w" : "b";
@@ -786,36 +811,38 @@ export default function GuessTheMovePage() {
             {lastGuessResult && !gameComplete && (() => {
               const latestGuess = guesses[guesses.length - 1];
               return (
-                <div className={`coach-insight flex items-center gap-3 rounded-xl border px-4 py-3 ${RESULT_BG[lastGuessResult.result]}`}>
-                  <span className={`text-lg font-extrabold ${RESULT_COLOR[lastGuessResult.result]}`}>
-                    {resultLabel(lastGuessResult.result)}
-                  </span>
-                  {lastGuessResult.result !== "correct" && (
-                    <span className="text-sm text-slate-300">
-                      You played <span className="font-bold">{lastGuessResult.san}</span>
-                      {latestGuess?.userRating && (
-                        <span className={`ml-1 ${ENGINE_RATING_COLOR[latestGuess.userRating]}`} title={ENGINE_RATING_LABEL[latestGuess.userRating]}>
-                          {ENGINE_RATING_EMOJI[latestGuess.userRating]}
-                        </span>
-                      )}
-                      {" · "}
-                      GM played <span className="font-bold text-emerald-400">{lastGuessResult.actual}</span>
-                      {latestGuess?.masterRating && (
-                        <span className={`ml-1 ${ENGINE_RATING_COLOR[latestGuess.masterRating]}`} title={ENGINE_RATING_LABEL[latestGuess.masterRating]}>
-                          {ENGINE_RATING_EMOJI[latestGuess.masterRating]}
-                        </span>
-                      )}
+                <div className={`coach-insight flex flex-col gap-1 rounded-xl border px-4 py-3 ${RESULT_BG[lastGuessResult.result]}`}>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-lg font-extrabold ${RESULT_COLOR[lastGuessResult.result]}`}>
+                      {resultLabel(lastGuessResult.result)}
                     </span>
-                  )}
-                  {lastGuessResult.result === "correct" && (
-                    <span className="text-sm text-emerald-300/80">
-                      <span className="font-bold">{lastGuessResult.san}</span> — exactly right!
-                      {latestGuess?.masterRating && (
-                        <span className={`ml-1 ${ENGINE_RATING_COLOR[latestGuess.masterRating]}`} title={ENGINE_RATING_LABEL[latestGuess.masterRating]}>
-                          {ENGINE_RATING_EMOJI[latestGuess.masterRating]}
-                        </span>
+                    {lastGuessResult.result !== "correct" ? (
+                      <span className="text-sm text-slate-300">
+                        You played <span className="font-bold">{lastGuessResult.san}</span>
+                        {" · "}
+                        GM played <span className="font-bold text-emerald-400">{lastGuessResult.actual}</span>
+                      </span>
+                    ) : (
+                      <span className="text-sm text-emerald-300/80">
+                        <span className="font-bold">{lastGuessResult.san}</span> — exactly right!
+                      </span>
+                    )}
+                  </div>
+                  {/* Engine rating detail line */}
+                  {latestGuess?.userRating && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className={`font-semibold ${ENGINE_RATING_COLOR[latestGuess.userRating]}`}>
+                        {ENGINE_RATING_EMOJI[latestGuess.userRating]} Your move: {ENGINE_RATING_LABEL[latestGuess.userRating]}
+                      </span>
+                      {latestGuess.masterRating && latestGuess.result !== "correct" && (
+                        <>
+                          <span className="text-slate-600">·</span>
+                          <span className={`font-semibold ${ENGINE_RATING_COLOR[latestGuess.masterRating]}`}>
+                            GM move: {ENGINE_RATING_LABEL[latestGuess.masterRating]}
+                          </span>
+                        </>
                       )}
-                    </span>
+                    </div>
                   )}
                 </div>
               );
@@ -906,6 +933,43 @@ export default function GuessTheMovePage() {
 
           {/* Sidebar: Move history */}
           <div className="flex flex-col gap-3">
+            {/* Cooking Meter */}
+            <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Cooking Meter</h3>
+                <span className="text-sm">{cookingLabel.emoji}</span>
+              </div>
+              {/* Meter bar */}
+              <div className="relative h-4 w-full overflow-hidden rounded-full bg-slate-800 border border-white/[0.06]">
+                <div
+                  className="absolute inset-y-0 left-0 rounded-full transition-all duration-700 ease-out"
+                  style={{
+                    width: `${Math.max(cookingLevel, 3)}%`,
+                    background: cookingLevel >= 75
+                      ? "linear-gradient(90deg, #f97316, #ef4444, #dc2626)"
+                      : cookingLevel >= 50
+                      ? "linear-gradient(90deg, #eab308, #f97316)"
+                      : cookingLevel >= 25
+                      ? "linear-gradient(90deg, #3b82f6, #eab308)"
+                      : "linear-gradient(90deg, #64748b, #3b82f6)",
+                  }}
+                />
+                {/* Glowing tip when cooking */}
+                {cookingLevel >= 60 && (
+                  <div
+                    className="absolute inset-y-0 w-3 rounded-full blur-sm animate-pulse"
+                    style={{
+                      left: `calc(${cookingLevel}% - 6px)`,
+                      background: cookingLevel >= 75 ? "#ef4444" : "#f97316",
+                    }}
+                  />
+                )}
+              </div>
+              <p className={`mt-1.5 text-center text-[11px] font-bold tracking-wide ${cookingLabel.color}`}>
+                {cookingLabel.text}
+              </p>
+            </div>
+
             {/* Score card */}
             <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Your Score</h3>
@@ -958,19 +1022,9 @@ export default function GuessTheMovePage() {
                         ) : (
                           <>
                             <span className="text-slate-500 line-through">{g.san}</span>
-                            {g.userRating && (
-                              <span className={`text-[9px] ${ENGINE_RATING_COLOR[g.userRating]}`} title={`Your move: ${ENGINE_RATING_LABEL[g.userRating]}`}>
-                                {ENGINE_RATING_EMOJI[g.userRating]}
-                              </span>
-                            )}
                             <span className="text-slate-600">→</span>
                             <span className="font-bold text-emerald-400">{g.actualSan}</span>
                           </>
-                        )}
-                        {g.masterRating && (
-                          <span className={`text-[9px] ${ENGINE_RATING_COLOR[g.masterRating]}`} title={`Master: ${ENGINE_RATING_LABEL[g.masterRating]}`}>
-                            {ENGINE_RATING_EMOJI[g.masterRating]}
-                          </span>
                         )}
                         <span className={`ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
                           g.result === "correct" ? "bg-emerald-500/20 text-emerald-400" :
@@ -980,11 +1034,14 @@ export default function GuessTheMovePage() {
                           {g.result === "correct" ? "✓" : g.result === "close" ? "≈" : "✗"}
                         </span>
                       </div>
-                      {/* Engine rating detail row (visible on hover) */}
-                      {g.userRating && g.result !== "correct" && (
-                        <div className="hidden group-hover/row:flex items-center gap-2 pl-8 text-[9px] text-slate-500">
-                          <span>You: <span className={`font-semibold ${ENGINE_RATING_COLOR[g.userRating]}`}>{ENGINE_RATING_LABEL[g.userRating]}</span></span>
-                          {g.masterRating && (
+                      {/* Engine rating detail — always visible */}
+                      {g.userRating && (
+                        <div className="flex items-center gap-2 pl-8 text-[9px] text-slate-400">
+                          <span>
+                            {ENGINE_RATING_EMOJI[g.userRating]}{" "}
+                            <span className={`font-semibold ${ENGINE_RATING_COLOR[g.userRating]}`}>{ENGINE_RATING_LABEL[g.userRating]}</span>
+                          </span>
+                          {g.masterRating && g.result !== "correct" && (
                             <span>· GM: <span className={`font-semibold ${ENGINE_RATING_COLOR[g.masterRating]}`}>{ENGINE_RATING_LABEL[g.masterRating]}</span></span>
                           )}
                         </div>
