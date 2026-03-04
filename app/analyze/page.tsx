@@ -22,7 +22,18 @@ import { stockfishPool } from "@/lib/stockfish-client";
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
-import { SAMPLE_GAMES } from "@/lib/sample-games";
+import { SAMPLE_GAMES, GAME_CATEGORIES, type GameCategory } from "@/lib/sample-games";
+
+/* ────────────────── Tag filter options (shared with Guess) ──────────────── */
+const TAG_OPTIONS = [
+  { value: "all", label: "All Games", icon: "📚" },
+  { value: "attack", label: "Attack", icon: "⚔️" },
+  { value: "sacrifice", label: "Sacrifice", icon: "💥" },
+  { value: "positional", label: "Positional", icon: "🧠" },
+  { value: "endgame", label: "Endgame", icon: "♔" },
+  { value: "defense", label: "Defense", icon: "🛡️" },
+  { value: "tactics", label: "Tactics", icon: "🎯" },
+] as const;
 
 /* ────────────────────────── Types ────────────────────────── */
 
@@ -391,6 +402,11 @@ export default function AnalyzePage() {
   const [loadError, setLoadError] = useState("");
   const [gameLoaderOpen, setGameLoaderOpen] = useState(false);
 
+  /* ── Game library modal state ── */
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [libraryCategory, setLibraryCategory] = useState<GameCategory | "all">("all");
+  const [libraryTagFilter, setLibraryTagFilter] = useState<string>("all");
+
   /* ── Elo report modal state ── */
   const [eloReportOpen, setEloReportOpen] = useState(false);
   const eloReportShownRef = useRef(false);
@@ -584,6 +600,14 @@ export default function AnalyzePage() {
       );
     }) as any;
   }, [selectedMove]);
+
+  /* ── Filtered library games ── */
+  const filteredLibraryGames = useMemo(() => {
+    let games = [...SAMPLE_GAMES];
+    if (libraryCategory !== "all") games = games.filter(g => g.category === libraryCategory);
+    if (libraryTagFilter !== "all") games = games.filter(g => g.tags.includes(libraryTagFilter as any));
+    return games;
+  }, [libraryCategory, libraryTagFilter]);
 
   /* ── Summary stats ── */
   const summary = useMemo(() => {
@@ -973,34 +997,29 @@ export default function AnalyzePage() {
             </div>
 
             {/* Sample PGN buttons */}
-            <div className="space-y-3">
-              <p className="text-center text-xs font-medium text-slate-500">Or load a famous game:</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {SAMPLE_GAMES.map((game) => (
-                  <button
-                    key={game.label}
-                    onClick={() => setPgnText(game.pgn)}
-                    className="group flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-left transition-all hover:border-blue-500/20 hover:bg-blue-500/[0.04]"
-                  >
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-sm group-hover:bg-blue-500/10">♟</span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-slate-300 group-hover:text-blue-300 truncate">{game.label}</p>
-                      <p className="text-[10px] text-slate-500 truncate">{game.description}</p>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* ── Load from Lichess / Chess.com ── */}
+              <button
+                type="button"
+                onClick={() => setGameLoaderOpen(true)}
+                className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 text-center transition-all hover:border-blue-500/20 hover:bg-blue-500/[0.04] cursor-pointer"
+              >
+                <span className="mb-2 flex justify-center text-2xl">📥</span>
+                <p className="text-sm font-bold text-blue-400 group-hover:text-blue-300">Load from Lichess / Chess.com</p>
+                <p className="mt-1 text-[11px] text-slate-500">Import your recent games</p>
+              </button>
 
-            {/* ── Load from Lichess / Chess.com ── */}
-            <button
-              type="button"
-              onClick={() => setGameLoaderOpen(true)}
-              className="w-full rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 text-center transition-all hover:border-blue-500/20 hover:bg-blue-500/[0.04] cursor-pointer"
-            >
-              <p className="text-xs font-medium text-slate-500">Or load your recent games from</p>
-              <p className="mt-1 text-sm font-bold text-blue-400">Lichess / Chess.com →</p>
-            </button>
+              {/* ── Browse Game Library ── */}
+              <button
+                type="button"
+                onClick={() => setLibraryOpen(true)}
+                className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 text-center transition-all hover:border-amber-500/20 hover:bg-amber-500/[0.04] cursor-pointer"
+              >
+                <span className="mb-2 flex justify-center text-2xl">📚</span>
+                <p className="text-sm font-bold text-amber-400 group-hover:text-amber-300">Browse Game Library</p>
+                <p className="mt-1 text-[11px] text-slate-500">{SAMPLE_GAMES.length} famous games across {GAME_CATEGORIES.length} collections</p>
+              </button>
+            </div>
           </div>
         )}
 
@@ -1482,6 +1501,184 @@ export default function AnalyzePage() {
               {recentGames.length === 0 && !loadingGames && !loadError && (
                 <p className="text-center text-xs text-slate-600 py-4">Enter your username and hit Load to see your last 10 games</p>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Game Library Modal ── */}
+      {libraryOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={() => setLibraryOpen(false)}>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          <div
+            className="relative z-10 flex w-full max-w-5xl max-h-[85vh] flex-col rounded-3xl border border-white/[0.1] bg-slate-950 shadow-2xl animate-fade-in-up"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-white/[0.06] px-6 py-4 shrink-0">
+              <div>
+                <h3 className="text-lg font-bold text-white">📚 Game Library</h3>
+                <p className="text-xs text-slate-500 mt-0.5">{SAMPLE_GAMES.length} famous games across {GAME_CATEGORIES.length} collections</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLibraryOpen(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            {/* Body: sidebar + grid */}
+            <div className="flex flex-1 overflow-hidden">
+              {/* Sidebar */}
+              <aside className="hidden sm:flex w-56 shrink-0 flex-col gap-1 overflow-y-auto border-r border-white/[0.06] p-3 custom-scrollbar">
+                <button
+                  onClick={() => setLibraryCategory("all")}
+                  className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition-all text-left ${
+                    libraryCategory === "all"
+                      ? "bg-blue-500/15 text-blue-400 border border-blue-500/30"
+                      : "bg-white/[0.02] text-slate-400 border border-white/[0.04] hover:bg-white/[0.06] hover:text-slate-200"
+                  }`}
+                >
+                  <span>📚</span>
+                  <span className="truncate">All Games</span>
+                  <span className="ml-auto rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-bold text-slate-500">
+                    {SAMPLE_GAMES.length}
+                  </span>
+                </button>
+                {GAME_CATEGORIES.map(cat => {
+                  const count = SAMPLE_GAMES.filter(g => g.category === cat.key).length;
+                  return (
+                    <button
+                      key={cat.key}
+                      onClick={() => setLibraryCategory(cat.key)}
+                      className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold transition-all text-left ${
+                        libraryCategory === cat.key
+                          ? "bg-blue-500/15 text-blue-400 border border-blue-500/30"
+                          : "bg-white/[0.02] text-slate-400 border border-white/[0.04] hover:bg-white/[0.06] hover:text-slate-200"
+                      }`}
+                    >
+                      <span>{cat.icon}</span>
+                      <span className="truncate">{cat.label}</span>
+                      <span className="ml-auto rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-bold text-slate-500">
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </aside>
+
+              {/* Main content */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-5 custom-scrollbar">
+                {/* Mobile category select */}
+                <div className="sm:hidden mb-4">
+                  <select
+                    value={libraryCategory}
+                    onChange={(e) => setLibraryCategory(e.target.value as GameCategory | "all")}
+                    className="w-full rounded-xl border border-white/[0.08] bg-black/40 px-3 py-2 text-sm text-slate-200 outline-none"
+                  >
+                    <option value="all">📚 All Games ({SAMPLE_GAMES.length})</option>
+                    {GAME_CATEGORIES.map(cat => (
+                      <option key={cat.key} value={cat.key}>
+                        {cat.icon} {cat.label} ({SAMPLE_GAMES.filter(g => g.category === cat.key).length})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Category description */}
+                {libraryCategory !== "all" && (
+                  <div className="mb-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 flex items-center gap-3">
+                    <span className="text-2xl">{GAME_CATEGORIES.find(c => c.key === libraryCategory)?.icon}</span>
+                    <div>
+                      <p className="text-sm font-bold text-white">{GAME_CATEGORIES.find(c => c.key === libraryCategory)?.label}</p>
+                      <p className="text-xs text-slate-500">{GAME_CATEGORIES.find(c => c.key === libraryCategory)?.description}</p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Tag filters */}
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                  {TAG_OPTIONS.map(tag => (
+                    <button
+                      key={tag.value}
+                      onClick={() => setLibraryTagFilter(tag.value)}
+                      className={`flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all ${
+                        libraryTagFilter === tag.value
+                          ? "bg-blue-500/15 text-blue-400 border border-blue-500/30 shadow-sm"
+                          : "bg-white/[0.03] text-slate-400 border border-white/[0.06] hover:bg-white/[0.06] hover:text-slate-200"
+                      }`}
+                    >
+                      <span>{tag.icon}</span>
+                      {tag.label}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Game grid */}
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {filteredLibraryGames.map((game) => {
+                    const resultTag = game.pgn.match(/\[Result "([^"]+)"\]/)?.[1] ?? "";
+                    const whiteWon = resultTag === "1-0";
+                    const blackWon = resultTag === "0-1";
+                    const catInfo = GAME_CATEGORIES.find(c => c.key === game.category);
+                    return (
+                      <button
+                        key={game.label}
+                        type="button"
+                        onClick={() => {
+                          setPgnText(game.pgn);
+                          setLibraryOpen(false);
+                          // Clear any existing analysis
+                          if (analyzedMoves.length > 0) {
+                            setAnalyzedMoves([]);
+                            setGameHeaders({});
+                            setSelectedMoveIdx(-1);
+                            eloReportShownRef.current = false;
+                          }
+                        }}
+                        className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 text-left transition-all hover:border-blue-500/20 hover:bg-blue-500/[0.03] cursor-pointer"
+                      >
+                        <div className="mb-2 flex items-start justify-between">
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-white group-hover:text-blue-300 transition-colors truncate">{game.label}</p>
+                            <p className="mt-0.5 text-xs text-slate-500 truncate">{game.description}</p>
+                          </div>
+                          <span className="shrink-0 rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] font-bold text-slate-400 ml-2">
+                            {game.year}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap gap-1">
+                          {libraryCategory === "all" && catInfo && (
+                            <span className="rounded-full bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 text-[10px] font-bold text-blue-400">
+                              {catInfo.icon} {catInfo.label}
+                            </span>
+                          )}
+                          {game.tags.map(tag => (
+                            <span key={tag} className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] font-medium text-slate-500 capitalize">
+                              {tag}
+                            </span>
+                          ))}
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${whiteWon ? "bg-white/[0.08] text-white" : blackWon ? "bg-slate-700/50 text-slate-300" : "bg-white/[0.04] text-slate-500"}`}>
+                            {resultTag}
+                          </span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {filteredLibraryGames.length === 0 && (
+                  <div className="mt-12 text-center">
+                    <p className="text-slate-500">No games match this filter.</p>
+                    <button onClick={() => { setLibraryTagFilter("all"); setLibraryCategory("all"); }} className="mt-2 text-sm text-blue-400 hover:underline">
+                      Clear filters
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
