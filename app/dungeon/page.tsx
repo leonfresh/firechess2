@@ -776,7 +776,7 @@ function BattleBoard({
     : "❌ Incorrect";
 
   return (
-    <div className="flex flex-col items-center gap-3 dungeon-screen-enter relative">
+    <div ref={boardRef} className="w-full flex flex-col items-center gap-3 dungeon-screen-enter relative">
       {/* Damage flash overlay */}
       {flashDamage && (
         <div className="fixed inset-0 z-50 pointer-events-none bg-red-500/20 dungeon-damage-flash" />
@@ -818,8 +818,8 @@ function BattleBoard({
 
       {/* Board with effects */}
       <div
-        ref={boardRef}
-        className={`relative mx-auto w-full max-w-[720px] shrink-0 overflow-hidden rounded-xl transition-shadow ${
+        style={{ width: boardSize, height: boardSize }}
+        className={`relative shrink-0 overflow-hidden rounded-xl transition-shadow ${
           shaking ? "dungeon-shake" : ""
         } ${
           glowCorrect ? "dungeon-correct-glow" : ""
