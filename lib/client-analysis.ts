@@ -2043,6 +2043,8 @@ export async function analyzeOpeningLeaksInBrowser(
     // ── Database validation: check if the Lichess DB approves this move ──
     // Formula-based: more games + higher win rate → higher CPL tolerance.
     // e.g. Dutch (500K games, 50% WR) → dbScore ≈ 228, so CPL 51 is a sideline.
+    // Popular gambits (Budapest, Vienna, etc.) with 5K+ games get a popularity
+    // bonus so they're classified as sidelines rather than inaccuracies.
     let dbApproved = false;
     let dbWinRate: number | undefined;
     let dbGames: number | undefined;
@@ -2051,12 +2053,21 @@ export async function analyzeOpeningLeaksInBrowser(
       const dbMove = explorer.moves.find(
         (m) => m.san === chosenMove || m.uci === chosenMove
       );
-      if (dbMove && dbMove.totalGames >= 50 && dbMove.winRate >= 0.40) {
-        const dbScore = Math.min(300, Math.log10(dbMove.totalGames) * 40 * (dbMove.winRate / 0.50));
-        if (cpLoss <= dbScore) {
+      if (dbMove && dbMove.totalGames >= 50 && dbMove.winRate >= 0.35) {
+        // Very popular lines (50K+) with decent WR are always known openings
+        if (dbMove.totalGames >= 50000 && dbMove.winRate >= 0.35) {
           dbApproved = true;
           dbWinRate = dbMove.winRate;
           dbGames = dbMove.totalGames;
+        } else {
+          const dbScore = Math.min(300, Math.log10(dbMove.totalGames) * 40 * (dbMove.winRate / 0.50));
+          // Popularity bonus: well-known gambits/sidelines get extra CPL tolerance
+          const popularityBonus = dbMove.totalGames >= 5000 ? 50 : dbMove.totalGames >= 1000 ? 25 : 0;
+          if (cpLoss <= dbScore + popularityBonus) {
+            dbApproved = true;
+            dbWinRate = dbMove.winRate;
+            dbGames = dbMove.totalGames;
+          }
         }
       }
     } catch { /* explorer unavailable — proceed without DB data */ }
@@ -2178,7 +2189,8 @@ export async function analyzeOpeningLeaksInBrowser(
       moveCount: chosenCount,
     });
 
-    // DB validation — formula-based sideline detection
+    // DB validation — formula-based sideline detection (one-off path)
+    // Uses same lenient thresholds as main leak path to catch popular gambits
     let dbApproved = false;
     let dbWinRate: number | undefined;
     let dbGames: number | undefined;
@@ -2187,12 +2199,19 @@ export async function analyzeOpeningLeaksInBrowser(
       const dbMove = explorer.moves.find(
         (m) => m.san === chosenMove || m.uci === chosenMove
       );
-      if (dbMove && dbMove.totalGames >= 50 && dbMove.winRate >= 0.40) {
-        const dbScore = Math.min(300, Math.log10(dbMove.totalGames) * 40 * (dbMove.winRate / 0.50));
-        if (cpLoss <= dbScore) {
+      if (dbMove && dbMove.totalGames >= 50 && dbMove.winRate >= 0.35) {
+        if (dbMove.totalGames >= 50000 && dbMove.winRate >= 0.35) {
           dbApproved = true;
           dbWinRate = dbMove.winRate;
           dbGames = dbMove.totalGames;
+        } else {
+          const dbScore = Math.min(300, Math.log10(dbMove.totalGames) * 40 * (dbMove.winRate / 0.50));
+          const popularityBonus = dbMove.totalGames >= 5000 ? 50 : dbMove.totalGames >= 1000 ? 25 : 0;
+          if (cpLoss <= dbScore + popularityBonus) {
+            dbApproved = true;
+            dbWinRate = dbMove.winRate;
+            dbGames = dbMove.totalGames;
+          }
         }
       }
     } catch { /* skip */ }

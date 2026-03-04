@@ -195,16 +195,19 @@ function classifyLossBadge(cpLoss: number, dbApproved?: boolean, explorerMove?: 
   // Formula-based sideline detection:
   // The more games in the DB and the higher the win rate, the more CPL
   // is needed before we call the move an inaccuracy/mistake.
-  //   dbScore examples (winRate ≈ 0.50):
-  //     50 games  → ~65    |  500 games → ~108
-  //   5 000 games → ~148   | 50 000     → ~188
-  // 500 000 games → ~228   (capped at 300)
-  if (explorerMove && explorerMove.totalGames >= 50 && explorerMove.winRate >= 0.40) {
+  // Popular gambits (Budapest, Vienna, etc.) with 5K+ games in the DB get
+  // a popularity bonus; very popular lines (50K+) are always flagged as sidelines.
+  if (explorerMove && explorerMove.totalGames >= 50 && explorerMove.winRate >= 0.35) {
+    // Very popular lines are always known openings
+    if (explorerMove.totalGames >= 50000 && explorerMove.winRate >= 0.35) {
+      return { label: "Sideline", color: "#6366f1" };
+    }
     const dbScore = Math.min(
       300,
       Math.log10(explorerMove.totalGames) * 40 * (explorerMove.winRate / 0.50),
     );
-    if (cpLoss <= dbScore) {
+    const popularityBonus = explorerMove.totalGames >= 5000 ? 50 : explorerMove.totalGames >= 1000 ? 25 : 0;
+    if (cpLoss <= dbScore + popularityBonus) {
       return { label: "Sideline", color: "#6366f1" };
     }
   }

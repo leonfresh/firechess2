@@ -21,7 +21,7 @@ const plans = [
       "Full opening leak detection + drill mode",
       "Up to 10 missed tactics per scan",
       "Up to 10 endgame mistakes per scan",
-      "All scan modes (Openings / Tactics / Endgames / All)",
+      "All scan modes (Openings / Tactics / Endgames / Time)",
       "Strengths & Weaknesses radar + insight scores",
       "Basic mental game stats (stability, tilt, post-loss)",
       "Opening Explorer on every card",

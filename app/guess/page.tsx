@@ -105,6 +105,7 @@ export default function GuessTheMovePage() {
   const [showHint, setShowHint] = useState(false);
   const [gameComplete, setGameComplete] = useState(false);
   const [guessingSide, setGuessingSide] = useState<"w" | "b" | "both">("both");
+  const [loadError, setLoadError] = useState<string | null>(null);
   const moveListRef = useRef<HTMLDivElement>(null);
 
   // Preload sounds
@@ -121,7 +122,11 @@ export default function GuessTheMovePage() {
   // ── Start a game ──
   const startGame = useCallback((game: SampleGame, side: "w" | "b" | "both" = "both") => {
     const parsedMoves = parsePgnMoves(game.pgn);
-    if (parsedMoves.length === 0) return;
+    if (parsedMoves.length === 0) {
+      setLoadError(`Could not load "${game.label}". The PGN may be invalid or empty. Try another game.`);
+      return;
+    }
+    setLoadError(null);
 
     setSelectedGame(game);
     setMoves(parsedMoves);
@@ -410,12 +415,12 @@ export default function GuessTheMovePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[220px_1fr]">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[240px_1fr]">
             {/* Sidebar: Category folders */}
-            <aside className="flex flex-row flex-wrap gap-2 lg:flex-col lg:gap-1">
+            <aside className="flex flex-row flex-wrap gap-2 lg:sticky lg:top-24 lg:max-h-[calc(100vh-7rem)] lg:flex-col lg:gap-1 lg:overflow-y-auto lg:self-start custom-scrollbar">
               <button
                 onClick={() => setActiveCategory("all")}
-                className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all text-left whitespace-nowrap ${
+                className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all text-left ${
                   activeCategory === "all"
                     ? "bg-blue-500/15 text-blue-400 border border-blue-500/30"
                     : "bg-white/[0.02] text-slate-400 border border-white/[0.04] hover:bg-white/[0.06] hover:text-slate-200"
@@ -433,7 +438,7 @@ export default function GuessTheMovePage() {
                   <button
                     key={cat.key}
                     onClick={() => setActiveCategory(cat.key)}
-                    className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all text-left whitespace-nowrap ${
+                    className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all text-left ${
                       activeCategory === cat.key
                         ? "bg-blue-500/15 text-blue-400 border border-blue-500/30"
                         : "bg-white/[0.02] text-slate-400 border border-white/[0.04] hover:bg-white/[0.06] hover:text-slate-200"
@@ -450,7 +455,7 @@ export default function GuessTheMovePage() {
             </aside>
 
             {/* Main content area */}
-            <div>
+            <div className="min-w-0">
               {/* Category description */}
               {activeCategory !== "all" && (
                 <div className="mb-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 flex items-center gap-3">
@@ -556,6 +561,34 @@ export default function GuessTheMovePage() {
             </div>
           </div>
         </div>
+
+        {/* Error modal */}
+        {loadError && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={() => setLoadError(null)}>
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+            <div
+              className="relative z-10 w-full max-w-md rounded-2xl border border-red-500/20 bg-slate-950 p-6 shadow-2xl shadow-red-500/10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start gap-4">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-red-500/15 text-2xl">⚠️</span>
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-lg font-bold text-white">Failed to Load Game</h2>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-400">{loadError}</p>
+                </div>
+              </div>
+              <div className="mt-5 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setLoadError(null)}
+                  className="rounded-xl bg-white/[0.06] px-5 py-2.5 text-sm font-bold text-slate-300 transition-all hover:bg-white/[0.12] hover:text-white"
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     );
   }

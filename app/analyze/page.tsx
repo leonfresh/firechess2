@@ -426,6 +426,17 @@ export default function AnalyzePage() {
   /* ── Preload sounds ── */
   useEffect(() => { preloadSounds(); }, []);
 
+  /* ── Load PGN from sessionStorage (from Game Library on main page) ── */
+  useEffect(() => {
+    try {
+      const stored = sessionStorage.getItem("firechess-library-pgn");
+      if (stored) {
+        setPgnText(stored);
+        sessionStorage.removeItem("firechess-library-pgn");
+      }
+    } catch { /* sessionStorage unavailable */ }
+  }, []);
+
   /* ── Load recent games from Lichess / Chess.com ── */
   const fetchRecentGames = useCallback(async () => {
     const username = loadUsername.trim();
