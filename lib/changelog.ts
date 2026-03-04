@@ -15,6 +15,26 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: 20,
+    date: "Mar 5, 2026",
+    title: "Opening Cheat Sheets, Daily Tips & Avatar Frames",
+    description:
+      "30 opening cheat sheets, 400 daily chess tips, and 12 avatar frames for the coin shop — plus a coin shop preview page.",
+    changes: [
+      { type: "feature", text: "Opening Cheat Sheets page (/openings) — 30 curated guides across 5 categories: e4-e5, Semi-Open, d4, Indian Systems, and Flank Openings" },
+      { type: "feature", text: "Each cheat sheet includes key ideas, plans for White & Black, common traps with explanations, critical positions with FEN, and famous practitioners" },
+      { type: "feature", text: "Category filter pills, search bar, and difficulty badges (Beginner / Intermediate / Advanced) on the Openings page" },
+      { type: "feature", text: "Daily Chess Tips widget on the dashboard — 400 entries (quotes, tips, facts, and patterns) rotating by day of year with prev/next browsing" },
+      { type: "feature", text: "Avatar Frames in the Coin Shop — 12 cosmetic border effects for your profile avatar (Emerald Glow, Fire Ring, Frozen Aura, Royal Purple, Gold Crown, Prismatic Rainbow, Neon Pink, Dark Shadow, Diamond, Rose Gold, Toxic Green)" },
+      { type: "feature", text: "Animated avatar frames — Rainbow cycles through three colours, Diamond pulses with a white glow" },
+      { type: "feature", text: "Avatar frames display on the navbar profile picture (desktop & mobile)" },
+      { type: "feature", text: "Coin Shop standalone page (/shop) with live 4×4 board preview for piece themes" },
+      { type: "feature", text: "24 Lichess piece themes in the Coin Shop — quality-based pricing from 20 to 250 coins" },
+      { type: "improvement", text: "Added 📖 Openings link to the More dropdown in the navbar and mobile menu" },
+      { type: "improvement", text: "Added 🪙 Coin Shop link to the More dropdown for quick access to /shop" },
+    ],
+  },
+  {
     version: 19,
     date: "Mar 4, 2026",
     title: "Guess the Move & Game Library",
