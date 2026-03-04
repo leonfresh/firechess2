@@ -776,7 +776,7 @@ function BattleBoard({
     : "❌ Incorrect";
 
   return (
-    <div className="w-full flex flex-col items-center gap-3 dungeon-screen-enter relative">
+    <div className="w-full dungeon-screen-enter">
       {/* Damage flash overlay */}
       {flashDamage && (
         <div className="fixed inset-0 z-50 pointer-events-none bg-red-500/20 dungeon-damage-flash" />
@@ -787,69 +787,74 @@ function BattleBoard({
         <div className="fixed inset-0 z-0 pointer-events-none dungeon-boss-vignette rounded-3xl" />
       )}
 
-      {/* Battle type badge */}
-      <div className={`flex items-center gap-2 rounded-full px-4 py-1 text-xs font-bold uppercase tracking-wider border ${
-        isBoss ? "border-red-500/30 bg-red-500/10 text-red-400" :
-        isElite ? "border-purple-500/30 bg-purple-500/10 text-purple-400" :
-        "border-blue-500/20 bg-blue-500/5 text-blue-400"
-      }`}>
-        {isBoss ? "⚔️ Boss Battle" : isElite ? "💀 Elite Fight" : "⚔️ Battle"}
-      </div>
+      {/* Grid layout matching Guess the Move */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px]">
+        {/* Board column */}
+        <div className="flex flex-col items-center gap-3">
+          <div ref={boardRef} className="w-full max-w-[720px]">
+            <div className="overflow-hidden rounded-xl">
+              <Chessboard
+                id="dungeon-battle"
+                position={fen}
+                boardOrientation={orientation}
+                boardWidth={boardSize}
+                onPieceDrop={onDrop as any}
+                arePiecesDraggable={state === "solving"}
+                isDraggablePiece={isDraggablePiece}
+                animationDuration={200}
+                customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+                customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                showBoardNotation={showCoords}
+                customSquareStyles={customSquareStyles}
+                customPieces={customPieces}
+                showPromotionDialog={showPromoDialog}
+                promotionToSquare={promoTo as CbSquare | undefined}
+                onPromotionPieceSelect={onPromotionPieceSelect}
+              />
+            </div>
+          </div>
 
-      {/* Status */}
-      <div className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-all ${
-        state === "correct" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-          : state === "wrong" ? "border-red-500/30 bg-red-500/10 text-red-400"
-          : "border-white/[0.08] bg-white/[0.03] text-slate-400"
-      }`}>
-        {statusLabel}
-      </div>
+          {/* Status below board */}
+          <div className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-all ${
+            state === "correct" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+              : state === "wrong" ? "border-red-500/30 bg-red-500/10 text-red-400"
+              : "border-white/[0.08] bg-white/[0.03] text-slate-400"
+          }`}>
+            {statusLabel}
+          </div>
+        </div>
 
-      {/* Puzzle info */}
-      <div className="flex items-center gap-3 text-[11px] text-slate-500">
-        <span className="flex items-center gap-1">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-500">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-          </svg>
-          {puzzle.puzzle.rating}
-        </span>
-        <span>{puzzle.matchedTheme}</span>
-      </div>
+        {/* Sidebar — puzzle info */}
+        <div className="flex flex-col gap-3">
+          {/* Battle type badge */}
+          <div className={`flex items-center justify-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider border ${
+            isBoss ? "border-red-500/30 bg-red-500/10 text-red-400" :
+            isElite ? "border-purple-500/30 bg-purple-500/10 text-purple-400" :
+            "border-blue-500/20 bg-blue-500/5 text-blue-400"
+          }`}>
+            {isBoss ? "⚔️ Boss Battle" : isElite ? "💀 Elite Fight" : "⚔️ Battle"}
+          </div>
 
-      {/* Board — ref container must have NO transforms for drag accuracy */}
-      <div ref={boardRef} className="w-full max-w-[720px]">
-        <div
-          className={`relative overflow-hidden rounded-xl transition-shadow ${
-            shaking ? "dungeon-shake" : ""
-          } ${
-            glowCorrect ? "dungeon-correct-glow" : ""
-          }`}
-        >
-          <Chessboard
-            id="dungeon-battle"
-            position={fen}
-            boardOrientation={orientation}
-            boardWidth={boardSize}
-            onPieceDrop={onDrop as any}
-            arePiecesDraggable={state === "solving"}
-            isDraggablePiece={isDraggablePiece}
-            animationDuration={200}
-            customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-            customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
-            showBoardNotation={showCoords}
-            customSquareStyles={customSquareStyles}
-            customPieces={customPieces}
-            showPromotionDialog={showPromoDialog}
-            promotionToSquare={promoTo as CbSquare | undefined}
-            onPromotionPieceSelect={onPromotionPieceSelect}
-          />
+          {/* Puzzle info */}
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-500">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <span>{puzzle.puzzle.rating}</span>
+              <span className="text-slate-600">·</span>
+              <span>{puzzle.matchedTheme}</span>
+            </div>
+          </div>
+
           {moveIndicator && (
-            <DungeonMoveIndicator
-              square={moveIndicator.square}
-              type={moveIndicator.type}
-              orientation={orientation}
-              boardSize={boardSize}
-            />
+            <div className={`rounded-xl border px-4 py-3 text-center text-sm font-bold ${
+              moveIndicator.type === "correct"
+                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                : "border-red-500/30 bg-red-500/10 text-red-400"
+            }`}>
+              {moveIndicator.type === "correct" ? "✓ Correct!" : "✗ Wrong move"}
+            </div>
           )}
         </div>
       </div>
