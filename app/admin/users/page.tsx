@@ -87,6 +87,8 @@ export default function AdminUsersPage() {
   const [fetching, setFetching] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
+  const [coinAmount, setCoinAmount] = useState<Record<string, string>>({});
+  const [grantingCoins, setGrantingCoins] = useState<string | null>(null);
 
   // Redirect non-admin
   useEffect(() => {
@@ -134,6 +136,39 @@ export default function AdminUsersPage() {
       setUpdating(null);
     }
   }, []);
+
+  const giveCoins = useCallback(
+    async (userId: string) => {
+      const raw = coinAmount[userId]?.trim();
+      const amount = parseInt(raw || "0", 10);
+      if (!amount || amount < 1 || amount > 10000) {
+        alert("Enter a valid amount (1\u201310,000)");
+        return;
+      }
+      setGrantingCoins(userId);
+      try {
+        const res = await fetch("/api/admin/users", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, coins: amount }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setUsers((prev) =>
+            prev.map((u) => (u.id === userId ? { ...u, coins: data.newBalance } : u))
+          );
+          setCoinAmount((prev) => ({ ...prev, [userId]: "" }));
+        } else {
+          alert("Failed to grant coins");
+        }
+      } catch {
+        alert("Network error");
+      } finally {
+        setGrantingCoins(null);
+      }
+    },
+    [coinAmount]
+  );
 
   if (loading || !isAdmin) {
     return (
@@ -338,6 +373,31 @@ export default function AdminUsersPage() {
                         <Detail label="Coins" value={
                           <span className="text-amber-400 font-bold">🪙 {user.coins.toLocaleString()}</span>
                         } />
+                      </div>
+                    </div>
+
+                    {/* Give Coins */}
+                    <div className="mt-3 border-t border-white/[0.06] pt-3">
+                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">🪙 Grant Coins</p>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number"
+                          min={1}
+                          max={10000}
+                          placeholder="Amount"
+                          value={coinAmount[user.id] ?? ""}
+                          onChange={(e) => setCoinAmount((prev) => ({ ...prev, [user.id]: e.target.value }))}
+                          onClick={(e) => e.stopPropagation()}
+                          className="w-24 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-white placeholder:text-slate-600 focus:border-amber-500/40 focus:outline-none"
+                        />
+                        <button
+                          onClick={(e) => { e.stopPropagation(); giveCoins(user.id); }}
+                          disabled={grantingCoins === user.id}
+                          className="rounded-md bg-amber-500/20 px-3 py-1 text-[11px] font-medium text-amber-400 transition hover:bg-amber-500/30 disabled:opacity-50"
+                        >
+                          {grantingCoins === user.id ? "Granting..." : "Give Coins"}
+                        </button>
+                        <span className="text-[10px] text-slate-600">Current: 🪙 {user.coins.toLocaleString()}</span>
                       </div>
                     </div>
 

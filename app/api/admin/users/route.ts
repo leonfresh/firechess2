@@ -203,3 +203,39 @@ export async function PATCH(req: NextRequest) {
 
   return NextResponse.json({ ok: true, userId, plan });
 }
+
+/**
+ * PUT /api/admin/users — Grant coins to a user (admin only).
+ */
+export async function PUT(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id || !(await isAdmin(session.user.id))) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const body = await req.json();
+  const { userId, coins } = body as { userId?: string; coins?: number };
+
+  if (!userId || typeof coins !== "number" || coins < 1 || coins > 10000) {
+    return NextResponse.json(
+      { error: "userId and coins (1–10000) are required" },
+      { status: 400 }
+    );
+  }
+
+  // Upsert: add coins to the user's balance
+  const result = await db
+    .insert(userCoins)
+    .values({ userId, balance: coins })
+    .onConflictDoUpdate({
+      target: userCoins.userId,
+      set: {
+        balance: sql`${userCoins.balance} + ${coins}`,
+      },
+    })
+    .returning({ balance: userCoins.balance });
+
+  const newBalance = Number(result[0]?.balance ?? coins);
+
+  return NextResponse.json({ ok: true, userId, granted: coins, newBalance });
+}

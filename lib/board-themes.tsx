@@ -156,8 +156,8 @@ export const PIECE_THEMES: PieceTheme[] = [
   { id: "piece-fantasy",  name: "Fantasy",         price: 120, setName: "fantasy",        style: "Decorative" },
   { id: "piece-spatial",  name: "Spatial",         price: 120, setName: "spatial",        style: "3D" },
   { id: "piece-celtic",   name: "Celtic",          price: 150, setName: "celtic",         style: "Ornate" },
-  { id: "piece-monarchy", name: "Monarchy",        price: 150, setName: "monarchy",       style: "Royal" },
-  { id: "piece-disguised", name: "Disguised",       price: 200, setName: "disguised",      style: "Mystery" },
+  { id: "piece-dubrovny", name: "Dubrovny",        price: 150, setName: "dubrovny",       style: "Royal" },
+  { id: "piece-shapes",   name: "Shapes",          price: 200, setName: "shapes",         style: "Abstract" },
   { id: "piece-letter",   name: "Letter",          price: 200, setName: "letter",         style: "Minimalist" },
 ];
 
