@@ -379,11 +379,27 @@ export default function GuessTheMovePage() {
         const cpAfterMasterVal = evalAfterMaster ? (sideToMove === "w" ? -evalAfterMaster.cp : evalAfterMaster.cp) : cpBefore;
         const masterCpLoss = Math.max(0, cpBefore - cpAfterMasterVal);
 
+        // If user's move is as good or better than GM's, upgrade to "correct"
+        const userIsAsGood = userCpLoss <= masterCpLoss + 10; // 10cp tolerance
+        const wasWrong = result !== "correct";
+
         setGuesses(prev => prev.map((g, idx) =>
           idx === guessIdx
-            ? { ...g, userRating: classifyByCpLoss(userCpLoss), masterRating: classifyByCpLoss(masterCpLoss) }
+            ? {
+                ...g,
+                userRating: classifyByCpLoss(userCpLoss),
+                masterRating: classifyByCpLoss(masterCpLoss),
+                ...(wasWrong && userIsAsGood ? { result: "correct" as GuessResult } : {}),
+              }
             : g
         ));
+
+        // Upgrade the visible feedback + play correct sound
+        if (wasWrong && userIsAsGood) {
+          setLastGuessResult({ result: "correct", san: userSan, actual: actualSan });
+          setGuessBadge(prev => prev ? { ...prev, result: "correct" } : prev);
+          playSound("move");
+        }
       } catch { /* engine not available — ratings stay undefined */ }
     })();
 
@@ -515,11 +531,11 @@ export default function GuessTheMovePage() {
     if (guesses.length === 0) return 0;
     const window = guesses.slice(-10); // last 10 guesses
     const pts = window.reduce((s, g) => {
-      if (g.result === "correct") return s + 2;
+      if (g.result === "correct") return s + 2; // includes engine-upgraded moves
       if (g.result === "close") return s + 1;
-      // bonus for engine-rated quality
-      if (g.userRating === "best" || g.userRating === "excellent") return s + 1.5;
-      if (g.userRating === "good") return s + 0.5;
+      // Engine-rated quality bonus for wrong moves that were still decent
+      if (g.result === "wrong" && (g.userRating === "best" || g.userRating === "excellent")) return s + 1;
+      if (g.result === "wrong" && g.userRating === "good") return s + 0.5;
       return s;
     }, 0);
     return Math.min(100, Math.round((pts / (window.length * 2)) * 100));
@@ -821,6 +837,10 @@ export default function GuessTheMovePage() {
                         You played <span className="font-bold">{lastGuessResult.san}</span>
                         {" · "}
                         GM played <span className="font-bold text-emerald-400">{lastGuessResult.actual}</span>
+                      </span>
+                    ) : lastGuessResult.san !== lastGuessResult.actual ? (
+                      <span className="text-sm text-emerald-300/80">
+                        <span className="font-bold">{lastGuessResult.san}</span> — equally strong as the GM&apos;s <span className="font-bold">{lastGuessResult.actual}</span>!
                       </span>
                     ) : (
                       <span className="text-sm text-emerald-300/80">
