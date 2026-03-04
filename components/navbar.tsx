@@ -148,7 +148,7 @@ export function Navbar() {
             <button
               type="button"
               className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                isActive("/train") || isActive("/guess")
+                isActive("/train") || isActive("/guess") || isActive("/dungeon")
                   ? "text-white bg-white/[0.06]"
                   : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
               }`}
@@ -173,6 +173,14 @@ export function Navbar() {
                   }`}
                 >
                   🧩 Guess the Move
+                </Link>
+                <Link
+                  href="/dungeon"
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive("/dungeon") ? "text-red-400 bg-red-500/[0.08]" : "text-slate-400 hover:text-red-400 hover:bg-red-500/[0.06]"
+                  }`}
+                >
+                  ⚔️ Dungeon Tactics
                 </Link>
               </div>
             </div>
@@ -557,6 +565,7 @@ export function Navbar() {
                 { href: "/", label: "Home" },
                 ...NAV_LINKS,
                 { href: "/blog", label: "Blog" },
+                { href: "/dungeon", label: "⚔️ Dungeon Tactics" },
                 { href: "/openings", label: "📖 Openings" },
                 { href: "/leaderboard", label: "🏆 Leaderboard" },
                 { href: "/shop", label: "🪙 Coin Shop" },
