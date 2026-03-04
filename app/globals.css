@@ -436,3 +436,147 @@ button {
   0% { box-shadow: 0 0 12px 3px rgba(255,255,255,0.2), 0 0 6px 2px rgba(186,230,253,0.3); }
   100% { box-shadow: 0 0 20px 6px rgba(255,255,255,0.5), 0 0 10px 4px rgba(186,230,253,0.6); }
 }
+
+/* ─── Dungeon Tactics Animations ─── */
+
+/* Board shake on wrong move */
+@keyframes dungeon-shake {
+  0%, 100% { transform: translateX(0); }
+  15% { transform: translateX(-8px) rotate(-0.5deg); }
+  30% { transform: translateX(8px) rotate(0.5deg); }
+  45% { transform: translateX(-6px) rotate(-0.3deg); }
+  60% { transform: translateX(6px) rotate(0.3deg); }
+  75% { transform: translateX(-3px); }
+  90% { transform: translateX(3px); }
+}
+.dungeon-shake {
+  animation: dungeon-shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+/* Correct solve green pulse */
+@keyframes dungeon-correct-glow {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  30% { box-shadow: 0 0 30px 8px rgba(16, 185, 129, 0.4); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+.dungeon-correct-glow {
+  animation: dungeon-correct-glow 1s ease-out;
+}
+
+/* Damage red flash overlay */
+@keyframes dungeon-damage-flash {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.dungeon-damage-flash {
+  animation: dungeon-damage-flash 0.6s ease-out both;
+}
+
+/* Boss vignette */
+@keyframes dungeon-boss-vignette {
+  0%, 100% { box-shadow: inset 0 0 80px 20px rgba(220, 38, 38, 0.15); }
+  50% { box-shadow: inset 0 0 120px 40px rgba(220, 38, 38, 0.25); }
+}
+.dungeon-boss-vignette {
+  animation: dungeon-boss-vignette 3s ease-in-out infinite;
+}
+
+/* Perk card shimmer */
+@keyframes dungeon-perk-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.dungeon-perk-shimmer {
+  background-size: 200% 100%;
+  background-image: linear-gradient(
+    110deg,
+    transparent 25%,
+    rgba(255, 255, 255, 0.08) 37%,
+    transparent 63%
+  );
+  animation: dungeon-perk-shimmer 3s ease-in-out infinite;
+}
+
+/* Node pulse for current position */
+@keyframes dungeon-node-pulse {
+  0%, 100% { box-shadow: 0 0 8px 2px rgba(16, 185, 129, 0.3); transform: scale(1); }
+  50% { box-shadow: 0 0 20px 6px rgba(16, 185, 129, 0.5); transform: scale(1.05); }
+}
+.dungeon-node-pulse {
+  animation: dungeon-node-pulse 2s ease-in-out infinite;
+}
+
+/* Boss node throb */
+@keyframes dungeon-boss-throb {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(220, 38, 38, 0.4)); }
+  50% { filter: drop-shadow(0 0 12px rgba(220, 38, 38, 0.7)); }
+}
+.dungeon-boss-throb {
+  animation: dungeon-boss-throb 2s ease-in-out infinite;
+}
+
+/* Reachable node glow hover */
+@keyframes dungeon-reachable-glow {
+  0%, 100% { box-shadow: 0 0 6px 2px rgba(147, 197, 253, 0.2); }
+  50% { box-shadow: 0 0 14px 4px rgba(147, 197, 253, 0.35); }
+}
+.dungeon-reachable-glow {
+  animation: dungeon-reachable-glow 1.5s ease-in-out infinite;
+}
+
+/* SVG connection path animated dash */
+@keyframes dungeon-path-dash {
+  to { stroke-dashoffset: -20; }
+}
+.dungeon-path-active {
+  animation: dungeon-path-dash 1s linear infinite;
+}
+
+/* Floating embers / particles */
+@keyframes dungeon-ember-float {
+  0% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 0.8; }
+  100% { transform: translateY(-120px) translateX(20px) scale(0); opacity: 0; }
+}
+
+/* Screen transition fade-in */
+@keyframes dungeon-screen-enter {
+  0% { opacity: 0; transform: translateY(20px) scale(0.97); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.dungeon-screen-enter {
+  animation: dungeon-screen-enter 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Torch flicker for ambient elements */
+@keyframes dungeon-torch-flicker {
+  0%, 100% { opacity: 0.6; transform: scaleY(1) scaleX(1); }
+  25% { opacity: 0.8; transform: scaleY(1.05) scaleX(0.95); }
+  50% { opacity: 1; transform: scaleY(1.1) scaleX(0.9); }
+  75% { opacity: 0.7; transform: scaleY(0.95) scaleX(1.05); }
+}
+
+/* HP bar drain animation */
+@keyframes dungeon-hp-drain {
+  0% { background-color: rgba(239, 68, 68, 0.6); }
+  100% { background-color: transparent; }
+}
+
+/* Victory celebration */
+@keyframes dungeon-victory-glow {
+  0% { text-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
+  50% { text-shadow: 0 0 40px rgba(251, 191, 36, 0.7), 0 0 80px rgba(251, 191, 36, 0.3); }
+  100% { text-shadow: 0 0 10px rgba(251, 191, 36, 0.3); }
+}
+.dungeon-victory-glow {
+  animation: dungeon-victory-glow 2s ease-in-out infinite;
+}
+
+/* Stagger entrance for cards */
+.dungeon-stagger-1 { animation: dungeon-screen-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both; }
+.dungeon-stagger-2 { animation: dungeon-screen-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both; }
+.dungeon-stagger-3 { animation: dungeon-screen-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both; }
+.dungeon-stagger-4 { animation: dungeon-screen-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both; }
+
