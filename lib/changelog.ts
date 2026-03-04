@@ -15,6 +15,31 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: 19,
+    date: "Mar 4, 2026",
+    title: "Guess the Move & Game Library",
+    description:
+      "A full Guess the Move experience with 100 GM games across 10 themed collections, a Game Library modal for the analyzer, engine-rated guesses, and board UX upgrades throughout.",
+    changes: [
+      { type: "feature", text: "Guess the Move page (/guess) — play through 100 famous GM games and try to find each move. Supports click-to-move, drag-and-drop, hints, and keyboard controls" },
+      { type: "feature", text: "10 game collections — World Championship Classics, Bobby Fischer Brilliancies, Kasparov's Immortals, Tal's Sacrifices, Capablanca's Technique, Modern Masterpieces, Romantic Era, Endgame Artistry, Attacking Masterclasses, and Defensive Masterpieces" },
+      { type: "feature", text: "Side selection — guess as White, Black, or Both sides with auto-play for opponent moves" },
+      { type: "feature", text: "Game Library modal on the main page — browse and load any of the 100 games into the PGN Analyzer with folder categories and tag filters" },
+      { type: "feature", text: "Input method tabs on the Control Center — switch between Input PGN, Lichess/Chess.com, and Load Library" },
+      { type: "feature", text: "Engine-rated moves — after each guess, Stockfish (depth 12) rates both your move and the master's move (Best ✅, Excellent 💎, Good 👍, Inaccuracy ⚠️, Mistake ❌, Blunder 💀)" },
+      { type: "feature", text: "Emoji result badges on pieces — ✅/⚠️/❌ badge appears on the top-right of the destination square after each guess, matching the analyze page style" },
+      { type: "feature", text: "Opponent last-move highlighting — from/to squares of the opponent's auto-played move are highlighted in amber" },
+      { type: "improvement", text: "Bigger board on desktop for Guess the Move — increased from 400px to 560px for a more immersive experience" },
+      { type: "improvement", text: "Positional patterns explain modal now uses the best continuation animation instead of the mistake line — matches the openings modal behaviour" },
+      { type: "improvement", text: "Positional patterns switched to 2-column desktop layout with bigger 280px boards (up from 180px 3-column)" },
+      { type: "improvement", text: "Move history log shows engine ratings inline — emoji next to each SAN, hover to reveal 'You: Good · GM: Best' detail row" },
+      { type: "fix", text: "Gambit sideline detection improved — Budapest Gambit, Vienna Gambit, and other popular gambits no longer flagged as inaccuracies (lower win-rate threshold, popularity bonus, auto-approve 50K+ game lines)" },
+      { type: "fix", text: "Guess the Move sidebar no longer overlaps the board — fixed with sticky positioning, scroll overflow, and text wrapping" },
+      { type: "fix", text: "Error modal for failed game loads — if a PGN can't be parsed, a descriptive error dialog appears instead of a silent failure" },
+      { type: "design", text: "Removed 'All' scan mode button from the UI — scan modes are now Openings, Tactics, Endgames, and Time Management" },
+    ],
+  },
+  {
     version: 18,
     date: "Mar 4, 2026",
     title: "Patterns Standalone Section & Time Management CTA",
