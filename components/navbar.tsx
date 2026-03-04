@@ -181,7 +181,7 @@ export function Navbar() {
             <button
               type="button"
               className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                isActive("/about") || isActive("/blog") || isActive("/feedback") || isActive("/leaderboard")
+                isActive("/about") || isActive("/blog") || isActive("/feedback") || isActive("/leaderboard") || isActive("/shop")
                   ? "text-white bg-white/[0.06]"
                   : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
               }`}
@@ -228,6 +228,14 @@ export function Navbar() {
                   }`}
                 >
                   🏆 Leaderboard
+                </Link>
+                <Link
+                  href="/shop"
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive("/shop") ? "text-amber-400 bg-amber-500/[0.08]" : "text-slate-400 hover:text-amber-400 hover:bg-amber-500/[0.06]"
+                  }`}
+                >
+                  🪙 Coin Shop
                 </Link>
               </div>
             </div>
@@ -538,6 +546,7 @@ export function Navbar() {
                 ...NAV_LINKS,
                 { href: "/blog", label: "Blog" },
                 { href: "/leaderboard", label: "🏆 Leaderboard" },
+                { href: "/shop", label: "🪙 Coin Shop" },
                 { href: "/feedback", label: "Feedback" },
                 ...(authenticated
                   ? [

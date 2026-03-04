@@ -255,6 +255,99 @@ export function CoinShop() {
         </div>
       )}
 
+      {/* ─── Live Preview ─── */}
+      {(() => {
+        const bt = BOARD_THEMES.find((t) => t.id === activeTheme) ?? BOARD_THEMES[0];
+        const es = EVAL_BAR_SKINS.find((s) => s.id === activeEvalSkin) ?? EVAL_BAR_SKINS[0];
+        const pt = PIECE_THEMES.find((t) => t.id === activePieceTheme) ?? PIECE_THEMES[0];
+        const previewPieces = pt.setName
+          ? ["wK", "wQ", "wB", "wN", "wR", "wP", "bK", "bQ", "bB", "bN", "bR", "bP"]
+          : null;
+        return (
+          <div className="space-y-2">
+            <h3 className="text-sm font-semibold text-white">Preview</h3>
+            <div className="flex items-stretch gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-4">
+              {/* Eval Bar preview */}
+              <div className="flex w-5 shrink-0 overflow-hidden rounded-md" title={`Eval: ${es.name}`}>
+                <div className="flex w-full flex-col">
+                  <div className="flex-1" style={{ background: `linear-gradient(to bottom, ${es.whiteGradient[0]}, ${es.whiteGradient[1]})` }} />
+                  <div className="flex-1" style={{ background: `linear-gradient(to bottom, ${es.blackGradient[0]}, ${es.blackGradient[1]})` }} />
+                </div>
+              </div>
+
+              {/* Mini board preview */}
+              <div className="grid grid-cols-4 grid-rows-4 overflow-hidden rounded-lg" style={{ width: 120, height: 120 }}>
+                {Array.from({ length: 16 }).map((_, i) => {
+                  const row = Math.floor(i / 4);
+                  const col = i % 4;
+                  const isLight = (row + col) % 2 === 0;
+
+                  // Place some pieces on the mini board
+                  let piece: string | null = null;
+                  if (row === 0 && col === 0) piece = "bR";
+                  if (row === 0 && col === 1) piece = "bN";
+                  if (row === 0 && col === 2) piece = "bB";
+                  if (row === 0 && col === 3) piece = "bQ";
+                  if (row === 1 && col === 0) piece = "bP";
+                  if (row === 1 && col === 2) piece = "bP";
+                  if (row === 2 && col === 1) piece = "wN";
+                  if (row === 2 && col === 3) piece = "wP";
+                  if (row === 3 && col === 0) piece = "wR";
+                  if (row === 3 && col === 1) piece = "wB";
+                  if (row === 3 && col === 2) piece = "wQ";
+                  if (row === 3 && col === 3) piece = "wK";
+
+                  return (
+                    <div
+                      key={i}
+                      className="relative flex items-center justify-center"
+                      style={{
+                        width: 30,
+                        height: 30,
+                        backgroundColor: isLight ? bt.lightSquare : bt.darkSquare,
+                      }}
+                    >
+                      {piece && previewPieces && (
+                        <img
+                          src={getPieceImageUrl(pt.setName!, piece)}
+                          alt={piece}
+                          className="h-[26px] w-[26px] object-contain"
+                          loading="lazy"
+                        />
+                      )}
+                      {piece && !previewPieces && (
+                        <span className="text-lg leading-none" style={{ filter: piece.startsWith("b") ? "invert(0)" : "invert(0)", opacity: 0.85 }}>
+                          {({
+                            wK: "♔", wQ: "♕", wR: "♖", wB: "♗", wN: "♘", wP: "♙",
+                            bK: "♚", bQ: "♛", bR: "♜", bB: "♝", bN: "♞", bP: "♟",
+                          } as Record<string, string>)[piece]}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Labels */}
+              <div className="flex flex-col justify-center gap-1.5">
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-white/30">Board</p>
+                  <p className="text-xs text-white">{bt.name}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-white/30">Pieces</p>
+                  <p className="text-xs text-white">{pt.name}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-white/30">Eval Bar</p>
+                  <p className="text-xs text-white">{es.name}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {/* ─── Board Themes ─── */}
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-white">Board Themes</h3>
