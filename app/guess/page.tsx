@@ -824,26 +824,37 @@ export default function GuessTheMovePage() {
                       </span>
                     ) : (
                       <span className="text-sm text-emerald-300/80">
-                        <span className="font-bold">{lastGuessResult.san}</span> — exactly right!
+                        <span className="font-bold">{lastGuessResult.san}</span> — you matched the GM!
                       </span>
                     )}
                   </div>
                   {/* Engine rating detail line */}
-                  {latestGuess?.userRating && (
-                    <div className="flex items-center gap-2 text-xs">
-                      <span className={`font-semibold ${ENGINE_RATING_COLOR[latestGuess.userRating]}`}>
-                        {ENGINE_RATING_EMOJI[latestGuess.userRating]} Your move: {ENGINE_RATING_LABEL[latestGuess.userRating]}
-                      </span>
-                      {latestGuess.masterRating && latestGuess.result !== "correct" && (
-                        <>
-                          <span className="text-slate-600">·</span>
-                          <span className={`font-semibold ${ENGINE_RATING_COLOR[latestGuess.masterRating]}`}>
-                            GM move: {ENGINE_RATING_LABEL[latestGuess.masterRating]}
+                  {latestGuess?.userRating && (() => {
+                    const isCorrect = latestGuess.result === "correct";
+                    const isBadMove = latestGuess.userRating === "inaccuracy" || latestGuess.userRating === "mistake" || latestGuess.userRating === "blunder";
+                    return (
+                      <div className="flex flex-col gap-0.5 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className={`font-semibold ${ENGINE_RATING_COLOR[latestGuess.userRating]}`}>
+                            {ENGINE_RATING_EMOJI[latestGuess.userRating]} {isCorrect ? "Engine rates this move" : "Your move"}: {ENGINE_RATING_LABEL[latestGuess.userRating]}
                           </span>
-                        </>
-                      )}
-                    </div>
-                  )}
+                          {!isCorrect && latestGuess.masterRating && (
+                            <>
+                              <span className="text-slate-600">·</span>
+                              <span className={`font-semibold ${ENGINE_RATING_COLOR[latestGuess.masterRating]}`}>
+                                GM move: {ENGINE_RATING_LABEL[latestGuess.masterRating]}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        {isCorrect && isBadMove && (
+                          <span className="text-[10px] text-slate-500">
+                            You matched the GM — but even GMs aren&apos;t perfect!
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               );
             })()}
