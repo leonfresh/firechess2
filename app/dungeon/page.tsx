@@ -776,7 +776,7 @@ function BattleBoard({
     : "❌ Incorrect";
 
   return (
-    <div ref={boardRef} className="w-full flex flex-col items-center gap-3 dungeon-screen-enter relative">
+    <div className="w-full flex flex-col items-center gap-3 dungeon-screen-enter relative">
       {/* Damage flash overlay */}
       {flashDamage && (
         <div className="fixed inset-0 z-50 pointer-events-none bg-red-500/20 dungeon-damage-flash" />
@@ -816,41 +816,42 @@ function BattleBoard({
         <span>{puzzle.matchedTheme}</span>
       </div>
 
-      {/* Board with effects */}
-      <div
-        style={{ width: boardSize, height: boardSize }}
-        className={`relative shrink-0 overflow-hidden rounded-xl transition-shadow ${
-          shaking ? "dungeon-shake" : ""
-        } ${
-          glowCorrect ? "dungeon-correct-glow" : ""
-        }`}
-      >
-        <Chessboard
-          id="dungeon-battle"
-          position={fen}
-          boardOrientation={orientation}
-          boardWidth={boardSize}
-          onPieceDrop={onDrop as any}
-          arePiecesDraggable={state === "solving"}
-          isDraggablePiece={isDraggablePiece}
-          animationDuration={200}
-          customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-          customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
-          showBoardNotation={showCoords}
-          customSquareStyles={customSquareStyles}
-          customPieces={customPieces}
-          showPromotionDialog={showPromoDialog}
-          promotionToSquare={promoTo as CbSquare | undefined}
-          onPromotionPieceSelect={onPromotionPieceSelect}
-        />
-        {moveIndicator && (
-          <DungeonMoveIndicator
-            square={moveIndicator.square}
-            type={moveIndicator.type}
-            orientation={orientation}
-            boardSize={boardSize}
+      {/* Board — ref container must have NO transforms for drag accuracy */}
+      <div ref={boardRef} className="w-full max-w-[720px]">
+        <div
+          className={`relative overflow-hidden rounded-xl transition-shadow ${
+            shaking ? "dungeon-shake" : ""
+          } ${
+            glowCorrect ? "dungeon-correct-glow" : ""
+          }`}
+        >
+          <Chessboard
+            id="dungeon-battle"
+            position={fen}
+            boardOrientation={orientation}
+            boardWidth={boardSize}
+            onPieceDrop={onDrop as any}
+            arePiecesDraggable={state === "solving"}
+            isDraggablePiece={isDraggablePiece}
+            animationDuration={200}
+            customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+            customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+            showBoardNotation={showCoords}
+            customSquareStyles={customSquareStyles}
+            customPieces={customPieces}
+            showPromotionDialog={showPromoDialog}
+            promotionToSquare={promoTo as CbSquare | undefined}
+            onPromotionPieceSelect={onPromotionPieceSelect}
           />
-        )}
+          {moveIndicator && (
+            <DungeonMoveIndicator
+              square={moveIndicator.square}
+              type={moveIndicator.type}
+              orientation={orientation}
+              boardSize={boardSize}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
