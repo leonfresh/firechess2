@@ -20,10 +20,15 @@ import {
   NODE_INFO,
   RARITY_COLORS,
   ALL_ACHIEVEMENTS,
+  DUNGEON_ACTS,
   loadProfile,
   finalizeRun,
   calculateRunXp,
   xpForLevel,
+  getAct,
+  getBattleFlavor,
+  getRestFlavor,
+  getDeathEpitaph,
   type DungeonRun,
   type DungeonProfile,
   type MapNode,
@@ -555,6 +560,7 @@ function BattleBoard({
   const currentNode = run.map.find(n => n.id === run.currentNodeId);
   const isBoss = currentNode?.type === "boss";
   const isElite = currentNode?.type === "elite";
+  const act = getAct(run.currentFloor);
 
   const hasSecondWind = run.perks.some(p => p.id === "second-wind" && !p.consumed);
   const hasGlassCannon = run.perks.some(p => p.id === "glass-cannon");
@@ -834,7 +840,14 @@ function BattleBoard({
             isElite ? "border-purple-500/30 bg-purple-500/10 text-purple-400" :
             "border-blue-500/20 bg-blue-500/5 text-blue-400"
           }`}>
-            {isBoss ? "⚔️ Boss Battle" : isElite ? "💀 Elite Fight" : "⚔️ Battle"}
+            {isBoss ? `${act.bossIcon} ${act.bossName}` : isElite ? "💀 Elite Fight" : "⚔️ Battle"}
+          </div>
+
+          {/* Narrative flavor text */}
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+            <p className="text-xs italic leading-relaxed text-slate-400">
+              {isBoss ? act.bossIntro.split("\n")[0] : getBattleFlavor(run.currentFloor, run.seed)}
+            </p>
           </div>
 
           {/* Puzzle info */}
@@ -969,14 +982,19 @@ function EventScreen({
 
 function RestScreen({
   stats,
+  floor,
+  seed,
   onHeal,
   onUpgrade,
 }: {
   stats: { hp: number; maxHp: number };
+  floor: number;
+  seed: number;
   onHeal: () => void;
   onUpgrade: () => void;
 }) {
   const canHeal = stats.hp < stats.maxHp;
+  const flavor = getRestFlavor(floor, seed);
   return (
     <div className="mx-auto max-w-md text-center dungeon-screen-enter">
       {/* Warm campfire glow */}
@@ -995,6 +1013,7 @@ function RestScreen({
           }} />
         </div>
         <h2 className="mt-3 text-xl font-bold text-white">Rest Stop</h2>
+        <p className="mt-2 text-xs italic text-slate-500 max-w-sm mx-auto leading-relaxed">{flavor}</p>
         <p className="mt-2 text-sm text-slate-400">Take a moment to recover…</p>
         <div className="mt-6 flex flex-col gap-3">
           <button
@@ -1161,8 +1180,13 @@ function RunSummary({
       </h2>
       <p className="mt-1 text-sm text-slate-400">
         {isVictory
-          ? "You conquered the dungeon!"
-          : `You fell on floor ${run.currentFloor}`}
+          ? getAct(30).bossDefeat.split("\n")[0]
+          : getDeathEpitaph(run.seed, run.currentFloor)}
+      </p>
+      <p className="mt-2 text-xs italic text-slate-600 max-w-sm mx-auto leading-relaxed">
+        {isVictory
+          ? "You conquered the dungeon and silenced the Dark Engine forever."
+          : `Fell on floor ${run.currentFloor} — ${getAct(run.currentFloor).name}`}
       </p>
 
       {/* XP Earned Breakdown */}
@@ -1275,7 +1299,9 @@ export default function DungeonPage() {
   const [puzzle, setPuzzle] = useState<LichessPuzzle | null>(null);
   const [loading, setLoading] = useState(false);
   const [eventMessage, setEventMessage] = useState<string | null>(null);
+  const [storyMessage, setStoryMessage] = useState<string | null>(null);
   const [showStartScreen, setShowStartScreen] = useState(true);
+  const lastActRef = useRef<number>(0);
 
   /* ── Start a new run ── */
   const startRun = useCallback((seed?: number) => {
@@ -1315,6 +1341,14 @@ export default function DungeonPage() {
     if (nodeIdx >= 0) updated.map[nodeIdx] = { ...updated.map[nodeIdx], visited: true };
 
     updated.floorsCleared = Math.max(updated.floorsCleared, node.floor);
+
+    // Act transition — show narrative text when entering a new act
+    const newAct = getAct(node.floor);
+    if (newAct.id !== lastActRef.current && node.floor > 0) {
+      lastActRef.current = newAct.id;
+      setStoryMessage(newAct.transition);
+      setTimeout(() => setStoryMessage(null), 5000);
+    }
 
     // Devil's Pawn damage every 3 floors
     if (run.perks.some(p => p.id === "devils-pawn") && node.floor > 0 && node.floor % 3 === 0) {
@@ -1394,6 +1428,13 @@ export default function DungeonPage() {
       updated.status = "perk-select";
     } else {
       updated.status = "exploring";
+    }
+
+    // Show boss defeat story text
+    if (currentNode?.type === "boss") {
+      const act = getAct(currentNode.floor);
+      setStoryMessage(act.bossDefeat.split("\n")[0]);
+      setTimeout(() => setStoryMessage(null), 5000);
     }
 
     // Victory if floor 30 boss beaten
@@ -1714,9 +1755,25 @@ export default function DungeonPage() {
             </span>
           </h1>
           <p className="mt-3 text-sm text-slate-400 max-w-sm leading-relaxed">
-            A roguelike chess puzzle adventure. Navigate a branching dungeon,
-            solve tactical puzzles, collect perks, manage your HP, and fight bosses.
+            Beneath the ruins of an ancient chess academy lies a cursed dungeon,
+            its halls guarded by tactical puzzles of increasing ferocity.
+            Three bosses stand between you and the Dark Engine — the sentient
+            machine that corrupted it all.
           </p>
+
+          {/* Act preview */}
+          <div className="mt-6 w-full max-w-xs space-y-2">
+            {DUNGEON_ACTS.map((act, i) => (
+              <div key={act.id} className={`dungeon-stagger-${i + 1} flex items-start gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-left transition-all hover:bg-white/[0.04]`}>
+                <span className="text-xl mt-0.5">{act.icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-white">Act {act.id}: {act.name}</p>
+                  <p className="text-[10px] text-slate-500 leading-relaxed">{act.subtitle} · Boss: {act.bossIcon} {act.bossName}</p>
+                </div>
+                <span className="text-[9px] text-slate-600 whitespace-nowrap">F{act.floorRange[0]}-{act.floorRange[1]}</span>
+              </div>
+            ))}
+          </div>
 
           {/* Player profile card */}
           {(() => {
@@ -1773,9 +1830,9 @@ export default function DungeonPage() {
           {/* Feature badges */}
           <div className="mt-10 grid grid-cols-3 gap-6 text-center">
             {[
-              { icon: "💀", label: "Elites drop rare perks" },
-              { icon: "🗡️", label: "22 unique perks to find" },
-              { icon: "🔥", label: "Boss every 10 floors" },
+              { icon: "�", label: "3 acts with unique story" },
+              { icon: "🗡️", label: "22 perks & 3 bosses" },
+              { icon: "🔥", label: "XP, levels & achievements" },
             ].map((feat, i) => (
               <div key={i} className={`dungeon-stagger-${i + 1}`}>
                 <div className="text-3xl">{feat.icon}</div>
@@ -1864,7 +1921,7 @@ export default function DungeonPage() {
             </div>
             <div>
               <h1 className="text-lg font-bold text-white">Dungeon Tactics</h1>
-              <p className="text-[10px] text-slate-500 font-mono">Floor {run.currentFloor}</p>
+              <p className="text-[10px] text-slate-500 font-mono">Floor {run.currentFloor} — <span className="text-slate-400">{getAct(run.currentFloor).name}</span></p>
             </div>
           </div>
 
@@ -1894,6 +1951,13 @@ export default function DungeonPage() {
           </div>
         )}
 
+        {/* Story / act transition toast */}
+        {storyMessage && (
+          <div className="mb-4 rounded-xl border border-purple-500/20 bg-purple-500/[0.06] px-5 py-3 text-center">
+            <p className="text-xs italic leading-relaxed text-purple-300/90">{storyMessage}</p>
+          </div>
+        )}
+
         {/* Perks bar (compact, always visible) */}
         {run.perks.length > 0 && (
           <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-2">
@@ -1907,6 +1971,21 @@ export default function DungeonPage() {
           {/* Exploring: show map full-width */}
           {run.status === "exploring" && (
             <div className="w-full max-w-2xl">
+              {/* Act header */}
+              {(() => {
+                const a = getAct(run.currentFloor);
+                return (
+                  <div className="mb-4 flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-2.5">
+                    <span className="text-xl">{a.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-white">Act {a.id}: {a.name}</p>
+                      <p className="text-[10px] text-slate-500 italic">{a.subtitle}</p>
+                    </div>
+                    <span className="text-[9px] text-slate-600">Floors {a.floorRange[0]}–{a.floorRange[1]}</span>
+                  </div>
+                );
+              })()}
+
               <DungeonMap
                 nodes={run.map}
                 currentNodeId={run.currentNodeId}
@@ -1962,12 +2041,34 @@ export default function DungeonPage() {
           )}
 
           {/* Battle — full-width board, no map */}
-          {run.status === "battle" && loading && (
-            <div className="text-center min-h-[400px] flex flex-col items-center justify-center">
-              <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-white/10 border-t-emerald-400" />
-              <p className="mt-4 text-sm text-slate-400">Summoning puzzle…</p>
-            </div>
-          )}
+          {run.status === "battle" && loading && (() => {
+            const loadNode = run.map.find(n => n.id === run.currentNodeId);
+            const isBossLoad = loadNode?.type === "boss";
+            const a = getAct(run.currentFloor);
+            return (
+              <div className="text-center min-h-[400px] flex flex-col items-center justify-center dungeon-screen-enter">
+                {isBossLoad ? (
+                  <>
+                    <span className="text-6xl">{a.bossIcon}</span>
+                    <h2 className="mt-4 text-2xl font-extrabold text-red-400">{a.bossName}</h2>
+                    <p className="text-xs uppercase tracking-wider text-red-400/60 mt-1">{a.bossTitle}</p>
+                    <div className="mt-4 max-w-sm">
+                      {a.bossIntro.split("\n").filter(Boolean).map((line, i) => (
+                        <p key={i} className="mt-2 text-xs italic leading-relaxed text-slate-400">{line}</p>
+                      ))}
+                    </div>
+                    <div className="mt-6 mx-auto h-10 w-10 animate-spin rounded-full border-4 border-red-500/20 border-t-red-400" />
+                  </>
+                ) : (
+                  <>
+                    <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-white/10 border-t-emerald-400" />
+                    <p className="mt-4 text-sm text-slate-400">Summoning puzzle…</p>
+                    <p className="mt-2 text-xs italic text-slate-600">{getBattleFlavor(run.currentFloor, run.seed)}</p>
+                  </>
+                )}
+              </div>
+            );
+          })()}
 
           {run.status === "battle" && puzzle && !loading && (
             <BattleBoard
@@ -1999,6 +2100,8 @@ export default function DungeonPage() {
           {run.status === "rest" && (
             <RestScreen
               stats={run.stats}
+              floor={run.currentFloor}
+              seed={run.seed}
               onHeal={() => handleRest("heal")}
               onUpgrade={() => handleRest("upgrade")}
             />

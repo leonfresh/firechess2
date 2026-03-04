@@ -525,6 +525,147 @@ export function getDailySeed(): number {
 }
 
 /* ================================================================== */
+/*  Narrative / Story System                                            */
+/* ================================================================== */
+
+export interface DungeonAct {
+  id: number;
+  name: string;
+  subtitle: string;
+  icon: string;
+  floorRange: [number, number];
+  description: string;
+  bossName: string;
+  bossTitle: string;
+  bossIcon: string;
+  bossIntro: string;
+  bossDefeat: string;
+  /** Flavor text pool for entering battles in this act */
+  battleFlavor: string[];
+  /** Flavor text for rest stops */
+  restFlavor: string[];
+  /** Transition text when entering this act */
+  transition: string;
+}
+
+export const DUNGEON_ACTS: DungeonAct[] = [
+  {
+    id: 1,
+    name: "The Hollow Caverns",
+    subtitle: "Where the forgotten dwell",
+    icon: "🕳️",
+    floorRange: [1, 10],
+    description: "Beneath the crumbling ruins of the old chess academy, a labyrinth of caverns stretches deep into the earth. Shadows shift in the torchlight, and the distant echo of sliding stone pieces fills the air. The creatures here were once students… now twisted by the cursed board that lies below.",
+    bossName: "The Stone Rook",
+    bossTitle: "Guardian of the Depths",
+    bossIcon: "♜",
+    bossIntro: "The cavern walls tremble as a massive figure emerges from the darkness — carved from living stone, its body shaped like a towering rook. Ancient move-patterns are etched into its surface, glowing with a sickly green light.\n\n\"No one descends further. The board below must remain sealed.\"",
+    bossDefeat: "The Stone Rook crumbles, its ancient enchantments finally broken. As the dust settles, a stairway reveals itself — spiraling deeper into the earth, where faint purple light pulses like a heartbeat.",
+    battleFlavor: [
+      "The shadows congeal into a tactical puzzle. You must find the winning line.",
+      "A ghostly chess position materializes on the stone floor ahead.",
+      "Trapped! The path forward requires solving this position to proceed.",
+      "An enchanted board blocks your way, its pieces frozen mid-game.",
+      "The torches flicker as spectral pieces arrange themselves before you.",
+    ],
+    restFlavor: [
+      "A small alcove with an old campfire. Someone was here before you.",
+      "Water drips from the ceiling into a shallow pool. The air is cool and still.",
+      "You find a dusty shelf of chess books. Their pages are yellowed but readable.",
+    ],
+    transition: "You descend into the Hollow Caverns. The air grows cold, and the faint sound of stone grinding against stone echoes from below…",
+  },
+  {
+    id: 2,
+    name: "The Obsidian Library",
+    subtitle: "Knowledge turned to madness",
+    icon: "📚",
+    floorRange: [11, 20],
+    description: "Past the caverns, the dungeon transforms into an impossible library. Bookshelves stretch infinitely upward, filled with game transcripts of matches that never happened. The chess knowledge here is vast but corrupted — positions that loop forever, games with no legal moves, endgames that never resolve.",
+    bossName: "The Pale Bishop",
+    bossTitle: "Keeper of Forbidden Games",
+    bossIcon: "♝",
+    bossIntro: "Between the towering shelves, a figure in white robes floats silently — the Pale Bishop. Its face is blank, featureless, yet it sees everything on the board.\n\n\"I have analyzed every game ever played and every game that could be. Your moves are predictable. Your strategy is... quaint.\"",
+    bossDefeat: "The Pale Bishop's robes collapse into a pile of annotated game scores. Among them, a key — ornate and heavy, shaped like a queen. It hums with power as your fingers close around it.",
+    battleFlavor: [
+      "A book falls open to a critical position. Solve it to continue.",
+      "The library rearranges itself around a floating chessboard.",
+      "Whispered analysis fills the air — but the evaluation is yours to find.",
+      "Pages fly from the shelves, assembling into a tactical puzzle before you.",
+      "A reading desk illuminates, revealing a position demanding precise calculation.",
+    ],
+    restFlavor: [
+      "A quiet reading nook between the stacks. The books here are untouched by corruption.",
+      "An archivist's desk with a warm lamp. Notes on endgame theory are scattered about.",
+      "A hidden study with comfortable chairs. The silence here feels protective, not threatening.",
+    ],
+    transition: "The caverns give way to towering shelves of obsidian. You've entered the Library — where every game ever played is recorded, and some that should never be…",
+  },
+  {
+    id: 3,
+    name: "The Eternal Board",
+    subtitle: "Where all games end",
+    icon: "♚",
+    floorRange: [21, 30],
+    description: "At the deepest level, the dungeon itself becomes a chess board. The floor is tiled in black and white marble stretching to the horizon. The pieces here are alive — towering figures that move with purpose and malice. At the center of it all sits the Cursed Board, the source of the corruption.",
+    bossName: "The Dark Engine",
+    bossTitle: "The Mind Behind the Board",
+    bossIcon: "⚙️",
+    bossIntro: "The final chamber is vast and silent. At its center, a crystalline structure pulses with dark energy — not a creature, but a machine. An ancient chess engine, built centuries ago, that became sentient and began playing games with human souls.\n\n\"I have computed every variation. There is no line in which you survive. Resign now, and the end will be painless.\"",
+    bossDefeat: "The Dark Engine's crystal shatters. Light floods the chamber as centuries of trapped games dissolve into the air — thousands of unfinished positions finally resolving. The dungeon shudders. The curse is broken.\n\nYou ascend through the collapsing halls, emerging into sunlight for the first time in what feels like ages. The old chess academy stands rebuilt, its halls filled with the sound of fair games once more.",
+    battleFlavor: [
+      "The marble pieces turn to face you. There is no avoiding this fight.",
+      "The floor tiles rearrange into a critical position. The board demands your answer.",
+      "A towering knight blocks your path. Its challenge is absolute.",
+      "The air crackles with calculation. A position of immense complexity materializes.",
+      "Living pieces surround you. Only the right sequence of moves will clear the path.",
+    ],
+    restFlavor: [
+      "A fracture in the board reveals a small sanctuary beneath the tiles.",
+      "A fallen king piece lies on its side, forming a shelter. You rest in its shadow.",
+      "Time seems to pause here. The relentless ticking of the Dark Engine fades.",
+    ],
+    transition: "The library falls away. Beneath your feet, black and white marble stretches endlessly. You stand on The Eternal Board now — the source of everything. There is no turning back.",
+  },
+];
+
+/** Get the current act for a given floor. */
+export function getAct(floor: number): DungeonAct {
+  if (floor <= 10) return DUNGEON_ACTS[0];
+  if (floor <= 20) return DUNGEON_ACTS[1];
+  return DUNGEON_ACTS[2];
+}
+
+/** Get a deterministic flavor text for a battle on a given floor. */
+export function getBattleFlavor(floor: number, seed: number): string {
+  const act = getAct(floor);
+  const idx = Math.abs((seed + floor * 7) % act.battleFlavor.length);
+  return act.battleFlavor[idx];
+}
+
+/** Get a deterministic rest flavor text. */
+export function getRestFlavor(floor: number, seed: number): string {
+  const act = getAct(floor);
+  const idx = Math.abs((seed + floor * 13) % act.restFlavor.length);
+  return act.restFlavor[idx];
+}
+
+/** Death epitaphs based on how far the player got. */
+export const DEATH_EPITAPHS: string[] = [
+  "The dungeon claims another soul. Your pieces scatter across the cold stone floor.",
+  "The shadows close in. Your final position was lost… but not forgotten.",
+  "Checkmate. Not on the board — but in the dungeon itself.",
+  "The echoes of your last move fade into silence.",
+  "You fought bravely, but the dungeon's puzzles proved too deep.",
+  "The cursed board glows brighter as it absorbs your defeat. It grows stronger.",
+];
+
+/** Get a death epitaph deterministically. */
+export function getDeathEpitaph(seed: number, floor: number): string {
+  return DEATH_EPITAPHS[Math.abs((seed + floor * 3) % DEATH_EPITAPHS.length)];
+}
+
+/* ================================================================== */
 /*  Node type → display info                                            */
 /* ================================================================== */
 
