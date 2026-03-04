@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
-import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useCustomPieces, useShowCoordinates } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
@@ -20,7 +19,13 @@ import {
   ALL_EVENTS,
   NODE_INFO,
   RARITY_COLORS,
+  ALL_ACHIEVEMENTS,
+  loadProfile,
+  finalizeRun,
+  calculateRunXp,
+  xpForLevel,
   type DungeonRun,
+  type DungeonProfile,
   type MapNode,
   type Perk,
   type MysteryEvent,
@@ -568,9 +573,6 @@ function BattleBoard({
   const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
   const [wrongMove, setWrongMove] = useState<{ from: string; to: string } | null>(null);
   const [hintSquare, setHintSquare] = useState<string | null>(null);
-  const [showPromoDialog, setShowPromoDialog] = useState(false);
-  const [promoFrom, setPromoFrom] = useState<string | null>(null);
-  const [promoTo, setPromoTo] = useState<string | null>(null);
   const puzzleSetupRef = useRef<typeof setup | null>(null);
 
   const orientation: "white" | "black" = useMemo(() => {
@@ -637,8 +639,10 @@ function BattleBoard({
       const expectedBase = expected.slice(0, 4);
       const expectedPromo = expected.slice(4, 5);
 
-      if (from + to === expectedBase && expectedPromo && !promotion) {
-        if (expectedPromo === "q") promotion = "q";
+      // Auto-apply the solution's promotion piece when squares match
+      // (user just needs to find the right squares, like the train page)
+      if (from + to === expectedBase && expectedPromo) {
+        promotion = expectedPromo;
       }
 
       const matches = from + to === expectedBase && (!expectedPromo || promotion === expectedPromo);
@@ -733,35 +737,9 @@ function BattleBoard({
   const onDrop = useCallback(
     (from: string, to: string, _piece: string) => {
       if (state !== "solving") return false;
-      const chess = new Chess(fen);
-      const piece = chess.get(from as Parameters<Chess["get"]>[0]);
-      if (piece?.type === "p") {
-        const rank = parseInt(to[1]);
-        const isPromo = (piece.color === "w" && rank === 8) || (piece.color === "b" && rank === 1);
-        if (isPromo) {
-          setPromoFrom(from);
-          setPromoTo(to);
-          setShowPromoDialog(true);
-          return false;
-        }
-      }
       return attemptMove(from, to);
     },
-    [state, fen, attemptMove]
-  );
-
-  const onPromotionPieceSelect = useCallback(
-    (piece?: string): boolean => {
-      setShowPromoDialog(false);
-      if (piece && promoFrom && promoTo) {
-        const promo = piece[1]?.toLowerCase() ?? "q";
-        attemptMove(promoFrom, promoTo, promo);
-      }
-      setPromoFrom(null);
-      setPromoTo(null);
-      return true;
-    },
-    [promoFrom, promoTo, attemptMove]
+    [state, attemptMove]
   );
 
   // Square styles
@@ -834,9 +812,6 @@ function BattleBoard({
                 showBoardNotation={showCoords}
                 customSquareStyles={customSquareStyles}
                 customPieces={customPieces}
-                showPromotionDialog={showPromoDialog}
-                promotionToSquare={promoTo as CbSquare | undefined}
-                onPromotionPieceSelect={onPromotionPieceSelect}
               />
             </div>
           </div>
@@ -1148,6 +1123,21 @@ function RunSummary({
 }) {
   const isVictory = run.status === "victory";
 
+  // Finalize the run once on mount — awards XP and achievements
+  const resultRef = useRef<ReturnType<typeof finalizeRun> | null>(null);
+  if (!resultRef.current) resultRef.current = finalizeRun(run);
+  const result = resultRef.current;
+
+  const { profile, newAchievements, xpGained, oldLevel, newLevel } = result;
+  const leveledUp = newLevel > oldLevel;
+
+  const xpData = calculateRunXp(run);
+  const nextLevelXp = xpForLevel(newLevel + 1);
+  const currentLevelXp = xpForLevel(newLevel);
+  const progressXp = profile.xp - currentLevelXp;
+  const neededXp = nextLevelXp - currentLevelXp;
+  const xpPercent = neededXp > 0 ? Math.min(100, (progressXp / neededXp) * 100) : 100;
+
   useEffect(() => {
     playDungeonSound(isVictory ? "victory" : "death");
   }, [isVictory]);
@@ -1175,13 +1165,72 @@ function RunSummary({
           : `You fell on floor ${run.currentFloor}`}
       </p>
 
+      {/* XP Earned Breakdown */}
+      <div className="mt-5 rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-4">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400/80">XP Earned</h3>
+        <div className="mt-2 space-y-1">
+          {xpData.breakdown.map(b => (
+            <div key={b.label} className="flex items-center justify-between text-xs">
+              <span className="text-slate-400">{b.label}</span>
+              <span className="font-mono font-bold text-amber-300">+{b.value}</span>
+            </div>
+          ))}
+          <div className="flex items-center justify-between border-t border-white/[0.06] pt-1 text-sm font-bold">
+            <span className="text-white">Total</span>
+            <span className="text-amber-400">+{xpGained} XP</span>
+          </div>
+        </div>
+
+        {/* Level bar */}
+        <div className="mt-3">
+          <div className="flex items-center justify-between text-[10px] text-slate-500">
+            <span>Lv. {newLevel} — {profile.title}</span>
+            <span>{progressXp} / {neededXp} XP</span>
+          </div>
+          <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-400 transition-all duration-1000"
+              style={{ width: `${xpPercent}%` }}
+            />
+          </div>
+        </div>
+
+        {leveledUp && (
+          <div className="mt-2 rounded-lg bg-amber-500/15 border border-amber-500/30 px-3 py-2 text-sm font-bold text-amber-300 dungeon-victory-glow">
+            🎉 Level Up! Lv. {oldLevel} → Lv. {newLevel}
+          </div>
+        )}
+      </div>
+
+      {/* New achievements */}
+      {newAchievements.length > 0 && (
+        <div className="mt-4">
+          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-purple-400/80">Achievements Unlocked!</p>
+          <div className="space-y-1.5">
+            {newAchievements.map(id => {
+              const ach = ALL_ACHIEVEMENTS.find(a => a.id === id);
+              if (!ach) return null;
+              return (
+                <div key={id} className="flex items-center gap-2 rounded-lg border border-purple-500/20 bg-purple-500/[0.06] px-3 py-2 text-left">
+                  <span className="text-xl">{ach.icon}</span>
+                  <div>
+                    <div className="text-xs font-bold text-purple-300">{ach.name}</div>
+                    <div className="text-[10px] text-slate-500">{ach.description}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Stats grid */}
-      <div className="mt-6 grid grid-cols-2 gap-2">
+      <div className="mt-5 grid grid-cols-3 gap-2">
         {stats.map((s, i) => (
-          <div key={s.label} className={`dungeon-stagger-${Math.min(i + 1, 4)} rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 transition-all hover:bg-white/[0.04]`}>
-            <div className="text-2xl">{s.icon}</div>
-            <div className="mt-1 text-lg font-bold text-white">{s.value}</div>
-            <div className="text-[10px] text-slate-500">{s.label}</div>
+          <div key={s.label} className={`dungeon-stagger-${Math.min(i + 1, 4)} rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 transition-all hover:bg-white/[0.04]`}>
+            <div className="text-xl">{s.icon}</div>
+            <div className="mt-0.5 text-base font-bold text-white">{s.value}</div>
+            <div className="text-[9px] text-slate-500">{s.label}</div>
           </div>
         ))}
       </div>
@@ -1669,6 +1718,39 @@ export default function DungeonPage() {
             solve tactical puzzles, collect perks, manage your HP, and fight bosses.
           </p>
 
+          {/* Player profile card */}
+          {(() => {
+            const p = loadProfile();
+            if (p.totalRuns === 0) return null;
+            const nextXp = xpForLevel(p.level + 1);
+            const currXp = xpForLevel(p.level);
+            const prog = p.xp - currXp;
+            const need = nextXp - currXp;
+            const pct = need > 0 ? Math.min(100, (prog / need) * 100) : 100;
+            return (
+              <div className="mt-6 w-full max-w-xs rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-left">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/15 text-lg font-bold text-amber-400">
+                    {p.level}
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-bold text-white">{p.title}</div>
+                    <div className="text-[10px] text-slate-500">{prog} / {need} XP to next level</div>
+                  </div>
+                </div>
+                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                  <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-400" style={{ width: `${pct}%` }} />
+                </div>
+                <div className="mt-3 flex justify-between text-[10px] text-slate-500">
+                  <span>{p.totalRuns} runs</span>
+                  <span>{p.totalVictories} wins</span>
+                  <span>{p.totalPuzzlesSolved} puzzles</span>
+                  <span>{p.achievements.length}/{ALL_ACHIEVEMENTS.length} 🏅</span>
+                </div>
+              </div>
+            );
+          })()}
+
           <div className="mt-8 flex flex-col gap-3 w-full max-w-xs">
             <button
               type="button"
@@ -1835,6 +1917,19 @@ export default function DungeonPage() {
 
               {/* Run stats — compact row */}
               <div className="mt-6 flex flex-wrap items-center justify-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-xs">
+                {(() => {
+                  const p = loadProfile();
+                  const nxt = xpForLevel(p.level + 1);
+                  const cur = xpForLevel(p.level);
+                  const prg = p.xp - cur;
+                  const nd = nxt - cur;
+                  return (
+                    <div className="flex items-center gap-1.5" title={`${prg}/${nd} XP to level ${p.level + 1}`}>
+                      <span className="text-amber-400 font-bold">Lv.{p.level}</span>
+                      <span className="text-slate-600">{p.title}</span>
+                    </div>
+                  );
+                })()}
                 <div className="flex items-center gap-1.5">
                   <span className="text-slate-500">Solved</span>
                   <span className="font-bold text-emerald-400">{run.puzzlesSolved}</span>

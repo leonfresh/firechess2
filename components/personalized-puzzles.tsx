@@ -11,7 +11,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
-import type { Square as CbSquare, PromotionPieceOption } from "react-chessboard/dist/chessboard/types";
+import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
@@ -214,9 +214,7 @@ function PuzzleBoard({
   const [orientation, setOrientation] = useState<"white" | "black">("white");
   const [selectedSq, setSelectedSq] = useState<string | null>(null);
   const [legalMoveSqs, setLegalMoveSqs] = useState<string[]>([]);
-  const [showPromoDialog, setShowPromoDialog] = useState(false);
-  const [promoFrom, setPromoFrom] = useState<string | null>(null);
-  const [promoTo, setPromoTo] = useState<string | null>(null);
+
   const [solved, setSolved] = useState(0);
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
@@ -292,13 +290,9 @@ function PuzzleBoard({
       const expectedBase = expected.slice(0, 4);
       const expectedPromo = expected.slice(4, 5);
 
-      /* Auto-queen: if the expected move is a queen promotion and no
-         explicit promotion was passed, fill it in automatically.
-         For underpromotion puzzles the promo dialog handles it. */
-      if (from + to === expectedBase && expectedPromo && !promotion) {
-        if (expectedPromo === "q") {
-          promotion = "q";
-        }
+      // Auto-apply the solution's promotion piece when squares match
+      if (from + to === expectedBase && expectedPromo) {
+        promotion = expectedPromo;
       }
 
       const matches =
@@ -399,24 +393,12 @@ function PuzzleBoard({
   const onDrop = useCallback(
     (from: string, to: string, _piece: string) => {
       if (state !== "solving" || !puzzle) return false;
-      const chess = new Chess(fen);
-      const piece = chess.get(from as Parameters<Chess["get"]>[0]);
-      if (piece?.type === "p") {
-        const rank = parseInt(to[1]);
-        const isPromo = (piece.color === "w" && rank === 8) || (piece.color === "b" && rank === 1);
-        if (isPromo) {
-          setPromoFrom(from);
-          setPromoTo(to);
-          setShowPromoDialog(true);
-          return false;
-        }
-      }
       const result = attemptMove(from, to);
       setSelectedSq(null);
       setLegalMoveSqs([]);
       return result;
     },
-    [state, puzzle, fen, attemptMove]
+    [state, puzzle, attemptMove]
   );
 
   const onPieceDragBegin = useCallback(
@@ -444,17 +426,6 @@ function PuzzleBoard({
 
       if (selectedSq && selectedSq !== square) {
         if (legalMoveSqs.includes(square)) {
-          const piece = chess.get(selectedSq as Parameters<Chess["get"]>[0]);
-          if (piece?.type === "p") {
-            const rank = parseInt(square[1]);
-            const isPromo = (piece.color === "w" && rank === 8) || (piece.color === "b" && rank === 1);
-            if (isPromo) {
-              setPromoFrom(selectedSq);
-              setPromoTo(square);
-              setShowPromoDialog(true);
-              return;
-            }
-          }
           attemptMove(selectedSq, square);
           setSelectedSq(null);
           setLegalMoveSqs([]);
@@ -474,25 +445,6 @@ function PuzzleBoard({
       }
     },
     [state, puzzle, fen, selectedSq, legalMoveSqs, attemptMove]
-  );
-
-  const onPromotionPieceSelect = useCallback(
-    (piece?: PromotionPieceOption) => {
-      setShowPromoDialog(false);
-      if (!piece || !promoFrom || !promoTo) {
-        setSelectedSq(null);
-        setLegalMoveSqs([]);
-        return true;
-      }
-      const promo = piece[1]?.toLowerCase() ?? "q";
-      attemptMove(promoFrom, promoTo, promo);
-      setSelectedSq(null);
-      setLegalMoveSqs([]);
-      setPromoFrom(null);
-      setPromoTo(null);
-      return true;
-    },
-    [promoFrom, promoTo, attemptMove]
   );
 
   /* ---- Hint ---- */
@@ -653,9 +605,7 @@ function PuzzleBoard({
                 onPieceDrop={onDrop}
                 onSquareClick={onSquareClick}
                 onPieceDragBegin={onPieceDragBegin}
-                onPromotionPieceSelect={onPromotionPieceSelect}
-                showPromotionDialog={showPromoDialog}
-                promotionToSquare={promoTo as CbSquare | undefined}
+
                 arePiecesDraggable={state === "solving"}
                 isDraggablePiece={isDraggablePiece}
                 boardOrientation={orientation}

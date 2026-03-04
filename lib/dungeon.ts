@@ -545,3 +545,185 @@ export const RARITY_COLORS: Record<PerkRarity, string> = {
   legendary: "border-amber-500/30 bg-amber-500/10 text-amber-300",
   cursed: "border-red-500/30 bg-red-500/10 text-red-300",
 };
+
+/* ================================================================== */
+/*  Meta-Progression — XP, Levels, Achievements                         */
+/* ================================================================== */
+
+export interface DungeonProfile {
+  xp: number;
+  level: number;
+  totalRuns: number;
+  totalVictories: number;
+  totalPuzzlesSolved: number;
+  totalBossesDefeated: number;
+  bestStreak: number;
+  highestFloor: number;
+  achievements: string[];
+  title: string;
+}
+
+export interface Achievement {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+}
+
+/** XP required to reach a given level (cumulative). */
+export function xpForLevel(level: number): number {
+  // level 1 = 50, level 2 = 150, level 3 = 300 … roughly quadratic
+  return level * (level + 1) * 25;
+}
+
+/** Derive level from current XP. */
+export function getLevelFromXp(xp: number): number {
+  let level = 0;
+  while (xpForLevel(level + 1) <= xp) level++;
+  return level;
+}
+
+/** XP earned from a single run. */
+export function calculateRunXp(run: DungeonRun): { total: number; breakdown: { label: string; value: number }[] } {
+  const breakdown: { label: string; value: number }[] = [];
+  if (run.puzzlesSolved > 0) breakdown.push({ label: "Puzzles Solved", value: run.puzzlesSolved * 10 });
+  if (run.floorsCleared > 0) breakdown.push({ label: "Floors Cleared", value: run.floorsCleared * 5 });
+  if (run.bestStreak > 0) breakdown.push({ label: "Best Streak", value: run.bestStreak * 3 });
+  const bossesDefeated = Math.floor(run.floorsCleared / 10);
+  if (bossesDefeated > 0) breakdown.push({ label: "Bosses Defeated", value: bossesDefeated * 25 });
+  if (run.status === "victory") breakdown.push({ label: "Victory Bonus", value: 100 });
+  const total = breakdown.reduce((a, b) => a + b.value, 0);
+  return { total, breakdown };
+}
+
+/** Title/rank derived from level. */
+export function getTitle(level: number): string {
+  if (level >= 25) return "Legend";
+  if (level >= 20) return "Grandmaster";
+  if (level >= 15) return "Master";
+  if (level >= 10) return "Expert";
+  if (level >= 7) return "Knight";
+  if (level >= 5) return "Squire";
+  if (level >= 3) return "Apprentice";
+  if (level >= 1) return "Initiate";
+  return "Newcomer";
+}
+
+/** All achievements that can be earned. */
+export const ALL_ACHIEVEMENTS: Achievement[] = [
+  { id: "first-blood",     name: "First Blood",       description: "Solve your first dungeon puzzle",    icon: "🗡️"  },
+  { id: "streak-3",        name: "On Fire",            description: "Get a 3-puzzle streak",              icon: "🔥"  },
+  { id: "streak-5",        name: "Streak Master",      description: "Get a 5-puzzle streak",              icon: "⚡"  },
+  { id: "streak-10",       name: "Unstoppable",        description: "Get a 10-puzzle streak",             icon: "💥"  },
+  { id: "boss-slayer",     name: "Boss Slayer",        description: "Defeat a boss",                      icon: "💀"  },
+  { id: "ten-puzzles",     name: "Warming Up",         description: "Solve 10 puzzles total",             icon: "🏋️"  },
+  { id: "fifty-puzzles",   name: "Dedicated",          description: "Solve 50 puzzles total",             icon: "📚"  },
+  { id: "hundred-puzzles", name: "Centurion",          description: "Solve 100 puzzles total",            icon: "🏛️"  },
+  { id: "first-victory",   name: "Dungeon Conqueror",  description: "Complete a full dungeon run",        icon: "🏆"  },
+  { id: "five-runs",       name: "Adventurer",         description: "Complete 5 dungeon runs",            icon: "🗺️"  },
+  { id: "level-5",         name: "Rising Star",        description: "Reach level 5",                      icon: "⭐"  },
+  { id: "level-10",        name: "Veteran",            description: "Reach level 10",                     icon: "🌟"  },
+  { id: "floor-15",        name: "Deep Explorer",      description: "Reach floor 15 in a single run",     icon: "⛏️"  },
+  { id: "floor-30",        name: "Rock Bottom",        description: "Reach floor 30 in a single run",     icon: "🌋"  },
+  { id: "perk-collector",  name: "Perk Hoarder",       description: "Collect 5 perks in a single run",    icon: "🎒"  },
+  { id: "no-damage",       name: "Flawless",           description: "Clear 5 floors without taking damage", icon: "✨" },
+];
+
+/** Check all achievements, return array of newly earned IDs. */
+export function checkAchievements(profile: DungeonProfile, run: DungeonRun): string[] {
+  const earned = new Set(profile.achievements);
+  const newlyEarned: string[] = [];
+
+  const checks: [string, boolean][] = [
+    ["first-blood",     profile.totalPuzzlesSolved >= 1],
+    ["streak-3",        profile.bestStreak >= 3],
+    ["streak-5",        profile.bestStreak >= 5],
+    ["streak-10",       profile.bestStreak >= 10],
+    ["boss-slayer",     profile.totalBossesDefeated >= 1],
+    ["ten-puzzles",     profile.totalPuzzlesSolved >= 10],
+    ["fifty-puzzles",   profile.totalPuzzlesSolved >= 50],
+    ["hundred-puzzles", profile.totalPuzzlesSolved >= 100],
+    ["first-victory",   profile.totalVictories >= 1],
+    ["five-runs",       profile.totalRuns >= 5],
+    ["level-5",         profile.level >= 5],
+    ["level-10",        profile.level >= 10],
+    ["floor-15",        profile.highestFloor >= 15],
+    ["floor-30",        profile.highestFloor >= 30],
+    ["perk-collector",  run.perks.length >= 5],
+    ["no-damage",       run.puzzlesSolved >= 5 && run.puzzlesFailed === 0],
+  ];
+
+  for (const [id, condition] of checks) {
+    if (condition && !earned.has(id)) {
+      newlyEarned.push(id);
+    }
+  }
+  return newlyEarned;
+}
+
+/** Create a fresh profile. */
+export function createProfile(): DungeonProfile {
+  return {
+    xp: 0,
+    level: 0,
+    totalRuns: 0,
+    totalVictories: 0,
+    totalPuzzlesSolved: 0,
+    totalBossesDefeated: 0,
+    bestStreak: 0,
+    highestFloor: 0,
+    achievements: [],
+    title: "Newcomer",
+  };
+}
+
+const PROFILE_KEY = "firechess-dungeon-profile";
+
+/** Load profile from localStorage. */
+export function loadProfile(): DungeonProfile {
+  if (typeof window === "undefined") return createProfile();
+  try {
+    const raw = localStorage.getItem(PROFILE_KEY);
+    if (raw) return { ...createProfile(), ...JSON.parse(raw) };
+  } catch {}
+  return createProfile();
+}
+
+/** Save profile to localStorage. */
+export function saveProfile(profile: DungeonProfile): void {
+  if (typeof window === "undefined") return;
+  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch {}
+}
+
+/** Update profile at end of run. Returns { profile, newAchievements, xpGained, leveledUp }. */
+export function finalizeRun(run: DungeonRun): {
+  profile: DungeonProfile;
+  newAchievements: string[];
+  xpGained: number;
+  oldLevel: number;
+  newLevel: number;
+} {
+  const profile = loadProfile();
+  const oldLevel = profile.level;
+
+  // Accumulate stats
+  profile.totalRuns++;
+  profile.totalPuzzlesSolved += run.puzzlesSolved;
+  profile.totalBossesDefeated += Math.floor(run.floorsCleared / 10);
+  if (run.status === "victory") profile.totalVictories++;
+  profile.bestStreak = Math.max(profile.bestStreak, run.bestStreak);
+  profile.highestFloor = Math.max(profile.highestFloor, run.floorsCleared);
+
+  // Award XP
+  const { total: xpGained } = calculateRunXp(run);
+  profile.xp += xpGained;
+  profile.level = getLevelFromXp(profile.xp);
+  profile.title = getTitle(profile.level);
+
+  // Check achievements
+  const newAchievements = checkAchievements(profile, run);
+  profile.achievements = [...profile.achievements, ...newAchievements];
+
+  saveProfile(profile);
+  return { profile, newAchievements, xpGained, oldLevel, newLevel: profile.level };
+}
