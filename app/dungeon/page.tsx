@@ -134,7 +134,7 @@ function DungeonMap({
   onSelectNode: (node: MapNode) => void;
 }) {
   const hasScoutsMap = perks.some(p => p.id === "scouts-map");
-  const visibleFloors = hasScoutsMap ? currentFloor + 3 : currentFloor + 2;
+  const visibleFloors = hasScoutsMap ? currentFloor + 4 : currentFloor + 3;
 
   // Group nodes by floor
   const floors = useMemo(() => {
@@ -152,7 +152,7 @@ function DungeonMap({
   const reachableIds = new Set(currentNode?.connections ?? []);
 
   // Display range: show a window of floors around current floor
-  const startFloor = Math.max(0, currentFloor - 1);
+  const startFloor = Math.max(0, currentFloor - 2);
   const endFloor = Math.min(Math.max(...Array.from(floors.keys())), visibleFloors);
 
   const displayFloors: number[] = [];
@@ -161,23 +161,22 @@ function DungeonMap({
   }
 
   return (
-    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
-      <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">
-        Dungeon Map — Floor {currentFloor}
+    <div className="mx-auto w-full max-w-lg">
+      <p className="mb-4 text-center text-xs font-bold uppercase tracking-wider text-slate-500">
+        🗺️ Dungeon Map — Floor {currentFloor}
       </p>
-      <div className="space-y-2">
+      <div className="space-y-3">
         {displayFloors.map(floor => {
           const floorNodes = floors.get(floor) ?? [];
           return (
-            <div key={floor} className="flex items-center justify-center gap-3">
-              <span className="w-6 text-right text-[10px] font-mono text-slate-600">{floor}</span>
-              <div className="flex gap-2">
+            <div key={floor} className="flex items-center justify-center gap-4">
+              <span className="w-8 text-right text-xs font-mono text-slate-600">{floor}</span>
+              <div className="flex gap-3">
                 {[0, 1, 2].map(col => {
                   const node = floorNodes.find(n => n.col === col);
                   if (!node) {
-                    // Boss floors only have col=1
-                    if (floorNodes.length === 1 && floorNodes[0].col === 1 && col !== 1) return <div key={col} className="w-12 h-10" />;
-                    return <div key={col} className="w-12 h-10" />;
+                    if (floorNodes.length === 1 && floorNodes[0].col === 1 && col !== 1) return <div key={col} className="w-24 h-16" />;
+                    return <div key={col} className="w-24 h-16" />;
                   }
 
                   const isCurrent = node.id === currentNodeId;
@@ -191,11 +190,11 @@ function DungeonMap({
                       type="button"
                       disabled={!isReachable}
                       onClick={() => isReachable && onSelectNode(node)}
-                      className={`flex h-10 w-12 flex-col items-center justify-center rounded-lg border text-xs transition-all ${
+                      className={`flex h-16 w-24 flex-col items-center justify-center gap-0.5 rounded-xl border text-xs transition-all ${
                         isCurrent
-                          ? "border-emerald-500/50 bg-emerald-500/20 ring-1 ring-emerald-500/30 scale-110"
+                          ? "border-emerald-500/50 bg-emerald-500/20 ring-2 ring-emerald-500/30 scale-105"
                           : isReachable
-                            ? "border-white/20 bg-white/[0.06] hover:bg-white/[0.12] hover:border-white/30 cursor-pointer"
+                            ? "border-white/20 bg-white/[0.06] hover:bg-white/[0.12] hover:border-white/30 hover:scale-105 cursor-pointer"
                             : node.visited
                               ? "border-white/[0.04] bg-white/[0.01] opacity-40"
                               : isHidden
@@ -204,10 +203,10 @@ function DungeonMap({
                       }`}
                       title={`${info.label}${node.difficulty ? ` (${node.difficulty})` : ""}`}
                     >
-                      <span className="text-sm leading-none">{isHidden ? "?" : info.icon}</span>
+                      <span className="text-xl leading-none">{isHidden ? "?" : info.icon}</span>
                       {!isHidden && (
-                        <span className={`text-[8px] font-bold ${info.color}`}>
-                          {node.type === "boss" ? "BOSS" : info.label.slice(0, 4).toUpperCase()}
+                        <span className={`text-[10px] font-bold ${info.color}`}>
+                          {node.type === "boss" ? "BOSS" : info.label}
                         </span>
                       )}
                     </button>
@@ -237,7 +236,7 @@ function BattleBoard({
   onSolved: () => void;
   onFailed: () => void;
 }) {
-  const { ref: boardRef, size: boardSize } = useBoardSize(480, { evalBar: false });
+  const { ref: boardRef, size: boardSize } = useBoardSize(600, { evalBar: false });
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
@@ -474,7 +473,7 @@ function BattleBoard({
       </div>
 
       {/* Board */}
-      <div ref={boardRef} className="w-full max-w-[480px]">
+      <div ref={boardRef} className="w-full max-w-[600px]">
         <Chessboard
           id="dungeon-battle"
           position={fen}
@@ -1277,117 +1276,112 @@ export default function DungeonPage() {
           </div>
         )}
 
-        {/* Main content — depends on status */}
-        <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
-          {/* Center area */}
-          <div className="flex flex-col items-center justify-center min-h-[400px]">
-            {run.status === "exploring" && (
-              <div className="text-center">
-                <span className="text-5xl">🗺️</span>
-                <h2 className="mt-3 text-xl font-bold text-white">Choose Your Path</h2>
-                <p className="mt-1 text-sm text-slate-400">
-                  Select a node on the map to continue your journey
-                </p>
-              </div>
-            )}
-
-            {run.status === "battle" && loading && (
-              <div className="text-center">
-                <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-white/10 border-t-emerald-400" />
-                <p className="mt-4 text-sm text-slate-400">Summoning puzzle…</p>
-              </div>
-            )}
-
-            {run.status === "battle" && puzzle && !loading && (
-              <BattleBoard
-                puzzle={puzzle}
-                run={run}
-                onSolved={handlePuzzleSolved}
-                onFailed={handlePuzzleFailed}
-              />
-            )}
-
-            {run.status === "perk-select" && (
-              <PerkSelect
-                choices={run.perkChoices}
-                onPick={handlePerkPick}
-                onSkip={handlePerkSkip}
-              />
-            )}
-
-            {run.status === "event" && run.activeEvent && (
-              <EventScreen
-                event={run.activeEvent}
-                onChoice={handleEventChoice}
-              />
-            )}
-
-            {run.status === "rest" && (
-              <RestScreen
-                stats={run.stats}
-                onHeal={() => handleRest("heal")}
-                onUpgrade={() => handleRest("upgrade")}
-              />
-            )}
-
-            {run.status === "shop" && (
-              <ShopScreen
-                coins={run.coins}
-                stats={run.stats}
-                onBuy={handleShopBuy}
-                onLeave={() => setRun({ ...run, status: "exploring" })}
-              />
-            )}
+        {/* Perks bar (compact, always visible) */}
+        {run.perks.length > 0 && (
+          <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mr-1">🎒 Perks</span>
+            {run.perks.map((p, i) => <PerkBadge key={`${p.id}-${i}`} perk={p} small />)}
           </div>
+        )}
 
-          {/* Sidebar — map + perks */}
-          <div className="space-y-4 lg:order-first lg:order-none">
-            <DungeonMap
-              nodes={run.map}
-              currentNodeId={run.currentNodeId}
-              currentFloor={run.currentFloor}
-              perks={run.perks}
-              onSelectNode={navigateToNode}
-            />
+        {/* Main content — single full-width panel, one view at a time */}
+        <div className="flex flex-col items-center">
+          {/* Exploring: show map full-width */}
+          {run.status === "exploring" && (
+            <div className="w-full max-w-2xl">
+              <DungeonMap
+                nodes={run.map}
+                currentNodeId={run.currentNodeId}
+                currentFloor={run.currentFloor}
+                perks={run.perks}
+                onSelectNode={navigateToNode}
+              />
 
-            {/* Perks inventory */}
-            {run.perks.length > 0 && (
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
-                <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-                  🎒 Perks ({run.perks.length})
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {run.perks.map((p, i) => <PerkBadge key={`${p.id}-${i}`} perk={p} small />)}
+              {/* Run stats — compact row */}
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-500">Solved</span>
+                  <span className="font-bold text-emerald-400">{run.puzzlesSolved}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-500">Failed</span>
+                  <span className="font-bold text-red-400">{run.puzzlesFailed}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-500">Best Streak</span>
+                  <span className="font-bold text-orange-400">{run.bestStreak}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-500">Coins</span>
+                  <span className="font-bold text-amber-400">{run.coins}</span>
                 </div>
               </div>
-            )}
 
-            {/* Run stats */}
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
-              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-                Run Stats
-              </p>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="text-slate-500">Puzzles Solved</div>
-                <div className="text-right text-emerald-400 font-medium">{run.puzzlesSolved}</div>
-                <div className="text-slate-500">Puzzles Failed</div>
-                <div className="text-right text-red-400 font-medium">{run.puzzlesFailed}</div>
-                <div className="text-slate-500">Best Streak</div>
-                <div className="text-right text-orange-400 font-medium">{run.bestStreak}</div>
-                <div className="text-slate-500">Coins Earned</div>
-                <div className="text-right text-amber-400 font-medium">{run.coins}</div>
+              {/* Abandon run */}
+              <div className="mt-4 text-center">
+                <button
+                  type="button"
+                  onClick={() => { setRun(null); setShowStartScreen(true); }}
+                  className="rounded-lg border border-red-500/10 px-4 py-1.5 text-xs text-red-400/60 transition-colors hover:text-red-400 hover:border-red-500/30"
+                >
+                  Abandon Run
+                </button>
               </div>
             </div>
+          )}
 
-            {/* Abandon run */}
-            <button
-              type="button"
-              onClick={() => { setRun(null); setShowStartScreen(true); }}
-              className="w-full rounded-lg border border-red-500/10 px-3 py-1.5 text-xs text-red-400/60 transition-colors hover:text-red-400 hover:border-red-500/30"
-            >
-              Abandon Run
-            </button>
-          </div>
+          {/* Battle — full-width board, no map */}
+          {run.status === "battle" && loading && (
+            <div className="text-center min-h-[400px] flex flex-col items-center justify-center">
+              <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-white/10 border-t-emerald-400" />
+              <p className="mt-4 text-sm text-slate-400">Summoning puzzle…</p>
+            </div>
+          )}
+
+          {run.status === "battle" && puzzle && !loading && (
+            <BattleBoard
+              puzzle={puzzle}
+              run={run}
+              onSolved={handlePuzzleSolved}
+              onFailed={handlePuzzleFailed}
+            />
+          )}
+
+          {/* Perk selection */}
+          {run.status === "perk-select" && (
+            <PerkSelect
+              choices={run.perkChoices}
+              onPick={handlePerkPick}
+              onSkip={handlePerkSkip}
+            />
+          )}
+
+          {/* Mystery event */}
+          {run.status === "event" && run.activeEvent && (
+            <EventScreen
+              event={run.activeEvent}
+              onChoice={handleEventChoice}
+            />
+          )}
+
+          {/* Rest */}
+          {run.status === "rest" && (
+            <RestScreen
+              stats={run.stats}
+              onHeal={() => handleRest("heal")}
+              onUpgrade={() => handleRest("upgrade")}
+            />
+          )}
+
+          {/* Shop */}
+          {run.status === "shop" && (
+            <ShopScreen
+              coins={run.coins}
+              stats={run.stats}
+              onBuy={handleShopBuy}
+              onLeave={() => setRun({ ...run, status: "exploring" })}
+            />
+          )}
         </div>
       </div>
     </div>
