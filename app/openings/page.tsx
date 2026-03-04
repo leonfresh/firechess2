@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import type { Metadata } from "next";
+import { Chess } from "chess.js";
+import { Chessboard } from "react-chessboard";
+import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";
 import {
   OPENING_GUIDES,
   OPENING_CATEGORIES,
@@ -30,17 +32,224 @@ function DifficultyBadge({ level }: { level: string }) {
 }
 
 /* ------------------------------------------------------------------ */
-/*  Position Card (mini board placeholder with FEN label)               */
+/*  Line Player — animated board that plays through the opening         */
+/* ------------------------------------------------------------------ */
+
+/** Parse a move string like "1.e4 e5 2.Nf3 Nc6 3.Bc4" → ["e4","e5","Nf3","Nc6","Bc4"] */
+function parseSanMoves(raw: string): string[] {
+  return raw
+    .replace(/\d+\./g, "")       // strip move numbers
+    .replace(/\.\.\./g, "")       // strip ellipses
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function LinePlayer({ moves: rawMoves, boardWidth }: { moves: string; boardWidth: number }) {
+  const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
+
+  const sans = useMemo(() => parseSanMoves(rawMoves), [rawMoves]);
+
+  /* Build all FENs from start through each move */
+  const fens = useMemo(() => {
+    const g = new Chess();
+    const arr = [g.fen()];
+    for (const san of sans) {
+      try {
+        g.move(san);
+        arr.push(g.fen());
+      } catch {
+        break;
+      }
+    }
+    return arr;
+  }, [sans]);
+
+  const maxIndex = fens.length - 1;
+  const [index, setIndex] = useState(0);
+  const [playing, setPlaying] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Reset when the component remounts / rawMoves changes
+  useEffect(() => {
+    setIndex(0);
+    setPlaying(false);
+  }, [rawMoves]);
+
+  // Auto-play interval
+  useEffect(() => {
+    if (playing) {
+      timerRef.current = setInterval(() => {
+        setIndex((prev) => {
+          if (prev >= maxIndex) {
+            setPlaying(false);
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 900);
+    }
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [playing, maxIndex]);
+
+  const goBack = useCallback(() => { setPlaying(false); setIndex((p) => Math.max(0, p - 1)); }, []);
+  const goForward = useCallback(() => { setPlaying(false); setIndex((p) => Math.min(maxIndex, p)); }, [maxIndex]);
+  const goForwardStep = useCallback(() => { setPlaying(false); setIndex((p) => Math.min(maxIndex, p + 1)); }, [maxIndex]);
+  const reset = useCallback(() => { setPlaying(false); setIndex(0); }, []);
+  const togglePlay = useCallback(() => {
+    setPlaying((p) => {
+      // if at end, restart
+      if (!p) setIndex((i) => (i >= maxIndex ? 0 : i));
+      return !p;
+    });
+  }, [maxIndex]);
+
+  /* Move label under the board */
+  const moveLabel = useMemo(() => {
+    if (index === 0) return "Starting position";
+    const moveNum = Math.ceil(index / 2);
+    const isBlack = index % 2 === 0;
+    return `${moveNum}${isBlack ? "..." : "."} ${sans[index - 1]}`;
+  }, [index, sans]);
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      {/* Board */}
+      <div className="rounded-xl overflow-hidden">
+        <Chessboard
+          id={`opening-${rawMoves.slice(0, 20)}`}
+          position={fens[index]}
+          boardWidth={boardWidth}
+          arePiecesDraggable={false}
+          animationDuration={300}
+          customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+          customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+          customPieces={customPieces}
+        />
+      </div>
+
+      {/* Move label */}
+      <p className="text-xs font-mono text-slate-400">{moveLabel}</p>
+
+      {/* Transport controls */}
+      <div className="flex items-center gap-1">
+        {/* Reset */}
+        <button
+          type="button"
+          onClick={reset}
+          disabled={index === 0 && !playing}
+          className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+          title="Reset"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path d="M11 19l-7-7 7-7M18 19l-7-7 7-7" />
+          </svg>
+        </button>
+        {/* Step back */}
+        <button
+          type="button"
+          onClick={goBack}
+          disabled={index === 0}
+          className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+          title="Back"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        {/* Play / Pause */}
+        <button
+          type="button"
+          onClick={togglePlay}
+          className="rounded-lg bg-emerald-500/15 px-3 py-1.5 text-emerald-400 transition-colors hover:bg-emerald-500/25"
+          title={playing ? "Pause" : "Play"}
+        >
+          {playing ? (
+            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+              <rect x="6" y="4" width="4" height="16" rx="1" />
+              <rect x="14" y="4" width="4" height="16" rx="1" />
+            </svg>
+          ) : (
+            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          )}
+        </button>
+        {/* Step forward */}
+        <button
+          type="button"
+          onClick={goForwardStep}
+          disabled={index >= maxIndex}
+          className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+          title="Forward"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+        {/* End */}
+        <button
+          type="button"
+          onClick={() => { setPlaying(false); setIndex(maxIndex); }}
+          disabled={index >= maxIndex}
+          className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400"
+          title="Go to end"
+        >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path d="M13 5l7 7-7 7M6 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Progress dots */}
+      <div className="flex gap-1 flex-wrap justify-center">
+        {fens.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => { setPlaying(false); setIndex(i); }}
+            className={`h-1.5 rounded-full transition-all ${
+              i === index
+                ? "w-4 bg-emerald-400"
+                : i < index
+                  ? "w-1.5 bg-emerald-400/40"
+                  : "w-1.5 bg-white/10"
+            }`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Position Card (mini board with label)                               */
 /* ------------------------------------------------------------------ */
 
 function PositionCard({ fen, label, note }: { fen: string; label: string; note: string }) {
+  const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
+
   return (
     <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-      <p className="text-xs font-bold text-white">{label}</p>
-      <p className="mt-1 text-[11px] leading-relaxed text-slate-400">{note}</p>
-      <p className="mt-2 select-all rounded bg-black/30 px-2 py-1 font-mono text-[10px] text-slate-500 break-all">
-        {fen}
-      </p>
+      <p className="text-xs font-bold text-white mb-2">{label}</p>
+      <div className="flex justify-center rounded-lg overflow-hidden mb-2">
+        <Chessboard
+          id={`pos-${fen.slice(0, 16)}`}
+          position={fen}
+          boardWidth={180}
+          arePiecesDraggable={false}
+          animationDuration={0}
+          showBoardNotation={false}
+          customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+          customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+          customPieces={customPieces}
+        />
+      </div>
+      <p className="text-[11px] leading-relaxed text-slate-400">{note}</p>
     </div>
   );
 }
@@ -85,6 +294,11 @@ function GuideCard({ guide }: { guide: OpeningGuide }) {
       {/* Expanded body */}
       {open && (
         <div className="border-t border-white/[0.06] px-5 pb-5 pt-4 space-y-5">
+          {/* Opening Line Board — play through the moves */}
+          <div className="flex justify-center">
+            <LinePlayer moves={guide.moves} boardWidth={280} />
+          </div>
+
           {/* Key Ideas */}
           <Section title="💡 Key Ideas">
             <ul className="space-y-1">
