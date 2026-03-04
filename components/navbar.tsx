@@ -11,6 +11,7 @@ import { useCoinBalance } from "@/lib/use-coins";
 
 const NAV_LINKS = [
   { href: "/analyze", label: "Analyze" },
+  { href: "/guess", label: "Guess the Move" },
   { href: "/about", label: "About" },
 ];
 
