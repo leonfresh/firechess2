@@ -83,7 +83,7 @@ const TAG_OPTIONS = [
 
 export default function GuessTheMovePage() {
   // ── Board & theme ──
-  const { ref: boardRef, size: boardSize } = useBoardSize(400, { evalBar: false });
+  const { ref: boardRef, size: boardSize } = useBoardSize(560, { evalBar: false });
   const boardTheme = useBoardTheme();
   const showCoords = useShowCoordinates();
 
@@ -106,6 +106,10 @@ export default function GuessTheMovePage() {
   const [gameComplete, setGameComplete] = useState(false);
   const [guessingSide, setGuessingSide] = useState<"w" | "b" | "both">("both");
   const [loadError, setLoadError] = useState<string | null>(null);
+  /** Track the opponent's last move for board highlighting */
+  const [opponentLastMove, setOpponentLastMove] = useState<{ from: string; to: string } | null>(null);
+  /** Track the last guess result square + badge for the emoji overlay */
+  const [guessBadge, setGuessBadge] = useState<{ square: string; result: GuessResult } | null>(null);
   const moveListRef = useRef<HTMLDivElement>(null);
 
   // Preload sounds
@@ -136,6 +140,8 @@ export default function GuessTheMovePage() {
     setShowHint(false);
     setGameComplete(false);
     setGuessingSide(side);
+    setOpponentLastMove(null);
+    setGuessBadge(null);
     chess.reset();
     setBoardFen(chess.fen());
     setSelectedSquare(null);
@@ -191,6 +197,8 @@ export default function GuessTheMovePage() {
           const result = chess.move(moves[nextIdx]);
           if (result) {
             setBoardFen(chess.fen());
+            setOpponentLastMove({ from: result.from, to: result.to });
+            setGuessBadge(null);
             playSound(result.captured ? "capture" : "move");
             // Try to advance again
             const next2 = nextIdx + 1;
@@ -218,6 +226,7 @@ export default function GuessTheMovePage() {
           const result = chess.move(moves[0]);
           if (result) {
             setBoardFen(chess.fen());
+            setOpponentLastMove({ from: result.from, to: result.to });
             playSound(result.captured ? "capture" : "move");
             setCurrentMoveIdx(1);
             updateLegalMoves(chess);
@@ -276,6 +285,16 @@ export default function GuessTheMovePage() {
 
     setBoardFen(chess.fen());
 
+    // Get the actual move's destination for badge placement
+    const tempForActual = new Chess(fenBefore);
+    let actualTo = "";
+    try {
+      const am = tempForActual.move(actualSan);
+      if (am) actualTo = am.to;
+    } catch { /* */ }
+    setGuessBadge({ square: actualTo, result });
+    setOpponentLastMove(null);
+
     const guess: MoveGuess = {
       moveIdx: currentMoveIdx,
       san: userSan,
@@ -324,6 +343,13 @@ export default function GuessTheMovePage() {
   // ── Board highlights ──
   const squareStyles = useMemo(() => {
     const styles: Record<string, React.CSSProperties> = {};
+
+    // Highlight opponent's last move (from/to squares) in amber
+    if (opponentLastMove) {
+      styles[opponentLastMove.from] = { backgroundColor: "rgba(255, 170, 0, 0.35)" };
+      styles[opponentLastMove.to] = { backgroundColor: "rgba(255, 170, 0, 0.45)" };
+    }
+
     if (selectedSquare) {
       styles[selectedSquare] = { backgroundColor: "rgba(255, 255, 0, 0.4)" };
       const targets = legalMoves.get(selectedSquare) ?? [];
@@ -335,7 +361,7 @@ export default function GuessTheMovePage() {
       }
     }
     return styles;
-  }, [selectedSquare, legalMoves]);
+  }, [selectedSquare, legalMoves, opponentLastMove]);
 
   // ── Hint: highlight the destination square of the actual move ──
   const hintStyles = useMemo(() => {
@@ -375,6 +401,35 @@ export default function GuessTheMovePage() {
     return { correct, close, wrong: total - correct - close, total, points, maxPoints, percentage };
   }, [guesses]);
 
+  // ── Guess badge: emoji overlay on the destination square ──
+  const GUESS_BADGE_CONFIG: Record<GuessResult, { emoji: string; bg: string; title: string }> = {
+    correct: { emoji: "✅", bg: "rgba(16,185,129,0.85)", title: "Correct" },
+    close:   { emoji: "⚠️", bg: "rgba(245,158,11,0.85)", title: "Close" },
+    wrong:   { emoji: "❌", bg: "rgba(239,68,68,0.85)", title: "Wrong" },
+  };
+
+  const customSquareRenderer = useMemo(() => {
+    return ((props: any) => {
+      const sq = props?.square as string | undefined;
+      const showBadge = sq && guessBadge && sq === guessBadge.square;
+      const cfg = showBadge ? GUESS_BADGE_CONFIG[guessBadge!.result] : null;
+      return (
+        <div style={props?.style} className="relative h-full w-full">
+          {props?.children}
+          {showBadge && cfg && (
+            <span
+              className="pointer-events-none absolute -right-0.5 -top-0.5 z-[40] flex h-5 w-5 items-center justify-center rounded-full text-[11px] shadow-lg"
+              style={{ backgroundColor: cfg.bg }}
+              title={cfg.title}
+            >
+              {cfg.emoji}
+            </span>
+          )}
+        </div>
+      );
+    }) as any;
+  }, [guessBadge]);
+
   // ── Move number for display ──
   const currentMoveNumber = Math.floor(currentMoveIdx / 2) + 1;
   const currentSide = currentMoveIdx % 2 === 0 ? "w" : "b";
@@ -394,6 +449,8 @@ export default function GuessTheMovePage() {
     setGameComplete(false);
     setCurrentMoveIdx(0);
     setLastGuessResult(null);
+    setOpponentLastMove(null);
+    setGuessBadge(null);
     chess.reset();
     setBoardFen("start");
   }, [chess]);
@@ -625,7 +682,7 @@ export default function GuessTheMovePage() {
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
           {/* Board column */}
           <div className="flex flex-col items-center gap-3">
-            <div ref={boardRef} className="w-full max-w-[640px]">
+            <div ref={boardRef} className="w-full max-w-[560px]">
               <div className="overflow-hidden rounded-xl">
                 <Chessboard
                   id="guess-board"
@@ -640,6 +697,7 @@ export default function GuessTheMovePage() {
                   customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
                   showBoardNotation={showCoords}
                   customSquareStyles={{ ...squareStyles, ...hintStyles }}
+                  customSquare={customSquareRenderer}
                 />
               </div>
             </div>
@@ -667,7 +725,7 @@ export default function GuessTheMovePage() {
 
             {/* Game complete */}
             {gameComplete && (
-              <div className="coach-insight w-full max-w-[640px] rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/[0.06] to-purple-500/[0.03] p-6 text-center">
+              <div className="coach-insight w-full max-w-[560px] rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/[0.06] to-purple-500/[0.03] p-6 text-center">
                 <p className="gradient-text text-2xl font-black tracking-tight sm:text-3xl">
                   Game Complete!
                 </p>
@@ -711,7 +769,7 @@ export default function GuessTheMovePage() {
 
             {/* Controls: Hint + Move info */}
             {!gameComplete && (
-              <div className="flex w-full max-w-[640px] items-center justify-between gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+              <div className="flex w-full max-w-[560px] items-center justify-between gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
                 <div className="flex items-center gap-3">
                   <span className={`flex h-8 w-8 items-center justify-center rounded-lg text-sm font-black ${currentSide === "w" ? "bg-white text-gray-900" : "bg-gray-800 text-white"}`}>
                     {currentMoveNumber}
