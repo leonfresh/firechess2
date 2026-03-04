@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 import { useBoardSize } from "@/lib/use-board-size";
-import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
+import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
 import type { RepeatedOpeningLeak } from "@/lib/types";
 
 /* ── Mini eval bar (matches the real EvalBar look) ── */
@@ -274,6 +274,7 @@ function leaksToScenarios(leaks: RepeatedOpeningLeak[]): DemoScenario[] {
 export function HeroDemoBoard({ paused, userLeaks }: { paused?: boolean; userLeaks?: RepeatedOpeningLeak[] }) {
   const { ref: heroBoardRef, size: heroBoardSize } = useBoardSize(380);
   const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
   const [index, setIndex] = useState(0);
   const [autoplay, setAutoplay] = useState(true);
@@ -370,6 +371,7 @@ export function HeroDemoBoard({ paused, userLeaks }: { paused?: boolean; userLea
                   customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
                   customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
                   showBoardNotation={showCoords}
+                  customPieces={customPieces}
                 />
               </div>
             </div>

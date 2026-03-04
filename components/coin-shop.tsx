@@ -15,17 +15,22 @@ import {
   BOARD_THEMES,
   PROFILE_TITLES,
   EVAL_BAR_SKINS,
+  PIECE_THEMES,
   getActiveThemeId,
   setActiveTheme,
   getActiveTitleId,
   setActiveTitle,
   getActiveEvalSkinId,
   setActiveEvalSkin,
+  getActivePieceThemeId,
+  setActivePieceTheme,
+  getPieceImageUrl,
   getShowCoordinates,
   setShowCoordinates,
   type BoardTheme,
   type ProfileTitle,
   type EvalBarSkin,
+  type PieceTheme,
 } from "@/lib/board-themes";
 import { useCoinBalance, useCoinLog } from "@/lib/use-coins";
 
@@ -39,6 +44,7 @@ export function CoinShop() {
   const [activeTheme, setActiveThemeState] = useState("classic");
   const [activeTitle, setActiveTitleState] = useState<string | null>(null);
   const [activeEvalSkin, setActiveEvalSkinState] = useState("eval-default");
+  const [activePieceTheme, setActivePieceThemeState] = useState("piece-default");
   const [purchased, setPurchased] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -48,6 +54,7 @@ export function CoinShop() {
     setActiveThemeState(getActiveThemeId());
     setActiveTitleState(getActiveTitleId());
     setActiveEvalSkinState(getActiveEvalSkinId());
+    setActivePieceThemeState(getActivePieceThemeId());
     setShowCoordsState(getShowCoordinates());
     // Build purchased list
     const p: string[] = [];
@@ -58,6 +65,9 @@ export function CoinShop() {
       if (hasPurchased(t.id)) p.push(t.id);
     }
     for (const t of EVAL_BAR_SKINS) {
+      if (t.price === 0 || hasPurchased(t.id)) p.push(t.id);
+    }
+    for (const t of PIECE_THEMES) {
       if (t.price === 0 || hasPurchased(t.id)) p.push(t.id);
     }
     setPurchased(p);
@@ -144,6 +154,32 @@ export function CoinShop() {
       setActiveEvalSkin(skin.id);
       setActiveEvalSkinState(skin.id);
       showToast(`Purchased & equipped: ${skin.name}`);
+    },
+    [showToast]
+  );
+
+  const handleBuyPieceTheme = useCallback(
+    (pt: PieceTheme) => {
+      if (pt.price === 0) {
+        setActivePieceTheme(pt.id);
+        setActivePieceThemeState(pt.id);
+        return;
+      }
+      if (hasPurchased(pt.id)) {
+        setActivePieceTheme(pt.id);
+        setActivePieceThemeState(pt.id);
+        showToast(`Equipped: ${pt.name}`);
+        return;
+      }
+      const ok = spendCoins(pt.price, pt.id);
+      if (!ok) {
+        showToast("Not enough coins!");
+        return;
+      }
+      setPurchased((p) => [...p, pt.id]);
+      setActivePieceTheme(pt.id);
+      setActivePieceThemeState(pt.id);
+      showToast(`Purchased & equipped: ${pt.name}`);
     },
     [showToast]
   );
@@ -286,6 +322,70 @@ export function CoinShop() {
                         d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
                         clipRule="evenodd"
                       />
+                    </svg>
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ─── Eval Bar Skins ─── */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-white">Piece Sets</h3>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          {PIECE_THEMES.map((pt) => {
+            const owned = pt.price === 0 || purchased.includes(pt.id);
+            const active = activePieceTheme === pt.id;
+            return (
+              <button
+                key={pt.id}
+                onClick={() => handleBuyPieceTheme(pt)}
+                className={`group relative overflow-hidden rounded-xl border p-3 text-left transition-all ${
+                  active
+                    ? "border-emerald-500/40 bg-emerald-500/[0.06]"
+                    : "border-white/5 bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.04]"
+                }`}
+              >
+                {/* Preview — 4 piece images */}
+                {pt.setName ? (
+                  <div className="mb-2 grid grid-cols-4 gap-0.5">
+                    {(["wK", "wQ", "bN", "bR"] as const).map((piece) => (
+                      <img
+                        key={piece}
+                        src={getPieceImageUrl(pt.setName!, piece)}
+                        alt={piece}
+                        className="h-7 w-7 object-contain"
+                        loading="lazy"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mb-2 flex h-7 items-center justify-center">
+                    <span className="text-xs text-white/30">Default</span>
+                  </div>
+                )}
+
+                <p className="text-xs font-medium text-white">{pt.name}</p>
+                <p className="text-[10px] text-white/25">{pt.style}</p>
+
+                <div className="mt-1">
+                  {active ? (
+                    <span className="text-[10px] font-bold text-emerald-400">Active</span>
+                  ) : owned ? (
+                    <span className="text-[10px] text-white/30">Owned</span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-[10px] text-amber-400">
+                      <span>🪙</span> {pt.price}
+                    </span>
+                  )}
+                </div>
+
+                {!owned && (
+                  <div className="absolute right-1.5 top-1.5 rounded-full bg-black/30 p-1">
+                    <svg className="h-3 w-3 text-white/30" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
                     </svg>
                   </div>
                 )}

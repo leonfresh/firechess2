@@ -19,7 +19,7 @@ import { Chessboard } from "react-chessboard";
 import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
 import { useSession } from "@/components/session-provider";
 import { useBoardSize } from "@/lib/use-board-size";
-import { useBoardTheme } from "@/lib/use-coins";
+import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
 import { EvalBar } from "@/components/eval-bar";
 import { earnCoins } from "@/lib/coins";
@@ -442,6 +442,7 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
   const containerRef = useRef<HTMLDivElement>(null);
   const { ref: boardRef, size: boardSize } = useBoardSize(720, { evalBar: false });
   const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
   const [game, setGame] = useState(() => new Chess(fen));
   const [moveIndex, setMoveIndex] = useState(-1); // -1 = waiting for trigger move
   const [status, setStatus] = useState<"playing" | "correct" | "wrong">("playing");
@@ -631,6 +632,7 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
           customSquareStyles={customSquareStyles}
           customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
           customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+          customPieces={customPieces}
         />
         {moveIndicator && (
           <MoveIndicator
@@ -684,6 +686,7 @@ type SimpleBoardProps = {
 function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
   const { ref: boardRef, size: boardSize } = useBoardSize(720, { evalBar: false });
   const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
   const [game, setGame] = useState(() => new Chess(position.fen));
   const [status, setStatus] = useState<"playing" | "correct" | "wrong">("playing");
   const [attempts, setAttempts] = useState(0);
@@ -786,6 +789,7 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
           customSquareStyles={customSquareStyles}
           customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
           customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+          customPieces={customPieces}
         />
         {moveIndicator && (
           <MoveIndicator
@@ -839,6 +843,7 @@ type TimePressureBoardProps = {
 function TimePressureBoard({ position, onResult, showHint }: TimePressureBoardProps) {
   const { ref: boardRef, size: boardSize } = useBoardSize(720, { evalBar: false });
   const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
   const [game, setGame] = useState(() => new Chess(position.fen));
   const [status, setStatus] = useState<"playing" | "correct" | "wrong">("playing");
   const [attempts, setAttempts] = useState(0);
@@ -983,6 +988,7 @@ function TimePressureBoard({ position, onResult, showHint }: TimePressureBoardPr
           customSquareStyles={customSquareStyles}
           customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
           customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+          customPieces={customPieces}
         />
         {moveIndicator && (
           <MoveIndicator

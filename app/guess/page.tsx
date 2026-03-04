@@ -14,7 +14,7 @@ import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types"
 import { Chessboard } from "react-chessboard";
 import { SAMPLE_GAMES, GAME_CATEGORIES, type SampleGame, type GameCategory } from "@/lib/sample-games";
 import { useBoardSize } from "@/lib/use-board-size";
-import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
+import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
 import { stockfishClient } from "@/lib/stockfish-client";
 
@@ -130,6 +130,7 @@ export default function GuessTheMovePage() {
   // ── Board & theme ──
   const { ref: boardRef, size: boardSize } = useBoardSize(560, { evalBar: false });
   const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
 
   // ── Game selection state ──
@@ -819,6 +820,7 @@ export default function GuessTheMovePage() {
                   showBoardNotation={showCoords}
                   customSquareStyles={{ ...squareStyles, ...hintStyles }}
                   customSquare={customSquareRenderer}
+                  customPieces={customPieces}
                 />
               </div>
             </div>

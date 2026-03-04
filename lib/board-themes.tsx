@@ -1,3 +1,5 @@
+import React from "react";
+
 /**
  * Board themes — cosmetic board colour schemes purchasable with coins.
  *
@@ -107,6 +109,116 @@ export const BOARD_THEMES: BoardTheme[] = [
     preview: ["#c44536", "#f7e1bf"],
   },
 ];
+
+/* ================================================================== */
+/*  Piece Themes (Lichess piece sets)                                   */
+/* ================================================================== */
+
+/**
+ * Piece sets sourced from Lichess (github.com/lichess-org/lila).
+ * SVGs served from GitHub raw CDN.
+ * react-chessboard expects piece codes like "wP", "wN", "wB", "wR", "wQ", "wK",
+ * "bP", "bN", "bB", "bR", "bQ", "bK" — which matches Lichess file naming exactly.
+ */
+
+const LICHESS_PIECE_CDN = "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece";
+
+export type PieceTheme = {
+  id: string;
+  name: string;
+  /** Coin cost (0 = free / default) */
+  price: number;
+  /** Lichess set folder name — used to build CDN URLs.  null = react-chessboard default */
+  setName: string | null;
+  /** Descriptive style tag */
+  style: string;
+};
+
+export const PIECE_THEMES: PieceTheme[] = [
+  { id: "piece-default", name: "Default",       price: 0,   setName: null,             style: "Classic" },
+  { id: "piece-cburnett", name: "CBurnett",     price: 0,   setName: "cburnett",       style: "Standard" },
+  { id: "piece-merida",  name: "Merida",         price: 30,  setName: "merida",         style: "Traditional" },
+  { id: "piece-alpha",   name: "Alpha",          price: 30,  setName: "alpha",          style: "Clean" },
+  { id: "piece-california", name: "California",  price: 40,  setName: "california",     style: "Modern" },
+  { id: "piece-cardinal", name: "Cardinal",      price: 40,  setName: "cardinal",       style: "Elegant" },
+  { id: "piece-staunty", name: "Staunty",        price: 50,  setName: "staunty",        style: "Classic" },
+  { id: "piece-tatiana",  name: "Tatiana",        price: 50,  setName: "tatiana",        style: "Ornate" },
+  { id: "piece-maestro",  name: "Maestro",        price: 60,  setName: "maestro",        style: "Bold" },
+  { id: "piece-fresca",   name: "Fresca",         price: 60,  setName: "fresca",         style: "Minimal" },
+  { id: "piece-gioco",    name: "Gioco",          price: 70,  setName: "gioco",          style: "Modern" },
+  { id: "piece-governor", name: "Governor",       price: 70,  setName: "governor",       style: "Regal" },
+  { id: "piece-kosal",    name: "Kosal",          price: 80,  setName: "kosal",          style: "Artistic" },
+  { id: "piece-chessnut", name: "Chessnut",       price: 80,  setName: "chessnut",       style: "Chunky" },
+  { id: "piece-companion", name: "Companion",     price: 90,  setName: "companion",      style: "Clean" },
+  { id: "piece-pixel",    name: "Pixel",          price: 90,  setName: "pixel",          style: "Retro" },
+  { id: "piece-horsey",   name: "Horsey",         price: 100, setName: "horsey",         style: "Fun" },
+  { id: "piece-anarcandy", name: "Anarcandy",     price: 100, setName: "anarcandy",      style: "Colorful" },
+  { id: "piece-fantasy",  name: "Fantasy",         price: 120, setName: "fantasy",        style: "Decorative" },
+  { id: "piece-spatial",  name: "Spatial",         price: 120, setName: "spatial",        style: "3D" },
+  { id: "piece-celtic",   name: "Celtic",          price: 150, setName: "celtic",         style: "Ornate" },
+  { id: "piece-monarchy", name: "Monarchy",        price: 150, setName: "monarchy",       style: "Royal" },
+  { id: "piece-disguised", name: "Disguised",       price: 200, setName: "disguised",      style: "Mystery" },
+  { id: "piece-letter",   name: "Letter",          price: 200, setName: "letter",         style: "Minimalist" },
+];
+
+/**
+ * Build the URL for a specific piece image.
+ * @param setName - Lichess set folder name
+ * @param piece   - e.g. "wK", "bQ"
+ */
+export function getPieceImageUrl(setName: string, piece: string): string {
+  return `${LICHESS_PIECE_CDN}/${setName}/${piece}.svg`;
+}
+
+/**
+ * Generate the customPieces prop for react-chessboard.
+ * Returns undefined (use defaults) when setName is null.
+ */
+export function getCustomPieces(
+  setName: string | null,
+): Record<string, ({ squareWidth }: { squareWidth: number }) => React.ReactElement> | undefined {
+  if (!setName) return undefined;
+
+  const pieces = ["wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK"];
+  const result: Record<string, ({ squareWidth }: { squareWidth: number }) => React.ReactElement> = {};
+
+  for (const p of pieces) {
+    const url = getPieceImageUrl(setName, p);
+    result[p] = ({ squareWidth }: { squareWidth: number }) => (
+      <div
+        style={{
+          width: squareWidth,
+          height: squareWidth,
+          backgroundImage: `url(${url})`,
+          backgroundSize: "contain",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "center",
+        }}
+      />
+    );
+  }
+
+  return result;
+}
+
+/* ─── Active piece theme (localStorage) ─── */
+
+const KEY_ACTIVE_PIECE_THEME = "fc-piece-theme";
+
+export function getActivePieceThemeId(): string {
+  if (typeof window === "undefined") return "piece-default";
+  return localStorage.getItem(KEY_ACTIVE_PIECE_THEME) ?? "piece-default";
+}
+
+export function getActivePieceTheme(): PieceTheme {
+  const id = getActivePieceThemeId();
+  return PIECE_THEMES.find((t) => t.id === id) ?? PIECE_THEMES[0];
+}
+
+export function setActivePieceTheme(id: string): void {
+  localStorage.setItem(KEY_ACTIVE_PIECE_THEME, id);
+  window.dispatchEvent(new CustomEvent("fc-piece-theme-changed", { detail: id }));
+}
 
 /* ------------------------------------------------------------------ */
 /*  Profile titles                                                      */

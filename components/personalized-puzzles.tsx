@@ -13,7 +13,7 @@ import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 import type { Square as CbSquare, PromotionPieceOption } from "react-chessboard/dist/chessboard/types";
 import { useBoardSize } from "@/lib/use-board-size";
-import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
+import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
 import type { MissedTactic, EndgameMistake, RepeatedOpeningLeak } from "@/lib/types";
 
@@ -203,6 +203,7 @@ function PuzzleBoard({
 }) {
   const { ref: boardRef, size: boardSize } = useBoardSize(560);
   const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
 
   const [queue, setQueue] = useState<LichessPuzzle[]>(initialPuzzles);
@@ -635,6 +636,7 @@ function PuzzleBoard({
                 customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
                 customSquareStyles={customSquareStyles}
                 showBoardNotation={showCoords}
+                customPieces={customPieces}
               />
           </div>
 

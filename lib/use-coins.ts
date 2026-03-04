@@ -5,16 +5,19 @@
  * Listens for custom events so all components update in sync.
  */
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { getBalance, getLog, syncCoinsFromDb, type CoinTransaction } from "@/lib/coins";
 import {
   getActiveTheme,
   getActiveTitle,
   getActiveEvalSkin,
   getShowCoordinates,
+  getActivePieceTheme,
+  getCustomPieces,
   type BoardTheme,
   type ProfileTitle,
   type EvalBarSkin,
+  type PieceTheme,
 } from "@/lib/board-themes";
 
 /* ------------------------------------------------------------------ */
@@ -127,4 +130,30 @@ export function useShowCoordinates(): boolean {
   }, []);
 
   return show;
+}
+
+/* ------------------------------------------------------------------ */
+/*  usePieceTheme — reactive piece set                                  */
+/* ------------------------------------------------------------------ */
+
+export function usePieceTheme(): PieceTheme {
+  const [pt, setPt] = useState<PieceTheme>(() => getActivePieceTheme());
+
+  useEffect(() => {
+    setPt(getActivePieceTheme());
+    const handler = () => setPt(getActivePieceTheme());
+    window.addEventListener("fc-piece-theme-changed", handler);
+    return () => window.removeEventListener("fc-piece-theme-changed", handler);
+  }, []);
+
+  return pt;
+}
+
+/* ------------------------------------------------------------------ */
+/*  useCustomPieces — memoised customPieces prop for react-chessboard   */
+/* ------------------------------------------------------------------ */
+
+export function useCustomPieces() {
+  const pt = usePieceTheme();
+  return useMemo(() => getCustomPieces(pt.setName), [pt.setName]);
 }

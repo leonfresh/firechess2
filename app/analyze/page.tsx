@@ -20,7 +20,7 @@ import { ExplanationModal } from "@/components/explanation-modal";
 import { explainMoves, type PositionExplanation } from "@/lib/position-explainer";
 import { stockfishPool } from "@/lib/stockfish-client";
 import { useBoardSize } from "@/lib/use-board-size";
-import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
+import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
 import { SAMPLE_GAMES, GAME_CATEGORIES, type GameCategory } from "@/lib/sample-games";
 
@@ -442,6 +442,7 @@ export default function AnalyzePage() {
   /* ── Hooks ── */
   const { ref: boardRef, size: boardSize } = useBoardSize(540);
   const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
   const moveListRef = useRef<HTMLDivElement>(null);
 
@@ -1252,6 +1253,7 @@ export default function AnalyzePage() {
                         showBoardNotation={showCoords}
                         customSquareStyles={analyzeSquareStyles}
                         customSquare={analyzeCustomSquare}
+                        customPieces={customPieces}
                       />
                     </div>
                   </div>

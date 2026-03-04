@@ -29,7 +29,7 @@ import { PersonalizedPuzzles } from "@/components/personalized-puzzles";
 import { Chessboard } from "react-chessboard";
 import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
 import { Chess, type PieceSymbol } from "chess.js";
-import { useBoardTheme } from "@/lib/use-coins";
+import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";
 
 /* ── Inline help tooltip ── */
 function HelpTip({ text }: { text: string }) {
@@ -109,6 +109,7 @@ export default function HomePage() {
   const reportRef = useRef<HTMLElement>(null);
   const pngRef = useRef<HTMLDivElement>(null);
   const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
   const hasProAccess = sessionPlan === "pro" || sessionPlan === "lifetime" || localProEnabled;
   const gamesOverFreeLimit = gameRangeMode === "count" && gameCount > FREE_MAX_GAMES;
   const depthOverFreeLimit = engineDepth > FREE_MAX_DEPTH;
@@ -2709,6 +2710,7 @@ export default function HomePage() {
                                       customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
                                       customBoardStyle={{ borderRadius: "0px" }}
                                       showBoardNotation={false}
+                                      customPieces={customPieces}
                                     />
                                   </div>
                                   <div className="text-center">

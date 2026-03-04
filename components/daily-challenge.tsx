@@ -6,7 +6,7 @@ import { Chessboard } from "react-chessboard";
 import { useBoardSize } from "@/lib/use-board-size";
 import { playSound } from "@/lib/sounds";
 import { earnCoins } from "@/lib/coins";
-import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
+import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
 import type { MissedTactic, MoveSquare } from "@/lib/types";
 
 /* ------------------------------------------------------------------ */
@@ -86,6 +86,7 @@ type ChallengeState = "ready" | "correct" | "wrong" | "revealed";
 export function DailyChallenge({ allTactics }: DailyChallengeProps) {
   const { ref: boardRef, size: boardSize } = useBoardSize(280);
   const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
 
   const tactic = useMemo(() => {
@@ -311,6 +312,7 @@ export function DailyChallenge({ allTactics }: DailyChallengeProps) {
             customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
             customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
             showBoardNotation={showCoords}
+            customPieces={customPieces}
           />
         </div>
 

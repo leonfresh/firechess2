@@ -9,7 +9,7 @@ import { playSound, preloadSounds } from "@/lib/sounds";
 import { stockfishClient } from "@/lib/stockfish-client";
 import { useBoardSize } from "@/lib/use-board-size";
 import type { EndgameMistake, MissedTactic, PositionEvalTrace, RepeatedOpeningLeak } from "@/lib/types";
-import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
+import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
 
 type MoveBadge = {
   label: "Best" | "Good" | "Inaccuracy" | "Mistake" | "Blunder";
@@ -114,6 +114,7 @@ function deriveMoveDetails(fen: string, move: string | null): MoveDetails | null
 export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOffMistakes = [], excludeFens, variant }: DrillModeProps) {
   const { ref: drillBoardRef, size: drillBoardSize } = useBoardSize(470);
   const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
   const drillPositions = useMemo(() => {
     const openingItems: DrillItem[] = positions
@@ -802,6 +803,7 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
                     customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
                     customSquareStyles={customSquareStyles}
                     showBoardNotation={showCoords}
+                    customPieces={customPieces}
                   />
                 </div>
               </div>

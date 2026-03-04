@@ -12,7 +12,7 @@ import type { MoveSquare, RepeatedOpeningLeak } from "@/lib/types";
 import { fetchExplorerMoves, type ExplorerMove } from "@/lib/lichess-explorer";
 import { explainOpeningLeak, describeEndPosition, type MoveExplanation, type PositionExplanation } from "@/lib/position-explainer";
 import { SaveToRepertoireButton } from "@/components/opening-repertoire";
-import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
+import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
 import { ExplanationModal } from "@/components/explanation-modal";
 
 type MistakeCardProps = {
@@ -241,6 +241,7 @@ function formatEval(valueCp: number, options?: { showPlus?: boolean }): string {
 export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   const { ref: boardSizeRef, size: boardSize } = useBoardSize(480);
   const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
   const badMove = useMemo(() => deriveMoveDetails(leak.fenBefore, leak.userMove), [leak.fenBefore, leak.userMove]);
   const bestMove = useMemo(() => deriveMoveDetails(leak.fenBefore, leak.bestMove), [leak.fenBefore, leak.bestMove]);
@@ -1259,6 +1260,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                 customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
                 customBoardStyle={{ borderRadius: "12px", overflow: "hidden" }}
                 showBoardNotation={showCoords}
+                customPieces={customPieces}
               />
             </div>
           </div>

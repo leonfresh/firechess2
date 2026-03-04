@@ -6,7 +6,7 @@ import { EvalBar } from "@/components/eval-bar";
 import { ExplanationModal } from "@/components/explanation-modal";
 import { Chessboard } from "react-chessboard";
 import { useBoardSize } from "@/lib/use-board-size";
-import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
+import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
 import { explainMoves } from "@/lib/position-explainer";
 import type { PositionExplanation } from "@/lib/position-explainer";
 import type { TimeMoment, MoveSquare } from "@/lib/types";
@@ -130,6 +130,7 @@ const VERDICT_CONFIG = {
 export function TimeCard({ moment }: TimeCardProps) {
   const { ref: boardSizeRef, size: boardSize } = useBoardSize(400);
   const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
   const [fenCopied, setFenCopied] = useState(false);
   const [explainOpen, setExplainOpen] = useState(false);
@@ -260,6 +261,7 @@ export function TimeCard({ moment }: TimeCardProps) {
                 customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
                 customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
                 customBoardStyle={{ borderRadius: "12px", overflow: "hidden" }}
+                customPieces={customPieces}
               />
             </div>
           </div>

@@ -5,7 +5,7 @@ import { Chess } from "chess.js";
 import type { PieceSymbol } from "chess.js";
 import { Chessboard } from "react-chessboard";
 import { EvalBar } from "@/components/eval-bar";
-import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
+import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
 import { stockfishClient } from "@/lib/stockfish-client";
 import type { PositionExplanation, ThemeCard } from "@/lib/position-explainer";
 
@@ -113,6 +113,7 @@ export function ExplanationModal({
 }: ExplanationModalProps) {
   /* ── Board theming ── */
   const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
 
   /* ── Animation state ── */
@@ -292,6 +293,7 @@ export function ExplanationModal({
                       customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
                       customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
                       showBoardNotation={showCoords}
+                      customPieces={customPieces}
                     />
                   </div>
                 </div>
