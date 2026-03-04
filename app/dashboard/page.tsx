@@ -24,6 +24,7 @@ import { RepertoirePanel } from "@/components/opening-repertoire";
 import { PercentileWidget } from "@/components/percentile-widget";
 import { CoinShop } from "@/components/coin-shop";
 import { DailyLoginRewards } from "@/components/daily-login-rewards";
+import { DailyTipWidget } from "@/components/daily-tip";
 import { OnboardingTour } from "@/components/onboarding-tour";
 import { useCoinBalance } from "@/lib/use-coins";
 import { useProfileTitle } from "@/lib/use-coins";
@@ -479,6 +480,11 @@ export default function DashboardPage() {
           {/* ─── Daily Login Rewards ─── */}
           <div data-tour="daily-login" className="animate-fade-in-up" style={{ animationDelay: "0.155s" }}>
             <DailyLoginRewards />
+          </div>
+
+          {/* ─── Daily Chess Tip ─── */}
+          <div className="animate-fade-in-up" style={{ animationDelay: "0.157s" }}>
+            <DailyTipWidget />
           </div>
 
           {/* ─── Daily Challenge ─── */}

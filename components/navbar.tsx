@@ -8,6 +8,7 @@ import { signIn, signOut } from "next-auth/react";
 import { useSession } from "@/components/session-provider";
 import { LATEST_VERSION } from "@/lib/constants";
 import { useCoinBalance } from "@/lib/use-coins";
+import { useAvatarFrame } from "@/lib/use-coins";
 
 const NAV_LINKS = [
   { href: "/analyze", label: "Analyze" },
@@ -20,6 +21,7 @@ export function Navbar() {
   const pathname = usePathname();
   const { loading, authenticated, user, plan, isAdmin } = useSession();
   const coinBalance = useCoinBalance();
+  const avatarFrame = useAvatarFrame();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -181,7 +183,7 @@ export function Navbar() {
             <button
               type="button"
               className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                isActive("/about") || isActive("/blog") || isActive("/feedback") || isActive("/leaderboard") || isActive("/shop")
+                isActive("/about") || isActive("/blog") || isActive("/feedback") || isActive("/leaderboard") || isActive("/shop") || isActive("/openings")
                   ? "text-white bg-white/[0.06]"
                   : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
               }`}
@@ -228,6 +230,14 @@ export function Navbar() {
                   }`}
                 >
                   🏆 Leaderboard
+                </Link>
+                <Link
+                  href="/openings"
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive("/openings") ? "text-white bg-white/[0.06]" : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
+                  }`}
+                >
+                  📖 Openings
                 </Link>
                 <Link
                   href="/shop"
@@ -296,7 +306,8 @@ export function Navbar() {
                     <img
                       src={user.image}
                       alt=""
-                      className="h-6 w-6 rounded-full object-cover"
+                      className={`h-6 w-6 rounded-full object-cover ${avatarFrame.frameClass}`}
+                      style={avatarFrame.frameStyle}
                       crossOrigin="anonymous"
                       referrerPolicy="no-referrer"
                       onError={(e) => {
@@ -307,7 +318,7 @@ export function Navbar() {
                       }}
                     />
                   ) : null}
-                  <div className={`${user?.image ? "hidden" : "flex"} h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-xs font-bold text-emerald-400`}>
+                  <div className={`${user?.image ? "hidden" : "flex"} h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-xs font-bold text-emerald-400 ${avatarFrame.frameClass}`} style={avatarFrame.frameStyle}>
                     {(user?.name?.[0] ?? user?.email?.[0] ?? "?").toUpperCase()}
                   </div>
                   <span className="max-w-[100px] truncate text-sm">
@@ -513,7 +524,8 @@ export function Navbar() {
                   <img
                     src={user.image}
                     alt=""
-                    className="h-10 w-10 rounded-full object-cover"
+                    className={`h-10 w-10 rounded-full object-cover ${avatarFrame.frameClass}`}
+                    style={avatarFrame.frameStyle}
                     crossOrigin="anonymous"
                     referrerPolicy="no-referrer"
                     onError={(e) => {
@@ -524,7 +536,7 @@ export function Navbar() {
                     }}
                   />
                 ) : null}
-                <div className={`${user.image ? "hidden" : "flex"} h-10 w-10 items-center justify-center rounded-full bg-emerald-500/20 text-sm font-bold text-emerald-400`}>
+                <div className={`${user.image ? "hidden" : "flex"} h-10 w-10 items-center justify-center rounded-full bg-emerald-500/20 text-sm font-bold text-emerald-400 ${avatarFrame.frameClass}`} style={avatarFrame.frameStyle}>
                   {(user.name?.[0] ?? user.email?.[0] ?? "?").toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -545,6 +557,7 @@ export function Navbar() {
                 { href: "/", label: "Home" },
                 ...NAV_LINKS,
                 { href: "/blog", label: "Blog" },
+                { href: "/openings", label: "📖 Openings" },
                 { href: "/leaderboard", label: "🏆 Leaderboard" },
                 { href: "/shop", label: "🪙 Coin Shop" },
                 { href: "/feedback", label: "Feedback" },

@@ -14,10 +14,12 @@ import {
   getShowCoordinates,
   getActivePieceTheme,
   getCustomPieces,
+  getActiveFrame,
   type BoardTheme,
   type ProfileTitle,
   type EvalBarSkin,
   type PieceTheme,
+  type AvatarFrame,
 } from "@/lib/board-themes";
 
 /* ------------------------------------------------------------------ */
@@ -156,4 +158,21 @@ export function usePieceTheme(): PieceTheme {
 export function useCustomPieces() {
   const pt = usePieceTheme();
   return useMemo(() => getCustomPieces(pt.setName), [pt.setName]);
+}
+
+/* ------------------------------------------------------------------ */
+/*  useAvatarFrame — reactive avatar frame                              */
+/* ------------------------------------------------------------------ */
+
+export function useAvatarFrame(): AvatarFrame {
+  const [frame, setFrame] = useState<AvatarFrame>(() => getActiveFrame());
+
+  useEffect(() => {
+    setFrame(getActiveFrame());
+    const handler = () => setFrame(getActiveFrame());
+    window.addEventListener("fc-frame-changed", handler);
+    return () => window.removeEventListener("fc-frame-changed", handler);
+  }, []);
+
+  return frame;
 }

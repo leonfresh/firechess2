@@ -16,6 +16,7 @@ import {
   PROFILE_TITLES,
   EVAL_BAR_SKINS,
   PIECE_THEMES,
+  AVATAR_FRAMES,
   getActiveThemeId,
   setActiveTheme,
   getActiveTitleId,
@@ -24,6 +25,8 @@ import {
   setActiveEvalSkin,
   getActivePieceThemeId,
   setActivePieceTheme,
+  getActiveFrameId,
+  setActiveFrame,
   getPieceImageUrl,
   getShowCoordinates,
   setShowCoordinates,
@@ -31,6 +34,7 @@ import {
   type ProfileTitle,
   type EvalBarSkin,
   type PieceTheme,
+  type AvatarFrame,
 } from "@/lib/board-themes";
 import { useCoinBalance, useCoinLog } from "@/lib/use-coins";
 
@@ -45,6 +49,7 @@ export function CoinShop() {
   const [activeTitle, setActiveTitleState] = useState<string | null>(null);
   const [activeEvalSkin, setActiveEvalSkinState] = useState("eval-default");
   const [activePieceTheme, setActivePieceThemeState] = useState("piece-default");
+  const [activeFrame, setActiveFrameState] = useState("frame-none");
   const [purchased, setPurchased] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -55,6 +60,7 @@ export function CoinShop() {
     setActiveTitleState(getActiveTitleId());
     setActiveEvalSkinState(getActiveEvalSkinId());
     setActivePieceThemeState(getActivePieceThemeId());
+    setActiveFrameState(getActiveFrameId());
     setShowCoordsState(getShowCoordinates());
     // Build purchased list
     const p: string[] = [];
@@ -69,6 +75,9 @@ export function CoinShop() {
     }
     for (const t of PIECE_THEMES) {
       if (t.price === 0 || hasPurchased(t.id)) p.push(t.id);
+    }
+    for (const f of AVATAR_FRAMES) {
+      if (f.price === 0 || hasPurchased(f.id)) p.push(f.id);
     }
     setPurchased(p);
   }, []);
@@ -180,6 +189,32 @@ export function CoinShop() {
       setActivePieceTheme(pt.id);
       setActivePieceThemeState(pt.id);
       showToast(`Purchased & equipped: ${pt.name}`);
+    },
+    [showToast]
+  );
+
+  const handleBuyFrame = useCallback(
+    (frame: AvatarFrame) => {
+      if (frame.price === 0) {
+        setActiveFrame(frame.id);
+        setActiveFrameState(frame.id);
+        return;
+      }
+      if (hasPurchased(frame.id)) {
+        setActiveFrame(frame.id);
+        setActiveFrameState(frame.id);
+        showToast(`Equipped: ${frame.name}`);
+        return;
+      }
+      const ok = spendCoins(frame.price, frame.id);
+      if (!ok) {
+        showToast("Not enough coins!");
+        return;
+      }
+      setPurchased((p) => [...p, frame.id]);
+      setActiveFrame(frame.id);
+      setActiveFrameState(frame.id);
+      showToast(`Purchased & equipped: ${frame.name}`);
     },
     [showToast]
   );
@@ -596,6 +631,50 @@ export function CoinShop() {
                       />
                     </svg>
                   </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* ─── Avatar Frames ─── */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-white">Avatar Frames</h3>
+        <p className="text-[11px] text-white/40">Glowing borders and effects for your profile avatar</p>
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-6">
+          {AVATAR_FRAMES.map((frame) => {
+            const owned = purchased.includes(frame.id);
+            const equipped = activeFrame === frame.id;
+            return (
+              <button
+                key={frame.id}
+                type="button"
+                onClick={() => handleBuyFrame(frame)}
+                className={`group relative flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition-all ${
+                  equipped
+                    ? "border-emerald-500/40 bg-emerald-500/10"
+                    : "border-white/5 bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.04]"
+                }`}
+              >
+                {/* Preview circle */}
+                <div
+                  className={`relative flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-lg ${frame.frameClass}`}
+                  style={frame.frameStyle}
+                >
+                  👤
+                </div>
+                <span className="text-[11px] font-medium text-white/70 leading-tight">{frame.name}</span>
+                {frame.price === 0 ? (
+                  <span className="text-[10px] text-emerald-400">Free</span>
+                ) : owned ? (
+                  equipped ? (
+                    <span className="text-[10px] font-bold text-emerald-400">Equipped ✓</span>
+                  ) : (
+                    <span className="text-[10px] text-white/30">Owned</span>
+                  )
+                ) : (
+                  <span className="text-[10px] font-bold text-amber-400">🪙 {frame.price}</span>
                 )}
               </button>
             );

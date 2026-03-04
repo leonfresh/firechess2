@@ -400,3 +400,143 @@ export function setShowCoordinates(show: boolean): void {
   localStorage.setItem(KEY_SHOW_COORDS, show ? "1" : "0");
   window.dispatchEvent(new CustomEvent("fc-coords-changed", { detail: show }));
 }
+
+/* ================================================================== */
+/*  Avatar Frames                                                       */
+/* ================================================================== */
+
+export type AvatarFrame = {
+  id: string;
+  name: string;
+  price: number;
+  /** CSS for the wrapper around the avatar image */
+  frameStyle: React.CSSProperties;
+  /** Tailwind classes for the frame wrapper */
+  frameClass: string;
+  /** Preview label colour */
+  previewColor: string;
+};
+
+export const AVATAR_FRAMES: AvatarFrame[] = [
+  {
+    id: "frame-none",
+    name: "None",
+    price: 0,
+    frameStyle: {},
+    frameClass: "",
+    previewColor: "#64748b",
+  },
+  {
+    id: "frame-emerald-glow",
+    name: "Emerald Glow",
+    price: 60,
+    frameStyle: { boxShadow: "0 0 12px 3px rgba(16,185,129,0.5), 0 0 4px 1px rgba(16,185,129,0.3)" },
+    frameClass: "ring-2 ring-emerald-400/60",
+    previewColor: "#10b981",
+  },
+  {
+    id: "frame-fire",
+    name: "Fire Ring",
+    price: 80,
+    frameStyle: { boxShadow: "0 0 14px 4px rgba(249,115,22,0.5), 0 0 6px 2px rgba(239,68,68,0.4)" },
+    frameClass: "ring-2 ring-orange-400/70",
+    previewColor: "#f97316",
+  },
+  {
+    id: "frame-ice",
+    name: "Frozen Aura",
+    price: 80,
+    frameStyle: { boxShadow: "0 0 14px 4px rgba(56,189,248,0.5), 0 0 6px 2px rgba(147,197,253,0.4)" },
+    frameClass: "ring-2 ring-sky-300/60",
+    previewColor: "#38bdf8",
+  },
+  {
+    id: "frame-purple",
+    name: "Royal Purple",
+    price: 100,
+    frameStyle: { boxShadow: "0 0 16px 4px rgba(168,85,247,0.5), 0 0 6px 2px rgba(192,132,252,0.4)" },
+    frameClass: "ring-2 ring-purple-400/70",
+    previewColor: "#a855f7",
+  },
+  {
+    id: "frame-gold",
+    name: "Gold Crown",
+    price: 150,
+    frameStyle: { boxShadow: "0 0 16px 4px rgba(251,191,36,0.5), 0 0 8px 2px rgba(245,158,11,0.4)" },
+    frameClass: "ring-2 ring-amber-400/70",
+    previewColor: "#fbbf24",
+  },
+  {
+    id: "frame-rainbow",
+    name: "Prismatic",
+    price: 200,
+    frameStyle: {
+      boxShadow: "0 0 12px 3px rgba(239,68,68,0.3), 0 0 12px 3px rgba(59,130,246,0.3), 0 0 12px 3px rgba(16,185,129,0.3)",
+      animation: "frame-rainbow 3s linear infinite",
+    },
+    frameClass: "ring-2 ring-white/40",
+    previewColor: "#ec4899",
+  },
+  {
+    id: "frame-neon-pink",
+    name: "Neon Pink",
+    price: 100,
+    frameStyle: { boxShadow: "0 0 14px 4px rgba(236,72,153,0.5), 0 0 6px 2px rgba(244,114,182,0.4)" },
+    frameClass: "ring-2 ring-pink-400/70",
+    previewColor: "#ec4899",
+  },
+  {
+    id: "frame-shadow",
+    name: "Dark Shadow",
+    price: 75,
+    frameStyle: { boxShadow: "0 0 20px 6px rgba(0,0,0,0.6), inset 0 0 8px rgba(0,0,0,0.3)" },
+    frameClass: "ring-2 ring-slate-600/80",
+    previewColor: "#475569",
+  },
+  {
+    id: "frame-diamond",
+    name: "Diamond",
+    price: 250,
+    frameStyle: {
+      boxShadow: "0 0 16px 4px rgba(255,255,255,0.4), 0 0 8px 2px rgba(186,230,253,0.5)",
+      animation: "frame-diamond 2s ease-in-out infinite alternate",
+    },
+    frameClass: "ring-2 ring-white/60",
+    previewColor: "#e2e8f0",
+  },
+  {
+    id: "frame-rose",
+    name: "Rose Gold",
+    price: 120,
+    frameStyle: { boxShadow: "0 0 14px 4px rgba(251,113,133,0.4), 0 0 6px 2px rgba(253,164,175,0.3)" },
+    frameClass: "ring-2 ring-rose-400/60",
+    previewColor: "#fb7185",
+  },
+  {
+    id: "frame-toxic",
+    name: "Toxic Green",
+    price: 90,
+    frameStyle: { boxShadow: "0 0 14px 4px rgba(74,222,128,0.5), 0 0 6px 2px rgba(34,197,94,0.4)" },
+    frameClass: "ring-2 ring-green-400/70",
+    previewColor: "#4ade80",
+  },
+];
+
+/* ─── Active avatar frame (localStorage) ─── */
+
+const KEY_ACTIVE_FRAME = "fc-avatar-frame";
+
+export function getActiveFrameId(): string {
+  if (typeof window === "undefined") return "frame-none";
+  return localStorage.getItem(KEY_ACTIVE_FRAME) ?? "frame-none";
+}
+
+export function getActiveFrame(): AvatarFrame {
+  const id = getActiveFrameId();
+  return AVATAR_FRAMES.find((f) => f.id === id) ?? AVATAR_FRAMES[0];
+}
+
+export function setActiveFrame(id: string): void {
+  localStorage.setItem(KEY_ACTIVE_FRAME, id);
+  window.dispatchEvent(new CustomEvent("fc-frame-changed", { detail: id }));
+}
