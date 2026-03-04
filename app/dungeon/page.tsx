@@ -480,6 +480,48 @@ function DungeonMap({
 }
 
 /* ================================================================== */
+/*  Move Indicator (tick / cross overlay)                               */
+/* ================================================================== */
+
+function DungeonMoveIndicator({
+  square,
+  type,
+  orientation,
+  boardSize,
+}: {
+  square: string;
+  type: "correct" | "wrong";
+  orientation: "white" | "black";
+  boardSize: number;
+}) {
+  const file = square.charCodeAt(0) - 97;
+  const rank = parseInt(square[1]) - 1;
+  const sqSize = boardSize / 8;
+  const x = orientation === "white" ? file * sqSize : (7 - file) * sqSize;
+  const y = orientation === "white" ? (7 - rank) * sqSize : rank * sqSize;
+  const size = Math.max(18, Math.round(sqSize * 0.36));
+
+  return (
+    <div
+      className="pointer-events-none absolute z-20 flex items-center justify-center rounded-full font-bold shadow-lg"
+      style={{
+        left: x + sqSize - size - 2,
+        top: y + 2,
+        width: size,
+        height: size,
+        fontSize: size * 0.65,
+        lineHeight: 1,
+        backgroundColor: type === "correct" ? "#22c55e" : "#ef4444",
+        color: "#fff",
+        animation: "indicator-pop 0.15s ease-out",
+      }}
+    >
+      {type === "correct" ? "✓" : "✗"}
+    </div>
+  );
+}
+
+/* ================================================================== */
 /*  Puzzle Battle Board                                                 */
 /* ================================================================== */
 
@@ -494,7 +536,7 @@ function BattleBoard({
   onSolved: () => void;
   onFailed: () => void;
 }) {
-  const { ref: boardRef, size: boardSize } = useBoardSize(600, { evalBar: false });
+  const { ref: boardRef, size: boardSize } = useBoardSize(720, { evalBar: false });
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
@@ -503,6 +545,7 @@ function BattleBoard({
   const [shaking, setShaking] = useState(false);
   const [glowCorrect, setGlowCorrect] = useState(false);
   const [flashDamage, setFlashDamage] = useState(false);
+  const [moveIndicator, setMoveIndicator] = useState<{ square: string; type: "correct" | "wrong" } | null>(null);
 
   const currentNode = run.map.find(n => n.id === run.currentNodeId);
   const isBoss = currentNode?.type === "boss";
@@ -604,12 +647,13 @@ function BattleBoard({
         playSound("wrong");
         playDungeonSound("damage");
         setWrongMove({ from, to });
+        setMoveIndicator({ square: to, type: "wrong" });
         setShaking(true);
         setTimeout(() => setShaking(false), 500);
         const newAttempts = attempts + 1;
         setAttempts(newAttempts);
 
-        setTimeout(() => setWrongMove(null), 800);
+        setTimeout(() => { setWrongMove(null); setMoveIndicator(null); }, 800);
 
         if (newAttempts >= maxAttempts) {
           setState("wrong");
@@ -638,6 +682,7 @@ function BattleBoard({
         const newFen = chess.fen();
         setFen(newFen);
         setLastMove({ from: expected.slice(0, 2), to: expected.slice(2, 4) });
+        setMoveIndicator({ square: expected.slice(2, 4), type: "correct" });
         setHintSquare(null);
         playSound("move");
 
@@ -662,6 +707,7 @@ function BattleBoard({
               setFen(c2.fen());
               setLastMove({ from: oppMove.slice(0, 2), to: oppMove.slice(2, 4) });
               setSolutionIdx(nextIdx + 1);
+              setMoveIndicator(null);
               playSound("move");
             } catch {}
           }
@@ -771,32 +817,42 @@ function BattleBoard({
       </div>
 
       {/* Board with effects */}
-      <div
-        ref={boardRef}
-        className={`w-full max-w-[600px] rounded-xl transition-shadow ${
-          shaking ? "dungeon-shake" : ""
-        } ${
-          glowCorrect ? "dungeon-correct-glow" : ""
-        }`}
-      >
-        <Chessboard
-          id="dungeon-battle"
-          position={fen}
-          boardOrientation={orientation}
-          boardWidth={boardSize}
-          onPieceDrop={onDrop as any}
-          arePiecesDraggable={state === "solving"}
-          isDraggablePiece={isDraggablePiece}
-          animationDuration={200}
-          customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-          customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
-          showBoardNotation={showCoords}
-          customSquareStyles={customSquareStyles}
-          customPieces={customPieces}
-          showPromotionDialog={showPromoDialog}
-          promotionToSquare={promoTo as CbSquare | undefined}
-          onPromotionPieceSelect={onPromotionPieceSelect}
-        />
+      <div ref={boardRef} className="w-full max-w-[720px]">
+        <div
+          style={{ width: boardSize, height: boardSize }}
+          className={`relative shrink-0 overflow-hidden rounded-xl transition-shadow ${
+            shaking ? "dungeon-shake" : ""
+          } ${
+            glowCorrect ? "dungeon-correct-glow" : ""
+          }`}
+        >
+          <Chessboard
+            id="dungeon-battle"
+            position={fen}
+            boardOrientation={orientation}
+            boardWidth={boardSize}
+            onPieceDrop={onDrop as any}
+            arePiecesDraggable={state === "solving"}
+            isDraggablePiece={isDraggablePiece}
+            animationDuration={200}
+            customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+            customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+            showBoardNotation={showCoords}
+            customSquareStyles={customSquareStyles}
+            customPieces={customPieces}
+            showPromotionDialog={showPromoDialog}
+            promotionToSquare={promoTo as CbSquare | undefined}
+            onPromotionPieceSelect={onPromotionPieceSelect}
+          />
+          {moveIndicator && (
+            <DungeonMoveIndicator
+              square={moveIndicator.square}
+              type={moveIndicator.type}
+              orientation={orientation}
+              boardSize={boardSize}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
