@@ -37,6 +37,13 @@ import {
   type Difficulty,
   type NodeType,
 } from "@/lib/dungeon";
+import {
+  BossPortrait,
+  ActScene,
+  VictoryIllustration,
+  DeathIllustration,
+  DungeonEntranceIllustration,
+} from "@/components/dungeon-illustrations";
 
 /* ================================================================== */
 /*  Lichess puzzle types                                                */
@@ -835,13 +842,21 @@ function BattleBoard({
         {/* Sidebar — puzzle info */}
         <div className="flex flex-col gap-3">
           {/* Battle type badge */}
-          <div className={`flex items-center justify-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider border ${
-            isBoss ? "border-red-500/30 bg-red-500/10 text-red-400" :
-            isElite ? "border-purple-500/30 bg-purple-500/10 text-purple-400" :
-            "border-blue-500/20 bg-blue-500/5 text-blue-400"
-          }`}>
-            {isBoss ? `${act.bossIcon} ${act.bossName}` : isElite ? "💀 Elite Fight" : "⚔️ Battle"}
-          </div>
+          {isBoss ? (
+            <div className="flex flex-col items-center gap-2">
+              <BossPortrait actId={act.id} size={64} />
+              <div className="rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider border border-red-500/30 bg-red-500/10 text-red-400">
+                {act.bossName}
+              </div>
+            </div>
+          ) : (
+            <div className={`flex items-center justify-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider border ${
+              isElite ? "border-purple-500/30 bg-purple-500/10 text-purple-400" :
+              "border-blue-500/20 bg-blue-500/5 text-blue-400"
+            }`}>
+              {isElite ? "💀 Elite Fight" : "⚔️ Battle"}
+            </div>
+          )}
 
           {/* Narrative flavor text */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
@@ -1172,9 +1187,7 @@ function RunSummary({
 
   return (
     <div className="mx-auto max-w-md text-center dungeon-screen-enter">
-      <span className={`text-7xl inline-block ${isVictory ? "dungeon-victory-glow" : ""}`}>
-        {isVictory ? "🏆" : "💀"}
-      </span>
+      {isVictory ? <VictoryIllustration size={140} /> : <DeathIllustration size={140} />}
       <h2 className={`mt-3 text-3xl font-bold ${isVictory ? "text-amber-400 dungeon-victory-glow" : "text-red-400"}`}>
         {isVictory ? "Victory!" : "Run Over"}
       </h2>
@@ -1726,26 +1739,9 @@ export default function DungeonPage() {
           <div className="absolute top-1/3 left-1/2 -translate-x-1/2 h-64 w-64 rounded-full bg-orange-500/[0.06] blur-[80px]" />
         </div>
         <div className="relative z-10 mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center px-4 text-center">
-          {/* SVG Sword decoration */}
+          {/* SVG Dungeon entrance illustration */}
           <div className="relative">
-            <svg width="80" height="80" viewBox="0 0 80 80" className="drop-shadow-lg">
-              <defs>
-                <linearGradient id="sword-grad" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="#fbbf24" />
-                  <stop offset="100%" stopColor="#f59e0b" />
-                </linearGradient>
-              </defs>
-              {/* Sword blade */}
-              <path d="M40 8 L46 50 L40 56 L34 50 Z" fill="url(#sword-grad)" opacity="0.9" />
-              {/* Guard */}
-              <rect x="28" y="50" width="24" height="4" rx="2" fill="#d97706" />
-              {/* Handle */}
-              <rect x="37" y="54" width="6" height="14" rx="1" fill="#92400e" />
-              {/* Pommel */}
-              <circle cx="40" cy="72" r="4" fill="#b45309" />
-              {/* Blade highlight */}
-              <path d="M40 12 L43 48 L40 52 Z" fill="rgba(255,255,255,0.15)" />
-            </svg>
+            <DungeonEntranceIllustration size={120} />
             <div className="absolute -inset-4 rounded-full bg-amber-500/10 blur-xl animate-pulse-slow" />
           </div>
 
@@ -1764,13 +1760,16 @@ export default function DungeonPage() {
           {/* Act preview */}
           <div className="mt-6 w-full max-w-xs space-y-2">
             {DUNGEON_ACTS.map((act, i) => (
-              <div key={act.id} className={`dungeon-stagger-${i + 1} flex items-start gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-left transition-all hover:bg-white/[0.04]`}>
-                <span className="text-xl mt-0.5">{act.icon}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-white">Act {act.id}: {act.name}</p>
-                  <p className="text-[10px] text-slate-500 leading-relaxed">{act.subtitle} · Boss: {act.bossIcon} {act.bossName}</p>
+              <div key={act.id} className={`dungeon-stagger-${i + 1} overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.02] transition-all hover:bg-white/[0.04]`}>
+                <ActScene actId={act.id} height={40} />
+                <div className="flex items-start gap-3 px-3 py-2 text-left">
+                  <span className="text-xl mt-0.5">{act.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-white">Act {act.id}: {act.name}</p>
+                    <p className="text-[10px] text-slate-500 leading-relaxed">{act.subtitle} · Boss: {act.bossIcon} {act.bossName}</p>
+                  </div>
+                  <span className="text-[9px] text-slate-600 whitespace-nowrap mt-1">F{act.floorRange[0]}-{act.floorRange[1]}</span>
                 </div>
-                <span className="text-[9px] text-slate-600 whitespace-nowrap">F{act.floorRange[0]}-{act.floorRange[1]}</span>
               </div>
             ))}
           </div>
@@ -1975,13 +1974,16 @@ export default function DungeonPage() {
               {(() => {
                 const a = getAct(run.currentFloor);
                 return (
-                  <div className="mb-4 flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-2.5">
-                    <span className="text-xl">{a.icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-bold text-white">Act {a.id}: {a.name}</p>
-                      <p className="text-[10px] text-slate-500 italic">{a.subtitle}</p>
+                  <div className="mb-4 overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.02]">
+                    <ActScene actId={a.id} height={48} />
+                    <div className="flex items-center gap-3 px-4 py-2.5">
+                      <span className="text-xl">{a.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-white">Act {a.id}: {a.name}</p>
+                        <p className="text-[10px] text-slate-500 italic">{a.subtitle}</p>
+                      </div>
+                      <span className="text-[9px] text-slate-600">Floors {a.floorRange[0]}–{a.floorRange[1]}</span>
                     </div>
-                    <span className="text-[9px] text-slate-600">Floors {a.floorRange[0]}–{a.floorRange[1]}</span>
                   </div>
                 );
               })()}
@@ -2049,7 +2051,7 @@ export default function DungeonPage() {
               <div className="text-center min-h-[400px] flex flex-col items-center justify-center dungeon-screen-enter">
                 {isBossLoad ? (
                   <>
-                    <span className="text-6xl">{a.bossIcon}</span>
+                    <BossPortrait actId={a.id} size={140} />
                     <h2 className="mt-4 text-2xl font-extrabold text-red-400">{a.bossName}</h2>
                     <p className="text-xs uppercase tracking-wider text-red-400/60 mt-1">{a.bossTitle}</p>
                     <div className="mt-4 max-w-sm">
