@@ -72,7 +72,8 @@ type AnalyzedMove = {
 
 /* ────────────────────────── Constants ────────────────────────── */
 
-const ENGINE_DEPTH = 14;
+const DEFAULT_ENGINE_DEPTH = 14;
+const DEPTH_OPTIONS = [8, 10, 12, 14, 16, 18, 20] as const;
 
 const CLASSIFICATION_COLORS: Record<MoveClassification, string> = {
   brilliant: "text-cyan-400",
@@ -393,6 +394,11 @@ export default function AnalyzePage() {
   /* ── PGN input state ── */
   const [pgnText, setPgnText] = useState("");
   const [error, setError] = useState("");
+
+  /* ── Settings state ── */
+  const [engineDepth, setEngineDepth] = useState(DEFAULT_ENGINE_DEPTH);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   /* ── Game loader state ── */
   const [loadUsername, setLoadUsername] = useState("");
@@ -724,7 +730,7 @@ export default function AnalyzePage() {
     const results: AnalyzedMove[] = [];
 
     // Evaluate starting position
-    const startEval = await stockfishPool.evaluateFen(parsed.moves[0].fenBefore, ENGINE_DEPTH);
+    const startEval = await stockfishPool.evaluateFen(parsed.moves[0].fenBefore, engineDepth);
     let prevEvalWhite = startEval?.cp ?? 15; // slight white advantage default
 
     for (let i = 0; i < parsed.moves.length; i++) {
@@ -732,11 +738,11 @@ export default function AnalyzePage() {
       setProgress({ current: i + 1, total: parsed.moves.length });
 
       // Evaluate position after this move
-      const evalResult = await stockfishPool.evaluateFen(move.fenAfter, ENGINE_DEPTH);
+      const evalResult = await stockfishPool.evaluateFen(move.fenAfter, engineDepth);
       // Get best move for the position before
-      const bestResult = await stockfishPool.evaluateFen(move.fenBefore, ENGINE_DEPTH);
+      const bestResult = await stockfishPool.evaluateFen(move.fenBefore, engineDepth);
       // Get PV for the position before
-      const pvResult = await stockfishPool.getPrincipalVariation(move.fenBefore, 6, ENGINE_DEPTH);
+      const pvResult = await stockfishPool.getPrincipalVariation(move.fenBefore, 6, engineDepth);
 
       // Normalize evals to white's perspective
       const evalAfterWhite = evalResult ? (move.color === "w" ? -evalResult.cp : evalResult.cp) : prevEvalWhite;
@@ -789,8 +795,8 @@ export default function AnalyzePage() {
 
     setAnalyzing(false);
     setSelectedMoveIdx(0);
-    playSound("move");
-  }, [pgnText]);
+    if (soundEnabled) playSound("move");
+  }, [pgnText, engineDepth, soundEnabled]);
 
   /* ── Keyboard navigation ── */
   useEffect(() => {
@@ -824,6 +830,23 @@ export default function AnalyzePage() {
     if (el) el.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [selectedMoveIdx]);
 
+  /* ── Play sound on move navigation ── */
+  useEffect(() => {
+    if (!soundEnabled || analyzedMoves.length === 0) return;
+    // Skip initial render and when idx hasn't actually changed
+    if (selectedMoveIdx < 0) return;
+    const move = analyzedMoves[selectedMoveIdx];
+    if (!move) return;
+    const san = move.san;
+    if (san.includes("+") || san.includes("#")) {
+      playSound("check");
+    } else if (san.includes("x")) {
+      playSound("capture");
+    } else {
+      playSound("move");
+    }
+  }, [selectedMoveIdx, soundEnabled]); // eslint-disable-line react-hooks/exhaustive-deps
+
   /* ── Explain move ── */
   const openExplain = useCallback((move: AnalyzedMove, tab: "played" | "best") => {
     const explanation = explainMoves(
@@ -838,11 +861,23 @@ export default function AnalyzePage() {
     const ex = tab === "played" ? explanation.played : explanation.best;
     const pvMoveList = tab === "best" ? move.pvMoves : [move.uci];
 
+    const playedTitle = (() => {
+      if (move.classification === "blunder") return `Why ${move.san} is a blunder`;
+      if (move.classification === "mistake") return `Why ${move.san} is a mistake`;
+      if (move.classification === "inaccuracy") return `Why ${move.san} is inaccurate`;
+      if (move.classification === "brilliant") return `Why ${move.san} is brilliant`;
+      if (move.classification === "best") return `Why ${move.san} is the best move`;
+      if (move.classification === "good") return `Why ${move.san} is a good move`;
+      return `About ${move.san}`;
+    })();
+
+    const bestTitle = move.cpLoss > 0
+      ? `Why ${move.bestMoveSan ?? "the engine move"} is better`
+      : `Engine's top line from this position`;
+
     setExplainData({
       explanation: ex,
-      title: tab === "played"
-        ? `Why ${move.san} is ${move.classification === "blunder" ? "a blunder" : move.classification === "mistake" ? "a mistake" : "inaccurate"}`
-        : `Why ${move.bestMoveSan ?? "the engine move"} is better`,
+      title: tab === "played" ? playedTitle : bestTitle,
       subtitle: `Move ${move.moveNumber}${move.color === "w" ? "." : "..."} — ${formatEval(move.evalBefore)} → ${formatEval(move.evalAfter)}`,
       fen: move.fenBefore,
       uciMoves: pvMoveList,
@@ -980,9 +1015,72 @@ export default function AnalyzePage() {
                 🔍 Analyze Game
               </button>
 
-              <div className="mt-4 flex flex-wrap gap-2 text-[11px] text-slate-500">
+              {/* Settings panel */}
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => setSettingsOpen(o => !o)}
+                  className="flex items-center gap-2 text-xs font-semibold text-slate-400 transition-colors hover:text-slate-200"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+                  </svg>
+                  Settings
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform ${settingsOpen ? "rotate-180" : ""}`}>
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+
+                {settingsOpen && (
+                  <div className="mt-3 space-y-3 rounded-xl border border-white/[0.06] bg-black/30 p-4">
+                    {/* Engine depth */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-semibold text-slate-300">Engine Depth</p>
+                        <p className="text-[10px] text-slate-500">Higher = more accurate but slower</p>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {DEPTH_OPTIONS.map(d => (
+                          <button
+                            key={d}
+                            onClick={() => setEngineDepth(d)}
+                            className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-all ${
+                              engineDepth === d
+                                ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
+                                : "bg-white/[0.04] text-slate-500 border border-white/[0.04] hover:bg-white/[0.08] hover:text-slate-300"
+                            }`}
+                          >
+                            {d}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Sound toggle */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-semibold text-slate-300">Move Sounds</p>
+                        <p className="text-[10px] text-slate-500">Play sounds when navigating moves</p>
+                      </div>
+                      <button
+                        onClick={() => setSoundEnabled(s => !s)}
+                        className={`relative h-6 w-11 rounded-full transition-colors ${
+                          soundEnabled ? "bg-blue-500" : "bg-white/[0.1]"
+                        }`}
+                      >
+                        <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                          soundEnabled ? "translate-x-5" : ""
+                        }`} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-500">
                 <span className="rounded-full border border-white/[0.06] px-2.5 py-1">
-                  Depth {ENGINE_DEPTH}
+                  Depth {engineDepth}
                 </span>
                 <span className="rounded-full border border-white/[0.06] px-2.5 py-1">
                   Client-side Stockfish 18
@@ -1241,24 +1339,26 @@ export default function AnalyzePage() {
                           Best: <span className="font-bold text-emerald-400">{selectedMove.bestMoveSan}</span>
                         </p>
                       )}
-                      {selectedMove.cpLoss >= 30 && (
-                        <div className="flex gap-1.5 ml-auto">
+                      <div className="flex gap-1.5 ml-auto">
+                        <button
+                          onClick={() => openExplain(selectedMove, "played")}
+                          className={`rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+                            selectedMove.cpLoss >= 30
+                              ? "border-red-500/20 bg-red-500/10 text-red-400 hover:bg-red-500/20"
+                              : "border-blue-500/20 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20"
+                          }`}
+                        >
+                          💡 Explain
+                        </button>
+                        {selectedMove.bestMove && selectedMove.bestMove !== selectedMove.uci && (
                           <button
-                            onClick={() => openExplain(selectedMove, "played")}
-                            className="rounded-lg border border-red-500/20 bg-red-500/10 px-2.5 py-1 text-[11px] font-medium text-red-400 transition-colors hover:bg-red-500/20"
+                            onClick={() => openExplain(selectedMove, "best")}
+                            className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20"
                           >
-                            Explain played
+                            Explain best
                           </button>
-                          {selectedMove.bestMove && (
-                            <button
-                              onClick={() => openExplain(selectedMove, "best")}
-                              className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-medium text-emerald-400 transition-colors hover:bg-emerald-500/20"
-                            >
-                              Explain best
-                            </button>
-                          )}
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
