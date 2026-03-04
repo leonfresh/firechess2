@@ -16,10 +16,13 @@ import { SAMPLE_GAMES, GAME_CATEGORIES, type SampleGame, type GameCategory } fro
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useShowCoordinates } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
+import { stockfishClient } from "@/lib/stockfish-client";
 
 /* ────────────────────────── Types ────────────────────────── */
 
 type GuessResult = "correct" | "close" | "wrong";
+
+type EngineRating = "best" | "excellent" | "good" | "inaccuracy" | "mistake" | "blunder";
 
 interface MoveGuess {
   moveIdx: number;
@@ -28,6 +31,10 @@ interface MoveGuess {
   result: GuessResult;
   /** User's FEN before this move */
   fen: string;
+  /** Engine rating of the user's move (filled async) */
+  userRating?: EngineRating;
+  /** Engine rating of the master's move (filled async) */
+  masterRating?: EngineRating;
 }
 
 /* ────────────────────────── Helpers ────────────────────────── */
@@ -65,6 +72,44 @@ const RESULT_BG: Record<GuessResult, string> = {
   correct: "bg-emerald-500/15 border-emerald-500/20",
   close: "bg-amber-500/15 border-amber-500/20",
   wrong: "bg-red-500/15 border-red-500/20",
+};
+
+/* ────── Engine move classification ────── */
+
+function classifyByCpLoss(cpLoss: number): EngineRating {
+  if (cpLoss <= 5) return "best";
+  if (cpLoss <= 15) return "excellent";
+  if (cpLoss <= 40) return "good";
+  if (cpLoss <= 90) return "inaccuracy";
+  if (cpLoss <= 200) return "mistake";
+  return "blunder";
+}
+
+const ENGINE_RATING_EMOJI: Record<EngineRating, string> = {
+  best: "✅",
+  excellent: "💎",
+  good: "👍",
+  inaccuracy: "⚠️",
+  mistake: "❌",
+  blunder: "💀",
+};
+
+const ENGINE_RATING_COLOR: Record<EngineRating, string> = {
+  best: "text-emerald-400",
+  excellent: "text-cyan-400",
+  good: "text-green-400",
+  inaccuracy: "text-amber-400",
+  mistake: "text-orange-400",
+  blunder: "text-red-400",
+};
+
+const ENGINE_RATING_LABEL: Record<EngineRating, string> = {
+  best: "Best",
+  excellent: "Excellent",
+  good: "Good",
+  inaccuracy: "Inaccuracy",
+  mistake: "Mistake",
+  blunder: "Blunder",
 };
 
 /* ────────────────────────── Tag Filters ────────────────────────── */
@@ -306,6 +351,41 @@ export default function GuessTheMovePage() {
     setGuesses(prev => [...prev, guess]);
     setLastGuessResult({ result, san: userSan, actual: actualSan });
     setSelectedSquare(null);
+
+    // Async engine evaluation of both moves
+    const guessIdx = guesses.length; // index of the guess we just pushed
+    (async () => {
+      try {
+        // Evaluate position before the move
+        const sideToMove = fenBefore.split(" ")[1]; // "w" or "b"
+        const evalBefore = await stockfishClient.evaluateFen(fenBefore, 12);
+        if (!evalBefore) return;
+        // Eval from perspective of side to move
+        const cpBefore = sideToMove === "w" ? evalBefore.cp : -evalBefore.cp;
+
+        // Evaluate after user's move
+        const chessUser = new Chess(fenBefore);
+        const um = chessUser.move(userSan);
+        if (!um) return;
+        const evalAfterUser = await stockfishClient.evaluateFen(chessUser.fen(), 12);
+        const cpAfterUser = evalAfterUser ? (sideToMove === "w" ? -evalAfterUser.cp : evalAfterUser.cp) : cpBefore;
+        const userCpLoss = Math.max(0, cpBefore - cpAfterUser);
+
+        // Evaluate after master's move
+        const chessMaster = new Chess(fenBefore);
+        const mm = chessMaster.move(actualSan);
+        if (!mm) return;
+        const evalAfterMaster = await stockfishClient.evaluateFen(chessMaster.fen(), 12);
+        const cpAfterMasterVal = evalAfterMaster ? (sideToMove === "w" ? -evalAfterMaster.cp : evalAfterMaster.cp) : cpBefore;
+        const masterCpLoss = Math.max(0, cpBefore - cpAfterMasterVal);
+
+        setGuesses(prev => prev.map((g, idx) =>
+          idx === guessIdx
+            ? { ...g, userRating: classifyByCpLoss(userCpLoss), masterRating: classifyByCpLoss(masterCpLoss) }
+            : g
+        ));
+      } catch { /* engine not available — ratings stay undefined */ }
+    })();
 
     // Auto-advance after a short delay
     setTimeout(() => {
@@ -703,25 +783,43 @@ export default function GuessTheMovePage() {
             </div>
 
             {/* Feedback toast */}
-            {lastGuessResult && (
-              <div className={`coach-insight flex items-center gap-3 rounded-xl border px-4 py-3 ${RESULT_BG[lastGuessResult.result]}`}>
-                <span className={`text-lg font-extrabold ${RESULT_COLOR[lastGuessResult.result]}`}>
-                  {resultLabel(lastGuessResult.result)}
-                </span>
-                {lastGuessResult.result !== "correct" && (
-                  <span className="text-sm text-slate-300">
-                    You played <span className="font-bold">{lastGuessResult.san}</span>
-                    {" · "}
-                    GM played <span className="font-bold text-emerald-400">{lastGuessResult.actual}</span>
+            {lastGuessResult && (() => {
+              const latestGuess = guesses[guesses.length - 1];
+              return (
+                <div className={`coach-insight flex items-center gap-3 rounded-xl border px-4 py-3 ${RESULT_BG[lastGuessResult.result]}`}>
+                  <span className={`text-lg font-extrabold ${RESULT_COLOR[lastGuessResult.result]}`}>
+                    {resultLabel(lastGuessResult.result)}
                   </span>
-                )}
-                {lastGuessResult.result === "correct" && (
-                  <span className="text-sm text-emerald-300/80">
-                    <span className="font-bold">{lastGuessResult.san}</span> — exactly right!
-                  </span>
-                )}
-              </div>
-            )}
+                  {lastGuessResult.result !== "correct" && (
+                    <span className="text-sm text-slate-300">
+                      You played <span className="font-bold">{lastGuessResult.san}</span>
+                      {latestGuess?.userRating && (
+                        <span className={`ml-1 ${ENGINE_RATING_COLOR[latestGuess.userRating]}`} title={ENGINE_RATING_LABEL[latestGuess.userRating]}>
+                          {ENGINE_RATING_EMOJI[latestGuess.userRating]}
+                        </span>
+                      )}
+                      {" · "}
+                      GM played <span className="font-bold text-emerald-400">{lastGuessResult.actual}</span>
+                      {latestGuess?.masterRating && (
+                        <span className={`ml-1 ${ENGINE_RATING_COLOR[latestGuess.masterRating]}`} title={ENGINE_RATING_LABEL[latestGuess.masterRating]}>
+                          {ENGINE_RATING_EMOJI[latestGuess.masterRating]}
+                        </span>
+                      )}
+                    </span>
+                  )}
+                  {lastGuessResult.result === "correct" && (
+                    <span className="text-sm text-emerald-300/80">
+                      <span className="font-bold">{lastGuessResult.san}</span> — exactly right!
+                      {latestGuess?.masterRating && (
+                        <span className={`ml-1 ${ENGINE_RATING_COLOR[latestGuess.masterRating]}`} title={ENGINE_RATING_LABEL[latestGuess.masterRating]}>
+                          {ENGINE_RATING_EMOJI[latestGuess.masterRating]}
+                        </span>
+                      )}
+                    </span>
+                  )}
+                </div>
+              );
+            })()}
 
             {/* Game complete */}
             {gameComplete && (
@@ -848,27 +946,49 @@ export default function GuessTheMovePage() {
                   return (
                     <div
                       key={i}
-                      className={`flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs ${RESULT_BG[g.result]}`}
+                      className={`group/row relative flex flex-col gap-0.5 rounded-lg border px-3 py-1.5 text-xs ${RESULT_BG[g.result]}`}
                     >
-                      <span className="font-mono text-slate-500 w-8 shrink-0">
-                        {moveNum}{isWhite ? "." : "…"}
-                      </span>
-                      {g.result === "correct" ? (
-                        <span className="font-bold text-emerald-400">{g.actualSan}</span>
-                      ) : (
-                        <>
-                          <span className="text-slate-500 line-through">{g.san}</span>
-                          <span className="text-slate-600">→</span>
+                      {/* Main row */}
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-slate-500 w-8 shrink-0">
+                          {moveNum}{isWhite ? "." : "…"}
+                        </span>
+                        {g.result === "correct" ? (
                           <span className="font-bold text-emerald-400">{g.actualSan}</span>
-                        </>
+                        ) : (
+                          <>
+                            <span className="text-slate-500 line-through">{g.san}</span>
+                            {g.userRating && (
+                              <span className={`text-[9px] ${ENGINE_RATING_COLOR[g.userRating]}`} title={`Your move: ${ENGINE_RATING_LABEL[g.userRating]}`}>
+                                {ENGINE_RATING_EMOJI[g.userRating]}
+                              </span>
+                            )}
+                            <span className="text-slate-600">→</span>
+                            <span className="font-bold text-emerald-400">{g.actualSan}</span>
+                          </>
+                        )}
+                        {g.masterRating && (
+                          <span className={`text-[9px] ${ENGINE_RATING_COLOR[g.masterRating]}`} title={`Master: ${ENGINE_RATING_LABEL[g.masterRating]}`}>
+                            {ENGINE_RATING_EMOJI[g.masterRating]}
+                          </span>
+                        )}
+                        <span className={`ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
+                          g.result === "correct" ? "bg-emerald-500/20 text-emerald-400" :
+                          g.result === "close" ? "bg-amber-500/20 text-amber-400" :
+                          "bg-red-500/20 text-red-400"
+                        }`}>
+                          {g.result === "correct" ? "✓" : g.result === "close" ? "≈" : "✗"}
+                        </span>
+                      </div>
+                      {/* Engine rating detail row (visible on hover) */}
+                      {g.userRating && g.result !== "correct" && (
+                        <div className="hidden group-hover/row:flex items-center gap-2 pl-8 text-[9px] text-slate-500">
+                          <span>You: <span className={`font-semibold ${ENGINE_RATING_COLOR[g.userRating]}`}>{ENGINE_RATING_LABEL[g.userRating]}</span></span>
+                          {g.masterRating && (
+                            <span>· GM: <span className={`font-semibold ${ENGINE_RATING_COLOR[g.masterRating]}`}>{ENGINE_RATING_LABEL[g.masterRating]}</span></span>
+                          )}
+                        </div>
                       )}
-                      <span className={`ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold ${
-                        g.result === "correct" ? "bg-emerald-500/20 text-emerald-400" :
-                        g.result === "close" ? "bg-amber-500/20 text-amber-400" :
-                        "bg-red-500/20 text-red-400"
-                      }`}>
-                        {g.result === "correct" ? "✓" : g.result === "close" ? "≈" : "✗"}
-                      </span>
                     </div>
                   );
                 })}
