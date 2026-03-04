@@ -678,13 +678,17 @@ function BattleBoard({
       // Correct move
       try {
         const chess = new Chess(fen);
+        const targetPiece = chess.get(expected.slice(2, 4) as any);
+        const isCapture = !!targetPiece;
         chess.move({ from: expected.slice(0, 2), to: expected.slice(2, 4), promotion: expectedPromo || undefined } as any);
         const newFen = chess.fen();
         setFen(newFen);
         setLastMove({ from: expected.slice(0, 2), to: expected.slice(2, 4) });
         setMoveIndicator({ square: expected.slice(2, 4), type: "correct" });
         setHintSquare(null);
-        playSound("move");
+        if (chess.isCheck()) playSound("check");
+        else if (isCapture) playSound("capture");
+        else playSound("move");
 
         const nextIdx = solutionIdx + 1;
         if (nextIdx >= puzzle.puzzle.solution.length) {
@@ -703,12 +707,16 @@ function BattleBoard({
           if (oppMove) {
             try {
               const c2 = new Chess(newFen);
+              const oppTarget = c2.get(oppMove.slice(2, 4) as any);
+              const oppCapture = !!oppTarget;
               c2.move({ from: oppMove.slice(0, 2), to: oppMove.slice(2, 4), promotion: oppMove.slice(4, 5) || undefined } as any);
               setFen(c2.fen());
               setLastMove({ from: oppMove.slice(0, 2), to: oppMove.slice(2, 4) });
               setSolutionIdx(nextIdx + 1);
               setMoveIndicator(null);
-              playSound("move");
+              if (c2.isCheck()) playSound("check");
+              else if (oppCapture) playSound("capture");
+              else playSound("move");
             } catch {}
           }
         }, 400);
@@ -737,8 +745,7 @@ function BattleBoard({
           return false;
         }
       }
-      attemptMove(from, to);
-      return false;
+      return attemptMove(from, to);
     },
     [state, fen, attemptMove]
   );
@@ -759,10 +766,30 @@ function BattleBoard({
 
   // Square styles
   const customSquareStyles: Record<string, React.CSSProperties> = {};
-  if (lastMove && state === "solving") {
-    customSquareStyles[lastMove.from] = { backgroundColor: "rgba(255, 170, 0, 0.20)" };
-    customSquareStyles[lastMove.to] = { backgroundColor: "rgba(255, 170, 0, 0.30)" };
+  if (lastMove) {
+    customSquareStyles[lastMove.from] = { backgroundColor: "rgba(255, 255, 0, 0.25)" };
+    customSquareStyles[lastMove.to] = { backgroundColor: "rgba(255, 255, 0, 0.35)" };
   }
+  // King in check — red glow
+  try {
+    const checkChess = new Chess(fen);
+    if (checkChess.isCheck()) {
+      const turn = checkChess.turn();
+      const board = checkChess.board();
+      for (let r = 0; r < 8; r++) {
+        for (let f = 0; f < 8; f++) {
+          const p = board[r][f];
+          if (p?.type === "k" && p.color === turn) {
+            const sq = String.fromCharCode(97 + f) + (8 - r);
+            customSquareStyles[sq] = {
+              ...customSquareStyles[sq],
+              background: "radial-gradient(circle, rgba(239,68,68,0.6) 0%, rgba(239,68,68,0.2) 60%, transparent 80%)",
+            };
+          }
+        }
+      }
+    }
+  } catch {}
   if (wrongMove) {
     customSquareStyles[wrongMove.to] = { backgroundColor: "rgba(239, 68, 68, 0.4)" };
   }

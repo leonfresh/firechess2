@@ -336,6 +336,8 @@ function PuzzleBoard({
       // Correct move
       try {
         const chess = new Chess(fen);
+        const targetPiece = chess.get(expected.slice(2, 4) as any);
+        const isCapture = !!targetPiece;
         chess.move({
           from: expected.slice(0, 2),
           to: expected.slice(2, 4),
@@ -345,7 +347,9 @@ function PuzzleBoard({
         setFen(newFen);
         setLastMove({ from: expected.slice(0, 2), to: expected.slice(2, 4) });
         setHintSquare(null);
-        playSound("move");
+        if (chess.isCheck()) playSound("check");
+        else if (isCapture) playSound("capture");
+        else playSound("move");
 
         const nextIdx = solutionIdx + 1;
 
@@ -367,6 +371,8 @@ function PuzzleBoard({
           if (oppMove) {
             try {
               const c2 = new Chess(newFen);
+              const oppTarget = c2.get(oppMove.slice(2, 4) as any);
+              const oppCapture = !!oppTarget;
               c2.move({
                 from: oppMove.slice(0, 2),
                 to: oppMove.slice(2, 4),
@@ -375,7 +381,9 @@ function PuzzleBoard({
               setFen(c2.fen());
               setLastMove({ from: oppMove.slice(0, 2), to: oppMove.slice(2, 4) });
               setSolutionIdx(nextIdx + 1);
-              playSound("move");
+              if (c2.isCheck()) playSound("check");
+              else if (oppCapture) playSound("capture");
+              else playSound("move");
             } catch { /* */ }
           }
         }, 400);
@@ -403,10 +411,10 @@ function PuzzleBoard({
           return false;
         }
       }
-      attemptMove(from, to);
+      const result = attemptMove(from, to);
       setSelectedSq(null);
       setLegalMoveSqs([]);
-      return false;
+      return result;
     },
     [state, puzzle, fen, attemptMove]
   );
@@ -495,7 +503,7 @@ function PuzzleBoard({
     setHintSquare(expected.slice(0, 2));
   }, [state, puzzle, solutionIdx]);
 
-  // Square styles: last move, selection, legal dots, wrong move, hint
+  // Square styles: last move, selection, legal dots, wrong move, hint, check
   const customSquareStyles = useMemo(() => {
     const styles: Record<string, React.CSSProperties> = {};
 
@@ -504,6 +512,27 @@ function PuzzleBoard({
       styles[lastMove.from] = { background: lmColor };
       styles[lastMove.to] = { background: lmColor };
     }
+
+    // King in check — red glow
+    try {
+      const checkChess = new Chess(fen);
+      if (checkChess.isCheck()) {
+        const turn = checkChess.turn();
+        const board = checkChess.board();
+        for (let r = 0; r < 8; r++) {
+          for (let f = 0; f < 8; f++) {
+            const p = board[r][f];
+            if (p?.type === "k" && p.color === turn) {
+              const sq = String.fromCharCode(97 + f) + (8 - r);
+              styles[sq] = {
+                ...styles[sq],
+                background: "radial-gradient(circle, rgba(239,68,68,0.6) 0%, rgba(239,68,68,0.2) 60%, transparent 80%)",
+              };
+            }
+          }
+        }
+      }
+    } catch {}
 
     if (selectedSq && state === "solving") {
       styles[selectedSq] = { background: "rgba(255, 255, 0, 0.4)" };
