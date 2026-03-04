@@ -817,42 +817,40 @@ function BattleBoard({
       </div>
 
       {/* Board with effects */}
-      <div ref={boardRef} className="w-full max-w-[720px]">
-        <div
-          style={{ width: boardSize, height: boardSize }}
-          className={`relative shrink-0 overflow-hidden rounded-xl transition-shadow ${
-            shaking ? "dungeon-shake" : ""
-          } ${
-            glowCorrect ? "dungeon-correct-glow" : ""
-          }`}
-        >
-          <Chessboard
-            id="dungeon-battle"
-            position={fen}
-            boardOrientation={orientation}
-            boardWidth={boardSize}
-            onPieceDrop={onDrop as any}
-            arePiecesDraggable={state === "solving"}
-            isDraggablePiece={isDraggablePiece}
-            animationDuration={200}
-            customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-            customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
-            showBoardNotation={showCoords}
-            customSquareStyles={customSquareStyles}
-            customPieces={customPieces}
-            showPromotionDialog={showPromoDialog}
-            promotionToSquare={promoTo as CbSquare | undefined}
-            onPromotionPieceSelect={onPromotionPieceSelect}
+      <div
+        ref={boardRef}
+        className={`relative mx-auto w-full max-w-[720px] shrink-0 overflow-hidden rounded-xl transition-shadow ${
+          shaking ? "dungeon-shake" : ""
+        } ${
+          glowCorrect ? "dungeon-correct-glow" : ""
+        }`}
+      >
+        <Chessboard
+          id="dungeon-battle"
+          position={fen}
+          boardOrientation={orientation}
+          boardWidth={boardSize}
+          onPieceDrop={onDrop as any}
+          arePiecesDraggable={state === "solving"}
+          isDraggablePiece={isDraggablePiece}
+          animationDuration={200}
+          customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+          customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+          showBoardNotation={showCoords}
+          customSquareStyles={customSquareStyles}
+          customPieces={customPieces}
+          showPromotionDialog={showPromoDialog}
+          promotionToSquare={promoTo as CbSquare | undefined}
+          onPromotionPieceSelect={onPromotionPieceSelect}
+        />
+        {moveIndicator && (
+          <DungeonMoveIndicator
+            square={moveIndicator.square}
+            type={moveIndicator.type}
+            orientation={orientation}
+            boardSize={boardSize}
           />
-          {moveIndicator && (
-            <DungeonMoveIndicator
-              square={moveIndicator.square}
-              type={moveIndicator.type}
-              orientation={orientation}
-              boardSize={boardSize}
-            />
-          )}
-        </div>
+        )}
       </div>
     </div>
   );
