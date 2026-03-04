@@ -230,7 +230,7 @@ export default function GuessTheMovePage() {
       return;
     }
     setCurrentMoveIdx(nextIdx);
-    setLastGuessResult(null);
+    // Keep lastGuessResult visible — it stays until the next guess replaces it
     setShowHint(false);
     setSelectedSquare(null);
 
@@ -390,7 +390,7 @@ export default function GuessTheMovePage() {
     // Auto-advance after a short delay
     setTimeout(() => {
       advanceToNext(currentMoveIdx);
-    }, result === "correct" ? 600 : 1200);
+    }, result === "correct" ? 800 : 1400);
   }, [chess, currentMoveIdx, moves, gameComplete, shouldGuess, advanceToNext]);
 
   // ── Click-to-move ──
@@ -782,8 +782,8 @@ export default function GuessTheMovePage() {
               </div>
             </div>
 
-            {/* Feedback toast */}
-            {lastGuessResult && (() => {
+            {/* Feedback — persistent until next guess */}
+            {lastGuessResult && !gameComplete && (() => {
               const latestGuess = guesses[guesses.length - 1];
               return (
                 <div className={`coach-insight flex items-center gap-3 rounded-xl border px-4 py-3 ${RESULT_BG[lastGuessResult.result]}`}>
