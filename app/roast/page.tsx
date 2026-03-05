@@ -906,20 +906,6 @@ export default function RoastPage() {
                       })}
                     </div>
                   )}
-                  {/* Board overlay speech bubble */}
-                  {activeComment && boardSize > 0 && (
-                    <div
-                      className="absolute bottom-0 left-0 right-0 pointer-events-none flex items-end justify-center p-2 animate-fadeIn"
-                      style={{ width: boardSize }}
-                    >
-                      <div className="w-full rounded-lg bg-black/70 backdrop-blur-sm border border-white/10 px-3 py-2 shadow-lg">
-                        <p className="text-xs sm:text-sm text-white/90 leading-relaxed text-center line-clamp-3">
-                          {typewriterText}
-                          {!typingDone && <span className="animate-blink text-orange-400">|</span>}
-                        </p>
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
 
@@ -935,6 +921,18 @@ export default function RoastPage() {
                   )}
                 </div>
               </div>
+
+              {/* Commentary text below board */}
+              {activeComment && (pageState === "watching" || pageState === "guessing") && (
+                <div className="w-full max-w-[640px] mt-1 animate-fadeIn">
+                  <div className="rounded-lg bg-black/50 backdrop-blur-sm border border-white/10 px-3 py-2">
+                    <p className="text-xs sm:text-sm text-white/90 leading-relaxed text-center">
+                      {typewriterText}
+                      {!typingDone && <span className="animate-blink text-orange-400">|</span>}
+                    </p>
+                  </div>
+                </div>
+              )}
 
               {/* Playback controls */}
               {(pageState === "watching" || pageState === "guessing" || pageState === "revealed") && (
