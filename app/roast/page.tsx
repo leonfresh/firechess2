@@ -43,7 +43,7 @@ import { RoastAvatar, type RoastMood } from "@/components/roast-avatar";
 /*  Typewriter hook                                                     */
 /* ================================================================== */
 
-function useTypewriter(text: string | null, charDelay = 18) {
+function useTypewriter(text: string | null, charDelay = 14) {
   const [displayed, setDisplayed] = useState("");
   const [isDone, setIsDone] = useState(true);
 
@@ -148,7 +148,7 @@ export default function RoastPage() {
   const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
   const [introLine, setIntroLine] = useState("");
   const [autoplay, setAutoplay] = useState(true);
-  const [speed, setSpeed] = useState<number>(1800); // ms between moves
+  const [speed, setSpeed] = useState<number>(2400); // ms between moves (no-comment)
   const [analyzing, setAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [selectedBracket, setSelectedBracket] = useState<number | null>(null);
@@ -483,8 +483,11 @@ export default function RoastPage() {
       return;
     }
 
-    // After a comment finishes typing, use a shorter pause; otherwise normal speed
-    const delay = activeComment ? 800 : speed;
+    // After a comment finishes typing, give reading time scaled to length;
+    // otherwise use the base speed for non-comment moves
+    const delay = activeComment
+      ? Math.max(1800, Math.min(3500, activeComment.length * 15))
+      : speed;
 
     const timer = setTimeout(() => {
       const next = currentIdx + 1;
@@ -829,10 +832,10 @@ export default function RoastPage() {
                     onChange={(e) => setSpeed(Number(e.target.value))}
                     className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-xs text-slate-400 cursor-pointer"
                   >
-                    <option value={3000}>🐌 Slow</option>
-                    <option value={1800}>🚶 Normal</option>
-                    <option value={900}>🏃 Fast</option>
-                    <option value={400}>⚡ Blitz</option>
+                    <option value={4000}>🐌 Slow</option>
+                    <option value={2400}>🚶 Normal</option>
+                    <option value={1400}>🏃 Fast</option>
+                    <option value={700}>⚡ Blitz</option>
                   </select>
                   <button
                     onClick={skipToGuess}
