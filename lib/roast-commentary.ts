@@ -152,7 +152,10 @@ function detectHanging(chess: Chess, color: Color): PieceInfo[] {
     const attacked = new Set(oppMoves.filter(m => m.captured).map(m => m.to));
     for (const p of allPieces(chess)) {
       if (p.color === color && p.type !== "k" && attacked.has(p.square) && (PIECE_VALUES[p.type] ?? 0) >= 3) {
-        hanging.push(p);
+        // Only flag as hanging if the piece is NOT defended by any friendly piece
+        if (!chess.isAttacked(p.square, color)) {
+          hanging.push(p);
+        }
       }
     }
   } catch { /* not opponent's turn */ }
@@ -388,8 +391,15 @@ function _generatePositionAware(
   return null;
 }
 
-function _emitResult(used: Set<string>, result: { text: string; annotations: MoveAnnotation }): CommentResult {
-  used.add(result.text);
+function _templateKey(text: string): string {
+  // Strip move-specific text to produce a template key for dedup
+  return text.replace(/[KQRBN]?[a-h]?x?[a-h][1-8][+=]?[QRBN]?[+#]?/g, "_").replace(/move \d+/gi, "_").slice(0, 60);
+}
+
+function _emitResult(used: Set<string>, result: { text: string; annotations: MoveAnnotation }): CommentResult | null {
+  const key = _templateKey(result.text);
+  if (used.has(key)) return null; // skip duplicate template
+  used.add(key);
   return result;
 }
 
@@ -408,8 +418,8 @@ function _brilliantRoast(
   const baseMarkers: { square: string; emoji: string }[] = [{ square: toSq, emoji: "✨" }];
 
   const lines: (() => { text: string; annotations: MoveAnnotation })[] = [
-    () => ({ text: `🤯 ${move.san}?! EXCUSE ME?? That's actually BRILLIANT. ${pn(move.pieceType, true)} to ${toSq}? Engine approved, I'm shooketh 🔥`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
-    () => ({ text: `✨ Nah hold up. ${move.san} is literally Stockfish's #1 choice. WHERE was this energy 3 moves ago when they were throwing?? 😤`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `🤯 ${move.san}?! EXCUSE ME?? That's actually BRILLIANT. ${pn(move.pieceType, true)} to ${toSq}? Google "best move ever." Holy hell 🔥`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `✨ Nah hold up. ${move.san} is literally the best move on the board. WHERE was this energy 3 moves ago when they were throwing?? 😤`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => ({ text: `🧠 ${pn(move.pieceType, true)} to ${toSq}. That's the best move on the board. I'm actually speechless. This person has NO business playing this well 💀`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => {
       if (move.sacrificedMaterial && landed)
@@ -445,7 +455,7 @@ function _goodMoveRoast(
   const lines: (() => string)[] = [
     () => `✅ ${move.san} — can't roast this one. solid af. And I'm mad about it tbh 😤`,
     () => `👑 ${pn(move.pieceType, true)} to ${toSq}. Right move, right reasons. Ngl kinda sus at this elo 🤨`,
-    () => `🫡 Engine top choice? At THIS elo? *runs background check* 🕵️`,
+    () => `🫡 Google "${move.san} best move." Holy hell, they actually found it 💀👑`,
     () => {
       if (move.isCastle) return `🏰 Castling! FINALLY. The king was one more move away from witness protection 🫣💨`;
       return `✅ ${move.san} is clean. Accurate. The kind of move that makes me think they actually have a coach 🧐`;
@@ -454,7 +464,7 @@ function _goodMoveRoast(
       const dev = development(after, move.color as Color);
       if (dev.stuck.length === 0 && dev.total > 0)
         return `💅 ${move.san} — all pieces developed and coordinating. This is what chess is SUPPOSED to look like. Rare W 📈`;
-      return `🫡 Solid ${move.san}. Stockfish approves. I grudgingly approve. Don't let it go to your head 😤`;
+      return `🫡 ${move.san} — alright fine, that was good. I grudgingly approve. Don't let it go to your head 😤`;
     },
     () => `👍 ${move.san} — no notes. Well played. Now do it again (you won't) 🫠`,
     () => `💪 ${move.san} is textbook. Based and positionally-pilled 📚`,
@@ -464,6 +474,13 @@ function _goodMoveRoast(
     },
     () => `🫡 ${move.san} — okay who is this and what did they do with the person who blundered last move? Identity theft is not a joke 🕵️`,
     () => `✅ ${move.san}. The tu art of chess. Beautiful. No notes. Garry Chess would shed a single tear 🥲👑`,
+    () => `🗿 ${move.san} — a good move? In THIS economy?? Google "good chess move." Holy hell 💀🫡`,
+    () => `👑 ${move.san}. Are you kidding ??? This was actually GOOD. What the **** happened since last move 🤡✨`,
+    () => `✅ ${move.san} — true will never die. And neither will this position after that move 🫡💪`,
+    () => {
+      if (move.isCapture) return `🍖 ${move.san} takes and it's CORRECT. Free material collected. The en passant of good decisions 🫡⛪`;
+      return `🫡 ${move.san}. New response just dropped and it's actually competent. Rare 🗿✨`;
+    },
   ];
   return { text: pick(lines)(), annotations: ann };
 }
@@ -652,7 +669,7 @@ function _blunderRoast(
 
   // 9. Generic
   return { text: pick([
-    `💀 ${move.san}. Oh no. Oh NO. The eval bar just had a seizure. Position went from playable to "queue next game" 🎮🫠`,
+    `💀 ${move.san}. Oh no. Oh NO. Position went from playable to "queue next game." Garry Chess is weeping 🎮🫠`,
     `😭 ${move.san} — and just like that, the advantage evaporates. Poof. Gone. Reduced to atoms 🚰`,
     `☠️ Ladies and gentlemen… ${move.san}. This move belongs in a museum. The Museum of Bad Decisions 🏛️💀`,
     `🗿 ${move.san} was so bad the chess pieces filed a complaint. Self-sabotage fr 😭`,
@@ -712,13 +729,15 @@ function _mistakeRoast(
 
   if (move.bestMoveSan) {
     return { text: pick([
-      `😬 ${move.san} when ${move.bestMoveSan} was right there. The eval bar is NOT happy about this 📉`,
+      `😬 ${move.san} when ${move.bestMoveSan} was right there. Google "missed opportunity." Holy hell 📉`,
       `🫤 ${move.san} instead of ${move.bestMoveSan}. The advantage just did a backflip off a cliff 🏔️💀`,
       `😤 ${move.san} — ${move.bestMoveSan} was right there staring them in the face. "Was that really the best I could do?" No. No it wasn't 🗿`,
       `📉 ${move.bestMoveSan} was calling. They didn't answer. ${move.san} instead. This is the moment where everything goes sideways 🫠`,
       `🤦 ${move.san} over ${move.bestMoveSan}. That's like studying for the wrong exam fr 📚❌`,
       `🗿 ${move.san} instead of ${move.bestMoveSan}. I know what ${move.bestMoveSan} is dumbass you just blundered your advantage 💀`,
       `😬 ${move.san} played, ${move.bestMoveSan} wept. Are you kidding ??? What the **** are you talking about man 🗿🤡`,
+      `💀 ${move.san} over ${move.bestMoveSan}. Google "en passant." They didn't take the best move and the brick is incoming ⛪🧱`,
+      `🫠 ${move.san}. Garry Chess invented ${move.bestMoveSan} for a reason. This ain't it 👑📉`,
     ])!, annotations: { arrows: [moveArrow], markers: [] } };
   }
 
@@ -728,6 +747,8 @@ function _mistakeRoast(
     `🫤 ${move.san}. The opponent should absolutely punish this. Key word: should 🤞`,
     `🤡 ${move.san}. Are you kidding? You were doing PIPI in your pampers when good moves were right there on the board 🗿`,
     `😬 ${move.san}. New mistake just dropped. This game is the gift that keeps on giving 🎁💀`,
+    `🧱 ${move.san}. Didn't take the best move. Google "brick." The punishment is severe 🗿⛪`,
+    `💀 ${move.san}. Liers will kicked off... from the advantage they had. True will never die, but their lead just did 🗿`,
   ])!, annotations: { arrows: [moveArrow], markers: [] } };
 }
 
@@ -764,6 +785,9 @@ function _inaccuracyRoast(
     () => `🤷 ${move.san}. Unquestionably one of the moves in this game. I literally do not care to analyze this further 🗿`,
     () => `😑 ${move.san} — not great, not terrible. 3.6 roentgen. The Chernobyl of chess accuracy ☢️🫠`,
     () => `🫤 ${move.san}. Google "how to improve at chess." Actually, scratch that, they'd probably find AnarchyChess first 💀`,
+    () => `🤷 ${move.san}. The Knook of moves — neither here nor there, just vibing in an alternate dimension 🗿♞🏰`,
+    () => `😑 ${move.san}. New response just dropped and it's mid. This is exactly what ${move.san} is, dumbass — mid 🫠`,
+    () => `🫤 ${move.san}. Not a blunder, not good, just... chess purgatory. The adult soul trembles 💀🗿`,
   ];
   return { text: pick(lines)(), annotations: ann };
 }
@@ -775,7 +799,7 @@ function _fallbackLine(move: AnalyzedMove): { text: string; annotations: MoveAnn
   if (cls === "best" || cls === "great" || cls === "good") {
     return Math.random() < 0.3 ? { text: `✅ ${move.san} — solid move. Nothing to see here 🫡`, annotations: NO_ANNOTATIONS } : null;
   }
-  if (cls === "blunder") return { text: `💀 ${move.san}. That one hurt. The eval bar is in pain 😭`, annotations: { arrows: [[fromSq, toSq, "rgba(239, 68, 68, 0.85)"]], markers: [] } };
+  if (cls === "blunder") return { text: `💀 ${move.san}. That one hurt. Liers will kicked off for this 😭`, annotations: { arrows: [[fromSq, toSq, "rgba(239, 68, 68, 0.85)"]], markers: [] } };
   if (cls === "mistake") return { text: `😬 ${move.san} — that's rough buddy. Position just got worse 📉`, annotations: { arrows: [[fromSq, toSq, "rgba(239, 183, 44, 0.85)"]], markers: [] } };
   if (cls === "inaccuracy") return Math.random() < 0.4 ? { text: `🤷 ${move.san} — there was something better`, annotations: NO_ANNOTATIONS } : null;
   return null;
@@ -826,7 +850,7 @@ export function getEloFlavorLine(elo: number): string {
     "Above 2000. These players actually know what they're doing. Usually 👑🧠",
     "Expert level. When they blunder up here, it's genuinely hard to spot why 🔍",
     "When a 2000+ player blunders, they blunder with ✨STYLE✨ 💀",
-    "At this elo, you need an engine to find the mistakes. Let's see 🤖🔍",
+    "At this elo, the blunders are rare but when they drop? Holy hell 🤖🔍",
     "High-level chess. Where the difference between best and second-best actually matters 📊👑",
     "2000+. These players are unquestionably some of the players in chess history 👑🗿",
     "Expert chess. If they blunder up here, Hans's earpiece couldn't save them 💀🔊",
