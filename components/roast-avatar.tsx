@@ -13,9 +13,9 @@ export type RoastMood =
   | "thinking";
 
 /**
- * Pepe the Frog style avatar for roast commentary.
- * Big green face, bulging eyes, expressive mouth — maximum meme energy.
- * Changes expression based on `mood` prop and bounces on mood change.
+ * Pepe the Frog avatar — faithful to the Twitch emote style.
+ * Bug eyes sitting ON TOP of the head, thick red-brown frog lips,
+ * blue hoodie collar, classic green with darker shading.
  */
 export function RoastAvatar({ mood, size = 72 }: { mood: RoastMood; size?: number }) {
   const [bounce, setBounce] = useState(false);
@@ -35,177 +35,179 @@ export function RoastAvatar({ mood, size = 72 }: { mood: RoastMood; size?: numbe
       className={`flex-shrink-0 transition-transform duration-200 ${bounce ? "scale-[1.18]" : "scale-100"}`}
       style={{ width: size, height: size }}
     >
-      <svg viewBox="0 0 120 120" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <radialGradient id="pepe-face" cx="50%" cy="45%" r="55%">
-            <stop offset="0%" stopColor="#7BC264" />
-            <stop offset="100%" stopColor="#5A9E47" />
-          </radialGradient>
-          <radialGradient id="pepe-dark" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#4A8A38" />
-            <stop offset="100%" stopColor="#3D7530" />
-          </radialGradient>
-        </defs>
+      <svg viewBox="0 0 140 140" width={size} height={size} xmlns="http://www.w3.org/2000/svg">
+        {/* ── Blue hoodie / shirt collar ── */}
+        <path d="M24 108 Q30 96,70 94 Q110 96,116 108 L120 140 L20 140Z" fill="#3B5DC9" stroke="#2A47A0" strokeWidth="1.5" />
+        <path d="M38 102 Q70 97,102 102 Q108 104,110 108 L30 108 Q32 104,38 102Z" fill="#4A6FE0" />
 
-        {/* ── Head shape (big round green face) ── */}
-        <ellipse cx="60" cy="62" rx="50" ry="46" fill="url(#pepe-face)" stroke="#3D7530" strokeWidth="1.2">
-          <animateTransform attributeName="transform" type="scale" values="1 1;1.01 0.99;1 1" dur="2.5s" repeatCount="indefinite" additive="sum" />
-        </ellipse>
+        {/* ── Head shape — wider at top, rounder chin, Pepe proportions ── */}
+        <path d="M22 72 Q18 42,36 28 Q50 18,70 18 Q90 18,104 28 Q122 42,118 72 Q116 88,104 96 Q88 104,70 104 Q52 104,36 96 Q24 88,22 72Z"
+          fill="#6B9E3C" stroke="#4A7A2A" strokeWidth="2">
+          <animateTransform attributeName="transform" type="scale" values="1 1;1.005 0.995;1 1" dur="3s" repeatCount="indefinite" additive="sum" />
+        </path>
 
-        {/* ── Chin / jaw bulge ── */}
-        <ellipse cx="60" cy="88" rx="38" ry="18" fill="#6BB855" />
+        {/* ── Lighter face area (front of face) ── */}
+        <ellipse cx="70" cy="72" rx="40" ry="28" fill="#7DB84A" />
 
-        {/* ── Eye whites (big bulging frog eyes) ── */}
-        <ellipse cx="40" cy="48" rx="18" ry="20" fill="white" stroke="#3D7530" strokeWidth="1" />
-        <ellipse cx="80" cy="48" rx="18" ry="20" fill="white" stroke="#3D7530" strokeWidth="1" />
+        {/* ── Eye whites — BIG, protruding ABOVE the head like a frog ── */}
+        <ellipse cx="50" cy="42" rx="20" ry="22" fill="white" stroke="#4A7A2A" strokeWidth="2" />
+        <ellipse cx="90" cy="42" rx="20" ry="22" fill="white" stroke="#4A7A2A" strokeWidth="2" />
 
-        {/* ── Mouth area base ── */}
-        <ellipse cx="60" cy="82" rx="28" ry="12" fill="#6BB855" />
+        {/* ── Thick frog lips (the iconic red-brown wide mouth) ── */}
+        <path d="M30 82 Q50 78,70 80 Q90 78,110 82 Q112 86,110 90 Q90 96,70 94 Q50 96,30 90 Q28 86,30 82Z"
+          fill="#C45C3A" stroke="#8B3D22" strokeWidth="1.5" />
+        {/* Lip highlight */}
+        <path d="M36 84 Q70 80,104 84 Q106 86,104 88 Q70 84,36 88 Q34 86,36 84Z" fill="#D47A5A" opacity="0.5" />
 
-        {/* ═══ NEUTRAL — classic Pepe ═══ */}
+        {/* ═══ NEUTRAL — Classic Pepe ═══ */}
         {mood === "neutral" && (
           <>
-            {/* Pupils */}
-            <circle cx="42" cy="52" r="7" fill="#2D1B07" />
-            <circle cx="78" cy="52" r="7" fill="#2D1B07" />
-            <circle cx="40" cy="50" r="2.5" fill="white" />
-            <circle cx="76" cy="50" r="2.5" fill="white" />
-            {/* Eyelids (half-droopy classic Pepe) */}
-            <path d="M22 42 Q40 36 58 42" fill="#5A9E47" />
-            <path d="M62 42 Q80 36 98 42" fill="#5A9E47" />
-            {/* Mouth — flat frog line with slight downturn */}
-            <path d="M34 82 Q46 86 60 84 Q74 86 86 82" fill="none" stroke="#3D7530" strokeWidth="2.5" strokeLinecap="round" />
+            {/* Pupils — large, looking slightly left */}
+            <circle cx="48" cy="48" r="10" fill="#1A1A1A" />
+            <circle cx="88" cy="48" r="10" fill="#1A1A1A" />
+            <circle cx="45" cy="44" r="3.5" fill="white" />
+            <circle cx="85" cy="44" r="3.5" fill="white" />
+            {/* Droopy eyelids — half-closed classic Pepe */}
+            <path d="M30 32 Q50 22,70 36 L70 42 Q50 32,30 42Z" fill="#5A8E32" />
+            <path d="M70 36 Q90 22,110 32 L110 42 Q90 32,70 42Z" fill="#5A8E32" />
+            {/* Mouth line — subtle downturn inside lips */}
+            <path d="M38 86 Q54 89,70 87 Q86 89,102 86" fill="none" stroke="#8B3D22" strokeWidth="1.5" strokeLinecap="round" />
           </>
         )}
 
-        {/* ═══ SMUG — Smug Pepe (small knowing smile, half-closed eyes) ═══ */}
+        {/* ═══ SMUG — Smug Pepe ═══ */}
         {mood === "smug" && (
           <>
-            {/* Heavy eyelids */}
-            <ellipse cx="40" cy="48" rx="18" ry="20" fill="white" stroke="#3D7530" strokeWidth="1" />
-            <ellipse cx="80" cy="48" rx="18" ry="20" fill="white" stroke="#3D7530" strokeWidth="1" />
-            <circle cx="42" cy="54" r="6" fill="#2D1B07" />
-            <circle cx="78" cy="54" r="6" fill="#2D1B07" />
-            <circle cx="40" cy="52" r="2" fill="white" />
-            <circle cx="76" cy="52" r="2" fill="white" />
-            {/* More closed eyelids */}
-            <path d="M22 38 Q40 28 58 38 L58 50 Q40 42 22 50Z" fill="#5A9E47" />
-            <path d="M62 38 Q80 28 98 38 L98 50 Q80 42 62 50Z" fill="#5A9E47" />
-            {/* Smug smirk — one corner up */}
-            <path d="M36 82 Q50 80 60 82 Q72 88 88 80" fill="none" stroke="#3D7530" strokeWidth="2.5" strokeLinecap="round" />
+            {/* Pupils low and small — smug look */}
+            <circle cx="50" cy="52" r="8" fill="#1A1A1A" />
+            <circle cx="90" cy="52" r="8" fill="#1A1A1A" />
+            <circle cx="48" cy="49" r="2.5" fill="white" />
+            <circle cx="88" cy="49" r="2.5" fill="white" />
+            {/* Very heavy eyelids — nearly closed */}
+            <path d="M30 28 Q50 18,70 32 L70 50 Q50 38,30 50Z" fill="#5A8E32" />
+            <path d="M70 32 Q90 18,110 28 L110 50 Q90 38,70 50Z" fill="#5A8E32" />
+            {/* Smirk — right corner up */}
+            <path d="M38 86 Q54 88,70 86 Q86 84,106 78" fill="none" stroke="#8B3D22" strokeWidth="2" strokeLinecap="round" />
           </>
         )}
 
-        {/* ═══ SHOCKED — MonkaS wide eyes ═══ */}
+        {/* ═══ SHOCKED — MonkaS ═══ */}
         {mood === "shocked" && (
           <>
-            {/* Wide open eyes — no eyelids */}
-            <circle cx="42" cy="50" r="9" fill="#2D1B07" />
-            <circle cx="78" cy="50" r="9" fill="#2D1B07" />
-            <circle cx="40" cy="47" r="3" fill="white" />
-            <circle cx="76" cy="47" r="3" fill="white" />
-            <circle cx="44" cy="53" r="1.5" fill="white" opacity="0.5" />
-            <circle cx="80" cy="53" r="1.5" fill="white" opacity="0.5" />
-            {/* Open mouth — shocked O */}
-            <ellipse cx="60" cy="84" rx="12" ry="8" fill="#2D1B07" />
-            <ellipse cx="60" cy="83" rx="8" ry="5" fill="#8B2020" />
-            {/* Sweat drop */}
-            <path d="M100 38 Q102 30 104 38 Q102 44 100 38Z" fill="#87CEEB" opacity="0.8" />
+            {/* Huge pupils — wide eyes, no eyelids */}
+            <circle cx="50" cy="46" r="12" fill="#1A1A1A" />
+            <circle cx="90" cy="46" r="12" fill="#1A1A1A" />
+            <circle cx="46" cy="42" r="4" fill="white" />
+            <circle cx="86" cy="42" r="4" fill="white" />
+            <circle cx="52" cy="50" r="2" fill="white" opacity="0.4" />
+            <circle cx="92" cy="50" r="2" fill="white" opacity="0.4" />
+            {/* Open mouth inside lips */}
+            <ellipse cx="70" cy="87" rx="14" ry="6" fill="#1A1A1A" />
+            <ellipse cx="70" cy="86" rx="10" ry="4" fill="#6B1A1A" />
+            {/* Sweat drops */}
+            <path d="M118 50 Q120 42,122 50 Q120 56,118 50Z" fill="#87CEEB" opacity="0.8" />
+            <path d="M114 62 Q115 58,116 62 Q115 65,114 62Z" fill="#87CEEB" opacity="0.6" />
           </>
         )}
 
-        {/* ═══ DISAPPOINTED — Sad Pepe (feels bad man) ═══ */}
+        {/* ═══ DISAPPOINTED — FeelsBadMan / Sad Pepe ═══ */}
         {mood === "disappointed" && (
           <>
-            {/* Sad droopy eyes */}
-            <circle cx="42" cy="54" r="6" fill="#2D1B07" />
-            <circle cx="78" cy="54" r="6" fill="#2D1B07" />
-            <circle cx="40" cy="52" r="2" fill="white" />
-            <circle cx="76" cy="52" r="2" fill="white" />
-            {/* Very heavy sad eyelids */}
-            <path d="M22 36 Q40 44 58 36 L58 52 Q40 46 22 52Z" fill="#5A9E47" />
-            <path d="M62 36 Q80 44 98 36 L98 52 Q80 46 62 52Z" fill="#5A9E47" />
-            {/* Sad frown */}
-            <path d="M38 86 Q48 78 60 80 Q72 78 82 86" fill="none" stroke="#3D7530" strokeWidth="2.5" strokeLinecap="round" />
-            {/* Tear */}
-            <path d="M28 60 Q26 68 28 72 Q30 68 28 60Z" fill="#87CEEB" opacity="0.7" />
+            {/* Small sad pupils looking down */}
+            <circle cx="50" cy="52" r="8" fill="#1A1A1A" />
+            <circle cx="90" cy="52" r="8" fill="#1A1A1A" />
+            <circle cx="48" cy="50" r="2.5" fill="white" />
+            <circle cx="88" cy="50" r="2.5" fill="white" />
+            {/* Heavy droopy/sad eyelids — angled inward */}
+            <path d="M30 26 Q50 38,70 26 L70 50 Q50 42,30 50Z" fill="#5A8E32" />
+            <path d="M70 26 Q90 38,110 26 L110 50 Q90 42,70 50Z" fill="#5A8E32" />
+            {/* Sad frown inside lips */}
+            <path d="M44 90 Q56 82,70 84 Q84 82,96 90" fill="none" stroke="#8B3D22" strokeWidth="2" strokeLinecap="round" />
+            {/* Tear stream */}
+            <path d="M34 56 Q32 68,34 78" fill="none" stroke="#87CEEB" strokeWidth="3" strokeLinecap="round" opacity="0.6" />
+            <path d="M106 56 Q108 68,106 78" fill="none" stroke="#87CEEB" strokeWidth="3" strokeLinecap="round" opacity="0.6" />
           </>
         )}
 
-        {/* ═══ SUSPICIOUS — one eye squinted ═══ */}
+        {/* ═══ SUSPICIOUS — Pepe squint ═══ */}
         {mood === "suspicious" && (
           <>
-            {/* Left eye squinted */}
-            <path d="M24 50 Q40 44 56 50" fill="none" stroke="#2D1B07" strokeWidth="3" strokeLinecap="round" />
+            {/* Left eye nearly fully closed */}
+            <path d="M30 28 Q50 20,70 28 L70 52 Q50 40,30 52Z" fill="#5A8E32" />
+            <path d="M32 48 Q50 42,68 48" fill="none" stroke="#1A1A1A" strokeWidth="3" strokeLinecap="round" />
             {/* Right eye open, looking sideways */}
-            <circle cx="80" cy="52" r="8" fill="#2D1B07" />
-            <circle cx="83" cy="50" r="2.5" fill="white" />
-            {/* Raised right eyebrow */}
-            <path d="M64 32 Q80 26 96 34" fill="none" stroke="#3D7530" strokeWidth="3" strokeLinecap="round" />
-            {/* Heavy left eyelid */}
-            <path d="M22 36 Q40 30 58 36 L58 48 Q40 42 22 48Z" fill="#5A9E47" />
-            {/* Pursed skeptical mouth */}
-            <path d="M42 82 Q52 86 62 82 Q68 80 74 82" fill="none" stroke="#3D7530" strokeWidth="2.5" strokeLinecap="round" />
+            <circle cx="92" cy="50" r="10" fill="#1A1A1A" />
+            <circle cx="96" cy="47" r="3" fill="white" />
+            {/* Right eyelid partially closed */}
+            <path d="M70 30 Q90 22,110 30 L110 42 Q90 34,70 42Z" fill="#5A8E32" />
+            {/* Raised right brow */}
+            <path d="M72 20 Q90 12,112 22" fill="none" stroke="#4A7A2A" strokeWidth="3" strokeLinecap="round" />
+            {/* Skeptical flat mouth */}
+            <path d="M42 86 Q56 89,70 86 Q76 84,82 86" fill="none" stroke="#8B3D22" strokeWidth="2" strokeLinecap="round" />
           </>
         )}
 
-        {/* ═══ MINDBLOWN — PogChamp eyes ═══ */}
+        {/* ═══ MINDBLOWN — PogChamp face ═══ */}
         {mood === "mindblown" && (
           <>
-            {/* Huge eyes with star pupils */}
-            <text x="42" cy="54" fontSize="18" textAnchor="middle" dominantBaseline="central" fill="#FFD700" y="54">★</text>
-            <text x="78" cy="54" fontSize="18" textAnchor="middle" dominantBaseline="central" fill="#FFD700" y="54">★</text>
-            {/* Wide open mouth */}
-            <ellipse cx="60" cy="84" rx="16" ry="10" fill="#2D1B07" />
-            <ellipse cx="60" cy="83" rx="12" ry="6" fill="#8B2020" />
-            {/* Explosion lines */}
-            <line x1="14" y1="30" x2="6" y2="22" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" />
-            <line x1="106" y1="30" x2="114" y2="22" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" />
-            <line x1="60" y1="10" x2="60" y2="2" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" />
+            {/* Huge wide eyes — no eyelids */}
+            <circle cx="50" cy="44" r="14" fill="#1A1A1A" />
+            <circle cx="90" cy="44" r="14" fill="#1A1A1A" />
+            <circle cx="46" cy="40" r="4.5" fill="white" />
+            <circle cx="86" cy="40" r="4.5" fill="white" />
+            {/* WIDE open mouth inside lips */}
+            <ellipse cx="70" cy="87" rx="20" ry="8" fill="#1A1A1A" />
+            <ellipse cx="70" cy="86" rx="16" ry="5" fill="#6B1A1A" />
+            {/* Impact lines */}
+            <line x1="10" y1="24" x2="2" y2="16" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" />
+            <line x1="130" y1="24" x2="138" y2="16" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" />
+            <line x1="70" y1="6" x2="70" y2="-2" stroke="#FFD700" strokeWidth="2.5" strokeLinecap="round" />
+            <line x1="24" y1="14" x2="18" y2="6" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" />
+            <line x1="116" y1="14" x2="122" y2="6" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" />
           </>
         )}
 
         {/* ═══ LAUGHING — PepeLaugh ═══ */}
         {mood === "laughing" && (
           <>
-            {/* Closed happy eyes */}
-            <path d="M26 50 Q40 40 54 50" fill="none" stroke="#2D1B07" strokeWidth="3" strokeLinecap="round" />
-            <path d="M66 50 Q80 40 94 50" fill="none" stroke="#2D1B07" strokeWidth="3" strokeLinecap="round" />
-            {/* Heavy eyelids */}
-            <path d="M22 36 Q40 30 58 36 L58 46 Q40 38 22 46Z" fill="#5A9E47" />
-            <path d="M62 36 Q80 30 98 36 L98 46 Q80 38 62 46Z" fill="#5A9E47" />
-            {/* Wide open laughing mouth */}
-            <path d="M32 80 Q60 102 88 80" fill="#2D1B07" />
-            <path d="M36 81 Q60 96 84 81" fill="#8B2020" />
-            {/* Teeth */}
-            <rect x="48" y="80" width="24" height="4" rx="1" fill="white" />
+            {/* Closed happy crescent eyes */}
+            <path d="M32 46 Q50 34,68 46" fill="none" stroke="#1A1A1A" strokeWidth="3.5" strokeLinecap="round" />
+            <path d="M72 46 Q90 34,108 46" fill="none" stroke="#1A1A1A" strokeWidth="3.5" strokeLinecap="round" />
+            {/* Heavy eyelids pressing down */}
+            <path d="M30 28 Q50 18,70 28 L70 42 Q50 32,30 42Z" fill="#5A8E32" />
+            <path d="M70 28 Q90 18,110 28 L110 42 Q90 32,70 42Z" fill="#5A8E32" />
+            {/* Wide laughing mouth — open with teeth visible */}
+            <path d="M34 82 Q70 100,106 82 L106 90 Q70 106,34 90Z" fill="#1A1A1A" />
+            <path d="M38 83 Q70 96,102 83" fill="#6B1A1A" />
+            {/* Top teeth row */}
+            <rect x="54" y="82" width="32" height="5" rx="2" fill="white" />
             {/* Laugh tears */}
-            <path d="M22 56 Q20 64 22 68" fill="none" stroke="#87CEEB" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
-            <path d="M98 56 Q100 64 98 68" fill="none" stroke="#87CEEB" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
+            <path d="M28 52 Q26 62,28 70" fill="none" stroke="#87CEEB" strokeWidth="2.5" strokeLinecap="round" opacity="0.7" />
+            <path d="M112 52 Q114 62,112 70" fill="none" stroke="#87CEEB" strokeWidth="2.5" strokeLinecap="round" opacity="0.7" />
           </>
         )}
 
-        {/* ═══ THINKING — PepeThink (hand on chin) ═══ */}
+        {/* ═══ THINKING — PepeThink ═══ */}
         {mood === "thinking" && (
           <>
-            {/* Eyes looking up-right */}
-            <circle cx="44" cy="48" r="7" fill="#2D1B07" />
-            <circle cx="80" cy="48" r="7" fill="#2D1B07" />
-            <circle cx="46" cy="44" r="2.5" fill="white" />
-            <circle cx="82" cy="44" r="2.5" fill="white" />
+            {/* Eyes looking up and to the right */}
+            <circle cx="52" cy="44" r="9" fill="#1A1A1A" />
+            <circle cx="92" cy="44" r="9" fill="#1A1A1A" />
+            <circle cx="56" cy="40" r="3" fill="white" />
+            <circle cx="96" cy="40" r="3" fill="white" />
             {/* Slight eyelids */}
-            <path d="M22 38 Q40 32 58 38 L58 44 Q40 38 22 44Z" fill="#5A9E47" />
-            <path d="M62 38 Q80 32 98 38 L98 44 Q80 38 62 44Z" fill="#5A9E47" />
-            {/* Flat thinking mouth */}
-            <path d="M42 84 Q52 82 62 84" fill="none" stroke="#3D7530" strokeWidth="2" strokeLinecap="round" />
-            {/* Hand on chin */}
-            <ellipse cx="72" cy="92" rx="10" ry="7" fill="#6BB855" stroke="#3D7530" strokeWidth="1" />
-            <circle cx="66" cy="90" r="4" fill="#6BB855" stroke="#3D7530" strokeWidth="0.8" />
-            <circle cx="78" cy="90" r="4" fill="#6BB855" stroke="#3D7530" strokeWidth="0.8" />
+            <path d="M30 30 Q50 22,70 30 L70 40 Q50 34,30 40Z" fill="#5A8E32" />
+            <path d="M70 30 Q90 22,110 30 L110 40 Q90 34,70 40Z" fill="#5A8E32" />
+            {/* Flat/pensive mouth line */}
+            <path d="M44 86 Q56 84,68 86" fill="none" stroke="#8B3D22" strokeWidth="2" strokeLinecap="round" />
+            {/* Hand on chin — green frog hand */}
+            <ellipse cx="84" cy="96" rx="12" ry="8" fill="#6B9E3C" stroke="#4A7A2A" strokeWidth="1.5" />
+            <ellipse cx="76" cy="94" rx="5" ry="5" fill="#6B9E3C" stroke="#4A7A2A" strokeWidth="1" />
+            <ellipse cx="92" cy="94" rx="5" ry="5" fill="#6B9E3C" stroke="#4A7A2A" strokeWidth="1" />
             {/* Thought bubbles */}
-            <circle cx="100" cy="26" r="3" fill="#A0D890" opacity="0.5" />
-            <circle cx="106" cy="18" r="4" fill="#A0D890" opacity="0.4" />
-            <circle cx="113" cy="10" r="5" fill="#A0D890" opacity="0.3" />
+            <circle cx="118" cy="22" r="3.5" fill="#A0D890" opacity="0.5" />
+            <circle cx="126" cy="14" r="4.5" fill="#A0D890" opacity="0.4" />
+            <circle cx="134" cy="6" r="5.5" fill="#A0D890" opacity="0.3" />
           </>
         )}
       </svg>
