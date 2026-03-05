@@ -30,6 +30,7 @@ import {
   getOpeningRoast,
   getMiddlegameComment,
   getEndgameComment,
+  getEloGuessComment,
   ELO_BRACKETS,
   getEloBracketIdx,
   GAME_INTRO,
@@ -498,6 +499,49 @@ export default function RoastPage() {
       });
       if (endTarget >= 0) {
         analyzed[endTarget].comment = getEndgameComment();
+      }
+
+      // Inject 1-2 elo-guessing comments based on game quality patterns
+      const blunderCount = analyzed.filter(m => m.classification === "blunder").length;
+      const brilliantCount = analyzed.filter(m => m.classification === "brilliant" || m.classification === "best").length;
+      const totalMvs = analyzed.length;
+
+      // Determine quality assessment at ~40% of game
+      const earlyIdx = Math.floor(totalMvs * 0.4);
+      const earlyBlunders = analyzed.slice(0, earlyIdx).filter(m => m.classification === "blunder").length;
+      const earlyBest = analyzed.slice(0, earlyIdx).filter(m => m.classification === "brilliant" || m.classification === "best").length;
+
+      let earlyQuality: "surprising_good" | "clueless" | "mid" | "rollercoaster" = "mid";
+      if (earlyBlunders >= 2 && earlyBest >= 2) earlyQuality = "rollercoaster";
+      else if (earlyBlunders >= 2) earlyQuality = "clueless";
+      else if (earlyBest >= 3) earlyQuality = "surprising_good";
+
+      const eloTarget1 = analyzed.findIndex((m, i) => {
+        const pct = i / totalMvs;
+        return pct >= 0.38 && pct <= 0.48 && !m.comment;
+      });
+      if (eloTarget1 >= 0) {
+        analyzed[eloTarget1].comment = getEloGuessComment(earlyQuality);
+      }
+
+      // Second elo comment at ~55% if quality shifts
+      const lateIdx = Math.floor(totalMvs * 0.55);
+      const lateBlunders = analyzed.slice(earlyIdx, lateIdx).filter(m => m.classification === "blunder").length;
+      const lateBest = analyzed.slice(earlyIdx, lateIdx).filter(m => m.classification === "brilliant" || m.classification === "best").length;
+
+      let lateQuality: "surprising_good" | "clueless" | "mid" | "rollercoaster" = "mid";
+      if (lateBlunders >= 1 && lateBest >= 1) lateQuality = "rollercoaster";
+      else if (lateBlunders >= 2) lateQuality = "clueless";
+      else if (lateBest >= 2) lateQuality = "surprising_good";
+
+      if (lateQuality !== earlyQuality) {
+        const eloTarget2 = analyzed.findIndex((m, i) => {
+          const pct = i / totalMvs;
+          return pct >= 0.52 && pct <= 0.60 && !m.comment;
+        });
+        if (eloTarget2 >= 0) {
+          analyzed[eloTarget2].comment = getEloGuessComment(lateQuality);
+        }
       }
 
       setMoves(analyzed);

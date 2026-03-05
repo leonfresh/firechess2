@@ -909,6 +909,63 @@ export function getEndgameComment(): string {
 }
 
 /* ================================================================== */
+/*  Elo guessing commentary — ambiguous skill observations             */
+/* ================================================================== */
+
+/**
+ * Returns an ambiguous comment about the perceived skill level.
+ * `quality` is a rough indicator:
+ *   "surprising_good" — player just did something unexpectedly decent
+ *   "clueless"        — they did something truly terrible
+ *   "mid"             — neither great nor awful, just... mid
+ *   "rollercoaster"   — game quality is wildly inconsistent
+ */
+export function getEloGuessComment(quality: "surprising_good" | "clueless" | "mid" | "rollercoaster"): string {
+  switch (quality) {
+    case "surprising_good":
+      return pick([
+        "Wait... that was actually a good move. Hold on, maybe they aren't as bad as I thought? 🤔🗿",
+        "Okay okay I'm slightly revising my elo estimate upward after that one. SLIGHTLY 📈🫡",
+        "Huh, so they DO know how to play chess? Could've fooled me with the earlier moves 🤨",
+        "That move was... competent??? I was NOT expecting that. My whole read on this game just shifted 😳",
+        "Oh? Oh?? They're not total beginners? The plot thickens 🧐📖",
+        "I was ready to call this a sub-500 game but that move has me second-guessing everything 🤯",
+        "Either that was a lucky mouse slip or I've been seriously underestimating this player 🐭✨",
+        "Well well well, someone's been hiding their power level. That was way better than I expected 💪🫠",
+      ]);
+    case "clueless":
+      return pick([
+        "Oh no. OH NO. I thought they were better than this. I was WRONG 💀📉",
+        "Okay I'm revising my estimate. Way. Way. Down. That was rough 🗿⬇️",
+        "And just like that, any respect I had evaporates. What was THAT 😭🤡",
+        "I was giving them too much credit. That move belongs in a museum. The bad one 🏛️💀",
+        "This is looking more and more like someone who just learned the rules last week 🫠📚",
+        "New theory: this is a toddler playing chess. It would explain so much 👶🗿",
+        "Every time I think I've calibrated their level, they go even lower. Impressive, honestly 📉📉",
+        "I... I had hope. That move destroyed it. Like a blunder destroys evaluation 💔",
+      ]);
+    case "mid":
+      return pick([
+        "It's giving... average. Not terrible, not great. Just... chess 🤷😐",
+        "Peak mediocrity. The moves are fine. Not good. Not bad. Just... fine 🗿",
+        "This is aggressively mid chess. Like eating plain oatmeal for every meal 🥣😑",
+        "Can't tell if they're a decent player having a bad day or a bad player having a good day 🤔",
+        "The level of play here is... existing. It exists. That's the nicest thing I can say 🫤",
+        "They're playing the chess equivalent of driving exactly the speed limit. In the right lane. Forever 🚗💤",
+      ]);
+    case "rollercoaster":
+      return pick([
+        "This game is WILD. One move they look like a GM, next move they look like they've never seen a chess board 🎢💀",
+        "The consistency here is... non-existent. Up down up down. Chess rollercoaster 🎢🤮",
+        "I genuinely cannot tell what level this is. Brilliant move followed by absolute catastrophe. WHAT 🤯🗿",
+        "Are two different people taking turns at the keyboard?? The skill variance is INSANE 👥😭",
+        "One second I think this is 1500, next second I think it's 600. I'm getting whiplash 🏥📊",
+        "Jekyll and Hyde chess. Masterful one move, crimes against chess the next 🧪💀",
+      ]);
+  }
+}
+
+/* ================================================================== */
 /*  Opening roast                                                       */
 /* ================================================================== */
 
