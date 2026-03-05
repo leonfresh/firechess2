@@ -40,6 +40,7 @@ import {
   type MoveAnnotation,
 } from "@/lib/roast-commentary";
 import { RoastAvatar, type RoastMood } from "@/components/roast-avatar";
+import { useTTS } from "@/lib/use-tts";
 
 /* ================================================================== */
 /*  Typewriter hook                                                     */
@@ -179,8 +180,20 @@ export default function RoastPage() {
   const [activeArrows, setActiveArrows] = useState<[string, string, string][]>([]);
   const [activeMarkers, setActiveMarkers] = useState<{ square: string; emoji: string }[]>([]);
 
+  /* ── TTS ── */
+  const tts = useTTS();
+
+  // Speak new comments
+  useEffect(() => {
+    if (activeComment && tts.enabled) {
+      tts.speak(activeComment);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeComment, tts.enabled]);
+
   /* ── Fetch a new game ── */
   const fetchGame = useCallback(async () => {
+    tts.stop();
     setPageState("loading");
     setMoves([]);
     setCurrentIdx(-1);
@@ -559,12 +572,18 @@ export default function RoastPage() {
       .map(m => m.comment)
       .filter(Boolean) as string[];
     setCommentHistory(comments);
-    // Update avatar mood and clear active comment
-    const m2 = idx >= 0 ? moves[idx] : null;
-    setCurrentMood(m2 ? getMood(m2) : "neutral");
-    setActiveComment(null);
-    setActiveArrows([]);
-    setActiveMarkers([]);
+    // Show the current move's comment in the speech bubble (if any)
+    const cur = idx >= 0 ? moves[idx] : null;
+    setCurrentMood(cur ? getMood(cur) : "neutral");
+    if (cur?.comment) {
+      setActiveComment(cur.comment);
+      setActiveArrows(cur.arrows ?? []);
+      setActiveMarkers(cur.markers ?? []);
+    } else {
+      setActiveComment(null);
+      setActiveArrows([]);
+      setActiveMarkers([]);
+    }
   }, [moves]);
 
   const skipToGuess = useCallback(() => {
@@ -841,7 +860,7 @@ export default function RoastPage() {
               </div>
 
               {/* Playback controls */}
-              {pageState === "watching" && (
+              {(pageState === "watching" || pageState === "guessing" || pageState === "revealed") && (
                 <div className="flex items-center gap-3 mt-2">
                   <button
                     onClick={() => goToMove(Math.max(-1, currentIdx - 1))}
@@ -849,16 +868,18 @@ export default function RoastPage() {
                   >
                     ◀ Prev
                   </button>
-                  <button
-                    onClick={() => setAutoplay(prev => !prev)}
-                    className={`rounded-lg border px-4 py-1.5 text-sm font-medium transition-all ${
-                      autoplay
-                        ? "border-orange-500/30 bg-orange-500/10 text-orange-400"
-                        : "border-white/10 bg-white/[0.03] text-slate-400 hover:bg-white/[0.06]"
-                    }`}
-                  >
-                    {autoplay ? "⏸ Pause" : "▶ Play"}
-                  </button>
+                  {pageState === "watching" && (
+                    <button
+                      onClick={() => setAutoplay(prev => !prev)}
+                      className={`rounded-lg border px-4 py-1.5 text-sm font-medium transition-all ${
+                        autoplay
+                          ? "border-orange-500/30 bg-orange-500/10 text-orange-400"
+                          : "border-white/10 bg-white/[0.03] text-slate-400 hover:bg-white/[0.06]"
+                      }`}
+                    >
+                      {autoplay ? "⏸ Pause" : "▶ Play"}
+                    </button>
+                  )}
                   <button
                     onClick={() => {
                       setAutoplay(false);
@@ -868,27 +889,31 @@ export default function RoastPage() {
                   >
                     Next ▶
                   </button>
-                  <select
-                    value={speed}
-                    onChange={(e) => setSpeed(Number(e.target.value))}
-                    className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-xs text-slate-400 cursor-pointer"
-                  >
-                    <option value={4000}>🐌 Slow</option>
-                    <option value={2400}>🚶 Normal</option>
-                    <option value={1400}>🏃 Fast</option>
-                    <option value={700}>⚡ Blitz</option>
-                  </select>
-                  <button
-                    onClick={skipToGuess}
-                    className="rounded-lg border border-amber-500/20 bg-amber-500/[0.06] px-3 py-1.5 text-xs font-medium text-amber-400 hover:bg-amber-500/10 transition-colors"
-                  >
-                    Skip to Guess →
-                  </button>
+                  {pageState === "watching" && (
+                    <>
+                      <select
+                        value={speed}
+                        onChange={(e) => setSpeed(Number(e.target.value))}
+                        className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-xs text-slate-400 cursor-pointer"
+                      >
+                        <option value={4000}>🐌 Slow</option>
+                        <option value={2400}>🚶 Normal</option>
+                        <option value={1400}>🏃 Fast</option>
+                        <option value={700}>⚡ Blitz</option>
+                      </select>
+                      <button
+                        onClick={skipToGuess}
+                        className="rounded-lg border border-amber-500/20 bg-amber-500/[0.06] px-3 py-1.5 text-xs font-medium text-amber-400 hover:bg-amber-500/10 transition-colors"
+                      >
+                        Skip to Guess →
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
 
               {/* Move progress bar */}
-              {pageState === "watching" && moves.length > 0 && (
+              {(pageState === "watching" || pageState === "guessing" || pageState === "revealed") && moves.length > 0 && (
                 <div className="w-full max-w-[640px] mt-1">
                   <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
                     <div
@@ -910,6 +935,19 @@ export default function RoastPage() {
               <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-orange-400 mb-3 flex items-center gap-1.5">
                   🎙️ Live Roast
+                  {tts.supported && (
+                    <button
+                      onClick={tts.toggle}
+                      title={tts.enabled ? `TTS on (${tts.voiceName})` : "Enable text-to-speech"}
+                      className={`ml-auto rounded-md border px-2 py-0.5 text-[10px] font-medium transition-all ${
+                        tts.enabled
+                          ? "border-orange-500/30 bg-orange-500/10 text-orange-400"
+                          : "border-white/10 bg-white/[0.03] text-slate-500 hover:text-slate-300"
+                      }`}
+                    >
+                      {tts.enabled ? "🔊 TTS" : "🔇 TTS"}
+                    </button>
+                  )}
                 </h3>
 
                 {/* Avatar + Speech Bubble */}

@@ -708,7 +708,10 @@ function _mistakeRoast(
     ])!, annotations: { arrows: hangArrows, markers: [{ square: h.square, emoji: "⚠️" }] } };
   }
 
-  const newPins = detectPins(after, moverColor);
+  // Only flag pins that are NEW (didn't exist before the move)
+  const pinsBefore = detectPins(before, moverColor);
+  const pinsAfterMove = detectPins(after, moverColor);
+  const newPins = pinsAfterMove.filter(pa => !pinsBefore.some(pb => pb.pinned.square === pa.pinned.square && pb.pinner.square === pa.pinner.square));
   if (newPins.length > 0) {
     const p = newPins[0];
     return { text: `📌 ${move.san} and the ${pn(p.pinned.type)} on ${p.pinned.square} is pinned now. Pinned pieces = sad pieces 😔🔒`, annotations: {
