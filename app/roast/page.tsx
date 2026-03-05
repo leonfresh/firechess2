@@ -142,9 +142,109 @@ export default function RoastPage() {
     usedLines.current.clear();
 
     try {
-      const res = await fetch("/api/roast");
-      if (!res.ok) throw new Error("fetch failed");
-      const data: GameData = await res.json();
+      // Fetch puzzles from Lichess to discover game IDs (client-side)
+      let gameId: string | null = null;
+      let whitePlayer = "White";
+      let blackPlayer = "Black";
+      let whiteElo = 1500;
+      let blackElo = 1500;
+
+      // Step 1: Get puzzle batch from Lichess
+      const puzzleRes = await fetch("https://lichess.org/api/puzzle/batch/next?nb=50", {
+        headers: { Accept: "application/json" },
+      });
+
+      if (puzzleRes.ok) {
+        const puzzleData = await puzzleRes.json();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const puzzles: any[] = puzzleData.puzzles ?? [];
+        if (puzzles.length > 0) {
+          // Shuffle and try to find a game from a player's recent history
+          const shuffled = [...puzzles].sort(() => Math.random() - 0.5);
+
+          for (let i = 0; i < Math.min(3, shuffled.length) && !gameId; i++) {
+            const pz = shuffled[i];
+            if (!pz?.game?.players?.length) continue;
+            const player = pz.game.players[Math.floor(Math.random() * pz.game.players.length)];
+            if (!player?.id) continue;
+
+            try {
+              const userRes = await fetch(
+                `https://lichess.org/api/games/user/${player.id}?max=20&rated=true&perfType=blitz,rapid&opening=true`,
+                { headers: { Accept: "application/x-ndjson" } }
+              );
+              if (userRes.ok) {
+                const text = await userRes.text();
+                const lines = text.trim().split("\n").filter(Boolean);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const games: any[] = lines
+                  .map((l) => { try { return JSON.parse(l); } catch { return null; } })
+                  .filter((g) =>
+                    g && g.variant === "standard" && g.rated &&
+                    g.status !== "started" &&
+                    g.players?.white?.user && g.players?.black?.user &&
+                    g.players?.white?.rating && g.players?.black?.rating
+                  );
+                const decisive = games.filter((g) => g.winner);
+                const pool = decisive.length > 0 ? decisive : games;
+                if (pool.length > 0) {
+                  const picked = pool[Math.floor(Math.random() * pool.length)];
+                  gameId = picked.id;
+                  whitePlayer = picked.players.white.user.name;
+                  blackPlayer = picked.players.black.user.name;
+                  whiteElo = picked.players.white.rating;
+                  blackElo = picked.players.black.rating;
+                }
+              }
+            } catch { continue; }
+          }
+
+          // Fallback: use the puzzle's own source game
+          if (!gameId) {
+            const pz = shuffled[0];
+            const w = pz.game?.players?.find((p: { color: string }) => p.color === "white");
+            const b = pz.game?.players?.find((p: { color: string }) => p.color === "black");
+            if (pz.game?.id && w && b) {
+              gameId = pz.game.id;
+              whitePlayer = w.name;
+              blackPlayer = b.name;
+              whiteElo = w.rating ?? 1500;
+              blackElo = b.rating ?? 1500;
+            }
+          }
+        }
+      }
+
+      if (!gameId) throw new Error("No games found");
+
+      // Step 2: Export the full PGN
+      const pgnRes = await fetch(
+        `https://lichess.org/game/export/${gameId}?evals=false&clocks=false&opening=true`,
+        { headers: { Accept: "application/x-chess-pgn" } }
+      );
+      if (!pgnRes.ok) throw new Error("Failed to export game");
+      const pgn = await pgnRes.text();
+
+      // Parse opening/result from PGN
+      const openingMatch = pgn.match(/\[Opening "(.+?)"\]/);
+      const resultMatch = pgn.match(/\[Result "(.+?)"\]/);
+      const terminationMatch = pgn.match(/\[Termination "(.+?)"\]/);
+      const result = resultMatch?.[1] ?? "*";
+
+      const data: GameData = {
+        id: gameId,
+        pgn,
+        whitePlayer,
+        blackPlayer,
+        whiteElo,
+        blackElo,
+        avgElo: Math.round((whiteElo + blackElo) / 2),
+        opening: openingMatch?.[1] ?? "Unknown Opening",
+        result,
+        termination: terminationMatch?.[1] ?? "",
+        winner: result === "1-0" ? "white" : result === "0-1" ? "black" : null,
+      };
+
       setGame(data);
 
       // Randomly orient the board

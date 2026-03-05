@@ -14,6 +14,7 @@ const NAV_LINKS = [
   { href: "/analyze", label: "Analyze" },
   { href: "/train", label: "Training" },
   { href: "/guess", label: "Guess the Move" },
+  { href: "/roast", label: "🔥 Guess the Elo" },
   { href: "/about", label: "About" },
 ];
 
@@ -143,17 +144,17 @@ export function Navbar() {
             Analyze
           </Link>
 
-          {/* Training dropdown */}
+          {/* Games dropdown */}
           <div className="group relative">
             <button
               type="button"
               className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                isActive("/train") || isActive("/guess") || isActive("/dungeon")
+                isActive("/train") || isActive("/guess") || isActive("/dungeon") || isActive("/roast")
                   ? "text-white bg-white/[0.06]"
                   : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
               }`}
             >
-              Training
+              Games
               <svg className="h-3 w-3 text-slate-500 transition-transform group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><polyline points="6 9 12 15 18 9" /></svg>
             </button>
             <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
@@ -181,6 +182,14 @@ export function Navbar() {
                   }`}
                 >
                   ⚔️ Dungeon Tactics
+                </Link>
+                <Link
+                  href="/roast"
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive("/roast") ? "text-orange-400 bg-orange-500/[0.08]" : "text-slate-400 hover:text-orange-400 hover:bg-orange-500/[0.06]"
+                  }`}
+                >
+                  🔥 Guess the Elo
                 </Link>
               </div>
             </div>
@@ -566,6 +575,7 @@ export function Navbar() {
                 ...NAV_LINKS,
                 { href: "/blog", label: "Blog" },
                 { href: "/dungeon", label: "⚔️ Dungeon Tactics" },
+                { href: "/roast", label: "🔥 Guess the Elo" },
                 { href: "/openings", label: "📖 Openings" },
                 { href: "/leaderboard", label: "🏆 Leaderboard" },
                 { href: "/shop", label: "🪙 Coin Shop" },
