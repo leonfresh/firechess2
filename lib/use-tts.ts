@@ -92,7 +92,7 @@ export interface TTSControls {
 }
 
 export function useTTS(): TTSControls {
-  const [enabled, setEnabled] = useState(false);
+  const [enabled, setEnabled] = useState(true);
   const [speaking, setSpeaking] = useState(false);
   const [voiceName, setVoiceName] = useState("");
   const [supported, setSupported] = useState(false);

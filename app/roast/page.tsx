@@ -828,16 +828,7 @@ export default function RoastPage() {
               <div className="space-y-2 text-sm text-slate-400">
                 <p>📋 Opening: <span className="text-white font-medium">{game.opening}</span></p>
                 <p>🕐 {moves.length} moves played</p>
-                <p>🏁 Result: <span className="font-mono text-white">{game.result}</span>
-                  {game.termination && <span className="text-slate-500"> ({game.termination})</span>}
-                </p>
-              </div>
-              <div className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500">
-                <span>💀 {blunders} blunders</span>
-                <span>·</span>
-                <span>❌ {mistakes} mistakes</span>
-                <span>·</span>
-                <span>⚠️ {inaccuracies} inaccuracies</span>
+                <p>🏁 Result: <span className="font-mono text-slate-500">???</span></p>
               </div>
             </div>
 
