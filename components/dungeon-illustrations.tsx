@@ -644,3 +644,135 @@ export function ActScene({ actId, width = 320, height = 80 }: { actId: number; w
     default: return <CavernScene width={width} height={height} />;
   }
 }
+
+/* ================================================================== */
+/*  Battle Scene Vignettes (per-act atmosphere during puzzles)          */
+/* ================================================================== */
+
+/** Generic battle scene that adapts to act */
+export function BattleSceneVignette({ actId, seed = 0 }: { actId: number; seed?: number }) {
+  // Seeded pseudo-random for consistent variation
+  const r = (i: number) => {
+    const x = Math.sin(seed * 9301 + i * 49297 + 233280) * 0.5 + 0.5;
+    return x;
+  };
+
+  const variants = {
+    1: { bg1: "#1c1917", bg2: "#0c0a09", accent: "#f97316", glow: "#f97316" },
+    2: { bg1: "#1e1b4b", bg2: "#0f0e24", accent: "#a78bfa", glow: "#7c3aed" },
+    3: { bg1: "#0c0a09", bg2: "#1c1917", accent: "#dc2626", glow: "#ef4444" },
+  };
+  const v = variants[actId as keyof typeof variants] ?? variants[1];
+
+  return (
+    <svg width="280" height="60" viewBox="0 0 280 60" className="w-full opacity-60" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <linearGradient id={`bs-bg-${actId}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={v.bg1} />
+          <stop offset="100%" stopColor={v.bg2} />
+        </linearGradient>
+      </defs>
+      <rect width="280" height="60" fill={`url(#bs-bg-${actId})`} rx="6" />
+
+      {/* Terrain elements */}
+      {actId === 1 && <>
+        {/* Stalactites */}
+        {[30, 90, 160, 220, 260].map((x, i) => (
+          <polygon key={i} points={`${x},0 ${x + 4 + r(i) * 3},${12 + r(i + 10) * 10} ${x - 4},${10 + r(i + 5) * 8}`} fill="#292524" opacity={0.4 + r(i) * 0.3} />
+        ))}
+        {/* Torch */}
+        <circle cx={140} cy={25} r={4} fill={v.accent} opacity={0.3}>
+          <animate attributeName="opacity" values="0.3;0.15;0.3" dur="1.2s" repeatCount="indefinite" />
+        </circle>
+      </>}
+
+      {actId === 2 && <>
+        {/* Floating notation fragments */}
+        {[40, 100, 180, 240].map((x, i) => (
+          <rect key={i} x={x} y={10 + r(i) * 20} width={8 + r(i + 3) * 6} height={10 + r(i + 1) * 5} rx="1"
+            fill="#e2e8f0" opacity={0.05 + r(i) * 0.08}
+            transform={`rotate(${-10 + r(i + 2) * 20} ${x + 5} ${20 + r(i) * 10})`}>
+            <animateTransform attributeName="transform" type="rotate"
+              values={`${-10 + r(i + 2) * 20} ${x + 5} ${20 + r(i) * 10};${-5 + r(i + 2) * 20} ${x + 5} ${20 + r(i) * 10};${-10 + r(i + 2) * 20} ${x + 5} ${20 + r(i) * 10}`}
+              dur={`${3 + r(i) * 3}s`} repeatCount="indefinite" />
+          </rect>
+        ))}
+      </>}
+
+      {actId === 3 && <>
+        {/* Grid lines — circuit board feel */}
+        {[0, 1, 2, 3, 4, 5].map(i => (
+          <line key={`h${i}`} x1="0" y1={i * 12} x2="280" y2={i * 12} stroke={v.accent} strokeWidth="0.3" opacity={0.08 + r(i) * 0.05} />
+        ))}
+        {[0, 1, 2, 3, 4, 5, 6, 7].map(i => (
+          <line key={`v${i}`} x1={i * 40} y1="0" x2={i * 40} y2="60" stroke={v.accent} strokeWidth="0.3" opacity={0.06 + r(i + 10) * 0.04} />
+        ))}
+        <circle cx="140" cy="30" r="8" fill={v.accent} opacity={0.05}>
+          <animate attributeName="r" values="8;12;8" dur="3s" repeatCount="indefinite" />
+        </circle>
+      </>}
+
+      {/* Chess piece silhouettes — scattered by seed */}
+      {[0, 1].map(i => {
+        const px = 50 + r(i + 20) * 180;
+        const py = 25 + r(i + 30) * 20;
+        const pieces = ["♟", "♞", "♝", "♜"];
+        const piece = pieces[Math.floor(r(i + 40) * pieces.length)];
+        return (
+          <text key={i} x={px} y={py} fontSize="14" fill={v.accent} opacity={0.08} textAnchor="middle" dominantBaseline="central">
+            {piece}
+          </text>
+        );
+      })}
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Puzzle Mode Icons (for mode badge display)                          */
+/* ================================================================== */
+
+/** Sword icon — standard tactic */
+export function TacticIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <path d="M10 2 L12 12 L10 14 L8 12 Z" fill="currentColor" opacity="0.3" />
+      <line x1="7" y1="12" x2="13" y2="12" strokeLinecap="round" />
+      <line x1="10" y1="13" x2="10" y2="17" strokeLinecap="round" />
+      <circle cx="10" cy="18" r="1" fill="currentColor" />
+    </svg>
+  );
+}
+
+/** Bar chart icon — guess the eval */
+export function EvalIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <rect x="3" y="10" width="3" height="7" rx="0.5" fill="currentColor" opacity="0.2" />
+      <rect x="8.5" y="5" width="3" height="12" rx="0.5" fill="currentColor" opacity="0.3" />
+      <rect x="14" y="8" width="3" height="9" rx="0.5" fill="currentColor" opacity="0.2" />
+      <line x1="2" y1="18" x2="18" y2="18" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+/** Magnifying glass + piece — guess the move */
+export function GuessMoveIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <circle cx="9" cy="9" r="5" />
+      <line x1="13" y1="13" x2="17" y2="17" strokeLinecap="round" strokeWidth="2" />
+      <text x="9" y="11" fontSize="6" fill="currentColor" textAnchor="middle" fontWeight="bold">?</text>
+    </svg>
+  );
+}
+
+/** Star rating icon — guess the elo */
+export function EloIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+      <polygon points="10,2 12.5,7 18,7.5 14,11.5 15,17 10,14 5,17 6,11.5 2,7.5 7.5,7" fill="currentColor" opacity="0.15" />
+      <polygon points="10,2 12.5,7 18,7.5 14,11.5 15,17 10,14 5,17 6,11.5 2,7.5 7.5,7" />
+    </svg>
+  );
+}

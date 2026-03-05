@@ -13,6 +13,15 @@ export type Difficulty = "easy" | "medium" | "hard" | "boss";
 
 export type NodeType = "battle" | "elite" | "shop" | "mystery" | "boss" | "rest" | "start";
 
+export type PuzzleMode = "tactic" | "guess-eval" | "guess-move" | "guess-elo";
+
+export const PUZZLE_MODE_INFO: Record<PuzzleMode, { label: string; icon: string; description: string }> = {
+  "tactic":     { label: "Solve the Tactic", icon: "⚔️", description: "Find the best move" },
+  "guess-eval": { label: "Guess the Eval",  icon: "📊", description: "Estimate the position's evaluation" },
+  "guess-move": { label: "Guess the Move",  icon: "🔍", description: "What did the GM play here?" },
+  "guess-elo":  { label: "Guess the Elo",   icon: "⭐", description: "Estimate the players' rating" },
+};
+
 export type PerkRarity = "common" | "rare" | "epic" | "legendary" | "cursed";
 
 export interface Perk {
@@ -49,6 +58,8 @@ export interface MapNode {
   visited: boolean;
   /** Difficulty for battle/elite/boss nodes */
   difficulty?: Difficulty;
+  /** Puzzle mode variant for battle nodes */
+  puzzleMode?: PuzzleMode;
 }
 
 export type EventChoice = {
@@ -284,6 +295,20 @@ function getDifficulty(floor: number, type: NodeType): Difficulty {
   return "hard";
 }
 
+/** Pick a puzzle mode variant for a battle node.
+ *  Bosses & elites always use standard tactics.
+ *  Regular battles get random variety after floor 2. */
+function pickPuzzleMode(type: NodeType, floor: number, rng: () => number): PuzzleMode | undefined {
+  if (type !== "battle") return "tactic"; // bosses, elites always standard
+  if (floor <= 2) return "tactic"; // first floors are standard so player learns
+
+  const roll = rng();
+  if (roll < 0.45) return "tactic";        // 45% standard
+  if (roll < 0.65) return "guess-eval";    // 20% guess eval
+  if (roll < 0.82) return "guess-move";    // 17% guess move
+  return "guess-elo";                       // 18% guess elo
+}
+
 export function generateMap(seed: number, totalFloors = 30): MapNode[] {
   const rng = seededRandom(seed);
   const nodes: MapNode[] = [];
@@ -329,6 +354,7 @@ export function generateMap(seed: number, totalFloors = 30): MapNode[] {
         connections,
         visited: false,
         difficulty: type === "battle" || type === "elite" || type === "boss" ? diff : undefined,
+        puzzleMode: pickPuzzleMode(type, floor, rng),
       });
     }
   }

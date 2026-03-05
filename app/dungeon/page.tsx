@@ -29,6 +29,7 @@ import {
   getBattleFlavor,
   getRestFlavor,
   getDeathEpitaph,
+  PUZZLE_MODE_INFO,
   type DungeonRun,
   type DungeonProfile,
   type MapNode,
@@ -36,14 +37,21 @@ import {
   type MysteryEvent,
   type Difficulty,
   type NodeType,
+  type PuzzleMode,
 } from "@/lib/dungeon";
 import {
   BossPortrait,
   ActScene,
+  BattleSceneVignette,
   VictoryIllustration,
   DeathIllustration,
   DungeonEntranceIllustration,
+  TacticIcon,
+  EvalIcon,
+  GuessMoveIcon,
+  EloIcon,
 } from "@/components/dungeon-illustrations";
+import { stockfishPool } from "@/lib/stockfish-client";
 
 /* ================================================================== */
 /*  Lichess puzzle types                                                */
@@ -132,7 +140,7 @@ function DungeonParticles({ variant = "embers" }: { variant?: "embers" | "sparkl
 /*  SVG Node Shape Renderers                                            */
 /* ================================================================== */
 
-function SvgNodeShape({ type, x, y, isCurrent, isReachable, isVisited, isHidden }: {
+function SvgNodeShape({ type, x, y, isCurrent, isReachable, isVisited, isHidden, puzzleMode }: {
   type: NodeType;
   x: number;
   y: number;
@@ -140,6 +148,7 @@ function SvgNodeShape({ type, x, y, isCurrent, isReachable, isVisited, isHidden 
   isReachable: boolean;
   isVisited: boolean;
   isHidden: boolean;
+  puzzleMode?: PuzzleMode;
 }) {
   const info = NODE_INFO[type];
   const size = type === "boss" ? 28 : 22;
@@ -238,6 +247,20 @@ function SvgNodeShape({ type, x, y, isCurrent, isReachable, isVisited, isHidden 
           className="select-none"
         >
           {type === "boss" ? "BOSS" : info.label}
+        </text>
+      )}
+      {/* Puzzle mode indicator for battle nodes */}
+      {!isHidden && type === "battle" && puzzleMode && puzzleMode !== "tactic" && (
+        <text
+          x={x}
+          y={y + size + 22}
+          textAnchor="middle"
+          fontSize={7}
+          fill="#94a3b8"
+          opacity={0.6}
+          className="select-none"
+        >
+          {PUZZLE_MODE_INFO[puzzleMode].icon} {PUZZLE_MODE_INFO[puzzleMode].label.replace("Guess the ", "").replace("Solve the ", "")}
         </text>
       )}
     </g>
@@ -485,6 +508,7 @@ function DungeonMap({
                     isReachable={isReachable}
                     isVisited={node.visited}
                     isHidden={isHidden}
+                    puzzleMode={node.puzzleMode}
                   />
                 </g>
               );
@@ -858,6 +882,9 @@ function BattleBoard({
             </div>
           )}
 
+          {/* Battle scene vignette */}
+          {!isBoss && <BattleSceneVignette actId={act.id} seed={run.seed + run.currentFloor} />}
+
           {/* Narrative flavor text */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
             <p className="text-xs italic leading-relaxed text-slate-400">
@@ -886,6 +913,593 @@ function BattleBoard({
               {moveIndicator.type === "correct" ? "✓ Correct!" : "✗ Wrong move"}
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================== */
+/*  Guess the Eval — estimate position evaluation                       */
+/* ================================================================== */
+
+const EVAL_BUCKETS = [
+  { label: "White crushing", range: "+3 or more", min: 3, color: "text-white bg-white/10 border-white/20" },
+  { label: "White better", range: "+1 to +3", min: 1, max: 3, color: "text-blue-300 bg-blue-500/10 border-blue-500/20" },
+  { label: "Roughly equal", range: "-1 to +1", min: -1, max: 1, color: "text-slate-300 bg-slate-500/10 border-slate-500/20" },
+  { label: "Black better", range: "-3 to -1", min: -3, max: -1, color: "text-purple-300 bg-purple-500/10 border-purple-500/20" },
+  { label: "Black crushing", range: "-3 or less", max: -3, color: "text-zinc-300 bg-zinc-500/10 border-zinc-500/20" },
+] as const;
+
+function getEvalBucket(cp: number): number {
+  const evalPawns = cp / 100;
+  if (evalPawns >= 3) return 0;
+  if (evalPawns >= 1) return 1;
+  if (evalPawns >= -1) return 2;
+  if (evalPawns >= -3) return 3;
+  return 4;
+}
+
+function GuessEvalBoard({
+  puzzle,
+  run,
+  onSolved,
+  onFailed,
+}: {
+  puzzle: LichessPuzzle;
+  run: DungeonRun;
+  onSolved: () => void;
+  onFailed: () => void;
+}) {
+  const { ref: boardRef, size: boardSize } = useBoardSize(720, { evalBar: false });
+  const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
+  const showCoords = useShowCoordinates();
+
+  const setup = useMemo(
+    () => setupPuzzlePosition(puzzle.game.pgn, puzzle.puzzle.initialPly),
+    [puzzle]
+  );
+
+  const [selectedBucket, setSelectedBucket] = useState<number | null>(null);
+  const [actualBucket, setActualBucket] = useState<number | null>(null);
+  const [actualEval, setActualEval] = useState<number | null>(null);
+  const [revealed, setRevealed] = useState(false);
+  const [evaluating, setEvaluating] = useState(true);
+  const evalRef = useRef<number | null>(null);
+
+  const act = getAct(run.currentFloor);
+
+  // Run Stockfish to get actual eval
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await stockfishPool.evaluateFen(setup.postTriggerFen, 14);
+        if (!cancelled && result) {
+          evalRef.current = result.cp;
+          setActualEval(result.cp);
+          setActualBucket(getEvalBucket(result.cp));
+        }
+      } catch {}
+      if (!cancelled) setEvaluating(false);
+    })();
+    return () => { cancelled = true; };
+  }, [setup.postTriggerFen]);
+
+  const handleGuess = useCallback((bucketIdx: number) => {
+    if (revealed || evaluating || actualBucket === null) return;
+    setSelectedBucket(bucketIdx);
+    setRevealed(true);
+
+    const distance = Math.abs(bucketIdx - actualBucket);
+    // Exact or one off = correct, farther = wrong
+    if (distance <= 1) {
+      playSound("correct");
+      setTimeout(() => onSolved(), 1500);
+    } else {
+      playSound("wrong");
+      playDungeonSound("damage");
+      setTimeout(() => onFailed(), 2000);
+    }
+  }, [revealed, evaluating, actualBucket, onSolved, onFailed]);
+
+  const orientation: "white" | "black" = useMemo(() => {
+    return new Chess(setup.postTriggerFen).turn() === "w" ? "white" : "black";
+  }, [setup.postTriggerFen]);
+
+  return (
+    <div className="w-full dungeon-screen-enter">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px]">
+        <div className="flex flex-col items-center gap-3">
+          <div ref={boardRef} className="w-full max-w-[720px]">
+            <div className="overflow-hidden rounded-xl">
+              <Chessboard
+                id="dungeon-eval"
+                position={setup.postTriggerFen}
+                boardOrientation={orientation}
+                boardWidth={boardSize}
+                arePiecesDraggable={false}
+                customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+                customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                showBoardNotation={showCoords}
+                customPieces={customPieces}
+              />
+            </div>
+          </div>
+
+          {/* Eval guess buttons */}
+          <div className="w-full max-w-md space-y-2">
+            <p className="text-center text-sm font-medium text-slate-300">
+              {evaluating ? "Analyzing position…" : revealed ? "Result:" : "Who stands better?"}
+            </p>
+            {EVAL_BUCKETS.map((bucket, idx) => {
+              const isSelected = selectedBucket === idx;
+              const isCorrect = revealed && actualBucket !== null && Math.abs(idx - actualBucket) <= 1;
+              const isActual = revealed && idx === actualBucket;
+
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handleGuess(idx)}
+                  disabled={revealed || evaluating}
+                  className={`w-full flex items-center justify-between rounded-lg border px-4 py-2.5 text-sm font-medium transition-all ${
+                    revealed
+                      ? isActual
+                        ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-400/30"
+                        : isSelected && !isCorrect
+                          ? "border-red-400/40 bg-red-500/15 text-red-400"
+                          : "border-white/[0.04] bg-white/[0.01] text-slate-600"
+                      : `${bucket.color} border hover:brightness-125 cursor-pointer`
+                  } ${evaluating ? "opacity-40" : ""}`}
+                >
+                  <span>{bucket.label}</span>
+                  <span className="text-xs opacity-60">{bucket.range}</span>
+                  {isActual && revealed && <span className="ml-2">✓</span>}
+                </button>
+              );
+            })}
+            {revealed && actualEval !== null && (
+              <p className="text-center text-xs text-slate-400 mt-2">
+                Engine eval: <span className="font-mono font-bold text-white">{actualEval >= 0 ? "+" : ""}{(actualEval / 100).toFixed(1)}</span>
+                {selectedBucket !== null && actualBucket !== null && Math.abs(selectedBucket - actualBucket) <= 1
+                  ? <span className="ml-2 text-emerald-400">Close enough! ✓</span>
+                  : <span className="ml-2 text-red-400">Too far off ✗</span>
+                }
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Sidebar */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider border border-cyan-500/20 bg-cyan-500/5 text-cyan-400">
+            📊 Guess the Eval
+          </div>
+          <BattleSceneVignette actId={act.id} seed={run.seed + run.currentFloor} />
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+            <p className="text-xs italic leading-relaxed text-slate-400">
+              Study the position carefully. Is White or Black doing better? How much?
+            </p>
+          </div>
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-500">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <span>{puzzle.puzzle.rating}</span>
+              <span className="text-slate-600">·</span>
+              <span>Eval Challenge</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================== */
+/*  Guess the Move — what did the GM play?                              */
+/* ================================================================== */
+
+function GuessMoveBoard({
+  puzzle,
+  run,
+  onSolved,
+  onFailed,
+}: {
+  puzzle: LichessPuzzle;
+  run: DungeonRun;
+  onSolved: () => void;
+  onFailed: () => void;
+}) {
+  const { ref: boardRef, size: boardSize } = useBoardSize(720, { evalBar: false });
+  const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
+  const showCoords = useShowCoordinates();
+
+  // Pick an interesting position from the game — a few moves before the puzzle trigger
+  const { fen, correctMove, orientation, moveSAN } = useMemo(() => {
+    const moves = parsePgnMoves(puzzle.game.pgn);
+    // Go to a position a few moves before the puzzle starts
+    const targetPly = Math.max(4, puzzle.puzzle.initialPly - 2);
+    const chess = new Chess();
+    for (let i = 0; i < Math.min(targetPly, moves.length); i++) {
+      try { chess.move(moves[i]); } catch { break; }
+    }
+    const position = chess.fen();
+    const nextMoveStr = moves[targetPly];
+    let moveResult: any = null;
+    let san = "";
+    const from = nextMoveStr ? null : null; // We'll get it from chess.move
+    try {
+      moveResult = chess.move(nextMoveStr);
+      san = moveResult?.san ?? nextMoveStr;
+    } catch {}
+    const ori: "white" | "black" = new Chess(position).turn() === "w" ? "white" : "black";
+    return {
+      fen: position,
+      correctMove: moveResult ? { from: moveResult.from, to: moveResult.to } : null,
+      orientation: ori,
+      moveSAN: san,
+    };
+  }, [puzzle]);
+
+  const [state, setState] = useState<"waiting" | "correct" | "wrong">("waiting");
+  const [attempts, setAttempts] = useState(0);
+  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
+  const [currentFen, setCurrentFen] = useState(fen);
+
+  const act = getAct(run.currentFloor);
+
+  const sideToMove = useMemo(() => {
+    try { return new Chess(fen).turn(); } catch { return "w"; }
+  }, [fen]);
+
+  const isDraggablePiece = useCallback(
+    ({ piece }: { piece: string }) => {
+      if (state !== "waiting") return false;
+      return piece.startsWith(sideToMove === "w" ? "w" : "b");
+    },
+    [state, sideToMove]
+  );
+
+  const onDrop = useCallback(
+    (from: string, to: string) => {
+      if (state !== "waiting" || !correctMove) return false;
+
+      if (from === correctMove.from && to === correctMove.to) {
+        // Correct!
+        const chess = new Chess(fen);
+        try {
+          chess.move({ from, to, promotion: "q" });
+          setCurrentFen(chess.fen());
+        } catch {}
+        setLastMove({ from, to });
+        setState("correct");
+        playSound("correct");
+        setTimeout(() => onSolved(), 1200);
+        return true;
+      } else {
+        // Wrong
+        setAttempts(a => a + 1);
+        playSound("wrong");
+        if (attempts >= 1) {
+          // Two fails — show the answer
+          setState("wrong");
+          playDungeonSound("damage");
+          if (correctMove) {
+            const chess = new Chess(fen);
+            try {
+              chess.move({ from: correctMove.from, to: correctMove.to, promotion: "q" });
+              setTimeout(() => {
+                setCurrentFen(chess.fen());
+                setLastMove({ from: correctMove.from, to: correctMove.to });
+              }, 500);
+            } catch {}
+          }
+          setTimeout(() => onFailed(), 2500);
+        }
+        return false;
+      }
+    },
+    [state, correctMove, fen, attempts, onSolved, onFailed]
+  );
+
+  const customSquareStyles: Record<string, React.CSSProperties> = {};
+  if (lastMove) {
+    customSquareStyles[lastMove.from] = { backgroundColor: "rgba(255, 255, 0, 0.25)" };
+    customSquareStyles[lastMove.to] = { backgroundColor: "rgba(255, 255, 0, 0.35)" };
+  }
+
+  return (
+    <div className="w-full dungeon-screen-enter">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px]">
+        <div className="flex flex-col items-center gap-3">
+          <div ref={boardRef} className="w-full max-w-[720px]">
+            <div className="overflow-hidden rounded-xl">
+              <Chessboard
+                id="dungeon-guess-move"
+                position={currentFen}
+                boardOrientation={orientation}
+                boardWidth={boardSize}
+                onPieceDrop={onDrop as any}
+                arePiecesDraggable={state === "waiting"}
+                isDraggablePiece={isDraggablePiece}
+                animationDuration={200}
+                customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+                customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                showBoardNotation={showCoords}
+                customSquareStyles={customSquareStyles}
+                customPieces={customPieces}
+              />
+            </div>
+          </div>
+
+          <div className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-all ${
+            state === "correct" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+              : state === "wrong" ? "border-red-500/30 bg-red-500/10 text-red-400"
+              : "border-white/[0.08] bg-white/[0.03] text-slate-400"
+          }`}>
+            {state === "waiting"
+              ? `What did the player play here?${attempts > 0 ? " (last chance!)" : ""}`
+              : state === "correct"
+                ? `✅ Correct! The move was ${moveSAN}`
+                : `❌ Wrong — the move was ${moveSAN}`
+            }
+          </div>
+        </div>
+
+        {/* Sidebar */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider border border-amber-500/20 bg-amber-500/5 text-amber-400">
+            🔍 Guess the Move
+          </div>
+          <BattleSceneVignette actId={act.id} seed={run.seed + run.currentFloor} />
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+            <p className="text-xs italic leading-relaxed text-slate-400">
+              This position is from a real game. Can you find the move that was actually played?
+            </p>
+          </div>
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-500">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <span>{puzzle.puzzle.rating}</span>
+              <span className="text-slate-600">·</span>
+              <span>Move Challenge</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================== */
+/*  Guess the Elo — estimate players' rating                            */
+/* ================================================================== */
+
+const ELO_RANGES = [
+  { label: "Beginner", range: "Under 1200", mid: 1000, color: "text-green-300 bg-green-500/10 border-green-500/20" },
+  { label: "Intermediate", range: "1200–1500", mid: 1350, color: "text-blue-300 bg-blue-500/10 border-blue-500/20" },
+  { label: "Advanced", range: "1500–1800", mid: 1650, color: "text-purple-300 bg-purple-500/10 border-purple-500/20" },
+  { label: "Expert", range: "1800–2100", mid: 1950, color: "text-amber-300 bg-amber-500/10 border-amber-500/20" },
+  { label: "Master+", range: "2100+", mid: 2250, color: "text-red-300 bg-red-500/10 border-red-500/20" },
+] as const;
+
+function getEloBucket(elo: number): number {
+  if (elo < 1200) return 0;
+  if (elo < 1500) return 1;
+  if (elo < 1800) return 2;
+  if (elo < 2100) return 3;
+  return 4;
+}
+
+function GuessEloBoard({
+  puzzle,
+  run,
+  onSolved,
+  onFailed,
+}: {
+  puzzle: LichessPuzzle;
+  run: DungeonRun;
+  onSolved: () => void;
+  onFailed: () => void;
+}) {
+  const { ref: boardRef, size: boardSize } = useBoardSize(720, { evalBar: false });
+  const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
+  const showCoords = useShowCoordinates();
+
+  // Derive a position from the game and extract player Elo
+  const { fen, orientation, avgElo, actualBucket } = useMemo(() => {
+    const moves = parsePgnMoves(puzzle.game.pgn);
+    const targetPly = Math.min(puzzle.puzzle.initialPly, moves.length);
+    const chess = new Chess();
+    for (let i = 0; i < targetPly; i++) {
+      try { chess.move(moves[i]); } catch { break; }
+    }
+    const position = chess.fen();
+    const ori: "white" | "black" = new Chess(position).turn() === "w" ? "white" : "black";
+
+    // Get average rating from players — Lichess format: [{color, name, rating?}, ...]
+    let avg = 1500;
+    try {
+      const players = puzzle.game.players;
+      if (Array.isArray(players) && players.length >= 2) {
+        const ratings = players.map((p: any) => p.rating ?? p.user?.rating ?? 1500);
+        avg = Math.round(ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length);
+      }
+    } catch {}
+
+    return {
+      fen: position,
+      orientation: ori,
+      avgElo: avg,
+      actualBucket: getEloBucket(avg),
+    };
+  }, [puzzle]);
+
+  const [selectedBucket, setSelectedBucket] = useState<number | null>(null);
+  const [revealed, setRevealed] = useState(false);
+
+  const act = getAct(run.currentFloor);
+
+  // Also replay a short sequence of recent moves via autoplay
+  const [displayFen, setDisplayFen] = useState(fen);
+  const [replayMoves, setReplayMoves] = useState<{ from: string; to: string }[]>([]);
+  const [currentMoveIdx, setCurrentMoveIdx] = useState(0);
+
+  useEffect(() => {
+    // Show last 3 moves of the game as an animated replay
+    const moves = parsePgnMoves(puzzle.game.pgn);
+    const startPly = Math.max(0, puzzle.puzzle.initialPly - 6);
+    const endPly = puzzle.puzzle.initialPly;
+    const chess = new Chess();
+    for (let i = 0; i < startPly; i++) {
+      try { chess.move(moves[i]); } catch { break; }
+    }
+    setDisplayFen(chess.fen());
+
+    const replays: { from: string; to: string }[] = [];
+    for (let i = startPly; i < endPly && i < moves.length; i++) {
+      try {
+        const result = chess.move(moves[i]);
+        if (result) replays.push({ from: result.from, to: result.to });
+      } catch { break; }
+    }
+    setReplayMoves(replays);
+    setCurrentMoveIdx(0);
+  }, [puzzle]);
+
+  // Autoplay the last moves
+  useEffect(() => {
+    if (currentMoveIdx >= replayMoves.length || revealed) return;
+    const timer = setTimeout(() => {
+      const moves = parsePgnMoves(puzzle.game.pgn);
+      const startPly = Math.max(0, puzzle.puzzle.initialPly - 6);
+      const chess = new Chess();
+      for (let i = 0; i < startPly + currentMoveIdx + 1; i++) {
+        try { chess.move(moves[i]); } catch { break; }
+      }
+      setDisplayFen(chess.fen());
+      setCurrentMoveIdx(prev => prev + 1);
+      playSound("move");
+    }, 1200);
+    return () => clearTimeout(timer);
+  }, [currentMoveIdx, replayMoves.length, puzzle, revealed]);
+
+  const handleGuess = useCallback((bucketIdx: number) => {
+    if (revealed) return;
+    setSelectedBucket(bucketIdx);
+    setRevealed(true);
+
+    // Show final position
+    setDisplayFen(fen);
+
+    const distance = Math.abs(bucketIdx - actualBucket);
+    if (distance <= 1) {
+      playSound("correct");
+      setTimeout(() => onSolved(), 1500);
+    } else {
+      playSound("wrong");
+      playDungeonSound("damage");
+      setTimeout(() => onFailed(), 2000);
+    }
+  }, [revealed, actualBucket, fen, onSolved, onFailed]);
+
+  return (
+    <div className="w-full dungeon-screen-enter">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px]">
+        <div className="flex flex-col items-center gap-3">
+          <div ref={boardRef} className="w-full max-w-[720px]">
+            <div className="overflow-hidden rounded-xl">
+              <Chessboard
+                id="dungeon-guess-elo"
+                position={displayFen}
+                boardOrientation={orientation}
+                boardWidth={boardSize}
+                arePiecesDraggable={false}
+                customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+                customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                showBoardNotation={showCoords}
+                customPieces={customPieces}
+              />
+            </div>
+          </div>
+
+          {/* Elo guess buttons */}
+          <div className="w-full max-w-md space-y-2">
+            <p className="text-center text-sm font-medium text-slate-300">
+              {!revealed
+                ? currentMoveIdx < replayMoves.length
+                  ? "Watch the game unfold…"
+                  : "What rating are these players?"
+                : "Result:"}
+            </p>
+            {ELO_RANGES.map((range, idx) => {
+              const isSelected = selectedBucket === idx;
+              const isActual = revealed && idx === actualBucket;
+              const isClose = revealed && selectedBucket !== null && Math.abs(selectedBucket - actualBucket) <= 1;
+
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handleGuess(idx)}
+                  disabled={revealed || currentMoveIdx < replayMoves.length}
+                  className={`w-full flex items-center justify-between rounded-lg border px-4 py-2.5 text-sm font-medium transition-all ${
+                    revealed
+                      ? isActual
+                        ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-400/30"
+                        : isSelected && !isClose
+                          ? "border-red-400/40 bg-red-500/15 text-red-400"
+                          : "border-white/[0.04] bg-white/[0.01] text-slate-600"
+                      : currentMoveIdx < replayMoves.length
+                        ? "border-white/[0.04] bg-white/[0.01] text-slate-600 opacity-40"
+                        : `${range.color} border hover:brightness-125 cursor-pointer`
+                  }`}
+                >
+                  <span>{range.label}</span>
+                  <span className="text-xs opacity-60">{range.range}</span>
+                  {isActual && revealed && <span className="ml-2">✓</span>}
+                </button>
+              );
+            })}
+            {revealed && (
+              <p className="text-center text-xs text-slate-400 mt-2">
+                Average rating: <span className="font-mono font-bold text-white">{avgElo}</span>
+                {selectedBucket !== null && Math.abs(selectedBucket - actualBucket) <= 1
+                  ? <span className="ml-2 text-emerald-400">Close enough! ✓</span>
+                  : <span className="ml-2 text-red-400">Too far off ✗</span>
+                }
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Sidebar */}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider border border-yellow-500/20 bg-yellow-500/5 text-yellow-400">
+            ⭐ Guess the Elo
+          </div>
+          <BattleSceneVignette actId={act.id} seed={run.seed + run.currentFloor} />
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+            <p className="text-xs italic leading-relaxed text-slate-400">
+              Watch these moves from a real game. Can you guess the players&apos; rating?
+            </p>
+          </div>
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-500">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <span>{puzzle.puzzle.rating}</span>
+              <span className="text-slate-600">·</span>
+              <span>Elo Challenge</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -1827,11 +2441,12 @@ export default function DungeonPage() {
           </div>
 
           {/* Feature badges */}
-          <div className="mt-10 grid grid-cols-3 gap-6 text-center">
+          <div className="mt-10 grid grid-cols-2 gap-4 text-center sm:grid-cols-4">
             {[
-              { icon: "�", label: "3 acts with unique story" },
-              { icon: "🗡️", label: "22 perks & 3 bosses" },
-              { icon: "🔥", label: "XP, levels & achievements" },
+              { icon: "📖", label: "3 acts with story" },
+              { icon: "⚔️", label: "22 perks, 3 bosses" },
+              { icon: "🎲", label: "4 puzzle modes" },
+              { icon: "🔥", label: "XP & achievements" },
             ].map((feat, i) => (
               <div key={i} className={`dungeon-stagger-${i + 1}`}>
                 <div className="text-3xl">{feat.icon}</div>
@@ -2063,8 +2678,19 @@ export default function DungeonPage() {
                   </>
                 ) : (
                   <>
-                    <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-white/10 border-t-emerald-400" />
-                    <p className="mt-4 text-sm text-slate-400">Summoning puzzle…</p>
+                    <BattleSceneVignette actId={a.id} seed={run.seed + run.currentFloor} />
+                    {(() => {
+                      const mode = loadNode?.puzzleMode ?? "tactic";
+                      const modeInfo = PUZZLE_MODE_INFO[mode];
+                      return (
+                        <div className="mt-4 flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-1.5">
+                          <span className="text-sm">{modeInfo.icon}</span>
+                          <span className="text-xs font-bold text-white">{modeInfo.label}</span>
+                        </div>
+                      );
+                    })()}
+                    <div className="mt-4 mx-auto h-10 w-10 animate-spin rounded-full border-4 border-white/10 border-t-emerald-400" />
+                    <p className="mt-3 text-sm text-slate-400">Summoning challenge…</p>
                     <p className="mt-2 text-xs italic text-slate-600">{getBattleFlavor(run.currentFloor, run.seed)}</p>
                   </>
                 )}
@@ -2072,14 +2698,20 @@ export default function DungeonPage() {
             );
           })()}
 
-          {run.status === "battle" && puzzle && !loading && (
-            <BattleBoard
-              puzzle={puzzle}
-              run={run}
-              onSolved={handlePuzzleSolved}
-              onFailed={handlePuzzleFailed}
-            />
-          )}
+          {run.status === "battle" && puzzle && !loading && (() => {
+            const currentNode = run.map.find(n => n.id === run.currentNodeId);
+            const mode = currentNode?.puzzleMode ?? "tactic";
+            switch (mode) {
+              case "guess-eval":
+                return <GuessEvalBoard puzzle={puzzle} run={run} onSolved={handlePuzzleSolved} onFailed={handlePuzzleFailed} />;
+              case "guess-move":
+                return <GuessMoveBoard puzzle={puzzle} run={run} onSolved={handlePuzzleSolved} onFailed={handlePuzzleFailed} />;
+              case "guess-elo":
+                return <GuessEloBoard puzzle={puzzle} run={run} onSolved={handlePuzzleSolved} onFailed={handlePuzzleFailed} />;
+              default:
+                return <BattleBoard puzzle={puzzle} run={run} onSolved={handlePuzzleSolved} onFailed={handlePuzzleFailed} />;
+            }
+          })()}
 
           {/* Perk selection */}
           {run.status === "perk-select" && (
