@@ -214,29 +214,55 @@ export function RoastAvatar({ mood, size = 72 }: { mood: RoastMood; size?: numbe
           </>
         )}
 
-        {/* ═══ CLOWN — PepeClown (red nose, party hat) ═══ */}
+        {/* ═══ CLOWN — PepeClown (rainbow wig, red nose, bowtie) 🤡 honk honk ═══ */}
         {mood === "clown" && (
           <>
-            {/* Cross-eyed pupils */}
+            {/* Rainbow afro wig — layered colored blobs */}
+            <path d="M14 40 Q8 20,24 12 Q34 4,50 6" fill="#FF6B00" stroke="#E05500" strokeWidth="1" />
+            <path d="M50 6 Q58 2,66 4 Q72 2,80 6" fill="#FFD700" stroke="#E6BE00" strokeWidth="1" />
+            <path d="M80 6 Q92 4,100 10 Q112 18,118 34" fill="#3366FF" stroke="#2244CC" strokeWidth="1" />
+            <path d="M100 10 Q108 6,114 10 Q122 16,124 30" fill="#9944CC" stroke="#7733AA" strokeWidth="1" />
+            <path d="M14 40 Q6 28,16 16 Q24 6,42 4 Q56 0,70 2 Q84 0,98 4 Q116 6,124 16 Q134 28,126 40 Q128 50,120 48 Q114 36,104 28 Q90 18,70 18 Q50 18,36 28 Q26 36,22 48 Q12 50,14 40Z"
+              fill="none" />
+            {/* Wig fill sections with puffy shape */}
+            <path d="M14 42 Q4 28,16 14 Q28 2,48 2 Q56 -2,70 0 Q84 -2,92 2 Q112 2,124 14 Q136 28,126 42 Q122 34,110 26 Q94 16,70 16 Q46 16,30 26 Q18 34,14 42Z"
+              fill="#FF6B00" opacity="0.95" />
+            <path d="M36 6 Q50 -2,70 0 Q90 -2,104 6 Q116 12,122 24 Q112 14,96 8 Q80 4,70 4 Q60 4,44 8 Q28 14,18 24 Q24 12,36 6Z"
+              fill="#FFDD00" opacity="0.95" />
+            <path d="M56 0 Q70 -4,84 0 Q98 4,108 14 Q100 6,88 4 Q76 0,70 2 Q64 0,52 4 Q40 6,32 14 Q42 4,56 0Z"
+              fill="#22AA44" opacity="0.9" />
+            <path d="M96 4 Q110 8,120 18 Q128 28,126 40 Q124 30,116 22 Q108 14,96 10Z"
+              fill="#3366FF" opacity="0.9" />
+            <path d="M108 10 Q118 14,124 24 Q130 34,126 42 Q128 30,122 22 Q116 16,108 10Z"
+              fill="#9944CC" opacity="0.85" />
+            {/* Cross-eyed pupils — silly/derpy look */}
             <circle cx="54" cy="48" r="10" fill="#1A1A1A" />
             <circle cx="86" cy="48" r="10" fill="#1A1A1A" />
             <circle cx="57" cy="45" r="3" fill="white" />
             <circle cx="83" cy="45" r="3" fill="white" />
-            {/* Droopy eyelids */}
-            <path d="M30 32 Q50 22,70 36 L70 42 Q50 32,30 42Z" fill="#5A8E32" />
-            <path d="M70 36 Q90 22,110 32 L110 42 Q90 32,70 42Z" fill="#5A8E32" />
-            {/* Big red clown nose */}
-            <circle cx="70" cy="70" r="10" fill="#E74C3C" stroke="#C0392B" strokeWidth="1.5" />
-            <circle cx="66" cy="66" r="3" fill="#F5B7B1" opacity="0.6" />
-            {/* Wide goofy grin */}
-            <path d="M34 82 Q70 104,106 82 L106 88 Q70 108,34 88Z" fill="#1A1A1A" />
-            <rect x="50" y="82" width="40" height="5" rx="2" fill="white" />
+            {/* Wide, innocent-looking eyes (less eyelid than normal) */}
+            <path d="M30 32 Q50 26,70 36 L70 40 Q50 32,30 40Z" fill="#5A8E32" />
+            <path d="M70 36 Q90 26,110 32 L110 40 Q90 32,70 40Z" fill="#5A8E32" />
+            {/* Big red clown nose — 3D shading */}
+            <circle cx="70" cy="68" r="11" fill="#E74C3C" stroke="#C0392B" strokeWidth="1.5" />
+            <circle cx="66" cy="64" r="4" fill="#F5B7B1" opacity="0.5" />
+            <circle cx="68" cy="62" r="2" fill="white" opacity="0.3" />
+            {/* Slight smile (content, not goofy) */}
+            <path d="M40 86 Q54 92,70 90 Q86 92,100 86" fill="none" stroke="#8B3D22" strokeWidth="2" strokeLinecap="round" />
             {/* Rosy cheeks */}
-            <circle cx="32" cy="72" r="8" fill="#FF6B6B" opacity="0.3" />
-            <circle cx="108" cy="72" r="8" fill="#FF6B6B" opacity="0.3" />
-            {/* Small party hat */}
-            <polygon points="70,2 58,22 82,22" fill="#FFD700" stroke="#E6BE00" strokeWidth="1" />
-            <circle cx="70" cy="2" r="3" fill="#E74C3C" />
+            <circle cx="34" cy="74" r="8" fill="#FF6B6B" opacity="0.25" />
+            <circle cx="106" cy="74" r="8" fill="#FF6B6B" opacity="0.25" />
+            {/* Polka-dot bowtie */}
+            <path d="M50 108 L70 104 L70 112 Z" fill="#87CEEB" stroke="#5EAAD4" strokeWidth="1" />
+            <path d="M90 108 L70 104 L70 112 Z" fill="#87CEEB" stroke="#5EAAD4" strokeWidth="1" />
+            <circle cx="70" cy="108" r="3.5" fill="#5EAAD4" stroke="#4890B8" strokeWidth="1" />
+            {/* Bowtie polka dots */}
+            <circle cx="56" cy="108" r="1.5" fill="white" opacity="0.7" />
+            <circle cx="62" cy="106" r="1" fill="white" opacity="0.6" />
+            <circle cx="60" cy="110" r="1.2" fill="white" opacity="0.6" />
+            <circle cx="80" cy="108" r="1.5" fill="white" opacity="0.7" />
+            <circle cx="78" cy="106" r="1" fill="white" opacity="0.6" />
+            <circle cx="82" cy="110" r="1.2" fill="white" opacity="0.6" />
           </>
         )}
 

@@ -1078,7 +1078,15 @@ export default function RoastPage() {
 
                 {/* Avatar + Speech Bubble */}
                 <div className="flex items-start gap-3 mb-4 min-h-[100px]">
-                  <RoastAvatar mood={currentMood} size={68} />
+                  <div className="relative flex-shrink-0">
+                    <RoastAvatar mood={currentMood} size={68} />
+                    {currentMood === "clown" && (
+                      <span className="absolute -top-2 -right-2 text-[10px] font-bold text-red-400 animate-bounce select-none pointer-events-none"
+                        style={{ textShadow: "0 0 6px rgba(239,68,68,0.5)" }}>
+                        honk honk
+                      </span>
+                    )}
+                  </div>
                   <div className="relative flex-1 min-w-0">
                     {activeComment ? (
                       <>
