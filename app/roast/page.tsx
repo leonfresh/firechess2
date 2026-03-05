@@ -73,15 +73,33 @@ function useTypewriter(text: string | null, charDelay = 14) {
 /*  Mood from classification                                            */
 /* ================================================================== */
 
-function getMood(move: { classification: MoveClassification; cpLoss: number } | null): RoastMood {
+function getMood(move: { classification: MoveClassification; cpLoss: number } | null, blunderCount?: number): RoastMood {
   if (!move) return "neutral";
   switch (move.classification) {
     case "brilliant": return "mindblown";
-    case "great": case "best": return "smug";
-    case "good": return "neutral";
-    case "inaccuracy": return "suspicious";
-    case "mistake": return "disappointed";
-    case "blunder": return move.cpLoss > 400 ? "laughing" : "shocked";
+    case "great": case "best": return Math.random() < 0.3 ? "thinking" : "smug";
+    case "good": return Math.random() < 0.15 ? "smug" : "neutral";
+    case "inaccuracy": return Math.random() < 0.3 ? "disappointed" : "suspicious";
+    case "mistake": {
+      const r = Math.random();
+      if (r < 0.25) return "crylaugh";
+      if (r < 0.45) return "clown";
+      return "disappointed";
+    }
+    case "blunder": {
+      // More expressive for blunders — escalate with repeated blunders
+      const r = Math.random();
+      if (move.cpLoss > 600) return r < 0.5 ? "clown" : "crylaugh";
+      if (move.cpLoss > 400) {
+        if (r < 0.3) return "clown";
+        if (r < 0.6) return "crylaugh";
+        return "laughing";
+      }
+      if ((blunderCount ?? 0) >= 4) return r < 0.5 ? "rage" : "clown";
+      if (r < 0.3) return "crylaugh";
+      if (r < 0.5) return "laughing";
+      return "shocked";
+    }
     default: return "neutral";
   }
 }
@@ -598,12 +616,12 @@ export default function RoastPage() {
         if (move.comment) {
           setActiveComment(move.comment);
           setCommentHistory(prev => [...prev, move.comment!]);
-          setCurrentMood(getMood(move));
+          setCurrentMood(getMood(move, blunders));
           setActiveArrows(move.arrows ?? []);
           setActiveMarkers(move.markers ?? []);
         } else {
           setActiveComment(null);
-          setCurrentMood(getMood(move));
+          setCurrentMood(getMood(move, blunders));
           setActiveArrows([]);
           setActiveMarkers([]);
         }
@@ -648,7 +666,7 @@ export default function RoastPage() {
     setCommentHistory(comments);
     // Show the current move's comment in the speech bubble (if any)
     const cur = idx >= 0 ? moves[idx] : null;
-    setCurrentMood(cur ? getMood(cur) : "neutral");
+    setCurrentMood(cur ? getMood(cur, blunders) : "neutral");
     if (cur?.comment) {
       setActiveComment(cur.comment);
       setActiveArrows(cur.arrows ?? []);

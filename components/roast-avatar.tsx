@@ -10,7 +10,10 @@ export type RoastMood =
   | "suspicious"
   | "mindblown"
   | "laughing"
-  | "thinking";
+  | "thinking"
+  | "clown"
+  | "crylaugh"
+  | "rage";
 
 /**
  * Pepe the Frog avatar — faithful to the Twitch emote style.
@@ -208,6 +211,89 @@ export function RoastAvatar({ mood, size = 72 }: { mood: RoastMood; size?: numbe
             <circle cx="118" cy="22" r="3.5" fill="#A0D890" opacity="0.5" />
             <circle cx="126" cy="14" r="4.5" fill="#A0D890" opacity="0.4" />
             <circle cx="134" cy="6" r="5.5" fill="#A0D890" opacity="0.3" />
+          </>
+        )}
+
+        {/* ═══ CLOWN — PepeClown (red nose, party hat) ═══ */}
+        {mood === "clown" && (
+          <>
+            {/* Cross-eyed pupils */}
+            <circle cx="54" cy="48" r="10" fill="#1A1A1A" />
+            <circle cx="86" cy="48" r="10" fill="#1A1A1A" />
+            <circle cx="57" cy="45" r="3" fill="white" />
+            <circle cx="83" cy="45" r="3" fill="white" />
+            {/* Droopy eyelids */}
+            <path d="M30 32 Q50 22,70 36 L70 42 Q50 32,30 42Z" fill="#5A8E32" />
+            <path d="M70 36 Q90 22,110 32 L110 42 Q90 32,70 42Z" fill="#5A8E32" />
+            {/* Big red clown nose */}
+            <circle cx="70" cy="70" r="10" fill="#E74C3C" stroke="#C0392B" strokeWidth="1.5" />
+            <circle cx="66" cy="66" r="3" fill="#F5B7B1" opacity="0.6" />
+            {/* Wide goofy grin */}
+            <path d="M34 82 Q70 104,106 82 L106 88 Q70 108,34 88Z" fill="#1A1A1A" />
+            <rect x="50" y="82" width="40" height="5" rx="2" fill="white" />
+            {/* Rosy cheeks */}
+            <circle cx="32" cy="72" r="8" fill="#FF6B6B" opacity="0.3" />
+            <circle cx="108" cy="72" r="8" fill="#FF6B6B" opacity="0.3" />
+            {/* Small party hat */}
+            <polygon points="70,2 58,22 82,22" fill="#FFD700" stroke="#E6BE00" strokeWidth="1" />
+            <circle cx="70" cy="2" r="3" fill="#E74C3C" />
+          </>
+        )}
+
+        {/* ═══ CRYLAUGH — Tears of joy Pepe ═══ */}
+        {mood === "crylaugh" && (
+          <>
+            {/* Squinting happy eyes */}
+            <path d="M34 44 Q50 32,66 44" fill="none" stroke="#1A1A1A" strokeWidth="4" strokeLinecap="round" />
+            <path d="M74 44 Q90 32,106 44" fill="none" stroke="#1A1A1A" strokeWidth="4" strokeLinecap="round" />
+            {/* Heavy eyelids */}
+            <path d="M30 26 Q50 16,70 26 L70 40 Q50 30,30 40Z" fill="#5A8E32" />
+            <path d="M70 26 Q90 16,110 26 L110 40 Q90 30,70 40Z" fill="#5A8E32" />
+            {/* Wide open laughing mouth */}
+            <path d="M34 82 Q70 104,106 82 L106 92 Q70 110,34 92Z" fill="#1A1A1A" />
+            <path d="M40 84 Q70 100,100 84" fill="#6B1A1A" />
+            <rect x="54" y="82" width="32" height="5" rx="2" fill="white" />
+            {/* Lots of tears */}
+            <path d="M28 48 Q24 60,26 74" fill="none" stroke="#87CEEB" strokeWidth="3.5" strokeLinecap="round" opacity="0.8" />
+            <path d="M112 48 Q116 60,114 74" fill="none" stroke="#87CEEB" strokeWidth="3.5" strokeLinecap="round" opacity="0.8" />
+            <path d="M34 52 Q30 64,32 76" fill="none" stroke="#87CEEB" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
+            <path d="M106 52 Q110 64,108 76" fill="none" stroke="#87CEEB" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
+            {/* Tear drops */}
+            <path d="M24 76 Q26 70,28 76 Q26 80,24 76Z" fill="#87CEEB" opacity="0.7" />
+            <path d="M116 76 Q114 70,112 76 Q114 80,116 76Z" fill="#87CEEB" opacity="0.7" />
+          </>
+        )}
+
+        {/* ═══ RAGE — Angry red Pepe ═══ */}
+        {mood === "rage" && (
+          <>
+            {/* Angry squinting eyes */}
+            <circle cx="50" cy="50" r="9" fill="#1A1A1A" />
+            <circle cx="90" cy="50" r="9" fill="#1A1A1A" />
+            <circle cx="48" cy="47" r="2.5" fill="#E74C3C" />
+            <circle cx="88" cy="47" r="2.5" fill="#E74C3C" />
+            {/* Angry V-shaped eyelids */}
+            <path d="M28 28 Q50 40,70 28 L70 48 Q50 38,28 48Z" fill="#5A8E32" />
+            <path d="M70 28 Q90 40,112 28 L112 48 Q90 38,70 48Z" fill="#5A8E32" />
+            {/* Angry thick brows */}
+            <path d="M28 24 Q50 36,68 26" fill="none" stroke="#3A6A1A" strokeWidth="4" strokeLinecap="round" />
+            <path d="M72 26 Q90 36,112 24" fill="none" stroke="#3A6A1A" strokeWidth="4" strokeLinecap="round" />
+            {/* Gritted teeth */}
+            <path d="M38 82 Q54 78,70 80 Q86 78,102 82 Q104 86,102 90 Q86 94,70 92 Q54 94,38 90 Q36 86,38 82Z" fill="#1A1A1A" />
+            <rect x="44" y="82" width="6" height="8" rx="1" fill="white" />
+            <rect x="52" y="82" width="6" height="8" rx="1" fill="white" />
+            <rect x="62" y="82" width="6" height="8" rx="1" fill="white" />
+            <rect x="72" y="82" width="6" height="8" rx="1" fill="white" />
+            <rect x="82" y="82" width="6" height="8" rx="1" fill="white" />
+            <rect x="92" y="82" width="6" height="8" rx="1" fill="white" />
+            {/* Red anger glow */}
+            <circle cx="26" cy="34" r="12" fill="#FF0000" opacity="0.12" />
+            <circle cx="114" cy="34" r="12" fill="#FF0000" opacity="0.12" />
+            {/* Steam puffs */}
+            <circle cx="14" cy="40" r="5" fill="white" opacity="0.4" />
+            <circle cx="8" cy="34" r="4" fill="white" opacity="0.3" />
+            <circle cx="126" cy="40" r="5" fill="white" opacity="0.4" />
+            <circle cx="132" cy="34" r="4" fill="white" opacity="0.3" />
           </>
         )}
       </svg>
