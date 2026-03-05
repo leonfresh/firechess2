@@ -383,6 +383,11 @@ function _generatePositionAware(
 
   if (move.classification === "great" || move.classification === "best") {
     if (Math.random() > 0.35) return null;
+    // Sometimes comment on playstyle instead of the move itself
+    if (Math.random() < 0.35) {
+      const style = _styleRoast(move, summary, used);
+      if (style) return _emitResult(used, style);
+    }
     return _emitResult(used, _goodMoveRoast(move, after, toSq));
   }
 
@@ -403,6 +408,12 @@ function _generatePositionAware(
   if (move.classification === "inaccuracy") {
     if (Math.random() > 0.4) return null;
     return _emitResult(used, _inaccuracyRoast(move, after, moverColor, used));
+  }
+
+  // Style commentary for "good" / neutral moves that didn't trigger anything else
+  if (Math.random() < 0.2) {
+    const style = _styleRoast(move, summary, used);
+    if (style) return _emitResult(used, style);
   }
 
   return null;
@@ -851,6 +862,122 @@ function _inaccuracyRoast(
   // Evaluate all thunks, then pick an unused one
   const evaluated = lines.map(fn => fn());
   return { text: pickUnused(evaluated, used), annotations: ann };
+}
+
+/* ================================================================== */
+/*  Play-Style Commentary (aggression / passivity / trading sprees)     */
+/* ================================================================== */
+
+type PlayStyle = "aggressive" | "passive" | "trading" | null;
+
+function _detectStyle(move: AnalyzedMove, summary: GameSummary): PlayStyle {
+  const color = move.color;
+  // Get recent moves by this player (last 4 of their moves)
+  const myMoves = summary.moves.filter(m => m.color === color);
+  const recent = myMoves.slice(-4);
+  if (recent.length < 3) return null;
+
+  // Trading spree: 3+ consecutive captures by this player
+  const lastCaptures = [...recent].reverse();
+  let capStreak = 0;
+  for (const m of lastCaptures) {
+    if (m.isCapture) capStreak++;
+    else break;
+  }
+  if (move.isCapture) capStreak++;
+  if (capStreak >= 3) return "trading";
+
+  // Aggression: lots of checks, captures, and advancing pieces
+  const allRecent = [...recent, move];
+  const checks = allRecent.filter(m => m.isCheck).length;
+  const captures = allRecent.filter(m => m.isCapture).length;
+  let advances = 0;
+  for (const m of allRecent) {
+    const fromRank = parseInt(m.uci[1]);
+    const toRank = parseInt(m.uci[3]);
+    // Advancing = moving toward opponent's back rank
+    if (color === "w" && toRank > fromRank) advances++;
+    if (color === "b" && toRank < fromRank) advances++;
+  }
+  if (checks >= 2 || (captures >= 2 && advances >= 2) || (checks >= 1 && captures >= 2)) {
+    return "aggressive";
+  }
+
+  // Passivity: retreating pieces, no captures or checks, shuffling
+  const noAction = allRecent.every(m => !m.isCapture && !m.isCheck);
+  let retreats = 0;
+  for (const m of allRecent) {
+    const fromRank = parseInt(m.uci[1]);
+    const toRank = parseInt(m.uci[3]);
+    if (color === "w" && toRank < fromRank) retreats++;
+    if (color === "b" && toRank > fromRank) retreats++;
+  }
+  if (noAction && retreats >= 2) return "passive";
+  // Piece shuffling — same piece type moving back and forth
+  if (noAction && allRecent.length >= 4) {
+    const types = allRecent.map(m => m.pieceType);
+    const sameType = types.filter(t => t === move.pieceType).length;
+    if (sameType >= 3) return "passive";
+  }
+
+  return null;
+}
+
+function _styleRoast(
+  move: AnalyzedMove,
+  summary: GameSummary,
+  used: Set<string>,
+): { text: string; annotations: MoveAnnotation } | null {
+  const style = _detectStyle(move, summary);
+  if (!style) return null;
+
+  const fromSq = move.uci.slice(0, 2);
+  const toSq = move.uci.slice(2, 4);
+  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(100, 160, 255, 0.7)"]], markers: [] };
+
+  if (style === "aggressive") {
+    const text = pickUnused([
+      `⚔️ They are COOKING right now. Checks, captures, threats — this is full berserker mode 🔥🗡️`,
+      `🔥 Somebody woke up and chose violence today. ${move.san} continues the assault. The opponent needs therapy after this 💀`,
+      `⚡ Attack attack attack! They've got that Tal energy going — just throw pieces at the king and pray 🙏💥`,
+      `🗡️ ${move.san} — this player is playing like they've got somewhere to be. All gas no brakes 🏎️💨`,
+      `🔥 The aggression is PALPABLE. Every move is a threat. The opponent's position is having a panic attack rn 😰⚔️`,
+      `⚡ ${move.san} — they're not playing chess, they're playing Call of Duty. Just going straight in 🫡🎮`,
+      `🗡️ Full aggro mode engaged. Garry Chess himself would say "slow down" but they literally do not care 💀🔥`,
+      `⚔️ ${move.san} continues the rampage. This is what happens when someone watches too many Tal games 🤡💥`,
+    ], used);
+    return { text, annotations: ann };
+  }
+
+  if (style === "passive") {
+    const text = pickUnused([
+      `🐌 They've been retreating for like 4 moves straight. Is this chess or a tactical withdrawal?? 🏳️😤`,
+      `😴 ${move.san} — another quiet move. The position is begging for action and they're choosing violence... against their own clock ⏰💤`,
+      `🛋️ The pieces are going BACKWARDS. This is giving "I'll just shuffle and hope they blunder" energy 🫠`,
+      `🐢 ${move.san} — playing it safe is an understatement. They're playing it comatose. DO SOMETHING 😤🗿`,
+      `😴 Move after move of pure nothing. No captures. No threats. Just vibes and regret 🧘‍♂️💤`,
+      `🏳️ ${move.san} — the pieces are literally retreating to the starting squares. The opening was all for nothing 😭`,
+      `🐌 They've entered full turtle mode. Shell up, head down, pray for a draw. Inspiring stuff 🐢🗿`,
+      `😴 ${move.san}. The opposite of Tal energy. This is Petrosian energy but without the wins. Just the suffering 💀`,
+    ], used);
+    return { text, annotations: ann };
+  }
+
+  if (style === "trading") {
+    const text = pickUnused([
+      `♻️ Trade. Trade. Trade. They're liquidating pieces like it's a going-out-of-business sale 🏪💨`,
+      `🤝 Another exchange! At this rate there'll be nothing left but kings staring at each other 👑👀👑`,
+      `♻️ ${move.san} — they really said "if I trade everything, nobody can beat me." Galaxy-brain draw strategy 🧠🤝`,
+      `🔄 The trading spree continues! Every piece is getting escorted off the board. This is chess capitalism — CONSUME 💀`,
+      `🤝 ${move.san} trades again. The position is speedrunning towards a drawn endgame. Thrilling content 🫠📉`,
+      `♻️ Another piece off the board. They're simplifying faster than my attention span at a classical game ⏩💤`,
+      `🔄 ${move.san} — is this a chess game or a piece exchange program?? The board is getting emptier by the second 🏜️`,
+      `🤝 Trade trade trade. "When in doubt, trade it out." The motto of every scared chess player ever 😬♻️`,
+    ], used);
+    return { text, annotations: ann };
+  }
+
+  return null;
 }
 
 function _fallbackLine(move: AnalyzedMove): { text: string; annotations: MoveAnnotation } | null {
