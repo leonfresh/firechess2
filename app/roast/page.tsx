@@ -28,9 +28,8 @@ import {
   generateMoveComment,
   getEloFlavorLine,
   getOpeningRoast,
-  getMiddlegameComment,
-  getEndgameComment,
   getEloGuessComment,
+  getClosingRoast,
   ELO_BRACKETS,
   getEloBracketIdx,
   GAME_INTRO,
@@ -483,22 +482,11 @@ export default function RoastPage() {
         analyzed[2].comment = openingRoast;
       }
 
-      // Inject middlegame transition comment (~22-35% of game)
-      const middleTarget = analyzed.findIndex((m, i) => {
-        const pct = i / analyzed.length;
-        return pct >= 0.22 && pct <= 0.35 && !m.comment;
-      });
-      if (middleTarget >= 0) {
-        analyzed[middleTarget].comment = getMiddlegameComment();
-      }
-
-      // Inject endgame transition comment (~65-75% of game)
-      const endTarget = analyzed.findIndex((m, i) => {
-        const pct = i / analyzed.length;
-        return pct >= 0.65 && pct <= 0.75 && !m.comment;
-      });
-      if (endTarget >= 0) {
-        analyzed[endTarget].comment = getEndgameComment();
+      // Inject closing game summary roast on the last move
+      if (analyzed.length > 0) {
+        const lastIdx = analyzed.length - 1;
+        const closingRoast = getClosingRoast(totalBlunders, totalMistakes, totalInaccuracies, analyzed.length, data.result);
+        analyzed[lastIdx].comment = closingRoast;
       }
 
       // Inject 1-2 elo-guessing comments based on game quality patterns

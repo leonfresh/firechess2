@@ -376,11 +376,13 @@ function _generatePositionAware(
   }
 
   if (move.classification === "blunder") {
-    return _emitResult(used, _blunderRoast(move, before, after, moverColor, fromSq, toSq, movedPiece, capturedPiece, summary));
+    // Blunders ALWAYS get roasted — never skip due to dedup
+    return _emitResultForce(used, _blunderRoast(move, before, after, moverColor, fromSq, toSq, movedPiece, capturedPiece, summary));
   }
 
   if (move.classification === "mistake") {
-    return _emitResult(used, _mistakeRoast(move, before, after, moverColor));
+    // Mistakes always get roasted too
+    return _emitResultForce(used, _mistakeRoast(move, before, after, moverColor));
   }
 
   if (move.classification === "inaccuracy") {
@@ -399,6 +401,14 @@ function _templateKey(text: string): string {
 function _emitResult(used: Set<string>, result: { text: string; annotations: MoveAnnotation }): CommentResult | null {
   const key = _templateKey(result.text);
   if (used.has(key)) return null; // skip duplicate template
+  used.add(key);
+  return result;
+}
+
+/** Like _emitResult but never returns null — for blunders/mistakes that MUST be roasted */
+function _emitResultForce(used: Set<string>, result: { text: string; annotations: MoveAnnotation }): CommentResult {
+  const key = _templateKey(result.text);
+  // Still track usage, but always return the result
   used.add(key);
   return result;
 }
@@ -882,30 +892,59 @@ export function getPhaseContext(moveNumber: number, totalMoves: number): string 
   ]);
 }
 
-/** Middlegame transition commentary — injected once around 25-30% of game */
-export function getMiddlegameComment(): string {
-  return pick([
-    "⚔️ We're entering the middlegame now. This is where the REAL chess begins. And by chess I mean blunders 💀🔥",
-    "⚔️ Opening's over. Middlegame time. The book knowledge runs out and the vibes-based chess takes over 🫠📚",
-    "⚔️ Alright, we're in the middlegame. From here it's all tactics, calculation, and panic-clicking. Mostly panic-clicking 🖱️💀",
-    "⚔️ The pieces are developed (mostly). The kings are (hopefully) safe. Now the real battle begins. Google \"middlegame strategy.\" Holy hell 🗿⛪",
-    "⚔️ Middlegame. Where plans are supposed to be made. At this elo? Plans = 'move a piece and see what happens' 🤷🔥",
-    "⚔️ Theory has ended. We're in the wilderness now. Garry Chess can't save them. Nothing can 👑💀",
-    "⚔️ The middlegame complex is taking shape. Tension on the board. Will they find the right plan? Spoiler: lol 🗿😭",
-  ]);
-}
+/**
+ * Closing game summary roast — provides an overall assessment of both players.
+ * Uses blunder/mistake/inaccuracy counts and result to generate a meme-style wrap-up.
+ */
+export function getClosingRoast(
+  blunders: number,
+  mistakes: number,
+  inaccuracies: number,
+  totalMoves: number,
+  result: string,
+): string {
+  const lines: string[] = [];
 
-/** Endgame transition commentary — injected once around 65-70% of game */
-export function getEndgameComment(): string {
-  return pick([
-    "🏁 We've reached the endgame. The board is emptying out. Time for technique. Or the complete absence of it 🫠",
-    "🏁 Endgame time. The moment where a good player converts and a bad player finds new and creative ways to draw. Or lose. Or stalemate 💀👑",
-    "🏁 Most of the pieces are off the board. This is the endgame. Where games are won and lost. Mostly lost at this elo 🗿📉",
-    "🏁 The endgame. King activity, pawn structure, zugzwang — words that exist. Whether these players know them? I literally do not care to speculate 🫠🗿",
-    "🏁 We're in the endgame now. As Thanos once said. Except instead of snapping, someone's about to blunder a pawn and cry 💀🧤",
-    "🏁 Endgame. Where the pawns become IMPORTANT. Google \"how to promote a pawn.\" Holy hell, they're gonna need it ⛪♟️",
-    "🏁 Board's clearing out. The endgame approaches. Will they know how to convert? At this elo? *snort* 🗿💀",
-  ]);
+  // Result-based
+  if (result === "1-0" || result === "0-1") {
+    lines.push(
+      `🏁 And that's the game! ${result}. One player won, but let's be real — both sides lost dignity today 💀🗿`,
+      `🏁 Game over. ${result}. The winner can celebrate, but I've seen their moves. It's a hollow victory 🫠👑`,
+      `🏁 ${result}. The losing side will blame lag. The winning side will pretend they meant to play like that. Both are lying 🤡`,
+    );
+  } else {
+    lines.push(
+      `🏁 And it's a draw! Honestly, nobody deserved to win this game. Justice was served 🤝🗿`,
+      `🏁 Draw. Neither player could deliver the finishing blow. Like two boxers who keep missing 🥊💀`,
+      `🏁 It ended in a draw. Stalemate of skill. Or the mutual absence of it 🫠🤝`,
+    );
+  }
+
+  // Quality-based additions
+  if (blunders >= 5) {
+    lines.push(
+      `📊 Overall? ${blunders} blunders in ${totalMoves} moves. Both players treated their pieces like they were disposable. RECYCLING ♻️💀`,
+      `📊 ${blunders} blunders total. This was less of a chess game and more of a demolition derby. Both players brought hammers instead of brains 🔨🗿`,
+      `📊 Overall assessment: ${blunders} blunders. Each player was the other's best teammate. Impressive teamwork against themselves 🤝💀`,
+    );
+  } else if (blunders >= 3) {
+    lines.push(
+      `📊 ${blunders} blunders and ${mistakes} mistakes across the whole game. Not the worst I've seen, but definitely not something to tell your chess coach about 📉🫠`,
+      `📊 ${blunders} blunders, ${mistakes} mistakes. The game had moments of brilliance surrounded by vast oceans of questionable decisions 🌊💀`,
+    );
+  } else if (blunders <= 1 && mistakes <= 2) {
+    lines.push(
+      `📊 Only ${blunders} blunder and ${mistakes} mistakes? Okay I'll admit it — this was actually a halfway decent game. For this elo. Don't let it go to your head 🫡📈`,
+      `📊 Surprisingly clean game. ${blunders} blunders, ${mistakes} mistakes. Either they've been studying or they got really lucky. I'm going with lucky 🍀🗿`,
+    );
+  } else {
+    lines.push(
+      `📊 ${blunders} blunders, ${mistakes} mistakes, ${inaccuracies} inaccuracies. A very normal game. The kind that makes you wonder if chess was a mistake (pun intended) 🗿`,
+      `📊 Final stats: ${blunders} blunders, ${mistakes} mistakes. Both players showed flashes of competence between the chaos. Like finding a diamond in a dumpster 💎🗑️`,
+    );
+  }
+
+  return pick(lines);
 }
 
 /* ================================================================== */
