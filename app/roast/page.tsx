@@ -758,7 +758,7 @@ export default function RoastPage() {
                     </span>
                   )}
                 </div>
-                {currentMove && (
+                {currentMove && pageState === "revealed" && (
                   <span className={`text-xs font-bold ${classColor(currentMove.classification)}`}>
                     {classIcon(currentMove.classification)} {currentMove.classification}
                   </span>
@@ -934,7 +934,7 @@ export default function RoastPage() {
                           }}
                           className={`inline-block cursor-pointer rounded px-1 py-0.5 transition-colors ${
                             isCurrent ? "bg-orange-500/20 text-orange-300" : "text-slate-500 hover:text-slate-300"
-                          } ${m.classification === "blunder" ? "text-red-400" : m.classification === "mistake" ? "text-orange-400" : ""}`}
+                          } ${pageState === "revealed" ? (m.classification === "blunder" ? "text-red-400" : m.classification === "mistake" ? "text-orange-400" : "") : ""}`}
                         >
                           {m.color === "w" ? `${m.moveNumber}. ` : ""}{m.san}{" "}
                         </span>

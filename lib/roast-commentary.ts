@@ -460,13 +460,13 @@ function _blunderRoast(
 ): string {
   const elo = summary.avgElo;
 
-  // 1. Early blunder
+  // 1. Early disaster
   if (move.moveNumber <= 8) {
     return pick([
-      `🚨 Blunder on move ${move.moveNumber}?! The game JUST STARTED. ${move.san} and the position is already lost. Speedrun any% 💀`,
-      `😭 Move ${move.moveNumber}. ${move.san}. Already a blunder. Some people study openings, this person studied the "how to lose fast" guide 📉`,
+      `🚨 Move ${move.moveNumber} and the position is already COOKED. ${move.san}?? Speedrun any% 💀`,
+      `😭 Move ${move.moveNumber}. ${move.san}. The game JUST STARTED and someone's already in shambles 📉`,
       `💀 We're ${move.moveNumber} moves in and ${move.san} just ended this person's whole career. The opening lasted shorter than my attention span 🫠`,
-      `🗿 ${move.san} on move ${move.moveNumber}. The chess equivalent of faceplanting at the starting line. In front of everyone. On stream 😭`,
+      `🗿 ${move.san} on move ${move.moveNumber}. The chess equivalent of faceplanting at the starting line. Very cool very normal 😭`,
     ])!;
   }
 
@@ -478,10 +478,10 @@ function _blunderRoast(
     const onSq = worst.square;
     const numAtt = countAttackers(after, onSq, opp(moverColor));
     return pick([
-      `💀 ${move.san} and the ${vName} on ${onSq} is just HANGING there. Free. Like samples at Costco.${numAtt > 1 ? ` ${numAtt} pieces staring at it like 👀` : ""} 🆓`,
-      `🤡 They played ${move.san} and left a whole ${vName} on ${onSq} for free. ${PIECE_VALUES[worst.type]} points of material DONATED to charity 🎁`,
+      `💀 ${move.san} and the ${vName} on ${onSq} is just SITTING there. Free. Like samples at Costco.${numAtt > 1 ? ` ${numAtt} pieces staring at it like 👀` : ""} 🆓`,
+      `🤡 They played ${move.san} and left a whole ${vName} on ${onSq} up for grabs. Material DONATED to charity 🎁`,
       `☠️ The ${vName} on ${onSq}: "Am I a joke to you?" After ${move.san}? Apparently yes. RIP bozo 🪦`,
-      `😭 ${move.san} hangs the ${vName} on ${onSq}. No defence, no compensation, just vibes and hanging pieces fr fr 🗿`,
+      `😭 ${move.san} — the ${vName} on ${onSq} has no friends. No defence, no compensation, just vibes fr fr 🗿`,
       `🆓 After ${move.san}, the ${vName} on ${onSq} is undefended. The opponent doesn't even need to think. It's literally free real estate 🏠`,
       `💀 ${move.san} and the ${vName} on ${onSq} is doing its best piñata impression. One hit and candy falls out 🎪🪅`,
     ])!;
@@ -527,9 +527,9 @@ function _blunderRoast(
   if (move.sacrificedMaterial || (capturedPiece && move.cpLoss > 150)) {
     const sacWhat = movedPiece ? pn(movedPiece.type) : "piece";
     return pick([
-      `🤡 They sacrificed the ${sacWhat} with ${move.san}! Bold! Brave! ...and terrible. Engine says: ${move.cpLoss > 300 ? "completely lost 💀" : "just bad 📉"}`,
-      `⚔️ SACRIFICE! *checks engine* Oh. ${move.san} is just losing material. This isn't Tal, this is tragedy 🎭😭`,
-      `📖 "I'll sac the ${sacWhat} and get attacking chances" — narrator: there were no attacking chances. Just a ${move.cpLoss}cp hole 🕳️💀`,
+      `🤡 They sacrificed the ${sacWhat} with ${move.san}! Bold! Brave! ...and terrible 💀`,
+      `⚔️ SACRIFICE! Except the position doesn't justify it at ALL. ${move.san} is just losing material. This isn't Tal, this is tragedy 🎭😭`,
+      `📖 "I'll sac the ${sacWhat} and get attacking chances" — narrator: there were no attacking chances 🕳️💀`,
       `🗿 ${move.san} gives up the ${sacWhat} for absolutely nothing. Kasparov could've made this work. This is not Kasparov 🤡`,
     ])!;
   }
@@ -541,7 +541,7 @@ function _blunderRoast(
     return pick([
       `👑💀 ${move.san} and the king is in DANGER. ${issue}. More exposed than your browser history 🫣`,
       `🏃 After ${move.san}: ${issue}. This king needs witness protection not another pawn move 😭`,
-      `🚨 ${move.san} leaves the king wide open — ${issue}. At ${elo} elo you can't keep getting away with this 🗿`,
+      `🚨 ${move.san} leaves the king wide open — ${issue}. Can't keep getting away with this 🗿`,
     ])!;
   }
 
@@ -568,13 +568,13 @@ function _blunderRoast(
 
   // 9. Generic
   return pick([
-    `💀 ${move.san}. Oh no. Oh NO. That's a ${move.cpLoss}cp loss. Position went from playable to "queue next game" 🎮🫠`,
-    `😭 ${move.san} — and just like that, the advantage evaporates. ${move.cpLoss} centipawns down the drain. Cope 🚰`,
-    `☠️ Ladies and gentlemen… ${move.san}. A ${move.cpLoss}cp blunder. This move belongs in a museum. The Museum of Bad Decisions 🏛️💀`,
-    `🗿 ${move.san} was so bad the chess pieces filed a complaint. ${move.cpLoss}cp of damage. At ${elo} elo, this is self-sabotage fr 😭`,
-    `😱 I physically recoiled. ${move.san}? THAT was the plan? Eval swung by ${move.cpLoss}cp. Rough doesn't even cover it 💀`,
-    `🫠 ${move.san}. The kind of move that makes you Alt+F4 and go touch grass. ${move.cpLoss}cp blunder. Gg go next 🌱`,
-    `🚨 Somewhere, a chess coach just felt a disturbance in the force. ${move.san}. ${move.cpLoss}cp. In ${new Date().getFullYear()}. In this economy 💀🗿`,
+    `💀 ${move.san}. Oh no. Oh NO. The eval bar just had a seizure. Position went from playable to "queue next game" 🎮🫠`,
+    `😭 ${move.san} — and just like that, the advantage evaporates. Poof. Gone. Reduced to atoms 🚰`,
+    `☠️ Ladies and gentlemen… ${move.san}. This move belongs in a museum. The Museum of Bad Decisions 🏛️💀`,
+    `🗿 ${move.san} was so bad the chess pieces filed a complaint. Self-sabotage fr 😭`,
+    `😱 I physically recoiled. ${move.san}? THAT was the plan? Rough doesn't even cover it 💀`,
+    `🫠 ${move.san}. The kind of move that makes you Alt+F4 and go touch grass. Gg go next 🌱`,
+    `🚨 Somewhere, a chess coach just felt a disturbance in the force. ${move.san}. In ${new Date().getFullYear()}. In this economy 💀🗿`,
   ])!;
 }
 
@@ -587,37 +587,37 @@ function _mistakeRoast(
   if (hanging.length > 0) {
     const h = hanging[0];
     return pick([
-      `😬 ${move.san} — and now the ${pn(h.type)} on ${h.square} is a little en prise. Not a blunder but definitely a "hmm" 🤨`,
-      `⚠️ After ${move.san}, the ${pn(h.type)} on ${h.square} isn't fully protected. The eval bar did a subtle but ominous jump 📉`,
+      `😬 ${move.san} — and now the ${pn(h.type)} on ${h.square} is a little en prise. That's a "hmm" from me 🤨`,
+      `⚠️ After ${move.san}, the ${pn(h.type)} on ${h.square} isn't looking too safe. I'm just saying 📉`,
     ])!;
   }
 
   const newPins = detectPins(after, moverColor);
   if (newPins.length > 0) {
     const p = newPins[0];
-    return `📌 ${move.san} and the ${pn(p.pinned.type)} on ${p.pinned.square} is pinned. Not a blunder, but pinned pieces = sad pieces 😔🔒`;
+    return `📌 ${move.san} and the ${pn(p.pinned.type)} on ${p.pinned.square} is pinned now. Pinned pieces = sad pieces 😔🔒`;
   }
 
   const ksBefore = kingSafety(before, moverColor).score;
   const ksAfter = kingSafety(after, moverColor);
   if (ksAfter.score < ksBefore - 15 && ksAfter.issues.length > 0) {
-    return `⚠️ ${move.san} weakens the king — ${ksAfter.issues[0]}. Not catastrophic, but the eval bar did a little jump. Never a good sign 😬📉`;
+    return `⚠️ ${move.san} weakens the king — ${ksAfter.issues[0]}. Kinda sus. The king is not gonna be happy about that one 😬🫣`;
   }
 
   if (move.bestMoveSan) {
     return pick([
-      `😬 ${move.san} is a mistake. Engine wanted ${move.bestMoveSan} — ${move.cpLoss}cp diff. Position went from "we're fine" to "we are NOT fine" 📉`,
-      `🫤 That's a mistake. ${move.san} instead of ${move.bestMoveSan}. The advantage just did a backflip off a cliff 🏔️💀`,
-      `😤 ${move.san} loses ~${move.cpLoss}cp. ${move.bestMoveSan} was right there. "Was that really the best I could do?" No. No it wasn't 🗿`,
-      `📉 Engine says ${move.bestMoveSan}. They played ${move.san}. ${move.cpLoss}cp mistake. This is the moment where everything goes sideways 🫠`,
-      `🤦 ${move.san} — a clear mistake. ${move.bestMoveSan} was ${move.cpLoss}cp better. That's like studying for the wrong exam fr 📚❌`,
+      `😬 ${move.san} when ${move.bestMoveSan} was right there. The eval bar is NOT happy about this 📉`,
+      `🫤 ${move.san} instead of ${move.bestMoveSan}. The advantage just did a backflip off a cliff 🏔️💀`,
+      `😤 ${move.san} — ${move.bestMoveSan} was right there staring them in the face. "Was that really the best I could do?" No. No it wasn't 🗿`,
+      `📉 ${move.bestMoveSan} was calling. They didn't answer. ${move.san} instead. This is the moment where everything goes sideways 🫠`,
+      `🤦 ${move.san} over ${move.bestMoveSan}. That's like studying for the wrong exam fr 📚❌`,
     ])!;
   }
 
   return pick([
-    `😬 ${move.san} — not a blunder, but definitely a mistake. Eval shifted by ${move.cpLoss}cp. Someone should be nervous rn 😤`,
-    `📉 That's a mistake. ${move.san} and the position tilts. ${move.cpLoss}cp of advantage: gone. Poof 💨`,
-    `🫤 ${move.san}. A mistake that the opponent absolutely should punish. Key word: should 🤞`,
+    `😬 ${move.san} — that's not it chief. The position just got a lot worse. Someone should be nervous rn 😤`,
+    `📉 ${move.san} and the position tilts. Advantage? Gone. Poof 💨`,
+    `🫤 ${move.san}. The opponent should absolutely punish this. Key word: should 🤞`,
   ])!;
 }
 
@@ -632,21 +632,21 @@ function _inaccuracyRoast(
   const lines: (() => string)[] = [
     () => {
       if (dev.stuck.length >= 2 && move.moveNumber > 8)
-        return `🤷 ${move.san} — an inaccuracy. And with ${dev.stuck.length} pieces still on the back rank at move ${move.moveNumber}?? Maybe develop before you attack bro 😤📺`;
-      return `🤷 ${move.san} — not the worst, not the best. Participation trophy energy 🏆 ${move.cpLoss}cp inaccuracy`;
+        return `🤷 ${move.san} — with ${dev.stuck.length} pieces still on the back rank at move ${move.moveNumber}?? Maybe develop before you attack bro 😤📺`;
+      return `🤷 ${move.san} — not the worst, not the best. Participation trophy energy 🏆`;
     },
     () => {
       if (pawns.isolated.length > 0)
-        return `😑 ${move.san} — slight inaccuracy. The pawn on ${pawns.isolated[0]} is now isolated. Not fatal, but annoying. Like a paper cut 🩹`;
-      return `🫤 ${move.san} is suboptimal — engine prefers something else by ${move.cpLoss}cp. But honestly? Vibes and prayers 🙏`;
+        return `😑 ${move.san} — the pawn on ${pawns.isolated[0]} is now isolated. Not fatal, but annoying. Like a paper cut 🩹`;
+      return `🫤 ${move.san} is a bit suboptimal. But honestly? Vibes and prayers 🙏`;
     },
     () => {
       if (move.bestMoveSan)
-        return `🚶 ${move.san} instead of ${move.bestMoveSan}. Only ${move.cpLoss}cp. An inaccuracy — the jaywalking of chess crimes 👮‍♂️`;
-      return `🤷 ${move.san} — an inaccuracy. A participation trophy moment. You tried bestie 💅`;
+        return `🚶 ${move.san} instead of ${move.bestMoveSan}. Not a crime, more like jaywalking 👮‍♂️`;
+      return `🤷 ${move.san} — a participation trophy moment. You tried bestie 💅`;
     },
-    () => `😐 ${move.san} loses a small edge — ${move.cpLoss}cp. Could be better, but they could also have hung the queen. So, progress? 📈`,
-    () => `🫤 Engine prefers something else over ${move.san}, but at this level? Nobody's gonna punish this. Probably. Hopefully 🤞`,
+    () => `😐 ${move.san} gives up a small edge. Could be better, but they could also have hung the queen. So, progress? 📈`,
+    () => `🫤 There was something better than ${move.san}, but at this level? Nobody's gonna punish this. Probably. Hopefully 🤞`,
     () => `😑 ${move.san}. The C+ of chess moves. Not failing, but definitely not thriving 📝`,
   ];
   return pick(lines)();
@@ -657,9 +657,9 @@ function _fallbackLine(move: AnalyzedMove): string | null {
   if (cls === "best" || cls === "great" || cls === "good") {
     return Math.random() < 0.3 ? `✅ ${move.san} — solid move. Nothing to see here 🫡` : null;
   }
-  if (cls === "blunder") return `💀 ${move.san}. That's a blunder. A bad one. ${move.cpLoss}cp gone 😭`;
-  if (cls === "mistake") return `😬 ${move.san} is a mistake. ${move.cpLoss}cp lost 📉`;
-  if (cls === "inaccuracy") return Math.random() < 0.4 ? `🤷 ${move.san} — slight inaccuracy` : null;
+  if (cls === "blunder") return `💀 ${move.san}. That one hurt. The eval bar is in pain 😭`;
+  if (cls === "mistake") return `😬 ${move.san} — that's rough buddy. Position just got worse 📉`;
+  if (cls === "inaccuracy") return Math.random() < 0.4 ? `🤷 ${move.san} — there was something better` : null;
   return null;
 }
 
