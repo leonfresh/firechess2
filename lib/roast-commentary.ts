@@ -401,6 +401,15 @@ function _generatePositionAware(
     return _emitResult(used, _missedMateRoast(move));
   }
 
+  // Pointless / bad checks — intercept before standard handlers
+  if (move.isCheck && (move.classification === "mistake" || move.classification === "inaccuracy" || move.classification === "blunder")) {
+    if (Math.random() < 0.55) {
+      const checkResult = _badCheckRoast(move, ctx, used);
+      if (move.classification === "blunder") return _emitResultForce(used, checkResult);
+      return _emitResult(used, checkResult);
+    }
+  }
+
   if (move.classification === "blunder") {
     // Blunders ALWAYS get roasted — never skip due to dedup
     return _emitResultForce(used, _blunderRoast(move, before, after, moverColor, fromSq, toSq, movedPiece, capturedPiece, summary, used, ctx));
@@ -1008,6 +1017,55 @@ function _inaccuracyRoast(
   // Evaluate all thunks, then pick an unused one
   const evaluated = lines.map(fn => fn());
   return { text: pickUnused(evaluated, used), annotations: ann };
+}
+
+/* ================================================================== */
+/*  Bad-Check Roasts — pointless / wrong checks get the meme treatment */
+/* ================================================================== */
+
+function _badCheckRoast(
+  move: AnalyzedMove,
+  ctx: GameContext,
+  used: Set<string>,
+): { text: string; annotations: MoveAnnotation } {
+  const fromSq = move.uci.slice(0, 2);
+  const toSq = move.uci.slice(2, 4);
+  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(168, 162, 158, 0.7)"]], markers: [] };
+  const isBlunder = move.classification === "blunder";
+
+  const ctxLine = ctx.threwAdvantage
+    ? " They were WINNING btw."
+    : ctx.recentBlunder
+    ? ` And they ${ctx.recentBlunder}. Pattern recognition: zero.`
+    : ctx.playerBlunders >= 2
+    ? ` Check number who-cares in a series of bad decisions.`
+    : "";
+
+  const lines: string[] = [
+    // Panzer of the Lake
+    `🐸 ${move.san}. O Panzer of the Lake, what is your wisdom? "That check was wrong."${ctxLine} The lake has spoken 🗿🌊`,
+    `🐸 ${move.san}+ — O Panzer of the Lake... "giving a check doesn't make it a good move, patzer."${ctxLine} Wisdom from the depths 🌊💀`,
+    `🐸 ${move.san}. The Panzer of the Lake has reviewed this check and found it lacking. "Patzer sees a check, patzer gives a check."${ctxLine} 🗿🏖️`,
+    // Hikaru tickle
+    `😏 ${move.san}+ — just a little tickle. King's not even scared. Hikaru would call this a "nothing burger check" 🍔${ctxLine} 🗿`,
+    `🤭 ${move.san}. Just tickling the king rn. A little tickle check, the king goes "hehe" and walks away.${ctxLine} Not even a threat 💅`,
+    `😏 ${move.san}+ — ooh a check! The king is SO scared. Just kidding, it's a tickle. The king literally didn't flinch 🤷${ctxLine}`,
+    // Patzer check energy
+    `🤡 ${move.san}. Patzer sees a check, patzer plays a check. It's the law.${ctxLine} Unfortunately the law is wrong 💀`,
+    `🗿 ${move.san}+. "Checks, captures, threats" — except this check threatens NOTHING.${ctxLine} Levy is rolling in his chair rn 📉`,
+    `😬 ${move.san}+ and the check bounces right off.${ctxLine} The king said "lol" and moved one square 👑💨`,
+    // Blunder-strength checks
+    ...(isBlunder ? [
+      `💀 ${move.san}+. Gave a check that LOST MATERIAL. The check that checked THEM right out of the game.${ctxLine} Extraordinary self-destruction 🤡🔥`,
+      `🤡 ${move.san}+. A check. A blunder. A blunder-check. The worst kind of check possible — the kind that makes YOU worse.${ctxLine} Holy hell 💀`,
+      `⚰️ ${move.san}+. "At least I gave check" they said, as their position crumbled to dust.${ctxLine} Google "pyrrhic check" ⛪🗿`,
+    ] : [
+      `😤 ${move.san}+ — checking for the sake of checking. "But it's a check!" Yeah, and it's also bad 🗿${ctxLine}`,
+      `🫠 ${move.san}. The check that accomplished nothing. A move so mid even the engine sighed.${ctxLine} AnarchyChess would approve of the chaos tho 💀`,
+    ]),
+  ];
+
+  return { text: pickUnused(lines, used), annotations: ann };
 }
 
 /* ================================================================== */
