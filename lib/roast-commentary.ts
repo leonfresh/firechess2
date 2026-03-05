@@ -428,6 +428,9 @@ function _brilliantRoast(
     },
     () => ({ text: `⚡ ${move.san} goes HARD. The position just shifted and the opponent didn't even see it coming. Built different ngl 💅`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => ({ text: `👑 Best move in the entire game and it's not even close. ${pn(move.pieceType, true)} to ${toSq}. *chef's kiss* 🤌✨`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `✨ ${move.san}?! Garry Chess himself could never. This move just invented Chess 2 🎮👑`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `🔥 ${move.san} — and the crowd goes HOLY HELL. Someone googled "how to play chess" and actually learned 💀🫡`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `🧠 ${move.san}. Unquestionably one of the moves in chess history. Magnificent. Glorious. I literally do not care about my bias, this is art ✨🤌`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
   ];
   return pick(lines)();
 }
@@ -455,6 +458,12 @@ function _goodMoveRoast(
     },
     () => `👍 ${move.san} — no notes. Well played. Now do it again (you won't) 🫠`,
     () => `💪 ${move.san} is textbook. Based and positionally-pilled 📚`,
+    () => {
+      if (move.isCastle) return `🏰 The king retreats to safety. Even Garry Chess approves this one. Bongcloud DENIED 👑`;
+      return `✅ ${move.san}. This person is unquestionably one of the players in chess history 🫡`;
+    },
+    () => `🫡 ${move.san} — okay who is this and what did they do with the person who blundered last move? Identity theft is not a joke 🕵️`,
+    () => `✅ ${move.san}. The tu art of chess. Beautiful. No notes. Garry Chess would shed a single tear 🥲👑`,
   ];
   return { text: pick(lines)(), annotations: ann };
 }
@@ -472,6 +481,9 @@ function _missedMateRoast(move: AnalyzedMove): { text: string; annotations: Move
     () => `☠️ Missing mate in ${n} should be a criminal offence. ${move.san} instead of winning the game outright. suffering.jpg 😭`,
     () => `🤡 Mate in ${n} available but ${move.san} felt right apparently. It was not. It was so very not. 💀`,
     () => `⚰️ Mate blindness activated. Forced checkmate in ${n} on the board. They played ${move.san}. I need to lie down 🫠`,
+    () => `💀 Mate in ${n}! MATE! IN! ${n}! But nah, ${move.san} was the move. Are you kidding ??? What the **** are you talking about man 🗿`,
+    () => `😱 Google "mate in ${n}." Holy hell. They had it and played ${move.san} instead. New response just dropped: I'm in pain 😭`,
+    () => `🪦 ${move.san} instead of LITERAL CHECKMATE. This person was doing PIPI in their pampers when others were learning patterns 💀🤡`,
   ];
   return { text: pick(lines)(), annotations: ann };
 }
@@ -495,6 +507,8 @@ function _blunderRoast(
       `😭 Move ${move.moveNumber}. ${move.san}. The game JUST STARTED and someone's already in shambles 📉`,
       `💀 We're ${move.moveNumber} moves in and ${move.san} just ended this person's whole career. The opening lasted shorter than my attention span 🫠`,
       `🗿 ${move.san} on move ${move.moveNumber}. The chess equivalent of faceplanting at the starting line. Very cool very normal 😭`,
+      `🤡 Move ${move.moveNumber} and already a blunder. This is what happens when you skip the Bongcloud prep 👑💀`,
+      `😭 Move ${move.moveNumber}. ${move.san}. Even Gavin from 3rd grade would be shaking his head rn. Incredible scenes 🗿`,
     ])!, annotations: { arrows: [moveArrow], markers: [{ square: _toSq, emoji: "💀" }] } };
   }
 
@@ -519,6 +533,8 @@ function _blunderRoast(
       `😭 ${move.san} — the ${vName} on ${onSq} has no friends. No defence, no compensation, just vibes fr fr 🗿`,
       `🆓 After ${move.san}, the ${vName} on ${onSq} is undefended. The opponent doesn't even need to think. It's literally free real estate 🏠`,
       `💀 ${move.san} and the ${vName} on ${onSq} is doing its best piñata impression. One hit and candy falls out 🎪🪅`,
+      `🗿 ${move.san} — the ${vName} on ${onSq} is just standing there.${worst.type === "q" ? ` Oh no my queen! Eric Rosen is typing… 💀` : " Like a pinboard without the pin. Free material is free 🎁"}`,
+      `🤡 ${move.san} and the ${vName} on ${onSq} is unprotected. Google "hanging pieces." Holy hell 🗿💀`,
     ])!, annotations: { arrows: hangArrows, markers: [{ square: onSq, emoji: "🆓" }] } };
   }
 
@@ -561,6 +577,8 @@ function _blunderRoast(
           `⚡ After ${move.san}, opponent plays ${res.san} and FORKS the ${targets}. Did they think the ${pn(lp.type)} was decorative?? 🗿`,
           `😱 ${move.san} allows a devastating ${pn(lp.type)} fork on ${m.to}: ${targets}. This is the "I didn't look at the whole board" special 🫠`,
           `🍴 They forked UP. ${move.san} → ${res.san} forks the ${targets}. It was at this moment they knew 😭`,
+          `🍴 ${move.san} → ${res.san}. ${pn(lp.type, true)} fork on the ${targets}! Google "knight fork." Holy hell 🗿`,
+          `💀 After ${move.san}, the opponent has ${res.san} forking the ${targets}. True will never die! But this position will 🪦`,
         ])!, annotations: { arrows: forkArrows, markers: forkMarkers } };
       }
     }
@@ -581,6 +599,7 @@ function _blunderRoast(
       `📌 ${move.san} and now the ${pn(pin.pinned.type)} on ${pin.pinned.square} is PINNED to the ${pn(pin.target.type)} by the ${pn(pin.pinner.type)} on ${pin.pinner.square}. Stuck. Can't move. Just standing there like 🗿`,
       `🔒 After ${move.san}, the ${pn(pin.pinner.type)} on ${pin.pinner.square} pins the ${pn(pin.pinned.type)} on ${pin.pinned.square} to the ${pn(pin.target.type)}. That piece is a decoration now fr 🖼️`,
       `💀 ${move.san} walks into an absolute pin: ${pn(pin.pinner.type)} ${pin.pinner.square} → ${pn(pin.pinned.type)} ${pin.pinned.square} → ${pn(pin.target.type)} ${pin.target.square}. Self-handcuffing speedrun 🔒🏃`,
+      `📌 ${move.san} and the ${pn(pin.pinned.type)} on ${pin.pinned.square} is PINNED. It has absorbed the adult soul of the ${pn(pin.target.type)} behind it. It cannot move. It is one with the pain 🗿💀`,
     ])!, annotations: { arrows: pinArrows, markers: pinMarkers } };
   }
 
@@ -592,6 +611,8 @@ function _blunderRoast(
       `⚔️ SACRIFICE! Except the position doesn't justify it at ALL. ${move.san} is just losing material. This isn't Tal, this is tragedy 🎭😭`,
       `📖 "I'll sac the ${sacWhat} and get attacking chances" — narrator: there were no attacking chances 🕳️💀`,
       `🗿 ${move.san} gives up the ${sacWhat} for absolutely nothing. Kasparov could've made this work. This is not Kasparov 🤡`,
+      `🤡 ${move.san} sacs the ${sacWhat}. "Trust me I saw the lines." The lines: 📊📉📉📉. You are not Tal. You are not even Petrosian doing PIPI 💀`,
+      `⚔️ The ${sacWhat} has been sacrificed. Was it the Immortal Game? No. Was it even good? Also no. It's giving "I panic-clicked" energy 🗿`,
     ])!, annotations: { arrows: [moveArrow], markers: [{ square: _toSq, emoji: "🤡" }] } };
   }
 
@@ -638,6 +659,11 @@ function _blunderRoast(
     `😱 I physically recoiled. ${move.san}? THAT was the plan? Rough doesn't even cover it 💀`,
     `🫠 ${move.san}. The kind of move that makes you Alt+F4 and go touch grass. Gg go next 🌱`,
     `🚨 Somewhere, a chess coach just felt a disturbance in the force. ${move.san}. In ${new Date().getFullYear()}. In this economy 💀🗿`,
+    `💀 ${move.san}. Google "how to play chess." Holy hell. Actually don't—this person googled it and still ended up here 🤡`,
+    `😭 ${move.san} — you know it's bad when even Petrosian would say "Are you kidding ??? What the **** are you talking about man" 🗿`,
+    `☠️ ${move.san}. That was the most AnarchyChess move I've ever seen and I literally do not care to understand the thought process behind it 💀`,
+    `🤡 ${move.san}. This move was doing PIPI in its pampers when good moves were being played. Absolute scenes 🗿😭`,
+    `🚨 ${move.san}. Liers will kicked off... and so will this player's rating. True will never die, but this position already did 💀`,
   ])!, annotations: { arrows: [moveArrow], markers: [{ square: _toSq, emoji: "💀" }] } };
 }
 
@@ -691,6 +717,8 @@ function _mistakeRoast(
       `😤 ${move.san} — ${move.bestMoveSan} was right there staring them in the face. "Was that really the best I could do?" No. No it wasn't 🗿`,
       `📉 ${move.bestMoveSan} was calling. They didn't answer. ${move.san} instead. This is the moment where everything goes sideways 🫠`,
       `🤦 ${move.san} over ${move.bestMoveSan}. That's like studying for the wrong exam fr 📚❌`,
+      `🗿 ${move.san} instead of ${move.bestMoveSan}. I know what ${move.bestMoveSan} is dumbass you just blundered your advantage 💀`,
+      `😬 ${move.san} played, ${move.bestMoveSan} wept. Are you kidding ??? What the **** are you talking about man 🗿🤡`,
     ])!, annotations: { arrows: [moveArrow], markers: [] } };
   }
 
@@ -698,6 +726,8 @@ function _mistakeRoast(
     `😬 ${move.san} — that's not it chief. The position just got a lot worse. Someone should be nervous rn 😤`,
     `📉 ${move.san} and the position tilts. Advantage? Gone. Poof 💨`,
     `🫤 ${move.san}. The opponent should absolutely punish this. Key word: should 🤞`,
+    `🤡 ${move.san}. Are you kidding? You were doing PIPI in your pampers when good moves were right there on the board 🗿`,
+    `😬 ${move.san}. New mistake just dropped. This game is the gift that keeps on giving 🎁💀`,
   ])!, annotations: { arrows: [moveArrow], markers: [] } };
 }
 
@@ -731,6 +761,9 @@ function _inaccuracyRoast(
     () => `😐 ${move.san} gives up a small edge. Could be better, but they could also have hung the queen. So, progress? 📈`,
     () => `🫤 There was something better than ${move.san}, but at this level? Nobody's gonna punish this. Probably. Hopefully 🤞`,
     () => `😑 ${move.san}. The C+ of chess moves. Not failing, but definitely not thriving 📝`,
+    () => `🤷 ${move.san}. Unquestionably one of the moves in this game. I literally do not care to analyze this further 🗿`,
+    () => `😑 ${move.san} — not great, not terrible. 3.6 roentgen. The Chernobyl of chess accuracy ☢️🫠`,
+    () => `🫤 ${move.san}. Google "how to improve at chess." Actually, scratch that, they'd probably find AnarchyChess first 💀`,
   ];
   return { text: pick(lines)(), annotations: ann };
 }
@@ -759,6 +792,8 @@ export function getEloFlavorLine(elo: number): string {
     "Sub-1000 energy is a different kind of beautiful. Like watching a building demolition in slow-mo 🏚️💥",
     "At this elo, both players are fighting gravity as much as each other 🫠",
     "Below 1000. The pieces are on the board. That's about all we can confirm 🗿",
+    "Sub-1000. Even Gavin from 3rd grade is sweating watching this. And Gavin is the strongest player 💀👑",
+    "Sub-1000 elo. This is the \"I learned chess from AnarchyChess\" bracket and it shows 🤡🔥",
   ]);
   if (elo < 1300) return pick([
     "1000-1300 bracket. Where dreams of grandeur meet the reality of hung pieces 💀🎁",
@@ -766,6 +801,8 @@ export function getEloFlavorLine(elo: number): string {
     "Some opening knowledge, lots of one-move blunders. Classic 1000-1300 energy 🔥💀",
     "The 'I can see two moves ahead but not three' zone. My favourite 🤌",
     "They know the rules. They just don't know what to do with them yet 🤷🗿",
+    "1000-1300. The 'I hang pieces but I know what en passant is' bracket. Holy hell 💀⛪",
+    "1000-1300. They were doing PIPI in their pampers... actually no, they're still doing it. Live. On this board 😭",
   ]);
   if (elo < 1600) return pick([
     "1300-1600: the 'I'm actually decent… sometimes' bracket 😤💅",
@@ -773,6 +810,8 @@ export function getEloFlavorLine(elo: number): string {
     "The intermediate plateau. Where improvement goes to die and blunders go to thrive 📉🪦",
     "They have ideas. The ideas are just not always good. But they HAVE them 🧠🤡",
     "This is the elo where you start losing to people who actually study. Humbling 📚😭",
+    "1300-1600. The 'I have an opening repertoire (it's the London)' bracket. Garry Chess wept 👑🤮",
+    "Intermediate elo. They know what a Knook is but not how to avoid one 🐴🗿",
   ]);
   if (elo < 2000) return pick([
     "1600-2000: now we're cooking 🍳🔥 These players have seen some things",
@@ -780,6 +819,8 @@ export function getEloFlavorLine(elo: number): string {
     "Advanced club players. They don't hang pieces often. Key word: OFTEN 💀",
     "At this level, the mistakes are subtle. The blunders? Spectacular and rare 🎆✨",
     "Good enough to be dangerous, not quite good enough to be consistent 😤💅",
+    "1600-2000. The 'I beat Gavin from 3rd grade and it felt meaningful' bracket 🏆🗿",
+    "1600-2000. Decent enough that when they blunder, even Petrosian would say 'Proffesionals knew how to lose' 🤡",
   ]);
   return pick([
     "Above 2000. These players actually know what they're doing. Usually 👑🧠",
@@ -787,6 +828,8 @@ export function getEloFlavorLine(elo: number): string {
     "When a 2000+ player blunders, they blunder with ✨STYLE✨ 💀",
     "At this elo, you need an engine to find the mistakes. Let's see 🤖🔍",
     "High-level chess. Where the difference between best and second-best actually matters 📊👑",
+    "2000+. These players are unquestionably some of the players in chess history 👑🗿",
+    "Expert chess. If they blunder up here, Hans's earpiece couldn't save them 💀🔊",
   ]);
 }
 
@@ -820,6 +863,8 @@ export const REVEAL_TOO_HIGH = [
   "You sweet summer child. This is LOW elo chess 🫠",
   "Your faith in humanity's chess ability is touching, but misplaced 💀🤝",
   "If only they were that good. If only 😭",
+  "You overestimated harder than these players overestimate their tactical vision 💀🤡",
+  "Nah, these players were doing PIPI in their pampers at that rating. Lower. Much lower 🗿",
 ];
 
 export const REVEAL_TOO_LOW = [
@@ -830,6 +875,8 @@ export const REVEAL_TOO_LOW = [
   "You judged too harshly. They blundered, but they also played SOME good moves 🤷",
   "They're higher rated than that, believe it or not 😳",
   "Even with the blunders, they're rated higher than your guess. Ratio'd 📉🤡",
+  "Too low! These players actually know what en passant is. They even take it sometimes 💀⛪",
+  "You underestimated them harder than they underestimated that knight fork. Respect their grind 💪🗿",
 ];
 
 export const REVEAL_CORRECT = [
@@ -841,6 +888,8 @@ export const REVEAL_CORRECT = [
   "Crushed it. You clearly spend too much time on the internet. Same tbh 🤝💀",
   "Ding ding ding! We have a winner! 🏆🔔",
   "You know your elo brackets. Either impressive or concerning 🧠🤨",
+  "Holy hell you got it right! Google 'I'm a genius.' 💀👑",
+  "Correct! You are unquestionably one of the guessers in Guess the Elo history 🎯🗿",
 ];
 
 export const GAME_INTRO = [
@@ -856,6 +905,11 @@ export const GAME_INTRO = [
   "Welcome to 'Is This Chess or Just Two People Pushing Wood?' 🪵🗿",
   "NEW GAME NEW ME. Jk, same pain different board 😭🔥",
   "Chat I'm scared. Let's see what horrors await 💀🍿",
+  "New Guess the Elo just dropped. Holy hell 👑🔥",
+  "Chess 2 update just dropped. Let's see what Garry Chess cooked this time 🍳💀",
+  "Another game. Will it make me question the existence of chess education? Probably 📚🤡",
+  "Let's see what happens when two people who googled 'en passant' try to play a full game 💀⛪",
+  "Fresh game loaded. I'm already bracing for the PIPI energy 🗿🔥",
 ];
 
 export const GAME_SUMMARY_LINES = [
@@ -869,6 +923,10 @@ export const GAME_SUMMARY_LINES = [
   "📝 In summary: chaos, pain, and the occasional good move by accident 🎲💀",
   "🫤 I've seen worse. Not MUCH worse, but worse 🗿",
   "🎪 What a game. What an absolute CIRCUS of a game 🤡🔥",
+  "📊 This game was unquestionably one of the chess games of all time. The tu art of chess, truly 🗿👑",
+  "☠️ {blunders} blunders. Garry Chess is rolling in his chess factory. Holy hell 💀",
+  "📉 Google \"how did this game end like this.\" Actually don't. Save yourself. I literally do not care to relive this 🫠",
+  "🪧 {blunders} blunders. Liers will kicked off the rating ladder. True will never die, but this game's quality already did 💀",
 ];
 
 /* ================================================================== */
