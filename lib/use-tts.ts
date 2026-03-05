@@ -55,7 +55,7 @@ export interface TTSControls {
   enabled: boolean;
   /** Toggle TTS on/off */
   toggle: () => void;
-  /** Speak the given text immediately (cancels any current speech) */
+  /** Speak the given text immediately (cancels any current speech). Returns a promise that resolves when speech ends. */
   speak: (text: string) => void;
   /** Stop any current speech */
   stop: () => void;
@@ -65,6 +65,8 @@ export interface TTSControls {
   voiceName: string;
   /** Whether the browser supports TTS */
   supported: boolean;
+  /** Register a callback for when the current utterance finishes */
+  onDone: React.MutableRefObject<(() => void) | null>;
 }
 
 export function useTTS(): TTSControls {
@@ -73,6 +75,7 @@ export function useTTS(): TTSControls {
   const [voiceName, setVoiceName] = useState("");
   const [supported, setSupported] = useState(false);
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const onDone = useRef<(() => void) | null>(null);
 
   // Detect support and pick best voice
   useEffect(() => {
@@ -118,8 +121,8 @@ export function useTTS(): TTSControls {
     utterance.volume = 1.0;
 
     utterance.onstart = () => setSpeaking(true);
-    utterance.onend = () => setSpeaking(false);
-    utterance.onerror = () => setSpeaking(false);
+    utterance.onend = () => { setSpeaking(false); onDone.current?.(); };
+    utterance.onerror = () => { setSpeaking(false); onDone.current?.(); };
 
     speechSynthesis.speak(utterance);
   }, [enabled, supported]);
@@ -141,5 +144,5 @@ export function useTTS(): TTSControls {
     });
   }, []);
 
-  return { enabled, toggle, speak, stop, speaking, voiceName, supported };
+  return { enabled, toggle, speak, stop, speaking, voiceName, supported, onDone };
 }

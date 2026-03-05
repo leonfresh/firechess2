@@ -27,6 +27,9 @@ import {
   classifyMove,
   generateMoveComment,
   getEloFlavorLine,
+  getOpeningRoast,
+  getMiddlegameComment,
+  getEndgameComment,
   ELO_BRACKETS,
   getEloBracketIdx,
   GAME_INTRO,
@@ -182,6 +185,7 @@ export default function RoastPage() {
 
   /* ── TTS ── */
   const tts = useTTS();
+  const [ttsDoneSignal, setTtsDoneSignal] = useState(0);
 
   // Speak new comments
   useEffect(() => {
@@ -469,6 +473,33 @@ export default function RoastPage() {
         setAnalysisProgress(Math.round(((i + 1) / maxMoves) * 100));
       }
 
+      // Inject opening roast onto an early move (book territory, moves 3-8)
+      const openingRoast = getOpeningRoast(data.opening);
+      const openingTarget = analyzed.findIndex((m, i) => i >= 2 && i <= 7 && !m.comment);
+      if (openingTarget >= 0) {
+        analyzed[openingTarget].comment = openingRoast;
+      } else if (analyzed.length > 2 && !analyzed[2].comment) {
+        analyzed[2].comment = openingRoast;
+      }
+
+      // Inject middlegame transition comment (~22-35% of game)
+      const middleTarget = analyzed.findIndex((m, i) => {
+        const pct = i / analyzed.length;
+        return pct >= 0.22 && pct <= 0.35 && !m.comment;
+      });
+      if (middleTarget >= 0) {
+        analyzed[middleTarget].comment = getMiddlegameComment();
+      }
+
+      // Inject endgame transition comment (~65-75% of game)
+      const endTarget = analyzed.findIndex((m, i) => {
+        const pct = i / analyzed.length;
+        return pct >= 0.65 && pct <= 0.75 && !m.comment;
+      });
+      if (endTarget >= 0) {
+        analyzed[endTarget].comment = getEndgameComment();
+      }
+
       setMoves(analyzed);
       setBlunders(totalBlunders);
       setMistakes(totalMistakes);
@@ -491,10 +522,19 @@ export default function RoastPage() {
     fetchGame();
   }, [fetchGame]);
 
-  /* ── Autoplay (waits for typewriter to finish) ── */
+  /* ── Autoplay (waits for typewriter + TTS to finish) ── */
   useEffect(() => {
     if (pageState !== "watching" || !autoplay) return;
     if (!typingDone) return; // wait for speech bubble animation
+    // If TTS is active and still speaking, wait for it to finish
+    if (tts.enabled && tts.speaking) {
+      // Register a one-shot callback to re-trigger this effect
+      tts.onDone.current = () => {
+        tts.onDone.current = null;
+        setTtsDoneSignal(n => n + 1);
+      };
+      return () => { tts.onDone.current = null; };
+    }
 
     if (currentIdx >= moves.length - 1) {
       setTimeout(() => {
@@ -504,10 +544,9 @@ export default function RoastPage() {
       return;
     }
 
-    // After a comment finishes typing, give reading time scaled to length;
-    // otherwise use the base speed for non-comment moves
+    // Reading time scales with comment length — longer messages get more time
     const delay = activeComment
-      ? Math.max(2000, Math.min(5000, activeComment.length * 22))
+      ? Math.max(2500, Math.min(6000, activeComment.length * 28))
       : speed;
 
     const timer = setTimeout(() => {
@@ -538,7 +577,8 @@ export default function RoastPage() {
     }, delay);
 
     return () => clearTimeout(timer);
-  }, [pageState, autoplay, currentIdx, moves, speed, typingDone, activeComment]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageState, autoplay, currentIdx, moves, speed, typingDone, activeComment, tts.enabled, tts.speaking, ttsDoneSignal]);
 
   /* ── Scroll comment box to bottom ── */
   useEffect(() => {
@@ -841,6 +881,20 @@ export default function RoastPage() {
                           </span>
                         );
                       })}
+                    </div>
+                  )}
+                  {/* Board overlay speech bubble */}
+                  {activeComment && boardSize > 0 && (
+                    <div
+                      className="absolute bottom-0 left-0 right-0 pointer-events-none flex items-end justify-center p-2 animate-fadeIn"
+                      style={{ width: boardSize }}
+                    >
+                      <div className="w-full rounded-lg bg-black/70 backdrop-blur-sm border border-white/10 px-3 py-2 shadow-lg">
+                        <p className="text-xs sm:text-sm text-white/90 leading-relaxed text-center line-clamp-3">
+                          {typewriterText}
+                          {!typingDone && <span className="animate-blink text-orange-400">|</span>}
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>

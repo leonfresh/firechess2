@@ -882,6 +882,168 @@ export function getPhaseContext(moveNumber: number, totalMoves: number): string 
   ]);
 }
 
+/** Middlegame transition commentary — injected once around 25-30% of game */
+export function getMiddlegameComment(): string {
+  return pick([
+    "⚔️ We're entering the middlegame now. This is where the REAL chess begins. And by chess I mean blunders 💀🔥",
+    "⚔️ Opening's over. Middlegame time. The book knowledge runs out and the vibes-based chess takes over 🫠📚",
+    "⚔️ Alright, we're in the middlegame. From here it's all tactics, calculation, and panic-clicking. Mostly panic-clicking 🖱️💀",
+    "⚔️ The pieces are developed (mostly). The kings are (hopefully) safe. Now the real battle begins. Google \"middlegame strategy.\" Holy hell 🗿⛪",
+    "⚔️ Middlegame. Where plans are supposed to be made. At this elo? Plans = 'move a piece and see what happens' 🤷🔥",
+    "⚔️ Theory has ended. We're in the wilderness now. Garry Chess can't save them. Nothing can 👑💀",
+    "⚔️ The middlegame complex is taking shape. Tension on the board. Will they find the right plan? Spoiler: lol 🗿😭",
+  ]);
+}
+
+/** Endgame transition commentary — injected once around 65-70% of game */
+export function getEndgameComment(): string {
+  return pick([
+    "🏁 We've reached the endgame. The board is emptying out. Time for technique. Or the complete absence of it 🫠",
+    "🏁 Endgame time. The moment where a good player converts and a bad player finds new and creative ways to draw. Or lose. Or stalemate 💀👑",
+    "🏁 Most of the pieces are off the board. This is the endgame. Where games are won and lost. Mostly lost at this elo 🗿📉",
+    "🏁 The endgame. King activity, pawn structure, zugzwang — words that exist. Whether these players know them? I literally do not care to speculate 🫠🗿",
+    "🏁 We're in the endgame now. As Thanos once said. Except instead of snapping, someone's about to blunder a pawn and cry 💀🧤",
+    "🏁 Endgame. Where the pawns become IMPORTANT. Google \"how to promote a pawn.\" Holy hell, they're gonna need it ⛪♟️",
+    "🏁 Board's clearing out. The endgame approaches. Will they know how to convert? At this elo? *snort* 🗿💀",
+  ]);
+}
+
+/* ================================================================== */
+/*  Opening roast                                                       */
+/* ================================================================== */
+
+export function getOpeningRoast(opening: string): string {
+  const o = opening.toLowerCase();
+
+  // Specific opening roasts
+  if (o.includes("london")) return pick([
+    `📖 ${opening}. The London System. The mayonnaise of chess openings. Bland, safe, and your opponent is already bored 🥱🗿`,
+    `📖 ${opening}. Ah yes, the London. Bold choice if "bold" means "I learned one opening and I'm riding it to the grave" 💀🇬🇧`,
+    `📖 ${opening}. The London. Google "most boring chess opening." Holy hell, they actually play it 🗿⛪`,
+    `📖 ${opening}. London System. The chess equivalent of ordering plain toast at a Michelin star restaurant. Garry Chess is WEEPING 👑😭`,
+  ]);
+
+  if (o.includes("bongcloud")) return pick([
+    `📖 ${opening}. THE BONGCLOUD. They actually did it. Ke2 energy. Garry Chess approves and so do I 👑☁️🔥`,
+    `📖 ${opening}. Bongcloud Attack. The meme opening that's also theory now because chess is broken 💀👑`,
+    `📖 ${opening}. Google "Bongcloud Attack." Holy hell. The king LEADS THE CHARGE. Chad energy ☁️🗿`,
+  ]);
+
+  if (o.includes("italian")) return pick([
+    `📖 ${opening}. The Italian Game. Classic, boring, and every 1200 plays it. Pizza never hurt anyone tho 🍕✅`,
+    `📖 ${opening}. Italian Game — the training wheels of chess openings. Reliable until someone plays the Fried Liver and your world ends 🔪🍳`,
+    `📖 ${opening}. Mamma mia, it's the Italian! Bc4 into hoping the opponent hangs something. A timeless strategy 🤌🇮🇹`,
+  ]);
+
+  if (o.includes("sicilian")) return pick([
+    `📖 ${opening}. The Sicilian. They chose violence today. Spicy, chaotic, and someone's definitely getting mated 🌶️💀`,
+    `📖 ${opening}. The Sicilian Defense — where both sides pretend they know 35 moves of theory. Spoiler: they don't 🗿📚`,
+    `📖 ${opening}. Sicilian. One of the openings of all time. Unquestionably sharp, unquestionably gonna end in tears 😭⚔️`,
+  ]);
+
+  if (o.includes("french")) return pick([
+    `📖 ${opening}. The French Defense. e6 into a closed position into suffering. I feel the pain already 🇫🇷💀`,
+    `📖 ${opening}. The French. AKA "I'm going to build a wall of pawns and pray." Bold strategy Cotton 🧱🤞`,
+    `📖 ${opening}. French Defense. Google "how to be passive-aggressive in chess." Holy hell 🗿🇫🇷`,
+  ]);
+
+  if (o.includes("caro") || o.includes("caro-kann")) return pick([
+    `📖 ${opening}. The Caro-Kann. Solid, slightly boring, and your opponent just fell asleep. But hey, it works 😴✅`,
+    `📖 ${opening}. Caro-Kann — the "I watched a Levy video and picked the most solid option" special 📺🗿`,
+    `📖 ${opening}. Caro-Kann Defense. The chess equivalent of wearing a seatbelt AND a helmet. Safe, boring, effective 🪖📚`,
+  ]);
+
+  if (o.includes("king's gambit") || o.includes("kings gambit")) return pick([
+    `📖 ${opening}. The King's Gambit! SACRIFICING A PAWN ON MOVE 2. This person woke up and chose absolute violence 🔥⚔️`,
+    `📖 ${opening}. King's Gambit. Bobby Fischer said it was "busted." These players said "I literally do not care" 🗿👑`,
+    `📖 ${opening}. Google "King's Gambit." Holy hell — they're giving away material before the game even starts 💀⛪`,
+  ]);
+
+  if (o.includes("queen's gambit") || o.includes("queens gambit")) return pick([
+    `📖 ${opening}. The Queen's Gambit. They watched the Netflix show. Very relatable. Very 1. d4 energy 📺♟️`,
+    `📖 ${opening}. Queen's Gambit. d4 d5 c4 — the "I'm a serious player" opening choice. We'll see about that 🤨📚`,
+    `📖 ${opening}. Queen's Gambit. Anya Taylor-Joy could never play this badly but let's see what happens 💅💀`,
+  ]);
+
+  if (o.includes("scandinavian")) return pick([
+    `📖 ${opening}. The Scandinavian. 1. e4 d5 — "I'm going to develop my queen on move 2 because I fear nothing." Chaos energy 👑💀`,
+    `📖 ${opening}. Scandinavian Defense. Google "early queen development." Then Google "why you shouldn't." Holy hell 🗿`,
+    `📖 ${opening}. The Scandinavian. Bold, reckless, and weirdly effective at low elo. Like a drunk driver who somehow arrives safely 🚗💀`,
+  ]);
+
+  if (o.includes("pirc") || o.includes("modern")) return pick([
+    `📖 ${opening}. ${opening}. Hypermodern vibes. "Let them have the center then complain about it later." A mood 🗿🧠`,
+    `📖 ${opening}. They're playing hypermodern chess. Which at this elo means "I didn't know what else to play" 💀📖`,
+  ]);
+
+  if (o.includes("english")) return pick([
+    `📖 ${opening}. The English Opening. 1. c4 — the "I'm too cool for e4 or d4" move. We'll see if it pays off 🇬🇧🤨`,
+    `📖 ${opening}. English. 1. c4. Explosive? No. But it's going to be a slow, painful grind 🐌⚔️`,
+  ]);
+
+  if (o.includes("dutch")) return pick([
+    `📖 ${opening}. The Dutch Defense. 1...f5 — immediately weakening the kingside. This person does NOT care about safety 🇳🇱🔥`,
+    `📖 ${opening}. Dutch Defense. The "I'm either a genius or an idiot" opening. No in between. We'll find out soon 🤡👑`,
+  ]);
+
+  if (o.includes("grünfeld") || o.includes("grunfeld")) return pick([
+    `📖 ${opening}. The Grünfeld. Kasparov's weapon. At this elo tho? It's more like a plastic sword 🗡️💀`,
+    `📖 ${opening}. Grünfeld Defense. Super sharp, super theoretical. How much of this do they actually know? My guess: zero 📚🗿`,
+  ]);
+
+  if (o.includes("king's indian") || o.includes("kings indian")) return pick([
+    `📖 ${opening}. The King's Indian. Fianchetto and pray. Castle and launch a kingside attack. Or hang everything trying 🔥🙏`,
+    `📖 ${opening}. King's Indian Defense. Kasparov energy. Bobby Fischer energy. At this elo? Gavin from 3rd grade energy 🗿👑`,
+  ]);
+
+  if (o.includes("ruy lopez") || o.includes("spanish")) return pick([
+    `📖 ${opening}. The Ruy Lopez. The most classical of classical openings. 500 years of theory and they'll deviate by move 5 📖🗿`,
+    `📖 ${opening}. Spanish Game. Bb5. The opening that says "I read a chess book once." Cultured. For now 🎩📚`,
+  ]);
+
+  if (o.includes("nimzo") || o.includes("nimzo-indian")) return pick([
+    `📖 ${opening}. The Nimzo-Indian. Pinning the knight before developing. Sophisticated. Almost too sophisticated for what's about to happen 📌😭`,
+    `📖 ${opening}. Nimzo-Indian. A top-tier opening choice. It's all downhill from here tho 💅📉`,
+  ]);
+
+  if (o.includes("slav")) return pick([
+    `📖 ${opening}. The Slav Defense. c6 — solid, reliable, and about as exciting as watching paint dry. But hey, they haven't blundered yet 🎨😴`,
+    `📖 ${opening}. Slav Defense. The "I will defend everything and you will suffer" approach. Love to see it 🗿💪`,
+  ]);
+
+  if (o.includes("philidor")) return pick([
+    `📖 ${opening}. The Philidor Defense. Named after a guy from the 1700s. This opening is literally older than the United States 🇺🇸💀`,
+    `📖 ${opening}. Philidor. d6. Passive but sturdy. The defensive lineman of chess openings 🏈🗿`,
+  ]);
+
+  if (o.includes("scotch")) return pick([
+    `📖 ${opening}. The Scotch Game. d4 on move 3 — "I don't have time for your Italian nonsense, we're fighting NOW" 🏴󠁧󠁢󠁳󠁣󠁴󠁿⚔️`,
+    `📖 ${opening}. The Scotch. Direct. Aggressive. The chess equivalent of rolling up your sleeves on move 3 💪🔥`,
+  ]);
+
+  if (o.includes("vienna")) return pick([
+    `📖 ${opening}. The Vienna Game. Nc3 before Nf3 — "I want to play the King's Gambit but with plausible deniability" 🤫🔥`,
+    `📖 ${opening}. Vienna Game. The hipster King's Gambit. Same chaos, more obscure moves. I respect it 🎩💀`,
+  ]);
+
+  if (o.includes("alekhine")) return pick([
+    `📖 ${opening}. Alekhine's Defense. 1...Nf6 — "Come on then, push those pawns. I DARE you." Bold strategy 🗿⚔️`,
+    `📖 ${opening}. Alekhine Defense. Inviting White to overextend. Either genius or copium. We'll see 🧠💀`,
+  ]);
+
+  // Generic opening roasts
+  return pick([
+    `📖 ${opening}. Interesting choice. Let's see if they actually know the theory or if they're freestyling by move 3 🎤🗿`,
+    `📖 ${opening}. An opening has been played. Whether they know WHY these moves are played is... debatable 🤨📚`,
+    `📖 ${opening}. Google "${opening}." Holy hell — this should be interesting 💀⛪`,
+    `📖 ${opening}. Garry Chess himself would have an opinion about this opening choice. I literally do not care, let's just see what happens 🗿👑`,
+    `📖 ${opening}. The opening is set. Now we wait for the first blunder. It's not a question of IF, it's WHEN 💀📉`,
+    `📖 ${opening}. Theory has been played. How long until someone goes off-book? Taking bets now 🎲🔥`,
+    `📖 ${opening}. They chose their weapon. Let the suffering begin 🗡️🫠`,
+    `📖 ${opening}. Alright, opening identified. Liers will kicked off from here. True will never die. But one of these players' positions will 🗿💀`,
+  ]);
+}
+
 export const REVEAL_TOO_HIGH = [
   "You thought they were better than that? Generous 🤡",
   "Overestimated. WAY overestimated. These are MORTALS 💀",
