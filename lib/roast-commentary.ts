@@ -377,11 +377,16 @@ function _generatePositionAware(
   const landedPiece = after.get(toSq);
   const capturedPiece = before.get(toSq);
 
+  // Detect obvious recaptures — skip commentary for routine take-backs
+  const isRecapture = _isObviousRecapture(move, summary);
+
   if (move.classification === "brilliant" || (move.classification === "best" && move.sacrificedMaterial)) {
     return _emitResult(used, _brilliantRoast(move, after, toSq, landedPiece));
   }
 
   if (move.classification === "great" || move.classification === "best") {
+    // Skip obvious recaptures — they're not interesting
+    if (isRecapture) return null;
     if (Math.random() > 0.35) return null;
     // Sometimes comment on playstyle instead of the move itself
     if (Math.random() < 0.35) {
@@ -406,17 +411,37 @@ function _generatePositionAware(
   }
 
   if (move.classification === "inaccuracy") {
+    // Skip obvious recaptures classified as inaccuracy (e.g. recaptured with wrong piece)
+    if (isRecapture && move.cpLoss < 80) return null;
     if (Math.random() > 0.4) return null;
     return _emitResult(used, _inaccuracyRoast(move, after, moverColor, used));
   }
 
   // Style commentary for "good" / neutral moves that didn't trigger anything else
-  if (Math.random() < 0.2) {
+  if (!isRecapture && Math.random() < 0.2) {
     const style = _styleRoast(move, summary, used);
     if (style) return _emitResult(used, style);
   }
 
   return null;
+}
+
+/** Detect if this move is an obvious recapture on the same square the opponent
+ *  just captured on — these are routine and shouldn't get commentary. */
+function _isObviousRecapture(move: AnalyzedMove, summary: GameSummary): boolean {
+  if (!move.isCapture) return false;
+  const prevMoves = summary.moves;
+  if (prevMoves.length === 0) return false;
+  const lastMove = prevMoves[prevMoves.length - 1];
+  // Opponent's last move was a capture, and we're taking back on the same square
+  if (!lastMove.isCapture) return false;
+  const lastToSq = lastMove.uci.slice(2, 4);
+  const thisToSq = move.uci.slice(2, 4);
+  if (lastToSq !== thisToSq) return false;
+  // It's a recapture on the same square — but still interesting if it's
+  // a bad recapture (high cpLoss) or involves a significantly different piece value
+  if (move.cpLoss > 80) return false; // bad recapture is worth commenting on
+  return true;
 }
 
 function _templateKey(text: string): string {
