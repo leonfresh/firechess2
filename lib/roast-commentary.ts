@@ -475,7 +475,7 @@ function _goodMoveRoast(
     () => `🫡 ${move.san} — okay who is this and what did they do with the person who blundered last move? Identity theft is not a joke 🕵️`,
     () => `✅ ${move.san}. The tu art of chess. Beautiful. No notes. Garry Chess would shed a single tear 🥲👑`,
     () => `🗿 ${move.san} — a good move? In THIS economy?? Google "good chess move." Holy hell 💀🫡`,
-    () => `👑 ${move.san}. Are you kidding ??? This was actually GOOD. What the **** happened since last move 🤡✨`,
+    () => `👑 ${move.san}. Are you kidding ??? This was actually GOOD. What the beep happened since last move 🤡✨`,
     () => `✅ ${move.san} — true will never die. And neither will this position after that move 🫡💪`,
     () => {
       if (move.isCapture) return `🍖 ${move.san} takes and it's CORRECT. Free material collected. The en passant of good decisions 🫡⛪`;
@@ -498,7 +498,7 @@ function _missedMateRoast(move: AnalyzedMove): { text: string; annotations: Move
     () => `☠️ Missing mate in ${n} should be a criminal offence. ${move.san} instead of winning the game outright. suffering.jpg 😭`,
     () => `🤡 Mate in ${n} available but ${move.san} felt right apparently. It was not. It was so very not. 💀`,
     () => `⚰️ Mate blindness activated. Forced checkmate in ${n} on the board. They played ${move.san}. I need to lie down 🫠`,
-    () => `💀 Mate in ${n}! MATE! IN! ${n}! But nah, ${move.san} was the move. Are you kidding ??? What the **** are you talking about man 🗿`,
+    () => `💀 Mate in ${n}! MATE! IN! ${n}! But nah, ${move.san} was the move. Are you kidding ??? What the beep are you talking about man 🗿`,
     () => `😱 Google "mate in ${n}." Holy hell. They had it and played ${move.san} instead. New response just dropped: I'm in pain 😭`,
     () => `🪦 ${move.san} instead of LITERAL CHECKMATE. This person was doing PIPI in their pampers when others were learning patterns 💀🤡`,
   ];
@@ -677,7 +677,7 @@ function _blunderRoast(
     `🫠 ${move.san}. The kind of move that makes you Alt+F4 and go touch grass. Gg go next 🌱`,
     `🚨 Somewhere, a chess coach just felt a disturbance in the force. ${move.san}. In ${new Date().getFullYear()}. In this economy 💀🗿`,
     `💀 ${move.san}. Google "how to play chess." Holy hell. Actually don't—this person googled it and still ended up here 🤡`,
-    `😭 ${move.san} — you know it's bad when even Petrosian would say "Are you kidding ??? What the **** are you talking about man" 🗿`,
+    `😭 ${move.san} — you know it's bad when even Petrosian would say "Are you kidding ??? What the beep are you talking about man" 🗿`,
     `☠️ ${move.san}. That was the most AnarchyChess move I've ever seen and I literally do not care to understand the thought process behind it 💀`,
     `🤡 ${move.san}. This move was doing PIPI in its pampers when good moves were being played. Absolute scenes 🗿😭`,
     `🚨 ${move.san}. Liers will kicked off... and so will this player's rating. True will never die, but this position already did 💀`,
@@ -738,7 +738,7 @@ function _mistakeRoast(
       `📉 ${move.bestMoveSan} was calling. They didn't answer. ${move.san} instead. This is the moment where everything goes sideways 🫠`,
       `🤦 ${move.san} over ${move.bestMoveSan}. That's like studying for the wrong exam fr 📚❌`,
       `🗿 ${move.san} instead of ${move.bestMoveSan}. I know what ${move.bestMoveSan} is dumbass you just blundered your advantage 💀`,
-      `😬 ${move.san} played, ${move.bestMoveSan} wept. Are you kidding ??? What the **** are you talking about man 🗿🤡`,
+      `😬 ${move.san} played, ${move.bestMoveSan} wept. Are you kidding ??? What the beep are you talking about man 🗿🤡`,
       `💀 ${move.san} over ${move.bestMoveSan}. Google "en passant." They didn't take the best move and the brick is incoming ⛪🧱`,
       `🫠 ${move.san}. Garry Chess invented ${move.bestMoveSan} for a reason. This ain't it 👑📉`,
     ])!, annotations: { arrows: [moveArrow], markers: [] } };
