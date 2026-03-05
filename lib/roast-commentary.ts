@@ -67,6 +67,19 @@ export interface GameSummary {
   biggestSwing: AnalyzedMove | null;
 }
 
+/** Board annotation returned alongside commentary text */
+export interface MoveAnnotation {
+  arrows: [string, string, string][]; // [from, to, rgba color]
+  markers: { square: string; emoji: string }[];
+}
+
+export interface CommentResult {
+  text: string;
+  annotations: MoveAnnotation;
+}
+
+const NO_ANNOTATIONS: MoveAnnotation = { arrows: [], markers: [] };
+
 /* ================================================================== */
 /*  Classification                                                      */
 /* ================================================================== */
@@ -318,11 +331,12 @@ export function generateMoveComment(
   move: AnalyzedMove,
   usedLines: Set<string>,
   summary: GameSummary,
-): string | null {
+): CommentResult | null {
   try {
     return _generatePositionAware(move, usedLines, summary);
   } catch {
-    return _fallbackLine(move);
+    const fb = _fallbackLine(move);
+    return fb ?? null;
   }
 }
 
@@ -330,10 +344,13 @@ function _generatePositionAware(
   move: AnalyzedMove,
   used: Set<string>,
   summary: GameSummary,
-): string | null {
+): CommentResult | null {
   const before = new Chess(move.fen);
   let after: Chess;
-  try { after = new Chess(move.fenAfter); } catch { return _fallbackLine(move); }
+  try { after = new Chess(move.fenAfter); } catch {
+    const fb = _fallbackLine(move);
+    return fb ?? null;
+  }
 
   const moverColor = move.color as Color;
   const fromSq = move.uci.slice(0, 2) as Square;
@@ -343,37 +360,37 @@ function _generatePositionAware(
   const capturedPiece = before.get(toSq);
 
   if (move.classification === "brilliant" || (move.classification === "best" && move.sacrificedMaterial)) {
-    return _emit(used, _brilliantRoast(move, after, toSq, landedPiece));
+    return _emitResult(used, _brilliantRoast(move, after, toSq, landedPiece));
   }
 
   if (move.classification === "great" || move.classification === "best") {
     if (Math.random() > 0.35) return null;
-    return _emit(used, _goodMoveRoast(move, after, toSq));
+    return _emitResult(used, _goodMoveRoast(move, after, toSq));
   }
 
   if (move.missedMateInN && move.missedMateInN <= 5) {
-    return _emit(used, _missedMateRoast(move));
+    return _emitResult(used, _missedMateRoast(move));
   }
 
   if (move.classification === "blunder") {
-    return _emit(used, _blunderRoast(move, before, after, moverColor, fromSq, toSq, movedPiece, capturedPiece, summary));
+    return _emitResult(used, _blunderRoast(move, before, after, moverColor, fromSq, toSq, movedPiece, capturedPiece, summary));
   }
 
   if (move.classification === "mistake") {
-    return _emit(used, _mistakeRoast(move, before, after, moverColor));
+    return _emitResult(used, _mistakeRoast(move, before, after, moverColor));
   }
 
   if (move.classification === "inaccuracy") {
     if (Math.random() > 0.4) return null;
-    return _emit(used, _inaccuracyRoast(move, after, moverColor));
+    return _emitResult(used, _inaccuracyRoast(move, after, moverColor));
   }
 
   return null;
 }
 
-function _emit(used: Set<string>, line: string): string {
-  used.add(line);
-  return line;
+function _emitResult(used: Set<string>, result: { text: string; annotations: MoveAnnotation }): CommentResult {
+  used.add(result.text);
+  return result;
 }
 
 /* ================================================================== */
@@ -385,27 +402,32 @@ function _brilliantRoast(
   after: Chess,
   toSq: Square,
   landed: ReturnType<Chess["get"]>,
-): string {
-  const lines: (() => string)[] = [
-    () => `🤯 ${move.san}?! EXCUSE ME?? That's actually BRILLIANT. ${pn(move.pieceType, true)} to ${toSq}? Engine approved, I'm shooketh 🔥`,
-    () => `✨ Nah hold up. ${move.san} is literally Stockfish's #1 choice. WHERE was this energy 3 moves ago when they were throwing?? 😤`,
-    () => `🧠 ${pn(move.pieceType, true)} to ${toSq}. That's the best move on the board. I'm actually speechless. This person has NO business playing this well 💀`,
+): { text: string; annotations: MoveAnnotation } {
+  const fromSq = move.uci.slice(0, 2);
+  const baseArrows: [string, string, string][] = [[fromSq, toSq, "rgba(34, 197, 94, 0.85)"]];
+  const baseMarkers: { square: string; emoji: string }[] = [{ square: toSq, emoji: "✨" }];
+
+  const lines: (() => { text: string; annotations: MoveAnnotation })[] = [
+    () => ({ text: `🤯 ${move.san}?! EXCUSE ME?? That's actually BRILLIANT. ${pn(move.pieceType, true)} to ${toSq}? Engine approved, I'm shooketh 🔥`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `✨ Nah hold up. ${move.san} is literally Stockfish's #1 choice. WHERE was this energy 3 moves ago when they were throwing?? 😤`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `🧠 ${pn(move.pieceType, true)} to ${toSq}. That's the best move on the board. I'm actually speechless. This person has NO business playing this well 💀`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => {
       if (move.sacrificedMaterial && landed)
-        return `⚡ A REAL sacrifice! ${pn(landed.type, true)} to ${toSq} — gives up material for a crushing attack. Tal energy fr fr 👑🔥`;
-      return `✨ ${move.san} — the only move, the hardest move, and they found it. Alekhine is smiling from heaven rn 🫡`;
+        return { text: `⚡ A REAL sacrifice! ${pn(landed.type, true)} to ${toSq} — gives up material for a crushing attack. Tal energy fr fr 👑🔥`, annotations: { arrows: baseArrows, markers: [{ square: toSq, emoji: "⚡" }] } };
+      return { text: `✨ ${move.san} — the only move, the hardest move, and they found it. Alekhine is smiling from heaven rn 🫡`, annotations: { arrows: baseArrows, markers: baseMarkers } };
     },
-    () => `🌟 Galaxy-brain ${move.san}. The kind of move that makes you re-check the elo. Still low. Mind = blown 🤯`,
+    () => ({ text: `🌟 Galaxy-brain ${move.san}. The kind of move that makes you re-check the elo. Still low. Mind = blown 🤯`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => {
       const forks = landed ? detectForks(after, toSq, { type: landed.type, color: landed.color, square: toSq }) : [];
       if (forks.length >= 2) {
         const targets = forks.map(f => `${pn(f.type)} on ${f.square}`).join(" and ");
-        return `🍴 ${move.san} FORKS the ${targets}! Actually calculated?? At this elo?? I'm calling hacks 🕵️✨`;
+        const forkArrows: [string, string, string][] = forks.map(f => [toSq, f.square, "rgba(34, 197, 94, 0.75)"] as [string, string, string]);
+        return { text: `🍴 ${move.san} FORKS the ${targets}! Actually calculated?? At this elo?? I'm calling hacks 🕵️✨`, annotations: { arrows: forkArrows, markers: [{ square: toSq, emoji: "🍴" }, ...forks.map(f => ({ square: f.square, emoji: "🎯" }))] } };
       }
-      return `🔥 ${move.san} is absolutely disgusting. In a good way. Chef's kiss 💋👨‍🍳`;
+      return { text: `🔥 ${move.san} is absolutely disgusting. In a good way. Chef's kiss 💋👨‍🍳`, annotations: { arrows: baseArrows, markers: baseMarkers } };
     },
-    () => `⚡ ${move.san} goes HARD. The position just shifted and the opponent didn't even see it coming. Built different ngl 💅`,
-    () => `👑 Best move in the entire game and it's not even close. ${pn(move.pieceType, true)} to ${toSq}. *chef's kiss* 🤌✨`,
+    () => ({ text: `⚡ ${move.san} goes HARD. The position just shifted and the opponent didn't even see it coming. Built different ngl 💅`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `👑 Best move in the entire game and it's not even close. ${pn(move.pieceType, true)} to ${toSq}. *chef's kiss* 🤌✨`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
   ];
   return pick(lines)();
 }
@@ -414,7 +436,9 @@ function _goodMoveRoast(
   move: AnalyzedMove,
   after: Chess,
   toSq: Square,
-): string {
+): { text: string; annotations: MoveAnnotation } {
+  const fromSq = move.uci.slice(0, 2);
+  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(34, 197, 94, 0.7)"]], markers: [{ square: toSq, emoji: "✅" }] };
   const lines: (() => string)[] = [
     () => `✅ ${move.san} — can't roast this one. solid af. And I'm mad about it tbh 😤`,
     () => `👑 ${pn(move.pieceType, true)} to ${toSq}. Right move, right reasons. Ngl kinda sus at this elo 🤨`,
@@ -432,11 +456,14 @@ function _goodMoveRoast(
     () => `👍 ${move.san} — no notes. Well played. Now do it again (you won't) 🫠`,
     () => `💪 ${move.san} is textbook. Based and positionally-pilled 📚`,
   ];
-  return pick(lines)();
+  return { text: pick(lines)(), annotations: ann };
 }
 
-function _missedMateRoast(move: AnalyzedMove): string {
+function _missedMateRoast(move: AnalyzedMove): { text: string; annotations: MoveAnnotation } {
   const n = move.missedMateInN!;
+  const fromSq = move.uci.slice(0, 2);
+  const toSq = move.uci.slice(2, 4);
+  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(239, 68, 68, 0.85)"]], markers: [{ square: toSq, emoji: "😱" }] };
   const lines: (() => string)[] = [
     () => `💀 They had MATE IN ${n}. M-A-T-E. IN. ${n}. And they played ${move.san}?! I'm calling the police 🚨🚨`,
     () => `🫠 Mate in ${n} was RIGHT THERE. On the board. STARING at them. They chose ${move.san} instead. actual pain 😭`,
@@ -446,7 +473,7 @@ function _missedMateRoast(move: AnalyzedMove): string {
     () => `🤡 Mate in ${n} available but ${move.san} felt right apparently. It was not. It was so very not. 💀`,
     () => `⚰️ Mate blindness activated. Forced checkmate in ${n} on the board. They played ${move.san}. I need to lie down 🫠`,
   ];
-  return pick(lines)();
+  return { text: pick(lines)(), annotations: ann };
 }
 
 function _blunderRoast(
@@ -457,17 +484,18 @@ function _blunderRoast(
   movedPiece: ReturnType<Chess["get"]>,
   capturedPiece: ReturnType<Chess["get"]>,
   summary: GameSummary,
-): string {
+): { text: string; annotations: MoveAnnotation } {
   const elo = summary.avgElo;
+  const moveArrow: [string, string, string] = [_fromSq, _toSq, "rgba(239, 68, 68, 0.85)"];
 
   // 1. Early disaster
   if (move.moveNumber <= 8) {
-    return pick([
+    return { text: pick([
       `🚨 Move ${move.moveNumber} and the position is already COOKED. ${move.san}?? Speedrun any% 💀`,
       `😭 Move ${move.moveNumber}. ${move.san}. The game JUST STARTED and someone's already in shambles 📉`,
       `💀 We're ${move.moveNumber} moves in and ${move.san} just ended this person's whole career. The opening lasted shorter than my attention span 🫠`,
       `🗿 ${move.san} on move ${move.moveNumber}. The chess equivalent of faceplanting at the starting line. Very cool very normal 😭`,
-    ])!;
+    ])!, annotations: { arrows: [moveArrow], markers: [{ square: _toSq, emoji: "💀" }] } };
   }
 
   // 2. Hanging pieces
@@ -477,17 +505,24 @@ function _blunderRoast(
     const vName = pn(worst.type);
     const onSq = worst.square;
     const numAtt = countAttackers(after, onSq, opp(moverColor));
-    return pick([
+    // Arrow from attacker direction to hanging piece
+    const hangArrows: [string, string, string][] = [moveArrow];
+    try {
+      const oppMvs = after.moves({ verbose: true });
+      const firstAttacker = oppMvs.find(m => m.to === onSq && m.captured);
+      if (firstAttacker) hangArrows.push([firstAttacker.from, onSq, "rgba(239, 68, 68, 0.7)"]);
+    } catch {}
+    return { text: pick([
       `💀 ${move.san} and the ${vName} on ${onSq} is just SITTING there. Free. Like samples at Costco.${numAtt > 1 ? ` ${numAtt} pieces staring at it like 👀` : ""} 🆓`,
       `🤡 They played ${move.san} and left a whole ${vName} on ${onSq} up for grabs. Material DONATED to charity 🎁`,
       `☠️ The ${vName} on ${onSq}: "Am I a joke to you?" After ${move.san}? Apparently yes. RIP bozo 🪦`,
       `😭 ${move.san} — the ${vName} on ${onSq} has no friends. No defence, no compensation, just vibes fr fr 🗿`,
       `🆓 After ${move.san}, the ${vName} on ${onSq} is undefended. The opponent doesn't even need to think. It's literally free real estate 🏠`,
       `💀 ${move.san} and the ${vName} on ${onSq} is doing its best piñata impression. One hit and candy falls out 🎪🪅`,
-    ])!;
+    ])!, annotations: { arrows: hangArrows, markers: [{ square: onSq, emoji: "🆓" }] } };
   }
 
-  // 3. Fork
+  // 3. Fork — validate forking piece is safe
   try {
     const oppMoves = after.moves({ verbose: true });
     for (const m of oppMoves) {
@@ -496,16 +531,37 @@ function _blunderRoast(
       if (!res) continue;
       const lp = sim.get(m.to as Square);
       if (!lp) continue;
-      const forked = detectForks(sim, m.to as Square, { type: lp.type, color: lp.color, square: m.to as Square });
+      // Check the forking piece isn't itself hanging after the fork move
+      const forkSq = m.to as Square;
+      const forkerVal = PIECE_VALUES[lp.type] ?? 0;
+      let forkerSafe = true;
+      try {
+        const simMoves = sim.moves({ verbose: true });
+        for (const recapture of simMoves) {
+          if (recapture.to === forkSq && recapture.captured) {
+            // If recapture is by a piece of lower or equal value, forker isn't safe
+            const recapturerVal = PIECE_VALUES[recapture.piece] ?? 0;
+            if (recapturerVal <= forkerVal) { forkerSafe = false; break; }
+          }
+        }
+      } catch {}
+      if (!forkerSafe) continue; // skip — the "fork" piece just gets captured
+
+      const forked = detectForks(sim, forkSq, { type: lp.type, color: lp.color, square: forkSq });
       const valuable = forked.filter(f => f.type === "k" || f.type === "q" || f.type === "r");
       if (forked.length >= 2 && valuable.length >= 1) {
         const targets = forked.map(f => `${pn(f.type)} on ${f.square}`).join(" and ");
-        return pick([
+        const forkArrows: [string, string, string][] = [
+          [m.from, forkSq, "rgba(239, 68, 68, 0.85)"],
+          ...forked.map(f => [forkSq, f.square, "rgba(239, 68, 68, 0.6)"] as [string, string, string]),
+        ];
+        const forkMarkers = [{ square: forkSq, emoji: "🍴" }, ...forked.map(f => ({ square: f.square, emoji: "🎯" }))];
+        return { text: pick([
           `🍴 ${move.san} walks straight into ${res.san} — a ${pn(lp.type)} fork hitting the ${targets}. Like stepping on a rake in Looney Tunes 💀`,
           `⚡ After ${move.san}, opponent plays ${res.san} and FORKS the ${targets}. Did they think the ${pn(lp.type)} was decorative?? 🗿`,
           `😱 ${move.san} allows a devastating ${pn(lp.type)} fork on ${m.to}: ${targets}. This is the "I didn't look at the whole board" special 🫠`,
-          `🍴💀 They forked UP. ${move.san} → ${res.san} forks the ${targets}. It was at this moment they knew 😭`,
-        ])!;
+          `🍴 They forked UP. ${move.san} → ${res.san} forks the ${targets}. It was at this moment they knew 😭`,
+        ])!, annotations: { arrows: forkArrows, markers: forkMarkers } };
       }
     }
   } catch {}
@@ -516,58 +572,65 @@ function _blunderRoast(
   const newPins = pinsAfter.filter(pa => !pinsBefore.some(pb => pb.pinned.square === pa.pinned.square && pb.pinner.square === pa.pinner.square));
   if (newPins.length > 0) {
     const pin = newPins[0];
-    return pick([
+    const pinArrows: [string, string, string][] = [
+      [pin.pinner.square, pin.pinned.square, "rgba(239, 68, 68, 0.8)"],
+      [pin.pinned.square, pin.target.square, "rgba(239, 68, 68, 0.4)"],
+    ];
+    const pinMarkers = [{ square: pin.pinned.square, emoji: "📌" }];
+    return { text: pick([
       `📌 ${move.san} and now the ${pn(pin.pinned.type)} on ${pin.pinned.square} is PINNED to the ${pn(pin.target.type)} by the ${pn(pin.pinner.type)} on ${pin.pinner.square}. Stuck. Can't move. Just standing there like 🗿`,
       `🔒 After ${move.san}, the ${pn(pin.pinner.type)} on ${pin.pinner.square} pins the ${pn(pin.pinned.type)} on ${pin.pinned.square} to the ${pn(pin.target.type)}. That piece is a decoration now fr 🖼️`,
       `💀 ${move.san} walks into an absolute pin: ${pn(pin.pinner.type)} ${pin.pinner.square} → ${pn(pin.pinned.type)} ${pin.pinned.square} → ${pn(pin.target.type)} ${pin.target.square}. Self-handcuffing speedrun 🔒🏃`,
-    ])!;
+    ])!, annotations: { arrows: pinArrows, markers: pinMarkers } };
   }
 
   // 5. Bad sacrifice
   if (move.sacrificedMaterial || (capturedPiece && move.cpLoss > 150)) {
     const sacWhat = movedPiece ? pn(movedPiece.type) : "piece";
-    return pick([
+    return { text: pick([
       `🤡 They sacrificed the ${sacWhat} with ${move.san}! Bold! Brave! ...and terrible 💀`,
       `⚔️ SACRIFICE! Except the position doesn't justify it at ALL. ${move.san} is just losing material. This isn't Tal, this is tragedy 🎭😭`,
       `📖 "I'll sac the ${sacWhat} and get attacking chances" — narrator: there were no attacking chances 🕳️💀`,
       `🗿 ${move.san} gives up the ${sacWhat} for absolutely nothing. Kasparov could've made this work. This is not Kasparov 🤡`,
-    ])!;
+    ])!, annotations: { arrows: [moveArrow], markers: [{ square: _toSq, emoji: "🤡" }] } };
   }
 
   // 6. King safety
   const ks = kingSafety(after, moverColor);
   if (ks.score < 50 && ks.issues.length > 0) {
     const issue = ks.issues[0];
-    return pick([
+    const king = findKing(after, moverColor);
+    const kingMarkers = king ? [{ square: king, emoji: "⚠️" }] : [];
+    return { text: pick([
       `👑💀 ${move.san} and the king is in DANGER. ${issue}. More exposed than your browser history 🫣`,
       `🏃 After ${move.san}: ${issue}. This king needs witness protection not another pawn move 😭`,
       `🚨 ${move.san} leaves the king wide open — ${issue}. Can't keep getting away with this 🗿`,
-    ])!;
+    ])!, annotations: { arrows: [moveArrow], markers: kingMarkers } };
   }
 
   // 7. Development
   if (move.moveNumber > 10) {
     const dev = development(after, moverColor);
     if (dev.stuck.length >= 3) {
-      return pick([
+      return { text: pick([
         `😤 ${move.san} — and there are STILL ${dev.stuck.length} pieces on the back rank: ${dev.stuck.slice(0, 2).join(", ")}. It's move ${move.moveNumber}. DEVELOP. The army is at home watching Netflix 📺💀`,
         `🛋️ After ${move.san}, the ${dev.stuck[0]} still hasn't moved. ${dev.stuck.length} pieces are just vibing on the bench at move ${move.moveNumber} 🫠`,
         `💀 ${move.san} but ${dev.stuck.length} pieces are STILL undeveloped on move ${move.moveNumber}. The position is collapsing and half the army hasn't even shown up. This is fine 🔥🐶`,
-      ])!;
+      ])!, annotations: { arrows: [moveArrow], markers: dev.stuck.slice(0, 2).map(s => ({ square: s.split(" on ")[1] ?? _toSq, emoji: "💤" })) } };
     }
   }
 
   // 8. Pawn structure
   const pawns = pawnIssues(after, moverColor);
   if (pawns.doubled.length >= 2 || pawns.isolated.length >= 3) {
-    return pick([
+    return { text: pick([
       `🚧 ${move.san} — and the pawn structure is a war crime 🏚️${pawns.doubled.length > 0 ? ` Doubled pawns on the ${pawns.doubled[0]}.` : ""}${pawns.isolated.length > 0 ? ` ${pawns.isolated.length} isolated pawns.` : ""} Rubble, not a position 💀`,
       `🤮 After ${move.san}, look at this pawn structure.${pawns.doubled.length > 0 ? ` Doubled on ${pawns.doubled[0]}.` : ""}${pawns.isolated.length > 0 ? ` ${pawns.isolated.length} isolated pawns.` : ""} Philidor is rolling in his grave 🪦`,
-    ])!;
+    ])!, annotations: { arrows: [moveArrow], markers: [] } };
   }
 
   // 9. Generic
-  return pick([
+  return { text: pick([
     `💀 ${move.san}. Oh no. Oh NO. The eval bar just had a seizure. Position went from playable to "queue next game" 🎮🫠`,
     `😭 ${move.san} — and just like that, the advantage evaporates. Poof. Gone. Reduced to atoms 🚰`,
     `☠️ Ladies and gentlemen… ${move.san}. This move belongs in a museum. The Museum of Bad Decisions 🏛️💀`,
@@ -575,59 +638,79 @@ function _blunderRoast(
     `😱 I physically recoiled. ${move.san}? THAT was the plan? Rough doesn't even cover it 💀`,
     `🫠 ${move.san}. The kind of move that makes you Alt+F4 and go touch grass. Gg go next 🌱`,
     `🚨 Somewhere, a chess coach just felt a disturbance in the force. ${move.san}. In ${new Date().getFullYear()}. In this economy 💀🗿`,
-  ])!;
+  ])!, annotations: { arrows: [moveArrow], markers: [{ square: _toSq, emoji: "💀" }] } };
 }
 
 function _mistakeRoast(
   move: AnalyzedMove,
   before: Chess, after: Chess,
   moverColor: Color,
-): string {
+): { text: string; annotations: MoveAnnotation } {
+  const fromSq = move.uci.slice(0, 2);
+  const toSq = move.uci.slice(2, 4);
+  const moveArrow: [string, string, string] = [fromSq, toSq, "rgba(239, 183, 44, 0.85)"];
+
   const hanging = detectHanging(after, moverColor);
   if (hanging.length > 0) {
     const h = hanging[0];
-    return pick([
+    const hangArrows: [string, string, string][] = [moveArrow];
+    try {
+      const oppMvs = after.moves({ verbose: true });
+      const att = oppMvs.find(m => m.to === h.square && m.captured);
+      if (att) hangArrows.push([att.from, h.square, "rgba(239, 183, 44, 0.6)"]);
+    } catch {}
+    return { text: pick([
       `😬 ${move.san} — and now the ${pn(h.type)} on ${h.square} is a little en prise. That's a "hmm" from me 🤨`,
       `⚠️ After ${move.san}, the ${pn(h.type)} on ${h.square} isn't looking too safe. I'm just saying 📉`,
-    ])!;
+    ])!, annotations: { arrows: hangArrows, markers: [{ square: h.square, emoji: "⚠️" }] } };
   }
 
   const newPins = detectPins(after, moverColor);
   if (newPins.length > 0) {
     const p = newPins[0];
-    return `📌 ${move.san} and the ${pn(p.pinned.type)} on ${p.pinned.square} is pinned now. Pinned pieces = sad pieces 😔🔒`;
+    return { text: `📌 ${move.san} and the ${pn(p.pinned.type)} on ${p.pinned.square} is pinned now. Pinned pieces = sad pieces 😔🔒`, annotations: {
+      arrows: [[p.pinner.square, p.pinned.square, "rgba(239, 183, 44, 0.8)"], [p.pinned.square, p.target.square, "rgba(239, 183, 44, 0.4)"]],
+      markers: [{ square: p.pinned.square, emoji: "📌" }],
+    } };
   }
 
   const ksBefore = kingSafety(before, moverColor).score;
   const ksAfter = kingSafety(after, moverColor);
   if (ksAfter.score < ksBefore - 15 && ksAfter.issues.length > 0) {
-    return `⚠️ ${move.san} weakens the king — ${ksAfter.issues[0]}. Kinda sus. The king is not gonna be happy about that one 😬🫣`;
+    const king = findKing(after, moverColor);
+    return { text: `⚠️ ${move.san} weakens the king — ${ksAfter.issues[0]}. Kinda sus. The king is not gonna be happy about that one 😬🫣`, annotations: {
+      arrows: [moveArrow],
+      markers: king ? [{ square: king, emoji: "⚠️" }] : [],
+    } };
   }
 
   if (move.bestMoveSan) {
-    return pick([
+    return { text: pick([
       `😬 ${move.san} when ${move.bestMoveSan} was right there. The eval bar is NOT happy about this 📉`,
       `🫤 ${move.san} instead of ${move.bestMoveSan}. The advantage just did a backflip off a cliff 🏔️💀`,
       `😤 ${move.san} — ${move.bestMoveSan} was right there staring them in the face. "Was that really the best I could do?" No. No it wasn't 🗿`,
       `📉 ${move.bestMoveSan} was calling. They didn't answer. ${move.san} instead. This is the moment where everything goes sideways 🫠`,
       `🤦 ${move.san} over ${move.bestMoveSan}. That's like studying for the wrong exam fr 📚❌`,
-    ])!;
+    ])!, annotations: { arrows: [moveArrow], markers: [] } };
   }
 
-  return pick([
+  return { text: pick([
     `😬 ${move.san} — that's not it chief. The position just got a lot worse. Someone should be nervous rn 😤`,
     `📉 ${move.san} and the position tilts. Advantage? Gone. Poof 💨`,
     `🫤 ${move.san}. The opponent should absolutely punish this. Key word: should 🤞`,
-  ])!;
+  ])!, annotations: { arrows: [moveArrow], markers: [] } };
 }
 
 function _inaccuracyRoast(
   move: AnalyzedMove,
   after: Chess,
   moverColor: Color,
-): string {
+): { text: string; annotations: MoveAnnotation } {
   const dev = development(after, moverColor);
   const pawns = pawnIssues(after, moverColor);
+  const fromSq = move.uci.slice(0, 2);
+  const toSq = move.uci.slice(2, 4);
+  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(168, 162, 158, 0.7)"]], markers: [] };
 
   const lines: (() => string)[] = [
     () => {
@@ -649,17 +732,19 @@ function _inaccuracyRoast(
     () => `🫤 There was something better than ${move.san}, but at this level? Nobody's gonna punish this. Probably. Hopefully 🤞`,
     () => `😑 ${move.san}. The C+ of chess moves. Not failing, but definitely not thriving 📝`,
   ];
-  return pick(lines)();
+  return { text: pick(lines)(), annotations: ann };
 }
 
-function _fallbackLine(move: AnalyzedMove): string | null {
+function _fallbackLine(move: AnalyzedMove): { text: string; annotations: MoveAnnotation } | null {
   const cls = move.classification;
+  const fromSq = move.uci.slice(0, 2);
+  const toSq = move.uci.slice(2, 4);
   if (cls === "best" || cls === "great" || cls === "good") {
-    return Math.random() < 0.3 ? `✅ ${move.san} — solid move. Nothing to see here 🫡` : null;
+    return Math.random() < 0.3 ? { text: `✅ ${move.san} — solid move. Nothing to see here 🫡`, annotations: NO_ANNOTATIONS } : null;
   }
-  if (cls === "blunder") return `💀 ${move.san}. That one hurt. The eval bar is in pain 😭`;
-  if (cls === "mistake") return `😬 ${move.san} — that's rough buddy. Position just got worse 📉`;
-  if (cls === "inaccuracy") return Math.random() < 0.4 ? `🤷 ${move.san} — there was something better` : null;
+  if (cls === "blunder") return { text: `💀 ${move.san}. That one hurt. The eval bar is in pain 😭`, annotations: { arrows: [[fromSq, toSq, "rgba(239, 68, 68, 0.85)"]], markers: [] } };
+  if (cls === "mistake") return { text: `😬 ${move.san} — that's rough buddy. Position just got worse 📉`, annotations: { arrows: [[fromSq, toSq, "rgba(239, 183, 44, 0.85)"]], markers: [] } };
+  if (cls === "inaccuracy") return Math.random() < 0.4 ? { text: `🤷 ${move.san} — there was something better`, annotations: NO_ANNOTATIONS } : null;
   return null;
 }
 

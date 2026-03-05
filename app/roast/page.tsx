@@ -18,6 +18,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
+import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
@@ -36,6 +37,7 @@ import {
   type AnalyzedMove,
   type MoveClassification,
   type GameSummary,
+  type MoveAnnotation,
 } from "@/lib/roast-commentary";
 import { RoastAvatar, type RoastMood } from "@/components/roast-avatar";
 
@@ -114,6 +116,8 @@ interface MoveWithComment {
   piece: string;
   isCapture: boolean;
   isCheck: boolean;
+  arrows?: [string, string, string][];
+  markers?: { square: string; emoji: string }[];
 }
 
 type PageState = "loading" | "intro" | "watching" | "guessing" | "revealed";
@@ -172,6 +176,8 @@ export default function RoastPage() {
   const [activeComment, setActiveComment] = useState<string | null>(null);
   const { displayed: typewriterText, isDone: typingDone } = useTypewriter(activeComment);
   const [currentMood, setCurrentMood] = useState<RoastMood>("neutral");
+  const [activeArrows, setActiveArrows] = useState<[string, string, string][]>([]);
+  const [activeMarkers, setActiveMarkers] = useState<{ square: string; emoji: string }[]>([]);
 
   /* ── Fetch a new game ── */
   const fetchGame = useCallback(async () => {
@@ -425,7 +431,7 @@ export default function RoastPage() {
           biggestSwing: null,
         };
 
-        const comment = generateMoveComment(analyzedMove, usedSet, gameSummary);
+        const commentResult = generateMoveComment(analyzedMove, usedSet, gameSummary);
 
         analyzed.push({
           san: moveResult.san,
@@ -439,10 +445,12 @@ export default function RoastPage() {
           cpLoss,
           bestMoveSan,
           classification,
-          comment,
+          comment: commentResult?.text ?? null,
           piece: moveResult.piece,
           isCapture: !!moveResult.captured,
           isCheck: chess.isCheck(),
+          arrows: commentResult?.annotations.arrows,
+          markers: commentResult?.annotations.markers,
         });
 
         setAnalysisProgress(Math.round(((i + 1) / maxMoves) * 100));
@@ -486,7 +494,7 @@ export default function RoastPage() {
     // After a comment finishes typing, give reading time scaled to length;
     // otherwise use the base speed for non-comment moves
     const delay = activeComment
-      ? Math.max(1800, Math.min(3500, activeComment.length * 15))
+      ? Math.max(2000, Math.min(5000, activeComment.length * 22))
       : speed;
 
     const timer = setTimeout(() => {
@@ -505,9 +513,13 @@ export default function RoastPage() {
           setActiveComment(move.comment);
           setCommentHistory(prev => [...prev, move.comment!]);
           setCurrentMood(getMood(move));
+          setActiveArrows(move.arrows ?? []);
+          setActiveMarkers(move.markers ?? []);
         } else {
           setActiveComment(null);
           setCurrentMood(getMood(move));
+          setActiveArrows([]);
+          setActiveMarkers([]);
         }
       }
     }, delay);
@@ -551,6 +563,8 @@ export default function RoastPage() {
     const m2 = idx >= 0 ? moves[idx] : null;
     setCurrentMood(m2 ? getMood(m2) : "neutral");
     setActiveComment(null);
+    setActiveArrows([]);
+    setActiveMarkers([]);
   }, [moves]);
 
   const skipToGuess = useCallback(() => {
@@ -769,7 +783,7 @@ export default function RoastPage() {
               </div>
 
               <div ref={boardRef} className="w-full max-w-[640px]">
-                <div className="overflow-hidden rounded-xl shadow-2xl shadow-black/40">
+                <div className="overflow-hidden rounded-xl shadow-2xl shadow-black/40 relative">
                   <Chessboard
                     id="roast-board"
                     position={fen}
@@ -782,7 +796,34 @@ export default function RoastPage() {
                     showBoardNotation={showCoords}
                     customSquareStyles={customSquareStyles}
                     customPieces={customPieces}
+                    customArrows={activeArrows.map(([from, to, color]) => [from as CbSquare, to as CbSquare, color] as [CbSquare, CbSquare, string])}
                   />
+                  {/* Emoji marker overlay */}
+                  {activeMarkers.length > 0 && boardSize > 0 && (
+                    <div className="absolute inset-0 pointer-events-none" style={{ width: boardSize, height: boardSize }}>
+                      {activeMarkers.map((m, i) => {
+                        const sqSize = boardSize / 8;
+                        const fileI = m.square.charCodeAt(0) - 97; // a=0 .. h=7
+                        const rankI = parseInt(m.square[1]) - 1;   // 1=0 .. 8=7
+                        const x = orientation === "white" ? fileI * sqSize : (7 - fileI) * sqSize;
+                        const y = orientation === "white" ? (7 - rankI) * sqSize : rankI * sqSize;
+                        return (
+                          <span
+                            key={`${m.square}-${i}`}
+                            className="absolute select-none drop-shadow-lg"
+                            style={{
+                              left: x + sqSize * 0.58,
+                              top: y - sqSize * 0.08,
+                              fontSize: sqSize * 0.38,
+                              lineHeight: 1,
+                            }}
+                          >
+                            {m.emoji}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
 
