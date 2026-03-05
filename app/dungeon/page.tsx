@@ -109,29 +109,134 @@ function setupPuzzlePosition(pgn: string, initialPly: number) {
 /*  Floating Particles                                                  */
 /* ================================================================== */
 
-function DungeonParticles({ variant = "embers" }: { variant?: "embers" | "sparkle" | "ash" }) {
+function DungeonParticles({ variant = "embers" }: { variant?: "embers" | "sparkle" | "ash" | "runes" | "snow" | "void" | "lightning" }) {
   const colors =
     variant === "embers" ? ["#f97316", "#ef4444", "#fbbf24"] :
     variant === "sparkle" ? ["#fbbf24", "#a78bfa", "#34d399"] :
-    ["#64748b", "#475569", "#94a3b8"];
+    variant === "runes" ? ["#a78bfa", "#818cf8", "#c4b5fd"] :
+    variant === "snow" ? ["#e2e8f0", "#cbd5e1", "#f1f5f9"] :
+    variant === "void" ? ["#6d28d9", "#4c1d95", "#312e81"] :
+    variant === "lightning" ? ["#38bdf8", "#7dd3fc", "#e0f2fe"] :
+    ["#64748b", "#475569", "#94a3b8"]; // ash
+
+  const isSnow = variant === "snow";
+  const isRunes = variant === "runes";
+  const isVoid = variant === "void";
+  const isLightning = variant === "lightning";
 
   return (
     <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
-      {Array.from({ length: 18 }).map((_, i) => (
+      {Array.from({ length: isLightning ? 8 : isVoid ? 24 : 18 }).map((_, i) => {
+        const size = isRunes ? 6 + Math.random() * 4 : isVoid ? 3 + Math.random() * 5 : 2 + Math.random() * 3;
+        const duration = isSnow ? 6 + Math.random() * 8 : isLightning ? 1 + Math.random() * 2 : 4 + Math.random() * 6;
+        const anim = isSnow ? "dungeon-snow-fall" : isVoid ? "dungeon-void-drift" : isLightning ? "dungeon-lightning-flash" : "dungeon-ember-float";
+
+        return (
+          <div
+            key={i}
+            className={`absolute ${isRunes ? "font-mono text-[10px] flex items-center justify-center" : "rounded-full"}`}
+            style={{
+              width: `${size}px`,
+              height: `${size}px`,
+              backgroundColor: isRunes ? "transparent" : colors[i % colors.length],
+              color: isRunes ? colors[i % colors.length] : undefined,
+              left: `${5 + Math.random() * 90}%`,
+              bottom: isSnow ? undefined : `${-5 + Math.random() * 10}%`,
+              top: isSnow ? `${-10 + Math.random() * 5}%` : undefined,
+              opacity: 0,
+              animation: `${anim} ${duration}s ${isLightning ? "ease-in" : "ease-out"} ${Math.random() * 5}s infinite`,
+              ...(isVoid ? { borderRadius: "50%", boxShadow: `0 0 ${4 + Math.random() * 6}px ${colors[i % colors.length]}` } : {}),
+            }}
+          >
+            {isRunes ? ["♜", "♞", "♝", "♛", "♚", "♟", "⚔", "✦"][i % 8] : null}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ================================================================== */
+/*  Puzzle Timer                                                        */
+/* ================================================================== */
+
+const BASE_PUZZLE_TIME = 30; // seconds
+
+function getPuzzleTimeLimit(stats: { attack: number }, perks: Perk[]): number | null {
+  // Zen Master = unlimited
+  if (perks.some(p => p.id === "zen-master")) return null;
+
+  let time = BASE_PUZZLE_TIME + stats.attack * 2;
+
+  // Cursed Clock = halve time
+  if (perks.some(p => p.id === "cursed-clock")) time = Math.max(10, Math.floor(time / 2));
+
+  return time;
+}
+
+function PuzzleTimer({
+  timeLimit,
+  paused,
+  onExpired,
+}: {
+  timeLimit: number | null; // null = unlimited
+  paused?: boolean;
+  onExpired: () => void;
+}) {
+  const [remaining, setRemaining] = useState(timeLimit ?? 0);
+  const expiredRef = useRef(false);
+  const onExpiredRef = useRef(onExpired);
+  onExpiredRef.current = onExpired;
+
+  useEffect(() => {
+    setRemaining(timeLimit ?? 0);
+    expiredRef.current = false;
+  }, [timeLimit]);
+
+  useEffect(() => {
+    if (timeLimit === null || paused) return;
+    const interval = setInterval(() => {
+      setRemaining(prev => {
+        const next = Math.max(0, prev - 0.1);
+        if (next <= 0 && !expiredRef.current) {
+          expiredRef.current = true;
+          setTimeout(() => onExpiredRef.current(), 0);
+        }
+        return next;
+      });
+    }, 100);
+    return () => clearInterval(interval);
+  }, [timeLimit, paused]);
+
+  if (timeLimit === null) {
+    return (
+      <div className="flex items-center gap-1.5 text-xs text-purple-400">
+        <span>🧘</span>
+        <span className="font-medium">Zen — No time limit</span>
+      </div>
+    );
+  }
+
+  const pct = (remaining / timeLimit) * 100;
+  const isLow = remaining <= 10;
+  const isCritical = remaining <= 5;
+
+  const barColor = isCritical ? "bg-red-500" : isLow ? "bg-amber-500" : "bg-cyan-500";
+  const glowColor = isCritical ? "shadow-red-500/40" : isLow ? "shadow-amber-500/30" : "shadow-cyan-500/20";
+  const textColor = isCritical ? "text-red-400" : isLow ? "text-amber-400" : "text-slate-400";
+
+  return (
+    <div className={`flex items-center gap-2 ${isCritical ? "animate-[dungeon-timer-pulse_0.5s_ease-in-out_infinite]" : ""}`}>
+      <span className={`text-xs font-mono font-bold ${textColor} min-w-[32px]`}>
+        {Math.ceil(remaining)}s
+      </span>
+      <div className={`h-2 flex-1 rounded-full bg-white/[0.06] overflow-hidden min-w-[100px] shadow-sm ${glowColor}`}>
         <div
-          key={i}
-          className="absolute rounded-full"
-          style={{
-            width: `${2 + Math.random() * 3}px`,
-            height: `${2 + Math.random() * 3}px`,
-            backgroundColor: colors[i % colors.length],
-            left: `${5 + Math.random() * 90}%`,
-            bottom: `${-5 + Math.random() * 10}%`,
-            opacity: 0,
-            animation: `dungeon-ember-float ${4 + Math.random() * 6}s ease-out ${Math.random() * 5}s infinite`,
-          }}
+          className={`h-full rounded-full transition-all duration-100 ease-linear ${barColor}`}
+          style={{ width: `${pct}%` }}
         />
-      ))}
+      </div>
+      <span className="text-[10px] text-slate-600">⏱</span>
     </div>
   );
 }
@@ -904,6 +1009,23 @@ function BattleBoard({
             </div>
           </div>
 
+          {/* Timer */}
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+            <PuzzleTimer
+              timeLimit={getPuzzleTimeLimit(run.stats, run.perks)}
+              paused={state !== "solving"}
+              onExpired={() => {
+                if (state === "solving") {
+                  setState("wrong");
+                  setFlashDamage(true);
+                  setTimeout(() => setFlashDamage(false), 600);
+                  playDungeonSound("damage");
+                  onFailed();
+                }
+              }}
+            />
+          </div>
+
           {moveIndicator && (
             <div className={`rounded-xl border px-4 py-3 text-center text-sm font-bold ${
               moveIndicator.type === "correct"
@@ -1008,6 +1130,20 @@ function GuessEvalBoard({
     return new Chess(setup.postTriggerFen).turn() === "w" ? "white" : "black";
   }, [setup.postTriggerFen]);
 
+  const turnToMove = useMemo(() => {
+    return new Chess(setup.postTriggerFen).turn() === "w" ? "White" : "Black";
+  }, [setup.postTriggerFen]);
+
+  // Highlight the opponent's last move (trigger move)
+  const lastMoveStyles: Record<string, React.CSSProperties> = useMemo(() => {
+    const styles: Record<string, React.CSSProperties> = {};
+    if (setup.triggerFrom && setup.triggerTo) {
+      styles[setup.triggerFrom] = { backgroundColor: "rgba(255, 255, 0, 0.25)" };
+      styles[setup.triggerTo] = { backgroundColor: "rgba(255, 255, 0, 0.35)" };
+    }
+    return styles;
+  }, [setup.triggerFrom, setup.triggerTo]);
+
   return (
     <div className="w-full dungeon-screen-enter">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px]">
@@ -1023,9 +1159,21 @@ function GuessEvalBoard({
                 customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
                 customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
                 showBoardNotation={showCoords}
+                customSquareStyles={lastMoveStyles}
                 customPieces={customPieces}
               />
             </div>
+          </div>
+
+          {/* Turn indicator */}
+          <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5">
+            <div className={`h-3 w-3 rounded-full ${turnToMove === "White" ? "bg-white border border-slate-400" : "bg-zinc-800 border border-zinc-600"}`} />
+            <span className="text-sm font-medium text-slate-300">{turnToMove} to move</span>
+            {setup.triggerFrom && setup.triggerTo && (
+              <span className="text-xs text-slate-500 ml-1">
+                (last: {setup.triggerFrom}→{setup.triggerTo})
+              </span>
+            )}
           </div>
 
           {/* Eval guess buttons */}
@@ -1091,6 +1239,21 @@ function GuessEvalBoard({
               <span className="text-slate-600">·</span>
               <span>Eval Challenge</span>
             </div>
+          </div>
+          {/* Timer */}
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+            <PuzzleTimer
+              timeLimit={getPuzzleTimeLimit(run.stats, run.perks)}
+              paused={evaluating || revealed}
+              onExpired={() => {
+                if (!revealed) {
+                  setRevealed(true);
+                  playSound("wrong");
+                  playDungeonSound("damage");
+                  setTimeout(() => onFailed(), 1500);
+                }
+              }}
+            />
           </div>
         </div>
       </div>
@@ -1270,6 +1433,29 @@ function GuessMoveBoard({
               <span className="text-slate-600">·</span>
               <span>Move Challenge</span>
             </div>
+          </div>
+          {/* Timer */}
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+            <PuzzleTimer
+              timeLimit={getPuzzleTimeLimit(run.stats, run.perks)}
+              paused={state !== "waiting"}
+              onExpired={() => {
+                if (state === "waiting") {
+                  setState("wrong" as any);
+                  playSound("wrong");
+                  playDungeonSound("damage");
+                  if (correctMove) {
+                    const chess = new Chess(fen);
+                    try {
+                      chess.move({ from: correctMove.from, to: correctMove.to, promotion: "q" });
+                      setCurrentFen(chess.fen());
+                      setLastMove({ from: correctMove.from, to: correctMove.to });
+                    } catch {}
+                  }
+                  setTimeout(() => onFailed(), 2000);
+                }
+              }}
+            />
           </div>
         </div>
       </div>
@@ -1499,6 +1685,22 @@ function GuessEloBoard({
               <span className="text-slate-600">·</span>
               <span>Elo Challenge</span>
             </div>
+          </div>
+          {/* Timer */}
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+            <PuzzleTimer
+              timeLimit={getPuzzleTimeLimit(run.stats, run.perks)}
+              paused={currentMoveIdx < replayMoves.length || revealed}
+              onExpired={() => {
+                if (!revealed) {
+                  setRevealed(true);
+                  setDisplayFen(fen);
+                  playSound("wrong");
+                  playDungeonSound("damage");
+                  setTimeout(() => onFailed(), 1500);
+                }
+              }}
+            />
           </div>
         </div>
       </div>
@@ -2512,8 +2714,15 @@ export default function DungeonPage() {
         )}
       </div>
 
-      {/* Subtle particles */}
-      {run.status === "battle" && <DungeonParticles variant="embers" />}
+      {/* Subtle particles — per-act variety */}
+      {run.status === "battle" && (() => {
+        const act = getAct(run.currentFloor);
+        const pv = act.id === 1 ? "embers" : act.id === 2 ? "runes" : "lightning";
+        return <DungeonParticles variant={pv as any} />;
+      })()}
+      {run.status === "exploring" && <DungeonParticles variant="ash" />}
+      {run.status === "event" && <DungeonParticles variant="void" />}
+      {run.status === "rest" && <DungeonParticles variant="snow" />}
 
       <div className="relative z-10 mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Top bar */}
@@ -2550,10 +2759,34 @@ export default function DungeonPage() {
                 🔥 {run.streak} <span className="text-orange-300">(×{run.streakMultiplier})</span>
               </span>
             )}
-            <div className="flex gap-2 text-slate-500">
-              <span title="Attack" className="hover:text-slate-300 transition-colors">⚔️ {run.stats.attack}</span>
-              <span title="Defense" className="hover:text-slate-300 transition-colors">🛡️ {run.stats.defense}</span>
-              <span title="Luck" className="hover:text-slate-300 transition-colors">🍀 {run.stats.luck}</span>
+            <div className="flex gap-3 text-slate-400">
+              <div className="group relative flex items-center gap-1 cursor-help hover:text-cyan-400 transition-colors">
+                <span>⚔️</span>
+                <span className="font-bold">{run.stats.attack}</span>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-50">
+                  <div className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-[11px] text-slate-300 whitespace-nowrap shadow-xl">
+                    <span className="font-bold text-cyan-400">Attack</span> — +{2 + run.stats.attack * 2}s thinking time
+                  </div>
+                </div>
+              </div>
+              <div className="group relative flex items-center gap-1 cursor-help hover:text-blue-400 transition-colors">
+                <span>🛡️</span>
+                <span className="font-bold">{run.stats.defense}</span>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-50">
+                  <div className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-[11px] text-slate-300 whitespace-nowrap shadow-xl">
+                    <span className="font-bold text-blue-400">Defense</span> — {run.stats.defense > 0 ? `-${run.stats.defense * 5}` : "no"} damage reduction
+                  </div>
+                </div>
+              </div>
+              <div className="group relative flex items-center gap-1 cursor-help hover:text-emerald-400 transition-colors">
+                <span>🍀</span>
+                <span className="font-bold">{run.stats.luck}</span>
+                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-50">
+                  <div className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-[11px] text-slate-300 whitespace-nowrap shadow-xl">
+                    <span className="font-bold text-emerald-400">Luck</span> — better perk rarity rolls
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>

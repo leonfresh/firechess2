@@ -297,16 +297,16 @@ function getDifficulty(floor: number, type: NodeType): Difficulty {
 
 /** Pick a puzzle mode variant for a battle node.
  *  Bosses & elites always use standard tactics.
- *  Regular battles get random variety after floor 2. */
+ *  Regular battles get random variety after floor 1. */
 function pickPuzzleMode(type: NodeType, floor: number, rng: () => number): PuzzleMode | undefined {
   if (type !== "battle") return "tactic"; // bosses, elites always standard
-  if (floor <= 2) return "tactic"; // first floors are standard so player learns
+  if (floor <= 1) return "tactic"; // first floor is standard so player learns
 
   const roll = rng();
-  if (roll < 0.45) return "tactic";        // 45% standard
-  if (roll < 0.65) return "guess-eval";    // 20% guess eval
-  if (roll < 0.82) return "guess-move";    // 17% guess move
-  return "guess-elo";                       // 18% guess elo
+  if (roll < 0.28) return "tactic";        // 28% standard
+  if (roll < 0.52) return "guess-eval";    // 24% guess eval
+  if (roll < 0.76) return "guess-move";    // 24% guess move
+  return "guess-elo";                       // 24% guess elo
 }
 
 export function generateMap(seed: number, totalFloors = 30): MapNode[] {

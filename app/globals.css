@@ -541,6 +541,34 @@ button {
   100% { transform: translateY(-120px) translateX(20px) scale(0); opacity: 0; }
 }
 
+@keyframes dungeon-snow-fall {
+  0% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+  5% { opacity: 0.7; }
+  50% { transform: translateY(50vh) translateX(30px) scale(0.9); opacity: 0.6; }
+  100% { transform: translateY(105vh) translateX(-10px) scale(0.3); opacity: 0; }
+}
+
+@keyframes dungeon-void-drift {
+  0% { transform: translateY(0) scale(0.5); opacity: 0; }
+  20% { opacity: 0.6; }
+  50% { transform: translateY(-60px) scale(1.3); opacity: 0.4; }
+  80% { opacity: 0.3; }
+  100% { transform: translateY(-120px) scale(0.2); opacity: 0; }
+}
+
+@keyframes dungeon-lightning-flash {
+  0% { opacity: 0; transform: scale(1); }
+  5% { opacity: 1; transform: scale(2.5); }
+  15% { opacity: 0.8; transform: scale(1.5); }
+  25% { opacity: 0; transform: scale(1); }
+  100% { opacity: 0; }
+}
+
+@keyframes dungeon-timer-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
 /* Screen transition fade-in */
 @keyframes dungeon-screen-enter {
   0% { opacity: 0; }
