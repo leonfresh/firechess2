@@ -10,6 +10,36 @@ You sit down to play. Your opponent opens 1.d4. You groan internally. Somehow, y
 
 This isn't bad luck. It's a pattern, and patterns can be fixed.
 
+<div style="margin: 2rem 0; display: flex; justify-content: center;">
+<svg width="600" height="200" viewBox="0 0 600 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="600" height="200" rx="16" fill="#0f172a"/>
+  <rect x="1" y="1" width="598" height="198" rx="15" stroke="white" stroke-opacity="0.06"/>
+  <text x="300" y="30" text-anchor="middle" fill="white" font-size="13" font-weight="700">Why You Keep Losing: The Real Causes</text>
+  <!-- Three columns -->
+  <rect x="30" y="48" width="168" height="130" rx="12" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.2"/>
+  <text x="114" y="72" text-anchor="middle" fill="#f87171" font-size="20">🗺️</text>
+  <text x="114" y="95" text-anchor="middle" fill="#f87171" font-size="12" font-weight="700">No Plan</text>
+  <text x="114" y="115" text-anchor="middle" fill="#94a3b8" font-size="10">You know the moves</text>
+  <text x="114" y="130" text-anchor="middle" fill="#94a3b8" font-size="10">but not the ideas.</text>
+  <text x="114" y="145" text-anchor="middle" fill="#94a3b8" font-size="10">Moves feel aimless</text>
+  <text x="114" y="160" text-anchor="middle" fill="#94a3b8" font-size="10">after book ends.</text>
+  <rect x="216" y="48" width="168" height="130" rx="12" fill="#f59e0b" fill-opacity="0.08" stroke="#f59e0b" stroke-opacity="0.2"/>
+  <text x="300" y="72" text-anchor="middle" fill="#fbbf24" font-size="20">🕳️</text>
+  <text x="300" y="95" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="700">Blind Spot</text>
+  <text x="300" y="115" text-anchor="middle" fill="#94a3b8" font-size="10">Same motif keeps</text>
+  <text x="300" y="130" text-anchor="middle" fill="#94a3b8" font-size="10">catching you, but it</text>
+  <text x="300" y="145" text-anchor="middle" fill="#94a3b8" font-size="10">looks different each</text>
+  <text x="300" y="160" text-anchor="middle" fill="#94a3b8" font-size="10">time.</text>
+  <rect x="402" y="48" width="168" height="130" rx="12" fill="#a855f7" fill-opacity="0.08" stroke="#a855f7" stroke-opacity="0.2"/>
+  <text x="486" y="72" text-anchor="middle" fill="#c084fc" font-size="20">🪤</text>
+  <text x="486" y="95" text-anchor="middle" fill="#c084fc" font-size="12" font-weight="700">Unknown Traps</text>
+  <text x="486" y="115" text-anchor="middle" fill="#94a3b8" font-size="10">Your opponent knows</text>
+  <text x="486" y="130" text-anchor="middle" fill="#94a3b8" font-size="10">the forcing lines.</text>
+  <text x="486" y="145" text-anchor="middle" fill="#94a3b8" font-size="10">You walk into them</text>
+  <text x="486" y="160" text-anchor="middle" fill="#94a3b8" font-size="10">every time.</text>
+</svg>
+</div>
+
 ## The Myth of "Bad Matchup" Openings
 
 Players often believe certain openings are inherently problematic for them, as if it's some kind of stylistic incompatibility. In reality, there are almost always specific, identifiable positions within those openings where you're making suboptimal decisions.
@@ -69,6 +99,47 @@ Some openings have well-known traps, tactical motifs, or forcing sequences that 
 ## The Systematic Approach
 
 Here's a concrete 5-step process to solve your problem opening:
+
+<div style="margin: 2rem 0; display: flex; justify-content: center;">
+<svg width="600" height="160" viewBox="0 0 600 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="600" height="160" rx="16" fill="#0f172a"/>
+  <rect x="1" y="1" width="598" height="158" rx="15" stroke="white" stroke-opacity="0.06"/>
+  <!-- Steps as connected nodes -->
+  <circle cx="70" cy="60" r="24" fill="#10b981" fill-opacity="0.15" stroke="#10b981" stroke-opacity="0.5"/>
+  <text x="70" y="56" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="700">1</text>
+  <text x="70" y="70" text-anchor="middle" fill="#6ee7b7" font-size="8">DATA</text>
+  <text x="70" y="110" text-anchor="middle" fill="#94a3b8" font-size="9">Pull 30-50</text>
+  <text x="70" y="122" text-anchor="middle" fill="#94a3b8" font-size="9">games</text>
+  <line x1="94" y1="60" x2="136" y2="60" stroke="#334155" stroke-width="2"/>
+  <circle cx="170" cy="60" r="24" fill="#06b6d4" fill-opacity="0.15" stroke="#06b6d4" stroke-opacity="0.5"/>
+  <text x="170" y="56" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="700">2</text>
+  <text x="170" y="70" text-anchor="middle" fill="#67e8f9" font-size="8">FIND</text>
+  <text x="170" y="110" text-anchor="middle" fill="#94a3b8" font-size="9">Divergence</text>
+  <text x="170" y="122" text-anchor="middle" fill="#94a3b8" font-size="9">point</text>
+  <line x1="194" y1="60" x2="236" y2="60" stroke="#334155" stroke-width="2"/>
+  <circle cx="270" cy="60" r="24" fill="#10b981" fill-opacity="0.15" stroke="#10b981" stroke-opacity="0.5"/>
+  <text x="270" y="56" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="700">3</text>
+  <text x="270" y="70" text-anchor="middle" fill="#6ee7b7" font-size="8">CHECK</text>
+  <text x="270" y="110" text-anchor="middle" fill="#94a3b8" font-size="9">Engine-check</text>
+  <text x="270" y="122" text-anchor="middle" fill="#94a3b8" font-size="9">key moments</text>
+  <line x1="294" y1="60" x2="336" y2="60" stroke="#334155" stroke-width="2"/>
+  <circle cx="370" cy="60" r="24" fill="#06b6d4" fill-opacity="0.15" stroke="#06b6d4" stroke-opacity="0.5"/>
+  <text x="370" y="56" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="700">4</text>
+  <text x="370" y="70" text-anchor="middle" fill="#67e8f9" font-size="8">LEARN</text>
+  <text x="370" y="110" text-anchor="middle" fill="#94a3b8" font-size="9">Correct</text>
+  <text x="370" y="122" text-anchor="middle" fill="#94a3b8" font-size="9">plans</text>
+  <line x1="394" y1="60" x2="436" y2="60" stroke="#334155" stroke-width="2"/>
+  <circle cx="470" cy="60" r="24" fill="#10b981" fill-opacity="0.2" stroke="#10b981" stroke-opacity="0.6"/>
+  <text x="470" y="56" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="700">5</text>
+  <text x="470" y="70" text-anchor="middle" fill="#6ee7b7" font-size="8">TEST</text>
+  <text x="470" y="110" text-anchor="middle" fill="#94a3b8" font-size="9">Play 10-15</text>
+  <text x="470" y="122" text-anchor="middle" fill="#94a3b8" font-size="9">& re-scan</text>
+  <!-- Loop arrow -->
+  <path d="M470 84 C 470 140, 70 140, 70 84" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 3" fill="none"/>
+  <polygon points="73,88 68,80 78,80" fill="#334155"/>
+  <text x="270" y="150" text-anchor="middle" fill="#475569" font-size="9" font-style="italic">Repeat until win rate improves</text>
+</svg>
+</div>
 
 ### Step 1: Gather Data
 

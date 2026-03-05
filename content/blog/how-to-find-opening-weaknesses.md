@@ -16,6 +16,28 @@ An opening leak is a move or position in your repertoire where you regularly dev
 
 The key distinction is **repetition**. A single mistake is just a mistake. But when you make the same sub-optimal move across 10 or 15 games, that's a leak — and it's silently dragging down your rating.
 
+<div style="margin: 2rem 0; display: flex; justify-content: center;">
+<svg width="600" height="200" viewBox="0 0 600 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="600" height="200" rx="16" fill="#0f172a"/>
+  <rect x="1" y="1" width="598" height="198" rx="15" stroke="white" stroke-opacity="0.06"/>
+  <text x="300" y="30" text-anchor="middle" fill="white" font-size="13" font-weight="700">One-off Mistake vs. Opening Leak</text>
+  <!-- Left: single mistake -->
+  <rect x="30" y="50" width="255" height="130" rx="12" fill="#f59e0b" fill-opacity="0.06" stroke="#f59e0b" stroke-opacity="0.15"/>
+  <text x="157" y="75" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="700">Single Mistake</text>
+  <text x="70" y="105" fill="#94a3b8" font-size="10">Game 1: ♞ Nc3? ...</text>
+  <text x="70" y="125" fill="#475569" font-size="10">Game 2: ♞ Nf3 ✓</text>
+  <text x="70" y="145" fill="#475569" font-size="10">Game 3: ♞ Nf3 ✓</text>
+  <text x="70" y="165" fill="#94a3b8" font-size="9" font-style="italic">One bad game — happens to everyone</text>
+  <!-- Right: leak -->
+  <rect x="315" y="50" width="255" height="130" rx="12" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.2"/>
+  <text x="442" y="75" text-anchor="middle" fill="#f87171" font-size="12" font-weight="700">Opening Leak 🔥</text>
+  <text x="355" y="105" fill="#f87171" font-size="10">Game 1: ♞ Nc3? −0.5</text>
+  <text x="355" y="125" fill="#f87171" font-size="10">Game 5: ♞ Nc3? −0.5</text>
+  <text x="355" y="145" fill="#f87171" font-size="10">Game 12: ♞ Nc3? −0.5</text>
+  <text x="355" y="165" fill="#fca5a5" font-size="9" font-style="italic">Systematic error baked into your repertoire</text>
+</svg>
+</div>
+
 ## Why Opening Leaks Matter More Than You Think
 
 Consider this: if you play 100 games per month and 15% of them pass through a position where you have a consistent leak losing ~0.5 pawns of evaluation, that's roughly 15 games where you're starting the middlegame with a disadvantage. Even a small centipawn loss compounds over hundreds of games.
@@ -91,6 +113,38 @@ Not all leaks are equal. Prioritize fixes based on:
 | **Phase** | Earlier leaks cascade into worse positions; fix move-7 leaks before move-15 ones |
 
 Focus on your top 3 leaks first. Fixing just three positions can measurably improve your results.
+
+<div style="margin: 2rem 0; display: flex; justify-content: center;">
+<svg width="520" height="180" viewBox="0 0 520 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="520" height="180" rx="16" fill="#0f172a"/>
+  <rect x="1" y="1" width="518" height="178" rx="15" stroke="white" stroke-opacity="0.06"/>
+  <text x="260" y="28" text-anchor="middle" fill="white" font-size="12" font-weight="700">Prioritize by Impact</text>
+  <!-- Priority matrix -->
+  <text x="60" y="56" fill="#94a3b8" font-size="10" font-weight="600">PRIORITY</text>
+  <text x="200" y="56" fill="#94a3b8" font-size="10" font-weight="600">FREQUENCY</text>
+  <text x="320" y="56" fill="#94a3b8" font-size="10" font-weight="600">SEVERITY</text>
+  <text x="440" y="56" fill="#94a3b8" font-size="10" font-weight="600">ACTION</text>
+  <line x1="30" y1="64" x2="490" y2="64" stroke="#1e293b" stroke-width="1"/>
+  <!-- Row 1 -->
+  <rect x="30" y="72" width="460" height="28" rx="6" fill="#ef4444" fill-opacity="0.08"/>
+  <text x="60" y="90" fill="#f87171" font-size="11" font-weight="700">🔴 #1</text>
+  <text x="200" y="90" fill="#f87171" font-size="10">15 games/month</text>
+  <text x="320" y="90" fill="#f87171" font-size="10">−1.2 pawns</text>
+  <text x="440" y="90" fill="#f87171" font-size="10">Fix NOW</text>
+  <!-- Row 2 -->
+  <rect x="30" y="106" width="460" height="28" rx="6" fill="#f59e0b" fill-opacity="0.06"/>
+  <text x="60" y="124" fill="#fbbf24" font-size="11" font-weight="700">🟡 #2</text>
+  <text x="200" y="124" fill="#fbbf24" font-size="10">8 games/month</text>
+  <text x="320" y="124" fill="#fbbf24" font-size="10">−0.6 pawns</text>
+  <text x="440" y="124" fill="#fbbf24" font-size="10">Fix this week</text>
+  <!-- Row 3 -->
+  <rect x="30" y="140" width="460" height="28" rx="6" fill="#10b981" fill-opacity="0.06"/>
+  <text x="60" y="158" fill="#6ee7b7" font-size="11" font-weight="700">🟢 #3</text>
+  <text x="200" y="158" fill="#6ee7b7" font-size="10">3 games/month</text>
+  <text x="320" y="158" fill="#6ee7b7" font-size="10">−0.3 pawns</text>
+  <text x="440" y="158" fill="#6ee7b7" font-size="10">When ready</text>
+</svg>
+</div>
 
 ## Common Opening Leak Patterns
 
