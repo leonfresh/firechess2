@@ -148,10 +148,53 @@ type PageState = "loading" | "intro" | "watching" | "guessing" | "revealed";
 /*  PGN Parsing                                                         */
 /* ================================================================== */
 
-function parsePgnMoves(pgn: string): string[] {
+/** Parse PGN moves and extract clock times if available.
+ *  Returns { sans, clocks } where clocks[i] is time remaining in seconds after move i, or null. */
+function parsePgnWithClocks(pgn: string): { sans: string[]; clocks: (number | null)[] } {
   const chess = new Chess();
-  try { chess.loadPgn(pgn); } catch { return []; }
-  return chess.history();
+  try { chess.loadPgn(pgn); } catch { return { sans: [], clocks: [] }; }
+  const sans = chess.history();
+
+  // Extract %clk comments from raw PGN movelist
+  // Format: 1. e4 { [%clk 0:05:00] } 1... e5 { [%clk 0:05:00] }
+  const moveSection = pgn.replace(/\[.*?\]\s*/g, "").trim();
+  const clkRegex = /\{[^}]*\[%clk\s+(\d+):(\d+):(\d+(?:\.\d+)?)\s*\][^}]*\}/g;
+  const rawClocks: number[] = [];
+  let m;
+  while ((m = clkRegex.exec(moveSection)) !== null) {
+    rawClocks.push(parseInt(m[1]) * 3600 + parseInt(m[2]) * 60 + parseFloat(m[3]));
+  }
+
+  // Compute time SPENT on each move = prev clock - current clock
+  const clocks: (number | null)[] = [];
+  if (rawClocks.length >= sans.length) {
+    // Separate white and black clocks
+    const whiteClocks: number[] = [];
+    const blackClocks: number[] = [];
+    for (let i = 0; i < rawClocks.length; i++) {
+      if (i % 2 === 0) whiteClocks.push(rawClocks[i]);
+      else blackClocks.push(rawClocks[i]);
+    }
+    for (let i = 0; i < sans.length; i++) {
+      const isWhite = i % 2 === 0;
+      const arr = isWhite ? whiteClocks : blackClocks;
+      const moveIdx = isWhite ? Math.floor(i / 2) : Math.floor(i / 2);
+      if (moveIdx === 0) {
+        // First move — can't compute time spent without initial clock
+        clocks.push(null);
+      } else if (moveIdx < arr.length) {
+        const spent = arr[moveIdx - 1] - arr[moveIdx];
+        clocks.push(spent > 0 ? Math.round(spent * 10) / 10 : null);
+      } else {
+        clocks.push(null);
+      }
+    }
+  } else {
+    // No clock data available
+    for (let i = 0; i < sans.length; i++) clocks.push(null);
+  }
+
+  return { sans, clocks };
 }
 
 /* ================================================================== */
@@ -311,7 +354,7 @@ export default function RoastPage() {
 
       // Step 2: Export the full PGN
       const pgnRes = await fetch(
-        `https://lichess.org/game/export/${gameId}?evals=false&clocks=false&opening=true`,
+        `https://lichess.org/game/export/${gameId}?evals=false&clocks=true&opening=true`,
         { headers: { Accept: "application/x-chess-pgn" } }
       );
       if (!pgnRes.ok) throw new Error("Failed to export game");
@@ -343,7 +386,7 @@ export default function RoastPage() {
       setOrientation(Math.random() > 0.5 ? "white" : "black");
 
       // Parse and analyze the game
-      const sans = parsePgnMoves(data.pgn);
+      const { sans, clocks } = parsePgnWithClocks(data.pgn);
       if (sans.length < 10) {
         // Too short, skip and retry
         setTimeout(fetchGame, 500);
@@ -452,6 +495,7 @@ export default function RoastPage() {
           walkedIntoPin: false,
           evalSwing: cpLoss,
           isResignationWorthy: evalAfterForSide < -500 && evalBeforeForSide > -200,
+          timeSpent: clocks[i] ?? null,
         };
 
         const gameSummary: GameSummary = {

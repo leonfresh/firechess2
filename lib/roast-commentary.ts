@@ -51,6 +51,8 @@ export interface AnalyzedMove {
   walkedIntoPin: boolean;
   evalSwing: number;
   isResignationWorthy: boolean;
+  /** Seconds spent on this move (from %clk data), or null if unavailable */
+  timeSpent: number | null;
 }
 
 export interface GameSummary {
@@ -381,6 +383,26 @@ function _generatePositionAware(
   const isRecapture = _isObviousRecapture(move, summary);
   const ctx = _getGameContext(move, summary);
 
+  // Time-based roasts — if clock data is available and the time spent is extreme
+  if (move.timeSpent !== null && Math.random() < 0.4) {
+    const timeResult = _timeRoast(move, ctx, used);
+    if (timeResult) return _emitResult(used, timeResult);
+  }
+
+  // Opponent just gifted material and player didn't capitalize
+  if (ctx.opponentJustBlundered && ctx.opponentGift > 150 &&
+      (move.classification !== "best" && move.classification !== "great" && move.classification !== "brilliant") &&
+      Math.random() < 0.5) {
+    const giftResult = _opponentGiftRoast(move, ctx, used);
+    if (giftResult) return _emitResult(used, giftResult);
+  }
+
+  // Momentum commentary — eval is cratering over multiple moves
+  if (ctx.evalCrater > 300 && Math.random() < 0.25) {
+    const momentumResult = _momentumRoast(move, ctx, used);
+    if (momentumResult) return _emitResult(used, momentumResult);
+  }
+
   if (move.classification === "brilliant" || (move.classification === "best" && move.sacrificedMaterial)) {
     return _emitResult(used, _brilliantRoast(move, after, toSq, landedPiece, ctx));
   }
@@ -425,6 +447,12 @@ function _generatePositionAware(
     if (isRecapture && move.cpLoss < 80) return null;
     if (Math.random() > 0.4) return null;
     return _emitResult(used, _inaccuracyRoast(move, after, moverColor, used));
+  }
+
+  // Endgame-specific commentary for neutral moves
+  if (ctx.isEndgame && !isRecapture && Math.random() < 0.3) {
+    const endgameResult = _endgameRoast(move, after, moverColor, ctx, used);
+    if (endgameResult) return _emitResult(used, endgameResult);
   }
 
   // Style commentary for "good" / neutral moves that didn't trigger anything else
@@ -499,6 +527,18 @@ interface GameContext {
   threwAdvantage: boolean;
   /** Was the position completely lost and they're still going? */
   desperateDefense: boolean;
+  /** Eval trend over last 4 player moves: total cp lost (positive = cratering) */
+  evalCrater: number;
+  /** Is this an endgame position? (few pieces left) */
+  isEndgame: boolean;
+  /** Total pieces on board */
+  totalPieces: number;
+  /** Did the opponent just blunder on their last move? */
+  opponentJustBlundered: boolean;
+  /** Opponent's last move classification */
+  opponentLastClass: MoveClassification | null;
+  /** How much eval the opponent just gifted (positive = gift) */
+  opponentGift: number;
 }
 
 function _getGameContext(move: AnalyzedMove, summary: GameSummary): GameContext {
@@ -552,7 +592,38 @@ function _getGameContext(move: AnalyzedMove, summary: GameSummary): GameContext 
   // Desperate defense: position is badly losing (< -400)
   const desperateDefense = evalForPlayer < -400;
 
-  return { recentBlunder, playerBlunders, goodStreak, posture, threwAdvantage, desperateDefense };
+  // Eval cratering: how much eval has been lost over the last 4 player moves
+  let evalCrater = 0;
+  if (myMoves.length >= 2) {
+    const recentMy = myMoves.slice(-4);
+    for (const m of recentMy) {
+      evalCrater += m.cpLoss;
+    }
+  }
+
+  // Endgame detection: count total pieces on the board
+  let totalPieces = 0;
+  try {
+    const boardNow = new Chess(move.fen);
+    for (const file of FILES) {
+      for (const rank of RANKS) {
+        const p = boardNow.get((file + rank) as Square);
+        if (p && p.type !== "k") totalPieces++;
+      }
+    }
+  } catch {}
+  const isEndgame = totalPieces <= 10;
+
+  // Opponent's last move analysis
+  const oppColor = color === "w" ? "b" : "w";
+  const oppMoves = allMoves.filter(m => m.color === oppColor);
+  const oppLast = oppMoves.length > 0 ? oppMoves[oppMoves.length - 1] : null;
+  const opponentJustBlundered = oppLast ? oppLast.classification === "blunder" : false;
+  const opponentLastClass = oppLast?.classification ?? null;
+  // Gift: how much eval the opponent just handed us (their cpLoss from our perspective)
+  const opponentGift = oppLast ? oppLast.cpLoss : 0;
+
+  return { recentBlunder, playerBlunders, goodStreak, posture, threwAdvantage, desperateDefense, evalCrater, isEndgame, totalPieces, opponentJustBlundered, opponentLastClass, opponentGift };
 }
 
 function _brilliantRoast(
@@ -598,6 +669,11 @@ function _brilliantRoast(
     () => ({ text: `🤯 ${move.san}.${callback} Not gonna lie that was clean. But one good move doesn't make up for the rest of this game so let's not celebrate 🗿`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => ({ text: `🔥 ${move.san}. Garry Chess would nod approvingly and then go back to being disappointed by everything else in this game 💀👑`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => ({ text: `🧠 ${move.san}.${ctx.playerBlunders >= 2 ? ` After ${ctx.playerBlunders} blunders? NOW they play well? The audacity. The RANGE of this player 🎭` : ` Objectively the best move. I'm not complimenting them, I'm complimenting Stockfish for suggesting it 🤖`}`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `🤯 ${move.san}.${callback} Okay I literally had to double-check. That IS the engine's top choice. At this elo?? The simulation is glitching 🖥️💀`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `⚡ ${move.san}! ${ctx.isEndgame ? "Endgame precision out of NOWHERE." : "Middlegame brilliance."} They found the one move. THE one move.${ctx.playerBlunders > 0 ? " After all those blunders. Unbelievable 🤡" : " Still don't trust them tho 🗿"}`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `🌟 ${move.san}. Hans, is that you?? Is there an earpiece under that hair?? Nobody at this elo finds that move.${callback} 🔊💀`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `🧠 ${move.san}.${callback} Absolutely DISGUSTING move. In the best way. The opponent is gonna need a shower after that 🚿🔥`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `🤯 ${move.san}. Even the Knook would be impressed. That's the best move on the board and they FOUND it. At THIS level. Unquestionably suspicious 🗿♞🏰`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
   ];
   return pick(lines)();
 }
@@ -650,6 +726,15 @@ function _goodMoveRoast(
     () => ctx.posture === "losing"
       ? `😬 ${move.san} is fine but they're still losing.${ctx.recentBlunder ? ` This game was decided when they ${ctx.recentBlunder}. Everything since is just delaying the inevitable ⏳` : " Too little too late 💀"}`
       : `🗿 ${move.san}. Sure. Fine. Great. Can we skip to the part where they blunder again 🫠`,
+    () => ctx.opponentJustBlundered
+      ? `🗿 ${move.san}. Good move but let's be real, the opponent just GIFTED them this position. Hard to mess up a free gift. Hard but not impossible at this elo 🎁💀`
+      : `😤 ${move.san}. Theory says this is good. Practice says I'm bored. Where's the content 🫠🗿`,
+    () => ctx.isEndgame
+      ? `🏁 ${move.san} in the endgame. Oh they know how pieces move! Crazy! Do they know endgame theory? LOL probably not 🗿📚`
+      : `🤷 ${move.san}. A moves that screams "I have no idea what I'm doing but I'll copy what the engine says." Except they don't have an engine. Or do they 🕵️`,
+    () => `🗿 ${move.san}. The Petrosian of moves. Solid, boring, and makes everyone watching want to Alt+F4. "Well done" I guess 💤`,
+    () => `😤 ${move.san}. They played a normal chess move and want applause? This is the bare minimum? Like, the FLOOR? 📉👏`,
+    () => `🗿 ${move.san}. "Don't hang pieces" ✅ "Play the best move" ❌ Somewhere in between. Mid. Ultra mid 🫠`,
   ];
   return { text: pick(lines)(), annotations: ann };
 }
@@ -670,6 +755,11 @@ function _missedMateRoast(move: AnalyzedMove): { text: string; annotations: Move
     () => `💀 Mate in ${n}! MATE! IN! ${n}! But nah, ${move.san} was the move. Are you kidding ??? What the beep are you talking about man 🗿`,
     () => `😱 Google "mate in ${n}." Holy hell. They had it and played ${move.san} instead. New response just dropped: I'm in pain 😭`,
     () => `🪦 ${move.san} instead of LITERAL CHECKMATE. This person was doing PIPI in their pampers when others were learning patterns 💀🤡`,
+    () => `🚨 FORCED MATE IN ${n}! And they played ${move.san}! The winning move was FREE and they chose to NOT WIN. You cannot make this up 🗿💀`,
+    () => `💀 Mate in ${n}. CHECKMATE. You know, the thing you're supposed to DO in chess. ${move.san} was apparently more appealing. I literally cannot cope 😭`,
+    () => `☠️ ${move.san} when there was mate in ${n}. Garry Chess invented checkmate for a REASON and they chose to IGNORE it 👑🤡`,
+    () => `😱 Missing mate in ${n} is crazy. ${move.san}?? Even the Panzer of the Lake would call this one out. "Patzer misses a mate, patzer plays ${move.san}" 🐸💀`,
+    () => `🤡 Mate in ${n}. They didn't see it. Of COURSE they didn't see it. Why would they see CHECKMATE when they can play ${move.san} instead. The Knook weeps 🗿♞🏰`,
   ];
   return { text: pick(lines)(), annotations: ann };
 }
@@ -973,6 +1063,13 @@ function _mistakeRoast(
     `😬 ${move.san}.${ctxFallback} New mistake just dropped. This game is the gift that keeps on giving 🎁💀`,
     `🧱 ${move.san}.${ctxFallback} Didn't take the best move. Google "brick." The punishment is severe 🗿⛪`,
     `💀 ${move.san}.${ctxFallback} Liers will kicked off... from the advantage they had. True will never die, but their lead just did 🗿`,
+    `😤 ${move.san}.${ctxFallback} The Panzer of the Lake stirs. "That was bad and you should feel bad." The lake has spoken 🐸🌊`,
+    `🫤 ${move.san}.${ctxFallback} Not a blunder, but a mistake. The difference? One is a car crash, the other is a fender bender. Both hurt 🚗💀`,
+    `😬 ${move.san}.${ctxFallback} Every chess coach watching this just felt a sharp pain in their chest. Sympathy inaccuracy 🫀💀`,
+    `🗿 ${move.san}.${ctxFallback} Average move in an above-average bad game. The adult soul trembles at this position 😭`,
+    `📉 ${move.san}.${ctxFallback} The evaluation bar just twitched and NOT in the good direction 📊😬`,
+    `🤦 ${move.san}.${ctxFallback} This is the type of move that gets posted on AnarchyChess with the caption "guess the elo" 🤡💀`,
+    `😬 ${move.san}.${ctxFallback} Hikaru would call this "not great." Levy would call it content. I'm calling it pain 🗿🔥`,
   ], used), annotations: { arrows: [moveArrow], markers: [] } };
 }
 
@@ -1013,6 +1110,11 @@ function _inaccuracyRoast(
     () => `🤷 ${move.san}. The Knook of moves — neither here nor there, just vibing in an alternate dimension 🗿♞🏰`,
     () => `😑 ${move.san}. New response just dropped and it's mid. This is exactly what ${move.san} is, dumbass — mid 🫠`,
     () => `🫤 ${move.san}. Not a blunder, not good, just... chess purgatory. The adult soul trembles 💀🗿`,
+    () => `😑 ${move.san}. O Panzer of the Lake, what is your wisdom? "This move is mid." Thank you Panzer, very helpful 🐸🌊`,
+    () => `🤷 ${move.san}. Hikaru would glance at this and go "ehhh" and move on. That's the energy this move deserves 🤷💤`,
+    () => `😐 ${move.san}. The chess equivalent of "it's fine" when someone asks how you're doing. It's not fine. But it's fine 🫠`,
+    () => `🫤 ${move.san}. This move will not be remembered. By anyone. Ever. Including the person who played it 🗿💨`,
+    () => `🤷 ${move.san}. Peak "I'll just develop and hope for the best" energy. The strategy of champions. And also beginners. Mostly beginners 🏆💀`,
   ];
   // Evaluate all thunks, then pick an unused one
   const evaluated = lines.map(fn => fn());
@@ -1066,6 +1168,244 @@ function _badCheckRoast(
   ];
 
   return { text: pickUnused(lines, used), annotations: ann };
+}
+
+/* ================================================================== */
+/*  Endgame Roasts — late-game with few pieces left                    */
+/* ================================================================== */
+
+function _endgameRoast(
+  move: AnalyzedMove,
+  after: Chess,
+  moverColor: Color,
+  ctx: GameContext,
+  used: Set<string>,
+): { text: string; annotations: MoveAnnotation } | null {
+  const fromSq = move.uci.slice(0, 2);
+  const toSq = move.uci.slice(2, 4);
+  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(100, 160, 255, 0.7)"]], markers: [] };
+
+  // Count specific pieces to detect common endgames
+  const pieces: Record<string, number> = { wq: 0, bq: 0, wr: 0, br: 0, wb: 0, bb: 0, wn: 0, bn: 0, wp: 0, bp: 0 };
+  try {
+    for (const file of FILES) {
+      for (const rank of RANKS) {
+        const p = after.get((file + rank) as Square);
+        if (p && p.type !== "k") {
+          pieces[p.color + p.type]++;
+        }
+      }
+    }
+  } catch {}
+
+  const myQ = moverColor === "w" ? pieces.wq : pieces.bq;
+  const oppQ = moverColor === "w" ? pieces.bq : pieces.wq;
+  const totalNonPawns = pieces.wq + pieces.bq + pieces.wr + pieces.br + pieces.wb + pieces.bb + pieces.wn + pieces.bn;
+  const myPawns = moverColor === "w" ? pieces.wp : pieces.bp;
+  const oppPawns = moverColor === "w" ? pieces.bp : pieces.wp;
+  const totalPawns = myPawns + oppPawns;
+
+  // K+Q vs K — should be trivially winning
+  if (myQ >= 1 && oppQ === 0 && totalNonPawns === 1 && totalPawns === 0 && ctx.posture === "winning") {
+    if (move.classification === "blunder" || move.classification === "mistake") {
+      return { text: pickUnused([
+        `👑 K+Q vs K and they're STRUGGLING?? This is literally tutorial level. You have the QUEEN. Just push them to the edge and checkmate 💀🤦`,
+        `💀 It's King and Queen versus a lone King. You had ONE job. ONE. And somehow it's going wrong 🤡👑`,
+        `🫠 K+Q vs K. This should be over in like 10 moves. The fact that ${move.san} was played here is... concerning 👑💀`,
+        `🤡 They have a QUEEN and can't find mate against a LONE KING. Google "how to checkmate with king and queen." Holy hell 🗿⛪`,
+      ], used), annotations: ann };
+    }
+    return { text: pickUnused([
+      `👑 K+Q vs K. This should be a formality. Should be. Let's see if they know the technique or if they'll stalemate 🫠💀`,
+      `🏁 It's King and Queen vs lone King. The chess equivalent of a victory lap. Unless they mess it up. Which... wouldn't surprise me 🤡`,
+      `👑 Down to K+Q vs K. At this elo the real question isn't IF they'll win, it's whether they'll accidentally stalemate 😬🗿`,
+    ], used), annotations: ann };
+  }
+
+  // General endgame lines
+  const lines: string[] = [];
+
+  if (ctx.posture === "winning" && (move.classification === "blunder" || move.classification === "mistake")) {
+    lines.push(
+      `🏁 Endgame. Winning position. ${move.san}. They're trying to snatch defeat from the jaws of victory. Classic endgame technique: none 💀`,
+      `📉 In the endgame with an advantage and they play ${move.san}?? You had ONE JOB: don't blunder. The job was failed successfully 🤡`,
+      `🫠 ${move.san} in a winning endgame. "I'll just convert my advantage" — narrator: they did not convert 💀📉`,
+      `😤 ${move.san}. Winning endgame + panicking = this move. Precision? Never heard of her 🗿`,
+    );
+  }
+
+  if (totalPawns > 0 && totalNonPawns <= 2) {
+    lines.push(
+      `🏁 We're in the endgame now. ${ctx.totalPieces} pieces left. Every tempo matters. Every pawn push is a decision. Do they know that? Probably not 🫠`,
+      `♟️ Pawn endgame territory. This is where "chess is 99% tactics" meets "I don't know any endgame theory" 💀📚`,
+      `🏁 ${move.san} — endgame chess. The board is clearing out. Time for technique. Or, more likely, time for suffering 🗿♟️`,
+    );
+  }
+
+  if (totalPawns === 0 && totalNonPawns <= 4) {
+    lines.push(
+      `🏁 No pawns left. This is pure technique now. The kind of endgame that separates the prepared from the clueless 📚💀`,
+      `🧹 Board is almost clean. ${ctx.totalPieces} pieces left. This is the "did you study endgames or did you skip that chapter" test 🗿📖`,
+    );
+  }
+
+  if (ctx.desperateDefense) {
+    lines.push(
+      `⚰️ ${move.san} — endgame and losing. At this point they're playing for the stalemate trick. Which at this elo might actually work 🤞💀`,
+      `🏳️ Losing endgame, fighting on. Respect the grind but the engine says it's over. The adult soul trembles 🗿😭`,
+    );
+  }
+
+  if (lines.length === 0) {
+    lines.push(
+      `🏁 Endgame time. ${ctx.totalPieces} pieces left. Precision mode activated. Or it should be 🎯🫠`,
+      `🧹 The board is thinning out. Every move matters more now. ${move.san} continues the endgame. Will it be technique or tears? 💀`,
+      `🏁 ${move.san} in the endgame. At this level, endgames are won by whoever blunders last. May the best blunderer win 🤡🏆`,
+    );
+  }
+
+  return { text: pickUnused(lines, used), annotations: ann };
+}
+
+/* ================================================================== */
+/*  Opponent Gift Roasts — when they fail to capitalize on gifts       */
+/* ================================================================== */
+
+function _opponentGiftRoast(
+  move: AnalyzedMove,
+  ctx: GameContext,
+  used: Set<string>,
+): { text: string; annotations: MoveAnnotation } | null {
+  const fromSq = move.uci.slice(0, 2);
+  const toSq = move.uci.slice(2, 4);
+  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(255, 200, 50, 0.7)"]], markers: [] };
+
+  const giftSize = ctx.opponentGift > 500 ? "MASSIVE" : ctx.opponentGift > 300 ? "huge" : "nice";
+  const isMiss = move.classification === "mistake" || move.classification === "inaccuracy" || move.classification === "blunder";
+
+  const lines: string[] = [];
+
+  if (isMiss) {
+    lines.push(
+      `🎁 The opponent just BLUNDERED and they respond with... ${move.san}?? A ${giftSize} gift was sitting right there and they didn't unwrap it 💀🤦`,
+      `🤡 Opponent handed them free material on a silver platter. They responded with ${move.san}. THEY DIDN'T TAKE THE GIFT. I'm in physical pain 😭💀`,
+      `🎁 A ${giftSize} blunder by the opponent! The eval shifted! And ${move.san} doesn't capitalize AT ALL. Two people who don't want to win this game 🤝🗿`,
+      `💀 The opponent just threw. Like, THREW threw. And ${move.san} completely ignores it. It's like finding money on the ground and walking past it 🫠💸`,
+      `🤡 Both players are competing to see who can lose FASTER. Opponent blunders, they play ${move.san} instead of punishing. This is art. Bad art, but art 🎨💀`,
+      `😤 THE OPPONENT GIFT-WRAPPED MATERIAL FOR THEM. ${move.san} just... didn't take it. At this point they BOTH deserve to lose 🗿`,
+    );
+  } else {
+    lines.push(
+      `🎁 Opponent just blundered and ${move.san} is... fine? They took the gift but didn't even say thank you. Missed the refutation but at least didn't make it worse 🤷`,
+      `😏 The opponent made a ${giftSize} mistake and they played ${move.san}. Not bad, not the best punishment. Like catching someone stealing and just giving them a stern look 👀🗿`,
+      `🎁 Opponent slipped up! ${move.san} is acceptable but the REAL punishment was right there. They chose mercy. Or ignorance. Same energy at this elo 💀`,
+    );
+  }
+
+  return { text: pickUnused(lines, used), annotations: ann };
+}
+
+/* ================================================================== */
+/*  Momentum / Eval Cratering Roasts                                   */
+/* ================================================================== */
+
+function _momentumRoast(
+  move: AnalyzedMove,
+  ctx: GameContext,
+  used: Set<string>,
+): { text: string; annotations: MoveAnnotation } | null {
+  const fromSq = move.uci.slice(0, 2);
+  const toSq = move.uci.slice(2, 4);
+  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(239, 68, 68, 0.6)"]], markers: [] };
+
+  const crater = Math.round(ctx.evalCrater / 100); // in pawns
+
+  const lines: string[] = [
+    `📉 The eval has dropped ${crater} pawns over the last few moves. The graph looks like a cliff dive. Is this chess or base jumping? 🪂💀`,
+    `📊 Losing ${crater} pawns of eval in just a few moves. The position is in FREEFALL. Someone grab a parachute 🪂😭`,
+    `📉 Eval cratering HARD. Down ${crater} pawns recently. This is the chess equivalent of watching your stocks on a Monday morning 📊💀`,
+    `🗿 The evaluation bar is PLUMMETING. ${crater} pawns gone in a few moves. At this rate they'll be losing by the time I finish this sentence 📉`,
+    `😭 The position was fine a few moves ago. NOW look at it. ${crater} pawns worse. The collapse is real and it's spectacular 🏚️💀`,
+    `📉 ${crater} pawns of advantage deleted over the last few moves. That's not a loss, that's a speedrun to resignation 🏃💨`,
+    `📊 The eval chart for this player looks like a ski slope. Downhill. Fast. No stopping. ${crater} pawns gone 🎿💀`,
+    `😤 Do they know the eval is cratering? ${crater} pawns lost recently. At this point even Stockfish is looking away 🤖😬`,
+  ];
+
+  return { text: pickUnused(lines, used), annotations: ann };
+}
+
+/* ================================================================== */
+/*  Time-Based Roasts — when clock data reveals suspicious speed       */
+/* ================================================================== */
+
+function _timeRoast(
+  move: AnalyzedMove,
+  ctx: GameContext,
+  used: Set<string>,
+): { text: string; annotations: MoveAnnotation } | null {
+  const timeSpent = move.timeSpent;
+  if (timeSpent === null) return null;
+
+  const fromSq = move.uci.slice(0, 2);
+  const toSq = move.uci.slice(2, 4);
+  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(100, 200, 255, 0.6)"]], markers: [] };
+
+  const isBlunder = move.classification === "blunder";
+  const isMistake = move.classification === "mistake";
+  const isGood = move.classification === "best" || move.classification === "great" || move.classification === "brilliant";
+  const isCritical = Math.abs(move.cpBefore) < 200; // position was roughly equal = critical moment
+
+  // Fast move on critical/important position
+  if (timeSpent <= 2 && isCritical && (isBlunder || isMistake)) {
+    return { text: pickUnused([
+      `⏱️ ${timeSpent}s on this move. ${timeSpent} SECONDS on the most important position of the game. And they blundered. THINK. USE YOUR TIME 💀⏰`,
+      `⚡ Played ${move.san} in ${timeSpent} seconds. In a critical position. And it's a ${move.classification}. Maybe try using more than 0.1% of your clock 🗿⏱️`,
+      `⏱️ ${timeSpent}s. The position was balanced. This was THE moment to think. They speedran to a ${move.classification} instead. Outstanding clock management 🤡`,
+      `💀 ${move.san} after ${timeSpent} seconds of "thought." The position required DEEP calculation and they treated it like they were late for dinner 🍽️⏰`,
+      `⏱️ ${timeSpent} seconds. Critical moment. ${move.classification}. The three horsemen of low elo chess. The fourth horseman is time trouble, and they're not even IN time trouble 🐴💀`,
+    ], used), annotations: ann };
+  }
+
+  // Fast move on a blunder in general
+  if (timeSpent <= 3 && isBlunder) {
+    return { text: pickUnused([
+      `⏱️ ${timeSpent}s and a blunder. Speed ≠ accuracy, folks. They moved faster than their brain could process 🧠💨`,
+      `⚡ ${move.san} in ${timeSpent} seconds. The confidence. The speed. The blunder. All happening at once 🤡⏱️`,
+      `⏱️ Premoved a blunder? Or just didn't think? ${timeSpent}s on ${move.san}. Either way: pain 💀`,
+    ], used), annotations: ann };
+  }
+
+  // Super long think and still blundered
+  if (timeSpent >= 60 && (isBlunder || isMistake)) {
+    return { text: pickUnused([
+      `⏱️ ${Math.round(timeSpent)}s of thinking... and THAT was the conclusion? ${move.san}? They burned over a minute for a ${move.classification}. The think tank has failed 💀🧠`,
+      `🤯 Over a MINUTE of thinking and they played ${move.san}. A ${move.classification}. What were they calculating in there?? Their grocery list?? 🛒😭`,
+      `⏱️ ${Math.round(timeSpent)} seconds on the clock used up for... ${move.san}. A ${move.classification}. All that time invested and the return was NEGATIVE 📉⏰`,
+      `💀 They thought for ${Math.round(timeSpent)} seconds. Over a minute. And produced a ${move.classification}. The chess clock is just decoration at this point ⏱️🗿`,
+    ], used), annotations: ann };
+  }
+
+  // Long think on an obvious move
+  if (timeSpent >= 45 && isGood && move.cpLoss <= 5) {
+    return { text: pickUnused([
+      `⏱️ ${Math.round(timeSpent)} seconds for ${move.san}?? It's the only good move and it took them THAT long to see it 🗿⏰`,
+      `😤 ${Math.round(timeSpent)}s to find the obvious move. At least they found it I guess. The clock is crying though ⏱️😭`,
+      `⏱️ Over ${Math.round(timeSpent / 10) * 10} seconds on a move Stockfish finds in 0.01s. But sure, take your time. Not like the clock matters 🤖⏰`,
+    ], used), annotations: ann };
+  }
+
+  // Instant premove energy on a normal move
+  if (timeSpent <= 1 && !isBlunder && !isMistake) {
+    if (Math.random() < 0.15) {
+      return { text: pickUnused([
+        `⚡ ${move.san} at LIGHT SPEED. ${timeSpent}s. Either a premove or they're channeling their inner Hikaru. Naka would be proud 🏎️💨`,
+        `⏱️ ${timeSpent}s. Premove energy. Confidence is high. Whether it's justified is another question entirely 🗿⚡`,
+      ], used), annotations: ann };
+    }
+    return null;
+  }
+
+  return null;
 }
 
 /* ================================================================== */
