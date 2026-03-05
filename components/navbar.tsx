@@ -14,7 +14,7 @@ const NAV_LINKS = [
   { href: "/analyze", label: "Analyze" },
   { href: "/train", label: "Training" },
   { href: "/guess", label: "Guess the Move" },
-  { href: "/roast", label: "🔥 Guess the Elo" },
+  { href: "/roast", label: "🔥 Roast the Elo" },
   { href: "/about", label: "About" },
 ];
 
@@ -189,7 +189,7 @@ export function Navbar() {
                     isActive("/roast") ? "text-orange-400 bg-orange-500/[0.08]" : "text-slate-400 hover:text-orange-400 hover:bg-orange-500/[0.06]"
                   }`}
                 >
-                  🔥 Guess the Elo
+                  🔥 Roast the Elo
                 </Link>
               </div>
             </div>
@@ -575,7 +575,7 @@ export function Navbar() {
                 ...NAV_LINKS,
                 { href: "/blog", label: "Blog" },
                 { href: "/dungeon", label: "⚔️ Dungeon Tactics" },
-                { href: "/roast", label: "🔥 Guess the Elo" },
+                { href: "/roast", label: "🔥 Roast the Elo" },
                 { href: "/openings", label: "📖 Openings" },
                 { href: "/leaderboard", label: "🏆 Leaderboard" },
                 { href: "/shop", label: "🪙 Coin Shop" },
