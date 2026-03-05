@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { MarkdownRenderer } from "./markdown";
+import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/json-ld";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -50,6 +51,20 @@ export default async function BlogPostPage({ params }: Props) {
 
   return (
     <div className="min-h-[80vh] px-4 py-12 sm:px-6">
+      <ArticleJsonLd
+        title={post.title}
+        description={post.description}
+        url={`https://firechess.com/blog/${slug}`}
+        datePublished={post.date}
+        author={post.author}
+      />
+      <BreadcrumbJsonLd
+        items={[
+          { name: "Home", href: "/" },
+          { name: "Blog", href: "/blog" },
+          { name: post.title, href: `/blog/${slug}` },
+        ]}
+      />
       <div className="mx-auto max-w-3xl">
         {/* Breadcrumb */}
         <Link

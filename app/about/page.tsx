@@ -3,9 +3,23 @@ import Image from "next/image";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "About FireChess - Free Chess Analysis Tool",
+  title: "About FireChess — Free Chess Analysis Tool",
   description:
     "FireChess is a free chess analysis tool that scans your Lichess and Chess.com games for repeated opening mistakes, missed tactics, and endgame blunders using Stockfish 18 WASM — all running privately in your browser.",
+  openGraph: {
+    title: "About FireChess — Free Chess Analysis Tool",
+    description:
+      "A free chess analysis tool that scans your games for repeated mistakes using Stockfish 18 — all in your browser.",
+    url: "https://firechess.com/about",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "About FireChess — Free Chess Analysis Tool",
+    description:
+      "Free chess analysis powered by Stockfish 18. Find your repeated mistakes.",
+  },
+  alternates: { canonical: "https://firechess.com/about" },
 };
 
 export default function AboutPage() {

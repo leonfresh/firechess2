@@ -3,9 +3,23 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Chess Improvement Blog | FireChess",
+  title: "Chess Improvement Blog",
   description:
     "Tips, guides, and analysis techniques to improve your chess. Learn about opening preparation, tactical patterns, endgame theory, and how to use engine analysis effectively.",
+  openGraph: {
+    title: "Chess Improvement Blog | FireChess",
+    description:
+      "Tips, guides, and analysis techniques to improve your chess — openings, tactics, endgames, and engine analysis.",
+    url: "https://firechess.com/blog",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Chess Improvement Blog | FireChess",
+    description:
+      "Guides, tips, and analysis techniques to level up your chess.",
+  },
+  alternates: { canonical: "https://firechess.com/blog" },
 };
 
 export default function BlogPage() {

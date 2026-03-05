@@ -1,0 +1,19 @@
+{
+  "name": "FireChess — Chess Analysis & Opening Leak Scanner",
+  "short_name": "FireChess",
+  "description": "Scan your Lichess and Chess.com games for repeated opening mistakes, missed tactics, and endgame blunders. Powered by Stockfish 18.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#10b981",
+  "orientation": "any",
+  "categories": ["games", "education", "utilities"],
+  "icons": [
+    {
+      "src": "/firechess-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

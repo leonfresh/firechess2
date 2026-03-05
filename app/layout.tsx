@@ -5,6 +5,7 @@ import Link from "next/link";
 import "./globals.css";
 import { SessionProvider } from "@/components/session-provider";
 import { Navbar } from "@/components/navbar";
+import { OrganizationJsonLd, WebApplicationJsonLd, WebSiteJsonLd } from "@/components/json-ld";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -19,38 +20,71 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FireChess - Chess Analysis & Opening Leak Scanner",
+  metadataBase: new URL("https://firechess.com"),
+  title: {
+    default: "FireChess - Free Chess Analysis & Opening Leak Scanner",
+    template: "%s | FireChess",
+  },
   description:
     "Scan your Lichess and Chess.com games for repeated opening mistakes, missed tactics, and endgame blunders. Powered by Stockfish 18 WASM — free, fast, and private.",
+  keywords: [
+    "chess analysis",
+    "opening mistakes",
+    "chess improvement",
+    "Lichess analysis",
+    "Chess.com analysis",
+    "Stockfish",
+    "chess tactics",
+    "endgame blunders",
+    "opening repertoire",
+    "chess training",
+    "free chess tool",
+    "chess leaks",
+    "chess engine",
+    "chess puzzles",
+    "guess the elo",
+  ],
+  authors: [{ name: "FireChess" }],
+  creator: "FireChess",
+  publisher: "FireChess",
   icons: {
     icon: "/firechess-logo.png",
     apple: "/firechess-logo.png",
   },
   openGraph: {
-    title: "FireChess - Chess Analysis & Opening Leak Scanner",
+    title: "FireChess - Free Chess Analysis & Opening Leak Scanner",
     description:
-      "Scan your games for repeated mistakes, missed tactics, and endgame blunders. Powered by Stockfish 18.",
+      "Scan your Lichess & Chess.com games for repeated mistakes, missed tactics, and endgame blunders. Powered by Stockfish 18 — free, fast, private.",
     url: "https://firechess.com",
     siteName: "FireChess",
-    images: [
-      {
-        url: "https://firechess.com/firechess-logo.png",
-        width: 512,
-        height: 512,
-        alt: "FireChess Logo",
-      },
-    ],
     type: "website",
     locale: "en_US",
   },
   twitter: {
-    card: "summary",
-    title: "FireChess - Chess Analysis & Opening Leak Scanner",
+    card: "summary_large_image",
+    title: "FireChess - Free Chess Analysis & Opening Leak Scanner",
     description:
       "Scan your games for repeated mistakes, missed tactics, and endgame blunders. Free & powered by Stockfish 18.",
-    images: ["https://firechess.com/firechess-logo.png"],
   },
-  metadataBase: new URL("https://firechess.com"),
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  alternates: {
+    canonical: "https://firechess.com",
+  },
+  manifest: "/manifest.webmanifest",
+  // Uncomment and fill in after registering with Google Search Console:
+  // verification: {
+  //   google: "YOUR_GOOGLE_VERIFICATION_CODE",
+  // },
 };
 
 export default function RootLayout({
@@ -61,6 +95,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans`}>
+        <OrganizationJsonLd />
+        <WebApplicationJsonLd />
+        <WebSiteJsonLd />
         <SessionProvider>
         <Navbar />
 

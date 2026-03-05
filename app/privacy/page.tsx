@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy - FireChess",
-  description: "FireChess privacy policy — how we handle your data.",
+  title: "Privacy Policy",
+  description: "FireChess privacy policy — how we handle your data, what we collect, and how we protect your privacy.",
+  alternates: { canonical: "https://firechess.com/privacy" },
 };
 
 export default function PrivacyPage() {
