@@ -643,17 +643,27 @@ function _blunderRoast(
     ])!, annotations: { arrows: [moveArrow], markers: [{ square: _toSq, emoji: "🤡" }] } };
   }
 
-  // 6. King safety
-  const ks = kingSafety(after, moverColor);
-  if (ks.score < 50 && ks.issues.length > 0) {
-    const issue = ks.issues[0];
+  // 6. King safety — only roast pawn moves in front of a castled king
+  if (move.pieceType === "p") {
     const king = findKing(after, moverColor);
-    const kingMarkers = king ? [{ square: king, emoji: "⚠️" }] : [];
-    return { text: pick([
-      `👑💀 ${move.san} and the king is in DANGER. ${issue}. More exposed than your browser history 🫣`,
-      `🏃 After ${move.san}: ${issue}. This king needs witness protection not another pawn move 😭`,
-      `🚨 ${move.san} leaves the king wide open — ${issue}. Can't keep getting away with this 🗿`,
-    ])!, annotations: { arrows: [moveArrow], markers: kingMarkers } };
+    if (king) {
+      const kf = fileIdx(king);
+      const castled = (moverColor === "w" ? (king === "g1" || king === "h1" || king === "b1" || king === "c1") : (king === "g8" || king === "h8" || king === "b8" || king === "c8"));
+      const pawnFile = fileIdx(_toSq);
+      const nearKing = Math.abs(pawnFile - kf) <= 1;
+      if (castled && nearKing) {
+        const ks = kingSafety(after, moverColor);
+        if (ks.score < 50 && ks.issues.length > 0) {
+          const issue = ks.issues[0];
+          const kingMarkers = [{ square: king, emoji: "⚠️" }];
+          return { text: pick([
+            `👑💀 ${move.san} pushes a pawn in front of the castled king — ${issue}. Weakening your own fortress. Outstanding move 🫣`,
+            `🏃 ${move.san} — pushing pawns in front of your king after castling? ${issue}. The king is BEGGING you to stop 😭`,
+            `🚨 ${move.san} weakens the pawn shield after castling — ${issue}. That's like removing the lock from your own front door 🗿`,
+          ])!, annotations: { arrows: [moveArrow], markers: kingMarkers } };
+        }
+      }
+    }
   }
 
   // 7. Development
@@ -730,14 +740,25 @@ function _mistakeRoast(
     } };
   }
 
-  const ksBefore = kingSafety(before, moverColor).score;
-  const ksAfter = kingSafety(after, moverColor);
-  if (ksAfter.score < ksBefore - 15 && ksAfter.issues.length > 0) {
+  // King safety for mistakes — only pawn moves in front of castled king
+  if (move.pieceType === "p") {
     const king = findKing(after, moverColor);
-    return { text: `⚠️ ${move.san} weakens the king — ${ksAfter.issues[0]}. Kinda sus. The king is not gonna be happy about that one 😬🫣`, annotations: {
-      arrows: [moveArrow],
-      markers: king ? [{ square: king, emoji: "⚠️" }] : [],
-    } };
+    if (king) {
+      const kf = fileIdx(king);
+      const toFile = fileIdx(move.uci.slice(2, 4) as Square);
+      const castled = (moverColor === "w" ? (king === "g1" || king === "h1" || king === "b1" || king === "c1") : (king === "g8" || king === "h8" || king === "b8" || king === "c8"));
+      const nearKing = Math.abs(toFile - kf) <= 1;
+      if (castled && nearKing) {
+        const ksBefore = kingSafety(before, moverColor).score;
+        const ksAfter = kingSafety(after, moverColor);
+        if (ksAfter.score < ksBefore - 15 && ksAfter.issues.length > 0) {
+          return { text: `⚠️ ${move.san} pushes a pawn near the castled king — ${ksAfter.issues[0]}. Weakening your own king shelter is not the vibe 😬🫣`, annotations: {
+            arrows: [moveArrow],
+            markers: [{ square: king, emoji: "⚠️" }],
+          } };
+        }
+      }
+    }
   }
 
   if (move.bestMoveSan) {
