@@ -37,6 +37,48 @@ import {
   type MoveClassification,
   type GameSummary,
 } from "@/lib/roast-commentary";
+import { RoastAvatar, type RoastMood } from "@/components/roast-avatar";
+
+/* ================================================================== */
+/*  Typewriter hook                                                     */
+/* ================================================================== */
+
+function useTypewriter(text: string | null, charDelay = 18) {
+  const [displayed, setDisplayed] = useState("");
+  const [isDone, setIsDone] = useState(true);
+
+  useEffect(() => {
+    if (!text) { setDisplayed(""); setIsDone(true); return; }
+    setIsDone(false);
+    setDisplayed("");
+    let i = 0;
+    const timer = setInterval(() => {
+      i++;
+      setDisplayed(text.slice(0, i));
+      if (i >= text.length) { clearInterval(timer); setIsDone(true); }
+    }, charDelay);
+    return () => clearInterval(timer);
+  }, [text, charDelay]);
+
+  return { displayed, isDone };
+}
+
+/* ================================================================== */
+/*  Mood from classification                                            */
+/* ================================================================== */
+
+function getMood(move: { classification: MoveClassification; cpLoss: number } | null): RoastMood {
+  if (!move) return "neutral";
+  switch (move.classification) {
+    case "brilliant": return "mindblown";
+    case "great": case "best": return "smug";
+    case "good": return "neutral";
+    case "inaccuracy": return "suspicious";
+    case "mistake": return "disappointed";
+    case "blunder": return move.cpLoss > 400 ? "laughing" : "shocked";
+    default: return "neutral";
+  }
+}
 
 /* ================================================================== */
 /*  Types                                                               */
@@ -126,6 +168,11 @@ export default function RoastPage() {
 
   const usedLines = useRef(new Set<string>());
 
+  /* ── Active comment + typewriter ── */
+  const [activeComment, setActiveComment] = useState<string | null>(null);
+  const { displayed: typewriterText, isDone: typingDone } = useTypewriter(activeComment);
+  const [currentMood, setCurrentMood] = useState<RoastMood>("neutral");
+
   /* ── Fetch a new game ── */
   const fetchGame = useCallback(async () => {
     setPageState("loading");
@@ -140,6 +187,8 @@ export default function RoastPage() {
     setSummaryLine("");
     setEloFlavor("");
     usedLines.current.clear();
+    setActiveComment(null);
+    setCurrentMood("neutral");
 
     try {
       // Fetch puzzles from Lichess to discover game IDs (client-side)
@@ -421,39 +470,47 @@ export default function RoastPage() {
     fetchGame();
   }, [fetchGame]);
 
-  /* ── Autoplay ── */
+  /* ── Autoplay (waits for typewriter to finish) ── */
   useEffect(() => {
     if (pageState !== "watching" || !autoplay) return;
+    if (!typingDone) return; // wait for speech bubble animation
+
     if (currentIdx >= moves.length - 1) {
-      // Game over, go to guessing
-      setTimeout(() => setPageState("guessing"), 1500);
+      setTimeout(() => {
+        setActiveComment(null);
+        setPageState("guessing");
+      }, 1500);
       return;
     }
 
+    // After a comment finishes typing, use a shorter pause; otherwise normal speed
+    const delay = activeComment ? 800 : speed;
+
     const timer = setTimeout(() => {
-      setCurrentIdx(prev => {
-        const next = prev + 1;
-        const move = moves[next];
-        if (move) {
-          setFen(move.fen);
-          setLastMove({ from: move.from, to: move.to });
+      const next = currentIdx + 1;
+      const move = moves[next];
+      if (move) {
+        setCurrentIdx(next);
+        setFen(move.fen);
+        setLastMove({ from: move.from, to: move.to });
 
-          // Play sound
-          if (move.isCheck) playSound("check");
-          else if (move.isCapture) playSound("capture");
-          else playSound("move");
+        if (move.isCheck) playSound("check");
+        else if (move.isCapture) playSound("capture");
+        else playSound("move");
 
-          // Add comment to history
-          if (move.comment) {
-            setCommentHistory(prev => [...prev, move.comment!]);
-          }
+        if (move.comment) {
+          setActiveComment(move.comment);
+          setCommentHistory(prev => [...prev, move.comment!]);
+          setCurrentMood(getMood(move));
+        } else {
+          setActiveComment(null);
+          setCurrentMood(getMood(move));
         }
-        return next;
-      });
-    }, speed);
+      }
+    }, delay);
 
     return () => clearTimeout(timer);
-  }, [pageState, autoplay, currentIdx, moves, speed]);
+  }, [pageState, autoplay, currentIdx, moves, speed, typingDone, activeComment]);
 
   /* ── Scroll comment box to bottom ── */
   useEffect(() => {
@@ -487,6 +544,10 @@ export default function RoastPage() {
       .map(m => m.comment)
       .filter(Boolean) as string[];
     setCommentHistory(comments);
+    // Update avatar mood and clear active comment
+    const m2 = idx >= 0 ? moves[idx] : null;
+    setCurrentMood(m2 ? getMood(m2) : "neutral");
+    setActiveComment(null);
   }, [moves]);
 
   const skipToGuess = useCallback(() => {
@@ -801,26 +862,57 @@ export default function RoastPage() {
 
             {/* Sidebar — commentary + guess */}
             <div className="flex flex-col gap-4">
-              {/* Commentary box */}
+              {/* ── Live Roast: Avatar + Speech Bubble ── */}
               <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-orange-400 mb-3 flex items-center gap-1.5">
-                  🎙️ Commentary
+                  🎙️ Live Roast
                 </h3>
-                <div
-                  ref={commentBoxRef}
-                  className="h-[320px] overflow-y-auto space-y-2 pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10"
-                >
-                  {commentHistory.length === 0 && pageState === "watching" && (
-                    <p className="text-xs text-slate-600 italic">Waiting for notable moves…</p>
-                  )}
-                  {commentHistory.map((c, i) => (
-                    <div
-                      key={i}
-                      className="rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2 text-sm text-slate-300 animate-fadeIn"
-                    >
-                      {c}
-                    </div>
-                  ))}
+
+                {/* Avatar + Speech Bubble */}
+                <div className="flex items-start gap-3 mb-4 min-h-[100px]">
+                  <RoastAvatar mood={currentMood} size={68} />
+                  <div className="relative flex-1 min-w-0">
+                    {activeComment ? (
+                      <>
+                        {/* Triangle tail */}
+                        <div className="absolute -left-2 top-5 w-0 h-0 border-y-[6px] border-y-transparent border-r-[8px] border-r-orange-500/20" />
+                        {/* Bubble */}
+                        <div className="rounded-xl border border-orange-500/20 bg-orange-500/[0.06] px-4 py-3 animate-fadeIn">
+                          <p className="text-sm text-slate-200 leading-relaxed">
+                            {typewriterText}
+                            {!typingDone && <span className="animate-blink text-orange-400">|</span>}
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex items-center justify-center h-[80px] text-xs text-slate-600 italic">
+                        {pageState === "watching" ? "Watching the game... 👀" : "Ready for roast 🔥"}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Commentary History (compact) */}
+                <div className="border-t border-white/[0.04] pt-3">
+                  <h4 className="text-[10px] uppercase tracking-wider text-slate-600 mb-2 flex items-center gap-1">
+                    📜 Commentary Log
+                  </h4>
+                  <div
+                    ref={commentBoxRef}
+                    className="h-[180px] overflow-y-auto space-y-1.5 pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10"
+                  >
+                    {commentHistory.length === 0 && pageState === "watching" && (
+                      <p className="text-[11px] text-slate-700 italic">No comments yet…</p>
+                    )}
+                    {commentHistory.map((c, i) => (
+                      <div
+                        key={i}
+                        className="text-xs text-slate-500 pl-2 border-l-2 border-white/[0.06] py-0.5 animate-fadeIn"
+                      >
+                        {c}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -965,6 +1057,13 @@ export default function RoastPage() {
         .scrollbar-thin::-webkit-scrollbar-thumb {
           background: rgba(255,255,255,0.1);
           border-radius: 2px;
+        }
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+        .animate-blink {
+          animation: blink 0.8s step-end infinite;
         }
       `}</style>
     </main>
