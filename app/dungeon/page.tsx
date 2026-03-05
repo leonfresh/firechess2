@@ -790,6 +790,15 @@ function BattleBoard({
       const matches = from + to === expectedBase && (!expectedPromo || promotion === expectedPromo);
 
       if (!matches) {
+        // Check if this is even a legal move — don't penalize mouse slips / illegal moves
+        try {
+          const legCheck = new Chess(fen);
+          const legResult = legCheck.move({ from, to, promotion: promotion || "q" } as any);
+          if (!legResult) return false; // illegal move, ignore silently
+        } catch {
+          return false; // illegal move, ignore silently
+        }
+
         playSound("wrong");
         playDungeonSound("damage");
         setWrongMove({ from, to });
@@ -1344,7 +1353,16 @@ function GuessMoveBoard({
         setTimeout(() => onSolved(), 1200);
         return true;
       } else {
-        // Wrong
+        // Check legality — don't penalize mouse slips / illegal moves
+        try {
+          const legCheck = new Chess(fen);
+          const legResult = legCheck.move({ from, to, promotion: "q" });
+          if (!legResult) return false;
+        } catch {
+          return false;
+        }
+
+        // Wrong but legal move
         setAttempts(a => a + 1);
         playSound("wrong");
         if (attempts >= 1) {
