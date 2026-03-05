@@ -176,6 +176,8 @@ export default function RoastPage() {
 
   const usedLines = useRef(new Set<string>());
 
+  const [shareText, setShareText] = useState<string | null>(null);
+
   /* ── Active comment + typewriter ── */
   const [activeComment, setActiveComment] = useState<string | null>(null);
   const { displayed: typewriterText, isDone: typingDone } = useTypewriter(activeComment);
@@ -485,7 +487,7 @@ export default function RoastPage() {
       // Inject closing game summary roast on the last move
       if (analyzed.length > 0) {
         const lastIdx = analyzed.length - 1;
-        const closingRoast = getClosingRoast(totalBlunders, totalMistakes, totalInaccuracies, analyzed.length, data.result);
+        const closingRoast = getClosingRoast(totalBlunders, totalMistakes, totalInaccuracies, analyzed.length);
         analyzed[lastIdx].comment = closingRoast;
       }
 
@@ -672,6 +674,29 @@ export default function RoastPage() {
     setPageState("guessing");
   }, [moves]);
 
+  /* ── Keyboard navigation (arrow keys, space, F) ── */
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (pageState !== "watching" && pageState !== "guessing" && pageState !== "revealed") return;
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        setAutoplay(false);
+        goToMove(Math.max(-1, currentIdx - 1));
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        setAutoplay(false);
+        goToMove(Math.min(moves.length - 1, currentIdx + 1));
+      } else if (e.key === " " && pageState === "watching") {
+        e.preventDefault();
+        setAutoplay(prev => !prev);
+      } else if (e.key === "f" || e.key === "F") {
+        setOrientation(o => o === "white" ? "black" : "white");
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [pageState, currentIdx, moves.length, goToMove]);
+
   /* ── Guess handling ── */
   const handleGuess = useCallback((bracketIdx: number) => {
     if (!game || selectedBracket !== null) return;
@@ -843,9 +868,9 @@ export default function RoastPage() {
 
         {/* ── Main game view (watching / guessing / revealed) ── */}
         {(pageState === "watching" || pageState === "guessing" || pageState === "revealed") && (
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_360px]">
+          <div className="grid grid-cols-1 gap-4 lg:gap-6 lg:grid-cols-[1fr_360px]">
             {/* Board column */}
-            <div className="flex flex-col items-center gap-3">
+            <div className="flex flex-col items-center gap-2 sm:gap-3">
               {/* Player labels */}
               <div className="w-full max-w-[640px] flex items-center justify-between px-1">
                 <div className="flex items-center gap-2 text-sm">
@@ -924,7 +949,7 @@ export default function RoastPage() {
 
               {/* Commentary text below board */}
               {activeComment && (pageState === "watching" || pageState === "guessing") && (
-                <div className="w-full max-w-[640px] mt-1 animate-fadeIn">
+                <div className="w-full max-w-[640px] animate-fadeIn">
                   <div className="rounded-lg bg-black/50 backdrop-blur-sm border border-white/10 px-3 py-2">
                     <p className="text-xs sm:text-sm text-white/90 leading-relaxed text-center">
                       {typewriterText}
@@ -936,7 +961,7 @@ export default function RoastPage() {
 
               {/* Playback controls */}
               {(pageState === "watching" || pageState === "guessing" || pageState === "revealed") && (
-                <div className="flex items-center gap-3 mt-2">
+                <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-1 sm:mt-2">
                   <button
                     onClick={() => goToMove(Math.max(-1, currentIdx - 1))}
                     className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-slate-400 hover:bg-white/[0.06] transition-colors"
@@ -964,6 +989,14 @@ export default function RoastPage() {
                   >
                     Next ▶
                   </button>
+                  {/* Flip board */}
+                  <button
+                    onClick={() => setOrientation(o => o === "white" ? "black" : "white")}
+                    title="Flip board"
+                    className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-sm text-slate-400 hover:bg-white/[0.06] transition-colors"
+                  >
+                    🔄
+                  </button>
                   {pageState === "watching" && (
                     <>
                       <select
@@ -989,7 +1022,7 @@ export default function RoastPage() {
 
               {/* Move progress bar */}
               {(pageState === "watching" || pageState === "guessing" || pageState === "revealed") && moves.length > 0 && (
-                <div className="w-full max-w-[640px] mt-1">
+                <div className="w-full max-w-[640px]">
                   <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-orange-500 to-red-500 transition-all duration-300"
@@ -1005,9 +1038,9 @@ export default function RoastPage() {
             </div>
 
             {/* Sidebar — commentary + guess */}
-            <div className="flex flex-col gap-4">
-              {/* ── Live Roast: Avatar + Speech Bubble ── */}
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+            <div className="flex flex-col gap-3 sm:gap-4">
+              {/* ── Live Roast: Avatar + Speech Bubble (hidden on mobile, shown under board instead) ── */}
+              <div className="hidden lg:block rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-orange-400 mb-3 flex items-center gap-1.5">
                   🎙️ Live Roast
                   {tts.supported && (
@@ -1056,7 +1089,7 @@ export default function RoastPage() {
                   </h4>
                   <div
                     ref={commentBoxRef}
-                    className="h-[180px] overflow-y-auto space-y-1.5 pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10"
+                    className="h-[140px] lg:h-[180px] overflow-y-auto space-y-1.5 pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10"
                   >
                     {commentHistory.length === 0 && pageState === "watching" && (
                       <p className="text-[11px] text-slate-700 italic">No comments yet…</p>
@@ -1075,7 +1108,7 @@ export default function RoastPage() {
 
               {/* Move list (compact) */}
               {(pageState === "watching" || pageState === "guessing" || pageState === "revealed") && (
-                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+                <div className="hidden lg:block rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                     Moves
                   </h3>
@@ -1166,6 +1199,53 @@ export default function RoastPage() {
                   >
                     View on Lichess ↗
                   </a>
+
+                  {/* Result + Opening */}
+                  <div className="text-center text-xs text-slate-500 space-y-0.5">
+                    <p>🏁 {game.result}{game.termination ? ` — ${game.termination}` : ""}</p>
+                    <p>📋 {game.opening}</p>
+                  </div>
+
+                  {/* Share result */}
+                  <button
+                    onClick={() => {
+                      const bracket = selectedBracket !== null ? ELO_BRACKETS[selectedBracket] : null;
+                      const actualBracket = ELO_BRACKETS[getEloBracketIdx(game.avgElo)];
+                      const diff = selectedBracket !== null ? Math.abs(selectedBracket - getEloBracketIdx(game.avgElo)) : 99;
+                      const emoji = diff === 0 ? "🎯" : diff === 1 ? "🔥" : "💀";
+                      const text = [
+                        `${emoji} Roast the Elo — I guessed ${bracket?.label ?? "?"} and the actual Elo was ${game.avgElo} (${actualBracket.label})`,
+                        `💀 ${blunders} blunders · ❌ ${mistakes} mistakes · ⚠️ ${inaccuracies} inaccuracies`,
+                        `🐸 Try it yourself: firechess.app/roast`,
+                      ].join("\n");
+                      navigator.clipboard.writeText(text).then(() => {
+                        setShareText("Copied!");
+                        setTimeout(() => setShareText(null), 2000);
+                      }).catch(() => {
+                        setShareText("Copy failed");
+                        setTimeout(() => setShareText(null), 2000);
+                      });
+                    }}
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/[0.08] transition-all flex items-center justify-center gap-2"
+                  >
+                    {shareText ?? "📋 Share Result"}
+                  </button>
+
+                  {/* Re-watch */}
+                  <button
+                    onClick={() => {
+                      setPageState("watching");
+                      setCurrentIdx(-1);
+                      setFen("start");
+                      setLastMove(null);
+                      setCommentHistory([]);
+                      setActiveComment(null);
+                      setAutoplay(true);
+                    }}
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-xs text-slate-400 hover:bg-white/[0.08] transition-all"
+                  >
+                    🔁 Re-watch Game
+                  </button>
 
                   <button
                     onClick={fetchGame}

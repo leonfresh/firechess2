@@ -915,31 +915,23 @@ export function getPhaseContext(moveNumber: number, totalMoves: number): string 
 
 /**
  * Closing game summary roast — provides an overall assessment of both players.
- * Uses blunder/mistake/inaccuracy counts and result to generate a meme-style wrap-up.
+ * Uses blunder/mistake/inaccuracy counts to generate a meme-style wrap-up.
+ * Does NOT mention the result to avoid spoiling the outcome.
  */
 export function getClosingRoast(
   blunders: number,
   mistakes: number,
   inaccuracies: number,
   totalMoves: number,
-  result: string,
 ): string {
   const lines: string[] = [];
 
-  // Result-based
-  if (result === "1-0" || result === "0-1") {
-    lines.push(
-      `🏁 And that's the game! ${result}. One player won, but let's be real — both sides lost dignity today 💀🗿`,
-      `🏁 Game over. ${result}. The winner can celebrate, but I've seen their moves. It's a hollow victory 🫠👑`,
-      `🏁 ${result}. The losing side will blame lag. The winning side will pretend they meant to play like that. Both are lying 🤡`,
-    );
-  } else {
-    lines.push(
-      `🏁 And it's a draw! Honestly, nobody deserved to win this game. Justice was served 🤝🗿`,
-      `🏁 Draw. Neither player could deliver the finishing blow. Like two boxers who keep missing 🥊💀`,
-      `🏁 It ended in a draw. Stalemate of skill. Or the mutual absence of it 🫠🤝`,
-    );
-  }
+  // General closing lines (result-neutral)
+  lines.push(
+    `🏁 And that's the game! Both sides gave it everything they had. And by everything, I mean every piece. Voluntarily 💀🗿`,
+    `🏁 Game over! What a ride. I'm not saying it was a rollercoaster, but my evaluation bar needs therapy 📊🫠`,
+    `🏁 And that's a wrap! Time to guess the elo. Choose wisely... or don't. I'll roast you either way 🔥🤡`,
+  );
 
   // Quality-based additions
   if (blunders >= 5) {
