@@ -1,13 +1,16 @@
 /**
- * Roast Commentary Engine — AnarchyChess / Gotham-style humour
+ * Roast Commentary Engine — Position-Aware Edition
  *
- * Generates contextual, sarcastic commentary based on Stockfish evaluations
- * of real game moves. Designed to never feel repetitive by having a deep
- * pool of lines for every situation, and combining multiple dimensions
- * (piece type, eval swing, move number, elo bracket, specific patterns).
+ * Generates contextual, sarcastic commentary by applying chess.js board
+ * analysis (forks, pins, hanging pieces, king safety, pawn structure,
+ * development) to each move — then wrapping the insights in
+ * AnarchyChess / Gotham Chess-style humor.
+ *
+ * Unlike the static-pool v1, every roast now references the actual
+ * squares, pieces and patterns on the board.
  */
 
-import { Chess, type Move } from "chess.js";
+import { Chess, type PieceSymbol, type Color, type Square } from "chess.js";
 
 /* ================================================================== */
 /*  Types                                                               */
@@ -22,30 +25,28 @@ export type MoveClassification =
   | "inaccuracy"
   | "mistake"
   | "blunder"
-  | "miss";    // missed a winning tactic
+  | "miss";
 
 export interface AnalyzedMove {
   san: string;
   uci: string;
   moveNumber: number;
   color: "w" | "b";
-  fen: string;           // FEN before the move
-  fenAfter: string;      // FEN after the move
-  cpBefore: number;      // eval before (from side to move's perspective)
-  cpAfter: number;       // eval after (from side to move's perspective — flipped)
+  fen: string;
+  fenAfter: string;
+  cpBefore: number;
+  cpAfter: number;
   bestMoveSan: string | null;
-  cpLoss: number;        // centipawn loss vs best move
+  cpLoss: number;
   classification: MoveClassification;
-
-  // Pattern flags
   isCapture: boolean;
   isCheck: boolean;
   isCastle: boolean;
   isPromotion: boolean;
-  pieceType: string;     // p, n, b, r, q, k
+  pieceType: string;
   capturedPiece?: string;
-  hungPiece: boolean;    // piece was left en prise after this move
-  hungWhat?: string;     // what piece was hung
+  hungPiece: boolean;
+  hungWhat?: string;
   sacrificedMaterial: boolean;
   wasBookMove: boolean;
   mateInN: number | null;
@@ -84,274 +85,698 @@ export function classifyMove(cpLoss: number, isBestMove: boolean): MoveClassific
 }
 
 /* ================================================================== */
-/*  Roast Lines — MASSIVE pool for variety                              */
+/*  Helpers — chess.js board inspection                                 */
 /* ================================================================== */
 
-// ── Blunder roasts (by piece type) ──
+const FILES = ["a", "b", "c", "d", "e", "f", "g", "h"] as const;
+const RANKS = ["1", "2", "3", "4", "5", "6", "7", "8"] as const;
 
-const BLUNDER_GENERAL = [
-  "Oh no. Oh NO. What was that?",
-  "Ladies and gentlemen… we have a blunder.",
-  "This move was so bad the chess pieces filed a complaint.",
-  "Even Stockfish crashed trying to understand this.",
-  "I need a moment. That move physically hurt me.",
-  "Bold strategy: lose on purpose. Unorthodox, but let's see.",
-  "And just like that, the advantage evaporates.",
-  "This is why we can't have nice things in chess.",
-  "Actually laughing out loud. What was the plan here?",
-  "The engine just dropped 3 evaluation points. Like it saw a ghost.",
-  "If mistakes were currency, this player would be rich.",
-  "Plot twist: they're throwing on purpose. Right? RIGHT?",
-  "That move belongs in a museum. The Museum of Bad Decisions.",
-  "Somewhere, a chess coach just felt a disturbance in the force.",
-  "This is the chess equivalent of walking into a glass door.",
-  "Tell me you don't see the board without telling me you don't see the board.",
-  "My man saw the best move and chose violence against himself.",
-  "I physically recoiled. That was ROUGH.",
-  "The kind of move that makes you Alt+F4 and go touch grass.",
-  "If I showed this to a 1200, they'd roast the player. A 1200.",
-];
+const PIECE_NAMES: Record<string, string> = {
+  p: "pawn", n: "knight", b: "bishop", r: "rook", q: "queen", k: "king",
+};
 
-const BLUNDER_QUEEN = [
-  "They just HUNG the queen. The QUEEN. On a silver platter.",
-  "Queen hangs like laundry on a Sunday afternoon.",
-  "That queen was worth 9 points. Now it's worth memories.",
-  "Giving the queen away like free samples at Costco.",
-  "My brother in Christ, the queen was RIGHT THERE.",
-  "Queen sacrifice? No. Queen donation. Taxes, if you will.",
-  "They lost the queen faster than I lose my motivation to study openings.",
-  "Hanging the queen is crazy, but hanging it on move {move} is INSANE.",
-  "The queen: 'Am I a joke to you?' Apparently yes.",
-  "Next time just start the game without a queen, save time.",
-  "This isn't a sacrifice. Sacrifices have purpose. This is just grief.",
-  "RIP to the queen. She didn't deserve this.",
-];
+const PIECE_VALUES: Record<string, number> = {
+  p: 1, n: 3, b: 3, r: 5, q: 9, k: 0,
+};
 
-const BLUNDER_ROOK = [
-  "That rook just got donated to charity.",
-  "Hanging a rook. Classic. Love to see it.",
-  "The rook hangs and nobody noticed until it was too late.",
-  "Free rook! Get your free rook here!",
-  "That rook was just vibing and then— yeah.",
-  "A whole rook. Five points. Gone. Reduced to atoms.",
-  "Imagine working 20 moves to get a rook active, then hanging it.",
-  "The rook: *exists*. The opponent: *I'll take that, thanks.*",
-];
+function pn(t: string, cap = false): string {
+  const n = PIECE_NAMES[t] ?? "piece";
+  return cap ? n[0].toUpperCase() + n.slice(1) : n;
+}
 
-const BLUNDER_KNIGHT = [
-  "That knight jumped right into the shadow realm.",
-  "The knight went to an outpost… an outpost of no return.",
-  "Knight goes from hero to zero in one move.",
-  "They put the knight where it could be taken for free. Why.",
-  "My man sent the knight on a suicide mission.",
-  "That knight is pinned, forked, and crying.",
-];
+function opp(c: Color): Color {
+  return c === "w" ? "b" : "w";
+}
 
-const BLUNDER_BISHOP = [
-  "The bishop just walked into a trap like it's a mall sale.",
-  "Bishop hangs. The diagonal of death claims another victim.",
-  "Imagine losing a bishop for literally nothing.",
-  "That bishop had so much potential. Had.",
-  "The bishop moved to the worst possible square. Achievement unlocked.",
-];
+function fileIdx(s: string): number { return s.charCodeAt(0) - 97; }
+function rankIdx(s: string): number { return parseInt(s[1]) - 1; }
+function sq(f: number, r: number): Square | null {
+  if (f < 0 || f > 7 || r < 0 || r > 7) return null;
+  return `${FILES[f]}${RANKS[r]}` as Square;
+}
 
-const BLUNDER_PAWN = [
-  "It's just a pawn but the position is now completely lost.",
-  "Losing a pawn here is like pulling one card from a house of cards.",
-  "A pawn drop, and the whole structure collapses.",
-  "One pawn. That's all it took to ruin everything.",
-];
+interface PieceInfo { type: PieceSymbol; color: Color; square: Square }
 
-// ── Hung piece roasts ──
+function allPieces(chess: Chess): PieceInfo[] {
+  const out: PieceInfo[] = [];
+  for (const f of FILES) for (const r of RANKS) {
+    const s = `${f}${r}` as Square;
+    const p = chess.get(s);
+    if (p) out.push({ type: p.type, color: p.color, square: s });
+  }
+  return out;
+}
 
-const HUNG_PIECE_ROASTS = [
-  "They just left a piece hanging. Completely en prise. Just sitting there.",
-  "That piece is hanging like a decoration. Except it's your position that's decorated.",
-  "Hanging a piece in {year}? In this economy?",
-  "The piece is free. It's literally free. And they just… left it there.",
-  "They calculated everything except the part where the piece could be taken.",
-  "No defense, no compensation, no plan. Just vibes and hanging pieces.",
-  "This is the chess equivalent of leaving your car unlocked with the keys in it.",
-  "Stockfish doesn't even need to think here. The piece is just… free.",
-];
+function findKing(chess: Chess, color: Color): Square | null {
+  for (const p of allPieces(chess)) if (p.type === "k" && p.color === color) return p.square;
+  return null;
+}
 
-// ── Sacrifice roasts (sacrifice that's actually a blunder) ──
+/* ================================================================== */
+/*  Board Analysis Functions                                            */
+/* ================================================================== */
 
-const FAKE_SACRIFICE = [
-  "They sacrificed the {piece}! Bold! Brave! …and terrible.",
-  "Is it a sacrifice if you get absolutely nothing for it? Asking for a friend.",
-  "SACRIFICE! *checks engine* Oh. It's just losing material.",
-  "The Tal wannabe energy is strong but the execution is… lacking.",
-  "What a sacrifice! What a concept! What a… blunder.",
-  "They went for the speculative sacrifice. Except it's not speculative, it's just bad.",
-  "\"I'll sac the {piece} and get attacking chances.\" — narrator: there were no attacking chances.",
-  "Kasparov would've made this work. This is not Kasparov.",
-  "Sometimes you sacrifice material for compensation. This is not one of those times.",
-];
+/* ── Hanging pieces ── */
+function detectHanging(chess: Chess, color: Color): PieceInfo[] {
+  const hanging: PieceInfo[] = [];
+  try {
+    const oppMoves = chess.moves({ verbose: true });
+    const attacked = new Set(oppMoves.filter(m => m.captured).map(m => m.to));
+    for (const p of allPieces(chess)) {
+      if (p.color === color && p.type !== "k" && attacked.has(p.square) && (PIECE_VALUES[p.type] ?? 0) >= 3) {
+        hanging.push(p);
+      }
+    }
+  } catch { /* not opponent's turn — skip */ }
+  return hanging;
+}
 
-// ── Missed mate ──
+/* ── Fork detection ── */
+function isAttacking(_chess: Chess, from: Square, attacker: PieceInfo, target: Square): boolean {
+  const dFile = fileIdx(target) - fileIdx(from);
+  const dRank = rankIdx(target) - rankIdx(from);
+  switch (attacker.type) {
+    case "n": {
+      const af = Math.abs(dFile), ar = Math.abs(dRank);
+      return (af === 2 && ar === 1) || (af === 1 && ar === 2);
+    }
+    case "p": {
+      const dir = attacker.color === "w" ? 1 : -1;
+      return dRank === dir && Math.abs(dFile) === 1;
+    }
+    case "b": return Math.abs(dFile) === Math.abs(dRank) && dFile !== 0 && pathClear(_chess, from, target);
+    case "r": return (dFile === 0 || dRank === 0) && (dFile !== 0 || dRank !== 0) && pathClear(_chess, from, target);
+    case "q": return ((dFile === 0 || dRank === 0) || (Math.abs(dFile) === Math.abs(dRank))) && (dFile !== 0 || dRank !== 0) && pathClear(_chess, from, target);
+    case "k": return Math.abs(dFile) <= 1 && Math.abs(dRank) <= 1 && (dFile !== 0 || dRank !== 0);
+    default: return false;
+  }
+}
 
-const MISSED_MATE = [
-  "They had mate in {n}. MATE IN {n}. And they played THAT.",
-  "Mate was right there. Like RIGHT there. On the board. Staring at them.",
-  "How do you miss mate in {n}? How?? I need answers.",
-  "The computer is showing mate in {n} and this person chose to play a developing move.",
-  "Mate in {n} was available. Instead, we got whatever THIS is.",
-  "The one time in the whole game they have a forced mate, and they don't see it.",
-  "Imagine having mate in {n} and thinking 'nah, let me improve my knight.'",
-  "Mate blindness: when the winning move is literally checkmate and you don't play it.",
-  "Missing mate in {n} should be illegal. Actually, in some countries it probably is.",
-];
+function pathClear(chess: Chess, from: Square, to: Square): boolean {
+  const sf = fileIdx(from), sr = rankIdx(from), tf = fileIdx(to), tr = rankIdx(to);
+  const df = Math.sign(tf - sf), dr = Math.sign(tr - sr);
+  let f = sf + df, r = sr + dr;
+  while (f !== tf || r !== tr) {
+    const s = sq(f, r);
+    if (!s || chess.get(s)) return false;
+    f += df; r += dr;
+  }
+  return true;
+}
 
-// ── Good move / brilliant roasts ──
+function detectForks(chess: Chess, square: Square, piece: PieceInfo): PieceInfo[] {
+  const attacked: PieceInfo[] = [];
+  for (const t of allPieces(chess)) {
+    if (t.color === piece.color || t.type === "p") continue;
+    if (isAttacking(chess, square, piece, t.square)) attacked.push(t);
+  }
+  return attacked;
+}
 
-const BRILLIANT_ROASTS = [
-  "WAIT. That's actually… brilliant? At THIS elo?",
-  "Okay I take back everything I said. That move was FIRE.",
-  "Even Stockfish approves. And Stockfish approves of NOTHING.",
-  "A glimmer of hope! A flash of genius in the darkness!",
-  "This is the best move in the game and it's not even close.",
-  "Where was this energy three moves ago when they hung a piece?",
-  "They found the only move. And it was the hardest one. Respect.",
-  "The engine likes this. I like this. Chess is beautiful sometimes.",
-  "This move is so good I had to double-check the elo. Still {elo}. Wow.",
-  "Galaxy brain move. Completely unexpected. Is this even the same player?",
-  "Okay that was disgusting. In a good way. What a move.",
-];
+/* ── Pin detection ── */
+type PinInfo = { pinner: PieceInfo; pinned: PieceInfo; target: PieceInfo };
 
-const GREAT_MOVE_ROASTS = [
-  "Solid move. Top engine choice. Nothing to roast here… unfortunately.",
-  "Playing the best move? In MY game? More likely than you think.",
-  "Credit where it's due — that's textbook.",
-  "The right move for the right reasons. A rare sighting.",
-  "Accurate. Clean. Almost suspicious for this elo range.",
-];
+function sliderDirs(t: PieceSymbol): [number, number][] {
+  if (t === "b") return [[1,1],[1,-1],[-1,1],[-1,-1]];
+  if (t === "r") return [[1,0],[-1,0],[0,1],[0,-1]];
+  return [[1,1],[1,-1],[-1,1],[-1,-1],[1,0],[-1,0],[0,1],[0,-1]];
+}
 
-// ── Inaccuracy roasts ──
+function isAligned(from: Square, to: Square, df: number, dr: number): boolean {
+  const dFile = fileIdx(to) - fileIdx(from), dRank = rankIdx(to) - rankIdx(from);
+  if (df === 0 && dr === 0) return false;
+  if (df === 0) return dFile === 0 && Math.sign(dRank) === Math.sign(dr);
+  if (dr === 0) return dRank === 0 && Math.sign(dFile) === Math.sign(df);
+  return Math.abs(dFile) === Math.abs(dRank) && Math.sign(dFile) === Math.sign(df) && Math.sign(dRank) === Math.sign(dr);
+}
 
-const INACCURACY_ROASTS = [
-  "Not the worst, not the best. The C+ of chess moves.",
-  "An inaccuracy. The move that says 'I kind of know what I'm doing.'",
-  "Slightly worse than ideal. Like putting ketchup on a steak.",
-  "The engine prefers something else, but honestly? Vibes.",
-  "It's an inaccuracy but I've seen way worse. We'll allow it.",
-  "This move is like a participation trophy. You tried.",
-  "Suboptimal but not punishable. The equivalent of jaywalking in chess.",
-  "Could be better, but they could also have hung the queen. So, progress.",
-  "The kind of move that loses 0.3 pawns but gains 0 knowledge.",
-  "This is the move of someone who's not quite panicking. Yet.",
-];
+function detectPins(chess: Chess, pinnedColor: Color): PinInfo[] {
+  const pins: PinInfo[] = [];
+  const pinnerColor = opp(pinnedColor);
+  const sliders = allPieces(chess).filter(p => p.color === pinnerColor && (p.type === "b" || p.type === "r" || p.type === "q"));
+  const targets = allPieces(chess).filter(p => p.color === pinnedColor && (p.type === "k" || p.type === "q" || p.type === "r"));
+  for (const slider of sliders) {
+    for (const tgt of targets) {
+      for (const [df, dr] of sliderDirs(slider.type)) {
+        if (!isAligned(slider.square, tgt.square, df, dr)) continue;
+        const between: PieceInfo[] = [];
+        let f = fileIdx(slider.square) + df, r = rankIdx(slider.square) + dr;
+        while (f !== fileIdx(tgt.square) || r !== rankIdx(tgt.square)) {
+          const s = sq(f, r);
+          if (!s) break;
+          const p = chess.get(s);
+          if (p) between.push({ type: p.type, color: p.color, square: s });
+          f += df; r += dr;
+        }
+        if (between.length === 1 && between[0].color === pinnedColor && between[0].type !== "k") {
+          pins.push({ pinner: slider, pinned: between[0], target: tgt });
+        }
+      }
+    }
+  }
+  return pins;
+}
 
-// ── Mistake roasts ──
+/* ── King safety ── */
+function kingSafety(chess: Chess, color: Color): { score: number; issues: string[] } {
+  const king = findKing(chess, color);
+  if (!king) return { score: 100, issues: [] };
+  const issues: string[] = [];
+  let score = 100;
+  const kf = fileIdx(king), kr = rankIdx(king);
+  const shieldRank = color === "w" ? kr + 1 : kr - 1;
 
-const MISTAKE_ROASTS = [
-  "That's a mistake. Not a blunder, but definitely a mistake.",
-  "The position just went from 'fine' to 'hmm.' That's never good.",
-  "This move is like taking a wrong turn on a road trip. You'll survive, but it'll cost you.",
-  "A clear mistake. The evaluation bar just did a little jump.",
-  "The advantage just flipped like a pancake. Thanks, I hate it.",
-  "My man gave away a full pawn of advantage with that one.",
-  "This move is the equivalent of studying for the wrong exam.",
-  "A mistake that the opponent absolutely should punish. Key word: should.",
-  "And just like that, the comfortable advantage becomes uncomfortable.",
-  "This is the moment where everything starts going sideways.",
-  "The kind of error that makes you go 'was that really the best I could do?' No. No it wasn't.",
-];
+  // Pawn shield
+  let shield = 0;
+  for (let f = Math.max(0, kf - 1); f <= Math.min(7, kf + 1); f++) {
+    const s = sq(f, shieldRank);
+    if (s) { const p = chess.get(s); if (p?.type === "p" && p.color === color) shield++; }
+  }
+  if (shield === 0) { score -= 30; issues.push("no pawn shield"); }
+  else if (shield === 1) { score -= 15; issues.push("thin pawn shield"); }
 
-// ── Opening-specific roasts ──
+  // King in centre during middlegame
+  const pieces = allPieces(chess);
+  if (pieces.length > 12 && kf >= 3 && kf <= 4) {
+    const backRank = color === "w" ? 0 : 7;
+    if (kr === backRank) { score -= 25; issues.push("king stuck in the centre"); }
+  }
 
-const EARLY_BLUNDER = [
-  "Blunder on move {move}?! The game just STARTED.",
-  "We're {move} moves in and someone already blundered. Speed run.",
-  "Move {move}. Already a blunder. This is going to be a ride.",
-  "It took {move} moves to reach a losing position. Impressive in the wrong way.",
-  "The opening lasted {move} moves before someone decided to improvise. Badly.",
-  "Some people study openings. This player studied the 'how to lose fast' guide.",
-  "An opening blunder. The chess equivalent of tripping at the starting line.",
-  "Blunder on move {move}. Some people just want to watch their own position burn.",
-];
+  // Open files near king
+  for (let f = Math.max(0, kf - 1); f <= Math.min(7, kf + 1); f++) {
+    const hasPawn = pieces.some(p => p.type === "p" && p.color === color && fileIdx(p.square) === f);
+    if (!hasPawn) {
+      const hasHeavy = pieces.some(p => (p.type === "r" || p.type === "q") && p.color === opp(color) && fileIdx(p.square) === f);
+      if (hasHeavy) { score -= 20; issues.push(`open ${FILES[f]}-file near king with enemy heavy piece`); }
+    }
+  }
 
-// ── Walk into fork / pin ──
+  return { score: Math.max(0, score), issues };
+}
 
-const WALKED_INTO_FORK = [
-  "They walked directly into a fork. Like a cartoon character stepping on a rake.",
-  "Knight fork incoming! And they just… let it happen.",
-  "The classic 'I didn't see the fork' moment. Textbook.",
-  "Double attack? Triple attack? Who's counting at this point.",
-];
+/* ── Development ── */
+function development(chess: Chess, color: Color): { developed: number; total: number; stuck: string[] } {
+  const backRank = color === "w" ? "1" : "8";
+  let developed = 0, total = 0;
+  const stuck: string[] = [];
+  for (const p of allPieces(chess)) {
+    if (p.color !== color || p.type === "k" || p.type === "p") continue;
+    total++;
+    if (p.square[1] === backRank) stuck.push(`${pn(p.type, true)} on ${p.square}`);
+    else developed++;
+  }
+  return { developed, total, stuck };
+}
 
-const WALKED_INTO_PIN = [
-  "That piece is now pinned to the king. Stuck. Can't move. Sad.",
-  "They walked into an absolute pin. The piece is bricked.",
-  "Pinned and helpless. The chess equivalent of being stuck in traffic.",
-];
+/* ── Pawn structure ── */
+function pawnIssues(chess: Chess, color: Color): { doubled: string[]; isolated: string[]; passed: string[] } {
+  const pawns = allPieces(chess).filter(p => p.type === "p" && p.color === color);
+  const oppPawns = allPieces(chess).filter(p => p.type === "p" && p.color === opp(color));
+  const doubled: string[] = [], isolated: string[] = [], passed: string[] = [];
 
-// ── Elo-specific commentary ──
+  const fileCounts = new Map<number, Square[]>();
+  for (const p of pawns) {
+    const f = fileIdx(p.square);
+    fileCounts.set(f, [...(fileCounts.get(f) ?? []), p.square]);
+  }
+  for (const [f, sqs] of fileCounts) {
+    if (sqs.length >= 2) doubled.push(`${FILES[f]}-file (${sqs.join(", ")})`);
+  }
+  for (const p of pawns) {
+    const f = fileIdx(p.square);
+    if (!pawns.some(pp => Math.abs(fileIdx(pp.square) - f) === 1)) isolated.push(p.square);
+  }
+  for (const p of pawns) {
+    const f = fileIdx(p.square), r = rankIdx(p.square);
+    let isPassed = true;
+    for (const op of oppPawns) {
+      if (Math.abs(fileIdx(op.square) - f) <= 1) {
+        if (color === "w" && rankIdx(op.square) > r) { isPassed = false; break; }
+        if (color === "b" && rankIdx(op.square) < r) { isPassed = false; break; }
+      }
+    }
+    if (isPassed) passed.push(p.square);
+  }
+  return { doubled, isolated, passed };
+}
 
-const SUB_1000_FLAVOR = [
-  "This is below 1000 chess. We're in the trenches.",
-  "Sub-1000 energy is a different kind of beautiful.",
-  "At this elo, every game is a blunder speedrun competition.",
-  "The pieces are on the board. That's about all we can say.",
-  "Both players are fighting gravity as much as each other.",
-];
+/* ── Attacker count helper ── */
+function countAttackers(chess: Chess, square: string, _attackerColor: Color): number {
+  let count = 0;
+  try {
+    const moves = chess.moves({ verbose: true });
+    for (const m of moves) {
+      if (m.to === square) count++;
+    }
+  } catch { /* not this colour's turn */ }
+  return count;
+}
 
-const ELO_1000_1300 = [
-  "Ah, the 1000-1300 bracket. Where dreams of grandeur meet reality.",
-  "They know the rules. They just don't know what to do with them.",
-  "This is the 'I watched one Gotham Chess video' elo range.",
-  "Some opening knowledge, lots of one-move blunders. Classic.",
-  "The 'I can see two moves ahead but not three' zone.",
-];
+/* ================================================================== */
+/*  Random helpers                                                      */
+/* ================================================================== */
 
-const ELO_1300_1600 = [
-  "1300-1600: the 'I'm actually decent… sometimes' bracket.",
-  "These players know tactics exist. Finding them? Different story.",
-  "The intermediate plateau. Where improvement goes to die.",
-  "They have ideas. The ideas are just not always good.",
-  "This is the elo where you start losing to people who actually study.",
-];
+function pick<T>(arr: readonly T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
-const ELO_1600_2000 = [
-  "1600-2000: now we're cooking. These players have seen some things.",
-  "The 'I actually have an opening repertoire' bracket.",
-  "Advanced club players. They don't hang pieces often. OFTEN.",
-  "At this level, the mistakes are subtle. The blunders? Spectacular.",
-  "Good enough to be dangerous. Not good enough to be consistent.",
-];
+/* ================================================================== */
+/*  Position-Aware Roast Generator                                      */
+/* ================================================================== */
 
-const ELO_ABOVE_2000 = [
-  "Above 2000. These players actually know what they're doing.",
-  "Expert level. The mistakes here are genuinely hard to spot.",
-  "When a 2000+ blunders, they blunder with STYLE.",
-  "At this elo, you need a computer to find the mistakes.",
-  "High-level chess. Where the difference between best and second-best matters.",
-];
+/** Build a roast by analysing FEN before/after and combining humour + board observations */
+export function generateMoveComment(
+  move: AnalyzedMove,
+  usedLines: Set<string>,
+  summary: GameSummary,
+): string | null {
+  try {
+    return _generatePositionAware(move, usedLines, summary);
+  } catch {
+    // If chess.js or anything blows up, fall back to a generic line
+    return _fallbackLine(move, usedLines);
+  }
+}
 
-// ── Move number context ──
+function _generatePositionAware(
+  move: AnalyzedMove,
+  used: Set<string>,
+  summary: GameSummary,
+): string | null {
+  const before = new Chess(move.fen);
+  let after: Chess;
+  try { after = new Chess(move.fenAfter); } catch { return _fallbackLine(move, used); }
 
-const EARLY_GAME_CONTEXT = [
-  "We're still in the opening.",
-  "The position is still theoretical.",
-  "Both sides are developing.",
-  "Still book territory.",
-];
+  const moverColor = move.color as Color;
+  const fromSq = move.uci.slice(0, 2) as Square;
+  const toSq = move.uci.slice(2, 4) as Square;
+  const movedPiece = before.get(fromSq);
+  const landedPiece = after.get(toSq);
+  const capturedPiece = before.get(toSq);
 
-const MIDDLEGAME_CONTEXT = [
-  "We're deep in the middlegame now.",
-  "The battle is fully engaged.",
-  "Pieces are flying across the board.",
-  "The position is getting spicy.",
-];
+  // ── Brilliant / Sacrifice that works ──
+  if (move.classification === "brilliant" || (move.classification === "best" && move.sacrificedMaterial)) {
+    return _emit(used, _brilliantRoast(move, after, toSq, landedPiece));
+  }
 
-const ENDGAME_CONTEXT = [
-  "We've reached the endgame.",
-  "The board is clearing out.",
-  "Precision matters more than ever now.",
-  "Endgame technique time. Or lack thereof.",
-];
+  // ── Best / Great — only comment ~30 % to keep the pace ──
+  if (move.classification === "great" || move.classification === "best") {
+    if (Math.random() > 0.3) return null;
+    return _emit(used, _goodMoveRoast(move, after, toSq));
+  }
 
-// ── Result reveal lines ──
+  // ── Missed mate ──
+  if (move.missedMateInN && move.missedMateInN <= 5) {
+    return _emit(used, _missedMateRoast(move));
+  }
+
+  // ── Blunder ──
+  if (move.classification === "blunder") {
+    return _emit(used, _blunderRoast(move, before, after, moverColor, fromSq, toSq, movedPiece, capturedPiece, summary));
+  }
+
+  // ── Mistake ──
+  if (move.classification === "mistake") {
+    return _emit(used, _mistakeRoast(move, before, after, moverColor));
+  }
+
+  // ── Inaccuracy — ~40 % ──
+  if (move.classification === "inaccuracy") {
+    if (Math.random() > 0.4) return null;
+    return _emit(used, _inaccuracyRoast(move, after, moverColor));
+  }
+
+  return null;
+}
+
+function _emit(used: Set<string>, line: string): string {
+  used.add(line);
+  return line;
+}
+
+/* ================================================================== */
+/*  Roast Generators — each returns a single string                     */
+/* ================================================================== */
+
+/* ── Brilliant ── */
+function _brilliantRoast(
+  move: AnalyzedMove,
+  after: Chess,
+  toSq: Square,
+  landed: ReturnType<Chess["get"]>,
+): string {
+  const lines: (() => string)[] = [
+    () => `${move.san}?! Wait — that's actually BRILLIANT. ${pn(move.pieceType, true)} to ${toSq}? Even Stockfish is clapping.`,
+    () => `Hold on. ${move.san} is the ENGINE'S top pick. Where was this energy when they were blundering earlier?`,
+    () => `${pn(move.pieceType, true)} to ${toSq}. That's the best move on the board. I'm shook.`,
+    () => {
+      if (move.sacrificedMaterial && landed)
+        return `A real sacrifice! ${pn(landed.type, true)} to ${toSq} — gives up material for a crushing attack. Tal would be proud.`;
+      return `${move.san} — the only move, the hardest move, and they found it. Respect.`;
+    },
+    () => `Galaxy-brain ${move.san}. The kind of move that makes you re-check the elo. Still low. Mind-blowing.`,
+    () => {
+      const forks = landed ? detectForks(after, toSq, { type: landed.type, color: landed.color, square: toSq }) : [];
+      if (forks.length >= 2) {
+        const targets = forks.map(f => `${pn(f.type)} on ${f.square}`).join(" and ");
+        return `${move.san} FORKS the ${targets}! Brilliant. Actually calculated. I'm impressed.`;
+      }
+      return `${move.san} is absolutely disgusting. In a good way.`;
+    },
+    () => `Okay, ${move.san} goes HARD. The position just shifted in their favour and the opponent probably didn't even see it coming.`,
+    () => `This is the best move in the entire game and it's not even close. ${pn(move.pieceType, true)} to ${toSq}, chef's kiss.`,
+  ];
+  return pick(lines)();
+}
+
+/* ── Good / Best ── */
+function _goodMoveRoast(
+  move: AnalyzedMove,
+  after: Chess,
+  toSq: Square,
+): string {
+  const lines: (() => string)[] = [
+    () => `${move.san} — textbook. Solid. Nothing to roast here. Unfortunately.`,
+    () => `The right move for the right reasons. ${pn(move.pieceType, true)} to ${toSq}. Credit where it's due.`,
+    () => `Playing the engine's top choice at this elo? Almost suspicious.`,
+    () => {
+      if (move.isCastle) return `Castling! Finally. The king was one more move away from needing witness protection.`;
+      return `${move.san} is clean. Accurate. The kind of move that makes me think they're actually trying.`;
+    },
+    () => {
+      const dev = development(after, move.color as Color);
+      if (dev.stuck.length === 0 && dev.total > 0)
+        return `${move.san} — all pieces developed and coordinating. This is what chess is SUPPOSED to look like.`;
+      return `Solid ${move.san}. The computer approves. I grudgingly approve.`;
+    },
+  ];
+  return pick(lines)();
+}
+
+/* ── Missed Mate ── */
+function _missedMateRoast(move: AnalyzedMove): string {
+  const n = move.missedMateInN!;
+  const lines: (() => string)[] = [
+    () => `They had MATE IN ${n}. MATE. IN. ${n}. And they played ${move.san}?! I'm going to lie down.`,
+    () => `Mate in ${n} was right there. On the board. Staring at them. And they chose ${move.san} instead. I need answers.`,
+    () => `The one time they have a forced checkmate and they play a developing move. Mate in ${n}, missed. Incredible.`,
+    () => `Imagine having mate in ${n} and thinking "nah, let me play ${move.san} and improve my position." Your position IS MATE.`,
+    () => `Missing mate in ${n} should be a criminal offence. ${move.san} instead of winning the game outright. Pain.`,
+    () => `How. How do you miss mate in ${n}. The winning move is literally CHECKMATE and they played ${move.san}. I can't.`,
+    () => `Mate blindness at its finest. Mate in ${n} available, but ${move.san} felt right apparently. It wasn't.`,
+  ];
+  return pick(lines)();
+}
+
+/* ── Blunder ── */
+function _blunderRoast(
+  move: AnalyzedMove,
+  before: Chess, after: Chess,
+  moverColor: Color,
+  _fromSq: Square, _toSq: Square,
+  movedPiece: ReturnType<Chess["get"]>,
+  capturedPiece: ReturnType<Chess["get"]>,
+  summary: GameSummary,
+): string {
+  const elo = summary.avgElo;
+
+  // 1. Early blunder
+  if (move.moveNumber <= 8) {
+    return pick([
+      `Blunder on move ${move.moveNumber}?! The game JUST STARTED. ${move.san} and the position is already lost. Speed-run any%.`,
+      `Move ${move.moveNumber}. ${move.san}. Already a blunder. Some people study openings; this person studied the 'how to lose fast' guide.`,
+      `We're ${move.moveNumber} moves in and ${move.san} just ended this person's whole career. The opening lasted shorter than my attention span.`,
+      `${move.san} on move ${move.moveNumber}. The chess equivalent of tripping at the starting line. In front of everyone.`,
+    ])!;
+  }
+
+  // 2. Hanging pieces — deep analysis
+  const hanging = detectHanging(after, moverColor);
+  if (hanging.length > 0) {
+    const worst = hanging.reduce((a, b) => (PIECE_VALUES[b.type] ?? 0) > (PIECE_VALUES[a.type] ?? 0) ? b : a);
+    const vName = pn(worst.type);
+    const onSq = worst.square;
+    const numAttackers = countAttackers(after, onSq, opp(moverColor));
+    return pick([
+      `${move.san} and the ${vName} on ${onSq} is just… hanging. Completely en prise.${numAttackers > 1 ? ` ${numAttackers} pieces staring at it.` : ""} Free real estate.`,
+      `They played ${move.san} and left a whole ${vName} on ${onSq} for free. That's ${PIECE_VALUES[worst.type]} points of material they just donated to charity.`,
+      `The ${vName} on ${onSq}: "Am I a joke to you?" After ${move.san}? Apparently yes.`,
+      `${move.san} hangs the ${vName} on ${onSq}. No defence, no compensation, just vibes and hanging pieces.`,
+      `After ${move.san}, the ${vName} on ${onSq} is undefended. The opponent doesn't even need to think — it's literally free.`,
+      `${move.san} — and now the ${vName} on ${onSq} is doing its best piñata impression. One hit and it's gone.`,
+    ])!;
+  }
+
+  // 3. Walked into a fork
+  try {
+    const oppMoves = after.moves({ verbose: true });
+    for (const m of oppMoves) {
+      const sim = new Chess(after.fen());
+      const res = sim.move(m);
+      if (!res) continue;
+      const lp = sim.get(m.to as Square);
+      if (!lp) continue;
+      const forked = detectForks(sim, m.to as Square, { type: lp.type, color: lp.color, square: m.to as Square });
+      const valuable = forked.filter(f => f.type === "k" || f.type === "q" || f.type === "r");
+      if (forked.length >= 2 && valuable.length >= 1) {
+        const targets = forked.map(f => `${pn(f.type)} on ${f.square}`).join(" and ");
+        return pick([
+          `${move.san} walks right into ${res.san} — a ${pn(lp.type)} fork hitting the ${targets}. Like stepping on a rake in a cartoon.`,
+          `After ${move.san}, the opponent plays ${res.san} and FORKS the ${targets}. Did they not see the ${pn(lp.type)}? Did they think it was decorative?`,
+          `${move.san} and now there's a devastating ${pn(lp.type)} fork on ${m.to}: ${targets}. This is the "I didn't look at the whole board" special.`,
+        ])!;
+      }
+    }
+  } catch { /* best effort */ }
+
+  // 4. Walked into a pin
+  const pinsBefore = detectPins(before, moverColor);
+  const pinsAfter = detectPins(after, moverColor);
+  const newPins = pinsAfter.filter(pa => !pinsBefore.some(pb => pb.pinned.square === pa.pinned.square && pb.pinner.square === pa.pinner.square));
+  if (newPins.length > 0) {
+    const pin = newPins[0];
+    return pick([
+      `${move.san} and now the ${pn(pin.pinned.type)} on ${pin.pinned.square} is PINNED to the ${pn(pin.target.type)} by the ${pn(pin.pinner.type)} on ${pin.pinner.square}. Stuck. Can't move. Sad.`,
+      `After ${move.san}, the opponent's ${pn(pin.pinner.type)} on ${pin.pinner.square} pins the ${pn(pin.pinned.type)} on ${pin.pinned.square} to the ${pn(pin.target.type)}. That piece is now a decoration.`,
+      `${move.san} walks into an absolute pin: ${pn(pin.pinner.type)} on ${pin.pinner.square} → ${pn(pin.pinned.type)} on ${pin.pinned.square} → ${pn(pin.target.type)} on ${pin.target.square}. The chess equivalent of handcuffing yourself.`,
+    ])!;
+  }
+
+  // 5. Bad sacrifice
+  if (move.sacrificedMaterial || (capturedPiece && move.cpLoss > 150)) {
+    const sacWhat = movedPiece ? pn(movedPiece.type) : "piece";
+    return pick([
+      `They sacrificed the ${sacWhat} with ${move.san}! Bold! Brave! …and terrible. The engine says ${move.cpLoss > 300 ? "completely losing" : "just bad"}.`,
+      `SACRIFICE! *checks engine* Oh. ${move.san} is just losing material. This isn't Tal, this is tragedy.`,
+      `"I'll sac the ${sacWhat} with ${move.san} and get attacking chances" — narrator: there were no attacking chances. Just a ${move.cpLoss} centipawn hole.`,
+      `${move.san} gives up the ${sacWhat} for absolutely nothing. Kasparov would've made this work. This is not Kasparov.`,
+    ])!;
+  }
+
+  // 6. King safety disaster
+  const ks = kingSafety(after, moverColor);
+  if (ks.score < 50 && ks.issues.length > 0) {
+    const issue = ks.issues[0];
+    return pick([
+      `${move.san} and the king is in DANGER. ${issue[0].toUpperCase() + issue.slice(1)}. The king is more exposed than a chess.com free trial.`,
+      `After ${move.san}: ${issue}. This king needs witness protection, not another pawn move.`,
+      `${move.san} leaves the king wide open — ${issue}. At ${elo} elo you can't keep getting away with this.`,
+    ])!;
+  }
+
+  // 7. Development shame
+  if (move.moveNumber > 10) {
+    const dev = development(after, moverColor);
+    if (dev.stuck.length >= 3) {
+      return pick([
+        `${move.san} — and there are still ${dev.stuck.length} pieces on the back rank: ${dev.stuck.slice(0, 2).join(", ")}. It's move ${move.moveNumber}. Develop. Please.`,
+        `After ${move.san} on move ${move.moveNumber}, the ${dev.stuck[0]} still hasn't moved. ${dev.stuck.length} pieces are just watching from the bench.`,
+        `${move.san} but ${dev.stuck.length} pieces are still undeveloped on move ${move.moveNumber}. The position is collapsing and half the army hasn't even shown up.`,
+      ])!;
+    }
+  }
+
+  // 8. Pawn structure wreck
+  const pawns = pawnIssues(after, moverColor);
+  if (pawns.doubled.length >= 2 || pawns.isolated.length >= 3) {
+    return pick([
+      `${move.san} — and the pawn structure is a war crime.${pawns.doubled.length > 0 ? ` Doubled pawns on the ${pawns.doubled[0]}.` : ""}${pawns.isolated.length > 0 ? ` Isolated pawns on ${pawns.isolated.slice(0, 2).join(", ")}.` : ""} This is rubble, not a position.`,
+      `After ${move.san}, just look at this pawn structure.${pawns.doubled.length > 0 ? ` Doubled on ${pawns.doubled[0]}.` : ""}${pawns.isolated.length > 0 ? ` ${pawns.isolated.length} isolated pawns.` : ""} Philidor is crying in his grave.`,
+    ])!;
+  }
+
+  // 9. Generic blunder with eval reference
+  return pick([
+    `${move.san}. Oh no. Oh NO. That's a ${move.cpLoss} centipawn loss. The position just went from playable to "queue next game."`,
+    `${move.san} — and just like that, the advantage evaporates. ${move.cpLoss} centipawns down the drain.`,
+    `Ladies and gentlemen… ${move.san}. A ${move.cpLoss}cp blunder. The engine just dropped its jaw. This move belongs in a museum. The Museum of Bad Decisions.`,
+    `${move.san} was so bad the chess pieces filed a complaint. ${move.cpLoss} centipawns of damage. At ${elo} elo, this is basically self-harm.`,
+    `I physically recoiled. ${move.san}? THAT was the plan? The eval just swung by ${move.cpLoss}cp. Rough.`,
+    `${move.san}. The kind of move that makes you Alt+F4 and go touch grass. ${move.cpLoss}cp blunder.`,
+    `Somewhere, a chess coach just felt a disturbance in the force. ${move.san}. ${move.cpLoss}cp blunder. In ${new Date().getFullYear()}. In this economy.`,
+  ])!;
+}
+
+/* ── Mistake ── */
+function _mistakeRoast(
+  move: AnalyzedMove,
+  before: Chess, after: Chess,
+  moverColor: Color,
+): string {
+  // Try to find something specific first
+
+  // 1. New hanging piece
+  const hanging = detectHanging(after, moverColor);
+  if (hanging.length > 0) {
+    const h = hanging[0];
+    return pick([
+      `${move.san} — and now the ${pn(h.type)} on ${h.square} is a little bit en prise. Not a blunder, but definitely a "hmm."`,
+      `After ${move.san}, the ${pn(h.type)} on ${h.square} isn't fully protected. The eval bar did a subtle but ominous jump.`,
+    ])!;
+  }
+
+  // 2. New pin
+  const newPins = detectPins(after, moverColor);
+  if (newPins.length > 0) {
+    const p = newPins[0];
+    return `${move.san} and the ${pn(p.pinned.type)} on ${p.pinned.square} is pinned. It's a mistake, not a blunder, but pinned pieces are cramped pieces.`;
+  }
+
+  // 3. King safety worsened
+  const ksBefore = kingSafety(before, moverColor).score;
+  const ksAfter = kingSafety(after, moverColor);
+  if (ksAfter.score < ksBefore - 15 && ksAfter.issues.length > 0) {
+    return `${move.san} weakens the king — ${ksAfter.issues[0]}. Not catastrophic, but the eval bar just did a little jump. Never a good sign.`;
+  }
+
+  // 4. Missed best move context
+  if (move.bestMoveSan) {
+    return pick([
+      `${move.san} is a mistake. The engine wanted ${move.bestMoveSan} instead — ${move.cpLoss}cp difference. The position went from "fine" to "hmm."`,
+      `That's a mistake. ${move.san} instead of ${move.bestMoveSan}. The advantage just flipped like a pancake. Thanks, I hate it.`,
+      `${move.san} loses roughly ${move.cpLoss} centipawns. ${move.bestMoveSan} was right there. The kind of error that makes you go "was that really the best I could do?" No. No it wasn't.`,
+      `The engine says ${move.bestMoveSan}. They played ${move.san}. ${move.cpLoss}cp mistake. This is the moment where everything starts going sideways.`,
+      `${move.san} — a clear mistake. ${move.bestMoveSan} was ${move.cpLoss} centipawns better. That's like studying for the wrong exam.`,
+    ])!;
+  }
+
+  // 5. Generic mistake
+  return pick([
+    `${move.san} — not a blunder, but definitely a mistake. The eval just shifted by ${move.cpLoss}cp and someone should be nervous.`,
+    `That's a mistake. ${move.san} and the position tilts. ${move.cpLoss} centipawns of advantage: gone.`,
+    `${move.san}. A mistake that the opponent absolutely should punish. Key word: should.`,
+  ])!;
+}
+
+/* ── Inaccuracy ── */
+function _inaccuracyRoast(
+  move: AnalyzedMove,
+  after: Chess,
+  moverColor: Color,
+): string {
+  // Check for specific observations
+  const dev = development(after, moverColor);
+  const pawns = pawnIssues(after, moverColor);
+
+  const lines: (() => string)[] = [
+    () => {
+      if (dev.stuck.length >= 2 && move.moveNumber > 8)
+        return `${move.san} — an inaccuracy. And with ${dev.stuck.length} pieces still on the back rank at move ${move.moveNumber}, maybe develop before you attack?`;
+      return `${move.san} — not the worst, not the best. The C+ of chess moves. ${move.cpLoss}cp inaccuracy.`;
+    },
+    () => {
+      if (pawns.isolated.length > 0)
+        return `${move.san} — slight inaccuracy. The pawn on ${pawns.isolated[0]} is now isolated. Not fatal, but annoying. Like a paper cut.`;
+      return `${move.san} is suboptimal — the engine prefers something else by ${move.cpLoss}cp. But honestly? Vibes.`;
+    },
+    () => {
+      if (move.bestMoveSan)
+        return `${move.san} instead of ${move.bestMoveSan}. Only ${move.cpLoss}cp difference. An inaccuracy — the jaywalking of chess mistakes.`;
+      return `${move.san} — an inaccuracy. A participation trophy. You tried.`;
+    },
+    () => `${move.san} loses a small edge — ${move.cpLoss}cp. Could be better, but they could also have hung the queen. So, progress.`,
+    () => `The engine prefers something else over ${move.san}, but at this level? Nobody's going to punish this. Probably.`,
+  ];
+  return pick(lines)();
+}
+
+/* ── Fallback ── */
+function _fallbackLine(move: AnalyzedMove, _used: Set<string>): string | null {
+  const cls = move.classification;
+  if (cls === "best" || cls === "great" || cls === "good") {
+    return Math.random() < 0.3 ? `${move.san} — solid move. Nothing to see here.` : null;
+  }
+  if (cls === "blunder") return `${move.san}. That's a blunder. A bad one. ${move.cpLoss}cp gone.`;
+  if (cls === "mistake") return `${move.san} is a mistake. ${move.cpLoss}cp lost.`;
+  if (cls === "inaccuracy") return Math.random() < 0.4 ? `${move.san} — slight inaccuracy.` : null;
+  return null;
+}
+
+/* ================================================================== */
+/*  Elo / Phase / Reveal Lines                                          */
+/* ================================================================== */
+
+export function getEloFlavorLine(elo: number): string {
+  if (elo < 1000) return pick([
+    "This is sub-1000 chess. We're in the trenches. Buckle up.",
+    "Below 1000 elo. Every game is a blunder contest and honestly? I'm here for it.",
+    "Sub-1000 energy is a different kind of beautiful. Like watching a building collapse in slow motion.",
+    "At this elo, both players are fighting gravity as much as each other.",
+    "Below 1000. The pieces are on the board. That's about all we can confirm.",
+  ]);
+  if (elo < 1300) return pick([
+    "1000-1300 bracket. Where dreams of grandeur meet the reality of hung pieces.",
+    "This is the 'I watched one Gotham Chess video' elo range. Let's see if it helped.",
+    "Some opening knowledge, lots of one-move blunders. Classic 1000-1300.",
+    "The 'I can see two moves ahead but not three' zone. My favourite.",
+    "They know the rules. They just don't know what to do with them yet.",
+  ]);
+  if (elo < 1600) return pick([
+    "1300-1600: the 'I'm actually decent… sometimes' bracket.",
+    "Intermediate chess. They know tactics exist. Finding them in their own games? Different story.",
+    "The intermediate plateau. Where improvement goes to die and blunders go to thrive.",
+    "They have ideas. The ideas are just not always good. But they HAVE them.",
+    "This is the elo where you start losing to people who actually study. Humbling.",
+  ]);
+  if (elo < 2000) return pick([
+    "1600-2000: now we're cooking. These players have seen some things.",
+    "The 'I actually have an opening repertoire' bracket. Let's see if it holds up.",
+    "Advanced club players. They don't hang pieces often. Key word: OFTEN.",
+    "At this level, the mistakes are subtle. The blunders? Spectacular and rare.",
+    "Good enough to be dangerous, not quite good enough to be consistent.",
+  ]);
+  return pick([
+    "Above 2000. These players actually know what they're doing. Usually.",
+    "Expert level. When they blunder up here, it's genuinely hard to spot why.",
+    "When a 2000+ player blunders, they blunder with STYLE.",
+    "At this elo, you need an engine to find the mistakes. Let's see.",
+    "High-level chess. Where the difference between best and second-best actually matters.",
+  ]);
+}
+
+export function getPhaseContext(moveNumber: number, totalMoves: number): string {
+  const pct = moveNumber / totalMoves;
+  if (pct < 0.25) return pick([
+    "We're still in the opening.",
+    "The position is still theoretical.",
+    "Both sides are developing. Or should be.",
+    "Still book territory. For now.",
+  ]);
+  if (pct < 0.7) return pick([
+    "We're deep in the middlegame now.",
+    "The battle is fully engaged.",
+    "Pieces are flying across the board.",
+    "The position is getting spicy.",
+  ]);
+  return pick([
+    "We've reached the endgame.",
+    "The board is clearing out.",
+    "Precision matters more than ever now.",
+    "Endgame technique time. Or lack thereof.",
+  ]);
+}
+
+/* ── Result reveal lines ── */
 
 export const REVEAL_TOO_HIGH = [
   "You thought they were better than that? Generous.",
@@ -376,15 +801,15 @@ export const REVEAL_TOO_LOW = [
 export const REVEAL_CORRECT = [
   "NAILED IT. Are you secretly a coach?",
   "Right on the money! You've seen enough games to know.",
-  "Correct! Your pattern recognition is 📈",
-  "Bulls-eye. You can just SMELL the elo. Impressive.",
-  "Spot on! This is exactly what {elo} chess looks like.",
+  "Correct! Your pattern recognition is on point.",
+  "Bull's-eye. You can just SMELL the elo. Impressive.",
+  "Spot on! This is exactly what this level of chess looks like.",
   "Crushed it. You clearly spend too much time on the internet. Same.",
   "Ding ding ding! We have a winner!",
   "You know your elo brackets. That's either impressive or concerning.",
 ];
 
-// ── Game-opener lines (shown at start) ──
+/* ── Game-opener lines ── */
 
 export const GAME_INTRO = [
   "Alright chat, let's see what we're working with today.",
@@ -399,7 +824,7 @@ export const GAME_INTRO = [
   "Welcome to 'Is This Chess or Just Two People Pushing Wood?'",
 ];
 
-// ── Fun final summaries ──
+/* ── Game summary lines ── */
 
 export const GAME_SUMMARY_LINES = [
   "{blunders} blunders, {mistakes} mistakes, and {inaccuracies} inaccuracies. A normal day in {elo} chess.",
@@ -413,194 +838,6 @@ export const GAME_SUMMARY_LINES = [
   "I've seen worse. Not much worse, but worse.",
   "What a game. What an absolute circus of a game.",
 ];
-
-/* ================================================================== */
-/*  Commentary Selection Engine                                         */
-/* ================================================================== */
-
-function pick<T>(arr: readonly T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
-
-function pickUnique<T>(arr: readonly T[], exclude: Set<string>): T {
-  const available = arr.filter(l => !exclude.has(String(l)));
-  if (available.length === 0) return pick(arr); // fallback
-  return pick(available);
-}
-
-function template(str: string, vars: Record<string, string | number>): string {
-  let result = str;
-  for (const [key, value] of Object.entries(vars)) {
-    result = result.replaceAll(`{${key}}`, String(value));
-  }
-  return result;
-}
-
-export function generateMoveComment(
-  move: AnalyzedMove,
-  usedLines: Set<string>,
-  summary: GameSummary,
-): string | null {
-  const vars = {
-    move: move.moveNumber,
-    piece: pieceName(move.pieceType),
-    elo: summary.avgElo,
-    year: new Date().getFullYear(),
-    n: move.missedMateInN ?? 0,
-  };
-
-  let line: string | null = null;
-
-  // ── Brilliant / Best ──
-  if (move.classification === "brilliant" || (move.classification === "best" && move.sacrificedMaterial)) {
-    line = template(pickUnique(BRILLIANT_ROASTS, usedLines), vars);
-  }
-
-  // ── Great / Best (normal) ──
-  else if (move.classification === "great" || move.classification === "best") {
-    // Only comment on ~30% of good moves to keep it interesting
-    if (Math.random() < 0.3) {
-      line = template(pickUnique(GREAT_MOVE_ROASTS, usedLines), vars);
-    }
-  }
-
-  // ── Missed mate ──
-  else if (move.missedMateInN && move.missedMateInN <= 5) {
-    line = template(pickUnique(MISSED_MATE, usedLines), vars);
-  }
-
-  // ── Blunder ──
-  else if (move.classification === "blunder") {
-    // Early blunder?
-    if (move.moveNumber <= 8) {
-      line = template(pickUnique(EARLY_BLUNDER, usedLines), vars);
-    }
-    // Piece-specific hung piece
-    else if (move.hungPiece) {
-      const piecePool =
-        move.hungWhat === "q" ? BLUNDER_QUEEN :
-        move.hungWhat === "r" ? BLUNDER_ROOK :
-        move.hungWhat === "n" ? BLUNDER_KNIGHT :
-        move.hungWhat === "b" ? BLUNDER_BISHOP :
-        move.hungWhat === "p" ? BLUNDER_PAWN :
-        BLUNDER_GENERAL;
-      line = template(pickUnique(piecePool, usedLines), vars);
-    }
-    // Fake sacrifice
-    else if (move.sacrificedMaterial) {
-      line = template(pickUnique(FAKE_SACRIFICE, usedLines), vars);
-    }
-    // Walked into fork or pin
-    else if (move.walkedIntoFork) {
-      line = template(pickUnique(WALKED_INTO_FORK, usedLines), vars);
-    }
-    else if (move.walkedIntoPin) {
-      line = template(pickUnique(WALKED_INTO_PIN, usedLines), vars);
-    }
-    // General blunder
-    else {
-      line = template(pickUnique(BLUNDER_GENERAL, usedLines), vars);
-    }
-  }
-
-  // ── Mistake ──
-  else if (move.classification === "mistake") {
-    line = template(pickUnique(MISTAKE_ROASTS, usedLines), vars);
-  }
-
-  // ── Inaccuracy — only comment sometimes ──
-  else if (move.classification === "inaccuracy") {
-    if (Math.random() < 0.4) {
-      line = template(pickUnique(INACCURACY_ROASTS, usedLines), vars);
-    }
-  }
-
-  // ── Hung piece on an otherwise okay-ish move ──
-  if (!line && move.hungPiece && move.cpLoss > 100) {
-    line = template(pickUnique(HUNG_PIECE_ROASTS, usedLines), vars);
-  }
-
-  if (line) usedLines.add(line);
-  return line;
-}
-
-export function getEloFlavorLine(elo: number): string {
-  if (elo < 1000) return pick(SUB_1000_FLAVOR);
-  if (elo < 1300) return pick(ELO_1000_1300);
-  if (elo < 1600) return pick(ELO_1300_1600);
-  if (elo < 2000) return pick(ELO_1600_2000);
-  return pick(ELO_ABOVE_2000);
-}
-
-export function getPhaseContext(moveNumber: number, totalMoves: number): string {
-  const pct = moveNumber / totalMoves;
-  if (pct < 0.25) return pick(EARLY_GAME_CONTEXT);
-  if (pct < 0.7) return pick(MIDDLEGAME_CONTEXT);
-  return pick(ENDGAME_CONTEXT);
-}
-
-function pieceName(piece: string): string {
-  switch (piece) {
-    case "q": return "queen";
-    case "r": return "rook";
-    case "b": return "bishop";
-    case "n": return "knight";
-    case "k": return "king";
-    case "p": return "pawn";
-    default: return "piece";
-  }
-}
-
-/* ================================================================== */
-/*  Analysis helpers                                                    */
-/* ================================================================== */
-
-/** Check if a piece is hanging (en prise) after a move */
-export function isHanging(chess: Chess, square: string): { hanging: boolean; piece?: string } {
-  const piece = chess.get(square as any);
-  if (!piece) return { hanging: false };
-
-  // Check if any opponent piece can capture this square
-  const moves = chess.moves({ verbose: true });
-  // We need to check from the opponent's perspective
-  // So we look at what the OTHER side can capture
-  const opponentMoves = chess.moves({ verbose: true });
-  for (const m of opponentMoves) {
-    if (m.to === square && m.captured) {
-      // Check if the capture is profitable (simple material comparison)
-      return { hanging: true, piece: piece.type };
-    }
-  }
-  return { hanging: false };
-}
-
-/** Piece material value for simple comparisons */
-export function materialValue(piece: string): number {
-  switch (piece) {
-    case "p": return 1;
-    case "n": return 3;
-    case "b": return 3;
-    case "r": return 5;
-    case "q": return 9;
-    case "k": return 0;
-    default: return 0;
-  }
-}
-
-/** Count total material on the board */
-export function countMaterial(chess: Chess): { white: number; black: number } {
-  const board = chess.board();
-  let white = 0, black = 0;
-  for (const row of board) {
-    for (const sq of row) {
-      if (!sq) continue;
-      const val = materialValue(sq.type);
-      if (sq.color === "w") white += val;
-      else black += val;
-    }
-  }
-  return { white, black };
-}
 
 /* ================================================================== */
 /*  Elo bracket helpers                                                 */
@@ -622,4 +859,33 @@ export function getEloBracketIdx(elo: number): number {
   if (elo < 1700) return 3;
   if (elo < 2000) return 4;
   return 5;
+}
+
+/* ================================================================== */
+/*  Legacy helpers (kept for page.tsx compat)                            */
+/* ================================================================== */
+
+export function isHanging(chess: Chess, square: string): { hanging: boolean; piece?: string } {
+  const piece = chess.get(square as Square);
+  if (!piece) return { hanging: false };
+  try {
+    const moves = chess.moves({ verbose: true });
+    for (const m of moves) {
+      if (m.to === square && m.captured) return { hanging: true, piece: piece.type };
+    }
+  } catch { /* not this side's turn */ }
+  return { hanging: false };
+}
+
+export function materialValue(piece: string): number {
+  return PIECE_VALUES[piece] ?? 0;
+}
+
+export function countMaterial(chess: Chess): { white: number; black: number } {
+  let white = 0, black = 0;
+  for (const p of allPieces(chess)) {
+    const v = PIECE_VALUES[p.type] ?? 0;
+    if (p.color === "w") white += v; else black += v;
+  }
+  return { white, black };
 }
