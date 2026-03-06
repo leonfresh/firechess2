@@ -461,11 +461,11 @@ export default function RoastPage() {
         // CP loss calculation: from the moving side's perspective
         // cpBefore is from side-to-move perspective (the player making the move)
         // cpAfter is from the NEW side-to-move perspective (opponent after the move)
-        // So the player's eval went from cpBefore to -cpAfter
+        // Mover's eval went from cpBefore to -cpAfter, so loss = cpBefore + cpAfter
         const sideMultiplier = moveResult.color === "w" ? 1 : -1;
         const evalBeforeForSide = cpBefore * sideMultiplier;
         const evalAfterForSide = -cpAfter * sideMultiplier;
-        const cpLoss = Math.max(0, evalBeforeForSide - evalAfterForSide);
+        const cpLoss = Math.max(0, cpBefore + cpAfter);
 
         const isBestMove = bestMoveSan === moveResult.san;
         const classification = classifyMove(cpLoss, isBestMove);
@@ -503,7 +503,7 @@ export default function RoastPage() {
           walkedIntoFork: false,
           walkedIntoPin: false,
           evalSwing: cpLoss,
-          isResignationWorthy: evalAfterForSide < -500 && evalBeforeForSide > -200,
+          isResignationWorthy: cpAfter > 500 && cpBefore > -200,
           timeSpent: clocks[i] ?? null,
         };
 
@@ -556,10 +556,24 @@ export default function RoastPage() {
       }
 
       // Inject closing game summary roast on the last move
+      // Don't overwrite blunder/mistake comments — use the second-to-last move instead
       if (analyzed.length > 0) {
-        const lastIdx = analyzed.length - 1;
+        let closingIdx = analyzed.length - 1;
         const closingRoast = getClosingRoast(totalBlunders, totalMistakes, totalInaccuracies, analyzed.length);
-        analyzed[lastIdx].comment = closingRoast;
+        if (analyzed[closingIdx].comment && 
+            (analyzed[closingIdx].classification === "blunder" || analyzed[closingIdx].classification === "mistake")) {
+          // Last move has an important roast — put closing on second-to-last if available
+          if (analyzed.length > 1 && !analyzed[closingIdx - 1].comment) {
+            closingIdx = closingIdx - 1;
+          } else {
+            // Append closing to existing comment
+            analyzed[closingIdx].comment = analyzed[closingIdx].comment + "\n\n" + closingRoast;
+            closingIdx = -1; // skip overwrite
+          }
+        }
+        if (closingIdx >= 0) {
+          analyzed[closingIdx].comment = closingRoast;
+        }
       }
 
       // Inject 1-2 elo-guessing comments based on game quality patterns
@@ -722,7 +736,7 @@ export default function RoastPage() {
         const sideMultiplier = moveResult.color === "w" ? 1 : -1;
         const evalBeforeForSide = cpBefore * sideMultiplier;
         const evalAfterForSide = -cpAfter * sideMultiplier;
-        const cpLoss = Math.max(0, evalBeforeForSide - evalAfterForSide);
+        const cpLoss = Math.max(0, cpBefore + cpAfter);
         const isBestMove = bestMoveSan === moveResult.san;
         const classification = classifyMove(cpLoss, isBestMove);
 
@@ -758,7 +772,7 @@ export default function RoastPage() {
           walkedIntoFork: false,
           walkedIntoPin: false,
           evalSwing: cpLoss,
-          isResignationWorthy: evalAfterForSide < -500 && evalBeforeForSide > -200,
+          isResignationWorthy: cpAfter > 500 && cpBefore > -200,
           timeSpent: clocks[i] ?? null,
         };
 
@@ -807,9 +821,23 @@ export default function RoastPage() {
       if (openingTarget >= 0) analyzed[openingTarget].comment = openingRoast;
       else if (analyzed.length > 2 && !analyzed[2].comment) analyzed[2].comment = openingRoast;
 
-      // Inject closing roast on last move
+      // Inject closing game summary roast on the last move
+      // Don't overwrite blunder/mistake comments — use the second-to-last move instead
       if (analyzed.length > 0) {
-        analyzed[analyzed.length - 1].comment = getClosingRoast(totalBlunders, totalMistakes, totalInaccuracies, analyzed.length);
+        let closingIdx = analyzed.length - 1;
+        const closingRoast = getClosingRoast(totalBlunders, totalMistakes, totalInaccuracies, analyzed.length);
+        if (analyzed[closingIdx].comment && 
+            (analyzed[closingIdx].classification === "blunder" || analyzed[closingIdx].classification === "mistake")) {
+          if (analyzed.length > 1 && !analyzed[closingIdx - 1].comment) {
+            closingIdx = closingIdx - 1;
+          } else {
+            analyzed[closingIdx].comment = analyzed[closingIdx].comment + "\n\n" + closingRoast;
+            closingIdx = -1;
+          }
+        }
+        if (closingIdx >= 0) {
+          analyzed[closingIdx].comment = closingRoast;
+        }
       }
 
       // Elo-guessing comments
