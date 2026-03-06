@@ -1231,6 +1231,9 @@ export default function RoastPage() {
           <p className="mt-2 text-sm text-slate-400">
             Watch real games. Read the roasts. Guess the rating.
           </p>
+          <p className="mt-1.5 text-xs text-slate-500">
+            🚧 Beta — got feedback? <a href="/feedback" className="text-amber-400 underline underline-offset-2 hover:text-amber-300 transition-colors">Let us know</a>
+          </p>
           {gamesPlayed > 0 && (
             <p className="mt-1 text-xs text-slate-500">
               Score: <span className="font-bold text-amber-400">{score}</span> / {gamesPlayed * 3} ({gamesPlayed} games)
