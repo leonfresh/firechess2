@@ -971,7 +971,7 @@ function _blunderRoast(
     `☠️ ${move.san}.${ctxLine} That was the most AnarchyChess move I've ever seen and I literally do not care to understand the thought process behind it 💀`,
     `🤡 ${move.san}.${ctx.playerBlunders >= 3 ? ` Blunder number ${ctx.playerBlunders}. This person is speedrunning to the lowest elo.` : " This move was doing PIPI in its pampers when good moves were being played."} Absolute scenes 🗿😭`,
     `🚨 ${move.san}.${ctx.goodStreak >= 3 ? ` AFTER ${ctx.goodStreak} GOOD MOVES?? They gave us hope and RIPPED it away.` : " Liers will kicked off... and so will this player's rating."} True will never die, but this position already did 💀`,
-  ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: _toSq, emoji: "💀" }, ...(move.bestMoveUci ? [{ square: move.bestMoveUci.slice(2, 4), emoji: "✅" }] : [])] } };
+  ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: _toSq, emoji: "💀" }] } };
 }
 
 function _mistakeRoast(
@@ -1053,7 +1053,7 @@ function _mistakeRoast(
       `😬 ${move.san} played, ${move.bestMoveSan} wept.${ctxLine} Are you kidding ??? What the beep are you talking about man 🗿🤡`,
       `💀 ${move.san} over ${move.bestMoveSan}.${ctxLine} Google "en passant." They didn't take the best move and the brick is incoming ⛪🧱`,
       `🫠 ${move.san}. Garry Chess invented ${move.bestMoveSan} for a reason.${ctxLine} This ain't it 👑📉`,
-    ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: toSq, emoji: pick(["😬", "📉", "🤦", "😤", "🫤"]) }, ...(move.bestMoveUci ? [{ square: move.bestMoveUci.slice(2, 4), emoji: "✅" }] : [])] } };
+    ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: toSq, emoji: pick(["😬", "📉", "🤦", "😤", "🫤"]) }] } };
   }
 
   const ctxFallback = ctx.goodStreak >= 3
@@ -1080,7 +1080,7 @@ function _mistakeRoast(
     `📉 ${move.san}.${ctxFallback} The evaluation bar just twitched and NOT in the good direction 📊😬`,
     `🤦 ${move.san}.${ctxFallback} This is the type of move that gets posted on AnarchyChess with the caption "guess the elo" 🤡💀`,
     `😬 ${move.san}.${ctxFallback} Hikaru would call this "not great." Levy would call it content. I'm calling it pain 🗿🔥`,
-    ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: toSq, emoji: pick(["😬", "📉", "🤡", "😤", "🗿"]) }, ...(move.bestMoveUci ? [{ square: move.bestMoveUci.slice(2, 4), emoji: "✅" }] : [])] } };
+    ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: toSq, emoji: pick(["😬", "📉", "🤡", "😤", "🗿"]) }] } };
 }
 
 function _inaccuracyRoast(
@@ -1095,7 +1095,7 @@ function _inaccuracyRoast(
   const toSq = move.uci.slice(2, 4);
   const ann: MoveAnnotation = {
     arrows: [[fromSq, toSq, "rgba(168, 162, 158, 0.7)"], ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])],
-    markers: [{ square: toSq, emoji: pick(["🤷", "😑", "🫤", "😐", "💤"]) }, ...(move.bestMoveUci ? [{ square: move.bestMoveUci.slice(2, 4), emoji: "✅" }] : [])],
+    markers: [{ square: toSq, emoji: pick(["🤷", "😑", "🫤", "😐", "💤"]) }],
   };
 
   const lines: (() => string)[] = [

@@ -249,6 +249,14 @@ export default function RoastPage() {
   const [guessReaction, setGuessReaction] = useState<string | null>(null);
   const [mobileClippyOpen, setMobileClippyOpen] = useState(false);
 
+  /* ── Gameshow FX state ── */
+  const [showConfetti, setShowConfetti] = useState(false);
+  const [audienceMeter, setAudienceMeter] = useState(50); // 0-100 crowd sentiment
+  const [streakCount, setStreakCount] = useState(0);
+  const [revealCounterElo, setRevealCounterElo] = useState<number | null>(null);
+  const [spotlightPulse, setSpotlightPulse] = useState(false);
+  const [lockedIn, setLockedIn] = useState(false);
+
   /* ── Source selection state ── */
   const [inputMode, setInputMode] = useState<"random" | "import" | "paste" | null>(null);
   const [loadSource, setLoadSource] = useState<"lichess" | "chesscom">("lichess");
@@ -293,6 +301,11 @@ export default function RoastPage() {
     setEloFlavor("");
     setGuessReaction(null);
     setMobileClippyOpen(false);
+    setShowConfetti(false);
+    setAudienceMeter(50);
+    setRevealCounterElo(null);
+    setSpotlightPulse(false);
+    setLockedIn(false);
     usedLines.current.clear();
     setActiveComment(null);
     setCurrentMood("neutral");
@@ -666,6 +679,11 @@ export default function RoastPage() {
     setEloFlavor("");
     setGuessReaction(null);
     setMobileClippyOpen(false);
+    setShowConfetti(false);
+    setAudienceMeter(50);
+    setRevealCounterElo(null);
+    setSpotlightPulse(false);
+    setLockedIn(false);
     usedLines.current.clear();
     setActiveComment(null);
     setCurrentMood("neutral");
@@ -1034,7 +1052,7 @@ export default function RoastPage() {
         else if (move.isCapture) playSound("capture");
         else playSound("move");
 
-        // Gameshow sound effects based on move classification
+        // Gameshow sound effects + audience meter based on move classification
         if (move.comment) {
           const cls = move.classification;
           setTimeout(() => {
@@ -1043,6 +1061,13 @@ export default function RoastPage() {
             else if (cls === "best" || cls === "great") playSound("bell");
             else if (cls === "mistake") playSound("honk");
           }, 300);
+          // Update audience meter
+          if (cls === "blunder") setAudienceMeter(prev => Math.max(0, prev - 25));
+          else if (cls === "mistake") setAudienceMeter(prev => Math.max(0, prev - 12));
+          else if (cls === "inaccuracy") setAudienceMeter(prev => Math.max(0, prev - 5));
+          else if (cls === "brilliant") setAudienceMeter(prev => Math.min(100, prev + 20));
+          else if (cls === "best" || cls === "great") setAudienceMeter(prev => Math.min(100, prev + 10));
+          else if (cls === "good") setAudienceMeter(prev => Math.min(100, prev + 3));
         }
 
         if (move.comment) {
@@ -1153,6 +1178,7 @@ export default function RoastPage() {
   const handleGuess = useCallback((bracketIdx: number) => {
     if (!game || selectedBracket !== null) return;
     setSelectedBracket(bracketIdx);
+    setLockedIn(true);
 
     const actualIdx = getEloBracketIdx(game.avgElo);
     const distance = Math.abs(bracketIdx - actualIdx);
@@ -1164,27 +1190,34 @@ export default function RoastPage() {
       result = "correct";
       revealPool = REVEAL_CORRECT;
       playSound("correct");
-      // Gameshow: bell double + applause
       setTimeout(() => playSound("bell-double"), 200);
       setTimeout(() => playSound("applause"), 500);
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 4000);
+      setStreakCount(prev => prev + 1);
     } else if (distance === 1) {
       result = "close";
-      revealPool = REVEAL_CORRECT; // close enough gets a positive line
+      revealPool = REVEAL_CORRECT;
       playSound("correct");
       setTimeout(() => playSound("bell"), 200);
       setTimeout(() => playSound("applause-short"), 400);
+      setShowConfetti(true);
+      setTimeout(() => setShowConfetti(false), 3000);
+      setStreakCount(prev => prev + 1);
     } else if (bracketIdx > actualIdx) {
       result = "wrong";
       revealPool = REVEAL_TOO_HIGH;
       playSound("wrong");
       setTimeout(() => playSound("buzzer"), 150);
       if (distance >= 3) setTimeout(() => playSound("sad-trombone"), 600);
+      setStreakCount(0);
     } else {
       result = "wrong";
       revealPool = REVEAL_TOO_LOW;
       playSound("wrong");
       setTimeout(() => playSound("buzzer"), 150);
       if (distance >= 3) setTimeout(() => playSound("sad-trombone"), 600);
+      setStreakCount(0);
     }
 
     if (result === "correct" || result === "close") {
@@ -1218,9 +1251,30 @@ export default function RoastPage() {
       .replace("{frequency}", String(freq));
     setSummaryLine(sumLine);
 
+    // Spotlight pulse on reveal
+    setSpotlightPulse(true);
+    setTimeout(() => setSpotlightPulse(false), 2000);
+
+    // Animated elo counter reveal
+    setRevealCounterElo(0);
+    const target = game.avgElo;
+    const steps = 30;
+    const stepTime = 40;
+    let step = 0;
+    const counterInterval = setInterval(() => {
+      step++;
+      const progress = step / steps;
+      const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      setRevealCounterElo(Math.round(target * eased));
+      if (step >= steps) {
+        clearInterval(counterInterval);
+        setRevealCounterElo(target);
+      }
+    }, stepTime);
+
     // Play reveal stinger before transition
     setTimeout(() => playSound("reveal-stinger"), 300);
-    setTimeout(() => setPageState("revealed"), 600);
+    setTimeout(() => { setPageState("revealed"); setLockedIn(false); }, 600);
   }, [game, selectedBracket, moves.length, blunders, mistakes, inaccuracies]);
 
   /* ── Square styles ── */
@@ -1268,18 +1322,59 @@ export default function RoastPage() {
 
   return (
     <main className="min-h-screen bg-[#030712] text-white">
-      {/* Background glow */}
+      {/* Background — stage lights + spotlight sweep */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="animate-float absolute -left-32 top-20 h-96 w-96 rounded-full bg-red-500/[0.04] blur-[100px]" />
         <div className="animate-float-delayed absolute -right-32 top-40 h-80 w-80 rounded-full bg-orange-500/[0.04] blur-[100px]" />
+        {/* Stage spotlight sweep */}
+        <div className="animate-spotlight absolute top-0 left-1/2 h-[120vh] w-[200px] -translate-x-1/2 bg-gradient-to-b from-orange-400/[0.03] via-transparent to-transparent blur-[60px]" />
+        {/* Spotlight pulse on guess reveal */}
+        {spotlightPulse && (
+          <div className="animate-spotlight-pulse absolute inset-0 bg-radial-gradient from-amber-400/[0.08] to-transparent" style={{ background: "radial-gradient(circle at center 30%, rgba(251,191,36,0.08) 0%, transparent 60%)" }} />
+        )}
       </div>
+
+      {/* Confetti burst */}
+      {showConfetti && (
+        <div className="pointer-events-none fixed inset-0 z-[60] overflow-hidden">
+          {Array.from({ length: 50 }).map((_, i) => {
+            const left = Math.random() * 100;
+            const delay = Math.random() * 0.8;
+            const duration = 2 + Math.random() * 2;
+            const size = 6 + Math.random() * 8;
+            const colors = ["#f97316", "#ef4444", "#eab308", "#22c55e", "#3b82f6", "#a855f7", "#ec4899", "#14b8a6"];
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const rotation = Math.random() * 360;
+            const drift = (Math.random() - 0.5) * 100;
+            return (
+              <div
+                key={i}
+                className="absolute animate-confetti"
+                style={{
+                  left: `${left}%`,
+                  top: "-5%",
+                  width: size,
+                  height: size * (0.6 + Math.random() * 0.8),
+                  backgroundColor: color,
+                  borderRadius: Math.random() > 0.5 ? "50%" : "2px",
+                  animationDelay: `${delay}s`,
+                  animationDuration: `${duration}s`,
+                  transform: `rotate(${rotation}deg)`,
+                  // @ts-expect-error -- CSS custom property for drift
+                  "--drift": `${drift}px`,
+                }}
+              />
+            );
+          })}
+        </div>
+      )}
 
       <div className="relative z-10 mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center gap-3">
             <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
-              <span className="bg-gradient-to-r from-red-400 via-orange-400 to-amber-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-red-400 via-orange-400 to-amber-400 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(251,146,60,0.3)]">
                 Roast the Elo 🔥
               </span>
             </h1>
@@ -1290,10 +1385,23 @@ export default function RoastPage() {
           <p className="mt-2 text-sm text-slate-400">
             Watch real games. Read the roasts. Guess the rating.
           </p>
+          {/* Gameshow scoreboard */}
           {gamesPlayed > 0 && (
-            <p className="mt-1 text-xs text-slate-500">
-              Score: <span className="font-bold text-amber-400">{score}</span> / {gamesPlayed * 3} ({gamesPlayed} games)
-            </p>
+            <div className="mt-3 flex items-center justify-center gap-4">
+              <div className="flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/[0.06] px-4 py-1.5 shadow-lg shadow-amber-500/10">
+                <span className="text-xs text-amber-300/70 uppercase tracking-wider font-bold">Score</span>
+                <span className="text-lg font-black text-amber-400 tabular-nums" style={{ textShadow: "0 0 12px rgba(251,191,36,0.5)" }}>
+                  {score}
+                </span>
+                <span className="text-xs text-slate-500">/ {gamesPlayed * 3}</span>
+              </div>
+              {streakCount >= 2 && (
+                <div className="flex items-center gap-1 rounded-full border border-orange-500/40 bg-orange-500/[0.1] px-3 py-1.5 animate-pulse shadow-lg shadow-orange-500/20">
+                  <span className="text-sm">🔥</span>
+                  <span className="text-xs font-bold text-orange-300">{streakCount} STREAK</span>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
@@ -1472,23 +1580,42 @@ export default function RoastPage() {
           </div>
         )}
 
-        {/* ── Intro screen ── */}
+        {/* ── Intro screen — Gameshow Curtain ── */}
         {pageState === "intro" && game && !analyzing && (
           <div className="flex flex-col items-center gap-6 py-12 animate-fadeIn">
-            <div className="rounded-2xl border border-orange-500/20 bg-orange-500/[0.04] p-8 text-center max-w-lg">
-              <p className="text-xl font-bold text-orange-300 mb-4">&ldquo;{introLine}&rdquo;</p>
-              <div className="space-y-2 text-sm text-slate-400">
-                <p>📋 Opening: <span className="text-white font-medium">{game.opening}</span></p>
-                <p>🕐 {moves.length} moves played</p>
-                <p>🏁 Result: <span className="font-mono text-slate-500">???</span></p>
+            <div className="relative rounded-2xl border-2 border-orange-500/30 bg-gradient-to-b from-orange-500/[0.08] to-red-500/[0.04] p-8 text-center max-w-lg overflow-hidden">
+              {/* Stage light accent */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-40 bg-orange-400/[0.06] rounded-full blur-[50px] pointer-events-none" />
+              <div className="relative">
+                <p className="text-xs uppercase tracking-[0.25em] text-orange-400/60 font-bold mb-3">🎬 Coming Up</p>
+                <p className="text-xl font-bold text-orange-300 mb-5">&ldquo;{introLine}&rdquo;</p>
+                <div className="grid grid-cols-3 gap-3 text-xs text-slate-400">
+                  <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-2.5">
+                    <p className="text-base mb-0.5">📋</p>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-wider">Opening</p>
+                    <p className="text-white font-medium text-[11px] mt-0.5">{game.opening.length > 20 ? game.opening.slice(0, 20) + "…" : game.opening}</p>
+                  </div>
+                  <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-2.5">
+                    <p className="text-base mb-0.5">🕐</p>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-wider">Moves</p>
+                    <p className="text-white font-bold mt-0.5">{moves.length}</p>
+                  </div>
+                  <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-2.5">
+                    <p className="text-base mb-0.5">🏁</p>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-wider">Result</p>
+                    <p className="text-slate-500 font-mono mt-0.5">???</p>
+                  </div>
+                </div>
               </div>
             </div>
 
             <button
               onClick={startWatching}
-              className="rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:brightness-110 hover:scale-105 active:scale-95"
+              className="group relative rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-10 py-4 text-base font-black text-white shadow-xl shadow-orange-500/30 transition-all hover:brightness-110 hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/40 active:scale-95 uppercase tracking-wider"
             >
-              Start Watching 🍿
+              <span className="relative z-10">🍿 Start the Show</span>
+              {/* Glow ring */}
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-orange-400 to-red-400 opacity-0 group-hover:opacity-20 transition-opacity blur-xl" />
             </button>
           </div>
         )}
@@ -1582,6 +1709,40 @@ export default function RoastPage() {
                       {typewriterText}
                       {!typingDone && <span className="animate-blink text-orange-400">|</span>}
                     </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Audience Reaction Meter */}
+              {(pageState === "watching" || pageState === "guessing") && (
+                <div className="w-full max-w-[640px]">
+                  <div className="flex items-center gap-2 px-1">
+                    <span className="text-[10px] text-slate-600 uppercase tracking-wider font-bold whitespace-nowrap">
+                      👥 Crowd
+                    </span>
+                    <div className="flex-1 h-2.5 rounded-full bg-white/[0.04] border border-white/[0.06] overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-700 ease-out"
+                        style={{
+                          width: `${audienceMeter}%`,
+                          background: audienceMeter > 70
+                            ? "linear-gradient(90deg, #22c55e, #4ade80)"
+                            : audienceMeter > 40
+                            ? "linear-gradient(90deg, #eab308, #facc15)"
+                            : "linear-gradient(90deg, #ef4444, #f87171)",
+                          boxShadow: audienceMeter > 70
+                            ? "0 0 8px rgba(34,197,94,0.4)"
+                            : audienceMeter < 30
+                            ? "0 0 8px rgba(239,68,68,0.4)"
+                            : "none",
+                        }}
+                      />
+                    </div>
+                    <span className="text-[10px] w-8 text-right tabular-nums" style={{
+                      color: audienceMeter > 70 ? "#4ade80" : audienceMeter > 40 ? "#facc15" : "#f87171",
+                    }}>
+                      {audienceMeter > 70 ? "😍" : audienceMeter > 40 ? "😐" : audienceMeter > 20 ? "😬" : "💀"}
+                    </span>
                   </div>
                 </div>
               )}
@@ -1769,39 +1930,93 @@ export default function RoastPage() {
                 </div>
               )}
 
-              {/* ── Guess the Elo ── */}
+              {/* ── Guess the Elo — Gameshow Decision Panel ── */}
               {pageState === "guessing" && (
-                <div className="rounded-2xl border border-orange-500/20 bg-orange-500/[0.03] p-5 animate-fadeIn">
-                  <h3 className="text-sm font-bold text-orange-400 mb-1 text-center">🔥 Time to Guess!</h3>
-                  <p className="text-xs text-slate-400 text-center mb-4">What&apos;s the average Elo of these players?</p>
-                  <div className="space-y-2">
-                    {ELO_BRACKETS.map((bracket, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => handleGuess(idx)}
-                        disabled={selectedBracket !== null}
-                        className="w-full flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm font-medium transition-all hover:bg-white/[0.06] hover:border-orange-500/20 cursor-pointer disabled:opacity-40"
-                      >
-                        <span className="flex items-center gap-2">
-                          <span>{bracket.emoji}</span>
-                          <span className="text-white">{bracket.label}</span>
-                        </span>
-                        <span className="text-xs text-slate-500">{bracket.range}</span>
-                      </button>
-                    ))}
+                <div className="rounded-2xl border-2 border-orange-500/30 bg-gradient-to-b from-orange-500/[0.06] to-red-500/[0.04] p-5 animate-fadeIn relative overflow-hidden">
+                  {/* Animated corner accents */}
+                  <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-orange-400/40 rounded-tl-2xl" />
+                  <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-orange-400/40 rounded-tr-2xl" />
+                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-orange-400/40 rounded-bl-2xl" />
+                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-orange-400/40 rounded-br-2xl" />
+
+                  <div className="text-center mb-4">
+                    <h3 className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-300 to-amber-300 uppercase tracking-wider" style={{ textShadow: "0 0 20px rgba(251,146,60,0.3)" }}>
+                      🎯 Lock It In!
+                    </h3>
+                    <p className="text-[11px] text-slate-400 mt-1">What&apos;s the average Elo of these players?</p>
                   </div>
+                  <div className="space-y-2">
+                    {ELO_BRACKETS.map((bracket, idx) => {
+                      const isSelected = selectedBracket === idx;
+                      const isLocked = selectedBracket !== null;
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => handleGuess(idx)}
+                          disabled={isLocked}
+                          className={`w-full flex items-center justify-between rounded-xl border-2 px-4 py-3 text-sm font-bold transition-all cursor-pointer group ${
+                            isSelected
+                              ? "border-orange-400 bg-orange-500/20 scale-[1.02] shadow-lg shadow-orange-500/20"
+                              : isLocked
+                              ? "border-white/[0.04] bg-white/[0.01] opacity-30"
+                              : "border-white/[0.08] bg-white/[0.02] hover:border-orange-500/40 hover:bg-orange-500/[0.08] hover:scale-[1.01] active:scale-[0.98]"
+                          }`}
+                        >
+                          <span className="flex items-center gap-2.5">
+                            <span className={`text-lg transition-transform ${!isLocked ? "group-hover:scale-125" : ""}`}>{bracket.emoji}</span>
+                            <span className={isSelected ? "text-orange-300" : "text-white"}>{bracket.label}</span>
+                          </span>
+                          <span className={`text-xs font-mono ${isSelected ? "text-orange-400" : "text-slate-500"}`}>{bracket.range}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Lock-in animation */}
+                  {lockedIn && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10 animate-fadeIn rounded-2xl">
+                      <div className="text-center">
+                        <p className="text-2xl font-black text-orange-400 animate-bounce" style={{ textShadow: "0 0 20px rgba(251,146,60,0.5)" }}>
+                          LOCKED IN! 🔒
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* ── Reveal ── */}
+              {/* ── Reveal — Dramatic Gameshow Reveal ── */}
               {pageState === "revealed" && game && (
-                <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.03] p-5 space-y-4 animate-fadeIn">
-                  <div className="text-center">
-                    <p className="text-3xl font-black text-white">{game.avgElo}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">
+                <div className="rounded-2xl border-2 border-amber-500/30 bg-gradient-to-b from-amber-500/[0.06] to-orange-500/[0.04] p-5 space-y-4 animate-fadeIn relative overflow-hidden">
+                  {/* Spotlight glow behind elo */}
+                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-amber-400/[0.08] rounded-full blur-[60px] pointer-events-none" />
+
+                  {/* Animated Elo Counter */}
+                  <div className="text-center relative">
+                    <p className="text-xs text-amber-400/60 uppercase tracking-[0.2em] font-bold mb-1">The Rating Is...</p>
+                    <p className="text-5xl sm:text-6xl font-black tabular-nums text-transparent bg-clip-text bg-gradient-to-b from-white to-amber-200" style={{ textShadow: "0 0 40px rgba(251,191,36,0.3)" }}>
+                      {revealCounterElo ?? game.avgElo}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">
                       White: {game.whiteElo} · Black: {game.blackElo}
                     </p>
                   </div>
+
+                  {/* Result badge */}
+                  {selectedBracket !== null && (() => {
+                    const dist = Math.abs(selectedBracket - getEloBracketIdx(game.avgElo));
+                    const badge = dist === 0 ? { text: "PERFECT", color: "from-green-400 to-emerald-400", border: "border-green-500/40", bg: "bg-green-500/10", glow: "shadow-green-500/30" }
+                      : dist === 1 ? { text: "CLOSE", color: "from-amber-300 to-yellow-300", border: "border-amber-500/40", bg: "bg-amber-500/10", glow: "shadow-amber-500/30" }
+                      : { text: "MISS", color: "from-red-400 to-orange-400", border: "border-red-500/40", bg: "bg-red-500/10", glow: "shadow-red-500/30" };
+                    return (
+                      <div className={`mx-auto mt-2 w-fit rounded-full border-2 ${badge.border} ${badge.bg} px-5 py-1 shadow-lg ${badge.glow}`}>
+                        <span className={`text-sm font-black uppercase tracking-wider bg-gradient-to-r ${badge.color} bg-clip-text text-transparent`}>
+                          {badge.text} {dist === 0 ? "🎯" : dist === 1 ? "🔥" : "💀"}
+                        </span>
+                      </div>
+                    );
+                  })()}
+
                   <p className="text-sm text-amber-300 text-center font-medium">{revealLine}</p>
                   <p className="text-xs text-slate-400 text-center italic">{eloFlavor}</p>
 
@@ -1902,9 +2117,10 @@ export default function RoastPage() {
                       setRecentGames([]);
                       setPgnInput("");
                     }}
-                    className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:brightness-110 hover:scale-[1.02] active:scale-95"
+                    className="group relative w-full rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-6 py-3.5 text-sm font-black text-white shadow-xl shadow-orange-500/25 transition-all hover:brightness-110 hover:scale-[1.02] hover:shadow-2xl hover:shadow-orange-500/40 active:scale-95 uppercase tracking-wider"
                   >
-                    Next Game 🔥
+                    <span className="relative z-10">🔥 Next Round</span>
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-orange-400 to-red-400 opacity-0 group-hover:opacity-20 transition-opacity blur-xl" />
                   </button>
                 </div>
               )}
@@ -1996,6 +2212,32 @@ export default function RoastPage() {
         }
         .animate-blink {
           animation: blink 0.8s step-end infinite;
+        }
+        /* Confetti particles */
+        @keyframes confetti-fall {
+          0% { transform: translateY(0) rotate(0deg) translateX(0); opacity: 1; }
+          25% { opacity: 1; }
+          100% { transform: translateY(100vh) rotate(720deg) translateX(var(--drift, 0px)); opacity: 0; }
+        }
+        .animate-confetti {
+          animation: confetti-fall 3s ease-out forwards;
+        }
+        /* Spotlight sweep */
+        @keyframes spotlight-sweep {
+          0%, 100% { transform: translateX(-200%) rotate(-5deg); opacity: 0.5; }
+          50% { transform: translateX(200%) rotate(5deg); opacity: 1; }
+        }
+        .animate-spotlight {
+          animation: spotlight-sweep 12s ease-in-out infinite;
+        }
+        /* Spotlight pulse on reveal */
+        @keyframes spotlight-pulse {
+          0% { opacity: 0; transform: scale(0.5); }
+          50% { opacity: 1; transform: scale(1); }
+          100% { opacity: 0; transform: scale(1.5); }
+        }
+        .animate-spotlight-pulse {
+          animation: spotlight-pulse 2s ease-out forwards;
         }
       `}</style>
     </main>
