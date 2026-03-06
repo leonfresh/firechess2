@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    optimizeCss: true,
+  },
   async rewrites() {
     return [
       // Stockfish JS hardcodes "stockfish.wasm" — redirect to our actual file
