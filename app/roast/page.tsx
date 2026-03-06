@@ -285,7 +285,7 @@ export default function RoastPage() {
   const [dailyCompleted, setDailyCompleted] = useState<{ date: string; result: string; elo: number; guess: string } | null>(null);
   const [isDaily, setIsDaily] = useState(false);
 
-  // Check localStorage for today's daily challenge
+  // Load persisted score/streak and daily challenge on mount
   useEffect(() => {
     if (typeof window === "undefined") return;
     try {
@@ -296,7 +296,22 @@ export default function RoastPage() {
         if (data.date === today) setDailyCompleted(data);
       }
     } catch { /* ignore */ }
+    try {
+      const session = localStorage.getItem("fc-roast-session");
+      if (session) {
+        const data = JSON.parse(session);
+        if (typeof data.score === "number") setScore(data.score);
+        if (typeof data.gamesPlayed === "number") setGamesPlayed(data.gamesPlayed);
+        if (typeof data.streakCount === "number") setStreakCount(data.streakCount);
+      }
+    } catch { /* ignore */ }
   }, []);
+
+  // Persist score/streak to localStorage on change
+  useEffect(() => {
+    if (typeof window === "undefined" || gamesPlayed === 0) return;
+    localStorage.setItem("fc-roast-session", JSON.stringify({ score, gamesPlayed, streakCount }));
+  }, [score, gamesPlayed, streakCount]);
 
   /* ── Challenge link state ── */
   const [challengeId, setChallengeId] = useState<string | null>(null);
@@ -703,66 +718,6 @@ export default function RoastPage() {
     }
   }, []);
 
-  /* ── Fetch the daily challenge game (same for everyone each day) ── */
-  const fetchDailyGame = useCallback(async () => {
-    setIsDaily(true);
-    try {
-      // Use Lichess daily puzzle — its source game is the same for everyone today
-      const dailyRes = await fetch("https://lichess.org/api/puzzle/daily", {
-        headers: { Accept: "application/json" },
-      });
-      if (!dailyRes.ok) throw new Error("Failed to fetch daily puzzle");
-      const daily = await dailyRes.json();
-      const gameId = daily?.game?.id;
-      if (!gameId) throw new Error("No game in daily puzzle");
-
-      // Get a recent game from one of the puzzle's players for variety
-      const players = daily?.game?.players ?? [];
-      const player = players[0];
-      if (!player?.id) throw new Error("No player found");
-
-      // Use a date-seeded index to deterministically pick a game
-      const today = new Date().toISOString().slice(0, 10);
-      const seed = today.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
-
-      const userRes = await fetch(
-        `https://lichess.org/api/games/user/${player.id}?max=20&rated=true&perfType=blitz,rapid&opening=true`,
-        { headers: { Accept: "application/x-ndjson" } }
-      );
-      if (!userRes.ok) throw new Error("Failed to load player games");
-      const text = await userRes.text();
-      const lines = text.trim().split("\n").filter(Boolean);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const games: any[] = lines
-        .map((l) => { try { return JSON.parse(l); } catch { return null; } })
-        .filter((g: Record<string, unknown>) =>
-          g && (g as { variant: string }).variant === "standard" && (g as { rated: boolean }).rated &&
-          (g as { status: string }).status !== "started" &&
-          (g as { players: { white?: { user?: unknown }; black?: { user?: unknown } } }).players?.white?.user &&
-          (g as { players: { white?: { user?: unknown }; black?: { user?: unknown } } }).players?.black?.user
-        );
-
-      if (games.length === 0) throw new Error("No valid games");
-      const picked = games[seed % games.length];
-
-      // Export and process the game using the existing flow
-      const pgnRes = await fetch(
-        `https://lichess.org/game/export/${picked.id}?evals=false&clocks=true&opening=true`,
-        { headers: { Accept: "application/x-chess-pgn" } }
-      );
-      if (!pgnRes.ok) throw new Error("Failed to export daily game");
-      const pgn = await pgnRes.text();
-
-      const wElo = picked.players?.white?.rating ?? 1500;
-      const bElo = picked.players?.black?.rating ?? 1500;
-      await processProvidedPgn(pgn, wElo, bElo);
-    } catch (err) {
-      console.error("Daily game failed, falling back to random:", err);
-      setIsDaily(false);
-      fetchGame();
-    }
-  }, [fetchGame, processProvidedPgn]);
-
   /* ── Process a user-provided PGN (import or paste) ── */
   const processProvidedPgn = useCallback(async (pgn: string, knownWhiteElo?: number, knownBlackElo?: number) => {
     tts.stop();
@@ -1023,6 +978,66 @@ export default function RoastPage() {
       setAnalyzing(false);
     }
   }, []);
+
+  /* ── Fetch the daily challenge game (same for everyone each day) ── */
+  const fetchDailyGame = useCallback(async () => {
+    setIsDaily(true);
+    try {
+      // Use Lichess daily puzzle — its source game is the same for everyone today
+      const dailyRes = await fetch("https://lichess.org/api/puzzle/daily", {
+        headers: { Accept: "application/json" },
+      });
+      if (!dailyRes.ok) throw new Error("Failed to fetch daily puzzle");
+      const daily = await dailyRes.json();
+      const gameId = daily?.game?.id;
+      if (!gameId) throw new Error("No game in daily puzzle");
+
+      // Get a recent game from one of the puzzle's players for variety
+      const players = daily?.game?.players ?? [];
+      const player = players[0];
+      if (!player?.id) throw new Error("No player found");
+
+      // Use a date-seeded index to deterministically pick a game
+      const today = new Date().toISOString().slice(0, 10);
+      const seed = today.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+
+      const userRes = await fetch(
+        `https://lichess.org/api/games/user/${player.id}?max=20&rated=true&perfType=blitz,rapid&opening=true`,
+        { headers: { Accept: "application/x-ndjson" } }
+      );
+      if (!userRes.ok) throw new Error("Failed to load player games");
+      const text = await userRes.text();
+      const lines = text.trim().split("\n").filter(Boolean);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const games: any[] = lines
+        .map((l) => { try { return JSON.parse(l); } catch { return null; } })
+        .filter((g: Record<string, unknown>) =>
+          g && (g as { variant: string }).variant === "standard" && (g as { rated: boolean }).rated &&
+          (g as { status: string }).status !== "started" &&
+          (g as { players: { white?: { user?: unknown }; black?: { user?: unknown } } }).players?.white?.user &&
+          (g as { players: { white?: { user?: unknown }; black?: { user?: unknown } } }).players?.black?.user
+        );
+
+      if (games.length === 0) throw new Error("No valid games");
+      const picked = games[seed % games.length];
+
+      // Export and process the game using the existing flow
+      const pgnRes = await fetch(
+        `https://lichess.org/game/export/${picked.id}?evals=false&clocks=true&opening=true`,
+        { headers: { Accept: "application/x-chess-pgn" } }
+      );
+      if (!pgnRes.ok) throw new Error("Failed to export daily game");
+      const pgn = await pgnRes.text();
+
+      const wElo = picked.players?.white?.rating ?? 1500;
+      const bElo = picked.players?.black?.rating ?? 1500;
+      await processProvidedPgn(pgn, wElo, bElo);
+    } catch (err) {
+      console.error("Daily game failed, falling back to random:", err);
+      setIsDaily(false);
+      fetchGame();
+    }
+  }, [fetchGame, processProvidedPgn]);
 
   /* ── Fetch recent games from Lichess / Chess.com ── */
   const fetchRecentGames = useCallback(async () => {
@@ -1685,12 +1700,12 @@ export default function RoastPage() {
                     : "border-amber-500/20 bg-amber-500/[0.04] hover:border-amber-500/40 hover:bg-amber-500/[0.08]"
                 }`}
               >
-                <span className="mb-2 sm:mb-3 flex justify-center text-2xl sm:text-3xl">📅</span>
+                <span className="mb-2 sm:mb-3 flex justify-center text-2xl sm:text-3xl">{dailyCompleted ? (dailyCompleted.result === "correct" ? "🎯" : dailyCompleted.result === "close" ? "🔥" : "📅") : "📅"}</span>
                 <p className={`text-xs sm:text-sm font-bold ${dailyCompleted ? "text-emerald-400" : "text-amber-400 group-hover:text-amber-300"}`}>
                   {dailyCompleted ? "Completed ✓" : "Daily Challenge"}
                 </p>
                 <p className="mt-1 text-[10px] sm:text-[11px] text-slate-500 leading-relaxed">
-                  {dailyCompleted ? `You guessed ${dailyCompleted.guess}` : "Same game for everyone today"}
+                  {dailyCompleted ? `${dailyCompleted.guess} → ${dailyCompleted.elo} Elo` : "Same game for everyone today"}
                 </p>
                 {!dailyCompleted && (
                   <div className="absolute top-2 right-2">
@@ -1848,6 +1863,11 @@ export default function RoastPage() {
         {/* ── Loading / Analyzing ── */}
         {(pageState === "loading" || analyzing) && (
           <div className="flex flex-col items-center justify-center gap-4 py-20">
+            {challengeId && (
+              <div className="rounded-full border border-orange-500/30 bg-orange-500/[0.08] px-5 py-1.5 mb-2">
+                <p className="text-xs font-bold text-orange-300 uppercase tracking-wider">⚔️ Challenge Mode</p>
+              </div>
+            )}
             <div className="relative h-16 w-16">
               <div className="absolute inset-0 animate-spin rounded-full border-4 border-white/10 border-t-orange-400" />
               <span className="absolute inset-0 flex items-center justify-center text-2xl">🔥</span>
@@ -1883,6 +1903,12 @@ export default function RoastPage() {
               <div className="absolute bottom-0 left-0 w-10 h-10 border-b-2 border-l-2 border-orange-400/30 rounded-bl-3xl" />
               <div className="absolute bottom-0 right-0 w-10 h-10 border-b-2 border-r-2 border-orange-400/30 rounded-br-3xl" />
               <div className="relative">
+                {challengeId && (
+                  <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-orange-500/40 bg-orange-500/10 px-4 py-1">
+                    <span className="text-xs">⚔️</span>
+                    <span className="text-[10px] font-bold text-orange-300 uppercase tracking-wider">Friend&apos;s Challenge</span>
+                  </div>
+                )}
                 <p className="text-xs uppercase tracking-[0.25em] text-orange-400/60 font-bold mb-3">🎬 Coming Up</p>
                 <p className="text-xl font-bold text-orange-300 mb-5">&ldquo;{introLine}&rdquo;</p>
                 <div className="grid grid-cols-3 gap-3 text-xs text-slate-400">
@@ -2112,6 +2138,8 @@ export default function RoastPage() {
                           setLoadError("");
                           setRecentGames([]);
                           setPgnInput("");
+                          setIsDaily(false);
+                          setChallengeId(null);
                         } : skipToGuess}
                         className="rounded-lg border border-amber-500/20 bg-amber-500/[0.06] px-3 py-1.5 text-xs font-medium text-amber-400 hover:bg-amber-500/10 transition-colors"
                       >
@@ -2534,9 +2562,9 @@ export default function RoastPage() {
                     >
                       𝕏 Post
                     </a>
-                    {/* Copy text */}
+                    {/* Share (native on mobile, clipboard fallback) */}
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         const bracket = selectedBracket !== null ? ELO_BRACKETS[selectedBracket] : null;
                         const actualBracket = ELO_BRACKETS[getEloBracketIdx(game.avgElo)];
                         const diff = selectedBracket !== null ? Math.abs(selectedBracket - getEloBracketIdx(game.avgElo)) : 99;
@@ -2544,9 +2572,17 @@ export default function RoastPage() {
                         const text = [
                           `${emoji} Roast the Elo — I guessed ${bracket?.label ?? "?"} and the actual Elo was ${game.avgElo} (${actualBracket.label})`,
                           `💀 ${blunders} blunders · ❌ ${mistakes} mistakes · ⚠️ ${inaccuracies} inaccuracies`,
-                          `🐸 Try it yourself: firechess.app/roast`,
+                          `🐸 Try it yourself:`,
                         ].join("\n");
-                        navigator.clipboard.writeText(text).then(() => {
+                        const url = game.id ? `https://firechess.app/roast?game=${game.id}` : "https://firechess.app/roast";
+                        // Use native share on mobile, clipboard fallback on desktop
+                        if (typeof navigator.share === "function") {
+                          try {
+                            await navigator.share({ title: "Roast the Elo", text, url });
+                            return;
+                          } catch { /* user cancelled or not supported */ }
+                        }
+                        navigator.clipboard.writeText(text + "\n" + url).then(() => {
                           setShareText("Copied!");
                           setTimeout(() => setShareText(null), 2000);
                         }).catch(() => {
@@ -2556,7 +2592,7 @@ export default function RoastPage() {
                       }}
                       className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs font-medium text-slate-300 hover:bg-white/[0.08] transition-all flex items-center justify-center gap-1.5"
                     >
-                      {shareText ?? "📋 Copy"}
+                      {shareText ?? "📤 Share"}
                     </button>
                   </div>
                   {/* Challenge + Download row */}
@@ -2629,6 +2665,8 @@ export default function RoastPage() {
                     setLoadError("");
                     setRecentGames([]);
                     setPgnInput("");
+                    setIsDaily(false);
+                    setChallengeId(null);
                   }}
                   className="group relative w-full rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4 text-base font-black text-white shadow-xl shadow-orange-500/25 transition-all hover:brightness-110 hover:scale-[1.02] hover:shadow-2xl hover:shadow-orange-500/40 active:scale-95 uppercase tracking-wider"
                 >
