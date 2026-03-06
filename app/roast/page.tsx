@@ -268,6 +268,7 @@ export default function RoastPage() {
   const [activeDecision, setActiveDecision] = useState<GameshowDecision | null>(null);
   const [decisionAnswer, setDecisionAnswer] = useState<number | null>(null);
   const [decisionShown, setDecisionShown] = useState(new Set<number>());
+  const [pendingDecisionIdx, setPendingDecisionIdx] = useState<number | null>(null);
 
   /* ── Source selection state ── */
   const [inputMode, setInputMode] = useState<"random" | "import" | "paste" | null>(null);
@@ -321,6 +322,7 @@ export default function RoastPage() {
     setActiveDecision(null);
     setDecisionAnswer(null);
     setDecisionShown(new Set());
+    setPendingDecisionIdx(null);
     usedLines.current.clear();
     setActiveComment(null);
     setCurrentMood("neutral");
@@ -702,6 +704,7 @@ export default function RoastPage() {
     setActiveDecision(null);
     setDecisionAnswer(null);
     setDecisionShown(new Set());
+    setPendingDecisionIdx(null);
     usedLines.current.clear();
     setActiveComment(null);
     setCurrentMood("neutral");
@@ -1103,99 +1106,14 @@ export default function RoastPage() {
           setActiveMarkers([]);
         }
 
-        // Mid-game decision triggers — pause autoplay with interactive question
+        // Mid-game decision triggers — mark for deferred popup (after TTS/text finishes)
         if (!decisionShown.has(next)) {
           const pctDone = next / moves.length;
-          // Trigger at ~30% and ~60% of the game
           const shouldTrigger =
             (pctDone >= 0.28 && pctDone <= 0.35 && !Array.from(decisionShown).some(d => d / moves.length >= 0.25 && d / moves.length <= 0.40)) ||
             (pctDone >= 0.55 && pctDone <= 0.65 && !Array.from(decisionShown).some(d => d / moves.length >= 0.50 && d / moves.length <= 0.70));
-          if (shouldTrigger) {
-            const cls = move.classification;
-            const nextMove = next + 1 < moves.length ? moves[next + 1] : null;
-            const blundersSoFar = moves.slice(0, next + 1).filter(m => m.classification === "blunder").length;
-            const bestSoFar = moves.slice(0, next + 1).filter(m => m.classification === "brilliant" || m.classification === "best").length;
-
-            // Generate a contextual decision based on what just happened
-            let decision: GameshowDecision | null = null;
-
-            if (cls === "blunder" || cls === "mistake") {
-              decision = {
-                moveIdx: next,
-                question: `🤔 That ${cls} just happened. What do you think happens next?`,
-                options: [
-                  { label: "They recover with a good move", emoji: "💪" },
-                  { label: "It gets worse", emoji: "📉" },
-                  { label: "Opponent blunders back", emoji: "🤝" },
-                ],
-                correctIdx: nextMove ? (
-                  nextMove.classification === "blunder" || nextMove.classification === "mistake" ? 2 :
-                  nextMove.cpLoss > 50 ? 1 : 0
-                ) : 1,
-                explanation: nextMove?.classification === "blunder"
-                  ? "The blunder trades! Both sides are dropping pieces 💀"
-                  : nextMove?.cpLoss === 0 ? "They actually found the best move! Redemption arc 🎬"
-                  : "The chaos continues... as expected at this level 🫠",
-              };
-            } else if (blundersSoFar >= 2 && pctDone < 0.5) {
-              decision = {
-                moveIdx: next,
-                question: `🎯 We're ${Math.round(pctDone * 100)}% through the game with ${blundersSoFar} blunders already. How many total blunders by the end?`,
-                options: [
-                  { label: `${blundersSoFar} — they've learned their lesson`, emoji: "🎓" },
-                  { label: `${blundersSoFar + 2}-${blundersSoFar + 4} — buckle up`, emoji: "🎢" },
-                  { label: `${blundersSoFar + 5}+ — this is a trainwreck`, emoji: "🚂💥" },
-                ],
-                correctIdx: (() => {
-                  const totalB = moves.filter(m => m.classification === "blunder").length;
-                  const remaining = totalB - blundersSoFar;
-                  if (remaining <= 0) return 0;
-                  if (remaining <= 4) return 1;
-                  return 2;
-                })(),
-                explanation: (() => {
-                  const totalB = moves.filter(m => m.classification === "blunder").length;
-                  return totalB <= blundersSoFar
-                    ? "They actually cleaned it up! Character development 📈"
-                    : totalB >= blundersSoFar + 5
-                    ? `${totalB} total blunders. This game is a crime scene 🔍`
-                    : `${totalB} total blunders. Par for the course 🏌️`;
-                })(),
-              };
-            } else if (bestSoFar >= 2) {
-              decision = {
-                moveIdx: next,
-                question: "⭐ The players have been surprisingly solid. What's your early Elo vibe?",
-                options: [
-                  { label: "Under 1200 — luck runs out", emoji: "🍀" },
-                  { label: "1200-1800 — decent club players", emoji: "♟️" },
-                  { label: "1800+ — these guys can play", emoji: "🧠" },
-                ],
-                correctIdx: game ? (game.avgElo < 1200 ? 0 : game.avgElo < 1800 ? 1 : 2) : 1,
-                explanation: game ? `The actual average Elo is ${game.avgElo}. ${game.avgElo < 1200 ? "Fools' gold! 🪙" : game.avgElo >= 1800 ? "They're legit!" : "Right in the middle."}` : "Wait for the reveal!",
-              };
-            } else {
-              decision = {
-                moveIdx: next,
-                question: "🎪 AUDIENCE POLL: How's this game going so far?",
-                options: [
-                  { label: "Boring — wake me up when it's over", emoji: "😴" },
-                  { label: "Entertaining — popcorn worthy", emoji: "🍿" },
-                  { label: "Chaos — what am I watching", emoji: "🤯" },
-                ],
-                correctIdx: -1, // No correct answer — just engagement
-                explanation: "Your voice has been heard! The crowd has spoken 📢",
-              };
-            }
-
-            if (decision) {
-              setTimeout(() => {
-                playSound("bell");
-                setActiveDecision(decision);
-                setDecisionAnswer(null);
-                setAutoplay(false);
-              }, 1200);
-            }
+          if (shouldTrigger && move.comment) {
+            setPendingDecisionIdx(next);
           }
         }
       }
@@ -1204,6 +1122,90 @@ export default function RoastPage() {
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageState, autoplay, currentIdx, moves, speed, typingDone, activeComment, tts.enabled, tts.speaking, ttsDoneSignal, activeDecision]);
+
+  /* ── Deferred decision popup — waits for TTS + typewriter to finish ── */
+  useEffect(() => {
+    if (pendingDecisionIdx === null || pageState !== "watching") return;
+    if (!typingDone) return; // wait for text to finish typing
+    if (tts.enabled && tts.speaking) return; // wait for TTS to finish
+
+    const next = pendingDecisionIdx;
+    const move = moves[next];
+    if (!move) { setPendingDecisionIdx(null); return; }
+
+    const pctDone = next / moves.length;
+    const cls = move.classification;
+    const nextMove = next + 1 < moves.length ? moves[next + 1] : null;
+    const blundersSoFar = moves.slice(0, next + 1).filter(m => m.classification === "blunder").length;
+
+    let decision: GameshowDecision | null = null;
+
+    if (cls === "blunder" || cls === "mistake") {
+      decision = {
+        moveIdx: next,
+        question: `🤔 That ${cls} just happened. What do you think happens next?`,
+        options: [
+          { label: "They recover with a good move", emoji: "💪" },
+          { label: "It gets worse", emoji: "📉" },
+          { label: "Opponent blunders back", emoji: "🤝" },
+        ],
+        correctIdx: nextMove ? (
+          nextMove.classification === "blunder" || nextMove.classification === "mistake" ? 2 :
+          nextMove.cpLoss > 50 ? 1 : 0
+        ) : 1,
+        explanation: nextMove?.classification === "blunder"
+          ? "The blunder trades! Both sides are dropping pieces 💀"
+          : nextMove?.cpLoss === 0 ? "They actually found the best move! Redemption arc 🎬"
+          : "The chaos continues... as expected at this level 🫠",
+      };
+    } else if (blundersSoFar >= 2 && pctDone < 0.5) {
+      decision = {
+        moveIdx: next,
+        question: `🎯 We're ${Math.round(pctDone * 100)}% through the game with ${blundersSoFar} blunders already. How many total blunders by the end?`,
+        options: [
+          { label: `${blundersSoFar} — they've learned their lesson`, emoji: "🎓" },
+          { label: `${blundersSoFar + 2}-${blundersSoFar + 4} — buckle up`, emoji: "🎢" },
+          { label: `${blundersSoFar + 5}+ — this is a trainwreck`, emoji: "🚂💥" },
+        ],
+        correctIdx: (() => {
+          const totalB = moves.filter(m => m.classification === "blunder").length;
+          const remaining = totalB - blundersSoFar;
+          if (remaining <= 0) return 0;
+          if (remaining <= 4) return 1;
+          return 2;
+        })(),
+        explanation: (() => {
+          const totalB = moves.filter(m => m.classification === "blunder").length;
+          return totalB <= blundersSoFar
+            ? "They actually cleaned it up! Character development 📈"
+            : totalB >= blundersSoFar + 5
+            ? `${totalB} total blunders. This game is a crime scene 🔍`
+            : `${totalB} total blunders. Par for the course 🏌️`;
+        })(),
+      };
+    } else {
+      decision = {
+        moveIdx: next,
+        question: "🎪 AUDIENCE POLL: How's this game going so far?",
+        options: [
+          { label: "Boring — wake me up when it's over", emoji: "😴" },
+          { label: "Entertaining — popcorn worthy", emoji: "🍿" },
+          { label: "Chaos — what am I watching", emoji: "🤯" },
+        ],
+        correctIdx: -1,
+        explanation: "Your voice has been heard! The crowd has spoken 📢",
+      };
+    }
+
+    setPendingDecisionIdx(null);
+    if (decision) {
+      playSound("bell");
+      setActiveDecision(decision);
+      setDecisionAnswer(null);
+      setAutoplay(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingDecisionIdx, typingDone, tts.enabled, tts.speaking, pageState]);
 
   /* ── Scroll comment box to bottom ── */
   useEffect(() => {
