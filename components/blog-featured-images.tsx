@@ -107,14 +107,14 @@ function CentipawnArt() {
           <stop offset="0" stopColor="#22c55e" /><stop offset="0.5" stopColor="#fbbf24" /><stop offset="1" stopColor="#ef4444" />
         </linearGradient>
         <radialGradient id="c-glow" cx="210" cy="110" r="130" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#f59e0b" stopOpacity="0.15" /><stop offset="1" stopColor="#f59e0b" stopOpacity="0" />
+          <stop offset="0" stopColor="#f59e0b" stopOpacity="0.28" /><stop offset="1" stopColor="#f59e0b" stopOpacity="0" />
         </radialGradient>
         <filter id="c-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
       </defs>
       <rect width="400" height="220" fill="url(#c-bg)" />
       <rect width="400" height="220" fill="url(#c-glow)" />
       {/* Eval bar on left */}
-      <rect x="40" y="30" width="18" height="160" rx="9" fill="url(#c-eval)" fillOpacity="0.75" />
+      <rect x="40" y="30" width="18" height="160" rx="9" fill="url(#c-eval)" fillOpacity="0.92" />
       <rect x="40" y="30" width="18" height="160" rx="9" fill="none" stroke="#475569" strokeWidth="0.8" strokeOpacity="0.5" />
       {/* Slider mark on eval bar */}
       <rect x="36" y="105" width="26" height="4" rx="2" fill="white" fillOpacity="0.8" />
@@ -123,22 +123,22 @@ function CentipawnArt() {
         <line key={`t${i}`} x1="60" y1={30+i*20} x2="66" y2={30+i*20} stroke="#94a3b8" strokeWidth="0.5" strokeOpacity="0.5" />
       ))}
       {/* Concentric measurement circles around pawn */}
-      <circle cx="210" cy="110" r="70" fill="none" stroke="#475569" strokeWidth="0.8" strokeDasharray="3 4" strokeOpacity="0.35" />
-      <circle cx="210" cy="110" r="50" fill="none" stroke="#64748b" strokeWidth="0.8" strokeDasharray="3 4" strokeOpacity="0.4" />
-      <circle cx="210" cy="110" r="30" fill="none" stroke="#fbbf24" strokeWidth="1" strokeDasharray="2 3" strokeOpacity="0.45" />
+      <circle cx="210" cy="110" r="70" fill="none" stroke="#475569" strokeWidth="1" strokeDasharray="3 4" strokeOpacity="0.55" />
+      <circle cx="210" cy="110" r="50" fill="none" stroke="#64748b" strokeWidth="1" strokeDasharray="3 4" strokeOpacity="0.6" />
+      <circle cx="210" cy="110" r="30" fill="none" stroke="#fbbf24" strokeWidth="1.5" strokeDasharray="2 3" strokeOpacity="0.7" />
       {/* Cross-hair lines */}
-      <line x1="130" y1="110" x2="290" y2="110" stroke="#475569" strokeWidth="0.5" strokeOpacity="0.35" />
-      <line x1="210" y1="30" x2="210" y2="190" stroke="#475569" strokeWidth="0.5" strokeOpacity="0.35" />
+      <line x1="130" y1="110" x2="290" y2="110" stroke="#475569" strokeWidth="0.7" strokeOpacity="0.5" />
+      <line x1="210" y1="30" x2="210" y2="190" stroke="#475569" strokeWidth="0.7" strokeOpacity="0.5" />
       {/* Pawn silhouette  precision target */}
-      <circle cx="210" cy="88" r="11" fill="#f59e0b" fillOpacity="0.7" />
-      <path d="M201,98 L194,132 Q210,139 226,132 L219,98 Z" fill="#f59e0b" fillOpacity="0.6" />
-      <ellipse cx="210" cy="134" rx="20" ry="7" fill="#f59e0b" fillOpacity="0.55" />
+      <circle cx="210" cy="88" r="11" fill="#f59e0b" fillOpacity="0.92" />
+      <path d="M201,98 L194,132 Q210,139 226,132 L219,98 Z" fill="#f59e0b" fillOpacity="0.85" />
+      <ellipse cx="210" cy="134" rx="20" ry="7" fill="#f59e0b" fillOpacity="0.78" />
       {/* Glowing outline on the pawn */}
-      <circle cx="210" cy="88" r="11" fill="none" stroke="#fbbf24" strokeWidth="1.5" strokeOpacity="0.6" filter="url(#c-f)" />
+      <circle cx="210" cy="88" r="11" fill="none" stroke="#fbbf24" strokeWidth="2" strokeOpacity="0.8" filter="url(#c-f)" />
       {/* Floating measurement text */}
-      <text x="310" y="70" textAnchor="middle" fill="#fbbf24" fillOpacity="0.25" fontSize="28" fontWeight="700">{'0.3'}</text>
-      <text x="320" y="170" textAnchor="middle" fill="#ef4444" fillOpacity="0.2" fontSize="22" fontWeight="700">{'-1.2'}</text>
-      <text x="105" y="60" textAnchor="middle" fill="#22c55e" fillOpacity="0.2" fontSize="22" fontWeight="700">{'+0.5'}</text>
+      <text x="310" y="70" textAnchor="middle" fill="#fbbf24" fillOpacity="0.45" fontSize="28" fontWeight="700">{'±0.3'}</text>
+      <text x="320" y="170" textAnchor="middle" fill="#ef4444" fillOpacity="0.4" fontSize="22" fontWeight="700">{'-1.2'}</text>
+      <text x="105" y="60" textAnchor="middle" fill="#22c55e" fillOpacity="0.4" fontSize="22" fontWeight="700">{'+0.5'}</text>
     </svg>
   );
 }
@@ -367,43 +367,43 @@ function TimeArt() {
           <stop offset="0" stopColor="#0c1220" /><stop offset="1" stopColor="#14102a" />
         </linearGradient>
         <radialGradient id="t-glow" cx="200" cy="95" r="100" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#06b6d4" stopOpacity="0.15" /><stop offset="1" stopColor="#06b6d4" stopOpacity="0" />
+          <stop offset="0" stopColor="#06b6d4" stopOpacity="0.28" /><stop offset="1" stopColor="#06b6d4" stopOpacity="0" />
         </radialGradient>
         <filter id="t-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
       </defs>
       <rect width="400" height="190" fill="url(#t-bg)" />
       <rect width="400" height="190" fill="url(#t-glow)" />
       {/* Hourglass frame */}
-      <rect x="158" y="18" width="84" height="6" rx="3" fill="#94a3b8" fillOpacity="0.6" />
-      <rect x="158" y="166" width="84" height="6" rx="3" fill="#94a3b8" fillOpacity="0.6" />
+      <rect x="158" y="18" width="84" height="6" rx="3" fill="#94a3b8" fillOpacity="0.85" />
+      <rect x="158" y="166" width="84" height="6" rx="3" fill="#94a3b8" fillOpacity="0.85" />
       {/* Hourglass glass shape */}
-      <path d="M165,24 L165,68 Q200,100 200,95 Q200,100 235,68 L235,24 Z" fill="none" stroke="#67e8f9" strokeWidth="2" strokeOpacity="0.55" />
-      <path d="M165,166 L165,122 Q200,90 200,95 Q200,90 235,122 L235,166 Z" fill="none" stroke="#67e8f9" strokeWidth="2" strokeOpacity="0.55" />
+      <path d="M165,24 L165,68 Q200,100 200,95 Q200,100 235,68 L235,24 Z" fill="none" stroke="#67e8f9" strokeWidth="2.5" strokeOpacity="0.8" />
+      <path d="M165,166 L165,122 Q200,90 200,95 Q200,90 235,122 L235,166 Z" fill="none" stroke="#67e8f9" strokeWidth="2.5" strokeOpacity="0.8" />
       {/* Sand in top chamber */}
-      <path d="M168,55 Q185,62 200,58 Q215,62 232,55 L216,80 Q200,88 184,80 Z" fill="#f59e0b" fillOpacity="0.35" />
+      <path d="M168,55 Q185,62 200,58 Q215,62 232,55 L216,80 Q200,88 184,80 Z" fill="#f59e0b" fillOpacity="0.6" />
       {/* Sand stream */}
-      <line x1="200" y1="90" x2="200" y2="115" stroke="#f59e0b" strokeWidth="2" strokeOpacity="0.55">
+      <line x1="200" y1="90" x2="200" y2="115" stroke="#f59e0b" strokeWidth="2.5" strokeOpacity="0.8">
         <animate attributeName="strokeDashoffset" from="10" to="0" dur="1s" repeatCount="indefinite" />
       </line>
       {/* Sand pile at bottom */}
-      <path d="M182,158 Q192,148 200,145 Q208,148 218,158" fill="#f59e0b" fillOpacity="0.3" />
-      <path d="M172,162 Q186,152 200,148 Q214,152 228,162" fill="#f59e0b" fillOpacity="0.2" />
+      <path d="M182,158 Q192,148 200,145 Q208,148 218,158" fill="#f59e0b" fillOpacity="0.55" />
+      <path d="M172,162 Q186,152 200,148 Q214,152 228,162" fill="#f59e0b" fillOpacity="0.4" />
       {/* Knight piece inside top chamber */}
       <g transform="translate(200,45) scale(0.7)">
-        <path d="M-5,6 L-7,-12 Q-8,-22 -2,-26 L0,-28 Q3,-25 5,-22 L7,-16 Q9,-12 7,-8 L7,0 Q4,3 -3,3 Z" fill="#67e8f9" fillOpacity="0.6" />
-        <circle cx="-1" cy="-20" r="1.5" fill="#0c1220" fillOpacity="0.5" />
-        <ellipse cx="0" cy="6" rx="8" ry="3" fill="#67e8f9" fillOpacity="0.5" />
+        <path d="M-5,6 L-7,-12 Q-8,-22 -2,-26 L0,-28 Q3,-25 5,-22 L7,-16 Q9,-12 7,-8 L7,0 Q4,3 -3,3 Z" fill="#67e8f9" fillOpacity="0.85" />
+        <circle cx="-1" cy="-20" r="1.5" fill="#0c1220" fillOpacity="0.7" />
+        <ellipse cx="0" cy="6" rx="8" ry="3" fill="#67e8f9" fillOpacity="0.75" />
       </g>
       {/* Clock tick marks around hourglass */}
       {[0,30,60,90,120,150,180,210,240,270,300,330].map((deg, i) => {
         const rad = (deg * Math.PI) / 180;
         const x = 200 + Math.cos(rad) * 115;
         const y = 95 + Math.sin(rad) * 85;
-        return <circle key={`ck${i}`} cx={x} cy={y} r="2" fill="#64748b" fillOpacity="0.3" />;
+        return <circle key={`ck${i}`} cx={x} cy={y} r="2.5" fill="#64748b" fillOpacity="0.5" />;
       })}
       {/* Time pressure text watermark */}
-      <text x="65" y="100" textAnchor="middle" fill="white" fillOpacity="0.05" fontSize="32" fontWeight="700">{'0:30'}</text>
-      <text x="335" y="100" textAnchor="middle" fill="white" fillOpacity="0.05" fontSize="32" fontWeight="700">{'5:00'}</text>
+      <text x="65" y="100" textAnchor="middle" fill="white" fillOpacity="0.1" fontSize="32" fontWeight="700">{'0:30'}</text>
+      <text x="335" y="100" textAnchor="middle" fill="white" fillOpacity="0.1" fontSize="32" fontWeight="700">{'5:00'}</text>
     </svg>
   );
 }
