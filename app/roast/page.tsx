@@ -145,6 +145,13 @@ interface MoveWithComment {
 type PageState = "choose-source" | "loading" | "intro" | "watching" | "guessing" | "revealed";
 
 /* ================================================================== */
+/*  Piece values (for sacrifice detection)                              */
+/* ================================================================== */
+
+const _PIECE_VAL: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+function _pieceVal(p: string | undefined | null): number { return _PIECE_VAL[p ?? ""] ?? 0; }
+
+/* ================================================================== */
 /*  PGN Parsing                                                         */
 /* ================================================================== */
 
@@ -496,7 +503,7 @@ export default function RoastPage() {
           capturedPiece: moveResult.captured ?? undefined,
           hungPiece: cpLoss > 200 && !moveResult.captured,
           hungWhat: cpLoss > 200 ? moveResult.piece : undefined,
-          sacrificedMaterial: !!moveResult.captured && cpLoss > 150,
+          sacrificedMaterial: !!moveResult.captured && cpLoss > 150 && _pieceVal(moveResult.piece) > _pieceVal(moveResult.captured),
           wasBookMove: i < 10 && cpLoss < 10,
           mateInN: null,
           missedMateInN: null,
@@ -765,7 +772,7 @@ export default function RoastPage() {
           capturedPiece: moveResult.captured ?? undefined,
           hungPiece: cpLoss > 200 && !moveResult.captured,
           hungWhat: cpLoss > 200 ? moveResult.piece : undefined,
-          sacrificedMaterial: !!moveResult.captured && cpLoss > 150,
+          sacrificedMaterial: !!moveResult.captured && cpLoss > 150 && _pieceVal(moveResult.piece) > _pieceVal(moveResult.captured),
           wasBookMove: i < 10 && cpLoss < 10,
           mateInN: null,
           missedMateInN: null,

@@ -666,8 +666,8 @@ function _brilliantRoast(
     },
     () => ({ text: `⚡ ${move.san} goes hard.${ctx.recentBlunder ? ` WHERE was this energy when they ${ctx.recentBlunder}?? 😤` : ` But can they keep it up? Spoiler: probably not 🫠`}`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => ({ text: `🗿 ${move.san}. Okay that was actually really good and I hate it. This isn't supposed to happen at this elo. Moving on 😤`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
-    () => ({ text: `🤯 ${move.san}.${callback} Not gonna lie that was clean. But one good move doesn't make up for the rest of this game so let's not celebrate 🗿`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
-    () => ({ text: `🔥 ${move.san}. Garry Chess would nod approvingly and then go back to being disappointed by everything else in this game 💀👑`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `🤯 ${move.san}.${callback} Not gonna lie that was clean.${ctx.playerBlunders > 0 ? " But one good move doesn't make up for the rest of this game so let's not celebrate" : " But can they keep it up? Doubt it"} 🗿`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `🔥 ${move.san}. Garry Chess would nod approvingly${ctx.playerBlunders > 0 ? " and then go back to being disappointed by everything else in this game" : ". Don't get used to it, the bar is still on the floor"} 💀👑`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => ({ text: `🧠 ${move.san}.${ctx.playerBlunders >= 2 ? ` After ${ctx.playerBlunders} blunders? NOW they play well? The audacity. The RANGE of this player 🎭` : ` Objectively the best move. I'm not complimenting them, I'm complimenting Stockfish for suggesting it 🤖`}`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => ({ text: `🤯 ${move.san}.${callback} Okay I literally had to double-check. That IS the engine's top choice. At this elo?? The simulation is glitching 🖥️💀`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => ({ text: `⚡ ${move.san}! ${ctx.isEndgame ? "Endgame precision out of NOWHERE." : "Middlegame brilliance."} They found the one move. THE one move.${ctx.playerBlunders > 0 ? " After all those blunders. Unbelievable 🤡" : " Still don't trust them tho 🗿"}`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
@@ -685,7 +685,8 @@ function _goodMoveRoast(
   ctx: GameContext,
 ): { text: string; annotations: MoveAnnotation } {
   const fromSq = move.uci.slice(0, 2);
-  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(34, 197, 94, 0.7)"]], markers: [] };
+  const goodEmojis = ["🗿", "🫠", "😤", "🤷", "😐", "💤", "🥱"];
+  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(34, 197, 94, 0.7)"]], markers: [{ square: toSq, emoji: pick(goodEmojis) }] };
 
   // Context-aware sarcasm
   const afterBlunder = ctx.recentBlunder ? ` (after they ${ctx.recentBlunder})` : "";
@@ -703,7 +704,8 @@ function _goodMoveRoast(
       : `😐 ${move.san}. Objectively correct. Soulless. Like a chess engine pretending to be a human. Where's the personality 🤖`,
     () => {
       if (move.isCastle) return `🏰 Castling — wow, they know the rules. Want a medal? 🎖️😤`;
-      return `🗿 ${move.san}. Yeah it's good. I'm not gonna compliment them though. They know what they did earlier 💀`;
+      if (ctx.playerBlunders > 0 || ctx.recentBlunder) return `🗿 ${move.san}. Yeah it's good. I'm not gonna compliment them though. They know what they did earlier 💀`;
+      return `🗿 ${move.san}. Yeah it's good. Not gonna compliment them though. Where's the drama? This is boring 🫠`;
     },
     () => {
       const dev = development(after, move.color as Color);
@@ -718,14 +720,16 @@ function _goodMoveRoast(
     () => ctx.goodStreak >= 4
       ? `🤨 ${move.san} — that's ${ctx.goodStreak} good moves in a row. Okay who took over the mouse? This isn't the same person from the opening 🕵️`
       : `😤 ${move.san}. Stockfish approves. I don't care. Where's the next blunder I can roast 🫠🔥`,
-    () => `🗿 ${move.san}.${threwLine || " One good move in a sea of questionable decisions. Google 'consistency.' Holy hell"} 💀`,
+    () => `🗿 ${move.san}.${threwLine || (ctx.playerBlunders > 0 ? " One good move in a sea of questionable decisions. Google 'consistency.' Holy hell" : " A perfectly normal move. My commentary energy is at 0% for this one")} 💀`,
     () => {
       if (move.isCapture) return `🤷 ${move.san} captures and it's correct. Even my dog could see that was free. Not impressed 🐕`;
       return `😐 ${move.san}. Good move. I hate it when they play well because I have nothing to say. Awkward silence 🦗`;
     },
     () => ctx.posture === "losing"
       ? `😬 ${move.san} is fine but they're still losing.${ctx.recentBlunder ? ` This game was decided when they ${ctx.recentBlunder}. Everything since is just delaying the inevitable ⏳` : " Too little too late 💀"}`
-      : `🗿 ${move.san}. Sure. Fine. Great. Can we skip to the part where they blunder again 🫠`,
+      : ctx.playerBlunders > 0
+      ? `🗿 ${move.san}. Sure. Fine. Great. Can we skip to the part where they blunder again 🫠`
+      : `🗿 ${move.san}. Sure. Fine. Great. Where's the content though? I need something to roast 🫠`,
     () => ctx.opponentJustBlundered
       ? `🗿 ${move.san}. Good move but let's be real, the opponent just GIFTED them this position. Hard to mess up a free gift. Hard but not impossible at this elo 🎁💀`
       : `😤 ${move.san}. Theory says this is good. Practice says I'm bored. Where's the content 🫠🗿`,
@@ -734,7 +738,9 @@ function _goodMoveRoast(
       : `🤷 ${move.san}. A moves that screams "I have no idea what I'm doing but I'll copy what the engine says." Except they don't have an engine. Or do they 🕵️`,
     () => `🗿 ${move.san}. The Petrosian of moves. Solid, boring, and makes everyone watching want to Alt+F4. "Well done" I guess 💤`,
     () => `😤 ${move.san}. They played a normal chess move and want applause? This is the bare minimum? Like, the FLOOR? 📉👏`,
-    () => `🗿 ${move.san}. "Don't hang pieces" ✅ "Play the best move" ❌ Somewhere in between. Mid. Ultra mid 🫠`,
+    () => ctx.playerBlunders > 0
+      ? `🗿 ${move.san}. "Don't hang pieces" ✅ "Play the best move" ❌ Somewhere in between. Mid. Ultra mid 🫠`
+      : `🗿 ${move.san}. A move exists. On the board. In a game of chess. Mid. Ultra mid 🫠`,
   ];
   return { text: pick(lines)(), annotations: ann };
 }
@@ -881,8 +887,10 @@ function _blunderRoast(
     ], used), annotations: { arrows: pinArrows, markers: pinMarkers } };
   }
 
-  // 5. Bad sacrifice
-  if (move.sacrificedMaterial || (capturedPiece && move.cpLoss > 150)) {
+  // 5. Bad sacrifice — only trigger when the moved piece is worth MORE than the captured piece
+  //    (e.g. queen takes pawn). Equal trades like bishop takes knight are NOT sacrifices.
+  const _isTrueSacrifice = movedPiece && capturedPiece && (PIECE_VALUES[movedPiece.type] ?? 0) > (PIECE_VALUES[capturedPiece.type] ?? 0);
+  if (move.sacrificedMaterial || (_isTrueSacrifice && move.cpLoss > 150)) {
     const sacWhat = movedPiece ? pn(movedPiece.type) : "piece";
     return { text: pickUnused([
       `🤡 They sacrificed the ${sacWhat} with ${move.san}! Bold! Brave! ...and terrible 💀`,
@@ -935,7 +943,7 @@ function _blunderRoast(
     return { text: pickUnused([
       `🚧 ${move.san} — and the pawn structure is a war crime 🏚️${pawns.doubled.length > 0 ? ` Doubled pawns on the ${pawns.doubled[0]}.` : ""}${pawns.isolated.length > 0 ? ` ${pawns.isolated.length} isolated pawns.` : ""} Rubble, not a position 💀`,
       `🤮 After ${move.san}, look at this pawn structure.${pawns.doubled.length > 0 ? ` Doubled on ${pawns.doubled[0]}.` : ""}${pawns.isolated.length > 0 ? ` ${pawns.isolated.length} isolated pawns.` : ""} Philidor is rolling in his grave 🪦`,
-    ], used), annotations: { arrows: [moveArrow], markers: [] } };
+    ], used), annotations: { arrows: [moveArrow], markers: [{ square: _toSq, emoji: "🚧" }] } };
   }
 
   // 9. Generic — with context-aware callbacks
@@ -1043,7 +1051,7 @@ function _mistakeRoast(
       `😬 ${move.san} played, ${move.bestMoveSan} wept.${ctxLine} Are you kidding ??? What the beep are you talking about man 🗿🤡`,
       `💀 ${move.san} over ${move.bestMoveSan}.${ctxLine} Google "en passant." They didn't take the best move and the brick is incoming ⛪🧱`,
       `🫠 ${move.san}. Garry Chess invented ${move.bestMoveSan} for a reason.${ctxLine} This ain't it 👑📉`,
-    ], used), annotations: { arrows: [moveArrow], markers: [] } };
+    ], used), annotations: { arrows: [moveArrow], markers: [{ square: toSq, emoji: pick(["😬", "📉", "🤦", "😤", "🫤"]) }] } };
   }
 
   const ctxFallback = ctx.goodStreak >= 3
@@ -1070,7 +1078,7 @@ function _mistakeRoast(
     `📉 ${move.san}.${ctxFallback} The evaluation bar just twitched and NOT in the good direction 📊😬`,
     `🤦 ${move.san}.${ctxFallback} This is the type of move that gets posted on AnarchyChess with the caption "guess the elo" 🤡💀`,
     `😬 ${move.san}.${ctxFallback} Hikaru would call this "not great." Levy would call it content. I'm calling it pain 🗿🔥`,
-  ], used), annotations: { arrows: [moveArrow], markers: [] } };
+    ], used), annotations: { arrows: [moveArrow], markers: [{ square: toSq, emoji: pick(["😬", "📉", "🤡", "😤", "🗿"]) }] } };
 }
 
 function _inaccuracyRoast(
@@ -1083,7 +1091,7 @@ function _inaccuracyRoast(
   const pawns = pawnIssues(after, moverColor);
   const fromSq = move.uci.slice(0, 2);
   const toSq = move.uci.slice(2, 4);
-  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(168, 162, 158, 0.7)"]], markers: [] };
+  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(168, 162, 158, 0.7)"]], markers: [{ square: toSq, emoji: pick(["🤷", "😑", "🫤", "😐", "💤"]) }] };
 
   const lines: (() => string)[] = [
     () => {
@@ -1132,8 +1140,8 @@ function _badCheckRoast(
 ): { text: string; annotations: MoveAnnotation } {
   const fromSq = move.uci.slice(0, 2);
   const toSq = move.uci.slice(2, 4);
-  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(168, 162, 158, 0.7)"]], markers: [] };
   const isBlunder = move.classification === "blunder";
+  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(168, 162, 158, 0.7)"]], markers: [{ square: toSq, emoji: isBlunder ? pick(["🤡", "💀", "⚰️"]) : pick(["🐸", "😏", "🤡", "🗿"]) }] };
 
   const ctxLine = ctx.threwAdvantage
     ? " They were WINNING btw."
@@ -1183,7 +1191,7 @@ function _endgameRoast(
 ): { text: string; annotations: MoveAnnotation } | null {
   const fromSq = move.uci.slice(0, 2);
   const toSq = move.uci.slice(2, 4);
-  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(100, 160, 255, 0.7)"]], markers: [] };
+  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(100, 160, 255, 0.7)"]], markers: [{ square: toSq, emoji: "🏁" }] };
 
   // Count specific pieces to detect common endgames
   const pieces: Record<string, number> = { wq: 0, bq: 0, wr: 0, br: 0, wb: 0, bb: 0, wn: 0, bn: 0, wp: 0, bp: 0 };
@@ -1278,10 +1286,9 @@ function _opponentGiftRoast(
 ): { text: string; annotations: MoveAnnotation } | null {
   const fromSq = move.uci.slice(0, 2);
   const toSq = move.uci.slice(2, 4);
-  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(255, 200, 50, 0.7)"]], markers: [] };
-
   const giftSize = ctx.opponentGift > 500 ? "MASSIVE" : ctx.opponentGift > 300 ? "huge" : "nice";
   const isMiss = move.classification === "mistake" || move.classification === "inaccuracy" || move.classification === "blunder";
+  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(255, 200, 50, 0.7)"]], markers: [{ square: toSq, emoji: isMiss ? "🤡" : "🎁" }] };
 
   const lines: string[] = [];
 
@@ -1316,7 +1323,7 @@ function _momentumRoast(
 ): { text: string; annotations: MoveAnnotation } | null {
   const fromSq = move.uci.slice(0, 2);
   const toSq = move.uci.slice(2, 4);
-  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(239, 68, 68, 0.6)"]], markers: [] };
+  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(239, 68, 68, 0.6)"]], markers: [{ square: toSq, emoji: "📉" }] };
 
   const crater = Math.round(ctx.evalCrater / 100); // in pawns
 
@@ -1348,7 +1355,7 @@ function _timeRoast(
 
   const fromSq = move.uci.slice(0, 2);
   const toSq = move.uci.slice(2, 4);
-  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(100, 200, 255, 0.6)"]], markers: [] };
+  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(100, 200, 255, 0.6)"]], markers: [{ square: toSq, emoji: "⏱️" }] };
 
   const isBlunder = move.classification === "blunder";
   const isMistake = move.classification === "mistake";
@@ -1477,7 +1484,8 @@ function _styleRoast(
 
   const fromSq = move.uci.slice(0, 2);
   const toSq = move.uci.slice(2, 4);
-  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(100, 160, 255, 0.7)"]], markers: [] };
+  const styleEmoji = style === "aggressive" ? "⚔️" : style === "passive" ? "🐌" : "♻️";
+  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(100, 160, 255, 0.7)"]], markers: [{ square: toSq, emoji: styleEmoji }] };
 
   if (style === "aggressive") {
     const text = pickUnused([
@@ -1531,8 +1539,8 @@ function _fallbackLine(move: AnalyzedMove): { text: string; annotations: MoveAnn
   if (cls === "best" || cls === "great" || cls === "good") {
     return Math.random() < 0.3 ? { text: `✅ ${move.san} — solid move. Nothing to see here 🫡`, annotations: NO_ANNOTATIONS } : null;
   }
-  if (cls === "blunder") return { text: `💀 ${move.san}. That one hurt. Liers will kicked off for this 😭`, annotations: { arrows: [[fromSq, toSq, "rgba(239, 68, 68, 0.85)"]], markers: [] } };
-  if (cls === "mistake") return { text: `😬 ${move.san} — that's rough buddy. Position just got worse 📉`, annotations: { arrows: [[fromSq, toSq, "rgba(239, 183, 44, 0.85)"]], markers: [] } };
+  if (cls === "blunder") return { text: `💀 ${move.san}. That one hurt. Liers will kicked off for this 😭`, annotations: { arrows: [[fromSq, toSq, "rgba(239, 68, 68, 0.85)"]], markers: [{ square: toSq, emoji: "💀" }] } };
+  if (cls === "mistake") return { text: `😬 ${move.san} — that's rough buddy. Position just got worse 📉`, annotations: { arrows: [[fromSq, toSq, "rgba(239, 183, 44, 0.85)"]], markers: [{ square: toSq, emoji: "😬" }] } };
   if (cls === "inaccuracy") return Math.random() < 0.4 ? { text: `🤷 ${move.san} — there was something better`, annotations: NO_ANNOTATIONS } : null;
   return null;
 }
