@@ -21,7 +21,7 @@ import { Chessboard } from "react-chessboard";
 import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
-import { playSound, preloadSounds } from "@/lib/sounds";
+import { playSound, preloadSounds, preloadRoastSounds } from "@/lib/sounds";
 import { stockfishPool } from "@/lib/stockfish-client";
 import {
   classifyMove,
@@ -30,6 +30,7 @@ import {
   getOpeningRoast,
   getEloGuessComment,
   getClosingRoast,
+  getGuessReaction,
   ELO_BRACKETS,
   getEloBracketIdx,
   GAME_INTRO,
@@ -245,6 +246,8 @@ export default function RoastPage() {
   const usedLines = useRef(new Set<string>());
 
   const [shareText, setShareText] = useState<string | null>(null);
+  const [guessReaction, setGuessReaction] = useState<string | null>(null);
+  const [mobileClippyOpen, setMobileClippyOpen] = useState(false);
 
   /* ── Source selection state ── */
   const [inputMode, setInputMode] = useState<"random" | "import" | "paste" | null>(null);
@@ -288,6 +291,8 @@ export default function RoastPage() {
     setRevealLine("");
     setSummaryLine("");
     setEloFlavor("");
+    setGuessReaction(null);
+    setMobileClippyOpen(false);
     usedLines.current.clear();
     setActiveComment(null);
     setCurrentMood("neutral");
@@ -435,9 +440,11 @@ export default function RoastPage() {
 
         // Get the best move from this position
         let bestMoveSan: string | null = null;
+        let bestMoveUci: string | null = null;
         try {
           const pv = await stockfishPool.getPrincipalVariation(fenBefore, 1, 12);
           if (pv?.pvMoves?.[0]) {
+            bestMoveUci = pv.pvMoves[0];
             // Convert UCI to SAN
             const tmp = new Chess(fenBefore);
             try {
@@ -493,6 +500,7 @@ export default function RoastPage() {
           cpBefore: evalBeforeForSide,
           cpAfter: evalAfterForSide,
           bestMoveSan,
+          bestMoveUci,
           cpLoss,
           classification,
           isCapture: !!moveResult.captured,
@@ -656,6 +664,8 @@ export default function RoastPage() {
     setRevealLine("");
     setSummaryLine("");
     setEloFlavor("");
+    setGuessReaction(null);
+    setMobileClippyOpen(false);
     usedLines.current.clear();
     setActiveComment(null);
     setCurrentMood("neutral");
@@ -720,9 +730,11 @@ export default function RoastPage() {
         try { const evalBefore = await stockfishPool.evaluateFen(fenBefore, 12); cpBefore = evalBefore?.cp ?? 0; } catch {}
 
         let bestMoveSan: string | null = null;
+        let bestMoveUci: string | null = null;
         try {
           const pv = await stockfishPool.getPrincipalVariation(fenBefore, 1, 12);
           if (pv?.pvMoves?.[0]) {
+            bestMoveUci = pv.pvMoves[0];
             const tmp = new Chess(fenBefore);
             try {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -762,6 +774,7 @@ export default function RoastPage() {
           cpBefore: evalBeforeForSide,
           cpAfter: evalAfterForSide,
           bestMoveSan,
+          bestMoveUci,
           cpLoss,
           classification,
           isCapture: !!moveResult.captured,
@@ -978,6 +991,7 @@ export default function RoastPage() {
   /* ── Initialize ── */
   useEffect(() => {
     preloadSounds();
+    preloadRoastSounds();
   }, []);
 
   /* ── Autoplay (waits for typewriter + TTS to finish) ── */
@@ -997,6 +1011,7 @@ export default function RoastPage() {
     if (currentIdx >= moves.length - 1) {
       setTimeout(() => {
         setActiveComment(null);
+        playSound("drumroll");
         setPageState("guessing");
       }, 1500);
       return;
@@ -1019,12 +1034,24 @@ export default function RoastPage() {
         else if (move.isCapture) playSound("capture");
         else playSound("move");
 
+        // Gameshow sound effects based on move classification
+        if (move.comment) {
+          const cls = move.classification;
+          setTimeout(() => {
+            if (cls === "blunder") playSound("crowd-ooh");
+            else if (cls === "brilliant") playSound("applause-short");
+            else if (cls === "best" || cls === "great") playSound("bell");
+            else if (cls === "mistake") playSound("honk");
+          }, 300);
+        }
+
         if (move.comment) {
           setActiveComment(move.comment);
           setCommentHistory(prev => [...prev, move.comment!]);
           setCurrentMood(getMood(move, blunders));
           setActiveArrows(move.arrows ?? []);
           setActiveMarkers(move.markers ?? []);
+          setMobileClippyOpen(true); // Auto-open clippy on mobile when there's a comment
         } else {
           setActiveComment(null);
           setCurrentMood(getMood(move, blunders));
@@ -1047,6 +1074,7 @@ export default function RoastPage() {
 
   /* ── Start watching after intro ── */
   const startWatching = useCallback(() => {
+    playSound("intro-jingle");
     setPageState("watching");
     setCurrentIdx(-1);
     setFen("start");
@@ -1136,18 +1164,27 @@ export default function RoastPage() {
       result = "correct";
       revealPool = REVEAL_CORRECT;
       playSound("correct");
+      // Gameshow: bell double + applause
+      setTimeout(() => playSound("bell-double"), 200);
+      setTimeout(() => playSound("applause"), 500);
     } else if (distance === 1) {
       result = "close";
       revealPool = REVEAL_CORRECT; // close enough gets a positive line
       playSound("correct");
+      setTimeout(() => playSound("bell"), 200);
+      setTimeout(() => playSound("applause-short"), 400);
     } else if (bracketIdx > actualIdx) {
       result = "wrong";
       revealPool = REVEAL_TOO_HIGH;
       playSound("wrong");
+      setTimeout(() => playSound("buzzer"), 150);
+      if (distance >= 3) setTimeout(() => playSound("sad-trombone"), 600);
     } else {
       result = "wrong";
       revealPool = REVEAL_TOO_LOW;
       playSound("wrong");
+      setTimeout(() => playSound("buzzer"), 150);
+      if (distance >= 3) setTimeout(() => playSound("sad-trombone"), 600);
     }
 
     if (result === "correct" || result === "close") {
@@ -1161,6 +1198,14 @@ export default function RoastPage() {
 
     setEloFlavor(getEloFlavorLine(game.avgElo));
 
+    // Guess reaction commentary
+    const reaction = getGuessReaction(bracketIdx, actualIdx, game.avgElo, blunders, moves.length);
+    setGuessReaction(reaction);
+    setActiveComment(reaction);
+    setCommentHistory(prev => [...prev, reaction]);
+    setCurrentMood(result === "correct" ? "mindblown" : result === "close" ? "smug" : distance >= 3 ? "laughing" : "disappointed");
+    setMobileClippyOpen(true);
+
     // Summary line
     const totalMoves = moves.length;
     const freq = blunders > 0 ? Math.round(totalMoves / blunders) : totalMoves;
@@ -1173,6 +1218,8 @@ export default function RoastPage() {
       .replace("{frequency}", String(freq));
     setSummaryLine(sumLine);
 
+    // Play reveal stinger before transition
+    setTimeout(() => playSound("reveal-stinger"), 300);
     setTimeout(() => setPageState("revealed"), 600);
   }, [game, selectedBracket, moves.length, blunders, mistakes, inaccuracies]);
 
@@ -1527,7 +1574,7 @@ export default function RoastPage() {
                 </div>
               </div>
 
-              {/* Commentary text below board */}
+              {/* Commentary text below board (shown on all sizes) */}
               {activeComment && (pageState === "watching" || pageState === "guessing") && (
                 <div className="w-full max-w-[640px] animate-fadeIn">
                   <div className="rounded-lg bg-black/50 backdrop-blur-sm border border-white/10 px-3 py-2">
@@ -1758,6 +1805,18 @@ export default function RoastPage() {
                   <p className="text-sm text-amber-300 text-center font-medium">{revealLine}</p>
                   <p className="text-xs text-slate-400 text-center italic">{eloFlavor}</p>
 
+                  {/* Guess reaction commentary */}
+                  {guessReaction && (
+                    <div className="rounded-xl border border-orange-500/20 bg-orange-500/[0.04] px-4 py-3">
+                      <div className="flex items-start gap-2.5">
+                        <div className="flex-shrink-0 mt-0.5">
+                          <RoastAvatar mood={currentMood} size={36} />
+                        </div>
+                        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">{guessReaction}</p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
                     <p className="text-xs text-slate-400 text-center">{summaryLine}</p>
                   </div>
@@ -1859,6 +1918,48 @@ export default function RoastPage() {
           <p className="mt-1">Inspired by Gotham Chess &amp; r/AnarchyChess. No GMs were harmed in the making of this page.</p>
         </div>
       </div>
+
+      {/* ── Mobile Clippy: Floating avatar + speech bubble (visible below lg breakpoint) ── */}
+      {(pageState === "watching" || pageState === "guessing" || pageState === "revealed") && (
+        <div className="fixed bottom-4 right-4 z-50 lg:hidden flex flex-col items-end gap-2">
+          {/* Speech bubble (expanded) */}
+          {mobileClippyOpen && activeComment && (
+            <div className="animate-fadeIn max-w-[280px] sm:max-w-[340px]">
+              <div className="relative rounded-2xl border border-orange-500/30 bg-zinc-900/95 backdrop-blur-md px-4 py-3 shadow-2xl shadow-black/50">
+                {/* Close button */}
+                <button
+                  onClick={() => setMobileClippyOpen(false)}
+                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-zinc-800 border border-white/10 text-slate-400 text-xs flex items-center justify-center hover:bg-zinc-700 transition-colors"
+                >
+                  ✕
+                </button>
+                <p className="text-xs sm:text-sm text-slate-200 leading-relaxed">
+                  {typewriterText}
+                  {!typingDone && <span className="animate-blink text-orange-400">|</span>}
+                </p>
+                {/* Triangle tail pointing to avatar */}
+                <div className="absolute -bottom-2 right-6 w-0 h-0 border-x-[6px] border-x-transparent border-t-[8px] border-t-orange-500/30" />
+              </div>
+            </div>
+          )}
+          {/* Avatar button */}
+          <button
+            onClick={() => setMobileClippyOpen(prev => !prev)}
+            className="relative flex-shrink-0 rounded-full bg-zinc-900/90 backdrop-blur-md border-2 border-orange-500/30 p-1.5 shadow-xl shadow-black/40 transition-all active:scale-90 hover:border-orange-500/50"
+          >
+            <RoastAvatar mood={currentMood} size={52} />
+            {activeComment && !mobileClippyOpen && (
+              <span className="absolute -top-1 -left-1 h-4 w-4 rounded-full bg-orange-500 border-2 border-zinc-900 animate-pulse" />
+            )}
+            {currentMood === "clown" && (
+              <span className="absolute -top-3 -right-1 text-[10px] font-bold text-red-400 animate-bounce select-none pointer-events-none"
+                style={{ textShadow: "0 0 6px rgba(239,68,68,0.5)" }}>
+                honk
+              </span>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* CSS */}
       <style jsx>{`

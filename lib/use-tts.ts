@@ -40,6 +40,27 @@ function cleanForSpeech(text: string): string {
     })
     // Check/checkmate symbols
     .replace(/\+/g, " check")
+    // Expand internet slang & abbreviations for natural TTS
+    .replace(/\bfr fr\b/gi, "for real for real")
+    .replace(/\bfr\b/gi, "for real")
+    .replace(/\bngl\b/gi, "not gonna lie")
+    .replace(/\btbh\b/gi, "to be honest")
+    .replace(/\brn\b/gi, "right now")
+    .replace(/\bbtw\b/gi, "by the way")
+    .replace(/\bgg\b/gi, "G G")
+    .replace(/\bjk\b/gi, "just kidding")
+    .replace(/\bRIP\b/g, "R I P")
+    .replace(/\bAKA\b/g, "A K A")
+    .replace(/\bGM\b/g, "G M")
+    .replace(/\btho\b/gi, "though")
+    .replace(/\bany%\b/gi, "any percent")
+    .replace(/\bAlt[+-]F4\b/gi, "alt F4")
+    .replace(/\bIMO\b/g, "in my opinion")
+    .replace(/\blol\b/gi, "lol")
+    .replace(/\bPIPI\b/g, "pipi")
+    .replace(/\bsmh\b/gi, "shaking my head")
+    .replace(/\bidk\b/gi, "I don't know")
+    .replace(/\bpls\b/gi, "please")
     // Collapse multiple spaces
     .replace(/\s+/g, " ")
     .trim();

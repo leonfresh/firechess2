@@ -33,6 +33,8 @@ export interface AnalyzedMove {
   cpBefore: number;
   cpAfter: number;
   bestMoveSan: string | null;
+  /** UCI notation for the engine's best move, e.g. "e2e4" */
+  bestMoveUci: string | null;
   cpLoss: number;
   classification: MoveClassification;
   isCapture: boolean;
@@ -969,7 +971,7 @@ function _blunderRoast(
     `☠️ ${move.san}.${ctxLine} That was the most AnarchyChess move I've ever seen and I literally do not care to understand the thought process behind it 💀`,
     `🤡 ${move.san}.${ctx.playerBlunders >= 3 ? ` Blunder number ${ctx.playerBlunders}. This person is speedrunning to the lowest elo.` : " This move was doing PIPI in its pampers when good moves were being played."} Absolute scenes 🗿😭`,
     `🚨 ${move.san}.${ctx.goodStreak >= 3 ? ` AFTER ${ctx.goodStreak} GOOD MOVES?? They gave us hope and RIPPED it away.` : " Liers will kicked off... and so will this player's rating."} True will never die, but this position already did 💀`,
-  ], used), annotations: { arrows: [moveArrow], markers: [{ square: _toSq, emoji: "💀" }] } };
+  ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: _toSq, emoji: "💀" }, ...(move.bestMoveUci ? [{ square: move.bestMoveUci.slice(2, 4), emoji: "✅" }] : [])] } };
 }
 
 function _mistakeRoast(
@@ -1051,7 +1053,7 @@ function _mistakeRoast(
       `😬 ${move.san} played, ${move.bestMoveSan} wept.${ctxLine} Are you kidding ??? What the beep are you talking about man 🗿🤡`,
       `💀 ${move.san} over ${move.bestMoveSan}.${ctxLine} Google "en passant." They didn't take the best move and the brick is incoming ⛪🧱`,
       `🫠 ${move.san}. Garry Chess invented ${move.bestMoveSan} for a reason.${ctxLine} This ain't it 👑📉`,
-    ], used), annotations: { arrows: [moveArrow], markers: [{ square: toSq, emoji: pick(["😬", "📉", "🤦", "😤", "🫤"]) }] } };
+    ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: toSq, emoji: pick(["😬", "📉", "🤦", "😤", "🫤"]) }, ...(move.bestMoveUci ? [{ square: move.bestMoveUci.slice(2, 4), emoji: "✅" }] : [])] } };
   }
 
   const ctxFallback = ctx.goodStreak >= 3
@@ -1078,7 +1080,7 @@ function _mistakeRoast(
     `📉 ${move.san}.${ctxFallback} The evaluation bar just twitched and NOT in the good direction 📊😬`,
     `🤦 ${move.san}.${ctxFallback} This is the type of move that gets posted on AnarchyChess with the caption "guess the elo" 🤡💀`,
     `😬 ${move.san}.${ctxFallback} Hikaru would call this "not great." Levy would call it content. I'm calling it pain 🗿🔥`,
-    ], used), annotations: { arrows: [moveArrow], markers: [{ square: toSq, emoji: pick(["😬", "📉", "🤡", "😤", "🗿"]) }] } };
+    ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: toSq, emoji: pick(["😬", "📉", "🤡", "😤", "🗿"]) }, ...(move.bestMoveUci ? [{ square: move.bestMoveUci.slice(2, 4), emoji: "✅" }] : [])] } };
 }
 
 function _inaccuracyRoast(
@@ -1091,7 +1093,10 @@ function _inaccuracyRoast(
   const pawns = pawnIssues(after, moverColor);
   const fromSq = move.uci.slice(0, 2);
   const toSq = move.uci.slice(2, 4);
-  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(168, 162, 158, 0.7)"]], markers: [{ square: toSq, emoji: pick(["🤷", "😑", "🫤", "😐", "💤"]) }] };
+  const ann: MoveAnnotation = {
+    arrows: [[fromSq, toSq, "rgba(168, 162, 158, 0.7)"], ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])],
+    markers: [{ square: toSq, emoji: pick(["🤷", "😑", "🫤", "😐", "💤"]) }, ...(move.bestMoveUci ? [{ square: move.bestMoveUci.slice(2, 4), emoji: "✅" }] : [])],
+  };
 
   const lines: (() => string)[] = [
     () => {
@@ -1982,4 +1987,91 @@ export function countMaterial(chess: Chess): { white: number; black: number } {
     if (p.color === "w") white += v; else black += v;
   }
   return { white, black };
+}
+
+/* ================================================================== */
+/*  Guess Reaction Commentary                                           */
+/* ================================================================== */
+
+/**
+ * Generate a personalised roast/reaction based on how the user's elo guess
+ * compares to the actual elo. Returns a short commentary line.
+ */
+export function getGuessReaction(
+  guessedBracketIdx: number,
+  actualBracketIdx: number,
+  actualElo: number,
+  blunders: number,
+  totalMoves: number,
+): string {
+  const distance = Math.abs(guessedBracketIdx - actualBracketIdx);
+  const guessedBracket = ELO_BRACKETS[guessedBracketIdx];
+  const actualBracket = ELO_BRACKETS[actualBracketIdx];
+  const tooHigh = guessedBracketIdx > actualBracketIdx;
+
+  // Perfect guess
+  if (distance === 0) {
+    return pick([
+      `🎯 ${actualElo} elo and you NAILED IT. Are you a coach or just traumatised by Elo brackets? 🧠🔥`,
+      `🎯 Dead on! ${actualBracket.label} detected. You've seen enough chess suffering to be an expert 💀👑`,
+      `🎯 ${actualElo}. You got it. Your pattern recognition is genuinely scary rn 😳✨`,
+      `🎯 Correct! ${actualElo}! You can just SMELL the elo through the screen. Built different 🤌🔥`,
+      `🎯 ${actualElo}! Spot on! The blunder density gave it away, didn't it? 💀📊`,
+      `🎯 That's ${actualElo} and you knew it. Google "I'm cracked at Guess the Elo" 👑🗿`,
+      `🎯 Absolutely nailed it. With ${blunders} blunders in ${totalMoves} moves? Yeah, that's ${actualElo} behavior 📈🎯`,
+    ]);
+  }
+
+  // Close guess (±1 bracket)
+  if (distance === 1) {
+    if (tooHigh) {
+      return pick([
+        `🔥 Close! You said ${guessedBracket.label} but it's actually ${actualElo}. A tiny bit generous but we'll allow it 🤝`,
+        `🔥 Almost! ${actualElo} — you were one bracket too kind. These players thank you for your service 🫡`,
+        `🔥 Off by one bracket — you said ${guessedBracket.range} but the real elo is ${actualElo}. The blunders were a hint 💀`,
+        `🔥 SO close. ${actualElo}. You overshot slightly but you clearly know your elo brackets 📊🔥`,
+      ]);
+    }
+    return pick([
+      `🔥 Close! You said ${guessedBracket.label} but it's actually ${actualElo}. Don't undersell them! 💪`,
+      `🔥 Almost! ${actualElo} — one bracket too harsh. They had some good moments too 😤`,
+      `🔥 Off by just one bracket — ${actualElo}. The good moves fooled you, huh? 🧠`,
+      `🔥 Nearly! ${actualElo}. They're slightly better than you gave them credit for. Growth mindset 📈`,
+    ]);
+  }
+
+  // Way off (2+ brackets)
+  if (tooHigh) {
+    if (distance >= 3) {
+      return pick([
+        `💀 You said ${guessedBracket.label}?? It's ${actualElo}. That's not just wrong, that's DISRESPECTFULLY wrong 🤡`,
+        `💀 ${guessedBracket.range}?! These players are ${actualElo}!! You gave them like 3 brackets too much credit 😭`,
+        `💀 Brother. ${actualElo}. You were WAY off. Did you even watch the same game? 🤡💀`,
+        `💀 You thought this was ${guessedBracket.label} chess?? Nah fam, ${actualElo}. The delusion is real 🗿`,
+        `💀 ${actualElo}! You guessed ${guessedBracket.range}. The ${blunders} blunders should've been a clue 😭📉`,
+      ]);
+    }
+    return pick([
+      `😤 ${actualElo} — you guessed too high. ${blunders} blunders in ${totalMoves} moves and you thought they were ${guessedBracket.label}? 🤡`,
+      `😤 It's ${actualElo}. You overestimated by a lot. These players make the kind of moves that keep therapists busy 💀`,
+      `😤 ${guessedBracket.range}? Nah. ${actualElo}. The tactical awareness of a goldfish gave it away 🐟`,
+      `😤 Too high! ${actualElo}. You gave them way too much credit for that blunder festival 🎪💀`,
+    ]);
+  }
+
+  // Too low, way off
+  if (distance >= 3) {
+    return pick([
+      `😳 ${actualElo}?! You said ${guessedBracket.label}! HOW DARE YOU underestimate these warriors 💪🗿`,
+      `😳 It's actually ${actualElo}! You said ${guessedBracket.range}. Mans are HIGHER rated than that! Disrespectful 😤`,
+      `😳 ${actualElo}!! ${guessedBracket.label}?? They played ${totalMoves} moves with only ${blunders} blunders and you dissed them like that? 💀`,
+      `😳 Brother they're ${actualElo}. You said ${guessedBracket.range}. Even I feel bad for them rn 😭`,
+    ]);
+  }
+  return pick([
+    `🤷 ${actualElo} — you went too low. They're better than you gave them credit for. Respect the grind 💪`,
+    `🤷 It's ${actualElo}! You said ${guessedBracket.label}. Even with the blunders, they're rated higher than that 📈`,
+    `🤷 Too low! ${actualElo}. Some of those moves were actually decent, you just focused on the pain 😭`,
+    `🤷 ${actualElo}. You underestimated them. The good moves were there, you just chose to remember the blunders 🗿`,
+  ]);
 }
