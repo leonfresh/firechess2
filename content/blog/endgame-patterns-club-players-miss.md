@@ -11,41 +11,73 @@ The endgame is where club players leave the most points on the table. You've out
 After analyzing thousands of games from players rated 1200-2000, five endgame patterns show up as consistent mistakes over and over. Fix these, and you'll convert significantly more wins.
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="640" height="180" viewBox="0 0 640 180" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="640" height="180" rx="16" fill="#0f172a"/>
-  <rect x="1" y="1" width="638" height="178" rx="15" stroke="white" stroke-opacity="0.06"/>
-  <text x="320" y="28" text-anchor="middle" fill="white" font-size="13" font-weight="700">5 Endgame Patterns Club Players Miss</text>
-  <!-- 5 cards -->
-  <rect x="16" y="44" width="114" height="120" rx="10" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.2"/>
-  <text x="73" y="72" text-anchor="middle" fill="#6ee7b7" font-size="24">♜</text>
-  <text x="73" y="94" text-anchor="middle" fill="#6ee7b7" font-size="10" font-weight="700">Lucena</text>
-  <text x="73" y="110" text-anchor="middle" fill="#94a3b8" font-size="9">Bridge</text>
-  <text x="73" y="122" text-anchor="middle" fill="#94a3b8" font-size="9">technique</text>
-  <text x="73" y="150" text-anchor="middle" fill="#475569" font-size="9">#1 must-know</text>
-  <rect x="140" y="44" width="114" height="120" rx="10" fill="#06b6d4" fill-opacity="0.08" stroke="#06b6d4" stroke-opacity="0.2"/>
-  <text x="197" y="72" text-anchor="middle" fill="#67e8f9" font-size="24">♚</text>
-  <text x="197" y="94" text-anchor="middle" fill="#67e8f9" font-size="10" font-weight="700">King Activity</text>
-  <text x="197" y="110" text-anchor="middle" fill="#94a3b8" font-size="9">Centralize</text>
-  <text x="197" y="122" text-anchor="middle" fill="#94a3b8" font-size="9">before pawns</text>
-  <text x="197" y="150" text-anchor="middle" fill="#475569" font-size="9">Opposition</text>
-  <rect x="264" y="44" width="114" height="120" rx="10" fill="#f59e0b" fill-opacity="0.08" stroke="#f59e0b" stroke-opacity="0.2"/>
-  <text x="321" y="72" text-anchor="middle" fill="#fbbf24" font-size="24">♜</text>
-  <text x="321" y="94" text-anchor="middle" fill="#fbbf24" font-size="10" font-weight="700">Tarrasch Rule</text>
-  <text x="321" y="110" text-anchor="middle" fill="#94a3b8" font-size="9">Rooks behind</text>
-  <text x="321" y="122" text-anchor="middle" fill="#94a3b8" font-size="9">passed pawns</text>
-  <text x="321" y="150" text-anchor="middle" fill="#475569" font-size="9">Both yours &amp; theirs</text>
-  <rect x="388" y="44" width="114" height="120" rx="10" fill="#a855f7" fill-opacity="0.08" stroke="#a855f7" stroke-opacity="0.2"/>
-  <text x="445" y="72" text-anchor="middle" fill="#c084fc" font-size="24">♗</text>
-  <text x="445" y="94" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="700">Wrong Bishop</text>
-  <text x="445" y="110" text-anchor="middle" fill="#94a3b8" font-size="9">Rook pawn +</text>
-  <text x="445" y="122" text-anchor="middle" fill="#94a3b8" font-size="9">wrong color = ½</text>
-  <text x="445" y="150" text-anchor="middle" fill="#475569" font-size="9">Check before trading</text>
-  <rect x="512" y="44" width="114" height="120" rx="10" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.2"/>
-  <text x="569" y="72" text-anchor="middle" fill="#f87171" font-size="24">♟</text>
-  <text x="569" y="94" text-anchor="middle" fill="#f87171" font-size="10" font-weight="700">Passed Pawns</text>
-  <text x="569" y="110" text-anchor="middle" fill="#94a3b8" font-size="9">Create one</text>
-  <text x="569" y="122" text-anchor="middle" fill="#94a3b8" font-size="9">from majority</text>
-  <text x="569" y="150" text-anchor="middle" fill="#475569" font-size="9">Wins rook endings</text>
+<svg width="680" height="240" viewBox="0 0 680 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="egBg" x1="0" y1="0" x2="680" y2="240" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0c1220"/><stop offset="1" stop-color="#14102a"/>
+    </linearGradient>
+    <radialGradient id="egGlow1" cx="140" cy="120" r="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#10b981" stop-opacity="0.08"/><stop offset="1" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="egGlow2" cx="540" cy="120" r="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ef4444" stop-opacity="0.08"/><stop offset="1" stop-color="#ef4444" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="egPieceGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="680" height="240" rx="18" fill="url(#egBg)"/>
+  <rect x="1" y="1" width="678" height="238" rx="17" stroke="white" stroke-opacity="0.06"/>
+  <rect width="680" height="240" rx="18" fill="url(#egGlow1)"/>
+  <rect width="680" height="240" rx="18" fill="url(#egGlow2)"/>
+  <!-- watermarks -->
+  <text x="50" y="220" text-anchor="middle" fill="white" fill-opacity="0.012" font-size="80">♚</text>
+  <text x="630" y="90" text-anchor="middle" fill="white" fill-opacity="0.012" font-size="80">♜</text>
+  <!-- title -->
+  <text x="340" y="34" text-anchor="middle" fill="white" font-size="17" font-weight="700" letter-spacing="0.5">5 Endgame Patterns Club Players Miss</text>
+  <!-- Card 1: Lucena -->
+  <rect x="16" y="52" width="122" height="170" rx="12" fill="#10b981" fill-opacity="0.07" stroke="#10b981" stroke-opacity="0.22"/>
+  <text x="77" y="86" text-anchor="middle" fill="#6ee7b7" font-size="30" filter="url(#egPieceGlow)">♜</text>
+  <text x="77" y="110" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="700">Lucena</text>
+  <line x1="52" y1="118" x2="102" y2="118" stroke="#10b981" stroke-opacity="0.25" stroke-width="1"/>
+  <text x="77" y="138" text-anchor="middle" fill="#cbd5e1" font-size="13">Bridge</text>
+  <text x="77" y="155" text-anchor="middle" fill="#94a3b8" font-size="13">technique</text>
+  <text x="77" y="200" text-anchor="middle" fill="#475569" font-size="13" font-style="italic">#1 must-know</text>
+  <!-- Card 2: King Activity -->
+  <rect x="148" y="52" width="122" height="170" rx="12" fill="#06b6d4" fill-opacity="0.07" stroke="#06b6d4" stroke-opacity="0.22"/>
+  <text x="209" y="86" text-anchor="middle" fill="#67e8f9" font-size="30" filter="url(#egPieceGlow)">♚</text>
+  <text x="209" y="110" text-anchor="middle" fill="#67e8f9" font-size="13" font-weight="700">King Activity</text>
+  <line x1="177" y1="118" x2="241" y2="118" stroke="#06b6d4" stroke-opacity="0.25" stroke-width="1"/>
+  <text x="209" y="138" text-anchor="middle" fill="#cbd5e1" font-size="13">Centralize</text>
+  <text x="209" y="155" text-anchor="middle" fill="#94a3b8" font-size="13">before pawns</text>
+  <text x="209" y="200" text-anchor="middle" fill="#475569" font-size="13" font-style="italic">Opposition</text>
+  <!-- Card 3: Tarrasch Rule -->
+  <rect x="280" y="52" width="122" height="170" rx="12" fill="#f59e0b" fill-opacity="0.07" stroke="#f59e0b" stroke-opacity="0.22"/>
+  <text x="341" y="86" text-anchor="middle" fill="#fbbf24" font-size="30" filter="url(#egPieceGlow)">♜</text>
+  <text x="341" y="110" text-anchor="middle" fill="#fbbf24" font-size="13" font-weight="700">Tarrasch Rule</text>
+  <line x1="309" y1="118" x2="373" y2="118" stroke="#f59e0b" stroke-opacity="0.25" stroke-width="1"/>
+  <text x="341" y="138" text-anchor="middle" fill="#cbd5e1" font-size="13">Rooks behind</text>
+  <text x="341" y="155" text-anchor="middle" fill="#94a3b8" font-size="13">passed pawns</text>
+  <text x="341" y="200" text-anchor="middle" fill="#475569" font-size="13" font-style="italic">Yours &amp; theirs</text>
+  <!-- Card 4: Wrong Bishop -->
+  <rect x="412" y="52" width="122" height="170" rx="12" fill="#a855f7" fill-opacity="0.07" stroke="#a855f7" stroke-opacity="0.22"/>
+  <text x="473" y="86" text-anchor="middle" fill="#c084fc" font-size="30" filter="url(#egPieceGlow)">♝</text>
+  <text x="473" y="110" text-anchor="middle" fill="#c084fc" font-size="13" font-weight="700">Wrong Bishop</text>
+  <line x1="441" y1="118" x2="505" y2="118" stroke="#a855f7" stroke-opacity="0.25" stroke-width="1"/>
+  <text x="473" y="138" text-anchor="middle" fill="#cbd5e1" font-size="13">Rook pawn +</text>
+  <text x="473" y="155" text-anchor="middle" fill="#94a3b8" font-size="13">wrong color = ½</text>
+  <text x="473" y="200" text-anchor="middle" fill="#475569" font-size="13" font-style="italic">Check first</text>
+  <!-- Card 5: Passed Pawns -->
+  <rect x="544" y="52" width="122" height="170" rx="12" fill="#ef4444" fill-opacity="0.07" stroke="#ef4444" stroke-opacity="0.22"/>
+  <text x="605" y="86" text-anchor="middle" fill="#f87171" font-size="30" filter="url(#egPieceGlow)">♟</text>
+  <text x="605" y="110" text-anchor="middle" fill="#f87171" font-size="13" font-weight="700">Passed Pawns</text>
+  <line x1="573" y1="118" x2="637" y2="118" stroke="#ef4444" stroke-opacity="0.25" stroke-width="1"/>
+  <text x="605" y="138" text-anchor="middle" fill="#cbd5e1" font-size="13">Create one</text>
+  <text x="605" y="155" text-anchor="middle" fill="#94a3b8" font-size="13">from majority</text>
+  <text x="605" y="200" text-anchor="middle" fill="#475569" font-size="13" font-style="italic">Wins rook EGs</text>
+  <!-- decorative bottom line -->
+  <line x1="80" y1="232" x2="600" y2="232" stroke="white" stroke-opacity="0.04" stroke-width="1"/>
 </svg>
 </div>
 
@@ -138,56 +170,72 @@ A passed pawn in a rook ending is like having an extra piece. It ties the oppone
 ## How to Fix These Weaknesses
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="600" height="280" viewBox="0 0 600 280" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="600" height="280" rx="16" fill="#0f172a"/>
-  <rect x="1" y="1" width="598" height="278" rx="15" stroke="white" stroke-opacity="0.06"/>
-  <text x="300" y="30" text-anchor="middle" fill="white" font-size="14" font-weight="700">Endgame Study Plan — Priority Order</text>
-  <!-- Row headers -->
-  <text x="44" y="56" fill="#94a3b8" font-size="10" font-weight="600">PATTERN</text>
-  <text x="260" y="56" fill="#94a3b8" font-size="10" font-weight="600">FREQUENCY</text>
-  <text x="380" y="56" fill="#94a3b8" font-size="10" font-weight="600">DIFFICULTY</text>
-  <text x="500" y="56" fill="#94a3b8" font-size="10" font-weight="600">ELO IMPACT</text>
-  <line x1="20" y1="64" x2="580" y2="64" stroke="white" stroke-opacity="0.06"/>
+<svg width="640" height="340" viewBox="0 0 640 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="espBg" x1="0" y1="0" x2="640" y2="340" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0c1220"/><stop offset="1" stop-color="#14102a"/>
+    </linearGradient>
+    <radialGradient id="espGlow" cx="320" cy="170" r="220" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#10b981" stop-opacity="0.06"/><stop offset="1" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="espBarGlow" x="-10%" y="-50%" width="120%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="640" height="340" rx="18" fill="url(#espBg)"/>
+  <rect x="1" y="1" width="638" height="338" rx="17" stroke="white" stroke-opacity="0.06"/>
+  <rect width="640" height="340" rx="18" fill="url(#espGlow)"/>
+  <!-- watermark -->
+  <text x="580" y="310" text-anchor="middle" fill="white" fill-opacity="0.015" font-size="90">♚</text>
+  <!-- title -->
+  <text x="320" y="36" text-anchor="middle" fill="white" font-size="17" font-weight="700" letter-spacing="0.5">Endgame Study Plan — Priority Order</text>
+  <!-- Column headers -->
+  <text x="50" y="66" fill="#94a3b8" font-size="13" font-weight="600">PATTERN</text>
+  <text x="270" y="66" fill="#94a3b8" font-size="13" font-weight="600">FREQUENCY</text>
+  <text x="410" y="66" fill="#94a3b8" font-size="13" font-weight="600">DIFFICULTY</text>
+  <text x="550" y="66" fill="#94a3b8" font-size="13" font-weight="600">ELO IMPACT</text>
+  <line x1="24" y1="76" x2="616" y2="76" stroke="white" stroke-opacity="0.06"/>
   <!-- Row 1: Lucena -->
-  <rect x="20" y="70" width="560" height="36" rx="6" fill="#10b981" fill-opacity="0.06"/>
-  <text x="44" y="92" fill="#6ee7b7" font-size="11" font-weight="600">1. Lucena Position</text>
-  <rect x="260" y="80" width="80" height="12" rx="3" fill="#1e293b"/>
-  <rect x="260" y="80" width="56" height="12" rx="3" fill="#10b981" fill-opacity="0.5"/>
-  <text x="350" y="91" fill="#94a3b8" font-size="9">70%</text>
-  <text x="400" y="92" fill="#6ee7b7" font-size="10">⬤ Easy</text>
-  <text x="520" y="92" fill="#6ee7b7" font-size="11" font-weight="700">+40</text>
+  <rect x="24" y="84" width="592" height="44" rx="8" fill="#10b981" fill-opacity="0.06" stroke="#10b981" stroke-opacity="0.08"/>
+  <text x="50" y="112" fill="#6ee7b7" font-size="14" font-weight="600">1. Lucena Position</text>
+  <rect x="270" y="99" width="100" height="14" rx="4" fill="#1e293b"/>
+  <rect x="270" y="99" width="70" height="14" rx="4" fill="#10b981" fill-opacity="0.5" filter="url(#espBarGlow)"/>
+  <text x="380" y="112" fill="#94a3b8" font-size="13">70%</text>
+  <text x="420" y="112" fill="#6ee7b7" font-size="13">● Easy</text>
+  <text x="558" y="112" fill="#6ee7b7" font-size="15" font-weight="700">+40</text>
   <!-- Row 2: King Activity -->
-  <rect x="20" y="112" width="560" height="36" rx="6" fill="transparent"/>
-  <text x="44" y="134" fill="#67e8f9" font-size="11" font-weight="600">2. King Activity</text>
-  <rect x="260" y="122" width="80" height="12" rx="3" fill="#1e293b"/>
-  <rect x="260" y="122" width="72" height="12" rx="3" fill="#06b6d4" fill-opacity="0.5"/>
-  <text x="350" y="133" fill="#94a3b8" font-size="9">90%</text>
-  <text x="400" y="134" fill="#fbbf24" font-size="10">⬤ Medium</text>
-  <text x="520" y="134" fill="#67e8f9" font-size="11" font-weight="700">+50</text>
-  <!-- Row 3: Tarrasch Rule -->
-  <rect x="20" y="154" width="560" height="36" rx="6" fill="#f59e0b" fill-opacity="0.04"/>
-  <text x="44" y="176" fill="#fbbf24" font-size="11" font-weight="600">3. Tarrasch Rule</text>
-  <rect x="260" y="164" width="80" height="12" rx="3" fill="#1e293b"/>
-  <rect x="260" y="164" width="64" height="12" rx="3" fill="#f59e0b" fill-opacity="0.5"/>
-  <text x="350" y="175" fill="#94a3b8" font-size="9">80%</text>
-  <text x="400" y="176" fill="#6ee7b7" font-size="10">⬤ Easy</text>
-  <text x="520" y="176" fill="#fbbf24" font-size="11" font-weight="700">+35</text>
+  <rect x="24" y="136" width="592" height="44" rx="8" fill="transparent"/>
+  <text x="50" y="164" fill="#67e8f9" font-size="14" font-weight="600">2. King Activity</text>
+  <rect x="270" y="151" width="100" height="14" rx="4" fill="#1e293b"/>
+  <rect x="270" y="151" width="90" height="14" rx="4" fill="#06b6d4" fill-opacity="0.5"/>
+  <text x="380" y="164" fill="#94a3b8" font-size="13">90%</text>
+  <text x="420" y="164" fill="#fbbf24" font-size="13">● Medium</text>
+  <text x="558" y="164" fill="#67e8f9" font-size="15" font-weight="700">+50</text>
+  <!-- Row 3: Tarrasch -->
+  <rect x="24" y="188" width="592" height="44" rx="8" fill="#f59e0b" fill-opacity="0.04"/>
+  <text x="50" y="216" fill="#fbbf24" font-size="14" font-weight="600">3. Tarrasch Rule</text>
+  <rect x="270" y="203" width="100" height="14" rx="4" fill="#1e293b"/>
+  <rect x="270" y="203" width="80" height="14" rx="4" fill="#f59e0b" fill-opacity="0.5"/>
+  <text x="380" y="216" fill="#94a3b8" font-size="13">80%</text>
+  <text x="420" y="216" fill="#6ee7b7" font-size="13">● Easy</text>
+  <text x="558" y="216" fill="#fbbf24" font-size="15" font-weight="700">+35</text>
   <!-- Row 4: Wrong Bishop -->
-  <rect x="20" y="196" width="560" height="36" rx="6" fill="transparent"/>
-  <text x="44" y="218" fill="#c084fc" font-size="11" font-weight="600">4. Wrong Bishop</text>
-  <rect x="260" y="206" width="80" height="12" rx="3" fill="#1e293b"/>
-  <rect x="260" y="206" width="24" height="12" rx="3" fill="#a855f7" fill-opacity="0.5"/>
-  <text x="350" y="217" fill="#94a3b8" font-size="9">30%</text>
-  <text x="400" y="218" fill="#6ee7b7" font-size="10">⬤ Easy</text>
-  <text x="520" y="218" fill="#c084fc" font-size="11" font-weight="700">+15</text>
+  <rect x="24" y="240" width="592" height="44" rx="8" fill="transparent"/>
+  <text x="50" y="268" fill="#c084fc" font-size="14" font-weight="600">4. Wrong Bishop</text>
+  <rect x="270" y="255" width="100" height="14" rx="4" fill="#1e293b"/>
+  <rect x="270" y="255" width="30" height="14" rx="4" fill="#a855f7" fill-opacity="0.5"/>
+  <text x="380" y="268" fill="#94a3b8" font-size="13">30%</text>
+  <text x="420" y="268" fill="#6ee7b7" font-size="13">● Easy</text>
+  <text x="558" y="268" fill="#c084fc" font-size="15" font-weight="700">+15</text>
   <!-- Row 5: Passed Pawns -->
-  <rect x="20" y="238" width="560" height="36" rx="6" fill="#ef4444" fill-opacity="0.04"/>
-  <text x="44" y="260" fill="#f87171" font-size="11" font-weight="600">5. Passed Pawns</text>
-  <rect x="260" y="248" width="80" height="12" rx="3" fill="#1e293b"/>
-  <rect x="260" y="248" width="60" height="12" rx="3" fill="#ef4444" fill-opacity="0.5"/>
-  <text x="350" y="259" fill="#94a3b8" font-size="9">75%</text>
-  <text x="400" y="260" fill="#f87171" font-size="10">⬤ Hard</text>
-  <text x="520" y="260" fill="#f87171" font-size="11" font-weight="700">+30</text>
+  <rect x="24" y="292" width="592" height="44" rx="8" fill="#ef4444" fill-opacity="0.04"/>
+  <text x="50" y="320" fill="#f87171" font-size="14" font-weight="600">5. Passed Pawns</text>
+  <rect x="270" y="307" width="100" height="14" rx="4" fill="#1e293b"/>
+  <rect x="270" y="307" width="75" height="14" rx="4" fill="#ef4444" fill-opacity="0.5"/>
+  <text x="380" y="320" fill="#94a3b8" font-size="13">75%</text>
+  <text x="420" y="320" fill="#f87171" font-size="13">● Hard</text>
+  <text x="558" y="320" fill="#f87171" font-size="15" font-weight="700">+30</text>
 </svg>
 </div>
 

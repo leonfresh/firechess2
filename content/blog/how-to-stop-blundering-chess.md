@@ -11,36 +11,65 @@ Every chess player blunders. Magnus Carlsen blunders. But the difference between
 The good news: blunders aren't random. They cluster into predictable patterns, and once you know your patterns, you can build habits to prevent them.
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="640" height="220" viewBox="0 0 640 220" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="640" height="220" rx="16" fill="#0f172a"/>
-  <rect x="1" y="1" width="638" height="218" rx="15" stroke="white" stroke-opacity="0.06"/>
-  <text x="320" y="28" text-anchor="middle" fill="white" font-size="13" font-weight="700">The 6 Blunder Archetypes</text>
+<svg width="680" height="290" viewBox="0 0 680 290" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="blBg" x1="0" y1="0" x2="680" y2="290" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0c1220"/><stop offset="1" stop-color="#1a1030"/>
+    </linearGradient>
+    <radialGradient id="blGlow1" cx="170" cy="110" r="160" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ef4444" stop-opacity="0.07"/><stop offset="1" stop-color="#ef4444" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="blGlow2" cx="510" cy="200" r="160" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#10b981" stop-opacity="0.07"/><stop offset="1" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="blIconGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="680" height="290" rx="18" fill="url(#blBg)"/>
+  <rect x="1" y="1" width="678" height="288" rx="17" stroke="white" stroke-opacity="0.06"/>
+  <rect width="680" height="290" rx="18" fill="url(#blGlow1)"/>
+  <rect width="680" height="290" rx="18" fill="url(#blGlow2)"/>
+  <!-- watermarks -->
+  <text x="60" y="270" text-anchor="middle" fill="white" fill-opacity="0.012" font-size="70">♚</text>
+  <text x="620" y="90" text-anchor="middle" fill="white" fill-opacity="0.012" font-size="70">♞</text>
+  <!-- title -->
+  <text x="340" y="34" text-anchor="middle" fill="white" font-size="17" font-weight="700" letter-spacing="0.5">The 6 Blunder Archetypes</text>
   <!-- Row 1 -->
-  <rect x="20" y="44" width="192" height="76" rx="10" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.18"/>
-  <text x="116" y="68" text-anchor="middle" fill="#f87171" font-size="12" font-weight="700">Hanging Pieces</text>
-  <text x="116" y="86" text-anchor="middle" fill="#94a3b8" font-size="10">Leaving a piece en prise</text>
-  <text x="116" y="104" text-anchor="middle" fill="#475569" font-size="9">Most common at all levels</text>
-  <rect x="224" y="44" width="192" height="76" rx="10" fill="#f59e0b" fill-opacity="0.08" stroke="#f59e0b" stroke-opacity="0.18"/>
-  <text x="320" y="68" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="700">Missed Forks</text>
-  <text x="320" y="86" text-anchor="middle" fill="#94a3b8" font-size="10">Walking into double attacks</text>
-  <text x="320" y="104" text-anchor="middle" fill="#475569" font-size="9">Knight forks dominate</text>
-  <rect x="428" y="44" width="192" height="76" rx="10" fill="#06b6d4" fill-opacity="0.08" stroke="#06b6d4" stroke-opacity="0.18"/>
-  <text x="524" y="68" text-anchor="middle" fill="#67e8f9" font-size="12" font-weight="700">Back Rank</text>
-  <text x="524" y="86" text-anchor="middle" fill="#94a3b8" font-size="10">Forgetting about mate threats</text>
-  <text x="524" y="104" text-anchor="middle" fill="#475569" font-size="9">Preventable with h3/g3</text>
+  <rect x="18" y="52" width="208" height="100" rx="12" fill="#ef4444" fill-opacity="0.07" stroke="#ef4444" stroke-opacity="0.20"/>
+  <text x="36" y="78" fill="#f87171" font-size="24" filter="url(#blIconGlow)">♟</text>
+  <text x="70" y="78" fill="#f87171" font-size="15" font-weight="700">Hanging Pieces</text>
+  <text x="36" y="100" fill="#cbd5e1" font-size="13">Leaving a piece en prise</text>
+  <text x="36" y="120" fill="#475569" font-size="13">Most common at all levels</text>
+  <rect x="236" y="52" width="208" height="100" rx="12" fill="#f59e0b" fill-opacity="0.07" stroke="#f59e0b" stroke-opacity="0.20"/>
+  <text x="254" y="78" fill="#fbbf24" font-size="24" filter="url(#blIconGlow)">♞</text>
+  <text x="288" y="78" fill="#fbbf24" font-size="15" font-weight="700">Missed Forks</text>
+  <text x="254" y="100" fill="#cbd5e1" font-size="13">Walking into double attacks</text>
+  <text x="254" y="120" fill="#475569" font-size="13">Knight forks dominate</text>
+  <rect x="454" y="52" width="208" height="100" rx="12" fill="#06b6d4" fill-opacity="0.07" stroke="#06b6d4" stroke-opacity="0.20"/>
+  <text x="472" y="78" fill="#67e8f9" font-size="24" filter="url(#blIconGlow)">♜</text>
+  <text x="506" y="78" fill="#67e8f9" font-size="15" font-weight="700">Back Rank</text>
+  <text x="472" y="100" fill="#cbd5e1" font-size="13">Forgetting about mate threats</text>
+  <text x="472" y="120" fill="#475569" font-size="13">Preventable with h3/g3</text>
   <!-- Row 2 -->
-  <rect x="20" y="132" width="192" height="76" rx="10" fill="#a855f7" fill-opacity="0.08" stroke="#a855f7" stroke-opacity="0.18"/>
-  <text x="116" y="156" text-anchor="middle" fill="#c084fc" font-size="12" font-weight="700">Pins &amp; Skewers</text>
-  <text x="116" y="174" text-anchor="middle" fill="#94a3b8" font-size="10">Moving into a pin line</text>
-  <text x="116" y="192" text-anchor="middle" fill="#475569" font-size="9">Check diagonals first</text>
-  <rect x="224" y="132" width="192" height="76" rx="10" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.18"/>
-  <text x="320" y="156" text-anchor="middle" fill="#6ee7b7" font-size="12" font-weight="700">Pawn Captures</text>
-  <text x="320" y="174" text-anchor="middle" fill="#94a3b8" font-size="10">Forgetting pawns can take</text>
-  <text x="320" y="192" text-anchor="middle" fill="#475569" font-size="9">Especially diagonal captures</text>
-  <rect x="428" y="132" width="192" height="76" rx="10" fill="#f43f5e" fill-opacity="0.08" stroke="#f43f5e" stroke-opacity="0.18"/>
-  <text x="524" y="156" text-anchor="middle" fill="#fb7185" font-size="12" font-weight="700">Time Pressure</text>
-  <text x="524" y="174" text-anchor="middle" fill="#94a3b8" font-size="10">Rushed moves under clock</text>
-  <text x="524" y="192" text-anchor="middle" fill="#475569" font-size="9">Root cause: poor time mgmt</text>
+  <rect x="18" y="166" width="208" height="100" rx="12" fill="#a855f7" fill-opacity="0.07" stroke="#a855f7" stroke-opacity="0.20"/>
+  <text x="36" y="192" fill="#c084fc" font-size="24" filter="url(#blIconGlow)">♝</text>
+  <text x="70" y="192" fill="#c084fc" font-size="15" font-weight="700">Pins &amp; Skewers</text>
+  <text x="36" y="214" fill="#cbd5e1" font-size="13">Moving into a pin line</text>
+  <text x="36" y="234" fill="#475569" font-size="13">Check diagonals first</text>
+  <rect x="236" y="166" width="208" height="100" rx="12" fill="#10b981" fill-opacity="0.07" stroke="#10b981" stroke-opacity="0.20"/>
+  <text x="254" y="192" fill="#6ee7b7" font-size="24" filter="url(#blIconGlow)">♟</text>
+  <text x="288" y="192" fill="#6ee7b7" font-size="15" font-weight="700">Pawn Captures</text>
+  <text x="254" y="214" fill="#cbd5e1" font-size="13">Forgetting pawns can take</text>
+  <text x="254" y="234" fill="#475569" font-size="13">Especially diagonal captures</text>
+  <rect x="454" y="166" width="208" height="100" rx="12" fill="#f43f5e" fill-opacity="0.07" stroke="#f43f5e" stroke-opacity="0.20"/>
+  <text x="472" y="192" fill="#fb7185" font-size="24" filter="url(#blIconGlow)">⏱</text>
+  <text x="506" y="192" fill="#fb7185" font-size="15" font-weight="700">Time Pressure</text>
+  <text x="472" y="214" fill="#cbd5e1" font-size="13">Rushed moves under clock</text>
+  <text x="472" y="234" fill="#475569" font-size="13">Root cause: poor time mgmt</text>
+  <!-- decorative bottom line -->
+  <line x1="80" y1="278" x2="600" y2="278" stroke="white" stroke-opacity="0.04" stroke-width="1"/>
 </svg>
 </div>
 
@@ -124,41 +153,59 @@ This isn't really a blunder type — it's a blunder amplifier. The real fix is t
 ## The Pre-Move Checklist
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="600" height="300" viewBox="0 0 600 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="600" height="300" rx="16" fill="#0f172a"/>
-  <rect x="1" y="1" width="598" height="298" rx="15" stroke="white" stroke-opacity="0.06"/>
-  <text x="300" y="30" text-anchor="middle" fill="white" font-size="14" font-weight="700">The 5-Second Pre-Move Checklist</text>
-  <text x="300" y="48" text-anchor="middle" fill="#94a3b8" font-size="10">Do this BEFORE every move you play</text>
+<svg width="640" height="370" viewBox="0 0 640 370" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="clBg" x1="0" y1="0" x2="640" y2="370" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0c1220"/><stop offset="1" stop-color="#14102a"/>
+    </linearGradient>
+    <radialGradient id="clGlow" cx="320" cy="185" r="240" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ef4444" stop-opacity="0.05"/><stop offset="1" stop-color="#ef4444" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="clStepGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="640" height="370" rx="18" fill="url(#clBg)"/>
+  <rect x="1" y="1" width="638" height="368" rx="17" stroke="white" stroke-opacity="0.06"/>
+  <rect width="640" height="370" rx="18" fill="url(#clGlow)"/>
+  <!-- watermark -->
+  <text x="580" y="340" text-anchor="middle" fill="white" fill-opacity="0.015" font-size="80">♚</text>
+  <!-- title -->
+  <text x="320" y="36" text-anchor="middle" fill="white" font-size="17" font-weight="700" letter-spacing="0.5">The 5-Second Pre-Move Checklist</text>
+  <text x="320" y="58" text-anchor="middle" fill="#94a3b8" font-size="13">Do this BEFORE every move you play</text>
   <!-- Step 1 -->
-  <rect x="30" y="64" width="540" height="38" rx="8" fill="#ef4444" fill-opacity="0.06" stroke="#ef4444" stroke-opacity="0.15"/>
-  <rect x="44" y="74" width="20" height="20" rx="10" fill="#ef4444" fill-opacity="0.2"/>
-  <text x="54" y="89" text-anchor="middle" fill="#f87171" font-size="11" font-weight="700">1</text>
-  <text x="80" y="88" fill="white" font-size="12" font-weight="600">What does my opponent's last move threaten?</text>
-  <text x="490" y="88" fill="#f87171" font-size="10">→ Check captures</text>
+  <rect x="30" y="76" width="580" height="48" rx="10" fill="#ef4444" fill-opacity="0.06" stroke="#ef4444" stroke-opacity="0.15"/>
+  <circle cx="60" cy="100" r="14" fill="#ef4444" fill-opacity="0.2" filter="url(#clStepGlow)"/>
+  <text x="60" y="105" text-anchor="middle" fill="#f87171" font-size="14" font-weight="700">1</text>
+  <text x="88" y="100" fill="white" font-size="14" font-weight="600">What does my opponent's last move threaten?</text>
+  <text x="530" y="100" fill="#f87171" font-size="13">→ Check captures</text>
   <!-- Step 2 -->
-  <rect x="30" y="108" width="540" height="38" rx="8" fill="#f59e0b" fill-opacity="0.06" stroke="#f59e0b" stroke-opacity="0.15"/>
-  <rect x="44" y="118" width="20" height="20" rx="10" fill="#f59e0b" fill-opacity="0.2"/>
-  <text x="54" y="133" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="700">2</text>
-  <text x="80" y="132" fill="white" font-size="12" font-weight="600">Is the square I'm going to safe?</text>
-  <text x="490" y="132" fill="#fbbf24" font-size="10">→ Count defenders</text>
+  <rect x="30" y="132" width="580" height="48" rx="10" fill="#f59e0b" fill-opacity="0.06" stroke="#f59e0b" stroke-opacity="0.15"/>
+  <circle cx="60" cy="156" r="14" fill="#f59e0b" fill-opacity="0.2"/>
+  <text x="60" y="161" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="700">2</text>
+  <text x="88" y="156" fill="white" font-size="14" font-weight="600">Is the square I'm going to safe?</text>
+  <text x="530" y="156" fill="#fbbf24" font-size="13">→ Count defenders</text>
   <!-- Step 3 -->
-  <rect x="30" y="152" width="540" height="38" rx="8" fill="#06b6d4" fill-opacity="0.06" stroke="#06b6d4" stroke-opacity="0.15"/>
-  <rect x="44" y="162" width="20" height="20" rx="10" fill="#06b6d4" fill-opacity="0.2"/>
-  <text x="54" y="177" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="700">3</text>
-  <text x="80" y="176" fill="white" font-size="12" font-weight="600">What am I leaving undefended?</text>
-  <text x="490" y="176" fill="#67e8f9" font-size="10">→ Check behind</text>
+  <rect x="30" y="188" width="580" height="48" rx="10" fill="#06b6d4" fill-opacity="0.06" stroke="#06b6d4" stroke-opacity="0.15"/>
+  <circle cx="60" cy="212" r="14" fill="#06b6d4" fill-opacity="0.2" filter="url(#clStepGlow)"/>
+  <text x="60" y="217" text-anchor="middle" fill="#67e8f9" font-size="14" font-weight="700">3</text>
+  <text x="88" y="212" fill="white" font-size="14" font-weight="600">What am I leaving undefended?</text>
+  <text x="530" y="212" fill="#67e8f9" font-size="13">→ Check behind</text>
   <!-- Step 4 -->
-  <rect x="30" y="196" width="540" height="38" rx="8" fill="#a855f7" fill-opacity="0.06" stroke="#a855f7" stroke-opacity="0.15"/>
-  <rect x="44" y="206" width="20" height="20" rx="10" fill="#a855f7" fill-opacity="0.2"/>
-  <text x="54" y="221" text-anchor="middle" fill="#c084fc" font-size="11" font-weight="700">4</text>
-  <text x="80" y="220" fill="white" font-size="12" font-weight="600">Any forks, pins, or skewers after my move?</text>
-  <text x="490" y="220" fill="#c084fc" font-size="10">→ Scan lines</text>
+  <rect x="30" y="244" width="580" height="48" rx="10" fill="#a855f7" fill-opacity="0.06" stroke="#a855f7" stroke-opacity="0.15"/>
+  <circle cx="60" cy="268" r="14" fill="#a855f7" fill-opacity="0.2"/>
+  <text x="60" y="273" text-anchor="middle" fill="#c084fc" font-size="14" font-weight="700">4</text>
+  <text x="88" y="268" fill="white" font-size="14" font-weight="600">Any forks, pins, or skewers after my move?</text>
+  <text x="530" y="268" fill="#c084fc" font-size="13">→ Scan lines</text>
   <!-- Step 5 -->
-  <rect x="30" y="240" width="540" height="38" rx="8" fill="#10b981" fill-opacity="0.06" stroke="#10b981" stroke-opacity="0.15"/>
-  <rect x="44" y="250" width="20" height="20" rx="10" fill="#10b981" fill-opacity="0.2"/>
-  <text x="54" y="265" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="700">5</text>
-  <text x="80" y="264" fill="white" font-size="12" font-weight="600">Is my back rank safe?</text>
-  <text x="490" y="264" fill="#6ee7b7" font-size="10">→ Quick glance</text>
+  <rect x="30" y="300" width="580" height="48" rx="10" fill="#10b981" fill-opacity="0.06" stroke="#10b981" stroke-opacity="0.15"/>
+  <circle cx="60" cy="324" r="14" fill="#10b981" fill-opacity="0.2" filter="url(#clStepGlow)"/>
+  <text x="60" y="329" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="700">5</text>
+  <text x="88" y="324" fill="white" font-size="14" font-weight="600">Is my back rank safe?</text>
+  <text x="530" y="324" fill="#6ee7b7" font-size="13">→ Quick glance</text>
+  <!-- decorative bottom line -->
+  <line x1="80" y1="360" x2="560" y2="360" stroke="white" stroke-opacity="0.04" stroke-width="1"/>
 </svg>
 </div>
 

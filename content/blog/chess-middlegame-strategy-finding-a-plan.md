@@ -11,55 +11,87 @@ The opening is over. You've developed your pieces, castled your king, and now...
 The middlegame is where chess gets hard because there's no book telling you what move to play. But there IS a systematic way to find a plan, and it doesn't require genius-level intuition — just a structured thinking process.
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="640" height="200" viewBox="0 0 640 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="640" height="200" rx="16" fill="#0f172a"/>
-  <rect x="1" y="1" width="638" height="198" rx="15" stroke="white" stroke-opacity="0.06"/>
-  <text x="320" y="28" text-anchor="middle" fill="white" font-size="13" font-weight="700">The 4-Step Plan-Finding Framework</text>
+<svg width="680" height="260" viewBox="0 0 680 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="mgBg" x1="0" y1="0" x2="680" y2="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0c1220"/><stop offset="1" stop-color="#1a1030"/>
+    </linearGradient>
+    <radialGradient id="mgGlow1" cx="340" cy="130" r="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f59e0b" stop-opacity="0.05"/><stop offset="1" stop-color="#f59e0b" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="mgStepGlow" x="-15%" y="-20%" width="130%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="680" height="260" rx="18" fill="url(#mgBg)"/>
+  <rect x="1" y="1" width="678" height="258" rx="17" stroke="white" stroke-opacity="0.06"/>
+  <rect width="680" height="260" rx="18" fill="url(#mgGlow1)"/>
+  <!-- watermarks -->
+  <text x="60" y="240" text-anchor="middle" fill="white" fill-opacity="0.012" font-size="72">♟</text>
+  <text x="620" y="100" text-anchor="middle" fill="white" fill-opacity="0.012" font-size="72">♛</text>
+  <!-- title -->
+  <text x="340" y="34" text-anchor="middle" fill="white" font-size="17" font-weight="700" letter-spacing="0.5">The 4-Step Plan-Finding Framework</text>
   <!-- Step 1 -->
-  <rect x="20" y="48" width="145" height="136" rx="10" fill="#ef4444" fill-opacity="0.06" stroke="#ef4444" stroke-opacity="0.15"/>
-  <rect x="72" y="60" width="24" height="24" rx="12" fill="#ef4444" fill-opacity="0.2"/>
-  <text x="84" y="77" text-anchor="middle" fill="#f87171" font-size="13" font-weight="700">1</text>
-  <text x="92" y="102" text-anchor="middle" fill="#f87171" font-size="11" font-weight="700">PAWN</text>
-  <text x="92" y="116" text-anchor="middle" fill="#f87171" font-size="11" font-weight="700">STRUCTURE</text>
-  <text x="92" y="138" text-anchor="middle" fill="#94a3b8" font-size="9">What structure</text>
-  <text x="92" y="152" text-anchor="middle" fill="#94a3b8" font-size="9">do I have? What</text>
-  <text x="92" y="166" text-anchor="middle" fill="#94a3b8" font-size="9">plans does it</text>
-  <text x="92" y="178" text-anchor="middle" fill="#94a3b8" font-size="9">suggest?</text>
-  <!-- Arrow -->
-  <text x="178" y="120" fill="#475569" font-size="18">→</text>
+  <rect x="18" y="52" width="148" height="186" rx="12" fill="#ef4444" fill-opacity="0.06" stroke="#ef4444" stroke-opacity="0.18"/>
+  <circle cx="92" cy="76" r="14" fill="#ef4444" fill-opacity="0.20"/>
+  <text x="92" y="82" text-anchor="middle" fill="#f87171" font-size="15" font-weight="700" filter="url(#mgStepGlow)">1</text>
+  <text x="92" y="110" text-anchor="middle" fill="#f87171" font-size="14" font-weight="700">PAWN</text>
+  <text x="92" y="128" text-anchor="middle" fill="#f87171" font-size="14" font-weight="700">STRUCTURE</text>
+  <text x="92" y="156" text-anchor="middle" fill="#94a3b8" font-size="13">What structure</text>
+  <text x="92" y="174" text-anchor="middle" fill="#94a3b8" font-size="13">do I have? What</text>
+  <text x="92" y="192" text-anchor="middle" fill="#94a3b8" font-size="13">plans does it</text>
+  <text x="92" y="210" text-anchor="middle" fill="#94a3b8" font-size="13">suggest?</text>
+  <text x="92" y="232" text-anchor="middle" fill="#f87171" font-size="20">♟</text>
+  <!-- Arrow 1 -->
+  <line x1="170" y1="140" x2="187" y2="140" stroke="#475569" stroke-width="2" stroke-dasharray="5 3">
+    <animate attributeName="stroke-dashoffset" from="16" to="0" dur="2s" repeatCount="indefinite"/>
+  </line>
+  <polygon points="187,136 195,140 187,144" fill="#475569"/>
   <!-- Step 2 -->
-  <rect x="192" y="48" width="145" height="136" rx="10" fill="#f59e0b" fill-opacity="0.06" stroke="#f59e0b" stroke-opacity="0.15"/>
-  <rect x="244" y="60" width="24" height="24" rx="12" fill="#f59e0b" fill-opacity="0.2"/>
-  <text x="256" y="77" text-anchor="middle" fill="#fbbf24" font-size="13" font-weight="700">2</text>
-  <text x="264" y="102" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="700">PIECE</text>
-  <text x="264" y="116" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="700">ACTIVITY</text>
-  <text x="264" y="138" text-anchor="middle" fill="#94a3b8" font-size="9">Which piece is</text>
-  <text x="264" y="152" text-anchor="middle" fill="#94a3b8" font-size="9">my worst? How</text>
-  <text x="264" y="166" text-anchor="middle" fill="#94a3b8" font-size="9">can I improve</text>
-  <text x="264" y="178" text-anchor="middle" fill="#94a3b8" font-size="9">it?</text>
-  <!-- Arrow -->
-  <text x="350" y="120" fill="#475569" font-size="18">→</text>
+  <rect x="198" y="52" width="148" height="186" rx="12" fill="#f59e0b" fill-opacity="0.06" stroke="#f59e0b" stroke-opacity="0.18"/>
+  <circle cx="272" cy="76" r="14" fill="#f59e0b" fill-opacity="0.20"/>
+  <text x="272" y="82" text-anchor="middle" fill="#fbbf24" font-size="15" font-weight="700">2</text>
+  <text x="272" y="110" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="700">PIECE</text>
+  <text x="272" y="128" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="700">ACTIVITY</text>
+  <text x="272" y="156" text-anchor="middle" fill="#94a3b8" font-size="13">Which piece is</text>
+  <text x="272" y="174" text-anchor="middle" fill="#94a3b8" font-size="13">my worst? How</text>
+  <text x="272" y="192" text-anchor="middle" fill="#94a3b8" font-size="13">can I improve</text>
+  <text x="272" y="210" text-anchor="middle" fill="#94a3b8" font-size="13">it?</text>
+  <text x="272" y="232" text-anchor="middle" fill="#fbbf24" font-size="20">♞</text>
+  <!-- Arrow 2 -->
+  <line x1="350" y1="140" x2="367" y2="140" stroke="#475569" stroke-width="2" stroke-dasharray="5 3">
+    <animate attributeName="stroke-dashoffset" from="16" to="0" dur="2s" repeatCount="indefinite"/>
+  </line>
+  <polygon points="367,136 375,140 367,144" fill="#475569"/>
   <!-- Step 3 -->
-  <rect x="364" y="48" width="145" height="136" rx="10" fill="#06b6d4" fill-opacity="0.06" stroke="#06b6d4" stroke-opacity="0.15"/>
-  <rect x="416" y="60" width="24" height="24" rx="12" fill="#06b6d4" fill-opacity="0.2"/>
-  <text x="428" y="77" text-anchor="middle" fill="#67e8f9" font-size="13" font-weight="700">3</text>
-  <text x="436" y="102" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="700">KING</text>
-  <text x="436" y="116" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="700">SAFETY</text>
-  <text x="436" y="138" text-anchor="middle" fill="#94a3b8" font-size="9">Is either king</text>
-  <text x="436" y="152" text-anchor="middle" fill="#94a3b8" font-size="9">weak? Can I</text>
-  <text x="436" y="166" text-anchor="middle" fill="#94a3b8" font-size="9">attack or do I</text>
-  <text x="436" y="178" text-anchor="middle" fill="#94a3b8" font-size="9">need to defend?</text>
-  <!-- Arrow -->
-  <text x="522" y="120" fill="#475569" font-size="18">→</text>
+  <rect x="378" y="52" width="148" height="186" rx="12" fill="#06b6d4" fill-opacity="0.06" stroke="#06b6d4" stroke-opacity="0.18"/>
+  <circle cx="452" cy="76" r="14" fill="#06b6d4" fill-opacity="0.20"/>
+  <text x="452" y="82" text-anchor="middle" fill="#67e8f9" font-size="15" font-weight="700" filter="url(#mgStepGlow)">3</text>
+  <text x="452" y="110" text-anchor="middle" fill="#67e8f9" font-size="14" font-weight="700">KING</text>
+  <text x="452" y="128" text-anchor="middle" fill="#67e8f9" font-size="14" font-weight="700">SAFETY</text>
+  <text x="452" y="156" text-anchor="middle" fill="#94a3b8" font-size="13">Is either king</text>
+  <text x="452" y="174" text-anchor="middle" fill="#94a3b8" font-size="13">weak? Can I</text>
+  <text x="452" y="192" text-anchor="middle" fill="#94a3b8" font-size="13">attack or do I</text>
+  <text x="452" y="210" text-anchor="middle" fill="#94a3b8" font-size="13">need to defend?</text>
+  <text x="452" y="232" text-anchor="middle" fill="#67e8f9" font-size="20">♚</text>
+  <!-- Arrow 3 -->
+  <line x1="530" y1="140" x2="547" y2="140" stroke="#475569" stroke-width="2" stroke-dasharray="5 3">
+    <animate attributeName="stroke-dashoffset" from="16" to="0" dur="2s" repeatCount="indefinite"/>
+  </line>
+  <polygon points="547,136 555,140 547,144" fill="#475569"/>
   <!-- Step 4 -->
-  <rect x="536" y="48" width="90" height="136" rx="10" fill="#10b981" fill-opacity="0.06" stroke="#10b981" stroke-opacity="0.15"/>
-  <rect x="562" y="60" width="24" height="24" rx="12" fill="#10b981" fill-opacity="0.2"/>
-  <text x="574" y="77" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="700">4</text>
-  <text x="581" y="102" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="700">MAKE</text>
-  <text x="581" y="116" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="700">A PLAN</text>
-  <text x="581" y="142" text-anchor="middle" fill="#94a3b8" font-size="9">Commit</text>
-  <text x="581" y="156" text-anchor="middle" fill="#94a3b8" font-size="9">and</text>
-  <text x="581" y="170" text-anchor="middle" fill="#94a3b8" font-size="9">execute</text>
+  <rect x="558" y="52" width="108" height="186" rx="12" fill="#10b981" fill-opacity="0.06" stroke="#10b981" stroke-opacity="0.18" filter="url(#mgStepGlow)"/>
+  <circle cx="612" cy="76" r="14" fill="#10b981" fill-opacity="0.20"/>
+  <text x="612" y="82" text-anchor="middle" fill="#6ee7b7" font-size="15" font-weight="700">4</text>
+  <text x="612" y="110" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="700">MAKE</text>
+  <text x="612" y="128" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="700">A PLAN</text>
+  <text x="612" y="162" text-anchor="middle" fill="#94a3b8" font-size="13">Commit</text>
+  <text x="612" y="180" text-anchor="middle" fill="#94a3b8" font-size="13">and</text>
+  <text x="612" y="198" text-anchor="middle" fill="#94a3b8" font-size="13">execute</text>
+  <text x="612" y="232" text-anchor="middle" fill="#6ee7b7" font-size="20">♛</text>
+  <!-- decorative bottom line -->
+  <line x1="80" y1="250" x2="600" y2="250" stroke="white" stroke-opacity="0.04" stroke-width="1"/>
 </svg>
 </div>
 
@@ -132,30 +164,52 @@ Based on your assessment of pawn structure, piece activity, and king safety, you
 Sometimes, even after going through the framework, the position feels equal and planless. In these positions:
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="600" height="210" viewBox="0 0 600 210" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="600" height="210" rx="16" fill="#0f172a"/>
-  <rect x="1" y="1" width="598" height="208" rx="15" stroke="white" stroke-opacity="0.06"/>
-  <text x="300" y="28" text-anchor="middle" fill="white" font-size="13" font-weight="700">When You Have No Plan — Do This</text>
-  <!-- 4 fallback strategies -->
-  <rect x="24" y="48" width="265" height="66" rx="10" fill="#10b981" fill-opacity="0.06" stroke="#10b981" stroke-opacity="0.15"/>
-  <text x="44" y="72" fill="#6ee7b7" font-size="12" font-weight="700">1. Improve your worst piece</text>
-  <text x="44" y="92" fill="#94a3b8" font-size="10">Find the piece doing the least and</text>
-  <text x="44" y="106" fill="#94a3b8" font-size="10">reroute it to a better square</text>
-
-  <rect x="311" y="48" width="265" height="66" rx="10" fill="#06b6d4" fill-opacity="0.06" stroke="#06b6d4" stroke-opacity="0.15"/>
-  <text x="331" y="72" fill="#67e8f9" font-size="12" font-weight="700">2. Put a rook on an open file</text>
-  <text x="331" y="92" fill="#94a3b8" font-size="10">If no file is open, create one by</text>
-  <text x="331" y="106" fill="#94a3b8" font-size="10">exchanging or pushing a pawn</text>
-
-  <rect x="24" y="126" width="265" height="66" rx="10" fill="#f59e0b" fill-opacity="0.06" stroke="#f59e0b" stroke-opacity="0.15"/>
-  <text x="44" y="150" fill="#fbbf24" font-size="12" font-weight="700">3. Ask "What does my opponent want?"</text>
-  <text x="44" y="170" fill="#94a3b8" font-size="10">Prevent their best plan (prophylaxis)</text>
-  <text x="44" y="184" fill="#94a3b8" font-size="10">before executing your own</text>
-
-  <rect x="311" y="126" width="265" height="66" rx="10" fill="#a855f7" fill-opacity="0.06" stroke="#a855f7" stroke-opacity="0.15"/>
-  <text x="331" y="150" fill="#c084fc" font-size="12" font-weight="700">4. Trade toward your advantage</text>
-  <text x="331" y="170" fill="#94a3b8" font-size="10">If you have a bishop, trade knights.</text>
-  <text x="331" y="184" fill="#94a3b8" font-size="10">If you have knights, keep it closed.</text>
+<svg width="640" height="270" viewBox="0 0 640 270" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="fbBg" x1="0" y1="0" x2="640" y2="270" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0c1220"/><stop offset="1" stop-color="#14102a"/>
+    </linearGradient>
+    <radialGradient id="fbGlow" cx="320" cy="135" r="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#10b981" stop-opacity="0.05"/><stop offset="1" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="fbCardGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="640" height="270" rx="18" fill="url(#fbBg)"/>
+  <rect x="1" y="1" width="638" height="268" rx="17" stroke="white" stroke-opacity="0.06"/>
+  <rect width="640" height="270" rx="18" fill="url(#fbGlow)"/>
+  <!-- watermark -->
+  <text x="580" y="250" text-anchor="middle" fill="white" fill-opacity="0.012" font-size="72">♞</text>
+  <!-- title -->
+  <text x="320" y="34" text-anchor="middle" fill="white" font-size="17" font-weight="700" letter-spacing="0.5">When You Have No Plan — Do This</text>
+  <!-- Card 1: Improve worst piece -->
+  <rect x="22" y="52" width="285" height="88" rx="12" fill="#10b981" fill-opacity="0.06" stroke="#10b981" stroke-opacity="0.18" filter="url(#fbCardGlow)"/>
+  <text x="42" y="76" fill="#6ee7b7" font-size="20">♞</text>
+  <text x="64" y="78" fill="#6ee7b7" font-size="14" font-weight="700">1. Improve your worst piece</text>
+  <text x="42" y="100" fill="#94a3b8" font-size="13">Find the piece doing the least and</text>
+  <text x="42" y="118" fill="#94a3b8" font-size="13">reroute it to a better square</text>
+  <!-- Card 2: Rook on open file -->
+  <rect x="333" y="52" width="285" height="88" rx="12" fill="#06b6d4" fill-opacity="0.06" stroke="#06b6d4" stroke-opacity="0.18"/>
+  <text x="353" y="76" fill="#67e8f9" font-size="20">♜</text>
+  <text x="375" y="78" fill="#67e8f9" font-size="14" font-weight="700">2. Put a rook on an open file</text>
+  <text x="353" y="100" fill="#94a3b8" font-size="13">If no file is open, create one by</text>
+  <text x="353" y="118" fill="#94a3b8" font-size="13">exchanging or pushing a pawn</text>
+  <!-- Card 3: Prophylaxis -->
+  <rect x="22" y="154" width="285" height="88" rx="12" fill="#f59e0b" fill-opacity="0.06" stroke="#f59e0b" stroke-opacity="0.18"/>
+  <text x="42" y="178" fill="#fbbf24" font-size="20">♝</text>
+  <text x="64" y="180" fill="#fbbf24" font-size="13" font-weight="700">3. Ask "What does opponent want?"</text>
+  <text x="42" y="202" fill="#94a3b8" font-size="13">Prevent their best plan (prophylaxis)</text>
+  <text x="42" y="220" fill="#94a3b8" font-size="13">before executing your own</text>
+  <!-- Card 4: Trade toward advantage -->
+  <rect x="333" y="154" width="285" height="88" rx="12" fill="#a855f7" fill-opacity="0.06" stroke="#a855f7" stroke-opacity="0.18" filter="url(#fbCardGlow)"/>
+  <text x="353" y="178" fill="#c084fc" font-size="20">♛</text>
+  <text x="375" y="180" fill="#c084fc" font-size="14" font-weight="700">4. Trade toward your advantage</text>
+  <text x="353" y="202" fill="#94a3b8" font-size="13">If you have a bishop, trade knights.</text>
+  <text x="353" y="220" fill="#94a3b8" font-size="13">If you have knights, keep it closed.</text>
+  <!-- decorative bottom line -->
+  <line x1="80" y1="258" x2="560" y2="258" stroke="white" stroke-opacity="0.04" stroke-width="1"/>
 </svg>
 </div>
 

@@ -11,58 +11,81 @@ You've been 1400 for six months. You study openings, solve puzzles, play every d
 Plateaus aren't a bug in your improvement — they're a signal that you need to change *what* you're working on. Every rating range has a specific set of skills that gate your progress. Once you identify and fix the gating skill, the plateau breaks.
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="640" height="260" viewBox="0 0 640 260" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="640" height="260" rx="16" fill="#0f172a"/>
-  <rect x="1" y="1" width="638" height="258" rx="15" stroke="white" stroke-opacity="0.06"/>
-  <text x="320" y="28" text-anchor="middle" fill="white" font-size="13" font-weight="700">What Limits You at Each Rating Range</text>
-  <!-- Rating bands -->
-  <rect x="20" y="44" width="145" height="200" rx="10" fill="#ef4444" fill-opacity="0.06" stroke="#ef4444" stroke-opacity="0.15"/>
-  <text x="92" y="66" text-anchor="middle" fill="#f87171" font-size="14" font-weight="700">800–1200</text>
-  <line x1="40" y1="76" x2="145" y2="76" stroke="#ef4444" stroke-opacity="0.15"/>
-  <text x="92" y="96" text-anchor="middle" fill="white" font-size="10" font-weight="600">Bottleneck:</text>
-  <text x="92" y="114" text-anchor="middle" fill="#f87171" font-size="11" font-weight="700">Hanging pieces</text>
-  <text x="92" y="136" text-anchor="middle" fill="#94a3b8" font-size="9">Fix: Blunder check</text>
-  <text x="92" y="152" text-anchor="middle" fill="#94a3b8" font-size="9">habit before each</text>
-  <text x="92" y="168" text-anchor="middle" fill="#94a3b8" font-size="9">move</text>
-  <text x="92" y="194" text-anchor="middle" fill="#475569" font-size="9">Basic tactics</text>
-  <text x="92" y="210" text-anchor="middle" fill="#475569" font-size="9">1-move puzzles</text>
-  <text x="92" y="230" text-anchor="middle" fill="#475569" font-size="9">Basic checkmates</text>
-
-  <rect x="175" y="44" width="145" height="200" rx="10" fill="#f59e0b" fill-opacity="0.06" stroke="#f59e0b" stroke-opacity="0.15"/>
-  <text x="247" y="66" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="700">1200–1600</text>
-  <line x1="195" y1="76" x2="300" y2="76" stroke="#f59e0b" stroke-opacity="0.15"/>
-  <text x="247" y="96" text-anchor="middle" fill="white" font-size="10" font-weight="600">Bottleneck:</text>
-  <text x="247" y="114" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="700">Tactical vision</text>
-  <text x="247" y="136" text-anchor="middle" fill="#94a3b8" font-size="9">Fix: Daily puzzles</text>
-  <text x="247" y="152" text-anchor="middle" fill="#94a3b8" font-size="9">(forks, pins,</text>
-  <text x="247" y="168" text-anchor="middle" fill="#94a3b8" font-size="9">discovered attacks)</text>
-  <text x="247" y="194" text-anchor="middle" fill="#475569" font-size="9">Opening principles</text>
-  <text x="247" y="210" text-anchor="middle" fill="#475569" font-size="9">Simple endgames</text>
-  <text x="247" y="230" text-anchor="middle" fill="#475569" font-size="9">2-3 move combos</text>
-
-  <rect x="330" y="44" width="145" height="200" rx="10" fill="#06b6d4" fill-opacity="0.06" stroke="#06b6d4" stroke-opacity="0.15"/>
-  <text x="402" y="66" text-anchor="middle" fill="#67e8f9" font-size="14" font-weight="700">1600–2000</text>
-  <line x1="350" y1="76" x2="455" y2="76" stroke="#06b6d4" stroke-opacity="0.15"/>
-  <text x="402" y="96" text-anchor="middle" fill="white" font-size="10" font-weight="600">Bottleneck:</text>
-  <text x="402" y="114" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="700">Positional play</text>
-  <text x="402" y="136" text-anchor="middle" fill="#94a3b8" font-size="9">Fix: Study plans,</text>
-  <text x="402" y="152" text-anchor="middle" fill="#94a3b8" font-size="9">pawn structures,</text>
-  <text x="402" y="168" text-anchor="middle" fill="#94a3b8" font-size="9">prophylaxis</text>
-  <text x="402" y="194" text-anchor="middle" fill="#475569" font-size="9">Opening repertoire</text>
-  <text x="402" y="210" text-anchor="middle" fill="#475569" font-size="9">Rook endgames</text>
-  <text x="402" y="230" text-anchor="middle" fill="#475569" font-size="9">Static vs dynamic</text>
-
-  <rect x="485" y="44" width="145" height="200" rx="10" fill="#10b981" fill-opacity="0.06" stroke="#10b981" stroke-opacity="0.15"/>
-  <text x="557" y="66" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="700">2000+</text>
-  <line x1="505" y1="76" x2="610" y2="76" stroke="#10b981" stroke-opacity="0.15"/>
-  <text x="557" y="96" text-anchor="middle" fill="white" font-size="10" font-weight="600">Bottleneck:</text>
-  <text x="557" y="114" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="700">Deep preparation</text>
-  <text x="557" y="136" text-anchor="middle" fill="#94a3b8" font-size="9">Fix: Opening prep,</text>
-  <text x="557" y="152" text-anchor="middle" fill="#94a3b8" font-size="9">calculation depth,</text>
-  <text x="557" y="168" text-anchor="middle" fill="#94a3b8" font-size="9">endgame theory</text>
-  <text x="557" y="194" text-anchor="middle" fill="#475569" font-size="9">Complex tactics</text>
-  <text x="557" y="210" text-anchor="middle" fill="#475569" font-size="9">Candidate moves</text>
-  <text x="557" y="230" text-anchor="middle" fill="#475569" font-size="9">Clock management</text>
+<svg width="680" height="320" viewBox="0 0 680 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="rpBg" x1="0" y1="0" x2="680" y2="320" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0c1220"/><stop offset="1" stop-color="#1a1030"/>
+    </linearGradient>
+    <radialGradient id="rpGlow1" cx="135" cy="160" r="150" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ef4444" stop-opacity="0.07"/><stop offset="1" stop-color="#ef4444" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="rpGlow2" cx="545" cy="160" r="150" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#10b981" stop-opacity="0.07"/><stop offset="1" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="rpTitleGlow" x="-20%" y="-30%" width="140%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="680" height="320" rx="18" fill="url(#rpBg)"/>
+  <rect x="1" y="1" width="678" height="318" rx="17" stroke="white" stroke-opacity="0.06"/>
+  <rect width="680" height="320" rx="18" fill="url(#rpGlow1)"/>
+  <rect width="680" height="320" rx="18" fill="url(#rpGlow2)"/>
+  <!-- watermarks -->
+  <text x="55" y="300" text-anchor="middle" fill="white" fill-opacity="0.012" font-size="80">♟</text>
+  <text x="625" y="100" text-anchor="middle" fill="white" fill-opacity="0.012" font-size="80">♛</text>
+  <!-- title -->
+  <text x="340" y="34" text-anchor="middle" fill="white" font-size="17" font-weight="700" letter-spacing="0.5">What Limits You at Each Rating Range</text>
+  <!-- Card 1: 800-1200 -->
+  <rect x="18" y="52" width="155" height="248" rx="12" fill="#ef4444" fill-opacity="0.06" stroke="#ef4444" stroke-opacity="0.18"/>
+  <text x="95" y="78" text-anchor="middle" fill="#f87171" font-size="16" font-weight="700" filter="url(#rpTitleGlow)">800–1200</text>
+  <line x1="42" y1="88" x2="149" y2="88" stroke="#ef4444" stroke-opacity="0.2" stroke-width="1"/>
+  <text x="95" y="112" text-anchor="middle" fill="white" font-size="13" font-weight="600">Bottleneck:</text>
+  <text x="95" y="132" text-anchor="middle" fill="#f87171" font-size="14" font-weight="700">Hanging pieces</text>
+  <text x="95" y="160" text-anchor="middle" fill="#94a3b8" font-size="13">Fix: Blunder check</text>
+  <text x="95" y="178" text-anchor="middle" fill="#94a3b8" font-size="13">habit before every</text>
+  <text x="95" y="196" text-anchor="middle" fill="#94a3b8" font-size="13">move</text>
+  <text x="95" y="230" text-anchor="middle" fill="#475569" font-size="13">Basic tactics</text>
+  <text x="95" y="248" text-anchor="middle" fill="#475569" font-size="13">1-move puzzles</text>
+  <text x="95" y="266" text-anchor="middle" fill="#475569" font-size="13">Basic checkmates</text>
+  <!-- Card 2: 1200-1600 -->
+  <rect x="183" y="52" width="155" height="248" rx="12" fill="#f59e0b" fill-opacity="0.06" stroke="#f59e0b" stroke-opacity="0.18"/>
+  <text x="260" y="78" text-anchor="middle" fill="#fbbf24" font-size="16" font-weight="700">1200–1600</text>
+  <line x1="207" y1="88" x2="314" y2="88" stroke="#f59e0b" stroke-opacity="0.2" stroke-width="1"/>
+  <text x="260" y="112" text-anchor="middle" fill="white" font-size="13" font-weight="600">Bottleneck:</text>
+  <text x="260" y="132" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="700">Tactical vision</text>
+  <text x="260" y="160" text-anchor="middle" fill="#94a3b8" font-size="13">Fix: Daily puzzles</text>
+  <text x="260" y="178" text-anchor="middle" fill="#94a3b8" font-size="13">(forks, pins,</text>
+  <text x="260" y="196" text-anchor="middle" fill="#94a3b8" font-size="13">discovered attacks)</text>
+  <text x="260" y="230" text-anchor="middle" fill="#475569" font-size="13">Opening principles</text>
+  <text x="260" y="248" text-anchor="middle" fill="#475569" font-size="13">Simple endgames</text>
+  <text x="260" y="266" text-anchor="middle" fill="#475569" font-size="13">2–3 move combos</text>
+  <!-- Card 3: 1600-2000 -->
+  <rect x="348" y="52" width="155" height="248" rx="12" fill="#06b6d4" fill-opacity="0.06" stroke="#06b6d4" stroke-opacity="0.18"/>
+  <text x="425" y="78" text-anchor="middle" fill="#67e8f9" font-size="16" font-weight="700">1600–2000</text>
+  <line x1="372" y1="88" x2="479" y2="88" stroke="#06b6d4" stroke-opacity="0.2" stroke-width="1"/>
+  <text x="425" y="112" text-anchor="middle" fill="white" font-size="13" font-weight="600">Bottleneck:</text>
+  <text x="425" y="132" text-anchor="middle" fill="#67e8f9" font-size="14" font-weight="700">Positional play</text>
+  <text x="425" y="160" text-anchor="middle" fill="#94a3b8" font-size="13">Fix: Study plans,</text>
+  <text x="425" y="178" text-anchor="middle" fill="#94a3b8" font-size="13">pawn structures,</text>
+  <text x="425" y="196" text-anchor="middle" fill="#94a3b8" font-size="13">prophylaxis</text>
+  <text x="425" y="230" text-anchor="middle" fill="#475569" font-size="13">Opening repertoire</text>
+  <text x="425" y="248" text-anchor="middle" fill="#475569" font-size="13">Rook endgames</text>
+  <text x="425" y="266" text-anchor="middle" fill="#475569" font-size="13">Static vs dynamic</text>
+  <!-- Card 4: 2000+ -->
+  <rect x="513" y="52" width="155" height="248" rx="12" fill="#10b981" fill-opacity="0.06" stroke="#10b981" stroke-opacity="0.18"/>
+  <text x="590" y="78" text-anchor="middle" fill="#6ee7b7" font-size="16" font-weight="700" filter="url(#rpTitleGlow)">2000+</text>
+  <line x1="537" y1="88" x2="644" y2="88" stroke="#10b981" stroke-opacity="0.2" stroke-width="1"/>
+  <text x="590" y="112" text-anchor="middle" fill="white" font-size="13" font-weight="600">Bottleneck:</text>
+  <text x="590" y="132" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="700">Deep preparation</text>
+  <text x="590" y="160" text-anchor="middle" fill="#94a3b8" font-size="13">Fix: Opening prep,</text>
+  <text x="590" y="178" text-anchor="middle" fill="#94a3b8" font-size="13">calculation depth,</text>
+  <text x="590" y="196" text-anchor="middle" fill="#94a3b8" font-size="13">endgame theory</text>
+  <text x="590" y="230" text-anchor="middle" fill="#475569" font-size="13">Complex tactics</text>
+  <text x="590" y="248" text-anchor="middle" fill="#475569" font-size="13">Candidate moves</text>
+  <text x="590" y="266" text-anchor="middle" fill="#475569" font-size="13">Clock management</text>
+  <!-- decorative bottom line -->
+  <line x1="80" y1="310" x2="600" y2="310" stroke="white" stroke-opacity="0.04" stroke-width="1"/>
 </svg>
 </div>
 
@@ -156,36 +179,73 @@ This is purely a habit issue, not a knowledge issue. The blunder check habit alo
 4. Improve your endgame technique, especially rook endings
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="600" height="220" viewBox="0 0 600 220" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="600" height="220" rx="16" fill="#0f172a"/>
-  <rect x="1" y="1" width="598" height="218" rx="15" stroke="white" stroke-opacity="0.06"/>
-  <text x="300" y="28" text-anchor="middle" fill="white" font-size="13" font-weight="700">The Plateau-Breaking Cycle</text>
-  <!-- Step boxes connected by arrows -->
-  <rect x="30" y="60" width="120" height="80" rx="10" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.2"/>
-  <text x="90" y="88" text-anchor="middle" fill="#f87171" font-size="11" font-weight="700">SCAN</text>
-  <text x="90" y="106" text-anchor="middle" fill="#94a3b8" font-size="9">Analyze 25-50</text>
-  <text x="90" y="120" text-anchor="middle" fill="#94a3b8" font-size="9">games for patterns</text>
+<svg width="640" height="280" viewBox="0 0 640 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="pcBg" x1="0" y1="0" x2="640" y2="280" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0c1220"/><stop offset="1" stop-color="#14102a"/>
+    </linearGradient>
+    <radialGradient id="pcGlow" cx="320" cy="120" r="220" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#06b6d4" stop-opacity="0.06"/><stop offset="1" stop-color="#06b6d4" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="pcBoxGlow" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="640" height="280" rx="18" fill="url(#pcBg)"/>
+  <rect x="1" y="1" width="638" height="278" rx="17" stroke="white" stroke-opacity="0.06"/>
+  <rect width="640" height="280" rx="18" fill="url(#pcGlow)"/>
+  <!-- watermark -->
+  <text x="580" y="260" text-anchor="middle" fill="white" fill-opacity="0.015" font-size="80">♚</text>
+  <!-- title -->
+  <text x="320" y="34" text-anchor="middle" fill="white" font-size="17" font-weight="700" letter-spacing="0.5">The Plateau-Breaking Cycle</text>
+  <!-- Step boxes -->
+  <rect x="30" y="65" width="130" height="105" rx="12" fill="#ef4444" fill-opacity="0.07" stroke="#ef4444" stroke-opacity="0.20" filter="url(#pcBoxGlow)"/>
+  <text x="95" y="92" text-anchor="middle" fill="#f87171" font-size="26">♟</text>
+  <text x="95" y="116" text-anchor="middle" fill="#f87171" font-size="15" font-weight="700">SCAN</text>
+  <text x="95" y="138" text-anchor="middle" fill="#94a3b8" font-size="13">Analyze 25–50</text>
+  <text x="95" y="155" text-anchor="middle" fill="#94a3b8" font-size="13">games for patterns</text>
   <!-- Arrow 1 -->
-  <text x="168" y="104" fill="#475569" font-size="18">→</text>
-  <rect x="186" y="60" width="120" height="80" rx="10" fill="#f59e0b" fill-opacity="0.08" stroke="#f59e0b" stroke-opacity="0.2"/>
-  <text x="246" y="88" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="700">DIAGNOSE</text>
-  <text x="246" y="106" text-anchor="middle" fill="#94a3b8" font-size="9">Find #1 weakness</text>
-  <text x="246" y="120" text-anchor="middle" fill="#94a3b8" font-size="9">by game phase</text>
+  <line x1="165" y1="118" x2="195" y2="118" stroke="#475569" stroke-width="2" stroke-dasharray="5 3">
+    <animate attributeName="stroke-dashoffset" from="16" to="0" dur="2s" repeatCount="indefinite"/>
+  </line>
+  <polygon points="195,113 205,118 195,123" fill="#475569"/>
+  <!-- Step 2 -->
+  <rect x="210" y="65" width="130" height="105" rx="12" fill="#f59e0b" fill-opacity="0.07" stroke="#f59e0b" stroke-opacity="0.20"/>
+  <text x="275" y="92" text-anchor="middle" fill="#fbbf24" font-size="26">♞</text>
+  <text x="275" y="116" text-anchor="middle" fill="#fbbf24" font-size="15" font-weight="700">DIAGNOSE</text>
+  <text x="275" y="138" text-anchor="middle" fill="#94a3b8" font-size="13">Find #1 weakness</text>
+  <text x="275" y="155" text-anchor="middle" fill="#94a3b8" font-size="13">by game phase</text>
   <!-- Arrow 2 -->
-  <text x="324" y="104" fill="#475569" font-size="18">→</text>
-  <rect x="342" y="60" width="120" height="80" rx="10" fill="#06b6d4" fill-opacity="0.08" stroke="#06b6d4" stroke-opacity="0.2"/>
-  <text x="402" y="88" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="700">TRAIN</text>
-  <text x="402" y="106" text-anchor="middle" fill="#94a3b8" font-size="9">70% effort on</text>
-  <text x="402" y="120" text-anchor="middle" fill="#94a3b8" font-size="9">weakness for 3 wks</text>
+  <line x1="345" y1="118" x2="375" y2="118" stroke="#475569" stroke-width="2" stroke-dasharray="5 3">
+    <animate attributeName="stroke-dashoffset" from="16" to="0" dur="2s" repeatCount="indefinite"/>
+  </line>
+  <polygon points="375,113 385,118 375,123" fill="#475569"/>
+  <!-- Step 3 -->
+  <rect x="390" y="65" width="130" height="105" rx="12" fill="#06b6d4" fill-opacity="0.07" stroke="#06b6d4" stroke-opacity="0.20" filter="url(#pcBoxGlow)"/>
+  <text x="455" y="92" text-anchor="middle" fill="#67e8f9" font-size="26">♝</text>
+  <text x="455" y="116" text-anchor="middle" fill="#67e8f9" font-size="15" font-weight="700">TRAIN</text>
+  <text x="455" y="138" text-anchor="middle" fill="#94a3b8" font-size="13">70% effort on</text>
+  <text x="455" y="155" text-anchor="middle" fill="#94a3b8" font-size="13">weakness for 3 wks</text>
   <!-- Arrow 3 -->
-  <text x="480" y="104" fill="#475569" font-size="18">→</text>
-  <rect x="498" y="60" width="80" height="80" rx="10" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.2"/>
-  <text x="538" y="88" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="700">VERIFY</text>
-  <text x="538" y="106" text-anchor="middle" fill="#94a3b8" font-size="9">Re-scan</text>
-  <text x="538" y="120" text-anchor="middle" fill="#94a3b8" font-size="9">and compare</text>
+  <line x1="525" y1="118" x2="540" y2="118" stroke="#475569" stroke-width="2" stroke-dasharray="5 3">
+    <animate attributeName="stroke-dashoffset" from="16" to="0" dur="2s" repeatCount="indefinite"/>
+  </line>
+  <polygon points="540,113 550,118 540,123" fill="#475569"/>
+  <!-- Step 4 -->
+  <rect x="555" y="65" width="70" height="105" rx="12" fill="#10b981" fill-opacity="0.07" stroke="#10b981" stroke-opacity="0.20"/>
+  <text x="590" y="92" text-anchor="middle" fill="#6ee7b7" font-size="26">♜</text>
+  <text x="590" y="116" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="700">VERIFY</text>
+  <text x="590" y="138" text-anchor="middle" fill="#94a3b8" font-size="13">Re-scan</text>
+  <text x="590" y="155" text-anchor="middle" fill="#94a3b8" font-size="13">& compare</text>
   <!-- Loop arrow -->
-  <path d="M538 148 L538 180 L90 180 L90 148" stroke="#475569" stroke-width="1.5" fill="none" stroke-dasharray="4 3"/>
-  <text x="314" y="196" text-anchor="middle" fill="#475569" font-size="10">Repeat with next weakness</text>
+  <path d="M590 176 L590 220 L95 220 L95 176" stroke="#475569" stroke-width="1.5" fill="none" stroke-dasharray="6 4">
+    <animate attributeName="stroke-dashoffset" from="20" to="0" dur="3s" repeatCount="indefinite"/>
+  </path>
+  <polygon points="98,180 92,170 104,170" fill="#475569"/>
+  <text x="340" y="250" text-anchor="middle" fill="#64748b" font-size="14" font-style="italic">Repeat with next weakness</text>
+  <!-- decorative bottom line -->
+  <line x1="80" y1="270" x2="560" y2="270" stroke="white" stroke-opacity="0.04" stroke-width="1"/>
 </svg>
 </div>
 

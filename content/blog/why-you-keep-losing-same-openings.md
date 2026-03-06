@@ -11,32 +11,65 @@ You sit down to play. Your opponent opens 1.d4. You groan internally. Somehow, y
 This isn't bad luck. It's a pattern, and patterns can be fixed.
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="600" height="200" viewBox="0 0 600 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="600" height="200" rx="16" fill="#0f172a"/>
-  <rect x="1" y="1" width="598" height="198" rx="15" stroke="white" stroke-opacity="0.06"/>
-  <text x="300" y="30" text-anchor="middle" fill="white" font-size="13" font-weight="700">Why You Keep Losing: The Real Causes</text>
-  <!-- Three columns -->
-  <rect x="30" y="48" width="168" height="130" rx="12" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.2"/>
-  <text x="114" y="72" text-anchor="middle" fill="#f87171" font-size="20">🗺️</text>
-  <text x="114" y="95" text-anchor="middle" fill="#f87171" font-size="12" font-weight="700">No Plan</text>
-  <text x="114" y="115" text-anchor="middle" fill="#94a3b8" font-size="10">You know the moves</text>
-  <text x="114" y="130" text-anchor="middle" fill="#94a3b8" font-size="10">but not the ideas.</text>
-  <text x="114" y="145" text-anchor="middle" fill="#94a3b8" font-size="10">Moves feel aimless</text>
-  <text x="114" y="160" text-anchor="middle" fill="#94a3b8" font-size="10">after book ends.</text>
-  <rect x="216" y="48" width="168" height="130" rx="12" fill="#f59e0b" fill-opacity="0.08" stroke="#f59e0b" stroke-opacity="0.2"/>
-  <text x="300" y="72" text-anchor="middle" fill="#fbbf24" font-size="20">🕳️</text>
-  <text x="300" y="95" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="700">Blind Spot</text>
-  <text x="300" y="115" text-anchor="middle" fill="#94a3b8" font-size="10">Same motif keeps</text>
-  <text x="300" y="130" text-anchor="middle" fill="#94a3b8" font-size="10">catching you, but it</text>
-  <text x="300" y="145" text-anchor="middle" fill="#94a3b8" font-size="10">looks different each</text>
-  <text x="300" y="160" text-anchor="middle" fill="#94a3b8" font-size="10">time.</text>
-  <rect x="402" y="48" width="168" height="130" rx="12" fill="#a855f7" fill-opacity="0.08" stroke="#a855f7" stroke-opacity="0.2"/>
-  <text x="486" y="72" text-anchor="middle" fill="#c084fc" font-size="20">🪤</text>
-  <text x="486" y="95" text-anchor="middle" fill="#c084fc" font-size="12" font-weight="700">Unknown Traps</text>
-  <text x="486" y="115" text-anchor="middle" fill="#94a3b8" font-size="10">Your opponent knows</text>
-  <text x="486" y="130" text-anchor="middle" fill="#94a3b8" font-size="10">the forcing lines.</text>
-  <text x="486" y="145" text-anchor="middle" fill="#94a3b8" font-size="10">You walk into them</text>
-  <text x="486" y="160" text-anchor="middle" fill="#94a3b8" font-size="10">every time.</text>
+<svg width="660" height="280" viewBox="0 0 660 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="loBg" x1="0" y1="0" x2="660" y2="280" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0c1220"/><stop offset="1" stop-color="#1a1030"/>
+    </linearGradient>
+    <radialGradient id="loGlowRed" cx="120" cy="160" r="110" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ef4444" stop-opacity="0.12"/><stop offset="1" stop-color="#ef4444" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="loGlowAmber" cx="330" cy="160" r="110" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f59e0b" stop-opacity="0.10"/><stop offset="1" stop-color="#f59e0b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="loGlowPurple" cx="540" cy="160" r="110" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#a855f7" stop-opacity="0.12"/><stop offset="1" stop-color="#a855f7" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="loCardGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="660" height="280" rx="18" fill="url(#loBg)"/>
+  <rect x="1" y="1" width="658" height="278" rx="17" stroke="white" stroke-opacity="0.06"/>
+  <!-- ambient glows -->
+  <rect width="660" height="280" rx="18" fill="url(#loGlowRed)"/>
+  <rect width="660" height="280" rx="18" fill="url(#loGlowAmber)"/>
+  <rect width="660" height="280" rx="18" fill="url(#loGlowPurple)"/>
+  <!-- chess piece watermarks -->
+  <text x="60" y="260" text-anchor="middle" fill="white" fill-opacity="0.015" font-size="80">♚</text>
+  <text x="600" y="100" text-anchor="middle" fill="white" fill-opacity="0.015" font-size="70">♛</text>
+  <!-- title -->
+  <text x="330" y="36" text-anchor="middle" fill="white" font-size="17" font-weight="700" letter-spacing="0.5">Why You Keep Losing: The Real Causes</text>
+  <!-- Card 1: No Plan -->
+  <rect x="28" y="58" width="190" height="195" rx="14" fill="#ef4444" fill-opacity="0.07" stroke="#ef4444" stroke-opacity="0.25"/>
+  <text x="123" y="90" text-anchor="middle" fill="#f87171" font-size="34" filter="url(#loCardGlow)">♟</text>
+  <text x="123" y="118" text-anchor="middle" fill="#f87171" font-size="15" font-weight="700">No Plan</text>
+  <line x1="93" y1="128" x2="153" y2="128" stroke="#ef4444" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="123" y="150" text-anchor="middle" fill="#cbd5e1" font-size="13">You know the moves</text>
+  <text x="123" y="168" text-anchor="middle" fill="#cbd5e1" font-size="13">but not the ideas.</text>
+  <text x="123" y="190" text-anchor="middle" fill="#94a3b8" font-size="13">Moves feel aimless</text>
+  <text x="123" y="208" text-anchor="middle" fill="#94a3b8" font-size="13">after book ends.</text>
+  <!-- Card 2: Blind Spot -->
+  <rect x="235" y="58" width="190" height="195" rx="14" fill="#f59e0b" fill-opacity="0.07" stroke="#f59e0b" stroke-opacity="0.25"/>
+  <text x="330" y="90" text-anchor="middle" fill="#fbbf24" font-size="34" filter="url(#loCardGlow)">♞</text>
+  <text x="330" y="118" text-anchor="middle" fill="#fbbf24" font-size="15" font-weight="700">Blind Spot</text>
+  <line x1="300" y1="128" x2="360" y2="128" stroke="#f59e0b" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="330" y="150" text-anchor="middle" fill="#cbd5e1" font-size="13">Same motif keeps</text>
+  <text x="330" y="168" text-anchor="middle" fill="#cbd5e1" font-size="13">catching you — it just</text>
+  <text x="330" y="190" text-anchor="middle" fill="#94a3b8" font-size="13">looks different</text>
+  <text x="330" y="208" text-anchor="middle" fill="#94a3b8" font-size="13">each time.</text>
+  <!-- Card 3: Unknown Traps -->
+  <rect x="442" y="58" width="190" height="195" rx="14" fill="#a855f7" fill-opacity="0.07" stroke="#a855f7" stroke-opacity="0.25"/>
+  <text x="537" y="90" text-anchor="middle" fill="#c084fc" font-size="34" filter="url(#loCardGlow)">♝</text>
+  <text x="537" y="118" text-anchor="middle" fill="#c084fc" font-size="15" font-weight="700">Unknown Traps</text>
+  <line x1="502" y1="128" x2="572" y2="128" stroke="#a855f7" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="537" y="150" text-anchor="middle" fill="#cbd5e1" font-size="13">Your opponent knows</text>
+  <text x="537" y="168" text-anchor="middle" fill="#cbd5e1" font-size="13">the forcing lines.</text>
+  <text x="537" y="190" text-anchor="middle" fill="#94a3b8" font-size="13">You walk into them</text>
+  <text x="537" y="208" text-anchor="middle" fill="#94a3b8" font-size="13">every time.</text>
+  <!-- Decorative bottom line -->
+  <line x1="80" y1="268" x2="580" y2="268" stroke="white" stroke-opacity="0.04" stroke-width="1"/>
 </svg>
 </div>
 
@@ -101,43 +134,77 @@ Some openings have well-known traps, tactical motifs, or forcing sequences that 
 Here's a concrete 5-step process to solve your problem opening:
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="600" height="160" viewBox="0 0 600 160" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="600" height="160" rx="16" fill="#0f172a"/>
-  <rect x="1" y="1" width="598" height="158" rx="15" stroke="white" stroke-opacity="0.06"/>
-  <!-- Steps as connected nodes -->
-  <circle cx="70" cy="60" r="24" fill="#10b981" fill-opacity="0.15" stroke="#10b981" stroke-opacity="0.5"/>
-  <text x="70" y="56" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="700">1</text>
-  <text x="70" y="70" text-anchor="middle" fill="#6ee7b7" font-size="8">DATA</text>
-  <text x="70" y="110" text-anchor="middle" fill="#94a3b8" font-size="9">Pull 30-50</text>
-  <text x="70" y="122" text-anchor="middle" fill="#94a3b8" font-size="9">games</text>
-  <line x1="94" y1="60" x2="136" y2="60" stroke="#334155" stroke-width="2"/>
-  <circle cx="170" cy="60" r="24" fill="#06b6d4" fill-opacity="0.15" stroke="#06b6d4" stroke-opacity="0.5"/>
-  <text x="170" y="56" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="700">2</text>
-  <text x="170" y="70" text-anchor="middle" fill="#67e8f9" font-size="8">FIND</text>
-  <text x="170" y="110" text-anchor="middle" fill="#94a3b8" font-size="9">Divergence</text>
-  <text x="170" y="122" text-anchor="middle" fill="#94a3b8" font-size="9">point</text>
-  <line x1="194" y1="60" x2="236" y2="60" stroke="#334155" stroke-width="2"/>
-  <circle cx="270" cy="60" r="24" fill="#10b981" fill-opacity="0.15" stroke="#10b981" stroke-opacity="0.5"/>
-  <text x="270" y="56" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="700">3</text>
-  <text x="270" y="70" text-anchor="middle" fill="#6ee7b7" font-size="8">CHECK</text>
-  <text x="270" y="110" text-anchor="middle" fill="#94a3b8" font-size="9">Engine-check</text>
-  <text x="270" y="122" text-anchor="middle" fill="#94a3b8" font-size="9">key moments</text>
-  <line x1="294" y1="60" x2="336" y2="60" stroke="#334155" stroke-width="2"/>
-  <circle cx="370" cy="60" r="24" fill="#06b6d4" fill-opacity="0.15" stroke="#06b6d4" stroke-opacity="0.5"/>
-  <text x="370" y="56" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="700">4</text>
-  <text x="370" y="70" text-anchor="middle" fill="#67e8f9" font-size="8">LEARN</text>
-  <text x="370" y="110" text-anchor="middle" fill="#94a3b8" font-size="9">Correct</text>
-  <text x="370" y="122" text-anchor="middle" fill="#94a3b8" font-size="9">plans</text>
-  <line x1="394" y1="60" x2="436" y2="60" stroke="#334155" stroke-width="2"/>
-  <circle cx="470" cy="60" r="24" fill="#10b981" fill-opacity="0.2" stroke="#10b981" stroke-opacity="0.6"/>
-  <text x="470" y="56" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="700">5</text>
-  <text x="470" y="70" text-anchor="middle" fill="#6ee7b7" font-size="8">TEST</text>
-  <text x="470" y="110" text-anchor="middle" fill="#94a3b8" font-size="9">Play 10-15</text>
-  <text x="470" y="122" text-anchor="middle" fill="#94a3b8" font-size="9">& re-scan</text>
+<svg width="660" height="230" viewBox="0 0 660 230" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="lsStepBg" x1="0" y1="0" x2="660" y2="230" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0c1220"/><stop offset="1" stop-color="#0f1a2e"/>
+    </linearGradient>
+    <filter id="lsNodeGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <radialGradient id="lsCenterGlow" cx="330" cy="90" r="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#10b981" stop-opacity="0.06"/><stop offset="1" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="660" height="230" rx="18" fill="url(#lsStepBg)"/>
+  <rect x="1" y="1" width="658" height="228" rx="17" stroke="white" stroke-opacity="0.06"/>
+  <rect width="660" height="230" rx="18" fill="url(#lsCenterGlow)"/>
+  <!-- chess piece watermark -->
+  <text x="580" y="210" text-anchor="middle" fill="white" fill-opacity="0.015" font-size="90">♜</text>
+  <!-- title -->
+  <text x="330" y="30" text-anchor="middle" fill="white" font-size="15" font-weight="600" letter-spacing="0.5">5-Step Fix</text>
+  <!-- Step 1 -->
+  <circle cx="75" cy="80" r="28" fill="#10b981" fill-opacity="0.15" stroke="#10b981" stroke-opacity="0.5" filter="url(#lsNodeGlow)"/>
+  <text x="75" y="74" text-anchor="middle" fill="#6ee7b7" font-size="16" font-weight="700">1</text>
+  <text x="75" y="92" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="600">DATA</text>
+  <text x="75" y="132" text-anchor="middle" fill="#cbd5e1" font-size="13">Pull 30-50</text>
+  <text x="75" y="148" text-anchor="middle" fill="#94a3b8" font-size="13">games</text>
+  <!-- connector -->
+  <line x1="103" y1="80" x2="147" y2="80" stroke="#334155" stroke-width="2" stroke-dasharray="5 3">
+    <animate attributeName="stroke-dashoffset" from="16" to="0" dur="2s" repeatCount="indefinite"/>
+  </line>
+  <!-- Step 2 -->
+  <circle cx="192" cy="80" r="28" fill="#06b6d4" fill-opacity="0.15" stroke="#06b6d4" stroke-opacity="0.5"/>
+  <text x="192" y="74" text-anchor="middle" fill="#67e8f9" font-size="16" font-weight="700">2</text>
+  <text x="192" y="92" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="600">FIND</text>
+  <text x="192" y="132" text-anchor="middle" fill="#cbd5e1" font-size="13">Divergence</text>
+  <text x="192" y="148" text-anchor="middle" fill="#94a3b8" font-size="13">point</text>
+  <line x1="220" y1="80" x2="264" y2="80" stroke="#334155" stroke-width="2" stroke-dasharray="5 3">
+    <animate attributeName="stroke-dashoffset" from="16" to="0" dur="2s" repeatCount="indefinite"/>
+  </line>
+  <!-- Step 3 -->
+  <circle cx="309" cy="80" r="28" fill="#10b981" fill-opacity="0.15" stroke="#10b981" stroke-opacity="0.5" filter="url(#lsNodeGlow)"/>
+  <text x="309" y="74" text-anchor="middle" fill="#6ee7b7" font-size="16" font-weight="700">3</text>
+  <text x="309" y="92" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="600">CHECK</text>
+  <text x="309" y="132" text-anchor="middle" fill="#cbd5e1" font-size="13">Engine-check</text>
+  <text x="309" y="148" text-anchor="middle" fill="#94a3b8" font-size="13">key moments</text>
+  <line x1="337" y1="80" x2="381" y2="80" stroke="#334155" stroke-width="2" stroke-dasharray="5 3">
+    <animate attributeName="stroke-dashoffset" from="16" to="0" dur="2s" repeatCount="indefinite"/>
+  </line>
+  <!-- Step 4 -->
+  <circle cx="426" cy="80" r="28" fill="#06b6d4" fill-opacity="0.15" stroke="#06b6d4" stroke-opacity="0.5"/>
+  <text x="426" y="74" text-anchor="middle" fill="#67e8f9" font-size="16" font-weight="700">4</text>
+  <text x="426" y="92" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="600">LEARN</text>
+  <text x="426" y="132" text-anchor="middle" fill="#cbd5e1" font-size="13">Correct</text>
+  <text x="426" y="148" text-anchor="middle" fill="#94a3b8" font-size="13">plans</text>
+  <line x1="454" y1="80" x2="498" y2="80" stroke="#334155" stroke-width="2" stroke-dasharray="5 3">
+    <animate attributeName="stroke-dashoffset" from="16" to="0" dur="2s" repeatCount="indefinite"/>
+  </line>
+  <!-- Step 5 -->
+  <circle cx="543" cy="80" r="28" fill="#10b981" fill-opacity="0.2" stroke="#10b981" stroke-opacity="0.6" filter="url(#lsNodeGlow)"/>
+  <text x="543" y="74" text-anchor="middle" fill="#6ee7b7" font-size="16" font-weight="700">5</text>
+  <text x="543" y="92" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="600">TEST</text>
+  <text x="543" y="132" text-anchor="middle" fill="#cbd5e1" font-size="13">Play 10-15</text>
+  <text x="543" y="148" text-anchor="middle" fill="#94a3b8" font-size="13">& re-scan</text>
   <!-- Loop arrow -->
-  <path d="M470 84 C 470 140, 70 140, 70 84" stroke="#334155" stroke-width="1.5" stroke-dasharray="4 3" fill="none"/>
-  <polygon points="73,88 68,80 78,80" fill="#334155"/>
-  <text x="270" y="150" text-anchor="middle" fill="#475569" font-size="9" font-style="italic">Repeat until win rate improves</text>
+  <path d="M543 108 C 543 185, 75 185, 75 108" stroke="#475569" stroke-width="1.5" stroke-dasharray="6 4" fill="none">
+    <animate attributeName="stroke-dashoffset" from="20" to="0" dur="3s" repeatCount="indefinite"/>
+  </path>
+  <polygon points="78,112 72,102 84,102" fill="#475569"/>
+  <text x="330" y="200" text-anchor="middle" fill="#64748b" font-size="13" font-style="italic">Repeat until win rate improves</text>
+  <!-- decorative bottom line -->
+  <line x1="100" y1="218" x2="560" y2="218" stroke="white" stroke-opacity="0.04" stroke-width="1"/>
 </svg>
 </div>
 

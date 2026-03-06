@@ -9,50 +9,73 @@ tags: ["tools", "guide"]
 There's never been a better time to be a chess player looking for analysis tools. Between open-source engines, free platforms, and browser-based analyzers, you can get world-class analysis without spending a dollar.
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="660" height="220" viewBox="0 0 660 220" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="660" height="220" rx="16" fill="#0f172a"/>
-  <rect x="1" y="1" width="658" height="218" rx="15" stroke="white" stroke-opacity="0.06"/>
-  <text x="330" y="28" text-anchor="middle" fill="white" font-size="13" font-weight="700">Free Chess Analysis Landscape in 2026</text>
-  <!-- Categories -->
-  <rect x="20" y="44" width="148" height="160" rx="10" fill="#10b981" fill-opacity="0.06" stroke="#10b981" stroke-opacity="0.15"/>
-  <text x="94" y="66" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="700">Engines</text>
-  <line x1="40" y1="76" x2="148" y2="76" stroke="#10b981" stroke-opacity="0.15"/>
-  <text x="94" y="96" text-anchor="middle" fill="white" font-size="10">Stockfish 18</text>
-  <text x="94" y="112" text-anchor="middle" fill="#94a3b8" font-size="9">3600+ Elo • NNUE</text>
-  <text x="94" y="134" text-anchor="middle" fill="white" font-size="10">Leela Chess Zero</text>
-  <text x="94" y="150" text-anchor="middle" fill="#94a3b8" font-size="9">3500+ Elo • Neural</text>
-  <text x="94" y="172" text-anchor="middle" fill="#475569" font-size="9">Both free &amp; open-source</text>
-  <text x="94" y="192" text-anchor="middle" fill="#6ee7b7" font-size="9">💰 $0</text>
-
-  <rect x="178" y="44" width="148" height="160" rx="10" fill="#06b6d4" fill-opacity="0.06" stroke="#06b6d4" stroke-opacity="0.15"/>
-  <text x="252" y="66" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="700">Platforms</text>
-  <line x1="198" y1="76" x2="306" y2="76" stroke="#06b6d4" stroke-opacity="0.15"/>
-  <text x="252" y="96" text-anchor="middle" fill="white" font-size="10">Lichess</text>
-  <text x="252" y="112" text-anchor="middle" fill="#94a3b8" font-size="9">Unlimited analysis</text>
-  <text x="252" y="134" text-anchor="middle" fill="white" font-size="10">Chess.com</text>
-  <text x="252" y="150" text-anchor="middle" fill="#94a3b8" font-size="9">1 review/day free</text>
-  <text x="252" y="172" text-anchor="middle" fill="white" font-size="10">FireChess</text>
-  <text x="252" y="188" text-anchor="middle" fill="#94a3b8" font-size="9">25 bulk games free</text>
-
-  <rect x="336" y="44" width="148" height="160" rx="10" fill="#f59e0b" fill-opacity="0.06" stroke="#f59e0b" stroke-opacity="0.15"/>
-  <text x="410" y="66" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="700">Openings</text>
-  <line x1="356" y1="76" x2="464" y2="76" stroke="#f59e0b" stroke-opacity="0.15"/>
-  <text x="410" y="96" text-anchor="middle" fill="white" font-size="10">Lichess Explorer</text>
-  <text x="410" y="112" text-anchor="middle" fill="#94a3b8" font-size="9">3 databases</text>
-  <text x="410" y="134" text-anchor="middle" fill="white" font-size="10">Chess.com Explorer</text>
-  <text x="410" y="150" text-anchor="middle" fill="#94a3b8" font-size="9">Needs Diamond</text>
-  <text x="410" y="172" text-anchor="middle" fill="white" font-size="10">Chessable</text>
-  <text x="410" y="188" text-anchor="middle" fill="#94a3b8" font-size="9">Some free courses</text>
-
-  <rect x="494" y="44" width="148" height="160" rx="10" fill="#a855f7" fill-opacity="0.06" stroke="#a855f7" stroke-opacity="0.15"/>
-  <text x="568" y="66" text-anchor="middle" fill="#c084fc" font-size="11" font-weight="700">Tactics</text>
-  <line x1="514" y1="76" x2="622" y2="76" stroke="#a855f7" stroke-opacity="0.15"/>
-  <text x="568" y="96" text-anchor="middle" fill="white" font-size="10">Lichess Puzzles</text>
-  <text x="568" y="112" text-anchor="middle" fill="#94a3b8" font-size="9">Unlimited • Rated</text>
-  <text x="568" y="134" text-anchor="middle" fill="white" font-size="10">Chess.com Puzzles</text>
-  <text x="568" y="150" text-anchor="middle" fill="#94a3b8" font-size="9">5/day free</text>
-  <text x="568" y="172" text-anchor="middle" fill="white" font-size="10">ChessTempo</text>
-  <text x="568" y="188" text-anchor="middle" fill="#94a3b8" font-size="9">Free tier generous</text>
+<svg width="700" height="280" viewBox="0 0 700 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ftBg" x1="0" y1="0" x2="700" y2="280" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0c1220"/><stop offset="1" stop-color="#14102a"/>
+    </linearGradient>
+    <radialGradient id="ftGlow1" cx="170" cy="140" r="160" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#10b981" stop-opacity="0.07"/><stop offset="1" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ftGlow2" cx="530" cy="140" r="160" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#a855f7" stop-opacity="0.07"/><stop offset="1" stop-color="#a855f7" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="ftCardGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="700" height="280" rx="18" fill="url(#ftBg)"/>
+  <rect x="1" y="1" width="698" height="278" rx="17" stroke="white" stroke-opacity="0.06"/>
+  <rect width="700" height="280" rx="18" fill="url(#ftGlow1)"/>
+  <rect width="700" height="280" rx="18" fill="url(#ftGlow2)"/>
+  <!-- watermarks -->
+  <text x="60" y="260" text-anchor="middle" fill="white" fill-opacity="0.012" font-size="80">♛</text>
+  <text x="640" y="100" text-anchor="middle" fill="white" fill-opacity="0.012" font-size="80">♜</text>
+  <!-- title -->
+  <text x="350" y="34" text-anchor="middle" fill="white" font-size="17" font-weight="700" letter-spacing="0.5">Free Chess Analysis Landscape in 2026</text>
+  <!-- Card 1: Engines -->
+  <rect x="18" y="52" width="158" height="210" rx="12" fill="#10b981" fill-opacity="0.06" stroke="#10b981" stroke-opacity="0.18"/>
+  <text x="97" y="76" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="700">Engines</text>
+  <line x1="42" y1="86" x2="152" y2="86" stroke="#10b981" stroke-opacity="0.2" stroke-width="1"/>
+  <text x="97" y="108" text-anchor="middle" fill="white" font-size="13">Stockfish 18</text>
+  <text x="97" y="126" text-anchor="middle" fill="#94a3b8" font-size="13">3600+ Elo • NNUE</text>
+  <text x="97" y="152" text-anchor="middle" fill="white" font-size="13">Leela Chess Zero</text>
+  <text x="97" y="170" text-anchor="middle" fill="#94a3b8" font-size="13">3500+ • Neural</text>
+  <text x="97" y="200" text-anchor="middle" fill="#475569" font-size="13">Free &amp; open-source</text>
+  <text x="97" y="240" text-anchor="middle" fill="#6ee7b7" font-size="15" font-weight="700" filter="url(#ftCardGlow)">$0</text>
+  <!-- Card 2: Platforms -->
+  <rect x="186" y="52" width="158" height="210" rx="12" fill="#06b6d4" fill-opacity="0.06" stroke="#06b6d4" stroke-opacity="0.18"/>
+  <text x="265" y="76" text-anchor="middle" fill="#67e8f9" font-size="14" font-weight="700">Platforms</text>
+  <line x1="210" y1="86" x2="320" y2="86" stroke="#06b6d4" stroke-opacity="0.2" stroke-width="1"/>
+  <text x="265" y="108" text-anchor="middle" fill="white" font-size="13">Lichess</text>
+  <text x="265" y="126" text-anchor="middle" fill="#94a3b8" font-size="13">Unlimited analysis</text>
+  <text x="265" y="152" text-anchor="middle" fill="white" font-size="13">Chess.com</text>
+  <text x="265" y="170" text-anchor="middle" fill="#94a3b8" font-size="13">1 review/day free</text>
+  <text x="265" y="200" text-anchor="middle" fill="white" font-size="13">FireChess</text>
+  <text x="265" y="218" text-anchor="middle" fill="#94a3b8" font-size="13">25 bulk games free</text>
+  <!-- Card 3: Openings -->
+  <rect x="354" y="52" width="158" height="210" rx="12" fill="#f59e0b" fill-opacity="0.06" stroke="#f59e0b" stroke-opacity="0.18"/>
+  <text x="433" y="76" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="700">Openings</text>
+  <line x1="378" y1="86" x2="488" y2="86" stroke="#f59e0b" stroke-opacity="0.2" stroke-width="1"/>
+  <text x="433" y="108" text-anchor="middle" fill="white" font-size="13">Lichess Explorer</text>
+  <text x="433" y="126" text-anchor="middle" fill="#94a3b8" font-size="13">3 databases</text>
+  <text x="433" y="152" text-anchor="middle" fill="white" font-size="13">Chess.com Explorer</text>
+  <text x="433" y="170" text-anchor="middle" fill="#94a3b8" font-size="13">Needs Diamond</text>
+  <text x="433" y="200" text-anchor="middle" fill="white" font-size="13">Chessable</text>
+  <text x="433" y="218" text-anchor="middle" fill="#94a3b8" font-size="13">Some free courses</text>
+  <!-- Card 4: Tactics -->
+  <rect x="522" y="52" width="158" height="210" rx="12" fill="#a855f7" fill-opacity="0.06" stroke="#a855f7" stroke-opacity="0.18"/>
+  <text x="601" y="76" text-anchor="middle" fill="#c084fc" font-size="14" font-weight="700">Tactics</text>
+  <line x1="546" y1="86" x2="656" y2="86" stroke="#a855f7" stroke-opacity="0.2" stroke-width="1"/>
+  <text x="601" y="108" text-anchor="middle" fill="white" font-size="13">Lichess Puzzles</text>
+  <text x="601" y="126" text-anchor="middle" fill="#94a3b8" font-size="13">Unlimited • Rated</text>
+  <text x="601" y="152" text-anchor="middle" fill="white" font-size="13">Chess.com Puzzles</text>
+  <text x="601" y="170" text-anchor="middle" fill="#94a3b8" font-size="13">5/day free</text>
+  <text x="601" y="200" text-anchor="middle" fill="white" font-size="13">ChessTempo</text>
+  <text x="601" y="218" text-anchor="middle" fill="#94a3b8" font-size="13">Free tier generous</text>
+  <!-- decorative bottom line -->
+  <line x1="80" y1="272" x2="620" y2="272" stroke="white" stroke-opacity="0.04" stroke-width="1"/>
 </svg>
 </div>
 
@@ -221,51 +244,67 @@ An older but still excellent puzzle site:
 If I had to recommend a completely free analysis workflow for a club player:
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="620" height="300" viewBox="0 0 620 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="620" height="300" rx="16" fill="#0f172a"/>
-  <rect x="1" y="1" width="618" height="298" rx="15" stroke="white" stroke-opacity="0.06"/>
-  <text x="310" y="30" text-anchor="middle" fill="white" font-size="14" font-weight="700">The $0 Chess Improvement Stack</text>
-  <text x="310" y="48" text-anchor="middle" fill="#94a3b8" font-size="10">Everything you need for free</text>
-  <!-- Headers -->
-  <text x="44" y="76" fill="#94a3b8" font-size="10" font-weight="600">NEED</text>
-  <text x="240" y="76" fill="#94a3b8" font-size="10" font-weight="600">TOOL</text>
-  <text x="480" y="76" fill="#94a3b8" font-size="10" font-weight="600">COST</text>
-  <line x1="24" y1="84" x2="596" y2="84" stroke="white" stroke-opacity="0.06"/>
+<svg width="660" height="370" viewBox="0 0 660 370" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="stBg" x1="0" y1="0" x2="660" y2="370" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0c1220"/><stop offset="1" stop-color="#0f1a2e"/>
+    </linearGradient>
+    <radialGradient id="stGlow" cx="330" cy="185" r="240" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#10b981" stop-opacity="0.06"/><stop offset="1" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="stBadgeGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="660" height="370" rx="18" fill="url(#stBg)"/>
+  <rect x="1" y="1" width="658" height="368" rx="17" stroke="white" stroke-opacity="0.06"/>
+  <rect width="660" height="370" rx="18" fill="url(#stGlow)"/>
+  <!-- watermark -->
+  <text x="600" y="340" text-anchor="middle" fill="white" fill-opacity="0.015" font-size="90">♚</text>
+  <!-- title -->
+  <text x="330" y="36" text-anchor="middle" fill="white" font-size="17" font-weight="700" letter-spacing="0.5">The $0 Chess Improvement Stack</text>
+  <text x="330" y="56" text-anchor="middle" fill="#94a3b8" font-size="13">Everything you need for free</text>
+  <!-- Column headers -->
+  <text x="50" y="86" fill="#94a3b8" font-size="13" font-weight="600">NEED</text>
+  <text x="280" y="86" fill="#94a3b8" font-size="13" font-weight="600">TOOL</text>
+  <text x="540" y="86" fill="#94a3b8" font-size="13" font-weight="600">COST</text>
+  <line x1="28" y1="96" x2="632" y2="96" stroke="white" stroke-opacity="0.06"/>
   <!-- Row 1 -->
-  <rect x="24" y="90" width="572" height="32" rx="6" fill="#10b981" fill-opacity="0.05"/>
-  <text x="44" y="110" fill="#6ee7b7" font-size="11" font-weight="600">Game-by-game analysis</text>
-  <text x="240" y="110" fill="white" font-size="11">Lichess Analysis Board</text>
-  <rect x="470" y="98" width="50" height="18" rx="9" fill="#10b981" fill-opacity="0.15"/>
-  <text x="495" y="111" text-anchor="middle" fill="#6ee7b7" font-size="10" font-weight="600">Free</text>
+  <rect x="28" y="104" width="604" height="40" rx="8" fill="#10b981" fill-opacity="0.05"/>
+  <text x="50" y="130" fill="#6ee7b7" font-size="14" font-weight="600">Game-by-game analysis</text>
+  <text x="280" y="130" fill="white" font-size="14">Lichess Analysis Board</text>
+  <rect x="520" y="115" width="60" height="22" rx="11" fill="#10b981" fill-opacity="0.15" filter="url(#stBadgeGlow)"/>
+  <text x="550" y="131" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="600">Free</text>
   <!-- Row 2 -->
-  <rect x="24" y="126" width="572" height="32" rx="6" fill="transparent"/>
-  <text x="44" y="146" fill="#67e8f9" font-size="11" font-weight="600">Bulk pattern detection</text>
-  <text x="240" y="146" fill="white" font-size="11">FireChess (25 games)</text>
-  <rect x="470" y="134" width="50" height="18" rx="9" fill="#10b981" fill-opacity="0.15"/>
-  <text x="495" y="147" text-anchor="middle" fill="#6ee7b7" font-size="10" font-weight="600">Free</text>
+  <rect x="28" y="150" width="604" height="40" rx="8" fill="transparent"/>
+  <text x="50" y="176" fill="#67e8f9" font-size="14" font-weight="600">Bulk pattern detection</text>
+  <text x="280" y="176" fill="white" font-size="14">FireChess (25 games)</text>
+  <rect x="520" y="161" width="60" height="22" rx="11" fill="#10b981" fill-opacity="0.15"/>
+  <text x="550" y="177" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="600">Free</text>
   <!-- Row 3 -->
-  <rect x="24" y="162" width="572" height="32" rx="6" fill="#f59e0b" fill-opacity="0.04"/>
-  <text x="44" y="182" fill="#fbbf24" font-size="11" font-weight="600">Opening preparation</text>
-  <text x="240" y="182" fill="white" font-size="11">Lichess Opening Explorer</text>
-  <rect x="470" y="170" width="50" height="18" rx="9" fill="#10b981" fill-opacity="0.15"/>
-  <text x="495" y="183" text-anchor="middle" fill="#6ee7b7" font-size="10" font-weight="600">Free</text>
+  <rect x="28" y="196" width="604" height="40" rx="8" fill="#f59e0b" fill-opacity="0.04"/>
+  <text x="50" y="222" fill="#fbbf24" font-size="14" font-weight="600">Opening preparation</text>
+  <text x="280" y="222" fill="white" font-size="14">Lichess Opening Explorer</text>
+  <rect x="520" y="207" width="60" height="22" rx="11" fill="#10b981" fill-opacity="0.15"/>
+  <text x="550" y="223" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="600">Free</text>
   <!-- Row 4 -->
-  <rect x="24" y="198" width="572" height="32" rx="6" fill="transparent"/>
-  <text x="44" y="218" fill="#c084fc" font-size="11" font-weight="600">Tactical training</text>
-  <text x="240" y="218" fill="white" font-size="11">Lichess Puzzles</text>
-  <rect x="470" y="206" width="50" height="18" rx="9" fill="#10b981" fill-opacity="0.15"/>
-  <text x="495" y="219" text-anchor="middle" fill="#6ee7b7" font-size="10" font-weight="600">Free</text>
+  <rect x="28" y="242" width="604" height="40" rx="8" fill="transparent"/>
+  <text x="50" y="268" fill="#c084fc" font-size="14" font-weight="600">Tactical training</text>
+  <text x="280" y="268" fill="white" font-size="14">Lichess Puzzles</text>
+  <rect x="520" y="253" width="60" height="22" rx="11" fill="#10b981" fill-opacity="0.15"/>
+  <text x="550" y="269" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="600">Free</text>
   <!-- Row 5 -->
-  <rect x="24" y="234" width="572" height="32" rx="6" fill="#ef4444" fill-opacity="0.04"/>
-  <text x="44" y="254" fill="#f87171" font-size="11" font-weight="600">Endgame study</text>
-  <text x="240" y="254" fill="white" font-size="11">Syzygy + Lichess Practice</text>
-  <rect x="470" y="242" width="50" height="18" rx="9" fill="#10b981" fill-opacity="0.15"/>
-  <text x="495" y="255" text-anchor="middle" fill="#6ee7b7" font-size="10" font-weight="600">Free</text>
+  <rect x="28" y="288" width="604" height="40" rx="8" fill="#ef4444" fill-opacity="0.04"/>
+  <text x="50" y="314" fill="#f87171" font-size="14" font-weight="600">Endgame study</text>
+  <text x="280" y="314" fill="white" font-size="14">Syzygy + Lichess Practice</text>
+  <rect x="520" y="299" width="60" height="22" rx="11" fill="#10b981" fill-opacity="0.15"/>
+  <text x="550" y="315" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="600">Free</text>
   <!-- Total -->
-  <line x1="24" y1="274" x2="596" y2="274" stroke="white" stroke-opacity="0.06"/>
-  <text x="240" y="292" fill="#94a3b8" font-size="11" font-weight="600">TOTAL</text>
-  <rect x="460" y="280" width="70" height="18" rx="9" fill="#10b981" fill-opacity="0.2"/>
-  <text x="495" y="293" text-anchor="middle" fill="#6ee7b7" font-size="12" font-weight="700">$0.00</text>
+  <line x1="28" y1="338" x2="632" y2="338" stroke="white" stroke-opacity="0.06"/>
+  <text x="280" y="358" fill="#94a3b8" font-size="14" font-weight="600">TOTAL</text>
+  <rect x="510" y="344" width="80" height="22" rx="11" fill="#10b981" fill-opacity="0.2" filter="url(#stBadgeGlow)"/>
+  <text x="550" y="360" text-anchor="middle" fill="#6ee7b7" font-size="15" font-weight="700">$0.00</text>
 </svg>
 </div>
 

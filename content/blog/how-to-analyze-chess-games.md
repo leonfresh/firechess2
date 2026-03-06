@@ -9,51 +9,115 @@ tags: ["analysis", "improvement"]
 Most chess players analyze their games wrong. They plug a game into an engine, scroll through the moves, see where the evaluation changed, think "oh, I should have played that," and move on. Two weeks later, they make the exact same mistake.
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="680" height="200" viewBox="0 0 680 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="680" height="200" rx="16" fill="#0f172a"/>
-  <rect x="1" y="1" width="678" height="198" rx="15" stroke="white" stroke-opacity="0.06"/>
-  <!-- Step 1: Play -->
-  <circle cx="100" cy="80" r="36" fill="#10b981" fill-opacity="0.12" stroke="#10b981" stroke-opacity="0.4"/>
-  <text x="100" y="75" text-anchor="middle" fill="#6ee7b7" font-size="26">♟</text>
-  <text x="100" y="96" text-anchor="middle" fill="#6ee7b7" font-size="10" font-weight="600">PLAY</text>
-  <text x="100" y="140" text-anchor="middle" fill="#94a3b8" font-size="11">Play your</text>
-  <text x="100" y="155" text-anchor="middle" fill="#94a3b8" font-size="11">games</text>
-  <!-- Arrow 1 -->
-  <path d="M148 80 L192 80" stroke="#334155" stroke-width="2" stroke-dasharray="6 4"/>
-  <polygon points="192,75 202,80 192,85" fill="#334155"/>
-  <!-- Step 2: Reflect -->
-  <circle cx="240" cy="80" r="36" fill="#06b6d4" fill-opacity="0.12" stroke="#06b6d4" stroke-opacity="0.4"/>
-  <text x="240" y="75" text-anchor="middle" fill="#67e8f9" font-size="26">🤔</text>
-  <text x="240" y="96" text-anchor="middle" fill="#67e8f9" font-size="10" font-weight="600">REFLECT</text>
-  <text x="240" y="140" text-anchor="middle" fill="#94a3b8" font-size="11">Replay without</text>
-  <text x="240" y="155" text-anchor="middle" fill="#94a3b8" font-size="11">engine first</text>
-  <!-- Arrow 2 -->
-  <path d="M288 80 L332 80" stroke="#334155" stroke-width="2" stroke-dasharray="6 4"/>
-  <polygon points="332,75 342,80 332,85" fill="#334155"/>
-  <!-- Step 3: Analyze -->
-  <circle cx="380" cy="80" r="36" fill="#10b981" fill-opacity="0.12" stroke="#10b981" stroke-opacity="0.4"/>
-  <text x="380" y="75" text-anchor="middle" fill="#6ee7b7" font-size="26">🔍</text>
-  <text x="380" y="96" text-anchor="middle" fill="#6ee7b7" font-size="10" font-weight="600">ANALYZE</text>
-  <text x="380" y="140" text-anchor="middle" fill="#94a3b8" font-size="11">Engine-check</text>
-  <text x="380" y="155" text-anchor="middle" fill="#94a3b8" font-size="11">key moments</text>
-  <!-- Arrow 3 -->
-  <path d="M428 80 L472 80" stroke="#334155" stroke-width="2" stroke-dasharray="6 4"/>
-  <polygon points="472,75 482,80 472,85" fill="#334155"/>
-  <!-- Step 4: Categorize -->
-  <circle cx="520" cy="80" r="36" fill="#06b6d4" fill-opacity="0.12" stroke="#06b6d4" stroke-opacity="0.4"/>
-  <text x="520" y="75" text-anchor="middle" fill="#67e8f9" font-size="26">📊</text>
-  <text x="520" y="96" text-anchor="middle" fill="#67e8f9" font-size="10" font-weight="600">PATTERN</text>
-  <text x="520" y="140" text-anchor="middle" fill="#94a3b8" font-size="11">Find recurring</text>
-  <text x="520" y="155" text-anchor="middle" fill="#94a3b8" font-size="11">mistakes</text>
-  <!-- Arrow 4 -->
-  <path d="M568 80 L612 80" stroke="#334155" stroke-width="2" stroke-dasharray="6 4"/>
-  <polygon points="612,75 622,80 612,85" fill="#334155"/>
-  <!-- Step 5: Fix -->
-  <circle cx="620" cy="80" r="36" fill="#10b981" fill-opacity="0.15" stroke="#10b981" stroke-opacity="0.6"/>
-  <text x="620" y="75" text-anchor="middle" fill="#6ee7b7" font-size="26">✅</text>
-  <text x="620" y="96" text-anchor="middle" fill="#6ee7b7" font-size="10" font-weight="600">FIX</text>
-  <text x="620" y="140" text-anchor="middle" fill="#94a3b8" font-size="11">Create action</text>
-  <text x="620" y="155" text-anchor="middle" fill="#94a3b8" font-size="11">items</text>
+<svg width="680" height="240" viewBox="0 0 680 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="ag-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0c1220"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <filter id="ag-glow">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <radialGradient id="ag-spot1" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ag-spot2" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="680" height="240" rx="16" fill="url(#ag-bg)"/>
+  <!-- subtle grid texture -->
+  <g opacity="0.04" stroke="white" stroke-width="0.5">
+    <line x1="0" y1="60" x2="680" y2="60"/><line x1="0" y1="120" x2="680" y2="120"/><line x1="0" y1="180" x2="680" y2="180"/>
+    <line x1="136" y1="0" x2="136" y2="240"/><line x1="272" y1="0" x2="272" y2="240"/><line x1="408" y1="0" x2="408" y2="240"/><line x1="544" y1="0" x2="544" y2="240"/>
+  </g>
+  <!-- ambient glow spots -->
+  <circle cx="68" cy="100" r="80" fill="url(#ag-spot1)"/>
+  <circle cx="612" cy="100" r="80" fill="url(#ag-spot1)"/>
+  <circle cx="340" cy="100" r="100" fill="url(#ag-spot2)"/>
+  <!-- Title -->
+  <text x="340" y="32" text-anchor="middle" fill="white" font-size="15" font-weight="700" letter-spacing="2">THE 5-STEP ANALYSIS METHOD</text>
+  <!-- Step 1: Play — chess pieces on a board -->
+  <g filter="url(#ag-glow)">
+    <circle cx="68" cy="110" r="42" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+    <circle cx="68" cy="110" r="38" fill="none" stroke="#10b981" stroke-opacity="0.1" stroke-dasharray="3 5"/>
+  </g>
+  <!-- mini board -->
+  <rect x="50" y="86" width="36" height="36" rx="3" fill="#1e293b" stroke="#334155" stroke-width="0.5"/>
+  <rect x="50" y="86" width="9" height="9" fill="#334155"/><rect x="68" y="86" width="9" height="9" fill="#334155"/>
+  <rect x="59" y="95" width="9" height="9" fill="#334155"/><rect x="77" y="95" width="9" height="9" fill="#334155"/>
+  <rect x="50" y="104" width="9" height="9" fill="#334155"/><rect x="68" y="104" width="9" height="9" fill="#334155"/>
+  <rect x="59" y="113" width="9" height="9" fill="#334155"/><rect x="77" y="113" width="9" height="9" fill="#334155"/>
+  <!-- piece on board -->
+  <text x="63" y="102" text-anchor="middle" fill="#6ee7b7" font-size="14">♞</text>
+  <text x="72" y="111" text-anchor="middle" fill="#94a3b8" font-size="10">♟</text>
+  <text x="68" y="148" text-anchor="middle" fill="#6ee7b7" font-size="16" font-weight="700">PLAY</text>
+  <text x="68" y="168" text-anchor="middle" fill="#94a3b8" font-size="13">Play your games</text>
+  <!-- flowing arrow 1 -->
+  <path d="M118 110 C138 110 138 110 158 110" stroke="#334155" stroke-width="2" stroke-dasharray="4 4">
+    <animate attributeName="stroke-dashoffset" values="8;0" dur="1.5s" repeatCount="indefinite"/>
+  </path>
+  <polygon points="156,105 166,110 156,115" fill="#334155"/>
+  <!-- Step 2: Reflect — thoughtful king piece -->
+  <g filter="url(#ag-glow)">
+    <circle cx="204" cy="110" r="42" fill="#06b6d4" fill-opacity="0.08" stroke="#06b6d4" stroke-opacity="0.3" stroke-width="1.5"/>
+  </g>
+  <!-- king silhouette with question marks -->
+  <text x="204" y="108" text-anchor="middle" fill="#67e8f9" font-size="32">♚</text>
+  <text x="226" y="92" text-anchor="middle" fill="#67e8f9" font-size="14" opacity="0.5">?</text>
+  <text x="182" y="98" text-anchor="middle" fill="#67e8f9" font-size="11" opacity="0.3">?</text>
+  <text x="204" y="148" text-anchor="middle" fill="#67e8f9" font-size="16" font-weight="700">REFLECT</text>
+  <text x="204" y="168" text-anchor="middle" fill="#94a3b8" font-size="13">Review without engine</text>
+  <!-- flowing arrow 2 -->
+  <path d="M254 110 C274 110 274 110 294 110" stroke="#334155" stroke-width="2" stroke-dasharray="4 4">
+    <animate attributeName="stroke-dashoffset" values="8;0" dur="1.5s" repeatCount="indefinite"/>
+  </path>
+  <polygon points="292,105 302,110 292,115" fill="#334155"/>
+  <!-- Step 3: Analyze — engine/magnifying glass -->
+  <g filter="url(#ag-glow)">
+    <circle cx="340" cy="110" r="42" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+  </g>
+  <!-- magnifying glass over a position -->
+  <circle cx="336" cy="104" r="14" fill="none" stroke="#6ee7b7" stroke-width="2"/>
+  <line x1="346" y1="114" x2="356" y2="124" stroke="#6ee7b7" stroke-width="2.5" stroke-linecap="round"/>
+  <text x="336" y="109" text-anchor="middle" fill="#6ee7b7" font-size="12">♛</text>
+  <text x="340" y="148" text-anchor="middle" fill="#6ee7b7" font-size="16" font-weight="700">ANALYZE</text>
+  <text x="340" y="168" text-anchor="middle" fill="#94a3b8" font-size="13">Engine-check key moments</text>
+  <!-- flowing arrow 3 -->
+  <path d="M390 110 C410 110 410 110 430 110" stroke="#334155" stroke-width="2" stroke-dasharray="4 4">
+    <animate attributeName="stroke-dashoffset" values="8;0" dur="1.5s" repeatCount="indefinite"/>
+  </path>
+  <polygon points="428,105 438,110 428,115" fill="#334155"/>
+  <!-- Step 4: Pattern — radar chart shape -->
+  <g filter="url(#ag-glow)">
+    <circle cx="476" cy="110" r="42" fill="#06b6d4" fill-opacity="0.08" stroke="#06b6d4" stroke-opacity="0.3" stroke-width="1.5"/>
+  </g>
+  <!-- mini radar chart -->
+  <polygon points="476,88 494,102 490,120 462,120 458,102" fill="#06b6d4" fill-opacity="0.12" stroke="#67e8f9" stroke-width="1"/>
+  <polygon points="476,95 488,105 485,116 467,116 464,105" fill="#06b6d4" fill-opacity="0.08" stroke="#67e8f9" stroke-width="0.5" opacity="0.4"/>
+  <circle cx="476" cy="106" r="2" fill="#67e8f9"/>
+  <text x="476" y="148" text-anchor="middle" fill="#67e8f9" font-size="16" font-weight="700">PATTERN</text>
+  <text x="476" y="168" text-anchor="middle" fill="#94a3b8" font-size="13">Find recurring mistakes</text>
+  <!-- flowing arrow 4 -->
+  <path d="M526 110 C546 110 546 110 566 110" stroke="#334155" stroke-width="2" stroke-dasharray="4 4">
+    <animate attributeName="stroke-dashoffset" values="8;0" dur="1.5s" repeatCount="indefinite"/>
+  </path>
+  <polygon points="564,105 574,110 564,115" fill="#334155"/>
+  <!-- Step 5: Fix — rising arrow / checkmark -->
+  <g filter="url(#ag-glow)">
+    <circle cx="612" cy="110" r="42" fill="#10b981" fill-opacity="0.12" stroke="#10b981" stroke-opacity="0.5" stroke-width="2"/>
+  </g>
+  <!-- checkmark with upward arrow -->
+  <path d="M598 112 L608 122 L628 96" stroke="#6ee7b7" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M620 94 L628 86 L628 96" stroke="#6ee7b7" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <text x="612" y="148" text-anchor="middle" fill="#6ee7b7" font-size="16" font-weight="700">FIX</text>
+  <text x="612" y="168" text-anchor="middle" fill="#94a3b8" font-size="13">Create action items</text>
+  <!-- bottom accent line -->
+  <line x1="40" y1="225" x2="640" y2="225" stroke="#10b981" stroke-opacity="0.1" stroke-width="1"/>
+  <text x="340" y="222" text-anchor="middle" fill="#475569" font-size="12" font-style="italic">A method that builds real chess skill, not just engine dependency</text>
 </svg>
 </div>
 
@@ -119,33 +183,58 @@ The first analysis will change your thinking. The second won't.
 After analyzing several games, patterns emerge. Common categories:
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="600" height="280" viewBox="0 0 600 280" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="600" height="280" rx="16" fill="#0f172a"/>
-  <rect x="1" y="1" width="598" height="278" rx="15" stroke="white" stroke-opacity="0.06"/>
-  <text x="300" y="35" text-anchor="middle" fill="white" font-size="14" font-weight="700">Common Mistake Categories</text>
-  <!-- Bar chart -->
-  <rect x="80" y="60" width="200" height="28" rx="6" fill="#10b981" fill-opacity="0.25" stroke="#10b981" stroke-opacity="0.4"/>
-  <text x="90" y="79" fill="#6ee7b7" font-size="11" font-weight="600">⚡ Tactical Oversights</text>
-  <text x="268" y="79" fill="#6ee7b7" font-size="11">38%</text>
-  <rect x="80" y="98" width="150" height="28" rx="6" fill="#06b6d4" fill-opacity="0.25" stroke="#06b6d4" stroke-opacity="0.4"/>
-  <text x="90" y="117" fill="#67e8f9" font-size="11" font-weight="600">🧩 Positional Errors</text>
-  <text x="218" y="117" fill="#67e8f9" font-size="11">25%</text>
-  <rect x="80" y="136" width="100" height="28" rx="6" fill="#f59e0b" fill-opacity="0.25" stroke="#f59e0b" stroke-opacity="0.4"/>
-  <text x="90" y="155" fill="#fbbf24" font-size="11" font-weight="600">🔢 Calculation</text>
-  <text x="168" y="155" fill="#fbbf24" font-size="11">18%</text>
-  <rect x="80" y="174" width="70" height="28" rx="6" fill="#ef4444" fill-opacity="0.25" stroke="#ef4444" stroke-opacity="0.4"/>
-  <text x="90" y="193" fill="#f87171" font-size="11" font-weight="600">⏱ Time</text>
-  <text x="138" y="193" fill="#f87171" font-size="11">12%</text>
-  <rect x="80" y="212" width="45" height="28" rx="6" fill="#a855f7" fill-opacity="0.25" stroke="#a855f7" stroke-opacity="0.4"/>
-  <text x="90" y="231" fill="#c084fc" font-size="11" font-weight="600">📖</text>
-  <text x="113" y="231" fill="#c084fc" font-size="11">7%</text>
-  <!-- Legend -->
-  <text x="340" y="80" fill="#94a3b8" font-size="11">Missed forks, pins, skewers</text>
-  <text x="340" y="118" fill="#94a3b8" font-size="11">Wrong plan, bad piece placement</text>
-  <text x="340" y="156" fill="#94a3b8" font-size="11">Saw it, miscalculated a line</text>
-  <text x="340" y="194" fill="#94a3b8" font-size="11">Blunders under time pressure</text>
-  <text x="340" y="232" fill="#94a3b8" font-size="11">Suboptimal opening prep</text>
-  <text x="300" y="268" text-anchor="middle" fill="#475569" font-size="10" font-style="italic">Typical distribution for 1200-1800 rated players</text>
+<svg width="600" height="320" viewBox="0 0 600 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="mc-bg" x1="0" y1="0" x2="0.3" y2="1">
+      <stop offset="0%" stop-color="#0c1220"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <filter id="mc-glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="600" height="320" rx="16" fill="url(#mc-bg)"/>
+  <!-- background chess piece silhouettes -->
+  <text x="550" y="290" text-anchor="middle" fill="white" font-size="120" opacity="0.015">♛</text>
+  <text x="60" y="300" text-anchor="middle" fill="white" font-size="90" opacity="0.02">♞</text>
+  <!-- title -->
+  <text x="300" y="36" text-anchor="middle" fill="white" font-size="16" font-weight="700" letter-spacing="1">MISTAKE CATEGORIES</text>
+  <text x="300" y="54" text-anchor="middle" fill="#64748b" font-size="12">Typical distribution for 1200–1800 rated players</text>
+  <!-- Tactical Oversights — largest bar with knight icon -->
+  <g filter="url(#mc-glow)">
+    <rect x="60" y="76" width="340" height="36" rx="8" fill="#10b981" fill-opacity="0.1" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+  </g>
+  <rect x="62" y="78" width="336" height="32" rx="6" fill="#10b981" fill-opacity="0.08"/>
+  <text x="80" y="100" fill="#6ee7b7" font-size="20">♞</text>
+  <text x="106" y="100" fill="#6ee7b7" font-size="15" font-weight="700">Tactical Oversights</text>
+  <text x="380" y="100" fill="#6ee7b7" font-size="15" font-weight="700">38%</text>
+  <text x="420" y="100" fill="#64748b" font-size="13">Missed forks, pins, skewers</text>
+  <!-- Positional — medium bar with bishop -->
+  <rect x="60" y="122" width="260" height="36" rx="8" fill="#06b6d4" fill-opacity="0.08" stroke="#06b6d4" stroke-opacity="0.2"/>
+  <text x="80" y="146" fill="#67e8f9" font-size="20">♝</text>
+  <text x="106" y="146" fill="#67e8f9" font-size="15" font-weight="700">Positional Errors</text>
+  <text x="300" y="146" fill="#67e8f9" font-size="15" font-weight="700">25%</text>
+  <text x="340" y="146" fill="#64748b" font-size="13">Wrong plan, bad placement</text>
+  <!-- Calculation -->
+  <rect x="60" y="168" width="180" height="36" rx="8" fill="#f59e0b" fill-opacity="0.08" stroke="#f59e0b" stroke-opacity="0.2"/>
+  <text x="80" y="192" fill="#fbbf24" font-size="20">♛</text>
+  <text x="106" y="192" fill="#fbbf24" font-size="15" font-weight="700">Calculation</text>
+  <text x="224" y="192" fill="#fbbf24" font-size="15" font-weight="700">18%</text>
+  <text x="260" y="192" fill="#64748b" font-size="13">Saw it, miscalculated a line</text>
+  <!-- Time pressure -->
+  <rect x="60" y="214" width="120" height="36" rx="8" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.2"/>
+  <text x="80" y="238" fill="#f87171" font-size="20">⏱</text>
+  <text x="106" y="238" fill="#f87171" font-size="15" font-weight="700">Time</text>
+  <text x="162" y="238" fill="#f87171" font-size="15" font-weight="700">12%</text>
+  <text x="200" y="238" fill="#64748b" font-size="13">Blunders under clock pressure</text>
+  <!-- Opening -->
+  <rect x="60" y="260" width="72" height="36" rx="8" fill="#a855f7" fill-opacity="0.08" stroke="#a855f7" stroke-opacity="0.2"/>
+  <text x="80" y="284" fill="#c084fc" font-size="20">♟</text>
+  <text x="114" y="284" fill="#c084fc" font-size="15" font-weight="700">7%</text>
+  <text x="150" y="284" fill="#64748b" font-size="13">Suboptimal opening prep</text>
+  <!-- decorative bottom line -->
+  <line x1="40" y1="306" x2="560" y2="306" stroke="white" stroke-opacity="0.04"/>
 </svg>
 </div>
 

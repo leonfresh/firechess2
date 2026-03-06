@@ -9,38 +9,57 @@ tags: ["improvement", "time management"]
 You play a solid opening, find a strong plan in the middlegame, then suddenly you have 30 seconds left and blunder everything away. Sound familiar? Time trouble is one of the most common — and most fixable — weaknesses for club players.
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="640" height="200" viewBox="0 0 640 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="640" height="200" rx="16" fill="#0f172a"/>
-  <rect x="1" y="1" width="638" height="198" rx="15" stroke="white" stroke-opacity="0.06"/>
-  <text x="320" y="28" text-anchor="middle" fill="white" font-size="13" font-weight="700">Where Club Players Spend Their Clock</text>
+<svg width="680" height="260" viewBox="0 0 680 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="tmBg" x1="0" y1="0" x2="680" y2="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0c1220"/><stop offset="1" stop-color="#18102a"/>
+    </linearGradient>
+    <radialGradient id="tmGlow" cx="340" cy="130" r="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f59e0b" stop-opacity="0.06"/><stop offset="1" stop-color="#f59e0b" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="tmBarGlow" x="-10%" y="-40%" width="120%" height="180%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="680" height="260" rx="18" fill="url(#tmBg)"/>
+  <rect x="1" y="1" width="678" height="258" rx="17" stroke="white" stroke-opacity="0.06"/>
+  <rect width="680" height="260" rx="18" fill="url(#tmGlow)"/>
+  <!-- watermarks -->
+  <text x="60" y="240" text-anchor="middle" fill="white" fill-opacity="0.015" font-size="80">♛</text>
+  <text x="620" y="100" text-anchor="middle" fill="white" fill-opacity="0.015" font-size="70">♚</text>
+  <!-- title -->
+  <text x="340" y="34" text-anchor="middle" fill="white" font-size="17" font-weight="700" letter-spacing="0.5">Where Club Players Spend Their Clock</text>
   <!-- Phase labels -->
-  <text x="140" y="54" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600">OPENING</text>
-  <text x="320" y="54" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600">MIDDLEGAME</text>
-  <text x="500" y="54" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600">ENDGAME</text>
+  <text x="180" y="62" text-anchor="middle" fill="#94a3b8" font-size="13" font-weight="600">OPENING</text>
+  <text x="360" y="62" text-anchor="middle" fill="#94a3b8" font-size="13" font-weight="600">MIDDLEGAME</text>
+  <text x="540" y="62" text-anchor="middle" fill="#94a3b8" font-size="13" font-weight="600">ENDGAME</text>
   <!-- Typical (bad) distribution -->
-  <text x="50" y="82" fill="#f87171" font-size="10" font-weight="600">Typical</text>
-  <rect x="100" y="70" width="320" height="18" rx="4" fill="#1e293b"/>
-  <rect x="100" y="70" width="96" height="18" rx="4" fill="#10b981" fill-opacity="0.4"/>
-  <text x="148" y="83" text-anchor="middle" fill="white" font-size="9" font-weight="600">30%</text>
-  <rect x="196" y="70" width="192" height="18" rx="4" fill="#f59e0b" fill-opacity="0.4"/>
-  <text x="292" y="83" text-anchor="middle" fill="white" font-size="9" font-weight="600">60%</text>
-  <rect x="388" y="70" width="32" height="18" rx="4" fill="#ef4444" fill-opacity="0.5"/>
-  <text x="404" y="83" text-anchor="middle" fill="white" font-size="9" font-weight="600">10%</text>
-  <text x="440" y="83" fill="#f87171" font-size="9">← scramble!</text>
+  <text x="60" y="96" fill="#f87171" font-size="14" font-weight="600">Typical</text>
+  <rect x="130" y="80" width="400" height="24" rx="5" fill="#1e293b"/>
+  <rect x="130" y="80" width="120" height="24" rx="5" fill="#10b981" fill-opacity="0.4"/>
+  <text x="190" y="97" text-anchor="middle" fill="white" font-size="13" font-weight="600">30%</text>
+  <rect x="250" y="80" width="240" height="24" rx="5" fill="#f59e0b" fill-opacity="0.4"/>
+  <text x="370" y="97" text-anchor="middle" fill="white" font-size="13" font-weight="600">60%</text>
+  <rect x="490" y="80" width="40" height="24" rx="5" fill="#ef4444" fill-opacity="0.5" filter="url(#tmBarGlow)"/>
+  <text x="510" y="97" text-anchor="middle" fill="white" font-size="13" font-weight="600">10%</text>
+  <text x="552" y="97" fill="#f87171" font-size="13">← scramble!</text>
   <!-- Ideal distribution -->
-  <text x="50" y="116" fill="#6ee7b7" font-size="10" font-weight="600">Ideal</text>
-  <rect x="100" y="104" width="320" height="18" rx="4" fill="#1e293b"/>
-  <rect x="100" y="104" width="48" height="18" rx="4" fill="#10b981" fill-opacity="0.4"/>
-  <text x="124" y="117" text-anchor="middle" fill="white" font-size="9" font-weight="600">15%</text>
-  <rect x="148" y="104" width="176" height="18" rx="4" fill="#06b6d4" fill-opacity="0.4"/>
-  <text x="236" y="117" text-anchor="middle" fill="white" font-size="9" font-weight="600">55%</text>
-  <rect x="324" y="104" width="96" height="18" rx="4" fill="#10b981" fill-opacity="0.4"/>
-  <text x="372" y="117" text-anchor="middle" fill="white" font-size="9" font-weight="600">30%</text>
-  <text x="440" y="117" fill="#6ee7b7" font-size="9">← comfortable</text>
-  <!-- Key insight -->
-  <rect x="60" y="138" width="520" height="44" rx="10" fill="#f59e0b" fill-opacity="0.06" stroke="#f59e0b" stroke-opacity="0.15"/>
-  <text x="320" y="158" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="600">Key insight: Spend LESS time in the opening (know your lines),</text>
-  <text x="320" y="174" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="600">SAVE time for critical decisions and the endgame.</text>
+  <text x="60" y="134" fill="#6ee7b7" font-size="14" font-weight="600">Ideal</text>
+  <rect x="130" y="118" width="400" height="24" rx="5" fill="#1e293b"/>
+  <rect x="130" y="118" width="60" height="24" rx="5" fill="#10b981" fill-opacity="0.4"/>
+  <text x="160" y="135" text-anchor="middle" fill="white" font-size="13" font-weight="600">15%</text>
+  <rect x="190" y="118" width="220" height="24" rx="5" fill="#06b6d4" fill-opacity="0.4"/>
+  <text x="300" y="135" text-anchor="middle" fill="white" font-size="13" font-weight="600">55%</text>
+  <rect x="410" y="118" width="120" height="24" rx="5" fill="#10b981" fill-opacity="0.4"/>
+  <text x="470" y="135" text-anchor="middle" fill="white" font-size="13" font-weight="600">30%</text>
+  <text x="552" y="135" fill="#6ee7b7" font-size="13">← comfortable</text>
+  <!-- Key insight box -->
+  <rect x="60" y="160" width="560" height="70" rx="14" fill="#f59e0b" fill-opacity="0.06" stroke="#f59e0b" stroke-opacity="0.18"/>
+  <text x="340" y="190" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="600">Key insight: Spend LESS time in the opening (know your lines),</text>
+  <text x="340" y="212" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="600">SAVE time for critical decisions and the endgame.</text>
+  <!-- decorative bottom line -->
+  <line x1="100" y1="250" x2="580" y2="250" stroke="white" stroke-opacity="0.04" stroke-width="1"/>
 </svg>
 </div>
 
@@ -73,44 +92,62 @@ Most players never glance at their clock until they're already in trouble. Witho
 ## Time Budgeting by Format
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="620" height="260" viewBox="0 0 620 260" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="620" height="260" rx="16" fill="#0f172a"/>
-  <rect x="1" y="1" width="618" height="258" rx="15" stroke="white" stroke-opacity="0.06"/>
-  <text x="310" y="28" text-anchor="middle" fill="white" font-size="13" font-weight="700">Time Budget Per Format</text>
+<svg width="660" height="320" viewBox="0 0 660 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="tbBg" x1="0" y1="0" x2="660" y2="320" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0c1220"/><stop offset="1" stop-color="#18102a"/>
+    </linearGradient>
+    <radialGradient id="tbGlow" cx="330" cy="160" r="220" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#06b6d4" stop-opacity="0.06"/><stop offset="1" stop-color="#06b6d4" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="tbRowGlow" x="-5%" y="-30%" width="110%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="660" height="320" rx="18" fill="url(#tbBg)"/>
+  <rect x="1" y="1" width="658" height="318" rx="17" stroke="white" stroke-opacity="0.06"/>
+  <rect width="660" height="320" rx="18" fill="url(#tbGlow)"/>
+  <!-- watermark -->
+  <text x="600" y="290" text-anchor="middle" fill="white" fill-opacity="0.015" font-size="80">♜</text>
+  <!-- title -->
+  <text x="330" y="36" text-anchor="middle" fill="white" font-size="17" font-weight="700" letter-spacing="0.5">Time Budget Per Format</text>
   <!-- Column headers -->
-  <text x="140" y="54" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600">FORMAT</text>
-  <text x="280" y="54" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600">PER MOVE AVG</text>
-  <text x="420" y="54" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600">CRITICAL MOVE MAX</text>
-  <text x="550" y="54" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600">OPENING MAX</text>
-  <line x1="30" y1="64" x2="590" y2="64" stroke="white" stroke-opacity="0.06"/>
+  <text x="150" y="66" text-anchor="middle" fill="#94a3b8" font-size="13" font-weight="600">FORMAT</text>
+  <text x="320" y="66" text-anchor="middle" fill="#94a3b8" font-size="13" font-weight="600">PER MOVE AVG</text>
+  <text x="460" y="66" text-anchor="middle" fill="#94a3b8" font-size="13" font-weight="600">CRITICAL MAX</text>
+  <text x="590" y="66" text-anchor="middle" fill="#94a3b8" font-size="13" font-weight="600">OPENING MAX</text>
+  <line x1="28" y1="78" x2="632" y2="78" stroke="white" stroke-opacity="0.06"/>
   <!-- Bullet -->
-  <rect x="30" y="72" width="560" height="40" rx="6" fill="#ef4444" fill-opacity="0.04"/>
-  <text x="44" y="88" fill="#f87171" font-size="20">⚡</text>
-  <text x="140" y="96" text-anchor="middle" fill="#f87171" font-size="12" font-weight="700">Bullet (1+0)</text>
-  <text x="280" y="96" text-anchor="middle" fill="white" font-size="11">1-2 seconds</text>
-  <text x="420" y="96" text-anchor="middle" fill="white" font-size="11">5 seconds</text>
-  <text x="550" y="96" text-anchor="middle" fill="white" font-size="11">10 seconds</text>
+  <rect x="28" y="86" width="604" height="50" rx="10" fill="#ef4444" fill-opacity="0.05" stroke="#ef4444" stroke-opacity="0.08"/>
+  <text x="48" y="106" fill="#f87171" font-size="24">⚡</text>
+  <text x="150" y="116" text-anchor="middle" fill="#f87171" font-size="15" font-weight="700">Bullet (1+0)</text>
+  <text x="320" y="116" text-anchor="middle" fill="#cbd5e1" font-size="14">1–2 seconds</text>
+  <text x="460" y="116" text-anchor="middle" fill="#cbd5e1" font-size="14">5 seconds</text>
+  <text x="590" y="116" text-anchor="middle" fill="#cbd5e1" font-size="14">10 seconds</text>
   <!-- Blitz -->
-  <rect x="30" y="116" width="560" height="40" rx="6" fill="transparent"/>
-  <text x="44" y="132" fill="#fbbf24" font-size="20">⏱</text>
-  <text x="140" y="140" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="700">Blitz (3+2)</text>
-  <text x="280" y="140" text-anchor="middle" fill="white" font-size="11">5-8 seconds</text>
-  <text x="420" y="140" text-anchor="middle" fill="white" font-size="11">30 seconds</text>
-  <text x="550" y="140" text-anchor="middle" fill="white" font-size="11">30 seconds</text>
+  <rect x="28" y="142" width="604" height="50" rx="10" fill="transparent"/>
+  <text x="48" y="162" fill="#fbbf24" font-size="24">⏱</text>
+  <text x="150" y="172" text-anchor="middle" fill="#fbbf24" font-size="15" font-weight="700">Blitz (3+2)</text>
+  <text x="320" y="172" text-anchor="middle" fill="#cbd5e1" font-size="14">5–8 seconds</text>
+  <text x="460" y="172" text-anchor="middle" fill="#cbd5e1" font-size="14">30 seconds</text>
+  <text x="590" y="172" text-anchor="middle" fill="#cbd5e1" font-size="14">30 seconds</text>
   <!-- Rapid -->
-  <rect x="30" y="160" width="560" height="40" rx="6" fill="#06b6d4" fill-opacity="0.04"/>
-  <text x="44" y="176" fill="#67e8f9" font-size="20">⏲</text>
-  <text x="140" y="184" text-anchor="middle" fill="#67e8f9" font-size="12" font-weight="700">Rapid (10+0)</text>
-  <text x="280" y="184" text-anchor="middle" fill="white" font-size="11">10-15 seconds</text>
-  <text x="420" y="184" text-anchor="middle" fill="white" font-size="11">2 minutes</text>
-  <text x="550" y="184" text-anchor="middle" fill="white" font-size="11">2 minutes</text>
+  <rect x="28" y="198" width="604" height="50" rx="10" fill="#06b6d4" fill-opacity="0.05" stroke="#06b6d4" stroke-opacity="0.08"/>
+  <text x="48" y="218" fill="#67e8f9" font-size="24">⏲</text>
+  <text x="150" y="228" text-anchor="middle" fill="#67e8f9" font-size="15" font-weight="700">Rapid (10+0)</text>
+  <text x="320" y="228" text-anchor="middle" fill="#cbd5e1" font-size="14">10–15 seconds</text>
+  <text x="460" y="228" text-anchor="middle" fill="#cbd5e1" font-size="14">2 minutes</text>
+  <text x="590" y="228" text-anchor="middle" fill="#cbd5e1" font-size="14">2 minutes</text>
   <!-- Classical -->
-  <rect x="30" y="204" width="560" height="40" rx="6" fill="transparent"/>
-  <text x="44" y="220" fill="#6ee7b7" font-size="20">♛</text>
-  <text x="140" y="228" text-anchor="middle" fill="#6ee7b7" font-size="12" font-weight="700">Classical (90+30)</text>
-  <text x="280" y="228" text-anchor="middle" fill="white" font-size="11">2-3 minutes</text>
-  <text x="420" y="228" text-anchor="middle" fill="white" font-size="11">15 minutes</text>
-  <text x="550" y="228" text-anchor="middle" fill="white" font-size="11">10 minutes</text>
+  <rect x="28" y="254" width="604" height="50" rx="10" fill="transparent"/>
+  <text x="48" y="274" fill="#6ee7b7" font-size="24">♛</text>
+  <text x="150" y="284" text-anchor="middle" fill="#6ee7b7" font-size="15" font-weight="700">Classical (90+30)</text>
+  <text x="320" y="284" text-anchor="middle" fill="#cbd5e1" font-size="14">2–3 minutes</text>
+  <text x="460" y="284" text-anchor="middle" fill="#cbd5e1" font-size="14">15 minutes</text>
+  <text x="590" y="284" text-anchor="middle" fill="#cbd5e1" font-size="14">10 minutes</text>
+  <!-- decorative bottom line -->
+  <line x1="80" y1="312" x2="580" y2="312" stroke="white" stroke-opacity="0.04" stroke-width="1"/>
 </svg>
 </div>
 

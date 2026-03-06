@@ -11,46 +11,70 @@ If you've ever analyzed a chess game with an engine, you've seen evaluation numb
 The answer lies in **centipawn loss** — the most important metric in computer chess analysis.
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="600" height="220" viewBox="0 0 600 220" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="600" height="220" rx="16" fill="#0f172a"/>
-  <rect x="1" y="1" width="598" height="218" rx="15" stroke="white" stroke-opacity="0.06"/>
-  <text x="300" y="32" text-anchor="middle" fill="white" font-size="14" font-weight="700">How Centipawn Loss Works</text>
-  <!-- Position before -->
-  <rect x="40" y="52" width="150" height="70" rx="10" fill="#10b981" fill-opacity="0.1" stroke="#10b981" stroke-opacity="0.3"/>
-  <text x="115" y="75" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="600">Position Before</text>
-  <text x="115" y="100" text-anchor="middle" fill="#6ee7b7" font-size="22" font-weight="700">+0.50</text>
-  <!-- Arrow -->
-  <path d="M200 87 L245 87" stroke="#334155" stroke-width="2"/>
-  <polygon points="245,82 255,87 245,92" fill="#334155"/>
-  <text x="228" y="78" text-anchor="middle" fill="#94a3b8" font-size="9">Your</text>
-  <text x="228" y="68" text-anchor="middle" fill="#94a3b8" font-size="9">Move</text>
-  <!-- Position after -->
-  <rect x="265" y="52" width="150" height="70" rx="10" fill="#f59e0b" fill-opacity="0.1" stroke="#f59e0b" stroke-opacity="0.3"/>
-  <text x="340" y="75" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="600">Position After</text>
-  <text x="340" y="100" text-anchor="middle" fill="#fbbf24" font-size="22" font-weight="700">+0.10</text>
+<svg width="640" height="280" viewBox="0 0 640 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="cp-bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0c1220"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <filter id="cp-glow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <radialGradient id="cp-green" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="cp-red" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#ef4444" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="640" height="280" rx="16" fill="url(#cp-bg)"/>
+  <!-- background pawn watermark -->
+  <text x="540" y="240" text-anchor="middle" fill="white" font-size="160" opacity="0.012">♟</text>
+  <text x="320" y="36" text-anchor="middle" fill="white" font-size="16" font-weight="700" letter-spacing="1">HOW CENTIPAWN LOSS WORKS</text>
+  <!-- Position Before card -->
+  <circle cx="120" cy="120" r="70" fill="url(#cp-green)"/>
+  <g filter="url(#cp-glow)">
+    <rect x="50" y="70" width="140" height="100" rx="14" fill="#10b981" fill-opacity="0.06" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+  </g>
+  <text x="120" y="100" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="600">Best Engine Move</text>
+  <text x="120" y="140" text-anchor="middle" fill="#6ee7b7" font-size="36" font-weight="700">+0.50</text>
+  <text x="120" y="192" text-anchor="middle" fill="#64748b" font-size="13">Engine keeps the</text>
+  <text x="120" y="210" text-anchor="middle" fill="#64748b" font-size="13">full advantage</text>
+  <!-- Animated arrow -->
+  <path d="M200 120 C240 120 260 120 295 120" stroke="#475569" stroke-width="2" stroke-dasharray="6 4">
+    <animate attributeName="stroke-dashoffset" values="10;0" dur="1.5s" repeatCount="indefinite"/>
+  </path>
+  <text x="248" y="108" text-anchor="middle" fill="#94a3b8" font-size="14" font-weight="600">Your Move</text>
+  <polygon points="293,115 305,120 293,125" fill="#475569"/>
+  <!-- Position After card -->
+  <rect x="310" y="70" width="140" height="100" rx="14" fill="#f59e0b" fill-opacity="0.06" stroke="#f59e0b" stroke-opacity="0.25" stroke-width="1.5"/>
+  <text x="380" y="100" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="600">After Your Move</text>
+  <text x="380" y="140" text-anchor="middle" fill="#fbbf24" font-size="36" font-weight="700">+0.10</text>
+  <text x="380" y="192" text-anchor="middle" fill="#64748b" font-size="13">Dropped the eval</text>
+  <text x="380" y="210" text-anchor="middle" fill="#64748b" font-size="13">by 40 centipawns</text>
   <!-- Equals -->
-  <text x="440" y="92" text-anchor="middle" fill="#475569" font-size="22">=</text>
-  <!-- CPL result -->
-  <rect x="460" y="52" width="110" height="70" rx="10" fill="#ef4444" fill-opacity="0.12" stroke="#ef4444" stroke-opacity="0.3"/>
-  <text x="515" y="75" text-anchor="middle" fill="#f87171" font-size="11" font-weight="600">CP Loss</text>
-  <text x="515" y="100" text-anchor="middle" fill="#f87171" font-size="22" font-weight="700">40 cp</text>
-  <!-- Bottom labels -->
-  <text x="115" y="150" text-anchor="middle" fill="#94a3b8" font-size="10">Engine's best move</text>
-  <text x="115" y="164" text-anchor="middle" fill="#94a3b8" font-size="10">would keep +0.50</text>
-  <text x="340" y="150" text-anchor="middle" fill="#94a3b8" font-size="10">Your move dropped</text>
-  <text x="340" y="164" text-anchor="middle" fill="#94a3b8" font-size="10">the eval to +0.10</text>
-  <text x="515" y="150" text-anchor="middle" fill="#94a3b8" font-size="10">You lost 0.40 pawns</text>
-  <text x="515" y="164" text-anchor="middle" fill="#94a3b8" font-size="10">of advantage</text>
+  <text x="470" y="128" text-anchor="middle" fill="#475569" font-size="28">=</text>
+  <!-- CPL Result -->
+  <circle cx="550" cy="120" r="65" fill="url(#cp-red)"/>
+  <g filter="url(#cp-glow)">
+    <rect x="490" y="70" width="120" height="100" rx="14" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.3" stroke-width="1.5"/>
+  </g>
+  <text x="550" y="98" text-anchor="middle" fill="#f87171" font-size="14" font-weight="600">Centipawn Loss</text>
+  <text x="550" y="142" text-anchor="middle" fill="#f87171" font-size="40" font-weight="700">40</text>
+  <text x="550" y="160" text-anchor="middle" fill="#f87171" font-size="14">centipawns</text>
   <!-- Scale bar -->
-  <rect x="40" y="190" width="520" height="8" rx="4" fill="#1e293b"/>
-  <rect x="40" y="190" width="130" height="8" rx="4" fill="#10b981"/>
-  <rect x="170" y="190" width="130" height="8" rx="0" fill="#f59e0b"/>
-  <rect x="300" y="190" width="130" height="8" rx="0" fill="#ef4444"/>
-  <rect x="430" y="190" width="130" height="8" rx="4" fill="#7f1d1d"/>
-  <text x="105" y="212" text-anchor="middle" fill="#6ee7b7" font-size="9">0-20 cp: Good</text>
-  <text x="235" y="212" text-anchor="middle" fill="#fbbf24" font-size="9">20-50: Inaccuracy</text>
-  <text x="365" y="212" text-anchor="middle" fill="#f87171" font-size="9">50-100: Mistake</text>
-  <text x="495" y="212" text-anchor="middle" fill="#fca5a5" font-size="9">100+: Blunder</text>
+  <rect x="50" y="238" width="540" height="12" rx="6" fill="#1e293b"/>
+  <rect x="50" y="238" width="135" height="12" rx="6" fill="#10b981" fill-opacity="0.5"/>
+  <rect x="185" y="238" width="135" height="12" fill="#f59e0b" fill-opacity="0.4"/>
+  <rect x="320" y="238" width="135" height="12" fill="#ef4444" fill-opacity="0.4"/>
+  <rect x="455" y="238" width="135" height="12" rx="6" fill="#7f1d1d" fill-opacity="0.5"/>
+  <text x="118" y="270" text-anchor="middle" fill="#6ee7b7" font-size="13">0–20: Good</text>
+  <text x="252" y="270" text-anchor="middle" fill="#fbbf24" font-size="13">20–50: Inaccuracy</text>
+  <text x="388" y="270" text-anchor="middle" fill="#f87171" font-size="13">50–100: Mistake</text>
+  <text x="522" y="270" text-anchor="middle" fill="#fca5a5" font-size="13">100+: Blunder</text>
 </svg>
 </div>
 
@@ -83,29 +107,51 @@ Here's how it works:
 Your **average centipawn loss** (ACPL) across a game tells you how accurately you played overall. Lower is better:
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="560" height="230" viewBox="0 0 560 230" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="560" height="230" rx="16" fill="#0f172a"/>
-  <rect x="1" y="1" width="558" height="228" rx="15" stroke="white" stroke-opacity="0.06"/>
-  <text x="280" y="30" text-anchor="middle" fill="white" font-size="13" font-weight="700">Average CPL by Playing Strength</text>
-  <!-- Bars -->
-  <rect x="40" y="50" width="60" height="24" rx="5" fill="#10b981" fill-opacity="0.35" stroke="#10b981" stroke-opacity="0.5"/>
-  <text x="50" y="66" fill="#6ee7b7" font-size="10" font-weight="600">10-15</text>
-  <text x="115" y="66" fill="#94a3b8" font-size="10">Super GM (2700+)</text>
-  <rect x="40" y="80" width="95" height="24" rx="5" fill="#10b981" fill-opacity="0.25" stroke="#10b981" stroke-opacity="0.35"/>
-  <text x="50" y="96" fill="#6ee7b7" font-size="10" font-weight="600">15-25</text>
-  <text x="150" y="96" fill="#94a3b8" font-size="10">Grandmaster</text>
-  <rect x="40" y="110" width="140" height="24" rx="5" fill="#06b6d4" fill-opacity="0.25" stroke="#06b6d4" stroke-opacity="0.35"/>
-  <text x="50" y="126" fill="#67e8f9" font-size="10" font-weight="600">25-40</text>
-  <text x="195" y="126" fill="#94a3b8" font-size="10">IM / FM</text>
-  <rect x="40" y="140" width="200" height="24" rx="5" fill="#f59e0b" fill-opacity="0.2" stroke="#f59e0b" stroke-opacity="0.35"/>
-  <text x="50" y="156" fill="#fbbf24" font-size="10" font-weight="600">40-60</text>
-  <text x="255" y="156" fill="#94a3b8" font-size="10">Expert (1800-2100)</text>
-  <rect x="40" y="170" width="290" height="24" rx="5" fill="#ef4444" fill-opacity="0.15" stroke="#ef4444" stroke-opacity="0.3"/>
-  <text x="50" y="186" fill="#f87171" font-size="10" font-weight="600">60-90</text>
-  <text x="345" y="186" fill="#94a3b8" font-size="10">Intermediate (1400-1800)</text>
-  <rect x="40" y="200" width="400" height="24" rx="5" fill="#ef4444" fill-opacity="0.1" stroke="#ef4444" stroke-opacity="0.2"/>
-  <text x="50" y="216" fill="#fca5a5" font-size="10" font-weight="600">90-150+</text>
-  <text x="455" y="216" fill="#94a3b8" font-size="10">Beginner (&lt;1400)</text>
+<svg width="600" height="320" viewBox="0 0 600 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="acpl-bg" x1="0" y1="0" x2="0.2" y2="1">
+      <stop offset="0%" stop-color="#0c1220"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <filter id="acpl-glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="600" height="320" rx="16" fill="url(#acpl-bg)"/>
+  <!-- background chess king watermark -->
+  <text x="520" y="280" text-anchor="middle" fill="white" font-size="140" opacity="0.012">♚</text>
+  <text x="300" y="36" text-anchor="middle" fill="white" font-size="16" font-weight="700" letter-spacing="1">AVERAGE CPL BY PLAYING STRENGTH</text>
+  <!-- Super GM -->
+  <g filter="url(#acpl-glow)">
+    <rect x="50" y="58" width="80" height="32" rx="8" fill="#10b981" fill-opacity="0.12" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+  </g>
+  <text x="90" y="80" text-anchor="middle" fill="#6ee7b7" font-size="16" font-weight="700">10–15</text>
+  <text x="148" y="80" fill="#94a3b8" font-size="15">Super GM (2700+)</text>
+  <text x="550" y="80" fill="#6ee7b7" font-size="13">♚</text>
+  <!-- GM -->
+  <rect x="50" y="98" width="120" height="32" rx="8" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.25"/>
+  <text x="110" y="120" text-anchor="middle" fill="#6ee7b7" font-size="16" font-weight="700">15–25</text>
+  <text x="188" y="120" fill="#94a3b8" font-size="15">Grandmaster</text>
+  <!-- IM/FM -->
+  <rect x="50" y="138" width="180" height="32" rx="8" fill="#06b6d4" fill-opacity="0.08" stroke="#06b6d4" stroke-opacity="0.25"/>
+  <text x="140" y="160" text-anchor="middle" fill="#67e8f9" font-size="16" font-weight="700">25–40</text>
+  <text x="248" y="160" fill="#94a3b8" font-size="15">International Master / FM</text>
+  <!-- Expert -->
+  <rect x="50" y="178" width="260" height="32" rx="8" fill="#f59e0b" fill-opacity="0.08" stroke="#f59e0b" stroke-opacity="0.25"/>
+  <text x="180" y="200" text-anchor="middle" fill="#fbbf24" font-size="16" font-weight="700">40–60</text>
+  <text x="328" y="200" fill="#94a3b8" font-size="15">Expert (1800–2100)</text>
+  <!-- Intermediate -->
+  <rect x="50" y="218" width="370" height="32" rx="8" fill="#ef4444" fill-opacity="0.06" stroke="#ef4444" stroke-opacity="0.2"/>
+  <text x="235" y="240" text-anchor="middle" fill="#f87171" font-size="16" font-weight="700">60–90</text>
+  <text x="438" y="240" fill="#94a3b8" font-size="15">Intermediate (1400–1800)</text>
+  <!-- Beginner -->
+  <rect x="50" y="258" width="500" height="32" rx="8" fill="#ef4444" fill-opacity="0.04" stroke="#ef4444" stroke-opacity="0.12"/>
+  <text x="300" y="280" text-anchor="middle" fill="#fca5a5" font-size="16" font-weight="700">90–150+</text>
+  <text x="468" y="280" fill="#94a3b8" font-size="15">Beginner</text>
+  <!-- decorative line -->
+  <line x1="40" y1="304" x2="560" y2="304" stroke="white" stroke-opacity="0.04"/>
+  <text x="300" y="316" text-anchor="middle" fill="#475569" font-size="12" font-style="italic">Lower ACPL = more accurate play. Track yours over time.</text>
 </svg>
 </div>
 
