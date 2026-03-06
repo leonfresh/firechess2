@@ -711,6 +711,7 @@ function _goodMoveRoast(
     },
     () => `🤨 ${move.san}. Even Hikaru would say "okay that's fine." Not "great." Not "brilliant." Just "fine." Classic Hikaru praise 🏎️🗿`,
     () => `😤 ${move.san}. A good move. Levy would nod once and move on. No thumbnail. No red circle. Just a nod. Mid-level approval 📺🫡`,
+    () => `😌 ${move.san}. Eric Rosen would play this and go "that's nice" in the most wholesome way. Meanwhile we're just trying not to fall asleep 😌💤`,
     () => {
       const dev = development(after, move.color as Color);
       if (dev.stuck.length === 0 && dev.total > 0)
@@ -770,6 +771,8 @@ function _missedMateRoast(move: AnalyzedMove): { text: string; annotations: Move
     () => `☠️ ${move.san} when there was mate in ${n}. Garry Chess invented checkmate for a REASON and they chose to IGNORE it 👑🤡`,
     () => `😱 Missing mate in ${n} is crazy. ${move.san}?? Even the Panzer of the Lake would call this one out. "Patzer misses a mate, patzer plays ${move.san}" 🐸💀`,
     () => `🤡 Mate in ${n}. They didn't see it. Of COURSE they didn't see it. Why would they see CHECKMATE when they can play ${move.san} instead. The Knook weeps 🗿♞🏰`,
+    () => `😌 Mate in ${n}. Eric Rosen would have seen this instantly and said "oh that's nice" in the softest voice. This player saw it and said "nah" and played ${move.san} 💀😌`,
+    () => `💀 Missing mate in ${n} is wild. Eric Rosen's chat would be screaming "MAAATE" in all caps. The streamer himself? Calm. The player who missed it? Also calm, but for worse reasons 😌🗿`,
   ];
   return { text: pick(lines)(), annotations: ann };
 }
@@ -821,10 +824,12 @@ function _blunderRoast(
       `😭 ${move.san} — the ${vName} on ${onSq} has no friends. No defence, no compensation, just vibes fr fr 🗿`,
       `🆓 After ${move.san}, the ${vName} on ${onSq} is undefended. The opponent doesn't even need to think. It's literally free real estate 🏠`,
       `💀 ${move.san} and the ${vName} on ${onSq} is doing its best piñata impression. One hit and candy falls out 🎪🪅`,
-      `🗿 ${move.san} — the ${vName} on ${onSq} is just standing there.${worst.type === "q" ? ` Oh no my queen! Hikaru bait but they're NOT Hikaru 💀` : " Like a pinboard without the pin. Free material is free 🎁"}`,
+      `🗿 ${move.san} — the ${vName} on ${onSq} is just standing there.${worst.type === "q" ? ` Oh no my queen! Eric Rosen would be SO calm about this. "Ohhhh nooo... my queen." Meanwhile the chat is on FIRE 🔥😌` : " Like a pinboard without the pin. Free material is free 🎁"}`,
       `🤡 ${move.san} and the ${vName} on ${onSq} is unprotected. Google "hanging pieces." Holy hell 🗿💀`,
       `💀 ${move.san} leaves the ${vName} on ${onSq} hanging. Levy would zoom in and go "THE ${vName.toUpperCase()}!!" in that voice. You know the voice 📢😭`,
       `🆓 ${move.san} and the ${vName} on ${onSq} is just free. Hikaru would take this without even looking. Captures captures captures 🏎️🗿`,
+      `😌 ${move.san} and the ${vName} on ${onSq} is hanging. Eric Rosen energy: "Oh no... anyway." The calmest tragedy in chess history 🗿💀`,
+      `🆓 After ${move.san}, the ${vName} on ${onSq} is just THERE. Free for the taking. Even Eric Rosen would stop being wholesome for a second to call this out 😌🎁`,
     ], used), annotations: { arrows: hangArrows, markers: [{ square: onSq, emoji: "🆓" }] } };
   }
 
@@ -868,7 +873,8 @@ function _blunderRoast(
           `😱 ${move.san} allows a devastating ${pn(lp.type)} fork on ${m.to}: ${targets}. This is the "I didn't look at the whole board" special 🫠`,
           `🍴 They forked UP. ${move.san} → ${res.san} forks the ${targets}. It was at this moment they knew 😭`,
           `🍴 ${move.san} → ${res.san}. ${pn(lp.type, true)} fork on the ${targets}! Google "knight fork." Holy hell 🗿`,
-          `💀 After ${move.san}, the opponent has ${res.san} forking the ${targets}. True will never die! But this position will 🪦`,
+          `� ${move.san} allows ${res.san} forking the ${targets}. Eric Rosen would calmly say "oh that's a fork" like he's commenting on the weather. Meanwhile: devastation ☁️🍴`,
+          `�💀 After ${move.san}, the opponent has ${res.san} forking the ${targets}. True will never die! But this position will 🪦`,
         ], used), annotations: { arrows: forkArrows, markers: forkMarkers } };
       }
     }
@@ -905,6 +911,7 @@ function _blunderRoast(
       `🗿 ${move.san} gives up the ${sacWhat} for absolutely nothing. Kasparov could've made this work. This is not Kasparov 🤡`,
       `🤡 ${move.san} sacs the ${sacWhat}. "Trust me I saw the lines." The lines: 📊📉📉📉. You are not Tal. You are not even Petrosian doing PIPI 💀`,
       `⚔️ The ${sacWhat} has been sacrificed. Was it the Immortal Game? No. Was it even good? Also no. It's giving "I panic-clicked" energy 🗿`,
+      `😌 ${move.san} sacs the ${sacWhat}. Eric Rosen would sac this piece, get a mating attack, and chat would go "OHHHH." This person sacs it and gets nothing. Very different vibe 🤡😌`,
     ], used), annotations: { arrows: [moveArrow], markers: [{ square: _toSq, emoji: "🤡" }] } };
   }
 
@@ -981,6 +988,8 @@ function _blunderRoast(
     `🚨 ${move.san}.${ctx.goodStreak >= 3 ? ` AFTER ${ctx.goodStreak} GOOD MOVES?? They gave us hope and RIPPED it away.` : " Liers will kicked off... and so will this player's rating."} True will never die, but this position already did 💀`,
     `💀 ${move.san}.${ctx.threwAdvantage ? " FROM A WINNING POSITION." : ""} Levy would pause the video here and just stare into the camera for 10 seconds. That's the energy this deserves 📺😭`,
     `🗿 ${move.san}.${ctx.playerBlunders >= 2 ? ` Blunder number ${ctx.playerBlunders}.` : ""} Hikaru speed-running this position would never. He'd premove the right move in 0.1 seconds. This person took 30 seconds to find the WRONG one 🏎️💀`,
+    `😌 ${move.san}.${ctxLine} Eric Rosen would look at this and go "Ohhhh nooo" in the most calm voice imaginable. Meanwhile the position is literally ON FIRE 🔥😌`,
+    `💀 ${move.san}.${ctxLine} This is some Stafford Gambit victim energy. They walked right into it like an Eric Rosen highlight reel 🎯😌`,
   ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: _toSq, emoji: "💀" }] } };
 }
 
@@ -1065,6 +1074,7 @@ function _mistakeRoast(
       `🫠 ${move.san}. Garry Chess invented ${move.bestMoveSan} for a reason.${ctxLine} This ain't it 👑📉`,
       `😤 ${move.san} instead of ${move.bestMoveSan}.${ctxLine} Hikaru's chat would be spamming "NOOOO" right now. And they'd be right 📢😭`,
       `😬 ${move.san} over ${move.bestMoveSan}.${ctxLine} Levy would hit us with the "ladies and gentlemen" and zoom into the position. THE MISTAKE energy 📺💀`,
+      `😌 ${move.san} instead of ${move.bestMoveSan}.${ctxLine} Eric Rosen would calmly say "ohh that's unfortunate" while his chat has a meltdown. King of underreaction 😌💀`,
     ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: toSq, emoji: pick(["😬", "📉", "🤦", "😤", "🫤"]) }] } };
   }
 
@@ -1096,6 +1106,8 @@ function _mistakeRoast(
     `🤡 ${move.san}.${ctxFallback} If Hikaru was reviewing this he'd just say "ehhh that's not ideal" and his chat would go WILD. Understatement king 👑🗿`,
     `😬 ${move.san}.${ctxFallback} Levy would make this the thumbnail. Red arrow. Shocked face. "HOW?!" in Impact font. We all know the format 📺🤡`,
     `🗿 ${move.san}.${ctxFallback} Hikaru wouldn't even comment on this. Just "captures captures" past it. Speed chess energy except it's speed ignoring 🏎️💨`,
+    `😌 ${move.san}.${ctxFallback} Eric Rosen would go "oh no" so softly you'd think he was narrating a nature documentary. Meanwhile the position is DYING 🦆🗿`,
+    `😬 ${move.san}.${ctxFallback} This is the kind of move that shows up in an Eric Rosen "traps and tricks" video — as the victim. They ARE the content 📺😌`,
     ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: toSq, emoji: pick(["😬", "📉", "🤡", "😤", "🗿"]) }] } };
 }
 
@@ -1144,7 +1156,8 @@ function _inaccuracyRoast(
     () => `🤷 ${move.san}. Levy would speed past this in a Guess the Elo and go "yeah okay whatever" without pausing. The move that gets no screentime 📺💤`,
     () => `😑 ${move.san}. This is the move Hikaru plays in bullet with 0.3 seconds left and STILL doesn't lose. For this player? It's their best idea after 45 seconds 🏎️🗿`,
     () => `🤷 ${move.san}. Even GothamChess would struggle to make this move interesting for content. "And then they played... a move" 📺🫠`,
-    () => `😐 ${move.san}. The chess equivalent of "it's fine" when someone asks how you're doing. It's not fine. But it's fine 🫠`,
+    () => `� ${move.san}. Eric Rosen would play this move in a Stafford Gambit refusal and still somehow make it look fun. Here? It's just mid 🗿😌`,
+    () => `�😐 ${move.san}. The chess equivalent of "it's fine" when someone asks how you're doing. It's not fine. But it's fine 🫠`,
     () => `🫤 ${move.san}. This move will not be remembered. By anyone. Ever. Including the person who played it 🗿💨`,
     () => `🤷 ${move.san}. Peak "I'll just develop and hope for the best" energy. The strategy of champions. And also beginners. Mostly beginners 🏆💀`,
   ];
@@ -1191,6 +1204,7 @@ function _badCheckRoast(
     `🗿 ${move.san}+. "Checks, captures, threats" — except this check threatens NOTHING.${ctxLine} Levy is rolling in his chair rn 📉`,
     `🤡 ${move.san}+. GothamChess voice: "Ladies and gentlemen... a POINTLESS check." I can hear the disappointment from here 📢${ctxLine} 😭`,
     `😬 ${move.san}+ and the check bounces right off.${ctxLine} The king said "lol" and moved one square 👑💨`,
+    `😌 ${move.san}+. Eric Rosen would never give a useless check. When HE checks, it's checkmate in 3. This check? It's checkmate in... never. It's just bad ${ctxLine} 😌💀`,
     // Blunder-strength checks
     ...(isBlunder ? [
       `💀 ${move.san}+. Gave a check that LOST MATERIAL. The check that checked THEM right out of the game.${ctxLine} Extraordinary self-destruction 🤡🔥`,
@@ -1530,6 +1544,7 @@ function _styleRoast(
       `⚔️ ${move.san} continues the rampage. This is what happens when someone watches too many Tal games 🤡💥`,
       `🔥 ${move.san}. They watched one Hikaru speed chess video and said "I can do that." Spoiler: they cannot. But they're TRYING 🏎️💀`,
       `⚡ ${move.san}. Full Levy "SACRIFICE" energy rn. They're throwing pieces at the king like it's Black Friday and material is on sale 🛒🔥`,
+      `😌 ${move.san}. Giving Eric Rosen Stafford Gambit vibes. Just throw everything at the king and see what sticks. Except Rosen actually calculates first 🎯😌`,
     ], used);
     return { text, annotations: ann };
   }
@@ -1596,12 +1611,14 @@ export function getEloFlavorLine(elo: number): string {
     "Sub-1000 elo. This is the \"I learned chess from AnarchyChess\" bracket and it shows 🤡🔥",
     "Sub-1000 chess. Levy's Guess the Elo bread and butter. This is where the CONTENT lives 📺🔥",
     "Below 1000. Even Hikaru would do a double take. Then laugh. Then move on in 0.5 seconds 🏎️💀",
+    "Sub-1000. Eric Rosen would Stafford Gambit every single one of these players and it would work every single time 😌🎯",
   ]);
   if (elo < 1300) return pick([
     "1000-1300 bracket. Where dreams of grandeur meet the reality of hung pieces 💀🎁",
     "This is the 'I watched one Gotham Chess video' elo range. Let's see if it helped 📺🤡",
     "1000-1300. They watched Levy's How to Win at Chess series but skipped episode 2 📺💀",
     "1000-1300. Hikaru could beat this bracket blindfolded. With one hand. While doing a podcast. Probably 🏎️👑",
+    "1000-1300. Eric Rosen's favorite opponent rating. Every game is a potential trap compilation 😌🎯",
     "Some opening knowledge, lots of one-move blunders. Classic 1000-1300 energy 🔥💀",
     "The 'I can see two moves ahead but not three' zone. My favourite 🤌",
     "They know the rules. They just don't know what to do with them yet 🤷🗿",
@@ -1792,6 +1809,17 @@ export function getOpeningRoast(opening: string): string {
     `📖 ${opening}. Google "Bongcloud Attack." Holy hell. The king LEADS THE CHARGE. Chad energy ☁️🗿`,
   ]);
 
+  if (o.includes("stafford")) return pick([
+    `📖 ${opening}. The Stafford Gambit! Eric Rosen's signature weapon. Objectively dubious. Practically DEADLY at this elo 😌🎯`,
+    `📖 ${opening}. Stafford Gambit — "Oh no my pawn." *proceeds to mate you in 12 moves.* This is Eric Rosen energy personified 😌💀`,
+    `📖 ${opening}. The Stafford. Either they watched Eric Rosen's video and are about to cook, or they accidentally stumbled into it. Either way: TRAPS incoming 🪤🔥`,
+  ]);
+
+  if (o.includes("petrov") || o.includes("petroff")) return pick([
+    `📖 ${opening}. Petrov's Defense. The "I'm going to mirror everything you do" approach. Eric Rosen would find a way to make this spicy. These players? Probably not 😌🗿`,
+    `📖 ${opening}. Petrov Defense. AKA the Stafford Gambit's boring cousin. Same family, very different energy 💤⚔️`,
+  ]);
+
   if (o.includes("italian")) return pick([
     `📖 ${opening}. The Italian Game. Classic, boring, and every 1200 plays it. Pizza never hurt anyone tho 🍕✅`,
     `📖 ${opening}. Italian Game — the training wheels of chess openings. Reliable until someone plays the Fried Liver and your world ends 🔪🍳`,
@@ -1950,6 +1978,7 @@ export const REVEAL_CORRECT = [
   "Correct! You are unquestionably one of the guessers in Guess the Elo history 🎯🗿",
   "Nailed it! Hikaru-level pattern recognition. Chat is going crazy rn 🏎️🎯",
   "Spot on! Levy trained you well through all those Guess the Elo episodes 📺🧠",
+  "Eric Rosen would give you a calm nod and a 'nice.' The highest form of Rosen praise 😌🎯",
 ];
 
 export const GAME_INTRO = [
@@ -1967,6 +1996,7 @@ export const GAME_INTRO = [
   "Chat I'm scared. Let's see what horrors await 💀🍿",
   "Levy voice: 'Ladies and gentlemen... we have a game.' Let's see how bad it is 📺🔥",
   "Hikaru would speed through this in 3 minutes. We're gonna take our time and SUFFER through every move 🏎️😭",
+  "Eric Rosen voice: 'Oh... this is going to be interesting.' Said with the most dangerous calm 😌🔥",
   "New Guess the Elo just dropped. Holy hell 👑🔥",
   "Chess 2 update just dropped. Let's see what Garry Chess cooked this time 🍳💀",
   "Another game. Will it make me question the existence of chess education? Probably 📚🤡",
