@@ -109,51 +109,90 @@ Here's how it works:
 Your **average centipawn loss** (ACPL) across a game tells you how accurately you played overall. Lower is better:
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="600" height="320" viewBox="0 0 600 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="600" height="300" viewBox="0 0 600 300" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="acpl-bg" x1="0" y1="0" x2="0.2" y2="1">
-      <stop offset="0%" stop-color="#0c1220"/>
-      <stop offset="100%" stop-color="#0f172a"/>
+    <linearGradient id="acbg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#080c18"/><stop offset="1" stop-color="#0d1020"/>
     </linearGradient>
-    <filter id="acpl-glow">
-      <feGaussianBlur stdDeviation="3" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
+    <filter id="acg"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <radialGradient id="acgl" cx="0.5" cy="0.8" r="0.5">
+      <stop offset="0" stop-color="#fbbf24" stop-opacity="0.15"/><stop offset="1" stop-color="#fbbf24" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <rect width="600" height="320" rx="16" fill="url(#acpl-bg)"/>
-  <!-- background chess king watermark -->
-  <text x="520" y="280" text-anchor="middle" fill="white" font-size="140" opacity="0.012">♚</text>
-  <text x="300" y="36" text-anchor="middle" fill="white" font-size="16" font-weight="700" letter-spacing="1">AVERAGE CPL BY PLAYING STRENGTH</text>
-  <!-- Super GM -->
-  <g filter="url(#acpl-glow)">
-    <rect x="50" y="58" width="80" height="32" rx="8" fill="#10b981" fill-opacity="0.12" stroke="#10b981" stroke-opacity="0.4" stroke-width="1.5"/>
+  <rect width="600" height="300" rx="16" fill="url(#acbg)"/>
+  <rect x="1" y="1" width="598" height="298" rx="15" stroke="white" stroke-opacity="0.04"/>
+  <!-- Ground -->
+  <rect x="0" y="235" width="600" height="65" fill="#111827" opacity="0.5"/>
+  <line x1="0" y1="235" x2="600" y2="235" stroke="#1f2937"/>
+  <!-- Title -->
+  <text x="300" y="30" text-anchor="middle" fill="white" font-size="15" font-weight="700" letter-spacing="0.5">AVERAGE CPL BY PLAYING STRENGTH</text>
+  <!-- 6 kings growing from left (small/dim beginner) to right (tall/bright GM) -->
+  <!-- Beginner — tiny dim king -->
+  <g transform="translate(65, 0)" opacity="0.35">
+    <rect x="-10" y="225" width="20" height="10" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <g fill="#f87171" transform="translate(0, 210) scale(0.55)">
+      <rect x="-1.5" y="-22" width="3" height="8"/><rect x="-4" y="-19" width="8" height="3"/>
+      <circle r="6" cy="-10"/><path d="M-5,-4 L-8,10 L8,10 L5,-4 Z"/><rect x="-9" y="10" width="18" height="4" rx="1.5"/>
+    </g>
+    <text y="252" text-anchor="middle" fill="#f87171" font-size="12" font-weight="700">90–150+</text>
+    <text y="268" text-anchor="middle" fill="#64748b" font-size="10">Beginner</text>
   </g>
-  <text x="90" y="80" text-anchor="middle" fill="#6ee7b7" font-size="16" font-weight="700">10–15</text>
-  <text x="148" y="80" fill="#94a3b8" font-size="15">Super GM (2700+)</text>
-  <text x="550" y="80" fill="#6ee7b7" font-size="13">♚</text>
-  <!-- GM -->
-  <rect x="50" y="98" width="120" height="32" rx="8" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.25"/>
-  <text x="110" y="120" text-anchor="middle" fill="#6ee7b7" font-size="16" font-weight="700">15–25</text>
-  <text x="188" y="120" fill="#94a3b8" font-size="15">Grandmaster</text>
-  <!-- IM/FM -->
-  <rect x="50" y="138" width="180" height="32" rx="8" fill="#06b6d4" fill-opacity="0.08" stroke="#06b6d4" stroke-opacity="0.25"/>
-  <text x="140" y="160" text-anchor="middle" fill="#67e8f9" font-size="16" font-weight="700">25–40</text>
-  <text x="248" y="160" fill="#94a3b8" font-size="15">International Master / FM</text>
-  <!-- Expert -->
-  <rect x="50" y="178" width="260" height="32" rx="8" fill="#f59e0b" fill-opacity="0.08" stroke="#f59e0b" stroke-opacity="0.25"/>
-  <text x="180" y="200" text-anchor="middle" fill="#fbbf24" font-size="16" font-weight="700">40–60</text>
-  <text x="328" y="200" fill="#94a3b8" font-size="15">Expert (1800–2100)</text>
-  <!-- Intermediate -->
-  <rect x="50" y="218" width="370" height="32" rx="8" fill="#ef4444" fill-opacity="0.06" stroke="#ef4444" stroke-opacity="0.2"/>
-  <text x="235" y="240" text-anchor="middle" fill="#f87171" font-size="16" font-weight="700">60–90</text>
-  <text x="438" y="240" fill="#94a3b8" font-size="15">Intermediate (1400–1800)</text>
-  <!-- Beginner -->
-  <rect x="50" y="258" width="500" height="32" rx="8" fill="#ef4444" fill-opacity="0.04" stroke="#ef4444" stroke-opacity="0.12"/>
-  <text x="300" y="280" text-anchor="middle" fill="#fca5a5" font-size="16" font-weight="700">90–150+</text>
-  <text x="468" y="280" fill="#94a3b8" font-size="15">Beginner</text>
-  <!-- decorative line -->
-  <line x1="40" y1="304" x2="560" y2="304" stroke="white" stroke-opacity="0.04"/>
-  <text x="300" y="316" text-anchor="middle" fill="#475569" font-size="12" font-style="italic">Lower ACPL = more accurate play. Track yours over time.</text>
+  <!-- Intermediate — small king -->
+  <g transform="translate(160, 0)" opacity="0.5">
+    <rect x="-12" y="222" width="24" height="12" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <g fill="#f87171" transform="translate(0, 198) scale(0.7)">
+      <rect x="-1.5" y="-22" width="3" height="8"/><rect x="-4" y="-19" width="8" height="3"/>
+      <circle r="6" cy="-10"/><path d="M-5,-4 L-8,10 L8,10 L5,-4 Z"/><rect x="-9" y="10" width="18" height="4" rx="1.5"/>
+    </g>
+    <text y="252" text-anchor="middle" fill="#f87171" font-size="12" font-weight="700">60–90</text>
+    <text y="268" text-anchor="middle" fill="#64748b" font-size="10">Intermediate</text>
+  </g>
+  <!-- Expert — medium king -->
+  <g transform="translate(255, 0)" opacity="0.65">
+    <rect x="-13" y="218" width="26" height="14" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <g fill="#fbbf24" transform="translate(0, 185) scale(0.85)">
+      <rect x="-1.5" y="-22" width="3" height="8"/><rect x="-4" y="-19" width="8" height="3"/>
+      <circle r="6" cy="-10"/><path d="M-5,-4 L-8,10 L8,10 L5,-4 Z"/><rect x="-9" y="10" width="18" height="4" rx="1.5"/>
+    </g>
+    <text y="252" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="700">40–60</text>
+    <text y="268" text-anchor="middle" fill="#64748b" font-size="10">Expert</text>
+  </g>
+  <!-- IM/FM — taller king -->
+  <g transform="translate(350, 0)" opacity="0.8">
+    <rect x="-14" y="214" width="28" height="15" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <g fill="#67e8f9" transform="translate(0, 170) scale(1.0)">
+      <rect x="-1.5" y="-22" width="3" height="8"/><rect x="-4" y="-19" width="8" height="3"/>
+      <circle r="6" cy="-10"/><path d="M-5,-4 L-8,10 L8,10 L5,-4 Z"/><rect x="-9" y="10" width="18" height="4" rx="1.5"/>
+    </g>
+    <text y="252" text-anchor="middle" fill="#67e8f9" font-size="12" font-weight="700">25–40</text>
+    <text y="268" text-anchor="middle" fill="#64748b" font-size="10">IM / FM</text>
+  </g>
+  <!-- GM — tall king with glow -->
+  <g transform="translate(445, 0)" opacity="0.9">
+    <rect x="-14" y="210" width="28" height="16" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <g fill="#6ee7b7" transform="translate(0, 152) scale(1.15)">
+      <rect x="-1.5" y="-22" width="3" height="8"/><rect x="-4" y="-19" width="8" height="3"/>
+      <circle r="6" cy="-10"/><path d="M-5,-4 L-8,10 L8,10 L5,-4 Z"/><rect x="-9" y="10" width="18" height="4" rx="1.5"/>
+    </g>
+    <text y="252" text-anchor="middle" fill="#6ee7b7" font-size="12" font-weight="700">15–25</text>
+    <text y="268" text-anchor="middle" fill="#64748b" font-size="10">Grandmaster</text>
+  </g>
+  <!-- Super GM — tallest king, bright glow -->
+  <g transform="translate(540, 0)">
+    <rect x="-15" y="205" width="30" height="18" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <circle cy="140" r="40" fill="url(#acgl)"/>
+    <g fill="#fbbf24" transform="translate(0, 130) scale(1.35)" filter="url(#acg)">
+      <rect x="-1.5" y="-22" width="3" height="8"/><rect x="-4" y="-19" width="8" height="3"/>
+      <circle r="6" cy="-10"/><path d="M-5,-4 L-8,10 L8,10 L5,-4 Z"/><rect x="-9" y="10" width="18" height="4" rx="1.5"/>
+    </g>
+    <text y="252" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="700">10–15</text>
+    <text y="268" text-anchor="middle" fill="#64748b" font-size="10">Super GM</text>
+  </g>
+  <!-- Rising accuracy arrow -->
+  <path d="M65 200 C200 195 400 170 540 120" stroke="#334155" stroke-width="1.5" fill="none" stroke-dasharray="4 3" opacity="0.3">
+    <animate attributeName="stroke-dashoffset" from="14" to="0" dur="3s" repeatCount="indefinite"/>
+  </path>
+  <text x="300" y="287" text-anchor="middle" fill="#3f3f46" font-size="11" font-style="italic">Lower ACPL = more accurate play</text>
 </svg>
 </div>
 

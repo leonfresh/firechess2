@@ -13,63 +13,74 @@ This isn't bad luck. It's a pattern, and patterns can be fixed.
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
 <svg width="660" height="280" viewBox="0 0 660 280" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="loBg" x1="0" y1="0" x2="660" y2="280" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#0c1220"/><stop offset="1" stop-color="#1a1030"/>
+    <linearGradient id="loBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a0d15"/><stop offset="1" stop-color="#0d1020"/>
     </linearGradient>
-    <radialGradient id="loGlowRed" cx="120" cy="160" r="110" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#ef4444" stop-opacity="0.12"/><stop offset="1" stop-color="#ef4444" stop-opacity="0"/>
+    <filter id="loG"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <radialGradient id="loStorm" cx="330" cy="30" r="280" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ef4444" stop-opacity="0.08"/><stop offset="1" stop-color="#ef4444" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="loGlowAmber" cx="330" cy="160" r="110" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#f59e0b" stop-opacity="0.10"/><stop offset="1" stop-color="#f59e0b" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="loGlowPurple" cx="540" cy="160" r="110" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#a855f7" stop-opacity="0.12"/><stop offset="1" stop-color="#a855f7" stop-opacity="0"/>
-    </radialGradient>
-    <filter id="loCardGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="6" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
+    <pattern id="loChk" width="40" height="40" patternUnits="userSpaceOnUse">
+      <rect width="40" height="40" fill="#141b28"/><rect width="20" height="20" fill="#1a2336"/><rect x="20" y="20" width="20" height="20" fill="#1a2336"/>
+    </pattern>
   </defs>
   <rect width="660" height="280" rx="18" fill="url(#loBg)"/>
-  <rect x="1" y="1" width="658" height="278" rx="17" stroke="white" stroke-opacity="0.06"/>
-  <!-- ambient glows -->
-  <rect width="660" height="280" rx="18" fill="url(#loGlowRed)"/>
-  <rect width="660" height="280" rx="18" fill="url(#loGlowAmber)"/>
-  <rect width="660" height="280" rx="18" fill="url(#loGlowPurple)"/>
-  <!-- chess piece watermarks -->
-  <text x="60" y="260" text-anchor="middle" fill="white" fill-opacity="0.015" font-size="80">♚</text>
-  <text x="600" y="100" text-anchor="middle" fill="white" fill-opacity="0.015" font-size="70">♛</text>
-  <!-- title -->
-  <text x="330" y="36" text-anchor="middle" fill="white" font-size="17" font-weight="700" letter-spacing="0.5">Why You Keep Losing: The Real Causes</text>
-  <!-- Card 1: No Plan -->
-  <rect x="28" y="58" width="190" height="195" rx="14" fill="#ef4444" fill-opacity="0.07" stroke="#ef4444" stroke-opacity="0.25"/>
-  <text x="123" y="90" text-anchor="middle" fill="#f87171" font-size="34" filter="url(#loCardGlow)">♟</text>
-  <text x="123" y="118" text-anchor="middle" fill="#f87171" font-size="15" font-weight="700">No Plan</text>
-  <line x1="93" y1="128" x2="153" y2="128" stroke="#ef4444" stroke-opacity="0.3" stroke-width="1"/>
-  <text x="123" y="150" text-anchor="middle" fill="#cbd5e1" font-size="13">You know the moves</text>
-  <text x="123" y="168" text-anchor="middle" fill="#cbd5e1" font-size="13">but not the ideas.</text>
-  <text x="123" y="190" text-anchor="middle" fill="#94a3b8" font-size="13">Moves feel aimless</text>
-  <text x="123" y="208" text-anchor="middle" fill="#94a3b8" font-size="13">after book ends.</text>
-  <!-- Card 2: Blind Spot -->
-  <rect x="235" y="58" width="190" height="195" rx="14" fill="#f59e0b" fill-opacity="0.07" stroke="#f59e0b" stroke-opacity="0.25"/>
-  <text x="330" y="90" text-anchor="middle" fill="#fbbf24" font-size="34" filter="url(#loCardGlow)">♞</text>
-  <text x="330" y="118" text-anchor="middle" fill="#fbbf24" font-size="15" font-weight="700">Blind Spot</text>
-  <line x1="300" y1="128" x2="360" y2="128" stroke="#f59e0b" stroke-opacity="0.3" stroke-width="1"/>
-  <text x="330" y="150" text-anchor="middle" fill="#cbd5e1" font-size="13">Same motif keeps</text>
-  <text x="330" y="168" text-anchor="middle" fill="#cbd5e1" font-size="13">catching you — it just</text>
-  <text x="330" y="190" text-anchor="middle" fill="#94a3b8" font-size="13">looks different</text>
-  <text x="330" y="208" text-anchor="middle" fill="#94a3b8" font-size="13">each time.</text>
-  <!-- Card 3: Unknown Traps -->
-  <rect x="442" y="58" width="190" height="195" rx="14" fill="#a855f7" fill-opacity="0.07" stroke="#a855f7" stroke-opacity="0.25"/>
-  <text x="537" y="90" text-anchor="middle" fill="#c084fc" font-size="34" filter="url(#loCardGlow)">♝</text>
-  <text x="537" y="118" text-anchor="middle" fill="#c084fc" font-size="15" font-weight="700">Unknown Traps</text>
-  <line x1="502" y1="128" x2="572" y2="128" stroke="#a855f7" stroke-opacity="0.3" stroke-width="1"/>
-  <text x="537" y="150" text-anchor="middle" fill="#cbd5e1" font-size="13">Your opponent knows</text>
-  <text x="537" y="168" text-anchor="middle" fill="#cbd5e1" font-size="13">the forcing lines.</text>
-  <text x="537" y="190" text-anchor="middle" fill="#94a3b8" font-size="13">You walk into them</text>
-  <text x="537" y="208" text-anchor="middle" fill="#94a3b8" font-size="13">every time.</text>
-  <!-- Decorative bottom line -->
-  <line x1="80" y1="268" x2="580" y2="268" stroke="white" stroke-opacity="0.04" stroke-width="1"/>
+  <rect x="1" y="1" width="658" height="278" rx="17" stroke="white" stroke-opacity="0.04"/>
+  <rect width="660" height="280" rx="18" fill="url(#loStorm)"/>
+  <!-- Chess board in perspective (slanted) -->
+  <g transform="translate(180, 95)">
+    <rect width="300" height="160" rx="4" fill="url(#loChk)" opacity="0.6" transform="skewY(-3)"/>
+    <rect width="300" height="160" rx="4" fill="none" stroke="#1e293b" transform="skewY(-3)"/>
+  </g>
+  <!-- Standing pieces on board (drawn) -->
+  <!-- White pawn -->
+  <g fill="#d1d5db" transform="translate(250, 175)">
+    <circle r="5" cy="-10"/><path d="M-3,-5 L-5,4 L-7,7 L7,7 L5,4 L3,-5 Z"/><rect x="-8" y="7" width="16" height="3" rx="1"/>
+  </g>
+  <!-- White knight -->
+  <g fill="#d1d5db" transform="translate(330, 165)">
+    <path d="M-2,-14 L-5,-11 L-7,-5 L-4,-1 L-6,7 L-6,9 L6,9 L6,7 L1,-2 L3,-9 L1,-14 Z"/>
+    <path d="M-3,-11 L-7,-16 L-1,-13"/><circle cx="-1" cy="-7" r="1.2" fill="#0a0d15"/>
+    <rect x="-7" y="9" width="14" height="3" rx="1"/>
+  </g>
+  <!-- Black bishop threatening -->
+  <g fill="#64748b" transform="translate(390, 155)">
+    <ellipse rx="3" ry="4.5" cy="-13"/><line x1="0" y1="-18" x2="0" y2="-21" stroke="#64748b" stroke-width="2"/>
+    <path d="M-3,-8 L-6,7 L-8,10 L8,10 L6,7 L3,-8 Z"/><rect x="-9" y="10" width="18" height="3" rx="1"/>
+  </g>
+  <!-- Lightning bolts hitting "trap" squares -->
+  <g filter="url(#loG)">
+    <path d="M310 20 L300 55 L312 50 L295 90" stroke="#ef4444" stroke-width="2.5" fill="none" stroke-linecap="round">
+      <animate attributeName="opacity" values="0.8;0.2;0.8" dur="1.5s" repeatCount="indefinite"/>
+    </path>
+    <path d="M400 15 L392 48 L402 44 L388 78" stroke="#f59e0b" stroke-width="2" fill="none" stroke-linecap="round">
+      <animate attributeName="opacity" values="0.6;0.1;0.6" dur="2s" repeatCount="indefinite"/>
+    </path>
+  </g>
+  <!-- Red danger glow on trap square -->
+  <rect x="360" y="152" width="40" height="40" rx="4" fill="#ef4444" fill-opacity="0.1" stroke="#ef4444" stroke-opacity="0.3" transform="skewY(-3)">
+    <animate attributeName="fill-opacity" values="0.1;0.03;0.1" dur="2s" repeatCount="indefinite"/>
+  </rect>
+  <!-- Storm clouds at top -->
+  <g opacity="0.35">
+    <ellipse cx="250" cy="15" rx="80" ry="20" fill="#1f2937"/><ellipse cx="350" cy="10" rx="100" ry="25" fill="#1e293b"/>
+    <ellipse cx="430" cy="18" rx="70" ry="18" fill="#1f2937"/><ellipse cx="180" cy="20" rx="60" ry="15" fill="#1e293b"/>
+  </g>
+  <!-- Pieces knocked over / fallen (showing losses) -->
+  <g fill="#475569" transform="translate(450, 210) rotate(70)" opacity="0.4">
+    <circle r="4" cy="-9"/><path d="M-2.5,-5 L-4,3 L-6,6 L6,6 L4,3 L2.5,-5 Z"/><rect x="-7" y="6" width="14" height="2.5" rx="1"/>
+  </g>
+  <g fill="#475569" transform="translate(220, 220) rotate(-60)" opacity="0.3">
+    <circle r="4" cy="-9"/><path d="M-2.5,-5 L-4,3 L-6,6 L6,6 L4,3 L2.5,-5 Z"/><rect x="-7" y="6" width="14" height="2.5" rx="1"/>
+  </g>
+  <!-- Floating text annotations -->
+  <text x="100" y="100" fill="#ef4444" font-size="11" font-family="monospace" opacity="0.15">TRAP</text>
+  <text x="530" y="130" fill="#f59e0b" font-size="11" font-family="monospace" opacity="0.12">BLIND SPOT</text>
+  <text x="80" y="200" fill="#a855f7" font-size="10" font-family="monospace" opacity="0.1">NO PLAN</text>
+  <!-- Particles -->
+  <circle cx="80" cy="40" r="1.5" fill="#ef4444" opacity="0.12"><animate attributeName="opacity" values="0.12;0.03;0.12" dur="3s" repeatCount="indefinite"/></circle>
+  <circle cx="580" cy="60" r="1" fill="#f59e0b" opacity="0.08"><animate attributeName="opacity" values="0.08;0.02;0.08" dur="4s" repeatCount="indefinite"/></circle>
+  <text x="330" y="270" text-anchor="middle" fill="#3f3f46" font-size="12" font-style="italic">The storm keeps hitting the same squares</text>
 </svg>
 </div>
 
@@ -136,75 +147,90 @@ Here's a concrete 5-step process to solve your problem opening:
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
 <svg width="660" height="230" viewBox="0 0 660 230" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="lsStepBg" x1="0" y1="0" x2="660" y2="230" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#0c1220"/><stop offset="1" stop-color="#0f1a2e"/>
+    <linearGradient id="lsBg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a0d15"/><stop offset="1" stop-color="#0d1020"/>
     </linearGradient>
-    <filter id="lsNodeGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="5" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <radialGradient id="lsCenterGlow" cx="330" cy="90" r="200" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#10b981" stop-opacity="0.06"/><stop offset="1" stop-color="#10b981" stop-opacity="0"/>
+    <filter id="lsG"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <radialGradient id="lsGl" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#10b981" stop-opacity="0.2"/><stop offset="1" stop-color="#10b981" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="660" height="230" rx="18" fill="url(#lsStepBg)"/>
-  <rect x="1" y="1" width="658" height="228" rx="17" stroke="white" stroke-opacity="0.06"/>
-  <rect width="660" height="230" rx="18" fill="url(#lsCenterGlow)"/>
-  <!-- chess piece watermark -->
-  <text x="580" y="210" text-anchor="middle" fill="white" fill-opacity="0.015" font-size="90">♜</text>
-  <!-- title -->
-  <text x="330" y="30" text-anchor="middle" fill="white" font-size="15" font-weight="600" letter-spacing="0.5">5-Step Fix</text>
-  <!-- Step 1 -->
-  <circle cx="75" cy="80" r="28" fill="#10b981" fill-opacity="0.15" stroke="#10b981" stroke-opacity="0.5" filter="url(#lsNodeGlow)"/>
-  <text x="75" y="74" text-anchor="middle" fill="#6ee7b7" font-size="16" font-weight="700">1</text>
-  <text x="75" y="92" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="600">DATA</text>
-  <text x="75" y="132" text-anchor="middle" fill="#cbd5e1" font-size="13">Pull 30-50</text>
-  <text x="75" y="148" text-anchor="middle" fill="#94a3b8" font-size="13">games</text>
-  <!-- connector -->
-  <line x1="103" y1="80" x2="147" y2="80" stroke="#334155" stroke-width="2" stroke-dasharray="5 3">
-    <animate attributeName="stroke-dashoffset" from="16" to="0" dur="2s" repeatCount="indefinite"/>
-  </line>
-  <!-- Step 2 -->
-  <circle cx="192" cy="80" r="28" fill="#06b6d4" fill-opacity="0.15" stroke="#06b6d4" stroke-opacity="0.5"/>
-  <text x="192" y="74" text-anchor="middle" fill="#67e8f9" font-size="16" font-weight="700">2</text>
-  <text x="192" y="92" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="600">FIND</text>
-  <text x="192" y="132" text-anchor="middle" fill="#cbd5e1" font-size="13">Divergence</text>
-  <text x="192" y="148" text-anchor="middle" fill="#94a3b8" font-size="13">point</text>
-  <line x1="220" y1="80" x2="264" y2="80" stroke="#334155" stroke-width="2" stroke-dasharray="5 3">
-    <animate attributeName="stroke-dashoffset" from="16" to="0" dur="2s" repeatCount="indefinite"/>
-  </line>
-  <!-- Step 3 -->
-  <circle cx="309" cy="80" r="28" fill="#10b981" fill-opacity="0.15" stroke="#10b981" stroke-opacity="0.5" filter="url(#lsNodeGlow)"/>
-  <text x="309" y="74" text-anchor="middle" fill="#6ee7b7" font-size="16" font-weight="700">3</text>
-  <text x="309" y="92" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="600">CHECK</text>
-  <text x="309" y="132" text-anchor="middle" fill="#cbd5e1" font-size="13">Engine-check</text>
-  <text x="309" y="148" text-anchor="middle" fill="#94a3b8" font-size="13">key moments</text>
-  <line x1="337" y1="80" x2="381" y2="80" stroke="#334155" stroke-width="2" stroke-dasharray="5 3">
-    <animate attributeName="stroke-dashoffset" from="16" to="0" dur="2s" repeatCount="indefinite"/>
-  </line>
-  <!-- Step 4 -->
-  <circle cx="426" cy="80" r="28" fill="#06b6d4" fill-opacity="0.15" stroke="#06b6d4" stroke-opacity="0.5"/>
-  <text x="426" y="74" text-anchor="middle" fill="#67e8f9" font-size="16" font-weight="700">4</text>
-  <text x="426" y="92" text-anchor="middle" fill="#67e8f9" font-size="11" font-weight="600">LEARN</text>
-  <text x="426" y="132" text-anchor="middle" fill="#cbd5e1" font-size="13">Correct</text>
-  <text x="426" y="148" text-anchor="middle" fill="#94a3b8" font-size="13">plans</text>
-  <line x1="454" y1="80" x2="498" y2="80" stroke="#334155" stroke-width="2" stroke-dasharray="5 3">
-    <animate attributeName="stroke-dashoffset" from="16" to="0" dur="2s" repeatCount="indefinite"/>
-  </line>
-  <!-- Step 5 -->
-  <circle cx="543" cy="80" r="28" fill="#10b981" fill-opacity="0.2" stroke="#10b981" stroke-opacity="0.6" filter="url(#lsNodeGlow)"/>
-  <text x="543" y="74" text-anchor="middle" fill="#6ee7b7" font-size="16" font-weight="700">5</text>
-  <text x="543" y="92" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="600">TEST</text>
-  <text x="543" y="132" text-anchor="middle" fill="#cbd5e1" font-size="13">Play 10-15</text>
-  <text x="543" y="148" text-anchor="middle" fill="#94a3b8" font-size="13">& re-scan</text>
-  <!-- Loop arrow -->
-  <path d="M543 108 C 543 185, 75 185, 75 108" stroke="#475569" stroke-width="1.5" stroke-dasharray="6 4" fill="none">
+  <rect width="660" height="230" rx="18" fill="url(#lsBg)"/>
+  <rect x="1" y="1" width="658" height="228" rx="17" stroke="white" stroke-opacity="0.04"/>
+  <!-- Stone ground -->
+  <rect x="0" y="165" width="660" height="65" fill="#111827" opacity="0.5"/>
+  <line x1="0" y1="165" x2="660" y2="165" stroke="#1f2937"/>
+  <g stroke="#1f2937" stroke-width="0.5" opacity="0.3"><path d="M100 180 L120 195"/><path d="M350 175 L370 190"/><path d="M550 180 L570 195"/></g>
+  <!-- Title -->
+  <text x="330" y="28" text-anchor="middle" fill="white" font-size="15" font-weight="700" letter-spacing="0.5">5-Step Fix: Your Opening Cure</text>
+  <!-- Glowing path -->
+  <path d="M66 155 C140 155 140 155 198 155 C260 155 260 155 330 155 C400 155 400 155 462 155 C520 155 520 155 594 155" stroke="#10b981" stroke-width="2" stroke-opacity="0.2" fill="none" stroke-dasharray="6 4">
     <animate attributeName="stroke-dashoffset" from="20" to="0" dur="3s" repeatCount="indefinite"/>
   </path>
-  <polygon points="78,112 72,102 84,102" fill="#475569"/>
-  <text x="330" y="200" text-anchor="middle" fill="#64748b" font-size="13" font-style="italic">Repeat until win rate improves</text>
-  <!-- decorative bottom line -->
-  <line x1="100" y1="218" x2="560" y2="218" stroke="white" stroke-opacity="0.04" stroke-width="1"/>
+  <!-- Step 1: DATA — drawn rook (data fortress) -->
+  <g transform="translate(66, 0)">
+    <rect x="-12" y="150" width="24" height="12" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <circle cy="115" r="26" fill="url(#lsGl)"/>
+    <g fill="#6ee7b7" transform="translate(0, 110)">
+      <rect x="-8" y="-14" width="4" height="6"/><rect x="-2" y="-14" width="4" height="6"/><rect x="4" y="-14" width="4" height="6"/>
+      <rect x="-9" y="-8" width="18" height="4"/><path d="M-7,-4 L-8,8 L8,8 L7,-4 Z"/><rect x="-10" y="8" width="20" height="3" rx="1"/>
+    </g>
+    <text y="180" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="700">DATA</text>
+    <text y="197" text-anchor="middle" fill="#64748b" font-size="11">Pull 30-50 games</text>
+  </g>
+  <!-- Step 2: FIND — drawn bishop (searching) -->
+  <g transform="translate(198, 0)">
+    <rect x="-12" y="150" width="24" height="12" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <circle cy="115" r="26" fill="url(#lsGl)"/>
+    <g fill="#67e8f9" transform="translate(0, 110)">
+      <ellipse rx="3.5" ry="5" cy="-14"/><line x1="0" y1="-20" x2="0" y2="-23" stroke="#67e8f9" stroke-width="2"/>
+      <path d="M-3.5,-9 L-6,7 L-8,10 L8,10 L6,7 L3.5,-9 Z"/><rect x="-9" y="10" width="18" height="3" rx="1"/>
+    </g>
+    <text y="180" text-anchor="middle" fill="#67e8f9" font-size="14" font-weight="700">FIND</text>
+    <text y="197" text-anchor="middle" fill="#64748b" font-size="11">Divergence point</text>
+  </g>
+  <!-- Step 3: CHECK — drawn knight + magnifying glass -->
+  <g transform="translate(330, 0)">
+    <rect x="-12" y="150" width="24" height="12" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <circle cy="115" r="28" fill="url(#lsGl)"/>
+    <g fill="#6ee7b7" transform="translate(0, 110)" filter="url(#lsG)">
+      <path d="M-2,-14 L-5,-11 L-7,-5 L-4,-1 L-6,7 L-6,9 L6,9 L6,7 L1,-2 L3,-9 L1,-14 Z"/>
+      <path d="M-3,-11 L-7,-16 L-1,-13"/><circle cx="-1" cy="-7" r="1.2" fill="#0a0d15"/>
+      <rect x="-7" y="9" width="14" height="3" rx="1"/>
+    </g>
+    <text y="180" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="700">CHECK</text>
+    <text y="197" text-anchor="middle" fill="#64748b" font-size="11">Engine-verify</text>
+  </g>
+  <!-- Step 4: LEARN — drawn queen (knowledge) -->
+  <g transform="translate(462, 0)">
+    <rect x="-12" y="150" width="24" height="12" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <circle cy="115" r="26" fill="url(#lsGl)"/>
+    <g fill="#67e8f9" transform="translate(0, 110)">
+      <circle r="3.5" cy="-14"/><path d="M-8,-7 L-6,-14 L-3,-7 L0,-15 L3,-7 L6,-14 L8,-7 Z"/>
+      <path d="M-7,-7 L-8,8 L8,8 L7,-7 Z"/><rect x="-9" y="8" width="18" height="3" rx="1"/>
+    </g>
+    <text y="180" text-anchor="middle" fill="#67e8f9" font-size="14" font-weight="700">LEARN</text>
+    <text y="197" text-anchor="middle" fill="#64748b" font-size="11">Correct plans</text>
+  </g>
+  <!-- Step 5: TEST — drawn king (proving yourself) -->
+  <g transform="translate(594, 0)">
+    <rect x="-12" y="150" width="24" height="12" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <circle cy="115" r="28" fill="url(#lsGl)"/>
+    <g fill="#6ee7b7" transform="translate(0, 110)" filter="url(#lsG)">
+      <rect x="-1.5" y="-20" width="3" height="7"/><rect x="-4" y="-17" width="8" height="3"/>
+      <circle r="5.5" cy="-9"/><path d="M-4,-3 L-7,8 L7,8 L4,-3 Z"/><rect x="-8" y="8" width="16" height="3" rx="1"/>
+    </g>
+    <text y="180" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="700">TEST</text>
+    <text y="197" text-anchor="middle" fill="#64748b" font-size="11">Play 10-15 &amp; re-scan</text>
+  </g>
+  <!-- Loop arrow -->
+  <path d="M594 162 C594 210 66 210 66 162" stroke="#475569" stroke-width="1.5" fill="none" stroke-dasharray="5 3">
+    <animate attributeName="stroke-dashoffset" from="16" to="0" dur="3s" repeatCount="indefinite"/>
+  </path>
+  <polygon points="69,165 63,156 75,156" fill="#475569"/>
+  <!-- Stalactites -->
+  <g fill="#111827" opacity="0.4"><polygon points="60,0 68,20 52,20"/><polygon points="200,0 208,25 192,25"/><polygon points="450,0 457,18 443,18"/><polygon points="600,0 607,22 593,22"/></g>
+  <text x="330" y="220" text-anchor="middle" fill="#3f3f46" font-size="11" font-style="italic">Repeat until win rate improves</text>
 </svg>
 </div>
 
