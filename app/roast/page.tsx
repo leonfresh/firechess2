@@ -142,7 +142,7 @@ interface MoveWithComment {
   markers?: { square: string; emoji: string }[];
 }
 
-type PageState = "loading" | "intro" | "watching" | "guessing" | "revealed";
+type PageState = "choose-source" | "loading" | "intro" | "watching" | "guessing" | "revealed";
 
 /* ================================================================== */
 /*  PGN Parsing                                                         */
@@ -209,7 +209,7 @@ export default function RoastPage() {
   const showCoords = useShowCoordinates();
 
   /* ── Game state ── */
-  const [pageState, setPageState] = useState<PageState>("loading");
+  const [pageState, setPageState] = useState<PageState>("choose-source");
   const [game, setGame] = useState<GameData | null>(null);
   const [moves, setMoves] = useState<MoveWithComment[]>([]);
   const [currentIdx, setCurrentIdx] = useState(-1);
@@ -238,6 +238,15 @@ export default function RoastPage() {
   const usedLines = useRef(new Set<string>());
 
   const [shareText, setShareText] = useState<string | null>(null);
+
+  /* ── Source selection state ── */
+  const [inputMode, setInputMode] = useState<"random" | "import" | "paste" | null>(null);
+  const [loadSource, setLoadSource] = useState<"lichess" | "chesscom">("lichess");
+  const [loadUsername, setLoadUsername] = useState("");
+  const [loadingGames, setLoadingGames] = useState(false);
+  const [recentGames, setRecentGames] = useState<{ white: string; black: string; whiteElo: number; blackElo: number; date: string; result: string; pgn: string; event?: string }[]>([]);
+  const [loadError, setLoadError] = useState("");
+  const [pgnInput, setPgnInput] = useState("");
 
   /* ── Active comment + typewriter ── */
   const [activeComment, setActiveComment] = useState<string | null>(null);
@@ -612,11 +621,329 @@ export default function RoastPage() {
     }
   }, []);
 
+  /* ── Process a user-provided PGN (import or paste) ── */
+  const processProvidedPgn = useCallback(async (pgn: string, knownWhiteElo?: number, knownBlackElo?: number) => {
+    tts.stop();
+    setPageState("loading");
+    setMoves([]);
+    setCurrentIdx(-1);
+    setFen("start");
+    setLastMove(null);
+    setCommentHistory([]);
+    setAutoplay(true);
+    setSelectedBracket(null);
+    setRevealLine("");
+    setSummaryLine("");
+    setEloFlavor("");
+    usedLines.current.clear();
+    setActiveComment(null);
+    setCurrentMood("neutral");
+
+    try {
+      // Extract headers from PGN
+      const getHeader = (name: string) => {
+        const m = pgn.match(new RegExp(`\\[${name}\\s+"([^"]*)"\\]`));
+        return m?.[1] ?? "";
+      };
+
+      const whitePlayer = getHeader("White") || "White";
+      const blackPlayer = getHeader("Black") || "Black";
+      const whiteElo = knownWhiteElo || parseInt(getHeader("WhiteElo")) || 1500;
+      const blackElo = knownBlackElo || parseInt(getHeader("BlackElo")) || 1500;
+      const opening = getHeader("Opening") || getHeader("ECO") || "Unknown Opening";
+      const result = getHeader("Result") || "*";
+      const termination = getHeader("Termination") || "";
+      const site = getHeader("Site") || "";
+      // Try to extract game ID from Lichess URLs
+      const lichessMatch = site.match(/lichess\.org\/(\w{8})/);
+      const gameId = lichessMatch?.[1] || `custom-${Date.now()}`;
+
+      const data: GameData = {
+        id: gameId,
+        pgn,
+        whitePlayer,
+        blackPlayer,
+        whiteElo,
+        blackElo,
+        avgElo: Math.round((whiteElo + blackElo) / 2),
+        opening,
+        result,
+        termination,
+        winner: result === "1-0" ? "white" : result === "0-1" ? "black" : null,
+      };
+
+      setGame(data);
+      setOrientation(Math.random() > 0.5 ? "white" : "black");
+
+      const { sans, clocks } = parsePgnWithClocks(data.pgn);
+      if (sans.length < 6) {
+        throw new Error("Game too short (need at least 6 moves)");
+      }
+
+      setAnalyzing(true);
+      setAnalysisProgress(0);
+
+      const chess = new Chess();
+      const analyzed: MoveWithComment[] = [];
+      const usedSet = usedLines.current;
+
+      let totalBlunders = 0;
+      let totalMistakes = 0;
+      let totalInaccuracies = 0;
+
+      const maxMoves = Math.min(sans.length, 60);
+
+      for (let i = 0; i < maxMoves; i++) {
+        const fenBefore = chess.fen();
+        let cpBefore = 0;
+        try { const evalBefore = await stockfishPool.evaluateFen(fenBefore, 12); cpBefore = evalBefore?.cp ?? 0; } catch {}
+
+        let bestMoveSan: string | null = null;
+        try {
+          const pv = await stockfishPool.getPrincipalVariation(fenBefore, 1, 12);
+          if (pv?.pvMoves?.[0]) {
+            const tmp = new Chess(fenBefore);
+            try {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const m = tmp.move({ from: pv.pvMoves[0].slice(0, 2), to: pv.pvMoves[0].slice(2, 4), promotion: pv.pvMoves[0].slice(4, 5) || undefined } as any);
+              bestMoveSan = m?.san ?? null;
+            } catch {}
+          }
+        } catch {}
+
+        let moveResult;
+        try { moveResult = chess.move(sans[i]); } catch { break; }
+        if (!moveResult) break;
+
+        const fenAfter = chess.fen();
+        let cpAfter = 0;
+        try { const evalAfter = await stockfishPool.evaluateFen(fenAfter, 12); cpAfter = evalAfter?.cp ?? 0; } catch {}
+
+        const sideMultiplier = moveResult.color === "w" ? 1 : -1;
+        const evalBeforeForSide = cpBefore * sideMultiplier;
+        const evalAfterForSide = -cpAfter * sideMultiplier;
+        const cpLoss = Math.max(0, evalBeforeForSide - evalAfterForSide);
+        const isBestMove = bestMoveSan === moveResult.san;
+        const classification = classifyMove(cpLoss, isBestMove);
+
+        if (classification === "blunder") totalBlunders++;
+        if (classification === "mistake") totalMistakes++;
+        if (classification === "inaccuracy") totalInaccuracies++;
+
+        const moveNumber = Math.floor(i / 2) + 1;
+        const analyzedMove: AnalyzedMove = {
+          san: moveResult.san,
+          uci: moveResult.from + moveResult.to + (moveResult.promotion ?? ""),
+          moveNumber,
+          color: moveResult.color,
+          fen: fenBefore,
+          fenAfter,
+          cpBefore: evalBeforeForSide,
+          cpAfter: evalAfterForSide,
+          bestMoveSan,
+          cpLoss,
+          classification,
+          isCapture: !!moveResult.captured,
+          isCheck: chess.isCheck(),
+          isCastle: moveResult.san === "O-O" || moveResult.san === "O-O-O",
+          isPromotion: !!moveResult.promotion,
+          pieceType: moveResult.piece,
+          capturedPiece: moveResult.captured ?? undefined,
+          hungPiece: cpLoss > 200 && !moveResult.captured,
+          hungWhat: cpLoss > 200 ? moveResult.piece : undefined,
+          sacrificedMaterial: !!moveResult.captured && cpLoss > 150,
+          wasBookMove: i < 10 && cpLoss < 10,
+          mateInN: null,
+          missedMateInN: null,
+          walkedIntoFork: false,
+          walkedIntoPin: false,
+          evalSwing: cpLoss,
+          isResignationWorthy: evalAfterForSide < -500 && evalBeforeForSide > -200,
+          timeSpent: clocks[i] ?? null,
+        };
+
+        const gameSummary: GameSummary = {
+          moves: analyzed as unknown as AnalyzedMove[],
+          whiteElo: data.whiteElo,
+          blackElo: data.blackElo,
+          avgElo: data.avgElo,
+          result: data.result,
+          opening: data.opening,
+          totalBlunders,
+          totalMistakes,
+          worstMove: null,
+          bestMove: null,
+          biggestSwing: null,
+        };
+
+        const commentResult = generateMoveComment(analyzedMove, usedSet, gameSummary);
+
+        analyzed.push({
+          san: moveResult.san,
+          fen: fenAfter,
+          fenBefore,
+          from: moveResult.from,
+          to: moveResult.to,
+          color: moveResult.color,
+          moveNumber,
+          cp: cpAfter,
+          cpLoss,
+          bestMoveSan,
+          classification,
+          comment: commentResult?.text ?? null,
+          piece: moveResult.piece,
+          isCapture: !!moveResult.captured,
+          isCheck: chess.isCheck(),
+          arrows: commentResult?.annotations.arrows,
+          markers: commentResult?.annotations.markers,
+        });
+
+        setAnalysisProgress(Math.round(((i + 1) / maxMoves) * 100));
+      }
+
+      // Inject opening roast
+      const openingRoast = getOpeningRoast(data.opening);
+      const openingTarget = analyzed.findIndex((m, i) => i >= 2 && i <= 7 && !m.comment);
+      if (openingTarget >= 0) analyzed[openingTarget].comment = openingRoast;
+      else if (analyzed.length > 2 && !analyzed[2].comment) analyzed[2].comment = openingRoast;
+
+      // Inject closing roast on last move
+      if (analyzed.length > 0) {
+        analyzed[analyzed.length - 1].comment = getClosingRoast(totalBlunders, totalMistakes, totalInaccuracies, analyzed.length);
+      }
+
+      // Elo-guessing comments
+      const totalMvs = analyzed.length;
+      const earlyIdx = Math.floor(totalMvs * 0.4);
+      const earlyBlunders = analyzed.slice(0, earlyIdx).filter(m => m.classification === "blunder").length;
+      const earlyBest = analyzed.slice(0, earlyIdx).filter(m => m.classification === "brilliant" || m.classification === "best").length;
+      let earlyQuality: "surprising_good" | "clueless" | "mid" | "rollercoaster" = "mid";
+      if (earlyBlunders >= 2 && earlyBest >= 2) earlyQuality = "rollercoaster";
+      else if (earlyBlunders >= 2) earlyQuality = "clueless";
+      else if (earlyBest >= 3) earlyQuality = "surprising_good";
+      const eloTarget1 = analyzed.findIndex((m, i) => { const pct = i / totalMvs; return pct >= 0.38 && pct <= 0.48 && !m.comment; });
+      if (eloTarget1 >= 0) analyzed[eloTarget1].comment = getEloGuessComment(earlyQuality);
+
+      const lateIdx = Math.floor(totalMvs * 0.55);
+      const lateBlunders = analyzed.slice(earlyIdx, lateIdx).filter(m => m.classification === "blunder").length;
+      const lateBest = analyzed.slice(earlyIdx, lateIdx).filter(m => m.classification === "brilliant" || m.classification === "best").length;
+      let lateQuality: "surprising_good" | "clueless" | "mid" | "rollercoaster" = "mid";
+      if (lateBlunders >= 1 && lateBest >= 1) lateQuality = "rollercoaster";
+      else if (lateBlunders >= 2) lateQuality = "clueless";
+      else if (lateBest >= 2) lateQuality = "surprising_good";
+      if (lateQuality !== earlyQuality) {
+        const eloTarget2 = analyzed.findIndex((m, i) => { const pct = i / totalMvs; return pct >= 0.52 && pct <= 0.60 && !m.comment; });
+        if (eloTarget2 >= 0) analyzed[eloTarget2].comment = getEloGuessComment(lateQuality);
+      }
+
+      setMoves(analyzed);
+      setBlunders(totalBlunders);
+      setMistakes(totalMistakes);
+      setInaccuracies(totalInaccuracies);
+      setAnalyzing(false);
+
+      const intro = GAME_INTRO[Math.floor(Math.random() * GAME_INTRO.length)];
+      setIntroLine(intro);
+      setPageState("intro");
+    } catch (err) {
+      console.error("Failed to process game:", err);
+      alert(err instanceof Error ? err.message : "Failed to process game");
+      setPageState("choose-source");
+      setAnalyzing(false);
+    }
+  }, []);
+
+  /* ── Fetch recent games from Lichess / Chess.com ── */
+  const fetchRecentGames = useCallback(async () => {
+    const username = loadUsername.trim();
+    if (!username) { setLoadError("Enter a username"); return; }
+    setLoadingGames(true);
+    setLoadError("");
+    setRecentGames([]);
+
+    try {
+      if (loadSource === "lichess") {
+        const url = `https://lichess.org/api/games/user/${encodeURIComponent(username)}?max=10&moves=true&opening=true&clocks=true&evals=false&pgnInBody=true`;
+        const res = await fetch(url, { headers: { Accept: "application/x-chess-pgn" } });
+        if (!res.ok) {
+          if (res.status === 404) throw new Error("User not found on Lichess");
+          throw new Error(`Lichess API error (${res.status})`);
+        }
+        const text = await res.text();
+        const games = text.split(/\n\n(?=\[Event )/).filter(g => g.trim());
+        if (games.length === 0) throw new Error("No games found for this user");
+        const parsed = games.map(pgn => {
+          const headers: Record<string, string> = {};
+          const headerLines = pgn.match(/\[(\w+)\s+"([^"]*)"\]/g) ?? [];
+          for (const line of headerLines) {
+            const m = line.match(/\[(\w+)\s+"([^"]*)"\]/);
+            if (m) headers[m[1]] = m[2];
+          }
+          return {
+            white: headers.White ?? "?",
+            black: headers.Black ?? "?",
+            whiteElo: parseInt(headers.WhiteElo) || 1500,
+            blackElo: parseInt(headers.BlackElo) || 1500,
+            date: headers.UTCDate ?? headers.Date ?? "?",
+            result: headers.Result ?? "?",
+            event: headers.Event,
+            pgn: pgn.trim(),
+          };
+        });
+        setRecentGames(parsed);
+      } else {
+        const archRes = await fetch(`https://api.chess.com/pub/player/${encodeURIComponent(username)}/games/archives`);
+        if (!archRes.ok) {
+          if (archRes.status === 404) throw new Error("User not found on Chess.com");
+          throw new Error(`Chess.com API error (${archRes.status})`);
+        }
+        const archData = await archRes.json();
+        const archives: string[] = archData.archives ?? [];
+        if (archives.length === 0) throw new Error("No games found for this user");
+
+        const latestUrl = archives[archives.length - 1];
+        const gamesRes = await fetch(latestUrl);
+        if (!gamesRes.ok) throw new Error("Failed to fetch games from Chess.com");
+        const gamesData = await gamesRes.json();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const allGames: any[] = gamesData.games ?? [];
+
+        const last10 = allGames.filter((g: { pgn?: string }) => g.pgn).slice(-10).reverse();
+        if (last10.length === 0) throw new Error("No games with PGN found");
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const parsed = last10.map((g: any) => {
+          const pgn = g.pgn!;
+          const headers: Record<string, string> = {};
+          const headerLines = pgn.match(/\[(\w+)\s+"([^"]*)"\]/g) ?? [];
+          for (const line of headerLines) {
+            const m = line.match(/\[(\w+)\s+"([^"]*)"\]/);
+            if (m) headers[m[1]] = m[2];
+          }
+          return {
+            white: headers.White ?? g.white?.username ?? "?",
+            black: headers.Black ?? g.black?.username ?? "?",
+            whiteElo: parseInt(headers.WhiteElo) || g.white?.rating || 1500,
+            blackElo: parseInt(headers.BlackElo) || g.black?.rating || 1500,
+            date: headers.UTCDate ?? headers.Date ?? (g.end_time ? new Date(g.end_time * 1000).toISOString().slice(0, 10) : "?"),
+            result: headers.Result ?? "?",
+            event: headers.Event,
+            pgn: pgn.trim(),
+          };
+        });
+        setRecentGames(parsed);
+      }
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Failed to load games");
+    } finally {
+      setLoadingGames(false);
+    }
+  }, [loadUsername, loadSource]);
+
   /* ── Initialize ── */
   useEffect(() => {
     preloadSounds();
-    fetchGame();
-  }, [fetchGame]);
+  }, []);
 
   /* ── Autoplay (waits for typewriter + TTS to finish) ── */
   useEffect(() => {
@@ -882,6 +1209,147 @@ export default function RoastPage() {
             </p>
           )}
         </div>
+
+        {/* ── Source Selection ── */}
+        {pageState === "choose-source" && !analyzing && (
+          <div className="mx-auto max-w-2xl py-8 animate-fadeIn">
+            {/* Three source option cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+              {/* Random game */}
+              <button
+                type="button"
+                onClick={() => { setInputMode("random"); fetchGame(); }}
+                className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 text-center transition-all hover:border-orange-500/30 hover:bg-orange-500/[0.04] cursor-pointer"
+              >
+                <span className="mb-3 flex justify-center text-3xl">🎲</span>
+                <p className="text-sm font-bold text-orange-400 group-hover:text-orange-300">Random Game</p>
+                <p className="mt-1.5 text-[11px] text-slate-500 leading-relaxed">Watch a random Lichess game and guess the Elo</p>
+              </button>
+
+              {/* Import from Lichess / Chess.com */}
+              <button
+                type="button"
+                onClick={() => setInputMode("import")}
+                className={`group rounded-2xl border p-6 text-center transition-all cursor-pointer ${
+                  inputMode === "import"
+                    ? "border-blue-500/30 bg-blue-500/[0.06]"
+                    : "border-white/[0.06] bg-white/[0.02] hover:border-blue-500/20 hover:bg-blue-500/[0.04]"
+                }`}
+              >
+                <span className="mb-3 flex justify-center text-3xl">📥</span>
+                <p className="text-sm font-bold text-blue-400 group-hover:text-blue-300">Import Games</p>
+                <p className="mt-1.5 text-[11px] text-slate-500 leading-relaxed">Load from Lichess or Chess.com by username</p>
+              </button>
+
+              {/* Paste PGN */}
+              <button
+                type="button"
+                onClick={() => setInputMode("paste")}
+                className={`group rounded-2xl border p-6 text-center transition-all cursor-pointer ${
+                  inputMode === "paste"
+                    ? "border-emerald-500/30 bg-emerald-500/[0.06]"
+                    : "border-white/[0.06] bg-white/[0.02] hover:border-emerald-500/20 hover:bg-emerald-500/[0.04]"
+                }`}
+              >
+                <span className="mb-3 flex justify-center text-3xl">📋</span>
+                <p className="text-sm font-bold text-emerald-400 group-hover:text-emerald-300">Paste PGN</p>
+                <p className="mt-1.5 text-[11px] text-slate-500 leading-relaxed">Paste any PGN to get it roasted</p>
+              </button>
+            </div>
+
+            {/* ── Import from Lichess / Chess.com panel ── */}
+            {inputMode === "import" && (
+              <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.03] p-5 animate-fadeIn space-y-4">
+                <h3 className="text-sm font-bold text-blue-400 flex items-center gap-2">📥 Load Recent Games</h3>
+
+                <div className="flex gap-2">
+                  <div className="inline-flex rounded-xl border border-white/[0.08] bg-white/[0.03] p-1 shrink-0">
+                    <button type="button" onClick={() => { setLoadSource("lichess"); setRecentGames([]); setLoadError(""); }}
+                      className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${loadSource === "lichess" ? "bg-white/[0.1] text-white shadow-sm" : "text-slate-500 hover:text-slate-300"}`}>
+                      Lichess
+                    </button>
+                    <button type="button" onClick={() => { setLoadSource("chesscom"); setRecentGames([]); setLoadError(""); }}
+                      className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${loadSource === "chesscom" ? "bg-white/[0.1] text-white shadow-sm" : "text-slate-500 hover:text-slate-300"}`}>
+                      Chess.com
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={loadUsername}
+                    onChange={(e) => setLoadUsername(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter") fetchRecentGames(); }}
+                    placeholder={loadSource === "lichess" ? "Lichess username" : "Chess.com username"}
+                    className="flex-1 min-w-0 rounded-xl border border-white/[0.08] bg-black/40 px-3 py-1.5 text-sm text-slate-200 placeholder-slate-600 outline-none focus:border-blue-500/40"
+                  />
+                  <button type="button" onClick={fetchRecentGames} disabled={loadingGames}
+                    className="shrink-0 rounded-xl bg-white/[0.06] px-4 py-1.5 text-xs font-bold text-slate-300 hover:bg-white/[0.1] hover:text-white disabled:opacity-50 cursor-pointer transition-all">
+                    {loadingGames ? "Loading..." : "Load"}
+                  </button>
+                </div>
+
+                {loadError && <p className="text-xs text-red-400">{loadError}</p>}
+
+                {recentGames.length > 0 && (
+                  <div className="space-y-1.5 max-h-80 overflow-y-auto rounded-xl border border-white/[0.06] bg-black/30 p-2">
+                    {recentGames.map((game, idx) => (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => {
+                          setRecentGames([]);
+                          setInputMode(null);
+                          processProvidedPgn(game.pgn, game.whiteElo, game.blackElo);
+                        }}
+                        className="group flex w-full items-center gap-3 rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 text-left transition-all hover:border-blue-500/20 hover:bg-blue-500/[0.04] cursor-pointer"
+                      >
+                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-xs font-bold text-slate-400 group-hover:bg-blue-500/10 group-hover:text-blue-300">
+                          {idx + 1}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-bold text-slate-300 group-hover:text-blue-300 truncate">
+                            {game.white} vs {game.black}
+                          </p>
+                          <p className="text-[10px] text-slate-500 truncate">
+                            {game.date} · {game.result}{game.event ? ` · ${game.event}` : ""}
+                          </p>
+                        </div>
+                        <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${game.result === "1-0" ? "border-white/10 text-white" : game.result === "0-1" ? "border-slate-600 text-slate-400" : "border-slate-700 text-slate-500"}`}>
+                          {game.result}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── Paste PGN panel ── */}
+            {inputMode === "paste" && (
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.03] p-5 animate-fadeIn space-y-4">
+                <h3 className="text-sm font-bold text-emerald-400 flex items-center gap-2">📋 Paste Your PGN</h3>
+                <textarea
+                  value={pgnInput}
+                  onChange={(e) => setPgnInput(e.target.value)}
+                  placeholder={'[Event "Rated Blitz game"]\n[White "Player1"]\n[Black "Player2"]\n...\n\n1. e4 e5 2. Nf3 Nc6 ...'}
+                  rows={8}
+                  className="w-full rounded-xl border border-white/[0.08] bg-black/40 px-4 py-3 text-sm text-slate-200 placeholder-slate-600 outline-none focus:border-emerald-500/40 font-mono resize-y"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!pgnInput.trim()) return;
+                    setInputMode(null);
+                    processProvidedPgn(pgnInput.trim());
+                  }}
+                  disabled={!pgnInput.trim()}
+                  className="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:brightness-110 hover:scale-[1.02] active:scale-95 disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                >
+                  Roast This Game 🔥
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ── Loading / Analyzing ── */}
         {(pageState === "loading" || analyzing) && (
@@ -1318,7 +1786,13 @@ export default function RoastPage() {
                   </button>
 
                   <button
-                    onClick={fetchGame}
+                    onClick={() => {
+                      setPageState("choose-source");
+                      setInputMode(null);
+                      setLoadError("");
+                      setRecentGames([]);
+                      setPgnInput("");
+                    }}
                     className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:brightness-110 hover:scale-[1.02] active:scale-95"
                   >
                     Next Game 🔥
