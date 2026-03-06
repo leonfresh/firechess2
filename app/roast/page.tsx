@@ -1259,11 +1259,29 @@ export default function RoastPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageState, autoplay, currentIdx, moves, speed, typingDone, activeComment, tts.enabled, tts.speaking, ttsDoneSignal, activeDecision]);
 
-  /* ── Deferred decision popup — waits for TTS + typewriter to finish ── */
+  /* ── Deferred decision popup — waits for TTS + typewriter to finish + reading time ── */
+  const decisionReadyTime = useRef<number | null>(null);
   useEffect(() => {
-    if (pendingDecisionIdx === null || pageState !== "watching") return;
-    if (!typingDone) return; // wait for text to finish typing
-    if (tts.enabled && tts.speaking) return; // wait for TTS to finish
+    if (pendingDecisionIdx === null || pageState !== "watching") {
+      decisionReadyTime.current = null;
+      return;
+    }
+    if (!typingDone) { decisionReadyTime.current = null; return; } // wait for text to finish typing
+    if (tts.enabled && tts.speaking) { decisionReadyTime.current = null; return; } // wait for TTS to finish
+
+    // Mark when text/TTS finished, then add a reading delay
+    if (decisionReadyTime.current === null) {
+      decisionReadyTime.current = Date.now();
+    }
+    const elapsed = Date.now() - decisionReadyTime.current;
+    const readingDelay = tts.enabled ? 800 : 2500; // shorter if TTS already read it aloud
+    if (elapsed < readingDelay) {
+      const timer = setTimeout(() => {
+        // Force a re-render to re-check this effect
+        setPendingDecisionIdx(prev => prev);
+      }, readingDelay - elapsed + 50);
+      return () => clearTimeout(timer);
+    }
 
     const next = pendingDecisionIdx;
     const move = moves[next];
@@ -1644,32 +1662,33 @@ export default function RoastPage() {
       )}
 
       <div className="relative z-10 mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header — Gameshow title card */}
-        <div className="mb-8 text-center">
-          <div className="inline-flex items-center gap-3 rounded-2xl border border-orange-500/20 bg-gradient-to-r from-orange-500/[0.06] via-red-500/[0.04] to-orange-500/[0.06] px-6 py-3 shadow-lg shadow-orange-500/10">
-            <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
-              <span className="bg-gradient-to-r from-red-400 via-orange-400 to-amber-400 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(251,146,60,0.3)]">
-                Roast the Elo 🔥
-              </span>
-            </h1>
-            <span className="rounded-md bg-orange-500/20 border border-orange-500/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-orange-300">
-              Beta
-            </span>
-          </div>
-          <p className="mt-3 text-sm text-slate-400">
-            Watch real games. Read the roasts. Guess the rating.
-          </p>
-          {/* Gameshow scoreboard */}
-          {gamesPlayed > 0 && (
-            <div className="mt-3 flex items-center justify-center gap-4">
-              <div className="flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/[0.06] px-4 py-1.5 shadow-lg shadow-amber-500/10">
-                <span className="text-xs text-amber-300/70 uppercase tracking-wider font-bold">Score</span>
-                <span className="text-lg font-black text-amber-400 tabular-nums" style={{ textShadow: "0 0 12px rgba(251,191,36,0.5)" }}>
-                  {score}
+        {/* Header — Gameshow title card (compact when playing, full hero on landing) */}
+        {pageState !== "choose-source" ? (
+          <div className="mb-8 text-center">
+            <div className="inline-flex items-center gap-3 rounded-2xl border border-orange-500/20 bg-gradient-to-r from-orange-500/[0.06] via-red-500/[0.04] to-orange-500/[0.06] px-6 py-3 shadow-lg shadow-orange-500/10">
+              <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
+                <span className="bg-gradient-to-r from-red-400 via-orange-400 to-amber-400 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(251,146,60,0.3)]">
+                  Roast the Elo 🔥
                 </span>
-                <span className="text-xs text-slate-500">/ {gamesPlayed * 3}</span>
-              </div>
-              {streakCount >= 2 && (
+              </h1>
+              <span className="rounded-md bg-orange-500/20 border border-orange-500/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-orange-300">
+                Beta
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-slate-400">
+              Watch real games. Read the roasts. Guess the rating.
+            </p>
+            {/* Gameshow scoreboard */}
+            {gamesPlayed > 0 && (
+              <div className="mt-3 flex items-center justify-center gap-4">
+                <div className="flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/[0.06] px-4 py-1.5 shadow-lg shadow-amber-500/10">
+                  <span className="text-xs text-amber-300/70 uppercase tracking-wider font-bold">Score</span>
+                  <span className="text-lg font-black text-amber-400 tabular-nums" style={{ textShadow: "0 0 12px rgba(251,191,36,0.5)" }}>
+                    {score}
+                  </span>
+                  <span className="text-xs text-slate-500">/ {gamesPlayed * 3}</span>
+                </div>
+                {streakCount >= 2 && (
                 <div className="flex items-center gap-1 rounded-full border border-orange-500/40 bg-orange-500/[0.1] px-3 py-1.5 animate-pulse shadow-lg shadow-orange-500/20">
                   <span className="text-sm">🔥</span>
                   <span className="text-xs font-bold text-orange-300">{streakCount} STREAK</span>
@@ -1678,12 +1697,96 @@ export default function RoastPage() {
             </div>
           )}
         </div>
+        ) : null}
 
-        {/* ── Source Selection ── */}
+        {/* ── LANDING PAGE HERO (only on choose-source) ── */}
         {pageState === "choose-source" && !analyzing && (
-          <div className="mx-auto max-w-2xl py-8 animate-fadeIn">
-            {/* Source option cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
+          <div className="mx-auto max-w-3xl animate-fadeIn">
+            {/* Hero section */}
+            <div className="relative mb-10 text-center">
+              {/* Background glow */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full blur-[80px] pointer-events-none" style={{ background: "radial-gradient(ellipse, rgba(251,146,60,0.12) 0%, rgba(239,68,68,0.05) 40%, transparent 70%)" }} />
+
+              <div className="relative">
+                {/* Title */}
+                <div className="flex items-center justify-center gap-3 mb-4">
+                  <RoastAvatar mood="smug" size={56} />
+                  <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight">
+                    <span className="bg-gradient-to-r from-red-400 via-orange-400 to-amber-400 bg-clip-text text-transparent">
+                      Roast the Elo
+                    </span>
+                  </h1>
+                </div>
+
+                {/* Tagline */}
+                <p className="text-lg sm:text-xl text-slate-300 font-medium mb-2">
+                  Can you guess a player&apos;s rating just by watching them play?
+                </p>
+                <p className="text-sm text-slate-500 max-w-lg mx-auto mb-8">
+                  Watch real chess games move by move with hilarious AI commentary, then guess the Elo. 
+                  Inspired by Gotham Chess &amp; r/AnarchyChess.
+                </p>
+
+                {/* How it works — 3 steps */}
+                <div className="grid grid-cols-3 gap-3 sm:gap-5 mb-8 max-w-xl mx-auto">
+                  <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 sm:p-5">
+                    <div className="text-2xl sm:text-3xl mb-2">👀</div>
+                    <p className="text-xs sm:text-sm font-bold text-white mb-1">Watch</p>
+                    <p className="text-[10px] sm:text-xs text-slate-500 leading-relaxed">
+                      See every move with savage Pepe commentary
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 sm:p-5">
+                    <div className="text-2xl sm:text-3xl mb-2">🤔</div>
+                    <p className="text-xs sm:text-sm font-bold text-white mb-1">Guess</p>
+                    <p className="text-[10px] sm:text-xs text-slate-500 leading-relaxed">
+                      Pick the Elo bracket — Beginner to Master
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 sm:p-5">
+                    <div className="text-2xl sm:text-3xl mb-2">🔥</div>
+                    <p className="text-xs sm:text-sm font-bold text-white mb-1">Get Roasted</p>
+                    <p className="text-[10px] sm:text-xs text-slate-500 leading-relaxed">
+                      See how close you were + share with friends
+                    </p>
+                  </div>
+                </div>
+
+                {/* Primary CTA — big "Play Now" button */}
+                <button
+                  type="button"
+                  onClick={() => { setInputMode("random"); setIsDaily(false); fetchGame(); }}
+                  className="group relative mx-auto rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 px-10 py-4 text-lg font-black text-white shadow-2xl shadow-orange-500/30 transition-all hover:brightness-110 hover:scale-[1.03] hover:shadow-orange-500/50 active:scale-95 uppercase tracking-wider cursor-pointer"
+                >
+                  <span className="relative z-10 flex items-center gap-2">🎲 Play Random Game</span>
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-orange-400 to-red-400 opacity-0 group-hover:opacity-20 transition-opacity blur-xl" />
+                </button>
+              </div>
+            </div>
+
+            {/* Scoreboard when returning */}
+            {gamesPlayed > 0 && (
+              <div className="mb-8 flex items-center justify-center gap-4">
+                <div className="flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/[0.06] px-4 py-1.5 shadow-lg shadow-amber-500/10">
+                  <span className="text-xs text-amber-300/70 uppercase tracking-wider font-bold">Score</span>
+                  <span className="text-lg font-black text-amber-400 tabular-nums" style={{ textShadow: "0 0 12px rgba(251,191,36,0.5)" }}>
+                    {score}
+                  </span>
+                  <span className="text-xs text-slate-500">/ {gamesPlayed * 3}</span>
+                </div>
+                {streakCount >= 2 && (
+                  <div className="flex items-center gap-1 rounded-full border border-orange-500/40 bg-orange-500/[0.1] px-3 py-1.5 animate-pulse shadow-lg shadow-orange-500/20">
+                    <span className="text-sm">🔥</span>
+                    <span className="text-xs font-bold text-orange-300">{streakCount} STREAK</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* More ways to play */}
+            <div className="mb-6">
+              <p className="text-xs text-slate-600 uppercase tracking-widest font-bold text-center mb-4">Or choose your game</p>
+              <div className="grid grid-cols-3 gap-3 sm:gap-4">
               {/* Daily Challenge */}
               <button
                 type="button"
@@ -1712,17 +1815,6 @@ export default function RoastPage() {
                     <span className="inline-flex h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
                   </div>
                 )}
-              </button>
-
-              {/* Random game */}
-              <button
-                type="button"
-                onClick={() => { setInputMode("random"); setIsDaily(false); fetchGame(); }}
-                className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 sm:p-6 text-center transition-all hover:border-orange-500/30 hover:bg-orange-500/[0.04] cursor-pointer"
-              >
-                <span className="mb-2 sm:mb-3 flex justify-center text-2xl sm:text-3xl">🎲</span>
-                <p className="text-xs sm:text-sm font-bold text-orange-400 group-hover:text-orange-300">Random Game</p>
-                <p className="mt-1 text-[10px] sm:text-[11px] text-slate-500 leading-relaxed">Random Lichess game</p>
               </button>
 
               {/* Import from Lichess / Chess.com */}
@@ -1754,6 +1846,7 @@ export default function RoastPage() {
                 <p className="text-xs sm:text-sm font-bold text-emerald-400 group-hover:text-emerald-300">Paste PGN</p>
                 <p className="mt-1 text-[10px] sm:text-[11px] text-slate-500 leading-relaxed">Paste any PGN to roast</p>
               </button>
+              </div>
             </div>
 
             {/* ── Import from Lichess / Chess.com panel ── */}
