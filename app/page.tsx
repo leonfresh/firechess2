@@ -796,10 +796,10 @@ export default function HomePage() {
     <div className="relative min-h-screen">
       {/* Animated floating orbs — hidden during puzzle solving for drag perf */}
       <div className={`pointer-events-none fixed inset-0 z-0 overflow-hidden transition-opacity duration-300 ${puzzleBoardOpen ? "opacity-0" : ""}`} style={puzzleBoardOpen ? { display: "none" } : undefined}>
-        <div className="animate-float absolute -left-32 top-20 h-96 w-96 rounded-full bg-emerald-500/[0.07] blur-[100px]" />
-        <div className="animate-float-delayed absolute -right-32 top-40 h-80 w-80 rounded-full bg-cyan-500/[0.06] blur-[100px]" />
-        <div className="animate-float absolute bottom-20 left-1/3 h-72 w-72 rounded-full bg-fuchsia-500/[0.05] blur-[100px]" />
-        <div className="animate-float-delayed absolute right-1/4 top-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-[80px]" />
+        <div className="animate-float absolute -left-32 top-20 h-96 w-96 rounded-full bg-emerald-500/[0.07] blur-[100px] will-change-transform" />
+        <div className="animate-float-delayed absolute -right-32 top-40 h-80 w-80 rounded-full bg-cyan-500/[0.06] blur-[100px] will-change-transform" />
+        <div className="animate-float absolute bottom-20 left-1/3 h-72 w-72 rounded-full bg-fuchsia-500/[0.05] blur-[100px] will-change-transform" />
+        <div className="animate-float-delayed absolute right-1/4 top-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-[80px] will-change-transform" />
       </div>
 
       <div className="relative z-10 px-4 py-12 sm:px-6 md:px-10">
@@ -896,7 +896,7 @@ export default function HomePage() {
                   const isComplete = currentIdx > stepIdx || (step.key === "eval" && (progressInfo.phase === "tactics" || progressInfo.phase === "endgames"));
                   return (
                     <div key={step.key} className={`flex flex-col items-center gap-1 transition-colors ${
-                      isActive ? "text-emerald-400" : isComplete ? "text-slate-400" : "text-slate-600"
+                      isActive ? "text-emerald-400" : isComplete ? "text-slate-400" : "text-slate-500"
                     }`}>
                       <span className="text-sm">{step.icon}</span>
                       <span>{step.label}</span>
@@ -953,6 +953,7 @@ export default function HomePage() {
                   type="button"
                   onClick={() => setWelcomeBack(null)}
                   className="text-slate-500 hover:text-slate-300 transition-colors"
+                  aria-label="Dismiss"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
                 </button>
@@ -970,6 +971,7 @@ export default function HomePage() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Enter your Lichess or Chess.com username"
+                  aria-label="Chess username"
                   className="glass-input pl-11"
                 />
               </div>
@@ -1205,6 +1207,7 @@ export default function HomePage() {
                       max={hasProAccess ? 5000 : 300}
                       value={gameCount}
                       onChange={(e) => setGameCount(Number(e.target.value))}
+                      aria-label="Number of games to scan"
                       className="glass-input h-10 text-sm"
                     />
                   ) : (
@@ -1213,6 +1216,7 @@ export default function HomePage() {
                       value={sinceDate}
                       onChange={(e) => setSinceDate(e.target.value)}
                       max={new Date().toISOString().split("T")[0]}
+                      aria-label="Scan games since date"
                       className="glass-input h-10 text-sm"
                     />
                   )}
@@ -1236,6 +1240,7 @@ export default function HomePage() {
                     max={hasProAccess ? 40 : FREE_MAX_MOVES}
                     value={moveCount}
                     onChange={(e) => setMoveCount(Number(e.target.value))}
+                    aria-label="Number of moves to scan"
                     className="glass-input h-10 text-sm"
                   />
                   {!hasProAccess && movesOverFreeLimit && (
@@ -1253,6 +1258,7 @@ export default function HomePage() {
                     max={1000}
                     value={cpThreshold}
                     onChange={(e) => setCpThreshold(Number(e.target.value))}
+                    aria-label="Centipawn loss threshold"
                     className="glass-input h-10 text-sm"
                   />
                 </div>
@@ -1265,6 +1271,7 @@ export default function HomePage() {
                     max={24}
                     value={engineDepth}
                     onChange={(e) => setEngineDepth(Number(e.target.value))}
+                    aria-label="Engine search depth"
                     className="glass-input h-10 text-sm"
                   />
                   {depthOverFreeLimit && (
@@ -1412,12 +1419,12 @@ export default function HomePage() {
                         </div>
                         <p className="text-xs text-slate-500">{t.handle}{t.rating ? ` · ${t.rating}` : ""}</p>
                       </div>
-                      <span className="text-[10px] text-slate-600">{t.time}</span>
+                      <span className="text-[10px] text-slate-500">{t.time}</span>
                     </div>
                     {/* Body */}
                     <p className="text-[13px] leading-relaxed text-slate-300">{t.text}</p>
                     {/* Engagement row */}
-                    <div className="flex items-center gap-4 pt-1 text-[11px] text-slate-600">
+                    <div className="flex items-center gap-4 pt-1 text-[11px] text-slate-500">
                       <span className="flex items-center gap-1">
                         <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" /></svg>
                         {[34, 19, 47, 28, 41, 15][i]}
@@ -1458,7 +1465,7 @@ export default function HomePage() {
             <div className="fixed bottom-6 left-1/2 z-[9999] -translate-x-1/2 animate-fade-in">
               <div className="flex items-center gap-2.5 rounded-2xl border border-emerald-500/30 bg-slate-900/95 px-5 py-3 shadow-2xl backdrop-blur-sm">
                 <span className="text-sm font-medium text-emerald-300">{toast}</span>
-                <button type="button" onClick={() => setToast(null)} className="ml-1 text-slate-500 hover:text-slate-300 transition-colors">
+                <button type="button" onClick={() => setToast(null)} className="ml-1 text-slate-500 hover:text-slate-300 transition-colors" aria-label="Close notification">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 </button>
               </div>
@@ -1477,9 +1484,9 @@ export default function HomePage() {
               {/* Report Heading + Action Bar */}
               <div className="space-y-5">
                 <div className="text-center">
-                  <h1 className="text-3xl font-extrabold tracking-tight text-white md:text-4xl">
+                  <h2 className="text-3xl font-extrabold tracking-tight text-white md:text-4xl">
                     Analysis for <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">{result.username}</span>
-                  </h1>
+                  </h2>
                   <p className="mt-2 text-sm text-slate-400">
                     {result.gamesAnalyzed} games scanned{result.playerRating ? ` · ${result.playerRating} rated` : ""} · {result.leaks.length} opening leak{result.leaks.length !== 1 ? "s" : ""} · {result.missedTactics.length} missed tactic{result.missedTactics.length !== 1 ? "s" : ""}{result.endgameMistakes.length > 0 ? ` · ${result.endgameMistakes.length} endgame mistake${result.endgameMistakes.length !== 1 ? "s" : ""}` : ""}
                   </p>
@@ -3825,7 +3832,7 @@ export default function HomePage() {
                             evalBefore={trace.evalBefore ?? "n/a"}, evalAfter={trace.evalAfter ?? "n/a"}
                             {trace.skippedReason ? `, skipped=${trace.skippedReason}` : ""}
                           </p>
-                          <p className="mt-1 break-all text-slate-600">fen={trace.fenBefore}</p>
+                          <p className="mt-1 break-all text-slate-500">fen={trace.fenBefore}</p>
                         </div>
                       ))}
                     </div>
@@ -4084,7 +4091,7 @@ export default function HomePage() {
                         </button>
                       </div>
 
-                      <p className="mt-5 text-xs text-slate-600">
+                      <p className="mt-5 text-xs text-slate-500">
                         💡 Players who share get their friends analyzing too — and you can compare progress on your dashboards
                       </p>
                     </div>

@@ -148,6 +148,7 @@ export function Navbar() {
           <div className="group relative">
             <button
               type="button"
+              aria-haspopup="true"
               className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                 isActive("/train") || isActive("/guess") || isActive("/dungeon") || isActive("/roast")
                   ? "text-white bg-white/[0.06]"
@@ -199,6 +200,7 @@ export function Navbar() {
           <div className="group relative">
             <button
               type="button"
+              aria-haspopup="true"
               className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                 isActive("/about") || isActive("/blog") || isActive("/feedback") || isActive("/leaderboard") || isActive("/shop") || isActive("/openings")
                   ? "text-white bg-white/[0.06]"
