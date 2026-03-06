@@ -11,70 +11,72 @@ If you've ever analyzed a chess game with an engine, you've seen evaluation numb
 The answer lies in **centipawn loss** — the most important metric in computer chess analysis.
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="640" height="280" viewBox="0 0 640 280" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="640" height="300" viewBox="0 0 640 300" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="cp-bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#0c1220"/>
-      <stop offset="100%" stop-color="#0f172a"/>
+    <linearGradient id="cpbg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#080c18"/><stop offset="1" stop-color="#0d1020"/>
     </linearGradient>
-    <filter id="cp-glow">
-      <feGaussianBlur stdDeviation="6" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <radialGradient id="cp-green" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0%" stop-color="#10b981" stop-opacity="0.2"/>
-      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="cp-red" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.15"/>
-      <stop offset="100%" stop-color="#ef4444" stop-opacity="0"/>
+    <filter id="cpg"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <radialGradient id="cpgl" cx="320" cy="130" r="200" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f59e0b" stop-opacity="0.06"/><stop offset="1" stop-color="#f59e0b" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="640" height="280" rx="16" fill="url(#cp-bg)"/>
-  <!-- background pawn watermark -->
-  <text x="540" y="240" text-anchor="middle" fill="white" font-size="160" opacity="0.012">♟</text>
-  <text x="320" y="36" text-anchor="middle" fill="white" font-size="16" font-weight="700" letter-spacing="1">HOW CENTIPAWN LOSS WORKS</text>
-  <!-- Position Before card -->
-  <circle cx="120" cy="120" r="70" fill="url(#cp-green)"/>
-  <g filter="url(#cp-glow)">
-    <rect x="50" y="70" width="140" height="100" rx="14" fill="#10b981" fill-opacity="0.06" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+  <rect width="640" height="300" rx="18" fill="url(#cpbg)"/>
+  <rect x="1" y="1" width="638" height="298" rx="17" stroke="white" stroke-opacity="0.04"/>
+  <rect width="640" height="300" rx="18" fill="url(#cpgl)"/>
+  <!-- Balance scale post -->
+  <rect x="316" y="80" width="8" height="140" fill="#374151"/>
+  <rect x="310" y="210" width="20" height="6" rx="3" fill="#4b5563"/>
+  <rect x="300" y="214" width="40" height="5" rx="2" fill="#374151"/>
+  <!-- Scale beam (tilted — right side heavier) -->
+  <line x1="160" y1="88" x2="480" y2="78" stroke="#6b7280" stroke-width="4" stroke-linecap="round"/>
+  <!-- Left pan chains -->
+  <line x1="200" y1="90" x2="200" y2="130" stroke="#4b5563" stroke-width="1.5"/>
+  <line x1="160" y1="88" x2="160" y2="128" stroke="#4b5563" stroke-width="1.5"/>
+  <!-- Left pan plate -->
+  <ellipse cx="180" cy="132" rx="40" ry="6" fill="#334155" stroke="#4b5563" stroke-width="1"/>
+  <!-- White king on left pan (drawn) -->
+  <g fill="#d1d5db" transform="translate(180, 100)">
+    <rect x="-1.5" y="-22" width="3" height="8"/><rect x="-4" y="-19" width="8" height="3"/>
+    <circle r="6" cy="-10"/><path d="M-5,-4 L-8,10 L8,10 L5,-4 Z"/><rect x="-9" y="10" width="18" height="4" rx="1.5"/>
   </g>
-  <text x="120" y="100" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="600">Best Engine Move</text>
-  <text x="120" y="140" text-anchor="middle" fill="#6ee7b7" font-size="36" font-weight="700">+0.50</text>
-  <text x="120" y="192" text-anchor="middle" fill="#64748b" font-size="13">Engine keeps the</text>
-  <text x="120" y="210" text-anchor="middle" fill="#64748b" font-size="13">full advantage</text>
-  <!-- Animated arrow -->
-  <path d="M200 120 C240 120 260 120 295 120" stroke="#475569" stroke-width="2" stroke-dasharray="6 4">
-    <animate attributeName="stroke-dashoffset" values="10;0" dur="1.5s" repeatCount="indefinite"/>
-  </path>
-  <text x="248" y="108" text-anchor="middle" fill="#94a3b8" font-size="14" font-weight="600">Your Move</text>
-  <polygon points="293,115 305,120 293,125" fill="#475569"/>
-  <!-- Position After card -->
-  <rect x="310" y="70" width="140" height="100" rx="14" fill="#f59e0b" fill-opacity="0.06" stroke="#f59e0b" stroke-opacity="0.25" stroke-width="1.5"/>
-  <text x="380" y="100" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="600">After Your Move</text>
-  <text x="380" y="140" text-anchor="middle" fill="#fbbf24" font-size="36" font-weight="700">+0.10</text>
-  <text x="380" y="192" text-anchor="middle" fill="#64748b" font-size="13">Dropped the eval</text>
-  <text x="380" y="210" text-anchor="middle" fill="#64748b" font-size="13">by 40 centipawns</text>
-  <!-- Equals -->
-  <text x="470" y="128" text-anchor="middle" fill="#475569" font-size="28">=</text>
-  <!-- CPL Result -->
-  <circle cx="550" cy="120" r="65" fill="url(#cp-red)"/>
-  <g filter="url(#cp-glow)">
-    <rect x="490" y="70" width="120" height="100" rx="14" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.3" stroke-width="1.5"/>
+  <!-- Left label -->
+  <text x="180" y="158" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="600">Best Move</text>
+  <text x="180" y="178" text-anchor="middle" fill="#6ee7b7" font-size="28" font-weight="700" filter="url(#cpg)">+0.50</text>
+  <!-- Right pan chains -->
+  <line x1="440" y1="80" x2="440" y2="120" stroke="#4b5563" stroke-width="1.5"/>
+  <line x1="480" y1="78" x2="480" y2="118" stroke="#4b5563" stroke-width="1.5"/>
+  <!-- Right pan plate (lower = heavier) -->
+  <ellipse cx="460" cy="122" rx="40" ry="6" fill="#334155" stroke="#4b5563" stroke-width="1"/>
+  <!-- Stack of centipawn coins on right pan -->
+  <g transform="translate(460, 90)">
+    <ellipse rx="14" ry="3" cy="20" fill="#b45309" stroke="#d97706" stroke-width="0.5"/>
+    <ellipse rx="14" ry="3" cy="15" fill="#b45309" stroke="#d97706" stroke-width="0.5"/>
+    <ellipse rx="14" ry="3" cy="10" fill="#d97706" stroke="#f59e0b" stroke-width="0.5"/>
+    <ellipse rx="14" ry="3" cy="5" fill="#d97706" stroke="#f59e0b" stroke-width="0.5"/>
+    <ellipse rx="14" ry="3" cy="0" fill="#f59e0b" stroke="#fbbf24" stroke-width="0.5"/>
+    <text y="4" text-anchor="middle" fill="#451a03" font-size="7" font-weight="700">CP</text>
   </g>
-  <text x="550" y="98" text-anchor="middle" fill="#f87171" font-size="14" font-weight="600">Centipawn Loss</text>
-  <text x="550" y="142" text-anchor="middle" fill="#f87171" font-size="40" font-weight="700">40</text>
-  <text x="550" y="160" text-anchor="middle" fill="#f87171" font-size="14">centipawns</text>
-  <!-- Scale bar -->
-  <rect x="50" y="238" width="540" height="12" rx="6" fill="#1e293b"/>
-  <rect x="50" y="238" width="135" height="12" rx="6" fill="#10b981" fill-opacity="0.5"/>
-  <rect x="185" y="238" width="135" height="12" fill="#f59e0b" fill-opacity="0.4"/>
-  <rect x="320" y="238" width="135" height="12" fill="#ef4444" fill-opacity="0.4"/>
-  <rect x="455" y="238" width="135" height="12" rx="6" fill="#7f1d1d" fill-opacity="0.5"/>
-  <text x="118" y="270" text-anchor="middle" fill="#6ee7b7" font-size="13">0–20: Good</text>
-  <text x="252" y="270" text-anchor="middle" fill="#fbbf24" font-size="13">20–50: Inaccuracy</text>
-  <text x="388" y="270" text-anchor="middle" fill="#f87171" font-size="13">50–100: Mistake</text>
-  <text x="522" y="270" text-anchor="middle" fill="#fca5a5" font-size="13">100+: Blunder</text>
+  <!-- Right label -->
+  <text x="460" y="148" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="600">Your Move</text>
+  <text x="460" y="168" text-anchor="middle" fill="#fbbf24" font-size="28" font-weight="700">+0.10</text>
+  <!-- Equals and result -->
+  <text x="320" y="178" text-anchor="middle" fill="#475569" font-size="24">=</text>
+  <!-- CPL result glow -->
+  <g filter="url(#cpg)">
+    <rect x="270" y="228" width="100" height="44" rx="12" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.3" stroke-width="1.5"/>
+  </g>
+  <text x="320" y="248" text-anchor="middle" fill="#f87171" font-size="13" font-weight="600">CPL</text>
+  <text x="320" y="268" text-anchor="middle" fill="#f87171" font-size="22" font-weight="700">40</text>
+  <!-- Scale bar at bottom -->
+  <rect x="50" y="284" width="540" height="8" rx="4" fill="#1e293b"/>
+  <rect x="50" y="284" width="135" height="8" rx="4" fill="#10b981" fill-opacity="0.4"/>
+  <rect x="185" y="284" width="135" height="8" fill="#f59e0b" fill-opacity="0.35"/>
+  <rect x="320" y="284" width="135" height="8" fill="#ef4444" fill-opacity="0.35"/>
+  <rect x="455" y="284" width="135" height="8" rx="4" fill="#7f1d1d" fill-opacity="0.4"/>
+  <!-- Particles -->
+  <circle cx="80" cy="50" r="1" fill="#10b981" opacity="0.1"><animate attributeName="opacity" values="0.1;0.03;0.1" dur="3s" repeatCount="indefinite"/></circle>
+  <circle cx="570" cy="40" r="1.5" fill="#f59e0b" opacity="0.08"><animate attributeName="opacity" values="0.08;0.02;0.08" dur="4s" repeatCount="indefinite"/></circle>
 </svg>
 </div>
 

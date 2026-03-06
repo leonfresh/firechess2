@@ -9,115 +9,95 @@ tags: ["analysis", "improvement"]
 Most chess players analyze their games wrong. They plug a game into an engine, scroll through the moves, see where the evaluation changed, think "oh, I should have played that," and move on. Two weeks later, they make the exact same mistake.
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="680" height="240" viewBox="0 0 680 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="680" height="300" viewBox="0 0 680 300" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="ag-bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#0c1220"/>
-      <stop offset="100%" stop-color="#0f172a"/>
+    <linearGradient id="a1bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a0d15"/><stop offset="1" stop-color="#0d1020"/>
     </linearGradient>
-    <filter id="ag-glow">
-      <feGaussianBlur stdDeviation="4" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <radialGradient id="ag-spot1" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0%" stop-color="#10b981" stop-opacity="0.15"/>
-      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="ag-spot2" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.12"/>
-      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0"/>
+    <filter id="a1g"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <radialGradient id="a1s" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#10b981" stop-opacity="0.2"/><stop offset="1" stop-color="#10b981" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="680" height="240" rx="16" fill="url(#ag-bg)"/>
-  <!-- subtle grid texture -->
-  <g opacity="0.04" stroke="white" stroke-width="0.5">
-    <line x1="0" y1="60" x2="680" y2="60"/><line x1="0" y1="120" x2="680" y2="120"/><line x1="0" y1="180" x2="680" y2="180"/>
-    <line x1="136" y1="0" x2="136" y2="240"/><line x1="272" y1="0" x2="272" y2="240"/><line x1="408" y1="0" x2="408" y2="240"/><line x1="544" y1="0" x2="544" y2="240"/>
+  <rect width="680" height="300" rx="18" fill="url(#a1bg)"/>
+  <rect x="1" y="1" width="678" height="298" rx="17" stroke="white" stroke-opacity="0.04"/>
+  <!-- Stone ground -->
+  <rect x="0" y="220" width="680" height="80" fill="#111827" opacity="0.5"/>
+  <line x1="0" y1="220" x2="680" y2="220" stroke="#1f2937"/>
+  <!-- Ground cracks -->
+  <g stroke="#1f2937" stroke-width="0.5" opacity="0.4">
+    <path d="M50 240 L80 250 L60 270"/><path d="M200 235 L220 260"/><path d="M400 245 L420 265 L410 280"/><path d="M580 230 L600 255"/>
   </g>
-  <!-- ambient glow spots -->
-  <circle cx="68" cy="100" r="80" fill="url(#ag-spot1)"/>
-  <circle cx="612" cy="100" r="80" fill="url(#ag-spot1)"/>
-  <circle cx="340" cy="100" r="100" fill="url(#ag-spot2)"/>
-  <!-- Title -->
-  <text x="340" y="32" text-anchor="middle" fill="white" font-size="15" font-weight="700" letter-spacing="2">THE 5-STEP ANALYSIS METHOD</text>
-  <!-- Step 1: Play — chess pieces on a board -->
-  <g filter="url(#ag-glow)">
-    <circle cx="68" cy="110" r="42" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
-    <circle cx="68" cy="110" r="38" fill="none" stroke="#10b981" stroke-opacity="0.1" stroke-dasharray="3 5"/>
-  </g>
-  <!-- mini board -->
-  <rect x="50" y="86" width="36" height="36" rx="3" fill="#1e293b" stroke="#334155" stroke-width="0.5"/>
-  <rect x="50" y="86" width="9" height="9" fill="#334155"/><rect x="68" y="86" width="9" height="9" fill="#334155"/>
-  <rect x="59" y="95" width="9" height="9" fill="#334155"/><rect x="77" y="95" width="9" height="9" fill="#334155"/>
-  <rect x="50" y="104" width="9" height="9" fill="#334155"/><rect x="68" y="104" width="9" height="9" fill="#334155"/>
-  <rect x="59" y="113" width="9" height="9" fill="#334155"/><rect x="77" y="113" width="9" height="9" fill="#334155"/>
-  <!-- piece on board -->
-  <text x="63" y="102" text-anchor="middle" fill="#6ee7b7" font-size="14">♞</text>
-  <text x="72" y="111" text-anchor="middle" fill="#94a3b8" font-size="10">♟</text>
-  <text x="68" y="148" text-anchor="middle" fill="#6ee7b7" font-size="16" font-weight="700">PLAY</text>
-  <text x="68" y="168" text-anchor="middle" fill="#94a3b8" font-size="13">Play your games</text>
-  <!-- flowing arrow 1 -->
-  <path d="M118 110 C138 110 138 110 158 110" stroke="#334155" stroke-width="2" stroke-dasharray="4 4">
-    <animate attributeName="stroke-dashoffset" values="8;0" dur="1.5s" repeatCount="indefinite"/>
+  <!-- Glowing path connecting stations -->
+  <path d="M68 210 C120 210 120 210 170 210 C220 210 220 210 272 210 C320 210 320 210 374 210 C420 210 420 210 476 210 C520 210 520 210 578 210" stroke="#10b981" stroke-width="2" stroke-opacity="0.2" fill="none" stroke-dasharray="6 4">
+    <animate attributeName="stroke-dashoffset" from="20" to="0" dur="3s" repeatCount="indefinite"/>
   </path>
-  <polygon points="156,105 166,110 156,115" fill="#334155"/>
-  <!-- Step 2: Reflect — thoughtful king piece -->
-  <g filter="url(#ag-glow)">
-    <circle cx="204" cy="110" r="42" fill="#06b6d4" fill-opacity="0.08" stroke="#06b6d4" stroke-opacity="0.3" stroke-width="1.5"/>
+  <!-- Station 1: PLAY — Drawn pawn on pedestal -->
+  <g transform="translate(68, 0)">
+    <rect x="-14" y="198" width="28" height="14" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <circle cy="172" r="30" fill="url(#a1s)"/>
+    <g fill="#d1d5db" transform="translate(0, 170)">
+      <circle r="6" cy="-12"/><path d="M-4,-6 L-7,6 L-9,10 L9,10 L7,6 L4,-6 Z"/><rect x="-10" y="10" width="20" height="4" rx="1.5"/>
+    </g>
+    <text y="230" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="700">PLAY</text>
   </g>
-  <!-- king silhouette with question marks -->
-  <text x="204" y="108" text-anchor="middle" fill="#67e8f9" font-size="32">♚</text>
-  <text x="226" y="92" text-anchor="middle" fill="#67e8f9" font-size="14" opacity="0.5">?</text>
-  <text x="182" y="98" text-anchor="middle" fill="#67e8f9" font-size="11" opacity="0.3">?</text>
-  <text x="204" y="148" text-anchor="middle" fill="#67e8f9" font-size="16" font-weight="700">REFLECT</text>
-  <text x="204" y="168" text-anchor="middle" fill="#94a3b8" font-size="13">Review without engine</text>
-  <!-- flowing arrow 2 -->
-  <path d="M254 110 C274 110 274 110 294 110" stroke="#334155" stroke-width="2" stroke-dasharray="4 4">
-    <animate attributeName="stroke-dashoffset" values="8;0" dur="1.5s" repeatCount="indefinite"/>
-  </path>
-  <polygon points="292,105 302,110 292,115" fill="#334155"/>
-  <!-- Step 3: Analyze — engine/magnifying glass -->
-  <g filter="url(#ag-glow)">
-    <circle cx="340" cy="110" r="42" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+  <!-- Station 2: REFLECT — Drawn king with ? marks -->
+  <g transform="translate(170, 0)">
+    <rect x="-14" y="198" width="28" height="14" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <circle cy="165" r="30" fill="url(#a1s)"/>
+    <g fill="#67e8f9" transform="translate(0, 158)">
+      <rect x="-1.5" y="-22" width="3" height="8"/><rect x="-4" y="-19" width="8" height="3"/>
+      <circle r="6" cy="-10"/><path d="M-5,-4 L-8,10 L8,10 L5,-4 Z"/><rect x="-9" y="10" width="18" height="4" rx="1.5"/>
+    </g>
+    <text x="18" y="140" fill="#67e8f9" font-size="14" opacity="0.5">?</text>
+    <text x="-16" y="148" fill="#67e8f9" font-size="10" opacity="0.3">?</text>
+    <text y="230" text-anchor="middle" fill="#67e8f9" font-size="14" font-weight="700">REFLECT</text>
   </g>
-  <!-- magnifying glass over a position -->
-  <circle cx="336" cy="104" r="14" fill="none" stroke="#6ee7b7" stroke-width="2"/>
-  <line x1="346" y1="114" x2="356" y2="124" stroke="#6ee7b7" stroke-width="2.5" stroke-linecap="round"/>
-  <text x="336" y="109" text-anchor="middle" fill="#6ee7b7" font-size="12">♛</text>
-  <text x="340" y="148" text-anchor="middle" fill="#6ee7b7" font-size="16" font-weight="700">ANALYZE</text>
-  <text x="340" y="168" text-anchor="middle" fill="#94a3b8" font-size="13">Engine-check key moments</text>
-  <!-- flowing arrow 3 -->
-  <path d="M390 110 C410 110 410 110 430 110" stroke="#334155" stroke-width="2" stroke-dasharray="4 4">
-    <animate attributeName="stroke-dashoffset" values="8;0" dur="1.5s" repeatCount="indefinite"/>
-  </path>
-  <polygon points="428,105 438,110 428,115" fill="#334155"/>
-  <!-- Step 4: Pattern — radar chart shape -->
-  <g filter="url(#ag-glow)">
-    <circle cx="476" cy="110" r="42" fill="#06b6d4" fill-opacity="0.08" stroke="#06b6d4" stroke-opacity="0.3" stroke-width="1.5"/>
+  <!-- Station 3: ANALYZE — Drawn knight with magnifying glass -->
+  <g transform="translate(272, 0)">
+    <rect x="-14" y="198" width="28" height="14" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <circle cy="165" r="35" fill="url(#a1s)"/>
+    <g fill="#6ee7b7" transform="translate(0, 158)">
+      <path d="M-2,-16 L-6,-13 L-8,-7 L-5,-2 L-7,7 L-7,10 L7,10 L7,7 L1,-3 L3,-11 L1,-16 Z"/>
+      <path d="M-4,-13 L-8,-19 L-1,-15"/><circle cx="-2" cy="-8" r="1.5" fill="#0a0d15"/>
+      <rect x="-8" y="10" width="16" height="3.5" rx="1"/>
+    </g>
+    <circle cx="16" cy="148" r="10" fill="none" stroke="#6ee7b7" stroke-width="1.5" opacity="0.5"/>
+    <line x1="23" y1="155" x2="30" y2="162" stroke="#6ee7b7" stroke-width="2" opacity="0.5" stroke-linecap="round"/>
+    <text y="230" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="700">ANALYZE</text>
   </g>
-  <!-- mini radar chart -->
-  <polygon points="476,88 494,102 490,120 462,120 458,102" fill="#06b6d4" fill-opacity="0.12" stroke="#67e8f9" stroke-width="1"/>
-  <polygon points="476,95 488,105 485,116 467,116 464,105" fill="#06b6d4" fill-opacity="0.08" stroke="#67e8f9" stroke-width="0.5" opacity="0.4"/>
-  <circle cx="476" cy="106" r="2" fill="#67e8f9"/>
-  <text x="476" y="148" text-anchor="middle" fill="#67e8f9" font-size="16" font-weight="700">PATTERN</text>
-  <text x="476" y="168" text-anchor="middle" fill="#94a3b8" font-size="13">Find recurring mistakes</text>
-  <!-- flowing arrow 4 -->
-  <path d="M526 110 C546 110 546 110 566 110" stroke="#334155" stroke-width="2" stroke-dasharray="4 4">
-    <animate attributeName="stroke-dashoffset" values="8;0" dur="1.5s" repeatCount="indefinite"/>
-  </path>
-  <polygon points="564,105 574,110 564,115" fill="#334155"/>
-  <!-- Step 5: Fix — rising arrow / checkmark -->
-  <g filter="url(#ag-glow)">
-    <circle cx="612" cy="110" r="42" fill="#10b981" fill-opacity="0.12" stroke="#10b981" stroke-opacity="0.5" stroke-width="2"/>
+  <!-- Station 4: PATTERN — Drawn bishop with radar overlay -->
+  <g transform="translate(374, 0)">
+    <rect x="-14" y="198" width="28" height="14" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <circle cy="165" r="30" fill="url(#a1s)"/>
+    <g fill="#67e8f9" transform="translate(0, 158)">
+      <ellipse rx="3.5" ry="4.5" cy="-14"/><line x1="0" y1="-19" x2="0" y2="-22" stroke="#67e8f9" stroke-width="2"/>
+      <path d="M-3.5,-9 L-6,7 L-8,10 L8,10 L6,7 L3.5,-9 Z"/><rect x="-9" y="10" width="18" height="3.5" rx="1"/>
+    </g>
+    <polygon points="374,138 388,152 384,168 364,168 360,152" fill="#06b6d4" fill-opacity="0.06" stroke="#67e8f9" stroke-width="0.5" opacity="0.4" transform="translate(-374, 0)"/>
+    <text y="230" text-anchor="middle" fill="#67e8f9" font-size="14" font-weight="700">PATTERN</text>
   </g>
-  <!-- checkmark with upward arrow -->
-  <path d="M598 112 L608 122 L628 96" stroke="#6ee7b7" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M620 94 L628 86 L628 96" stroke="#6ee7b7" stroke-width="2" fill="none" stroke-linecap="round"/>
-  <text x="612" y="148" text-anchor="middle" fill="#6ee7b7" font-size="16" font-weight="700">FIX</text>
-  <text x="612" y="168" text-anchor="middle" fill="#94a3b8" font-size="13">Create action items</text>
-  <!-- bottom accent line -->
-  <line x1="40" y1="225" x2="640" y2="225" stroke="#10b981" stroke-opacity="0.1" stroke-width="1"/>
-  <text x="340" y="222" text-anchor="middle" fill="#475569" font-size="12" font-style="italic">A method that builds real chess skill, not just engine dependency</text>
+  <!-- Station 5: FIX — Drawn queen with checkmark glow -->
+  <g transform="translate(578, 0)">
+    <rect x="-14" y="198" width="28" height="14" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <circle cy="165" r="35" fill="url(#a1s)"/>
+    <g fill="#6ee7b7" transform="translate(0, 158)" filter="url(#a1g)">
+      <circle r="4" cy="-16"/><path d="M-10,-8 L-8,-16 L-4,-8 L0,-18 L4,-8 L8,-16 L10,-8 Z"/>
+      <path d="M-9,-8 L-10,8 L10,8 L9,-8 Z"/><rect x="-11" y="8" width="22" height="4" rx="1.5"/>
+    </g>
+    <path d="M12 140 L16 146 L26 132" stroke="#6ee7b7" stroke-width="2.5" fill="none" opacity="0.6" stroke-linecap="round"/>
+    <text y="230" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="700">FIX</text>
+  </g>
+  <!-- Cavern ceiling stalactites -->
+  <g fill="#111827" opacity="0.5">
+    <polygon points="30,0 38,25 22,25"/><polygon points="100,0 110,35 90,35"/><polygon points="200,0 208,20 192,20"/>
+    <polygon points="340,0 348,30 332,30"/><polygon points="480,0 487,22 473,22"/><polygon points="600,0 608,28 592,28"/>
+  </g>
+  <!-- Atmospheric particles -->
+  <circle cx="140" cy="50" r="1.5" fill="#10b981" opacity="0.12"><animate attributeName="opacity" values="0.12;0.03;0.12" dur="3s" repeatCount="indefinite"/></circle>
+  <circle cx="440" cy="30" r="1" fill="#06b6d4" opacity="0.08"><animate attributeName="opacity" values="0.08;0.02;0.08" dur="4s" repeatCount="indefinite"/></circle>
+  <circle cx="620" cy="55" r="1.5" fill="#10b981" opacity="0.1"><animate attributeName="opacity" values="0.1;0.03;0.1" dur="2.5s" repeatCount="indefinite"/></circle>
+  <text x="340" y="268" text-anchor="middle" fill="#3f3f46" font-size="12" font-style="italic">The journey from move to mastery</text>
 </svg>
 </div>
 
@@ -183,58 +163,83 @@ The first analysis will change your thinking. The second won't.
 After analyzing several games, patterns emerge. Common categories:
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="600" height="320" viewBox="0 0 600 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="600" height="310" viewBox="0 0 600 310" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="mc-bg" x1="0" y1="0" x2="0.3" y2="1">
-      <stop offset="0%" stop-color="#0c1220"/>
-      <stop offset="100%" stop-color="#0f172a"/>
+    <linearGradient id="mc1bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#080c18"/><stop offset="1" stop-color="#0d1020"/>
     </linearGradient>
-    <filter id="mc-glow">
-      <feGaussianBlur stdDeviation="3" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
+    <filter id="mc1g"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <radialGradient id="mc1gl" cx="0.5" cy="0.8" r="0.5">
+      <stop offset="0" stop-color="#10b981" stop-opacity="0.12"/><stop offset="1" stop-color="#10b981" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <rect width="600" height="320" rx="16" fill="url(#mc-bg)"/>
-  <!-- background chess piece silhouettes -->
-  <text x="550" y="290" text-anchor="middle" fill="white" font-size="120" opacity="0.015">♛</text>
-  <text x="60" y="300" text-anchor="middle" fill="white" font-size="90" opacity="0.02">♞</text>
-  <!-- title -->
-  <text x="300" y="36" text-anchor="middle" fill="white" font-size="16" font-weight="700" letter-spacing="1">MISTAKE CATEGORIES</text>
-  <text x="300" y="54" text-anchor="middle" fill="#64748b" font-size="12">Typical distribution for 1200–1800 rated players</text>
-  <!-- Tactical Oversights — largest bar with knight icon -->
-  <g filter="url(#mc-glow)">
-    <rect x="60" y="76" width="340" height="36" rx="8" fill="#10b981" fill-opacity="0.1" stroke="#10b981" stroke-opacity="0.3" stroke-width="1.5"/>
+  <rect width="600" height="310" rx="16" fill="url(#mc1bg)"/>
+  <rect x="1" y="1" width="598" height="308" rx="15" stroke="white" stroke-opacity="0.04"/>
+  <!-- Stone ground -->
+  <rect x="0" y="245" width="600" height="65" fill="#111827" opacity="0.5"/>
+  <line x1="0" y1="245" x2="600" y2="245" stroke="#1f2937"/>
+  <g stroke="#1f2937" stroke-width="0.5" opacity="0.3"><path d="M80 260 L100 275"/><path d="M300 255 L320 270"/><path d="M480 260 L500 278"/></g>
+  <!-- Title -->
+  <text x="300" y="28" text-anchor="middle" fill="white" font-size="15" font-weight="700" letter-spacing="0.5">MISTAKE CATEGORIES</text>
+  <text x="300" y="46" text-anchor="middle" fill="#475569" font-size="12" font-style="italic">Typical for 1200–1800 rated players</text>
+  <!-- 1. Tactical 38% — Tall drawn knight piece -->
+  <g transform="translate(68, 0)">
+    <rect x="-16" y="233" width="32" height="12" rx="3" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <rect x="-12" y="108" width="24" height="137" rx="4" fill="#10b981" fill-opacity="0.06" stroke="#10b981" stroke-opacity="0.2"/>
+    <g fill="#10b981" transform="translate(0, 88)" filter="url(#mc1g)">
+      <path d="M-3,-16 L-7,-13 L-10,-6 L-7,-1 L-9,8 L-9,12 L9,12 L9,8 L1,-3 L4,-11 L1,-16 Z"/>
+      <path d="M-5,-13 L-10,-20 L-2,-15"/><circle cx="-3" cy="-8" r="2" fill="#080c18"/>
+      <rect x="-10" y="12" width="20" height="4" rx="1"/>
+    </g>
+    <text y="265" text-anchor="middle" fill="#6ee7b7" font-size="13" font-weight="600">Tactical</text>
+    <text y="284" text-anchor="middle" fill="#6ee7b7" font-size="17" font-weight="700">38%</text>
   </g>
-  <rect x="62" y="78" width="336" height="32" rx="6" fill="#10b981" fill-opacity="0.08"/>
-  <text x="80" y="100" fill="#6ee7b7" font-size="20">♞</text>
-  <text x="106" y="100" fill="#6ee7b7" font-size="15" font-weight="700">Tactical Oversights</text>
-  <text x="380" y="100" fill="#6ee7b7" font-size="15" font-weight="700">38%</text>
-  <text x="420" y="100" fill="#64748b" font-size="13">Missed forks, pins, skewers</text>
-  <!-- Positional — medium bar with bishop -->
-  <rect x="60" y="122" width="260" height="36" rx="8" fill="#06b6d4" fill-opacity="0.08" stroke="#06b6d4" stroke-opacity="0.2"/>
-  <text x="80" y="146" fill="#67e8f9" font-size="20">♝</text>
-  <text x="106" y="146" fill="#67e8f9" font-size="15" font-weight="700">Positional Errors</text>
-  <text x="300" y="146" fill="#67e8f9" font-size="15" font-weight="700">25%</text>
-  <text x="340" y="146" fill="#64748b" font-size="13">Wrong plan, bad placement</text>
-  <!-- Calculation -->
-  <rect x="60" y="168" width="180" height="36" rx="8" fill="#f59e0b" fill-opacity="0.08" stroke="#f59e0b" stroke-opacity="0.2"/>
-  <text x="80" y="192" fill="#fbbf24" font-size="20">♛</text>
-  <text x="106" y="192" fill="#fbbf24" font-size="15" font-weight="700">Calculation</text>
-  <text x="224" y="192" fill="#fbbf24" font-size="15" font-weight="700">18%</text>
-  <text x="260" y="192" fill="#64748b" font-size="13">Saw it, miscalculated a line</text>
-  <!-- Time pressure -->
-  <rect x="60" y="214" width="120" height="36" rx="8" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.2"/>
-  <text x="80" y="238" fill="#f87171" font-size="20">⏱</text>
-  <text x="106" y="238" fill="#f87171" font-size="15" font-weight="700">Time</text>
-  <text x="162" y="238" fill="#f87171" font-size="15" font-weight="700">12%</text>
-  <text x="200" y="238" fill="#64748b" font-size="13">Blunders under clock pressure</text>
-  <!-- Opening -->
-  <rect x="60" y="260" width="72" height="36" rx="8" fill="#a855f7" fill-opacity="0.08" stroke="#a855f7" stroke-opacity="0.2"/>
-  <text x="80" y="284" fill="#c084fc" font-size="20">♟</text>
-  <text x="114" y="284" fill="#c084fc" font-size="15" font-weight="700">7%</text>
-  <text x="150" y="284" fill="#64748b" font-size="13">Suboptimal opening prep</text>
-  <!-- decorative bottom line -->
-  <line x1="40" y1="306" x2="560" y2="306" stroke="white" stroke-opacity="0.04"/>
+  <!-- 2. Positional 25% — Drawn bishop piece -->
+  <g transform="translate(178, 0)">
+    <rect x="-16" y="233" width="32" height="12" rx="3" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <rect x="-12" y="150" width="24" height="95" rx="4" fill="#06b6d4" fill-opacity="0.06" stroke="#06b6d4" stroke-opacity="0.2"/>
+    <g fill="#06b6d4" transform="translate(0, 130)">
+      <ellipse rx="4" ry="5.5" cy="-14"/><line x1="0" y1="-20" x2="0" y2="-24" stroke="#06b6d4" stroke-width="2"/>
+      <path d="M-4,-8 L-7,8 L-9,12 L9,12 L7,8 L4,-8 Z"/><rect x="-10" y="12" width="20" height="4" rx="1"/>
+    </g>
+    <text y="265" text-anchor="middle" fill="#67e8f9" font-size="13" font-weight="600">Positional</text>
+    <text y="284" text-anchor="middle" fill="#67e8f9" font-size="17" font-weight="700">25%</text>
+  </g>
+  <!-- 3. Calculation 18% — Drawn queen piece -->
+  <g transform="translate(288, 0)">
+    <rect x="-16" y="233" width="32" height="12" rx="3" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <rect x="-12" y="175" width="24" height="70" rx="4" fill="#f59e0b" fill-opacity="0.06" stroke="#f59e0b" stroke-opacity="0.2"/>
+    <g fill="#f59e0b" transform="translate(0, 158)">
+      <circle r="4" cy="-13"/><path d="M-9,-6 L-7,-13 L-3.5,-6 L0,-15 L3.5,-6 L7,-13 L9,-6 Z"/>
+      <path d="M-8,-6 L-9,8 L9,8 L8,-6 Z"/><rect x="-10" y="8" width="20" height="4" rx="1"/>
+    </g>
+    <text y="265" text-anchor="middle" fill="#fbbf24" font-size="13" font-weight="600">Calculation</text>
+    <text y="284" text-anchor="middle" fill="#fbbf24" font-size="17" font-weight="700">18%</text>
+  </g>
+  <!-- 4. Time 12% — Clock face drawing -->
+  <g transform="translate(398, 0)">
+    <rect x="-16" y="233" width="32" height="12" rx="3" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <rect x="-12" y="195" width="24" height="50" rx="4" fill="#ef4444" fill-opacity="0.06" stroke="#ef4444" stroke-opacity="0.2"/>
+    <g transform="translate(0, 190)" fill="none" stroke="#ef4444" stroke-width="1.5">
+      <circle r="12"/><line x1="0" y1="0" x2="0" y2="-7" stroke-width="1.5"/><line x1="0" y1="0" x2="5" y2="3" stroke-width="1"/>
+      <circle r="1.5" fill="#ef4444"/>
+    </g>
+    <text y="265" text-anchor="middle" fill="#f87171" font-size="13" font-weight="600">Time</text>
+    <text y="284" text-anchor="middle" fill="#f87171" font-size="17" font-weight="700">12%</text>
+  </g>
+  <!-- 5. Opening 7% — Small drawn pawn piece -->
+  <g transform="translate(508, 0)">
+    <rect x="-16" y="233" width="32" height="12" rx="3" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
+    <rect x="-12" y="210" width="24" height="35" rx="4" fill="#a855f7" fill-opacity="0.06" stroke="#a855f7" stroke-opacity="0.2"/>
+    <g fill="#a855f7" transform="translate(0, 202)">
+      <circle r="5" cy="-8"/><path d="M-3,-3 L-5,5 L-7,8 L7,8 L5,5 L3,-3 Z"/><rect x="-8" y="8" width="16" height="3" rx="1"/>
+    </g>
+    <text y="265" text-anchor="middle" fill="#c084fc" font-size="13" font-weight="600">Opening</text>
+    <text y="284" text-anchor="middle" fill="#c084fc" font-size="17" font-weight="700">7%</text>
+  </g>
+  <!-- Particles -->
+  <circle cx="40" cy="65" r="1" fill="#10b981" opacity="0.1"><animate attributeName="opacity" values="0.1;0.03;0.1" dur="3s" repeatCount="indefinite"/></circle>
+  <circle cx="560" cy="55" r="1.5" fill="#a855f7" opacity="0.08"><animate attributeName="opacity" values="0.08;0.02;0.08" dur="4s" repeatCount="indefinite"/></circle>
 </svg>
 </div>
 
