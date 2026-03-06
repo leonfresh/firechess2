@@ -1684,10 +1684,10 @@ export function getEloGuessComment(quality: "surprising_good" | "clueless" | "mi
       return pick([
         "Wait... that was actually a good move. Hold on, maybe they aren't as bad as I thought? 🤔🗿",
         "Okay okay I'm slightly revising my elo estimate upward after that one. SLIGHTLY 📈🫡",
-        "Huh, so they DO know how to play chess? Could've fooled me with the earlier moves 🤨",
+        "Huh, so they DO know how to play chess? Okay respect, this is better than I expected 🤨",
         "That move was... competent??? I was NOT expecting that. My whole read on this game just shifted 😳",
         "Oh? Oh?? They're not total beginners? The plot thickens 🧐📖",
-        "I was ready to call this a sub-500 game but that move has me second-guessing everything 🤯",
+        "Okay this is genuinely above my expectations for a Guess the Elo game. I'm suspicious now 🤯",
         "Either that was a lucky mouse slip or I've been seriously underestimating this player 🐭✨",
         "Well well well, someone's been hiding their power level. That was way better than I expected 💪🫠",
       ]);
