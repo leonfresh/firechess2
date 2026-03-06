@@ -1223,16 +1223,18 @@ export default function RoastPage() {
       <div className="relative z-10 mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
-            <span className="bg-gradient-to-r from-red-400 via-orange-400 to-amber-400 bg-clip-text text-transparent">
-              Roast the Elo 🔥
+          <div className="flex items-center justify-center gap-3">
+            <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
+              <span className="bg-gradient-to-r from-red-400 via-orange-400 to-amber-400 bg-clip-text text-transparent">
+                Roast the Elo 🔥
+              </span>
+            </h1>
+            <span className="rounded-md bg-orange-500/20 border border-orange-500/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-orange-300">
+              Beta
             </span>
-          </h1>
+          </div>
           <p className="mt-2 text-sm text-slate-400">
             Watch real games. Read the roasts. Guess the rating.
-          </p>
-          <p className="mt-1.5 text-xs text-slate-500">
-            🚧 Beta — got feedback? <a href="/feedback" className="text-amber-400 underline underline-offset-2 hover:text-amber-300 transition-colors">Let us know</a>
           </p>
           {gamesPlayed > 0 && (
             <p className="mt-1 text-xs text-slate-500">
@@ -1379,6 +1381,16 @@ export default function RoastPage() {
                 </button>
               </div>
             )}
+
+            {/* Beta feedback CTA */}
+            <div className="mt-10 rounded-xl border border-white/[0.06] bg-white/[0.02] p-6 text-center">
+              <p className="text-sm text-slate-400">
+                🔥 Roast the Elo is in <span className="font-semibold text-orange-300">Beta</span> — if you caught a bug or something feels off,{" "}
+                <a href="/feedback" className="font-medium text-orange-400 underline decoration-orange-400/30 underline-offset-2 transition-colors hover:text-orange-300">
+                  please leave feedback
+                </a>.
+              </p>
+            </div>
           </div>
         )}
 
