@@ -257,6 +257,18 @@ export default function RoastPage() {
   const [spotlightPulse, setSpotlightPulse] = useState(false);
   const [lockedIn, setLockedIn] = useState(false);
 
+  /* ── Mid-game decision state ── */
+  interface GameshowDecision {
+    moveIdx: number;
+    question: string;
+    options: { label: string; emoji: string }[];
+    correctIdx: number;
+    explanation: string;
+  }
+  const [activeDecision, setActiveDecision] = useState<GameshowDecision | null>(null);
+  const [decisionAnswer, setDecisionAnswer] = useState<number | null>(null);
+  const [decisionShown, setDecisionShown] = useState(new Set<number>());
+
   /* ── Source selection state ── */
   const [inputMode, setInputMode] = useState<"random" | "import" | "paste" | null>(null);
   const [loadSource, setLoadSource] = useState<"lichess" | "chesscom">("lichess");
@@ -306,6 +318,9 @@ export default function RoastPage() {
     setRevealCounterElo(null);
     setSpotlightPulse(false);
     setLockedIn(false);
+    setActiveDecision(null);
+    setDecisionAnswer(null);
+    setDecisionShown(new Set());
     usedLines.current.clear();
     setActiveComment(null);
     setCurrentMood("neutral");
@@ -684,6 +699,9 @@ export default function RoastPage() {
     setRevealCounterElo(null);
     setSpotlightPulse(false);
     setLockedIn(false);
+    setActiveDecision(null);
+    setDecisionAnswer(null);
+    setDecisionShown(new Set());
     usedLines.current.clear();
     setActiveComment(null);
     setCurrentMood("neutral");
@@ -1015,6 +1033,7 @@ export default function RoastPage() {
   /* ── Autoplay (waits for typewriter + TTS to finish) ── */
   useEffect(() => {
     if (pageState !== "watching" || !autoplay) return;
+    if (activeDecision) return; // wait for decision to be dismissed
     if (!typingDone) return; // wait for speech bubble animation
     // If TTS is active and still speaking, wait for it to finish
     if (tts.enabled && tts.speaking) {
@@ -1083,12 +1102,108 @@ export default function RoastPage() {
           setActiveArrows([]);
           setActiveMarkers([]);
         }
+
+        // Mid-game decision triggers — pause autoplay with interactive question
+        if (!decisionShown.has(next)) {
+          const pctDone = next / moves.length;
+          // Trigger at ~30% and ~60% of the game
+          const shouldTrigger =
+            (pctDone >= 0.28 && pctDone <= 0.35 && !Array.from(decisionShown).some(d => d / moves.length >= 0.25 && d / moves.length <= 0.40)) ||
+            (pctDone >= 0.55 && pctDone <= 0.65 && !Array.from(decisionShown).some(d => d / moves.length >= 0.50 && d / moves.length <= 0.70));
+          if (shouldTrigger) {
+            const cls = move.classification;
+            const nextMove = next + 1 < moves.length ? moves[next + 1] : null;
+            const blundersSoFar = moves.slice(0, next + 1).filter(m => m.classification === "blunder").length;
+            const bestSoFar = moves.slice(0, next + 1).filter(m => m.classification === "brilliant" || m.classification === "best").length;
+
+            // Generate a contextual decision based on what just happened
+            let decision: GameshowDecision | null = null;
+
+            if (cls === "blunder" || cls === "mistake") {
+              decision = {
+                moveIdx: next,
+                question: `🤔 That ${cls} just happened. What do you think happens next?`,
+                options: [
+                  { label: "They recover with a good move", emoji: "💪" },
+                  { label: "It gets worse", emoji: "📉" },
+                  { label: "Opponent blunders back", emoji: "🤝" },
+                ],
+                correctIdx: nextMove ? (
+                  nextMove.classification === "blunder" || nextMove.classification === "mistake" ? 2 :
+                  nextMove.cpLoss > 50 ? 1 : 0
+                ) : 1,
+                explanation: nextMove?.classification === "blunder"
+                  ? "The blunder trades! Both sides are dropping pieces 💀"
+                  : nextMove?.cpLoss === 0 ? "They actually found the best move! Redemption arc 🎬"
+                  : "The chaos continues... as expected at this level 🫠",
+              };
+            } else if (blundersSoFar >= 2 && pctDone < 0.5) {
+              decision = {
+                moveIdx: next,
+                question: `🎯 We're ${Math.round(pctDone * 100)}% through the game with ${blundersSoFar} blunders already. How many total blunders by the end?`,
+                options: [
+                  { label: `${blundersSoFar} — they've learned their lesson`, emoji: "🎓" },
+                  { label: `${blundersSoFar + 2}-${blundersSoFar + 4} — buckle up`, emoji: "🎢" },
+                  { label: `${blundersSoFar + 5}+ — this is a trainwreck`, emoji: "🚂💥" },
+                ],
+                correctIdx: (() => {
+                  const totalB = moves.filter(m => m.classification === "blunder").length;
+                  const remaining = totalB - blundersSoFar;
+                  if (remaining <= 0) return 0;
+                  if (remaining <= 4) return 1;
+                  return 2;
+                })(),
+                explanation: (() => {
+                  const totalB = moves.filter(m => m.classification === "blunder").length;
+                  return totalB <= blundersSoFar
+                    ? "They actually cleaned it up! Character development 📈"
+                    : totalB >= blundersSoFar + 5
+                    ? `${totalB} total blunders. This game is a crime scene 🔍`
+                    : `${totalB} total blunders. Par for the course 🏌️`;
+                })(),
+              };
+            } else if (bestSoFar >= 2) {
+              decision = {
+                moveIdx: next,
+                question: "⭐ The players have been surprisingly solid. What's your early Elo vibe?",
+                options: [
+                  { label: "Under 1200 — luck runs out", emoji: "🍀" },
+                  { label: "1200-1800 — decent club players", emoji: "♟️" },
+                  { label: "1800+ — these guys can play", emoji: "🧠" },
+                ],
+                correctIdx: game ? (game.avgElo < 1200 ? 0 : game.avgElo < 1800 ? 1 : 2) : 1,
+                explanation: game ? `The actual average Elo is ${game.avgElo}. ${game.avgElo < 1200 ? "Fools' gold! 🪙" : game.avgElo >= 1800 ? "They're legit!" : "Right in the middle."}` : "Wait for the reveal!",
+              };
+            } else {
+              decision = {
+                moveIdx: next,
+                question: "🎪 AUDIENCE POLL: How's this game going so far?",
+                options: [
+                  { label: "Boring — wake me up when it's over", emoji: "😴" },
+                  { label: "Entertaining — popcorn worthy", emoji: "🍿" },
+                  { label: "Chaos — what am I watching", emoji: "🤯" },
+                ],
+                correctIdx: -1, // No correct answer — just engagement
+                explanation: "Your voice has been heard! The crowd has spoken 📢",
+              };
+            }
+
+            if (decision) {
+              setTimeout(() => {
+                playSound("bell");
+                setActiveDecision(decision);
+                setDecisionAnswer(null);
+                setAutoplay(false);
+              }, 1200);
+            }
+          }
+        }
       }
     }, delay);
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageState, autoplay, currentIdx, moves, speed, typingDone, activeComment, tts.enabled, tts.speaking, ttsDoneSignal]);
+  }, [pageState, autoplay, currentIdx, moves, speed, typingDone, activeComment, tts.enabled, tts.speaking, ttsDoneSignal, activeDecision]);
 
   /* ── Scroll comment box to bottom ── */
   useEffect(() => {
@@ -1322,16 +1437,25 @@ export default function RoastPage() {
 
   return (
     <main className="min-h-screen bg-[#030712] text-white">
-      {/* Background — stage lights + spotlight sweep */}
+      {/* Background — TV gameshow stage: curtain edges, spotlights, warm glow */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        {/* Stage curtain side panels */}
+        <div className="absolute top-0 left-0 w-16 sm:w-24 h-full bg-gradient-to-r from-red-950/40 to-transparent" />
+        <div className="absolute top-0 right-0 w-16 sm:w-24 h-full bg-gradient-to-l from-red-950/40 to-transparent" />
+        {/* Top stage valance */}
+        <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-red-950/30 to-transparent" />
+        {/* Warm ambient floating lights */}
         <div className="animate-float absolute -left-32 top-20 h-96 w-96 rounded-full bg-red-500/[0.04] blur-[100px]" />
         <div className="animate-float-delayed absolute -right-32 top-40 h-80 w-80 rounded-full bg-orange-500/[0.04] blur-[100px]" />
-        {/* Stage spotlight sweep */}
+        <div className="animate-float absolute left-1/3 bottom-20 h-64 w-64 rounded-full bg-amber-500/[0.03] blur-[80px]" />
+        {/* Spotlight sweep */}
         <div className="animate-spotlight absolute top-0 left-1/2 h-[120vh] w-[200px] -translate-x-1/2 bg-gradient-to-b from-orange-400/[0.03] via-transparent to-transparent blur-[60px]" />
         {/* Spotlight pulse on guess reveal */}
         {spotlightPulse && (
           <div className="animate-spotlight-pulse absolute inset-0 bg-radial-gradient from-amber-400/[0.08] to-transparent" style={{ background: "radial-gradient(circle at center 30%, rgba(251,191,36,0.08) 0%, transparent 60%)" }} />
         )}
+        {/* Stage floor reflection */}
+        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-orange-500/[0.02] to-transparent" />
       </div>
 
       {/* Confetti burst */}
@@ -1370,9 +1494,9 @@ export default function RoastPage() {
       )}
 
       <div className="relative z-10 mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header */}
+        {/* Header — Gameshow title card */}
         <div className="mb-8 text-center">
-          <div className="flex items-center justify-center gap-3">
+          <div className="inline-flex items-center gap-3 rounded-2xl border border-orange-500/20 bg-gradient-to-r from-orange-500/[0.06] via-red-500/[0.04] to-orange-500/[0.06] px-6 py-3 shadow-lg shadow-orange-500/10">
             <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
               <span className="bg-gradient-to-r from-red-400 via-orange-400 to-amber-400 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(251,146,60,0.3)]">
                 Roast the Elo 🔥
@@ -1382,7 +1506,7 @@ export default function RoastPage() {
               Beta
             </span>
           </div>
-          <p className="mt-2 text-sm text-slate-400">
+          <p className="mt-3 text-sm text-slate-400">
             Watch real games. Read the roasts. Guess the rating.
           </p>
           {/* Gameshow scoreboard */}
@@ -1580,12 +1704,19 @@ export default function RoastPage() {
           </div>
         )}
 
-        {/* ── Intro screen — Gameshow Curtain ── */}
+        {/* ── Intro screen — Gameshow Stage Reveal ── */}
         {pageState === "intro" && game && !analyzing && (
           <div className="flex flex-col items-center gap-6 py-12 animate-fadeIn">
-            <div className="relative rounded-2xl border-2 border-orange-500/30 bg-gradient-to-b from-orange-500/[0.08] to-red-500/[0.04] p-8 text-center max-w-lg overflow-hidden">
+            <div className="relative rounded-3xl border-2 border-orange-500/30 bg-gradient-to-b from-red-950/20 via-zinc-900/95 to-zinc-950 p-8 text-center max-w-lg overflow-hidden shadow-2xl shadow-orange-500/10">
+              {/* Stage curtain top */}
+              <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-red-800/60 via-red-600/40 to-red-800/60" />
               {/* Stage light accent */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-40 bg-orange-400/[0.06] rounded-full blur-[50px] pointer-events-none" />
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-40 bg-orange-400/[0.08] rounded-full blur-[50px] pointer-events-none" />
+              {/* Corner accents */}
+              <div className="absolute top-0 left-0 w-10 h-10 border-t-2 border-l-2 border-orange-400/30 rounded-tl-3xl" />
+              <div className="absolute top-0 right-0 w-10 h-10 border-t-2 border-r-2 border-orange-400/30 rounded-tr-3xl" />
+              <div className="absolute bottom-0 left-0 w-10 h-10 border-b-2 border-l-2 border-orange-400/30 rounded-bl-3xl" />
+              <div className="absolute bottom-0 right-0 w-10 h-10 border-b-2 border-r-2 border-orange-400/30 rounded-br-3xl" />
               <div className="relative">
                 <p className="text-xs uppercase tracking-[0.25em] text-orange-400/60 font-bold mb-3">🎬 Coming Up</p>
                 <p className="text-xl font-bold text-orange-300 mb-5">&ldquo;{introLine}&rdquo;</p>
@@ -1611,11 +1742,13 @@ export default function RoastPage() {
 
             <button
               onClick={startWatching}
-              className="group relative rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-10 py-4 text-base font-black text-white shadow-xl shadow-orange-500/30 transition-all hover:brightness-110 hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/40 active:scale-95 uppercase tracking-wider"
+              className="group relative rounded-2xl bg-gradient-to-r from-orange-500 via-red-500 to-orange-500 px-12 py-5 text-lg font-black text-white shadow-2xl shadow-orange-500/30 transition-all hover:brightness-110 hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/40 active:scale-95 uppercase tracking-wider border border-orange-400/20"
             >
               <span className="relative z-10">🍿 Start the Show</span>
               {/* Glow ring */}
-              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-orange-400 to-red-400 opacity-0 group-hover:opacity-20 transition-opacity blur-xl" />
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-orange-400 to-red-400 opacity-0 group-hover:opacity-20 transition-opacity blur-xl" />
+              {/* Pulse ring */}
+              <div className="absolute -inset-1 rounded-2xl border border-orange-500/30 animate-pulse" />
             </button>
           </div>
         )}
@@ -1625,6 +1758,16 @@ export default function RoastPage() {
           <div className="grid grid-cols-1 gap-4 lg:gap-6 lg:grid-cols-[1fr_360px]">
             {/* Board column */}
             <div className="flex flex-col items-center gap-2 sm:gap-3">
+              {/* LIVE ON AIR indicator */}
+              {pageState === "watching" && (
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/[0.1] px-3 py-1">
+                    <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                    <span className="text-[10px] font-black uppercase tracking-wider text-red-400">Live</span>
+                  </div>
+                  <span className="text-[10px] text-slate-600 font-mono">Round {gamesPlayed + 1}</span>
+                </div>
+              )}
               {/* Player labels */}
               <div className="w-full max-w-[640px] flex items-center justify-between px-1">
                 <div className="flex items-center gap-2 text-sm">
@@ -1930,145 +2073,261 @@ export default function RoastPage() {
                 </div>
               )}
 
-              {/* ── Guess the Elo — Gameshow Decision Panel ── */}
-              {pageState === "guessing" && (
-                <div className="rounded-2xl border-2 border-orange-500/30 bg-gradient-to-b from-orange-500/[0.06] to-red-500/[0.04] p-5 animate-fadeIn relative overflow-hidden">
-                  {/* Animated corner accents */}
-                  <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-orange-400/40 rounded-tl-2xl" />
-                  <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-orange-400/40 rounded-tr-2xl" />
-                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-orange-400/40 rounded-bl-2xl" />
-                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-orange-400/40 rounded-br-2xl" />
+              {/* ── Guess + Reveal moved to centered modals — sidebar only has commentary + moves ── */}
+            </div>
+          </div>
+        )}
 
-                  <div className="text-center mb-4">
-                    <h3 className="text-lg font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-300 to-amber-300 uppercase tracking-wider" style={{ textShadow: "0 0 20px rgba(251,146,60,0.3)" }}>
-                      🎯 Lock It In!
-                    </h3>
-                    <p className="text-[11px] text-slate-400 mt-1">What&apos;s the average Elo of these players?</p>
-                  </div>
-                  <div className="space-y-2">
-                    {ELO_BRACKETS.map((bracket, idx) => {
-                      const isSelected = selectedBracket === idx;
-                      const isLocked = selectedBracket !== null;
-                      return (
-                        <button
-                          key={idx}
-                          onClick={() => handleGuess(idx)}
-                          disabled={isLocked}
-                          className={`w-full flex items-center justify-between rounded-xl border-2 px-4 py-3 text-sm font-bold transition-all cursor-pointer group ${
-                            isSelected
-                              ? "border-orange-400 bg-orange-500/20 scale-[1.02] shadow-lg shadow-orange-500/20"
-                              : isLocked
-                              ? "border-white/[0.04] bg-white/[0.01] opacity-30"
-                              : "border-white/[0.08] bg-white/[0.02] hover:border-orange-500/40 hover:bg-orange-500/[0.08] hover:scale-[1.01] active:scale-[0.98]"
-                          }`}
-                        >
-                          <span className="flex items-center gap-2.5">
-                            <span className={`text-lg transition-transform ${!isLocked ? "group-hover:scale-125" : ""}`}>{bracket.emoji}</span>
-                            <span className={isSelected ? "text-orange-300" : "text-white"}>{bracket.label}</span>
-                          </span>
-                          <span className={`text-xs font-mono ${isSelected ? "text-orange-400" : "text-slate-500"}`}>{bracket.range}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/*  CENTERED MODAL: Mid-Game Decision                              */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {activeDecision && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fadeIn">
+            <div className="relative w-[90vw] max-w-lg rounded-3xl border-2 border-amber-500/40 bg-gradient-to-b from-zinc-900 via-zinc-900 to-zinc-950 p-6 sm:p-8 shadow-2xl shadow-amber-500/20 overflow-hidden">
+              {/* Spotlight glow */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-60 h-60 bg-amber-400/[0.06] rounded-full blur-[80px] pointer-events-none" />
+              {/* Corner accents */}
+              <div className="absolute top-0 left-0 w-10 h-10 border-t-2 border-l-2 border-amber-400/50 rounded-tl-3xl" />
+              <div className="absolute top-0 right-0 w-10 h-10 border-t-2 border-r-2 border-amber-400/50 rounded-tr-3xl" />
+              <div className="absolute bottom-0 left-0 w-10 h-10 border-b-2 border-l-2 border-amber-400/50 rounded-bl-3xl" />
+              <div className="absolute bottom-0 right-0 w-10 h-10 border-b-2 border-r-2 border-amber-400/50 rounded-br-3xl" />
 
-                  {/* Lock-in animation */}
-                  {lockedIn && (
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10 animate-fadeIn rounded-2xl">
-                      <div className="text-center">
-                        <p className="text-2xl font-black text-orange-400 animate-bounce" style={{ textShadow: "0 0 20px rgba(251,146,60,0.5)" }}>
-                          LOCKED IN! 🔒
-                        </p>
-                      </div>
-                    </div>
-                  )}
+              <div className="relative">
+                {/* Header */}
+                <div className="text-center mb-5">
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-amber-400/60 font-bold mb-2">🎪 Gameshow Moment</p>
+                  <h3 className="text-lg sm:text-xl font-black text-white leading-snug">{activeDecision.question}</h3>
+                  <p className="text-[11px] text-slate-500 mt-2">Move {currentMove?.moveNumber ?? "?"} · {Math.round((currentIdx / moves.length) * 100)}% through the game</p>
                 </div>
-              )}
 
-              {/* ── Reveal — Dramatic Gameshow Reveal ── */}
-              {pageState === "revealed" && game && (
-                <div className="rounded-2xl border-2 border-amber-500/30 bg-gradient-to-b from-amber-500/[0.06] to-orange-500/[0.04] p-5 space-y-4 animate-fadeIn relative overflow-hidden">
-                  {/* Spotlight glow behind elo */}
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-48 bg-amber-400/[0.08] rounded-full blur-[60px] pointer-events-none" />
-
-                  {/* Animated Elo Counter */}
-                  <div className="text-center relative">
-                    <p className="text-xs text-amber-400/60 uppercase tracking-[0.2em] font-bold mb-1">The Rating Is...</p>
-                    <p className="text-5xl sm:text-6xl font-black tabular-nums text-transparent bg-clip-text bg-gradient-to-b from-white to-amber-200" style={{ textShadow: "0 0 40px rgba(251,191,36,0.3)" }}>
-                      {revealCounterElo ?? game.avgElo}
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      White: {game.whiteElo} · Black: {game.blackElo}
-                    </p>
-                  </div>
-
-                  {/* Result badge */}
-                  {selectedBracket !== null && (() => {
-                    const dist = Math.abs(selectedBracket - getEloBracketIdx(game.avgElo));
-                    const badge = dist === 0 ? { text: "PERFECT", color: "from-green-400 to-emerald-400", border: "border-green-500/40", bg: "bg-green-500/10", glow: "shadow-green-500/30" }
-                      : dist === 1 ? { text: "CLOSE", color: "from-amber-300 to-yellow-300", border: "border-amber-500/40", bg: "bg-amber-500/10", glow: "shadow-amber-500/30" }
-                      : { text: "MISS", color: "from-red-400 to-orange-400", border: "border-red-500/40", bg: "bg-red-500/10", glow: "shadow-red-500/30" };
+                {/* Options */}
+                <div className="space-y-2.5 mb-4">
+                  {activeDecision.options.map((opt, idx) => {
+                    const answered = decisionAnswer !== null;
+                    const isCorrect = idx === activeDecision.correctIdx;
+                    const isSelected = decisionAnswer === idx;
+                    const noCorrectAnswer = activeDecision.correctIdx === -1;
                     return (
-                      <div className={`mx-auto mt-2 w-fit rounded-full border-2 ${badge.border} ${badge.bg} px-5 py-1 shadow-lg ${badge.glow}`}>
-                        <span className={`text-sm font-black uppercase tracking-wider bg-gradient-to-r ${badge.color} bg-clip-text text-transparent`}>
-                          {badge.text} {dist === 0 ? "🎯" : dist === 1 ? "🔥" : "💀"}
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          if (answered) return;
+                          setDecisionAnswer(idx);
+                          if (isCorrect || noCorrectAnswer) playSound("correct");
+                          else playSound("wrong");
+                        }}
+                        disabled={answered}
+                        className={`w-full flex items-center gap-3 rounded-xl border-2 px-4 py-3.5 text-sm font-bold transition-all cursor-pointer group ${
+                          answered
+                            ? isCorrect && !noCorrectAnswer
+                              ? "border-green-400/60 bg-green-500/15 scale-[1.02]"
+                              : isSelected && !noCorrectAnswer
+                              ? "border-red-400/60 bg-red-500/15"
+                              : isSelected && noCorrectAnswer
+                              ? "border-amber-400/60 bg-amber-500/15 scale-[1.02]"
+                              : "border-white/[0.04] bg-white/[0.01] opacity-40"
+                            : "border-white/[0.08] bg-white/[0.02] hover:border-amber-500/40 hover:bg-amber-500/[0.06] hover:scale-[1.01] active:scale-[0.98]"
+                        }`}
+                      >
+                        <span className={`text-lg transition-transform ${!answered ? "group-hover:scale-125" : ""}`}>{opt.emoji}</span>
+                        <span className={answered && isSelected ? (isCorrect || noCorrectAnswer ? "text-green-300" : "text-red-300") : answered && isCorrect && !noCorrectAnswer ? "text-green-300" : "text-white"}>
+                          {opt.label}
                         </span>
-                      </div>
+                        {answered && isCorrect && !noCorrectAnswer && <span className="ml-auto text-green-400">✓</span>}
+                        {answered && isSelected && !isCorrect && !noCorrectAnswer && <span className="ml-auto text-red-400">✗</span>}
+                      </button>
                     );
-                  })()}
+                  })}
+                </div>
 
-                  <p className="text-sm text-amber-300 text-center font-medium">{revealLine}</p>
-                  <p className="text-xs text-slate-400 text-center italic">{eloFlavor}</p>
+                {/* Explanation + Continue (shown after answer) */}
+                {decisionAnswer !== null && (
+                  <div className="animate-fadeIn space-y-3">
+                    <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] px-4 py-3">
+                      <p className="text-xs sm:text-sm text-amber-200 leading-relaxed">{activeDecision.explanation}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setDecisionShown(prev => new Set([...prev, activeDecision.moveIdx]));
+                        setActiveDecision(null);
+                        setDecisionAnswer(null);
+                        setAutoplay(true);
+                      }}
+                      className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 text-sm font-black text-white shadow-lg shadow-amber-500/25 transition-all hover:brightness-110 hover:scale-[1.02] active:scale-95 uppercase tracking-wider"
+                    >
+                      Continue Watching ▶
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
-                  {/* Guess reaction commentary */}
-                  {guessReaction && (
-                    <div className="rounded-xl border border-orange-500/20 bg-orange-500/[0.04] px-4 py-3">
-                      <div className="flex items-start gap-2.5">
-                        <div className="flex-shrink-0 mt-0.5">
-                          <RoastAvatar mood={currentMood} size={36} />
-                        </div>
-                        <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">{guessReaction}</p>
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/*  CENTERED MODAL: Guess the Elo (non-closable)                   */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {pageState === "guessing" && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
+            <div className="relative w-[92vw] max-w-lg rounded-3xl border-2 border-orange-500/40 bg-gradient-to-b from-zinc-900 via-zinc-900 to-zinc-950 p-6 sm:p-8 shadow-2xl shadow-orange-500/20 overflow-hidden">
+              {/* Stage spotlight glow */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-orange-400/[0.08] rounded-full blur-[80px] pointer-events-none" />
+              {/* Corner accents */}
+              <div className="absolute top-0 left-0 w-10 h-10 border-t-2 border-l-2 border-orange-400/50 rounded-tl-3xl" />
+              <div className="absolute top-0 right-0 w-10 h-10 border-t-2 border-r-2 border-orange-400/50 rounded-tr-3xl" />
+              <div className="absolute bottom-0 left-0 w-10 h-10 border-b-2 border-l-2 border-orange-400/50 rounded-bl-3xl" />
+              <div className="absolute bottom-0 right-0 w-10 h-10 border-b-2 border-r-2 border-orange-400/50 rounded-br-3xl" />
+
+              <div className="relative">
+                {/* Pepe avatar positioned center-top */}
+                <div className="flex justify-center mb-3">
+                  <div className="relative">
+                    <RoastAvatar mood={currentMood} size={56} />
+                  </div>
+                </div>
+
+                <div className="text-center mb-5">
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-orange-400/60 font-bold mb-1">🎬 Final Answer</p>
+                  <h3 className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-300 to-amber-300 uppercase tracking-wider" style={{ textShadow: "0 0 20px rgba(251,146,60,0.3)" }}>
+                    🎯 Lock It In!
+                  </h3>
+                  <p className="text-[11px] text-slate-400 mt-1.5">What&apos;s the average Elo of these players?</p>
+                </div>
+
+                <div className="space-y-2">
+                  {ELO_BRACKETS.map((bracket, idx) => {
+                    const isSelected = selectedBracket === idx;
+                    const isLocked = selectedBracket !== null;
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => handleGuess(idx)}
+                        disabled={isLocked}
+                        className={`w-full flex items-center justify-between rounded-xl border-2 px-4 py-3 text-sm font-bold transition-all cursor-pointer group ${
+                          isSelected
+                            ? "border-orange-400 bg-orange-500/20 scale-[1.02] shadow-lg shadow-orange-500/20"
+                            : isLocked
+                            ? "border-white/[0.04] bg-white/[0.01] opacity-30"
+                            : "border-white/[0.08] bg-white/[0.02] hover:border-orange-500/40 hover:bg-orange-500/[0.08] hover:scale-[1.01] active:scale-[0.98]"
+                        }`}
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <span className={`text-lg transition-transform ${!isLocked ? "group-hover:scale-125" : ""}`}>{bracket.emoji}</span>
+                          <span className={isSelected ? "text-orange-300" : "text-white"}>{bracket.label}</span>
+                        </span>
+                        <span className={`text-xs font-mono ${isSelected ? "text-orange-400" : "text-slate-500"}`}>{bracket.range}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Lock-in animation */}
+                {lockedIn && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-10 animate-fadeIn rounded-3xl">
+                    <div className="text-center">
+                      <p className="text-3xl font-black text-orange-400 animate-bounce" style={{ textShadow: "0 0 20px rgba(251,146,60,0.5)" }}>
+                        LOCKED IN! 🔒
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/*  CENTERED MODAL: Reveal (non-closable, with Next Round)         */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {pageState === "revealed" && game && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn overflow-y-auto py-8">
+            <div className="relative w-[92vw] max-w-lg rounded-3xl border-2 border-amber-500/40 bg-gradient-to-b from-zinc-900 via-zinc-900 to-zinc-950 p-6 sm:p-8 shadow-2xl shadow-amber-500/20 overflow-hidden my-auto">
+              {/* Spotlight glow behind elo */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-amber-400/[0.1] rounded-full blur-[80px] pointer-events-none" />
+              {/* Corner accents */}
+              <div className="absolute top-0 left-0 w-10 h-10 border-t-2 border-l-2 border-amber-400/50 rounded-tl-3xl" />
+              <div className="absolute top-0 right-0 w-10 h-10 border-t-2 border-r-2 border-amber-400/50 rounded-tr-3xl" />
+              <div className="absolute bottom-0 left-0 w-10 h-10 border-b-2 border-l-2 border-amber-400/50 rounded-bl-3xl" />
+              <div className="absolute bottom-0 right-0 w-10 h-10 border-b-2 border-r-2 border-amber-400/50 rounded-br-3xl" />
+
+              <div className="relative space-y-4">
+                {/* Animated Elo Counter */}
+                <div className="text-center">
+                  <p className="text-xs text-amber-400/60 uppercase tracking-[0.2em] font-bold mb-1">The Rating Is...</p>
+                  <p className="text-5xl sm:text-7xl font-black tabular-nums text-transparent bg-clip-text bg-gradient-to-b from-white to-amber-200" style={{ textShadow: "0 0 40px rgba(251,191,36,0.3)" }}>
+                    {revealCounterElo ?? game.avgElo}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    White: {game.whiteElo} · Black: {game.blackElo}
+                  </p>
+                </div>
+
+                {/* Result badge */}
+                {selectedBracket !== null && (() => {
+                  const dist = Math.abs(selectedBracket - getEloBracketIdx(game.avgElo));
+                  const badge = dist === 0 ? { text: "PERFECT", color: "from-green-400 to-emerald-400", border: "border-green-500/40", bg: "bg-green-500/10", glow: "shadow-green-500/30" }
+                    : dist === 1 ? { text: "CLOSE", color: "from-amber-300 to-yellow-300", border: "border-amber-500/40", bg: "bg-amber-500/10", glow: "shadow-amber-500/30" }
+                    : { text: "MISS", color: "from-red-400 to-orange-400", border: "border-red-500/40", bg: "bg-red-500/10", glow: "shadow-red-500/30" };
+                  return (
+                    <div className={`mx-auto w-fit rounded-full border-2 ${badge.border} ${badge.bg} px-6 py-1.5 shadow-lg ${badge.glow}`}>
+                      <span className={`text-base font-black uppercase tracking-wider bg-gradient-to-r ${badge.color} bg-clip-text text-transparent`}>
+                        {badge.text} {dist === 0 ? "🎯" : dist === 1 ? "🔥" : "💀"}
+                      </span>
+                    </div>
+                  );
+                })()}
+
+                <p className="text-sm text-amber-300 text-center font-medium">{revealLine}</p>
+                <p className="text-xs text-slate-400 text-center italic">{eloFlavor}</p>
+
+                {/* Guess reaction commentary */}
+                {guessReaction && (
+                  <div className="rounded-xl border border-orange-500/20 bg-orange-500/[0.04] px-4 py-3">
+                    <div className="flex items-start gap-2.5">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <RoastAvatar mood={currentMood} size={36} />
                       </div>
-                    </div>
-                  )}
-
-                  <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                    <p className="text-xs text-slate-400 text-center">{summaryLine}</p>
-                  </div>
-
-                  {/* Stats breakdown */}
-                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
-                    <div className="rounded-lg border border-red-500/20 bg-red-500/[0.05] p-2">
-                      <p className="text-lg font-bold text-red-400">{blunders}</p>
-                      <p className="text-red-400/60">Blunders</p>
-                    </div>
-                    <div className="rounded-lg border border-orange-500/20 bg-orange-500/[0.05] p-2">
-                      <p className="text-lg font-bold text-orange-400">{mistakes}</p>
-                      <p className="text-orange-400/60">Mistakes</p>
-                    </div>
-                    <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/[0.05] p-2">
-                      <p className="text-lg font-bold text-yellow-400">{inaccuracies}</p>
-                      <p className="text-yellow-400/60">Inaccuracies</p>
+                      <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">{guessReaction}</p>
                     </div>
                   </div>
+                )}
 
-                  {/* View on Lichess */}
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                  <p className="text-xs text-slate-400 text-center">{summaryLine}</p>
+                </div>
+
+                {/* Stats breakdown */}
+                <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                  <div className="rounded-lg border border-red-500/20 bg-red-500/[0.05] p-2">
+                    <p className="text-lg font-bold text-red-400">{blunders}</p>
+                    <p className="text-red-400/60">Blunders</p>
+                  </div>
+                  <div className="rounded-lg border border-orange-500/20 bg-orange-500/[0.05] p-2">
+                    <p className="text-lg font-bold text-orange-400">{mistakes}</p>
+                    <p className="text-orange-400/60">Mistakes</p>
+                  </div>
+                  <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/[0.05] p-2">
+                    <p className="text-lg font-bold text-yellow-400">{inaccuracies}</p>
+                    <p className="text-yellow-400/60">Inaccuracies</p>
+                  </div>
+                </div>
+
+                {/* Result + Opening + Lichess link */}
+                <div className="text-center text-xs text-slate-500 space-y-0.5">
+                  <p>🏁 {game.result}{game.termination ? ` — ${game.termination}` : ""}</p>
+                  <p>📋 {game.opening}</p>
                   <a
                     href={`https://lichess.org/${game.id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block text-center text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                    className="inline-block text-slate-500 hover:text-slate-300 transition-colors mt-1"
                   >
                     View on Lichess ↗
                   </a>
+                </div>
 
-                  {/* Result + Opening */}
-                  <div className="text-center text-xs text-slate-500 space-y-0.5">
-                    <p>🏁 {game.result}{game.termination ? ` — ${game.termination}` : ""}</p>
-                    <p>📋 {game.opening}</p>
-                  </div>
-
-                  {/* Share result */}
+                {/* Action buttons */}
+                <div className="flex gap-2">
                   <button
                     onClick={() => {
                       const bracket = selectedBracket !== null ? ELO_BRACKETS[selectedBracket] : null;
@@ -2088,12 +2347,10 @@ export default function RoastPage() {
                         setTimeout(() => setShareText(null), 2000);
                       });
                     }}
-                    className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-300 hover:bg-white/[0.08] transition-all flex items-center justify-center gap-2"
+                    className="flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs font-medium text-slate-300 hover:bg-white/[0.08] transition-all flex items-center justify-center gap-1.5"
                   >
-                    {shareText ?? "📋 Share Result"}
+                    {shareText ?? "📋 Share"}
                   </button>
-
-                  {/* Re-watch */}
                   <button
                     onClick={() => {
                       setPageState("watching");
@@ -2104,34 +2361,35 @@ export default function RoastPage() {
                       setActiveComment(null);
                       setAutoplay(true);
                     }}
-                    className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-4 py-2 text-xs text-slate-400 hover:bg-white/[0.08] transition-all"
+                    className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs text-slate-400 hover:bg-white/[0.08] transition-all"
                   >
-                    🔁 Re-watch Game
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setPageState("choose-source");
-                      setInputMode(null);
-                      setLoadError("");
-                      setRecentGames([]);
-                      setPgnInput("");
-                    }}
-                    className="group relative w-full rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-6 py-3.5 text-sm font-black text-white shadow-xl shadow-orange-500/25 transition-all hover:brightness-110 hover:scale-[1.02] hover:shadow-2xl hover:shadow-orange-500/40 active:scale-95 uppercase tracking-wider"
-                  >
-                    <span className="relative z-10">🔥 Next Round</span>
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-orange-400 to-red-400 opacity-0 group-hover:opacity-20 transition-opacity blur-xl" />
+                    🔁 Rewatch
                   </button>
                 </div>
-              )}
+
+                <button
+                  onClick={() => {
+                    setPageState("choose-source");
+                    setInputMode(null);
+                    setLoadError("");
+                    setRecentGames([]);
+                    setPgnInput("");
+                  }}
+                  className="group relative w-full rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4 text-base font-black text-white shadow-xl shadow-orange-500/25 transition-all hover:brightness-110 hover:scale-[1.02] hover:shadow-2xl hover:shadow-orange-500/40 active:scale-95 uppercase tracking-wider"
+                >
+                  <span className="relative z-10">🔥 Next Round</span>
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-orange-400 to-red-400 opacity-0 group-hover:opacity-20 transition-opacity blur-xl" />
+                </button>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Footer */}
-        <div className="mt-12 text-center text-xs text-slate-600">
+        {/* Footer — Gameshow credits style */}
+        <div className="mt-12 text-center text-xs text-slate-600 border-t border-white/[0.04] pt-6">
+          <p className="text-[10px] uppercase tracking-[0.15em] text-slate-700 mb-2">A Production Of</p>
           <p>Games sourced from the <a href="https://lichess.org" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-slate-400 underline decoration-dotted">Lichess</a> database. Analysis by Stockfish.</p>
-          <p className="mt-1">Inspired by Gotham Chess &amp; r/AnarchyChess. No GMs were harmed in the making of this page.</p>
+          <p className="mt-1">Inspired by Gotham Chess &amp; r/AnarchyChess. No GMs were harmed in the making of this show.</p>
         </div>
       </div>
 

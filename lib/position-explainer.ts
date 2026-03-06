@@ -178,6 +178,8 @@ function countDeveloped(chess: Chess, color: Color): { developed: number; total:
 
   for (const p of pieces) {
     if (p.type === "k" || p.type === "p") continue;
+    // Rooks belong on the back rank — only count minor pieces + queen as undeveloped
+    if (p.type === "r") continue;
     total++;
     const onBack = p.square[1] === backRank;
     if (!onBack) {

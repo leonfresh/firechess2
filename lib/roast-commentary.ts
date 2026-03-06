@@ -279,6 +279,8 @@ function development(chess: Chess, color: Color): { developed: number; total: nu
   const stuck: string[] = [];
   for (const p of allPieces(chess)) {
     if (p.color !== color || p.type === "k" || p.type === "p") continue;
+    // Rooks belong on the back rank — only count minor pieces + queen as "stuck"
+    if (p.type === "r") continue;
     total++;
     if (p.square[1] === backRank) stuck.push(`${pn(p.type, true)} on ${p.square}`);
     else developed++;

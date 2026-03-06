@@ -214,55 +214,72 @@ export function RoastAvatar({ mood, size = 72 }: { mood: RoastMood; size?: numbe
           </>
         )}
 
-        {/* ═══ CLOWN — PepeClown (rainbow wig, red nose, bowtie) 🤡 honk honk ═══ */}
+        {/* ═══ CLOWN — PepeClown (classic meme: rainbow wig, red nose, bowtie, sad Pepe eyes) ═══ */}
         {mood === "clown" && (
           <>
-            {/* Rainbow afro wig — layered colored blobs */}
-            <path d="M14 40 Q8 20,24 12 Q34 4,50 6" fill="#FF6B00" stroke="#E05500" strokeWidth="1" />
-            <path d="M50 6 Q58 2,66 4 Q72 2,80 6" fill="#FFD700" stroke="#E6BE00" strokeWidth="1" />
-            <path d="M80 6 Q92 4,100 10 Q112 18,118 34" fill="#3366FF" stroke="#2244CC" strokeWidth="1" />
-            <path d="M100 10 Q108 6,114 10 Q122 16,124 30" fill="#9944CC" stroke="#7733AA" strokeWidth="1" />
-            <path d="M14 40 Q6 28,16 16 Q24 6,42 4 Q56 0,70 2 Q84 0,98 4 Q116 6,124 16 Q134 28,126 40 Q128 50,120 48 Q114 36,104 28 Q90 18,70 18 Q50 18,36 28 Q26 36,22 48 Q12 50,14 40Z"
-              fill="none" />
-            {/* Wig fill sections with puffy shape */}
-            <path d="M14 42 Q4 28,16 14 Q28 2,48 2 Q56 -2,70 0 Q84 -2,92 2 Q112 2,124 14 Q136 28,126 42 Q122 34,110 26 Q94 16,70 16 Q46 16,30 26 Q18 34,14 42Z"
-              fill="#FF6B00" opacity="0.95" />
-            <path d="M36 6 Q50 -2,70 0 Q90 -2,104 6 Q116 12,122 24 Q112 14,96 8 Q80 4,70 4 Q60 4,44 8 Q28 14,18 24 Q24 12,36 6Z"
-              fill="#FFDD00" opacity="0.95" />
-            <path d="M56 0 Q70 -4,84 0 Q98 4,108 14 Q100 6,88 4 Q76 0,70 2 Q64 0,52 4 Q40 6,32 14 Q42 4,56 0Z"
-              fill="#22AA44" opacity="0.9" />
-            <path d="M96 4 Q110 8,120 18 Q128 28,126 40 Q124 30,116 22 Q108 14,96 10Z"
-              fill="#3366FF" opacity="0.9" />
-            <path d="M108 10 Q118 14,124 24 Q130 34,126 42 Q128 30,122 22 Q116 16,108 10Z"
-              fill="#9944CC" opacity="0.85" />
-            {/* Cross-eyed pupils — silly/derpy look */}
-            <circle cx="54" cy="48" r="10" fill="#1A1A1A" />
-            <circle cx="86" cy="48" r="10" fill="#1A1A1A" />
-            <circle cx="57" cy="45" r="3" fill="white" />
-            <circle cx="83" cy="45" r="3" fill="white" />
-            {/* Wide, innocent-looking eyes (less eyelid than normal) */}
-            <path d="M30 32 Q50 26,70 36 L70 40 Q50 32,30 40Z" fill="#5A8E32" />
-            <path d="M70 36 Q90 26,110 32 L110 40 Q90 32,70 40Z" fill="#5A8E32" />
-            {/* Big red clown nose — 3D shading */}
-            <circle cx="70" cy="68" r="11" fill="#E74C3C" stroke="#C0392B" strokeWidth="1.5" />
-            <circle cx="66" cy="64" r="4" fill="#F5B7B1" opacity="0.5" />
-            <circle cx="68" cy="62" r="2" fill="white" opacity="0.3" />
-            {/* Slight smile (content, not goofy) */}
-            <path d="M40 86 Q54 92,70 90 Q86 92,100 86" fill="none" stroke="#8B3D22" strokeWidth="2" strokeLinecap="round" />
-            {/* Rosy cheeks */}
-            <circle cx="34" cy="74" r="8" fill="#FF6B6B" opacity="0.25" />
-            <circle cx="106" cy="74" r="8" fill="#FF6B6B" opacity="0.25" />
-            {/* Polka-dot bowtie */}
-            <path d="M50 108 L70 104 L70 112 Z" fill="#87CEEB" stroke="#5EAAD4" strokeWidth="1" />
-            <path d="M90 108 L70 104 L70 112 Z" fill="#87CEEB" stroke="#5EAAD4" strokeWidth="1" />
-            <circle cx="70" cy="108" r="3.5" fill="#5EAAD4" stroke="#4890B8" strokeWidth="1" />
+            {/* ── Rainbow afro wig — distinct color bands L→R matching the meme ── */}
+            {/* Outer wig silhouette (puffy shape) */}
+            <path d="M10 44 Q2 28,14 12 Q26 -2,46 -4 Q56 -6,70 -4 Q84 -6,94 -4 Q114 -2,126 12 Q138 28,130 44 Q128 36,118 26 Q100 12,70 12 Q40 12,22 26 Q12 36,10 44Z"
+              fill="#E83030" stroke="#C02020" strokeWidth="1" />
+            {/* Red/orange band (left) */}
+            <path d="M10 44 Q2 28,14 12 Q22 2,36 -2 Q36 4,34 14 Q28 24,20 36Z"
+              fill="#E83030" />
+            {/* Orange band */}
+            <path d="M20 36 Q28 24,34 14 Q36 4,36 -2 Q44 -4,52 -4 Q48 4,44 14 Q38 26,32 38Z"
+              fill="#FF8C00" />
+            {/* Yellow band */}
+            <path d="M32 38 Q38 26,44 14 Q48 4,52 -4 Q60 -6,70 -4 Q66 4,62 14 Q56 26,48 38Z"
+              fill="#FFD700" />
+            {/* Green band */}
+            <path d="M48 38 Q56 26,62 14 Q66 4,70 -4 Q78 -6,86 -4 Q82 4,78 14 Q72 26,66 38Z"
+              fill="#22AA44" />
+            {/* Blue band */}
+            <path d="M66 38 Q72 26,78 14 Q82 4,86 -4 Q96 -4,106 -2 Q98 8,92 18 Q84 30,80 40Z"
+              fill="#3B82F6" />
+            {/* Purple band (right) */}
+            <path d="M80 40 Q84 30,92 18 Q98 8,106 -2 Q118 0,126 12 Q136 26,130 44 Q128 36,120 28 Q110 16,98 22Z"
+              fill="#8B5CF6" />
+            {/* Wig bottom edge blending into head */}
+            <path d="M10 44 Q14 40,22 38 Q40 32,70 32 Q100 32,118 38 Q126 40,130 44 Q128 48,120 44 Q100 36,70 36 Q40 36,20 44 Q12 48,10 44Z"
+              fill="#6B9E3C" opacity="0.6" />
+
+            {/* ── Classic Pepe eyes (normal, NOT cross-eyed) — sad/contemplative ── */}
+            {/* Pupils — normal position, looking slightly forward-left like the meme */}
+            <circle cx="48" cy="48" r="10" fill="#1A1A1A" />
+            <circle cx="88" cy="48" r="10" fill="#1A1A1A" />
+            <circle cx="45" cy="44" r="3.5" fill="white" />
+            <circle cx="85" cy="44" r="3.5" fill="white" />
+            {/* Droopy eyelids — classic half-closed sad Pepe */}
+            <path d="M30 32 Q50 22,70 36 L70 42 Q50 32,30 42Z" fill="#5A8E32" />
+            <path d="M70 36 Q90 22,110 32 L110 42 Q90 32,70 42Z" fill="#5A8E32" />
+
+            {/* ── Big red clown nose — spherical with 3D highlight ── */}
+            <circle cx="70" cy="68" r="12" fill="#E74C3C" stroke="#C0392B" strokeWidth="1.5" />
+            <circle cx="65" cy="63" r="4.5" fill="#F5B7B1" opacity="0.5" />
+            <circle cx="67" cy="61" r="2.5" fill="white" opacity="0.35" />
+
+            {/* ── Sad/content mouth inside lips — slight frown ── */}
+            <path d="M44 88 Q56 84,70 86 Q84 84,96 88" fill="none" stroke="#8B3D22" strokeWidth="2" strokeLinecap="round" />
+
+            {/* ── Rosy cheeks ── */}
+            <circle cx="34" cy="74" r="8" fill="#FF6B6B" opacity="0.3" />
+            <circle cx="106" cy="74" r="8" fill="#FF6B6B" opacity="0.3" />
+
+            {/* ── Polka-dot bowtie (light blue with white dots) ── */}
+            <path d="M46 108 L70 102 L70 114 Z" fill="#87CEEB" stroke="#5EAAD4" strokeWidth="1" />
+            <path d="M94 108 L70 102 L70 114 Z" fill="#87CEEB" stroke="#5EAAD4" strokeWidth="1" />
+            <circle cx="70" cy="108" r="4" fill="#5EAAD4" stroke="#4890B8" strokeWidth="1" />
             {/* Bowtie polka dots */}
-            <circle cx="56" cy="108" r="1.5" fill="white" opacity="0.7" />
-            <circle cx="62" cy="106" r="1" fill="white" opacity="0.6" />
-            <circle cx="60" cy="110" r="1.2" fill="white" opacity="0.6" />
-            <circle cx="80" cy="108" r="1.5" fill="white" opacity="0.7" />
-            <circle cx="78" cy="106" r="1" fill="white" opacity="0.6" />
-            <circle cx="82" cy="110" r="1.2" fill="white" opacity="0.6" />
+            <circle cx="54" cy="108" r="1.8" fill="white" opacity="0.7" />
+            <circle cx="60" cy="105" r="1.2" fill="white" opacity="0.6" />
+            <circle cx="58" cy="111" r="1.4" fill="white" opacity="0.6" />
+            <circle cx="82" cy="108" r="1.8" fill="white" opacity="0.7" />
+            <circle cx="80" cy="105" r="1.2" fill="white" opacity="0.6" />
+            <circle cx="84" cy="111" r="1.4" fill="white" opacity="0.6" />
+
+            {/* ── Hand near chin — contemplative pose like the meme ── */}
+            <ellipse cx="108" cy="90" rx="8" ry="6" fill="#6B9E3C" stroke="#4A7A2A" strokeWidth="1" />
+            <ellipse cx="102" cy="88" rx="4" ry="4" fill="#6B9E3C" stroke="#4A7A2A" strokeWidth="0.8" />
           </>
         )}
 
