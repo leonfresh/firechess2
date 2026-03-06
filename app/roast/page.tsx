@@ -257,6 +257,7 @@ export default function RoastPage() {
   const [spotlightPulse, setSpotlightPulse] = useState(false);
   const [lockedIn, setLockedIn] = useState(false);
   const [isRewatching, setIsRewatching] = useState(false);
+  const [revealModalOpen, setRevealModalOpen] = useState(true);
 
   /* ── Mid-game decision state ── */
   interface GameshowDecision {
@@ -279,6 +280,26 @@ export default function RoastPage() {
   const [recentGames, setRecentGames] = useState<{ white: string; black: string; whiteElo: number; blackElo: number; date: string; result: string; pgn: string; event?: string }[]>([]);
   const [loadError, setLoadError] = useState("");
   const [pgnInput, setPgnInput] = useState("");
+
+  /* ── Daily Challenge state ── */
+  const [dailyCompleted, setDailyCompleted] = useState<{ date: string; result: string; elo: number; guess: string } | null>(null);
+  const [isDaily, setIsDaily] = useState(false);
+
+  // Check localStorage for today's daily challenge
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const stored = localStorage.getItem("fc-roast-daily");
+      if (stored) {
+        const data = JSON.parse(stored);
+        const today = new Date().toISOString().slice(0, 10);
+        if (data.date === today) setDailyCompleted(data);
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  /* ── Challenge link state ── */
+  const [challengeId, setChallengeId] = useState<string | null>(null);
 
   /* ── Active comment + typewriter ── */
   const [activeComment, setActiveComment] = useState<string | null>(null);
@@ -682,6 +703,66 @@ export default function RoastPage() {
     }
   }, []);
 
+  /* ── Fetch the daily challenge game (same for everyone each day) ── */
+  const fetchDailyGame = useCallback(async () => {
+    setIsDaily(true);
+    try {
+      // Use Lichess daily puzzle — its source game is the same for everyone today
+      const dailyRes = await fetch("https://lichess.org/api/puzzle/daily", {
+        headers: { Accept: "application/json" },
+      });
+      if (!dailyRes.ok) throw new Error("Failed to fetch daily puzzle");
+      const daily = await dailyRes.json();
+      const gameId = daily?.game?.id;
+      if (!gameId) throw new Error("No game in daily puzzle");
+
+      // Get a recent game from one of the puzzle's players for variety
+      const players = daily?.game?.players ?? [];
+      const player = players[0];
+      if (!player?.id) throw new Error("No player found");
+
+      // Use a date-seeded index to deterministically pick a game
+      const today = new Date().toISOString().slice(0, 10);
+      const seed = today.split("").reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+
+      const userRes = await fetch(
+        `https://lichess.org/api/games/user/${player.id}?max=20&rated=true&perfType=blitz,rapid&opening=true`,
+        { headers: { Accept: "application/x-ndjson" } }
+      );
+      if (!userRes.ok) throw new Error("Failed to load player games");
+      const text = await userRes.text();
+      const lines = text.trim().split("\n").filter(Boolean);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const games: any[] = lines
+        .map((l) => { try { return JSON.parse(l); } catch { return null; } })
+        .filter((g: Record<string, unknown>) =>
+          g && (g as { variant: string }).variant === "standard" && (g as { rated: boolean }).rated &&
+          (g as { status: string }).status !== "started" &&
+          (g as { players: { white?: { user?: unknown }; black?: { user?: unknown } } }).players?.white?.user &&
+          (g as { players: { white?: { user?: unknown }; black?: { user?: unknown } } }).players?.black?.user
+        );
+
+      if (games.length === 0) throw new Error("No valid games");
+      const picked = games[seed % games.length];
+
+      // Export and process the game using the existing flow
+      const pgnRes = await fetch(
+        `https://lichess.org/game/export/${picked.id}?evals=false&clocks=true&opening=true`,
+        { headers: { Accept: "application/x-chess-pgn" } }
+      );
+      if (!pgnRes.ok) throw new Error("Failed to export daily game");
+      const pgn = await pgnRes.text();
+
+      const wElo = picked.players?.white?.rating ?? 1500;
+      const bElo = picked.players?.black?.rating ?? 1500;
+      await processProvidedPgn(pgn, wElo, bElo);
+    } catch (err) {
+      console.error("Daily game failed, falling back to random:", err);
+      setIsDaily(false);
+      fetchGame();
+    }
+  }, [fetchGame, processProvidedPgn]);
+
   /* ── Process a user-provided PGN (import or paste) ── */
   const processProvidedPgn = useCallback(async (pgn: string, knownWhiteElo?: number, knownBlackElo?: number) => {
     tts.stop();
@@ -1035,6 +1116,43 @@ export default function RoastPage() {
     preloadSounds();
     preloadRoastSounds();
   }, []);
+
+  /* ── Challenge link: auto-load game from URL ?game=XXXXX ── */
+  const fetchGameById = useCallback(async (id: string) => {
+    try {
+      // Export the full PGN from Lichess  
+      const pgnRes = await fetch(
+        `https://lichess.org/game/export/${id}?evals=false&clocks=true&opening=true`,
+        { headers: { Accept: "application/x-chess-pgn" } }
+      );
+      if (!pgnRes.ok) throw new Error("Failed to load challenge game");
+      const pgn = await pgnRes.text();
+
+      // Extract elo from PGN headers
+      const whiteEloMatch = pgn.match(/\[WhiteElo "(\d+)"\]/);
+      const blackEloMatch = pgn.match(/\[BlackElo "(\d+)"\]/);
+      const wElo = whiteEloMatch ? parseInt(whiteEloMatch[1]) : undefined;
+      const bElo = blackEloMatch ? parseInt(blackEloMatch[1]) : undefined;
+
+      setChallengeId(id);
+      await processProvidedPgn(pgn, wElo, bElo);
+    } catch (err) {
+      console.error("Challenge game failed:", err);
+      // Fall back to source selection
+      setPageState("choose-source");
+    }
+  }, [processProvidedPgn]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const gameParam = params.get("game");
+    if (gameParam) {
+      // Clear the URL param so refreshing doesn't re-trigger
+      window.history.replaceState({}, "", window.location.pathname);
+      fetchGameById(gameParam);
+    }
+  }, [fetchGameById]);
 
   /* ── Autoplay (waits for typewriter + TTS to finish) ── */
   useEffect(() => {
@@ -1394,8 +1512,20 @@ export default function RoastPage() {
 
     // Play reveal stinger before transition
     setTimeout(() => playSound("reveal-stinger"), 300);
-    setTimeout(() => { setPageState("revealed"); setLockedIn(false); }, 600);
-  }, [game, selectedBracket, moves.length, blunders, mistakes, inaccuracies]);
+    setTimeout(() => { setPageState("revealed"); setLockedIn(false); setRevealModalOpen(true); }, 600);
+
+    // Save daily challenge result to localStorage
+    if (isDaily && game) {
+      const dailyData = {
+        date: new Date().toISOString().slice(0, 10),
+        result,
+        elo: game.avgElo,
+        guess: ELO_BRACKETS[bracketIdx]?.label ?? "?",
+      };
+      localStorage.setItem("fc-roast-daily", JSON.stringify(dailyData));
+      setDailyCompleted(dailyData);
+    }
+  }, [game, selectedBracket, moves.length, blunders, mistakes, inaccuracies, isDaily]);
 
   /* ── Square styles ── */
   const customSquareStyles: Record<string, React.CSSProperties> = {};
@@ -1537,47 +1667,77 @@ export default function RoastPage() {
         {/* ── Source Selection ── */}
         {pageState === "choose-source" && !analyzing && (
           <div className="mx-auto max-w-2xl py-8 animate-fadeIn">
-            {/* Three source option cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            {/* Source option cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-8">
+              {/* Daily Challenge */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (dailyCompleted) return;
+                  setInputMode("random");
+                  setIsDaily(true);
+                  fetchDailyGame();
+                }}
+                disabled={!!dailyCompleted}
+                className={`group rounded-2xl border p-5 sm:p-6 text-center transition-all cursor-pointer relative overflow-hidden ${
+                  dailyCompleted
+                    ? "border-emerald-500/30 bg-emerald-500/[0.06] opacity-70"
+                    : "border-amber-500/20 bg-amber-500/[0.04] hover:border-amber-500/40 hover:bg-amber-500/[0.08]"
+                }`}
+              >
+                <span className="mb-2 sm:mb-3 flex justify-center text-2xl sm:text-3xl">📅</span>
+                <p className={`text-xs sm:text-sm font-bold ${dailyCompleted ? "text-emerald-400" : "text-amber-400 group-hover:text-amber-300"}`}>
+                  {dailyCompleted ? "Completed ✓" : "Daily Challenge"}
+                </p>
+                <p className="mt-1 text-[10px] sm:text-[11px] text-slate-500 leading-relaxed">
+                  {dailyCompleted ? `You guessed ${dailyCompleted.guess}` : "Same game for everyone today"}
+                </p>
+                {!dailyCompleted && (
+                  <div className="absolute top-2 right-2">
+                    <span className="inline-flex h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+                  </div>
+                )}
+              </button>
+
               {/* Random game */}
               <button
                 type="button"
-                onClick={() => { setInputMode("random"); fetchGame(); }}
-                className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-6 text-center transition-all hover:border-orange-500/30 hover:bg-orange-500/[0.04] cursor-pointer"
+                onClick={() => { setInputMode("random"); setIsDaily(false); fetchGame(); }}
+                className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 sm:p-6 text-center transition-all hover:border-orange-500/30 hover:bg-orange-500/[0.04] cursor-pointer"
               >
-                <span className="mb-3 flex justify-center text-3xl">🎲</span>
-                <p className="text-sm font-bold text-orange-400 group-hover:text-orange-300">Random Game</p>
-                <p className="mt-1.5 text-[11px] text-slate-500 leading-relaxed">Watch a random Lichess game and guess the Elo</p>
+                <span className="mb-2 sm:mb-3 flex justify-center text-2xl sm:text-3xl">🎲</span>
+                <p className="text-xs sm:text-sm font-bold text-orange-400 group-hover:text-orange-300">Random Game</p>
+                <p className="mt-1 text-[10px] sm:text-[11px] text-slate-500 leading-relaxed">Random Lichess game</p>
               </button>
 
               {/* Import from Lichess / Chess.com */}
               <button
                 type="button"
                 onClick={() => setInputMode("import")}
-                className={`group rounded-2xl border p-6 text-center transition-all cursor-pointer ${
+                className={`group rounded-2xl border p-5 sm:p-6 text-center transition-all cursor-pointer ${
                   inputMode === "import"
                     ? "border-blue-500/30 bg-blue-500/[0.06]"
                     : "border-white/[0.06] bg-white/[0.02] hover:border-blue-500/20 hover:bg-blue-500/[0.04]"
                 }`}
               >
-                <span className="mb-3 flex justify-center text-3xl">📥</span>
-                <p className="text-sm font-bold text-blue-400 group-hover:text-blue-300">Import Games</p>
-                <p className="mt-1.5 text-[11px] text-slate-500 leading-relaxed">Load from Lichess or Chess.com by username</p>
+                <span className="mb-2 sm:mb-3 flex justify-center text-2xl sm:text-3xl">📥</span>
+                <p className="text-xs sm:text-sm font-bold text-blue-400 group-hover:text-blue-300">Import Games</p>
+                <p className="mt-1 text-[10px] sm:text-[11px] text-slate-500 leading-relaxed">From Lichess or Chess.com</p>
               </button>
 
               {/* Paste PGN */}
               <button
                 type="button"
                 onClick={() => setInputMode("paste")}
-                className={`group rounded-2xl border p-6 text-center transition-all cursor-pointer ${
+                className={`group rounded-2xl border p-5 sm:p-6 text-center transition-all cursor-pointer ${
                   inputMode === "paste"
                     ? "border-emerald-500/30 bg-emerald-500/[0.06]"
                     : "border-white/[0.06] bg-white/[0.02] hover:border-emerald-500/20 hover:bg-emerald-500/[0.04]"
                 }`}
               >
-                <span className="mb-3 flex justify-center text-3xl">📋</span>
-                <p className="text-sm font-bold text-emerald-400 group-hover:text-emerald-300">Paste PGN</p>
-                <p className="mt-1.5 text-[11px] text-slate-500 leading-relaxed">Paste any PGN to get it roasted</p>
+                <span className="mb-2 sm:mb-3 flex justify-center text-2xl sm:text-3xl">📋</span>
+                <p className="text-xs sm:text-sm font-bold text-emerald-400 group-hover:text-emerald-300">Paste PGN</p>
+                <p className="mt-1 text-[10px] sm:text-[11px] text-slate-500 leading-relaxed">Paste any PGN to roast</p>
               </button>
             </div>
 
@@ -1959,6 +2119,14 @@ export default function RoastPage() {
                       </button>
                     </>
                   )}
+                  {pageState === "revealed" && !revealModalOpen && (
+                    <button
+                      onClick={() => setRevealModalOpen(true)}
+                      className="rounded-lg border border-amber-500/20 bg-amber-500/[0.06] px-3 py-1.5 text-xs font-medium text-amber-400 hover:bg-amber-500/10 transition-colors"
+                    >
+                      📊 Show Results
+                    </button>
+                  )}
                 </div>
               )}
 
@@ -2248,11 +2416,19 @@ export default function RoastPage() {
         )}
 
         {/* ════════════════════════════════════════════════════════════════ */}
-        {/*  CENTERED MODAL: Reveal (non-closable, with Next Round)         */}
+        {/*  CENTERED MODAL: Reveal (closable, with Next Round)              */}
         {/* ════════════════════════════════════════════════════════════════ */}
-        {pageState === "revealed" && game && (
-          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn overflow-y-auto py-8">
-            <div className="relative w-[92vw] max-w-lg rounded-3xl border-2 border-amber-500/40 bg-gradient-to-b from-zinc-900 via-zinc-900 to-zinc-950 p-6 sm:p-8 shadow-2xl shadow-amber-500/20 overflow-hidden my-auto">
+        {pageState === "revealed" && game && revealModalOpen && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn overflow-y-auto py-8" onClick={() => setRevealModalOpen(false)}>
+            <div className="relative w-[92vw] max-w-lg rounded-3xl border-2 border-amber-500/40 bg-gradient-to-b from-zinc-900 via-zinc-900 to-zinc-950 p-6 sm:p-8 shadow-2xl shadow-amber-500/20 overflow-hidden my-auto" onClick={e => e.stopPropagation()}>
+              {/* Close button */}
+              <button
+                onClick={() => setRevealModalOpen(false)}
+                className="absolute top-3 right-3 z-20 h-8 w-8 rounded-full bg-zinc-800/80 border border-white/10 text-slate-400 text-sm flex items-center justify-center hover:bg-zinc-700 hover:text-white transition-colors"
+                title="Close (view board)"
+              >
+                ✕
+              </button>
               {/* Spotlight glow behind elo */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-amber-400/[0.1] rounded-full blur-[80px] pointer-events-none" />
               {/* Corner accents */}
@@ -2337,31 +2513,95 @@ export default function RoastPage() {
                   </a>
                 </div>
 
-                {/* Action buttons */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => {
-                      const bracket = selectedBracket !== null ? ELO_BRACKETS[selectedBracket] : null;
-                      const actualBracket = ELO_BRACKETS[getEloBracketIdx(game.avgElo)];
-                      const diff = selectedBracket !== null ? Math.abs(selectedBracket - getEloBracketIdx(game.avgElo)) : 99;
-                      const emoji = diff === 0 ? "🎯" : diff === 1 ? "🔥" : "💀";
-                      const text = [
-                        `${emoji} Roast the Elo — I guessed ${bracket?.label ?? "?"} and the actual Elo was ${game.avgElo} (${actualBracket.label})`,
-                        `💀 ${blunders} blunders · ❌ ${mistakes} mistakes · ⚠️ ${inaccuracies} inaccuracies`,
-                        `🐸 Try it yourself: firechess.app/roast`,
-                      ].join("\n");
-                      navigator.clipboard.writeText(text).then(() => {
-                        setShareText("Copied!");
-                        setTimeout(() => setShareText(null), 2000);
-                      }).catch(() => {
-                        setShareText("Copy failed");
-                        setTimeout(() => setShareText(null), 2000);
-                      });
-                    }}
-                    className="flex-1 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs font-medium text-slate-300 hover:bg-white/[0.08] transition-all flex items-center justify-center gap-1.5"
-                  >
-                    {shareText ?? "📋 Share"}
-                  </button>
+                {/* Share & Actions */}
+                <div className="space-y-2">
+                  {/* Share row */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Twitter / X share */}
+                    <a
+                      href={(() => {
+                        const bracket = selectedBracket !== null ? ELO_BRACKETS[selectedBracket] : null;
+                        const actualBracket = ELO_BRACKETS[getEloBracketIdx(game.avgElo)];
+                        const diff = selectedBracket !== null ? Math.abs(selectedBracket - getEloBracketIdx(game.avgElo)) : 99;
+                        const emoji = diff === 0 ? "🎯" : diff === 1 ? "🔥" : "💀";
+                        const tweet = `${emoji} Roast the Elo — I guessed ${bracket?.label ?? "?"} and the real Elo was ${game.avgElo}!\n\n💀 ${blunders} blunders · ❌ ${mistakes} mistakes\n\n🐸 Can you do better?`;
+                        const url = game.id ? `https://firechess.app/roast?game=${game.id}` : "https://firechess.app/roast";
+                        return `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweet)}&url=${encodeURIComponent(url)}`;
+                      })()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs font-medium text-slate-300 hover:bg-sky-500/10 hover:border-sky-500/30 hover:text-sky-300 transition-all flex items-center justify-center gap-1.5"
+                    >
+                      𝕏 Post
+                    </a>
+                    {/* Copy text */}
+                    <button
+                      onClick={() => {
+                        const bracket = selectedBracket !== null ? ELO_BRACKETS[selectedBracket] : null;
+                        const actualBracket = ELO_BRACKETS[getEloBracketIdx(game.avgElo)];
+                        const diff = selectedBracket !== null ? Math.abs(selectedBracket - getEloBracketIdx(game.avgElo)) : 99;
+                        const emoji = diff === 0 ? "🎯" : diff === 1 ? "🔥" : "💀";
+                        const text = [
+                          `${emoji} Roast the Elo — I guessed ${bracket?.label ?? "?"} and the actual Elo was ${game.avgElo} (${actualBracket.label})`,
+                          `💀 ${blunders} blunders · ❌ ${mistakes} mistakes · ⚠️ ${inaccuracies} inaccuracies`,
+                          `🐸 Try it yourself: firechess.app/roast`,
+                        ].join("\n");
+                        navigator.clipboard.writeText(text).then(() => {
+                          setShareText("Copied!");
+                          setTimeout(() => setShareText(null), 2000);
+                        }).catch(() => {
+                          setShareText("Copy failed");
+                          setTimeout(() => setShareText(null), 2000);
+                        });
+                      }}
+                      className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs font-medium text-slate-300 hover:bg-white/[0.08] transition-all flex items-center justify-center gap-1.5"
+                    >
+                      {shareText ?? "📋 Copy"}
+                    </button>
+                  </div>
+                  {/* Challenge + Download row */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* Challenge a Friend */}
+                    {game.id && (
+                      <button
+                        onClick={() => {
+                          const url = `https://firechess.app/roast?game=${game.id}`;
+                          navigator.clipboard.writeText(url).then(() => {
+                            setShareText("Link copied!");
+                            setTimeout(() => setShareText(null), 2000);
+                          });
+                        }}
+                        className="rounded-xl border border-orange-500/20 bg-orange-500/[0.06] px-3 py-2.5 text-xs font-medium text-orange-300 hover:bg-orange-500/[0.12] hover:border-orange-500/30 transition-all flex items-center justify-center gap-1.5"
+                      >
+                        🔗 Challenge a Friend
+                      </button>
+                    )}
+                    {/* Download share card */}
+                    <button
+                      onClick={() => {
+                        const diff = selectedBracket !== null ? Math.abs(selectedBracket - getEloBracketIdx(game.avgElo)) : 99;
+                        const result = diff === 0 ? "PERFECT" : diff === 1 ? "CLOSE" : "MISS";
+                        const params = new URLSearchParams({
+                          elo: String(game.avgElo),
+                          guess: selectedBracket !== null ? ELO_BRACKETS[selectedBracket].label : "?",
+                          result,
+                          blunders: String(blunders),
+                          mistakes: String(mistakes),
+                          inaccuracies: String(inaccuracies),
+                          score: String(score),
+                          games: String(gamesPlayed),
+                          streak: String(streakCount),
+                        });
+                        const url = `/api/roast/share-card?${params.toString()}`;
+                        // Open in new tab so user can save/share the image
+                        window.open(url, "_blank");
+                      }}
+                      className={`rounded-xl border border-purple-500/20 bg-purple-500/[0.06] px-3 py-2.5 text-xs font-medium text-purple-300 hover:bg-purple-500/[0.12] hover:border-purple-500/30 transition-all flex items-center justify-center gap-1.5 ${!game.id ? "col-span-2" : ""}`}
+                    >
+                      🖼️ Share Card
+                    </button>
+                  </div>
+                  {/* Rewatch */}
                   <button
                     onClick={() => {
                       setPageState("watching");
@@ -2376,7 +2616,7 @@ export default function RoastPage() {
                       setDecisionShown(new Set());
                       setPendingDecisionIdx(null);
                     }}
-                    className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs text-slate-400 hover:bg-white/[0.08] transition-all"
+                    className="w-full rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs text-slate-400 hover:bg-white/[0.08] transition-all"
                   >
                     🔁 Rewatch
                   </button>
