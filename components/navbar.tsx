@@ -575,7 +575,6 @@ export function Navbar() {
                 ...NAV_LINKS,
                 { href: "/blog", label: "Blog" },
                 { href: "/dungeon", label: "⚔️ Dungeon Tactics" },
-                { href: "/roast", label: "🔥 Roast the Elo" },
                 { href: "/openings", label: "📖 Openings" },
                 { href: "/leaderboard", label: "🏆 Leaderboard" },
                 { href: "/shop", label: "🪙 Coin Shop" },
