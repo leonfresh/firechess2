@@ -256,6 +256,7 @@ export default function RoastPage() {
   const [revealCounterElo, setRevealCounterElo] = useState<number | null>(null);
   const [spotlightPulse, setSpotlightPulse] = useState(false);
   const [lockedIn, setLockedIn] = useState(false);
+  const [isRewatching, setIsRewatching] = useState(false);
 
   /* ── Mid-game decision state ── */
   interface GameshowDecision {
@@ -319,6 +320,7 @@ export default function RoastPage() {
     setRevealCounterElo(null);
     setSpotlightPulse(false);
     setLockedIn(false);
+    setIsRewatching(false);
     setActiveDecision(null);
     setDecisionAnswer(null);
     setDecisionShown(new Set());
@@ -701,6 +703,7 @@ export default function RoastPage() {
     setRevealCounterElo(null);
     setSpotlightPulse(false);
     setLockedIn(false);
+    setIsRewatching(false);
     setActiveDecision(null);
     setDecisionAnswer(null);
     setDecisionShown(new Set());
@@ -1943,10 +1946,16 @@ export default function RoastPage() {
                         <option value={700}>⚡ Blitz</option>
                       </select>
                       <button
-                        onClick={skipToGuess}
+                        onClick={isRewatching ? () => {
+                          setPageState("choose-source");
+                          setInputMode(null);
+                          setLoadError("");
+                          setRecentGames([]);
+                          setPgnInput("");
+                        } : skipToGuess}
                         className="rounded-lg border border-amber-500/20 bg-amber-500/[0.06] px-3 py-1.5 text-xs font-medium text-amber-400 hover:bg-amber-500/10 transition-colors"
                       >
-                        Skip to Guess →
+                        {isRewatching ? "Next Round 🔥" : "Skip to Guess →"}
                       </button>
                     </>
                   )}
@@ -2362,6 +2371,10 @@ export default function RoastPage() {
                       setCommentHistory([]);
                       setActiveComment(null);
                       setAutoplay(true);
+                      setIsRewatching(true);
+                      setSelectedBracket(null);
+                      setDecisionShown(new Set());
+                      setPendingDecisionIdx(null);
                     }}
                     className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs text-slate-400 hover:bg-white/[0.08] transition-all"
                   >
