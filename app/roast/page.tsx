@@ -2556,60 +2556,46 @@ export default function RoastPage() {
 
   return (
     <main className="min-h-screen bg-[#030712] text-white">
-      {/* Background — cinematic dark stage with reactive ambient glow */}
+      {/* Background — floating particles and faint emoji */}
       {!streamerMode && (
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        {/* Subtle grid pattern for depth */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{
-          backgroundImage: "linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-        }} />
-
-        {/* Cinematic vignette */}
-        <div className="absolute inset-0" style={{
-          background: "radial-gradient(ellipse 70% 60% at 50% 50%, transparent 40%, rgba(0,0,0,0.6) 100%)",
-        }} />
-
-        {/* Reactive ambient glow — color shifts with move classification */}
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] rounded-full transition-all duration-1000 ease-out" style={{
-          background: `radial-gradient(ellipse, rgba(${ambientGlow.color}, ${ambientGlow.intensity}) 0%, rgba(${ambientGlow.color}, ${ambientGlow.intensity * 0.3}) 40%, transparent 70%)`,
-          filter: "blur(60px)",
-        }} />
-
-        {/* Spotlight pulse on guess reveal */}
-        {spotlightPulse && (
-          <div className="animate-spotlight-pulse absolute inset-0" style={{ background: "radial-gradient(circle at 50% 30%, rgba(251,191,36,0.12) 0%, transparent 55%)" }} />
-        )}
-
-        {/* Film grain overlay — very subtle */}
-        <div className="absolute inset-0 animate-grain opacity-[0.015]" style={{
-          backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")",
-          backgroundRepeat: "repeat",
-          backgroundSize: "256px 256px",
-        }} />
-
-        {/* Scanlines — retro TV effect (extremely subtle) */}
-        <div className="absolute inset-0 opacity-[0.018]" style={{
-          backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.3) 2px, rgba(0,0,0,0.3) 4px)",
-          backgroundSize: "100% 4px",
-        }} />
-
         {/* Floating embers — tiny drifting particles */}
-        {Array.from({ length: 6 }).map((_, i) => (
+        {Array.from({ length: 8 }).map((_, i) => (
           <div
             key={`ember-${i}`}
             className="absolute rounded-full"
             style={{
               width: 2 + (i % 3),
               height: 2 + (i % 3),
-              left: `${15 + i * 14}%`,
-              bottom: `${10 + (i % 4) * 8}%`,
+              left: `${10 + i * 11}%`,
+              bottom: `${8 + (i % 5) * 7}%`,
               background: `rgba(${ambientGlow.color}, ${0.15 + (i % 3) * 0.08})`,
               boxShadow: `0 0 6px rgba(${ambientGlow.color}, 0.2)`,
               animation: `ember-drift ${8 + i * 2}s ease-in-out ${i * 1.5}s infinite`,
             }}
           />
         ))}
+
+        {/* Faint floating chess emoji */}
+        {(() => {
+          const emojis = ["♟", "♞", "♝", "♜", "♛", "♚", "🏆", "🎯", "🔥", "💀", "🗿", "🤡", "⚡"];
+          return Array.from({ length: 10 }).map((_, i) => (
+            <div
+              key={`bg-emoji-${i}`}
+              className="absolute select-none"
+              style={{
+                fontSize: 14 + (i % 4) * 6,
+                left: `${5 + ((i * 17 + 7) % 90)}%`,
+                bottom: `${-5 + (i % 6) * 5}%`,
+                opacity: 0.04 + (i % 3) * 0.015,
+                animation: `ember-drift ${12 + i * 3}s ease-in-out ${i * 2.2}s infinite`,
+                filter: "blur(0.5px)",
+              }}
+            >
+              {emojis[i % emojis.length]}
+            </div>
+          ));
+        })()}
       </div>
       )}
 
@@ -3304,7 +3290,7 @@ export default function RoastPage() {
                     const rankI = parseInt(toSqStr[1]) - 1;
                     const x = orientation === "white" ? fileI * sqSize : (7 - fileI) * sqSize;
                     const y = orientation === "white" ? (7 - rankI) * sqSize : rankI * sqSize;
-                    const pepeSize = boardPepeIsCheckmate ? sqSize * 0.528 : sqSize * 0.36;
+                    const pepeSize = boardPepeIsCheckmate ? sqSize * 0.422 : sqSize * 0.288;
                     const pad = 3; // matches p-[3px] on the frame wrapper
                     return (
                       <div

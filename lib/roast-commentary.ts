@@ -736,15 +736,16 @@ function detectSoundSacrifice(move: AnalyzedMove, after: Chess, moverColor: Colo
   // The piece must actually be en prise (opponent can recapture it)
   // If the piece is safe on its new square, it's just a regular capture, not a sacrifice
   const toSq = move.uci.slice(2, 4) as Square;
-  const oppColor = opp(moverColor);
   try {
-    const pieces = allPieces(after);
-    const oppPieces = pieces.filter(p => p.color === oppColor);
-    const canRecapture = oppPieces.some(p => isAttacking(after, p.square, p, toSq));
+    // Use legal moves to check recapture — geometric attacks miss pins!
+    // A pinned piece can "attack" a square geometrically but can't legally move there.
+    const legalMoves = after.moves({ verbose: true });
+    const canRecapture = legalMoves.some(m => m.to === toSq && m.captured);
     if (!canRecapture) return null; // piece is safe — not a real sacrifice
 
     // If the piece is DEFENDED by friendly pieces, the opponent wouldn't actually
     // recapture because they'd lose material in the exchange. Not a real sacrifice.
+    const pieces = allPieces(after);
     const friendlyPieces = pieces.filter(p => p.color === moverColor && p.square !== toSq);
     const isDefended = friendlyPieces.some(p => isAttacking(after, p.square, p, toSq));
     if (isDefended) return null; // defended piece — opponent won't recapture
