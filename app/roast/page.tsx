@@ -103,8 +103,8 @@ function getMood(move: { classification: MoveClassification; cpLoss: number } | 
     }
     case "great": case "best": {
       const r = Math.random();
-      // Galaxy brain only on 3+ best-move streaks — keep it special
-      if ((bestStreak ?? 0) >= 3 && r < 0.35) return "galaxybrain";
+      // Galaxy brain only on 4+ best-move streaks — keep it rare & special
+      if ((bestStreak ?? 0) >= 4 && r < 0.15) return "galaxybrain";
       if (r < 0.15) return "loving";     // animated good vibes
       if (r < 0.5) return "king";
       return "smug";

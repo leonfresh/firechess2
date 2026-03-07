@@ -903,7 +903,7 @@ function _brilliantRoast(
   const threatArrows: [string, string, string][] = threats
     .filter(t => (PIECE_VALUES[t.piece.type] ?? 0) >= 3)
     .slice(0, 2)
-    .map(t => [t.attacker.square, t.square, "rgba(34, 197, 94, 0.6)"] as [string, string, string]);
+    .map(t => [t.attacker.square, t.square, "rgba(59, 130, 246, 0.65)"] as [string, string, string]);
   const allArrows: [string, string, string][] = [...baseArrows, ...threatArrows];
 
   // Context-aware prefix for Levy-style callbacks
@@ -963,7 +963,7 @@ function _goodMoveRoast(
   const threatArrows: [string, string, string][] = threats
     .filter(t => (PIECE_VALUES[t.piece.type] ?? 0) >= 3)
     .slice(0, 2)
-    .map(t => [t.attacker.square, t.square, "rgba(34, 197, 94, 0.6)"] as [string, string, string]);
+    .map(t => [t.attacker.square, t.square, "rgba(59, 130, 246, 0.65)"] as [string, string, string]);
   const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(34, 197, 94, 0.7)"], ...threatArrows], markers: [{ square: toSq, emoji: pick(goodEmojis) }] };
 
   // Context-aware sarcasm
