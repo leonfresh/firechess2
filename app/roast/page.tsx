@@ -419,10 +419,11 @@ export default function RoastPage() {
 
   /* ── Ghost reactions state (daily challenge social layer) ── */
   const [ghostReactions, setGhostReactions] = useState<Record<number, { emoji: string; displayName: string | null }[]>>({});
-  const [activeGhosts, setActiveGhosts] = useState<{ emoji: string; displayName: string | null; id: number; x: number }[]>([]);
+  const [activeGhosts, setActiveGhosts] = useState<{ emoji: string; displayName: string | null; id: number; x: number; y: number }[]>([]);
   const ghostIdRef = useRef(0);
   const [myReaction, setMyReaction] = useState<string | null>(null);
   const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
+  const [reactionConfirm, setReactionConfirm] = useState<string | null>(null); // flash confirmation
   const dailyDateRef = useRef<string>("");
 
   // Load persisted score/streak and daily challenge on mount
@@ -1600,14 +1601,15 @@ export default function RoastPage() {
                 emoji: g.emoji,
                 displayName: g.displayName,
                 id: ghostIdRef.current,
-                x: 10 + Math.random() * 80, // random horizontal position (% of board)
+                x: 0, // unused (horizontal is CSS-driven)
+                y: 5 + Math.random() * 80, // random vertical lane (% of board)
               };
               setActiveGhosts(prev => [...prev, ghost]);
-              // Remove after animation
+              // Remove after marquee scroll
               setTimeout(() => {
                 setActiveGhosts(prev => prev.filter(ag => ag.id !== ghost.id));
-              }, 3000);
-            }, i * 200); // stagger by 200ms each
+              }, 5500);
+            }, i * 300); // stagger by 300ms each
           });
         }
         // Reset current user's reaction for new move
@@ -3304,34 +3306,32 @@ export default function RoastPage() {
                     </div>
                   )}
 
-                  {/* ── Ghost reaction bubbles from other daily players ── */}
+                  {/* ── Ghost reaction marquee (danmaku-style horizontal scroll) ── */}
                   {isDaily && activeGhosts.length > 0 && (
                     <div className="absolute inset-0 pointer-events-none z-40 overflow-hidden">
                       {activeGhosts.map((ghost) => {
-                        // Check if it's a pepe mood (has an image) or plain emoji
                         const pepeImage = GHOST_EMOJI_IMAGES[ghost.emoji];
                         return (
                           <div
                             key={ghost.id}
-                            className="absolute animate-ghost-rise"
+                            className="absolute animate-ghost-marquee"
                             style={{
-                              left: `${ghost.x}%`,
-                              bottom: "0%",
+                              top: `${ghost.y}%`,
                             }}
                           >
-                            <div className="flex flex-col items-center gap-0.5">
+                            <div className="flex items-center gap-1 bg-black/30 backdrop-blur-[2px] rounded-full pl-1 pr-2 py-0.5 shadow-lg border border-white/10">
                               {pepeImage ? (
                                 <img
                                   src={pepeImage}
                                   alt={ghost.emoji}
-                                  className="w-8 h-8 sm:w-10 sm:h-10 drop-shadow-lg"
+                                  className="w-7 h-7 sm:w-8 sm:h-8 drop-shadow-lg"
                                   draggable={false}
                                 />
                               ) : (
-                                <span className="text-2xl sm:text-3xl drop-shadow-lg select-none">{ghost.emoji}</span>
+                                <span className="text-xl sm:text-2xl drop-shadow-lg select-none">{ghost.emoji}</span>
                               )}
                               {ghost.displayName && ghost.displayName !== "Anonymous" && (
-                                <span className="text-[8px] text-white/60 whitespace-nowrap bg-black/40 rounded px-1 backdrop-blur-sm">
+                                <span className="text-[9px] text-white/80 font-medium whitespace-nowrap">
                                   {ghost.displayName}
                                 </span>
                               )}
@@ -3448,10 +3448,10 @@ export default function RoastPage() {
                 </div>
               </div>
 
-              {/* Commentary text below board (shown on all sizes) */}
+              {/* Commentary text below board (hidden on mobile — mobile clippy shows it) */}
               {activeComment && (pageState === "watching" || pageState === "guessing") && (
                 <div className="w-full max-w-[640px] animate-fadeIn">
-                  <div className="relative rounded-xl bg-black/60 backdrop-blur-md border border-white/[0.08] px-4 py-2.5 overflow-hidden">
+                  <div className="hidden lg:block relative rounded-xl bg-black/60 backdrop-blur-md border border-white/[0.08] px-4 py-2.5 overflow-hidden">
                     {/* Reactive accent line at top */}
                     <div className="absolute top-0 left-0 right-0 h-[2px] transition-colors duration-700" style={{ background: `linear-gradient(90deg, transparent, rgba(${ambientGlow.color}, 0.6), transparent)` }} />
                     {tacticReplaying ? (
@@ -3488,7 +3488,7 @@ export default function RoastPage() {
               {/* ── Daily Challenge: Ghost Reaction Picker ── */}
               {isDaily && (pageState === "watching" || pageState === "guessing") && currentIdx >= 0 && (
                 <div className="w-full max-w-[640px]">
-                  <div className="flex items-center gap-1.5 px-1">
+                  <div className="relative flex items-center gap-1.5 px-1">
                     <span className="text-[10px] text-slate-600 uppercase tracking-wider font-bold whitespace-nowrap mr-1">
                       👻 React
                     </span>
@@ -3514,13 +3514,21 @@ export default function RoastPage() {
                             emoji: r.key,
                             displayName: user?.name ?? "You",
                             id: ghostIdRef.current,
-                            x: 30 + Math.random() * 40,
+                            x: 0,
+                            y: 10 + Math.random() * 70, // random vertical lane
                           };
                           setActiveGhosts(prev => [...prev, selfGhost]);
-                          setTimeout(() => setActiveGhosts(prev => prev.filter(g => g.id !== selfGhost.id)), 3000);
+                          setTimeout(() => setActiveGhosts(prev => prev.filter(g => g.id !== selfGhost.id)), 5500);
+                          // Flash confirmation
+                          setReactionConfirm(r.key);
+                          setTimeout(() => setReactionConfirm(null), 1200);
+                          // Bump audience meter slightly — your reaction energizes the crowd
+                          setAudienceMeter(prev => Math.min(100, prev + 3));
                         }}
-                        className={`group relative rounded-md p-1 transition-all hover:scale-125 hover:bg-white/10 ${
-                          myReaction === r.key ? "scale-110 bg-white/10 ring-1 ring-orange-400/40" : ""
+                        className={`group relative rounded-md p-1 transition-all duration-200 hover:scale-125 hover:bg-white/10 ${
+                          myReaction === r.key
+                            ? "scale-125 bg-orange-500/20 ring-2 ring-orange-400/70 shadow-[0_0_12px_rgba(251,146,60,0.3)]"
+                            : ""
                         }`}
                         title={r.label}
                       >
@@ -3528,6 +3536,10 @@ export default function RoastPage() {
                           <img src={r.image} alt={r.label} className="w-6 h-6 sm:w-7 sm:h-7" draggable={false} />
                         ) : (
                           <span className="text-base sm:text-lg">{r.key}</span>
+                        )}
+                        {/* Selected checkmark */}
+                        {myReaction === r.key && (
+                          <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-orange-500 rounded-full flex items-center justify-center text-[8px] text-white font-bold shadow-md">✓</span>
                         )}
                       </button>
                     ))}
@@ -3541,6 +3553,18 @@ export default function RoastPage() {
                         </span>
                       );
                     })()}
+                    {/* Reaction sent confirmation */}
+                    {reactionConfirm && (
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 pointer-events-none animate-reaction-confirm">
+                        <div className="bg-orange-500/90 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg whitespace-nowrap flex items-center gap-1">
+                          <span>Sent!</span>
+                          {(() => {
+                            const img = GHOST_EMOJI_IMAGES[reactionConfirm];
+                            return img ? <img src={img} alt="" className="w-4 h-4" /> : <span>{reactionConfirm}</span>;
+                          })()}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -3570,10 +3594,10 @@ export default function RoastPage() {
                         }}
                       />
                     </div>
-                    <span className="text-[10px] w-8 text-right tabular-nums" style={{
+                    <span className="text-[10px] text-right tabular-nums whitespace-nowrap flex items-center gap-1" style={{
                       color: audienceMeter > 70 ? "#4ade80" : audienceMeter > 40 ? "#facc15" : "#f87171",
                     }}>
-                      {audienceMeter > 70 ? "😍" : audienceMeter > 40 ? "😐" : audienceMeter > 20 ? "😬" : "💀"}
+                      {audienceMeter > 85 ? "🤯 Hyped" : audienceMeter > 70 ? "😍 Loving it" : audienceMeter > 55 ? "🙂 Engaged" : audienceMeter > 40 ? "😐 Meh" : audienceMeter > 20 ? "😬 Cringe" : "💀 Bored"}
                     </span>
                   </div>
 
@@ -3613,20 +3637,24 @@ export default function RoastPage() {
                 <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 mt-1 sm:mt-2 rounded-xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-sm px-3 py-2" style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)" }}>
                   <button
                     onClick={() => goToMove(Math.max(-1, currentIdx - 1))}
-                    className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-sm text-slate-400 hover:bg-white/[0.08] hover:text-white transition-all active:scale-95"
+                    title="Previous move (←)"
+                    className="group rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-sm text-slate-400 hover:bg-white/[0.08] hover:text-white transition-all active:scale-95"
                   >
                     ◀ Prev
+                    <kbd className="hidden sm:inline-block ml-1.5 text-[9px] text-slate-600 bg-white/[0.06] px-1 py-0.5 rounded font-mono group-hover:text-slate-400">←</kbd>
                   </button>
                   {pageState === "watching" && (
                     <button
                       onClick={() => setAutoplay(prev => !prev)}
-                      className={`rounded-lg border px-4 py-1.5 text-sm font-medium transition-all active:scale-95 ${
+                      title="Play/Pause (Space)"
+                      className={`group rounded-lg border px-4 py-1.5 text-sm font-medium transition-all active:scale-95 ${
                         autoplay
                           ? "border-orange-500/30 bg-orange-500/10 text-orange-400 shadow-lg shadow-orange-500/10"
                           : "border-white/[0.08] bg-white/[0.03] text-slate-400 hover:bg-white/[0.08] hover:text-white"
                       }`}
                     >
                       {autoplay ? "⏸ Pause" : "▶ Play"}
+                      <kbd className="hidden sm:inline-block ml-1.5 text-[9px] text-slate-600 bg-white/[0.06] px-1 py-0.5 rounded font-mono group-hover:text-slate-400">⎵</kbd>
                     </button>
                   )}
                   <button
@@ -3634,14 +3662,16 @@ export default function RoastPage() {
                       setAutoplay(false);
                       goToMove(Math.min(moves.length - 1, currentIdx + 1));
                     }}
-                    className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-sm text-slate-400 hover:bg-white/[0.08] hover:text-white transition-all active:scale-95"
+                    title="Next move (→)"
+                    className="group rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-sm text-slate-400 hover:bg-white/[0.08] hover:text-white transition-all active:scale-95"
                   >
                     Next ▶
+                    <kbd className="hidden sm:inline-block ml-1.5 text-[9px] text-slate-600 bg-white/[0.06] px-1 py-0.5 rounded font-mono group-hover:text-slate-400">→</kbd>
                   </button>
                   {/* Flip board */}
                   <button
                     onClick={() => setOrientation(o => o === "white" ? "black" : "white")}
-                    title="Flip board"
+                    title="Flip board (F)"
                     className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-sm text-slate-400 hover:bg-white/[0.06] transition-colors"
                   >
                     🔄
@@ -3698,6 +3728,21 @@ export default function RoastPage() {
                         boxShadow: `0 0 12px rgba(${ambientGlow.color}, 0.4)`,
                       }}
                     />
+                    {/* Classification event markers on the timeline */}
+                    {moves.map((m, i) => {
+                      const cls = m.classification;
+                      if (cls !== "blunder" && cls !== "mistake" && cls !== "brilliant" && cls !== "great") return null;
+                      const color = cls === "blunder" ? "#ef4444" : cls === "mistake" ? "#f97316" : cls === "brilliant" ? "#06b6d4" : "#22c55e";
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => { setAutoplay(false); goToMove(i); }}
+                          className="absolute top-1/2 -translate-y-1/2 w-2 h-2 rounded-full border border-black/40 cursor-pointer hover:scale-150 transition-transform z-10"
+                          style={{ left: `${((i + 0.5) / moves.length) * 100}%`, background: color, boxShadow: `0 0 4px ${color}` }}
+                          title={`Move ${m.moveNumber}: ${m.san} — ${cls}`}
+                        />
+                      );
+                    })}
                   </div>
                   <div className="flex justify-between text-[10px] text-slate-600 mt-0.5">
                     <span>Move {currentMove ? currentMove.moveNumber : 0}</span>
@@ -4616,16 +4661,25 @@ export default function RoastPage() {
           animation: round-flash 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
 
-        /* Ghost reaction — floating up + fade out */
-        @keyframes ghost-rise {
-          0% { opacity: 0; transform: translateY(0) scale(0.5); }
-          15% { opacity: 0.9; transform: translateY(-10%) scale(1.1); }
-          30% { opacity: 1; transform: translateY(-25%) scale(1); }
-          70% { opacity: 0.8; transform: translateY(-65%) scale(1); }
-          100% { opacity: 0; transform: translateY(-100%) scale(0.8); }
+        /* Ghost reaction — danmaku-style horizontal scroll (right → left) */
+        @keyframes ghost-marquee {
+          0% { left: 105%; opacity: 0; }
+          4% { left: 92%; opacity: 1; }
+          92% { left: -12%; opacity: 0.85; }
+          100% { left: -20%; opacity: 0; }
         }
-        .animate-ghost-rise {
-          animation: ghost-rise 3s ease-out forwards;
+        .animate-ghost-marquee {
+          animation: ghost-marquee 5s linear forwards;
+        }
+
+        /* Reaction confirm pulse */
+        @keyframes reaction-confirm {
+          0% { transform: scale(1); opacity: 1; }
+          30% { transform: scale(1.6); opacity: 1; }
+          100% { transform: scale(2.2); opacity: 0; }
+        }
+        .animate-reaction-confirm {
+          animation: reaction-confirm 1s ease-out forwards;
         }
 
         /* Film grain noise animation */

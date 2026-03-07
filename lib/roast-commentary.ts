@@ -735,6 +735,15 @@ function detectSoundSacrifice(move: AnalyzedMove, after: Chess, moverColor: Colo
   const diff = movedVal - capturedVal;
   if (diff < 2) return null; // minor difference (e.g. bishop takes knight) — not a real sac
 
+  // If the player was already losing badly before the move, this isn't a brilliant
+  // sacrifice — it's damage control / desperation (e.g. Qxf3 to avoid checkmate).
+  // A "sound sacrifice" should come from an equal or better position.
+  if (move.cpBefore < -200) return null; // already losing — this is survival, not brilliance
+
+  // Also check the eval AFTER: if the position is still heavily losing after the
+  // "sacrifice", it's not impressive — it just avoided an even worse outcome.
+  if (move.cpAfter < -300) return null; // still deeply losing after the sac
+
   // The piece must actually be en prise (opponent can recapture it)
   // If the piece is safe on its new square, it's just a regular capture, not a sacrifice
   const toSq = move.uci.slice(2, 4) as Square;
