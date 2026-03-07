@@ -77,34 +77,61 @@ function useTypewriter(text: string | null, charDelay = 14) {
 function getMood(move: { classification: MoveClassification; cpLoss: number } | null, blunderCount?: number): RoastMood {
   if (!move) return "neutral";
   switch (move.classification) {
-    case "brilliant": return Math.random() < 0.4 ? "gigachad" : "mindblown";
+    case "brilliant": {
+      const r = Math.random();
+      if (r < 0.25) return "clapping";   // animated applause
+      if (r < 0.5) return "gigachad";
+      if (r < 0.75) return "hyped";      // animated hype
+      return "mindblown";
+    }
     case "great": case "best": {
       const r = Math.random();
-      if (r < 0.2) return "galaxybrain";
-      if (r < 0.4) return "king";
+      if (r < 0.15) return "loving";     // animated good vibes
+      if (r < 0.3) return "galaxybrain";
+      if (r < 0.5) return "king";
       return "smug";
     }
     case "good": return Math.random() < 0.15 ? "smug" : "neutral";
-    case "inaccuracy": return Math.random() < 0.3 ? "detective" : "suspicious";
+    case "inaccuracy": {
+      const r = Math.random();
+      if (r < 0.15) return "bigeyes";    // animated wide eyes
+      if (r < 0.35) return "detective";
+      return "suspicious";
+    }
     case "mistake": {
       const r = Math.random();
-      if (r < 0.2) return "copium";
-      if (r < 0.4) return "crylaugh";
-      if (r < 0.6) return "clown";
+      if (r < 0.15) return "nope";       // animated nope
+      if (r < 0.3) return "firesgun";    // animated rage
+      if (r < 0.45) return "copium";
+      if (r < 0.6) return "crylaugh";
+      if (r < 0.8) return "clown";
       return "disappointed";
     }
     case "blunder": {
       // More expressive for blunders — escalate with repeated blunders
       const r = Math.random();
-      if (move.cpLoss > 600) return r < 0.5 ? "clown" : "crylaugh";
+      if (move.cpLoss > 600) {
+        // Catastrophic blunder — extreme animated reactions
+        if (r < 0.25) return "madpuke";     // animated vomit
+        if (r < 0.5) return "lmao";         // animated dying laughing
+        if (r < 0.75) return "cantwatch";   // animated covering ears
+        return "gamercry";                   // animated gamer cry
+      }
       if (move.cpLoss > 400) {
-        if (r < 0.3) return "clown";
-        if (r < 0.6) return "crylaugh";
+        if (r < 0.2) return "lmao";          // animated
+        if (r < 0.4) return "gamercry";      // animated
+        if (r < 0.6) return "clown";
         return "laughing";
       }
-      if ((blunderCount ?? 0) >= 4) return r < 0.5 ? "rage" : "clown";
-      if (r < 0.3) return "crylaugh";
-      if (r < 0.5) return "laughing";
+      if ((blunderCount ?? 0) >= 4) {
+        // Blunder train — special animated clown train!
+        if (r < 0.4) return "clowntrain";   // animated clown parade
+        if (r < 0.7) return "cantwatch";
+        return "rage";
+      }
+      if (r < 0.2) return "bigeyes";        // animated shock
+      if (r < 0.4) return "crylaugh";
+      if (r < 0.6) return "laughing";
       return "shocked";
     }
     default: return "neutral";
@@ -1541,7 +1568,13 @@ export default function RoastPage() {
     setGuessReaction(reaction);
     setActiveComment(reaction);
     setCommentHistory(prev => [...prev, reaction]);
-    setCurrentMood(result === "correct" ? "mindblown" : result === "close" ? "smug" : distance >= 3 ? "laughing" : "disappointed");
+    setCurrentMood(
+      result === "correct" ? (Math.random() < 0.5 ? "moneyrain" : "clapping")
+      : result === "close" ? (Math.random() < 0.5 ? "dogehug" : "hyped")
+      : distance >= 4 ? (Math.random() < 0.5 ? "toxic" : "madpuke")
+      : distance >= 3 ? (Math.random() < 0.5 ? "lmao" : "cantwatch")
+      : "disappointed"
+    );
     setMobileClippyOpen(true);
 
     // Summary line
