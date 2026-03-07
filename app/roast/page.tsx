@@ -77,14 +77,20 @@ function useTypewriter(text: string | null, charDelay = 14) {
 function getMood(move: { classification: MoveClassification; cpLoss: number } | null, blunderCount?: number): RoastMood {
   if (!move) return "neutral";
   switch (move.classification) {
-    case "brilliant": return "mindblown";
-    case "great": case "best": return Math.random() < 0.3 ? "thinking" : "smug";
+    case "brilliant": return Math.random() < 0.4 ? "gigachad" : "mindblown";
+    case "great": case "best": {
+      const r = Math.random();
+      if (r < 0.2) return "galaxybrain";
+      if (r < 0.4) return "king";
+      return "smug";
+    }
     case "good": return Math.random() < 0.15 ? "smug" : "neutral";
-    case "inaccuracy": return Math.random() < 0.3 ? "disappointed" : "suspicious";
+    case "inaccuracy": return Math.random() < 0.3 ? "detective" : "suspicious";
     case "mistake": {
       const r = Math.random();
-      if (r < 0.25) return "crylaugh";
-      if (r < 0.45) return "clown";
+      if (r < 0.2) return "copium";
+      if (r < 0.4) return "crylaugh";
+      if (r < 0.6) return "clown";
       return "disappointed";
     }
     case "blunder": {
@@ -1210,14 +1216,34 @@ export default function RoastPage() {
         else if (move.isCapture) playSound("capture");
         else playSound("move");
 
-        // Gameshow sound effects + audience meter based on move classification
+        // Gameshow sound effects + viral meme sounds based on move classification
         if (move.comment) {
           const cls = move.classification;
+          const isHungPiece = move.cpLoss > 200 && !move.isCapture;
           setTimeout(() => {
-            if (cls === "blunder") playSound("crowd-ooh");
-            else if (cls === "brilliant") playSound("applause-short");
-            else if (cls === "best" || cls === "great") playSound("bell");
-            else if (cls === "mistake") playSound("honk");
+            if (cls === "blunder") {
+              if (isHungPiece) {
+                playSound("mario-death");
+              } else if (move.cpLoss > 500) {
+                playSound(Math.random() < 0.5 ? "emotional-damage" : "bruh");
+              } else {
+                const r = Math.random();
+                if (r < 0.35) playSound("vine-boom");
+                else if (r < 0.6) playSound("roblox-oof");
+                else playSound("crowd-ooh");
+              }
+            } else if (cls === "brilliant") {
+              playSound(Math.random() < 0.5 ? "airhorn" : "applause-short");
+            } else if (cls === "best" || cls === "great") {
+              playSound("bell");
+            } else if (cls === "mistake") {
+              const r = Math.random();
+              if (r < 0.3) playSound("bro-serious");
+              else if (r < 0.55) playSound("ohnono-laugh");
+              else playSound("honk");
+            } else if (cls === "inaccuracy" && move.cpLoss > 80) {
+              playSound(Math.random() < 0.5 ? "record-scratch" : "nani");
+            }
           }, 300);
           // Update audience meter
           if (cls === "blunder") setAudienceMeter(prev => Math.max(0, prev - 25));
@@ -1480,14 +1506,22 @@ export default function RoastPage() {
       revealPool = REVEAL_TOO_HIGH;
       playSound("wrong");
       setTimeout(() => playSound("buzzer"), 150);
-      if (distance >= 3) setTimeout(() => playSound("sad-trombone"), 600);
+      if (distance >= 4) {
+        setTimeout(() => playSound("emotional-damage"), 500);
+      } else if (distance >= 3) {
+        setTimeout(() => playSound(Math.random() < 0.5 ? "sad-trombone" : "he-needs-milk"), 600);
+      }
       setStreakCount(0);
     } else {
       result = "wrong";
       revealPool = REVEAL_TOO_LOW;
       playSound("wrong");
       setTimeout(() => playSound("buzzer"), 150);
-      if (distance >= 3) setTimeout(() => playSound("sad-trombone"), 600);
+      if (distance >= 4) {
+        setTimeout(() => playSound("emotional-damage"), 500);
+      } else if (distance >= 3) {
+        setTimeout(() => playSound(Math.random() < 0.5 ? "sad-trombone" : "he-needs-milk"), 600);
+      }
       setStreakCount(0);
     }
 
@@ -1723,7 +1757,7 @@ export default function RoastPage() {
                   Can you guess a player&apos;s rating just by watching them play?
                 </p>
                 <p className="text-sm text-slate-500 max-w-lg mx-auto mb-8">
-                  Watch real chess games move by move with hilarious AI commentary, then guess the Elo. 
+                  Watch real chess games move by move with hilarious roast commentary, then guess the Elo. 
                   Inspired by Gotham Chess &amp; r/AnarchyChess.
                 </p>
 

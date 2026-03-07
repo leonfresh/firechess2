@@ -14,7 +14,12 @@ export type RoastMood =
   | "thinking"
   | "clown"
   | "crylaugh"
-  | "rage";
+  | "rage"
+  | "gigachad"
+  | "detective"
+  | "king"
+  | "copium"
+  | "galaxybrain";
 
 /** Map moods to Pepe emoji PNGs in /public/pepe-emojis/ */
 const MOOD_IMAGES: Record<RoastMood, string> = {
@@ -29,6 +34,11 @@ const MOOD_IMAGES: Record<RoastMood, string> = {
   clown:        "/pepe-emojis/4825_PepeClown.png",
   crylaugh:     "/pepe-emojis/2982-pepecry.png",
   rage:         "/pepe-emojis/4178-pepe-rage.png",
+  gigachad:     "/pepe-emojis/9088-pepe-gigachad.png",
+  detective:    "/pepe-emojis/8557-peepodetective.png",
+  king:         "/pepe-emojis/11998-pepe-king.png",
+  copium:       "/pepe-emojis/7332-copium.png",
+  galaxybrain:  "/pepe-emojis/26578-galaxybrainpepe.png",
 };
 
 /**

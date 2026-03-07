@@ -39,7 +39,7 @@ function cleanForSpeech(text: string): string {
       return `${sq} promotes to ${names[p]}`;
     })
     // Check/checkmate symbols
-    .replace(/\+/g, " check")
+    .replace(/\+/g, " plus")
     // Expand internet slang & abbreviations for natural TTS
     .replace(/\bfr fr\b/gi, "for real for real")
     .replace(/\bfr\b/gi, "for real")
