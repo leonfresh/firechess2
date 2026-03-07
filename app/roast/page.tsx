@@ -415,6 +415,7 @@ export default function RoastPage() {
   /* ── Daily Challenge state ── */
   const [dailyCompleted, setDailyCompleted] = useState<{ date: string; result: string; elo: number; guess: string } | null>(null);
   const [isDaily, setIsDaily] = useState(false);
+  const [dailyPlayerCount, setDailyPlayerCount] = useState<number | null>(null);
 
   /* ── Ghost reactions state (daily challenge social layer) ── */
   const [ghostReactions, setGhostReactions] = useState<Record<number, { emoji: string; displayName: string | null }[]>>({});
@@ -446,6 +447,12 @@ export default function RoastPage() {
       }
     } catch { /* ignore */ }
 
+    // Fetch daily player count for welcome screen
+    const today = new Date().toISOString().slice(0, 10);
+    fetch(`/api/roast/daily-reactions?date=${today}`)
+      .then(r => r.json())
+      .then(data => { if (typeof data.playerCount === "number") setDailyPlayerCount(data.playerCount); })
+      .catch(() => {});
     // Fetch leaderboard on mount for welcome screen
     fetch("/api/roast/leaderboard?period=weekly&limit=5")
       .then(r => r.json())
@@ -2943,6 +2950,12 @@ export default function RoastPage() {
                 <p className="mt-1 text-[10px] sm:text-[11px] text-slate-500 leading-relaxed">
                   {dailyCompleted ? `${dailyCompleted.guess} → ${dailyCompleted.elo} Elo` : "Same game for everyone today"}
                 </p>
+                {!dailyCompleted && dailyPlayerCount !== null && dailyPlayerCount > 0 && (
+                  <p className="mt-1.5 text-[10px] text-amber-400/60 font-medium flex items-center justify-center gap-1">
+                    <span className="inline-flex h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
+                    {dailyPlayerCount} player{dailyPlayerCount !== 1 ? "s" : ""} today
+                  </p>
+                )}
                 {!dailyCompleted && (
                   <div className="absolute top-2 right-2">
                     <span className="inline-flex h-2 w-2 rounded-full bg-amber-400 animate-pulse" />

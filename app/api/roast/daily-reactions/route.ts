@@ -52,7 +52,14 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  return NextResponse.json({ date, reactions: grouped });
+  // Count unique participants (by userId if available, otherwise displayName)
+  const uniqueNames = new Set<string>();
+  for (const row of rows) {
+    uniqueNames.add(row.displayName ?? "Anonymous");
+  }
+  const playerCount = uniqueNames.size;
+
+  return NextResponse.json({ date, reactions: grouped, playerCount });
 }
 
 export async function POST(req: NextRequest) {
