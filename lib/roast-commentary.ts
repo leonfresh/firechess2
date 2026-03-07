@@ -1451,6 +1451,11 @@ function _blunderRoast(
     `👑 ${move.san}.${ctxLine} Magnus would resign here. Not because the position is lost — but because he'd be embarrassed to be associated with this game 🏆💀`,
     `🏆 ${move.san}.${ctxLine} Magnus literally beat a world champion while half asleep on stream. This player is FULLY awake and playing like this?? 😴💀`,
     `👑 ${move.san}.${ctxLine} Magnus retired from classical chess because he was bored. If he saw this game he'd retire from WATCHING chess too 📺🗿`,
+    `🗿 ${move.san}.${ctxLine} "Are you kidding ??? What the **** are you talking about man." Petrosian WARNED us about players like this. Liers will kicked off 💀`,
+    `🤡 ${move.san}.${ctxLine} This player was doing PIPI in their pampers when Petrosian was winning world championships. And they're STILL doing PIPI. On this board. Right now 👶🗿`,
+    `💀 ${move.san}.${ctxLine} "True will never die" — but this position? This position is DECEASED. Petrosian copypasta energy in move form 🪦🗿`,
+    `☠️ ${move.san}.${ctxLine} W)esley S)o would never play this. "Proffesionals knew how to lose and congratulate." This player doesn't know how to NOT lose 🗿🤡`,
+    `🤡 ${move.san}.${ctxLine} "You was doing PIPI in your pampers when I was beating players much more stronger then you!" — Petrosian's ghost watching this game 👻🗿`,
   ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: _toSq, emoji: "💀" }] } };
 }
 
@@ -1641,6 +1646,8 @@ function _mistakeRoast(
     `👑 ${move.san}.${ctxFallback} Morphy retired at 22 because chess was too easy. This person should consider retiring because chess is too hard 😭♟️`,
     `👑 ${move.san}.${ctxFallback} Magnus would never. He'd play the right move, sip his coffee, and check his Fantasy Football team. All in 3 seconds ☕🏆`,
     `🏆 ${move.san}.${ctxFallback} Magnus once said he plays the best move because the other moves are "just worse." This player actively SEEKS the worse moves 🗿♟️`,
+    `🗿 ${move.san}.${ctxFallback} "Are you kidding ??? What the **** are you talking about man." Even Petrosian's copypasta is more strategically sound than this move 💀`,
+    `🤡 ${move.san}.${ctxFallback} This move was doing PIPI in its pampers when better moves were sitting RIGHT THERE on the board. Liers will kicked off... 🗿👶`,
     ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: toSq, emoji: pick(["😬", "📉", "🤡", "😤", "🗿"]) }] } };
 }
 
@@ -1693,6 +1700,8 @@ function _inaccuracyRoast(
     () => `�😐 ${move.san}. The chess equivalent of "it's fine" when someone asks how you're doing. It's not fine. But it's fine 🫠`,
     () => `🫤 ${move.san}. This move will not be remembered. By anyone. Ever. Including the person who played it 🗿💨`,
     () => `🤷 ${move.san}. Peak "I'll just develop and hope for the best" energy. The strategy of champions. And also beginners. Mostly beginners 🏆💀`,
+    () => `🗿 ${move.san}. "You was doing PIPI in your pampers" — Sir that's an inaccuracy, not a blunder. But the energy? Pure PIPI 👶🤡`,
+    () => `🤡 ${move.san}. Petrosian would call this move a "proffesional" inaccuracy. "W]esley 'S]o is not proffesional" but at least he wouldn't play this 🗿💀`,
   ];
   // Evaluate all thunks, then pick an unused one
   const evaluated = lines.map(fn => fn());
@@ -2287,11 +2296,13 @@ export function getClosingRoast(
       `📊 Overall? ${blunders} blunders in ${totalMoves} moves. Both players treated their pieces like they were disposable. RECYCLING ♻️💀`,
       `📊 ${blunders} blunders total. This was less of a chess game and more of a demolition derby. Both players brought hammers instead of brains 🔨🗿`,
       `📊 Overall assessment: ${blunders} blunders. Each player was the other's best teammate. Impressive teamwork against themselves 🤝💀`,
+      `📊 ${blunders} blunders. Both players were doing PIPI in their pampers the ENTIRE game. Petrosian would file a formal complaint. "Liers will kicked off..." 👶🗿`,
     );
   } else if (blunders >= 3) {
     lines.push(
       `📊 ${blunders} blunders and ${mistakes} mistakes across the whole game. Not the worst I've seen, but definitely not something to tell your chess coach about 📉🫠`,
       `📊 ${blunders} blunders, ${mistakes} mistakes. The game had moments of brilliance surrounded by vast oceans of questionable decisions 🌊💀`,
+      `📊 ${blunders} blunders. Are you kidding ??? What the **** are you talking about man ?? You are a biggest looser i ever seen in my life ! 🗿`,
     );
   } else if (blunders <= 1 && mistakes <= 2) {
     lines.push(
