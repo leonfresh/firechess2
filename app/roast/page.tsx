@@ -424,6 +424,10 @@ export default function RoastPage() {
     usedLines.current.clear();
     setActiveComment(null);
     setCurrentMood("neutral");
+    setScore(0);
+    setQuizScore(0);
+    setLastScoreGain(null);
+    setScoreSaved(false);
 
     try {
       // Fetch puzzles from Lichess to discover game IDs (client-side)
@@ -810,6 +814,10 @@ export default function RoastPage() {
     usedLines.current.clear();
     setActiveComment(null);
     setCurrentMood("neutral");
+    setScore(0);
+    setQuizScore(0);
+    setLastScoreGain(null);
+    setScoreSaved(false);
 
     try {
       // Extract headers from PGN
