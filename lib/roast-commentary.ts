@@ -491,13 +491,19 @@ function detectDiscoveredAttack(
   return null;
 }
 
-/** Detect back-rank weakness/threat: king is on the back rank with pawns blocking escape */
+/** Detect back-rank weakness/threat: king is on the back rank with pawns blocking escape
+ *  AND the opponent actually has heavy pieces (rook/queen) that could exploit it */
 function detectBackRankWeakness(chess: Chess, color: Color): boolean {
   const king = findKing(chess, color);
   if (!king) return false;
   const kr = rankIdx(king);
   const backRank = color === "w" ? 0 : 7;
   if (kr !== backRank) return false;
+
+  // Opponent must have at least one rook or queen to threaten the back rank
+  const oppColor = opp(color);
+  const oppHeavy = allPieces(chess).filter(p => p.color === oppColor && (p.type === "r" || p.type === "q"));
+  if (oppHeavy.length === 0) return false;
 
   // Check if all squares in front of the king are blocked by friendly pawns
   const kf = fileIdx(king);
