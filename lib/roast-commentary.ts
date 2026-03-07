@@ -42,6 +42,7 @@ export interface AnalyzedMove {
   isCheck: boolean;
   isCastle: boolean;
   isPromotion: boolean;
+  isEnPassant: boolean;
   pieceType: string;
   capturedPiece?: string;
   hungPiece: boolean;
@@ -915,6 +916,11 @@ function _generatePositionAware(
   // Detect obvious recaptures — skip commentary for routine take-backs
   const isRecapture = _isObviousRecapture(move, summary);
   const ctx = _getGameContext(move, summary);
+
+  // En passant — ALWAYS gets commentary, it's a meme event
+  if (move.isEnPassant) {
+    return _emitResultForce(used, _enPassantRoast(move, toSq, used, ctx));
+  }
 
   // Time-based roasts — if clock data is available and the time spent is extreme
   if (move.timeSpent !== null && Math.random() < 0.4) {
@@ -2307,6 +2313,66 @@ function _inaccuracyRoast(
   // Evaluate all thunks, then pick an unused one
   const evaluated = lines.map(fn => fn());
   return { text: pickUnused(evaluated, used), annotations: ann };
+}
+
+/* ================================================================== */
+/*  En Passant Roasts — AnarchyChess meme energy ⛪🧱                   */
+/* ================================================================== */
+
+function _enPassantRoast(
+  move: AnalyzedMove,
+  toSq: Square,
+  used: Set<string>,
+  ctx: GameContext,
+): { text: string; annotations: MoveAnnotation } {
+  const fromSq = move.uci.slice(0, 2);
+  // The captured pawn is on the same file as toSq but on the rank fromSq was on
+  const capturedPawnSq = toSq[0] + fromSq[1];
+  const isGood = move.classification === "best" || move.classification === "great" || move.classification === "brilliant";
+  const isBad = move.classification === "blunder" || move.classification === "mistake";
+  const ann: MoveAnnotation = {
+    arrows: [[fromSq, toSq, "rgba(34, 197, 94, 0.85)"]],
+    markers: [{ square: capturedPawnSq, emoji: "⛪" }, { square: toSq, emoji: "🧱" }],
+  };
+
+  const lines: string[] = [
+    // Core AnarchyChess memes
+    `⛪ ${move.san}! EN PASSANT! Google "en passant." Holy hell! The sacred move has been played. The brick stays in the pocket today 🧱✨`,
+    `🧱 ${move.san}! They took en passant! As written in the holy texts of r/AnarchyChess, en passant is FORCED. They had no choice. The brick demanded it ⛪🗿`,
+    `⛪ ${move.san}! EN PASSANT ACCEPTED! "I know what en passant is dumbass you just blundered your pawn." New response just dropped and it's GLORIOUS 🧱🔥`,
+    `🧱 ${move.san}!! EN PASSANT! Are you kidding ??? You don't decline en passant man. The brick is watching. The brick is ALWAYS watching ⛪👀`,
+    `⛪ HOLY HELL! ${move.san}! En passant has been played! The r/AnarchyChess council is pleased. The prophecy is fulfilled. No brick today 🧱✅`,
+    `🧱 ${move.san}! They TOOK it! En passant is forced — it's literally in the rules (source: r/AnarchyChess). The brick remains holstered ⛪🫡`,
+    `⛪ ${move.san}! EN PASSANT BABY! Google "en passant." Actually don't, they clearly already know. The pawn just got yeeted from behind. Holy hell 🧱💀`,
+    `🧱 ${move.san}! The most SACRED move in chess has been played. En passant. The move that separates the cultured from the uncultured. Brick = avoided ⛪👑`,
+    `⛪ ${move.san}! En passant. The move. THE move. If they hadn't taken it, a small brick would've appeared in their pocket. Those are the rules 🧱🗿`,
+    `🧱 ${move.san}! "What the hell is en passant?" — someone who's about to be educated. This person KNOWS. They TOOK it. Holy hell ⛪🔥`,
+    `⛪ ${move.san}! EN PASSANT IS FORCED AND THEY KNEW IT. The spirit of Garry Chess smiles upon this game. The brick stays put 🧱👑`,
+    `🧱 ${move.san}! Certified r/AnarchyChess moment. En passant taken. Brick dodged. True will never die. Holy hell ⛪🗿`,
+  ];
+
+  // Context-aware additions
+  if (isGood) {
+    lines.push(
+      `⛪ ${move.san}! En passant AND it's the best move?? The r/AnarchyChess gods are SMILING. Holy hell this is the most based thing that's happened all game 🧱🌟`,
+      `🧱 ${move.san}! Not only did they take en passant (as is REQUIRED), but it's actually the engine's top choice! When the meme is also the best move. Peak chess ⛪🧠`,
+      `⛪ ${move.san}! En passant — and it's BRILLIANT! The brick stays in the pocket AND the engine approves. The stars have aligned. Holy hell 🧱⭐`,
+    );
+  }
+  if (isBad) {
+    lines.push(
+      `⛪ ${move.san}! They took en passant... and it's a ${move.classification}?? But they HAD to take it. The brick COMPELLED them. Better a brick-free ${move.classification} than a perfect move with a pocket brick 🧱💀`,
+      `🧱 ${move.san}! En passant taken — as the law of AnarchyChess demands — but Stockfish says it's a ${move.classification}. Doesn't matter. En passant is FORCED. The brick was the greater threat ⛪🤡`,
+      `⛪ ${move.san}! It's a ${move.classification} but they took en passant so morally they are correct. The engine can judge the position but it cannot judge the SOUL 🧱🗿`,
+    );
+  }
+  if (ctx.playerBlunders >= 2) {
+    lines.push(
+      `⛪ ${move.san}! EN PASSANT! After ${ctx.playerBlunders} blunders they finally do something ICONIC. Google "en passant." Holy hell. The redemption arc 🧱🔥`,
+    );
+  }
+
+  return { text: pickUnused(lines, used), annotations: ann };
 }
 
 /* ================================================================== */
