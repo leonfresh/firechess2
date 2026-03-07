@@ -1376,13 +1376,33 @@ export default function RoastPage() {
 
   /* ── Deferred decision popup — waits for TTS + typewriter to finish + reading time ── */
   const decisionReadyTime = useRef<number | null>(null);
+  const ttsStartedForDecision = useRef(false);
   useEffect(() => {
     if (pendingDecisionIdx === null || pageState !== "watching") {
       decisionReadyTime.current = null;
+      ttsStartedForDecision.current = false;
       return;
     }
-    if (!typingDone) { decisionReadyTime.current = null; return; } // wait for text to finish typing
-    if (tts.enabled && tts.speaking) { decisionReadyTime.current = null; return; } // wait for TTS to finish
+    if (!typingDone) { decisionReadyTime.current = null; ttsStartedForDecision.current = false; return; } // wait for text to finish typing
+
+    // If TTS is enabled, we need to wait for it to START speaking first, then FINISH
+    if (tts.enabled) {
+      if (tts.speaking) {
+        // TTS is actively speaking — mark that it started, reset timer, keep waiting
+        ttsStartedForDecision.current = true;
+        decisionReadyTime.current = null;
+        return;
+      }
+      // TTS is not speaking — but has it started yet for this comment?
+      if (!ttsStartedForDecision.current) {
+        // TTS hasn't started speaking yet — wait a bit for it to begin
+        const waitTimer = setTimeout(() => {
+          setPendingDecisionIdx(prev => prev); // re-trigger
+        }, 200);
+        return () => clearTimeout(waitTimer);
+      }
+      // TTS started and finished — fall through to reading delay
+    }
 
     // Mark when text/TTS finished, then add a reading delay
     if (decisionReadyTime.current === null) {
@@ -1392,8 +1412,8 @@ export default function RoastPage() {
     // Scale reading delay with the comment length — longer text needs more time
     const commentLen = moves[pendingDecisionIdx]?.comment?.length ?? 0;
     const readingDelay = tts.enabled
-      ? Math.max(1200, commentLen * 15)   // TTS reads it, just need a small buffer
-      : Math.max(3500, commentLen * 30);   // reading only — scale with length
+      ? Math.max(2000, commentLen * 12)    // TTS already read it, just need post-TTS buffer
+      : Math.max(4000, commentLen * 32);   // reading only — scale with length
     if (elapsed < readingDelay) {
       const timer = setTimeout(() => {
         // Force a re-render to re-check this effect
