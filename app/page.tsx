@@ -60,7 +60,6 @@ export default function HomePage() {
   const { plan: sessionPlan, authenticated } = useSession();
   const [heroPhase, setHeroPhase] = useState<"idle" | "hiding" | "revealing">("idle");
   const heroTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [trailerOpen, setTrailerOpen] = useState(false);
   const [username, setUsername] = useState("");
   const [gameRangeMode, setGameRangeMode] = useState<"count" | "since">("count");
   const [gameCount, setGameCount] = useState(300);
@@ -828,14 +827,15 @@ export default function HomePage() {
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
                   Powered by Stockfish 18
                 </span>
-                <button
-                  type="button"
-                  className="tag-emerald cursor-pointer gap-1.5 transition-all hover:shadow-glow-sm active:scale-95"
-                  onClick={() => setTrailerOpen(true)}
+                <a
+                  href="https://www.youtube.com/watch?v=MpWsW10YE5M"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="tag-emerald cursor-pointer gap-1.5 transition-all hover:shadow-glow-sm active:scale-95 no-underline"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                  Play Trailer
-                </button>
+                  Watch Trailer
+                </a>
               </div>
 
               <h1 className="mx-auto max-w-4xl text-4xl font-black leading-[1.1] tracking-tight md:text-6xl lg:text-7xl">
@@ -4134,35 +4134,6 @@ export default function HomePage() {
                   {authenticated ? "Save Report" : "Sign in to Save"}
                 </>
               )}
-            </button>
-          </div>
-        </div>
-      )}
-      {/* ─── Trailer Modal ─── */}
-      {trailerOpen && (
-        <div
-          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm"
-          onClick={() => setTrailerOpen(false)}
-        >
-          <div
-            className="relative w-full max-w-4xl mx-4 aspect-video rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <iframe
-              className="h-full w-full"
-              src="https://www.youtube.com/embed/MpWsW10YE5M?si=aCA51t0YMIZTiCOu&autoplay=1"
-              title="YouTube video player"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              referrerPolicy="strict-origin-when-cross-origin"
-              allowFullScreen
-            />
-            <button
-              type="button"
-              className="absolute top-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white hover:bg-black/80 transition-colors"
-              onClick={() => setTrailerOpen(false)}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
             </button>
           </div>
         </div>
