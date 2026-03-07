@@ -49,6 +49,43 @@ import { useSession } from "@/components/session-provider";
 import Link from "next/link";
 
 /* ================================================================== */
+/*  Ghost reaction emoji mapping                                        */
+/* ================================================================== */
+
+/** Reaction options shown in the picker during daily challenges */
+const REACTION_OPTIONS: { key: string; label: string; image?: string }[] = [
+  { key: "lmao",      label: "LMAO",       image: "/pepe-emojis/animated/690612-pepe-lmao.gif" },
+  { key: "shocked",   label: "Shocked",    image: "/pepe-emojis/monkaS.png" },
+  { key: "clapping",  label: "Clapping",   image: "/pepe-emojis/animated/80293-pepeclap.gif" },
+  { key: "rage",      label: "Rage",       image: "/pepe-emojis/4178-pepe-rage.png" },
+  { key: "gamercry",  label: "Crying",     image: "/pepe-emojis/animated/411644-gamer-pepe-cry.gif" },
+  { key: "cantwatch", label: "Can't Watch", image: "/pepe-emojis/animated/pepe-with-hands-covering-ears.gif" },
+  { key: "bigeyes",   label: "Big Eyes",   image: "/pepe-emojis/animated/28654-bigeyes.gif" },
+  { key: "💀",        label: "Skull" },
+  { key: "🔥",        label: "Fire" },
+  { key: "🤡",        label: "Clown" },
+];
+
+/** Map ghost reaction emoji keys to image paths for floating display */
+const GHOST_EMOJI_IMAGES: Record<string, string> = {
+  lmao:      "/pepe-emojis/animated/690612-pepe-lmao.gif",
+  shocked:   "/pepe-emojis/monkaS.png",
+  clapping:  "/pepe-emojis/animated/80293-pepeclap.gif",
+  rage:      "/pepe-emojis/4178-pepe-rage.png",
+  gamercry:  "/pepe-emojis/animated/411644-gamer-pepe-cry.gif",
+  cantwatch: "/pepe-emojis/animated/pepe-with-hands-covering-ears.gif",
+  bigeyes:   "/pepe-emojis/animated/28654-bigeyes.gif",
+  clown:     "/pepe-emojis/4825_PepeClown.png",
+  crylaugh:  "/pepe-emojis/2982-pepecry.png",
+  hyped:     "/pepe-emojis/animated/88627-pepehype.gif",
+  firesgun:  "/pepe-emojis/animated/815161-pepe-fires-gun.gif",
+  madpuke:   "/pepe-emojis/animated/84899-pepe-madpuke.gif",
+  nope:      "/pepe-emojis/animated/41292-pepe-nopes.gif",
+  toxic:     "/pepe-emojis/animated/972934-pepe-with-toxic-sign.gif",
+  loving:    "/pepe-emojis/animated/98260-pepe-loving.gif",
+};
+
+/* ================================================================== */
 /*  Typewriter hook                                                     */
 /* ================================================================== */
 
@@ -353,6 +390,14 @@ export default function RoastPage() {
   const [dailyCompleted, setDailyCompleted] = useState<{ date: string; result: string; elo: number; guess: string } | null>(null);
   const [isDaily, setIsDaily] = useState(false);
 
+  /* ── Ghost reactions state (daily challenge social layer) ── */
+  const [ghostReactions, setGhostReactions] = useState<Record<number, { emoji: string; displayName: string | null }[]>>({});
+  const [activeGhosts, setActiveGhosts] = useState<{ emoji: string; displayName: string | null; id: number; x: number }[]>([]);
+  const ghostIdRef = useRef(0);
+  const [myReaction, setMyReaction] = useState<string | null>(null);
+  const [reactionPickerOpen, setReactionPickerOpen] = useState(false);
+  const dailyDateRef = useRef<string>("");
+
   // Load persisted score/streak and daily challenge on mount
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -450,6 +495,12 @@ export default function RoastPage() {
     setPieceRain([]);
     setStreakFire(false);
     setBoardCrack(false);
+    // Reset ghost reactions
+    setGhostReactions({});
+    setActiveGhosts([]);
+    setMyReaction(null);
+    setReactionPickerOpen(false);
+    dailyDateRef.current = "";
 
     try {
       // Fetch puzzles from Lichess to discover game IDs (client-side)
@@ -854,6 +905,12 @@ export default function RoastPage() {
     setPieceRain([]);
     setStreakFire(false);
     setBoardCrack(false);
+    // Reset ghost reactions
+    setGhostReactions({});
+    setActiveGhosts([]);
+    setMyReaction(null);
+    setReactionPickerOpen(false);
+    dailyDateRef.current = "";
 
     try {
       // Extract headers from PGN
@@ -1149,6 +1206,16 @@ export default function RoastPage() {
       const wElo = picked.players?.white?.rating ?? 1500;
       const bElo = picked.players?.black?.rating ?? 1500;
       await processProvidedPgn(pgn, wElo, bElo);
+
+      // Fetch ghost reactions from other players for this daily
+      dailyDateRef.current = today;
+      try {
+        const reactRes = await fetch(`/api/roast/daily-reactions?date=${today}`);
+        if (reactRes.ok) {
+          const data = await reactRes.json();
+          setGhostReactions(data.reactions ?? {});
+        }
+      } catch { /* ghost reactions are optional */ }
     } catch (err) {
       console.error("Daily game failed, falling back to random:", err);
       setIsDaily(false);
@@ -1412,6 +1479,30 @@ export default function RoastPage() {
 
         // ── VISUAL FX: Streak fire border ──
         if (streak >= 3) { setStreakFire(true); } else { setStreakFire(false); }
+
+        // ── Ghost reactions: show other players' reactions at this move ──
+        if (isDaily && ghostReactions[next] && ghostReactions[next].length > 0) {
+          const moveGhosts = ghostReactions[next];
+          // Stagger ghost appearances over 1.5s
+          moveGhosts.forEach((g, i) => {
+            setTimeout(() => {
+              ghostIdRef.current++;
+              const ghost = {
+                emoji: g.emoji,
+                displayName: g.displayName,
+                id: ghostIdRef.current,
+                x: 10 + Math.random() * 80, // random horizontal position (% of board)
+              };
+              setActiveGhosts(prev => [...prev, ghost]);
+              // Remove after animation
+              setTimeout(() => {
+                setActiveGhosts(prev => prev.filter(ag => ag.id !== ghost.id));
+              }, 3000);
+            }, i * 200); // stagger by 200ms each
+          });
+        }
+        // Reset current user's reaction for new move
+        setMyReaction(null);
 
         if (move.comment) {
           setActiveComment(move.comment);
@@ -2687,6 +2778,44 @@ export default function RoastPage() {
                       })}
                     </div>
                   )}
+
+                  {/* ── Ghost reaction bubbles from other daily players ── */}
+                  {isDaily && activeGhosts.length > 0 && (
+                    <div className="absolute inset-0 pointer-events-none z-40 overflow-hidden">
+                      {activeGhosts.map((ghost) => {
+                        // Check if it's a pepe mood (has an image) or plain emoji
+                        const pepeImage = GHOST_EMOJI_IMAGES[ghost.emoji];
+                        return (
+                          <div
+                            key={ghost.id}
+                            className="absolute animate-ghost-rise"
+                            style={{
+                              left: `${ghost.x}%`,
+                              bottom: "0%",
+                            }}
+                          >
+                            <div className="flex flex-col items-center gap-0.5">
+                              {pepeImage ? (
+                                <img
+                                  src={pepeImage}
+                                  alt={ghost.emoji}
+                                  className="w-8 h-8 sm:w-10 sm:h-10 drop-shadow-lg"
+                                  draggable={false}
+                                />
+                              ) : (
+                                <span className="text-2xl sm:text-3xl drop-shadow-lg select-none">{ghost.emoji}</span>
+                              )}
+                              {ghost.displayName && ghost.displayName !== "Anonymous" && (
+                                <span className="text-[8px] text-white/60 whitespace-nowrap bg-black/40 rounded px-1 backdrop-blur-sm">
+                                  {ghost.displayName}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -2711,6 +2840,66 @@ export default function RoastPage() {
                       {typewriterText}
                       {!typingDone && <span className="animate-blink text-orange-400">|</span>}
                     </p>
+                  </div>
+                </div>
+              )}
+
+              {/* ── Daily Challenge: Ghost Reaction Picker ── */}
+              {isDaily && (pageState === "watching" || pageState === "guessing") && currentIdx >= 0 && (
+                <div className="w-full max-w-[640px]">
+                  <div className="flex items-center gap-1.5 px-1">
+                    <span className="text-[10px] text-slate-600 uppercase tracking-wider font-bold whitespace-nowrap mr-1">
+                      👻 React
+                    </span>
+                    {REACTION_OPTIONS.map((r) => (
+                      <button
+                        key={r.key}
+                        onClick={() => {
+                          if (myReaction === r.key) return; // already reacted
+                          setMyReaction(r.key);
+                          // POST reaction to API
+                          fetch("/api/roast/daily-reactions", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                              date: dailyDateRef.current,
+                              moveIdx: currentIdx,
+                              emoji: r.key,
+                            }),
+                          }).catch(() => {});
+                          // Show own reaction as a ghost immediately
+                          ghostIdRef.current++;
+                          const selfGhost = {
+                            emoji: r.key,
+                            displayName: user?.name ?? "You",
+                            id: ghostIdRef.current,
+                            x: 30 + Math.random() * 40,
+                          };
+                          setActiveGhosts(prev => [...prev, selfGhost]);
+                          setTimeout(() => setActiveGhosts(prev => prev.filter(g => g.id !== selfGhost.id)), 3000);
+                        }}
+                        className={`group relative rounded-md p-1 transition-all hover:scale-125 hover:bg-white/10 ${
+                          myReaction === r.key ? "scale-110 bg-white/10 ring-1 ring-orange-400/40" : ""
+                        }`}
+                        title={r.label}
+                      >
+                        {r.image ? (
+                          <img src={r.image} alt={r.label} className="w-6 h-6 sm:w-7 sm:h-7" draggable={false} />
+                        ) : (
+                          <span className="text-base sm:text-lg">{r.key}</span>
+                        )}
+                      </button>
+                    ))}
+                    {/* Ghost count indicator */}
+                    {(() => {
+                      const reactionsAtMove = ghostReactions[currentIdx];
+                      if (!reactionsAtMove || reactionsAtMove.length === 0) return null;
+                      return (
+                        <span className="ml-auto text-[10px] text-slate-500 tabular-nums">
+                          👻 {reactionsAtMove.length} reaction{reactionsAtMove.length !== 1 ? "s" : ""}
+                        </span>
+                      );
+                    })()}
                   </div>
                 </div>
               )}
@@ -3712,6 +3901,18 @@ export default function RoastPage() {
         }
         .animate-round-flash {
           animation: round-flash 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        /* Ghost reaction — floating up + fade out */
+        @keyframes ghost-rise {
+          0% { opacity: 0; transform: translateY(0) scale(0.5); }
+          15% { opacity: 0.9; transform: translateY(-10%) scale(1.1); }
+          30% { opacity: 1; transform: translateY(-25%) scale(1); }
+          70% { opacity: 0.8; transform: translateY(-65%) scale(1); }
+          100% { opacity: 0; transform: translateY(-100%) scale(0.8); }
+        }
+        .animate-ghost-rise {
+          animation: ghost-rise 3s ease-out forwards;
         }
       `}</style>
     </main>

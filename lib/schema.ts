@@ -320,3 +320,24 @@ export const roastScores = pgTable("roast_score", {
   quizScore: integer("quizScore").notNull().default(0),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
 });
+
+/* ------------------------------------------------------------------ */
+/*  Roast the Elo – Daily Challenge live reactions (ghost emojis)       */
+/* ------------------------------------------------------------------ */
+
+export const roastDailyReactions = pgTable("roast_daily_reaction", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  /** Date string YYYY-MM-DD — all players on the same day share reactions */
+  date: text("date").notNull(),
+  /** Which move index (0-based) triggered this reaction */
+  moveIdx: integer("moveIdx").notNull(),
+  /** The emoji/mood key reacted with (e.g. "lmao", "shocked", "clapping") */
+  emoji: text("emoji").notNull(),
+  /** Optional display name (from session or "Anonymous") */
+  displayName: text("displayName").default("Anonymous"),
+  /** Optional user ID if authenticated */
+  userId: text("userId"),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+});
