@@ -1313,7 +1313,11 @@ export default function RoastPage() {
               if (isHungPiece) {
                 playSound("mario-death");
               } else if (move.cpLoss > 500) {
-                playSound(Math.random() < 0.5 ? "emotional-damage" : "bruh");
+                // Ultra-hilarious moment — massive blunder
+                const r2 = Math.random();
+                if (r2 < 0.3) playSound("ohnono-laugh");
+                else if (r2 < 0.65) playSound("emotional-damage");
+                else playSound("bruh");
               } else {
                 const r = Math.random();
                 if (r < 0.35) playSound("vine-boom");
@@ -1327,7 +1331,7 @@ export default function RoastPage() {
             } else if (cls === "mistake") {
               const r = Math.random();
               if (r < 0.3) playSound("bro-serious");
-              else if (r < 0.55) playSound("ohnono-laugh");
+              else if (r < 0.55) playSound("cute-laugh");
               else playSound("honk");
             } else if (cls === "inaccuracy" && move.cpLoss > 80) {
               playSound(Math.random() < 0.5 ? "record-scratch" : "nani");

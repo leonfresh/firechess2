@@ -35,6 +35,7 @@ type SoundName =
   | "yeet"
   | "he-needs-milk"
   | "ohnono-laugh"
+  | "cute-laugh"
   | "nani"
   | "baka"
   | "bro-serious";
@@ -71,6 +72,7 @@ const SOUND_PATHS: Record<SoundName, string> = {
   "yeet": "/sounds/viral/yeet.mp3",
   "he-needs-milk": "/sounds/viral/he-needs-some-milk.mp3",
   "ohnono-laugh": "/sounds/viral/ohnono-laugh.mp3",
+  "cute-laugh": "/sounds/viral/cute-girl-laughing-sound-effect.mp3",
   "nani": "/sounds/viral/alert-sound-then-nani.mp3",
   "baka": "/sounds/viral/anta-baka.mp3",
   "bro-serious": "/sounds/viral/bro-are-you-serious-right-now-bro.mp3",
@@ -100,6 +102,7 @@ const SOUND_VOLUMES: Partial<Record<SoundName, number>> = {
   "yeet": 0.5,
   "he-needs-milk": 0.45,
   "ohnono-laugh": 0.45,
+  "cute-laugh": 0.45,
   "nani": 0.45,
   "baka": 0.45,
   "bro-serious": 0.45,
@@ -143,7 +146,7 @@ export function preloadRoastSounds(): void {
     // Viral memes
     "vine-boom", "bruh", "mario-death", "record-scratch",
     "roblox-oof", "airhorn", "emotional-damage", "taco-bell-bong",
-    "yeet", "he-needs-milk", "ohnono-laugh", "nani", "baka", "bro-serious",
+    "yeet", "he-needs-milk", "ohnono-laugh", "cute-laugh", "nani", "baka", "bro-serious",
   ];
   roastSounds.forEach(getAudio);
 }
