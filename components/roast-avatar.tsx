@@ -37,7 +37,7 @@ export type RoastMood =
   | "loving";
 
 /** Map moods to Pepe emoji PNGs in /public/pepe-emojis/ */
-const MOOD_IMAGES: Record<RoastMood, string> = {
+export const MOOD_IMAGES: Record<RoastMood, string> = {
   neutral:      "/pepe-emojis/3959-hmm.png",
   smug:         "/pepe-emojis/81504-pepeok.png",
   shocked:      "/pepe-emojis/monkaS.png",
@@ -72,7 +72,7 @@ const MOOD_IMAGES: Record<RoastMood, string> = {
 };
 
 /** Whether a mood uses an animated GIF (needs <img> instead of next/image) */
-const ANIMATED_MOODS = new Set<RoastMood>([
+export const ANIMATED_MOODS = new Set<RoastMood>([
   "clapping", "hyped", "moneyrain", "lmao", "gamercry", "madpuke",
   "bigeyes", "nope", "clowntrain", "firesgun", "toxic", "dogehug",
   "cantwatch", "loving",

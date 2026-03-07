@@ -43,7 +43,7 @@ import {
   type GameSummary,
   type MoveAnnotation,
 } from "@/lib/roast-commentary";
-import { RoastAvatar, type RoastMood } from "@/components/roast-avatar";
+import { RoastAvatar, type RoastMood, MOOD_IMAGES, ANIMATED_MOODS } from "@/components/roast-avatar";
 import { useTTS } from "@/lib/use-tts";
 import { useSession } from "@/components/session-provider";
 import Link from "next/link";
@@ -2967,6 +2967,33 @@ export default function RoastPage() {
                     </div>
                   )}
 
+                  {/* ── Pepe reaction badge (top-right corner of board) ── */}
+                  {currentMove && pageState === "watching" && (
+                    <div className="absolute top-2 right-2 z-40 pointer-events-none animate-fadeIn" key={`pepe-${currentIdx}-${currentMood}`}>
+                      <div className="relative w-12 h-12 sm:w-14 sm:h-14 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] animate-bounce-once">
+                        {ANIMATED_MOODS.has(currentMood) ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={MOOD_IMAGES[currentMood]}
+                            alt={currentMood}
+                            width={56}
+                            height={56}
+                            className="object-contain w-full h-full"
+                          />
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={MOOD_IMAGES[currentMood]}
+                            alt={currentMood}
+                            width={56}
+                            height={56}
+                            className="object-contain w-full h-full"
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Emoji marker overlay */}
                   {activeMarkers.length > 0 && boardSize > 0 && (
                     <div className="absolute inset-0 pointer-events-none" style={{ width: boardSize, height: boardSize }}>
@@ -4000,6 +4027,15 @@ export default function RoastPage() {
         }
         .animate-fadeIn {
           animation: fadeIn 0.4s ease-out both;
+        }
+        @keyframes bounceOnce {
+          0% { transform: scale(0) rotate(-15deg); opacity: 0; }
+          50% { transform: scale(1.3) rotate(5deg); opacity: 1; }
+          70% { transform: scale(0.9) rotate(-3deg); }
+          100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        .animate-bounce-once {
+          animation: bounceOnce 0.5s ease-out both;
         }
         .animate-float {
           animation: float 6s ease-in-out infinite;
