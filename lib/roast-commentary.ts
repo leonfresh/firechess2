@@ -723,7 +723,7 @@ function detectPawnStorm(move: AnalyzedMove, after: Chess, moverColor: Color): {
 
 /** Detect a sound sacrifice: player captures with a higher-value piece (gives up material)
  *  but it's a good/best/brilliant move (low cpLoss). Returns material deficit. */
-function detectSoundSacrifice(move: AnalyzedMove): { sacPiece: string; capturedPiece: string; materialGiven: number } | null {
+function detectSoundSacrifice(move: AnalyzedMove, after: Chess, moverColor: Color): { sacPiece: string; capturedPiece: string; materialGiven: number } | null {
   if (!move.isCapture || !move.capturedPiece) return null;
   const movedVal = PIECE_VALUES[move.pieceType] ?? 0;
   const capturedVal = PIECE_VALUES[move.capturedPiece] ?? 0;
@@ -731,6 +731,19 @@ function detectSoundSacrifice(move: AnalyzedMove): { sacPiece: string; capturedP
   if (move.cpLoss > 50) return null; // engine doesn't approve — not sound
   const diff = movedVal - capturedVal;
   if (diff < 2) return null; // minor difference (e.g. bishop takes knight) — not a real sac
+
+  // The piece must actually be en prise (opponent can recapture it)
+  // If the piece is safe on its new square, it's just a regular capture, not a sacrifice
+  const toSq = move.uci.slice(2, 4) as Square;
+  const oppColor = opp(moverColor);
+  try {
+    const oppPieces = allPieces(after).filter(p => p.color === oppColor);
+    const canRecapture = oppPieces.some(p => isAttacking(after, p.square, p, toSq));
+    if (!canRecapture) return null; // piece is safe — not a real sacrifice
+  } catch {
+    return null;
+  }
+
   return { sacPiece: move.pieceType, capturedPiece: move.capturedPiece, materialGiven: diff };
 }
 
@@ -932,7 +945,7 @@ function _generatePositionAware(
   }
 
   // Sound sacrifice — player gave up material but engine approves. Applaud it!
-  const soundSac = detectSoundSacrifice(move);
+  const soundSac = detectSoundSacrifice(move, after, moverColor);
   if (soundSac && (move.classification === "best" || move.classification === "great" || move.classification === "brilliant")) {
     const sacName = pn(soundSac.sacPiece);
     const captName = pn(soundSac.capturedPiece);

@@ -2281,8 +2281,10 @@ export default function RoastPage() {
   })();
 
   /* ── Board pepe badge image (computed outside JSX to avoid styled-jsx IIFE scoping issues) ── */
+  // Only show on moves that have NO commentary (fills visual gap on silent moves)
   const boardPepeImg: string | null = (() => {
     if (!currentMove || pageState !== "watching") return null;
+    if (currentMove.comment) return null; // Don't show when there's commentary — avoid visual clutter
     if (currentMove.san.includes("#")) return "/pepe-emojis/4642-death.png";
     // Classification-specific pool that EXCLUDES the sidebar avatar image
     const candidates: Record<string, string[]> = {
@@ -3079,20 +3081,38 @@ export default function RoastPage() {
                     </div>
                   )}
 
-                  {/* ── Pepe reaction badge (top-right corner of board) ── */}
-                  {boardPepeImg && (
-                    <div className="absolute top-2 right-2 z-40 pointer-events-none animate-fadeIn" key={`pepe-${currentIdx}-${currentMood}`}>
-                      <div className={`relative drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] animate-bounce-once ${boardPepeIsCheckmate ? "w-16 h-16 sm:w-[72px] sm:h-[72px]" : "w-12 h-12 sm:w-14 sm:h-14"}`}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={boardPepeImg}
-                          alt={boardPepeIsCheckmate ? "checkmate" : currentMove?.classification ?? ""}
-                          width={boardPepeIsCheckmate ? 72 : 56}
-                          height={boardPepeIsCheckmate ? 72 : 56}
-                          className="object-contain w-full h-full"
-                        />
-                      </div>
-                    </div>
+                  {/* ── Pepe reaction badge (at the piece that moved — non-commented moves only) ── */}
+                  {boardPepeImg && boardSize > 0 && currentMove && (
+                    (() => {
+                      const toSqStr = currentMove.to;
+                      const sqSize = boardSize / 8;
+                      const fileI = toSqStr.charCodeAt(0) - 97;
+                      const rankI = parseInt(toSqStr[1]) - 1;
+                      const x = orientation === "white" ? fileI * sqSize : (7 - fileI) * sqSize;
+                      const y = orientation === "white" ? (7 - rankI) * sqSize : rankI * sqSize;
+                      const pepeSize = boardPepeIsCheckmate ? sqSize * 1.1 : sqSize * 0.75;
+                      return (
+                        <div
+                          className="absolute z-40 pointer-events-none animate-bounce-once"
+                          key={`pepe-${currentIdx}-${currentMood}`}
+                          style={{
+                            left: x + sqSize - pepeSize * 0.35,
+                            top: y - pepeSize * 0.35,
+                            width: pepeSize,
+                            height: pepeSize,
+                          }}
+                        >
+                          <div className="drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] w-full h-full">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={boardPepeImg}
+                              alt={boardPepeIsCheckmate ? "checkmate" : currentMove.classification}
+                              className="object-contain w-full h-full"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()
                   )}
 
                   {/* Emoji marker overlay */}
