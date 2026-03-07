@@ -1911,11 +1911,11 @@ function _blunderRoast(
     `🗿 ${move.san}.${ctx.playerBlunders >= 2 ? ` Blunder number ${ctx.playerBlunders}.` : ""} Hikaru speed-running this position would never. He'd premove the right move in 0.1 seconds. This person took 30 seconds to find the WRONG one 🏎️💀`,
     `😌 ${move.san}.${ctxLine} Eric Rosen would look at this and go "Ohhhh nooo" in the most calm voice imaginable. Meanwhile the position is literally ON FIRE 🔥😌`,
     `💀 ${move.san}.${ctxLine} This is some Stafford Gambit victim energy. They walked right into it like an Eric Rosen highlight reel 🎯😌`,
-    `🔥 ${move.san}.${ctxLine} Tal would have sacked a piece here and won. Magnus would have played the right move instantly. This person? They found the ONE move that loses 🗿♟️`,
-    `💀 ${move.san}.${ctxLine} Kasparov once stared down opponents into submission. This move would make Kasparov stare at it in disbelief 🧠♟️`,
+    `🔥 ${move.san}.${ctxLine} Tal would have sacked a piece here and won. Fischer would have played the right move instantly. This person? They found the ONE move that loses 🗿♟️`,
+    `💀 ${move.san}.${ctxLine} Fischer once said "I don't believe in psychology, I believe in good moves." This move believes in neither 🧠♟️`,
     `☠️ ${move.san}.${ctxLine} Morphy would have finished this game 15 moves ago with a queen sacrifice. Instead we get... this. The anti-Morphy 👑💀`,
     `🗿 ${move.san}.${ctxLine} Tal — the Magician from Riga — would NEVER. He'd sac the exchange and create chaos. This player created chaos by accident and it's THEIR chaos to suffer through 🎩🔥`,
-    `⚡ ${move.san}.${ctxLine} Kasparov prepared 20 moves deep before his opponents even sat down. This person played 0 good moves after sitting down for 20 minutes 🕐💀`,
+    `⚡ ${move.san}.${ctxLine} Bobby Fischer played 20 perfectly prepared moves before his opponents even sat down. This person played 0 good moves after sitting down for 20 minutes 🕐💀`,
     `💀 ${move.san}.${ctxLine} Morphy literally played blindfolded against 8 opponents simultaneously and won them all. This person can't beat ONE person with their eyes OPEN 🙈♟️`,
     `👑 ${move.san}.${ctxLine} Magnus would resign here. Not because the position is lost — but because he'd be embarrassed to be associated with this game 🏆💀`,
     `🏆 ${move.san}.${ctxLine} Magnus literally beat a world champion while half asleep on stream. This player is FULLY awake and playing like this?? 😴💀`,
@@ -2127,7 +2127,7 @@ function _mistakeRoast(
     `🗿 ${move.san}.${ctxFallback} Hikaru wouldn't even comment on this. Just "captures captures" past it. Speed chess energy except it's speed ignoring 🏎️💨`,
     `😌 ${move.san}.${ctxFallback} Eric Rosen would go "oh no" so softly you'd think he was narrating a nature documentary. Meanwhile the position is DYING 🦆🗿`,
     `😬 ${move.san}.${ctxFallback} This is the kind of move that shows up in an Eric Rosen "traps and tricks" video — as the victim. They ARE the content 📺😌`,
-    `♟️ ${move.san}.${ctxFallback} Hikaru would have found the best move in 0.5 seconds flat. This person found the second-best move in 30 seconds. Close but no cigar 🏎️🗿`,
+    `♟️ ${move.san}.${ctxFallback} Fischer would have found the best move in 2 seconds flat. This person found the second-best move in 30 seconds. Close but no cigar 🕐🗿`,
     `🎩 ${move.san}.${ctxFallback} Tal would have sacrificed a piece here and created magic. Instead we get... a mistake. The anti-magic 🪄💀`,
     `👑 ${move.san}.${ctxFallback} Morphy retired at 22 because chess was too easy. This person should consider retiring because chess is too hard 😭♟️`,
     `👑 ${move.san}.${ctxFallback} Magnus would never. He'd play the right move, sip his coffee, and check his Fantasy Football team. All in 3 seconds ☕🏆`,
@@ -2480,7 +2480,7 @@ function _checkResponseRoast(
       `⚠️ ${move.san} to escape check. Bold strategy. Wrong strategy. But bold 🗿💀`,
       `😭 They were in check and panicked into ${move.san}. The king said "save me!" and the player said "how about I make it worse?" 👑💀`,
       `🫠 Check! Quick, do something! ${move.san}! ...that was the wrong something. Panic mode: activated. Accuracy: not found 🔍`,
-      `👑 Under check pressure and ${move.san} crumbles. Magnus would calmly find the only move — this player believes in PANIC 😱🗿`,
+      `👑 Under check pressure and ${move.san} crumbles. Fischer said "I don't believe in psychology" — this player believes in PANIC 😱🗿`,
     ];
     if (cls === "blunder" && move.cpLoss > 200) {
       lines.push(
@@ -3215,7 +3215,7 @@ export function getOpeningRoast(opening: string): string {
 
   if (o.includes("king's gambit") || o.includes("kings gambit")) return pick([
     `📖 ${opening}. The King's Gambit! SACRIFICING A PAWN ON MOVE 2. This person woke up and chose absolute violence 🔥⚔️`,
-    `📖 ${opening}. King's Gambit. Most GMs say it's dubious. These players said "I literally do not care" 🗿👑`,
+    `📖 ${opening}. King's Gambit. Bobby Fischer said it was "busted." These players said "I literally do not care" 🗿👑`,
     `📖 ${opening}. Google "King's Gambit." Holy hell — they're giving away material before the game even starts 💀⛪`,
   ]);
 
@@ -3253,7 +3253,7 @@ export function getOpeningRoast(opening: string): string {
 
   if (o.includes("king's indian") || o.includes("kings indian")) return pick([
     `📖 ${opening}. The King's Indian. Fianchetto and pray. Castle and launch a kingside attack. Or hang everything trying 🔥🙏`,
-    `📖 ${opening}. King's Indian Defense. Kasparov energy. Nakamura energy. At this elo? Gavin from 3rd grade energy 🗿👑`,
+    `📖 ${opening}. King's Indian Defense. Kasparov energy. Bobby Fischer energy. At this elo? Gavin from 3rd grade energy 🗿👑`,
   ]);
 
   if (o.includes("ruy lopez") || o.includes("spanish")) return pick([
