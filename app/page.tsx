@@ -4150,9 +4150,11 @@ export default function HomePage() {
           >
             <iframe
               className="h-full w-full"
-              src="https://www.youtube.com/embed/MpWsW10YE5M?autoplay=1&rel=0"
-              title="FireChess Trailer"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              src="https://www.youtube.com/embed/MpWsW10YE5M?si=aCA51t0YMIZTiCOu&autoplay=1"
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
               allowFullScreen
             />
             <button
