@@ -3075,40 +3075,6 @@ export default function RoastPage() {
                     </div>
                   )}
 
-                  {/* ── Pepe reaction badge (at the piece that moved — non-commented moves only) ── */}
-                  {boardPepeImg && boardSize > 0 && currentMove && (
-                    (() => {
-                      const toSqStr = currentMove.to;
-                      const sqSize = boardSize / 8;
-                      const fileI = toSqStr.charCodeAt(0) - 97;
-                      const rankI = parseInt(toSqStr[1]) - 1;
-                      const x = orientation === "white" ? fileI * sqSize : (7 - fileI) * sqSize;
-                      const y = orientation === "white" ? (7 - rankI) * sqSize : rankI * sqSize;
-                      const pepeSize = boardPepeIsCheckmate ? sqSize * 1.1 : sqSize * 0.75;
-                      return (
-                        <div
-                          className="absolute z-40 pointer-events-none animate-bounce-once"
-                          key={`pepe-${currentIdx}-${currentMood}`}
-                          style={{
-                            left: x + sqSize - pepeSize * 0.35,
-                            top: y - pepeSize * 0.35,
-                            width: pepeSize,
-                            height: pepeSize,
-                          }}
-                        >
-                          <div className="drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] w-full h-full">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={boardPepeImg}
-                              alt={boardPepeIsCheckmate ? "checkmate" : currentMove.classification}
-                              className="object-contain w-full h-full"
-                            />
-                          </div>
-                        </div>
-                      );
-                    })()
-                  )}
-
                   {/* Emoji marker overlay */}
                   {activeMarkers.length > 0 && boardSize > 0 && (
                     <div className="absolute inset-0 pointer-events-none" style={{ width: boardSize, height: boardSize }}>
@@ -3174,6 +3140,42 @@ export default function RoastPage() {
                     </div>
                   )}
                 </div>
+
+                {/* ── Pepe reaction badge (OUTSIDE overflow-hidden so it won't clip at edges) ── */}
+                {boardPepeImg && boardSize > 0 && currentMove && (
+                  (() => {
+                    const toSqStr = currentMove.to;
+                    const sqSize = boardSize / 8;
+                    const fileI = toSqStr.charCodeAt(0) - 97;
+                    const rankI = parseInt(toSqStr[1]) - 1;
+                    const x = orientation === "white" ? fileI * sqSize : (7 - fileI) * sqSize;
+                    const y = orientation === "white" ? (7 - rankI) * sqSize : rankI * sqSize;
+                    const pepeSize = boardPepeIsCheckmate ? sqSize * 0.88 : sqSize * 0.6;
+                    const pad = 3; // matches p-[3px] on the frame wrapper
+                    return (
+                      <div
+                        className="absolute z-[100] pointer-events-none animate-bounce-once"
+                        key={`pepe-${currentIdx}-${currentMood}`}
+                        style={{
+                          left: pad + x + sqSize - pepeSize * 0.35,
+                          top: pad + y - pepeSize * 0.35,
+                          width: pepeSize,
+                          height: pepeSize,
+                        }}
+                      >
+                        <div className="drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] w-full h-full">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={boardPepeImg}
+                            alt={boardPepeIsCheckmate ? "checkmate" : currentMove.classification}
+                            className="object-contain w-full h-full"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })()
+                )}
+
                 </div>{/* close premium frame wrapper */}
               </div>
 
