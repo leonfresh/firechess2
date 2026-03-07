@@ -34,6 +34,7 @@ import {
   ELO_BRACKETS,
   getEloBracketIdx,
   getGameIntro,
+  GAME_INTRO,
   GAME_SUMMARY_LINES,
   REVEAL_CORRECT,
   REVEAL_TOO_HIGH,
@@ -858,14 +859,35 @@ export default function RoastPage() {
         }
       }
 
+      // Inject personalized player intro as the first synthetic move (plays with TTS in-game)
+      const playerIntro = getGameIntro(whitePlayer, blackPlayer);
+      const firstFen = analyzed.length > 0 ? analyzed[0].fenBefore : "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+      analyzed.unshift({
+        san: "",
+        fen: firstFen,
+        fenBefore: firstFen,
+        from: "e2",
+        to: "e2",
+        color: "w",
+        moveNumber: 0,
+        cp: 0,
+        cpLoss: 0,
+        bestMoveSan: null,
+        classification: "good",
+        comment: playerIntro,
+        piece: "p",
+        isCapture: false,
+        isCheck: false,
+      });
+
       setMoves(analyzed);
       setBlunders(totalBlunders);
       setMistakes(totalMistakes);
       setInaccuracies(totalInaccuracies);
       setAnalyzing(false);
 
-      // Intro
-      const intro = getGameIntro(whitePlayer, blackPlayer);
+      // Intro screen — generic line (personalized banter plays in-game with TTS)
+      const intro = GAME_INTRO[Math.floor(Math.random() * GAME_INTRO.length)];
       setIntroLine(intro);
       setPageState("intro");
     } catch (err) {
@@ -1145,13 +1167,35 @@ export default function RoastPage() {
         if (eloTarget2 >= 0) analyzed[eloTarget2].comment = getEloGuessComment(lateQuality);
       }
 
+      // Inject personalized player intro as the first synthetic move (plays with TTS in-game)
+      const playerIntro = getGameIntro(whitePlayer, blackPlayer);
+      const firstFen = analyzed.length > 0 ? analyzed[0].fenBefore : "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+      analyzed.unshift({
+        san: "",
+        fen: firstFen,
+        fenBefore: firstFen,
+        from: "e2",
+        to: "e2",
+        color: "w",
+        moveNumber: 0,
+        cp: 0,
+        cpLoss: 0,
+        bestMoveSan: null,
+        classification: "good",
+        comment: playerIntro,
+        piece: "p",
+        isCapture: false,
+        isCheck: false,
+      });
+
       setMoves(analyzed);
       setBlunders(totalBlunders);
       setMistakes(totalMistakes);
       setInaccuracies(totalInaccuracies);
       setAnalyzing(false);
 
-      const intro = getGameIntro(whitePlayer, blackPlayer);
+      // Intro screen — generic line (personalized banter plays in-game with TTS)
+      const intro = GAME_INTRO[Math.floor(Math.random() * GAME_INTRO.length)];
       setIntroLine(intro);
       setPageState("intro");
     } catch (err) {
