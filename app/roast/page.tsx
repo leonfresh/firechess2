@@ -697,25 +697,28 @@ export default function RoastPage() {
         analyzed[2].comment = openingRoast;
       }
 
-      // Inject closing game summary roast on the last move
-      // Don't overwrite blunder/mistake comments — use the second-to-last move instead
+      // Inject closing game summary as a separate synthetic entry AFTER the last move
+      // so the last move's own commentary plays first
       if (analyzed.length > 0) {
-        let closingIdx = analyzed.length - 1;
+        const lastMove = analyzed[analyzed.length - 1];
         const closingRoast = getClosingRoast(totalBlunders, totalMistakes, totalInaccuracies, analyzed.length);
-        if (analyzed[closingIdx].comment && 
-            (analyzed[closingIdx].classification === "blunder" || analyzed[closingIdx].classification === "mistake")) {
-          // Last move has an important roast — put closing on second-to-last if available
-          if (analyzed.length > 1 && !analyzed[closingIdx - 1].comment) {
-            closingIdx = closingIdx - 1;
-          } else {
-            // Append closing to existing comment
-            analyzed[closingIdx].comment = analyzed[closingIdx].comment + "\n\n" + closingRoast;
-            closingIdx = -1; // skip overwrite
-          }
-        }
-        if (closingIdx >= 0) {
-          analyzed[closingIdx].comment = closingRoast;
-        }
+        analyzed.push({
+          san: "",
+          fen: lastMove.fen,
+          fenBefore: lastMove.fen,
+          from: lastMove.to,
+          to: lastMove.to,
+          color: lastMove.color === "w" ? "b" : "w",
+          moveNumber: lastMove.moveNumber + (lastMove.color === "b" ? 1 : 0),
+          cp: lastMove.cp,
+          cpLoss: 0,
+          bestMoveSan: null,
+          classification: "good",
+          comment: closingRoast,
+          piece: "p",
+          isCapture: false,
+          isCheck: false,
+        });
       }
 
       // Inject 1-2 elo-guessing comments based on game quality patterns
@@ -978,23 +981,27 @@ export default function RoastPage() {
       if (openingTarget >= 0) analyzed[openingTarget].comment = openingRoast;
       else if (analyzed.length > 2 && !analyzed[2].comment) analyzed[2].comment = openingRoast;
 
-      // Inject closing game summary roast on the last move
-      // Don't overwrite blunder/mistake comments — use the second-to-last move instead
+      // Inject closing game summary as a separate synthetic entry AFTER the last move
       if (analyzed.length > 0) {
-        let closingIdx = analyzed.length - 1;
+        const lastMove = analyzed[analyzed.length - 1];
         const closingRoast = getClosingRoast(totalBlunders, totalMistakes, totalInaccuracies, analyzed.length);
-        if (analyzed[closingIdx].comment && 
-            (analyzed[closingIdx].classification === "blunder" || analyzed[closingIdx].classification === "mistake")) {
-          if (analyzed.length > 1 && !analyzed[closingIdx - 1].comment) {
-            closingIdx = closingIdx - 1;
-          } else {
-            analyzed[closingIdx].comment = analyzed[closingIdx].comment + "\n\n" + closingRoast;
-            closingIdx = -1;
-          }
-        }
-        if (closingIdx >= 0) {
-          analyzed[closingIdx].comment = closingRoast;
-        }
+        analyzed.push({
+          san: "",
+          fen: lastMove.fen,
+          fenBefore: lastMove.fen,
+          from: lastMove.to,
+          to: lastMove.to,
+          color: lastMove.color === "w" ? "b" : "w",
+          moveNumber: lastMove.moveNumber + (lastMove.color === "b" ? 1 : 0),
+          cp: lastMove.cp,
+          cpLoss: 0,
+          bestMoveSan: null,
+          classification: "good",
+          comment: closingRoast,
+          piece: "p",
+          isCapture: false,
+          isCheck: false,
+        });
       }
 
       // Elo-guessing comments

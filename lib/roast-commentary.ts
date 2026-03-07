@@ -7,6 +7,7 @@
  */
 
 import { Chess, type PieceSymbol, type Color, type Square } from "chess.js";
+import { OPENING_GUIDES, type OpeningGuide } from "./opening-guides";
 
 /* ================================================================== */
 /*  Types                                                               */
@@ -409,6 +410,172 @@ function countAttackers(chess: Chess, square: string, _attackerColor: Color): nu
 }
 
 /* ================================================================== */
+/*  Advanced Tactical Detection                                         */
+/* ================================================================== */
+
+type SkewerInfo = {
+  attacker: PieceInfo;
+  front: PieceInfo;   // higher-value piece being attacked
+  behind: PieceInfo;  // lower-value piece behind it
+};
+
+/** Detect skewers: a slider attacks a valuable piece that, when it moves, exposes a lesser piece behind */
+function detectSkewers(chess: Chess, attackerColor: Color): SkewerInfo[] {
+  const skewers: SkewerInfo[] = [];
+  const victimColor = opp(attackerColor);
+  const sliders = allPieces(chess).filter(p => p.color === attackerColor && (p.type === "b" || p.type === "r" || p.type === "q"));
+
+  for (const slider of sliders) {
+    for (const [df, dr] of sliderDirs(slider.type)) {
+      const line: PieceInfo[] = [];
+      let cf = fileIdx(slider.square) + df, cr = rankIdx(slider.square) + dr;
+      while (cf >= 0 && cf <= 7 && cr >= 0 && cr <= 7) {
+        const s = sq(cf, cr);
+        if (!s) break;
+        const p = chess.get(s);
+        if (p) {
+          if (p.color === victimColor) line.push({ type: p.type, color: p.color, square: s });
+          else break;
+          if (line.length === 2) break;
+        }
+        cf += df; cr += dr;
+      }
+      if (line.length === 2) {
+        const frontVal = PIECE_VALUES[line[0].type] ?? 0;
+        const behindVal = PIECE_VALUES[line[1].type] ?? 0;
+        if (frontVal > behindVal && frontVal >= 3) {
+          skewers.push({ attacker: slider, front: line[0], behind: line[1] });
+        }
+      }
+    }
+  }
+  return skewers;
+}
+
+/** Detect discovered attacks: moving a piece uncovers an attack by a friendly slider behind it */
+function detectDiscoveredAttack(
+  before: Chess,
+  after: Chess,
+  fromSq: Square,
+  moverColor: Color,
+): { slider: PieceInfo; target: PieceInfo } | null {
+  const oppColor = opp(moverColor);
+  const friendlySliders = allPieces(before).filter(p =>
+    p.color === moverColor && p.square !== fromSq && (p.type === "b" || p.type === "r" || p.type === "q")
+  );
+
+  for (const slider of friendlySliders) {
+    for (const [df, dr] of sliderDirs(slider.type)) {
+      if (!isAligned(slider.square, fromSq, df, dr)) continue;
+
+      // Walk from slider past fromSq to find newly-attacked targets
+      let cf = fileIdx(slider.square) + df, cr = rankIdx(slider.square) + dr;
+      let passedFrom = false;
+      while (cf >= 0 && cf <= 7 && cr >= 0 && cr <= 7) {
+        const s = sq(cf, cr);
+        if (!s) break;
+        if (s === fromSq) { passedFrom = true; cf += df; cr += dr; continue; }
+        const pBefore = before.get(s);
+        if (pBefore && !passedFrom) break; // blocked before fromSq
+        const pAfter = after.get(s);
+        if (pAfter && passedFrom) {
+          if (pAfter.color === oppColor && (PIECE_VALUES[pAfter.type] ?? 0) >= 3) {
+            return { slider, target: { type: pAfter.type, color: pAfter.color, square: s } };
+          }
+          break;
+        }
+        cf += df; cr += dr;
+      }
+    }
+  }
+  return null;
+}
+
+/** Detect back-rank weakness/threat: king is on the back rank with pawns blocking escape */
+function detectBackRankWeakness(chess: Chess, color: Color): boolean {
+  const king = findKing(chess, color);
+  if (!king) return false;
+  const kr = rankIdx(king);
+  const backRank = color === "w" ? 0 : 7;
+  if (kr !== backRank) return false;
+
+  // Check if all squares in front of the king are blocked by friendly pawns
+  const kf = fileIdx(king);
+  const forward = color === "w" ? 1 : -1;
+  let blocked = 0;
+  for (let f = Math.max(0, kf - 1); f <= Math.min(7, kf + 1); f++) {
+    const s = sq(f, kr + forward);
+    if (s) {
+      const p = chess.get(s);
+      if (p && p.type === "p" && p.color === color) blocked++;
+    }
+  }
+  return blocked >= 2; // At least 2 pawns blocking escape → back rank vulnerable
+}
+
+/** Check if a piece is trapped (no safe escape squares) */
+function isPieceTrapped(chess: Chess, square: Square, pieceColor: Color): boolean {
+  const piece = chess.get(square);
+  if (!piece || piece.type === "p" || piece.type === "k") return false;
+  if ((PIECE_VALUES[piece.type] ?? 0) < 3) return false;
+
+  try {
+    const allMoves = chess.moves({ verbose: true });
+    const pieceMoves = allMoves.filter(m => m.from === square);
+    if (pieceMoves.length === 0) return true; // no moves at all
+
+    let safeMoves = 0;
+    for (const m of pieceMoves) {
+      const sim = new Chess(chess.fen());
+      sim.move(m);
+      // Check if opponent can recapture for free
+      const isRecapturedCheap = sim.moves({ verbose: true }).some(
+        om => om.to === m.to && om.captured && (PIECE_VALUES[om.piece as PieceSymbol] ?? 0) <= (PIECE_VALUES[piece.type] ?? 0)
+      );
+      if (!isRecapturedCheap) safeMoves++;
+    }
+    return safeMoves === 0;
+  } catch {
+    return false;
+  }
+}
+
+/* ================================================================== */
+/*  Opening Guide Matching                                              */
+/* ================================================================== */
+
+/** Find the matching OpeningGuide for a game's opening name */
+function matchOpeningGuide(opening: string): OpeningGuide | null {
+  if (!opening) return null;
+  const o = opening.toLowerCase();
+  for (const guide of OPENING_GUIDES) {
+    const gn = guide.name.toLowerCase();
+    // exact-ish match first
+    if (o.includes(gn) || gn.includes(o)) return guide;
+    // keyword matching
+    const keywords = gn.split(/[\s-]+/).filter(w => w.length > 3);
+    if (keywords.length > 0 && keywords.every(kw => o.includes(kw))) return guide;
+  }
+  return null;
+}
+
+/** Get a relevant opening-specific idea or trap to use in commentary */
+function getOpeningInsight(guide: OpeningGuide, moverColor: Color): string | null {
+  const ideas = [
+    ...guide.keyIdeas,
+    ...(moverColor === "w" ? guide.whitePlans : guide.blackPlans),
+  ];
+  if (ideas.length === 0) return null;
+  return pick(ideas);
+}
+
+/** Get a trap description if the opening has traps */
+function getOpeningTrap(guide: OpeningGuide): { name: string; description: string } | null {
+  if (guide.traps.length === 0) return null;
+  return pick(guide.traps);
+}
+
+/* ================================================================== */
 /*  Random helpers                                                      */
 /* ================================================================== */
 
@@ -627,6 +794,8 @@ interface GameContext {
   opponentLastClass: MoveClassification | null;
   /** How much eval the opponent just gifted (positive = gift) */
   opponentGift: number;
+  /** Opening name from the game */
+  opening: string | null;
 }
 
 function _getGameContext(move: AnalyzedMove, summary: GameSummary): GameContext {
@@ -711,7 +880,7 @@ function _getGameContext(move: AnalyzedMove, summary: GameSummary): GameContext 
   // Gift: how much eval the opponent just handed us (their cpLoss from our perspective)
   const opponentGift = oppLast ? oppLast.cpLoss : 0;
 
-  return { recentBlunder, playerBlunders, goodStreak, posture, threwAdvantage, desperateDefense, evalCrater, isEndgame, totalPieces, opponentJustBlundered, opponentLastClass, opponentGift };
+  return { recentBlunder, playerBlunders, goodStreak, posture, threwAdvantage, desperateDefense, evalCrater, isEndgame, totalPieces, opponentJustBlundered, opponentLastClass, opponentGift, opening: summary.opening ?? null };
 }
 
 function _brilliantRoast(
@@ -860,6 +1029,21 @@ function _goodMoveRoast(
       ? `🗿 ${move.san}. "Don't hang pieces" ✅ "Play the best move" ❌ Somewhere in between. Mid. Ultra mid 🫠`
       : `🗿 ${move.san}. A move exists. On the board. In a game of chess. Mid. Ultra mid 🫠`,
   ];
+
+  // Opening-aware good move commentary
+  if (move.moveNumber <= 12) {
+    const guide = matchOpeningGuide(ctx.opening ?? "");
+    if (guide) {
+      const idea = getOpeningInsight(guide, move.color as Color);
+      if (idea) {
+        lines.push(
+          () => `📖 ${move.san} — that aligns with the ${guide.name}: "${idea}." Look at them, actually following opening principles. Suspicious 🕵️📚`,
+          () => `🧠 ${move.san}. In the ${guide.name}, this follows the plan: "${idea}." Playing with purpose? In THIS economy? 🗿📖`,
+        );
+      }
+    }
+  }
+
   return { text: pick(lines)(), annotations: ann };
 }
 
@@ -1012,6 +1196,62 @@ function _blunderRoast(
     ], used), annotations: { arrows: pinArrows, markers: pinMarkers } };
   }
 
+  // 4b. Skewer
+  const skewers = detectSkewers(after, opp(moverColor));
+  if (skewers.length > 0) {
+    const sk = skewers[0];
+    const skArrows: [string, string, string][] = [
+      moveArrow,
+      [sk.attacker.square, sk.front.square, "rgba(239, 68, 68, 0.85)"],
+      [sk.front.square, sk.behind.square, "rgba(239, 68, 68, 0.5)"],
+    ];
+    return { text: pickUnused([
+      `🗡️ ${move.san} and the opponent's ${pn(sk.attacker.type)} SKEWERS the ${pn(sk.front.type)} on ${sk.front.square} through to the ${pn(sk.behind.type)} on ${sk.behind.square}! Move the big piece, lose the one behind it. Chess kebab 🍢💀`,
+      `🔫 After ${move.san}, there's a nasty skewer: ${pn(sk.attacker.type)} on ${sk.attacker.square} stabs through the ${pn(sk.front.type)} to the ${pn(sk.behind.type)}. The geometry gods are ANGRY 📐😭`,
+      `🗡️ ${move.san} walks into a textbook skewer — ${pn(sk.attacker.type)} ${sk.attacker.square} vs ${pn(sk.front.type)} ${sk.front.square} and ${pn(sk.behind.type)} ${sk.behind.square}. Two-for-one special 🏷️💀`,
+      `🍢 ${move.san} and the ${pn(sk.front.type)} is skewered to the ${pn(sk.behind.type)}. Step aside or lose what's behind you. Either way: pain 🗿`,
+    ], used), annotations: { arrows: skArrows, markers: [{ square: sk.front.square, emoji: "🗡️" }, { square: sk.behind.square, emoji: "🎯" }] } };
+  }
+
+  // 4c. Discovered attack
+  {
+    const disco = detectDiscoveredAttack(before, after, _fromSq, opp(moverColor));
+    if (disco) {
+      const discoArrows: [string, string, string][] = [
+        moveArrow,
+        [disco.slider.square, disco.target.square, "rgba(239, 68, 68, 0.8)"],
+      ];
+      return { text: pickUnused([
+        `💥 ${move.san} opens up a DISCOVERED ATTACK — the ${pn(disco.slider.type)} on ${disco.slider.square} now blasts the ${pn(disco.target.type)} on ${disco.target.square}! The piece moved out of the way and BOOM 💣`,
+        `🎭 After ${move.san}, a discovered attack! The ${pn(disco.slider.type)} was hiding behind the piece that just moved, and now it's aiming at the ${pn(disco.target.type)} on ${disco.target.square}. Surprise! 🎉💀`,
+        `💥 ${move.san} uncorks a discovery: ${pn(disco.slider.type)} ${disco.slider.square} → ${pn(disco.target.type)} ${disco.target.square}. The chess equivalent of pulling a curtain to reveal the jumpscare 🎭😱`,
+        `🎯 ${move.san} and suddenly the ${pn(disco.slider.type)} on ${disco.slider.square} has a clear shot at the ${pn(disco.target.type)}. Discovered attack. They didn't see it. We did 💀`,
+      ], used), annotations: { arrows: discoArrows, markers: [{ square: disco.target.square, emoji: "💥" }] } };
+    }
+  }
+
+  // 4d. Back-rank weakness
+  if (detectBackRankWeakness(after, moverColor)) {
+    const king = findKing(after, moverColor)!;
+    return { text: pickUnused([
+      `🚪 ${move.san} and that back rank is WIDE OPEN. The king is trapped behind its own pawns with no escape. One heavy piece slides in and it's GG 💀🏰`,
+      `☠️ After ${move.san}, the back rank is a death trap. King is stuck, pawns won't budge. All it takes is one check on the 8th rank and this game writes its own obituary 🪦`,
+      `🏰 ${move.san} — the king's shelter just became the king's coffin. Back rank mate is LURKING. Someone didn't watch Levy's back rank video 📺💀`,
+      `🚨 ${move.san} and the back rank is screaming for help. One rook slides in and it's lights out. This is the "I forgot to make luft" special 🕳️💀`,
+    ], used), annotations: { arrows: [moveArrow], markers: [{ square: king, emoji: "🚨" }] } };
+  }
+
+  // 4e. Trapped piece
+  if (movedPiece && isPieceTrapped(after, _toSq, moverColor)) {
+    const trappedName = pn(movedPiece.type);
+    return { text: pickUnused([
+      `🪤 ${move.san} and the ${trappedName} on ${_toSq} is TRAPPED. No safe squares. Just standing there like it's in a glass box at a museum 🏛️💀`,
+      `🔒 After ${move.san}, the ${trappedName} on ${_toSq} has nowhere to go. Every escape square is covered. That piece is a hostage now fr 😭🗿`,
+      `🪤 ${move.san} parked the ${trappedName} on ${_toSq} with zero escape routes. It's not a piece anymore, it's a PRISONER 🚨💀`,
+      `😱 ${move.san} and the ${trappedName} is stuck in quicksand on ${_toSq}. No safe moves. The opponent just needs to come collect it like DoorDash 🛵💀`,
+    ], used), annotations: { arrows: [moveArrow], markers: [{ square: _toSq, emoji: "🪤" }] } };
+  }
+
   // 5. Bad sacrifice — only trigger when the moved piece is worth MORE than the captured piece
   //    (e.g. queen takes pawn). Equal trades like bishop takes knight are NOT sacrifices.
   const _isTrueSacrifice = movedPiece && capturedPiece && (PIECE_VALUES[movedPiece.type] ?? 0) > (PIECE_VALUES[capturedPiece.type] ?? 0);
@@ -1070,6 +1310,28 @@ function _blunderRoast(
       `🚧 ${move.san} — and the pawn structure is a war crime 🏚️${pawns.doubled.length > 0 ? ` Doubled pawns on the ${pawns.doubled[0]}.` : ""}${pawns.isolated.length > 0 ? ` ${pawns.isolated.length} isolated pawns.` : ""} Rubble, not a position 💀`,
       `🤮 After ${move.san}, look at this pawn structure.${pawns.doubled.length > 0 ? ` Doubled on ${pawns.doubled[0]}.` : ""}${pawns.isolated.length > 0 ? ` ${pawns.isolated.length} isolated pawns.` : ""} Philidor is rolling in his grave 🪦`,
     ], used), annotations: { arrows: [moveArrow], markers: [{ square: _toSq, emoji: "🚧" }] } };
+  }
+
+  // 8b. Opening principle violation — opening phase blunders with guide context
+  if (move.moveNumber <= 15) {
+    const guide = matchOpeningGuide(summary.opening);
+    if (guide) {
+      const insight = getOpeningInsight(guide, moverColor);
+      const trap = getOpeningTrap(guide);
+      if (insight && Math.random() < 0.5) {
+        return { text: pickUnused([
+          `📖💀 ${move.san} in the ${guide.name}?? The whole point of this opening is "${insight}" — and they did the OPPOSITE. Theory: ignored. Vibes: terrible 🗿`,
+          `🧠💀 ${move.san} — in the ${guide.name}, you should be thinking about "${insight}." Instead they played THIS. The opening book is crying 📚😭`,
+          `📖☠️ ${move.san} violates everything the ${guide.name} stands for. Key idea: "${insight}." What they did: the opposite. Incredible scenes 🤡`,
+        ], used), annotations: { arrows: [moveArrow], markers: [{ square: _toSq, emoji: "📖" }] } };
+      }
+      if (trap && Math.random() < 0.5) {
+        return { text: pickUnused([
+          `🪤 ${move.san} in the ${guide.name} — and they don't even know about the ${trap.name}! ${trap.description.length > 80 ? trap.description.slice(0, 77) + "..." : trap.description} Watch out 👀💀`,
+          `📖 ${move.san} plays right into potential ${guide.name} traps. The ${trap.name} is LURKING. If they don't know it, they're about to learn the hard way 🪤😭`,
+        ], used), annotations: { arrows: [moveArrow], markers: [{ square: _toSq, emoji: "🪤" }] } };
+      }
+    }
   }
 
   // 9. Generic — with context-aware callbacks
@@ -1144,6 +1406,59 @@ function _mistakeRoast(
     } };
   }
 
+  // Skewer
+  const skewers = detectSkewers(after, opp(moverColor));
+  if (skewers.length > 0) {
+    const sk = skewers[0];
+    return { text: pickUnused([
+      `🗡️ ${move.san} leaves a skewer on the board — ${pn(sk.attacker.type)} pins the ${pn(sk.front.type)} on ${sk.front.square} through to the ${pn(sk.behind.type)}. Geometrically unfortunate 📐😬`,
+      `🍢 After ${move.san}, there's a skewer: ${pn(sk.attacker.type)} ${sk.attacker.square} vs ${pn(sk.front.type)} and ${pn(sk.behind.type)}. Not great, Bob 🗿`,
+    ], used), annotations: {
+      arrows: [moveArrow, [sk.attacker.square, sk.front.square, "rgba(239, 183, 44, 0.8)"], [sk.front.square, sk.behind.square, "rgba(239, 183, 44, 0.4)"]],
+      markers: [{ square: sk.front.square, emoji: "🗡️" }],
+    } };
+  }
+
+  // Discovered attack
+  {
+    const disco = detectDiscoveredAttack(before, after, fromSq as Square, opp(moverColor));
+    if (disco) {
+      return { text: pickUnused([
+        `💥 ${move.san} opens a discovered attack — ${pn(disco.slider.type)} on ${disco.slider.square} now hits the ${pn(disco.target.type)} on ${disco.target.square}. The curtain was pulled 🎭📉`,
+        `🎯 After ${move.san}, the ${pn(disco.slider.type)} reveals an attack on the ${pn(disco.target.type)}. Discovered attacks: nature's way of saying "pay attention to the whole board" 🗿`,
+      ], used), annotations: {
+        arrows: [moveArrow, [disco.slider.square, disco.target.square, "rgba(239, 183, 44, 0.8)"]],
+        markers: [{ square: disco.target.square, emoji: "💥" }],
+      } };
+    }
+  }
+
+  // Back-rank weakness
+  if (detectBackRankWeakness(after, moverColor)) {
+    const king = findKing(after, moverColor)!;
+    return { text: pickUnused([
+      `🏰 ${move.san} and the back rank is looking sketchy. The king is boxed in by its own pawns. A rook invasion could be nasty 😬`,
+      `⚠️ After ${move.san}, the back rank is vulnerable. Someone should make luft before it's too late 🕳️📉`,
+    ], used), annotations: {
+      arrows: [moveArrow],
+      markers: [{ square: king, emoji: "⚠️" }],
+    } };
+  }
+
+  // Trapped piece
+  {
+    const movedP = after.get(toSq as Square);
+    if (movedP && isPieceTrapped(after, toSq as Square, moverColor)) {
+      return { text: pickUnused([
+        `🪤 ${move.san} and the ${pn(movedP.type)} on ${toSq} might be stuck. Not many safe squares to go to 😬🔒`,
+        `🔒 After ${move.san}, the ${pn(movedP.type)} on ${toSq} is running out of escape routes. Careful — trapped pieces = lost pieces ⚠️`,
+      ], used), annotations: {
+        arrows: [moveArrow],
+        markers: [{ square: toSq, emoji: "🪤" }],
+      } };
+    }
+  }
+
   // King safety for mistakes — only pawn moves in front of castled king
   if (move.pieceType === "p") {
     const king = findKing(after, moverColor);
@@ -1189,6 +1504,20 @@ function _mistakeRoast(
       `😬 ${move.san} over ${move.bestMoveSan}.${ctxLine} Levy would hit us with the "ladies and gentlemen" and zoom into the position. THE MISTAKE energy 📺💀`,
       `😌 ${move.san} instead of ${move.bestMoveSan}.${ctxLine} Eric Rosen would calmly say "ohh that's unfortunate" while his chat has a meltdown. King of underreaction 😌💀`,
     ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: toSq, emoji: pick(["😬", "📉", "🤦", "😤", "🫤"]) }] } };
+  }
+
+  // Opening principle mistake — if we have a guide and we're in the opening
+  if (move.moveNumber <= 15) {
+    const guide = matchOpeningGuide(ctx.opening ?? "");
+    if (guide && Math.random() < 0.35) {
+      const idea = getOpeningInsight(guide, moverColor);
+      if (idea) {
+        return { text: pickUnused([
+          `📖😬 ${move.san} — the ${guide.name} wants you to think about "${idea}" and instead they chose chaos. Opening theory is weeping 📚💀`,
+          `🧠📉 ${move.san} in the ${guide.name}. Key plan: "${idea}." What they did: literally anything else. Bold strategy Cotton 🗿`,
+        ], used), annotations: { arrows: [moveArrow], markers: [{ square: toSq, emoji: "📖" }] } };
+      }
+    }
   }
 
   const ctxFallback = ctx.goodStreak >= 3
@@ -1907,6 +2236,21 @@ export function getEloGuessComment(quality: "surprising_good" | "clueless" | "mi
 
 export function getOpeningRoast(opening: string): string {
   const o = opening.toLowerCase();
+  const guide = matchOpeningGuide(opening);
+
+  // Build a fun guide addendum if available
+  const guideAddendum = (() => {
+    if (!guide) return "";
+    const trap = getOpeningTrap(guide);
+    if (trap && Math.random() < 0.5) {
+      return ` 🪤 Watch out for the ${trap.name} — ${trap.description.length > 80 ? trap.description.slice(0, 77) + "..." : trap.description}`;
+    }
+    const idea = pick(guide.keyIdeas);
+    if (idea) {
+      return ` 🧠 Key idea: ${idea.length > 80 ? idea.slice(0, 77) + "..." : idea}`;
+    }
+    return "";
+  })();
 
   // Specific opening roasts
   if (o.includes("london")) return pick([
@@ -2036,7 +2380,7 @@ export function getOpeningRoast(opening: string): string {
   ]);
 
   // Generic opening roasts
-  return pick([
+  const base = pick([
     `📖 ${opening}. Interesting choice. Let's see if they actually know the theory or if they're freestyling by move 3 🎤🗿`,
     `📖 ${opening}. An opening has been played. Whether they know WHY these moves are played is... debatable 🤨📚`,
     `📖 ${opening}. Google "${opening}." Holy hell — this should be interesting 💀⛪`,
@@ -2048,6 +2392,7 @@ export function getOpeningRoast(opening: string): string {
     `📖 ${opening}. They chose their weapon. Let the suffering begin 🗡️🫠`,
     `📖 ${opening}. Alright, opening identified. Liers will kicked off from here. True will never die. But one of these players' positions will 🗿💀`,
   ]);
+  return base + guideAddendum;
 }
 
 export const REVEAL_TOO_HIGH = [
