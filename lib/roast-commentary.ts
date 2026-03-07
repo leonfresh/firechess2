@@ -177,11 +177,12 @@ function detectHanging(chess: Chess, color: Color): PieceInfo[] {
     }
 
     for (const p of allPieces(chess)) {
-      if (p.color === color && p.type !== "k" && attacked.has(p.square) && (PIECE_VALUES[p.type] ?? 0) >= 3) {
+      if (p.color === color && p.type !== "k" && attacked.has(p.square) && (PIECE_VALUES[p.type] ?? 0) >= 1) {
         // Only flag as hanging if the piece is NOT defended by any friendly piece
         if (!chess.isAttacked(p.square, color)) {
           // Skip if opponent has their own piece under bigger threat that they must save first
-          if (maxOppThreat >= (PIECE_VALUES[p.type] ?? 0)) continue;
+          // (but don't skip pawns — losing a free pawn is always worth flagging)
+          if (p.type !== "p" && maxOppThreat >= (PIECE_VALUES[p.type] ?? 0)) continue;
           hanging.push(p);
         }
       }
@@ -1518,7 +1519,7 @@ function _blunderRoast(
     ], used), annotations: { arrows: [moveArrow], markers: [{ square: _toSq, emoji: "💀" }] } };
   }
 
-  // 2. Hanging pieces
+  // 2. Hanging pieces (including pawns)
   const hanging = detectHanging(after, moverColor);
   if (hanging.length > 0) {
     const worst = hanging.reduce((a, b) => (PIECE_VALUES[b.type] ?? 0) > (PIECE_VALUES[a.type] ?? 0) ? b : a);
@@ -1532,6 +1533,22 @@ function _blunderRoast(
       const firstAttacker = oppMvs.find(m => m.to === onSq && m.captured);
       if (firstAttacker) hangArrows.push([firstAttacker.from, onSq, "rgba(239, 68, 68, 0.7)"]);
     } catch {}
+
+    // Pawn-specific hanging lines
+    if (worst.type === "p") {
+      return { text: pickUnused([
+        `🆓 ${move.san} and the pawn on ${onSq} is just FREE. One whole pawn donated to charity. They won't even say thank you 🎁`,
+        `😤 ${move.san} leaves a pawn on ${onSq} completely undefended. That's a free pawn! It's not much but it's honest material 🧑‍🌾🆓`,
+        `🆓 After ${move.san}, there's a free pawn on ${onSq}. Just sitting there. No protection. The opponent can just take it and say gg 🗿`,
+        `💀 ${move.san} hangs a pawn on ${onSq}. A pawn is a pawn! Capablanca won world championships with pawn advantages smaller than this 👑🆓`,
+        `🤡 ${move.san} and the pawn on ${onSq} is UNDEFENDED. Free pawn! At higher levels this is literally a death sentence for the position 📉🆓`,
+        `😭 ${move.san} — that pawn on ${onSq} is abandoned. No friends. No defenders. Just memories. A whole pawn for free 🆓💀`,
+        `🆓 ${move.san} drops a free pawn on ${onSq}. "It's just a pawn" — famous last words before losing the endgame by one pawn 📉🗿`,
+        `🗿 ${move.san} and the pawn on ${onSq} is hanging. It's literally free real estate. Free PAWN estate honestly 🏠🆓`,
+      ], used), annotations: { arrows: hangArrows, markers: [{ square: onSq, emoji: "🆓" }] } };
+    }
+
+    // Piece hanging lines (bishop, knight, rook, queen)
     return { text: pickUnused([
       `💀 ${move.san} and the ${vName} on ${onSq} is just SITTING there. Free. Like samples at Costco.${numAtt > 1 ? ` ${numAtt} pieces staring at it like 👀` : ""} 🆓`,
       `🤡 They played ${move.san} and left a whole ${vName} on ${onSq} up for grabs. Material DONATED to charity 🎁`,
@@ -1833,8 +1850,10 @@ function _blunderRoast(
           const checks = oppMoves.filter(m => m.san.includes("+") || m.san.includes("#"));
           if (checks.length > 0 && checks[0].san.includes("#")) {
             // Checkmate available — already handled in section 2b, skip
-          } else if (captures.length > 0 && (PIECE_VALUES[captures[0].captured!] ?? 0) >= 3) {
-            oppBestAfterBlunder = ` Now the opponent can grab the ${pn(captures[0].captured!)} with ${captures[0].san}.`;
+          } else if (captures.length > 0 && (PIECE_VALUES[captures[0].captured!] ?? 0) >= 1) {
+            oppBestAfterBlunder = captures[0].captured === "p"
+              ? ` And ${captures[0].san} takes a free pawn.`
+              : ` Now the opponent can grab the ${pn(captures[0].captured!)} with ${captures[0].san}.`;
           } else if (checks.length > 0) {
             oppBestAfterBlunder = ` And the opponent has ${checks[0].san} with check.`;
           }
@@ -1976,6 +1995,15 @@ function _mistakeRoast(
       const att = oppMvs.find(m => m.to === h.square && m.captured);
       if (att) hangArrows.push([att.from, h.square, "rgba(239, 183, 44, 0.6)"]);
     } catch {}
+
+    if (h.type === "p") {
+      return { text: pickUnused([
+        `😬 ${move.san} — and the pawn on ${h.square} is undefended now. That's a free pawn! Small details, big consequences 🆓📉`,
+        `⚠️ After ${move.san}, the pawn on ${h.square} is just hanging there. Free pawn for the opponent if they want it 🆓`,
+        `😤 ${move.san} leaves a pawn on ${h.square} without protection. A pawn is a pawn — and this one's free 🆓🗿`,
+      ], used), annotations: { arrows: hangArrows, markers: [{ square: h.square, emoji: "🆓" }] } };
+    }
+
     return { text: pickUnused([
       `😬 ${move.san} — and now the ${pn(h.type)} on ${h.square} is a little en prise. That's a "hmm" from me 🤨`,
       `⚠️ After ${move.san}, the ${pn(h.type)} on ${h.square} isn't looking too safe. I'm just saying 📉`,
