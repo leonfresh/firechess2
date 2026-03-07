@@ -3172,16 +3172,30 @@ export function getEloFlavorLine(elo: number): string {
     "1660 elo. The number that echoes through AnarchyChess like a prophecy. Every game at this level is a meme waiting to happen 🗿⛪",
     "The 1660 bracket. They know en passant, they know the Petrosian copypasta, they know the Knook. They just don't know how to play chess consistently 🐴💀",
   ]);
-  return pick([
-    "Above 2000. These players actually know what they're doing. Usually 👑🧠",
+  if (elo < 2300) return pick([
+    "2000-2300. These players actually know what they're doing. Usually 👑🧠",
     "Expert level. When they blunder up here, it's genuinely hard to spot why 🔍",
     "When a 2000+ player blunders, they blunder with ✨STYLE✨ 💀",
     "At this elo, the blunders are rare but when they drop? Holy hell 🤖🔍",
     "High-level chess. Where the difference between best and second-best actually matters 📊👑",
-    "2000+. These players are unquestionably some of the players in chess history 👑🗿",
+    "2000-2300. These players are unquestionably some of the players in chess history 👑🗿",
     "Expert chess. If they blunder up here, Hans's earpiece couldn't save them 💀🔊",
-    "2000+. These players probably have a Hikaru poster on their wall. Or they ARE Hikaru's alt. You never know 🏎️🖼️",
+    "2000-2300. These players probably have a Hikaru poster on their wall. Or they ARE Hikaru's alt. You never know 🏎️🖼️",
     "Expert level. Even Levy would say 'okay this is actually good chess.' Rare praise. Cherish it 📺👑",
+  ]);
+  return pick([
+    "2300+. We're in titled player territory now. These are SERIOUS chess players 🏅🧠",
+    "Master-level chess. At this elo, every inaccuracy is a story. Every blunder is a tragedy 📖💀",
+    "Above 2300. These players have opening prep deeper than most people's life plans 📚👑",
+    "2300+. When they blunder up HERE? Even the engine pauses to double-check 🤖😳",
+    "Master territory. Hikaru would actually speed up the video for this one. Respect 🏎️🔥",
+    "2300+. The air is different up here. The blunders are rarer. The pain is sharper. The chess is elite 👑⚡",
+    "Above 2300. Levy would be IMPRESSED and he'd probably analyze this seriously. No roast, just respect. Almost 📺🤌",
+    "2300+. These players have more opening theory memorized than most people have passwords. Built different 🧠📚",
+    "Master-level. Where every move gets scrutinized and every blunder gets its own Reddit thread 🗿📊",
+    "2300+. Half these players have FIDE titles. The other half probably deserve one. This is the real deal 🏅👑",
+    "Above 2300. At this level, 'blunder' means something completely different. We're talking subtle positional sins, not hanging queens 🔍✨",
+    "Master chess. Where preparation meets calculation meets 'how did they see THAT' 🤯🔥",
   ]);
 }
 
@@ -3712,7 +3726,8 @@ export const ELO_BRACKETS = [
   { label: "Casual player", range: "1100 – 1400", min: 1100, max: 1400, emoji: "♟️" },
   { label: "Intermediate", range: "1400 – 1700", min: 1400, max: 1700, emoji: "⚔️" },
   { label: "Advanced", range: "1700 – 2000", min: 1700, max: 2000, emoji: "🏆" },
-  { label: "Expert / Master", range: "2000+", min: 2000, max: 3500, emoji: "👑" },
+  { label: "Expert", range: "2000 – 2300", min: 2000, max: 2300, emoji: "👑" },
+  { label: "Master+", range: "2300+", min: 2300, max: 3500, emoji: "🏅" },
 ] as const;
 
 export function getEloBracketIdx(elo: number): number {
@@ -3721,7 +3736,8 @@ export function getEloBracketIdx(elo: number): number {
   if (elo < 1400) return 2;
   if (elo < 1700) return 3;
   if (elo < 2000) return 4;
-  return 5;
+  if (elo < 2300) return 5;
+  return 6;
 }
 
 /* ================================================================== */
