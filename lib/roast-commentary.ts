@@ -1695,8 +1695,10 @@ function _blunderRoast(
     }
   }
 
-  // 4e. Trapped piece
-  if (movedPiece && isPieceTrapped(after, _toSq, moverColor)) {
+  // 4e. Trapped piece — but NOT if the piece just captured equal/greater material
+  // (e.g. Nxd6 capturing a bishop — even if knight is recaptured, it's an even trade, not a trap)
+  const justCapturedEqualOrMore = capturedPiece && movedPiece && (PIECE_VALUES[capturedPiece.type] ?? 0) >= (PIECE_VALUES[movedPiece.type] ?? 0);
+  if (movedPiece && !justCapturedEqualOrMore && isPieceTrapped(after, _toSq, moverColor)) {
     const trappedName = pn(movedPiece.type);
     return { text: pickUnused([
       `🪤 ${move.san} and the ${trappedName} on ${_toSq} is TRAPPED. No safe squares. Just standing there like it's in a glass box at a museum 🏛️💀`,
@@ -2012,10 +2014,11 @@ function _mistakeRoast(
     }
   }
 
-  // Trapped piece
+  // Trapped piece — skip if the piece just captured equal/greater material (even trade, not a trap)
   {
     const movedP = after.get(toSq as Square);
-    if (movedP && isPieceTrapped(after, toSq as Square, moverColor)) {
+    const justCapturedEqual = move.isCapture && move.capturedPiece && movedP && (PIECE_VALUES[move.capturedPiece as PieceSymbol] ?? 0) >= (PIECE_VALUES[movedP.type] ?? 0);
+    if (movedP && !justCapturedEqual && isPieceTrapped(after, toSq as Square, moverColor)) {
       return { text: pickUnused([
         `🪤 ${move.san} and the ${pn(movedP.type)} on ${toSq} might be stuck. Not many safe squares to go to 😬🔒`,
         `🔒 After ${move.san}, the ${pn(movedP.type)} on ${toSq} is running out of escape routes. Careful — trapped pieces = lost pieces ⚠️`,
