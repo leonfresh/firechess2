@@ -230,6 +230,8 @@ interface MoveWithComment {
   isCheck: boolean;
   arrows?: [string, string, string][];
   markers?: { square: string; emoji: string }[];
+  /** Best continuation line as SAN moves (for tactic replay), e.g. ["Nxf7+", "Kxf7", "Qxd8"] */
+  tacticLine?: string[];
 }
 
 type PageState = "choose-source" | "loading" | "intro" | "watching" | "guessing" | "revealed";
@@ -240,6 +242,20 @@ type PageState = "choose-source" | "loading" | "intro" | "watching" | "guessing"
 
 const _PIECE_VAL: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
 function _pieceVal(p: string | undefined | null): number { return _PIECE_VAL[p ?? ""] ?? 0; }
+
+/** Convert a UCI PV line into SAN moves (best-effort, returns as many as parse successfully) */
+function uciPvToSan(fen: string, uciMoves: string[]): string[] {
+  const result: string[] = [];
+  const sim = new Chess(fen);
+  for (const uci of uciMoves) {
+    try {
+      const m = sim.move({ from: uci.slice(0, 2) as any, to: uci.slice(2, 4) as any, promotion: (uci.slice(4, 5) || undefined) as any });
+      if (!m) break;
+      result.push(m.san);
+    } catch { break; }
+  }
+  return result;
+}
 
 /* ================================================================== */
 /*  PGN Parsing                                                         */
@@ -453,6 +469,12 @@ export default function RoastPage() {
   const [activeArrows, setActiveArrows] = useState<[string, string, string][]>([]);
   const [activeMarkers, setActiveMarkers] = useState<{ square: string; emoji: string }[]>([]);
 
+  /* ── Tactic Replay state ── */
+  const [tacticReplaying, setTacticReplaying] = useState(false);
+  const [tacticReplayStep, setTacticReplayStep] = useState(0);
+  const tacticReplayRef = useRef<{ savedFen: string; savedLastMove: { from: string; to: string } | null; savedAutoplay: boolean } | null>(null);
+  const tacticTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   /* ── TTS ── */
   const tts = useTTS();
   const [ttsDoneSignal, setTtsDoneSignal] = useState(0);
@@ -653,13 +675,15 @@ export default function RoastPage() {
           cpBefore = evalBefore?.cp ?? 0;
         } catch {}
 
-        // Get the best move from this position
+        // Get the best move from this position (up to 6 plies for tactic replay)
         let bestMoveSan: string | null = null;
         let bestMoveUci: string | null = null;
+        let pvUciMoves: string[] = [];
         try {
-          const pv = await stockfishPool.getPrincipalVariation(fenBefore, 1, 12);
+          const pv = await stockfishPool.getPrincipalVariation(fenBefore, 6, 12);
           if (pv?.pvMoves?.[0]) {
             bestMoveUci = pv.pvMoves[0];
+            pvUciMoves = pv.pvMoves;
             // Convert UCI to SAN
             const tmp = new Chess(fenBefore);
             try {
@@ -753,6 +777,11 @@ export default function RoastPage() {
 
         const commentResult = generateMoveComment(analyzedMove, usedSet, gameSummary);
 
+        // Build tactic line for blunders/mistakes where there was a forcing best move
+        const isTacticWorthy = cpLoss >= 100 && bestMoveSan && pvUciMoves.length >= 2
+          && (bestMoveSan.includes("+") || bestMoveSan.includes("x") || bestMoveSan.includes("#"));
+        const tacticLine = isTacticWorthy ? uciPvToSan(fenBefore, pvUciMoves) : undefined;
+
         analyzed.push({
           san: moveResult.san,
           fen: fenAfter,
@@ -771,6 +800,7 @@ export default function RoastPage() {
           isCheck: chess.isCheck(),
           arrows: commentResult?.annotations.arrows,
           markers: commentResult?.annotations.markers,
+          tacticLine,
         });
 
         setAnalysisProgress(Math.round(((i + 1) / maxMoves) * 100));
@@ -1004,10 +1034,12 @@ export default function RoastPage() {
 
         let bestMoveSan: string | null = null;
         let bestMoveUci: string | null = null;
+        let pvUciMoves: string[] = [];
         try {
-          const pv = await stockfishPool.getPrincipalVariation(fenBefore, 1, 12);
+          const pv = await stockfishPool.getPrincipalVariation(fenBefore, 6, 12);
           if (pv?.pvMoves?.[0]) {
             bestMoveUci = pv.pvMoves[0];
+            pvUciMoves = pv.pvMoves;
             const tmp = new Chess(fenBefore);
             try {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1085,6 +1117,11 @@ export default function RoastPage() {
 
         const commentResult = generateMoveComment(analyzedMove, usedSet, gameSummary);
 
+        // Build tactic line for blunders/mistakes where there was a forcing best move
+        const isTacticWorthy = cpLoss >= 100 && bestMoveSan && pvUciMoves.length >= 2
+          && (bestMoveSan.includes("+") || bestMoveSan.includes("x") || bestMoveSan.includes("#"));
+        const tacticLine = isTacticWorthy ? uciPvToSan(fenBefore, pvUciMoves) : undefined;
+
         analyzed.push({
           san: moveResult.san,
           fen: fenAfter,
@@ -1103,6 +1140,7 @@ export default function RoastPage() {
           isCheck: chess.isCheck(),
           arrows: commentResult?.annotations.arrows,
           markers: commentResult?.annotations.markers,
+          tacticLine,
         });
 
         setAnalysisProgress(Math.round(((i + 1) / maxMoves) * 100));
@@ -1409,6 +1447,7 @@ export default function RoastPage() {
   /* ── Autoplay (waits for typewriter + TTS to finish) ── */
   useEffect(() => {
     if (pageState !== "watching" || !autoplay) return;
+    if (tacticReplaying) return; // wait for tactic replay animation to finish
     if (activeDecision) return; // wait for decision to be dismissed
     if (pendingDecisionIdx !== null) return; // wait for pending quiz to resolve before advancing
     if (!typingDone) return; // wait for speech bubble animation
@@ -1590,7 +1629,79 @@ export default function RoastPage() {
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageState, autoplay, currentIdx, moves, speed, typingDone, activeComment, tts.enabled, tts.speaking, ttsDoneSignal, activeDecision, pendingDecisionIdx]);
+  }, [pageState, autoplay, currentIdx, moves, speed, typingDone, activeComment, tts.enabled, tts.speaking, ttsDoneSignal, activeDecision, pendingDecisionIdx, tacticReplaying]);
+
+  /* ── Tactic Replay — animate through the engine's best continuation ── */
+  const startTacticReplay = useCallback(() => {
+    const move = currentIdx >= 0 && currentIdx < moves.length ? moves[currentIdx] : null;
+    if (!move?.tacticLine || move.tacticLine.length < 2 || tacticReplaying) return;
+
+    // Save current state
+    tacticReplayRef.current = {
+      savedFen: fen,
+      savedLastMove: lastMove,
+      savedAutoplay: autoplay,
+    };
+    setAutoplay(false);
+    setTacticReplaying(true);
+    setTacticReplayStep(0);
+    setActiveArrows([]);
+    setActiveMarkers([]);
+
+    // Start from the position BEFORE the player's move (fenBefore)
+    setFen(move.fenBefore);
+    setLastMove(null);
+
+    // Animate through the tactic line
+    const line = move.tacticLine;
+    let step = 0;
+    const sim = new Chess(move.fenBefore);
+
+    const playNextStep = () => {
+      if (step >= line.length) {
+        // Hold final position for 1.5s then revert
+        tacticTimerRef.current = setTimeout(() => {
+          if (tacticReplayRef.current) {
+            setFen(tacticReplayRef.current.savedFen);
+            setLastMove(tacticReplayRef.current.savedLastMove);
+            setAutoplay(tacticReplayRef.current.savedAutoplay);
+          }
+          setTacticReplaying(false);
+          setTacticReplayStep(0);
+          tacticReplayRef.current = null;
+        }, 1500);
+        return;
+      }
+
+      const san = line[step];
+      try {
+        const m = sim.move(san);
+        if (m) {
+          setFen(sim.fen());
+          setLastMove({ from: m.from, to: m.to });
+          setTacticReplayStep(step + 1);
+
+          // Play appropriate sound
+          if (san.includes("+") || san.includes("#")) playSound("check");
+          else if (san.includes("x")) playSound("capture");
+          else playSound("move");
+        }
+      } catch { /* skip */ }
+
+      step++;
+      tacticTimerRef.current = setTimeout(playNextStep, 800);
+    };
+
+    // Small delay before first move
+    tacticTimerRef.current = setTimeout(playNextStep, 400);
+  }, [currentIdx, moves, fen, lastMove, autoplay, tacticReplaying]);
+
+  // Cleanup tactic replay timer on unmount
+  useEffect(() => {
+    return () => {
+      if (tacticTimerRef.current) clearTimeout(tacticTimerRef.current);
+    };
+  }, []);
 
   /* ── Deferred decision popup — waits for TTS + typewriter to finish + reading time ── */
   const decisionReadyTime = useRef<number | null>(null);
@@ -3235,10 +3346,31 @@ export default function RoastPage() {
                   <div className="relative rounded-xl bg-black/60 backdrop-blur-md border border-white/[0.08] px-4 py-2.5 overflow-hidden">
                     {/* Reactive accent line at top */}
                     <div className="absolute top-0 left-0 right-0 h-[2px] transition-colors duration-700" style={{ background: `linear-gradient(90deg, transparent, rgba(${ambientGlow.color}, 0.6), transparent)` }} />
-                    <p className="text-xs sm:text-sm text-white/90 leading-relaxed text-center relative">
-                      {typewriterText}
-                      {!typingDone && <span className="animate-blink text-orange-400">|</span>}
-                    </p>
+                    {tacticReplaying ? (
+                      <div className="text-xs sm:text-sm text-center">
+                        <span className="text-amber-400 font-bold animate-pulse">🎯 Best continuation:</span>
+                        <span className="text-white/90 ml-2 font-mono">
+                          {currentMove?.tacticLine?.slice(0, tacticReplayStep).join(" → ") || "..."}
+                        </span>
+                      </div>
+                    ) : (
+                      <>
+                        <p className="text-xs sm:text-sm text-white/90 leading-relaxed text-center relative">
+                          {typewriterText}
+                          {!typingDone && <span className="animate-blink text-orange-400">|</span>}
+                        </p>
+                        {typingDone && currentMove?.tacticLine && currentMove.tacticLine.length >= 2 && !tacticReplaying && (
+                          <div className="flex justify-center mt-2">
+                            <button
+                              onClick={startTacticReplay}
+                              className="text-[10px] sm:text-xs px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-400 hover:bg-amber-500/30 transition-colors font-medium"
+                            >
+                              🎯 Show What Was Missed
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                   {/* Inline quiz options — visible only on non-lg screens where sidebar is hidden */}
                   <div className="lg:hidden">{inlineDecisionUI}</div>
@@ -3508,10 +3640,29 @@ export default function RoastPage() {
                         <div className="relative rounded-xl border border-white/[0.08] bg-gradient-to-br from-white/[0.05] to-white/[0.02] px-4 py-3 animate-fadeIn overflow-hidden" style={{ boxShadow: `0 0 20px rgba(${ambientGlow.color}, ${ambientGlow.intensity * 0.5})` }}>
                           {/* Reactive accent */}
                           <div className="absolute top-0 left-0 w-1 h-full rounded-l-xl transition-colors duration-700" style={{ background: `rgba(${ambientGlow.color}, 0.4)` }} />
-                          <p className={`text-slate-200 leading-relaxed ${streamerMode ? "text-base" : "text-sm"}`}>
-                            {typewriterText}
-                            {!typingDone && <span className="animate-blink text-orange-400">|</span>}
-                          </p>
+                          {tacticReplaying ? (
+                            <div className={`leading-relaxed ${streamerMode ? "text-base" : "text-sm"}`}>
+                              <span className="text-amber-400 font-bold animate-pulse">🎯 Best continuation:</span>
+                              <span className="text-white/90 ml-2 font-mono text-xs">
+                                {currentMove?.tacticLine?.slice(0, tacticReplayStep).join(" → ") || "..."}
+                              </span>
+                            </div>
+                          ) : (
+                            <>
+                              <p className={`text-slate-200 leading-relaxed ${streamerMode ? "text-base" : "text-sm"}`}>
+                                {typewriterText}
+                                {!typingDone && <span className="animate-blink text-orange-400">|</span>}
+                              </p>
+                              {typingDone && currentMove?.tacticLine && currentMove.tacticLine.length >= 2 && !tacticReplaying && (
+                                <button
+                                  onClick={startTacticReplay}
+                                  className="mt-2 text-[10px] px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-400 hover:bg-amber-500/30 transition-colors font-medium"
+                                >
+                                  🎯 Show What Was Missed
+                                </button>
+                              )}
+                            </>
+                          )}
                           {/* Inline quiz options — sidebar (lg+) */}
                           {inlineDecisionUI}
                         </div>

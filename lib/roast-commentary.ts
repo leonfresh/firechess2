@@ -1702,10 +1702,10 @@ function _blunderRoast(
     }
   }
 
-  // 4e. Trapped piece — but NOT if the piece just captured equal/greater material
-  // (e.g. Nxd6 capturing a bishop — even if knight is recaptured, it's an even trade, not a trap)
+  // 4e. Trapped piece — only flag when the engine confirms material loss (cpLoss > 80)
+  // AND piece just captured equal/greater material is excluded
   const justCapturedEqualOrMore = capturedPiece && movedPiece && (PIECE_VALUES[capturedPiece.type] ?? 0) >= (PIECE_VALUES[movedPiece.type] ?? 0);
-  if (movedPiece && !justCapturedEqualOrMore && isPieceTrapped(after, _toSq, moverColor)) {
+  if (movedPiece && !justCapturedEqualOrMore && move.cpLoss > 80 && isPieceTrapped(after, _toSq, moverColor)) {
     const trappedName = pn(movedPiece.type);
     return { text: pickUnused([
       `🪤 ${move.san} and the ${trappedName} on ${_toSq} is TRAPPED. No safe squares. Just standing there like it's in a glass box at a museum 🏛️💀`,
@@ -1841,6 +1841,19 @@ function _blunderRoast(
         } catch {}
 
         // Generate commentary based on what the best move achieves
+
+        // Forcing tactic: the best move is BOTH a capture AND a check — a true tactical shot
+        if (bestIsCapture && bestIsCheck && bestRes.captured) {
+          const captName = pn(bestRes.captured);
+          return { text: pickUnused([
+            `🎯 ${bestSan} — capturing the ${captName} WITH CHECK! A full tactic was on the board and they played ${move.san} instead. Hit "Show What Was Missed" to see the whole line 💀⚡`,
+            `⚔️ There was a TACTIC here! ${bestSan} wins the ${captName} with check. Instead: ${move.san}. That's a ${(swing / 100).toFixed(1)} pawn swing from missing the combination 🎯💀`,
+            `🧩 ${move.san} when ${bestSan} takes the ${captName} WITH CHECK?? This was a puzzle-level tactic and they walked right past it. The line is brutal 🔥💀`,
+            `💎 ${bestSan} — capture AND check in one move. The ${captName} was free and the king gets hit. Instead they played ${move.san}. Checks, captures, threats... in that order 📐🤡`,
+            `⚡ MISSED TACTIC! ${bestSan} grabs the ${captName} with tempo — the king has to move! ${move.san} throws away a forced win of material.${oppBestAfterBlunder} 🎯📉`,
+          ], used), annotations: { arrows: bestArrows, markers: [{ square: bestToSq, emoji: "🎯" }, { square: _toSq, emoji: "💀" }] } };
+        }
+
         if (bestIsCapture && bestRes.captured) {
           const captName = pn(bestRes.captured);
           return { text: pickUnused([
@@ -1848,6 +1861,7 @@ function _blunderRoast(
             `🆓 ${bestSan} was RIGHT THERE — capturing the ${captName}. Instead they played ${move.san} and the position goes from fine to ${swingDesc}.${oppBestAfterBlunder} 🗿`,
             `🤡 ${move.san} over ${bestSan}?? The ${captName} was free for the taking! That's a ${(swing / 100).toFixed(1)} pawn swing in the wrong direction.${oppBestAfterBlunder} 📉💀`,
             `💀 The engine wanted ${bestSan}, winning the ${captName}. Instead: ${move.san}. The position tanks by ${(swing / 100).toFixed(1)} pawns.${oppBestAfterBlunder} Self-sabotage on a new level 🗿`,
+            `🎯 ${bestSan} wins a ${captName}! There was a tactic on the board and they played ${move.san} instead. That's material just left on the table 😤💀`,
           ], used), annotations: { arrows: bestArrows, markers: [{ square: bestToSq, emoji: "🎯" }, { square: _toSq, emoji: "💀" }] } };
         }
 
@@ -1855,6 +1869,8 @@ function _blunderRoast(
           return { text: pickUnused([
             `⚡ ${bestSan} with check was the move! Instead ${move.san} leaves the position ${swingDesc}.${oppBestAfterBlunder} Missing checks in ${new Date().getFullYear()} is WILD 🗿💀`,
             `🎯 ${move.san} over ${bestSan}?? There was a CHECK available! The position swings ${(swing / 100).toFixed(1)} pawns.${oppBestAfterBlunder} Always look for checks captures threats — in that order 📐💀`,
+            `⚡ MISSED TACTIC! ${bestSan} gives check and the follow-up is crushing. ${move.san} instead?? Hit "Show What Was Missed" to see what could've been 🎯💀`,
+            `🧩 ${bestSan} with check starts a FORCING SEQUENCE. Instead: ${move.san}. When there's a check that gains material, you TAKE the check 📐⚡`,
           ], used), annotations: { arrows: bestArrows, markers: [{ square: bestToSq, emoji: "⚡" }, { square: _toSq, emoji: "💀" }] } };
         }
 
@@ -2021,11 +2037,11 @@ function _mistakeRoast(
     }
   }
 
-  // Trapped piece — skip if the piece just captured equal/greater material (even trade, not a trap)
+  // Trapped piece — only flag when engine confirms material loss (cpLoss > 50) AND not an even trade
   {
     const movedP = after.get(toSq as Square);
     const justCapturedEqual = move.isCapture && move.capturedPiece && movedP && (PIECE_VALUES[move.capturedPiece as PieceSymbol] ?? 0) >= (PIECE_VALUES[movedP.type] ?? 0);
-    if (movedP && !justCapturedEqual && isPieceTrapped(after, toSq as Square, moverColor)) {
+    if (movedP && !justCapturedEqual && move.cpLoss > 50 && isPieceTrapped(after, toSq as Square, moverColor)) {
       return { text: pickUnused([
         `🪤 ${move.san} and the ${pn(movedP.type)} on ${toSq} might be stuck. Not many safe squares to go to 😬🔒`,
         `🔒 After ${move.san}, the ${pn(movedP.type)} on ${toSq} is running out of escape routes. Careful — trapped pieces = lost pieces ⚠️`,
@@ -2067,6 +2083,25 @@ function _mistakeRoast(
       : ctx.playerBlunders >= 3
       ? ` That's mistake number ${ctx.playerBlunders + 1} btw. I'm keeping count.`
       : "";
+    const bestArrows: [string, string, string][] = [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])];
+
+    // Tactic-flavored lines for when the best move is forcing (check/capture/mate)
+    const bestHasCheck = move.bestMoveSan.includes("+") || move.bestMoveSan.includes("#");
+    const bestHasCapture = move.bestMoveSan.includes("x");
+    if (bestHasCheck && bestHasCapture && move.cpLoss >= 80) {
+      return { text: pickUnused([
+        `🎯 ${move.san} when ${move.bestMoveSan} was a capture WITH check?? A full tactic was sitting right there! Hit "Show What Was Missed" to see the line 😤⚡`,
+        `🧩 ${move.bestMoveSan} — capture AND check! That's a textbook tactic. Instead: ${move.san}.${ctxLine} Checks, captures, threats. The holy trinity. Missed 📐💀`,
+        `⚡ MISSED TACTIC! ${move.bestMoveSan} takes with tempo. Instead they went ${move.san}.${ctxLine} This was a puzzle on the board and they walked past it 🧩😤`,
+      ], used), annotations: { arrows: bestArrows, markers: [{ square: toSq, emoji: "🎯" }] } };
+    }
+    if (bestHasCheck && move.cpLoss >= 80) {
+      return { text: pickUnused([
+        `⚡ ${move.bestMoveSan} with check was right there. ${move.san} instead.${ctxLine} When there's a forcing check that wins material, you TAKE the check 📐😤`,
+        `🎯 ${move.san} over ${move.bestMoveSan}?? Check was available and the follow-up wins material.${ctxLine} Hit "Show What Was Missed" to see the whole combination ⚡🧩`,
+      ], used), annotations: { arrows: bestArrows, markers: [{ square: toSq, emoji: "⚡" }] } };
+    }
+
     return { text: pickUnused([
       `😬 ${move.san} when ${move.bestMoveSan} was right there.${ctxLine} Google "missed opportunity." Holy hell 📉`,
       `🫤 ${move.san} instead of ${move.bestMoveSan}.${ctxLine} The advantage just did a backflip off a cliff 🏔️💀`,
@@ -2080,7 +2115,7 @@ function _mistakeRoast(
       `😤 ${move.san} instead of ${move.bestMoveSan}.${ctxLine} Hikaru's chat would be spamming "NOOOO" right now. And they'd be right 📢😭`,
       `😬 ${move.san} over ${move.bestMoveSan}.${ctxLine} Levy would hit us with the "ladies and gentlemen" and zoom into the position. THE MISTAKE energy 📺💀`,
       `😌 ${move.san} instead of ${move.bestMoveSan}.${ctxLine} Eric Rosen would calmly say "ohh that's unfortunate" while his chat has a meltdown. King of underreaction 😌💀`,
-    ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: toSq, emoji: pick(["😬", "📉", "🤦", "😤", "🫤"]) }] } };
+    ], used), annotations: { arrows: bestArrows, markers: [{ square: toSq, emoji: pick(["😬", "📉", "🤦", "😤", "🫤"]) }] } };
   }
 
   // Opening principle mistake — if we have a guide and we're in the opening
