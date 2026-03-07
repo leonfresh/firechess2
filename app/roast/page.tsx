@@ -2145,9 +2145,28 @@ export default function RoastPage() {
       setActiveDecision(decision);
       setDecisionAnswer(null);
       setAutoplay(false);
-      // Type the question as commentary + TTS reads it — board stays visible
-      setActiveComment(decision.question);
-      setCommentHistory(prev => [...prev, decision.question]);
+      // Announce quiz with a hype intro line, then the question
+      const quizIntros = [
+        "Aaaand it's QUIZ TIME! 🎯🔔",
+        "STOP EVERYTHING — it's quiz o'clock! 🕐🔥",
+        "Hold up, hold up, HOLD UP — time for a question! 🎤",
+        "The board can wait. YOUR BRAIN can't. Quiz time! 🧠⚡",
+        "Pop quiz, hotshot. Let's see what you've got 🎯",
+        "Alright chat, time to prove you actually watch chess 📺🤔",
+        "BZZZT! 🔔 Quiz incoming — no Googling, no engine, just vibes 🗿",
+        "Quick! Before the next move drops — QUIZ TIME 🎰",
+        "The game pauses. The quiz begins. There is no escape 🫡",
+        "Time to separate the chess players from the chess watchers 👀🎯",
+        "We interrupt this blunderfest for a quick brain check 🧠💀",
+        "And NOW, the moment you didn't ask for — it's QUIZ TIME! 🎪",
+        "Okay okay okay — let's test that chess IQ real quick 🤓🔥",
+        "Drop everything. Quiz mode activated. This is not a drill 🚨",
+        "Before we continue this masterclass in suffering — a question 📋",
+      ];
+      const intro = quizIntros[Math.floor(Math.random() * quizIntros.length)];
+      const fullComment = `${intro}\n\n${decision.question}`;
+      setActiveComment(fullComment);
+      setCommentHistory(prev => [...prev, fullComment]);
       setMobileClippyOpen(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
