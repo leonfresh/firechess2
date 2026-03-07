@@ -365,6 +365,12 @@ export default function RoastPage() {
         if (typeof data.quizScore === "number") setQuizScore(data.quizScore);
       }
     } catch { /* ignore */ }
+
+    // Fetch leaderboard on mount for welcome screen
+    fetch("/api/roast/leaderboard?period=weekly&limit=5")
+      .then(r => r.json())
+      .then(d => setLeaderboardData(d.entries ?? []))
+      .catch(() => {});
   }, []);
 
   // Persist score/streak to localStorage on change
@@ -2137,6 +2143,30 @@ export default function RoastPage() {
                     <span className="text-xs font-bold text-orange-300">{streakCount} STREAK</span>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Weekly Leaderboard */}
+            {leaderboardData.length > 0 && (
+              <div className="mb-8 rounded-2xl border border-amber-500/15 bg-gradient-to-b from-amber-500/[0.04] to-transparent p-5">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">🏆 Weekly Top Players</h3>
+                  <a href="/roast/leaderboard" className="text-[10px] text-amber-400/50 hover:text-amber-400 transition-colors">View all →</a>
+                </div>
+                <div className="space-y-1.5">
+                  {leaderboardData.slice(0, 5).map((entry, i) => (
+                    <div key={i} className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 transition-colors hover:bg-white/[0.03]">
+                      <span className="text-sm w-5 text-center">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`}</span>
+                      {entry.userImage ? (
+                        <img src={entry.userImage} alt="" className="w-5 h-5 rounded-full" />
+                      ) : (
+                        <div className="w-5 h-5 rounded-full bg-white/[0.08] flex items-center justify-center text-[8px] text-slate-500">?</div>
+                      )}
+                      <span className="text-xs text-slate-300 flex-1 truncate">{entry.userName ?? "Anonymous"}</span>
+                      <span className="text-xs text-amber-400 font-bold tabular-nums">{entry.score.toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
