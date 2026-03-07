@@ -153,12 +153,35 @@ function findKing(chess: Chess, color: Color): Square | null {
 function detectHanging(chess: Chess, color: Color): PieceInfo[] {
   const hanging: PieceInfo[] = [];
   try {
+    const oppColor = opp(color);
     const oppMoves = chess.moves({ verbose: true });
     const attacked = new Set(oppMoves.filter(m => m.captured).map(m => m.to));
+
+    // Check if the opponent (side to move) has their own pieces under attack.
+    // If their most-valuable-attacked piece is worth >= the "hanging" piece,
+    // they likely can't afford to capture ours because they must save theirs first.
+    let maxOppThreat = 0;
+    for (const p of allPieces(chess)) {
+      if (p.color === oppColor && p.type !== "k" && chess.isAttacked(p.square, color)) {
+        // Only count as a counter-threat if the attacked piece can't also capture our hanging piece
+        // (e.g., if their queen is attacked but could capture the hanging piece, it's still "free")
+        const val = PIECE_VALUES[p.type] ?? 0;
+        if (val > maxOppThreat) {
+          // Check if this threatened opponent piece has a move that captures one of our attacked pieces
+          const canCaptureHanging = oppMoves.some(m => m.from === p.square && m.captured && attacked.has(m.to));
+          if (!canCaptureHanging) {
+            maxOppThreat = val;
+          }
+        }
+      }
+    }
+
     for (const p of allPieces(chess)) {
       if (p.color === color && p.type !== "k" && attacked.has(p.square) && (PIECE_VALUES[p.type] ?? 0) >= 3) {
         // Only flag as hanging if the piece is NOT defended by any friendly piece
         if (!chess.isAttacked(p.square, color)) {
+          // Skip if opponent has their own piece under bigger threat that they must save first
+          if (maxOppThreat >= (PIECE_VALUES[p.type] ?? 0)) continue;
           hanging.push(p);
         }
       }

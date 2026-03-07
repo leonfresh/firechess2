@@ -2265,6 +2265,29 @@ export default function RoastPage() {
   /* ── Current move info ── */
   const currentMove = currentIdx >= 0 && currentIdx < moves.length ? moves[currentIdx] : null;
 
+  /* ── Board pepe badge image (computed outside JSX to avoid styled-jsx IIFE scoping issues) ── */
+  const boardPepeImg: string | null = (() => {
+    if (!currentMove || pageState !== "watching") return null;
+    if (currentMove.san.includes("#")) return "/pepe-emojis/4642-death.png";
+    // Classification-specific pool that EXCLUDES the sidebar avatar image
+    const candidates: Record<string, string[]> = {
+      brilliant: ["/pepe-emojis/2230-poggies-peepo.png", "/pepe-emojis/animated/80293-pepeclap.gif", "/pepe-emojis/9088-pepe-gigachad.png", "/pepe-emojis/animated/88627-pepehype.gif"],
+      great: ["/pepe-emojis/11998-pepe-king.png", "/pepe-emojis/81504-pepeok.png", "/pepe-emojis/animated/98260-pepe-loving.gif"],
+      best: ["/pepe-emojis/11998-pepe-king.png", "/pepe-emojis/81504-pepeok.png", "/pepe-emojis/animated/98260-pepe-loving.gif"],
+      good: ["/pepe-emojis/81504-pepeok.png", "/pepe-emojis/3959-hmm.png"],
+      book: ["/pepe-emojis/8557-peepodetective.png", "/pepe-emojis/3959-hmm.png"],
+      inaccuracy: ["/pepe-emojis/60250-think.png", "/pepe-emojis/animated/28654-bigeyes.gif", "/pepe-emojis/monkaS.png"],
+      mistake: ["/pepe-emojis/2982-pepecry.png", "/pepe-emojis/4825_PepeClown.png", "/pepe-emojis/animated/41292-pepe-nopes.gif", "/pepe-emojis/7332-copium.png"],
+      blunder: ["/pepe-emojis/animated/690612-pepe-lmao.gif", "/pepe-emojis/animated/411644-gamer-pepe-cry.gif", "/pepe-emojis/animated/84899-pepe-madpuke.gif", "/pepe-emojis/4178-pepe-rage.png", "/pepe-emojis/animated/59958-pepeclownblobtrain.gif"],
+      miss: ["/pepe-emojis/6757_Sadge.png", "/pepe-emojis/animated/411644-gamer-pepe-cry.gif"],
+    };
+    const avatarImg = MOOD_IMAGES[currentMood];
+    const pool = (candidates[currentMove.classification] ?? ["/pepe-emojis/3959-hmm.png"]).filter(p => p !== avatarImg);
+    if (pool.length === 0) return candidates[currentMove.classification]?.[0] ?? "/pepe-emojis/3959-hmm.png";
+    return pool[currentIdx % pool.length];
+  })();
+  const boardPepeIsCheckmate = currentMove?.san.includes("#") ?? false;
+
   /* ── Inline Decision UI (replaces modal — board stays visible) ── */
   const showDecisionOptions = activeDecision && typingDone && (!tts.enabled || !tts.speaking);
   const inlineDecisionUI = showDecisionOptions ? (
@@ -2968,48 +2991,20 @@ export default function RoastPage() {
                   )}
 
                   {/* ── Pepe reaction badge (top-right corner of board) ── */}
-                  {/* Uses a DIFFERENT pepe than the sidebar avatar for visual variety */}
-                  {currentMove && pageState === "watching" && (() => {
-                    const isCheckmate = currentMove.san.includes("#");
-                    // Pick a board pepe that's different from the sidebar avatar (currentMood)
-                    const boardPepeForClass = (cls: MoveClassification, avatarMood: RoastMood): string => {
-                      // Map classification to a set of candidate pepes, excluding whatever the avatar is showing
-                      const candidates: Record<string, string[]> = {
-                        brilliant: ["/pepe-emojis/2230-poggies-peepo.png", "/pepe-emojis/animated/80293-pepeclap.gif", "/pepe-emojis/9088-pepe-gigachad.png", "/pepe-emojis/animated/88627-pepehype.gif"],
-                        great: ["/pepe-emojis/11998-pepe-king.png", "/pepe-emojis/81504-pepeok.png", "/pepe-emojis/animated/98260-pepe-loving.gif"],
-                        best: ["/pepe-emojis/11998-pepe-king.png", "/pepe-emojis/81504-pepeok.png", "/pepe-emojis/animated/98260-pepe-loving.gif"],
-                        good: ["/pepe-emojis/81504-pepeok.png", "/pepe-emojis/3959-hmm.png"],
-                        book: ["/pepe-emojis/8557-peepodetective.png", "/pepe-emojis/3959-hmm.png"],
-                        inaccuracy: ["/pepe-emojis/60250-think.png", "/pepe-emojis/animated/28654-bigeyes.gif", "/pepe-emojis/monkaS.png"],
-                        mistake: ["/pepe-emojis/2982-pepecry.png", "/pepe-emojis/4825_PepeClown.png", "/pepe-emojis/animated/41292-pepe-nopes.gif", "/pepe-emojis/7332-copium.png"],
-                        blunder: ["/pepe-emojis/animated/690612-pepe-lmao.gif", "/pepe-emojis/animated/411644-gamer-pepe-cry.gif", "/pepe-emojis/animated/84899-pepe-madpuke.gif", "/pepe-emojis/4178-pepe-rage.png", "/pepe-emojis/animated/59958-pepeclownblobtrain.gif"],
-                        miss: ["/pepe-emojis/6757_Sadge.png", "/pepe-emojis/animated/411644-gamer-pepe-cry.gif"],
-                      };
-                      const avatarImg = MOOD_IMAGES[avatarMood];
-                      const pool = (candidates[cls] ?? ["/pepe-emojis/3959-hmm.png"]).filter(p => p !== avatarImg);
-                      if (pool.length === 0) return candidates[cls]?.[0] ?? "/pepe-emojis/3959-hmm.png";
-                      // Deterministic pick based on currentIdx so it doesn't flicker
-                      return pool[currentIdx % pool.length];
-                    };
-                    const boardImg = isCheckmate
-                      ? "/pepe-emojis/4642-death.png"
-                      : boardPepeForClass(currentMove.classification, currentMood);
-                    const isGif = boardImg.endsWith(".gif");
-                    return (
-                      <div className="absolute top-2 right-2 z-40 pointer-events-none animate-fadeIn" key={`pepe-${currentIdx}-${currentMood}`}>
-                        <div className={`relative w-12 h-12 sm:w-14 sm:h-14 drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] animate-bounce-once ${isCheckmate ? "w-16 h-16 sm:w-[72px] sm:h-[72px]" : ""}`}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={boardImg}
-                            alt={isCheckmate ? "checkmate" : currentMove.classification}
-                            width={isCheckmate ? 72 : 56}
-                            height={isCheckmate ? 72 : 56}
-                            className="object-contain w-full h-full"
-                          />
-                        </div>
+                  {boardPepeImg && (
+                    <div className="absolute top-2 right-2 z-40 pointer-events-none animate-fadeIn" key={`pepe-${currentIdx}-${currentMood}`}>
+                      <div className={`relative drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] animate-bounce-once ${boardPepeIsCheckmate ? "w-16 h-16 sm:w-[72px] sm:h-[72px]" : "w-12 h-12 sm:w-14 sm:h-14"}`}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={boardPepeImg}
+                          alt={boardPepeIsCheckmate ? "checkmate" : currentMove?.classification ?? ""}
+                          width={boardPepeIsCheckmate ? 72 : 56}
+                          height={boardPepeIsCheckmate ? 72 : 56}
+                          className="object-contain w-full h-full"
+                        />
                       </div>
-                    );
-                  })()}
+                    </div>
+                  )}
 
                   {/* Emoji marker overlay */}
                   {activeMarkers.length > 0 && boardSize > 0 && (
