@@ -29,7 +29,13 @@ export function useBoardSize(fallback = 400, opts?: { evalBar?: boolean }) {
       // Use 12px to be safe — board may be ≤4px smaller on mobile but never overflows
       const evalBarOverhead = hasEvalBar ? 24 + 12 : 0;
       const available = contentWidth - evalBarOverhead;
-      setSize(Math.max(260, Math.min(available, fallback)));
+
+      // On mobile (narrow screens), also cap by viewport height so the board
+      // doesn't consume the entire screen — leave room for commentary, controls, etc.
+      const vh = window.innerHeight;
+      const maxByHeight = vh < 750 ? vh * 0.52 : vh < 900 ? vh * 0.56 : Infinity;
+
+      setSize(Math.max(260, Math.min(available, fallback, maxByHeight)));
     };
 
     update();
