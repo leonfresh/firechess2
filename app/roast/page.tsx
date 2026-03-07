@@ -2265,6 +2265,21 @@ export default function RoastPage() {
   /* ── Current move info ── */
   const currentMove = currentIdx >= 0 && currentIdx < moves.length ? moves[currentIdx] : null;
 
+  /* ── Ambient glow color based on current game state ── */
+  const ambientGlow = (() => {
+    if (!currentMove || pageState === "choose-source") return { color: "251, 146, 60", intensity: 0.04 }; // warm orange idle
+    switch (currentMove.classification) {
+      case "brilliant": return { color: "168, 85, 247", intensity: 0.08 }; // purple
+      case "best": case "great": return { color: "34, 197, 94", intensity: 0.06 }; // green
+      case "good": return { color: "59, 130, 246", intensity: 0.04 }; // blue
+      case "inaccuracy": return { color: "234, 179, 8", intensity: 0.05 }; // yellow
+      case "mistake": return { color: "249, 115, 22", intensity: 0.06 }; // orange
+      case "blunder": return { color: "239, 68, 68", intensity: 0.08 }; // red
+      case "miss": return { color: "239, 68, 68", intensity: 0.07 }; // red
+      default: return { color: "251, 146, 60", intensity: 0.03 }; // warm
+    }
+  })();
+
   /* ── Board pepe badge image (computed outside JSX to avoid styled-jsx IIFE scoping issues) ── */
   const boardPepeImg: string | null = (() => {
     if (!currentMove || pageState !== "watching") return null;
@@ -2375,26 +2390,76 @@ export default function RoastPage() {
 
   return (
     <main className="min-h-screen bg-[#030712] text-white">
-      {/* Background — TV gameshow stage: curtain edges, spotlights, warm glow */}
+      {/* Background — cinematic dark stage with reactive ambient glow */}
       {!streamerMode && (
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
-        {/* Stage curtain side panels */}
-        <div className="absolute top-0 left-0 w-16 sm:w-24 h-full bg-gradient-to-r from-red-950/40 to-transparent" />
-        <div className="absolute top-0 right-0 w-16 sm:w-24 h-full bg-gradient-to-l from-red-950/40 to-transparent" />
-        {/* Top stage valance */}
-        <div className="absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-red-950/30 to-transparent" />
-        {/* Warm ambient floating lights */}
-        <div className="animate-float absolute -left-32 top-20 h-96 w-96 rounded-full bg-red-500/[0.04] blur-[100px]" />
-        <div className="animate-float-delayed absolute -right-32 top-40 h-80 w-80 rounded-full bg-orange-500/[0.04] blur-[100px]" />
-        <div className="animate-float absolute left-1/3 bottom-20 h-64 w-64 rounded-full bg-amber-500/[0.03] blur-[80px]" />
-        {/* Spotlight sweep */}
-        <div className="animate-spotlight absolute top-0 left-1/2 h-[120vh] w-[200px] -translate-x-1/2 bg-gradient-to-b from-orange-400/[0.03] via-transparent to-transparent blur-[60px]" />
+        {/* Subtle grid pattern for depth */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: "linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
+        }} />
+
+        {/* Cinematic vignette */}
+        <div className="absolute inset-0" style={{
+          background: "radial-gradient(ellipse 70% 60% at 50% 50%, transparent 40%, rgba(0,0,0,0.6) 100%)",
+        }} />
+
+        {/* Reactive ambient glow — color shifts with move classification */}
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] rounded-full transition-all duration-1000 ease-out" style={{
+          background: `radial-gradient(ellipse, rgba(${ambientGlow.color}, ${ambientGlow.intensity}) 0%, rgba(${ambientGlow.color}, ${ambientGlow.intensity * 0.3}) 40%, transparent 70%)`,
+          filter: "blur(60px)",
+        }} />
+
+        {/* Secondary ambient — bottom corner accents */}
+        <div className="animate-float absolute -left-20 bottom-1/4 h-64 w-64 rounded-full transition-colors duration-1000" style={{
+          background: `radial-gradient(circle, rgba(${ambientGlow.color}, ${ambientGlow.intensity * 0.5}) 0%, transparent 70%)`,
+          filter: "blur(80px)",
+        }} />
+        <div className="animate-float-delayed absolute -right-20 bottom-1/3 h-52 w-52 rounded-full transition-colors duration-1000" style={{
+          background: `radial-gradient(circle, rgba(${ambientGlow.color}, ${ambientGlow.intensity * 0.4}) 0%, transparent 70%)`,
+          filter: "blur(80px)",
+        }} />
+
+        {/* Spotlight sweep — premium thin beam */}
+        <div className="animate-spotlight absolute top-0 left-1/2 h-[120vh] w-[120px] -translate-x-1/2 opacity-[0.025]" style={{
+          background: "linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.04) 30%, transparent 60%)",
+          filter: "blur(40px)",
+        }} />
+
         {/* Spotlight pulse on guess reveal */}
         {spotlightPulse && (
-          <div className="animate-spotlight-pulse absolute inset-0 bg-radial-gradient from-amber-400/[0.08] to-transparent" style={{ background: "radial-gradient(circle at center 30%, rgba(251,191,36,0.08) 0%, transparent 60%)" }} />
+          <div className="animate-spotlight-pulse absolute inset-0" style={{ background: "radial-gradient(circle at 50% 30%, rgba(251,191,36,0.12) 0%, transparent 55%)" }} />
         )}
-        {/* Stage floor reflection */}
-        <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-orange-500/[0.02] to-transparent" />
+
+        {/* Film grain overlay — very subtle */}
+        <div className="absolute inset-0 animate-grain opacity-[0.015]" style={{
+          backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")",
+          backgroundRepeat: "repeat",
+          backgroundSize: "256px 256px",
+        }} />
+
+        {/* Scanlines — retro TV effect (extremely subtle) */}
+        <div className="absolute inset-0 opacity-[0.018]" style={{
+          backgroundImage: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.3) 2px, rgba(0,0,0,0.3) 4px)",
+          backgroundSize: "100% 4px",
+        }} />
+
+        {/* Floating embers — tiny drifting particles */}
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div
+            key={`ember-${i}`}
+            className="absolute rounded-full"
+            style={{
+              width: 2 + (i % 3),
+              height: 2 + (i % 3),
+              left: `${15 + i * 14}%`,
+              bottom: `${10 + (i % 4) * 8}%`,
+              background: `rgba(${ambientGlow.color}, ${0.15 + (i % 3) * 0.08})`,
+              boxShadow: `0 0 6px rgba(${ambientGlow.color}, 0.2)`,
+              animation: `ember-drift ${8 + i * 2}s ease-in-out ${i * 1.5}s infinite`,
+            }}
+          />
+        ))}
       </div>
       )}
 
@@ -2500,19 +2565,26 @@ export default function RoastPage() {
             {/* Gameshow scoreboard */}
             {gamesPlayed > 0 && (
               <div className="mt-3 flex items-center justify-center gap-4">
-                <div className="relative flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/[0.06] px-4 py-1.5 shadow-lg shadow-amber-500/10">
-                  <span className="text-xs text-amber-300/70 uppercase tracking-wider font-bold">Score</span>
-                  <span className="text-xl font-black text-amber-400 tabular-nums" style={{ textShadow: "0 0 12px rgba(251,191,36,0.5)" }}>
+                <div className="relative flex items-center gap-2.5 rounded-full border border-amber-500/30 px-5 py-2 shadow-xl" style={{
+                  background: "linear-gradient(135deg, rgba(251,191,36,0.08) 0%, rgba(245,158,11,0.04) 100%)",
+                  boxShadow: "0 0 20px rgba(251,191,36,0.1), inset 0 1px 0 rgba(255,255,255,0.06)",
+                }}>
+                  <span className="text-[10px] text-amber-300/60 uppercase tracking-[0.2em] font-bold">Score</span>
+                  <span className="text-xl font-black text-amber-400 tabular-nums" style={{ textShadow: "0 0 16px rgba(251,191,36,0.6)" }}>
                     {score.toLocaleString()}
                   </span>
                   {lastScoreGain && (
-                    <span className="absolute -top-4 right-2 text-xs font-black text-green-400 animate-bounce">
+                    <span className="absolute -top-5 right-2 text-sm font-black text-green-400 animate-bounce" style={{ textShadow: "0 0 10px rgba(34,197,94,0.5)" }}>
                       +{lastScoreGain}
                     </span>
                   )}
                 </div>
                 {streakCount >= 2 && (
-                <div className="flex items-center gap-1 rounded-full border border-orange-500/40 bg-orange-500/[0.1] px-3 py-1.5 animate-pulse shadow-lg shadow-orange-500/20">
+                <div className="flex items-center gap-1.5 rounded-full border border-orange-500/40 px-3.5 py-1.5 shadow-lg" style={{
+                  background: "linear-gradient(135deg, rgba(249,115,22,0.15) 0%, rgba(239,68,68,0.08) 100%)",
+                  boxShadow: "0 0 16px rgba(249,115,22,0.2)",
+                  animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+                }}>
                   <span className="text-sm">🔥</span>
                   <span className="text-xs font-bold text-orange-300">{streakCount} STREAK</span>
                 </div>
@@ -2921,14 +2993,17 @@ export default function RoastPage() {
           <div className={`grid grid-cols-1 gap-4 lg:gap-6 ${streamerMode ? "lg:grid-cols-[1fr_420px]" : "lg:grid-cols-[1fr_360px]"}`}>
             {/* Board column */}
             <div className="flex flex-col items-center gap-2 sm:gap-3">
-              {/* LIVE ON AIR indicator */}
+              {/* LIVE ON AIR indicator — broadcast style */}
               {pageState === "watching" && (
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="flex items-center gap-1.5 rounded-full border border-red-500/40 bg-red-500/[0.1] px-3 py-1">
-                    <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-                    <span className="text-[10px] font-black uppercase tracking-wider text-red-400">Live</span>
+                <div className="flex items-center gap-2.5 mb-1">
+                  <div className="relative flex items-center gap-1.5 rounded-full border border-red-500/50 bg-red-500/[0.12] px-3.5 py-1 shadow-lg shadow-red-500/10">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.15em] text-red-400">Live</span>
                   </div>
-                  <span className="text-[10px] text-slate-600 font-mono">Round {gamesPlayed + 1}</span>
+                  <span className="text-[10px] text-slate-500 font-mono tracking-wider">Round {gamesPlayed + 1}</span>
                 </div>
               )}
               {/* Player labels */}
@@ -2950,7 +3025,12 @@ export default function RoastPage() {
               </div>
 
               <div ref={boardRef} className="w-full max-w-[640px]">
-                <div className={`overflow-hidden rounded-xl shadow-2xl shadow-black/40 relative ${
+                {/* Premium board frame with reactive glow */}
+                <div className="relative rounded-2xl p-[3px] transition-all duration-700" style={{
+                  background: `linear-gradient(135deg, rgba(${ambientGlow.color}, ${ambientGlow.intensity * 3}) 0%, rgba(255,255,255,0.06) 50%, rgba(${ambientGlow.color}, ${ambientGlow.intensity * 2}) 100%)`,
+                  boxShadow: `0 0 40px rgba(${ambientGlow.color}, ${ambientGlow.intensity * 1.5}), 0 0 80px rgba(${ambientGlow.color}, ${ambientGlow.intensity * 0.5}), inset 0 1px 0 rgba(255,255,255,0.08)`,
+                }}>
+                <div className={`overflow-hidden rounded-[13px] relative ${
                   screenShake === "slam" ? "animate-board-slam" :
                   screenShake === "heavy" ? "animate-board-shake-heavy" :
                   screenShake === "mild" ? "animate-board-shake-mild" : ""
@@ -3080,6 +3160,7 @@ export default function RoastPage() {
                     </div>
                   )}
                 </div>
+                </div>{/* close premium frame wrapper */}
               </div>
 
               {/* Bottom player label */}
@@ -3098,8 +3179,10 @@ export default function RoastPage() {
               {/* Commentary text below board (shown on all sizes) */}
               {activeComment && (pageState === "watching" || pageState === "guessing") && (
                 <div className="w-full max-w-[640px] animate-fadeIn">
-                  <div className="rounded-lg bg-black/50 backdrop-blur-sm border border-white/10 px-3 py-2">
-                    <p className="text-xs sm:text-sm text-white/90 leading-relaxed text-center">
+                  <div className="relative rounded-xl bg-black/60 backdrop-blur-md border border-white/[0.08] px-4 py-2.5 overflow-hidden">
+                    {/* Reactive accent line at top */}
+                    <div className="absolute top-0 left-0 right-0 h-[2px] transition-colors duration-700" style={{ background: `linear-gradient(90deg, transparent, rgba(${ambientGlow.color}, 0.6), transparent)` }} />
+                    <p className="text-xs sm:text-sm text-white/90 leading-relaxed text-center relative">
                       {typewriterText}
                       {!typingDone && <span className="animate-blink text-orange-400">|</span>}
                     </p>
@@ -3234,20 +3317,20 @@ export default function RoastPage() {
 
               {/* Playback controls */}
               {(pageState === "watching" || pageState === "guessing" || pageState === "revealed") && (
-                <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mt-1 sm:mt-2">
+                <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 mt-1 sm:mt-2 rounded-xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-sm px-3 py-2" style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)" }}>
                   <button
                     onClick={() => goToMove(Math.max(-1, currentIdx - 1))}
-                    className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-slate-400 hover:bg-white/[0.06] transition-colors"
+                    className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-sm text-slate-400 hover:bg-white/[0.08] hover:text-white transition-all active:scale-95"
                   >
                     ◀ Prev
                   </button>
                   {pageState === "watching" && (
                     <button
                       onClick={() => setAutoplay(prev => !prev)}
-                      className={`rounded-lg border px-4 py-1.5 text-sm font-medium transition-all ${
+                      className={`rounded-lg border px-4 py-1.5 text-sm font-medium transition-all active:scale-95 ${
                         autoplay
-                          ? "border-orange-500/30 bg-orange-500/10 text-orange-400"
-                          : "border-white/10 bg-white/[0.03] text-slate-400 hover:bg-white/[0.06]"
+                          ? "border-orange-500/30 bg-orange-500/10 text-orange-400 shadow-lg shadow-orange-500/10"
+                          : "border-white/[0.08] bg-white/[0.03] text-slate-400 hover:bg-white/[0.08] hover:text-white"
                       }`}
                     >
                       {autoplay ? "⏸ Pause" : "▶ Play"}
@@ -3258,7 +3341,7 @@ export default function RoastPage() {
                       setAutoplay(false);
                       goToMove(Math.min(moves.length - 1, currentIdx + 1));
                     }}
-                    className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-slate-400 hover:bg-white/[0.06] transition-colors"
+                    className="rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-sm text-slate-400 hover:bg-white/[0.08] hover:text-white transition-all active:scale-95"
                   >
                     Next ▶
                   </button>
@@ -3313,10 +3396,14 @@ export default function RoastPage() {
               {/* Move progress bar */}
               {(pageState === "watching" || pageState === "guessing" || pageState === "revealed") && moves.length > 0 && (
                 <div className="w-full max-w-[640px]">
-                  <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                  <div className="relative h-2 rounded-full bg-white/[0.04] border border-white/[0.06] overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-orange-500 to-red-500 transition-all duration-300"
-                      style={{ width: `${((currentIdx + 1) / moves.length) * 100}%` }}
+                      className="h-full rounded-full transition-all duration-500 ease-out"
+                      style={{
+                        width: `${((currentIdx + 1) / moves.length) * 100}%`,
+                        background: `linear-gradient(90deg, rgba(${ambientGlow.color}, 0.8), rgba(${ambientGlow.color}, 1))`,
+                        boxShadow: `0 0 12px rgba(${ambientGlow.color}, 0.4)`,
+                      }}
                     />
                   </div>
                   <div className="flex justify-between text-[10px] text-slate-600 mt-0.5">
@@ -3330,7 +3417,7 @@ export default function RoastPage() {
             {/* Sidebar — commentary + guess */}
             <div className="flex flex-col gap-3 sm:gap-4">
               {/* ── Live Roast: Avatar + Speech Bubble (hidden on mobile, shown under board instead) ── */}
-              <div className="hidden lg:block rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+              <div className="hidden lg:block rounded-2xl border border-white/[0.06] bg-gradient-to-b from-white/[0.03] to-white/[0.01] p-4 backdrop-blur-sm" style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.3)" }}>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-orange-400 mb-3 flex items-center gap-1.5">
                   🎙️ Live Roast
                   {tts.supported && (
@@ -3363,9 +3450,11 @@ export default function RoastPage() {
                     {activeComment ? (
                       <>
                         {/* Triangle tail */}
-                        <div className="absolute -left-2 top-5 w-0 h-0 border-y-[6px] border-y-transparent border-r-[8px] border-r-orange-500/20" />
+                        <div className="absolute -left-2 top-5 w-0 h-0 border-y-[6px] border-y-transparent border-r-[8px] border-r-white/[0.08]" />
                         {/* Bubble */}
-                        <div className="rounded-xl border border-orange-500/20 bg-orange-500/[0.06] px-4 py-3 animate-fadeIn">
+                        <div className="relative rounded-xl border border-white/[0.08] bg-gradient-to-br from-white/[0.05] to-white/[0.02] px-4 py-3 animate-fadeIn overflow-hidden" style={{ boxShadow: `0 0 20px rgba(${ambientGlow.color}, ${ambientGlow.intensity * 0.5})` }}>
+                          {/* Reactive accent */}
+                          <div className="absolute top-0 left-0 w-1 h-full rounded-l-xl transition-colors duration-700" style={{ background: `rgba(${ambientGlow.color}, 0.4)` }} />
                           <p className={`text-slate-200 leading-relaxed ${streamerMode ? "text-base" : "text-sm"}`}>
                             {typewriterText}
                             {!typingDone && <span className="animate-blink text-orange-400">|</span>}
@@ -3408,7 +3497,7 @@ export default function RoastPage() {
 
               {/* Move list (compact) */}
               {(pageState === "watching" || pageState === "guessing" || pageState === "revealed") && (
-                <div className="hidden lg:block rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+                <div className="hidden lg:block rounded-2xl border border-white/[0.06] bg-gradient-to-b from-white/[0.03] to-white/[0.01] p-4 backdrop-blur-sm" style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.3)" }}>
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
                     Moves
                   </h3>
@@ -4229,6 +4318,32 @@ export default function RoastPage() {
         }
         .animate-ghost-rise {
           animation: ghost-rise 3s ease-out forwards;
+        }
+
+        /* Film grain noise animation */
+        @keyframes grain {
+          0%, 100% { transform: translate(0, 0); }
+          10% { transform: translate(-5%, -10%); }
+          20% { transform: translate(-15%, 5%); }
+          30% { transform: translate(7%, -25%); }
+          40% { transform: translate(-5%, 25%); }
+          50% { transform: translate(-15%, 10%); }
+          60% { transform: translate(15%, 0%); }
+          70% { transform: translate(0%, 15%); }
+          80% { transform: translate(3%, 35%); }
+          90% { transform: translate(-10%, 10%); }
+        }
+        .animate-grain {
+          animation: grain 8s steps(10) infinite;
+        }
+
+        /* Floating ember particles */
+        @keyframes ember-drift {
+          0% { transform: translateY(0) translateX(0) scale(1); opacity: 0.6; }
+          25% { transform: translateY(-30vh) translateX(15px) scale(1.2); opacity: 1; }
+          50% { transform: translateY(-55vh) translateX(-10px) scale(0.8); opacity: 0.7; }
+          75% { transform: translateY(-75vh) translateX(20px) scale(1.1); opacity: 0.4; }
+          100% { transform: translateY(-95vh) translateX(5px) scale(0.6); opacity: 0; }
         }
       `}</style>
     </main>
