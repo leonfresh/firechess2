@@ -378,6 +378,14 @@ export default function RoastPage() {
   const [scoreSaved, setScoreSaved] = useState(false);
   const [savingScore, setSavingScore] = useState(false);
 
+  /* ── Streamer Mode (OBS-friendly) ── */
+  const [streamerMode, setStreamerMode] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("streamer") === "1") setStreamerMode(true);
+  }, []);
+
   /* ── Source selection state ── */
   const [inputMode, setInputMode] = useState<"random" | "import" | "paste" | null>(null);
   const [loadSource, setLoadSource] = useState<"lichess" | "chesscom">("lichess");
@@ -1929,6 +1937,11 @@ export default function RoastPage() {
       } else if (e.key === "f" || e.key === "F") {
         setOrientation(o => o === "white" ? "black" : "white");
       }
+      // Ctrl+Shift+S toggles streamer mode
+      if (e.key === "S" && e.ctrlKey && e.shiftKey) {
+        e.preventDefault();
+        setStreamerMode(p => !p);
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -2143,6 +2156,7 @@ export default function RoastPage() {
   return (
     <main className="min-h-screen bg-[#030712] text-white">
       {/* Background — TV gameshow stage: curtain edges, spotlights, warm glow */}
+      {!streamerMode && (
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         {/* Stage curtain side panels */}
         <div className="absolute top-0 left-0 w-16 sm:w-24 h-full bg-gradient-to-r from-red-950/40 to-transparent" />
@@ -2162,6 +2176,7 @@ export default function RoastPage() {
         {/* Stage floor reflection */}
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-orange-500/[0.02] to-transparent" />
       </div>
+      )}
 
       {/* Confetti burst */}
       {showConfetti && (
@@ -2230,9 +2245,24 @@ export default function RoastPage() {
         </div>
       )}
 
-      <div className="relative z-10 mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className={`relative z-10 mx-auto px-4 py-8 sm:px-6 lg:px-8 ${streamerMode ? "max-w-[1600px]" : "max-w-6xl"}`}>
+        {/* Streamer mode toggle (always visible in top-right) */}
+        {(pageState === "watching" || pageState === "guessing" || pageState === "revealed") && (
+          <button
+            onClick={() => setStreamerMode(p => !p)}
+            className={`fixed top-3 right-3 z-[80] rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-all ${
+              streamerMode
+                ? "border-2 border-purple-500/60 bg-purple-500/20 text-purple-300 shadow-lg shadow-purple-500/20"
+                : "border border-white/10 bg-white/[0.04] text-slate-500 hover:text-slate-300 hover:bg-white/[0.08]"
+            }`}
+            title="Toggle Streamer Mode (OBS-friendly)"
+          >
+            📺 {streamerMode ? "Streamer" : "Stream"}
+          </button>
+        )}
+
         {/* Header — Gameshow title card (compact when playing, full hero on landing) */}
-        {pageState !== "choose-source" ? (
+        {pageState !== "choose-source" && !streamerMode ? (
           <div className="mb-8 text-center">
             <div className="inline-flex items-center gap-3 rounded-2xl border border-orange-500/20 bg-gradient-to-r from-orange-500/[0.06] via-red-500/[0.04] to-orange-500/[0.06] px-6 py-3 shadow-lg shadow-orange-500/10">
               <h1 className="text-3xl font-black tracking-tight sm:text-4xl">
@@ -2668,7 +2698,7 @@ export default function RoastPage() {
 
         {/* ── Main game view (watching / guessing / revealed) ── */}
         {(pageState === "watching" || pageState === "guessing" || pageState === "revealed") && (
-          <div className="grid grid-cols-1 gap-4 lg:gap-6 lg:grid-cols-[1fr_360px]">
+          <div className={`grid grid-cols-1 gap-4 lg:gap-6 ${streamerMode ? "lg:grid-cols-[1fr_420px]" : "lg:grid-cols-[1fr_360px]"}`}>
             {/* Board column */}
             <div className="flex flex-col items-center gap-2 sm:gap-3">
               {/* LIVE ON AIR indicator */}
@@ -3081,9 +3111,9 @@ export default function RoastPage() {
                 </h3>
 
                 {/* Avatar + Speech Bubble */}
-                <div className="flex items-start gap-3 mb-4 min-h-[100px]">
+                <div className={`flex items-start gap-3 mb-4 ${streamerMode ? "min-h-[140px]" : "min-h-[100px]"}`}>
                   <div className="relative flex-shrink-0">
-                    <RoastAvatar mood={currentMood} size={68} />
+                    <RoastAvatar mood={currentMood} size={streamerMode ? 88 : 68} />
                     {currentMood === "clown" && (
                       <span className="absolute -top-2 -right-2 text-[10px] font-bold text-red-400 animate-bounce select-none pointer-events-none"
                         style={{ textShadow: "0 0 6px rgba(239,68,68,0.5)" }}>
@@ -3098,7 +3128,7 @@ export default function RoastPage() {
                         <div className="absolute -left-2 top-5 w-0 h-0 border-y-[6px] border-y-transparent border-r-[8px] border-r-orange-500/20" />
                         {/* Bubble */}
                         <div className="rounded-xl border border-orange-500/20 bg-orange-500/[0.06] px-4 py-3 animate-fadeIn">
-                          <p className="text-sm text-slate-200 leading-relaxed">
+                          <p className={`text-slate-200 leading-relaxed ${streamerMode ? "text-base" : "text-sm"}`}>
                             {typewriterText}
                             {!typingDone && <span className="animate-blink text-orange-400">|</span>}
                           </p>
@@ -3119,7 +3149,7 @@ export default function RoastPage() {
                   </h4>
                   <div
                     ref={commentBoxRef}
-                    className="h-[140px] lg:h-[180px] overflow-y-auto space-y-1.5 pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10"
+                    className={`overflow-y-auto space-y-1.5 pr-2 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 ${streamerMode ? "h-[240px] lg:h-[280px]" : "h-[140px] lg:h-[180px]"}`}
                   >
                     {commentHistory.length === 0 && pageState === "watching" && (
                       <p className="text-[11px] text-slate-700 italic">No comments yet…</p>
@@ -3127,7 +3157,7 @@ export default function RoastPage() {
                     {commentHistory.map((c, i) => (
                       <div
                         key={i}
-                        className="text-xs text-slate-500 pl-2 border-l-2 border-white/[0.06] py-0.5 animate-fadeIn"
+                        className={`pl-2 border-l-2 border-white/[0.06] py-0.5 animate-fadeIn ${streamerMode ? "text-sm text-slate-400" : "text-xs text-slate-500"}`}
                       >
                         {c}
                       </div>
@@ -3594,11 +3624,15 @@ export default function RoastPage() {
                         🔗 Challenge a Friend
                       </button>
                     )}
-                    {/* Download share card */}
+                    {/* Download / native-share card */}
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         const diff = selectedBracket !== null ? Math.abs(selectedBracket - getEloBracketIdx(game.avgElo)) : 99;
                         const result = diff === 0 ? "PERFECT" : diff === 1 ? "CLOSE" : "MISS";
+                        // Pick best roast line from commentary (longest non-trivial line)
+                        const bestRoast = [...commentHistory]
+                          .filter(c => c.length > 30 && !c.startsWith("Move"))
+                          .sort((a, b) => b.length - a.length)[0] ?? "";
                         const params = new URLSearchParams({
                           elo: String(game.avgElo),
                           guess: selectedBracket !== null ? ELO_BRACKETS[selectedBracket].label : "?",
@@ -3609,16 +3643,93 @@ export default function RoastPage() {
                           score: String(score),
                           games: String(gamesPlayed),
                           streak: String(streakCount),
+                          opening: game.opening ?? "",
+                          roast: bestRoast,
                         });
                         const url = `/api/roast/share-card?${params.toString()}`;
-                        // Open in new tab so user can save/share the image
-                        window.open(url, "_blank");
+                        try {
+                          const res = await fetch(url);
+                          const blob = await res.blob();
+                          const file = new File([blob], "roast-the-elo.png", { type: "image/png" });
+                          // Try native share with image (mobile)
+                          if (typeof navigator.share === "function" && navigator.canShare?.({ files: [file] })) {
+                            await navigator.share({
+                              title: "Roast the Elo",
+                              text: `🐸 I guessed ${selectedBracket !== null ? ELO_BRACKETS[selectedBracket].label : "?"} — actual Elo was ${game.avgElo}!`,
+                              files: [file],
+                            });
+                            return;
+                          }
+                          // Desktop fallback: auto-download
+                          const blobUrl = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = blobUrl;
+                          a.download = "roast-the-elo.png";
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                          URL.revokeObjectURL(blobUrl);
+                          setShareText("Saved!");
+                          setTimeout(() => setShareText(null), 2000);
+                        } catch {
+                          // Final fallback — open in new tab
+                          window.open(url, "_blank");
+                        }
                       }}
                       className={`rounded-xl border border-purple-500/20 bg-purple-500/[0.06] px-3 py-2.5 text-xs font-medium text-purple-300 hover:bg-purple-500/[0.12] hover:border-purple-500/30 transition-all flex items-center justify-center gap-1.5 ${!game.id ? "col-span-2" : ""}`}
                     >
                       🖼️ Share Card
                     </button>
                   </div>
+                  {/* Best Roasts highlight card */}
+                  {commentHistory.filter(c => c.length > 30 && !c.startsWith("Move")).length >= 2 && (
+                    <button
+                      onClick={async () => {
+                        const diff = selectedBracket !== null ? Math.abs(selectedBracket - getEloBracketIdx(game.avgElo)) : 99;
+                        const result = diff === 0 ? "PERFECT" : diff === 1 ? "CLOSE" : "MISS";
+                        // Pick top 3 roast lines (longest, funniest) from commentary
+                        const topLines = [...commentHistory]
+                          .filter(c => c.length > 30 && !c.startsWith("Move"))
+                          .sort((a, b) => b.length - a.length)
+                          .slice(0, 3);
+                        const params = new URLSearchParams({
+                          elo: String(game.avgElo),
+                          result,
+                          opening: game.opening ?? "",
+                          lines: topLines.join("||"),
+                        });
+                        const url = `/api/roast/highlight-card?${params.toString()}`;
+                        try {
+                          const res = await fetch(url);
+                          const blob = await res.blob();
+                          const file = new File([blob], "roast-highlights.png", { type: "image/png" });
+                          if (typeof navigator.share === "function" && navigator.canShare?.({ files: [file] })) {
+                            await navigator.share({
+                              title: "Best Roast Moments",
+                              text: `🐸 My best roast moments — Elo was ${game.avgElo}!`,
+                              files: [file],
+                            });
+                            return;
+                          }
+                          const blobUrl = URL.createObjectURL(blob);
+                          const a = document.createElement("a");
+                          a.href = blobUrl;
+                          a.download = "roast-highlights.png";
+                          document.body.appendChild(a);
+                          a.click();
+                          document.body.removeChild(a);
+                          URL.revokeObjectURL(blobUrl);
+                          setShareText("Saved!");
+                          setTimeout(() => setShareText(null), 2000);
+                        } catch {
+                          window.open(url, "_blank");
+                        }
+                      }}
+                      className="w-full rounded-xl border border-pink-500/20 bg-pink-500/[0.06] px-3 py-2.5 text-xs font-medium text-pink-300 hover:bg-pink-500/[0.12] hover:border-pink-500/30 transition-all flex items-center justify-center gap-1.5"
+                    >
+                      💀 Share Best Roasts
+                    </button>
+                  )}
                   {/* Rewatch */}
                   <button
                     onClick={() => {
@@ -3720,8 +3831,20 @@ export default function RoastPage() {
           </div>
         )}
 
+        {/* Streamer mode OBS watermark */}
+        {streamerMode && (pageState === "watching" || pageState === "guessing") && (
+          <div className="fixed bottom-4 left-4 z-[80] flex items-center gap-2 rounded-xl border border-orange-500/20 bg-black/60 backdrop-blur-sm px-4 py-2">
+            <span className="text-sm">🔥</span>
+            <span className="text-sm font-black text-orange-400 tracking-wide">firechess.app/roast</span>
+            <div className="flex items-center gap-1 ml-2">
+              <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider">Live</span>
+            </div>
+          </div>
+        )}
+
         {/* Footer — Gameshow credits style */}
-        <div className="mt-12 text-center text-xs text-slate-600 border-t border-white/[0.04] pt-6">
+        <div className={`mt-12 text-center text-xs text-slate-600 border-t border-white/[0.04] pt-6 ${streamerMode ? "hidden" : ""}`}>
           <p className="text-[10px] uppercase tracking-[0.15em] text-slate-700 mb-2">A Production Of</p>
           <p>Games sourced from the <a href="https://lichess.org" target="_blank" rel="noopener noreferrer" className="text-slate-500 hover:text-slate-400 underline decoration-dotted">Lichess</a> database. Analysis by Stockfish.</p>
           <p className="mt-1">Inspired by Gotham Chess &amp; r/AnarchyChess. No GMs were harmed in the making of this show.</p>
