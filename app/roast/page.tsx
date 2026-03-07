@@ -349,6 +349,7 @@ export default function RoastPage() {
   const [isRewatching, setIsRewatching] = useState(false);
   const [revealModalOpen, setRevealModalOpen] = useState(true);
   const [leaderboardData, setLeaderboardData] = useState<{ userName: string; userImage: string | null; score: number; gamesPlayed: number }[]>([]);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   /* ── Board visual FX state ── */
   const [screenShake, setScreenShake] = useState<"mild" | "heavy" | "slam" | null>(null);
@@ -3423,30 +3424,78 @@ export default function RoastPage() {
                   </div>
                 </div>
 
-                {/* Inline Leaderboard */}
+                {/* Sarcastic score judgment */}
+                {selectedBracket !== null && (() => {
+                  const dist = Math.abs(selectedBracket - getEloBracketIdx(game.avgElo));
+                  const guessedHigher = selectedBracket > getEloBracketIdx(game.avgElo);
+                  const totalErrors = blunders + mistakes;
+                  let judgment = "";
+                  if (dist === 0) {
+                    // Perfect guess
+                    if (totalErrors >= 6) judgment = `With ${blunders} blunders and ${mistakes} mistakes? Yeah that was basically a neon sign saying "I'm ${game.avgElo} elo." Free points 🎯`;
+                    else if (totalErrors >= 3) judgment = `Fair enough — ${totalErrors} errors total, the math checked out. You've clearly watched too many Guess the Elo videos 📺🧠`;
+                    else judgment = `Clean game, hard to read, and you STILL nailed it. Either you're a psychic or you've been doing this way too long 🔮`;
+                  } else if (dist === 1) {
+                    // Close
+                    if (guessedHigher && totalErrors >= 4) judgment = `You gave them more credit than they deserved? With ${blunders} blunders?? I respect the optimism but c'mon 😭`;
+                    else if (guessedHigher) judgment = `Guessed a bit high — honestly the game was cleaner than expected for ${game.avgElo}. They had us fooled too 🤷`;
+                    else if (totalErrors >= 5) judgment = `You rated them low and honestly? With ${blunders} blunders they PLAYED like patzers. Can't blame you for that read 💀`;
+                    else if (totalErrors >= 3) judgment = `A bit low but I get it — ${totalErrors} errors made them look worse than they are. The patzer energy was real 🐸`;
+                    else judgment = `Close! The game was surprisingly solid for this elo. Even their mistakes looked intentional... they weren't, but they LOOKED it 🗿`;
+                  } else if (dist >= 4) {
+                    // Way off
+                    if (guessedHigher && totalErrors >= 5) judgment = `You guessed THAT high?? They had ${blunders} blunders! Were you watching the same game as the rest of us? 💀😭`;
+                    else if (guessedHigher) judgment = `Respectfully: galaxy brain moment. You saw a ${game.avgElo} game and thought they were GOOD. The delusion is inspiring 🗿`;
+                    else if (totalErrors <= 2) judgment = `You thought THIS was low elo? They barely made any mistakes! The disrespect to ${game.avgElo}-rated players is unreal 😤`;
+                    else judgment = `Way off but honestly the game was chaotic enough that I can't even judge. Actually I can. I judge you negatively 💀`;
+                  } else {
+                    // dist 2-3 (moderate miss)
+                    if (guessedHigher && totalErrors >= 4) judgment = `${blunders} blunders and you thought they were BETTER than ${game.avgElo}?? They were playing like they just learned what en passant is 🤡`;
+                    else if (guessedHigher) judgment = `Overrated them a bit. I get it though — sometimes a patzer plays one clean sequence and you think they're Magnus. They're not 🐸`;
+                    else if (totalErrors >= 5) judgment = `Rated them low and look — with ${blunders} blunders and ${mistakes} mistakes, they DID play like absolute patzers. The data agreed with you. The elo didn't 📊💀`;
+                    else if (totalErrors >= 3) judgment = `A bit too harsh but I see it — ${totalErrors} errors, some questionable choices. They played like someone who knows the rules but forgot the strategy 🫠`;
+                    else judgment = `Underestimated them. The game was actually pretty clean — guess they're having a good day. Even patzers get lucky sometimes 🍀`;
+                  }
+                  return judgment ? (
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-2.5">
+                      <p className="text-xs text-slate-400 text-center leading-relaxed">{judgment}</p>
+                    </div>
+                  ) : null;
+                })()}
+
+                {/* Leaderboard toggle button */}
                 {leaderboardData.length > 0 && (
-                  <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.03] p-3 space-y-2">
-                    <p className="text-xs text-amber-400/70 uppercase tracking-wider font-bold text-center">🏆 Weekly Leaderboard</p>
-                    <div className="space-y-1">
-                      {leaderboardData.slice(0, 5).map((entry, i) => (
-                        <div key={i} className="flex items-center gap-2 text-xs">
-                          <span className={`w-5 text-center font-bold ${i === 0 ? "text-amber-400" : i === 1 ? "text-slate-300" : i === 2 ? "text-orange-400" : "text-slate-500"}`}>
-                            {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`}
-                          </span>
-                          {entry.userImage && (
-                            <img src={entry.userImage} alt="" className="w-4 h-4 rounded-full" />
-                          )}
-                          <span className="text-slate-300 flex-1 truncate">{entry.userName ?? "Anonymous"}</span>
-                          <span className="text-amber-400 font-bold tabular-nums">{entry.score.toLocaleString()}</span>
+                    <div>
+                      <button
+                        onClick={() => setShowLeaderboard(p => !p)}
+                        className="w-full rounded-xl border border-amber-500/20 bg-amber-500/[0.03] px-3 py-2.5 text-xs font-bold text-amber-400/70 uppercase tracking-wider hover:bg-amber-500/[0.08] transition-all flex items-center justify-center gap-1.5"
+                      >
+                        🏆 Weekly Leaderboard {showLeaderboard ? "▲" : "▼"}
+                      </button>
+                      {showLeaderboard && (
+                        <div className="mt-2 rounded-xl border border-amber-500/20 bg-amber-500/[0.03] p-3 space-y-2 animate-fadeIn">
+                          <div className="space-y-1">
+                            {leaderboardData.slice(0, 5).map((entry, i) => (
+                              <div key={i} className="flex items-center gap-2 text-xs">
+                                <span className={`w-5 text-center font-bold ${i === 0 ? "text-amber-400" : i === 1 ? "text-slate-300" : i === 2 ? "text-orange-400" : "text-slate-500"}`}>
+                                  {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`}
+                                </span>
+                                {entry.userImage && (
+                                  <img src={entry.userImage} alt="" className="w-4 h-4 rounded-full" />
+                                )}
+                                <span className="text-slate-300 flex-1 truncate">{entry.userName ?? "Anonymous"}</span>
+                                <span className="text-amber-400 font-bold tabular-nums">{entry.score.toLocaleString()}</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="text-center">
+                            <a href="/roast/leaderboard" className="text-[10px] text-amber-400/50 hover:text-amber-400 transition-colors">
+                              View full leaderboard →
+                            </a>
+                          </div>
                         </div>
-                      ))}
+                      )}
                     </div>
-                    <div className="text-center">
-                      <a href="/roast/leaderboard" className="text-[10px] text-amber-400/50 hover:text-amber-400 transition-colors">
-                        View full leaderboard →
-                      </a>
-                    </div>
-                  </div>
                 )}
 
                 {/* Your Score */}
