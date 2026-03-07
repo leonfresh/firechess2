@@ -2422,12 +2422,6 @@ export default function RoastPage() {
           filter: "blur(80px)",
         }} />
 
-        {/* Spotlight sweep — premium thin beam */}
-        <div className="animate-spotlight absolute top-0 left-1/2 h-[120vh] w-[120px] -translate-x-1/2 opacity-[0.025]" style={{
-          background: "linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.04) 30%, transparent 60%)",
-          filter: "blur(40px)",
-        }} />
-
         {/* Spotlight pulse on guess reveal */}
         {spotlightPulse && (
           <div className="animate-spotlight-pulse absolute inset-0" style={{ background: "radial-gradient(circle at 50% 30%, rgba(251,191,36,0.12) 0%, transparent 55%)" }} />
