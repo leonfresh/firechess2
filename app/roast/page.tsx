@@ -313,6 +313,15 @@ export default function RoastPage() {
   const [revealModalOpen, setRevealModalOpen] = useState(true);
   const [leaderboardData, setLeaderboardData] = useState<{ userName: string; userImage: string | null; score: number; gamesPlayed: number }[]>([]);
 
+  /* ── Board visual FX state ── */
+  const [screenShake, setScreenShake] = useState<"mild" | "heavy" | "slam" | null>(null);
+  const [boardFlash, setBoardFlash] = useState<"red" | "gold" | null>(null);
+  const [eliminationText, setEliminationText] = useState<string | null>(null);
+  const [pieceRain, setPieceRain] = useState<{ piece: string; id: number }[]>([]);
+  const [streakFire, setStreakFire] = useState(false);
+  const [boardCrack, setBoardCrack] = useState(false);
+  const pieceRainId = useRef(0);
+
   /* ── Mid-game decision state ── */
   interface GameshowDecision {
     moveIdx: number;
@@ -434,6 +443,13 @@ export default function RoastPage() {
     setQuizScore(0);
     setLastScoreGain(null);
     setScoreSaved(false);
+    // Reset visual FX
+    setScreenShake(null);
+    setBoardFlash(null);
+    setEliminationText(null);
+    setPieceRain([]);
+    setStreakFire(false);
+    setBoardCrack(false);
 
     try {
       // Fetch puzzles from Lichess to discover game IDs (client-side)
@@ -831,6 +847,13 @@ export default function RoastPage() {
     setQuizScore(0);
     setLastScoreGain(null);
     setScoreSaved(false);
+    // Reset visual FX
+    setScreenShake(null);
+    setBoardFlash(null);
+    setEliminationText(null);
+    setPieceRain([]);
+    setStreakFire(false);
+    setBoardCrack(false);
 
     try {
       // Extract headers from PGN
@@ -1304,7 +1327,7 @@ export default function RoastPage() {
         else if (move.isCapture) playSound("capture");
         else playSound("move");
 
-        // Gameshow sound effects + viral meme sounds based on move classification
+        // Gameshow sound effects + viral meme sounds + VISUAL FX based on move classification
         if (move.comment) {
           const cls = move.classification;
           const isHungPiece = move.cpLoss > 200 && !move.isCapture;
@@ -1324,8 +1347,44 @@ export default function RoastPage() {
                 else if (r < 0.6) playSound("roblox-oof");
                 else playSound("crowd-ooh");
               }
+
+              // ── VISUAL FX: Blunder effects ──
+              if (move.cpLoss > 500 || isHungPiece) {
+                // Catastrophic — BOARD SLAM + CRACK + ELIMINATION TEXT
+                setScreenShake("slam");
+                setBoardFlash("red");
+                setBoardCrack(true);
+                const hungPieceName = move.piece === "q" ? "♛" : move.piece === "r" ? "♜" : move.piece === "b" ? "♝" : move.piece === "n" ? "♞" : "♟";
+                setEliminationText(isHungPiece ? `${hungPieceName} ELIMINATED` : "ELIMINATED");
+                // Piece rain for hung pieces
+                if (isHungPiece) {
+                  const newPieces = Array.from({ length: 8 }, () => {
+                    pieceRainId.current++;
+                    return { piece: hungPieceName, id: pieceRainId.current };
+                  });
+                  setPieceRain(prev => [...prev, ...newPieces]);
+                  setTimeout(() => setPieceRain(prev => prev.filter(p => !newPieces.find(n => n.id === p.id))), 3000);
+                }
+                setTimeout(() => { setScreenShake(null); setBoardFlash(null); }, 600);
+                setTimeout(() => setBoardCrack(false), 2000);
+                setTimeout(() => setEliminationText(null), 2200);
+              } else if (move.cpLoss > 200) {
+                // Bad blunder — HEAVY SHAKE + RED FLASH
+                setScreenShake("heavy");
+                setBoardFlash("red");
+                setTimeout(() => { setScreenShake(null); setBoardFlash(null); }, 500);
+              } else {
+                // Normal blunder — MILD SHAKE
+                setScreenShake("mild");
+                setTimeout(() => setScreenShake(null), 400);
+              }
             } else if (cls === "brilliant") {
               playSound(Math.random() < 0.5 ? "airhorn" : "applause-short");
+              // ── VISUAL FX: Brilliant — GOLD FLASH + CONFETTI
+              setBoardFlash("gold");
+              setShowConfetti(true);
+              setTimeout(() => setBoardFlash(null), 800);
+              setTimeout(() => setShowConfetti(false), 3000);
             } else if (cls === "best" || cls === "great") {
               playSound("bell");
             } else if (cls === "mistake") {
@@ -1333,6 +1392,9 @@ export default function RoastPage() {
               if (r < 0.3) playSound("bro-serious");
               else if (r < 0.55) playSound("cute-laugh");
               else playSound("honk");
+              // ── VISUAL FX: Mistake — MILD SHAKE
+              setScreenShake("mild");
+              setTimeout(() => setScreenShake(null), 350);
             } else if (cls === "inaccuracy" && move.cpLoss > 80) {
               playSound(Math.random() < 0.5 ? "record-scratch" : "nani");
             }
@@ -1347,6 +1409,10 @@ export default function RoastPage() {
         }
 
         const streak = bestStreakAt(moves, next);
+
+        // ── VISUAL FX: Streak fire border ──
+        if (streak >= 3) { setStreakFire(true); } else { setStreakFire(false); }
+
         if (move.comment) {
           setActiveComment(move.comment);
           setCommentHistory(prev => [...prev, move.comment!]);
@@ -2040,6 +2106,38 @@ export default function RoastPage() {
         </div>
       )}
 
+      {/* Piece rain — chess pieces falling from top on hung pieces */}
+      {pieceRain.length > 0 && (
+        <div className="pointer-events-none fixed inset-0 z-[55] overflow-hidden">
+          {pieceRain.map((p) => {
+            const left = 10 + Math.random() * 80;
+            const delay = Math.random() * 0.6;
+            const duration = 1.8 + Math.random() * 1.5;
+            const size = 28 + Math.random() * 24;
+            const rotation = Math.random() * 720 - 360;
+            const drift = (Math.random() - 0.5) * 120;
+            return (
+              <div
+                key={p.id}
+                className="absolute animate-piece-fall"
+                style={{
+                  left: `${left}%`,
+                  top: "-8%",
+                  fontSize: size,
+                  animationDelay: `${delay}s`,
+                  animationDuration: `${duration}s`,
+                  // @ts-expect-error -- CSS custom property
+                  "--rotation": `${rotation}deg`,
+                  "--drift": `${drift}px`,
+                }}
+              >
+                {p.piece}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       <div className="relative z-10 mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Header — Gameshow title card (compact when playing, full hero on landing) */}
         {pageState !== "choose-source" ? (
@@ -2393,9 +2491,17 @@ export default function RoastPage() {
           </div>
         )}
 
-        {/* ── Intro screen — Gameshow Stage Reveal ── */}
+        {/* ── Intro screen — Beast Games / Squid Game Stage Reveal ── */}
         {pageState === "intro" && game && !analyzing && (
           <div className="flex flex-col items-center gap-6 py-12 animate-fadeIn">
+            {/* ROUND number — Beast Games style */}
+            <div className="animate-round-flash text-center mb-2">
+              <p className="text-5xl sm:text-6xl font-black uppercase tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-b from-red-400 to-red-600" style={{ textShadow: "0 0 40px rgba(239,68,68,0.4)" }}>
+                ROUND {gamesPlayed + 1}
+              </p>
+              <div className="w-32 h-0.5 bg-gradient-to-r from-transparent via-red-500 to-transparent mx-auto mt-2" />
+            </div>
+
             <div className="relative rounded-3xl border-2 border-orange-500/30 bg-gradient-to-b from-red-950/20 via-zinc-900/95 to-zinc-950 p-8 text-center max-w-lg overflow-hidden shadow-2xl shadow-orange-500/10">
               {/* Stage curtain top */}
               <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-red-800/60 via-red-600/40 to-red-800/60" />
@@ -2415,6 +2521,26 @@ export default function RoastPage() {
                 )}
                 <p className="text-xs uppercase tracking-[0.25em] text-orange-400/60 font-bold mb-3">🎬 Coming Up</p>
                 <p className="text-xl font-bold text-orange-300 mb-5">&ldquo;{introLine}&rdquo;</p>
+
+                {/* Player matchup — VS card */}
+                <div className="flex items-center justify-center gap-3 mb-5">
+                  <div className="flex-1 text-right">
+                    <div className="inline-block rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+                      <p className="text-xs text-slate-400 uppercase tracking-wider">White</p>
+                      <p className="text-sm font-bold text-white truncate max-w-[120px]">{game.whitePlayer}</p>
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0 w-10 h-10 rounded-full bg-red-500/20 border-2 border-red-500/40 flex items-center justify-center">
+                    <span className="text-xs font-black text-red-400">VS</span>
+                  </div>
+                  <div className="flex-1 text-left">
+                    <div className="inline-block rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2">
+                      <p className="text-xs text-slate-400 uppercase tracking-wider">Black</p>
+                      <p className="text-sm font-bold text-white truncate max-w-[120px]">{game.blackPlayer}</p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-3 gap-3 text-xs text-slate-400">
                   <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-2.5">
                     <p className="text-base mb-0.5">📋</p>
@@ -2482,7 +2608,11 @@ export default function RoastPage() {
               </div>
 
               <div ref={boardRef} className="w-full max-w-[640px]">
-                <div className="overflow-hidden rounded-xl shadow-2xl shadow-black/40 relative">
+                <div className={`overflow-hidden rounded-xl shadow-2xl shadow-black/40 relative ${
+                  screenShake === "slam" ? "animate-board-slam" :
+                  screenShake === "heavy" ? "animate-board-shake-heavy" :
+                  screenShake === "mild" ? "animate-board-shake-mild" : ""
+                } ${streakFire ? "ring-2 ring-amber-400/60 shadow-[0_0_25px_rgba(251,191,36,0.4)]" : ""}`}>
                   <Chessboard
                     id="roast-board"
                     position={fen}
@@ -2497,6 +2627,40 @@ export default function RoastPage() {
                     customPieces={customPieces}
                     customArrows={activeArrows.map(([from, to, color]) => [from as CbSquare, to as CbSquare, color] as [CbSquare, CbSquare, string])}
                   />
+
+                  {/* ── Board flash overlay (red for blunders, gold for brilliancies) ── */}
+                  {boardFlash && (
+                    <div className={`absolute inset-0 pointer-events-none z-10 animate-board-flash ${
+                      boardFlash === "red" ? "bg-red-500/30" : "bg-amber-400/25"
+                    }`} />
+                  )}
+
+                  {/* ── Board crack overlay (catastrophic blunders) ── */}
+                  {boardCrack && (
+                    <div className="absolute inset-0 pointer-events-none z-20 animate-fadeIn">
+                      <svg viewBox="0 0 100 100" className="w-full h-full opacity-40" preserveAspectRatio="none">
+                        <path d="M45 0 L48 18 L42 28 L50 45 L44 55 L48 72 L43 85 L47 100" stroke="white" strokeWidth="0.8" fill="none" className="animate-crack-draw" />
+                        <path d="M50 45 L58 52 L65 48" stroke="white" strokeWidth="0.5" fill="none" className="animate-crack-draw" />
+                        <path d="M42 28 L35 35 L30 32" stroke="white" strokeWidth="0.5" fill="none" className="animate-crack-draw" />
+                      </svg>
+                    </div>
+                  )}
+
+                  {/* ── ELIMINATED text (Squid Game style) ── */}
+                  {eliminationText && (
+                    <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center animate-elimination-in">
+                      <div className="bg-red-600/90 px-6 py-3 rounded-lg border-2 border-red-400 shadow-2xl shadow-red-500/50 backdrop-blur-sm">
+                        <p className="text-xl sm:text-2xl font-black text-white uppercase tracking-[0.2em] text-center whitespace-nowrap" style={{ textShadow: "0 0 20px rgba(255,0,0,0.8), 0 2px 4px rgba(0,0,0,0.5)" }}>
+                          {eliminationText}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ── Streak fire border glow ── */}
+                  {streakFire && (
+                    <div className="absolute -inset-1 pointer-events-none z-0 rounded-xl animate-streak-fire" style={{ background: "conic-gradient(from 0deg, rgba(251,191,36,0.3), rgba(239,68,68,0.3), rgba(251,146,60,0.3), rgba(251,191,36,0.3))", filter: "blur(6px)" }} />
+                  )}
                   {/* Emoji marker overlay */}
                   {activeMarkers.length > 0 && boardSize > 0 && (
                     <div className="absolute inset-0 pointer-events-none" style={{ width: boardSize, height: boardSize }}>
@@ -2582,6 +2746,35 @@ export default function RoastPage() {
                       {audienceMeter > 70 ? "😍" : audienceMeter > 40 ? "😐" : audienceMeter > 20 ? "😬" : "💀"}
                     </span>
                   </div>
+
+                  {/* Beast Games-style elimination + survival stats */}
+                  {currentIdx >= 0 && (
+                    <div className="flex items-center justify-between px-1 mt-1.5">
+                      <div className="flex items-center gap-3">
+                        {(() => {
+                          const blundersNow = moves.slice(0, currentIdx + 1).filter(m => m.classification === "blunder").length;
+                          const mistakesNow = moves.slice(0, currentIdx + 1).filter(m => m.classification === "mistake").length;
+                          return (
+                            <>
+                              {blundersNow > 0 && (
+                                <span className="text-[10px] font-bold text-red-400 flex items-center gap-0.5">
+                                  💀 {blundersNow} eliminated
+                                </span>
+                              )}
+                              {mistakesNow > 0 && (
+                                <span className="text-[10px] font-bold text-orange-400/60 flex items-center gap-0.5">
+                                  ⚠️ {mistakesNow}
+                                </span>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+                      <span className="text-[10px] text-slate-600 tabular-nums">
+                        {Math.round(((currentIdx + 1) / moves.length) * 100)}% complete
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -2908,11 +3101,15 @@ export default function RoastPage() {
                 </div>
 
                 <div className="text-center mb-5">
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-orange-400/60 font-bold mb-1">🎬 Final Answer</p>
-                  <h3 className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-300 to-amber-300 uppercase tracking-wider" style={{ textShadow: "0 0 20px rgba(251,146,60,0.3)" }}>
+                  <p className="text-[10px] uppercase tracking-[0.3em] text-red-400/80 font-bold mb-1 animate-pulse">⏱️ DECISION TIME</p>
+                  <h3 className="text-xl sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-300 via-orange-300 to-amber-300 uppercase tracking-wider" style={{ textShadow: "0 0 20px rgba(251,146,60,0.3)" }}>
                     🎯 Lock It In!
                   </h3>
                   <p className="text-[11px] text-slate-400 mt-1.5">What&apos;s the average Elo of these players?</p>
+                  {/* Beast Games-style stakes reminder */}
+                  <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-red-500/10 border border-red-500/20 px-3 py-0.5">
+                    <span className="text-[10px] text-red-400 font-bold">🏆 {score > 0 ? `${score} pts at stake` : "300 pts for perfect guess"}</span>
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -3400,6 +3597,121 @@ export default function RoastPage() {
         }
         .animate-spotlight-pulse {
           animation: spotlight-pulse 2s ease-out forwards;
+        }
+
+        /* ══════ Board Visual FX Animations ══════ */
+
+        /* Screen shake — mild (mistakes, small blunders) */
+        @keyframes board-shake-mild {
+          0%, 100% { transform: translate(0, 0); }
+          10% { transform: translate(-2px, 1px); }
+          30% { transform: translate(2px, -1px); }
+          50% { transform: translate(-1px, 2px); }
+          70% { transform: translate(1px, -2px); }
+          90% { transform: translate(-1px, 1px); }
+        }
+        .animate-board-shake-mild {
+          animation: board-shake-mild 0.35s ease-out;
+        }
+
+        /* Screen shake — heavy (big blunders) */
+        @keyframes board-shake-heavy {
+          0%, 100% { transform: translate(0, 0) rotate(0deg); }
+          10% { transform: translate(-4px, 2px) rotate(-0.5deg); }
+          20% { transform: translate(5px, -3px) rotate(0.5deg); }
+          30% { transform: translate(-3px, 4px) rotate(-0.3deg); }
+          40% { transform: translate(4px, -2px) rotate(0.4deg); }
+          50% { transform: translate(-5px, 3px) rotate(-0.5deg); }
+          60% { transform: translate(3px, -4px) rotate(0.3deg); }
+          70% { transform: translate(-2px, 2px) rotate(-0.2deg); }
+          80% { transform: translate(2px, -1px) rotate(0.1deg); }
+          90% { transform: translate(-1px, 1px) rotate(0deg); }
+        }
+        .animate-board-shake-heavy {
+          animation: board-shake-heavy 0.5s ease-out;
+        }
+
+        /* Board slam — catastrophic blunders (dramatic drop + bounce) */
+        @keyframes board-slam {
+          0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+          5% { transform: translate(0, -8px) scale(1.02) rotate(0deg); }
+          15% { transform: translate(-6px, 6px) scale(0.98) rotate(-1deg); }
+          25% { transform: translate(5px, -4px) scale(1.01) rotate(0.8deg); }
+          35% { transform: translate(-4px, 5px) scale(0.99) rotate(-0.6deg); }
+          45% { transform: translate(3px, -3px) scale(1) rotate(0.4deg); }
+          55% { transform: translate(-2px, 2px) rotate(-0.3deg); }
+          65% { transform: translate(2px, -1px) rotate(0.2deg); }
+          75% { transform: translate(-1px, 1px) rotate(-0.1deg); }
+          85% { transform: translate(1px, 0px) rotate(0deg); }
+          100% { transform: translate(0, 0) scale(1) rotate(0deg); }
+        }
+        .animate-board-slam {
+          animation: board-slam 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        /* Board flash overlay */
+        @keyframes board-flash {
+          0% { opacity: 0; }
+          20% { opacity: 1; }
+          100% { opacity: 0; }
+        }
+        .animate-board-flash {
+          animation: board-flash 0.5s ease-out forwards;
+        }
+
+        /* Crack lines drawing in */
+        @keyframes crack-draw {
+          0% { stroke-dashoffset: 200; opacity: 0; }
+          10% { opacity: 0.6; }
+          100% { stroke-dashoffset: 0; opacity: 0; }
+        }
+        .animate-crack-draw {
+          stroke-dasharray: 200;
+          stroke-dashoffset: 200;
+          animation: crack-draw 2s ease-out forwards;
+        }
+
+        /* ELIMINATED text — dramatic scale-in */
+        @keyframes elimination-in {
+          0% { opacity: 0; transform: scale(3) rotate(-5deg); }
+          30% { opacity: 1; transform: scale(0.9) rotate(1deg); }
+          50% { transform: scale(1.05) rotate(-0.5deg); }
+          70% { transform: scale(1) rotate(0deg); }
+          85% { opacity: 1; }
+          100% { opacity: 0; transform: scale(0.95) translateY(5px); }
+        }
+        .animate-elimination-in {
+          animation: elimination-in 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Streak fire — rotating border glow */
+        @keyframes streak-fire {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .animate-streak-fire {
+          animation: streak-fire 3s linear infinite;
+        }
+
+        /* Piece rain — falling chess pieces */
+        @keyframes piece-fall {
+          0% { transform: translateY(0) rotate(0deg) translateX(0); opacity: 1; }
+          15% { opacity: 1; }
+          100% { transform: translateY(110vh) rotate(var(--rotation, 360deg)) translateX(var(--drift, 0px)); opacity: 0; }
+        }
+        .animate-piece-fall {
+          animation: piece-fall 2.5s ease-in forwards;
+        }
+
+        /* ROUND announcement flash — Beast Games style */
+        @keyframes round-flash {
+          0% { opacity: 0; transform: scale(0.5); letter-spacing: 0.5em; }
+          30% { opacity: 1; transform: scale(1.1); }
+          50% { transform: scale(1); }
+          100% { opacity: 1; transform: scale(1); letter-spacing: 0.3em; }
+        }
+        .animate-round-flash {
+          animation: round-flash 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
         }
       `}</style>
     </main>
