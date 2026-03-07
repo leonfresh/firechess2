@@ -693,13 +693,20 @@ export default function RoastPage() {
         setAnalysisProgress(Math.round(((i + 1) / maxMoves) * 100));
       }
 
-      // Inject opening roast onto an early move (book territory, moves 3-8)
+      // Inject opening roast at the last book move (the exact moment of the opening)
       const openingRoast = getOpeningRoast(data.opening);
-      const openingTarget = analyzed.findIndex((m, i) => i >= 2 && i <= 7 && !m.comment);
+      let lastBookIdx = -1;
+      for (let i = analyzed.length - 1; i >= 0; i--) {
+        if (analyzed[i].classification === "book" || (i < 10 && analyzed[i].cpLoss < 10)) { lastBookIdx = i; break; }
+      }
+      // Place on the last book move, or the first uncommented early move as fallback
+      const openingTarget = lastBookIdx >= 0
+        ? lastBookIdx
+        : analyzed.findIndex((m, i) => i >= 2 && i <= 5 && !m.comment);
       if (openingTarget >= 0) {
         analyzed[openingTarget].comment = openingRoast;
-      } else if (analyzed.length > 2 && !analyzed[2].comment) {
-        analyzed[2].comment = openingRoast;
+      } else if (analyzed.length > 2) {
+        analyzed[2].comment = analyzed[2].comment || openingRoast;
       }
 
       // Inject closing game summary as a separate synthetic entry AFTER the last move
@@ -984,11 +991,17 @@ export default function RoastPage() {
         setAnalysisProgress(Math.round(((i + 1) / maxMoves) * 100));
       }
 
-      // Inject opening roast
+      // Inject opening roast at the last book move (the exact moment of the opening)
       const openingRoast = getOpeningRoast(data.opening);
-      const openingTarget = analyzed.findIndex((m, i) => i >= 2 && i <= 7 && !m.comment);
+      let lastBookIdx = -1;
+      for (let i = analyzed.length - 1; i >= 0; i--) {
+        if (analyzed[i].classification === "book" || (i < 10 && analyzed[i].cpLoss < 10)) { lastBookIdx = i; break; }
+      }
+      const openingTarget = lastBookIdx >= 0
+        ? lastBookIdx
+        : analyzed.findIndex((m, i) => i >= 2 && i <= 5 && !m.comment);
       if (openingTarget >= 0) analyzed[openingTarget].comment = openingRoast;
-      else if (analyzed.length > 2 && !analyzed[2].comment) analyzed[2].comment = openingRoast;
+      else if (analyzed.length > 2) analyzed[2].comment = analyzed[2].comment || openingRoast;
 
       // Inject closing game summary as a separate synthetic entry AFTER the last move
       if (analyzed.length > 0) {
