@@ -45,6 +45,8 @@ import {
 } from "@/lib/roast-commentary";
 import { RoastAvatar, type RoastMood } from "@/components/roast-avatar";
 import { useTTS } from "@/lib/use-tts";
+import { useSession } from "@/components/session-provider";
+import Link from "next/link";
 
 /* ================================================================== */
 /*  Typewriter hook                                                     */
@@ -71,10 +73,25 @@ function useTypewriter(text: string | null, charDelay = 14) {
 }
 
 /* ================================================================== */
+/*  Helpers                                                             */
+/* ================================================================== */
+
+/** Count consecutive best/great/brilliant moves ending at `idx` */
+function bestStreakAt(moves: { classification: MoveClassification }[], idx: number): number {
+  let streak = 0;
+  for (let i = idx; i >= 0; i--) {
+    const c = moves[i].classification;
+    if (c === "best" || c === "great" || c === "brilliant") streak++;
+    else break;
+  }
+  return streak;
+}
+
+/* ================================================================== */
 /*  Mood from classification                                            */
 /* ================================================================== */
 
-function getMood(move: { classification: MoveClassification; cpLoss: number } | null, blunderCount?: number): RoastMood {
+function getMood(move: { classification: MoveClassification; cpLoss: number } | null, blunderCount?: number, bestStreak?: number): RoastMood {
   if (!move) return "neutral";
   switch (move.classification) {
     case "brilliant": {
@@ -86,8 +103,9 @@ function getMood(move: { classification: MoveClassification; cpLoss: number } | 
     }
     case "great": case "best": {
       const r = Math.random();
+      // Galaxy brain only on 3+ best-move streaks — keep it special
+      if ((bestStreak ?? 0) >= 3 && r < 0.35) return "galaxybrain";
       if (r < 0.15) return "loving";     // animated good vibes
-      if (r < 0.3) return "galaxybrain";
       if (r < 0.5) return "king";
       return "smug";
     }
@@ -264,6 +282,8 @@ export default function RoastPage() {
   const [selectedBracket, setSelectedBracket] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [gamesPlayed, setGamesPlayed] = useState(0);
+  const [quizScore, setQuizScore] = useState(0); // bonus points from mid-game quizzes
+  const [lastScoreGain, setLastScoreGain] = useState<number | null>(null); // for floating +pts animation
   const [commentHistory, setCommentHistory] = useState<string[]>([]);
   const commentBoxRef = useRef<HTMLDivElement>(null);
   const [orientation, setOrientation] = useState<"white" | "black">("white");
@@ -305,6 +325,11 @@ export default function RoastPage() {
   const [decisionShown, setDecisionShown] = useState(new Set<number>());
   const [pendingDecisionIdx, setPendingDecisionIdx] = useState<number | null>(null);
 
+  /* ── Auth + score saving ── */
+  const { authenticated, user, loading: sessionLoading } = useSession();
+  const [scoreSaved, setScoreSaved] = useState(false);
+  const [savingScore, setSavingScore] = useState(false);
+
   /* ── Source selection state ── */
   const [inputMode, setInputMode] = useState<"random" | "import" | "paste" | null>(null);
   const [loadSource, setLoadSource] = useState<"lichess" | "chesscom">("lichess");
@@ -336,6 +361,7 @@ export default function RoastPage() {
         if (typeof data.score === "number") setScore(data.score);
         if (typeof data.gamesPlayed === "number") setGamesPlayed(data.gamesPlayed);
         if (typeof data.streakCount === "number") setStreakCount(data.streakCount);
+        if (typeof data.quizScore === "number") setQuizScore(data.quizScore);
       }
     } catch { /* ignore */ }
   }, []);
@@ -343,8 +369,8 @@ export default function RoastPage() {
   // Persist score/streak to localStorage on change
   useEffect(() => {
     if (typeof window === "undefined" || gamesPlayed === 0) return;
-    localStorage.setItem("fc-roast-session", JSON.stringify({ score, gamesPlayed, streakCount }));
-  }, [score, gamesPlayed, streakCount]);
+    localStorage.setItem("fc-roast-session", JSON.stringify({ score, gamesPlayed, streakCount, quizScore }));
+  }, [score, gamesPlayed, streakCount, quizScore]);
 
   /* ── Challenge link state ── */
   const [challengeId, setChallengeId] = useState<string | null>(null);
@@ -1281,16 +1307,17 @@ export default function RoastPage() {
           else if (cls === "good") setAudienceMeter(prev => Math.min(100, prev + 3));
         }
 
+        const streak = bestStreakAt(moves, next);
         if (move.comment) {
           setActiveComment(move.comment);
           setCommentHistory(prev => [...prev, move.comment!]);
-          setCurrentMood(getMood(move, blunders));
+          setCurrentMood(getMood(move, blunders, streak));
           setActiveArrows(move.arrows ?? []);
           setActiveMarkers(move.markers ?? []);
           setMobileClippyOpen(true); // Auto-open clippy on mobile when there's a comment
         } else {
           setActiveComment(null);
-          setCurrentMood(getMood(move, blunders));
+          setCurrentMood(getMood(move, blunders, streak));
           setActiveArrows([]);
           setActiveMarkers([]);
         }
@@ -1344,11 +1371,22 @@ export default function RoastPage() {
     const cls = move.classification;
     const nextMove = next + 1 < moves.length ? moves[next + 1] : null;
     const blundersSoFar = moves.slice(0, next + 1).filter(m => m.classification === "blunder").length;
+    const mistakesSoFar = moves.slice(0, next + 1).filter(m => m.classification === "mistake").length;
+    const bestMovesSoFar = moves.slice(0, next + 1).filter(m => m.classification === "best" || m.classification === "brilliant").length;
+    const totalMoves = moves.length;
+    const movesLeft = totalMoves - next;
+    const whiteBlunders = moves.slice(0, next + 1).filter(m => m.classification === "blunder" && m.color === "w").length;
+    const blackBlunders = moves.slice(0, next + 1).filter(m => m.classification === "blunder" && m.color === "b").length;
+    const captureCount = moves.slice(0, next + 1).filter(m => m.isCapture).length;
+    const checkCount = moves.slice(0, next + 1).filter(m => m.isCheck).length;
 
-    let decision: GameshowDecision | null = null;
+    // Build a pool of eligible questions based on game context
+    type QBuilder = () => GameshowDecision;
+    const questionPool: QBuilder[] = [];
 
+    // Q1: What happens after a blunder (classic)
     if (cls === "blunder" || cls === "mistake") {
-      decision = {
+      questionPool.push(() => ({
         moveIdx: next,
         question: `🤔 That ${cls} just happened. What do you think happens next?`,
         options: [
@@ -1364,44 +1402,240 @@ export default function RoastPage() {
           ? "The blunder trades! Both sides are dropping pieces 💀"
           : nextMove?.cpLoss === 0 ? "They actually found the best move! Redemption arc 🎬"
           : "The chaos continues... as expected at this level 🫠",
-      };
-    } else if (blundersSoFar >= 2 && pctDone < 0.5) {
-      decision = {
-        moveIdx: next,
-        question: `🎯 We're ${Math.round(pctDone * 100)}% through the game with ${blundersSoFar} blunders already. How many total blunders by the end?`,
-        options: [
-          { label: `${blundersSoFar} — they've learned their lesson`, emoji: "🎓" },
-          { label: `${blundersSoFar + 2}-${blundersSoFar + 4} — buckle up`, emoji: "🎢" },
-          { label: `${blundersSoFar + 5}+ — this is a trainwreck`, emoji: "🚂💥" },
-        ],
-        correctIdx: (() => {
-          const totalB = moves.filter(m => m.classification === "blunder").length;
-          const remaining = totalB - blundersSoFar;
-          if (remaining <= 0) return 0;
-          if (remaining <= 4) return 1;
-          return 2;
-        })(),
-        explanation: (() => {
-          const totalB = moves.filter(m => m.classification === "blunder").length;
-          return totalB <= blundersSoFar
+      }));
+    }
+
+    // Q2: Total blunders prediction
+    if (blundersSoFar >= 2 && pctDone < 0.5) {
+      questionPool.push(() => {
+        const totalB = moves.filter(m => m.classification === "blunder").length;
+        const remaining = totalB - blundersSoFar;
+        return {
+          moveIdx: next,
+          question: `🎯 We're ${Math.round(pctDone * 100)}% through with ${blundersSoFar} blunders. How many total by the end?`,
+          options: [
+            { label: `${blundersSoFar} — they've learned`, emoji: "🎓" },
+            { label: `${blundersSoFar + 2}-${blundersSoFar + 4} — buckle up`, emoji: "🎢" },
+            { label: `${blundersSoFar + 5}+ — trainwreck`, emoji: "🚂💥" },
+          ],
+          correctIdx: remaining <= 0 ? 0 : remaining <= 4 ? 1 : 2,
+          explanation: totalB <= blundersSoFar
             ? "They actually cleaned it up! Character development 📈"
             : totalB >= blundersSoFar + 5
             ? `${totalB} total blunders. This game is a crime scene 🔍`
-            : `${totalB} total blunders. Par for the course 🏌️`;
-        })(),
-      };
-    } else {
-      decision = {
+            : `${totalB} total blunders. Par for the course 🏌️`,
+        };
+      });
+    }
+
+    // Q3: Who has more blunders? (when both sides have blundered)
+    if (whiteBlunders > 0 && blackBlunders > 0 && pctDone < 0.6) {
+      questionPool.push(() => {
+        const totalW = moves.filter(m => m.classification === "blunder" && m.color === "w").length;
+        const totalB = moves.filter(m => m.classification === "blunder" && m.color === "b").length;
+        return {
+          moveIdx: next,
+          question: `⚖️ White has ${whiteBlunders} blunders, Black has ${blackBlunders}. Who finishes with more?`,
+          options: [
+            { label: `${game?.whitePlayer ?? "White"} blunders more`, emoji: "⬜" },
+            { label: "They tie in blunders", emoji: "🤝" },
+            { label: `${game?.blackPlayer ?? "Black"} blunders more`, emoji: "⬛" },
+          ],
+          correctIdx: totalW > totalB ? 0 : totalW === totalB ? 1 : 2,
+          explanation: totalW === totalB
+            ? `Both ended with ${totalW} blunders. Perfectly balanced, as all things should be 🗿`
+            : `${totalW > totalB ? "White" : "Black"} ended with ${Math.max(totalW, totalB)} blunders vs ${Math.min(totalW, totalB)}. ${Math.max(totalW, totalB) >= 5 ? "Yikes." : "Could be worse."} 💀`,
+        };
+      });
+    }
+
+    // Q4: How does the game end?
+    if (pctDone >= 0.4 && pctDone <= 0.7 && game) {
+      questionPool.push(() => {
+        const isCheckmate = game.termination?.toLowerCase().includes("checkmate") || game.result === "1-0" || game.result === "0-1";
+        const isDraw = game.result === "1/2-1/2";
+        const isResign = game.termination?.toLowerCase().includes("resign");
+        return {
+          moveIdx: next,
+          question: "🏁 How does this game end?",
+          options: [
+            { label: "Checkmate", emoji: "♟️" },
+            { label: "Resignation", emoji: "🏳️" },
+            { label: "Draw/Stalemate", emoji: "🤝" },
+          ],
+          correctIdx: isDraw ? 2 : isResign ? 1 : 0,
+          explanation: isDraw
+            ? "A draw! Neither side could finish the other off 🤝"
+            : isResign
+            ? "They resigned! Couldn't take the heat anymore 🏳️🔥"
+            : "Checkmate! Someone actually got mated 💀♟️",
+        };
+      });
+    }
+
+    // Q5: Will there be a brilliant move in the rest of the game?
+    if (pctDone >= 0.3 && pctDone <= 0.6) {
+      questionPool.push(() => {
+        const brilliantsLeft = moves.slice(next + 1).filter(m => m.classification === "brilliant").length;
+        return {
+          moveIdx: next,
+          question: "✨ Will either player find a BRILLIANT move in the rest of this game?",
+          options: [
+            { label: "Yes — someone pulls out a banger", emoji: "🧠" },
+            { label: "No — mediocrity all the way", emoji: "🫠" },
+          ],
+          correctIdx: brilliantsLeft > 0 ? 0 : 1,
+          explanation: brilliantsLeft > 0
+            ? `Yes! ${brilliantsLeft} brilliant move${brilliantsLeft > 1 ? "s" : ""} still coming. Even a broken clock... 🧠✨`
+            : "Nope. Pure mediocrity til the end. As expected 🫠💀",
+        };
+      });
+    }
+
+    // Q6: How many total captures in the game?
+    if (pctDone >= 0.35 && pctDone <= 0.55) {
+      const totalCaptures = moves.filter(m => m.isCapture).length;
+      questionPool.push(() => ({
         moveIdx: next,
-        question: "🎪 AUDIENCE POLL: How's this game going so far?",
+        question: `⚔️ There have been ${captureCount} captures so far. How many total by the end?`,
         options: [
-          { label: "Boring — wake me up when it's over", emoji: "😴" },
-          { label: "Entertaining — popcorn worthy", emoji: "🍿" },
-          { label: "Chaos — what am I watching", emoji: "🤯" },
+          { label: `${captureCount}-${captureCount + 3} — it calms down`, emoji: "🕊️" },
+          { label: `${captureCount + 4}-${captureCount + 8} — some more fireworks`, emoji: "🎆" },
+          { label: `${captureCount + 9}+ — BLOODBATH`, emoji: "🩸" },
         ],
-        correctIdx: -1,
-        explanation: "Your voice has been heard! The crowd has spoken 📢",
-      };
+        correctIdx: (() => {
+          const remaining = totalCaptures - captureCount;
+          if (remaining <= 3) return 0;
+          if (remaining <= 8) return 1;
+          return 2;
+        })(),
+        explanation: (() => {
+          const remaining = totalCaptures - captureCount;
+          if (remaining <= 3) return "Peace was an option after all 🕊️";
+          if (remaining <= 8) return `${totalCaptures} total captures. Healthy amount of violence ⚔️`;
+          return `${totalCaptures} total captures! A bloodbath! Bodies everywhere! 🩸💀`;
+        })(),
+      }));
+    }
+
+    // Q7: Will there be a check in the next 5 moves?
+    if (movesLeft >= 5) {
+      const checksInNext5 = moves.slice(next + 1, next + 6).filter(m => m.isCheck).length;
+      questionPool.push(() => ({
+        moveIdx: next,
+        question: "♔ Will there be a check in the next 5 moves?",
+        options: [
+          { label: "Yes — someone's getting checked", emoji: "♚" },
+          { label: "No — kings are chilling", emoji: "😎" },
+        ],
+        correctIdx: checksInNext5 > 0 ? 0 : 1,
+        explanation: checksInNext5 > 0
+          ? `${checksInNext5} check${checksInNext5 > 1 ? "s" : ""}! The king can't catch a break ♔💀`
+          : "The kings lived peacefully for 5 whole moves. Rare achievement unlocked 😎👑",
+      }));
+    }
+
+    // Q8: What's the next blunder type? (when game is chaotic)
+    if (blundersSoFar + mistakesSoFar >= 3 && movesLeft >= 8) {
+      const nextBad = moves.slice(next + 1).find(m => m.classification === "blunder" || m.classification === "mistake");
+      questionPool.push(() => ({
+        moveIdx: next,
+        question: "🎪 The next mistake/blunder will be by which side?",
+        options: [
+          { label: game?.whitePlayer ?? "White", emoji: "⬜" },
+          { label: game?.blackPlayer ?? "Black", emoji: "⬛" },
+          { label: "Neither — they both play well", emoji: "🤯" },
+        ],
+        correctIdx: !nextBad ? 2 : nextBad.color === "w" ? 0 : 1,
+        explanation: !nextBad
+          ? "They actually cleaned it up! Nobody saw that coming 🤯"
+          : `${nextBad.color === "w" ? "White" : "Black"} cracks first with ${nextBad.san}. The prophecy is fulfilled 🔮`,
+      }));
+    }
+
+    // Q9: How many moves left in the game?
+    if (pctDone >= 0.4 && pctDone <= 0.65) {
+      questionPool.push(() => ({
+        moveIdx: next,
+        question: `🔮 We're at move ${move.moveNumber}. How many total moves in this game?`,
+        options: [
+          { label: `Under ${move.moveNumber + 10}`, emoji: "⚡" },
+          { label: `${move.moveNumber + 10}-${move.moveNumber + 25}`, emoji: "📏" },
+          { label: `${move.moveNumber + 26}+ — marathon`, emoji: "🏃" },
+        ],
+        correctIdx: movesLeft < 10 ? 0 : movesLeft < 26 ? 1 : 2,
+        explanation: movesLeft < 10
+          ? `Only ${movesLeft} moves left! This ends quick ⚡`
+          : movesLeft >= 26
+          ? `${totalMoves} total moves. A marathon of chess violence 🏃💀`
+          : `${totalMoves} total moves. Standard length for this level 📏`,
+      }));
+    }
+
+    // Q10: Best move streak prediction
+    if (bestMovesSoFar >= 3 && pctDone < 0.6) {
+      questionPool.push(() => {
+        const totalBest = moves.filter(m => m.classification === "best" || m.classification === "brilliant").length;
+        return {
+          moveIdx: next,
+          question: `🎯 ${bestMovesSoFar} best/brilliant moves so far. Will they break ${bestMovesSoFar + 3}?`,
+          options: [
+            { label: "Yes — surprise accuracy incoming", emoji: "🎯" },
+            { label: "No — they've peaked", emoji: "📉" },
+          ],
+          correctIdx: totalBest > bestMovesSoFar + 3 ? 0 : 1,
+          explanation: totalBest > bestMovesSoFar + 3
+            ? `${totalBest} total! They actually showed up today 🎯`
+            : `Only ${totalBest} total. They indeed peaked early 📉`,
+        };
+      });
+    }
+
+    let decision: GameshowDecision | null = null;
+
+    if (questionPool.length > 0) {
+      // Pick a random question from the eligible pool
+      const builder = questionPool[Math.floor(Math.random() * questionPool.length)];
+      decision = builder();
+    } else {
+      // Fallback: audience engagement question (still varied)
+      const fallbacks: QBuilder[] = [
+        () => ({
+          moveIdx: next,
+          question: `🎭 ${checkCount} checks so far. Is this game aggressive or boring?`,
+          options: [
+            { label: "Aggressive — someone is out for blood", emoji: "🔥" },
+            { label: "Chill — just vibes", emoji: "☮️" },
+            { label: "Chaotic — nobody knows what's happening", emoji: "🌪️" },
+          ],
+          correctIdx: -1,
+          explanation: `You've seen ${checkCount} checks and ${captureCount} captures so far. You be the judge 📊`,
+        }),
+        () => ({
+          moveIdx: next,
+          question: "🤔 Quick prediction: does the game end in under 10 more moves?",
+          options: [
+            { label: "Yes — it's wrapping up", emoji: "⏰" },
+            { label: "No — there's more chaos ahead", emoji: "🎪" },
+          ],
+          correctIdx: movesLeft <= 10 ? 0 : 1,
+          explanation: movesLeft <= 10
+            ? `Only ${movesLeft} moves left! Your instincts are sharp ⏰`
+            : `${movesLeft} moves still to go. Buckle up for more 🎪`,
+        }),
+        () => ({
+          moveIdx: next,
+          question: `📊 Move ${move.moveNumber}: What's your read on the accuracy so far?`,
+          options: [
+            { label: "Better than expected for this level", emoji: "🎓" },
+            { label: "About what I'd expect", emoji: "🤷" },
+            { label: "HOW are these people playing chess", emoji: "🤡" },
+          ],
+          correctIdx: -1,
+          explanation: `${blundersSoFar} blunders and ${mistakesSoFar} mistakes so far — everyone has an opinion 📊🗿`,
+        }),
+      ];
+      decision = fallbacks[Math.floor(Math.random() * fallbacks.length)]();
     }
 
     setPendingDecisionIdx(null);
@@ -1449,7 +1683,7 @@ export default function RoastPage() {
     setCommentHistory(comments);
     // Show the current move's comment in the speech bubble (if any)
     const cur = idx >= 0 ? moves[idx] : null;
-    setCurrentMood(cur ? getMood(cur, blunders) : "neutral");
+    setCurrentMood(cur ? getMood(cur, blunders, bestStreakAt(moves, idx)) : "neutral");
     if (cur?.comment) {
       setActiveComment(cur.comment);
       setActiveArrows(cur.arrows ?? []);
@@ -1553,7 +1787,10 @@ export default function RoastPage() {
     }
 
     if (result === "correct" || result === "close") {
-      setScore(prev => prev + (result === "correct" ? 3 : 1));
+      const pts = result === "correct" ? 300 : 100;
+      setScore(prev => prev + pts);
+      setLastScoreGain(pts);
+      setTimeout(() => setLastScoreGain(null), 1500);
     }
     setGamesPlayed(prev => prev + 1);
 
@@ -1748,12 +1985,16 @@ export default function RoastPage() {
             {/* Gameshow scoreboard */}
             {gamesPlayed > 0 && (
               <div className="mt-3 flex items-center justify-center gap-4">
-                <div className="flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/[0.06] px-4 py-1.5 shadow-lg shadow-amber-500/10">
+                <div className="relative flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/[0.06] px-4 py-1.5 shadow-lg shadow-amber-500/10">
                   <span className="text-xs text-amber-300/70 uppercase tracking-wider font-bold">Score</span>
-                  <span className="text-lg font-black text-amber-400 tabular-nums" style={{ textShadow: "0 0 12px rgba(251,191,36,0.5)" }}>
-                    {score}
+                  <span className="text-xl font-black text-amber-400 tabular-nums" style={{ textShadow: "0 0 12px rgba(251,191,36,0.5)" }}>
+                    {score.toLocaleString()}
                   </span>
-                  <span className="text-xs text-slate-500">/ {gamesPlayed * 3}</span>
+                  {lastScoreGain && (
+                    <span className="absolute -top-4 right-2 text-xs font-black text-green-400 animate-bounce">
+                      +{lastScoreGain}
+                    </span>
+                  )}
                 </div>
                 {streakCount >= 2 && (
                 <div className="flex items-center gap-1 rounded-full border border-orange-500/40 bg-orange-500/[0.1] px-3 py-1.5 animate-pulse shadow-lg shadow-orange-500/20">
@@ -1834,12 +2075,16 @@ export default function RoastPage() {
             {/* Scoreboard when returning */}
             {gamesPlayed > 0 && (
               <div className="mb-8 flex items-center justify-center gap-4">
-                <div className="flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/[0.06] px-4 py-1.5 shadow-lg shadow-amber-500/10">
+                <div className="relative flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/[0.06] px-4 py-1.5 shadow-lg shadow-amber-500/10">
                   <span className="text-xs text-amber-300/70 uppercase tracking-wider font-bold">Score</span>
-                  <span className="text-lg font-black text-amber-400 tabular-nums" style={{ textShadow: "0 0 12px rgba(251,191,36,0.5)" }}>
-                    {score}
+                  <span className="text-xl font-black text-amber-400 tabular-nums" style={{ textShadow: "0 0 12px rgba(251,191,36,0.5)" }}>
+                    {score.toLocaleString()}
                   </span>
-                  <span className="text-xs text-slate-500">/ {gamesPlayed * 3}</span>
+                  {lastScoreGain && (
+                    <span className="absolute -top-4 right-2 text-xs font-black text-green-400 animate-bounce">
+                      +{lastScoreGain}
+                    </span>
+                  )}
                 </div>
                 {streakCount >= 2 && (
                   <div className="flex items-center gap-1 rounded-full border border-orange-500/40 bg-orange-500/[0.1] px-3 py-1.5 animate-pulse shadow-lg shadow-orange-500/20">
@@ -2300,6 +2545,7 @@ export default function RoastPage() {
                           setPgnInput("");
                           setIsDaily(false);
                           setChallengeId(null);
+                          setScoreSaved(false);
                         } : skipToGuess}
                         className="rounded-lg border border-amber-500/20 bg-amber-500/[0.06] px-3 py-1.5 text-xs font-medium text-amber-400 hover:bg-amber-500/10 transition-colors"
                       >
@@ -2480,8 +2726,17 @@ export default function RoastPage() {
                         onClick={() => {
                           if (answered) return;
                           setDecisionAnswer(idx);
-                          if (isCorrect || noCorrectAnswer) playSound("correct");
-                          else playSound("wrong");
+                          if (isCorrect && !noCorrectAnswer) {
+                            playSound("correct");
+                            setScore(prev => prev + 100);
+                            setQuizScore(prev => prev + 100);
+                            setLastScoreGain(100);
+                            setTimeout(() => setLastScoreGain(null), 1500);
+                          } else if (noCorrectAnswer) {
+                            playSound("correct");
+                          } else {
+                            playSound("wrong");
+                          }
                         }}
                         disabled={answered}
                         className={`w-full flex items-center gap-3 rounded-xl border-2 px-4 py-3.5 text-sm font-bold transition-all cursor-pointer group ${
@@ -2500,7 +2755,7 @@ export default function RoastPage() {
                         <span className={answered && isSelected ? (isCorrect || noCorrectAnswer ? "text-green-300" : "text-red-300") : answered && isCorrect && !noCorrectAnswer ? "text-green-300" : "text-white"}>
                           {opt.label}
                         </span>
-                        {answered && isCorrect && !noCorrectAnswer && <span className="ml-auto text-green-400">✓</span>}
+                        {answered && isCorrect && !noCorrectAnswer && <span className="ml-auto text-green-400">✓ +100</span>}
                         {answered && isSelected && !isCorrect && !noCorrectAnswer && <span className="ml-auto text-red-400">✗</span>}
                       </button>
                     );
@@ -2818,6 +3073,65 @@ export default function RoastPage() {
                   </button>
                 </div>
 
+                {/* ── Save Score CTA ── */}
+                {!sessionLoading && !authenticated && score > 0 && (
+                  <Link
+                    href="/auth/signin"
+                    className="group flex w-full items-center justify-center gap-2 rounded-xl border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-orange-500/10 px-4 py-3 text-sm font-bold text-amber-300 shadow-lg shadow-amber-500/10 transition-all hover:border-amber-500/50 hover:brightness-110"
+                  >
+                    <span className="text-lg">🏆</span>
+                    <span>Sign in to save your score &amp; hit the leaderboard</span>
+                    <svg className="h-4 w-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                  </Link>
+                )}
+                {!sessionLoading && authenticated && score > 0 && (
+                  <button
+                    disabled={savingScore || scoreSaved}
+                    onClick={async () => {
+                      setSavingScore(true);
+                      try {
+                        const res = await fetch("/api/roast/scores", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ score, gamesPlayed, streakCount, quizScore }),
+                        });
+                        if (res.ok) setScoreSaved(true);
+                      } catch { /* ignore */ } finally {
+                        setSavingScore(false);
+                      }
+                    }}
+                    className={`group flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-bold transition-all ${
+                      scoreSaved
+                        ? "border-green-500/30 bg-green-500/10 text-green-400"
+                        : "border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-300 shadow-lg shadow-amber-500/10 hover:border-amber-500/50 hover:brightness-110"
+                    }`}
+                  >
+                    {savingScore ? (
+                      <>
+                        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" /><path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" /></svg>
+                        Saving…
+                      </>
+                    ) : scoreSaved ? (
+                      <>✅ Score saved to leaderboard!</>
+                    ) : (
+                      <>
+                        <span className="text-lg">🏆</span>
+                        <span>Save Score to Leaderboard</span>
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {/* Leaderboard link */}
+                {scoreSaved && (
+                  <Link
+                    href="/roast/leaderboard"
+                    className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-xs font-medium text-slate-300 hover:bg-white/[0.08] transition-all"
+                  >
+                    📊 View Leaderboard
+                  </Link>
+                )}
+
                 <button
                   onClick={() => {
                     setPageState("choose-source");
@@ -2827,6 +3141,7 @@ export default function RoastPage() {
                     setPgnInput("");
                     setIsDaily(false);
                     setChallengeId(null);
+                    setScoreSaved(false);
                   }}
                   className="group relative w-full rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-6 py-4 text-base font-black text-white shadow-xl shadow-orange-500/25 transition-all hover:brightness-110 hover:scale-[1.02] hover:shadow-2xl hover:shadow-orange-500/40 active:scale-95 uppercase tracking-wider"
                 >

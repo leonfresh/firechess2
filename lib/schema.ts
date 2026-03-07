@@ -302,3 +302,21 @@ export const coinPurchases = pgTable("coin_purchase", {
   amount: integer("amount").notNull(),
   purchasedAt: timestamp("purchasedAt", { mode: "date" }).defaultNow(),
 });
+
+/* ------------------------------------------------------------------ */
+/*  Roast the Elo – score tracking                                     */
+/* ------------------------------------------------------------------ */
+
+export const roastScores = pgTable("roast_score", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  score: integer("score").notNull().default(0),
+  gamesPlayed: integer("gamesPlayed").notNull().default(0),
+  streakCount: integer("streakCount").notNull().default(0),
+  quizScore: integer("quizScore").notNull().default(0),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+});

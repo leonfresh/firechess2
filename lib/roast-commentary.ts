@@ -236,12 +236,96 @@ function detectPins(chess: Chess, pinnedColor: Color): PinInfo[] {
           f += df; r += dr;
         }
         if (between.length === 1 && between[0].color === pinnedColor && between[0].type !== "k") {
+          // Filter out false pins:
+          // 1. If the "target" behind is a rook/queen that can X-ray / oppose the pinner
+          //    on the same line (e.g. Rook behind a piece opposing an enemy queen on a file),
+          //    that's defensive opposition, not a meaningful pin.
+          const pinnedVal = PIECE_VALUES[between[0].type] ?? 0;
+          const targetVal = PIECE_VALUES[tgt.type] ?? 0;
+          const pinnerVal = PIECE_VALUES[slider.type] ?? 0;
+          // Skip if the "pinned" piece is worth ≥ the target behind it (no real pin leverage)
+          if (pinnedVal >= targetVal && tgt.type !== "k") continue;
+          // Skip rook/queen opposition: target is a slider that can attack the pinner through the
+          // pinned piece on the same line (e.g. rook opposing queen on same file/rank)
+          if (tgt.type !== "k" && (tgt.type === "r" || tgt.type === "q") && targetVal >= pinnerVal) {
+            // Check if the target can slide toward the pinner (same line)
+            const canOppose = (tgt.type === "q") || // queen always covers the line
+              (tgt.type === "r" && (df === 0 || dr === 0)); // rook covers ranks/files
+            if (canOppose) continue;
+          }
           pins.push({ pinner: slider, pinned: between[0], target: tgt });
         }
       }
     }
   }
   return pins;
+}
+
+/* ================================================================== */
+/*  Threat Detection — what does a move threaten?                       */
+/* ================================================================== */
+
+interface ThreatInfo {
+  /** Square being threatened */
+  square: Square;
+  /** Piece being threatened */
+  piece: PieceInfo;
+  /** What is doing the threatening */
+  attacker: PieceInfo;
+  /** Type of threat */
+  type: "capture" | "fork" | "skewer" | "discovery";
+}
+
+/** Detect what meaningful threats a move creates (new attacks on valuable pieces) */
+function detectNewThreats(before: Chess, after: Chess, moverColor: Color): ThreatInfo[] {
+  const threats: ThreatInfo[] = [];
+  const oppColor = opp(moverColor);
+
+  // Get squares attacked before and after
+  try {
+    // Find new attacks on opponent's pieces (attacks that didn't exist before)
+    const oppPieces = allPieces(after).filter(p => p.color === oppColor && p.type !== "p");
+    
+    for (const target of oppPieces) {
+      const wasAttacked = before.isAttacked(target.square, moverColor);
+      const nowAttacked = after.isAttacked(target.square, moverColor);
+      
+      if (nowAttacked && !wasAttacked) {
+        // Find who's attacking this square now
+        const myPieces = allPieces(after).filter(p => p.color === moverColor);
+        for (const attacker of myPieces) {
+          if (isAttacking(after, attacker.square, attacker, target.square)) {
+            threats.push({
+              square: target.square,
+              piece: target,
+              attacker,
+              type: "capture",
+            });
+            break; // one attacker is enough for commentary
+          }
+        }
+      }
+    }
+  } catch {}
+
+  return threats;
+}
+
+/** Format threats as a brief commentary snippet */
+function formatThreats(threats: ThreatInfo[]): string | null {
+  if (threats.length === 0) return null;
+  const valuable = threats.filter(t => (PIECE_VALUES[t.piece.type] ?? 0) >= 3);
+  if (valuable.length === 0) return null;
+  
+  if (valuable.length === 1) {
+    const t = valuable[0];
+    return `threatening the ${pn(t.piece.type)} on ${t.square}`;
+  }
+  if (valuable.length >= 2) {
+    const names = valuable.slice(0, 2).map(t => `${pn(t.piece.type)} on ${t.square}`);
+    return `threatening both the ${names.join(" and the ")}`;
+  }
+  return null;
 }
 
 function kingSafety(chess: Chess, color: Color): { score: number; issues: string[] } {
@@ -408,7 +492,7 @@ function _generatePositionAware(
   }
 
   if (move.classification === "brilliant" || (move.classification === "best" && move.sacrificedMaterial)) {
-    return _emitResult(used, _brilliantRoast(move, after, toSq, landedPiece, ctx));
+    return _emitResult(used, _brilliantRoast(move, before, after, toSq, landedPiece, ctx));
   }
 
   if (move.classification === "great" || move.classification === "best") {
@@ -420,7 +504,7 @@ function _generatePositionAware(
       const style = _styleRoast(move, summary, used);
       if (style) return _emitResult(used, style);
     }
-    return _emitResult(used, _goodMoveRoast(move, after, toSq, ctx));
+    return _emitResult(used, _goodMoveRoast(move, before, after, toSq, ctx));
   }
 
   if (move.missedMateInN && move.missedMateInN <= 5) {
@@ -632,6 +716,7 @@ function _getGameContext(move: AnalyzedMove, summary: GameSummary): GameContext 
 
 function _brilliantRoast(
   move: AnalyzedMove,
+  before: Chess,
   after: Chess,
   toSq: Square,
   landed: ReturnType<Chess["get"]>,
@@ -640,6 +725,17 @@ function _brilliantRoast(
   const fromSq = move.uci.slice(0, 2);
   const baseArrows: [string, string, string][] = [[fromSq, toSq, "rgba(34, 197, 94, 0.85)"]];
   const baseMarkers: { square: string; emoji: string }[] = [{ square: toSq, emoji: "✨" }];
+
+  // Detect threats created by this move
+  const threats = detectNewThreats(before, after, move.color as Color);
+  const threatStr = formatThreats(threats);
+  const threatSuffix = threatStr ? ` ${threatStr}!` : "";
+  // Add threat arrows to annotations
+  const threatArrows: [string, string, string][] = threats
+    .filter(t => (PIECE_VALUES[t.piece.type] ?? 0) >= 3)
+    .slice(0, 2)
+    .map(t => [t.attacker.square, t.square, "rgba(34, 197, 94, 0.6)"] as [string, string, string]);
+  const allArrows: [string, string, string][] = [...baseArrows, ...threatArrows];
 
   // Context-aware prefix for Levy-style callbacks
   const callback = ctx.recentBlunder
@@ -651,8 +747,8 @@ function _brilliantRoast(
     : "";
 
   const lines: (() => { text: string; annotations: MoveAnnotation })[] = [
-    () => ({ text: `🤯 ${move.san}?!${callback} That's actually the best move. WHERE has this person been hiding?? Suspicious ngl 🕵️`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
-    () => ({ text: `🧠 ${pn(move.pieceType, true)} to ${toSq}.${callback} The best move on the board. This person has NO business playing this well at this elo 💀`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `🤯 ${move.san}?!${callback} That's actually the best move —${threatSuffix || " WHERE has this person been hiding??"} Suspicious ngl 🕵️`, annotations: { arrows: allArrows, markers: baseMarkers } }),
+    () => ({ text: `🧠 ${pn(move.pieceType, true)} to ${toSq}.${callback} The best move on the board${threatSuffix ? `, ${threatStr}` : ""}. This person has NO business playing this well at this elo 💀`, annotations: { arrows: allArrows, markers: baseMarkers } }),
     () => {
       if (move.sacrificedMaterial && landed)
         return { text: `⚡ A REAL sacrifice! ${pn(landed.type, true)} to ${toSq}. Bold. And actually CORRECT? At this elo? Google "stockfish" because I think they did 🤨🔥`, annotations: { arrows: baseArrows, markers: [{ square: toSq, emoji: "⚡" }] } };
@@ -684,19 +780,34 @@ function _brilliantRoast(
 
 function _goodMoveRoast(
   move: AnalyzedMove,
+  before: Chess,
   after: Chess,
   toSq: Square,
   ctx: GameContext,
 ): { text: string; annotations: MoveAnnotation } {
   const fromSq = move.uci.slice(0, 2);
   const goodEmojis = ["🗿", "🫠", "😤", "🤷", "😐", "💤", "🥱"];
-  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(34, 197, 94, 0.7)"]], markers: [{ square: toSq, emoji: pick(goodEmojis) }] };
+
+  // Detect threats created by this move for context
+  const threats = detectNewThreats(before, after, move.color as Color);
+  const threatStr = formatThreats(threats);
+  const threatArrows: [string, string, string][] = threats
+    .filter(t => (PIECE_VALUES[t.piece.type] ?? 0) >= 3)
+    .slice(0, 2)
+    .map(t => [t.attacker.square, t.square, "rgba(34, 197, 94, 0.6)"] as [string, string, string]);
+  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(34, 197, 94, 0.7)"], ...threatArrows], markers: [{ square: toSq, emoji: pick(goodEmojis) }] };
 
   // Context-aware sarcasm
   const afterBlunder = ctx.recentBlunder ? ` (after they ${ctx.recentBlunder})` : "";
   const threwLine = ctx.threwAdvantage ? " Too bad the game was already over 5 moves ago" : "";
 
   const lines: (() => string)[] = [
+    // Threat-aware lines — when the move creates real threats
+    ...(threatStr ? [
+      () => `🗿 ${move.san}, ${threatStr}. Fine. Whatever. I guess they know what pieces do 🫠`,
+      () => `😤 ${move.san} — ${threatStr}. A move with actual PURPOSE? At this elo? Suspicious 🕵️`,
+      () => `🤷 ${move.san}, ${threatStr}. They're actually making threats now instead of hanging pieces. Character development 📈`,
+    ] : []),
     () => ctx.recentBlunder
       ? `🗿 ${move.san} — oh wow a normal move${afterBlunder}. Congratulations on doing the bare minimum 👏💀`
       : `🗿 ${move.san}. That's a normal move. Not gonna applaud someone for not hanging a piece 🫠`,
