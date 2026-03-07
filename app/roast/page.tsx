@@ -2933,21 +2933,19 @@ export default function RoastPage() {
               <button
                 type="button"
                 onClick={() => {
-                  if (dailyCompleted) return;
                   setInputMode("random");
                   setIsDaily(true);
                   fetchDailyGame();
                 }}
-                disabled={!!dailyCompleted}
                 className={`group rounded-2xl border p-5 sm:p-6 text-center transition-all cursor-pointer relative overflow-hidden ${
                   dailyCompleted
-                    ? "border-emerald-500/30 bg-emerald-500/[0.06] opacity-70"
+                    ? "border-emerald-500/30 bg-emerald-500/[0.06] hover:border-emerald-500/40 hover:bg-emerald-500/[0.10]"
                     : "border-amber-500/20 bg-amber-500/[0.04] hover:border-amber-500/40 hover:bg-amber-500/[0.08]"
                 }`}
               >
                 <span className="mb-2 sm:mb-3 flex justify-center text-2xl sm:text-3xl">{dailyCompleted ? (dailyCompleted.result === "correct" ? "🎯" : dailyCompleted.result === "close" ? "🔥" : "📅") : "📅"}</span>
                 <p className={`text-xs sm:text-sm font-bold ${dailyCompleted ? "text-emerald-400" : "text-amber-400 group-hover:text-amber-300"}`}>
-                  {dailyCompleted ? "Completed ✓" : "Daily Challenge"}
+                  {dailyCompleted ? "Rewatch ▶" : "Daily Challenge"}
                 </p>
                 <p className="mt-1 text-[10px] sm:text-[11px] text-slate-500 leading-relaxed">
                   {dailyCompleted ? `${dailyCompleted.guess} → ${dailyCompleted.elo} Elo` : "Same game for everyone today"}
@@ -3304,33 +3302,6 @@ export default function RoastPage() {
                     </div>
                   )}
 
-                  {/* Emoji marker overlay */}
-                  {activeMarkers.length > 0 && boardSize > 0 && (
-                    <div className="absolute inset-0 pointer-events-none z-[100]" style={{ width: boardSize, height: boardSize }}>
-                      {activeMarkers.map((m, i) => {
-                        const sqSize = boardSize / 8;
-                        const fileI = m.square.charCodeAt(0) - 97; // a=0 .. h=7
-                        const rankI = parseInt(m.square[1]) - 1;   // 1=0 .. 8=7
-                        const x = orientation === "white" ? fileI * sqSize : (7 - fileI) * sqSize;
-                        const y = orientation === "white" ? (7 - rankI) * sqSize : rankI * sqSize;
-                        return (
-                          <span
-                            key={`${m.square}-${i}`}
-                            className="absolute select-none drop-shadow-lg"
-                            style={{
-                              left: x + sqSize * 0.58,
-                              top: y - sqSize * 0.08,
-                              fontSize: sqSize * 0.38,
-                              lineHeight: 1,
-                            }}
-                          >
-                            {m.emoji}
-                          </span>
-                        );
-                      })}
-                    </div>
-                  )}
-
                   {/* ── Ghost reaction bubbles from other daily players ── */}
                   {isDaily && activeGhosts.length > 0 && (
                     <div className="absolute inset-0 pointer-events-none z-40 overflow-hidden">
@@ -3369,6 +3340,60 @@ export default function RoastPage() {
                     </div>
                   )}
                 </div>
+
+                {/* ── Emoji markers (OUTSIDE overflow-hidden so they won't clip at board edges) ── */}
+                {activeMarkers.length > 0 && boardSize > 0 && (
+                  <div className="absolute pointer-events-none z-[100]" style={{ width: boardSize, height: boardSize, left: 3, top: 3 }}>
+                    {activeMarkers.map((m, i) => {
+                      const sqSize = boardSize / 8;
+                      const fileI = m.square.charCodeAt(0) - 97;
+                      const rankI = parseInt(m.square[1]) - 1;
+                      const x = orientation === "white" ? fileI * sqSize : (7 - fileI) * sqSize;
+                      const y = orientation === "white" ? (7 - rankI) * sqSize : rankI * sqSize;
+                      return (
+                        <span
+                          key={`${m.square}-${i}`}
+                          className="absolute select-none drop-shadow-lg"
+                          style={{
+                            left: x + sqSize * 0.58,
+                            top: y - sqSize * 0.08,
+                            fontSize: sqSize * 0.38,
+                            lineHeight: 1,
+                          }}
+                        >
+                          {m.emoji}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* ── Emoji markers (OUTSIDE overflow-hidden so they won't clip at board edges) ── */}
+                {activeMarkers.length > 0 && boardSize > 0 && (
+                  <div className="absolute pointer-events-none z-[100]" style={{ width: boardSize, height: boardSize, left: 3, top: 3 }}>
+                    {activeMarkers.map((m, i) => {
+                      const sqSize = boardSize / 8;
+                      const fileI = m.square.charCodeAt(0) - 97;
+                      const rankI = parseInt(m.square[1]) - 1;
+                      const x = orientation === "white" ? fileI * sqSize : (7 - fileI) * sqSize;
+                      const y = orientation === "white" ? (7 - rankI) * sqSize : rankI * sqSize;
+                      return (
+                        <span
+                          key={`${m.square}-${i}`}
+                          className="absolute select-none drop-shadow-lg"
+                          style={{
+                            left: x + sqSize * 0.58,
+                            top: y - sqSize * 0.08,
+                            fontSize: sqSize * 0.38,
+                            lineHeight: 1,
+                          }}
+                        >
+                          {m.emoji}
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
 
                 {/* ── Pepe reaction badge (OUTSIDE overflow-hidden so it won't clip at edges) ── */}
                 {boardPepeImg && boardSize > 0 && currentMove && (
