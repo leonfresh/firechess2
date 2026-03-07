@@ -931,9 +931,9 @@ function _generatePositionAware(
     return _emitResultForce(used, _enPassantRoast(move, toSq, used, ctx));
   }
 
-  // Time-based roasts — if clock data is available and the time spent is extreme
-  if (move.timeSpent !== null && Math.random() < 0.4) {
-    const timeResult = _timeRoast(move, ctx, used);
+  // Time-based roasts — if clock data is available and the time spent is noteworthy
+  if (move.timeSpent !== null && Math.random() < 0.65) {
+    const timeResult = _timeRoast(move, ctx, used, summary);
     if (timeResult) return _emitResult(used, timeResult);
   }
 
@@ -2912,6 +2912,7 @@ function _timeRoast(
   move: AnalyzedMove,
   ctx: GameContext,
   used: Set<string>,
+  summary: GameSummary,
 ): { text: string; annotations: MoveAnnotation } | null {
   const timeSpent = move.timeSpent;
   if (timeSpent === null) return null;
@@ -2966,10 +2967,137 @@ function _timeRoast(
 
   // Instant premove energy on a normal move
   if (timeSpent <= 1 && !isBlunder && !isMistake) {
-    if (Math.random() < 0.15) {
+    if (Math.random() < 0.3) {
       return { text: pickUnused([
         `⚡ ${move.san} at LIGHT SPEED. ${timeSpent}s. Either a premove or they're channeling their inner Hikaru. Naka would be proud 🏎️💨`,
         `⏱️ ${timeSpent}s. Premove energy. Confidence is high. Whether it's justified is another question entirely 🗿⚡`,
+        `⚡ ${timeSpent}s. Didn't even look at the board. Just felt it in their BONES. Main character energy 🦴⏱️`,
+        `⏱️ ${move.san} in ${timeSpent} seconds. Chat, they loaded this move before the opponent even finished clicking. Bullet mentality in a non-bullet game 🔫💨`,
+      ], used), annotations: ann };
+    }
+    return null;
+  }
+
+  // Medium think (10-30s) and still blundered — they actually tried
+  if (timeSpent >= 10 && timeSpent <= 30 && isBlunder) {
+    return { text: pickUnused([
+      `⏱️ ${Math.round(timeSpent)}s of thinking and they STILL blundered. They didn't premove this one, they actually sat there and CHOSE violence against themselves 🤡⏰`,
+      `💀 ${Math.round(timeSpent)} seconds. They thought about it. They CONSIDERED their options. And then played ${move.san}. The worst possible timeline 😭⏱️`,
+      `⏱️ This wasn't a flag situation or a premove. They spent ${Math.round(timeSpent)} genuine seconds arriving at ${move.san}. The thought process led them here. That's the scary part 🧠💀`,
+      `🫠 ${Math.round(timeSpent)}s think time. They could have been recalculating, they could have been doubting themselves, but ultimately they committed to ${move.san}. Sometimes conviction is your enemy ⏱️`,
+      `⏱️ You know what's worse than a 1-second blunder? A ${Math.round(timeSpent)}-second blunder. Because you KNOW they tried 😭🧠`,
+    ], used), annotations: ann };
+  }
+
+  // Medium think and mistake (not blunder, but still not great)
+  if (timeSpent >= 15 && timeSpent <= 40 && isMistake) {
+    return { text: pickUnused([
+      `⏱️ ${Math.round(timeSpent)}s to find a mistake. Not a blunder, but not good either. The thinking time was wasted on finding the SECOND worst option 🗿⏰`,
+      `😤 ${Math.round(timeSpent)} seconds of deliberation for ${move.san}. A mistake. Close but no cigar. That think time deserved a better result 🧠📉`,
+      `⏱️ They invested ${Math.round(timeSpent)} seconds into this decision and the return on investment was a mistake. Not bankrupt, but the portfolio is DOWN 📉⏰`,
+    ], used), annotations: ann };
+  }
+
+  // Very long think and played a good move — validated the time
+  if (timeSpent >= 60 && isGood) {
+    return { text: pickUnused([
+      `⏱️ ${Math.round(timeSpent)} seconds... and it's actually a GOOD move! The think tank DELIVERED for once. Time well spent 🧠✅`,
+      `🧐 Over a minute of thought and ${move.san} is correct! Maybe they DO know what they're doing when they actually try 🤔⏱️`,
+      `⏱️ ${Math.round(timeSpent)}s and they found it. The deep think WORKED. This is what your clock is FOR. Respect 🫡⏰`,
+      `💡 ${Math.round(timeSpent)} seconds to find ${move.san}. They actually used their brain like it's a muscle. And it worked! The think tank has been redeemed 🧠💪`,
+    ], used), annotations: ann };
+  }
+
+  // Long think in a losing position — "it's already over"
+  if (timeSpent >= 30 && ctx.posture === "losing" && move.cpBefore < -300) {
+    return { text: pickUnused([
+      `⏱️ ${Math.round(timeSpent)}s of thinking while down major material. Buddy, the ship has sailed. The ship has DOCKED in another country 🚢💀`,
+      `😬 ${Math.round(timeSpent)} seconds of deep thought in a lost position. They're down a whole piece+ and treating this like it's game 12 of a world championship ⏱️🗿`,
+      `⏱️ They burned ${Math.round(timeSpent)} seconds of clock time in a position that's already lost. Save it for the next game, friend 📉⏰`,
+      `💀 ${Math.round(timeSpent)}s think in a position that Stockfish already called the ambulance for. Admirable stubbornness though ⏱️🚑`,
+    ], used), annotations: ann };
+  }
+
+  // Fast move when winning big — "they smell blood"
+  if (timeSpent <= 3 && ctx.posture === "winning" && move.cpBefore > 300 && isGood) {
+    return { text: pickUnused([
+      `⚡ ${timeSpent}s. They smell blood. ${move.san} instantly. No hesitation. The killer instinct has activated 🩸⏱️`,
+      `⏱️ ${timeSpent} seconds — they're up big and playing FAST. Converting with ZERO mercy. This is how you close out a game 💀⚡`,
+      `⚡ ${move.san} in ${timeSpent}s. When you're up material, play fast, stay confident. They're doing exactly that. Cold blooded 🐍⏰`,
+    ], used), annotations: ann };
+  }
+
+  // Fast move on a recapture — natural reaction
+  if (timeSpent <= 2 && move.isCapture && isGood) {
+    if (Math.random() < 0.2) {
+      return { text: pickUnused([
+        `⚡ ${timeSpent}s recapture. ${move.san}. No thought needed, just reflexes. Take back what's yours 🔄⏱️`,
+        `⏱️ Instant recapture. ${timeSpent}s. The hand is faster than the brain and for once that's fine 🤝⚡`,
+      ], used), annotations: ann };
+    }
+    return null;
+  }
+
+  // Long think on a capture — "they weren't sure if they should take"
+  if (timeSpent >= 20 && move.isCapture && isGood) {
+    return { text: pickUnused([
+      `⏱️ ${Math.round(timeSpent)}s to decide to capture. They were AGONIZING over this. "Do I take? Is it a trap? Will I regret this?" — they took 🤔⏰`,
+      `🧐 ${Math.round(timeSpent)} seconds staring at a capture. The self-doubt era. But ${move.san} was right. Trust your instincts next time ⏱️✅`,
+      `⏱️ It took them ${Math.round(timeSpent)} seconds to take a free piece. The hesitation was real. The trust issues are VISIBLE 👀⏰`,
+    ], used), annotations: ann };
+  }
+
+  // Getting faster and faster (speed escalation) — check last 3 time spents
+  const myMoves = summary.moves.filter(m => m.color === move.color);
+  const myIdx = myMoves.findIndex(m => m.uci === move.uci && m.moveNumber === move.moveNumber);
+  if (myIdx >= 2) {
+    const t1 = myMoves[myIdx - 2]?.timeSpent;
+    const t2 = myMoves[myIdx - 1]?.timeSpent;
+    const t3 = timeSpent;
+    if (t1 !== null && t2 !== null && t1 > t2 && t2 > t3 && t1 >= 15 && t3 <= 5) {
+      return { text: pickUnused([
+        `⏱️ Their think times: ${Math.round(t1)}s → ${Math.round(t2)}s → ${Math.round(t3)}s. They're ACCELERATING. Either they found a plan or they gave up thinking. One of these is concerning 📉⚡`,
+        `⚡ Getting faster every move. ${Math.round(t1)}s, ${Math.round(t2)}s, now ${Math.round(t3)}s. Either pure confidence or pure desperation. Hard to tell at this elo 🗿⏰`,
+        `⏱️ ${Math.round(t1)}s → ${Math.round(t2)}s → ${Math.round(t3)}s. The acceleration is REAL. They went from deep thought to speedrun mode 🏎️💨`,
+      ], used), annotations: ann };
+    }
+
+    // Getting slower and slower — overthinking spiral
+    if (t1 !== null && t2 !== null && t1 < t2 && t2 < t3 && t3 >= 20 && t1 <= 8) {
+      return { text: pickUnused([
+        `⏱️ ${Math.round(t1)}s → ${Math.round(t2)}s → ${Math.round(t3)}s. They're thinking MORE every move. The analysis paralysis is setting in. Somebody call a doctor 🩺🧠`,
+        `🐌 Getting slower... ${Math.round(t1)}s, ${Math.round(t2)}s, ${Math.round(t3)}s. The overthinking spiral has begun. Each move they trust themselves LESS ⏱️😰`,
+        `⏱️ Their confidence is dropping in real time. ${Math.round(t1)}s, then ${Math.round(t2)}s, now ${Math.round(t3)}s. The self-doubt creep is VISIBLE 📈⏰`,
+      ], used), annotations: ann };
+    }
+  }
+
+  // Fast castle — instinctive safety
+  if (timeSpent <= 3 && move.isCastle && !isBlunder) {
+    if (Math.random() < 0.25) {
+      return { text: pickUnused([
+        `⚡ ${timeSpent}s to castle. Zero hesitation. King safety is PRIORITY ONE. The only fast move that's always justified 🏰⏱️`,
+        `⏱️ Instant castle. ${timeSpent}s. Some things don't need thought, they need instinct. And the instinct says: GET THE KING OUT 🏰💨`,
+      ], used), annotations: ann };
+    }
+    return null;
+  }
+
+  // King move that took forever (not castling) — panic
+  if (timeSpent >= 20 && move.pieceType === "k" && !move.isCastle) {
+    return { text: pickUnused([
+      `⏱️ ${Math.round(timeSpent)}s to move the king. When the king has to run, you KNOW things have gone wrong. The panic think 👑😰⏰`,
+      `😬 ${Math.round(timeSpent)} seconds deciding where to put the king. It's fight-or-flight and the king chose flight... eventually ⏱️👑`,
+      `⏱️ A ${Math.round(timeSpent)}-second king move. They were calculating every escape route. The king is sweating 👑💦⏰`,
+    ], used), annotations: ann };
+  }
+
+  // Pawn push that took way too long
+  if (timeSpent >= 25 && move.pieceType === "p" && isGood) {
+    if (Math.random() < 0.3) {
+      return { text: pickUnused([
+        `⏱️ ${Math.round(timeSpent)} seconds to push a pawn. It's a PAWN. It goes forward. But apparently this required a full strategic evaluation 🧐⏰`,
+        `🐌 ${Math.round(timeSpent)}s on a pawn move. They treated this pawn push like it was a PhD thesis defense 🎓⏱️`,
       ], used), annotations: ann };
     }
     return null;
