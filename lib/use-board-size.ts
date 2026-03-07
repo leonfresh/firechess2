@@ -30,18 +30,14 @@ export function useBoardSize(fallback = 400, opts?: { evalBar?: boolean }) {
       const evalBarOverhead = hasEvalBar ? 24 + 12 : 0;
       const available = contentWidth - evalBarOverhead;
 
-      // On mobile / tablet, use viewport-relative sizing rather than fixed pixel caps.
-      // This ensures the board scales naturally with ANY device size.
+      // Use viewport-relative sizing so the board scales dynamically with any window size.
       const vw = window.innerWidth;
-      let maxSize = fallback;
-      if (vw < 1024) {
-        const vh = window.visualViewport?.height ?? window.innerHeight;
-        // Board should be at most 88% of viewport width (leave side padding)
-        const maxByWidth = vw * 0.88;
-        // Board should also leave ~250px for navbar + player labels + commentary + controls
-        const maxByHeight = Math.max(260, vh - 250);
-        maxSize = Math.min(maxByWidth, maxByHeight, fallback);
-      }
+      const vh = window.visualViewport?.height ?? window.innerHeight;
+      // Board should be at most 88% of viewport width (leave side padding)
+      const maxByWidth = vw * 0.88;
+      // On narrow/short viewports, also cap by height to leave room for UI
+      const maxByHeight = vw < 1024 ? Math.max(260, vh - 250) : Infinity;
+      const maxSize = Math.min(maxByWidth, maxByHeight, fallback);
 
       setSize(Math.max(260, Math.min(available, maxSize)));
     };
@@ -50,10 +46,13 @@ export function useBoardSize(fallback = 400, opts?: { evalBar?: boolean }) {
 
     const ro = new ResizeObserver(update);
     ro.observe(el);
+    // Listen for window resize so viewport-relative caps update when browser is resized
+    window.addEventListener("resize", update);
     // Also listen for visual viewport resize (iOS keyboard, address bar)
     window.visualViewport?.addEventListener("resize", update);
     return () => {
       ro.disconnect();
+      window.removeEventListener("resize", update);
       window.visualViewport?.removeEventListener("resize", update);
     };
   }, [fallback, hasEvalBar]);
