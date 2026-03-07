@@ -658,6 +658,15 @@ function _generatePositionAware(
     if (momentumResult) return _emitResult(used, momentumResult);
   }
 
+  // Check-response commentary — player was responding to a check
+  if (ctx.wasRespondingToCheck && Math.random() < 0.55) {
+    const checkResponseResult = _checkResponseRoast(move, ctx, used);
+    if (checkResponseResult) {
+      if (move.classification === "blunder") return _emitResultForce(used, checkResponseResult);
+      return _emitResult(used, checkResponseResult);
+    }
+  }
+
   if (move.classification === "brilliant" || (move.classification === "best" && move.sacrificedMaterial)) {
     return _emitResult(used, _brilliantRoast(move, before, after, toSq, landedPiece, ctx));
   }
@@ -739,6 +748,7 @@ function _isObviousRecapture(move: AnalyzedMove, summary: GameSummary): boolean 
 
 function _templateKey(text: string): string {
   // Strip move-specific text, numbers, emojis to produce a template key for dedup
+  // Keep more text (80 chars) for finer-grained dedup to avoid duplicate-feeling lines
   return text
     .replace(/[KQRBN]?[a-h]?x?[a-h][1-8][+=]?[QRBN]?[+#]?/g, "_")
     .replace(/move \d+/gi, "_")
@@ -746,7 +756,7 @@ function _templateKey(text: string): string {
     .replace(/[\u{1F000}-\u{1FFFF}]/gu, "")
     .replace(/\s+/g, " ")
     .trim()
-    .slice(0, 50);
+    .slice(0, 80);
 }
 
 function _emitResult(used: Set<string>, result: { text: string; annotations: MoveAnnotation }): CommentResult | null {
@@ -796,6 +806,8 @@ interface GameContext {
   opponentGift: number;
   /** Opening name from the game */
   opening: string | null;
+  /** Was the player responding to a check? (opponent's last move was a check) */
+  wasRespondingToCheck: boolean;
 }
 
 function _getGameContext(move: AnalyzedMove, summary: GameSummary): GameContext {
@@ -880,7 +892,10 @@ function _getGameContext(move: AnalyzedMove, summary: GameSummary): GameContext 
   // Gift: how much eval the opponent just handed us (their cpLoss from our perspective)
   const opponentGift = oppLast ? oppLast.cpLoss : 0;
 
-  return { recentBlunder, playerBlunders, goodStreak, posture, threwAdvantage, desperateDefense, evalCrater, isEndgame, totalPieces, opponentJustBlundered, opponentLastClass, opponentGift, opening: summary.opening ?? null };
+  // Was the player responding to a check? (opponent's last move gave check)
+  const wasRespondingToCheck = oppLast ? oppLast.isCheck : false;
+
+  return { recentBlunder, playerBlunders, goodStreak, posture, threwAdvantage, desperateDefense, evalCrater, isEndgame, totalPieces, opponentJustBlundered, opponentLastClass, opponentGift, opening: summary.opening ?? null, wasRespondingToCheck };
 }
 
 function _brilliantRoast(
@@ -1024,6 +1039,9 @@ function _goodMoveRoast(
       ? `🏁 ${move.san} in the endgame. Oh they know how pieces move! Crazy! Do they know endgame theory? LOL probably not 🗿📚`
       : `🤷 ${move.san}. A moves that screams "I have no idea what I'm doing but I'll copy what the engine says." Except they don't have an engine. Or do they 🕵️`,
     () => `🗿 ${move.san}. The Petrosian of moves. Solid, boring, and makes everyone watching want to Alt+F4. "Well done" I guess 💤`,
+    () => `♟️ ${move.san}. Fischer would approve. Then again, Fischer approved of like 3 things total in his life. So. Progress? 👑🗿`,
+    () => `🎩 ${move.san}. Tal would call this "boring" and sac the exchange instead. But for non-magicians? This is the right call 🪄`,
+    () => `👑 ${move.san}. Morphy energy. Simple, clean, devastating. Except Morphy did this in an opera house while watching a play. Very different levels 🎭♟️`,
     () => `😤 ${move.san}. They played a normal chess move and want applause? This is the bare minimum? Like, the FLOOR? 📉👏`,
     () => ctx.playerBlunders > 0
       ? `🗿 ${move.san}. "Don't hang pieces" ✅ "Play the best move" ❌ Somewhere in between. Mid. Ultra mid 🫠`
@@ -1158,6 +1176,22 @@ function _blunderRoast(
       const forked = detectForks(sim, forkSq, { type: lp.type, color: lp.color, square: forkSq });
       const valuable = forked.filter(f => f.type === "k" || f.type === "q" || f.type === "r");
       if (forked.length >= 2 && valuable.length >= 1) {
+        // Check if fork is meaningful — skip if all targets are well-defended
+        // (unless king is forked, which always forces a move)
+        const kingForked = forked.some(f => f.type === "k");
+        if (!kingForked) {
+          let hasMeaningfulTarget = false;
+          for (const target of forked) {
+            const targetVal = PIECE_VALUES[target.type] ?? 0;
+            // If forker is worth less than target, capturing wins material even if defended
+            if (forkerVal < targetVal) { hasMeaningfulTarget = true; break; }
+            // Check if target is undefended — any friendly piece (other than the target itself) defending the square?
+            const friends = allPieces(sim).filter(p => p.color === target.color && p.square !== target.square);
+            const isDefended = friends.some(p => isAttacking(sim, p.square, p, target.square));
+            if (!isDefended) { hasMeaningfulTarget = true; break; }
+          }
+          if (!hasMeaningfulTarget) continue; // all targets well-defended, not a real fork
+        }
         const targets = forked.map(f => `${pn(f.type)} on ${f.square}`).join(" and ");
         const forkArrows: [string, string, string][] = [
           [m.from, forkSq, "rgba(239, 68, 68, 0.85)"],
@@ -1365,6 +1399,12 @@ function _blunderRoast(
     `🗿 ${move.san}.${ctx.playerBlunders >= 2 ? ` Blunder number ${ctx.playerBlunders}.` : ""} Hikaru speed-running this position would never. He'd premove the right move in 0.1 seconds. This person took 30 seconds to find the WRONG one 🏎️💀`,
     `😌 ${move.san}.${ctxLine} Eric Rosen would look at this and go "Ohhhh nooo" in the most calm voice imaginable. Meanwhile the position is literally ON FIRE 🔥😌`,
     `💀 ${move.san}.${ctxLine} This is some Stafford Gambit victim energy. They walked right into it like an Eric Rosen highlight reel 🎯😌`,
+    `🔥 ${move.san}.${ctxLine} Tal would have sacked a piece here and won. Fischer would have played the right move instantly. This person? They found the ONE move that loses 🗿♟️`,
+    `💀 ${move.san}.${ctxLine} Fischer once said "I don't believe in psychology, I believe in good moves." This move believes in neither 🧠♟️`,
+    `☠️ ${move.san}.${ctxLine} Morphy would have finished this game 15 moves ago with a queen sacrifice. Instead we get... this. The anti-Morphy 👑💀`,
+    `🗿 ${move.san}.${ctxLine} Tal — the Magician from Riga — would NEVER. He'd sac the exchange and create chaos. This player created chaos by accident and it's THEIR chaos to suffer through 🎩🔥`,
+    `⚡ ${move.san}.${ctxLine} Bobby Fischer played 20 perfectly prepared moves before his opponents even sat down. This person played 0 good moves after sitting down for 20 minutes 🕐💀`,
+    `💀 ${move.san}.${ctxLine} Morphy literally played blindfolded against 8 opponents simultaneously and won them all. This person can't beat ONE person with their eyes OPEN 🙈♟️`,
   ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: _toSq, emoji: "💀" }] } };
 }
 
@@ -1550,6 +1590,9 @@ function _mistakeRoast(
     `🗿 ${move.san}.${ctxFallback} Hikaru wouldn't even comment on this. Just "captures captures" past it. Speed chess energy except it's speed ignoring 🏎️💨`,
     `😌 ${move.san}.${ctxFallback} Eric Rosen would go "oh no" so softly you'd think he was narrating a nature documentary. Meanwhile the position is DYING 🦆🗿`,
     `😬 ${move.san}.${ctxFallback} This is the kind of move that shows up in an Eric Rosen "traps and tricks" video — as the victim. They ARE the content 📺😌`,
+    `♟️ ${move.san}.${ctxFallback} Fischer would have found the best move in 2 seconds flat. This person found the second-best move in 30 seconds. Close but no cigar 🕐🗿`,
+    `🎩 ${move.san}.${ctxFallback} Tal would have sacrificed a piece here and created magic. Instead we get... a mistake. The anti-magic 🪄💀`,
+    `👑 ${move.san}.${ctxFallback} Morphy retired at 22 because chess was too easy. This person should consider retiring because chess is too hard 😭♟️`,
     ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: toSq, emoji: pick(["😬", "📉", "🤡", "😤", "🗿"]) }] } };
 }
 
@@ -1758,6 +1801,52 @@ function _endgameRoast(
   }
 
   return { text: pickUnused(lines, used), annotations: ann };
+}
+
+/* ================================================================== */
+/*  Check-Response Roasts — commentary when responding to a check      */
+/* ================================================================== */
+
+function _checkResponseRoast(
+  move: AnalyzedMove,
+  ctx: GameContext,
+  used: Set<string>,
+): { text: string; annotations: MoveAnnotation } | null {
+  const cls = move.classification;
+  const isBad = cls === "blunder" || cls === "mistake" || cls === "inaccuracy";
+  const isGood = cls === "best" || cls === "great" || cls === "brilliant";
+
+  if (isBad) {
+    const lines = [
+      `⚠️ They were in CHECK and played ${move.san}?? Of all the ways to escape check, they chose the WORST one 💀`,
+      `👑 The king is under attack and ${move.san} is the response? The panic is palpable. Like choosing the fire exit that leads to more fire 🔥🚪`,
+      `😨 Under check and ${move.san} is the answer. Fight or flight kicked in — and they chose "freeze" 🧊🗿`,
+      `💀 Check on the board. Adrenaline pumping. And they play ${move.san}. The wrong response under pressure. Classic 😤`,
+      `⚠️ ${move.san} to escape check. Bold strategy. Wrong strategy. But bold 🗿💀`,
+      `😭 They were in check and panicked into ${move.san}. The king said "save me!" and the player said "how about I make it worse?" 👑💀`,
+      `🫠 Check! Quick, do something! ${move.san}! ...that was the wrong something. Panic mode: activated. Accuracy: not found 🔍`,
+      `👑 Under check pressure and ${move.san} crumbles. Fischer said "I don't believe in psychology" — this player believes in PANIC 😱🗿`,
+    ];
+    if (cls === "blunder" && move.cpLoss > 200) {
+      lines.push(
+        `💀 IN CHECK and they blundered ${move.cpLoss > 500 ? "the entire game" : "hard"} with ${move.san}. The king was screaming for help and got... this 👑😭`,
+        `🆘 Check! Emergency! 911! And ${move.san} is the emergency response?? Send a better player, this one's broken 🚨💀`,
+      );
+    }
+    return { text: pickUnused(lines, used), annotations: { arrows: [], markers: [] } };
+  }
+
+  if (isGood && Math.random() < 0.4) {
+    const lines = [
+      `👑 Under check and ${move.san} — cool, calm, collected. The king lives to fight another day 🛡️`,
+      `⚡ Check! And ${move.san} is the perfect response. No panic, just precision. Respect 🗿✅`,
+      `🛡️ They were in check but handled it like a pro. ${move.san} — composure under fire 🔥👑`,
+      `👑 ${move.san} out of check. Smooth escape. The king barely broke a sweat 😎🛡️`,
+    ];
+    return { text: pickUnused(lines, used), annotations: { arrows: [], markers: [] } };
+  }
+
+  return null;
 }
 
 /* ================================================================== */

@@ -311,6 +311,7 @@ export default function RoastPage() {
   const [lockedIn, setLockedIn] = useState(false);
   const [isRewatching, setIsRewatching] = useState(false);
   const [revealModalOpen, setRevealModalOpen] = useState(true);
+  const [leaderboardData, setLeaderboardData] = useState<{ userName: string; userImage: string | null; score: number; gamesPlayed: number }[]>([]);
 
   /* ── Mid-game decision state ── */
   interface GameshowDecision {
@@ -1361,7 +1362,11 @@ export default function RoastPage() {
       decisionReadyTime.current = Date.now();
     }
     const elapsed = Date.now() - decisionReadyTime.current;
-    const readingDelay = tts.enabled ? 800 : 2500; // shorter if TTS already read it aloud
+    // Scale reading delay with the comment length — longer text needs more time
+    const commentLen = moves[pendingDecisionIdx]?.comment?.length ?? 0;
+    const readingDelay = tts.enabled
+      ? Math.max(1200, commentLen * 15)   // TTS reads it, just need a small buffer
+      : Math.max(3500, commentLen * 30);   // reading only — scale with length
     if (elapsed < readingDelay) {
       const timer = setTimeout(() => {
         // Force a re-render to re-check this effect
@@ -1557,25 +1562,6 @@ export default function RoastPage() {
         explanation: !nextBad
           ? "They actually cleaned it up! Nobody saw that coming 🤯"
           : `${nextBad.color === "w" ? "White" : "Black"} cracks first with ${nextBad.san}. The prophecy is fulfilled 🔮`,
-      }));
-    }
-
-    // Q9: How many moves left in the game?
-    if (pctDone >= 0.4 && pctDone <= 0.65) {
-      questionPool.push(() => ({
-        moveIdx: next,
-        question: `🔮 We're at move ${move.moveNumber}. How many total moves in this game?`,
-        options: [
-          { label: `Under ${move.moveNumber + 10}`, emoji: "⚡" },
-          { label: `${move.moveNumber + 10}-${move.moveNumber + 25}`, emoji: "📏" },
-          { label: `${move.moveNumber + 26}+ — marathon`, emoji: "🏃" },
-        ],
-        correctIdx: movesLeft < 10 ? 0 : movesLeft < 26 ? 1 : 2,
-        explanation: movesLeft < 10
-          ? `Only ${movesLeft} moves left! This ends quick ⚡`
-          : movesLeft >= 26
-          ? `${totalMoves} total moves. A marathon of chess violence 🏃💀`
-          : `${totalMoves} total moves. Standard length for this level 📏`,
       }));
     }
 
@@ -1793,11 +1779,13 @@ export default function RoastPage() {
       setStreakCount(0);
     }
 
-    if (result === "correct" || result === "close") {
-      const pts = result === "correct" ? 300 : 100;
-      setScore(prev => prev + pts);
-      setLastScoreGain(pts);
-      setTimeout(() => setLastScoreGain(null), 1500);
+    {
+      const pts = result === "correct" ? 300 : result === "close" ? 100 : distance === 2 ? 50 : 0;
+      if (pts > 0) {
+        setScore(prev => prev + pts);
+        setLastScoreGain(pts);
+        setTimeout(() => setLastScoreGain(null), 1500);
+      }
     }
     setGamesPlayed(prev => prev + 1);
 
@@ -1858,6 +1846,12 @@ export default function RoastPage() {
     setTimeout(() => playSound("reveal-stinger"), 300);
     setTimeout(() => { setPageState("revealed"); setLockedIn(false); setRevealModalOpen(true); }, 600);
 
+    // Fetch leaderboard for reveal modal
+    fetch("/api/roast/leaderboard?period=weekly&limit=5")
+      .then(r => r.json())
+      .then(d => setLeaderboardData(d.entries ?? []))
+      .catch(() => {});
+
     // Save daily challenge result to localStorage
     if (isDaily && game) {
       const dailyData = {
@@ -1876,6 +1870,29 @@ export default function RoastPage() {
   if (lastMove) {
     customSquareStyles[lastMove.from] = { backgroundColor: "rgba(255, 255, 0, 0.25)" };
     customSquareStyles[lastMove.to] = { backgroundColor: "rgba(255, 255, 0, 0.35)" };
+  }
+  // King check red glow (like Lichess)
+  const _checkMove = currentIdx >= 0 && currentIdx < moves.length ? moves[currentIdx] : null;
+  if (_checkMove?.isCheck && fen !== "start") {
+    try {
+      const checkBoard = new (require("chess.js").Chess)(fen);
+      const turn = checkBoard.turn();
+      // Find the king that's in check
+      const board = checkBoard.board();
+      for (let r = 0; r < 8; r++) {
+        for (let f = 0; f < 8; f++) {
+          const sq = board[r][f];
+          if (sq && sq.type === "k" && sq.color === turn) {
+            const file = String.fromCharCode(97 + f);
+            const rank = String(8 - r);
+            customSquareStyles[`${file}${rank}`] = {
+              background: "radial-gradient(circle, rgba(255, 0, 0, 0.6) 0%, rgba(255, 0, 0, 0.3) 40%, transparent 70%)",
+              borderRadius: "50%",
+            };
+          }
+        }
+      }
+    } catch {}
   }
 
   /* ── Classification color ── */
@@ -2946,6 +2963,43 @@ export default function RoastPage() {
                   <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/[0.05] p-2">
                     <p className="text-lg font-bold text-yellow-400">{inaccuracies}</p>
                     <p className="text-yellow-400/60">Inaccuracies</p>
+                  </div>
+                </div>
+
+                {/* Inline Leaderboard */}
+                {leaderboardData.length > 0 && (
+                  <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.03] p-3 space-y-2">
+                    <p className="text-xs text-amber-400/70 uppercase tracking-wider font-bold text-center">🏆 Weekly Leaderboard</p>
+                    <div className="space-y-1">
+                      {leaderboardData.slice(0, 5).map((entry, i) => (
+                        <div key={i} className="flex items-center gap-2 text-xs">
+                          <span className={`w-5 text-center font-bold ${i === 0 ? "text-amber-400" : i === 1 ? "text-slate-300" : i === 2 ? "text-orange-400" : "text-slate-500"}`}>
+                            {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}.`}
+                          </span>
+                          {entry.userImage && (
+                            <img src={entry.userImage} alt="" className="w-4 h-4 rounded-full" />
+                          )}
+                          <span className="text-slate-300 flex-1 truncate">{entry.userName ?? "Anonymous"}</span>
+                          <span className="text-amber-400 font-bold tabular-nums">{entry.score.toLocaleString()}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="text-center">
+                      <a href="/roast/leaderboard" className="text-[10px] text-amber-400/50 hover:text-amber-400 transition-colors">
+                        View full leaderboard →
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {/* Your Score */}
+                <div className="rounded-xl border border-white/[0.08] bg-white/[0.03] p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-400">Your Score</span>
+                    <span className="text-lg font-black text-amber-400 tabular-nums">{score.toLocaleString()}</span>
+                  </div>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-[10px] text-slate-500">Games: {gamesPlayed} · Streak: {streakCount} · Quiz: {quizScore}</span>
                   </div>
                 </div>
 
