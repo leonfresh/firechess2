@@ -1563,8 +1563,9 @@ function _blunderRoast(
     }
   }
 
-  // 4d. Back-rank weakness (only after the opening — move 15+)
-  if (move.moveNumber >= 15 && detectBackRankWeakness(after, moverColor)) {
+  // 4d. Back-rank weakness — only trigger when THIS MOVE created/worsened the weakness
+  //      (not just when the position structurally has one)
+  if (move.moveNumber >= 15 && detectBackRankWeakness(after, moverColor) && !detectBackRankWeakness(before, moverColor)) {
     const king = findKing(after, moverColor)!;
     return { text: pickUnused([
       `🚪 ${move.san} and that back rank is WIDE OPEN. The king is trapped behind its own pawns with no escape. One heavy piece slides in and it's GG 💀🏰`,
@@ -1665,6 +1666,89 @@ function _blunderRoast(
         ], used), annotations: { arrows: [moveArrow], markers: [{ square: _toSq, emoji: "🪤" }] } };
       }
     }
+  }
+
+  // 8c. Engine-based: compare played move vs best move to explain WHY this was bad
+  //     Falls through to generic only if we can't identify anything specific
+  if (move.bestMoveSan && move.bestMoveSan !== move.san && move.cpLoss >= 80) {
+    const bestSan = move.bestMoveSan;
+    try {
+      // Simulate the best move to see what it achieves
+      const simBest = new Chess(move.fen);
+      const bestRes = simBest.move(bestSan);
+      if (bestRes) {
+        const bestToSq = bestRes.to as Square;
+        const bestArrows: [string, string, string][] = [
+          moveArrow,
+          [bestRes.from as string, bestRes.to as string, "rgba(34, 197, 94, 0.7)"],
+        ];
+
+        // Describe the eval swing in human terms
+        const swing = move.cpLoss;
+        const swingDesc = swing >= 500 ? "completely losing"
+          : swing >= 300 ? "significantly worse"
+          : swing >= 150 ? "notably worse"
+          : "worse";
+
+        // Check what the best move does: capture? check? defense? attack?
+        const bestIsCapture = !!bestRes.captured;
+        const bestIsCheck = bestRes.san.includes("+") || bestRes.san.includes("#");
+        const bestPieceName = pn(bestRes.piece);
+
+        // Compare: what did the opponent's best response look like after the bad move?
+        let oppBestAfterBlunder = "";
+        try {
+          const oppMoves = after.moves({ verbose: true });
+          // Find most damaging opponent response
+          const captures = oppMoves.filter(m => m.captured).sort((a, b) => (PIECE_VALUES[b.captured!] ?? 0) - (PIECE_VALUES[a.captured!] ?? 0));
+          const checks = oppMoves.filter(m => m.san.includes("+") || m.san.includes("#"));
+          if (checks.length > 0 && checks[0].san.includes("#")) {
+            // Checkmate available — already handled in section 2b, skip
+          } else if (captures.length > 0 && (PIECE_VALUES[captures[0].captured!] ?? 0) >= 3) {
+            oppBestAfterBlunder = ` Now the opponent can grab the ${pn(captures[0].captured!)} with ${captures[0].san}.`;
+          } else if (checks.length > 0) {
+            oppBestAfterBlunder = ` And the opponent has ${checks[0].san} with check.`;
+          }
+        } catch {}
+
+        // Generate commentary based on what the best move achieves
+        if (bestIsCapture && bestRes.captured) {
+          const captName = pn(bestRes.captured);
+          return { text: pickUnused([
+            `🎯 ${move.san} instead of ${bestSan}? They could've taken the ${captName}! The position is now ${swingDesc}.${oppBestAfterBlunder} That's like turning down a free meal at a buffet 🍽️💀`,
+            `🆓 ${bestSan} was RIGHT THERE — capturing the ${captName}. Instead they played ${move.san} and the position goes from fine to ${swingDesc}.${oppBestAfterBlunder} 🗿`,
+            `🤡 ${move.san} over ${bestSan}?? The ${captName} was free for the taking! That's a ${(swing / 100).toFixed(1)} pawn swing in the wrong direction.${oppBestAfterBlunder} 📉💀`,
+            `💀 The engine wanted ${bestSan}, winning the ${captName}. Instead: ${move.san}. The position tanks by ${(swing / 100).toFixed(1)} pawns.${oppBestAfterBlunder} Self-sabotage on a new level 🗿`,
+          ], used), annotations: { arrows: bestArrows, markers: [{ square: bestToSq, emoji: "🎯" }, { square: _toSq, emoji: "💀" }] } };
+        }
+
+        if (bestIsCheck) {
+          return { text: pickUnused([
+            `⚡ ${bestSan} with check was the move! Instead ${move.san} leaves the position ${swingDesc}.${oppBestAfterBlunder} Missing checks in ${new Date().getFullYear()} is WILD 🗿💀`,
+            `🎯 ${move.san} over ${bestSan}?? There was a CHECK available! The position swings ${(swing / 100).toFixed(1)} pawns.${oppBestAfterBlunder} Always look for checks captures threats — in that order 📐💀`,
+          ], used), annotations: { arrows: bestArrows, markers: [{ square: bestToSq, emoji: "⚡" }, { square: _toSq, emoji: "💀" }] } };
+        }
+
+        // Best move is a quiet/positional improvement
+        if (oppBestAfterBlunder) {
+          return { text: pickUnused([
+            `📉 ${move.san} instead of ${bestSan}.${oppBestAfterBlunder} That's a ${(swing / 100).toFixed(1)} pawn swing. The engine is SCREAMING 🗿💀`,
+            `🎯 The right move was ${bestSan}. Instead: ${move.san}, making the position ${swingDesc}.${oppBestAfterBlunder} They chose violence... against themselves 🤡`,
+            `💀 ${bestSan} was the move. ${move.san} throws away ${(swing / 100).toFixed(1)} pawns worth of evaluation.${oppBestAfterBlunder} That's not a blunder, that's a DONATION 🎁📉`,
+          ], used), annotations: { arrows: bestArrows, markers: [{ square: _toSq, emoji: "📉" }] } };
+        }
+
+        // Generic engine comparison
+        if (swing >= 150) {
+          return { text: pickUnused([
+            `📉 ${move.san} over ${bestSan}. The ${bestPieceName} move was much stronger. That's a ${(swing / 100).toFixed(1)} pawn swing — position goes from playable to ${swingDesc} 🗿💀`,
+            `🎯 Engine says ${bestSan}. Player says ${move.san}. The eval says -${(swing / 100).toFixed(1)}. Math doesn't lie 📊💀`,
+            `💀 ${bestSan} kept the position alive. ${move.san} doesn't. A ${(swing / 100).toFixed(1)} pawn drop in one move. That's like going from a Ferrari to a shopping cart 🛒📉`,
+            `🤡 The computer wanted ${bestSan}. The human brain wanted ${move.san}. The human brain was wrong by ${(swing / 100).toFixed(1)} pawns. Tale as old as time 🧠💀`,
+          ], used), annotations: { arrows: bestArrows, markers: [{ square: _toSq, emoji: "📉" }] } };
+        }
+      }
+    } catch {}
   }
 
   // 9. Generic — with context-aware callbacks
@@ -1780,8 +1864,8 @@ function _mistakeRoast(
     }
   }
 
-  // Back-rank weakness (only after the opening — move 15+)
-  if (move.moveNumber >= 15 && detectBackRankWeakness(after, moverColor)) {
+  // Back-rank weakness (only after the opening — move 15+, only if THIS move created it)
+  if (move.moveNumber >= 15 && detectBackRankWeakness(after, moverColor) && !detectBackRankWeakness(before, moverColor)) {
     const king = findKing(after, moverColor)!;
     return { text: pickUnused([
       `🏰 ${move.san} and the back rank is looking sketchy. The king is boxed in by its own pawns. A rook invasion could be nasty 😬`,
