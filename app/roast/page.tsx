@@ -2764,7 +2764,7 @@ export default function RoastPage() {
                 </span>
               </h1>
               <span className="rounded-md bg-orange-500/20 border border-orange-500/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-orange-300">
-                Beta
+                Alpha
               </span>
             </div>
             <p className="mt-3 text-sm text-slate-400">
@@ -3087,10 +3087,10 @@ export default function RoastPage() {
               </div>
             )}
 
-            {/* Beta feedback CTA */}
+            {/* Alpha feedback CTA */}
             <div className="mt-10 rounded-xl border border-white/[0.06] bg-white/[0.02] p-6 text-center">
               <p className="text-sm text-slate-400">
-                🔥 Roast the Elo is in <span className="font-semibold text-orange-300">Beta</span> — if you caught a bug or something feels off,{" "}
+                🔥 Roast the Elo is in <span className="font-semibold text-orange-300">Alpha</span> — some commentary may be wrong. If you caught a bug or something feels off,{" "}
                 <a href="/feedback" className="font-medium text-orange-400 underline decoration-orange-400/30 underline-offset-2 transition-colors hover:text-orange-300">
                   please leave feedback
                 </a>.
