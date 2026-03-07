@@ -967,6 +967,8 @@ function _generatePositionAware(
       `🎭 ${move.san} — they sacrificed the ${sacName}! And Stockfish AGREES?? The prophecy speaks of mortals who sacrifice correctly at low elo. I didn't believe it until now 🗿✨`,
       `⚡ ${pn(soundSac.sacPiece, true)} sacrifice with ${move.san}! Giving up ${soundSac.materialGiven} points of material and it's BRILLIANT. Tal energy. Kasparov energy. Are we sure this is the same player? 🕵️🔥`,
       `🧠 ${move.san}! A real sacrifice — ${sacName} for ${captName} — and the engine is nodding. This person just channeled their inner Mikhail Tal for exactly one move. Respect 🫡🎭`,
+      `🍺 ${move.san}! Eric Hansen would shotgun a coffee and SLAM the ${sacName} down for this sacrifice. Chessbrah energy. Full send. AND it's correct?? ☕⚡`,
+      `🧠 ${move.san}! A sound sacrifice — ${sacName} for ${captName}. Aman would nod approvingly at this one — calculated, clean, and actually WORKS. Chessbrah-approved sac 🫡🔥`,
     ], used), annotations: { arrows: sacArrows, markers: [{ square: toSq, emoji: "⚡" }] } });
   }
 
@@ -983,6 +985,7 @@ function _generatePositionAware(
         `😤 ${move.san} pushing toward the king. Pawn storm energy! The pawns don't care about their own safety, they're on a mission 🐾💀`,
         `🔥 That pawn is getting UNCOMFORTABLY close to the enemy king. ${move.san} — this is how attacks start. Respect the aggression 👊⚔️`,
         `⚡ ${move.san}! The pawn is knocking on the king's door. "Let me in. LET ME IIIIIN" 🚪😤🔥`,
+        `⚔️ ${move.san}! Eric Hansen pawn storm energy — when Eric pushes pawns at your king it's OVER. Chessbrah VIOLENCE 🍺🔥`,
       ], used), annotations: { arrows: stormArrows, markers: stormMarkers } });
     } else if (move.classification === "mistake" || move.classification === "blunder") {
       // Bad pawn storm — the aggression backfired
@@ -1332,6 +1335,8 @@ function _brilliantRoast(
       return { text: `🌟 ${move.san} — the only move, the hardest move, and they found it.${ctx.playerBlunders > 0 ? ` Broken clock is right twice a day I guess 🕐` : ` Even a blind squirrel finds a nut 🐿️`}`, annotations: { arrows: baseArrows, markers: baseMarkers } };
     },
     () => ({ text: `🌟 Galaxy-brain ${move.san}.${callback} The kind of move that makes you re-check the elo. Yep, still low. Just got lucky 🎲🤯`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `🍺 ${move.san}.${callback} Eric Hansen energy — bold, aggressive, slightly unhinged, and somehow CORRECT. GM-level chaos from a non-GM. Chessbrah would be proud 🔥🧠`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `🧠 ${move.san}.${callback} Aman Hambleton finds moves like this while looking completely calm. This player probably had a heart attack finding it. Same result tho ♟️🫡`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => {
       // If the move is checkmate, skip fork detection — it's MATE, not a fork
       if (move.san.includes("#")) {
@@ -1409,6 +1414,8 @@ function _goodMoveRoast(
     () => `🤨 ${move.san}. Even Hikaru would say "okay that's fine." Not "great." Not "brilliant." Just "fine." Classic Hikaru praise 🏎️🗿`,
     () => `😤 ${move.san}. A good move. Levy would nod once and move on. No thumbnail. No red circle. Just a nod. Mid-level approval 📺🫡`,
     () => `😌 ${move.san}. Eric Rosen would play this and go "that's nice" in the most wholesome way. Meanwhile we're just trying not to fall asleep 😌💤`,
+    () => `🍺 ${move.san}. Eric Hansen would blitz this out in 0.5 seconds between sips of coffee. For this player it took 20 seconds of deep thought. Same result tho 🏎️🗿`,
+    () => `🧠 ${move.san}. Aman energy — quiet, calculated, no drama. The kind of move that doesn't make highlights but wins games. Chessbrah-approved 🫡♟️`,
     () => {
       const dev = development(after, move.color as Color);
       if (dev.stuck.length === 0 && dev.total > 0)
@@ -1958,9 +1965,14 @@ function _blunderRoast(
     `⚡ ${move.san}.${ctxLine} Bobby Fischer played 20 perfectly prepared moves before his opponents even sat down. This person played 0 good moves after sitting down for 20 minutes 🕐💀`,
     `💀 ${move.san}.${ctxLine} Morphy literally played blindfolded against 8 opponents simultaneously and won them all. This person can't beat ONE person with their eyes OPEN 🙈♟️`,
     `👑 ${move.san}.${ctxLine} Magnus would resign here. Not because the position is lost — but because he'd be embarrassed to be associated with this game 🏆💀`,
-    `🏆 ${move.san}.${ctxLine} Magnus literally beat a world champion while half asleep on stream. This player is FULLY awake and playing like this?? 😴💀`,
+    `� ${move.san}.${ctxLine} Eric Hansen would take a sip of his drink, look at the camera, and just start laughing. No words needed. The position speaks for itself 🗿🔥`,
+    `🧠 ${move.san}.${ctxLine} Aman would close the laptop, stand up, and walk away. Not dramatically — just calmly. Like a man who has seen too much. Chessbrah signing off 🚶💀`,
+    `🤡 ${move.san}.${ctxLine} If this was a chessbrah stream, Eric would be cackling and Aman would be pinching the bridge of his nose. Chef's kiss blunder 🍺🧠`,
+    `�🏆 ${move.san}.${ctxLine} Magnus literally beat a world champion while half asleep on stream. This player is FULLY awake and playing like this?? 😴💀`,
     `👑 ${move.san}.${ctxLine} Magnus retired from classical chess because he was bored. If he saw this game he'd retire from WATCHING chess too 📺🗿`,
     `🗿 ${move.san}.${ctxLine} "Are you kidding ??? What the **** are you talking about man." Petrosian WARNED us about players like this. Liers will kicked off 💀`,
+    `🍺 ${move.san}.${ctxLine} Eric Hansen plays 1-minute bullet while drinking coffee and STILL wouldn't play this. The chessbrah disrespect this move deserves 🏎️💀`,
+    `🧠 ${move.san}.${ctxLine} Aman Hambleton — the QUIET chessbrah — would raise one eyebrow at this. That's it. One eyebrow. And that's the harshest review this move could get 🗿🧠`,
     `🤡 ${move.san}.${ctxLine} This player was doing PIPI in their pampers when Petrosian was winning world championships. And they're STILL doing PIPI. On this board. Right now 👶🗿`,
     `💀 ${move.san}.${ctxLine} "True will never die" — but this position? This position is DECEASED. Petrosian copypasta energy in move form 🪦🗿`,
     `☠️ ${move.san}.${ctxLine} W)esley S)o would never play this. "Proffesionals knew how to lose and congratulate." This player doesn't know how to NOT lose 🗿🤡`,
@@ -2197,6 +2209,8 @@ function _mistakeRoast(
     `🗿 ${move.san}.${ctxFallback} Hikaru wouldn't even comment on this. Just "captures captures" past it. Speed chess energy except it's speed ignoring 🏎️💨`,
     `😌 ${move.san}.${ctxFallback} Eric Rosen would go "oh no" so softly you'd think he was narrating a nature documentary. Meanwhile the position is DYING 🦆🗿`,
     `😬 ${move.san}.${ctxFallback} This is the kind of move that shows up in an Eric Rosen "traps and tricks" video — as the victim. They ARE the content 📺😌`,
+    `🍺 ${move.san}.${ctxFallback} Eric Hansen would see this on stream, take a sip, and go "dude... DUDE." The disappointment is palpable. Chessbrah energy 🗿🔥`,
+    `🧠 ${move.san}.${ctxFallback} Aman would look at this and do that thing where he tilts his head and goes quiet for 3 seconds. That silence is louder than any roast 🤫💀`,
     `♟️ ${move.san}.${ctxFallback} Fischer would have found the best move in 2 seconds flat. This person found the second-best move in 30 seconds. Close but no cigar 🕐🗿`,
     `🎩 ${move.san}.${ctxFallback} Tal would have sacrificed a piece here and created magic. Instead we get... a mistake. The anti-magic 🪄💀`,
     `👑 ${move.san}.${ctxFallback} Morphy retired at 22 because chess was too easy. This person should consider retiring because chess is too hard 😭♟️`,
@@ -2258,6 +2272,7 @@ function _inaccuracyRoast(
     () => `🤷 ${move.san}. Levy would speed past this in a Guess the Elo and go "yeah okay whatever" without pausing. The move that gets no screentime 📺💤`,
     () => `😑 ${move.san}. This is the move Hikaru plays in bullet with 0.3 seconds left and STILL doesn't lose. For this player? It's their best idea after 45 seconds 🏎️🗿`,
     () => `🤷 ${move.san}. Even GothamChess would struggle to make this move interesting for content. "And then they played... a move" 📺🫠`,
+    () => `🍺 ${move.san}. Eric Hansen would premove past this in bullet without even looking. Aman would sigh. The duality of chessbrah 🧠🏎️`,
     () => `� ${move.san}. Eric Rosen would play this move in a Stafford Gambit refusal and still somehow make it look fun. Here? It's just mid 🗿😌`,
     () => `�😐 ${move.san}. The chess equivalent of "it's fine" when someone asks how you're doing. It's not fine. But it's fine 🫠`,
     () => `🫤 ${move.san}. This move will not be remembered. By anyone. Ever. Including the person who played it 🗿💨`,
@@ -2333,6 +2348,7 @@ function _badCheckRoast(
     `🤡 ${move.san}+. GothamChess voice: "Ladies and gentlemen... a POINTLESS check." I can hear the disappointment from here 📢${ctxLine} 😭`,
     `😬 ${move.san}+ and the check bounces right off.${ctxLine} The king said "lol" and moved one square 👑💨`,
     `😌 ${move.san}+. Eric Rosen would never give a useless check. When HE checks, it's checkmate in 3. This check? It's checkmate in... never. It's just bad ${ctxLine} 😌💀`,
+    `🍺 ${move.san}+. Eric Hansen gives checks in bullet that lead to MATE. This check leads to absolutely nothing. Chessbrah would NOT claim this one ${ctxLine} 🏎️🗿`,
     // Blunder-strength checks
     ...(isBlunder ? [
       `💀 ${move.san}+. Gave a check that LOST MATERIAL. The check that checked THEM right out of the game.${ctxLine} Extraordinary self-destruction 🤡🔥`,
