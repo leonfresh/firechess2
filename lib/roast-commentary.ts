@@ -1184,6 +1184,10 @@ function _brilliantRoast(
     },
     () => ({ text: `🌟 Galaxy-brain ${move.san}.${callback} The kind of move that makes you re-check the elo. Yep, still low. Just got lucky 🎲🤯`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => {
+      // If the move is checkmate, skip fork detection — it's MATE, not a fork
+      if (move.san.includes("#")) {
+        return { text: `♟️💀 ${move.san}! CHECKMATE! They found the mate! At this elo?? I refuse to believe they calculated that. Must've been an accident 🧠✨`, annotations: { arrows: baseArrows, markers: [{ square: toSq, emoji: "♟️" }] } };
+      }
       const forks = landed ? detectForks(after, toSq, { type: landed.type, color: landed.color, square: toSq }) : [];
       if (forks.length >= 2) {
         const targets = forks.map(f => `${pn(f.type)} on ${f.square}`).join(" and ");
@@ -1395,10 +1399,35 @@ function _blunderRoast(
     ], used), annotations: { arrows: hangArrows, markers: [{ square: onSq, emoji: "🆓" }] } };
   }
 
+  // 2b. Allows checkmate — check if any opponent response is mate
+  try {
+    const oppMovesForMate = after.moves({ verbose: true });
+    for (const m of oppMovesForMate) {
+      if (m.san.includes("#")) {
+        const mateArrows: [string, string, string][] = [
+          moveArrow,
+          [m.from, m.to, "rgba(239, 68, 68, 0.85)"],
+        ];
+        return { text: pickUnused([
+          `💀 ${move.san} allows ${m.san}. That's CHECKMATE. Not a fork, not a pin, not a threat. CHECKMATE. Game over. Pack it up 🪦♟️`,
+          `☠️ ${move.san}?? ${m.san} is MATE. They literally allowed checkmate on the board. The kind of move that makes you uninstall 💀`,
+          `🗿 ${move.san} and the opponent has ${m.san} — that's mate. CHECKMATE. The ultimate blunder. They didn't just lose material, they lost the GAME 🏁💀`,
+          `😱 ${move.san} walks into ${m.san}. That's checkmate, folks. Not a fork, not a skewer — the game is LITERALLY over. Did they forget how chess works?? 🤡`,
+          `🪦 After ${move.san}, the opponent has ${m.san}. Checkmate. THE END. This is not a drill. That's a real mate on the board and they walked right into it 💀🚶`,
+          `💀 ${move.san}?? ${m.san} is forced mate! They basically resigned with extra steps. Even the pieces are embarrassed 😭♟️`,
+          `☠️ ${move.san} allows CHECKMATE with ${m.san}. Hikaru would react with "oh it's just mate." The most casual death in chess history 🗿💀`,
+          `🏁 ${move.san} and it's over. ${m.san} is checkmate. The game doesn't even continue. That's how bad this move is. Not recoverable. Not survivable. Just dead 💀🪦`,
+        ], used), annotations: { arrows: mateArrows, markers: [{ square: m.to, emoji: "☠️" }] } };
+      }
+    }
+  } catch {}
+
   // 3. Fork — validate forking piece is safe
   try {
     const oppMoves = after.moves({ verbose: true });
     for (const m of oppMoves) {
+      // Skip checkmate moves — those are handled above, not forks
+      if (m.san.includes("#")) continue;
       const sim = new Chess(after.fen());
       const res = sim.move(m);
       if (!res) continue;
