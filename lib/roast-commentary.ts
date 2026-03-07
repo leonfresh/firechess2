@@ -443,6 +443,10 @@ function detectSkewers(chess: Chess, attackerColor: Color): SkewerInfo[] {
       if (line.length === 2) {
         const frontVal = PIECE_VALUES[line[0].type] ?? 0;
         const behindVal = PIECE_VALUES[line[1].type] ?? 0;
+        // Skip skewers to pawns — too low value to be meaningful
+        if (behindVal <= 1) continue;
+        // Skip if the behind piece is defended (protected skewer = no material gain)
+        if (chess.isAttacked(line[1].square as Square, victimColor)) continue;
         if (frontVal > behindVal && frontVal >= 3) {
           skewers.push({ attacker: slider, front: line[0], behind: line[1] });
         }
@@ -698,6 +702,15 @@ function _generatePositionAware(
     if (momentumResult) return _emitResult(used, momentumResult);
   }
 
+  // Tempo / initiative commentary — slow move in a sharp position
+  if (ctx.wastingInitiative && Math.random() < 0.45) {
+    const tempoResult = _tempoRoast(move, ctx, used);
+    if (tempoResult) {
+      if (move.classification === "mistake" || move.classification === "blunder") return _emitResultForce(used, tempoResult);
+      return _emitResult(used, tempoResult);
+    }
+  }
+
   // Check-response commentary — player was responding to a check
   if (ctx.wasRespondingToCheck && Math.random() < 0.55) {
     const checkResponseResult = _checkResponseRoast(move, ctx, used);
@@ -848,6 +861,12 @@ interface GameContext {
   opening: string | null;
   /** Was the player responding to a check? (opponent's last move was a check) */
   wasRespondingToCheck: boolean;
+  /** Position is sharp: open kings, lots of tension, initiative matters */
+  isSharpPosition: boolean;
+  /** Player is making a slow/passive move when they should be keeping initiative */
+  wastingInitiative: boolean;
+  /** King safety score: 0 = safe, higher = more exposed (both sides summed) */
+  kingSafetyTension: number;
 }
 
 function _getGameContext(move: AnalyzedMove, summary: GameSummary): GameContext {
@@ -935,7 +954,62 @@ function _getGameContext(move: AnalyzedMove, summary: GameSummary): GameContext 
   // Was the player responding to a check? (opponent's last move gave check)
   const wasRespondingToCheck = oppLast ? oppLast.isCheck : false;
 
-  return { recentBlunder, playerBlunders, goodStreak, posture, threwAdvantage, desperateDefense, evalCrater, isEndgame, totalPieces, opponentJustBlundered, opponentLastClass, opponentGift, opening: summary.opening ?? null, wasRespondingToCheck };
+  // Position sharpness: detect open kings, high tension, initiative positions
+  let kingSafetyTension = 0;
+  let isSharpPosition = false;
+  let wastingInitiative = false;
+  try {
+    const boardNow = new Chess(move.fen);
+    // Check if kings are exposed (not fully castled or pawn shield broken)
+    for (const kColor of ["w", "b"] as Color[]) {
+      const king = findKing(boardNow, kColor);
+      if (!king) continue;
+      const kr = rankIdx(king);
+      const kf = fileIdx(king);
+      // King in the center or advanced = exposed
+      if (kColor === "w" && kr >= 2) kingSafetyTension += 2;
+      if (kColor === "b" && kr <= 5) kingSafetyTension += 2;
+      // Count pawn shield squares
+      const shieldDir = kColor === "w" ? 1 : -1;
+      let shieldPawns = 0;
+      for (let df = -1; df <= 1; df++) {
+        const sf = kf + df;
+        const sr = kr + shieldDir;
+        const s = sq(sf, sr);
+        if (s) {
+          const p = boardNow.get(s);
+          if (p && p.type === "p" && p.color === kColor) shieldPawns++;
+        }
+      }
+      if (shieldPawns <= 1) kingSafetyTension += 2; // weak pawn shield
+    }
+    // High eval variance in recent moves = sharp/tactical position
+    const recentAll = allMoves.slice(-6);
+    const evalSwings = recentAll.filter(m => Math.abs(m.evalSwing) > 100).length;
+    if (evalSwings >= 2) kingSafetyTension += 2;
+    // Open position with lots of pieces = high tension
+    if (totalPieces >= 16 && kingSafetyTension >= 3) isSharpPosition = true;
+    if (kingSafetyTension >= 4 && !isEndgame) isSharpPosition = true;
+
+    // Wasting initiative: position is sharp, player is winning/equal,
+    // but this move is slow (pawn move on wrong side, retreat, no threat)
+    if (isSharpPosition && posture !== "losing" && !move.isCapture && !move.isCheck) {
+      const fromRank = parseInt(move.uci[1]);
+      const toRank = parseInt(move.uci[3]);
+      const isRetreat = (color === "w" && toRank < fromRank) || (color === "b" && toRank > fromRank);
+      const isPawnSideline = move.pieceType === "p" && (() => {
+        const pFile = fileIdx(move.uci.slice(2, 4) as Square);
+        // Pawn move far from opponent's king = slow
+        const oppKing = findKing(boardNow, opp(color));
+        if (!oppKing) return false;
+        const okf = fileIdx(oppKing);
+        return Math.abs(pFile - okf) >= 3;
+      })();
+      if (isRetreat || isPawnSideline) wastingInitiative = true;
+    }
+  } catch {}
+
+  return { recentBlunder, playerBlunders, goodStreak, posture, threwAdvantage, desperateDefense, evalCrater, isEndgame, totalPieces, opponentJustBlundered, opponentLastClass, opponentGift, opening: summary.opening ?? null, wasRespondingToCheck, isSharpPosition, wastingInitiative, kingSafetyTension };
 }
 
 function _brilliantRoast(
@@ -1970,6 +2044,69 @@ function _momentumRoast(
     `📉 ${crater} pawns of eval GONE. Hikaru's chat would be spamming "RESIGN" in all caps rn. And they'd be right 🏎️😭`,
     `📊 The eval is in FREEFALL. ${crater} pawns gone. Levy would pause the video and do the disappointed head shake. You know the one 📺😔`,
   ];
+
+  return { text: pickUnused(lines, used), annotations: ann };
+}
+
+/* ================================================================== */
+/*  Tempo / Initiative Roasts — slow moves in sharp positions          */
+/* ================================================================== */
+
+function _tempoRoast(
+  move: AnalyzedMove,
+  ctx: GameContext,
+  used: Set<string>,
+): { text: string; annotations: MoveAnnotation } | null {
+  const fromSq = move.uci.slice(0, 2);
+  const toSq = move.uci.slice(2, 4);
+  const ann: MoveAnnotation = {
+    arrows: [[fromSq, toSq, "rgba(239, 183, 44, 0.7)"]],
+    markers: [{ square: toSq, emoji: pick(["🐌", "⏳", "🕐", "💤"]) }],
+  };
+
+  const isRetreat = (() => {
+    const fromRank = parseInt(move.uci[1]);
+    const toRank = parseInt(move.uci[3]);
+    return (move.color === "w" && toRank < fromRank) || (move.color === "b" && toRank > fromRank);
+  })();
+
+  const isPawnGrab = move.pieceType === "p" && !move.isCapture;
+  const posDesc = ctx.kingSafetyTension >= 5
+    ? "kings are EXPOSED and the position is on fire"
+    : ctx.kingSafetyTension >= 3
+    ? "both sides have weakened king positions"
+    : "the position is tense and tactical";
+
+  const lines: string[] = [];
+
+  if (isRetreat) {
+    lines.push(
+      `🐌 ${move.san} — RETREATING when ${posDesc}?? This is a position where you need to ATTACK, not run backwards! The initiative is slipping away like sand through fingers ⏳💀`,
+      `⏳ ${move.san} is a backwards move in a sharp position. The ${posDesc} and they're... retreating? The tempo gods are WEEPING 😤🔥`,
+      `🕐 ${move.san}. Pulling back when the position is this sharp. That's not playing safe, that's giving the opponent a free turn. Tempo = life here 💀🐌`,
+      `💤 ${move.san} goes BACKWARDS. ${posDesc.charAt(0).toUpperCase() + posDesc.slice(1)} but they chose this moment to retreat?? Initiative deleted. Tempo wasted. Pain 😭⏳`,
+      `🐢 ${move.san} retreats when the position is SCREAMING for action. ${posDesc.charAt(0).toUpperCase() + posDesc.slice(1)} — this is the moment you go all in, not turtle up 🐌💀`,
+      `⏳ ${move.san}. Levy would be screaming "ATTACK THE KING" at his monitor rn. Instead they went backwards. In THIS position. With ${posDesc}. Incredible 📺💀`,
+    );
+  } else if (isPawnGrab) {
+    lines.push(
+      `🐌 ${move.san} — grabbing pawns while ${posDesc}?? Priorities check: pawns are worth 1 point. Kings are worth THE ENTIRE GAME 👑💀`,
+      `⏳ ${move.san} — pushing a sideline pawn when ${posDesc}. That's like reorganizing your bookshelf while your house is on fire 🔥📚`,
+      `💤 ${move.san}. A quiet pawn move. When the position is this sharp. When ${posDesc}. This is the "I don't see the danger" special 🫠🐌`,
+      `🐢 ${move.san} pushes a pawn on the wrong side of the board. Meanwhile ${posDesc}. Speed of the position says ATTACK — they said "nah, I'll push a pawn" 🗿⏳`,
+      `😴 ${move.san}. Pawn push on the flank while ${posDesc}. Hikaru plays h4 in bullet because he CALCULATES it first. This player just... went for it 🏎️😴`,
+      `⏳ ${move.san}. "When you see a good move, look for a better one." They saw a pawn push. There was definitely something better. With ${posDesc}, TEMPO IS EVERYTHING 🐌💀`,
+    );
+  } else {
+    lines.push(
+      `🐌 ${move.san} — a slow move in a FAST position. ${posDesc.charAt(0).toUpperCase() + posDesc.slice(1)} and THIS is the response? The tempo is gone now. It's gone 💨😭`,
+      `⏳ ${move.san}. Position requires URGENCY — ${posDesc} — but this move has zero initiative. Like bringing a pillow to a knife fight 🛋️⚔️`,
+      `🕐 ${move.san} wastes precious tempo. ${posDesc.charAt(0).toUpperCase() + posDesc.slice(1)}, and every move needs to be a threat. This one... isn't 🐌💀`,
+      `💤 ${move.san}. In speed chess analysis we talk about "fast" vs "slow" positions. This position is FAST. This move is GLACIAL. Mismatch 🧊🔥`,
+      `⏳ ${move.san} — no check, no capture, no threat. In a position where ${posDesc}. Stockfish probably has like 4 forcing moves here and they chose... this 🗿😤`,
+      `🐌 ${move.san}. The position has that "someone's about to get mated" energy but they're making quiet moves. Read the room, bro 🫠🔥`,
+    );
+  }
 
   return { text: pickUnused(lines, used), annotations: ann };
 }

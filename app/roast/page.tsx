@@ -2703,7 +2703,7 @@ export default function RoastPage() {
                   screenShake === "slam" ? "animate-board-slam" :
                   screenShake === "heavy" ? "animate-board-shake-heavy" :
                   screenShake === "mild" ? "animate-board-shake-mild" : ""
-                } ${streakFire ? "ring-2 ring-amber-400/60 shadow-[0_0_25px_rgba(251,191,36,0.4)]" : ""}`}>
+                }`}>
                   <Chessboard
                     id="roast-board"
                     position={fen}
@@ -2748,10 +2748,6 @@ export default function RoastPage() {
                     </div>
                   )}
 
-                  {/* ── Streak fire border glow ── */}
-                  {streakFire && (
-                    <div className="absolute -inset-1 pointer-events-none z-0 rounded-xl animate-streak-fire" style={{ background: "conic-gradient(from 0deg, rgba(251,191,36,0.3), rgba(239,68,68,0.3), rgba(251,146,60,0.3), rgba(251,191,36,0.3))", filter: "blur(6px)" }} />
-                  )}
                   {/* Emoji marker overlay */}
                   {activeMarkers.length > 0 && boardSize > 0 && (
                     <div className="absolute inset-0 pointer-events-none" style={{ width: boardSize, height: boardSize }}>
@@ -3873,14 +3869,6 @@ export default function RoastPage() {
           animation: elimination-in 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
 
-        /* Streak fire — rotating border glow */
-        @keyframes streak-fire {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        .animate-streak-fire {
-          animation: streak-fire 3s linear infinite;
-        }
 
         /* Piece rain — falling chess pieces */
         @keyframes piece-fall {
