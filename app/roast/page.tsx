@@ -1366,6 +1366,7 @@ export default function RoastPage() {
   useEffect(() => {
     if (pageState !== "watching" || !autoplay) return;
     if (activeDecision) return; // wait for decision to be dismissed
+    if (pendingDecisionIdx !== null) return; // wait for pending quiz to resolve before advancing
     if (!typingDone) return; // wait for speech bubble animation
     // If TTS is active and still speaking, wait for it to finish
     if (tts.enabled && tts.speaking) {
@@ -1542,11 +1543,12 @@ export default function RoastPage() {
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pageState, autoplay, currentIdx, moves, speed, typingDone, activeComment, tts.enabled, tts.speaking, ttsDoneSignal, activeDecision]);
+  }, [pageState, autoplay, currentIdx, moves, speed, typingDone, activeComment, tts.enabled, tts.speaking, ttsDoneSignal, activeDecision, pendingDecisionIdx]);
 
   /* ── Deferred decision popup — waits for TTS + typewriter to finish + reading time ── */
   const decisionReadyTime = useRef<number | null>(null);
   const ttsStartedForDecision = useRef(false);
+  const [decisionTick, setDecisionTick] = useState(0); // force re-render for deferred decision timing
   useEffect(() => {
     if (pendingDecisionIdx === null || pageState !== "watching") {
       decisionReadyTime.current = null;
@@ -1565,10 +1567,11 @@ export default function RoastPage() {
       }
       // TTS is not speaking — but has it started yet for this comment?
       if (!ttsStartedForDecision.current) {
-        // TTS hasn't started speaking yet — wait a bit for it to begin
+        // TTS hasn't started speaking yet — wait for it to begin
+        // Use a real counter to force re-render instead of setPendingDecisionIdx(prev => prev) which is a no-op
         const waitTimer = setTimeout(() => {
-          setPendingDecisionIdx(prev => prev); // re-trigger
-        }, 200);
+          setDecisionTick(t => t + 1);
+        }, 250);
         return () => clearTimeout(waitTimer);
       }
       // TTS started and finished — fall through to reading delay
@@ -1586,8 +1589,8 @@ export default function RoastPage() {
       : Math.max(4000, commentLen * 32);   // reading only — scale with length
     if (elapsed < readingDelay) {
       const timer = setTimeout(() => {
-        // Force a re-render to re-check this effect
-        setPendingDecisionIdx(prev => prev);
+        // Force a re-render to re-check this effect with real state change
+        setDecisionTick(t => t + 1);
       }, readingDelay - elapsed + 50);
       return () => clearTimeout(timer);
     }
@@ -1801,6 +1804,115 @@ export default function RoastPage() {
       });
     }
 
+    // ── PREDICT THE MOVE ── critical moment predictions with funny options ──
+
+    // Joke / meme wrong-answer pool
+    const jokePool = [
+      { label: "Botez Gambit the queen 👑💀", emoji: "♕" },
+      { label: "Resign immediately", emoji: "🏳️" },
+      { label: "Offer a draw and pray 🤝", emoji: "🤝" },
+      { label: "Disconnect and blame lag", emoji: "📡" },
+      { label: "Push a random pawn", emoji: "🐾" },
+      { label: "Sacrifice the rook for vibes", emoji: "♜" },
+      { label: "Premove something random", emoji: "🏃" },
+      { label: "Throw in a spite check", emoji: "♔" },
+      { label: "Stare at the board and flag", emoji: "⏰" },
+      { label: "Rage castle into danger", emoji: "🏰" },
+      { label: "Hang a piece for content", emoji: "🎬" },
+      { label: "Play the worst move possible", emoji: "🤡" },
+    ];
+    const pickJokes = (exclude: string[], count: number) => {
+      const filtered = jokePool.filter(j => !exclude.some(e => j.label.includes(e)));
+      const shuffled = [...filtered].sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, count);
+    };
+    const shuffleWithCorrect = (opts: { label: string; emoji: string }[], correctLabel: string) => {
+      const shuffled = [...opts].sort(() => Math.random() - 0.5);
+      return { options: shuffled, correctIdx: shuffled.findIndex(o => o.label === correctLabel) };
+    };
+
+    // P1: Predict the blunder — ask what player will do, they pick the blunder (or the engine move, or a joke)
+    if (nextMove && (nextMove.classification === "blunder" || nextMove.classification === "mistake") &&
+        nextMove.bestMoveSan && nextMove.san !== nextMove.bestMoveSan) {
+      questionPool.push(() => {
+        const pName = nextMove.color === "w" ? (game?.whitePlayer ?? "White") : (game?.blackPlayer ?? "Black");
+        const jokes = pickJokes([nextMove.san, nextMove.bestMoveSan ?? ""], 1);
+        const rawOpts = [
+          { label: `Play ${nextMove.san}`, emoji: "♟️" },
+          { label: `Play ${nextMove.bestMoveSan} (engine's pick)`, emoji: "🤖" },
+          ...jokes,
+        ];
+        const { options, correctIdx } = shuffleWithCorrect(rawOpts, `Play ${nextMove.san}`);
+        return {
+          moveIdx: next,
+          question: `🔮 What will ${pName} play here?`,
+          options,
+          correctIdx,
+          explanation: nextMove.classification === "blunder"
+            ? `They played ${nextMove.san}... a BLUNDER! The engine wanted ${nextMove.bestMoveSan}. Classic. 💀`
+            : `They played ${nextMove.san} — a mistake. ${nextMove.bestMoveSan} was better 🫠`,
+        };
+      });
+      // Push twice so predictions appear more often than trivia
+      questionPool.push(questionPool[questionPool.length - 1]);
+    }
+
+    // P2: Predict a brilliant/best move — players rarely guess right, extra hype when they do
+    if (nextMove && (nextMove.classification === "brilliant" || nextMove.classification === "best") &&
+        nextMove.san && movesLeft >= 4) {
+      questionPool.push(() => {
+        const pName = nextMove.color === "w" ? (game?.whitePlayer ?? "White") : (game?.blackPlayer ?? "Black");
+        // Build decoy moves — use a nearby worse move if available, plus joke options
+        const nearbyMoves = moves.slice(Math.max(0, next - 5), next).filter(m => m.san !== nextMove.san);
+        const decoy = nearbyMoves.length > 0 ? nearbyMoves[Math.floor(Math.random() * nearbyMoves.length)] : null;
+        const jokes = pickJokes([nextMove.san, decoy?.san ?? ""], decoy ? 1 : 2);
+        const rawOpts = [
+          { label: `Play ${nextMove.san}`, emoji: "🧠" },
+          ...(decoy ? [{ label: `Play ${decoy.san}`, emoji: "🤔" }] : []),
+          ...jokes,
+        ];
+        const { options, correctIdx } = shuffleWithCorrect(rawOpts, `Play ${nextMove.san}`);
+        return {
+          moveIdx: next,
+          question: `🎯 Critical moment — what will ${pName} find?`,
+          options,
+          correctIdx,
+          explanation: nextMove.classification === "brilliant"
+            ? `BRILLIANT! They found ${nextMove.san}! Even the engine is impressed 🧠✨`
+            : `They found the best move: ${nextMove.san}! Maybe there's hope after all 🎯`,
+        };
+      });
+    }
+
+    // P3: Predict a sacrifice / big trade (next move is a capture with piece value loss but intentional)
+    if (nextMove && nextMove.isCapture && nextMove.piece &&
+        (nextMove.classification === "good" || nextMove.classification === "best" || nextMove.classification === "brilliant") &&
+        (nextMove.piece === "q" || nextMove.piece === "r" || nextMove.piece === "n" || nextMove.piece === "b")) {
+      questionPool.push(() => {
+        const pName = nextMove.color === "w" ? (game?.whitePlayer ?? "White") : (game?.blackPlayer ?? "Black");
+        const pieceNames: Record<string, string> = { q: "Queen", r: "Rook", n: "Knight", b: "Bishop", p: "Pawn", k: "King" };
+        const pieceName = pieceNames[nextMove.piece ?? "p"] ?? "piece";
+        const jokes = pickJokes([nextMove.san], 1);
+        const rawOpts = [
+          { label: `${pieceName} takes — ${nextMove.san}`, emoji: "⚔️" },
+          { label: "They'll play it safe, no captures", emoji: "🛡️" },
+          ...jokes,
+        ];
+        const { options, correctIdx } = shuffleWithCorrect(rawOpts, `${pieceName} takes — ${nextMove.san}`);
+        return {
+          moveIdx: next,
+          question: `⚔️ ${pName} has a capture here. Will they go for it?`,
+          options,
+          correctIdx,
+          explanation: `They went for ${nextMove.san}! ${
+            nextMove.classification === "brilliant" ? "And it was BRILLIANT! 🧠✨" :
+            nextMove.classification === "best" ? "And it was the best move! 🎯" :
+            "Acceptable violence ⚔️"
+          }`,
+        };
+      });
+    }
+
     let decision: GameshowDecision | null = null;
 
     if (questionPool.length > 0) {
@@ -1856,7 +1968,7 @@ export default function RoastPage() {
       setAutoplay(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pendingDecisionIdx, typingDone, tts.enabled, tts.speaking, pageState]);
+  }, [pendingDecisionIdx, typingDone, tts.enabled, tts.speaking, pageState, decisionTick]);
 
   /* ── Scroll comment box to bottom ── */
   useEffect(() => {
