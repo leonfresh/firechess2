@@ -210,6 +210,7 @@ interface GameData {
   result: string;
   termination: string;
   winner: "white" | "black" | null;
+  source?: "lichess" | "chess.com";
 }
 
 interface MoveWithComment {
@@ -308,6 +309,111 @@ function parsePgnWithClocks(pgn: string): { sans: string[]; clocks: (number | nu
   }
 
   return { sans, clocks };
+}
+
+/** Fetch JSON with an AbortController timeout covering headers + body */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchJsonWithTimeout(url: string, opts: RequestInit = {}, timeoutMs = 8000): Promise<any> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...opts, signal: controller.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Fetch text with an AbortController timeout covering headers + body */
+async function fetchTextWithTimeout(url: string, opts: RequestInit = {}, timeoutMs = 8000): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { ...opts, signal: controller.signal });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.text();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** Fetch a random game from Chess.com as fallback */
+async function fetchChessComRandomGame(): Promise<{
+  id: string;
+  pgn: string;
+  whitePlayer: string;
+  blackPlayer: string;
+  whiteElo: number;
+  blackElo: number;
+} | null> {
+  try {
+    // Use titled players for a good elo range (FM ~2200-2400, CM ~2000-2200, NM ~2000-2300)
+    const titles = ["FM", "CM", "NM"];
+    const title = titles[Math.floor(Math.random() * titles.length)];
+
+    const listData = await fetchJsonWithTimeout(
+      `https://api.chess.com/pub/titled/${title}`,
+      {},
+      6000
+    );
+    const players: string[] = listData.players ?? [];
+    if (players.length === 0) return null;
+
+    // Shuffle and try up to 5 random players
+    const shuffled = [...players].sort(() => Math.random() - 0.5);
+
+    for (let i = 0; i < Math.min(5, shuffled.length); i++) {
+      try {
+        const username = shuffled[i].toLowerCase();
+
+        // Get game archives
+        const archData = await fetchJsonWithTimeout(
+          `https://api.chess.com/pub/player/${username}/games/archives`,
+          {},
+          5000
+        );
+        const archives: string[] = archData.archives ?? [];
+        if (archives.length === 0) continue;
+
+        // Get latest month's games
+        const latestUrl = archives[archives.length - 1];
+        const gamesData = await fetchJsonWithTimeout(latestUrl, {}, 5000);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const games = (gamesData.games ?? []).filter(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (g: any) =>
+            g.pgn &&
+            g.rules === "chess" &&
+            g.rated &&
+            g.white?.rating &&
+            g.black?.rating &&
+            g.time_class &&
+            ["blitz", "rapid"].includes(g.time_class)
+        );
+        if (games.length === 0) continue;
+
+        const picked = games[Math.floor(Math.random() * games.length)];
+        const gameUrl: string = picked.url ?? "";
+        const urlParts = gameUrl.split("/");
+        const gameId = urlParts[urlParts.length - 1] || `cc-${Date.now()}`;
+
+        return {
+          id: gameId,
+          pgn: picked.pgn,
+          whitePlayer: picked.white.username ?? "White",
+          blackPlayer: picked.black.username ?? "Black",
+          whiteElo: picked.white.rating,
+          blackElo: picked.black.rating,
+        };
+      } catch {
+        continue;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 /* ================================================================== */
@@ -543,20 +649,22 @@ export default function RoastPage() {
     dailyDateRef.current = "";
 
     try {
-      // Fetch puzzles from Lichess to discover game IDs (client-side)
       let gameId: string | null = null;
       let whitePlayer = "White";
       let blackPlayer = "Black";
       let whiteElo = 1500;
       let blackElo = 1500;
+      let pgn = "";
+      let source: "lichess" | "chess.com" = "lichess";
 
-      // Step 1: Get puzzle batch from Lichess
-      const puzzleRes = await fetch("https://lichess.org/api/puzzle/batch/next?nb=50", {
-        headers: { Accept: "application/json" },
-      });
-
-      if (puzzleRes.ok) {
-        const puzzleData = await puzzleRes.json();
+      // ── Try Lichess first (with timeouts) ──
+      try {
+        // Step 1: Get puzzle batch from Lichess
+        const puzzleData = await fetchJsonWithTimeout(
+          "https://lichess.org/api/puzzle/batch/next?nb=50",
+          { headers: { Accept: "application/json" } },
+          6000
+        );
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const puzzles: any[] = puzzleData.puzzles ?? [];
         if (puzzles.length > 0) {
@@ -570,32 +678,30 @@ export default function RoastPage() {
             if (!player?.id) continue;
 
             try {
-              const userRes = await fetch(
+              const text = await fetchTextWithTimeout(
                 `https://lichess.org/api/games/user/${player.id}?max=20&rated=true&perfType=blitz,rapid&opening=true`,
-                { headers: { Accept: "application/x-ndjson" } }
+                { headers: { Accept: "application/x-ndjson" } },
+                8000
               );
-              if (userRes.ok) {
-                const text = await userRes.text();
-                const lines = text.trim().split("\n").filter(Boolean);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const games: any[] = lines
-                  .map((l) => { try { return JSON.parse(l); } catch { return null; } })
-                  .filter((g) =>
-                    g && g.variant === "standard" && g.rated &&
-                    g.status !== "started" &&
-                    g.players?.white?.user && g.players?.black?.user &&
-                    g.players?.white?.rating && g.players?.black?.rating
-                  );
-                const decisive = games.filter((g) => g.winner);
-                const pool = decisive.length > 0 ? decisive : games;
-                if (pool.length > 0) {
-                  const picked = pool[Math.floor(Math.random() * pool.length)];
-                  gameId = picked.id;
-                  whitePlayer = picked.players.white.user.name;
-                  blackPlayer = picked.players.black.user.name;
-                  whiteElo = picked.players.white.rating;
-                  blackElo = picked.players.black.rating;
-                }
+              const lines = text.trim().split("\n").filter(Boolean);
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const games: any[] = lines
+                .map((l) => { try { return JSON.parse(l); } catch { return null; } })
+                .filter((g) =>
+                  g && g.variant === "standard" && g.rated &&
+                  g.status !== "started" &&
+                  g.players?.white?.user && g.players?.black?.user &&
+                  g.players?.white?.rating && g.players?.black?.rating
+                );
+              const decisive = games.filter((g) => g.winner);
+              const pool = decisive.length > 0 ? decisive : games;
+              if (pool.length > 0) {
+                const picked = pool[Math.floor(Math.random() * pool.length)];
+                gameId = picked.id;
+                whitePlayer = picked.players.white.user.name;
+                blackPlayer = picked.players.black.user.name;
+                whiteElo = picked.players.white.rating;
+                blackElo = picked.players.black.rating;
               }
             } catch { continue; }
           }
@@ -614,17 +720,31 @@ export default function RoastPage() {
             }
           }
         }
+
+        if (!gameId) throw new Error("No Lichess games found");
+
+        // Step 2: Export the full PGN
+        pgn = await fetchTextWithTimeout(
+          `https://lichess.org/game/export/${gameId}?evals=false&clocks=true&opening=true`,
+          { headers: { Accept: "application/x-chess-pgn" } },
+          6000
+        );
+        source = "lichess";
+      } catch (lichessErr) {
+        console.warn("Lichess fetch failed, trying Chess.com fallback:", lichessErr);
+
+        // ── Chess.com fallback ──
+        const ccGame = await fetchChessComRandomGame();
+        if (!ccGame) throw new Error("Both Lichess and Chess.com failed");
+
+        gameId = ccGame.id;
+        whitePlayer = ccGame.whitePlayer;
+        blackPlayer = ccGame.blackPlayer;
+        whiteElo = ccGame.whiteElo;
+        blackElo = ccGame.blackElo;
+        pgn = ccGame.pgn;
+        source = "chess.com";
       }
-
-      if (!gameId) throw new Error("No games found");
-
-      // Step 2: Export the full PGN
-      const pgnRes = await fetch(
-        `https://lichess.org/game/export/${gameId}?evals=false&clocks=true&opening=true`,
-        { headers: { Accept: "application/x-chess-pgn" } }
-      );
-      if (!pgnRes.ok) throw new Error("Failed to export game");
-      const pgn = await pgnRes.text();
 
       // Parse opening/result from PGN
       const openingMatch = pgn.match(/\[Opening "(.+?)"\]/);
@@ -633,7 +753,7 @@ export default function RoastPage() {
       const result = resultMatch?.[1] ?? "*";
 
       const data: GameData = {
-        id: gameId,
+        id: gameId!,
         pgn,
         whitePlayer,
         blackPlayer,
@@ -644,6 +764,7 @@ export default function RoastPage() {
         result,
         termination: terminationMatch?.[1] ?? "",
         winner: result === "1-0" ? "white" : result === "0-1" ? "black" : null,
+        source,
       };
 
       setGame(data);
@@ -3189,6 +3310,15 @@ export default function RoastPage() {
                     <span className="text-[10px] font-bold text-orange-300 uppercase tracking-wider">Friend&apos;s Challenge</span>
                   </div>
                 )}
+                {!challengeId && game.source && (
+                  <div className="mb-3 inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                    <span className={`text-[10px] font-bold uppercase tracking-wider ${
+                      game.source === "lichess" ? "text-slate-400" : "text-green-400"
+                    }`}>
+                      {game.source === "lichess" ? "♞ Lichess Game" : "♟ Chess.com Game"}
+                    </span>
+                  </div>
+                )}
                 <p className="text-xs uppercase tracking-[0.25em] text-orange-400/60 font-bold mb-3">🎬 Coming Up</p>
                 <p className="text-xl font-bold text-orange-300 mb-5">&ldquo;{introLine}&rdquo;</p>
 
@@ -3942,9 +4072,20 @@ export default function RoastPage() {
                     🎯 Lock It In!
                   </h3>
                   <p className="text-[11px] text-slate-400 mt-1.5">What&apos;s the average Elo of these players?</p>
-                  {/* Beast Games-style stakes reminder */}
-                  <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-red-500/10 border border-red-500/20 px-3 py-0.5">
-                    <span className="text-[10px] text-red-400 font-bold">🏆 {score > 0 ? `${score} pts at stake` : "300 pts for perfect guess"}</span>
+                  {/* Source badge + stakes reminder */}
+                  <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
+                    {game?.source && (
+                      <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${
+                        game.source === "lichess"
+                          ? "border-white/10 bg-white/5 text-slate-400"
+                          : "border-green-500/20 bg-green-500/5 text-green-400"
+                      }`}>
+                        {game.source === "lichess" ? "♞ Lichess" : "♟ Chess.com"}
+                      </span>
+                    )}
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-red-500/10 border border-red-500/20 px-3 py-0.5">
+                      <span className="text-[10px] text-red-400 font-bold">🏆 {score > 0 ? `${score} pts at stake` : "300 pts for perfect guess"}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -4026,6 +4167,15 @@ export default function RoastPage() {
                   <p className="text-xs text-slate-500 mt-1">
                     White: {game.whiteElo} · Black: {game.blackElo}
                   </p>
+                  {game.source && (
+                    <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold mt-1.5 ${
+                      game.source === "lichess"
+                        ? "border-white/10 bg-white/5 text-slate-400"
+                        : "border-green-500/20 bg-green-500/5 text-green-400"
+                    }`}>
+                      {game.source === "lichess" ? "♞ Lichess" : "♟ Chess.com"}
+                    </span>
+                  )}
                 </div>
 
                 {/* Result badge */}
