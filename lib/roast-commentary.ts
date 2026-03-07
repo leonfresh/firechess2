@@ -3383,6 +3383,126 @@ export const GAME_INTRO = [
   "Is this another r/AnarchyChess moment in the making? The brick is ready. The PIPI is warm ⛪🧱🗿",
 ];
 
+/* ================================================================== */
+/*  Personalized game intro with player name banter                     */
+/* ================================================================== */
+
+/** Common English words / pop culture that might appear in usernames */
+const NAME_ROASTS: [RegExp, (w: string, b: string) => string][] = [
+  // Animals
+  [/cat/i,    (w, b) => `${w} vs ${b}. Someone has "cat" in their name. Probably plays like one — knocking pieces off the board randomly 🐱💀`],
+  [/dog/i,    (w, b) => `${w} vs ${b}. Got a dog username. Loyal to bad openings, fetches losses, good boy energy 🐶🗿`],
+  [/fish/i,   (w, b) => `${w} vs ${b}. "Fish" in the name — are they the fish or are they FROM Stockfish? Spoiler: fish 🐟💀`],
+  [/shark/i,  (w, b) => `${w} vs ${b}. Shark in the name. Let's see if they bite or just flop around 🦈🤡`],
+  [/wolf/i,   (w, b) => `${w} vs ${b}. Wolf energy in the username. Please be wolf and not chihuahua 🐺🤞`],
+  [/bear/i,   (w, b) => `${w} vs ${b}. Bear in the name. Either a grandmaster in disguise or someone who hibernates through the middlegame 🐻💤`],
+  [/dragon/i, (w, b) => `${w} vs ${b}. Dragon in the username. Probably plays the Sicilian Dragon. Probably blunders it too 🐉🗿`],
+  [/monkey|ape/i, (w, b) => `${w} vs ${b}. Monke username detected. Return to monke chess. No theory, only vibes 🐒🍌`],
+  [/horse/i,  (w, b) => `${w} vs ${b}. Horse in the name — fitting for chess. Let's see if their knights move in L shapes or just L energy 🐴💀`],
+  [/bird/i,   (w, b) => `${w} vs ${b}. Bird username. Hopefully they don't play like the Bird Opening because 1. f4 is a war crime 🐦🤮`],
+  [/lion/i,   (w, b) => `${w} vs ${b}. Lion in the name. King of the jungle, but are they king of the board? Almost certainly not 🦁🤡`],
+  [/snake/i,  (w, b) => `${w} vs ${b}. Snake username. Sneaky, slithery chess incoming? Or just blundering like a worm 🐍💀`],
+  [/fox/i,    (w, b) => `${w} vs ${b}. Fox in the name. Cunning, clever... or just another 1200 with main character energy 🦊🗿`],
+  // Chess references
+  [/king/i,   (w, b) => `${w} vs ${b}. "King" in the name. Bold claim. Kings don't usually blunder their queens but we'll see 👑🗿`],
+  [/queen/i,  (w, b) => `${w} vs ${b}. Queen in the username. Powerful piece, but we know it's getting traded or blundered by move 15 👸💀`],
+  [/knight/i, (w, b) => `${w} vs ${b}. Knight in the name. Hopefully they know how the horsey moves. You'd be surprised how many don't 🐴🗿`],
+  [/bishop/i, (w, b) => `${w} vs ${b}. Bishop username. Diagonal energy. Let's see if they trap their own bishop by move 8 🗿📐`],
+  [/rook/i,   (w, b) => `${w} vs ${b}. Rook in the name. The piece that sits in the corner the entire game at this elo. Fitting 🏰💤`],
+  [/pawn/i,   (w, b) => `${w} vs ${b}. Pawn in the username? At least they're honest about their skill level. Respect 🫡♟️`],
+  [/mate|checkmate/i, (w, b) => `${w} vs ${b}. "Mate" in the name. Speaking it into existence. Or just Australian 🇦🇺🗿`],
+  [/gambit/i, (w, b) => `${w} vs ${b}. Gambit in the username. They watched Queen's Gambit ONCE and now it's a whole personality 📺🤡`],
+  [/GM|master/i, (w, b) => `${w} vs ${b}. "Master" in the name. Setting expectations REALLY high there. Let's see if they deliver 🎓💀`],
+  [/chess/i,  (w, b) => `${w} vs ${b}. Chess is literally in their name. That's like naming yourself "breathing." You BETTER be good at it 🗿🤡`],
+  // Pop culture / personality
+  [/dark/i,   (w, b) => `${w} vs ${b}. Dark in the name. Edgy. Probably plays the London. The darkest timeline 🌑🤮`],
+  [/fire|blaze|flame/i, (w, b) => `${w} vs ${b}. Fire username. Let's see if their chess is fire or just a dumpster fire 🔥🗑️`],
+  [/ice|frost|cold/i, (w, b) => `${w} vs ${b}. Cold username. Hopefully their chess is ice cold calculated, not just... cold and lifeless 🧊💀`],
+  [/shadow/i, (w, b) => `${w} vs ${b}. Shadow in the name. Living in the shadow of better players. We've all been there 🫥🗿`],
+  [/death|dead|skull/i, (w, b) => `${w} vs ${b}. Death in the username. Their rating is definitely dying, that's for sure 💀📉`],
+  [/ninja/i,  (w, b) => `${w} vs ${b}. Ninja in the name. Stealthy moves incoming? Or just invisibly bad 🥷💀`],
+  [/pro/i,    (w, b) => `${w} vs ${b}. "Pro" in the username. The audacity. The confidence. The inevitable blunder on move 6 💪🤡`],
+  [/noob|newb/i, (w, b) => `${w} vs ${b}. They PUT "noob" in their own name. Humility is a virtue. Let's see if it's accurate 🫡💀`],
+  [/wizard|magic/i, (w, b) => `${w} vs ${b}. Wizard energy username. Casting spells or just making pieces disappear (their own) 🧙💀`],
+  [/legend/i, (w, b) => `${w} vs ${b}. Legend in the name. Legendary at what though? Hanging pieces? We'll find out 🏆🤡`],
+  [/galaxy|space|star|cosmic/i, (w, b) => `${w} vs ${b}. Cosmic username energy. Their chess might be out of this world. Or just... lost in space 🌌🗿`],
+  [/toxic/i,  (w, b) => `${w} vs ${b}. Toxic in the name. Great. Probably premoves and then alt-tabs. We love it 🤢🗿`],
+  [/boss/i,   (w, b) => `${w} vs ${b}. Boss in the name. CEO of hanging pieces. Managing a portfolio of blunders 💼💀`],
+  [/bot/i,    (w, b) => `${w} vs ${b}. Bot in the name? If only. Even Mittens would play better than what we're about to see 🤖🗿`],
+  [/god/i,    (w, b) => `${w} vs ${b}. GOD in the username. Garry Chess would like to have a word. There's only ONE chess god ⛪👑`],
+  // Numbers / elo references
+  [/69/,      (w, b) => `${w} vs ${b}. 69 in the username. Nice. Very mature. Let's see if their chess is as funny as their humor 😏🗿`],
+  [/420/,     (w, b) => `${w} vs ${b}. 420 in the name. These moves are about to be... elevated. In the wrong direction 🌿📉`],
+  [/1337|leet|elite/i, (w, b) => `${w} vs ${b}. 1337 energy in the name. Hackerman vibes. Can they hack their way out of a bad position? 💻🤡`],
+  // Food
+  [/pizza/i,  (w, b) => `${w} vs ${b}. Pizza in the name. Delivering losses faster than Dominos. 30 minutes or it's free 🍕💀`],
+  [/cookie|cake/i, (w, b) => `${w} vs ${b}. Sweet username. Their chess is about to give ME a stomachache though 🍪🤢`],
+  // Misc fun
+  [/banana/i, (w, b) => `${w} vs ${b}. Banana in the name. This game is about to slip and fall. Hard 🍌💀`],
+  [/chaos/i,  (w, b) => `${w} vs ${b}. Chaos in the username. A promise or a warning? At this elo, both 🌀🔥`],
+  [/chill|zen|calm/i, (w, b) => `${w} vs ${b}. Chill username energy. Let's see how chill they are after blundering a rook 🧘‍♂️💀`],
+  [/rage|angry|mad/i, (w, b) => `${w} vs ${b}. Rage in the name. They're either already tilted or about to be. This should be fun 😤🔥`],
+  [/lucky/i,  (w, b) => `${w} vs ${b}. Lucky in the username. They're gonna need ALL the luck. And probably still won't be enough 🍀💀`],
+  [/speed|fast|quick|rapid/i, (w, b) => `${w} vs ${b}. Speed in the name. Fast at what — blundering? Because that they can speedrun 🏃💀`],
+  [/cr7|messi|ronaldo/i, (w, b) => `${w} vs ${b}. Football name in chess? Wrong sport bestie but I respect the energy ⚽🤡`],
+  [/trump|biden|obama/i, (w, b) => `${w} vs ${b}. Political username in chess. Controversial take: they're both going to lose pieces 🏛️💀`],
+];
+
+/** Generic intro templates that include player names */
+const NAME_INTROS: ((w: string, b: string) => string)[] = [
+  (w, b) => `${w} vs ${b}. Two warriors enter. Both will leave disappointed. Let's GO 🍿⚔️`,
+  (w, b) => `Ladies and gentlemen, in this corner: ${w}. And in the other corner: ${b}. FIGHT 🥊🔥`,
+  (w, b) => `${w} versus ${b}! Neither of them know we're about to roast them to absolute cinders. This is going to be beautiful 🔥💀`,
+  (w, b) => `Today's victims — I mean, players — are ${w} and ${b}. Let's see who embarrasses themselves less 🤡🍿`,
+  (w, b) => `${w} and ${b} sat down, opened a chess app, and chose violence. Let's see how that worked out 😤⚔️`,
+  (w, b) => `${w} vs ${b}! Names I will never remember after this game, but their blunders? Those are FOREVER 💀🗿`,
+  (w, b) => `Introducing: ${w} on White and ${b} on Black. They have no idea what's about to happen to their reputations 🫡🔥`,
+  (w, b) => `${w} against ${b}. A battle for the ages. "The ages" being like... age 12 based on this play style probably 👶🗿`,
+  (w, b) => `${w} vs ${b}! Two people who probably think they're way better than they actually are. Let's verify 📊🤡`,
+  (w, b) => `Alright chat, it's ${w} versus ${b}. Both of them woke up today thinking they were good at chess. Only one can be slightly less wrong 🤷💀`,
+  (w, b) => `${w} and ${b} — two usernames I'm going to be typing a LOT while pointing out their mistakes 📝😭`,
+  (w, b) => `Breaking news: ${w} has challenged ${b} to a game of chess. Or rather, a game of "who can blunder less." Coverage starts now 📺🔥`,
+  (w, b) => `${w} vs ${b}. One will blame lag. One will blame mouse slips. Both will blame anything except their own chess ability 🖱️💀`,
+  (w, b) => `Welcome welcome! ${w} takes the White pieces, ${b} gets Black. Neither gets my respect. Yet. Let's see what happens 🗿🍿`,
+  (w, b) => `Tonight's main event: ${w} vs ${b}! This is going to be a game. Whether it's a GOOD game is another question entirely 🤨🔥`,
+  (w, b) => `${w} versus ${b}. Two gladiators enter the arena. One has a sword, one has a pool noodle. Let's figure out who's who ⚔️🗿`,
+  (w, b) => `${w} on White, ${b} on Black. Hikaru could beat both of them simultaneously while eating ramen. But let's see what THEY can do 🏎️🍜`,
+  (w, b) => `It's ${w} vs ${b}! Levy would already be making faces at their names. I'm making faces at their moves. Let's begin 📺😬`,
+  (w, b) => `Chat, we've got ${w} against ${b}. Place your bets: who hangs a piece first? The floor is OPEN 🎰💀`,
+  (w, b) => `${w} and ${b} are about to find out why you should never let the internet watch your chess games 🌐😭`,
+];
+
+/**
+ * Generate a personalized game intro with player name banter.
+ * Checks usernames for dictionary words / pop culture references and roasts accordingly.
+ */
+export function getGameIntro(whiteName: string, blackName: string): string {
+  const w = whiteName || "White";
+  const b = blackName || "Black";
+
+  // If both names are generic ("White" / "Black"), fall back to the old GAME_INTRO pool
+  if (w === "White" && b === "Black") {
+    return pick(GAME_INTRO);
+  }
+
+  // 40% chance: try to find a name-specific roast
+  if (Math.random() < 0.4) {
+    const combined = w + " " + b;
+    const matchingRoasts: ((w: string, b: string) => string)[] = [];
+    for (const [pattern, fn] of NAME_ROASTS) {
+      if (pattern.test(combined)) {
+        matchingRoasts.push(fn);
+      }
+    }
+    if (matchingRoasts.length > 0) {
+      return pick(matchingRoasts)(w, b);
+    }
+  }
+
+  // Otherwise use a generic name intro
+  return pick(NAME_INTROS)(w, b);
+}
+
 export const GAME_SUMMARY_LINES = [
   "📊 {blunders} blunders, {mistakes} mistakes, {inaccuracies} inaccuracies. A normal day in {elo} chess 💀",
   "📉 Final tally: {blunders} blunders. Both players really said 'no one's winning today' 🤝🗿",

@@ -33,7 +33,7 @@ import {
   getGuessReaction,
   ELO_BRACKETS,
   getEloBracketIdx,
-  GAME_INTRO,
+  getGameIntro,
   GAME_SUMMARY_LINES,
   REVEAL_CORRECT,
   REVEAL_TOO_HIGH,
@@ -865,7 +865,7 @@ export default function RoastPage() {
       setAnalyzing(false);
 
       // Intro
-      const intro = GAME_INTRO[Math.floor(Math.random() * GAME_INTRO.length)];
+      const intro = getGameIntro(whitePlayer, blackPlayer);
       setIntroLine(intro);
       setPageState("intro");
     } catch (err) {
@@ -1151,7 +1151,7 @@ export default function RoastPage() {
       setInaccuracies(totalInaccuracies);
       setAnalyzing(false);
 
-      const intro = GAME_INTRO[Math.floor(Math.random() * GAME_INTRO.length)];
+      const intro = getGameIntro(whitePlayer, blackPlayer);
       setIntroLine(intro);
       setPageState("intro");
     } catch (err) {
