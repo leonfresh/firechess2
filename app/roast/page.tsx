@@ -3306,7 +3306,7 @@ export default function RoastPage() {
 
                   {/* Emoji marker overlay */}
                   {activeMarkers.length > 0 && boardSize > 0 && (
-                    <div className="absolute inset-0 pointer-events-none" style={{ width: boardSize, height: boardSize }}>
+                    <div className="absolute inset-0 pointer-events-none z-[100]" style={{ width: boardSize, height: boardSize }}>
                       {activeMarkers.map((m, i) => {
                         const sqSize = boardSize / 8;
                         const fileI = m.square.charCodeAt(0) - 97; // a=0 .. h=7
