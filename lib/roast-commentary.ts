@@ -1229,6 +1229,9 @@ function _brilliantRoast(
     () => ({ text: `🌟 ${move.san}. Hans, is that you?? Is there an earpiece under that hair?? Nobody at this elo finds that move.${callback} 🔊💀`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => ({ text: `🧠 ${move.san}.${callback} Absolutely DISGUSTING move. In the best way. The opponent is gonna need a shower after that 🚿🔥`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => ({ text: `🤯 ${move.san}. Even the Knook would be impressed. That's the best move on the board and they FOUND it. At THIS level. Unquestionably suspicious 🗿♞🏰`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `🎯 ${move.san}. That's a 1660 player finding a GM move. Google "1660 chess." Holy hell. This is NOT supposed to happen ⛪🤯`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `🔥 ${move.san}. r/AnarchyChess would NOT believe this came from a game like this. "Fake, must be engine." Nope, just raw talent. Briefly 🗿⬆️`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `👑 ${move.san}. Even Garry Chess himself — inventor of chess — would nod approvingly. Then see the rest of the game and take the nod back 🗿♟️`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
   ];
   return pick(lines)();
 }
@@ -1796,6 +1799,18 @@ function _blunderRoast(
     `💀 ${move.san}.${ctxLine} "True will never die" — but this position? This position is DECEASED. Petrosian copypasta energy in move form 🪦🗿`,
     `☠️ ${move.san}.${ctxLine} W)esley S)o would never play this. "Proffesionals knew how to lose and congratulate." This player doesn't know how to NOT lose 🗿🤡`,
     `🤡 ${move.san}.${ctxLine} "You was doing PIPI in your pampers when I was beating players much more stronger then you!" — Petrosian's ghost watching this game 👻🗿`,
+    `🎯 ${move.san}.${ctxLine} Certified 1660 moment. This is EXACTLY the kind of move Levy pauses on and goes "WHAT. WHAT IS THAT." Peak Guess the Elo content 📺🤡`,
+    `💀 ${move.san}.${ctxLine} This is 1660 behavior and I will not elaborate further. If you know you know. If you don't know, lucky you 🗿📺`,
+    `🤡 ${move.san}.${ctxLine} Google "1660 chess." Holy hell. New response just dropped and it's this move. Actually just this entire game 💀⛪`,
+    `🚨 ${move.san}.${ctxLine} The resssign button is RIGHT THERE. Right there. They can see it. They choose to suffer instead. Respect honestly 🗿🏳️`,
+    `💀 ${move.san}.${ctxLine} I was not cheating. I was not using the engine. Chess speaks for itself. And right now chess is SCREAMING 🗿🔊`,
+    `🧱 ${move.san}.${ctxLine} Google "en passant." Actually no, google "how to not blunder." Holy hell. Brick incoming ⛪🧱`,
+    `💀 ${move.san}.${ctxLine} This is the kind of move that gets 4000 upvotes on r/AnarchyChess with the title "my opponent is a genius" (it's sarcasm) 🤡⬆️`,
+    `🤡 ${move.san}.${ctxLine} The horse moves in an L shape. The rook moves in straight lines. This player moves in circles. Around the drain 🐴🚽💀`,
+    `🗿 ${move.san}.${ctxLine} Garry Chess would uninvent the game if he saw this. Actually he would specifically uninvent whatever piece just moved 🧩💀`,
+    `💀 ${move.san}.${ctxLine} This has big "I'm 1660 and this is my peak" energy. The plateau isn't a phase, it's a lifestyle 📉🗿`,
+    `☠️ ${move.san}.${ctxLine} Actual zombie chess. The position is dead but the game keeps going. Weekend at Bernie's but it's a chess game 🧟💀`,
+    `🤡 ${move.san}.${ctxLine} This move belongs on the AnarchyChess Hall of Fame. Right next to the en passant brick and the Petrosian copypasta 🏛️⛪🗿`,
   ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: _toSq, emoji: "💀" }] } };
 }
 
@@ -1988,6 +2003,12 @@ function _mistakeRoast(
     `🏆 ${move.san}.${ctxFallback} Magnus once said he plays the best move because the other moves are "just worse." This player actively SEEKS the worse moves 🗿♟️`,
     `🗿 ${move.san}.${ctxFallback} "Are you kidding ??? What the **** are you talking about man." Even Petrosian's copypasta is more strategically sound than this move 💀`,
     `🤡 ${move.san}.${ctxFallback} This move was doing PIPI in its pampers when better moves were sitting RIGHT THERE on the board. Liers will kicked off... 🗿👶`,
+    `😬 ${move.san}.${ctxFallback} Peak 1660 behavior. Not bad enough to be funny, not good enough to be chess. Just... 1660 📺🗿`,
+    `📉 ${move.san}.${ctxFallback} This is the kind of mistake that keeps you at 1660 forever. The plateau is real and this move IS the plateau 📺💀`,
+    `🧱 ${move.san}.${ctxFallback} Google "not blundering." Holy hell. New response just dropped and it's simply not playing ${move.san} ⛪🗿`,
+    `🤡 ${move.san}.${ctxFallback} Garry Chess did not invent this beautiful game for you to play like this. He's rolling in his... wait he's still alive. He's just rolling 🗿👑`,
+    `😬 ${move.san}.${ctxFallback} r/AnarchyChess would love this. "Just played this game, am I improving?" Comments: "no" 💀⬆️🗿`,
+    `🤡 ${move.san}.${ctxFallback} The horse moves in an L shape and even IT is confused by this decision. Neigh 🐴🗿`,
     ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: toSq, emoji: pick(["😬", "📉", "🤡", "😤", "🗿"]) }] } };
 }
 
@@ -2042,6 +2063,9 @@ function _inaccuracyRoast(
     () => `🤷 ${move.san}. Peak "I'll just develop and hope for the best" energy. The strategy of champions. And also beginners. Mostly beginners 🏆💀`,
     () => `🗿 ${move.san}. "You was doing PIPI in your pampers" — Sir that's an inaccuracy, not a blunder. But the energy? Pure PIPI 👶🤡`,
     () => `🤡 ${move.san}. Petrosian would call this move a "proffesional" inaccuracy. "W]esley 'S]o is not proffesional" but at least he wouldn't play this 🗿💀`,
+    () => `🗿 ${move.san}. Classic 1660 inaccuracy. Not a blunder, just a gentle slide into mediocrity. The 1660 experience™ 📺💤`,
+    () => `😑 ${move.san}. Google "how to play better chess." Holy hell. Actually don't, you'll end up on AnarchyChess and learn about the Knook instead ⛪🐴🏰`,
+    () => `🤷 ${move.san}. Garry Chess did not wake up every day and defend his world title for THIS. Show some respect to the game 👑🗿`,
     // Positional-awareness lines for inaccuracies
     () => {
       const bb = detectBadBishop(after, moverColor);
@@ -2818,6 +2842,8 @@ export function getEloFlavorLine(elo: number): string {
     "Intermediate elo. They know what a Knook is but not how to avoid one 🐴🗿",
     "1300-1600. The 'I'm subbed to Levy AND Hikaru but somehow still stuck here' bracket 📺😭",
     "Intermediate chess. The elo where you know enough to be frustrated but not enough to fix it. Peak Levy viewer energy 📉🗿",
+    "1300-1600. Approaching the legendary 1660. Where chess goes to be chaotic and Levy goes for content 📺🔥",
+    "1300-1600. Google 'en passant.' They know what it is. They just don't know WHEN to take it. Holy hell ⛪💀",
   ]);
   if (elo < 2000) return pick([
     "1600-2000: now we're cooking 🍳🔥 These players have seen some things",
@@ -2829,6 +2855,11 @@ export function getEloFlavorLine(elo: number): string {
     "1600-2000. Decent enough that when they blunder, even Petrosian would say 'Proffesionals knew how to lose' 🤡",
     "1600-2000. The elo where Hikaru would say 'that's actually not terrible' and his chat would celebrate for days 🏎️🎉",
     "1600-2000. Good enough that Levy would actually analyze the position instead of just roasting. Growth 📈📺",
+    "1660 territory. THE meme elo. Every Guess the Elo game lives here rent-free in Levy's head 📺🤡",
+    "1660. The elo that launched a thousand memes. Brilliant moves followed by hanging the queen. Beautiful chaos 💀👑",
+    "Ah yes, the 1660 zone. Where you play like Magnus for 3 moves then blunder like you just discovered chess exists. Peak content 📺🔥",
+    "1660 elo. The number that echoes through AnarchyChess like a prophecy. Every game at this level is a meme waiting to happen 🗿⛪",
+    "The 1660 bracket. They know en passant, they know the Petrosian copypasta, they know the Knook. They just don't know how to play chess consistently 🐴💀",
   ]);
   return pick([
     "Above 2000. These players actually know what they're doing. Usually 👑🧠",
@@ -2883,6 +2914,9 @@ export function getClosingRoast(
     `🏁 And that's the game! Both sides gave it everything they had. And by everything, I mean every piece. Voluntarily 💀🗿`,
     `🏁 Game over! What a ride. I'm not saying it was a rollercoaster, but my evaluation bar needs therapy 📊🫠`,
     `🏁 And that's a wrap! Time to guess the elo. Choose wisely... or don't. I'll roast you either way 🔥🤡`,
+    `🏁 GG! Certified 1660 content right here. Levy would FEAST on this game. Multiple pauses. Multiple zooms. Peak Guess the Elo 📺💀`,
+    `🏁 Game over! This game will be remembered. Not fondly, but it WILL be remembered. r/AnarchyChess hall of fame material ⬆️🗿`,
+    `🏁 That's a wrap! Google "was that game good?" Holy hell. New response just dropped and it's this entire analysis ⛪💀`,
   );
 
   // Quality-based additions
@@ -2892,6 +2926,7 @@ export function getClosingRoast(
       `📊 ${blunders} blunders total. This was less of a chess game and more of a demolition derby. Both players brought hammers instead of brains 🔨🗿`,
       `📊 Overall assessment: ${blunders} blunders. Each player was the other's best teammate. Impressive teamwork against themselves 🤝💀`,
       `📊 ${blunders} blunders. Both players were doing PIPI in their pampers the ENTIRE game. Petrosian would file a formal complaint. "Liers will kicked off..." 👶🗿`,
+      `📊 ${blunders} blunders. This game is going straight to r/AnarchyChess with the caption "peak 1660?" and getting 10k upvotes ⬆️🤡`,
     );
   } else if (blunders >= 3) {
     lines.push(
@@ -2969,6 +3004,9 @@ export function getEloGuessComment(quality: "surprising_good" | "clueless" | "mi
         "Jekyll and Hyde chess. Masterful one move, crimes against chess the next 🧪💀",
         "Even Levy couldn't Guess this Elo. One move looks GM, next move looks like they just installed the app 📺🤯",
         "Hikaru would need to pause and squint at this one. The skill variance is giving him whiplash too 🏎️😳",
+        "This is PEAK 1660 energy. GM one move, 400 the next. The duality of chess. Google '1660 chess.' Holy hell ⛪🎢",
+        "Classic 1660 game. They play a brilliant sacrifice then hang their queen the next move. Can't make this up 💀👑",
+        "This game has more mood swings than a chess.com rating graph at 1660. Up 200, down 300, up 100, uninstall 📉📈💀",
       ]);
   }
 }
@@ -3150,6 +3188,8 @@ export const REVEAL_TOO_HIGH = [
   "Nah, these players were doing PIPI in their pampers at that rating. Lower. Much lower 🗿",
   "Even Hikaru's chat wouldn't overestimate this hard, and they think EVERYTHING is brilliant 🏎️🤡",
   "Levy would roast you for this guess harder than he roasts the actual games 📺💀",
+  "This is 1660 chess at BEST and you thought it was higher?? Google '1660 chess.' Holy hell ⛪🤡",
+  "Even r/AnarchyChess would call this a bad guess. And they call en passant a forced move 🗿⬆️",
 ];
 
 export const REVEAL_TOO_LOW = [
@@ -3164,6 +3204,8 @@ export const REVEAL_TOO_LOW = [
   "You underestimated them harder than they underestimated that knight fork. Respect their grind 💪🗿",
   "Hikaru would say you're trolling with that guess. And he'd be right 🏎️🦨",
   "Levy's eyebrows would fly off his face at that underestimate. These players have TRAINING 📺💪",
+  "You guessed below 1660?? Some of these moves were at LEAST 1660 level. That's not a compliment btw 📺🗿",
+  "Too low! Even the Knook is offended by that guess. Show some respect to the horsey castle 🐴🏰🗿",
 ];
 
 export const REVEAL_CORRECT = [
@@ -3180,6 +3222,8 @@ export const REVEAL_CORRECT = [
   "Nailed it! Hikaru-level pattern recognition. Chat is going crazy rn 🏎️🎯",
   "Spot on! Levy trained you well through all those Guess the Elo episodes 📺🧠",
   "Eric Rosen would give you a calm nod and a 'nice.' The highest form of Rosen praise 😌🎯",
+  "Nailed it! You clearly watch too many Guess the Elo videos. Certified 1660 scholar 🎓📺",
+  "Spot on! Even Garry Chess — inventor of the game — would approve of this guess 👑🎯",
 ];
 
 export const GAME_INTRO = [
@@ -3203,6 +3247,9 @@ export const GAME_INTRO = [
   "Another game. Will it make me question the existence of chess education? Probably 📚🤡",
   "Let's see what happens when two people who googled 'en passant' try to play a full game 💀⛪",
   "Fresh game loaded. I'm already bracing for the PIPI energy 🗿🔥",
+  "New game. Will it be 1660? It's ALWAYS 1660 somehow. The prophecy is real 📺🤡",
+  "Alright let's see what Garry Chess cooked for us today. Please don't be the London. Please 👑🤮",
+  "Is this another r/AnarchyChess moment in the making? The brick is ready. The PIPI is warm ⛪🧱🗿",
 ];
 
 export const GAME_SUMMARY_LINES = [
