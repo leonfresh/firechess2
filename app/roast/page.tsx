@@ -19,7 +19,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
-import { useBoardSize } from "@/lib/use-board-size";
+
 import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
 import { playSound, preloadSounds, preloadRoastSounds } from "@/lib/sounds";
 import { stockfishPool } from "@/lib/stockfish-client";
@@ -422,7 +422,7 @@ async function fetchChessComRandomGame(): Promise<{
 
 export default function RoastPage() {
   /* ── Board rendering ── */
-  const { ref: boardRef, size: boardSize } = useBoardSize(640, { evalBar: false });
+  const [boardSize, setBoardSize] = useState(0);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
@@ -3410,7 +3410,7 @@ export default function RoastPage() {
                 )}
               </div>
 
-              <div ref={boardRef} className="w-full" style={{ maxWidth: "min(640px, 92vw)" }}>
+              <div className="w-full max-w-[640px]">
                 {/* Premium board frame with reactive glow */}
                 <div className="relative rounded-2xl p-[3px] transition-all duration-700" style={{
                   background: `linear-gradient(135deg, rgba(${ambientGlow.color}, ${ambientGlow.intensity * 3}) 0%, rgba(255,255,255,0.06) 50%, rgba(${ambientGlow.color}, ${ambientGlow.intensity * 2}) 100%)`,
@@ -3425,7 +3425,7 @@ export default function RoastPage() {
                     id="roast-board"
                     position={fen}
                     boardOrientation={orientation}
-                    boardWidth={boardSize}
+                    onBoardWidthChange={setBoardSize}
                     arePiecesDraggable={false}
                     animationDuration={200}
                     customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
