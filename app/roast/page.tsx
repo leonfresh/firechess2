@@ -750,7 +750,7 @@ export default function RoastPage() {
           capturedPiece: moveResult.captured ?? undefined,
           hungPiece: cpLoss > 200 && !moveResult.captured,
           hungWhat: cpLoss > 200 ? moveResult.piece : undefined,
-          sacrificedMaterial: !!moveResult.captured && cpLoss > 150 && _pieceVal(moveResult.piece) > _pieceVal(moveResult.captured),
+          sacrificedMaterial: !!moveResult.captured && cpLoss > 150 && (_pieceVal(moveResult.piece) - _pieceVal(moveResult.captured)) >= 3,
           wasBookMove: i < 10 && cpLoss < 10,
           mateInN: null,
           missedMateInN: null,
@@ -1090,7 +1090,7 @@ export default function RoastPage() {
           capturedPiece: moveResult.captured ?? undefined,
           hungPiece: cpLoss > 200 && !moveResult.captured,
           hungWhat: cpLoss > 200 ? moveResult.piece : undefined,
-          sacrificedMaterial: !!moveResult.captured && cpLoss > 150 && _pieceVal(moveResult.piece) > _pieceVal(moveResult.captured),
+          sacrificedMaterial: !!moveResult.captured && cpLoss > 150 && (_pieceVal(moveResult.piece) - _pieceVal(moveResult.captured)) >= 3,
           wasBookMove: i < 10 && cpLoss < 10,
           mateInN: null,
           missedMateInN: null,
@@ -1462,11 +1462,13 @@ export default function RoastPage() {
     }
 
     if (currentIdx >= moves.length - 1) {
+      // Delay before elo guess — let user read the closing comment
+      const closingDelay = activeComment ? Math.max(4000, activeComment.length * 30) : 2000;
       setTimeout(() => {
         setActiveComment(null);
         playSound("drumroll");
         setPageState("guessing");
-      }, 1500);
+      }, closingDelay);
       return;
     }
 
@@ -2164,7 +2166,7 @@ export default function RoastPage() {
     } else {
       const m = moves[idx];
       setFen(m.fen);
-      setLastMove({ from: m.from, to: m.to });
+      setLastMove(m.san ? { from: m.from, to: m.to } : null);
     }
     // Show all comments up to this move
     const comments = moves.slice(0, idx + 1)
@@ -2190,7 +2192,7 @@ export default function RoastPage() {
     if (moves.length > 0) {
       const last = moves[moves.length - 1];
       setFen(last.fen);
-      setLastMove({ from: last.from, to: last.to });
+      setLastMove(last.san ? { from: last.from, to: last.to } : null);
       setCurrentIdx(moves.length - 1);
       const comments = moves.map(m => m.comment).filter(Boolean) as string[];
       setCommentHistory(comments);
@@ -2199,9 +2201,69 @@ export default function RoastPage() {
     setPageState("guessing");
   }, [moves]);
 
-  /* ── Keyboard navigation (arrow keys, space, F) ── */
+  /* ── Quiz auto-continue countdown ── */
+  const [quizCountdown, setQuizCountdown] = useState<number | null>(null);
+  const quizTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Start 5s countdown when a quiz answer is selected and explanation TTS finishes
+  useEffect(() => {
+    if (decisionAnswer === null || !activeDecision) {
+      setQuizCountdown(null);
+      if (quizTimerRef.current) { clearInterval(quizTimerRef.current); quizTimerRef.current = null; }
+      return;
+    }
+    // Wait for TTS explanation to finish before starting countdown
+    if (tts.enabled && tts.speaking) return;
+    // Start countdown
+    setQuizCountdown(5);
+    quizTimerRef.current = setInterval(() => {
+      setQuizCountdown(prev => {
+        if (prev === null || prev <= 1) {
+          // Auto-continue
+          if (quizTimerRef.current) { clearInterval(quizTimerRef.current); quizTimerRef.current = null; }
+          setDecisionShown(prevSet => new Set([...prevSet, activeDecision.moveIdx]));
+          setActiveDecision(null);
+          setDecisionAnswer(null);
+          setAutoplay(true);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => { if (quizTimerRef.current) { clearInterval(quizTimerRef.current); quizTimerRef.current = null; } };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [decisionAnswer, activeDecision, tts.enabled, tts.speaking]);
+
+  /* ── Keyboard navigation (arrow keys, space, F, quiz 1-2-3) ── */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
+      // Quiz keyboard shortcuts 1-2-3-4
+      const quizVisible = activeDecision && typingDone && (decisionAnswer !== null || !tts.enabled || !tts.speaking);
+      if (activeDecision && decisionAnswer === null && quizVisible) {
+        const num = parseInt(e.key);
+        if (num >= 1 && num <= activeDecision.options.length) {
+          e.preventDefault();
+          const idx = num - 1;
+          const isCorrect = idx === activeDecision.correctIdx;
+          const noCorrectAnswer = activeDecision.correctIdx === -1;
+          setDecisionAnswer(idx);
+          if (isCorrect && !noCorrectAnswer) {
+            playSound("correct");
+            setScore(prev => prev + 100);
+            setQuizScore(prev => prev + 100);
+            setLastScoreGain(100);
+            setTimeout(() => setLastScoreGain(null), 1500);
+          } else if (noCorrectAnswer) {
+            playSound("correct");
+          } else {
+            playSound("wrong");
+          }
+          if (tts.enabled && activeDecision.explanation) {
+            setTimeout(() => tts.speak(activeDecision.explanation), 600);
+          }
+          return;
+        }
+      }
       if (pageState !== "watching" && pageState !== "guessing" && pageState !== "revealed") return;
       if (e.key === "ArrowLeft") {
         e.preventDefault();
@@ -2225,7 +2287,7 @@ export default function RoastPage() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [pageState, currentIdx, moves.length, goToMove]);
+  }, [pageState, currentIdx, moves.length, goToMove, activeDecision, decisionAnswer, typingDone, tts]);
 
   /* ── Guess handling ── */
   const handleGuess = useCallback((bracketIdx: number) => {
@@ -2517,6 +2579,7 @@ export default function RoastPage() {
               }`}
             >
               <span className="text-base">{opt.emoji}</span>
+              <span className="text-[10px] text-slate-500 font-mono w-4">{idx + 1}</span>
               <span className={answered && isSelected ? (isCorrect || noCorrectAnswer ? "text-green-300" : "text-red-300") : answered && isCorrect && !noCorrectAnswer ? "text-green-300" : "text-white"}>
                 {opt.label}
               </span>
@@ -2535,6 +2598,8 @@ export default function RoastPage() {
           {(!tts.enabled || !tts.speaking) && (
           <button
             onClick={() => {
+              if (quizTimerRef.current) { clearInterval(quizTimerRef.current); quizTimerRef.current = null; }
+              setQuizCountdown(null);
               setDecisionShown(prev => new Set([...prev, activeDecision.moveIdx]));
               setActiveDecision(null);
               setDecisionAnswer(null);
@@ -2542,7 +2607,7 @@ export default function RoastPage() {
             }}
             className="w-full rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2 text-xs font-black text-white shadow-lg shadow-amber-500/25 transition-all hover:brightness-110 hover:scale-[1.02] active:scale-95 uppercase tracking-wider"
           >
-            Continue ▶
+            Continue{quizCountdown !== null ? ` (${quizCountdown}s)` : ""} ▶
           </button>
           )}
         </div>

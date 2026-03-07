@@ -1733,10 +1733,11 @@ function _blunderRoast(
     ], used), annotations: { arrows: [moveArrow], markers: [{ square: _toSq, emoji: "🪤" }] } };
   }
 
-  // 5. Bad sacrifice — only trigger when the moved piece is worth MORE than the captured piece
-  //    (e.g. queen takes pawn). Equal trades like bishop takes knight are NOT sacrifices.
-  const _isTrueSacrifice = movedPiece && capturedPiece && (PIECE_VALUES[movedPiece.type] ?? 0) > (PIECE_VALUES[capturedPiece.type] ?? 0);
-  if (move.sacrificedMaterial || (_isTrueSacrifice && move.cpLoss > 150)) {
+  // 5. Bad sacrifice — only trigger when material difference is significant (>= 3)
+  //    Rook takes bishop/knight (diff=2) is "losing the exchange", NOT a sacrifice.
+  //    True sacrifices: queen for pawn (diff 8), rook for pawn (diff 4), etc.
+  const _isTrueSacrifice = movedPiece && capturedPiece && (PIECE_VALUES[movedPiece.type] ?? 0) - (PIECE_VALUES[capturedPiece.type] ?? 0) >= 3;
+  if ((_isTrueSacrifice && move.cpLoss > 150) || (move.sacrificedMaterial && movedPiece && capturedPiece && (PIECE_VALUES[movedPiece.type] ?? 0) - (PIECE_VALUES[capturedPiece.type] ?? 0) >= 3)) {
     const sacWhat = movedPiece ? pn(movedPiece.type) : "piece";
     return { text: pickUnused([
       `🤡 They sacrificed the ${sacWhat} with ${move.san}! Bold! Brave! ...and terrible 💀`,
