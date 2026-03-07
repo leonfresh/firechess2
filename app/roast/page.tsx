@@ -3624,8 +3624,8 @@ export default function RoastPage() {
         {/*  CENTERED MODAL: Reveal (closable, with Next Round)              */}
         {/* ════════════════════════════════════════════════════════════════ */}
         {pageState === "revealed" && game && revealModalOpen && (
-          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn overflow-y-auto py-8" onClick={() => setRevealModalOpen(false)}>
-            <div className="relative w-[92vw] max-w-lg rounded-3xl border-2 border-amber-500/40 bg-gradient-to-b from-zinc-900 via-zinc-900 to-zinc-950 p-6 sm:p-8 shadow-2xl shadow-amber-500/20 overflow-hidden my-auto" onClick={e => e.stopPropagation()}>
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn overflow-y-auto py-4 sm:py-8" onClick={() => setRevealModalOpen(false)}>
+            <div className="relative w-[96vw] max-w-2xl rounded-3xl border-2 border-amber-500/40 bg-gradient-to-b from-zinc-900 via-zinc-900 to-zinc-950 p-4 sm:p-6 shadow-2xl shadow-amber-500/20 overflow-hidden my-auto" onClick={e => e.stopPropagation()}>
               {/* Close button */}
               <button
                 onClick={() => setRevealModalOpen(false)}
@@ -3642,11 +3642,15 @@ export default function RoastPage() {
               <div className="absolute bottom-0 left-0 w-10 h-10 border-b-2 border-l-2 border-amber-400/50 rounded-bl-3xl" />
               <div className="absolute bottom-0 right-0 w-10 h-10 border-b-2 border-r-2 border-amber-400/50 rounded-br-3xl" />
 
-              <div className="relative space-y-4">
+              <div className="relative">
+                {/* ── Two-column grid on md+, single column on mobile ── */}
+                <div className="grid md:grid-cols-2 gap-4">
+                  {/* ═══ LEFT COLUMN: Reveal + Stats ═══ */}
+                  <div className="space-y-3">
                 {/* Animated Elo Counter */}
                 <div className="text-center">
                   <p className="text-xs text-amber-400/60 uppercase tracking-[0.2em] font-bold mb-1">The Rating Is...</p>
-                  <p className="text-5xl sm:text-7xl font-black tabular-nums text-transparent bg-clip-text bg-gradient-to-b from-white to-amber-200" style={{ textShadow: "0 0 40px rgba(251,191,36,0.3)" }}>
+                  <p className="text-4xl sm:text-5xl md:text-6xl font-black tabular-nums text-transparent bg-clip-text bg-gradient-to-b from-white to-amber-200" style={{ textShadow: "0 0 40px rgba(251,191,36,0.3)" }}>
                     {revealCounterElo ?? game.avgElo}
                   </p>
                   <p className="text-xs text-slate-500 mt-1">
@@ -3742,6 +3746,11 @@ export default function RoastPage() {
                     </div>
                   ) : null;
                 })()}
+
+                  </div>{/* end LEFT COLUMN */}
+
+                  {/* ═══ RIGHT COLUMN: Score, Actions, Share ═══ */}
+                  <div className="space-y-3">
 
                 {/* Leaderboard toggle button */}
                 {leaderboardData.length > 0 && (
@@ -4076,6 +4085,9 @@ export default function RoastPage() {
                   <span className="relative z-10">🔥 Next Round</span>
                   <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-orange-400 to-red-400 opacity-0 group-hover:opacity-20 transition-opacity blur-xl" />
                 </button>
+
+                  </div>{/* end RIGHT COLUMN */}
+                </div>{/* end grid */}
               </div>
             </div>
           </div>
