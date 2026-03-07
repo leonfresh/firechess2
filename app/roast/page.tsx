@@ -2412,16 +2412,6 @@ export default function RoastPage() {
           filter: "blur(60px)",
         }} />
 
-        {/* Secondary ambient — bottom corner accents */}
-        <div className="animate-float absolute -left-20 bottom-1/4 h-64 w-64 rounded-full transition-colors duration-1000" style={{
-          background: `radial-gradient(circle, rgba(${ambientGlow.color}, ${ambientGlow.intensity * 0.5}) 0%, transparent 70%)`,
-          filter: "blur(80px)",
-        }} />
-        <div className="animate-float-delayed absolute -right-20 bottom-1/3 h-52 w-52 rounded-full transition-colors duration-1000" style={{
-          background: `radial-gradient(circle, rgba(${ambientGlow.color}, ${ambientGlow.intensity * 0.4}) 0%, transparent 70%)`,
-          filter: "blur(80px)",
-        }} />
-
         {/* Spotlight pulse on guess reveal */}
         {spotlightPulse && (
           <div className="animate-spotlight-pulse absolute inset-0" style={{ background: "radial-gradient(circle at 50% 30%, rgba(251,191,36,0.12) 0%, transparent 55%)" }} />
@@ -4175,16 +4165,7 @@ export default function RoastPage() {
         .animate-bounce-once {
           animation: bounceOnce 0.5s ease-out both;
         }
-        .animate-float {
-          animation: float 6s ease-in-out infinite;
-        }
-        .animate-float-delayed {
-          animation: float 6s ease-in-out 3s infinite;
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-20px); }
-        }
+
         .scrollbar-thin::-webkit-scrollbar {
           width: 4px;
         }
@@ -4211,14 +4192,7 @@ export default function RoastPage() {
         .animate-confetti {
           animation: confetti-fall 3s ease-out forwards;
         }
-        /* Spotlight sweep */
-        @keyframes spotlight-sweep {
-          0%, 100% { transform: translateX(-200%) rotate(-5deg); opacity: 0.5; }
-          50% { transform: translateX(200%) rotate(5deg); opacity: 1; }
-        }
-        .animate-spotlight {
-          animation: spotlight-sweep 12s ease-in-out infinite;
-        }
+
         /* Spotlight pulse on reveal */
         @keyframes spotlight-pulse {
           0% { opacity: 0; transform: scale(0.5); }
