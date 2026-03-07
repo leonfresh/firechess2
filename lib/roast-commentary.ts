@@ -519,7 +519,7 @@ function detectBackRankWeakness(chess: Chess, color: Color): boolean {
   return blocked >= 2; // At least 2 pawns blocking escape → back rank vulnerable
 }
 
-/** Check if a piece is trapped (no safe escape squares) */
+/** Check if a piece is truly trapped (no safe escape squares AND opponent can actually win it) */
 function isPieceTrapped(chess: Chess, square: Square, pieceColor: Color): boolean {
   const piece = chess.get(square);
   if (!piece || piece.type === "p" || piece.type === "k") return false;
@@ -528,7 +528,16 @@ function isPieceTrapped(chess: Chess, square: Square, pieceColor: Color): boolea
   try {
     const allMoves = chess.moves({ verbose: true });
     const pieceMoves = allMoves.filter(m => m.from === square);
-    if (pieceMoves.length === 0) return true; // no moves at all
+    if (pieceMoves.length === 0) {
+      // No moves at all — only trapped if opponent can actually attack the square
+      const oppColor = opp(pieceColor);
+      const oppPieces = allPieces(chess).filter(p => p.color === oppColor);
+      const canAttack = oppPieces.some(p => isAttacking(chess, p.square, p, square));
+      return canAttack;
+    }
+
+    // Must have very few moves (truly cornered)
+    if (pieceMoves.length > 3) return false;
 
     let safeMoves = 0;
     for (const m of pieceMoves) {
@@ -540,7 +549,32 @@ function isPieceTrapped(chess: Chess, square: Square, pieceColor: Color): boolea
       );
       if (!isRecapturedCheap) safeMoves++;
     }
-    return safeMoves === 0;
+    if (safeMoves > 0) return false;
+
+    // All moves lose material — but also verify the opponent can actually threaten/win this piece
+    // (otherwise it's just a piece with limited mobility, not truly "trapped")
+    const oppColor = opp(pieceColor);
+    const sim2 = new Chess(chess.fen());
+    // Switch to opponent's turn to check if they can target this piece
+    // Simple check: can any opponent piece attack this square?
+    const oppPieces = allPieces(chess).filter(p => p.color === oppColor);
+    const isUnderAttack = oppPieces.some(p => isAttacking(chess, p.square, p, square));
+    // Or opponent has a move that captures it
+    if (!isUnderAttack) {
+      // Check if opponent can reach the square in 1 move
+      try {
+        const fenParts = chess.fen().split(" ");
+        fenParts[1] = oppColor; // flip turn
+        const oppSim = new Chess(fenParts.join(" "));
+        const oppMoves = oppSim.moves({ verbose: true });
+        const canCapture = oppMoves.some(m => m.to === square && m.captured);
+        if (!canCapture) return false; // opponent can't even reach it — not trapped
+      } catch {
+        return false;
+      }
+    }
+
+    return true;
   } catch {
     return false;
   }
@@ -1273,8 +1307,8 @@ function _blunderRoast(
     }
   }
 
-  // 4d. Back-rank weakness
-  if (detectBackRankWeakness(after, moverColor)) {
+  // 4d. Back-rank weakness (only after the opening — move 15+)
+  if (move.moveNumber >= 15 && detectBackRankWeakness(after, moverColor)) {
     const king = findKing(after, moverColor)!;
     return { text: pickUnused([
       `🚪 ${move.san} and that back rank is WIDE OPEN. The king is trapped behind its own pawns with no escape. One heavy piece slides in and it's GG 💀🏰`,
@@ -1485,8 +1519,8 @@ function _mistakeRoast(
     }
   }
 
-  // Back-rank weakness
-  if (detectBackRankWeakness(after, moverColor)) {
+  // Back-rank weakness (only after the opening — move 15+)
+  if (move.moveNumber >= 15 && detectBackRankWeakness(after, moverColor)) {
     const king = findKing(after, moverColor)!;
     return { text: pickUnused([
       `🏰 ${move.san} and the back rank is looking sketchy. The king is boxed in by its own pawns. A rook invasion could be nasty 😬`,
