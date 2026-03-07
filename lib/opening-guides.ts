@@ -66,11 +66,11 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Fried Liver Attack",
-        description: "After 3…Nf6 4.Ng5 d5 5.exd5 Nxd5?? 6.Nxf7! Kxf7 7.Qf3+ — devastating attack on the exposed king.",
+        description: "White's knight dives to f7, sacrificing itself to rip open the king. If Black takes back wrong, the queen swoops in with a devastating check.",
       },
       {
         name: "Légal Trap",
-        description: "White sacrifices the queen with Nxe5 to deliver checkmate with Bxf7+ and minor pieces.",
+        description: "White sacrifices the queen with a knight capture, then delivers checkmate using the bishop and minor pieces.",
       },
     ],
     positions: [
@@ -116,11 +116,11 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Noah's Ark Trap",
-        description: "After a6, b5, c5 — Black traps the Bb5 on a4 with …b5 and …c5 closing the diagonal.",
+        description: "Black traps White's bishop on a4 by pushing b5 and c5 — closing every escape diagonal.",
       },
       {
         name: "Tarrasch Trap",
-        description: "In the Open Ruy Lopez, if White plays 8.dxe5?? the knight on b5 hangs after …Na5.",
+        description: "In the Open Ruy Lopez, if White takes on e5 too early, the knight on b5 hangs to a knight attack.",
       },
     ],
     positions: [
@@ -165,7 +165,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Scotch Gambit f7 Attack",
-        description: "After 4.Bc4 Nf6 5.e5 — White gains tempo and targets f7 aggressively.",
+        description: "White develops the bishop to c4 and pushes e5, gaining tempo and targeting f7 aggressively.",
       },
     ],
     positions: [
@@ -206,11 +206,11 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Qh4+ Check",
-        description: "After 2…exf4 3.Nf3?? Black plays 3…d6 then …Qh4+ exploiting the weak f2 square.",
+        description: "If White plays knight f3 too early, Black can exploit the weak f2 square with a devastating queen check on h4.",
       },
       {
         name: "Muzio Gambit",
-        description: "White sacrifices a whole knight on f7 for a devastating attack: 3.Nf3 g5 4.Bc4 g4 5.0-0!?",
+        description: "White sacrifices a whole knight on f7 for a devastating attack — castling into the storm and unleashing total chaos.",
       },
     ],
     positions: [
@@ -248,7 +248,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Frankenstein-Dracula Variation",
-        description: "1.e4 e5 2.Nc3 Nf6 3.Bc4 Nxe4!? 4.Qh5 Nd6 5.Bb3 Nc6 — wild complications.",
+        description: "Black snatches the e-pawn with the knight, White fires the queen to h5 creating chaos — wild complications ensue.",
       },
     ],
     positions: [
@@ -286,7 +286,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Stafford Gambit",
-        description: "2…Nf6 3.Nxe5 Nc6!? — a dubious but tricky gambit popular online. White must play 4.Nxc6! (not 4.Nf3??).",
+        description: "A dubious but tricky gambit popular online — Black offers the knight and if White retreats instead of exchanging, complications arise.",
       },
     ],
     positions: [
@@ -335,7 +335,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
       },
       {
         name: "Magnus Smith Trap",
-        description: "In the Dragon: White plays Nd5 and if …e5?? then Nc7+ forks.",
+        description: "In the Dragon, White puts the knight on d5 and if Black pushes e5 carelessly, the knight forks with check on c7.",
       },
     ],
     positions: [
@@ -380,7 +380,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Poisoned Pawn Variation",
-        description: "6.Bg5 e6 7.f4 Qb6!? grabbing the b2 pawn — incredibly sharp and deeply analyzed.",
+        description: "The bishop goes to g5 early, Black grabs the b2 pawn with the queen — incredibly sharp and deeply analyzed.",
       },
     ],
     positions: [
@@ -419,7 +419,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Exchange Sac on c3",
-        description: "…Rxc3! bxc3 opens lines, shatters White's queenside, and unleashes the Dragon bishop.",
+        description: "Black sacrifices the rook on c3! Recapturing shatters White's queenside pawns and unleashes the Dragon bishop.",
       },
     ],
     positions: [
@@ -459,7 +459,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Winawer Poisoned Pawn",
-        description: "3.Nc3 Bb4 4.e5 c5 5.a3 Bxc3+ 6.bxc3 — wild imbalances, Black can grab pawns.",
+        description: "Black pins the knight with the bishop, trades it off, and snatches pawns — wild imbalances where both sides have chances.",
       },
     ],
     positions: [
@@ -504,7 +504,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Advance Bayonet Attack",
-        description: "3.e5 Bf5 4.g4!? — the Short variation, very sharp and aggressive.",
+        description: "The Short variation — White pushes e5 and then g4 for a very sharp and aggressive bayonet attack.",
       },
     ],
     positions: [
@@ -542,7 +542,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Austrian Attack Mishap",
-        description: "After 4.f4 Bg7 5.Nf3 0-0 6.e5?! — too early; Black gets counterplay with …dxe5 fxe5 Nd5.",
+        description: "White pushes e5 too early and Black strikes back in the center — the overextended pawn becomes a target.",
       },
     ],
     positions: [
@@ -580,7 +580,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Icelandic Gambit",
-        description: "2.exd5 Nf6 3.c4 e6!? — ambitious gambit giving up two pawns for rapid development.",
+        description: "Black gambits two pawns for rapid development — an ambitious gambit that can catch White off guard.",
       },
     ],
     positions: [
@@ -618,7 +618,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Four Pawns Overextension",
-        description: "After e5 Nd5 d4 d6 c4 Nb6 f4 — White has 4 central pawns but they can become targets.",
+        description: "White builds a massive 4-pawn center, but it can become overextended — Black chips away at the base and the whole structure collapses.",
       },
     ],
     positions: [
@@ -662,7 +662,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Elephant Trap (QGD)",
-        description: "After 1.d4 d5 2.c4 e6 3.Nc3 Nf6 4.Bg5 Nbd7 5.cxd5 exd5 6.Nxd5?? Nxd5! 7.Bxd8 Bb4+ winning the queen.",
+        description: "White greedily takes on d5 with the knight, Black recaptures, and when White snaps up the queen, a devastating bishop check wins it right back.",
       },
     ],
     positions: [
@@ -702,7 +702,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Bishop Trap after …Bd6",
-        description: "If Black plays …Bd6 early, White can avoid Bxd6 and maintain the bishop pair with Bg3.",
+        description: "If Black plays bishop d6 early, White can avoid the trade and maintain the bishop pair by retreating to g3.",
       },
     ],
     positions: [
@@ -741,7 +741,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Cambridge Springs",
-        description: "After 5.Bg5 Nbd7 — Black plays …Qa5 pinning on the a5-e1 diagonal, winning material if White is careless.",
+        description: "Black plays queen a5 pinning along the a5-e1 diagonal — winning material if White is careless.",
       },
     ],
     positions: [
@@ -779,7 +779,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Marshall Gambit Trap",
-        description: "In the Semi-Slav Meran: sacrificial play with …dxc4, …b5, …a6 — very sharp territory.",
+        description: "In the Semi-Slav Meran — sacrificial play with pawn grabs on the queenside leads to very sharp territory.",
       },
     ],
     positions: [
@@ -864,7 +864,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Hübner Variation Tactics",
-        description: "After …c5, …cxd4, …Nc6, and …Bxc3 — White gets the bishop pair but Black has a lead in development.",
+        description: "Black pushes c5, trades in the center, develops the knight and captures on c3 — White gets the bishop pair but Black leads in development.",
       },
     ],
     positions: [
@@ -902,7 +902,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Bogo-Indian Transpose",
-        description: "3…Bb4+ (Bogo-Indian) is a common transposition — be ready for both lines.",
+        description: "The Bogo-Indian bishop check is a common transposition — be ready for both lines.",
       },
     ],
     positions: [
@@ -979,7 +979,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Staunton Gambit",
-        description: "2.e4!? fxe4 3.Nc3 — White develops rapidly and can create dangerous attacks against the weakened king.",
+        description: "White gambits the e-pawn early and develops the knight to c3 — creating dangerous attacks against the weakened king.",
       },
     ],
     positions: [
@@ -1061,7 +1061,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Reversed Dragon",
-        description: "After 1.c4 e5 2.Nc3 Nf6 3.g3 d5 4.cxd5 Nxd5 — White gets a Reversed Dragon with an extra tempo.",
+        description: "Black recaptures on d5 with the knight, giving White a Reversed Dragon setup with an extra tempo advantage.",
       },
     ],
     positions: [
@@ -1099,7 +1099,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Réti Gambit",
-        description: "1.Nf3 d5 2.c4 dxc4 — White can gambit the c-pawn for rapid development with e3, Bxc4.",
+        description: "White gambits the c-pawn for rapid development — quickly recapturing with the bishop for active piece play.",
       },
     ],
     positions: [
@@ -1138,7 +1138,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Open Catalan Pawn Grab",
-        description: "After …dxc4, Black tries …a6, …b5 to hold the pawn — but White's Bg2 creates enormous pressure.",
+        description: "After Black grabs the c-pawn, they try to hold it with a6 and b5 — but White's fianchettoed bishop creates enormous pressure.",
       },
     ],
     positions: [
@@ -1215,7 +1215,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "From's Gambit",
-        description: "1.f4 e5!? 2.fxe5 d6 3.exd6 Bxd6 — Black gets rapid development and attacks the weakened kingside.",
+        description: "Black sacrifices a pawn to open lines — the bishop lands on d6 with rapid development and a vicious attack on the weakened kingside.",
       },
     ],
     positions: [
@@ -1257,7 +1257,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Raptor Variation",
-        description: "After 2…Ne4 3.Bf4 c5 — sharp positions where both sides have resources.",
+        description: "Black challenges the bishop with knight to e4, then pushes c5 — sharp positions where both sides have resources.",
       },
     ],
     positions: [
@@ -1295,7 +1295,7 @@ export const OPENING_GUIDES: OpeningGuide[] = [
     traps: [
       {
         name: "Torre Pin Pressure",
-        description: "If Black isn't careful, the Bg5 pin can lead to doubled pawns on f6 after Bxf6, weakening the kingside.",
+        description: "If Black isn't careful, the bishop pin on g5 leads to doubled pawns after the trade on f6, weakening the kingside.",
       },
     ],
     positions: [
