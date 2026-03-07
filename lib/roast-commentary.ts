@@ -642,21 +642,21 @@ function detectDiscoveredAttack(
   return null;
 }
 
-/** Detect back-rank weakness/threat: king is on the back rank with pawns blocking escape
- *  AND the opponent actually has heavy pieces (rook/queen) that could exploit it */
-function detectBackRankWeakness(chess: Chess, color: Color): boolean {
+/** Detect back-rank invasion threat: king is on the back rank with pawns blocking escape
+ *  AND an opponent rook/queen can actually reach the back rank on an open/semi-open file.
+ *  Returns the threatening piece square if found, null otherwise. */
+function detectBackRankInvasion(chess: Chess, color: Color): { square: string; type: string } | null {
   const king = findKing(chess, color);
-  if (!king) return false;
+  if (!king) return null;
   const kr = rankIdx(king);
   const backRank = color === "w" ? 0 : 7;
-  if (kr !== backRank) return false;
+  if (kr !== backRank) return null;
 
-  // Opponent must have at least one rook or queen to threaten the back rank
   const oppColor = opp(color);
   const oppHeavy = allPieces(chess).filter(p => p.color === oppColor && (p.type === "r" || p.type === "q"));
-  if (oppHeavy.length === 0) return false;
+  if (oppHeavy.length === 0) return null;
 
-  // Check if all squares in front of the king are blocked by friendly pawns
+  // Check pawns are blocking escape (at least 2)
   const kf = fileIdx(king);
   const forward = color === "w" ? 1 : -1;
   let blocked = 0;
@@ -667,7 +667,71 @@ function detectBackRankWeakness(chess: Chess, color: Color): boolean {
       if (p && p.type === "p" && p.color === color) blocked++;
     }
   }
-  return blocked >= 2; // At least 2 pawns blocking escape → back rank vulnerable
+  if (blocked < 2) return null;
+
+  // Check that an opponent heavy piece can actually slide to the back rank
+  // (has a clear file/rank path to any back-rank square near the king)
+  const backRankStr = color === "w" ? "1" : "8";
+  for (const hp of oppHeavy) {
+    // For rooks: check if they're on a file where they can reach the back rank
+    // For queens: same (we only care about rook-like invasions)
+    const hf = fileIdx(hp.square);
+    const hr = rankIdx(hp.square);
+    // Check if the heavy piece can slide vertically to the back rank on its file
+    if (Math.abs(hf - kf) <= 2) {
+      // Check all squares between the heavy piece and the back rank on this file
+      const dir = backRank > hr ? 1 : -1;
+      let clear = true;
+      for (let r = hr + dir; r !== backRank; r += dir) {
+        const s = sq(hf, r);
+        if (s && chess.get(s)) { clear = false; break; }
+      }
+      if (clear) {
+        // Verify the back-rank square is actually reachable (not blocked by own piece)
+        const target = sq(hf, backRank);
+        if (target) {
+          const occupant = chess.get(target as Square);
+          if (!occupant || occupant.color === color) {
+            return { square: hp.square, type: hp.type };
+          }
+        }
+      }
+    }
+  }
+  return null;
+}
+
+/** Detect pawn storm: a pawn is pushed to advanced ranks (5-7 for white, 4-2 for black)
+ *  toward the enemy king — within 2 files of the opposing king. */
+function detectPawnStorm(move: AnalyzedMove, after: Chess, moverColor: Color): { pawnSq: string; enemyKing: string } | null {
+  if (move.pieceType !== "p") return null;
+  const toSq = move.uci.slice(2, 4);
+  const pawnRank = rankIdx(toSq);
+  // Must be pushed to rank 5+ for white (index 4+), rank 4- for black (index 3-)
+  const isAdvanced = moverColor === "w" ? pawnRank >= 4 : pawnRank <= 3;
+  if (!isAdvanced) return null;
+
+  const enemyKing = findKing(after, opp(moverColor));
+  if (!enemyKing) return null;
+  const ekf = fileIdx(enemyKing);
+  const pf = fileIdx(toSq);
+  // Pawn must be within 2 files of enemy king to be a real storm
+  if (Math.abs(pf - ekf) > 2) return null;
+  // Must be advancing (moving toward enemy, not retreating — pawns always move forward)
+  return { pawnSq: toSq, enemyKing };
+}
+
+/** Detect a sound sacrifice: player captures with a higher-value piece (gives up material)
+ *  but it's a good/best/brilliant move (low cpLoss). Returns material deficit. */
+function detectSoundSacrifice(move: AnalyzedMove): { sacPiece: string; capturedPiece: string; materialGiven: number } | null {
+  if (!move.isCapture || !move.capturedPiece) return null;
+  const movedVal = PIECE_VALUES[move.pieceType] ?? 0;
+  const capturedVal = PIECE_VALUES[move.capturedPiece] ?? 0;
+  if (movedVal <= capturedVal) return null; // not a sacrifice
+  if (move.cpLoss > 50) return null; // engine doesn't approve — not sound
+  const diff = movedVal - capturedVal;
+  if (diff < 2) return null; // minor difference (e.g. bishop takes knight) — not a real sac
+  return { sacPiece: move.pieceType, capturedPiece: move.capturedPiece, materialGiven: diff };
 }
 
 /** Check if a piece is truly trapped (no safe escape squares AND opponent can actually win it) */
@@ -864,6 +928,45 @@ function _generatePositionAware(
     if (checkResponseResult) {
       if (move.classification === "blunder") return _emitResultForce(used, checkResponseResult);
       return _emitResult(used, checkResponseResult);
+    }
+  }
+
+  // Sound sacrifice — player gave up material but engine approves. Applaud it!
+  const soundSac = detectSoundSacrifice(move);
+  if (soundSac && (move.classification === "best" || move.classification === "great" || move.classification === "brilliant")) {
+    const sacName = pn(soundSac.sacPiece);
+    const captName = pn(soundSac.capturedPiece);
+    const fromSqStr = move.uci.slice(0, 2);
+    const sacArrows: [string, string, string][] = [[fromSqStr, toSq, "rgba(168, 85, 247, 0.85)"]];
+    return _emitResult(used, { text: pickUnused([
+      `⚡ ${move.san}! A ${sacName} for a ${captName}?? That's a SACRIFICE and it's actually CORRECT! At this elo?? Tal is smiling from above 🎭🔥`,
+      `🔥 SOUND SACRIFICE! ${move.san} gives up the ${sacName} for a ${captName} but the compensation is REAL. This is the kind of move that makes you check if the engine is broken 🧠⚡`,
+      `🎭 ${move.san} — they sacrificed the ${sacName}! And Stockfish AGREES?? The prophecy speaks of mortals who sacrifice correctly at low elo. I didn't believe it until now 🗿✨`,
+      `⚡ ${pn(soundSac.sacPiece, true)} sacrifice with ${move.san}! Giving up ${soundSac.materialGiven} points of material and it's BRILLIANT. Tal energy. Kasparov energy. Are we sure this is the same player? 🕵️🔥`,
+      `🧠 ${move.san}! A real sacrifice — ${sacName} for ${captName} — and the engine is nodding. This person just channeled their inner Mikhail Tal for exactly one move. Respect 🫡🎭`,
+    ], used), annotations: { arrows: sacArrows, markers: [{ square: toSq, emoji: "⚡" }] } });
+  }
+
+  // Pawn storm — pawn pushed aggressively toward the enemy king
+  const storm = detectPawnStorm(move, after, moverColor);
+  if (storm && Math.random() < 0.45) {
+    const stormArrows: [string, string, string][] = [[move.uci.slice(0, 2), storm.pawnSq, "rgba(239, 68, 68, 0.7)"], [storm.pawnSq, storm.enemyKing, "rgba(239, 68, 68, 0.4)"]];
+    const stormMarkers = [{ square: storm.pawnSq, emoji: "🔥" }];
+    if (move.cpLoss <= 25) {
+      // Good pawn storm — applaud the aggression
+      return _emitResult(used, { text: pickUnused([
+        `🔥 ${move.san}! PAWN STORM! That pawn is marching straight at the enemy king. The h-pawn has chosen violence today 😤⚔️`,
+        `⚔️ ${move.san} — pawns advancing on the enemy king. This is AGGRESSION. This is INTENT. The king's shelter is under siege 🏰🔥`,
+        `😤 ${move.san} pushing toward the king. Pawn storm energy! The pawns don't care about their own safety, they're on a mission 🐾💀`,
+        `🔥 That pawn is getting UNCOMFORTABLY close to the enemy king. ${move.san} — this is how attacks start. Respect the aggression 👊⚔️`,
+        `⚡ ${move.san}! The pawn is knocking on the king's door. "Let me in. LET ME IIIIIN" 🚪😤🔥`,
+      ], used), annotations: { arrows: stormArrows, markers: stormMarkers } });
+    } else if (move.classification === "mistake" || move.classification === "blunder") {
+      // Bad pawn storm — the aggression backfired
+      return _emitResult(used, { text: pickUnused([
+        `😬 ${move.san} — pushing toward the king but Stockfish says this is a ${move.classification}. The spirit is willing but the calculation is weak 💀📉`,
+        `🤡 ${move.san}. They wanted to storm the king but forgot to check if it actually works. Courage without calculation = disaster 😤💀`,
+      ], used), annotations: { arrows: stormArrows, markers: [{ square: storm.pawnSq, emoji: "😬" }] } });
     }
   }
 
@@ -1566,16 +1669,17 @@ function _blunderRoast(
     }
   }
 
-  // 4d. Back-rank weakness — only trigger when THIS MOVE created/worsened the weakness
-  //      (not just when the position structurally has one)
-  if (move.moveNumber >= 15 && detectBackRankWeakness(after, moverColor) && !detectBackRankWeakness(before, moverColor)) {
-    const king = findKing(after, moverColor)!;
-    return { text: pickUnused([
-      `🚪 ${move.san} and that back rank is WIDE OPEN. The king is trapped behind its own pawns with no escape. One heavy piece slides in and it's GG 💀🏰`,
-      `☠️ After ${move.san}, the back rank is a death trap. King is stuck, pawns won't budge. All it takes is one check on the 8th rank and this game writes its own obituary 🪦`,
-      `🏰 ${move.san} — the king's shelter just became the king's coffin. Back rank mate is LURKING. Someone didn't watch Levy's back rank video 📺💀`,
-      `🚨 ${move.san} and the back rank is screaming for help. One rook slides in and it's lights out. This is the "I forgot to make luft" special 🕳️💀`,
-    ], used), annotations: { arrows: [moveArrow], markers: [{ square: king, emoji: "🚨" }] } };
+  // 4d. Back-rank invasion — only when an opponent rook/queen can actually slide to the back rank
+  if (move.moveNumber >= 15) {
+    const invasion = detectBackRankInvasion(after, moverColor);
+    const invasionBefore = detectBackRankInvasion(before, moverColor);
+    if (invasion && !invasionBefore) {
+      const king = findKing(after, moverColor)!;
+      return { text: pickUnused([
+        `🚨 ${move.san} and the ${pn(invasion.type)} on ${invasion.square} has a CLEAR PATH to the back rank. The king is trapped behind its own pawns — this is a real invasion threat 💀🏰`,
+        `☠️ After ${move.san}, that ${pn(invasion.type)} on ${invasion.square} can slide right in for a back rank check. The king has nowhere to run. Classic back rank nightmare 🪦`,
+      ], used), annotations: { arrows: [moveArrow, [invasion.square, king, "rgba(239, 68, 68, 0.8)"]], markers: [{ square: king, emoji: "🚨" }] } };
+    }
   }
 
   // 4e. Trapped piece
@@ -1879,16 +1983,20 @@ function _mistakeRoast(
     }
   }
 
-  // Back-rank weakness (only after the opening — move 15+, only if THIS move created it)
-  if (move.moveNumber >= 15 && detectBackRankWeakness(after, moverColor) && !detectBackRankWeakness(before, moverColor)) {
-    const king = findKing(after, moverColor)!;
-    return { text: pickUnused([
-      `🏰 ${move.san} and the back rank is looking sketchy. The king is boxed in by its own pawns. A rook invasion could be nasty 😬`,
-      `⚠️ After ${move.san}, the back rank is vulnerable. Someone should make luft before it's too late 🕳️📉`,
-    ], used), annotations: {
-      arrows: [moveArrow],
-      markers: [{ square: king, emoji: "⚠️" }],
-    } };
+  // Back-rank invasion — only when a rook/queen can actually reach the back rank
+  if (move.moveNumber >= 15) {
+    const invasion = detectBackRankInvasion(after, moverColor);
+    const invasionBefore = detectBackRankInvasion(before, moverColor);
+    if (invasion && !invasionBefore) {
+      const king = findKing(after, moverColor)!;
+      return { text: pickUnused([
+        `🏰 ${move.san} and the ${pn(invasion.type)} on ${invasion.square} is eyeing the back rank. The king is boxed in — careful, a rook invasion could be nasty 😬`,
+        `⚠️ After ${move.san}, that ${pn(invasion.type)} has a clear line to the back rank. Make luft or face consequences 🕳️📉`,
+      ], used), annotations: {
+        arrows: [moveArrow, [invasion.square, king, "rgba(239, 68, 68, 0.6)"]],
+        markers: [{ square: king, emoji: "⚠️" }],
+      } };
+    }
   }
 
   // Trapped piece
