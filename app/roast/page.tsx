@@ -3377,7 +3377,7 @@ export default function RoastPage() {
                     const rankI = parseInt(toSqStr[1]) - 1;
                     const x = orientation === "white" ? fileI * sqSize : (7 - fileI) * sqSize;
                     const y = orientation === "white" ? (7 - rankI) * sqSize : rankI * sqSize;
-                    const pepeSize = boardPepeIsCheckmate ? sqSize * 0.422 : sqSize * 0.288;
+                    const pepeSize = boardPepeIsCheckmate ? sqSize * 0.5 : sqSize * 0.36;
                     const pad = 3; // matches p-[3px] on the frame wrapper
                     return (
                       <div
