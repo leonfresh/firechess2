@@ -801,8 +801,8 @@ export default function RoastPage() {
           san: "",
           fen: lastMove.fen,
           fenBefore: lastMove.fen,
-          from: lastMove.to,
-          to: lastMove.to,
+          from: "",
+          to: "",
           color: lastMove.color === "w" ? "b" : "w",
           moveNumber: lastMove.moveNumber + (lastMove.color === "b" ? 1 : 0),
           cp: lastMove.cp,
@@ -866,8 +866,8 @@ export default function RoastPage() {
         san: "",
         fen: firstFen,
         fenBefore: firstFen,
-        from: "e2",
-        to: "e2",
+        from: "",
+        to: "",
         color: "w",
         moveNumber: 0,
         cp: 0,
@@ -1128,8 +1128,8 @@ export default function RoastPage() {
           san: "",
           fen: lastMove.fen,
           fenBefore: lastMove.fen,
-          from: lastMove.to,
-          to: lastMove.to,
+          from: "",
+          to: "",
           color: lastMove.color === "w" ? "b" : "w",
           moveNumber: lastMove.moveNumber + (lastMove.color === "b" ? 1 : 0),
           cp: lastMove.cp,
@@ -1174,8 +1174,8 @@ export default function RoastPage() {
         san: "",
         fen: firstFen,
         fenBefore: firstFen,
-        from: "e2",
-        to: "e2",
+        from: "",
+        to: "",
         color: "w",
         moveNumber: 0,
         cp: 0,
@@ -1442,11 +1442,14 @@ export default function RoastPage() {
       if (move) {
         setCurrentIdx(next);
         setFen(move.fen);
-        setLastMove({ from: move.from, to: move.to });
+        setLastMove(move.san ? { from: move.from, to: move.to } : null);
 
-        if (move.isCheck) playSound("check");
-        else if (move.isCapture) playSound("capture");
-        else playSound("move");
+        // Only play piece-move sounds for real moves (not synthetic intro/closing)
+        if (move.san) {
+          if (move.isCheck) playSound("check");
+          else if (move.isCapture) playSound("capture");
+          else playSound("move");
+        }
 
         // Gameshow sound effects + viral meme sounds + VISUAL FX based on move classification
         if (move.comment) {
@@ -3184,7 +3187,7 @@ export default function RoastPage() {
                     const rankI = parseInt(toSqStr[1]) - 1;
                     const x = orientation === "white" ? fileI * sqSize : (7 - fileI) * sqSize;
                     const y = orientation === "white" ? (7 - rankI) * sqSize : rankI * sqSize;
-                    const pepeSize = boardPepeIsCheckmate ? sqSize * 0.88 : sqSize * 0.6;
+                    const pepeSize = boardPepeIsCheckmate ? sqSize * 0.528 : sqSize * 0.36;
                     const pad = 3; // matches p-[3px] on the frame wrapper
                     return (
                       <div
