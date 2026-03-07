@@ -30,10 +30,15 @@ export function useBoardSize(fallback = 400, opts?: { evalBar?: boolean }) {
       const evalBarOverhead = hasEvalBar ? 24 + 12 : 0;
       const available = contentWidth - evalBarOverhead;
 
-      // On mobile (narrow screens), also cap by viewport height so the board
-      // doesn't consume the entire screen — leave room for commentary, controls, etc.
-      const vh = window.innerHeight;
-      const maxByHeight = vh < 750 ? vh * 0.52 : vh < 900 ? vh * 0.56 : Infinity;
+      // On mobile, cap board so it doesn't consume all vertical space.
+      // Use visualViewport (more reliable on iOS) or window.innerHeight.
+      const vw = window.innerWidth;
+      let maxByHeight = Infinity;
+      if (vw < 1024) {
+        const vh = window.visualViewport?.height ?? window.innerHeight;
+        // Reserve ~260px for player labels, commentary, controls, navbar, etc.
+        maxByHeight = Math.max(260, vh - 280);
+      }
 
       setSize(Math.max(260, Math.min(available, fallback, maxByHeight)));
     };
@@ -42,7 +47,12 @@ export function useBoardSize(fallback = 400, opts?: { evalBar?: boolean }) {
 
     const ro = new ResizeObserver(update);
     ro.observe(el);
-    return () => ro.disconnect();
+    // Also listen for visual viewport resize (iOS keyboard, address bar)
+    window.visualViewport?.addEventListener("resize", update);
+    return () => {
+      ro.disconnect();
+      window.visualViewport?.removeEventListener("resize", update);
+    };
   }, [fallback, hasEvalBar]);
 
   return { ref, size };

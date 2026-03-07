@@ -3273,7 +3273,7 @@ export default function RoastPage() {
                 )}
               </div>
 
-              <div ref={boardRef} className="w-full max-w-[640px]">
+              <div ref={boardRef} className="w-full" style={{ maxWidth: "min(640px, 92vw)" }}>
                 {/* Premium board frame with reactive glow */}
                 <div className="relative rounded-2xl p-[3px] transition-all duration-700" style={{
                   background: `linear-gradient(135deg, rgba(${ambientGlow.color}, ${ambientGlow.intensity * 3}) 0%, rgba(255,255,255,0.06) 50%, rgba(${ambientGlow.color}, ${ambientGlow.intensity * 2}) 100%)`,
