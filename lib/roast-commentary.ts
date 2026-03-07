@@ -3944,9 +3944,10 @@ export function getGuessReaction(
     }
     return pick([
       `🔥 Close! You said ${guessedBracket.label} but it's actually ${actualElo}. Don't undersell them! 💪`,
-      `🔥 Almost! ${actualElo} — one bracket too harsh. They had some good moments too 😤`,
-      `🔥 Off by just one bracket — ${actualElo}. The good moves fooled you, huh? 🧠`,
-      `🔥 Nearly! ${actualElo}. They're slightly better than you gave them credit for. Growth mindset 📈`,
+      `🔥 Almost! ${actualElo} — one bracket too harsh. The blunders made it look worse than it was 😤`,
+      `🔥 Off by just one bracket — ${actualElo}. The blunders fooled you, huh? They're actually decent 🧠`,
+      `🔥 Nearly! ${actualElo}. You focused too hard on the mistakes — they're better than you think 📈`,
+      `🔥 Close but too low — ${actualElo}. The blunders were loud but the good moves were there too 🔊👀`,
     ]);
   }
 

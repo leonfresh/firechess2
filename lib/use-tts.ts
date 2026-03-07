@@ -163,7 +163,9 @@ export function useTTS(): TTSControls {
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
 
-    utterance.onstart = () => setSpeaking(true);
+    // Set speaking synchronously so effects checking tts.speaking
+    // don't race past before the browser's onstart callback fires.
+    setSpeaking(true);
     utterance.onend = () => { setSpeaking(false); onDone.current?.(); };
     utterance.onerror = () => { setSpeaking(false); onDone.current?.(); };
 

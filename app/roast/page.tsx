@@ -1474,14 +1474,17 @@ export default function RoastPage() {
     }
 
     if (currentIdx >= moves.length - 1) {
-      // Delay before elo guess — let user read the closing comment
-      const closingDelay = activeComment ? Math.max(4000, activeComment.length * 30) : 2000;
-      setTimeout(() => {
+      // Delay before elo guess — if TTS just finished, short pause is enough;
+      // otherwise scale with comment length so the user can read it.
+      const closingDelay = (tts.enabled && activeComment)
+        ? 1800  // TTS already read it out — short beat before guess
+        : activeComment ? Math.max(4000, activeComment.length * 30) : 2000;
+      const t = setTimeout(() => {
         setActiveComment(null);
         playSound("drumroll");
         setPageState("guessing");
       }, closingDelay);
-      return;
+      return () => clearTimeout(t);
     }
 
     // Reading time scales with comment length — longer messages get more time
