@@ -1860,11 +1860,30 @@ function _blunderRoast(
         const bestPieceName = pn(bestRes.piece);
 
         // Compare: what did the opponent's best response look like after the bad move?
+        // Only mention captures that are actually WINNING (not defended pieces where
+        // the attacker loses more than it gains, e.g. Qxd2+ on a defended rook).
         let oppBestAfterBlunder = "";
         try {
           const oppMoves = after.moves({ verbose: true });
-          // Find most damaging opponent response
-          const captures = oppMoves.filter(m => m.captured).sort((a, b) => (PIECE_VALUES[b.captured!] ?? 0) - (PIECE_VALUES[a.captured!] ?? 0));
+          // Filter captures to only those that are actually good:
+          // - attacker value <= captured value (favorable trade), OR
+          // - the piece is undefended (no recapture available)
+          const captures = oppMoves
+            .filter(m => m.captured)
+            .filter(m => {
+              const attackerVal = PIECE_VALUES[m.piece as PieceSymbol] ?? 0;
+              const capturedVal = PIECE_VALUES[m.captured! as PieceSymbol] ?? 0;
+              // Equal or better trade is always fine
+              if (capturedVal >= attackerVal) return true;
+              // Otherwise check if the piece is undefended (no recapture)
+              try {
+                const sim = new Chess(move.fenAfter);
+                sim.move(m.san);
+                const recaps = sim.moves({ verbose: true }).filter(r => r.to === m.to && r.captured);
+                return recaps.length === 0; // truly free — no recapture
+              } catch { return false; }
+            })
+            .sort((a, b) => (PIECE_VALUES[b.captured!] ?? 0) - (PIECE_VALUES[a.captured!] ?? 0));
           const checks = oppMoves.filter(m => m.san.includes("+") || m.san.includes("#"));
           if (checks.length > 0 && checks[0].san.includes("#")) {
             // Checkmate available — already handled in section 2b, skip
