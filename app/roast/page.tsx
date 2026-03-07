@@ -2859,11 +2859,18 @@ export default function RoastPage() {
                 </p>
 
                 {/* Alpha warning */}
-                <div className="mx-auto mb-6 max-w-md rounded-xl border border-amber-500/30 bg-amber-500/[0.06] px-4 py-3">
+                <div className="mx-auto mb-4 max-w-md rounded-xl border border-amber-500/30 bg-amber-500/[0.06] px-4 py-3">
                   <p className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-1">⚠️ Alpha — Expect Rough Edges</p>
                   <p className="text-[11px] text-amber-200/70 leading-relaxed">
                     Commentary lines may be inaccurate or out of context — we&apos;re still tuning the engine.
                     Found a bug? Please report it in <a href="/feedback" className="underline text-amber-300 hover:text-amber-200 transition-colors">Feedback</a>!
+                  </p>
+                </div>
+
+                {/* Sound suggestion */}
+                <div className="mx-auto mb-6 max-w-md rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] px-4 py-3">
+                  <p className="text-[11px] text-emerald-300/80 leading-relaxed text-center">
+                    🔊 <span className="font-bold text-emerald-300">Turn your sound on!</span> This mode has move sounds, meme SFX, and TTS voice narration for the full gameshow experience.
                   </p>
                 </div>
 
