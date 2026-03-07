@@ -1048,6 +1048,9 @@ function _goodMoveRoast(
     () => `♟️ ${move.san}. Fischer would approve. Then again, Fischer approved of like 3 things total in his life. So. Progress? 👑🗿`,
     () => `🎩 ${move.san}. Tal would call this "boring" and sac the exchange instead. But for non-magicians? This is the right call 🪄`,
     () => `👑 ${move.san}. Morphy energy. Simple, clean, devastating. Except Morphy did this in an opera house while watching a play. Very different levels 🎭♟️`,
+    () => `👑 ${move.san}. Magnus would play this while doing a crossword puzzle on his phone. For this player? It's the highlight of their chess career 🧩🗿`,
+    () => `🏆 ${move.san}. This is the kind of move Magnus plays and then immediately looks bored by. Championship-level move, mortal-level excitement 👑💤`,
+    () => `👑 ${move.san}. Magnus energy. Effortless. Clean. Now do it 50 more times in a row like he would. Spoiler: they won't 🗿♟️`,
     () => `😤 ${move.san}. They played a normal chess move and want applause? This is the bare minimum? Like, the FLOOR? 📉👏`,
     () => ctx.playerBlunders > 0
       ? `🗿 ${move.san}. "Don't hang pieces" ✅ "Play the best move" ❌ Somewhere in between. Mid. Ultra mid 🫠`
@@ -1411,6 +1414,9 @@ function _blunderRoast(
     `🗿 ${move.san}.${ctxLine} Tal — the Magician from Riga — would NEVER. He'd sac the exchange and create chaos. This player created chaos by accident and it's THEIR chaos to suffer through 🎩🔥`,
     `⚡ ${move.san}.${ctxLine} Bobby Fischer played 20 perfectly prepared moves before his opponents even sat down. This person played 0 good moves after sitting down for 20 minutes 🕐💀`,
     `💀 ${move.san}.${ctxLine} Morphy literally played blindfolded against 8 opponents simultaneously and won them all. This person can't beat ONE person with their eyes OPEN 🙈♟️`,
+    `👑 ${move.san}.${ctxLine} Magnus would resign here. Not because the position is lost — but because he'd be embarrassed to be associated with this game 🏆💀`,
+    `🏆 ${move.san}.${ctxLine} Magnus literally beat a world champion while half asleep on stream. This player is FULLY awake and playing like this?? 😴💀`,
+    `👑 ${move.san}.${ctxLine} Magnus retired from classical chess because he was bored. If he saw this game he'd retire from WATCHING chess too 📺🗿`,
   ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: _toSq, emoji: "💀" }] } };
 }
 
@@ -1599,6 +1605,8 @@ function _mistakeRoast(
     `♟️ ${move.san}.${ctxFallback} Fischer would have found the best move in 2 seconds flat. This person found the second-best move in 30 seconds. Close but no cigar 🕐🗿`,
     `🎩 ${move.san}.${ctxFallback} Tal would have sacrificed a piece here and created magic. Instead we get... a mistake. The anti-magic 🪄💀`,
     `👑 ${move.san}.${ctxFallback} Morphy retired at 22 because chess was too easy. This person should consider retiring because chess is too hard 😭♟️`,
+    `👑 ${move.san}.${ctxFallback} Magnus would never. He'd play the right move, sip his coffee, and check his Fantasy Football team. All in 3 seconds ☕🏆`,
+    `🏆 ${move.san}.${ctxFallback} Magnus once said he plays the best move because the other moves are "just worse." This player actively SEEKS the worse moves 🗿♟️`,
     ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: toSq, emoji: pick(["😬", "📉", "🤡", "😤", "🗿"]) }] } };
 }
 
