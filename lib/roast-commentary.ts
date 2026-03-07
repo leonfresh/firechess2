@@ -410,8 +410,126 @@ function countAttackers(chess: Chess, square: string, _attackerColor: Color): nu
 }
 
 /* ================================================================== */
-/*  Advanced Tactical Detection                                         */
+/*  Positional Analysis Helpers                                         */
 /* ================================================================== */
+
+/** Return info about passed pawns — how advanced they are and if they're supported */
+function passedPawnInfo(chess: Chess, color: Color): { square: Square; rank: number; supported: boolean; connected: boolean }[] {
+  const { passed } = pawnIssues(chess, color);
+  return passed.map(sq => {
+    const s = sq as Square;
+    const r = rankIdx(s);
+    const advancement = color === "w" ? r : 7 - r; // 0 = starting rank, 6 = promotion rank
+    // Supported: is there a friendly piece defending this pawn?
+    const supported = chess.isAttacked(s, color);
+    // Connected: adjacent friendly pawn
+    const f = fileIdx(s);
+    const allPawns = allPieces(chess).filter(p => p.type === "p" && p.color === color);
+    const connected = allPawns.some(p => Math.abs(fileIdx(p.square) - f) === 1 && Math.abs(rankIdx(p.square) - r) <= 1);
+    return { square: s, rank: advancement, supported, connected };
+  });
+}
+
+/** Measure king centralization — important in endgames */
+function kingCentralization(chess: Chess, color: Color): { score: number; square: Square | null } {
+  const king = findKing(chess, color);
+  if (!king) return { score: 0, square: null };
+  const kf = fileIdx(king), kr = rankIdx(king);
+  // Distance from center (d4/e4/d5/e5)
+  const distFile = Math.min(Math.abs(kf - 3), Math.abs(kf - 4));
+  const distRank = Math.min(Math.abs(kr - 3), Math.abs(kr - 4));
+  // Score: 0 = corner, 4 = center
+  const score = 4 - (distFile + distRank);
+  return { score: Math.max(0, score), square: king };
+}
+
+/** Detect material imbalance — e.g. rook vs two minors, bishop pair, etc. */
+function materialImbalance(chess: Chess): {
+  whitePieces: Record<string, number>;
+  blackPieces: Record<string, number>;
+  bishopPair: { w: boolean; b: boolean };
+  exchangeSac: Color | null;
+  rookVsMinors: Color | null;
+} {
+  const wp: Record<string, number> = { q: 0, r: 0, b: 0, n: 0, p: 0 };
+  const bp: Record<string, number> = { q: 0, r: 0, b: 0, n: 0, p: 0 };
+  const wBishopColors = new Set<string>();
+  const bBishopColors = new Set<string>();
+  for (const p of allPieces(chess)) {
+    if (p.type === "k") continue;
+    if (p.color === "w") {
+      wp[p.type]++;
+      if (p.type === "b") wBishopColors.add((fileIdx(p.square) + rankIdx(p.square)) % 2 === 0 ? "dark" : "light");
+    } else {
+      bp[p.type]++;
+      if (p.type === "b") bBishopColors.add((fileIdx(p.square) + rankIdx(p.square)) % 2 === 0 ? "dark" : "light");
+    }
+  }
+  const wBishopPair = wBishopColors.size >= 2;
+  const bBishopPair = bBishopColors.size >= 2;
+
+  // Exchange sacrifice: one side has fewer rooks but more minors
+  let exchangeSac: Color | null = null;
+  if (wp.r < bp.r && (wp.b + wp.n) > (bp.b + bp.n)) exchangeSac = "w"; // white gave up exchange
+  if (bp.r < wp.r && (bp.b + bp.n) > (wp.b + wp.n)) exchangeSac = "b";
+
+  // Rook vs two minor pieces
+  let rookVsMinors: Color | null = null;
+  if (wp.r > bp.r && (bp.b + bp.n) - (wp.b + wp.n) >= 2) rookVsMinors = "w"; // white has rook, black has minors
+  if (bp.r > wp.r && (wp.b + wp.n) - (bp.b + bp.n) >= 2) rookVsMinors = "b";
+
+  return { whitePieces: wp, blackPieces: bp, bishopPair: { w: wBishopPair, b: bBishopPair }, exchangeSac, rookVsMinors };
+}
+
+/** Detect opposite-colored bishops — important for endgame assessment */
+function hasOppositeColorBishops(chess: Chess): boolean {
+  const bishops = allPieces(chess).filter(p => p.type === "b");
+  const wBishops = bishops.filter(p => p.color === "w");
+  const bBishops = bishops.filter(p => p.color === "b");
+  if (wBishops.length !== 1 || bBishops.length !== 1) return false;
+  const wColor = (fileIdx(wBishops[0].square) + rankIdx(wBishops[0].square)) % 2;
+  const bColor = (fileIdx(bBishops[0].square) + rankIdx(bBishops[0].square)) % 2;
+  return wColor !== bColor;
+}
+
+/** Detect "bad" bishop — bishop blocked by its own pawns on the same color squares */
+function detectBadBishop(chess: Chess, color: Color): { square: Square; blockedPawns: number } | null {
+  const bishops = allPieces(chess).filter(p => p.type === "b" && p.color === color);
+  if (bishops.length === 0) return null;
+  const pawns = allPieces(chess).filter(p => p.type === "p" && p.color === color);
+  for (const bishop of bishops) {
+    const bishopColorSq = (fileIdx(bishop.square) + rankIdx(bishop.square)) % 2;
+    const blocked = pawns.filter(p => (fileIdx(p.square) + rankIdx(p.square)) % 2 === bishopColorSq).length;
+    if (blocked >= 4) return { square: bishop.square, blockedPawns: blocked };
+  }
+  return null;
+}
+
+/** Count control of central squares (d4, d5, e4, e5) */
+function centralControl(chess: Chess, color: Color): { controlled: number; occupied: number } {
+  const centers: Square[] = ["d4", "d5", "e4", "e5"] as Square[];
+  let controlled = 0, occupied = 0;
+  for (const sq of centers) {
+    if (chess.isAttacked(sq, color)) controlled++;
+    const p = chess.get(sq);
+    if (p && p.color === color) occupied++;
+  }
+  return { controlled, occupied };
+}
+
+/** Measure space advantage — how many squares in the opponent's half are controlled */
+function spaceAdvantage(chess: Chess, color: Color): number {
+  let space = 0;
+  const oppHalfRanks = color === "w" ? [4, 5, 6, 7] : [0, 1, 2, 3]; // ranks 5-8 for white, 1-4 for black
+  for (const f of [0, 1, 2, 3, 4, 5, 6, 7]) {
+    for (const r of oppHalfRanks) {
+      const s = sq(f, r);
+      if (s && chess.isAttacked(s, color)) space++;
+    }
+  }
+  return space;
+}
+
 
 type SkewerInfo = {
   attacker: PieceInfo;
@@ -484,6 +602,12 @@ function detectDiscoveredAttack(
         const pAfter = after.get(s);
         if (pAfter && passedFrom) {
           if (pAfter.color === oppColor && (PIECE_VALUES[pAfter.type] ?? 0) >= 3) {
+            // Skip if the target is well-defended AND the slider is worth >= the target
+            // (e.g. a queen "discovering" onto a defended rook = no real gain)
+            const sliderVal = PIECE_VALUES[slider.type] ?? 0;
+            const targetVal = PIECE_VALUES[pAfter.type] ?? 0;
+            const isDefended = after.isAttacked(s, oppColor);
+            if (isDefended && sliderVal >= targetVal) break; // not a real discovery threat
             return { slider, target: { type: pAfter.type, color: pAfter.color, square: s } };
           }
           break;
@@ -770,6 +894,12 @@ function _generatePositionAware(
   if (ctx.isEndgame && !isRecapture && Math.random() < 0.3) {
     const endgameResult = _endgameRoast(move, after, moverColor, ctx, used);
     if (endgameResult) return _emitResult(used, endgameResult);
+  }
+
+  // Positional commentary — piece activity, space, structure (for non-recapture neutral moves)
+  if (!isRecapture && !ctx.isEndgame && move.moveNumber >= 8 && Math.random() < 0.2) {
+    const posResult = _positionalRoast(move, after, moverColor, ctx, used);
+    if (posResult) return _emitResult(used, posResult);
   }
 
   // Style commentary for "good" / neutral moves that didn't trigger anything else
@@ -1776,6 +1906,27 @@ function _inaccuracyRoast(
     () => `🤷 ${move.san}. Peak "I'll just develop and hope for the best" energy. The strategy of champions. And also beginners. Mostly beginners 🏆💀`,
     () => `🗿 ${move.san}. "You was doing PIPI in your pampers" — Sir that's an inaccuracy, not a blunder. But the energy? Pure PIPI 👶🤡`,
     () => `🤡 ${move.san}. Petrosian would call this move a "proffesional" inaccuracy. "W]esley 'S]o is not proffesional" but at least he wouldn't play this 🗿💀`,
+    // Positional-awareness lines for inaccuracies
+    () => {
+      const bb = detectBadBishop(after, moverColor);
+      if (bb) return `🧱 ${move.san} — and that bishop on ${bb.square} is SUFFOCATING behind ${bb.blockedPawns} same-color pawns. A bad bishop is like a co-worker who showed up but isn't doing anything 🗿📐`;
+      return `🤷 ${move.san}. The chess equivalent of treading water. Not drowning, but not going anywhere either 🏊💤`;
+    },
+    () => {
+      const myS = spaceAdvantage(after, moverColor);
+      const oppS = spaceAdvantage(after, opp(moverColor));
+      if (oppS - myS >= 6)
+        return `📐 ${move.san} — and they're getting outspaced. The opponent controls more of the board. Chess claustrophobia setting in 🗜️🗿`;
+      return `😑 ${move.san}. A move was made. I think. Hard to tell because nothing changed 🫠`;
+    },
+    () => {
+      const pp = pawnIssues(after, moverColor);
+      if (pp.passed.length > 0 && move.moveNumber >= 20)
+        return `♟️ ${move.san} — they have a passed pawn on ${pp.passed[0]} but aren't doing anything with it. Passed pawns should be PUSHED. That's like, rule #1 📚🏃`;
+      if (pp.doubled.length > 0)
+        return `🚧 ${move.san} — and those doubled pawns on the ${pp.doubled[0]} aren't getting any prettier. Structural damage is permanent 🏚️`;
+      return `🤷 ${move.san}. "Improvement" is a word. A word this player should Google 🗿📚`;
+    },
   ];
   // Evaluate all thunks, then pick an unused one
   const evaluated = lines.map(fn => fn());
@@ -1865,6 +2016,8 @@ function _endgameRoast(
 
   const myQ = moverColor === "w" ? pieces.wq : pieces.bq;
   const oppQ = moverColor === "w" ? pieces.bq : pieces.wq;
+  const myR = moverColor === "w" ? pieces.wr : pieces.br;
+  const oppR = moverColor === "w" ? pieces.br : pieces.wr;
   const totalNonPawns = pieces.wq + pieces.bq + pieces.wr + pieces.br + pieces.wb + pieces.bb + pieces.wn + pieces.bn;
   const myPawns = moverColor === "w" ? pieces.wp : pieces.bp;
   const oppPawns = moverColor === "w" ? pieces.bp : pieces.wp;
@@ -1887,6 +2040,21 @@ function _endgameRoast(
     ], used), annotations: ann };
   }
 
+  // K+R vs K — should also be winning (but harder than K+Q)
+  if (myR >= 1 && oppR === 0 && oppQ === 0 && totalNonPawns <= 1 && totalPawns === 0 && ctx.posture === "winning") {
+    if (move.classification === "blunder" || move.classification === "mistake") {
+      return { text: pickUnused([
+        `🏰 K+R vs K. They have a whole ROOK and can't find the mate? Box method! BOOOOX METHOD! Google it please 💀📦`,
+        `🤡 K+R vs K and they're failing. This is THE endgame you're supposed to learn first. Before openings. Before tactics. THIS ONE 📚🗿`,
+        `💀 They have a rook advantage against a lone king and ${move.san} is the response? The box method is CRYING rn 📦😭`,
+      ], used), annotations: ann };
+    }
+    return { text: pickUnused([
+      `🏰 K+R vs K. The classic endgame. Do they know the box method or are they going to chase the king around like a dog chasing a car? 🐕📦`,
+      `🏁 Rook endgame vs lone King. Time for the box method. Or, more likely, time for 50 random rook moves and a lucky checkmate 🗿🏰`,
+    ], used), annotations: ann };
+  }
+
   // General endgame lines
   const lines: string[] = [];
 
@@ -1896,6 +2064,71 @@ function _endgameRoast(
       `📉 In the endgame with an advantage and they play ${move.san}?? You had ONE JOB: don't blunder. The job was failed successfully 🤡`,
       `🫠 ${move.san} in a winning endgame. "I'll just convert my advantage" — narrator: they did not convert 💀📉`,
       `😤 ${move.san}. Winning endgame + panicking = this move. Precision? Never heard of her 🗿`,
+    );
+  }
+
+  // Passed pawn commentary
+  const myPassed = passedPawnInfo(after, moverColor);
+  const oppPassed = passedPawnInfo(after, opp(moverColor));
+  if (myPassed.length > 0) {
+    const best = myPassed.reduce((a, b) => b.rank > a.rank ? b : a);
+    if (best.rank >= 4) {
+      const promoRank = moverColor === "w" ? "8" : "1";
+      lines.push(
+        `♟️ That passed pawn on ${best.square} is DANGEROUS. ${7 - best.rank} squares from promotion. ${best.supported ? "AND it's supported!" : "But it's unsupported — one blockade and it's stuck."} The endgame is all about this pawn now 🏃💨`,
+        `🏃 Passed pawn on ${best.square} is marching toward ${best.square[0]}${promoRank}! ${best.connected ? "Connected and deadly." : "Lone ranger but still scary."} Do they know to push it? Probably not at this elo 🗿♟️`,
+      );
+    } else if (myPassed.length >= 2) {
+      lines.push(
+        `♟️ ${myPassed.length} passed pawns! In an endgame! That's a LOT of promotion candidates. The question is whether they know what to DO with them 🗿📚`,
+        `🏃 Multiple passers on the board. Endgame theory says these should win. Practice says these players will find a way to mess it up 💀♟️`,
+      );
+    }
+  }
+  if (oppPassed.length > 0) {
+    const best = oppPassed.reduce((a, b) => b.rank > a.rank ? b : a);
+    if (best.rank >= 4 && move.classification !== "best" && move.classification !== "great") {
+      lines.push(
+        `🚨 The opponent has a passed pawn on ${best.square} and it's ${7 - best.rank} squares from queening! ${move.san} doesn't address this AT ALL. In endgames, passed pawns are PUBLIC ENEMY #1 🗿💀`,
+        `♟️ Opponent's passer on ${best.square} is RUNNING. ${move.san} ignores it completely. Has anyone told them about blockades? Or general awareness? 😬🏃`,
+      );
+    }
+  }
+
+  // King activity commentary
+  const myKingActivity = kingCentralization(after, moverColor);
+  const oppKingActivity = kingCentralization(after, opp(moverColor));
+  if (move.pieceType === "k" && myKingActivity.score >= 3) {
+    lines.push(
+      `👑 King marches to the center! FINALLY showing some endgame knowledge. Active king = winning king. Capablanca would nod approvingly 🧠👑`,
+      `🏃 King centralization! THIS is what you're supposed to do in endgames. The king becomes a PIECE. One of the few correct endgame decisions this game 👑💪`,
+    );
+  } else if (myKingActivity.score <= 1 && oppKingActivity.score >= 3 && totalNonPawns <= 4) {
+    lines.push(
+      `👑 Their king is hiding in the corner while the opponent's king is CENTRALIZED. In the endgame, the king needs to be ACTIVE. It's not a bishop, it can go anywhere! 🗿😤`,
+      `🏰 King stuck on the edge while the opponent's king owns the center. Endgame 101: centralize your king. They skipped that lecture 📚💀`,
+    );
+  }
+
+  // Opposite-color bishops = drawish tendency
+  if (hasOppositeColorBishops(after) && totalPawns <= 4) {
+    lines.push(
+      `🎨 Opposite-colored bishops endgame! This is famously drawish. Even with extra pawns, converting is PAIN. The bishops literally can't interact with each other 🤝💤`,
+      `🖌️ Opposite bishop colors. The great equalizer in chess. Even if one side is "winning," these endgames are the cockroaches of chess — they refuse to die as wins 🪳🗿`,
+    );
+  }
+
+  // Material imbalance commentary
+  const imbalance = materialImbalance(after);
+  const myColor = moverColor === "w" ? "w" : "b";
+  if (imbalance.bishopPair[myColor] && !imbalance.bishopPair[myColor === "w" ? "b" : "w"] && totalPawns > 0) {
+    lines.push(
+      `🎯 They have the BISHOP PAIR in the endgame. Two bishops are worth more than bishop+knight in open positions. Do they know how to use it? That's the million-dollar question 🤑🗿`,
+    );
+  }
+  if (imbalance.exchangeSac === moverColor) {
+    lines.push(
+      `♟️ Playing without the exchange (rook for minor piece). Bold. Petrosian famously loved exchange sacrifices. Is this a Petrosian-level positional decision or a "I blundered my rook earlier" situation? 🗿👑`,
     );
   }
 
@@ -2108,6 +2341,95 @@ function _tempoRoast(
     );
   }
 
+  return { text: pickUnused(lines, used), annotations: ann };
+}
+
+/* ================================================================== */
+/*  Positional Roasts — piece activity, space, structure, imbalance    */
+/* ================================================================== */
+
+function _positionalRoast(
+  move: AnalyzedMove,
+  after: Chess,
+  moverColor: Color,
+  ctx: GameContext,
+  used: Set<string>,
+): { text: string; annotations: MoveAnnotation } | null {
+  const fromSq = move.uci.slice(0, 2);
+  const toSq = move.uci.slice(2, 4);
+  const ann: MoveAnnotation = { arrows: [[fromSq, toSq, "rgba(100, 160, 255, 0.7)"]], markers: [{ square: toSq, emoji: pick(["🧠", "📐", "🗿", "📊"]) }] };
+
+  const lines: string[] = [];
+
+  // Bad bishop detection
+  const badBishop = detectBadBishop(after, moverColor);
+  if (badBishop && Math.random() < 0.5) {
+    lines.push(
+      `🧱 That bishop on ${badBishop.square} is BAD — ${badBishop.blockedPawns} of their own pawns are on the same color squares. It's basically a tall pawn. The bishop is TRAPPED behind its own team 🗿📐`,
+      `😤 Bishop on ${badBishop.square}: blocked by ${badBishop.blockedPawns} friendly pawns on the same color. This bishop isn't a piece, it's a wall decoration. Either trade it or fix the pawn structure 🖼️💀`,
+      `🧠 The bishop on ${badBishop.square} has ${badBishop.blockedPawns} friendly pawns blocking its diagonals. That's not a bishop, that's a prisoner. Free my boy 🔒🗿`,
+    );
+  }
+
+  // Space advantage / cramped position
+  const mySpace = spaceAdvantage(after, moverColor);
+  const oppSpace = spaceAdvantage(after, opp(moverColor));
+  if (oppSpace - mySpace >= 8 && !ctx.isEndgame) {
+    lines.push(
+      `📐 They're getting SQUEEZED. The opponent controls way more space on the board. Their pieces have nowhere to maneuver — it's like playing chess in a closet 🧳🗿`,
+      `🗜️ Space disadvantage is REAL. The opponent's pieces have room to breathe while these pieces are stacked on top of each other. Cramped positions = suffering. And they're suffering 📊💀`,
+      `📐 The opponent has a huge space advantage. Every piece placement is awkward. Every plan is restricted. This is positional chess torture and they walked right into it 🗿🧱`,
+    );
+  } else if (mySpace - oppSpace >= 8 && !ctx.isEndgame && move.classification !== "blunder" && move.classification !== "mistake") {
+    lines.push(
+      `📐 Look at that space advantage! Their pieces have room to maneuver while the opponent is CRAMPED. If they can maintain this, the position plays itself 💪📊`,
+      `🧠 Dominating the board spatially. Pieces have freedom, the opponent is restricted. This is the kind of positional advantage Petrosian would approve of. "Proffesionals" know about space 🗿👑`,
+    );
+  }
+
+  // Central control commentary
+  const myCenter = centralControl(after, moverColor);
+  const oppCenter = centralControl(after, opp(moverColor));
+  if (oppCenter.controlled >= 3 && myCenter.controlled <= 1 && !ctx.isEndgame && move.moveNumber >= 8) {
+    lines.push(
+      `🎯 The opponent OWNS the center. ${oppCenter.controlled}/4 central squares controlled vs ${myCenter.controlled}/4. The center is the heart of chess and they just handed it over. Cardiology needed 🫀💀`,
+      `📐 Zero central presence while the opponent has ${oppCenter.controlled} central squares. The pieces are going to trip over each other trying to find squares. Central control = piece activity = advantages. They have none 🗿`,
+    );
+  }
+
+  // Material imbalance — bishop pair, exchange sac
+  if (!ctx.isEndgame) {
+    const imbalance = materialImbalance(after);
+    const myColor = moverColor === "w" ? "w" : "b";
+    const oppColor2 = moverColor === "w" ? "b" : "w";
+    if (imbalance.bishopPair[myColor] && !imbalance.bishopPair[oppColor2]) {
+      if (Math.random() < 0.3) {
+        lines.push(
+          `🧠 They have the BISHOP PAIR. In open positions, two bishops are a WEAPON. Do they know how to open the position and let them breathe? Or will they block them behind pawns? The eternal question 📐🗿`,
+          `🎯 Bishop pair vs knight+bishop. Positionally, this is an advantage — IF the position opens up. If it stays closed, those bishops might as well be pawns. Let's see what happens 🧠💀`,
+        );
+      }
+    }
+    if (imbalance.rookVsMinors === moverColor && Math.random() < 0.4) {
+      lines.push(
+        `♜ Rook vs two minor pieces! Material says equal-ish, but the two minors usually dominate in the middlegame. The rook needs OPEN FILES to compete. Do they have any? 🗿📐`,
+      );
+    }
+  }
+
+  // Passed pawn awareness in middlegame (not just endgame)
+  if (!ctx.isEndgame && move.moveNumber >= 20) {
+    const myPassed = passedPawnInfo(after, moverColor);
+    const advancedPassers = myPassed.filter(p => p.rank >= 4);
+    if (advancedPassers.length > 0) {
+      const p = advancedPassers[0];
+      lines.push(
+        `♟️ That passed pawn on ${p.square} is getting IDEAS. ${p.supported ? "Supported and advancing." : "Needs support ASAP."} Even in the middlegame, advanced passers can decide games. Push it or protect it — just don't FORGET about it 🏃🗿`,
+      );
+    }
+  }
+
+  if (lines.length === 0) return null;
   return { text: pickUnused(lines, used), annotations: ann };
 }
 
