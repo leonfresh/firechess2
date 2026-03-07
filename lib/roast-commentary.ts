@@ -1721,10 +1721,12 @@ function _blunderRoast(
     }
   }
 
-  // 4e. Trapped piece — only flag when the engine confirms material loss (cpLoss > 80)
-  // AND piece just captured equal/greater material is excluded
+  // 4e. Trapped piece — only flag when the engine confirms the piece is truly LOST
+  // cpLoss must be at least the piece's value (e.g. 300 for bishop, 500 for rook)
+  // to confirm it's not just awkwardly placed but actually going to be captured
   const justCapturedEqualOrMore = capturedPiece && movedPiece && (PIECE_VALUES[capturedPiece.type] ?? 0) >= (PIECE_VALUES[movedPiece.type] ?? 0);
-  if (movedPiece && !justCapturedEqualOrMore && move.cpLoss > 80 && isPieceTrapped(after, _toSq, moverColor)) {
+  const trappedPieceVal = movedPiece ? (PIECE_VALUES[movedPiece.type] ?? 0) * 100 : 300;
+  if (movedPiece && !justCapturedEqualOrMore && move.cpLoss >= trappedPieceVal && isPieceTrapped(after, _toSq, moverColor)) {
     const trappedName = pn(movedPiece.type);
     return { text: pickUnused([
       `🪤 ${move.san} and the ${trappedName} on ${_toSq} is TRAPPED. No safe squares. Just standing there like it's in a glass box at a museum 🏛️💀`,
@@ -2068,11 +2070,13 @@ function _mistakeRoast(
     }
   }
 
-  // Trapped piece — only flag when engine confirms material loss (cpLoss > 50) AND not an even trade
+  // Trapped piece — only flag when engine confirms the piece is truly lost
+  // cpLoss must be at least the piece's full value to confirm it's going to be captured
   {
     const movedP = after.get(toSq as Square);
     const justCapturedEqual = move.isCapture && move.capturedPiece && movedP && (PIECE_VALUES[move.capturedPiece as PieceSymbol] ?? 0) >= (PIECE_VALUES[movedP.type] ?? 0);
-    if (movedP && !justCapturedEqual && move.cpLoss > 50 && isPieceTrapped(after, toSq as Square, moverColor)) {
+    const trappedVal = movedP ? (PIECE_VALUES[movedP.type] ?? 0) * 100 : 300;
+    if (movedP && !justCapturedEqual && move.cpLoss >= trappedVal && isPieceTrapped(after, toSq as Square, moverColor)) {
       return { text: pickUnused([
         `🪤 ${move.san} and the ${pn(movedP.type)} on ${toSq} might be stuck. Not many safe squares to go to 😬🔒`,
         `🔒 After ${move.san}, the ${pn(movedP.type)} on ${toSq} is running out of escape routes. Careful — trapped pieces = lost pieces ⚠️`,
