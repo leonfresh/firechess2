@@ -2289,7 +2289,9 @@ export default function RoastPage() {
   const boardPepeIsCheckmate = currentMove?.san.includes("#") ?? false;
 
   /* ── Inline Decision UI (replaces modal — board stays visible) ── */
-  const showDecisionOptions = activeDecision && typingDone && (!tts.enabled || !tts.speaking);
+  // Show quiz options once question is typed + spoken. After answering, keep visible during explanation TTS.
+  const showDecisionOptions = activeDecision && typingDone &&
+    (decisionAnswer !== null || !tts.enabled || !tts.speaking);
   const inlineDecisionUI = showDecisionOptions ? (
     <div className="mt-2 space-y-2 animate-fadeIn">
       <div className="space-y-1.5">
@@ -2314,6 +2316,10 @@ export default function RoastPage() {
                   playSound("correct");
                 } else {
                   playSound("wrong");
+                }
+                // TTS: read the explanation after a short delay so the sound effect plays first
+                if (tts.enabled && activeDecision.explanation) {
+                  setTimeout(() => tts.speak(activeDecision.explanation), 600);
                 }
               }}
               disabled={answered}
@@ -2344,6 +2350,8 @@ export default function RoastPage() {
           <div className="rounded-lg border border-amber-500/20 bg-amber-500/[0.04] px-3 py-2">
             <p className="text-xs text-amber-200 leading-relaxed">{activeDecision.explanation}</p>
           </div>
+          {/* Continue button waits for explanation TTS to finish */}
+          {(!tts.enabled || !tts.speaking) && (
           <button
             onClick={() => {
               setDecisionShown(prev => new Set([...prev, activeDecision.moveIdx]));
@@ -2355,6 +2363,7 @@ export default function RoastPage() {
           >
             Continue ▶
           </button>
+          )}
         </div>
       )}
     </div>
