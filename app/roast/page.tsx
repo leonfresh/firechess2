@@ -2289,8 +2289,8 @@ export default function RoastPage() {
     // Classification-specific pool that EXCLUDES the sidebar avatar image
     const candidates: Record<string, string[]> = {
       brilliant: ["/pepe-emojis/2230-poggies-peepo.png", "/pepe-emojis/animated/80293-pepeclap.gif", "/pepe-emojis/9088-pepe-gigachad.png", "/pepe-emojis/animated/88627-pepehype.gif"],
-      great: ["/pepe-emojis/11998-pepe-king.png", "/pepe-emojis/81504-pepeok.png", "/pepe-emojis/animated/98260-pepe-loving.gif"],
-      best: ["/pepe-emojis/11998-pepe-king.png", "/pepe-emojis/81504-pepeok.png", "/pepe-emojis/animated/98260-pepe-loving.gif"],
+      great: ["/pepe-emojis/11998-pepe-king.png", "/pepe-emojis/81504-pepeok.png", "/pepe-emojis/9088-pepe-gigachad.png"],
+      best: ["/pepe-emojis/11998-pepe-king.png", "/pepe-emojis/81504-pepeok.png", "/pepe-emojis/9088-pepe-gigachad.png"],
       good: ["/pepe-emojis/81504-pepeok.png", "/pepe-emojis/3959-hmm.png"],
       book: ["/pepe-emojis/8557-peepodetective.png", "/pepe-emojis/3959-hmm.png"],
       inaccuracy: ["/pepe-emojis/60250-think.png", "/pepe-emojis/animated/28654-bigeyes.gif", "/pepe-emojis/monkaS.png"],

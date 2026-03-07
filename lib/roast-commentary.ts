@@ -737,9 +737,16 @@ function detectSoundSacrifice(move: AnalyzedMove, after: Chess, moverColor: Colo
   const toSq = move.uci.slice(2, 4) as Square;
   const oppColor = opp(moverColor);
   try {
-    const oppPieces = allPieces(after).filter(p => p.color === oppColor);
+    const pieces = allPieces(after);
+    const oppPieces = pieces.filter(p => p.color === oppColor);
     const canRecapture = oppPieces.some(p => isAttacking(after, p.square, p, toSq));
     if (!canRecapture) return null; // piece is safe — not a real sacrifice
+
+    // If the piece is DEFENDED by friendly pieces, the opponent wouldn't actually
+    // recapture because they'd lose material in the exchange. Not a real sacrifice.
+    const friendlyPieces = pieces.filter(p => p.color === moverColor && p.square !== toSq);
+    const isDefended = friendlyPieces.some(p => isAttacking(after, p.square, p, toSq));
+    if (isDefended) return null; // defended piece — opponent won't recapture
   } catch {
     return null;
   }
