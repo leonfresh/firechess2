@@ -1835,7 +1835,7 @@ export default function RoastPage() {
     if (nextMove && (nextMove.classification === "blunder" || nextMove.classification === "mistake") &&
         nextMove.bestMoveSan && nextMove.san !== nextMove.bestMoveSan) {
       questionPool.push(() => {
-        const pName = nextMove.color === "w" ? (game?.whitePlayer ?? "White") : (game?.blackPlayer ?? "Black");
+        const side = nextMove.color === "w" ? "White" : "Black";
         const jokes = pickJokes([nextMove.san, nextMove.bestMoveSan ?? ""], 1);
         const rawOpts = [
           { label: `Play ${nextMove.san}`, emoji: "♟️" },
@@ -1845,7 +1845,7 @@ export default function RoastPage() {
         const { options, correctIdx } = shuffleWithCorrect(rawOpts, `Play ${nextMove.san}`);
         return {
           moveIdx: next,
-          question: `🔮 What will ${pName} play here?`,
+          question: `🔮 What will ${side} play here?`,
           options,
           correctIdx,
           explanation: nextMove.classification === "blunder"
@@ -1861,7 +1861,7 @@ export default function RoastPage() {
     if (nextMove && (nextMove.classification === "brilliant" || nextMove.classification === "best") &&
         nextMove.san && movesLeft >= 4) {
       questionPool.push(() => {
-        const pName = nextMove.color === "w" ? (game?.whitePlayer ?? "White") : (game?.blackPlayer ?? "Black");
+        const side = nextMove.color === "w" ? "White" : "Black";
         // Build decoy moves — use a nearby worse move if available, plus joke options
         const nearbyMoves = moves.slice(Math.max(0, next - 5), next).filter(m => m.san !== nextMove.san);
         const decoy = nearbyMoves.length > 0 ? nearbyMoves[Math.floor(Math.random() * nearbyMoves.length)] : null;
@@ -1874,7 +1874,7 @@ export default function RoastPage() {
         const { options, correctIdx } = shuffleWithCorrect(rawOpts, `Play ${nextMove.san}`);
         return {
           moveIdx: next,
-          question: `🎯 Critical moment — what will ${pName} find?`,
+          question: `🎯 Critical moment — what will ${side} find?`,
           options,
           correctIdx,
           explanation: nextMove.classification === "brilliant"
@@ -1889,7 +1889,7 @@ export default function RoastPage() {
         (nextMove.classification === "good" || nextMove.classification === "best" || nextMove.classification === "brilliant") &&
         (nextMove.piece === "q" || nextMove.piece === "r" || nextMove.piece === "n" || nextMove.piece === "b")) {
       questionPool.push(() => {
-        const pName = nextMove.color === "w" ? (game?.whitePlayer ?? "White") : (game?.blackPlayer ?? "Black");
+        const side = nextMove.color === "w" ? "White" : "Black";
         const pieceNames: Record<string, string> = { q: "Queen", r: "Rook", n: "Knight", b: "Bishop", p: "Pawn", k: "King" };
         const pieceName = pieceNames[nextMove.piece ?? "p"] ?? "piece";
         const jokes = pickJokes([nextMove.san], 1);
@@ -1901,7 +1901,7 @@ export default function RoastPage() {
         const { options, correctIdx } = shuffleWithCorrect(rawOpts, `${pieceName} takes — ${nextMove.san}`);
         return {
           moveIdx: next,
-          question: `⚔️ ${pName} has a capture here. Will they go for it?`,
+          question: `⚔️ ${side} has a capture here. Will they go for it?`,
           options,
           correctIdx,
           explanation: `They went for ${nextMove.san}! ${
@@ -1966,6 +1966,10 @@ export default function RoastPage() {
       setActiveDecision(decision);
       setDecisionAnswer(null);
       setAutoplay(false);
+      // Type the question as commentary + TTS reads it — board stays visible
+      setActiveComment(decision.question);
+      setCommentHistory(prev => [...prev, decision.question]);
+      setMobileClippyOpen(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingDecisionIdx, typingDone, tts.enabled, tts.speaking, pageState, decisionTick]);
@@ -2260,6 +2264,78 @@ export default function RoastPage() {
 
   /* ── Current move info ── */
   const currentMove = currentIdx >= 0 && currentIdx < moves.length ? moves[currentIdx] : null;
+
+  /* ── Inline Decision UI (replaces modal — board stays visible) ── */
+  const showDecisionOptions = activeDecision && typingDone && (!tts.enabled || !tts.speaking);
+  const inlineDecisionUI = showDecisionOptions ? (
+    <div className="mt-2 space-y-2 animate-fadeIn">
+      <div className="space-y-1.5">
+        {activeDecision.options.map((opt, idx) => {
+          const answered = decisionAnswer !== null;
+          const isCorrect = idx === activeDecision.correctIdx;
+          const isSelected = decisionAnswer === idx;
+          const noCorrectAnswer = activeDecision.correctIdx === -1;
+          return (
+            <button
+              key={idx}
+              onClick={() => {
+                if (answered) return;
+                setDecisionAnswer(idx);
+                if (isCorrect && !noCorrectAnswer) {
+                  playSound("correct");
+                  setScore(prev => prev + 100);
+                  setQuizScore(prev => prev + 100);
+                  setLastScoreGain(100);
+                  setTimeout(() => setLastScoreGain(null), 1500);
+                } else if (noCorrectAnswer) {
+                  playSound("correct");
+                } else {
+                  playSound("wrong");
+                }
+              }}
+              disabled={answered}
+              className={`w-full flex items-center gap-2 rounded-lg border px-3 py-2 text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                answered
+                  ? isCorrect && !noCorrectAnswer
+                    ? "border-green-400/60 bg-green-500/15 scale-[1.02]"
+                    : isSelected && !noCorrectAnswer
+                    ? "border-red-400/60 bg-red-500/15"
+                    : isSelected && noCorrectAnswer
+                    ? "border-amber-400/60 bg-amber-500/15 scale-[1.02]"
+                    : "border-white/[0.04] bg-white/[0.01] opacity-40"
+                  : "border-white/[0.08] bg-white/[0.02] hover:border-amber-500/40 hover:bg-amber-500/[0.06] hover:scale-[1.01] active:scale-[0.98]"
+              }`}
+            >
+              <span className="text-base">{opt.emoji}</span>
+              <span className={answered && isSelected ? (isCorrect || noCorrectAnswer ? "text-green-300" : "text-red-300") : answered && isCorrect && !noCorrectAnswer ? "text-green-300" : "text-white"}>
+                {opt.label}
+              </span>
+              {answered && isCorrect && !noCorrectAnswer && <span className="ml-auto text-green-400 text-xs">✓ +100</span>}
+              {answered && isSelected && !isCorrect && !noCorrectAnswer && <span className="ml-auto text-red-400 text-xs">✗</span>}
+            </button>
+          );
+        })}
+      </div>
+      {decisionAnswer !== null && (
+        <div className="animate-fadeIn space-y-2">
+          <div className="rounded-lg border border-amber-500/20 bg-amber-500/[0.04] px-3 py-2">
+            <p className="text-xs text-amber-200 leading-relaxed">{activeDecision.explanation}</p>
+          </div>
+          <button
+            onClick={() => {
+              setDecisionShown(prev => new Set([...prev, activeDecision.moveIdx]));
+              setActiveDecision(null);
+              setDecisionAnswer(null);
+              setAutoplay(true);
+            }}
+            className="w-full rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 px-4 py-2 text-xs font-black text-white shadow-lg shadow-amber-500/25 transition-all hover:brightness-110 hover:scale-[1.02] active:scale-95 uppercase tracking-wider"
+          >
+            Continue ▶
+          </button>
+        </div>
+      )}
+    </div>
+  ) : null;
 
   /* ══════════════════════════════════════════════════════════════════ */
   /*  RENDER                                                            */
@@ -2980,6 +3056,8 @@ export default function RoastPage() {
                       {!typingDone && <span className="animate-blink text-orange-400">|</span>}
                     </p>
                   </div>
+                  {/* Inline quiz options — visible only on non-lg screens where sidebar is hidden */}
+                  <div className="lg:hidden">{inlineDecisionUI}</div>
                 </div>
               )}
 
@@ -3244,6 +3322,8 @@ export default function RoastPage() {
                             {typewriterText}
                             {!typingDone && <span className="animate-blink text-orange-400">|</span>}
                           </p>
+                          {/* Inline quiz options — sidebar (lg+) */}
+                          {inlineDecisionUI}
                         </div>
                       </>
                     ) : (
@@ -3307,101 +3387,6 @@ export default function RoastPage() {
               )}
 
               {/* ── Guess + Reveal moved to centered modals — sidebar only has commentary + moves ── */}
-            </div>
-          </div>
-        )}
-
-        {/* ════════════════════════════════════════════════════════════════ */}
-        {/*  CENTERED MODAL: Mid-Game Decision                              */}
-        {/* ════════════════════════════════════════════════════════════════ */}
-        {activeDecision && (
-          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fadeIn">
-            <div className="relative w-[90vw] max-w-lg rounded-3xl border-2 border-amber-500/40 bg-gradient-to-b from-zinc-900 via-zinc-900 to-zinc-950 p-6 sm:p-8 shadow-2xl shadow-amber-500/20 overflow-hidden">
-              {/* Spotlight glow */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-60 h-60 bg-amber-400/[0.06] rounded-full blur-[80px] pointer-events-none" />
-              {/* Corner accents */}
-              <div className="absolute top-0 left-0 w-10 h-10 border-t-2 border-l-2 border-amber-400/50 rounded-tl-3xl" />
-              <div className="absolute top-0 right-0 w-10 h-10 border-t-2 border-r-2 border-amber-400/50 rounded-tr-3xl" />
-              <div className="absolute bottom-0 left-0 w-10 h-10 border-b-2 border-l-2 border-amber-400/50 rounded-bl-3xl" />
-              <div className="absolute bottom-0 right-0 w-10 h-10 border-b-2 border-r-2 border-amber-400/50 rounded-br-3xl" />
-
-              <div className="relative">
-                {/* Header */}
-                <div className="text-center mb-5">
-                  <p className="text-[10px] uppercase tracking-[0.3em] text-amber-400/60 font-bold mb-2">🎪 Gameshow Moment</p>
-                  <h3 className="text-lg sm:text-xl font-black text-white leading-snug">{activeDecision.question}</h3>
-                  <p className="text-[11px] text-slate-500 mt-2">Move {currentMove?.moveNumber ?? "?"} · {Math.round((currentIdx / moves.length) * 100)}% through the game</p>
-                </div>
-
-                {/* Options */}
-                <div className="space-y-2.5 mb-4">
-                  {activeDecision.options.map((opt, idx) => {
-                    const answered = decisionAnswer !== null;
-                    const isCorrect = idx === activeDecision.correctIdx;
-                    const isSelected = decisionAnswer === idx;
-                    const noCorrectAnswer = activeDecision.correctIdx === -1;
-                    return (
-                      <button
-                        key={idx}
-                        onClick={() => {
-                          if (answered) return;
-                          setDecisionAnswer(idx);
-                          if (isCorrect && !noCorrectAnswer) {
-                            playSound("correct");
-                            setScore(prev => prev + 100);
-                            setQuizScore(prev => prev + 100);
-                            setLastScoreGain(100);
-                            setTimeout(() => setLastScoreGain(null), 1500);
-                          } else if (noCorrectAnswer) {
-                            playSound("correct");
-                          } else {
-                            playSound("wrong");
-                          }
-                        }}
-                        disabled={answered}
-                        className={`w-full flex items-center gap-3 rounded-xl border-2 px-4 py-3.5 text-sm font-bold transition-all cursor-pointer group ${
-                          answered
-                            ? isCorrect && !noCorrectAnswer
-                              ? "border-green-400/60 bg-green-500/15 scale-[1.02]"
-                              : isSelected && !noCorrectAnswer
-                              ? "border-red-400/60 bg-red-500/15"
-                              : isSelected && noCorrectAnswer
-                              ? "border-amber-400/60 bg-amber-500/15 scale-[1.02]"
-                              : "border-white/[0.04] bg-white/[0.01] opacity-40"
-                            : "border-white/[0.08] bg-white/[0.02] hover:border-amber-500/40 hover:bg-amber-500/[0.06] hover:scale-[1.01] active:scale-[0.98]"
-                        }`}
-                      >
-                        <span className={`text-lg transition-transform ${!answered ? "group-hover:scale-125" : ""}`}>{opt.emoji}</span>
-                        <span className={answered && isSelected ? (isCorrect || noCorrectAnswer ? "text-green-300" : "text-red-300") : answered && isCorrect && !noCorrectAnswer ? "text-green-300" : "text-white"}>
-                          {opt.label}
-                        </span>
-                        {answered && isCorrect && !noCorrectAnswer && <span className="ml-auto text-green-400">✓ +100</span>}
-                        {answered && isSelected && !isCorrect && !noCorrectAnswer && <span className="ml-auto text-red-400">✗</span>}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Explanation + Continue (shown after answer) */}
-                {decisionAnswer !== null && (
-                  <div className="animate-fadeIn space-y-3">
-                    <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] px-4 py-3">
-                      <p className="text-xs sm:text-sm text-amber-200 leading-relaxed">{activeDecision.explanation}</p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setDecisionShown(prev => new Set([...prev, activeDecision.moveIdx]));
-                        setActiveDecision(null);
-                        setDecisionAnswer(null);
-                        setAutoplay(true);
-                      }}
-                      className="w-full rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 text-sm font-black text-white shadow-lg shadow-amber-500/25 transition-all hover:brightness-110 hover:scale-[1.02] active:scale-95 uppercase tracking-wider"
-                    >
-                      Continue Watching ▶
-                    </button>
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         )}
@@ -3981,6 +3966,8 @@ export default function RoastPage() {
                   {typewriterText}
                   {!typingDone && <span className="animate-blink text-orange-400">|</span>}
                 </p>
+                {/* Inline quiz options — mobile clippy */}
+                {inlineDecisionUI}
                 {/* Triangle tail pointing to avatar */}
                 <div className="absolute -bottom-2 right-6 w-0 h-0 border-x-[6px] border-x-transparent border-t-[8px] border-t-orange-500/30" />
               </div>
