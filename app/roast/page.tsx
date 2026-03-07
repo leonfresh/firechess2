@@ -736,6 +736,7 @@ export default function RoastPage() {
 
         // Generate commentary
         const moveNumber = Math.floor(i / 2) + 1;
+        const _hungThresh = moveResult.piece === "p" ? 350 : 200; // pawns need higher cpLoss — weak pawns aren't "hung"
         const analyzedMove: AnalyzedMove = {
           san: moveResult.san,
           uci: moveResult.from + moveResult.to + (moveResult.promotion ?? ""),
@@ -755,8 +756,8 @@ export default function RoastPage() {
           isPromotion: !!moveResult.promotion,
           pieceType: moveResult.piece,
           capturedPiece: moveResult.captured ?? undefined,
-          hungPiece: cpLoss > 200 && !moveResult.captured,
-          hungWhat: cpLoss > 200 ? moveResult.piece : undefined,
+          hungPiece: cpLoss > _hungThresh && !moveResult.captured,
+          hungWhat: cpLoss > _hungThresh && !moveResult.captured ? moveResult.piece : undefined,
           sacrificedMaterial: !!moveResult.captured && cpLoss > 150 && (_pieceVal(moveResult.piece) - _pieceVal(moveResult.captured)) >= 3,
           wasBookMove: i < 10 && cpLoss < 10,
           mateInN: null,
@@ -1076,6 +1077,7 @@ export default function RoastPage() {
         if (classification === "inaccuracy") totalInaccuracies++;
 
         const moveNumber = Math.floor(i / 2) + 1;
+        const _hungThresh2 = moveResult.piece === "p" ? 350 : 200; // pawns need higher cpLoss — weak pawns aren't "hung"
         const analyzedMove: AnalyzedMove = {
           san: moveResult.san,
           uci: moveResult.from + moveResult.to + (moveResult.promotion ?? ""),
@@ -1095,8 +1097,8 @@ export default function RoastPage() {
           isPromotion: !!moveResult.promotion,
           pieceType: moveResult.piece,
           capturedPiece: moveResult.captured ?? undefined,
-          hungPiece: cpLoss > 200 && !moveResult.captured,
-          hungWhat: cpLoss > 200 ? moveResult.piece : undefined,
+          hungPiece: cpLoss > _hungThresh2 && !moveResult.captured,
+          hungWhat: cpLoss > _hungThresh2 && !moveResult.captured ? moveResult.piece : undefined,
           sacrificedMaterial: !!moveResult.captured && cpLoss > 150 && (_pieceVal(moveResult.piece) - _pieceVal(moveResult.captured)) >= 3,
           wasBookMove: i < 10 && cpLoss < 10,
           mateInN: null,

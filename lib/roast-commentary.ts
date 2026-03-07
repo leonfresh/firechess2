@@ -181,8 +181,9 @@ function detectHanging(chess: Chess, color: Color): PieceInfo[] {
         // Only flag as hanging if the piece is NOT defended by any friendly piece
         if (!chess.isAttacked(p.square, color)) {
           // Skip if opponent has their own piece under bigger threat that they must save first
-          // (but don't skip pawns — losing a free pawn is always worth flagging)
-          if (p.type !== "p" && maxOppThreat >= (PIECE_VALUES[p.type] ?? 0)) continue;
+          // (skip pawns entirely — weak/isolated pawns that can't be saved aren't truly "hung")
+          if (p.type === "p") continue;
+          if (maxOppThreat >= (PIECE_VALUES[p.type] ?? 0)) continue;
           hanging.push(p);
         }
       }
