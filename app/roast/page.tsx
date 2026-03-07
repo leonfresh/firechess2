@@ -2020,13 +2020,19 @@ export default function RoastPage() {
         nextMove.san && movesLeft >= 4) {
       questionPool.push(() => {
         const side = nextMove.color === "w" ? "White" : "Black";
-        // Build decoy moves — use a nearby worse move if available, plus joke options
-        const nearbyMoves = moves.slice(Math.max(0, next - 5), next).filter(m => m.san !== nextMove.san);
-        const decoy = nearbyMoves.length > 0 ? nearbyMoves[Math.floor(Math.random() * nearbyMoves.length)] : null;
-        const jokes = pickJokes([nextMove.san, decoy?.san ?? ""], decoy ? 1 : 2);
+        // Build decoy moves — pick a legal-but-wrong move from the actual position
+        let decoy: string | null = null;
+        try {
+          const posChess = new Chess(nextMove.fenBefore);
+          const legalMoves = posChess.moves().filter(m => m !== nextMove.san);
+          if (legalMoves.length > 0) {
+            decoy = legalMoves[Math.floor(Math.random() * legalMoves.length)];
+          }
+        } catch { /* fallback to jokes only */ }
+        const jokes = pickJokes([nextMove.san, decoy ?? ""], decoy ? 1 : 2);
         const rawOpts = [
           { label: `Play ${nextMove.san}`, emoji: "🧠" },
-          ...(decoy ? [{ label: `Play ${decoy.san}`, emoji: "🤔" }] : []),
+          ...(decoy ? [{ label: `Play ${decoy}`, emoji: "🤔" }] : []),
           ...jokes,
         ];
         const { options, correctIdx } = shuffleWithCorrect(rawOpts, `Play ${nextMove.san}`);
