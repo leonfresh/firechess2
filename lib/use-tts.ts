@@ -22,14 +22,16 @@ function cleanForSpeech(text: string): string {
     // Castling
     .replace(/\bO-O-O\b/g, "queenside castles")
     .replace(/\bO-O\b/g, "kingside castles")
-    // Piece moves: Nf3 → Knight f3, Bxe5 → Bishop takes e5, etc.
-    .replace(/\b([KQRBN])x([a-h][1-8])\b/g, (_m, p, sq) => {
+    // Piece moves: Ngxe5 → Knight g takes e5, R1d3 → Rook 1 d3, Bxe5 → Bishop takes e5, Nf3 → Knight f3
+    .replace(/\b([KQRBN])([a-h])?([1-8])?x([a-h][1-8])\b/g, (_m, p, f, r, sq) => {
       const names: Record<string, string> = { K: "King", Q: "Queen", R: "Rook", B: "Bishop", N: "Knight" };
-      return `${names[p]} takes ${sq}`;
+      const disambig = f || r ? `${f || ""}${r || ""} ` : "";
+      return `${names[p]} ${disambig}takes ${sq}`;
     })
-    .replace(/\b([KQRBN])([a-h]?)([1-8]?)([a-h][1-8])\b/g, (_m, p, _f, _r, sq) => {
+    .replace(/\b([KQRBN])([a-h]?)([1-8]?)([a-h][1-8])\b/g, (_m, p, f, r, sq) => {
       const names: Record<string, string> = { K: "King", Q: "Queen", R: "Rook", B: "Bishop", N: "Knight" };
-      return `${names[p]} ${sq}`;
+      const disambig = f || r ? `${f || ""}${r || ""} ` : "";
+      return `${names[p]} ${disambig}${sq}`;
     })
     // Pawn captures: exd5 → e takes d5
     .replace(/\b([a-h])x([a-h][1-8])\b/g, "$1 takes $2")
