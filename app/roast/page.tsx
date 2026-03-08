@@ -3383,9 +3383,9 @@ export default function RoastPage() {
           <div className={`grid grid-cols-1 gap-4 lg:gap-6 ${streamerMode ? "lg:grid-cols-[1fr_420px]" : "lg:grid-cols-[1fr_360px]"}`}>
             {/* Board column */}
             <div className="flex flex-col items-center gap-2 sm:gap-3">
-              {/* LIVE ON AIR indicator — broadcast style */}
+              {/* LIVE ON AIR indicator — mobile only (desktop shows in sidebar) */}
               {pageState === "watching" && (
-                <div className="flex items-center gap-2.5 mb-1">
+                <div className="flex lg:hidden items-center gap-2.5 mb-1">
                   <div className="relative flex items-center gap-1.5 rounded-full border border-red-500/50 bg-red-500/[0.12] px-3.5 py-1 shadow-lg shadow-red-500/10">
                     <span className="relative flex h-2 w-2">
                       <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
@@ -3917,6 +3917,19 @@ export default function RoastPage() {
 
             {/* Sidebar — commentary + guess */}
             <div className="flex flex-col gap-3 sm:gap-4">
+              {/* LIVE ON AIR indicator — desktop sidebar (mobile shows above board) */}
+              {pageState === "watching" && (
+                <div className="hidden lg:flex items-center gap-2.5">
+                  <div className="relative flex items-center gap-1.5 rounded-full border border-red-500/50 bg-red-500/[0.12] px-3.5 py-1 shadow-lg shadow-red-500/10">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 animate-ping" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.15em] text-red-400">Live</span>
+                  </div>
+                  <span className="text-[10px] text-slate-500 font-mono tracking-wider">Round {gamesPlayed + 1}</span>
+                </div>
+              )}
               {/* ── Live Roast: Avatar + Speech Bubble (hidden on mobile, shown under board instead) ── */}
               <div className="hidden lg:block rounded-2xl border border-white/[0.06] bg-gradient-to-b from-white/[0.03] to-white/[0.01] p-4 backdrop-blur-sm" style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.3)" }}>
                 <h3 className="text-xs font-bold uppercase tracking-wider text-orange-400 mb-3 flex items-center gap-1.5">
