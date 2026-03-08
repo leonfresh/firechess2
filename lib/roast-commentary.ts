@@ -1701,14 +1701,17 @@ function _blunderRoast(
       // Check the forking piece isn't itself hanging after the fork move
       const forkSq = m.to as Square;
       const forkerVal = PIECE_VALUES[lp.type] ?? 0;
+      // Material gained by the fork move itself (e.g. Nxd1 gains a rook)
+      const capturedByForkVal = m.captured ? (PIECE_VALUES[m.captured as PieceSymbol] ?? 0) : 0;
       let forkerSafe = true;
       try {
         const simMoves = sim.moves({ verbose: true });
         for (const recapture of simMoves) {
           if (recapture.to === forkSq && recapture.captured) {
-            // If recapture is by a piece of lower or equal value, forker isn't safe
-            const recapturerVal = PIECE_VALUES[recapture.piece] ?? 0;
-            if (recapturerVal <= forkerVal) { forkerSafe = false; break; }
+            // ANY recapture means the forker dies. The fork only still "works"
+            // if the fork move itself already won enough material to compensate
+            // (e.g. Nxd1 winning a rook is worth it even if the knight is recaptured).
+            if (capturedByForkVal < forkerVal) { forkerSafe = false; break; }
           }
         }
       } catch {}
