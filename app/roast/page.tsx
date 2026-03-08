@@ -20,7 +20,7 @@ import { Chess } from "chess.js";
 import { Chessboard } from "react-chessboard";
 import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
 
-import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
+import { useBoardTheme, useShowCoordinates, useCustomPieces, usePieceTheme } from "@/lib/use-coins";
 import { BOARD_THEMES } from "@/lib/board-themes";
 import { playSound, preloadSounds, preloadRoastSounds } from "@/lib/sounds";
 import { stockfishPool } from "@/lib/stockfish-client";
@@ -502,6 +502,7 @@ export default function RoastPage() {
   const [boardSize, setBoardSize] = useState(0);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
+  const pieceTheme = usePieceTheme();
   const showCoords = useShowCoordinates();
 
   /* ── Game state ── */
@@ -2023,7 +2024,7 @@ export default function RoastPage() {
         pepeImg,
         lightSq: boardTheme.lightSquare,
         darkSq: boardTheme.darkSquare,
-        ...(game?.avgElo ? { elo: String(game.avgElo) } : {}),
+        ...(pieceTheme.setName ? { pieceSet: pieceTheme.setName } : {}),
       });
       const url = `/api/roast/moment-card?${params.toString()}`;
       const res = await fetch(url);
@@ -2044,21 +2045,36 @@ export default function RoastPage() {
         URL.revokeObjectURL(blobUrl);
       }
     } catch {
-      // Fallback: open the image in a new tab
-      const params = new URLSearchParams({
-        move: move.san,
-        moveNum: String(Math.floor(currentIdx / 2) + 1),
-        classification: move.classification,
-        comment: (move.comment ?? "").slice(0, 150),
-        fen,
-        orientation,
-      });
-      window.open(`/api/roast/moment-card?${params.toString()}`, "_blank");
+      // Fallback: download the image directly (avoids popup blocker)
+      try {
+        const fbParams = new URLSearchParams({
+          move: move.san,
+          moveNum: String(Math.floor(currentIdx / 2) + 1),
+          classification: move.classification,
+          comment: (move.comment ?? "").slice(0, 150),
+          fen,
+          orientation,
+        });
+        const fbRes = await fetch(`/api/roast/moment-card?${fbParams.toString()}`);
+        if (fbRes.ok) {
+          const fbBlob = await fbRes.blob();
+          const blobUrl = URL.createObjectURL(fbBlob);
+          const a = document.createElement("a");
+          a.href = blobUrl;
+          a.download = "roast-moment.png";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(blobUrl);
+        }
+      } catch {
+        // Final fallback — nothing we can do
+      }
     } finally {
       setShareLoading(false);
       if (wasAutoplay) setAutoplay(true); // resume if was playing
     }
-  }, [currentIdx, moves, shareLoading, currentMood, activeComment, fen, orientation, boardTheme, game, autoplay]);
+  }, [currentIdx, moves, shareLoading, currentMood, activeComment, fen, orientation, boardTheme, pieceTheme, game, autoplay]);
 
   /* ── Tactic Replay — animate through the engine's best continuation ── */
   const startTacticReplay = useCallback(() => {

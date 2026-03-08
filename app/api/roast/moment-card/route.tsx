@@ -3,11 +3,20 @@ import { NextRequest } from "next/server";
 
 export const runtime = "edge";
 
-/* ── Unicode chess pieces ── */
+const LICHESS_PIECE_CDN = "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece";
+const DEFAULT_PIECE_SET = "cburnett";
+
+/* ── Unicode fallback pieces ── */
 const PIECE_CHAR: Record<string, string> = {
   K: "\u2654", Q: "\u2655", R: "\u2656", B: "\u2657", N: "\u2658", P: "\u2659",
   k: "\u265A", q: "\u265B", r: "\u265C", b: "\u265D", n: "\u265E", p: "\u265F",
 };
+
+/** Map FEN char → piece key for Lichess CDN (e.g. "K" → "wK", "q" → "bQ") */
+function fenCharToPieceKey(ch: string): string {
+  const isWhite = ch === ch.toUpperCase();
+  return `${isWhite ? "w" : "b"}${ch.toUpperCase()}`;
+}
 
 function parseFen(fen: string, flip: boolean): (string | null)[][] {
   const ranks = fen.split(" ")[0].split("/");
@@ -30,10 +39,24 @@ function parseFen(fen: string, flip: boolean): (string | null)[][] {
   return board;
 }
 
+/** Fetch an image and return as base64 data URI */
+async function fetchAsDataUri(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const buf = await res.arrayBuffer();
+    const base64 = Buffer.from(buf).toString("base64");
+    const ct = res.headers.get("content-type") ?? "image/svg+xml";
+    return `data:${ct};base64,${base64}`;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * GET /api/roast/moment-card?move=Qxf7&moveNum=24&classification=blunder
- *     &comment=...&elo=1200&fen=...&orientation=white&pepeImg=...
- *     &lightSq=%23f0d9b5&darkSq=%23b58863
+ *     &comment=...&fen=...&orientation=white&pepeImg=...
+ *     &lightSq=%23f0d9b5&darkSq=%23b58863&pieceSet=cburnett
  *
  * Generates a shareable OG-style "moment" card with the chess board,
  * current Pepe commentator avatar, classification, and commentary.
@@ -46,30 +69,36 @@ export async function GET(req: NextRequest) {
   const moveNum = searchParams.get("moveNum") ?? "?";
   const classification = searchParams.get("classification") ?? "blunder";
   const comment = searchParams.get("comment") ?? "";
-  const elo = searchParams.get("elo") ?? "";
   const fenRaw = searchParams.get("fen") ?? "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
   const orientationParam = searchParams.get("orientation") ?? "white";
   const pepeImg = searchParams.get("pepeImg") ?? "/pepe-emojis/3959-hmm.png";
   const lightSq = searchParams.get("lightSq") ?? "#f0d9b5";
   const darkSq = searchParams.get("darkSq") ?? "#b58863";
+  const pieceSet = searchParams.get("pieceSet") ?? DEFAULT_PIECE_SET;
 
   const board = parseFen(fenRaw, orientationParam === "black");
 
-  // Fetch the pepe image and convert to base64 data URI
-  // (Satori can't reliably fetch from the same origin in Edge Runtime)
-  let pepeDataUri = "";
-  try {
-    const pepeUrl = `${origin}${pepeImg}`;
-    const imgRes = await fetch(pepeUrl);
-    if (imgRes.ok) {
-      const buf = await imgRes.arrayBuffer();
-      const base64 = Buffer.from(buf).toString("base64");
-      const ct = imgRes.headers.get("content-type") ?? "image/png";
-      pepeDataUri = `data:${ct};base64,${base64}`;
+  // Collect unique pieces on the board and fetch their SVGs in parallel
+  const uniquePieces = new Set<string>();
+  for (const row of board) {
+    for (const cell of row) {
+      if (cell) uniquePieces.add(cell);
     }
-  } catch {
-    // silently skip — card will render without avatar
   }
+
+  // Fetch all piece SVGs + pepe image in parallel
+  const pieceKeys = Array.from(uniquePieces);
+  const fetchPromises = pieceKeys.map((ch) =>
+    fetchAsDataUri(`${LICHESS_PIECE_CDN}/${pieceSet}/${fenCharToPieceKey(ch)}.svg`)
+  );
+  fetchPromises.push(fetchAsDataUri(`${origin}${pepeImg}`));
+
+  const results = await Promise.all(fetchPromises);
+  const pieceDataUris: Record<string, string> = {};
+  pieceKeys.forEach((ch, i) => {
+    if (results[i]) pieceDataUris[ch] = results[i]!;
+  });
+  const pepeDataUri = results[results.length - 1] ?? "";
 
   const classConfig: Record<string, { color: string; label: string; emoji: string; bg: string }> = {
     blunder:   { color: "#f87171", label: "BLUNDER",    emoji: "\uD83D\uDC80", bg: "rgba(239,68,68,0.08)" },
@@ -137,7 +166,7 @@ export async function GET(req: NextRequest) {
               <div key={r} style={{ display: "flex" }}>
                 {row.map((piece, c) => {
                   const isLight = (r + c) % 2 === 0;
-                  const isWhitePiece = piece ? piece === piece.toUpperCase() : false;
+                  const pieceUri = piece ? pieceDataUris[piece] : null;
                   return (
                     <div
                       key={c}
@@ -148,17 +177,16 @@ export async function GET(req: NextRequest) {
                         width: SQ,
                         height: SQ,
                         backgroundColor: isLight ? lightSq : darkSq,
-                        fontSize: "32px",
-                        lineHeight: 1,
-                        color: piece ? (isWhitePiece ? "#ffffff" : "#1a1a2e") : "transparent",
-                        textShadow: piece
-                          ? isWhitePiece
-                            ? "0 1px 3px rgba(0,0,0,0.7), 0 0 1px rgba(0,0,0,0.9)"
-                            : "0 1px 2px rgba(255,255,255,0.3), 0 0 1px rgba(255,255,255,0.5)"
-                          : "none",
                       }}
                     >
-                      {piece ? PIECE_CHAR[piece] ?? "" : ""}
+                      {piece && pieceUri ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={pieceUri} width={SQ - 4} height={SQ - 4} style={{ objectFit: "contain" }} alt="" />
+                      ) : piece ? (
+                        <span style={{ fontSize: "32px", lineHeight: 1, opacity: 0.85 }}>
+                          {PIECE_CHAR[piece] ?? ""}
+                        </span>
+                      ) : null}
                     </div>
                   );
                 })}
@@ -237,12 +265,6 @@ export async function GET(req: NextRequest) {
               </span>
               <span style={{ color: "#475569", fontSize: "15px", marginLeft: "8px" }}>firechess.app/roast</span>
             </div>
-            {elo && (
-              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                <span style={{ fontSize: "15px", color: "#64748b" }}>Elo:</span>
-                <span style={{ fontSize: "22px", fontWeight: 900, color: "white" }}>{elo}</span>
-              </div>
-            )}
           </div>
         </div>
       </div>
