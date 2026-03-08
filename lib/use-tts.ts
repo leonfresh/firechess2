@@ -13,7 +13,7 @@ function cleanForSpeech(text: string): string {
     // Remove ALL emoji characters — Extended_Pictographic catches nearly everything,
     // plus regional indicators (flags), skin-tone modifiers, variation selectors,
     // ZWJ (Zero Width Joiner), keycap combining, and tag characters.
-    .replace(/[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, "")
+    .replace(/[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]+/gu, ". ")
     // Remove markdown asterisks
     .replace(/\*/g, "")
     // Chess checkmate — # is the standard notation (e.g. Qxf7#)
@@ -43,7 +43,8 @@ function cleanForSpeech(text: string): string {
     // Handle ALT+F4 and similar non-chess plus signs BEFORE chess notation
     .replace(/\bAlt[+-]F4\b/gi, "alt F4")
     .replace(/\bCTRL\+[A-Z]\b/gi, (m) => m.replace("+", " "))
-    // Check symbol (single +) — standard chess notation for check
+    // Double-check (++) and single check (+) — chess notation
+    .replace(/\+\+/g, " double check")
     .replace(/\+/g, " check")
     // ALL CAPS words → titlecase for natural TTS (skip short acronyms ≤3 chars)
     .replace(/\b[A-Z]{4,}\b/g, (word) => word[0] + word.slice(1).toLowerCase())
