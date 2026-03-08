@@ -21,6 +21,7 @@ import { Chessboard } from "react-chessboard";
 import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
 
 import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
+import { BOARD_THEMES } from "@/lib/board-themes";
 import { playSound, preloadSounds, preloadRoastSounds } from "@/lib/sounds";
 import { stockfishPool } from "@/lib/stockfish-client";
 import {
@@ -3209,6 +3210,42 @@ export default function RoastPage() {
                     </p>
                   </div>
                 </div>
+
+                {/* ── Unlock themes CTA (unauthenticated only) ── */}
+                {!sessionLoading && !authenticated && (
+                  <div className="mx-auto max-w-xl rounded-2xl border-2 border-purple-500/30 bg-gradient-to-br from-purple-500/[0.06] to-indigo-500/[0.04] p-5 shadow-lg shadow-purple-500/10">
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="text-2xl">🎨</span>
+                      <div>
+                        <p className="text-sm font-black text-purple-300">Customize Your Board</p>
+                        <p className="text-xs text-slate-400">Unlock board themes, piece sets &amp; more — free with an account</p>
+                      </div>
+                    </div>
+                    {/* Theme preview swatches */}
+                    <div className="flex items-center gap-1.5 mb-4 justify-center">
+                      {BOARD_THEMES.filter(t => t.price > 0).slice(0, 6).map(t => (
+                        <div key={t.id} className="relative w-10 h-10 rounded-lg overflow-hidden border border-white/10 shadow-md" title={t.name}>
+                          <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
+                            <div style={{ backgroundColor: t.lightSquare }} />
+                            <div style={{ backgroundColor: t.darkSquare }} />
+                            <div style={{ backgroundColor: t.darkSquare }} />
+                            <div style={{ backgroundColor: t.lightSquare }} />
+                          </div>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="text-[8px]">🔒</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <Link
+                      href="/auth/signin"
+                      className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-500 px-5 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/25 transition-all hover:brightness-110 hover:scale-[1.02] active:scale-95"
+                    >
+                      <span>Sign Up Free to Unlock</span>
+                      <svg className="h-4 w-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                    </Link>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -4349,6 +4386,35 @@ export default function RoastPage() {
                 </div>
               )}
 
+              {/* ── Unlock themes CTA — in-game sidebar (unauthenticated, desktop only) ── */}
+              {!sessionLoading && !authenticated && (pageState === "watching" || pageState === "guessing") && (
+                <div className="hidden lg:block rounded-2xl border border-purple-500/20 bg-gradient-to-br from-purple-500/[0.04] to-indigo-500/[0.03] p-3 backdrop-blur-sm">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-sm">🎨</span>
+                    <p className="text-[10px] font-bold text-purple-300 uppercase tracking-wider">Customize Your Board</p>
+                  </div>
+                  <div className="flex items-center gap-1 mb-2 justify-center">
+                    {BOARD_THEMES.filter(t => t.price > 0).slice(0, 4).map(t => (
+                      <div key={t.id} className="relative w-6 h-6 rounded overflow-hidden border border-white/10" title={t.name}>
+                        <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
+                          <div style={{ backgroundColor: t.lightSquare }} />
+                          <div style={{ backgroundColor: t.darkSquare }} />
+                          <div style={{ backgroundColor: t.darkSquare }} />
+                          <div style={{ backgroundColor: t.lightSquare }} />
+                        </div>
+                      </div>
+                    ))}
+                    <span className="text-[9px] text-slate-600 ml-0.5">+more</span>
+                  </div>
+                  <Link
+                    href="/auth/signin"
+                    className="flex w-full items-center justify-center gap-1 rounded-lg bg-gradient-to-r from-purple-500/80 to-indigo-500/80 px-3 py-1.5 text-[10px] font-bold text-white transition-all hover:brightness-110 active:scale-95"
+                  >
+                    Sign Up Free 🎨
+                  </Link>
+                </div>
+              )}
+
               {/* ── Guess + Reveal moved to centered modals — sidebar only has commentary + moves ── */}
             </div>
           </div>
@@ -4897,6 +4963,35 @@ export default function RoastPage() {
                   >
                     📊 View Leaderboard
                   </Link>
+                )}
+
+                {/* ── Unlock themes CTA in reveal modal (unauthenticated only) ── */}
+                {!sessionLoading && !authenticated && (
+                  <div className="rounded-xl border border-purple-500/25 bg-gradient-to-r from-purple-500/[0.06] to-indigo-500/[0.04] p-3">
+                    <div className="flex items-center gap-2.5 mb-2">
+                      <span className="text-lg">🎨</span>
+                      <p className="text-xs font-bold text-purple-300">Unlock board themes &amp; piece sets</p>
+                    </div>
+                    <div className="flex items-center gap-1 mb-2.5 justify-center">
+                      {BOARD_THEMES.filter(t => t.price > 0).slice(0, 5).map(t => (
+                        <div key={t.id} className="relative w-7 h-7 rounded-md overflow-hidden border border-white/10" title={t.name}>
+                          <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
+                            <div style={{ backgroundColor: t.lightSquare }} />
+                            <div style={{ backgroundColor: t.darkSquare }} />
+                            <div style={{ backgroundColor: t.darkSquare }} />
+                            <div style={{ backgroundColor: t.lightSquare }} />
+                          </div>
+                        </div>
+                      ))}
+                      <span className="text-[10px] text-slate-500 ml-1">+{BOARD_THEMES.filter(t => t.price > 0).length - 5} more</span>
+                    </div>
+                    <Link
+                      href="/auth/signin"
+                      className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-purple-500 to-indigo-500 px-4 py-2 text-xs font-bold text-white transition-all hover:brightness-110 active:scale-95"
+                    >
+                      Sign Up Free to Unlock 🎨
+                    </Link>
+                  </div>
                 )}
 
                 <button
