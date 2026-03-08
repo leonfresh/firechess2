@@ -787,6 +787,22 @@ export default function RoastPage() {
       setAnalyzing(true);
       setAnalysisProgress(0);
 
+      // Pre-fetch Lichess explorer data for opening positions (batch, non-blocking)
+      // This populates the cache so inline lookups during analysis are instant.
+      {
+        const prefetchChess = new Chess();
+        const prefetchLimit = Math.min(sans.length, 30); // first 15 full moves
+        const prefetchPromises: Promise<unknown>[] = [];
+        for (let j = 0; j < prefetchLimit; j++) {
+          const fen = prefetchChess.fen();
+          const side = prefetchChess.turn() === "w" ? "white" as const : "black" as const;
+          prefetchPromises.push(fetchExplorerMoves(fen, side).catch(() => {}));
+          try { prefetchChess.move(sans[j]); } catch { break; }
+        }
+        // Don't await — let them resolve in parallel while Stockfish analysis runs
+        Promise.allSettled(prefetchPromises);
+      }
+
       const chess = new Chess();
       const analyzed: MoveWithComment[] = [];
       const usedSet = usedLines.current;
@@ -1170,6 +1186,20 @@ export default function RoastPage() {
 
       setAnalyzing(true);
       setAnalysisProgress(0);
+
+      // Pre-fetch Lichess explorer data for opening positions (batch, non-blocking)
+      {
+        const prefetchChess = new Chess();
+        const prefetchLimit = Math.min(sans.length, 30);
+        const prefetchPromises: Promise<unknown>[] = [];
+        for (let j = 0; j < prefetchLimit; j++) {
+          const fen = prefetchChess.fen();
+          const side = prefetchChess.turn() === "w" ? "white" as const : "black" as const;
+          prefetchPromises.push(fetchExplorerMoves(fen, side).catch(() => {}));
+          try { prefetchChess.move(sans[j]); } catch { break; }
+        }
+        Promise.allSettled(prefetchPromises);
+      }
 
       const chess = new Chess();
       const analyzed: MoveWithComment[] = [];
