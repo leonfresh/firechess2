@@ -6,6 +6,7 @@ import "./globals.css";
 import { SessionProvider } from "@/components/session-provider";
 import { Navbar } from "@/components/navbar";
 import { OrganizationJsonLd, WebApplicationJsonLd, WebSiteJsonLd } from "@/components/json-ld";
+import { Analytics } from "@vercel/analytics/next";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -176,6 +177,7 @@ export default function RootLayout({
           </div>
         </footer>
         </SessionProvider>
+        <Analytics />
       </body>
     </html>
   );
