@@ -101,6 +101,8 @@ The Lucena position is the single most important theoretical endgame position. I
 3. When the opponent's rook gives checks, block with your own rook on the 4th rank
 4. Promote the pawn
 
+<chess-position fen="1K1r4/1P6/8/8/8/8/8/R5k1 w - - 0 1" moves="Ra4, Rd1, Kc8, Rc1+, Rc4, Rxc4, b8=Q" orientation="white" caption="The Lucena Position — White builds the 'bridge'. The rook goes to the 4th rank, the king steps aside, and when Black checks, the rook blocks on the c-file. The pawn promotes!"></chess-position>
+
 This concept has been known for centuries, but a surprising number of 1500-1800 rated players haven't internalized it. **Learn the Lucena, and you'll convert every standard rook ending where you reach this position.**
 
 ## 2. King Activity in Pawn Endings
@@ -119,6 +121,8 @@ In king and pawn endings, the king transforms from a piece that hides in the cor
 
 **The opposition rule:** When two kings face each other with one square between them, the player who does NOT have to move has the "opposition" — a critical advantage in king and pawn endings. If you don't know this concept, you're losing drawn endings and drawing won endings constantly.
 
+<chess-position fen="8/5pk1/6p1/4K1P1/5P2/8/8/8 w - - 0 1" moves="Kd6, Kf8, Ke6, Kg7, Ke7, Kg8, Kf6" orientation="white" caption="White's centralized king invades step by step. Black's passive king can only react. After Kf6, White wins the g6-pawn and the game."></chess-position>
+
 ## 3. Rook Behind Passed Pawns (Tarrasch's Rule)
 
 Siegbert Tarrasch stated it over 100 years ago: **"Rooks belong behind passed pawns."** This applies to both your own passed pawns and your opponent's.
@@ -136,6 +140,8 @@ Siegbert Tarrasch stated it over 100 years ago: **"Rooks belong behind passed pa
 
 Your opponent has a passed d-pawn on d5. You put your rook on d1, blocking it. But now your rook is stuck babysitting. If instead you get your rook to d8 (behind their pawn), you're both stopping the pawn and keeping your rook active.
 
+<chess-position fen="3r4/4k3/8/3P4/8/4K3/8/3R4 w - - 0 1" moves="Ke4, Kd6, Kd4, Ke7, Kc5, Kd7, d6" orientation="white" caption="Tarrasch's Rule in action — White's rook on d1 supports the passed pawn from BEHIND. Black's rook on d8 is stuck blocking from the front. White's king marches forward freely while Black's rook stays chained to d8."></chess-position>
+
 ## 4. The Wrong Bishop
 
 This one sounds simple but catches club players constantly. If you have a bishop and a rook pawn (a-pawn or h-pawn), and your bishop doesn't control the promotion square, **it's a draw**.
@@ -151,6 +157,8 @@ This one sounds simple but catches club players constantly. If you have a bishop
 - They trade their good bishop, keeping the wrong one
 
 **How to avoid it:** Before trading down, check whether your remaining bishop controls your pawn's promotion square. If not, keep more material on the board or find a different plan.
+
+<chess-position fen="7k/8/6KP/8/2B5/8/8/8 w - - 0 1" orientation="white" caption="The 'wrong bishop' — White has a bishop and h-pawn, but the light-squared bishop can NEVER control h8 (a dark square). Black's king sits in the corner forever. This is a dead draw despite being up a full piece."></chess-position>
 
 ## 5. Not Creating a Passed Pawn
 
@@ -171,6 +179,8 @@ In rook endings with multiple pawns, the side that creates a passed pawn first u
 3. Trade pawns to create one unstoppable passed pawn
 
 A passed pawn in a rook ending is like having an extra piece. It ties the opponent's rook to defense while your rook stays active. Even one passed pawn often decides the game.
+
+<chess-position fen="8/pp4k1/8/PPP3K1/8/8/8/8 w - - 0 1" moves="c6, bxc6, bxc6, Kf6, c7, Ke7, a6" orientation="white" caption="The pawn majority technique: advance the unopposed 'candidate' (c5). After c6 bxc6 bxc6, White creates a passed c-pawn. When it reaches c7, the a-pawn advances too — Black can't stop both!"></chess-position>
 
 ## How to Fix These Weaknesses
 
