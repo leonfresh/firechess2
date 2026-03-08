@@ -3614,7 +3614,7 @@ function _tempoRoast(
     );
   } else if (isPawnGrab) {
     lines.push(
-      `🐌 ${move.san} — grabbing pawns while ${posDesc}?? Priorities check: pawns are worth 1 point. Kings are worth THE ENTIRE GAME 👑💀`,
+      `🐌 ${move.san} — pushing pawns while ${posDesc}?? Priorities check: pawns are worth 1 point. Kings are worth THE ENTIRE GAME 👑💀`,
       `⏳ ${move.san} — pushing a sideline pawn when ${posDesc}. That's like reorganizing your bookshelf while your house is on fire 🔥📚`,
       `💤 ${move.san}. A quiet pawn move. When the position is this sharp. When ${posDesc}. This is the "I don't see the danger" special 🫠🐌`,
       `🐢 ${move.san} pushes a pawn on the wrong side of the board. Meanwhile ${posDesc}. Speed of the position says ATTACK — they said "nah, I'll push a pawn" 🗿⏳`,
