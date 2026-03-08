@@ -708,14 +708,17 @@ function detectBackRankInvasion(chess: Chess, color: Color): { square: string; t
   return null;
 }
 
-/** Detect pawn storm: a pawn is pushed to advanced ranks (5-7 for white, 4-2 for black)
- *  toward the enemy king — within 2 files of the opposing king. */
+/** Detect pawn storm: a pawn is pushed to advanced ranks (6-7 for white, 3-2 for black)
+ *  toward the enemy king — within 2 files of the opposing king.
+ *  Rank 5 is often just central play (e.g. exd5 on move 2), so we require rank 6+
+ *  to ensure the pawn is genuinely threatening the king's shelter. */
 function detectPawnStorm(move: AnalyzedMove, after: Chess, moverColor: Color): { pawnSq: string; enemyKing: string } | null {
   if (move.pieceType !== "p") return null;
   const toSq = move.uci.slice(2, 4);
   const pawnRank = rankIdx(toSq);
-  // Must be pushed to rank 5+ for white (index 4+), rank 4- for black (index 3-)
-  const isAdvanced = moverColor === "w" ? pawnRank >= 4 : pawnRank <= 3;
+  // Must be pushed to rank 6+ for white (index 5+), rank 3- for black (index 2-)
+  // This filters out central pawn exchanges on rank 5 that aren't real storms
+  const isAdvanced = moverColor === "w" ? pawnRank >= 5 : pawnRank <= 2;
   if (!isAdvanced) return null;
 
   const enemyKing = findKing(after, opp(moverColor));
