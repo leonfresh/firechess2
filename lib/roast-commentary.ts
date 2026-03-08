@@ -1619,9 +1619,14 @@ function _blunderRoast(
   }
 
   // 2. Hanging pieces (including pawns)
+  // Engine-verify: cpLoss must be at least half the hanging piece's value
+  // to confirm the piece is TRULY hanging and not a geometric false positive
   const hanging = detectHanging(after, moverColor);
   if (hanging.length > 0) {
     const worst = hanging.reduce((a, b) => (PIECE_VALUES[b.type] ?? 0) > (PIECE_VALUES[a.type] ?? 0) ? b : a);
+    const hangMinCpLoss = Math.max((PIECE_VALUES[worst.type] ?? 0) * 50, 80);
+    if (move.cpLoss < hangMinCpLoss) { /* skip — engine doesn't agree this hang matters */ }
+    else {
     const vName = pn(worst.type);
     const onSq = worst.square;
     const numAtt = countAttackers(after, onSq, opp(moverColor));
@@ -1663,6 +1668,8 @@ function _blunderRoast(
       `🆓 After ${move.san}, the ${vName} on ${onSq} is just THERE. Free for the taking. Even Eric Rosen would stop being wholesome for a second to call this out 😌🎁`,
     ], used), annotations: { arrows: hangArrows, markers: [{ square: onSq, emoji: "🆓" }] } };
   }
+
+  } // end hanging piece cpLoss guard
 
   // 2b. Allows checkmate — check if any opponent response is mate
   try {
@@ -1769,7 +1776,8 @@ function _blunderRoast(
   } catch {}
   } // end cpLoss >= 150 guard for fork detection
 
-  // 4. Pin
+  // 4. Pin — require cpLoss >= 100 to confirm the pin is meaningful
+  if (move.cpLoss >= 100) {
   const pinsBefore = detectPins(before, moverColor);
   const pinsAfter = detectPins(after, moverColor);
   const newPins = pinsAfter.filter(pa => !pinsBefore.some(pb => pb.pinned.square === pa.pinned.square && pb.pinner.square === pa.pinner.square));
@@ -1788,7 +1796,10 @@ function _blunderRoast(
     ], used), annotations: { arrows: pinArrows, markers: pinMarkers } };
   }
 
-  // 4b. Skewer
+  } // end pin cpLoss >= 100 guard
+
+  // 4b. Skewer — require cpLoss >= 150 to confirm the skewer matters
+  if (move.cpLoss >= 150) {
   const skewers = detectSkewers(after, opp(moverColor));
   if (skewers.length > 0) {
     const sk = skewers[0];
@@ -1805,8 +1816,10 @@ function _blunderRoast(
     ], used), annotations: { arrows: skArrows, markers: [{ square: sk.front.square, emoji: "🗡️" }, { square: sk.behind.square, emoji: "🎯" }] } };
   }
 
-  // 4c. Discovered attack
-  {
+  } // end skewer cpLoss >= 150 guard
+
+  // 4c. Discovered attack — require cpLoss >= 100 to confirm the discovery matters
+  if (move.cpLoss >= 100) {
     const disco = detectDiscoveredAttack(before, after, _fromSq, opp(moverColor));
     if (disco) {
       const discoArrows: [string, string, string][] = [
@@ -1820,10 +1833,10 @@ function _blunderRoast(
         `🎯 ${move.san} and suddenly the ${pn(disco.slider.type)} on ${disco.slider.square} has a clear shot at the ${pn(disco.target.type)}. Discovered attack. They didn't see it. We did 💀`,
       ], used), annotations: { arrows: discoArrows, markers: [{ square: disco.target.square, emoji: "💥" }] } };
     }
-  }
+  } // end discovered attack cpLoss >= 100 guard
 
-  // 4d. Back-rank invasion — only when an opponent rook/queen can actually slide to the back rank
-  if (move.moveNumber >= 15) {
+  // 4d. Back-rank invasion — require cpLoss >= 200 to confirm the invasion threat is real
+  if (move.cpLoss >= 200 && move.moveNumber >= 15) {
     const invasion = detectBackRankInvasion(after, moverColor);
     const invasionBefore = detectBackRankInvasion(before, moverColor);
     if (invasion && !invasionBefore) {
