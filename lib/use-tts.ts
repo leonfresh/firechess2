@@ -16,8 +16,8 @@ function cleanForSpeech(text: string): string {
     .replace(/[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, "")
     // Remove markdown asterisks
     .replace(/\*/g, "")
-    // Remove hashtags/chess notation clutter
-    .replace(/#/g, "")
+    // Chess checkmate — # is the standard notation (e.g. Qxf7#)
+    .replace(/#/g, " checkmate")
     // Expand chess notation for TTS readability
     // Castling
     .replace(/\bO-O-O\b/g, "queenside castles")
@@ -43,9 +43,7 @@ function cleanForSpeech(text: string): string {
     // Handle ALT+F4 and similar non-chess plus signs BEFORE chess notation
     .replace(/\bAlt[+-]F4\b/gi, "alt F4")
     .replace(/\bCTRL\+[A-Z]\b/gi, (m) => m.replace("+", " "))
-    // Chess checkmate (++) must come before single check (+)
-    .replace(/\+\+/g, " checkmate")
-    // Check symbol (single +)
+    // Check symbol (single +) — standard chess notation for check
     .replace(/\+/g, " check")
     // ALL CAPS words → titlecase for natural TTS (skip short acronyms ≤3 chars)
     .replace(/\b[A-Z]{4,}\b/g, (word) => word[0] + word.slice(1).toLowerCase())
