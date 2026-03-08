@@ -2324,6 +2324,21 @@ export default function RoastPage() {
   /* ── Manual navigation ── */
   const goToMove = useCallback((idx: number) => {
     if (idx < -1 || idx >= moves.length) return;
+
+    // Cancel any in-flight state from the previous move to prevent race conditions
+    tts.stop(); // stop TTS mid-speech
+    setPendingDecisionIdx(null); // cancel pending quizzes
+    setActiveDecision(null); // dismiss active quiz
+    setDecisionAnswer(null);
+    setTacticReplaying(false); // cancel tactic replay
+    setTacticReplayStep(0);
+    setScreenShake(null); // clear visual effects
+    setBoardFlash(null);
+    setBoardCrack(false);
+    setEliminationText(null);
+    setShowConfetti(false);
+    setStreakFire(false);
+
     setCurrentIdx(idx);
     if (idx === -1) {
       setFen("start");
@@ -2350,7 +2365,7 @@ export default function RoastPage() {
       setActiveArrows([]);
       setActiveMarkers([]);
     }
-  }, [moves]);
+  }, [moves, tts]);
 
   const skipToGuess = useCallback(() => {
     // Jump to end and go to guessing
@@ -3807,7 +3822,7 @@ export default function RoastPage() {
               {(pageState === "watching" || pageState === "guessing" || pageState === "revealed") && (
                 <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 mt-1 sm:mt-2 rounded-xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-sm px-3 py-2" style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)" }}>
                   <button
-                    onClick={() => goToMove(Math.max(-1, currentIdx - 1))}
+                    onClick={() => { setAutoplay(false); goToMove(Math.max(-1, currentIdx - 1)); }}
                     title="Previous move (←)"
                     className="group rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-sm text-slate-400 hover:bg-white/[0.08] hover:text-white transition-all active:scale-95"
                   >
