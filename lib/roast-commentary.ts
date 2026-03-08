@@ -57,6 +57,10 @@ export interface AnalyzedMove {
   isResignationWorthy: boolean;
   /** Seconds spent on this move (from %clk data), or null if unavailable */
   timeSpent: number | null;
+  /** Lichess database win rate for this move (0–1), if available */
+  dbWinRate?: number;
+  /** Number of games in the Lichess database for this move */
+  dbGames?: number;
 }
 
 export interface GameSummary {
@@ -1424,19 +1428,19 @@ function _goodMoveRoast(
       () => `😤 ${move.san} — ${threatStr}. A move with actual PURPOSE? At this elo? Suspicious 🕵️`,
       () => `🤷 ${move.san}, ${threatStr}. They're actually making threats now instead of hanging pieces. Character development 📈`,
     ] : []),
-    () => ctx.recentBlunder
-      ? `🗿 ${move.san} — oh wow a normal move${afterBlunder}. Congratulations on doing the bare minimum 👏💀`
-      : `🗿 ${move.san}. That's a normal move. Not gonna applaud someone for not hanging a piece 🫠`,
-    () => ctx.playerBlunders >= 2
-      ? `😤 ${move.san} — finally not a blunder. Only took ${ctx.playerBlunders} tries to figure out how pieces move 🗿`
-      : `🤷 ${move.san}. Fine. Whatever. Can't roast this one. Moving on before I say something nice 😤`,
+    ...(ctx.recentBlunder ? [
+      () => `🗿 ${move.san} — oh wow a normal move${afterBlunder}. Congratulations on doing the bare minimum 👏💀`,
+    ] : []),
+    ...(ctx.playerBlunders >= 2 ? [
+      () => `😤 ${move.san} — finally not a blunder. Only took ${ctx.playerBlunders} tries to figure out how pieces move 🗿`,
+    ] : []),
     () => ctx.threwAdvantage
       ? `💀 ${move.san} — sure, it's accurate now. They were winning 5 moves ago. NOW they play correctly? The barn door is OPEN, the horses are GONE 🐎🚪`
       : `😐 ${move.san}. Objectively correct. Soulless. Like a chess engine pretending to be a human. Where's the personality 🤖`,
     () => {
       if (move.isCastle) return `🏰 Castling — wow, they know the rules. Want a medal? 🎖️😤`;
       if (ctx.playerBlunders > 0 || ctx.recentBlunder) return `🗿 ${move.san}. Yeah it's good. I'm not gonna compliment them though. They know what they did earlier 💀`;
-      return `🗿 ${move.san}. Yeah it's good. Not gonna compliment them though. Where's the drama? This is boring 🫠`;
+      return `🗿 ${move.san}. The engine likes it. Move ${move.moveNumber} and the position is ${ctx.posture}. Let's see how long THAT lasts 📉`;
     },
     () => `🤨 ${move.san}. Even Hikaru would say "okay that's fine." Not "great." Not "brilliant." Just "fine." Classic Hikaru praise 🏎️🗿`,
     () => `😤 ${move.san}. A good move. Levy would nod once and move on. No thumbnail. No red circle. Just a nod. Mid-level approval 📺🫡`,
@@ -1447,7 +1451,7 @@ function _goodMoveRoast(
       const dev = development(after, move.color as Color);
       if (dev.stuck.length === 0 && dev.total > 0)
         return `🫤 ${move.san} — all pieces developed. Cool. This is expected at literally any level of chess. It's like congratulating someone for tying their shoes 👟`;
-      return `🗿 ${move.san}. It's fine. It's accurate. I literally do not care 🫠`;
+      return `🗿 ${move.san}. Pieces developed, king safe, pawn structure intact — doing the fundamentals. Rare at this elo honestly 📐`;
     },
     () => `😤 ${move.san}.${afterBlunder} They played a good move. Alert the media. Stop the presses 🗞️💀`,
     () => ctx.desperateDefense
@@ -1459,7 +1463,7 @@ function _goodMoveRoast(
     () => `🗿 ${move.san}.${threwLine || (ctx.playerBlunders > 0 ? " One good move in a sea of questionable decisions. Google 'consistency.' Holy hell" : " A perfectly normal move. My commentary energy is at 0% for this one")} 💀`,
     () => {
       if (move.isCapture) return `🤷 ${move.san} captures and it's correct. Even my dog could see that was free. Not impressed 🐕`;
-      return `😐 ${move.san}. Good move. I hate it when they play well because I have nothing to say. Awkward silence 🦗`;
+      return `🤷 ${move.san}. Non-capture and it's still correct. They chose RESTRAINT? At this elo? Who ARE you 🕵️`;
     },
     () => ctx.posture === "losing"
       ? `😬 ${move.san} is fine but they're still losing.${ctx.recentBlunder ? ` This game was decided when they ${ctx.recentBlunder}. Everything since is just delaying the inevitable ⏳` : " Too little too late 💀"}`
@@ -1491,10 +1495,9 @@ function _goodMoveRoast(
     () => `🐐 ${move.san}. Charlie would say "this is a perfectly average chess move" in the most deadpan voice ever and somehow make it entertaining. We can't. It's mid 🎭💤`,
     () => `🌸 ${move.san}. Pokimane in PogChamps made moves like this and got hyped by chat. It's a normal move. Chat chill 🎮🗿`,
     () => `📺 ${move.san}. Levy Guess the Elo energy: "Hmm, this is a reasonable move, I'd say maybe... 1400?" Correct. That's exactly what this is. 1400 energy 🎯📺`,
-    () => `😤 ${move.san}. They played a normal chess move and want applause? This is the bare minimum? Like, the FLOOR? 📉👏`,
-    () => ctx.playerBlunders > 0
-      ? `🗿 ${move.san}. "Don't hang pieces" ✅ "Play the best move" ❌ Somewhere in between. Mid. Ultra mid 🫠`
-      : `🗿 ${move.san}. A move exists. On the board. In a game of chess. Mid. Ultra mid 🫠`,
+    ...(ctx.playerBlunders > 0 ? [
+      () => `🗿 ${move.san}. "Don't hang pieces" ✅ "Play the best move" ❌ Somewhere in between after ${ctx.playerBlunders} blunders. Growth? 📈`,
+    ] : []),
   ];
 
   // Opening-aware good move commentary
@@ -1509,6 +1512,20 @@ function _goodMoveRoast(
         );
       }
     }
+  }
+
+  // Database-aware commentary — when Lichess explorer data is available
+  if (move.dbWinRate !== undefined && move.dbGames !== undefined && move.dbGames >= 100) {
+    const wrPct = Math.round(move.dbWinRate * 100);
+    const gamesStr = move.dbGames >= 1000 ? `${(move.dbGames / 1000).toFixed(0)}K` : `${move.dbGames}`;
+    lines.push(
+      () => `📊 ${move.san}. ${wrPct}% win rate across ${gamesStr} Lichess games. Not the engine's top pick but the PEOPLE approve 🗳️`,
+      () => `📊 ${move.san}. Lichess database says: ${gamesStr} games, ${wrPct}% win rate. Theory vs practice, baby 📈`,
+      () => `🗃️ ${move.san}. In ${gamesStr} database games this scores ${wrPct}%. The engine might nitpick but thousands of players chose this and WON 📊`,
+      () => `📊 ${move.san}. The Lichess database has receipts: ${wrPct}% across ${gamesStr} games. Crowd-sourced chess wisdom vs computer perfectionism 🧠`,
+      () => `🗃️ ${move.san} — ${gamesStr} games on Lichess say it works. ${wrPct}% win rate. The streets know 📊🔥`,
+      () => `📊 ${move.san}. Engine: "meh." Lichess database: "${wrPct}% win rate in ${gamesStr} games." Numbers don't lie 🤖🗳️`,
+    );
   }
 
   return { text: pick(lines)(), annotations: ann };
@@ -2324,6 +2341,24 @@ function _inaccuracyRoast(
   };
 
   const lines: (() => string)[] = [
+    // Database-aware lines for inaccuracies that are popular in practice
+    ...(move.dbWinRate !== undefined && move.dbGames !== undefined && move.dbGames >= 100 ? [
+      () => {
+        const wrPct = Math.round(move.dbWinRate! * 100);
+        const gamesStr = move.dbGames! >= 1000 ? `${(move.dbGames! / 1000).toFixed(0)}K` : `${move.dbGames!}`;
+        return `📊 ${move.san}. Engine calls it an inaccuracy but ${gamesStr} Lichess games disagree — ${wrPct}% win rate. The people vs the machine 🤖🗳️`;
+      },
+      () => {
+        const wrPct = Math.round(move.dbWinRate! * 100);
+        const gamesStr = move.dbGames! >= 1000 ? `${(move.dbGames! / 1000).toFixed(0)}K` : `${move.dbGames!}`;
+        return `🗃️ ${move.san}. Stockfish frowns. Lichess database: "${wrPct}% across ${gamesStr} games." Offbeat but it WORKS. The engine is not your coach 📊😤`;
+      },
+      () => {
+        const wrPct = Math.round(move.dbWinRate! * 100);
+        const gamesStr = move.dbGames! >= 1000 ? `${(move.dbGames! / 1000).toFixed(0)}K` : `${move.dbGames!}`;
+        return `📊 ${move.san} — engine says -${move.cpLoss}cp but ${gamesStr} real games score ${wrPct}% for this move. Theory is one thing, practice is another 🧠📈`;
+      },
+    ] : []),
     () => {
       if (dev.stuck.length >= 2 && move.moveNumber > 8)
         return `🤷 ${move.san} — with ${dev.stuck.length} pieces still on the back rank at move ${move.moveNumber}?? Maybe develop before you attack bro 😤📺`;
@@ -3286,7 +3321,7 @@ function _fallbackLine(move: AnalyzedMove): { text: string; annotations: MoveAnn
   const fromSq = move.uci.slice(0, 2);
   const toSq = move.uci.slice(2, 4);
   if (cls === "best" || cls === "great" || cls === "good") {
-    return Math.random() < 0.3 ? { text: `✅ ${move.san} — solid move. Nothing to see here 🫡`, annotations: NO_ANNOTATIONS } : null;
+    return null;
   }
   if (cls === "blunder") return { text: `💀 ${move.san}. That one hurt. Liers will kicked off for this 😭`, annotations: { arrows: [[fromSq, toSq, "rgba(239, 68, 68, 0.85)"]], markers: [{ square: toSq, emoji: "💀" }] } };
   if (cls === "mistake") return { text: `😬 ${move.san} — that's rough buddy. Position just got worse 📉`, annotations: { arrows: [[fromSq, toSq, "rgba(239, 183, 44, 0.85)"]], markers: [{ square: toSq, emoji: "😬" }] } };

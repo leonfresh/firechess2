@@ -23,6 +23,7 @@ import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types"
 import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
 import { playSound, preloadSounds, preloadRoastSounds } from "@/lib/sounds";
 import { stockfishPool } from "@/lib/stockfish-client";
+import { fetchExplorerMoves } from "@/lib/lichess-explorer";
 import {
   classifyMove,
   generateMoveComment,
@@ -895,6 +896,21 @@ export default function RoastPage() {
           timeSpent: clocks[i] ?? null,
         };
 
+        // Enrich opening moves with Lichess explorer data (win rate & game count)
+        if (moveNumber <= 15) {
+          try {
+            const sideToMove = moveResult.color === "w" ? "white" as const : "black" as const;
+            const explorer = await fetchExplorerMoves(fenBefore, sideToMove);
+            const dbMove = explorer.moves.find(
+              (m) => m.san === moveResult.san || m.uci === analyzedMove.uci
+            );
+            if (dbMove && dbMove.totalGames >= 50) {
+              analyzedMove.dbWinRate = dbMove.winRate;
+              analyzedMove.dbGames = dbMove.totalGames;
+            }
+          } catch { /* explorer unavailable — proceed without DB data */ }
+        }
+
         const gameSummary: GameSummary = {
           moves: analyzed as unknown as AnalyzedMove[],
           whiteElo: data.whiteElo,
@@ -1240,6 +1256,21 @@ export default function RoastPage() {
           isResignationWorthy: cpAfter > 500 && cpBefore > -200,
           timeSpent: clocks[i] ?? null,
         };
+
+        // Enrich opening moves with Lichess explorer data (win rate & game count)
+        if (moveNumber <= 15) {
+          try {
+            const sideToMove = moveResult.color === "w" ? "white" as const : "black" as const;
+            const explorer = await fetchExplorerMoves(fenBefore, sideToMove);
+            const dbMove = explorer.moves.find(
+              (m) => m.san === moveResult.san || m.uci === analyzedMove.uci
+            );
+            if (dbMove && dbMove.totalGames >= 50) {
+              analyzedMove.dbWinRate = dbMove.winRate;
+              analyzedMove.dbGames = dbMove.totalGames;
+            }
+          } catch { /* explorer unavailable — proceed without DB data */ }
+        }
 
         const gameSummary: GameSummary = {
           moves: analyzed as unknown as AnalyzedMove[],

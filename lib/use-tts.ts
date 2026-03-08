@@ -10,10 +10,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 /** Strip emojis and markdown-like symbols for cleaner speech output */
 function cleanForSpeech(text: string): string {
   return text
-    // Remove emojis (unicode ranges for emoticons, symbols, etc.)
-    .replace(/[\u{1F300}-\u{1FAD6}\u{1FAE0}-\u{1FAF8}\u{2600}-\u{27BF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, "")
-    // Remove classification icons at the start
-    .replace(/^[✨✅👍📖⚠️❌💀🫠🤯🧠⚡🌟🔥👑💪🫡🤦☠️😭🗿😱🚨🫠😤🛋️💀🚧🤮😬🤡😐🤷😑🫤🚶💎🎪🆓☢️🍴📌🔒🏰]/u, "")
+    // Remove ALL emoji characters — Extended_Pictographic catches nearly everything,
+    // plus regional indicators (flags), skin-tone modifiers, variation selectors,
+    // ZWJ (Zero Width Joiner), keycap combining, and tag characters.
+    .replace(/[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}\u{1F3FB}-\u{1F3FF}\u{FE00}-\u{FE0F}\u{200D}\u{20E3}\u{E0020}-\u{E007F}]/gu, "")
     // Remove markdown asterisks
     .replace(/\*/g, "")
     // Remove hashtags/chess notation clutter
