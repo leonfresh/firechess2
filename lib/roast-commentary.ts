@@ -1308,9 +1308,14 @@ function _generatePositionAware(
   }
 
   // Momentum commentary — eval is cratering over multiple moves
-  if (ctx.evalCrater > 300 && Math.random() < 0.25) {
+  // Limit: fire at most twice per game — once at 300cp crater, once more if it hits 600cp
+  const momentumKey = ctx.evalCrater >= 600 ? "__momentum_big__" : "__momentum_fired__";
+  if (ctx.evalCrater > 300 && Math.random() < 0.25 && !used.has(momentumKey)) {
     const momentumResult = _momentumRoast(move, ctx, used);
-    if (momentumResult) return _emitResult(used, momentumResult);
+    if (momentumResult) {
+      used.add(momentumKey);
+      return _emitResult(used, momentumResult);
+    }
   }
 
   // Tempo / initiative commentary — slow move in a sharp position
