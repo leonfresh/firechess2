@@ -3366,98 +3366,6 @@ export default function RoastPage() {
               </div>
             </div>
 
-            {/* ── Import from Lichess / Chess.com panel ── */}
-            {inputMode === "import" && (
-              <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.03] p-5 animate-fadeIn space-y-4">
-                <h3 className="text-sm font-bold text-blue-400 flex items-center gap-2">📥 Load Recent Games</h3>
-
-                <div className="flex gap-2">
-                  <div className="inline-flex rounded-xl border border-white/[0.08] bg-white/[0.03] p-1 shrink-0">
-                    <button type="button" onClick={() => { setLoadSource("lichess"); setRecentGames([]); setLoadError(""); }}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${loadSource === "lichess" ? "bg-white/[0.1] text-white shadow-sm" : "text-slate-500 hover:text-slate-300"}`}>
-                      Lichess
-                    </button>
-                    <button type="button" onClick={() => { setLoadSource("chesscom"); setRecentGames([]); setLoadError(""); }}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${loadSource === "chesscom" ? "bg-white/[0.1] text-white shadow-sm" : "text-slate-500 hover:text-slate-300"}`}>
-                      Chess.com
-                    </button>
-                  </div>
-                  <input
-                    type="text"
-                    value={loadUsername}
-                    onChange={(e) => setLoadUsername(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === "Enter") fetchRecentGames(); }}
-                    placeholder={loadSource === "lichess" ? "Lichess username" : "Chess.com username"}
-                    className="flex-1 min-w-0 rounded-xl border border-white/[0.08] bg-black/40 px-3 py-1.5 text-sm text-slate-200 placeholder-slate-600 outline-none focus:border-blue-500/40"
-                  />
-                  <button type="button" onClick={fetchRecentGames} disabled={loadingGames}
-                    className="shrink-0 rounded-xl bg-white/[0.06] px-4 py-1.5 text-xs font-bold text-slate-300 hover:bg-white/[0.1] hover:text-white disabled:opacity-50 cursor-pointer transition-all">
-                    {loadingGames ? "Loading..." : "Load"}
-                  </button>
-                </div>
-
-                {loadError && <p className="text-xs text-red-400">{loadError}</p>}
-
-                {recentGames.length > 0 && (
-                  <div className="space-y-1.5 max-h-80 overflow-y-auto rounded-xl border border-white/[0.06] bg-black/30 p-2">
-                    {recentGames.map((game, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => {
-                          setRecentGames([]);
-                          setInputMode(null);
-                          processProvidedPgn(game.pgn, game.whiteElo, game.blackElo);
-                        }}
-                        className="group flex w-full items-center gap-3 rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 text-left transition-all hover:border-blue-500/20 hover:bg-blue-500/[0.04] cursor-pointer"
-                      >
-                        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-xs font-bold text-slate-400 group-hover:bg-blue-500/10 group-hover:text-blue-300">
-                          {idx + 1}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-bold text-slate-300 group-hover:text-blue-300 truncate">
-                            {game.white} vs {game.black}
-                          </p>
-                          <p className="text-[10px] text-slate-500 truncate">
-                            {game.date} · {game.result}{game.event ? ` · ${game.event}` : ""}
-                          </p>
-                        </div>
-                        <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${game.result === "1-0" ? "border-white/10 text-white" : game.result === "0-1" ? "border-slate-600 text-slate-400" : "border-slate-700 text-slate-500"}`}>
-                          {game.result}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ── Paste PGN panel ── */}
-            {inputMode === "paste" && (
-              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.03] p-5 animate-fadeIn space-y-4">
-                <h3 className="text-sm font-bold text-emerald-400 flex items-center gap-2">📋 Paste Your PGN</h3>
-                <textarea
-                  value={pgnInput}
-                  onChange={(e) => setPgnInput(e.target.value)}
-                  placeholder={'[Event "Rated Blitz game"]\n[White "Player1"]\n[Black "Player2"]\n...\n\n1. e4 e5 2. Nf3 Nc6 ...'}
-                  rows={8}
-                  className="w-full rounded-xl border border-white/[0.08] bg-black/40 px-4 py-3 text-sm text-slate-200 placeholder-slate-600 outline-none focus:border-emerald-500/40 font-mono resize-y"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!pgnInput.trim()) return;
-                    setInputMode(null);
-                    processProvidedPgn(pgnInput.trim());
-                  }}
-                  disabled={!pgnInput.trim()}
-                  className="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:brightness-110 hover:scale-[1.02] active:scale-95 disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
-                >
-                  Roast This Game 🔥
-                </button>
-              </div>
-            )}
-
             {/* Alpha feedback CTA */}
             <div className="mt-10 rounded-xl border border-white/[0.06] bg-white/[0.02] p-6 text-center">
               <p className="text-sm text-slate-400">
@@ -4428,6 +4336,148 @@ export default function RoastPage() {
               )}
 
               {/* ── Guess + Reveal moved to centered modals — sidebar only has commentary + moves ── */}
+            </div>
+          </div>
+        )}
+
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {/*  CENTERED MODAL: Import / Paste Games                             */}
+        {/* ════════════════════════════════════════════════════════════════ */}
+        {(inputMode === "import" || inputMode === "paste") && pageState === "choose-source" && (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn overflow-y-auto py-4 sm:py-8" onClick={() => { setInputMode(null); setRecentGames([]); setLoadError(""); }}>
+            <div className="relative w-[96vw] max-w-lg rounded-3xl border-2 border-blue-500/40 bg-gradient-to-b from-zinc-900 via-zinc-900 to-zinc-950 p-5 sm:p-6 shadow-2xl shadow-blue-500/20 overflow-hidden my-auto" onClick={e => e.stopPropagation()}>
+              {/* Close button */}
+              <button
+                onClick={() => { setInputMode(null); setRecentGames([]); setLoadError(""); }}
+                className="absolute top-3 right-3 z-20 h-8 w-8 rounded-full bg-zinc-800/80 border border-white/10 text-slate-400 text-sm flex items-center justify-center hover:bg-zinc-700 hover:text-white transition-colors cursor-pointer"
+                title="Close"
+              >
+                ✕
+              </button>
+
+              {/* Glow */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-blue-400/[0.08] rounded-full blur-[80px] pointer-events-none" />
+
+              {/* Tab switcher */}
+              <div className="relative flex items-center justify-center gap-1 mb-5">
+                <button
+                  type="button"
+                  onClick={() => setInputMode("import")}
+                  className={`rounded-xl px-4 py-2 text-sm font-bold transition-all cursor-pointer ${
+                    inputMode === "import"
+                      ? "bg-blue-500/15 text-blue-400 border border-blue-500/30 shadow-lg shadow-blue-500/10"
+                      : "text-slate-500 hover:text-slate-300 border border-transparent"
+                  }`}
+                >
+                  📥 Import Games
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInputMode("paste")}
+                  className={`rounded-xl px-4 py-2 text-sm font-bold transition-all cursor-pointer ${
+                    inputMode === "paste"
+                      ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-lg shadow-emerald-500/10"
+                      : "text-slate-500 hover:text-slate-300 border border-transparent"
+                  }`}
+                >
+                  📋 Paste PGN
+                </button>
+              </div>
+
+              {/* ── Import tab ── */}
+              {inputMode === "import" && (
+                <div className="relative space-y-4 animate-fadeIn">
+                  <div className="flex gap-2">
+                    <div className="inline-flex rounded-xl border border-white/[0.08] bg-white/[0.03] p-1 shrink-0">
+                      <button type="button" onClick={() => { setLoadSource("lichess"); setRecentGames([]); setLoadError(""); }}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${loadSource === "lichess" ? "bg-white/[0.1] text-white shadow-sm" : "text-slate-500 hover:text-slate-300"}`}>
+                        Lichess
+                      </button>
+                      <button type="button" onClick={() => { setLoadSource("chesscom"); setRecentGames([]); setLoadError(""); }}
+                        className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${loadSource === "chesscom" ? "bg-white/[0.1] text-white shadow-sm" : "text-slate-500 hover:text-slate-300"}`}>
+                        Chess.com
+                      </button>
+                    </div>
+                    <input
+                      type="text"
+                      value={loadUsername}
+                      onChange={(e) => setLoadUsername(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") fetchRecentGames(); }}
+                      placeholder={loadSource === "lichess" ? "Lichess username" : "Chess.com username"}
+                      className="flex-1 min-w-0 rounded-xl border border-white/[0.08] bg-black/40 px-3 py-1.5 text-sm text-slate-200 placeholder-slate-600 outline-none focus:border-blue-500/40"
+                      autoFocus
+                    />
+                    <button type="button" onClick={fetchRecentGames} disabled={loadingGames}
+                      className="shrink-0 rounded-xl bg-blue-500/15 border border-blue-500/30 px-4 py-1.5 text-xs font-bold text-blue-300 hover:bg-blue-500/25 hover:text-white disabled:opacity-50 cursor-pointer transition-all">
+                      {loadingGames ? "Loading..." : "Load"}
+                    </button>
+                  </div>
+
+                  {loadError && <p className="text-xs text-red-400">{loadError}</p>}
+
+                  {recentGames.length > 0 && (
+                    <div className="space-y-1.5 max-h-72 overflow-y-auto rounded-xl border border-white/[0.06] bg-black/30 p-2">
+                      {recentGames.map((game, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => {
+                            setRecentGames([]);
+                            setInputMode(null);
+                            processProvidedPgn(game.pgn, game.whiteElo, game.blackElo);
+                          }}
+                          className="group flex w-full items-center gap-3 rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 text-left transition-all hover:border-blue-500/20 hover:bg-blue-500/[0.04] cursor-pointer"
+                        >
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.06] text-xs font-bold text-slate-400 group-hover:bg-blue-500/10 group-hover:text-blue-300">
+                            {idx + 1}
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs font-bold text-slate-300 group-hover:text-blue-300 truncate">
+                              {game.white} vs {game.black}
+                            </p>
+                            <p className="text-[10px] text-slate-500 truncate">
+                              {game.date} · {game.result}{game.event ? ` · ${game.event}` : ""}
+                            </p>
+                          </div>
+                          <span className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold ${game.result === "1-0" ? "border-white/10 text-white" : game.result === "0-1" ? "border-slate-600 text-slate-400" : "border-slate-700 text-slate-500"}`}>
+                            {game.result}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {recentGames.length === 0 && !loadingGames && !loadError && (
+                    <p className="text-xs text-slate-600 text-center py-4">Enter your username and click Load to see your recent games.</p>
+                  )}
+                </div>
+              )}
+
+              {/* ── Paste tab ── */}
+              {inputMode === "paste" && (
+                <div className="relative space-y-4 animate-fadeIn">
+                  <textarea
+                    value={pgnInput}
+                    onChange={(e) => setPgnInput(e.target.value)}
+                    placeholder={'[Event "Rated Blitz game"]\n[White "Player1"]\n[Black "Player2"]\n...\n\n1. e4 e5 2. Nf3 Nc6 ...'}
+                    rows={8}
+                    className="w-full rounded-xl border border-white/[0.08] bg-black/40 px-4 py-3 text-sm text-slate-200 placeholder-slate-600 outline-none focus:border-emerald-500/40 font-mono resize-y"
+                    autoFocus
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!pgnInput.trim()) return;
+                      setInputMode(null);
+                      processProvidedPgn(pgnInput.trim());
+                    }}
+                    disabled={!pgnInput.trim()}
+                    className="w-full rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:brightness-110 hover:scale-[1.02] active:scale-95 disabled:opacity-40 disabled:pointer-events-none cursor-pointer"
+                  >
+                    Roast This Game 🔥
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
