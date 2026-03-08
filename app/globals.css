@@ -424,6 +424,47 @@ button {
   @apply my-6 rounded-xl;
 }
 
+/* ─── Crowd Bar Fever Mode ─── */
+@keyframes crowd-fever-fill {
+  0% { filter: hue-rotate(0deg) brightness(1.1); }
+  25% { filter: hue-rotate(90deg) brightness(1.2); }
+  50% { filter: hue-rotate(180deg) brightness(1.3); }
+  75% { filter: hue-rotate(270deg) brightness(1.2); }
+  100% { filter: hue-rotate(360deg) brightness(1.1); }
+}
+.animate-crowd-fever-fill {
+  animation: crowd-fever-fill 2s linear infinite;
+}
+
+@keyframes crowd-fever-border {
+  0% { border-color: rgba(239,68,68,0.6); }
+  16% { border-color: rgba(251,191,36,0.6); }
+  33% { border-color: rgba(34,197,94,0.6); }
+  50% { border-color: rgba(59,130,246,0.6); }
+  66% { border-color: rgba(168,85,247,0.6); }
+  83% { border-color: rgba(236,72,153,0.6); }
+  100% { border-color: rgba(239,68,68,0.6); }
+}
+.animate-crowd-fever-border {
+  animation: crowd-fever-border 2s linear infinite;
+}
+
+@keyframes crowd-fever-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+.animate-crowd-fever-pulse {
+  animation: crowd-fever-pulse 1s ease-in-out infinite;
+}
+
+@keyframes crowd-fever-text {
+  0% { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+.animate-crowd-fever-text {
+  animation: crowd-fever-text 1.5s linear infinite;
+}
+
 /* ─── Avatar Frame Animations ─── */
 @keyframes frame-rainbow {
   0% { box-shadow: 0 0 12px 3px rgba(239,68,68,0.4), 0 0 6px 2px rgba(59,130,246,0.2); }

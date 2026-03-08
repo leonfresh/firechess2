@@ -542,6 +542,7 @@ export default function RoastPage() {
   /* ── Gameshow FX state ── */
   const [showConfetti, setShowConfetti] = useState(false);
   const [audienceMeter, setAudienceMeter] = useState(50); // 0-100 crowd sentiment
+  const [crowdFever, setCrowdFever] = useState(false); // fever mode when crowd hits 100%
   const [streakCount, setStreakCount] = useState(0);
   const [revealCounterElo, setRevealCounterElo] = useState<number | null>(null);
   const [spotlightPulse, setSpotlightPulse] = useState(false);
@@ -742,6 +743,7 @@ export default function RoastPage() {
     setMobileClippyOpen(false);
     setShowConfetti(false);
     setAudienceMeter(50);
+    setCrowdFever(false);
     setRevealCounterElo(null);
     setSpotlightPulse(false);
     setLockedIn(false);
@@ -1208,6 +1210,7 @@ export default function RoastPage() {
     setMobileClippyOpen(false);
     setShowConfetti(false);
     setAudienceMeter(50);
+    setCrowdFever(false);
     setRevealCounterElo(null);
     setSpotlightPulse(false);
     setLockedIn(false);
@@ -1844,12 +1847,52 @@ export default function RoastPage() {
             }
           }, 300);
           // Update audience meter
-          if (cls === "blunder") setAudienceMeter(prev => Math.max(0, prev - 25));
-          else if (cls === "mistake") setAudienceMeter(prev => Math.max(0, prev - 12));
-          else if (cls === "inaccuracy") setAudienceMeter(prev => Math.max(0, prev - 5));
-          else if (cls === "brilliant") setAudienceMeter(prev => Math.min(100, prev + 20));
-          else if (cls === "best" || cls === "great") setAudienceMeter(prev => Math.min(100, prev + 10));
-          else if (cls === "good") setAudienceMeter(prev => Math.min(100, prev + 3));
+          if (cls === "blunder") {
+            setAudienceMeter(prev => {
+              const next = Math.max(0, prev - 25);
+              if (next < 95) setCrowdFever(false);
+              return next;
+            });
+          } else if (cls === "mistake") {
+            setAudienceMeter(prev => {
+              const next = Math.max(0, prev - 12);
+              if (next < 95) setCrowdFever(false);
+              return next;
+            });
+          } else if (cls === "inaccuracy") {
+            setAudienceMeter(prev => {
+              const next = Math.max(0, prev - 5);
+              if (next < 95) setCrowdFever(false);
+              return next;
+            });
+          } else if (cls === "brilliant") {
+            setAudienceMeter(prev => {
+              const next = Math.min(100, prev + 20);
+              if (next >= 100 && prev < 100) {
+                setCrowdFever(true);
+                playSound("crowd-laugh");
+              }
+              return next;
+            });
+          } else if (cls === "best" || cls === "great") {
+            setAudienceMeter(prev => {
+              const next = Math.min(100, prev + 10);
+              if (next >= 100 && prev < 100) {
+                setCrowdFever(true);
+                playSound("crowd-laugh");
+              }
+              return next;
+            });
+          } else if (cls === "good") {
+            setAudienceMeter(prev => {
+              const next = Math.min(100, prev + 3);
+              if (next >= 100 && prev < 100) {
+                setCrowdFever(true);
+                playSound("crowd-laugh");
+              }
+              return next;
+            });
+          }
         }
 
         const streak = bestStreakAt(moves, next);
@@ -1883,8 +1926,35 @@ export default function RoastPage() {
         setMyReaction(null);
 
         if (move.comment) {
-          setActiveComment(move.comment);
-          setCommentHistory(prev => [...prev, move.comment!]);
+          // Add crowd flavor to commentary
+          let enrichedComment = move.comment;
+          const crowdLevel = audienceMeter; // snapshot current level
+          if (crowdFever) {
+            const feverLines = [
+              " 🌈 THE CROWD IS IN FEVER MODE!",
+              " 🔥 FEVER! The audience is going ABSOLUTELY WILD!",
+              " 🎉 MAX HYPE! The crowd is on their FEET!",
+              " ⚡ FEVER MODE ACTIVATED — the energy is INSANE!",
+              " 🤯 The crowd meter is MAXED OUT! FEVER! FEVER! FEVER!",
+            ];
+            enrichedComment += feverLines[Math.floor(Math.random() * feverLines.length)];
+          } else if (crowdLevel >= 85) {
+            const highCrowd = [
+              " 🙌 The crowd is LOVING this!",
+              " 👏 Standing ovation energy from the audience!",
+              " The crowd is going WILD right now!",
+            ];
+            enrichedComment += highCrowd[Math.floor(Math.random() * highCrowd.length)];
+          } else if (crowdLevel <= 20) {
+            const lowCrowd = [
+              " 💀 The crowd is dead silent. You can hear a pin drop.",
+              " 😶 The audience has given up on this game.",
+              " The crowd is heading for the exits...",
+            ];
+            enrichedComment += lowCrowd[Math.floor(Math.random() * lowCrowd.length)];
+          }
+          setActiveComment(enrichedComment);
+          setCommentHistory(prev => [...prev, enrichedComment]);
           setCurrentMood(getMood(move, blunders, streak));
           setActiveArrows(move.arrows ?? []);
           setActiveMarkers(move.markers ?? []);
@@ -2871,6 +2941,7 @@ export default function RoastPage() {
 
   /* ── Ambient glow color based on current game state ── */
   const ambientGlow = (() => {
+    if (crowdFever) return { color: "251, 191, 36", intensity: 0.12 }; // gold fever glow
     if (!currentMove || pageState === "choose-source") return { color: "251, 146, 60", intensity: 0.04 }; // warm orange idle
     switch (currentMove.classification) {
       case "brilliant": return { color: "168, 85, 247", intensity: 0.08 }; // purple
@@ -3624,37 +3695,69 @@ export default function RoastPage() {
               <div className="flex items-stretch gap-2 w-full max-w-[680px]">
                 {/* ── Vertical Crowd Bar (left of board) ── */}
                 {(pageState === "watching" || pageState === "guessing") && (
-                  <div className="flex flex-col items-center gap-1 pt-4 pb-4">
-                    {/* Top emoji — mood indicator */}
-                    <span className="text-base leading-none select-none" title={`Crowd mood: ${audienceMeter}%`}>
-                      {audienceMeter > 85 ? "🤯" : audienceMeter > 70 ? "😍" : audienceMeter > 55 ? "🙂" : audienceMeter > 40 ? "😐" : audienceMeter > 20 ? "😬" : "💀"}
+                  <div className={`flex flex-col items-center gap-1.5 pt-2 pb-2 ${crowdFever ? "animate-crowd-fever-pulse" : ""}`}>
+                    {/* "CROWD" header label — big & obvious */}
+                    <div className="flex flex-col items-center">
+                      <span className={`text-[11px] font-black uppercase tracking-[0.2em] leading-none ${crowdFever ? "text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-yellow-400 via-green-400 via-blue-400 to-purple-400 animate-crowd-fever-text" : "text-slate-400"}`}>
+                        👥
+                      </span>
+                      <span className={`text-[10px] font-black uppercase tracking-[0.15em] leading-tight ${crowdFever ? "text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 via-pink-400 to-cyan-400 animate-crowd-fever-text" : "text-slate-500"}`}>
+                        C
+                      </span>
+                      <span className={`text-[10px] font-black uppercase tracking-[0.15em] leading-tight ${crowdFever ? "text-transparent bg-clip-text bg-gradient-to-b from-pink-400 via-orange-400 to-yellow-300 animate-crowd-fever-text" : "text-slate-500"}`}>
+                        R
+                      </span>
+                      <span className={`text-[10px] font-black uppercase tracking-[0.15em] leading-tight ${crowdFever ? "text-transparent bg-clip-text bg-gradient-to-b from-cyan-400 via-green-400 to-yellow-300 animate-crowd-fever-text" : "text-slate-500"}`}>
+                        O
+                      </span>
+                      <span className={`text-[10px] font-black uppercase tracking-[0.15em] leading-tight ${crowdFever ? "text-transparent bg-clip-text bg-gradient-to-b from-orange-400 via-red-400 to-pink-400 animate-crowd-fever-text" : "text-slate-500"}`}>
+                        W
+                      </span>
+                      <span className={`text-[10px] font-black uppercase tracking-[0.15em] leading-tight ${crowdFever ? "text-transparent bg-clip-text bg-gradient-to-b from-green-400 via-cyan-400 to-blue-400 animate-crowd-fever-text" : "text-slate-500"}`}>
+                        D
+                      </span>
+                    </div>
+                    {/* Emoji mood — big and prominent */}
+                    <span className={`text-xl leading-none select-none transition-transform duration-300 ${crowdFever ? "animate-bounce" : ""}`} title={`Crowd mood: ${audienceMeter}%`}>
+                      {crowdFever ? "🔥" : audienceMeter > 85 ? "🤯" : audienceMeter > 70 ? "😍" : audienceMeter > 55 ? "🙂" : audienceMeter > 40 ? "😐" : audienceMeter > 20 ? "😬" : "💀"}
                     </span>
                     {/* Bar */}
                     <div
-                      className="relative flex-1 overflow-hidden rounded-full border-2 transition-colors duration-500"
+                      className={`relative flex-1 overflow-hidden rounded-full border-2 transition-all duration-500 ${crowdFever ? "animate-crowd-fever-border" : ""}`}
                       style={{
-                        width: 30,
-                        minHeight: 140,
-                        borderColor: audienceMeter > 70 ? "rgba(168,85,247,0.4)" : audienceMeter > 40 ? "rgba(234,179,8,0.3)" : "rgba(239,68,68,0.3)",
-                        background: "linear-gradient(to bottom, rgba(15,15,25,0.9), rgba(10,10,20,0.95))",
+                        width: 32,
+                        minHeight: 150,
+                        borderColor: crowdFever
+                          ? "rgba(251,191,36,0.7)"
+                          : audienceMeter > 70 ? "rgba(168,85,247,0.4)" : audienceMeter > 40 ? "rgba(234,179,8,0.3)" : "rgba(239,68,68,0.3)",
+                        background: crowdFever
+                          ? "linear-gradient(to bottom, rgba(30,10,40,0.95), rgba(20,5,30,0.98))"
+                          : "linear-gradient(to bottom, rgba(15,15,25,0.9), rgba(10,10,20,0.95))",
+                        boxShadow: crowdFever
+                          ? "0 0 20px rgba(251,191,36,0.3), 0 0 40px rgba(168,85,247,0.2)"
+                          : "none",
                       }}
                       title={`Crowd: ${audienceMeter}%`}
                     >
                       {/* Silhouette people at different heights */}
-                      <div className="absolute inset-0 flex flex-col items-center justify-end gap-[2px] pb-1 text-[7px] leading-none opacity-20 pointer-events-none select-none overflow-hidden">
-                        <span>🧑</span><span>👤</span><span>🧑</span><span>👤</span><span>🧑</span><span>👤</span><span>🧑</span><span>👤</span>
+                      <div className="absolute inset-0 flex flex-col items-center justify-end gap-[2px] pb-1 text-[8px] leading-none opacity-20 pointer-events-none select-none overflow-hidden">
+                        <span>🧑</span><span>👤</span><span>🧑</span><span>👤</span><span>🧑</span><span>👤</span><span>🧑</span><span>👤</span><span>🧑</span><span>👤</span>
                       </div>
                       {/* Fill from bottom */}
                       <div
-                        className="absolute bottom-0 left-0 w-full transition-all duration-700 ease-out"
+                        className={`absolute bottom-0 left-0 w-full transition-all duration-700 ease-out ${crowdFever ? "animate-crowd-fever-fill" : ""}`}
                         style={{
                           height: `${audienceMeter}%`,
-                          background: audienceMeter > 70
+                          background: crowdFever
+                            ? "linear-gradient(to top, #ef4444, #f59e0b, #22c55e, #3b82f6, #8b5cf6, #ec4899)"
+                            : audienceMeter > 70
                             ? "linear-gradient(to top, #7c3aed, #a855f7, #c084fc)"
                             : audienceMeter > 40
                             ? "linear-gradient(to top, #b45309, #eab308, #facc15)"
                             : "linear-gradient(to top, #991b1b, #ef4444, #f87171)",
-                          boxShadow: audienceMeter > 70
+                          boxShadow: crowdFever
+                            ? "0 0 20px rgba(251,191,36,0.6), inset 0 0 12px rgba(168,85,247,0.4), 0 0 40px rgba(236,72,153,0.3)"
+                            : audienceMeter > 70
                             ? "0 0 12px rgba(168,85,247,0.5), inset 0 0 8px rgba(168,85,247,0.3)"
                             : audienceMeter < 30
                             ? "0 0 10px rgba(239,68,68,0.4)"
@@ -3663,22 +3766,34 @@ export default function RoastPage() {
                       />
                       {/* People silhouettes inside the fill */}
                       <div
-                        className="absolute bottom-0 left-0 w-full flex flex-col items-center justify-end gap-[2px] pb-1 text-[8px] leading-none pointer-events-none select-none overflow-hidden"
+                        className="absolute bottom-0 left-0 w-full flex flex-col items-center justify-end gap-[3px] pb-1 text-[9px] leading-none pointer-events-none select-none overflow-hidden"
                         style={{ height: `${audienceMeter}%`, transition: "height 0.7s ease-out" }}
                       >
-                        <span className="drop-shadow-sm">🧑</span><span className="drop-shadow-sm">👤</span><span className="drop-shadow-sm">🧑</span><span className="drop-shadow-sm">👤</span>
+                        <span className="drop-shadow-sm">🧑</span><span className="drop-shadow-sm">👤</span><span className="drop-shadow-sm">🧑</span><span className="drop-shadow-sm">👤</span><span className="drop-shadow-sm">🧑</span>
                       </div>
+                      {/* Fever sparkles overlay */}
+                      {crowdFever && (
+                        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                          <div className="absolute top-[10%] left-[20%] text-[6px] animate-ping">✨</div>
+                          <div className="absolute top-[30%] left-[60%] text-[6px] animate-ping" style={{ animationDelay: "0.3s" }}>⭐</div>
+                          <div className="absolute top-[50%] left-[30%] text-[6px] animate-ping" style={{ animationDelay: "0.6s" }}>✨</div>
+                          <div className="absolute top-[70%] left-[50%] text-[6px] animate-ping" style={{ animationDelay: "0.9s" }}>⭐</div>
+                          <div className="absolute top-[85%] left-[15%] text-[6px] animate-ping" style={{ animationDelay: "1.2s" }}>✨</div>
+                        </div>
+                      )}
                     </div>
                     {/* Percentage label */}
-                    <span className="text-[9px] font-black tabular-nums" style={{
-                      color: audienceMeter > 70 ? "#c084fc" : audienceMeter > 40 ? "#facc15" : "#f87171",
+                    <span className={`text-xs font-black tabular-nums ${crowdFever ? "animate-pulse" : ""}`} style={{
+                      color: crowdFever ? "#fbbf24" : audienceMeter > 70 ? "#c084fc" : audienceMeter > 40 ? "#facc15" : "#f87171",
                     }}>
                       {audienceMeter}%
                     </span>
-                    {/* "CROWD" label */}
-                    <span className="text-[8px] font-black uppercase tracking-[0.15em] text-slate-600 whitespace-nowrap" style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}>
-                      Crowd
-                    </span>
+                    {/* Fever badge */}
+                    {crowdFever && (
+                      <div className="rounded-full bg-gradient-to-r from-yellow-500/20 via-pink-500/20 to-cyan-500/20 border border-yellow-500/30 px-1.5 py-0.5 animate-pulse">
+                        <span className="text-[8px] font-black text-yellow-300 uppercase tracking-wider">Fever!</span>
+                      </div>
+                    )}
                   </div>
                 )}
 
