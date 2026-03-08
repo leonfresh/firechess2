@@ -4162,61 +4162,6 @@ export default function RoastPage() {
                   )}
                 </h3>
 
-                {/* Voice & Speed controls (when TTS enabled) */}
-                {tts.enabled && tts.supported && tts.availableVoices.length > 1 && (
-                  <div className="mb-3 space-y-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
-                    <div className="flex items-center gap-2">
-                      <label className="text-[10px] text-slate-500 font-medium whitespace-nowrap">Voice</label>
-                      <div className="relative flex-1 min-w-0" ref={voiceDropdownOpen === "sidebar" ? voiceDropdownRef : undefined}>
-                        <button
-                          type="button"
-                          onClick={() => setVoiceDropdownOpen(voiceDropdownOpen === "sidebar" ? null : "sidebar")}
-                          className="flex w-full items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-[10px] text-slate-300 cursor-pointer hover:border-orange-500/30 transition-colors"
-                        >
-                          <span className="truncate flex-1 text-left">{tts.voiceName.replace(/Microsoft\s+/, "").replace(/\s+Online\s+\(Natural\).*/, "")}</span>
-                          <svg className={`h-3 w-3 shrink-0 text-slate-500 transition-transform ${voiceDropdownOpen === "sidebar" ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                        </button>
-                        {voiceDropdownOpen === "sidebar" && (
-                          <div className="absolute z-50 mt-1 left-0 right-0 w-64 max-h-56 overflow-y-auto rounded-xl border border-white/[0.08] bg-zinc-900/95 backdrop-blur-md shadow-2xl shadow-black/60 py-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
-                            {tts.availableVoices.map(v => {
-                              const short = v.name.replace(/Microsoft\s+/, "").replace(/\s+Online\s+\(Natural\).*/, "");
-                              const isActive = v.name === tts.voiceName;
-                              return (
-                                <button
-                                  key={v.name}
-                                  type="button"
-                                  onClick={() => { tts.setVoice(v.name); setVoiceDropdownOpen(null); }}
-                                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[10px] transition-colors cursor-pointer ${
-                                    isActive
-                                      ? "bg-orange-500/15 text-orange-300"
-                                      : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
-                                  }`}
-                                >
-                                  {isActive && <span className="text-orange-400 text-xs">✓</span>}
-                                  <span className={`truncate ${isActive ? "" : "ml-4"}`}>{short}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <label className="text-[10px] text-slate-500 font-medium whitespace-nowrap">Speed</label>
-                      <input
-                        type="range"
-                        min={0.5}
-                        max={2.0}
-                        step={0.05}
-                        value={tts.rate}
-                        onChange={(e) => tts.setRate(parseFloat(e.target.value))}
-                        className="flex-1 h-1 accent-orange-500 cursor-pointer"
-                      />
-                      <span className="text-[10px] text-slate-500 font-mono w-8 text-right">{tts.rate.toFixed(1)}×</span>
-                    </div>
-                  </div>
-                )}
-
                 {/* Avatar + Speech Bubble */}
                 <div className={`flex items-start gap-3 mb-4 ${streamerMode ? "min-h-[140px]" : "min-h-[100px]"}`}>
                   <div className="relative flex-shrink-0">
@@ -4364,6 +4309,66 @@ export default function RoastPage() {
                         </span>
                       );
                     })}
+                  </div>
+                </div>
+              )}
+
+              {/* Voice & Speed controls (when TTS enabled) */}
+              {tts.enabled && tts.supported && tts.availableVoices.length > 1 && (
+                <div className="hidden lg:block rounded-2xl border border-white/[0.06] bg-gradient-to-b from-white/[0.03] to-white/[0.01] p-4 backdrop-blur-sm" style={{ boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.3)" }}>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
+                    🔊 Voice Settings
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <label className="text-[10px] text-slate-500 font-medium whitespace-nowrap">Voice</label>
+                      <div className="relative flex-1 min-w-0" ref={voiceDropdownOpen === "sidebar" ? voiceDropdownRef : undefined}>
+                        <button
+                          type="button"
+                          onClick={() => setVoiceDropdownOpen(voiceDropdownOpen === "sidebar" ? null : "sidebar")}
+                          className="flex w-full items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-[10px] text-slate-300 cursor-pointer hover:border-orange-500/30 transition-colors"
+                        >
+                          <span className="truncate flex-1 text-left">{tts.voiceName.replace(/Microsoft\s+/, "").replace(/\s+Online\s+\(Natural\).*/, "")}</span>
+                          <svg className={`h-3 w-3 shrink-0 text-slate-500 transition-transform ${voiceDropdownOpen === "sidebar" ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        {voiceDropdownOpen === "sidebar" && (
+                          <div className="absolute z-50 mt-1 left-0 right-0 w-64 max-h-56 overflow-y-auto rounded-xl border border-white/[0.08] bg-zinc-900/95 backdrop-blur-md shadow-2xl shadow-black/60 py-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
+                            {tts.availableVoices.map(v => {
+                              const short = v.name.replace(/Microsoft\s+/, "").replace(/\s+Online\s+\(Natural\).*/, "");
+                              const isActive = v.name === tts.voiceName;
+                              return (
+                                <button
+                                  key={v.name}
+                                  type="button"
+                                  onClick={() => { tts.setVoice(v.name); setVoiceDropdownOpen(null); }}
+                                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[10px] transition-colors cursor-pointer ${
+                                    isActive
+                                      ? "bg-orange-500/15 text-orange-300"
+                                      : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
+                                  }`}
+                                >
+                                  {isActive && <span className="text-orange-400 text-xs">✓</span>}
+                                  <span className={`truncate ${isActive ? "" : "ml-4"}`}>{short}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-[10px] text-slate-500 font-medium whitespace-nowrap">Speed</label>
+                      <input
+                        type="range"
+                        min={0.5}
+                        max={2.0}
+                        step={0.05}
+                        value={tts.rate}
+                        onChange={(e) => tts.setRate(parseFloat(e.target.value))}
+                        className="flex-1 h-1 accent-orange-500 cursor-pointer"
+                      />
+                      <span className="text-[10px] text-slate-500 font-mono w-8 text-right">{tts.rate.toFixed(1)}×</span>
+                    </div>
                   </div>
                 </div>
               )}
