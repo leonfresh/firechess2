@@ -1988,6 +1988,8 @@ export default function RoastPage() {
     const move = currentIdx >= 0 && currentIdx < moves.length ? moves[currentIdx] : null;
     if (!move || shareLoading) return;
     setShareLoading(true);
+    const wasAutoplay = autoplay;
+    setAutoplay(false); // pause the game while generating
     try {
       // Get static pepe image for current mood (GIFs don't work in OG images)
       let pepeImg = MOOD_IMAGES[currentMood];
@@ -2001,11 +2003,13 @@ export default function RoastPage() {
         };
         pepeImg = MOOD_IMAGES[fallbacks[currentMood] ?? "neutral"];
       }
+      // Use the move's original comment (not crowd-enriched activeComment which can be long)
+      const shareComment = (move.comment ?? activeComment ?? "").slice(0, 180);
       const params = new URLSearchParams({
         move: move.san,
         moveNum: String(Math.floor(currentIdx / 2) + 1),
         classification: move.classification,
-        comment: activeComment ?? "",
+        comment: shareComment,
         fen,
         orientation,
         pepeImg,
@@ -2015,7 +2019,9 @@ export default function RoastPage() {
       });
       const url = `/api/roast/moment-card?${params.toString()}`;
       const res = await fetch(url);
+      if (!res.ok) throw new Error(`API returned ${res.status}`);
       const blob = await res.blob();
+      if (blob.size < 1000) throw new Error("Image too small, likely an error");
       const file = new File([blob], "roast-moment.png", { type: "image/png" });
       if (typeof navigator.share === "function" && navigator.canShare?.({ files: [file] })) {
         await navigator.share({ title: "Roast the Elo Moment", files: [file] });
@@ -2030,20 +2036,21 @@ export default function RoastPage() {
         URL.revokeObjectURL(blobUrl);
       }
     } catch {
-      // Fallback
+      // Fallback: open the image in a new tab
       const params = new URLSearchParams({
         move: move.san,
         moveNum: String(Math.floor(currentIdx / 2) + 1),
         classification: move.classification,
-        comment: activeComment ?? "",
+        comment: (move.comment ?? "").slice(0, 150),
         fen,
         orientation,
       });
       window.open(`/api/roast/moment-card?${params.toString()}`, "_blank");
     } finally {
       setShareLoading(false);
+      if (wasAutoplay) setAutoplay(true); // resume if was playing
     }
-  }, [currentIdx, moves, shareLoading, currentMood, activeComment, fen, orientation, boardTheme, game]);
+  }, [currentIdx, moves, shareLoading, currentMood, activeComment, fen, orientation, boardTheme, game, autoplay]);
 
   /* ── Tactic Replay — animate through the engine's best continuation ── */
   const startTacticReplay = useCallback(() => {

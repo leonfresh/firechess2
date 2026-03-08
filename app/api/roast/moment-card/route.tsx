@@ -54,7 +54,22 @@ export async function GET(req: NextRequest) {
   const darkSq = searchParams.get("darkSq") ?? "#b58863";
 
   const board = parseFen(fenRaw, orientationParam === "black");
-  const pepeUrl = `${origin}${pepeImg}`;
+
+  // Fetch the pepe image and convert to base64 data URI
+  // (Satori can't reliably fetch from the same origin in Edge Runtime)
+  let pepeDataUri = "";
+  try {
+    const pepeUrl = `${origin}${pepeImg}`;
+    const imgRes = await fetch(pepeUrl);
+    if (imgRes.ok) {
+      const buf = await imgRes.arrayBuffer();
+      const base64 = Buffer.from(buf).toString("base64");
+      const ct = imgRes.headers.get("content-type") ?? "image/png";
+      pepeDataUri = `data:${ct};base64,${base64}`;
+    }
+  } catch {
+    // silently skip — card will render without avatar
+  }
 
   const classConfig: Record<string, { color: string; label: string; emoji: string; bg: string }> = {
     blunder:   { color: "#f87171", label: "BLUNDER",    emoji: "\uD83D\uDC80", bg: "rgba(239,68,68,0.08)" },
@@ -197,14 +212,16 @@ export async function GET(req: NextRequest) {
             }}
           >
             <div style={{ display: "flex", alignItems: "flex-start", gap: "16px", width: "100%" }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={pepeUrl}
-                width={72}
-                height={72}
-                style={{ borderRadius: "12px", flexShrink: 0, objectFit: "contain" }}
-                alt=""
-              />
+              {pepeDataUri && (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={pepeDataUri}
+                  width={72}
+                  height={72}
+                  style={{ borderRadius: "12px", flexShrink: 0, objectFit: "contain" }}
+                  alt=""
+                />
+              )}
               <span style={{ fontSize: trimmedComment.length > 120 ? "22px" : "26px", color: "#e2e8f0", lineHeight: 1.45, fontStyle: "italic" }}>
                 {trimmedComment ? `\u201C${trimmedComment}\u201D` : "\u201CNo words.\u201D"}
               </span>
