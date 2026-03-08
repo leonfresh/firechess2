@@ -390,6 +390,14 @@ export function CoinShop() {
           {BOARD_THEMES.map((theme) => {
             const owned = theme.price === 0 || purchased.includes(theme.id);
             const active = activeTheme === theme.id;
+            const pt = PIECE_THEMES.find((t) => t.id === activePieceTheme) ?? PIECE_THEMES[0];
+            // Mini 4×4 board layout with a handful of pieces
+            const miniPieces: (string | null)[] = [
+              "bR", "bN", "bB", "bQ",
+              "bP", null, "bP", null,
+              null, "wN", null, "wP",
+              "wR", "wB", "wQ", "wK",
+            ];
             return (
               <button
                 key={theme.id}
@@ -400,24 +408,34 @@ export function CoinShop() {
                     : "border-white/5 bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.04]"
                 }`}
               >
-                {/* Preview squares */}
-                <div className="mb-2 flex gap-0.5 overflow-hidden rounded-lg">
-                  <div
-                    className="h-6 flex-1"
-                    style={{ backgroundColor: theme.lightSquare }}
-                  />
-                  <div
-                    className="h-6 flex-1"
-                    style={{ backgroundColor: theme.darkSquare }}
-                  />
-                  <div
-                    className="h-6 flex-1"
-                    style={{ backgroundColor: theme.lightSquare }}
-                  />
-                  <div
-                    className="h-6 flex-1"
-                    style={{ backgroundColor: theme.darkSquare }}
-                  />
+                {/* Mini board preview with pieces */}
+                <div className="mb-2 grid grid-cols-4 grid-rows-4 overflow-hidden rounded-lg" style={{ aspectRatio: "1" }}>
+                  {miniPieces.map((piece, i) => {
+                    const row = Math.floor(i / 4);
+                    const col = i % 4;
+                    const isLight = (row + col) % 2 === 0;
+                    return (
+                      <div
+                        key={i}
+                        className="relative flex items-center justify-center"
+                        style={{ backgroundColor: isLight ? theme.lightSquare : theme.darkSquare }}
+                      >
+                        {piece && pt.setName && (
+                          <img
+                            src={getPieceImageUrl(pt.setName, piece)}
+                            alt={piece}
+                            className="h-[80%] w-[80%] object-contain"
+                            loading="lazy"
+                          />
+                        )}
+                        {piece && !pt.setName && (
+                          <span className="text-[clamp(10px,2.5vw,16px)] leading-none" style={{ opacity: 0.85 }}>
+                            {({ wK: "♔", wQ: "♕", wR: "♖", wB: "♗", wN: "♘", wP: "♙", bK: "♚", bQ: "♛", bR: "♜", bB: "♝", bN: "♞", bP: "♟" } as Record<string, string>)[piece]}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
 
                 <p className="text-xs font-medium text-white">{theme.name}</p>
