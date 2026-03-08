@@ -935,6 +935,30 @@ function _generatePositionAware(
     return _emitResultForce(used, _enPassantRoast(move, toSq, used, ctx));
   }
 
+  // Declined en passant — the player had a chance to take en passant but DIDN'T.
+  // This is a cardinal sin per r/AnarchyChess. En passant is FORCED.
+  {
+    const fenParts = move.fen.split(" ");
+    const epSquare = fenParts[3]; // e.g. "e6" or "-"
+    if (epSquare && epSquare !== "-" && !move.isEnPassant) {
+      // En passant was available and they declined it
+      const epResult = _declinedEnPassantRoast(move, epSquare, used, ctx);
+      if (epResult) return _emitResultForce(used, epResult);
+    }
+  }
+
+  // Opponent enabled en passant — this pawn push just created an EP opportunity.
+  // Meme the pawn push that allows it.
+  {
+    const afterFenParts = move.fenAfter.split(" ");
+    const afterEpSquare = afterFenParts[3];
+    if (afterEpSquare && afterEpSquare !== "-" && move.pieceType === "p") {
+      // This move is a 2-square pawn push that created an en passant opportunity
+      const enabledResult = _enabledEnPassantRoast(move, afterEpSquare, used, ctx);
+      if (enabledResult) return _emitResultForce(used, enabledResult);
+    }
+  }
+
   // Time-based roasts — if clock data is available and the time spent is noteworthy
   if (move.timeSpent !== null && Math.random() < 0.65) {
     const timeResult = _timeRoast(move, ctx, used, summary);
@@ -1483,7 +1507,7 @@ function _goodMoveRoast(
     () => `👑 ${move.san}. Magnus would play this while doing a crossword puzzle on his phone. For this player? It's the highlight of their chess career 🧩🗿`,
     () => `🏆 ${move.san}. This is the kind of move Magnus plays and then immediately looks bored by. Championship-level move, mortal-level excitement 👑💤`,
     () => `👑 ${move.san}. Magnus energy. Effortless. Clean. Now do it 50 more times in a row like he would. Spoiler: they won't 🗿♟️`,
-    () => `🎙️ ${move.san}. xQc would look at this move and go "düd that's literally just a normal move düd" and he'd be RIGHT for once 🗿🔊`,
+    () => `🎙️ ${move.san}. xQc would look at this move and go "dude that's literally just a normal move dude" and he'd be RIGHT for once 🗿🔊`,
     () => `🎮 ${move.san}. Ludwig reacting to this: "Chat, that's just a mid move. I'm not clipping that. Chat stop typing W." Fair assessment 🎬🫠`,
     () => `🎮 ${move.san}. Ludwig would look at chat, look at the board, look back at chat and go "...okay?" That's a 5 on the Ludwig reaction scale. Out of 10 🫠📊`,
     () => `♟️ ${move.san}. Alexandra Botez would call this "solid" and move on. Andrea would try something spicy instead and blunder. Different energies 👑🤡`,
@@ -1554,7 +1578,7 @@ function _missedMateRoast(move: AnalyzedMove): { text: string; annotations: Move
     () => `🤡 Mate in ${n}. They didn't see it. Of COURSE they didn't see it. Why would they see CHECKMATE when they can play ${move.san} instead. The Knook weeps 🗿♞🏰`,
     () => `😌 Mate in ${n}. Eric Rosen would have seen this instantly and said "oh that's nice" in the softest voice. This player saw it and said "nah" and played ${move.san} 💀😌`,
     () => `💀 Missing mate in ${n} is wild. Eric Rosen's chat would be screaming "MAAATE" in all caps. The streamer himself? Calm. The player who missed it? Also calm, but for worse reasons 😌🗿`,
-    () => `🎙️ Mate in ${n} on the board and they played ${move.san}. xQc would literally stand up from his chair and start pacing around the room. "DÜD ARE YOU SERIOUS RIGHT NOW" 🗿💥`,
+    () => `🎙️ Mate in ${n} on the board and they played ${move.san}. xQc would literally stand up from his chair and start pacing around the room. "DUDE ARE YOU SERIOUS RIGHT NOW" 🗿💥`,
     () => `🎮 Mate in ${n}. MATE. IN. ${n}. Ludwig would stare into the camera with dead eyes and say "...no shot." And for once, the "no shot" is 100%% justified 📺💀`,
     () => `🎮 Mate in ${n} and they missed it?? Ludwig would turn to chat and go "I genuinely can't tell if this person is trolling or if they just... can't see." Neither can we 📺😭`,
     () => `♟️ Missed mate in ${n}?? Even Andrea Botez sees mate in ${n}. The BOTEZ GAMBIT wasn't THIS bad. At least that was giving away the queen ON PURPOSE 👑🤡`,
@@ -2062,7 +2086,7 @@ function _blunderRoast(
     `💀 ${move.san}.${ctxLine} "True will never die" — but this position? This position is DECEASED. Petrosian copypasta energy in move form 🪦🗿`,
     `☠️ ${move.san}.${ctxLine} W)esley S)o would never play this. "Proffesionals knew how to lose and congratulate." This player doesn't know how to NOT lose 🗿🤡`,
     `🤡 ${move.san}.${ctxLine} "You was doing PIPI in your pampers when I was beating players much more stronger then you!" — Petrosian's ghost watching this game 👻🗿`,
-    `�️ ${move.san}.${ctxLine} xQc would slam the desk so hard his webcam falls off. "WHAT IS THAT MOVE DÜD" echoing through the void. And honestly? Valid reaction 🗿💥`,
+    `�️ ${move.san}.${ctxLine} xQc would slam the desk so hard his webcam falls off. "WHAT IS THAT MOVE DUDE" echoing through the void. And honestly? Valid reaction 🗿💥`,
     `🎮 ${move.san}.${ctxLine} Ludwig would just stare at the screen and say "no shot. NO SHOT." And then clip it for the YouTube video. Peak content 📺🤡`,
     `🎮 ${move.san}.${ctxLine} Ludwig's editor is already cutting this into a YouTube Short. The title? "How to Lose in One Move." The view count? Through the roof. The player's dignity? Through the floor 📺📉`,
     `♟️ ${move.san}.${ctxLine} Andrea Botez Gambit energy. Give away all the pieces and pray. Except Andrea at least commits to the bit. This is just sadness 👑💀`,
@@ -2479,6 +2503,98 @@ function _enPassantRoast(
   if (ctx.playerBlunders >= 2) {
     lines.push(
       `⛪ ${move.san}! EN PASSANT! After ${ctx.playerBlunders} blunders they finally do something ICONIC. Google "en passant." Holy hell. The redemption arc 🧱🔥`,
+    );
+  }
+
+  return { text: pickUnused(lines, used), annotations: ann };
+}
+
+/* ================================================================== */
+/*  Declined En Passant — the brick has been summoned ⛪🧱              */
+/* ================================================================== */
+
+function _declinedEnPassantRoast(
+  move: AnalyzedMove,
+  epSquare: string,
+  used: Set<string>,
+  ctx: GameContext,
+): { text: string; annotations: MoveAnnotation } {
+  const fromSq = move.uci.slice(0, 2);
+  const toSq = move.uci.slice(2, 4);
+  const isBad = move.classification === "blunder" || move.classification === "mistake";
+  const ann: MoveAnnotation = {
+    arrows: [[fromSq, toSq, "rgba(239, 68, 68, 0.7)"]],
+    markers: [{ square: epSquare, emoji: "⛪" }, { square: toSq, emoji: "🧱" }],
+  };
+
+  const lines: string[] = [
+    `🧱 ${move.san}?? EN PASSANT WAS RIGHT THERE. On ${epSquare}. FORCED. They DECLINED it. A small brick has materialized in their pocket. Google "en passant." Holy hell ⛪💀`,
+    `⛪ ${move.san} instead of taking en passant on ${epSquare}?? This person should resign immediately. En passant is FORCED — it's literally in the rules. The brick has been deployed 🧱🚨`,
+    `🧱 THEY DIDN'T TAKE EN PASSANT. ${move.san} instead of capturing on ${epSquare}. Are you kidding ??? The r/AnarchyChess council demands immediate resignation. Holy hell ⛪😤`,
+    `⛪ ${move.san}. ${epSquare} was RIGHT THERE. En passant. FORCED. And they said no. They chose VIOLENCE against chess culture. Brick = dispatched 🧱📦💀`,
+    `🧱 ALERT. EN PASSANT WAS AVAILABLE ON ${epSquare.toUpperCase()} AND THEY PLAYED ${move.san} INSTEAD. This is a violation of the sacred texts. True will never die but this player's dignity just did ⛪☠️`,
+    `⛪ En passant? On ${epSquare}? AVAILABLE? And they played ${move.san}?? "I know what en passant is dumbass" — clearly they DON'T. Brick incoming. Holy hell 🧱💀`,
+    `🧱 ${move.san}. They had en passant on ${epSquare}. They chose something else. Some choices are wrong. THIS choice is a crime against chess. The brick council has convened ⛪🏛️`,
+    `⛪ ${move.san} when en passant was on the menu?? That's like going to a restaurant and ordering water. YOU TAKE EN PASSANT. THE RULES ARE CLEAR. Google it. Holy hell 🧱😤`,
+    `🧱 BREAKING: Player declines en passant on ${epSquare}. r/AnarchyChess in shambles. The brick has been summoned. Resignation letter expected by end of game ⛪📋💀`,
+    `⛪ ${move.san}?? The en passant square ${epSquare} sits there, lonely, unchosen. The brick GROWS. Garry Chess did not invent en passant for it to be IGNORED 🧱👑`,
+  ];
+
+  if (isBad) {
+    lines.push(
+      `🧱 ${move.san}?? It's a ${move.classification} AND they declined en passant?? Double crime. The brick AND Stockfish agree: this player needs help ⛪💀📉`,
+      `⛪ Not only did they skip en passant on ${epSquare}, but ${move.san} is a ${move.classification}?? The universe is PUNISHING them for disrespecting the sacred rule. Holy hell 🧱⚖️`,
+    );
+  }
+
+  if (move.classification === "best" || move.classification === "great") {
+    lines.push(
+      `🧱 ${move.san} is technically the best move but they DECLINED EN PASSANT on ${epSquare}. Morally? This is a loss. The engine doesn't understand chess CULTURE ⛪🤖`,
+      `⛪ Sure, ${move.san} is "correct" according to Stockfish. But they didn't take en passant. Who cares about eval when your SOUL is compromised? Brick anyway 🧱🗿`,
+    );
+  }
+
+  return { text: pickUnused(lines, used), annotations: ann };
+}
+
+/* ================================================================== */
+/*  Opponent Enabled En Passant — meme the pawn push ⛪♟️              */
+/* ================================================================== */
+
+function _enabledEnPassantRoast(
+  move: AnalyzedMove,
+  epSquare: string,
+  used: Set<string>,
+  ctx: GameContext,
+): { text: string; annotations: MoveAnnotation } {
+  const fromSq = move.uci.slice(0, 2);
+  const toSq = move.uci.slice(2, 4);
+  const ann: MoveAnnotation = {
+    arrows: [[fromSq, toSq, "rgba(59, 130, 246, 0.7)"]],
+    markers: [{ square: epSquare, emoji: "⛪" }, { square: toSq, emoji: "♟️" }],
+  };
+
+  const lines: string[] = [
+    `♟️ ${move.san}. Oh. OH. They just pushed the pawn two squares. En passant is now available on ${epSquare}. The r/AnarchyChess community is watching. The brick is being polished 🧱⛪`,
+    `⛪ ${move.san} — a two-square pawn push. Do you know what that means? EN PASSANT IS ON THE MENU. ${epSquare}. The opponent now has a SACRED DUTY. Will they take it? Holy hell 🧱👀`,
+    `♟️ ${move.san}. And just like that, en passant on ${epSquare} is live. The chess gods have set the stage. Will the opponent accept? Or do they choose the brick? The tension is UNBEARABLE ⛪🧱`,
+    `⛪ ${move.san}! En passant on ${epSquare} is now POSSIBLE. This is the most important moment of the game. Not because of the position. Because of the CULTURE. Google "en passant." Holy hell 🧱🔥`,
+    `♟️ ${move.san}. ALERT: en passant opportunity created on ${epSquare}. The opponent is now legally AND morally obligated to take it. Those are the rules. The brick doesn't bluff ⛪🧱`,
+    `⛪ ${move.san}. A bold pawn push. A DANGEROUS pawn push. Not because of tactics. Because en passant on ${epSquare} is now the FORCED response. Google it. Holy hell 🧱😤`,
+    `♟️ ${move.san}. This pawn just walked past an enemy pawn and OFFERED ITSELF to en passant on ${epSquare}. A sacrifice? Or a test of the opponent's chess culture? The brick awaits ⛪🧱`,
+    `⛪ ${move.san} — and the en passant square lights up on ${epSquare}. The ancient ritual can begin. The opponent MUST take. En passant is forced. This is not a suggestion ⛪🧱`,
+  ];
+
+  if (move.classification === "blunder" || move.classification === "mistake") {
+    lines.push(
+      `♟️ ${move.san} is a ${move.classification}. But more importantly, it created en passant on ${epSquare}. We don't care about eval right now. We care about whether the opponent knows THE RULE 🧱⛪`,
+      `⛪ ${move.san}. It's a ${move.classification} AND it allows en passant on ${epSquare}. The position gets worse but the meme potential? Through the ROOF. Holy hell 🧱💀`,
+    );
+  }
+
+  if (move.classification === "best" || move.classification === "great") {
+    lines.push(
+      `♟️ ${move.san}. Best move AND it creates en passant on ${epSquare}? Stockfish-approved meme creation. The engine and r/AnarchyChess agree for once 🧱🧠⛪`,
     );
   }
 
@@ -3291,7 +3407,7 @@ function _styleRoast(
       `😴 ${move.san}. The opposite of Tal energy. This is Petrosian energy but without the wins. Just the suffering 💀`,
       `🐢 ${move.san}. Playing like anti-Hikaru rn. Where Naka pushes, they retreat. Where Naka attacks, they shuffle. Polar opposites 🏎️↔️🐌`,
       `💤 ${move.san}. Levy would be BEGGING them to do something. "PUSH A PAWN. ATTACK SOMETHING. DO ANYTHING." They refuse 📺😤`,
-      `🎙️ ${move.san}. Even xQc — who has the attention span of a goldfish — would be bored watching this. "DÜD NOTHING IS HAPPENING" for once he'd be right 🗿😴`,
+      `🎙️ ${move.san}. Even xQc — who has the attention span of a goldfish — would be bored watching this. "DUDE NOTHING IS HAPPENING" for once he'd be right 🗿😴`,
       `🎮 ${move.san}. Ludwig would cut to a different game on stream because this is putting chat to sleep. Zero content. Zero drama. Just shuffling 📺💤`,
     ], used);
     return { text, annotations: ann };
