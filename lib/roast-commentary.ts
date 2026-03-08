@@ -1839,8 +1839,11 @@ function _blunderRoast(
   // 5. Bad sacrifice — only trigger when material difference is significant (>= 3)
   //    Rook takes bishop/knight (diff=2) is "losing the exchange", NOT a sacrifice.
   //    True sacrifices: queen for pawn (diff 8), rook for pawn (diff 4), etc.
+  //    If the move gives check, require a much higher cpLoss threshold — checks almost
+  //    always have tactical purpose (forcing king movement, gaining tempo, etc.)
   const _isTrueSacrifice = movedPiece && capturedPiece && (PIECE_VALUES[movedPiece.type] ?? 0) - (PIECE_VALUES[capturedPiece.type] ?? 0) >= 3;
-  if ((_isTrueSacrifice && move.cpLoss > 150) || (move.sacrificedMaterial && movedPiece && capturedPiece && (PIECE_VALUES[movedPiece.type] ?? 0) - (PIECE_VALUES[capturedPiece.type] ?? 0) >= 3)) {
+  const sacCpThreshold = move.isCheck ? 400 : 150; // checks need to be REALLY bad to call a bad sac
+  if ((_isTrueSacrifice && move.cpLoss > sacCpThreshold) || (move.sacrificedMaterial && movedPiece && capturedPiece && (PIECE_VALUES[movedPiece.type] ?? 0) - (PIECE_VALUES[capturedPiece.type] ?? 0) >= 3 && move.cpLoss > sacCpThreshold)) {
     const sacWhat = movedPiece ? pn(movedPiece.type) : "piece";
     return { text: pickUnused([
       `🤡 They sacrificed the ${sacWhat} with ${move.san}! Bold! Brave! ...and terrible 💀`,
