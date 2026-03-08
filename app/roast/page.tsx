@@ -247,10 +247,11 @@ function _pieceVal(p: string | undefined | null): number { return _PIECE_VAL[p ?
  * Chess.com-style brilliant move detection.
  * A move is "brilliant" if:
  *  1. It IS the engine's best move (cpLoss ~ 0)
- *  2. It involves a real material sacrifice (piece moved to danger or high-value piece captured low-value on defended square)
- *  3. The position wasn't already crushingly winning (eval < +600)
+ *  2. It involves a REAL material sacrifice (not just moving to a vaguely attacked square)
+ *  3. The position wasn't already crushingly winning (eval < +500)
  *  4. It's NOT a simple recapture on the previous move's square
  *  5. The eval stays solid after the sacrifice (proving compensation)
+ *  6. The sacrifice is meaningful (at least a minor piece given up or major material imbalance)
  */
 function _isBrilliantMove(
   moveResult: { piece: string; captured?: string | null; from: string; to: string; san: string; flags: string },
@@ -264,7 +265,7 @@ function _isBrilliantMove(
   if (!isBestMove) return false;
 
   // Not already crushingly winning — sacrifice in a won position isn't brilliant
-  if (evalBeforeForSide > 600) return false;
+  if (evalBeforeForSide > 500) return false;
 
   // Not a simple recapture on the square the opponent just moved to
   if (prevMoveTo && moveResult.to === prevMoveTo && moveResult.captured) return false;
@@ -276,10 +277,11 @@ function _isBrilliantMove(
   let isSacrifice = false;
 
   if (moveResult.captured) {
-    // Capture sacrifice: mover gives up significantly more material
-    // e.g. Queen takes pawn on a defended square (Q=9, p=1, diff=8)
-    if (movingPieceVal > _pieceVal(moveResult.captured) + 1) {
-      // Check if opponent can recapture on the target square (piece is actually at risk)
+    // Capture sacrifice: mover gives up significantly more material than captured
+    // Must be at least 2 points difference (e.g. queen takes knight on defended square)
+    // This prevents knight-takes-pawn-on-defended-square from counting
+    if (movingPieceVal > _pieceVal(moveResult.captured) + 2) {
+      // Verify opponent can actually recapture (piece is genuinely sacrificed)
       try {
         const sim = new Chess(fenAfter);
         const replies = sim.moves({ verbose: true });
@@ -288,12 +290,22 @@ function _isBrilliantMove(
     }
   } else {
     // Non-capture sacrifice: piece moves to an attacked square (en prise)
-    // Only consider pieces worth >= 3 (knight/bishop/rook/queen)
-    if (movingPieceVal >= 3) {
+    // Only consider pieces worth >= 5 (rook/queen) — minor piece repositioning
+    // to technically-attacked squares is too common to be "brilliant"
+    if (movingPieceVal >= 5) {
       try {
         const sim = new Chess(fenAfter);
         const replies = sim.moves({ verbose: true });
-        if (replies.some(r => r.to === moveResult.to && r.captured)) isSacrifice = true;
+        // Must be capturable by a LOWER value piece (real sacrifice, not just trade)
+        if (replies.some(r => r.to === moveResult.to && r.captured && _pieceVal(r.piece) < movingPieceVal)) isSacrifice = true;
+      } catch {}
+    }
+    // Also allow minor piece (knight/bishop) if a PAWN can take it — that's a real sac
+    if (!isSacrifice && movingPieceVal >= 3) {
+      try {
+        const sim = new Chess(fenAfter);
+        const replies = sim.moves({ verbose: true });
+        if (replies.some(r => r.to === moveResult.to && r.piece === "p" && r.captured)) isSacrifice = true;
       } catch {}
     }
   }
@@ -303,7 +315,7 @@ function _isBrilliantMove(
   // The sacrifice must be sound — eval shouldn't drop significantly
   // (it IS the best move, so by definition it's sound, but we double-check
   //  that the eval didn't tank — sometimes depth is too shallow)
-  if (evalAfterForSide < evalBeforeForSide - 200) return false;
+  if (evalAfterForSide < evalBeforeForSide - 150) return false;
 
   return true;
 }
