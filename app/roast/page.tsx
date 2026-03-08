@@ -795,8 +795,8 @@ export default function RoastPage() {
       let totalMistakes = 0;
       let totalInaccuracies = 0;
 
-      // Limit to first 60 moves to keep it reasonable
-      const maxMoves = Math.min(sans.length, 60);
+      // Limit to first 200 half-moves (100 full moves) to keep it reasonable
+      const maxMoves = Math.min(sans.length, 200);
 
       for (let i = 0; i < maxMoves; i++) {
         const fenBefore = chess.fen();
@@ -1179,7 +1179,7 @@ export default function RoastPage() {
       let totalMistakes = 0;
       let totalInaccuracies = 0;
 
-      const maxMoves = Math.min(sans.length, 60);
+      const maxMoves = Math.min(sans.length, 200);
 
       for (let i = 0; i < maxMoves; i++) {
         const fenBefore = chess.fen();
