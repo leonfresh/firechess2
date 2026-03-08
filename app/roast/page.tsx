@@ -2082,19 +2082,21 @@ export default function RoastPage() {
       }));
     }
 
-    // Q10: Best move streak prediction
-    if (bestMovesSoFar >= 3 && pctDone < 0.6) {
+    // Q10: Best move streak prediction — only ask when there's real runway and meaningful target
+    if (bestMovesSoFar >= 5 && pctDone >= 0.3 && pctDone < 0.65) {
+      const targetExtra = Math.max(5, Math.ceil(bestMovesSoFar * 0.5));
+      const target = bestMovesSoFar + targetExtra;
       questionPool.push(() => {
         const totalBest = moves.filter(m => m.classification === "best" || m.classification === "brilliant").length;
         return {
           moveIdx: next,
-          question: `🎯 ${bestMovesSoFar} best/brilliant moves so far. Will they break ${bestMovesSoFar + 3}?`,
+          question: `🎯 ${bestMovesSoFar} best/brilliant moves so far. Will they break ${target}?`,
           options: [
             { label: "Yes — surprise accuracy incoming", emoji: "🎯" },
             { label: "No — they've peaked", emoji: "📉" },
           ],
-          correctIdx: totalBest > bestMovesSoFar + 3 ? 0 : 1,
-          explanation: totalBest > bestMovesSoFar + 3
+          correctIdx: totalBest > target ? 0 : 1,
+          explanation: totalBest > target
             ? `${totalBest} total! They actually showed up today 🎯`
             : `Only ${totalBest} total. They indeed peaked early 📉`,
         };

@@ -38,8 +38,15 @@ function cleanForSpeech(text: string): string {
       const names: Record<string, string> = { Q: "Queen", R: "Rook", B: "Bishop", N: "Knight" };
       return `${sq} promotes to ${names[p]}`;
     })
-    // Check/checkmate symbols
+    // Handle ALT+F4 and similar non-chess plus signs BEFORE chess notation
+    .replace(/\bAlt[+-]F4\b/gi, "alt F4")
+    .replace(/\bCTRL\+[A-Z]\b/gi, (m) => m.replace("+", " "))
+    // Chess checkmate (++) must come before single check (+)
+    .replace(/\+\+/g, " checkmate")
+    // Check symbol (single +)
     .replace(/\+/g, " check")
+    // ALL CAPS words → titlecase for natural TTS (skip short acronyms ≤3 chars)
+    .replace(/\b[A-Z]{4,}\b/g, (word) => word[0] + word.slice(1).toLowerCase())
     // Expand internet slang & abbreviations for natural TTS
     .replace(/\bfr fr\b/gi, "for real for real")
     .replace(/\bfr\b/gi, "for real")
@@ -54,7 +61,6 @@ function cleanForSpeech(text: string): string {
     .replace(/\bGM\b/g, "G M")
     .replace(/\btho\b/gi, "though")
     .replace(/\bany%\b/gi, "any percent")
-    .replace(/\bAlt[+-]F4\b/gi, "alt F4")
     .replace(/\bIMO\b/g, "in my opinion")
     .replace(/\blol\b/gi, "lol")
     .replace(/\bPIPI\b/g, "pipi")
