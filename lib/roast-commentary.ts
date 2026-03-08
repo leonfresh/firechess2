@@ -1687,7 +1687,10 @@ function _blunderRoast(
     }
   } catch {}
 
-  // 3. Fork — validate forking piece is safe
+  // 3. Fork — only report forks that are the engine's actual best response
+  //    A fork that exists geometrically but isn't the best move is noise.
+  //    Require cpLoss >= 150 to confirm the fork is actually punishing.
+  if (move.cpLoss >= 150) {
   try {
     const oppMoves = after.moves({ verbose: true });
     for (const m of oppMoves) {
@@ -1736,6 +1739,16 @@ function _blunderRoast(
           }
           if (!hasMeaningfulTarget) continue; // all targets well-defended, not a real fork
         }
+
+        // Final validation: the fork must actually be the BEST response for the
+        // opponent, not just any legal fork. Check the NEXT move in the game:
+        // if the opponent actually played a different move, the fork wasn't real
+        // enough for the opponent to notice or take advantage of.
+        // We approximate this by checking the eval: the cpLoss should be at least
+        // as large as the material the fork threatens to win.
+        const maxTargetVal = Math.max(...forked.map(f => PIECE_VALUES[f.type] ?? 0));
+        const minForkGain = Math.max(maxTargetVal - forkerVal, 0) * 100; // in centipawns
+        if (move.cpLoss < Math.min(minForkGain, 200)) continue; // eval doesn't support this fork being real
         const targets = forked.map(f => `${pn(f.type)} on ${f.square}`).join(" and ");
         const forkArrows: [string, string, string][] = [
           [m.from, forkSq, "rgba(239, 68, 68, 0.85)"],
@@ -1754,6 +1767,7 @@ function _blunderRoast(
       }
     }
   } catch {}
+  } // end cpLoss >= 150 guard for fork detection
 
   // 4. Pin
   const pinsBefore = detectPins(before, moverColor);
