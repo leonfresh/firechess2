@@ -833,6 +833,208 @@ function isPieceTrapped(chess: Chess, square: Square, pieceColor: Color): boolea
 }
 
 /* ================================================================== */
+/*  Additional Motif Detections                                         */
+/* ================================================================== */
+
+/** Detect back rank mate: king on back rank, pawns blocking escape, opponent
+ *  has a move that delivers checkmate on the back rank with a rook or queen. */
+function detectBackRankMate(chess: Chess, moverColor: Color): { matingSan: string; matingPiece: string; mateSq: string } | null {
+  try {
+    const oppMoves = chess.moves({ verbose: true });
+    for (const m of oppMoves) {
+      if (!m.san.includes("#")) continue;
+      // It's checkmate — check if it's on the back rank
+      const backRank = moverColor === "w" ? "1" : "8";
+      const king = findKing(chess, moverColor);
+      if (!king || king[1] !== backRank) continue;
+      // Mating piece is rook or queen landing on the back rank
+      if ((m.piece === "r" || m.piece === "q") && m.to[1] === backRank) {
+        return { matingSan: m.san, matingPiece: m.piece, mateSq: m.to };
+      }
+    }
+  } catch {}
+  return null;
+}
+
+/** Detect smothered mate: king surrounded by own pieces, knight delivers checkmate */
+function detectSmotheredMate(chess: Chess, moverColor: Color): { matingSan: string; knightSq: string } | null {
+  try {
+    const oppMoves = chess.moves({ verbose: true });
+    for (const m of oppMoves) {
+      if (!m.san.includes("#") || m.piece !== "n") continue;
+      // Knight checkmate — verify king is surrounded by own pieces (smothered)
+      const sim = new Chess(chess.fen());
+      sim.move(m);
+      const king = findKing(sim, moverColor);
+      if (!king) continue;
+      const kf = fileIdx(king), kr = rankIdx(king);
+      let smothered = true;
+      for (let df = -1; df <= 1; df++) {
+        for (let dr = -1; dr <= 1; dr++) {
+          if (df === 0 && dr === 0) continue;
+          const s = sq(kf + df, kr + dr);
+          if (!s) continue; // edge of board counts as blocked
+          const p = sim.get(s);
+          if (!p || p.color !== moverColor) { smothered = false; break; }
+        }
+        if (!smothered) break;
+      }
+      if (smothered) return { matingSan: m.san, knightSq: m.to };
+    }
+  } catch {}
+  return null;
+}
+
+/** Detect if a move gives double check (both the moving piece and a revealed piece check the king) */
+function isDoubleCheck(before: Chess, after: Chess, fromSq: Square, toSq: Square, moverColor: Color): boolean {
+  try {
+    if (!after.isCheck()) return false;
+    const oppKing = findKing(after, opp(moverColor));
+    if (!oppKing) return false;
+    const movedPiece = after.get(toSq);
+    if (!movedPiece) return false;
+    // Check 1: does the moved piece attack the king?
+    const directCheck = isAttacking(after, toSq, { ...movedPiece, square: toSq }, oppKing);
+    if (!directCheck) return false;
+    // Check 2: is there also a discovered check from a slider behind the moved piece?
+    const sliders = allPieces(after).filter(p => p.color === moverColor && (p.type === "b" || p.type === "r" || p.type === "q") && p.square !== toSq);
+    for (const slider of sliders) {
+      if (isAttacking(after, slider.square, slider, oppKing)) {
+        // Was this slider blocked BEFORE the move?
+        if (!isAttacking(before, slider.square, slider, oppKing)) {
+          return true; // discovered check + direct check = double check
+        }
+      }
+    }
+  } catch {}
+  return false;
+}
+
+/** Detect remove-the-defender / capture-the-defender motifs:
+ *  The best move captures a piece that was defending another piece,
+ *  leaving that other piece undefended and capturable. */
+function detectRemoveTheDefender(before: Chess, after: Chess, capturedSq: Square, capturedPiece: PieceInfo | null, moverColor: Color): { undefended: PieceInfo; defender: PieceInfo } | null {
+  if (!capturedPiece || capturedPiece.color === moverColor) return null;
+  try {
+    // Find opponent pieces that the captured piece was defending
+    const oppPieces = allPieces(before).filter(p => p.color === capturedPiece.color && p.square !== capturedSq && p.type !== "k" && p.type !== "p");
+    for (const target of oppPieces) {
+      // Was the captured piece defending this target?
+      const wasDefending = isAttacking(before, capturedSq, capturedPiece, target.square);
+      if (!wasDefending) continue;
+      // Is the target now undefended in the new position?
+      const targetInAfter = after.get(target.square);
+      if (!targetInAfter) continue; // piece no longer exists
+      const defenders = allPieces(after).filter(p => p.color === capturedPiece.color && p.square !== target.square && p.type !== "k");
+      const stillDefended = defenders.some(p => isAttacking(after, p.square, p, target.square));
+      if (stillDefended) continue;
+      // Is the target now attacked by the mover?
+      const attackers = allPieces(after).filter(p => p.color === moverColor);
+      const isNowAttacked = attackers.some(p => isAttacking(after, p.square, p, target.square));
+      if (isNowAttacked) {
+        return { undefended: target, defender: capturedPiece };
+      }
+    }
+  } catch {}
+  return null;
+}
+
+/** Detect exposed king: king has few friendly pieces around it and is on an open file/diagonal.
+ *  Returns a score 0-100 where higher = more exposed. */
+function exposedKingScore(chess: Chess, color: Color): number {
+  const king = findKing(chess, color);
+  if (!king) return 0;
+  const kf = fileIdx(king), kr = rankIdx(king);
+  let score = 0;
+  // Count friendly pieces defending the king (within 2 squares)
+  let friendlyNearby = 0;
+  for (const p of allPieces(chess)) {
+    if (p.color !== color || p.type === "k") continue;
+    const df = Math.abs(fileIdx(p.square) - kf);
+    const dr = Math.abs(rankIdx(p.square) - kr);
+    if (df <= 2 && dr <= 2) friendlyNearby++;
+  }
+  if (friendlyNearby <= 1) score += 40;
+  else if (friendlyNearby <= 2) score += 20;
+  // King in center (not castled) after move 10 = exposed
+  const isCenter = kf >= 2 && kf <= 5;
+  const isMidRank = kr >= 2 && kr <= 5;
+  if (isCenter && isMidRank) score += 30;
+  // Check pawn shield
+  const pawnDir = color === "w" ? 1 : -1;
+  let pawnShield = 0;
+  for (let df = -1; df <= 1; df++) {
+    const s = sq(kf + df, kr + pawnDir);
+    if (s) {
+      const p = chess.get(s);
+      if (p && p.type === "p" && p.color === color) pawnShield++;
+    }
+  }
+  if (pawnShield === 0) score += 30;
+  else if (pawnShield === 1) score += 15;
+  return Math.min(score, 100);
+}
+
+/** Detect advanced pawn: a pawn on rank 6 or 7 (for white) / 3 or 2 (for black) that is
+ *  threatening to promote. */
+function detectAdvancedPawn(chess: Chess, color: Color): { square: string; ranksFromPromo: number } | null {
+  for (const p of allPieces(chess)) {
+    if (p.color !== color || p.type !== "p") continue;
+    const rank = rankIdx(p.square);
+    const advancement = color === "w" ? rank : 7 - rank;
+    if (advancement >= 5) { // rank 6 or 7 for white (2 or 1 squares from promotion)
+      return { square: p.square, ranksFromPromo: 7 - advancement };
+    }
+  }
+  return null;
+}
+
+/** Detect queenside vs kingside attack based on where pieces are concentrated */
+function detectQueensideAttack(chess: Chess, attackerColor: Color): boolean {
+  const enemyKing = findKing(chess, opp(attackerColor));
+  if (!enemyKing) return false;
+  const ekf = fileIdx(enemyKing);
+  // King must be on the queenside (files a-d, indices 0-3)
+  if (ekf > 3) return false;
+  // Count attacker's pieces on the queenside
+  let attackerPiecesOnQside = 0;
+  for (const p of allPieces(chess)) {
+    if (p.color === attackerColor && p.type !== "k" && p.type !== "p") {
+      if (fileIdx(p.square) <= 3) attackerPiecesOnQside++;
+    }
+  }
+  return attackerPiecesOnQside >= 3;
+}
+
+/** Detect intermezzo: a move that is NOT the expected recapture but instead
+ *  interposes an immediate threat (check or attack on higher-value piece). */
+function detectIntermezzo(move: AnalyzedMove, before: Chess, summary: GameSummary): boolean {
+  // Must be a good/best move (not a mistake)
+  if (move.cpLoss > 30) return false;
+  // Previous move must have been a capture
+  const allMoves = summary.moves;
+  const idx = allMoves.findIndex(m => m.uci === move.uci && m.moveNumber === move.moveNumber);
+  if (idx <= 0) return false;
+  const prevMove = allMoves[idx - 1];
+  if (!prevMove.isCapture) return false;
+  // This move is NOT recapturing on the same square
+  const prevTo = prevMove.uci.slice(2, 4);
+  const thisTo = move.uci.slice(2, 4);
+  if (thisTo === prevTo) return false;
+  // This move gives check or attacks a high-value piece
+  if (move.isCheck) return true;
+  // Check if moving piece attacks something valuable
+  try {
+    const after = new Chess(move.fenAfter);
+    const movedPiece = after.get(thisTo as Square);
+    if (!movedPiece) return false;
+    const targets = allPieces(after).filter(p => p.color !== movedPiece.color && (p.type === "q" || p.type === "r") && isAttacking(after, thisTo as Square, { ...movedPiece, square: thisTo as Square }, p.square));
+    return targets.length > 0;
+  } catch {}
+  return false;
+}
+
+/* ================================================================== */
 /*  Opening Guide Matching                                              */
 /* ================================================================== */
 
@@ -956,6 +1158,130 @@ function _generatePositionAware(
       // This move is a 2-square pawn push that created an en passant opportunity
       const enabledResult = _enabledEnPassantRoast(move, afterEpSquare, used, ctx);
       if (enabledResult) return _emitResultForce(used, enabledResult);
+    }
+  }
+
+  // ── Promotion commentary ─────────────────────────────────────────────
+  if (move.isPromotion) {
+    const promoSq = toSq;
+    const promoChar = move.san.includes("=") ? move.san.split("=")[1]?.replace(/[+#]/g, "") : "Q";
+    const isUnderpromotion = promoChar && promoChar !== "Q";
+    const isBlunder = move.classification === "blunder" || move.classification === "mistake";
+    const promoArrows: [string, string, string][] = [[fromSq, toSq, isBlunder ? "rgba(239, 68, 68, 0.85)" : "rgba(168, 85, 247, 0.85)"]];
+    if (isUnderpromotion) {
+      const pieceName = promoChar === "N" ? "knight" : promoChar === "R" ? "rook" : promoChar === "B" ? "bishop" : "piece";
+      return _emitResultForce(used, { text: pickUnused([
+        `🤯 UNDERPROMOTION! ${move.san}! They promoted to a ${pieceName}! Not a queen — a ${pieceName.toUpperCase()}. The disrespect. The audacity. The GALAXY BRAIN 🧠💀`,
+        `🎭 ${move.san} — an underpromotion to ${pieceName}! This is either pure genius or pure chaos. There is no in between 🗿⚡`,
+        `👑❌ NO QUEEN?? ${move.san}! They chose a ${pieceName} over a queen. This is the chess equivalent of ordering water at a steakhouse 🥩🚰`,
+        `🤡 ${move.san}! Underpromotion! ${isBlunder ? `And it's a ${move.classification}! They chose the WRONG piece to promote to! Comedy gold 💀` : `And it's CORRECT?? The engine agrees?? I need to lie down 🧠🫠`}`,
+      ], used), annotations: { arrows: promoArrows, markers: [{ square: promoSq, emoji: "🤯" }] } });
+    }
+    if (isBlunder) {
+      return _emitResultForce(used, { text: pickUnused([
+        `👑 ${move.san}! They got a QUEEN! And it's still a ${move.classification}?? How do you promote and STILL mess it up 💀🤡`,
+        `😭 ${move.san} — promotion to a queen! This should be winning! And somehow it's still wrong?? The chess gods are CRUEL 👑📉`,
+      ], used), annotations: { arrows: promoArrows, markers: [{ square: promoSq, emoji: "👑" }] } });
+    }
+    return _emitResult(used, { text: pickUnused([
+      `👑 ${move.san}! PROMOTION! A new queen is born! The pawn's entire career arc just paid off. From humble pawn to royalty 🎓👑`,
+      `🎉 ${move.san}! Pawn promotes! The little pawn that COULD! It survived the entire board and now it's a queen. Inspirational honestly 😤🏃`,
+      `👑 ${move.san}! Promotion! The opponent's mood just went from "this is fine" to "this is NOT fine." Two queens is NOT fine 💀👑`,
+      `🏃 ${move.san}! That pawn made it all the way across! It's a QUEEN now! The chess equivalent of graduating AND getting a job on the same day 🎓👑`,
+    ], used), annotations: { arrows: promoArrows, markers: [{ square: promoSq, emoji: "👑" }] } });
+  }
+
+  // ── Double check commentary ──────────────────────────────────────────
+  if (move.isCheck && isDoubleCheck(before, after, fromSq, toSq, moverColor)) {
+    const oppKing = findKing(after, opp(moverColor));
+    const dblArrows: [string, string, string][] = [[fromSq, toSq, "rgba(168, 85, 247, 0.85)"]];
+    if (oppKing) dblArrows.push([toSq, oppKing, "rgba(239, 68, 68, 0.7)"]);
+    const isBlunder = move.classification === "blunder" || move.classification === "mistake";
+    return _emitResultForce(used, { text: pickUnused([
+      `⚡⚡ DOUBLE CHECK! ${move.san}! Two pieces checking the king at ONCE! The king HAS to move — no blocking, no capturing. ${isBlunder ? "Too bad the position is still losing 💀" : "DEVASTATING 🔥"}`,
+      `☠️ ${move.san}! DOUBLE CHECK! Both the moved piece AND a discovered piece are attacking the king simultaneously! The king is SCRAMBLING 👑💨`,
+      `💥 ${move.san}! DOUBLE DISCOVERED CHECK! The rarest and most brutal tactic! The only legal response is to move the king! Chess violence at its finest ⚡🗿`,
+      `⚡ DOUBLE CHECK on the board! ${move.san}! When two pieces check at once, NOTHING can block or capture. The king runs. End of discussion 👑🏃`,
+    ], used), annotations: { arrows: dblArrows, markers: [{ square: oppKing ?? toSq, emoji: "⚡" }] } });
+  }
+
+  // ── Intermezzo / Zwischenzug commentary ──────────────────────────────
+  if (detectIntermezzo(move, before, summary)) {
+    const zmArrows: [string, string, string][] = [[fromSq, toSq, "rgba(168, 85, 247, 0.85)"]];
+    return _emitResult(used, { text: pickUnused([
+      `🎭 ZWISCHENZUG! ${move.san}! Instead of recapturing, they interpose an in-between move first! Tempo! Initiative! CHESS 🧠⚡`,
+      `⚡ ${move.san}! That's an INTERMEZZO — an in-between move before recapturing. Sneaky. Tricky. Tactically SMART 🎭🗿`,
+      `🧠 ${move.san}! INTERMEZZO! The expected recapture can wait — first, create a threat! This is how strong players think 💪⚡`,
+      `🎯 ${move.san} — a Zwischenzug! Instead of the obvious recapture, they squeeze in an intermediate threat first. Top tier pattern recognition 🧠🎭`,
+    ], used), annotations: { arrows: zmArrows, markers: [{ square: toSq, emoji: "🎭" }] } });
+  }
+
+  // ── Advanced pawn commentary ─────────────────────────────────────────
+  if (move.pieceType === "p" && !move.isPromotion) {
+    const advanced = detectAdvancedPawn(after, moverColor);
+    if (advanced && advanced.square === toSq && Math.random() < 0.55) {
+      const advArrows: [string, string, string][] = [[fromSq, toSq, "rgba(168, 85, 247, 0.85)"]];
+      if (advanced.ranksFromPromo <= 1) {
+        return _emitResult(used, { text: pickUnused([
+          `🏃 ${move.san}! That pawn is on the 7th rank — ONE SQUARE from promotion! STOP THAT PAWN! Oh wait, you're the one pushing it. Never mind, PUSH THAT PAWN! 👑💨`,
+          `⚡ ${move.san}! Pawn on the penultimate rank! One more step and it's a QUEEN! The opponent better have a plan or it's OVER 👑🔥`,
+          `🚀 ${move.san}! That pawn is SO close to becoming a queen! One square away! The tension is UNBEARABLE 👑💀`,
+        ], used), annotations: { arrows: advArrows, markers: [{ square: toSq, emoji: "👑" }] } });
+      }
+      return _emitResult(used, { text: pickUnused([
+        `🏃 ${move.san}! That pawn is DEEP in enemy territory — ${advanced.ranksFromPromo} squares from promotion! It's becoming a real threat 👑📈`,
+        `⚔️ ${move.san}! Advanced pawn alert! That little soldier is ${advanced.ranksFromPromo} squares from queening and the opponent should be NERVOUS 🏃💨`,
+        `♟️ ${move.san} — that pawn is getting uncomfortably close to the promised land. ${advanced.ranksFromPromo} more squares and it's a queen 👑🗿`,
+      ], used), annotations: { arrows: advArrows, markers: [{ square: toSq, emoji: "🏃" }] } });
+    }
+  }
+
+  // ── Exposed king commentary ──────────────────────────────────────────
+  {
+    const oppExposed = exposedKingScore(after, opp(moverColor));
+    const oppExposedBefore = exposedKingScore(before, opp(moverColor));
+    if (oppExposed >= 60 && oppExposed > oppExposedBefore + 15 && Math.random() < 0.4) {
+      const oppKing = findKing(after, opp(moverColor));
+      const expArrows: [string, string, string][] = [[fromSq, toSq, "rgba(239, 68, 68, 0.7)"]];
+      if (oppKing) expArrows.push([toSq, oppKing, "rgba(239, 68, 68, 0.5)"]);
+      return _emitResult(used, { text: pickUnused([
+        `🚨 ${move.san} and the opponent's king is EXPOSED! Few defenders, open lines — this king is a TARGET! Attack time 🎯🔥`,
+        `👑 After ${move.san}, look at that king! No pawn shield, no defenders nearby. That's an EXPOSED KING and it's begging to be attacked 💀🏃`,
+        `⚡ ${move.san} strips away the king's cover! The opponent's king has fewer defenders than a gas station at 3am. EXPOSED 🚨💀`,
+        `🎯 ${move.san}! The opponent's king is wide open! This is what aggressive players DREAM about — an exposed king to hunt down 🔥👑`,
+      ], used), annotations: { arrows: expArrows, markers: [{ square: oppKing ?? toSq, emoji: "🚨" }] } });
+    }
+  }
+
+  // ── Remove the defender / Capture the defender ───────────────────────
+  if (move.isCapture && capturedPiece && (move.classification === "best" || move.classification === "great" || move.classification === "brilliant")) {
+    const rtd = detectRemoveTheDefender(before, after, toSq, { ...capturedPiece, square: toSq }, moverColor);
+    if (rtd) {
+      const rtdArrows: [string, string, string][] = [
+        [fromSq, toSq, "rgba(168, 85, 247, 0.85)"],
+        [toSq, rtd.undefended.square, "rgba(239, 68, 68, 0.7)"],
+      ];
+      return _emitResult(used, { text: pickUnused([
+        `🎯 ${move.san}! REMOVE THE DEFENDER! That ${pn(capturedPiece.type)} was holding the ${pn(rtd.undefended.type)} on ${rtd.undefended.square} together. Now it's FREE 🆓💀`,
+        `⚡ ${move.san} captures the ${pn(capturedPiece.type)} that was defending the ${pn(rtd.undefended.type)} on ${rtd.undefended.square}! Classic remove-the-defender tactic! 🧠🗿`,
+        `🧩 ${move.san}! They took the guardian! The ${pn(rtd.undefended.type)} on ${rtd.undefended.square} is now UNDEFENDED. Capture the defender — a textbook motif 📚⚡`,
+        `🎭 ${move.san} removes the defensive piece! The ${pn(rtd.undefended.type)} on ${rtd.undefended.square} just lost its bodyguard. It's alone. It's scared. It's TAKEN next move 🆓💀`,
+      ], used), annotations: { arrows: rtdArrows, markers: [{ square: rtd.undefended.square, emoji: "🆓" }] } });
+    }
+  }
+
+  // ── Queenside attack commentary ──────────────────────────────────────
+  if (move.moveNumber >= 12 && !ctx.isEndgame && Math.random() < 0.25) {
+    const qsideAttack = detectQueensideAttack(after, moverColor);
+    if (qsideAttack) {
+      const oppKing = findKing(after, opp(moverColor));
+      const qsArrows: [string, string, string][] = [[fromSq, toSq, "rgba(239, 68, 68, 0.7)"]];
+      if (oppKing) qsArrows.push([toSq, oppKing, "rgba(239, 68, 68, 0.4)"]);
+      return _emitResult(used, { text: pickUnused([
+        `⚔️ ${move.san}! QUEENSIDE ATTACK! Multiple pieces converging on the queenside where the king lives. This is organized ASSAULT 🏰🔥`,
+        `🎯 ${move.san} — pieces are piling up on the queenside! The king castled there and now it's under SIEGE. Opposite-side castling chaos! 🏃💀`,
+        `🔥 ${move.san}! Queenside attack in full swing! Three or more pieces aimed at the queenside king. This is PRESSURE 🏰⚡`,
+      ], used), annotations: { arrows: qsArrows, markers: [{ square: oppKing ?? toSq, emoji: "⚔️" }] } });
     }
   }
 
@@ -1693,6 +2019,51 @@ function _blunderRoast(
       }
     }
   } catch {}
+
+  // 2c. Back rank mate — special commentary for the classic back rank pattern
+  {
+    const backRankMate = detectBackRankMate(after, moverColor);
+    if (backRankMate) {
+      const mateArrows: [string, string, string][] = [moveArrow];
+      const king = findKing(after, moverColor);
+      return { text: pickUnused([
+        `🪦 ${move.san} allows BACK RANK MATE! ${backRankMate.matingSan}! The king is trapped behind its own pawns — the CLASSIC back rank disaster! Make luft! MAKE LUFT!! 🏰💀`,
+        `☠️ BACK RANK MATE after ${move.san}! ${backRankMate.matingSan} slides in and it's CHECKMATE. The pawns that were supposed to protect the king just became prison walls 🏚️🪦`,
+        `💀 ${move.san}?? That's BACK RANK MATE with ${backRankMate.matingSan}! The most PREVENTABLE pattern in chess! Push h3! Push g3! Literally ANY luft move! But no, here we are 🗿🏰`,
+        `🏰 ${move.san} walks into the BACK RANK! ${backRankMate.matingSan} is checkmate! The king is imprisoned by its own pawns. This is literally why "luft" exists as a concept 📚💀`,
+        `☠️ CLASSIC back rank mate after ${move.san}! ${backRankMate.matingSan}! If only they'd pushed one pawn to give the king an escape square. IF ONLY 😭🏰`,
+      ], used), annotations: { arrows: mateArrows, markers: [{ square: king ?? backRankMate.mateSq, emoji: "☠️" }] } };
+    }
+  }
+
+  // 2d. Smothered mate — knight checkmate where king is surrounded by own pieces
+  {
+    const smothered = detectSmotheredMate(after, moverColor);
+    if (smothered) {
+      const king = findKing(after, moverColor);
+      return { text: pickUnused([
+        `🐴 ${move.san} allows a SMOTHERED MATE! ${smothered.matingSan}! The knight delivers checkmate while the king is completely surrounded by its own pieces! The most BEAUTIFUL and PAINFUL checkmate pattern! 💀♞`,
+        `♞ SMOTHERED MATE! ${move.san} → ${smothered.matingSan}! The king can't move because its OWN PIECES are in the way! The knight just waltzed in and said game over 🐴🪦`,
+        `💀 ${move.san}?? SMOTHERED MATE with ${smothered.matingSan}! The king is surrounded by friends who are also its prison guards. Poetry in motion. A chess tragedy 🎭♞`,
+        `🐴 After ${move.san}, there's a SMOTHERED MATE — ${smothered.matingSan}! The rarest and most gorgeous checkmate pattern! The knight smiles, the pieces cry, the game ends 🪦✨`,
+      ], used), annotations: { arrows: [moveArrow, [smothered.knightSq, king ?? smothered.knightSq, "rgba(239, 68, 68, 0.85)"]], markers: [{ square: smothered.knightSq, emoji: "🐴" }] } };
+    }
+  }
+
+  // 2e. Exposed king — blunder that leaves own king dangerously exposed
+  {
+    const myExposedAfter = exposedKingScore(after, moverColor);
+    const myExposedBefore = exposedKingScore(before, moverColor);
+    if (myExposedAfter >= 70 && myExposedAfter > myExposedBefore + 20 && move.cpLoss >= 150) {
+      const king = findKing(after, moverColor);
+      return { text: pickUnused([
+        `🚨 ${move.san} and the king is WIDE OPEN! No pawn shield, barely any defenders — that's an EXPOSED KING and the opponent is going to FEAST on it 💀👑`,
+        `👑 After ${move.san}, the king has NO cover! That's a textbook exposed king! Every piece the opponent has is now a potential attacker 🔥🚨`,
+        `💀 ${move.san} stripped the king's defenses! The king is sitting there like a piñata at a birthday party — exposed and about to get HIT 🪅👑`,
+        `😱 ${move.san} leaves the king completely exposed! No pawns, no defenders — just vibes and hoping the opponent doesn't notice. Spoiler: they will 🗿👑`,
+      ], used), annotations: { arrows: [moveArrow], markers: [{ square: king ?? _toSq, emoji: "🚨" }] } };
+    }
+  }
 
   // 3. Fork — only report forks that are the engine's actual best response
   //    A fork that exists geometrically but isn't the best move is noise.
