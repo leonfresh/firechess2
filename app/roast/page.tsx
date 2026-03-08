@@ -581,7 +581,7 @@ export default function RoastPage() {
   const [savingScore, setSavingScore] = useState(false);
 
   /* ── Voice picker dropdown ── */
-  const [voiceDropdownOpen, setVoiceDropdownOpen] = useState<"sidebar" | "welcome" | null>(null);
+  const [voiceDropdownOpen, setVoiceDropdownOpen] = useState<"sidebar" | "welcome" | "mobile" | null>(null);
   const voiceDropdownRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!voiceDropdownOpen) return;
@@ -4275,6 +4275,50 @@ export default function RoastPage() {
                       📊 Show Results
                     </button>
                   )}
+                </div>
+              )}
+
+              {/* ── Mobile voice picker (below playback controls) ── */}
+              {tts.enabled && tts.supported && tts.availableVoices.length > 1 && (pageState === "watching" || pageState === "guessing") && (
+                <div className="lg:hidden w-full max-w-[640px]">
+                  <div className="flex items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-sm px-3 py-1.5">
+                    <span className="text-[10px] text-slate-500 font-medium whitespace-nowrap">🔊 Voice</span>
+                    <div className="relative flex-1 min-w-0" ref={voiceDropdownOpen === "mobile" ? voiceDropdownRef : undefined}>
+                      <button
+                        type="button"
+                        onClick={() => setVoiceDropdownOpen(voiceDropdownOpen === "mobile" ? null : "mobile")}
+                        className="flex w-full items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-[10px] text-slate-300 cursor-pointer hover:border-orange-500/30 transition-colors"
+                      >
+                        <span className="truncate flex-1 text-left">{tts.voiceName.replace(/Microsoft\s+/, "").replace(/\s+Online\s+\(Natural\).*/, "")}</span>
+                        <svg className={`h-3 w-3 shrink-0 text-slate-500 transition-transform ${voiceDropdownOpen === "mobile" ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                      </button>
+                      {voiceDropdownOpen === "mobile" && (
+                        <div className="absolute z-50 mb-1 bottom-full left-0 right-0 w-64 max-h-56 overflow-y-auto rounded-xl border border-white/[0.08] bg-zinc-900/95 backdrop-blur-md shadow-2xl shadow-black/60 py-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
+                          {tts.availableVoices.map(v => {
+                            const short = v.name.replace(/Microsoft\s+/, "").replace(/\s+Online\s+\(Natural\).*/, "");
+                            const isActive = v.name === tts.voiceName;
+                            const isAva = /\bAva\b/i.test(v.name);
+                            return (
+                              <button
+                                key={v.name}
+                                type="button"
+                                onClick={() => { tts.setVoice(v.name); setVoiceDropdownOpen(null); }}
+                                className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[10px] transition-colors cursor-pointer ${
+                                  isActive
+                                    ? "bg-orange-500/15 text-orange-300"
+                                    : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
+                                }`}
+                              >
+                                {isActive && <span className="text-orange-400 text-xs">✓</span>}
+                                <span className={`truncate ${isActive ? "" : "ml-4"}`}>{short}</span>
+                                {isAva && <span className="ml-auto shrink-0 rounded-full bg-orange-500/15 border border-orange-500/30 px-1.5 py-0.5 text-[8px] font-bold text-orange-400">⭐ Best</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
 
