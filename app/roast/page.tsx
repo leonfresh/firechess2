@@ -4647,7 +4647,7 @@ export default function RoastPage() {
         {/*  CENTERED MODAL: Import / Paste Games                             */}
         {/* ════════════════════════════════════════════════════════════════ */}
         {(inputMode === "import" || inputMode === "paste") && pageState === "choose-source" && (
-          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn overflow-y-auto py-4 sm:py-8" onClick={() => { setInputMode(null); setRecentGames([]); setLoadError(""); }}>
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn overflow-y-auto py-4 sm:py-8" onClick={() => { setInputMode(null); setRecentGames([]); setLoadError(""); }}>
             <div className="relative w-[96vw] max-w-lg rounded-3xl border-2 border-blue-500/40 bg-gradient-to-b from-zinc-900 via-zinc-900 to-zinc-950 p-5 sm:p-6 shadow-2xl shadow-blue-500/20 overflow-hidden my-auto" onClick={e => e.stopPropagation()}>
               {/* Close button */}
               <button
@@ -4789,7 +4789,7 @@ export default function RoastPage() {
         {/*  CENTERED MODAL: Guess the Elo (non-closable)                   */}
         {/* ════════════════════════════════════════════════════════════════ */}
         {pageState === "guessing" && (
-          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn">
             <div className="relative w-[92vw] max-w-lg rounded-3xl border-2 border-orange-500/40 bg-gradient-to-b from-zinc-900 via-zinc-900 to-zinc-950 p-6 sm:p-8 shadow-2xl shadow-orange-500/20 overflow-hidden">
               {/* Stage spotlight glow */}
               <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-orange-400/[0.08] rounded-full blur-[80px] pointer-events-none" />
@@ -4876,7 +4876,7 @@ export default function RoastPage() {
         {/*  CENTERED MODAL: Reveal (closable, with Next Round)              */}
         {/* ════════════════════════════════════════════════════════════════ */}
         {pageState === "revealed" && game && revealModalOpen && (
-          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn overflow-y-auto py-4 sm:py-8" onClick={() => setRevealModalOpen(false)}>
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fadeIn overflow-y-auto py-4 sm:py-8" onClick={() => setRevealModalOpen(false)}>
             <div className="relative w-[96vw] max-w-2xl rounded-3xl border-2 border-amber-500/40 bg-gradient-to-b from-zinc-900 via-zinc-900 to-zinc-950 p-4 sm:p-6 shadow-2xl shadow-amber-500/20 overflow-hidden my-auto" onClick={e => e.stopPropagation()}>
               {/* Close button */}
               <button
