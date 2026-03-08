@@ -3114,14 +3114,35 @@ export default function RoastPage() {
                   </h1>
                 </div>
 
-                {/* Tagline */}
-                <p className="text-lg sm:text-xl text-slate-300 font-medium mb-2">
-                  Can you guess a player&apos;s rating just by watching them play?
+                {/* Tagline — punchy and streamer-friendly */}
+                <p className="text-lg sm:text-xl text-slate-300 font-medium mb-1">
+                  A Pepe-powered AI commentator roasts chess games in real time.
                 </p>
-                <p className="text-sm text-slate-500 max-w-lg mx-auto mb-8">
-                  Watch real chess games move by move with hilarious roast commentary, then guess the Elo. 
-                  Inspired by Gotham Chess &amp; r/AnarchyChess.
+                <p className="text-base sm:text-lg text-orange-400/80 font-bold mb-2">
+                  Can you guess the Elo just from watching the moves?
                 </p>
+                <p className="text-sm text-slate-500 max-w-lg mx-auto mb-6">
+                  Meme sound effects. TTS narration. Blunder compilations. Think Guess the Elo meets a Twitch roast session.
+                </p>
+
+                {/* Two-column CTA — Random Game + Roast YOUR Games */}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-6 max-w-lg mx-auto">
+                  <button
+                    type="button"
+                    onClick={() => { setInputMode("random"); setIsDaily(false); fetchGame(); }}
+                    className="group relative w-full sm:w-auto rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 px-8 py-4 text-lg font-black text-white shadow-2xl shadow-orange-500/30 transition-all hover:brightness-110 hover:scale-[1.03] hover:shadow-orange-500/50 active:scale-95 uppercase tracking-wider cursor-pointer"
+                  >
+                    <span className="relative z-10 flex items-center justify-center gap-2">🎲 Play Random Game</span>
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-orange-400 to-red-400 opacity-0 group-hover:opacity-20 transition-opacity blur-xl" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setInputMode("import")}
+                    className="group relative w-full sm:w-auto rounded-2xl border-2 border-blue-500/40 bg-blue-500/[0.08] px-8 py-4 text-lg font-black text-blue-300 shadow-xl shadow-blue-500/10 transition-all hover:bg-blue-500/[0.15] hover:border-blue-500/60 hover:scale-[1.03] active:scale-95 uppercase tracking-wider cursor-pointer"
+                  >
+                    <span className="relative z-10 flex items-center justify-center gap-2">🔥 Roast MY Games</span>
+                  </button>
+                </div>
 
                 {/* Alpha warning */}
                 <div className="mx-auto mb-5 max-w-lg rounded-2xl border-2 border-amber-500/40 bg-gradient-to-br from-amber-500/10 to-amber-600/5 px-5 py-4 shadow-lg shadow-amber-500/10">
@@ -3140,6 +3161,28 @@ export default function RoastPage() {
                   <p className="text-sm text-emerald-300/60 text-center mt-1">
                     Move sounds, meme SFX, and TTS voice narration for the full gameshow experience.
                   </p>
+                  {/* Voice picker on welcome screen */}
+                  {tts.supported && tts.availableVoices.length > 1 && (
+                    <div className="mt-3 flex items-center justify-center gap-2">
+                      <label className="text-xs text-emerald-300/50 font-medium">Voice:</label>
+                      <select
+                        value={tts.voiceName}
+                        onChange={(e) => tts.setVoice(e.target.value)}
+                        className="rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-1.5 text-xs text-emerald-300 appearance-none cursor-pointer hover:border-emerald-500/40 transition-colors max-w-[200px] truncate"
+                      >
+                        {tts.availableVoices.map(v => (
+                          <option key={v.name} value={v.name}>{v.name}</option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => tts.speak("Welcome to Roast the Elo! Let's see how bad this game really is.")}
+                        className="rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] px-2 py-1.5 text-xs text-emerald-300 hover:bg-emerald-500/[0.12] transition-colors"
+                        title="Preview voice"
+                      >
+                        ▶
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* How it works — 3 steps */}
@@ -3148,34 +3191,24 @@ export default function RoastPage() {
                     <div className="text-2xl sm:text-3xl mb-2">👀</div>
                     <p className="text-xs sm:text-sm font-bold text-white mb-1">Watch</p>
                     <p className="text-[10px] sm:text-xs text-slate-500 leading-relaxed">
-                      See every move with savage Pepe commentary
+                      AI Pepe roasts every move with meme commentary &amp; sound effects
                     </p>
                   </div>
                   <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 sm:p-5">
                     <div className="text-2xl sm:text-3xl mb-2">🤔</div>
                     <p className="text-xs sm:text-sm font-bold text-white mb-1">Guess</p>
                     <p className="text-[10px] sm:text-xs text-slate-500 leading-relaxed">
-                      Pick the Elo bracket — Beginner to Master
+                      Pick the Elo bracket — from Beginner to Master
                     </p>
                   </div>
                   <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 sm:p-5">
-                    <div className="text-2xl sm:text-3xl mb-2">🔥</div>
-                    <p className="text-xs sm:text-sm font-bold text-white mb-1">Get Roasted</p>
+                    <div className="text-2xl sm:text-3xl mb-2">📤</div>
+                    <p className="text-xs sm:text-sm font-bold text-white mb-1">Share</p>
                     <p className="text-[10px] sm:text-xs text-slate-500 leading-relaxed">
-                      See how close you were + share with friends
+                      Share your best roast moments &amp; challenge friends
                     </p>
                   </div>
                 </div>
-
-                {/* Primary CTA — big "Play Now" button */}
-                <button
-                  type="button"
-                  onClick={() => { setInputMode("random"); setIsDaily(false); fetchGame(); }}
-                  className="group relative mx-auto rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 px-10 py-4 text-lg font-black text-white shadow-2xl shadow-orange-500/30 transition-all hover:brightness-110 hover:scale-[1.03] hover:shadow-orange-500/50 active:scale-95 uppercase tracking-wider cursor-pointer"
-                >
-                  <span className="relative z-10 flex items-center gap-2">🎲 Play Random Game</span>
-                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-orange-400 to-red-400 opacity-0 group-hover:opacity-20 transition-opacity blur-xl" />
-                </button>
               </div>
             </div>
 
@@ -3773,14 +3806,56 @@ export default function RoastPage() {
                           {typewriterText}
                           {!typingDone && <span className="animate-blink text-orange-400">|</span>}
                         </p>
-                        {typingDone && currentMove?.tacticLine && currentMove.tacticLine.length >= 2 && !tacticReplaying && (
-                          <div className="flex justify-center mt-2">
-                            <button
-                              onClick={startTacticReplay}
-                              className="text-[10px] sm:text-xs px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-400 hover:bg-amber-500/30 transition-colors font-medium"
-                            >
-                              🎯 Show What Was Missed
-                            </button>
+                        {typingDone && (
+                          <div className="flex justify-center gap-2 mt-2">
+                            {currentMove?.tacticLine && currentMove.tacticLine.length >= 2 && !tacticReplaying && (
+                              <button
+                                onClick={startTacticReplay}
+                                className="text-[10px] sm:text-xs px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-400 hover:bg-amber-500/30 transition-colors font-medium"
+                              >
+                                🎯 Show What Was Missed
+                              </button>
+                            )}
+                            {currentMove && (currentMove.classification === "blunder" || currentMove.classification === "brilliant") && (
+                              <button
+                                onClick={async () => {
+                                  const params = new URLSearchParams({
+                                    move: currentMove.san,
+                                    moveNum: String(Math.floor(currentIdx / 2) + 1),
+                                    classification: currentMove.classification,
+                                    comment: activeComment ?? "",
+                                    ...(game?.avgElo ? { elo: String(game.avgElo) } : {}),
+                                  });
+                                  const url = `/api/roast/moment-card?${params.toString()}`;
+                                  try {
+                                    const res = await fetch(url);
+                                    const blob = await res.blob();
+                                    const file = new File([blob], "roast-moment.png", { type: "image/png" });
+                                    if (typeof navigator.share === "function" && navigator.canShare?.({ files: [file] })) {
+                                      await navigator.share({ title: "Roast the Elo Moment", files: [file] });
+                                      return;
+                                    }
+                                    const blobUrl = URL.createObjectURL(blob);
+                                    const a = document.createElement("a");
+                                    a.href = blobUrl;
+                                    a.download = "roast-moment.png";
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                    URL.revokeObjectURL(blobUrl);
+                                  } catch {
+                                    window.open(url, "_blank");
+                                  }
+                                }}
+                                className={`text-[10px] sm:text-xs px-3 py-1 rounded-full border font-medium transition-colors ${
+                                  currentMove.classification === "brilliant"
+                                    ? "bg-cyan-500/20 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/30"
+                                    : "bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30"
+                                }`}
+                              >
+                                📸 Share This Moment
+                              </button>
+                            )}
                           </div>
                         )}
                       </>
@@ -4092,6 +4167,37 @@ export default function RoastPage() {
                   )}
                 </h3>
 
+                {/* Voice & Speed controls (when TTS enabled) */}
+                {tts.enabled && tts.supported && tts.availableVoices.length > 1 && (
+                  <div className="mb-3 space-y-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <label className="text-[10px] text-slate-500 font-medium whitespace-nowrap">Voice</label>
+                      <select
+                        value={tts.voiceName}
+                        onChange={(e) => tts.setVoice(e.target.value)}
+                        className="flex-1 min-w-0 rounded-md border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-[10px] text-slate-300 appearance-none cursor-pointer hover:border-orange-500/30 transition-colors truncate"
+                      >
+                        {tts.availableVoices.map(v => (
+                          <option key={v.name} value={v.name}>{v.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <label className="text-[10px] text-slate-500 font-medium whitespace-nowrap">Speed</label>
+                      <input
+                        type="range"
+                        min={0.5}
+                        max={2.0}
+                        step={0.05}
+                        value={tts.rate}
+                        onChange={(e) => tts.setRate(parseFloat(e.target.value))}
+                        className="flex-1 h-1 accent-orange-500 cursor-pointer"
+                      />
+                      <span className="text-[10px] text-slate-500 font-mono w-8 text-right">{tts.rate.toFixed(1)}×</span>
+                    </div>
+                  </div>
+                )}
+
                 {/* Avatar + Speech Bubble */}
                 <div className={`flex items-start gap-3 mb-4 ${streamerMode ? "min-h-[140px]" : "min-h-[100px]"}`}>
                   <div className="relative flex-shrink-0">
@@ -4125,13 +4231,57 @@ export default function RoastPage() {
                                 {typewriterText}
                                 {!typingDone && <span className="animate-blink text-orange-400">|</span>}
                               </p>
-                              {typingDone && currentMove?.tacticLine && currentMove.tacticLine.length >= 2 && !tacticReplaying && (
-                                <button
-                                  onClick={startTacticReplay}
-                                  className="mt-2 text-[10px] px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-400 hover:bg-amber-500/30 transition-colors font-medium"
-                                >
-                                  🎯 Show What Was Missed
-                                </button>
+                              {typingDone && (
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                  {currentMove?.tacticLine && currentMove.tacticLine.length >= 2 && !tacticReplaying && (
+                                    <button
+                                      onClick={startTacticReplay}
+                                      className="text-[10px] px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/30 text-amber-400 hover:bg-amber-500/30 transition-colors font-medium"
+                                    >
+                                      🎯 Show What Was Missed
+                                    </button>
+                                  )}
+                                  {currentMove && (currentMove.classification === "blunder" || currentMove.classification === "brilliant") && (
+                                    <button
+                                      onClick={async () => {
+                                        const params = new URLSearchParams({
+                                          move: currentMove.san,
+                                          moveNum: String(Math.floor(currentIdx / 2) + 1),
+                                          classification: currentMove.classification,
+                                          comment: activeComment ?? "",
+                                          ...(game?.avgElo ? { elo: String(game.avgElo) } : {}),
+                                        });
+                                        const url = `/api/roast/moment-card?${params.toString()}`;
+                                        try {
+                                          const res = await fetch(url);
+                                          const blob = await res.blob();
+                                          const file = new File([blob], "roast-moment.png", { type: "image/png" });
+                                          if (typeof navigator.share === "function" && navigator.canShare?.({ files: [file] })) {
+                                            await navigator.share({ title: "Roast the Elo Moment", files: [file] });
+                                            return;
+                                          }
+                                          const blobUrl = URL.createObjectURL(blob);
+                                          const a = document.createElement("a");
+                                          a.href = blobUrl;
+                                          a.download = "roast-moment.png";
+                                          document.body.appendChild(a);
+                                          a.click();
+                                          document.body.removeChild(a);
+                                          URL.revokeObjectURL(blobUrl);
+                                        } catch {
+                                          window.open(url, "_blank");
+                                        }
+                                      }}
+                                      className={`text-[10px] px-3 py-1 rounded-full border font-medium transition-colors ${
+                                        currentMove.classification === "brilliant"
+                                          ? "bg-cyan-500/20 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/30"
+                                          : "bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30"
+                                      }`}
+                                    >
+                                      📸 Share This Moment
+                                    </button>
+                                  )}
+                                </div>
                               )}
                             </>
                           )}

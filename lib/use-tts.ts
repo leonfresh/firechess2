@@ -116,6 +116,14 @@ export interface TTSControls {
   supported: boolean;
   /** Register a callback for when the current utterance finishes */
   onDone: React.MutableRefObject<(() => void) | null>;
+  /** Available English voices for selection */
+  availableVoices: { name: string; lang: string }[];
+  /** Set a specific voice by name */
+  setVoice: (name: string) => void;
+  /** Current rate (0.5-2.0) */
+  rate: number;
+  /** Set playback rate */
+  setRate: (rate: number) => void;
 }
 
 export function useTTS(): TTSControls {
@@ -123,7 +131,10 @@ export function useTTS(): TTSControls {
   const [speaking, setSpeaking] = useState(false);
   const [voiceName, setVoiceName] = useState("");
   const [supported, setSupported] = useState(false);
+  const [availableVoices, setAvailableVoices] = useState<{ name: string; lang: string }[]>([]);
+  const [rate, setRateState] = useState(1.05);
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const allVoicesRef = useRef<SpeechSynthesisVoice[]>([]);
   const onDone = useRef<(() => void) | null>(null);
 
   // Detect support and pick best voice
@@ -140,7 +151,12 @@ export function useTTS(): TTSControls {
         .filter(v => v.score > -1000)
         .sort((a, b) => b.score - a.score);
 
-      if (scored.length > 0) {
+      // Store all English voices for selection UI
+      allVoicesRef.current = scored.map(s => s.voice);
+      setAvailableVoices(scored.map(s => ({ name: s.voice.name, lang: s.voice.lang })));
+
+      // Only auto-pick if no voice is selected yet
+      if (!voiceRef.current && scored.length > 0) {
         voiceRef.current = scored[0].voice;
         setVoiceName(scored[0].voice.name);
       }
@@ -155,6 +171,18 @@ export function useTTS(): TTSControls {
     };
   }, []);
 
+  const setVoice = useCallback((name: string) => {
+    const match = allVoicesRef.current.find(v => v.name === name);
+    if (match) {
+      voiceRef.current = match;
+      setVoiceName(match.name);
+    }
+  }, []);
+
+  const setRate = useCallback((r: number) => {
+    setRateState(Math.max(0.5, Math.min(2.0, r)));
+  }, []);
+
   const speak = useCallback((text: string) => {
     if (!enabled || !supported) return;
 
@@ -165,7 +193,7 @@ export function useTTS(): TTSControls {
 
     const utterance = new SpeechSynthesisUtterance(clean);
     if (voiceRef.current) utterance.voice = voiceRef.current;
-    utterance.rate = 1.05; // slightly faster for commentary feel
+    utterance.rate = rate;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
 
@@ -176,7 +204,7 @@ export function useTTS(): TTSControls {
     utterance.onerror = () => { setSpeaking(false); onDone.current?.(); };
 
     speechSynthesis.speak(utterance);
-  }, [enabled, supported]);
+  }, [enabled, supported, rate]);
 
   const stop = useCallback(() => {
     if (!supported) return;
@@ -195,5 +223,5 @@ export function useTTS(): TTSControls {
     });
   }, []);
 
-  return { enabled, toggle, speak, stop, speaking, voiceName, supported, onDone };
+  return { enabled, toggle, speak, stop, speaking, voiceName, supported, onDone, availableVoices, setVoice, rate, setRate };
 }
