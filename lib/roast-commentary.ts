@@ -1969,14 +1969,31 @@ function _blunderRoast(
             })
             .sort((a, b) => (PIECE_VALUES[b.captured!] ?? 0) - (PIECE_VALUES[a.captured!] ?? 0));
           const checks = oppMoves.filter(m => m.san.includes("+") || m.san.includes("#"));
+          // Filter checks to only those where the checking piece survives (not immediately captured
+          // for a losing trade). E.g. Qxe4+ on a defended pawn is NOT a real threat.
+          const goodChecks = checks.filter(m => {
+            try {
+              const sim = new Chess(move.fenAfter);
+              sim.move(m.san);
+              const responses = sim.moves({ verbose: true });
+              // If any response captures the checking piece, check if that's a bad trade for the checker
+              const recaps = responses.filter(r => r.to === m.to && r.captured);
+              if (recaps.length === 0) return true; // checking piece is safe
+              // The piece that checks is worth checkerVal; if recaptured, opponent loses it
+              const checkerVal = PIECE_VALUES[m.piece as PieceSymbol] ?? 0;
+              // If the check also captured something, net = capturedVal - checkerVal (if recaptured)
+              const capturedVal = m.captured ? (PIECE_VALUES[m.captured as PieceSymbol] ?? 0) : 0;
+              return capturedVal >= checkerVal; // only good if trade is favorable
+            } catch { return false; }
+          });
           if (checks.length > 0 && checks[0].san.includes("#")) {
             // Checkmate available — already handled in section 2b, skip
           } else if (captures.length > 0 && (PIECE_VALUES[captures[0].captured!] ?? 0) >= 1) {
             oppBestAfterBlunder = captures[0].captured === "p"
               ? ` And ${captures[0].san} takes a free pawn.`
               : ` Now the opponent can grab the ${pn(captures[0].captured!)} with ${captures[0].san}.`;
-          } else if (checks.length > 0) {
-            oppBestAfterBlunder = ` And the opponent has ${checks[0].san} with check.`;
+          } else if (goodChecks.length > 0) {
+            oppBestAfterBlunder = ` And the opponent has ${goodChecks[0].san} with check.`;
           }
         } catch {}
 
