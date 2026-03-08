@@ -101,7 +101,7 @@ The Lucena position is the single most important theoretical endgame position. I
 3. When the opponent's rook gives checks, block with your own rook on the 4th rank
 4. Promote the pawn
 
-<chess-position fen="1K1r4/1P6/8/8/8/8/8/R5k1 w - - 0 1" moves="Ra4, Rd1, Kc8, Rc1+, Rc4, Rxc4, b8=Q" orientation="white" caption="The Lucena Position — White builds the 'bridge'. The rook goes to the 4th rank, the king steps aside, and when Black checks, the rook blocks on the c-file. The pawn promotes!"></chess-position>
+<chess-position fen="3K4/3P4/5k2/8/8/8/3r4/R7 w - - 0 1" moves="Ra4, Rd1, Kc7, Rc1+, Kb6, Rd1, Kc6, Rc1+, Kb5, Rd1, Rc4" orientation="white" caption="The Lucena Position — White builds the 'bridge'. The rook goes to the 4th rank to shield the king from checks. The king zigzags forward while the rook blocks each check, escorting the pawn to promotion."></chess-position>
 
 This concept has been known for centuries, but a surprising number of 1500-1800 rated players haven't internalized it. **Learn the Lucena, and you'll convert every standard rook ending where you reach this position.**
 
@@ -121,7 +121,7 @@ In king and pawn endings, the king transforms from a piece that hides in the cor
 
 **The opposition rule:** When two kings face each other with one square between them, the player who does NOT have to move has the "opposition" — a critical advantage in king and pawn endings. If you don't know this concept, you're losing drawn endings and drawing won endings constantly.
 
-<chess-position fen="8/5pk1/6p1/4K1P1/5P2/8/8/8 w - - 0 1" moves="Kd6, Kf8, Ke6, Kg7, Ke7, Kg8, Kf6" orientation="white" caption="White's centralized king invades step by step. Black's passive king can only react. After Kf6, White wins the g6-pawn and the game."></chess-position>
+<chess-position fen="8/5pk1/6p1/4K1P1/5P2/8/8/8 w - - 0 1" moves="Kd5, Kf8, Kd6, Ke8, Kc7, Ke7, Kc6, Ke6, f5+" orientation="white" caption="White's king outflanks via the queenside. After Kd5-Kd6-Kc7-Kc6, White infiltrates behind the pawns. The f5+ breakthrough wins material."></chess-position>
 
 ## 3. Rook Behind Passed Pawns (Tarrasch's Rule)
 
@@ -180,7 +180,7 @@ In rook endings with multiple pawns, the side that creates a passed pawn first u
 
 A passed pawn in a rook ending is like having an extra piece. It ties the opponent's rook to defense while your rook stays active. Even one passed pawn often decides the game.
 
-<chess-position fen="8/pp4k1/8/PPP3K1/8/8/8/8 w - - 0 1" moves="c6, bxc6, bxc6, Kf6, c7, Ke7, a6" orientation="white" caption="The pawn majority technique: advance the unopposed 'candidate' (c5). After c6 bxc6 bxc6, White creates a passed c-pawn. When it reaches c7, the a-pawn advances too — Black can't stop both!"></chess-position>
+<chess-position fen="8/pp4k1/8/PPP3K1/8/8/8/8 w - - 0 1" moves="c6, bxc6, bxc6, Kf8, c7, Ke7, a6" orientation="white" caption="The pawn majority technique: advance the unopposed 'candidate' (c5). After c6 bxc6 bxc6, White creates a passed c-pawn. When it reaches c7, the a-pawn advances too — Black can't stop both!"></chess-position>
 
 ## How to Fix These Weaknesses
 
