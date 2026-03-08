@@ -1657,19 +1657,27 @@ function _getGameContext(move: AnalyzedMove, summary: GameSummary): GameContext 
 
     // Wasting initiative: position is sharp, player is winning/equal,
     // but this move is slow (pawn move on wrong side, retreat, no threat)
-    if (isSharpPosition && posture !== "losing" && !move.isCapture && !move.isCheck) {
+    // Skip if responding to check (forced move)
+    if (isSharpPosition && posture !== "losing" && !move.isCapture && !move.isCheck && !wasRespondingToCheck) {
       const fromRank = parseInt(move.uci[1]);
       const toRank = parseInt(move.uci[3]);
       const isRetreat = (color === "w" && toRank < fromRank) || (color === "b" && toRank > fromRank);
-      const isPawnSideline = move.pieceType === "p" && (() => {
-        const pFile = fileIdx(move.uci.slice(2, 4) as Square);
-        // Pawn move far from opponent's king = slow
-        const oppKing = findKing(boardNow, opp(color));
-        if (!oppKing) return false;
-        const okf = fileIdx(oppKing);
-        return Math.abs(pFile - okf) >= 3;
-      })();
-      if (isRetreat || isPawnSideline) wastingInitiative = true;
+
+      // If the retreat is the engine's best/good move (cpLoss ≤ 15), it's likely forced
+      // (piece was attacked, only safe square, etc.) — don't roast forced retreats
+      const isForcedRetreat = isRetreat && move.cpLoss <= 15;
+
+      if (!isForcedRetreat) {
+        const isPawnSideline = move.pieceType === "p" && (() => {
+          const pFile = fileIdx(move.uci.slice(2, 4) as Square);
+          // Pawn move far from opponent's king = slow
+          const oppKing = findKing(boardNow, opp(color));
+          if (!oppKing) return false;
+          const okf = fileIdx(oppKing);
+          return Math.abs(pFile - okf) >= 3;
+        })();
+        if (isRetreat || isPawnSideline) wastingInitiative = true;
+      }
     }
   } catch {}
 
