@@ -140,6 +140,8 @@ Some openings have well-known traps, tactical motifs, or forcing sequences that 
 
 **The fix:** If you keep losing to a specific line, spend 30 minutes studying the typical traps and forcing sequences. YouTube has excellent "Opening Traps" content. Once you know the patterns, they never catch you again.
 
+<chess-position fen="r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4" moves="Ng5, d5, exd5, Nxd5, Nxf7" orientation="white" caption="The Fried Liver Attack: after 4.Ng5 d5 5.exd5 Nxd5?? comes 6.Nxf7! — a knight sacrifice forking the queen and rook while ripping open the king. Know this trap or you'll keep walking into it!"></chess-position>
+
 ## The Systematic Approach
 
 Here's a concrete 5-step process to solve your problem opening:

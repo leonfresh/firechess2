@@ -159,6 +159,8 @@ Scan your games again after 3-4 weeks. Compare your accuracy metrics and centipa
 
 This is purely a habit issue, not a knowledge issue. The blunder check habit alone can push you past 1200.
 
+<chess-position fen="rnbqkbnr/pppp1ppp/8/4p3/8/5P2/PPPPP1PP/RNBQKBNR w KQkq - 0 2" moves="g4, Qh4#" orientation="white" caption="At this level, games are decided by basic blunders. After 1.f3? e5 2.g4??, Black delivers Qh4# — checkmate in two moves. The pawns on f3 and g4 destroyed White's king safety entirely."></chess-position>
+
 ### The 1400-1600 Plateau
 
 **What's happening:** You rarely hang pieces anymore, but you miss tactical combinations. Your opponents find forks and pins that you don't see.

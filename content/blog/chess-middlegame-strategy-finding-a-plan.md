@@ -133,6 +133,8 @@ Every position has a piece (or two) that's doing nothing useful. It might be a b
 
 **Practical example:** Your knight is on a3. It's doing nothing there. Where should it go? Maybe Nc2-e3-d5, reaching a strong central outpost. That's not a flashy plan, but it's a PLAN — and having any plan is better than aimless moves.
 
+<chess-position fen="r1bq1rk1/ppp2ppp/3p1n2/4p3/4P3/N1N5/PP3PPP/R1BQ1RK1 w - - 0 1" moves="Nc2, Be6, Ne3, Nd7, Ned5" orientation="white" caption="Improve your worst piece: the knight on a3 is doing nothing on the rim. Through Nc2→Ne3→Nd5, it reaches a dominant central outpost controlling 8 squares. That's a plan!"></chess-position>
+
 ## Step 3: Assess King Safety
 
 Before committing to an attack, check both kings:
