@@ -2602,7 +2602,7 @@ function _blunderRoast(
         if (bestIsCapture && bestIsCheck && bestRes.captured) {
           const captName = pn(bestRes.captured);
           return { text: pickUnused([
-            `🎯 ${bestSan} — capturing the ${captName} WITH CHECK! A full tactic was on the board and they played ${move.san} instead. Hit "Show What Was Missed" to see the whole line 💀⚡`,
+            `🎯 ${bestSan} — capturing the ${captName} WITH CHECK! A full tactic was on the board and they played ${move.san} instead. The whole line is BRUTAL 💀⚡`,
             `⚔️ There was a TACTIC here! ${bestSan} wins the ${captName} with check. Instead: ${move.san}. That's a ${(swing / 100).toFixed(1)} pawn swing from missing the combination 🎯💀`,
             `🧩 ${move.san} when ${bestSan} takes the ${captName} WITH CHECK?? This was a puzzle-level tactic and they walked right past it. The line is brutal 🔥💀`,
             `💎 ${bestSan} — capture AND check in one move. The ${captName} was free and the king gets hit. Instead they played ${move.san}. Checks, captures, threats... in that order 📐🤡`,
@@ -2625,7 +2625,7 @@ function _blunderRoast(
           return { text: pickUnused([
             `⚡ ${bestSan} with check was the move! Instead ${move.san} leaves the position ${swingDesc}.${oppBestAfterBlunder} Missing checks in ${new Date().getFullYear()} is WILD 🗿💀`,
             `🎯 ${move.san} over ${bestSan}?? There was a CHECK available! The position swings ${(swing / 100).toFixed(1)} pawns.${oppBestAfterBlunder} Always look for checks captures threats — in that order 📐💀`,
-            `⚡ MISSED TACTIC! ${bestSan} gives check and the follow-up is crushing. ${move.san} instead?? Hit "Show What Was Missed" to see what could've been 🎯💀`,
+            `⚡ MISSED TACTIC! ${bestSan} gives check and the follow-up is crushing. ${move.san} instead?? The combination was RIGHT THERE 🎯💀`,
             `🧩 ${bestSan} with check starts a FORCING SEQUENCE. Instead: ${move.san}. When there's a check that gains material, you TAKE the check 📐⚡`,
           ], used), annotations: { arrows: bestArrows, markers: [{ square: bestToSq, emoji: "⚡" }, { square: _toSq, emoji: "💀" }] } };
         }
@@ -2879,7 +2879,7 @@ function _mistakeRoast(
     const bestHasCapture = move.bestMoveSan.includes("x");
     if (bestHasCheck && bestHasCapture && move.cpLoss >= 80) {
       return { text: pickUnused([
-        `🎯 ${move.san} when ${move.bestMoveSan} was a capture WITH check?? A full tactic was sitting right there! Hit "Show What Was Missed" to see the line 😤⚡`,
+        `🎯 ${move.san} when ${move.bestMoveSan} was a capture WITH check?? A full tactic was sitting right there and they just WALKED PAST IT 😤⚡`,
         `🧩 ${move.bestMoveSan} — capture AND check! That's a textbook tactic. Instead: ${move.san}.${ctxLine} Checks, captures, threats. The holy trinity. Missed 📐💀`,
         `⚡ MISSED TACTIC! ${move.bestMoveSan} takes with tempo. Instead they went ${move.san}.${ctxLine} This was a puzzle on the board and they walked past it 🧩😤`,
       ], used), annotations: { arrows: bestArrows, markers: [{ square: toSq, emoji: "🎯" }] } };
@@ -2887,7 +2887,7 @@ function _mistakeRoast(
     if (bestHasCheck && move.cpLoss >= 80) {
       return { text: pickUnused([
         `⚡ ${move.bestMoveSan} with check was right there. ${move.san} instead.${ctxLine} When there's a forcing check that wins material, you TAKE the check 📐😤`,
-        `🎯 ${move.san} over ${move.bestMoveSan}?? Check was available and the follow-up wins material.${ctxLine} Hit "Show What Was Missed" to see the whole combination ⚡🧩`,
+        `🎯 ${move.san} over ${move.bestMoveSan}?? Check was available and the follow-up wins material.${ctxLine} The whole combination was right there on the board ⚡🧩`,
       ], used), annotations: { arrows: bestArrows, markers: [{ square: toSq, emoji: "⚡" }] } };
     }
 
