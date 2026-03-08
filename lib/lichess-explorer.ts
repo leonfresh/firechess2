@@ -71,8 +71,8 @@ function computeWinRate(
 /*  Request queue — prevents 429 by serialising API calls              */
 /* ------------------------------------------------------------------ */
 
-const CONCURRENCY = 3;           // max parallel requests
-const DELAY_BETWEEN_MS = 100;    // minimum gap between requests
+const CONCURRENCY = 1;           // max parallel requests (1 = fully serial)
+const DELAY_BETWEEN_MS = 350;    // minimum gap between requests
 const MAX_RETRIES = 3;           // retry on 429 / 5xx
 const INITIAL_BACKOFF_MS = 1500; // first retry waits this long
 
@@ -114,12 +114,6 @@ function cacheKey(fen: string, sideToMove: string): string {
 }
 
 /* ------------------------------------------------------------------ */
-/*  In-flight deduplication — reuse pending requests for the same FEN  */
-/* ------------------------------------------------------------------ */
-
-const inflightRequests = new Map<string, Promise<ExplorerResult>>();
-
-/* ------------------------------------------------------------------ */
 /*  Public API                                                         */
 /* ------------------------------------------------------------------ */
 
@@ -127,10 +121,9 @@ const inflightRequests = new Map<string, Promise<ExplorerResult>>();
  * Fetch Lichess explorer data for a position and return an outlier top-pick
  * if one exists.
  *
- * Requests are automatically queued (max 3 in-flight at a time with 100ms
+ * Requests are automatically queued (max 1 in-flight at a time with 350ms
  * spacing) to respect the Lichess Explorer API rate limit. Results are
- * cached for 5 minutes. Duplicate in-flight requests for the same position
- * are coalesced automatically.
+ * cached for 5 minutes.
  *
  * @param fen        The position to look up.
  * @param sideToMove Which colour is to move (so we compute win-rate correctly).
@@ -140,38 +133,14 @@ export async function fetchExplorerMoves(
   fen: string,
   sideToMove: "white" | "black",
 ): Promise<ExplorerResult> {
-  const key = cacheKey(fen, sideToMove);
+  const empty: ExplorerResult = { moves: [], totalGames: 0, topPick: null, openingName: undefined, openingEco: undefined };
 
-  // 1. Check cache
+  // Check cache first
+  const key = cacheKey(fen, sideToMove);
   const cached = cache.get(key);
   if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
     return cached.result;
   }
-
-  // 2. Check if there's already an in-flight request for this position
-  const existing = inflightRequests.get(key);
-  if (existing) return existing;
-
-  // 3. Start a new request and register it for dedup
-  const promise = _fetchExplorerMovesImpl(fen, sideToMove, key);
-  inflightRequests.set(key, promise);
-  try {
-    return await promise;
-  } finally {
-    inflightRequests.delete(key);
-  }
-}
-
-/* ------------------------------------------------------------------ */
-/*  Internal fetch implementation                                      */
-/* ------------------------------------------------------------------ */
-
-async function _fetchExplorerMovesImpl(
-  fen: string,
-  sideToMove: "white" | "black",
-  key: string,
-): Promise<ExplorerResult> {
-  const empty: ExplorerResult = { moves: [], totalGames: 0, topPick: null, openingName: undefined, openingEco: undefined };
 
   // Wait for our turn in the queue
   await enqueue();
