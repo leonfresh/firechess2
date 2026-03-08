@@ -647,6 +647,37 @@ export default function RoastPage() {
   const [activeArrows, setActiveArrows] = useState<[string, string, string][]>([]);
   const [activeMarkers, setActiveMarkers] = useState<{ square: string; emoji: string }[]>([]);
 
+  /* ── Listen for navbar "new game" trigger ── */
+  const resetToNewGame = useCallback(() => {
+    setPageState("choose-source");
+    setInputMode(null);
+    setLoadError("");
+    setRecentGames([]);
+    setPgnInput("");
+    setIsDaily(false);
+    setChallengeId(null);
+    setScoreSaved(false);
+    setRevealModalOpen(false);
+    setGame(null);
+    setMoves([]);
+    setCurrentIdx(-1);
+    setFen("start");
+    setLastMove(null);
+    setCommentHistory([]);
+    setActiveComment(null);
+    setAutoplay(true);
+    setIsRewatching(false);
+    setSelectedBracket(null);
+    setDecisionShown(new Set());
+    setPendingDecisionIdx(null);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => resetToNewGame();
+    window.addEventListener("firechess:new-roast", handler);
+    return () => window.removeEventListener("firechess:new-roast", handler);
+  }, [resetToNewGame]);
+
   /* ── Tactic Replay state ── */
   const [tacticReplaying, setTacticReplaying] = useState(false);
   const [tacticReplayStep, setTacticReplayStep] = useState(0);
@@ -4739,6 +4770,19 @@ export default function RoastPage() {
               <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
               <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider">Live</span>
             </div>
+          </div>
+        )}
+
+        {/* ── Next Game button (visible after modal closed) ── */}
+        {pageState === "revealed" && !revealModalOpen && (
+          <div className="flex justify-center mt-8 mb-4">
+            <button
+              onClick={resetToNewGame}
+              className="group relative rounded-xl bg-gradient-to-r from-orange-500 to-red-500 px-8 py-4 text-lg font-black text-white shadow-xl shadow-orange-500/25 transition-all hover:brightness-110 hover:scale-[1.02] hover:shadow-2xl hover:shadow-orange-500/40 active:scale-95 uppercase tracking-wider"
+            >
+              <span className="relative z-10">🔥 Next Game</span>
+              <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-orange-400 to-red-400 opacity-0 group-hover:opacity-20 transition-opacity blur-xl" />
+            </button>
           </div>
         )}
 

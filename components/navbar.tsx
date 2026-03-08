@@ -186,6 +186,11 @@ export function Navbar() {
                 </Link>
                 <Link
                   href="/roast"
+                  onClick={() => {
+                    if (pathname.startsWith("/roast")) {
+                      window.dispatchEvent(new CustomEvent("firechess:new-roast"));
+                    }
+                  }}
                   className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                     isActive("/roast") ? "text-orange-400 bg-orange-500/[0.08]" : "text-slate-400 hover:text-orange-400 hover:bg-orange-500/[0.06]"
                   }`}
@@ -597,6 +602,9 @@ export function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  onClick={link.href === "/roast" && pathname.startsWith("/roast") ? () => {
+                    window.dispatchEvent(new CustomEvent("firechess:new-roast"));
+                  } : undefined}
                   className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                     isActive(link.href)
                       ? "text-white bg-white/[0.06]"

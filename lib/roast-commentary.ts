@@ -1161,6 +1161,11 @@ function _generatePositionAware(
     }
   }
 
+  // ── CHECKMATE commentary — the most important event in chess ────────
+  if (move.san.includes("#")) {
+    return _emitResultForce(used, _checkmateRoast(move, before, after, fromSq, toSq, moverColor, movedPiece, ctx, used, summary));
+  }
+
   // ── Promotion commentary ─────────────────────────────────────────────
   if (move.isPromotion) {
     const promoSq = toSq;
@@ -1663,6 +1668,179 @@ function _getGameContext(move: AnalyzedMove, summary: GameSummary): GameContext 
   return { recentBlunder, playerBlunders, goodStreak, posture, threwAdvantage, desperateDefense, evalCrater, isEndgame, totalPieces, opponentJustBlundered, opponentLastClass, opponentGift, opening: summary.opening ?? null, wasRespondingToCheck, isSharpPosition, wastingInitiative, kingSafetyTension };
 }
 
+/* ================================================================== */
+/*  Checkmate Commentary — contextual, hype, meme-ready                 */
+/* ================================================================== */
+
+function _checkmateRoast(
+  move: AnalyzedMove,
+  before: Chess,
+  after: Chess,
+  fromSq: Square,
+  toSq: Square,
+  moverColor: Color,
+  movedPiece: ReturnType<Chess["get"]>,
+  ctx: GameContext,
+  used: Set<string>,
+  summary: GameSummary,
+): { text: string; annotations: MoveAnnotation } {
+  const oppKing = findKing(before, opp(moverColor));
+  const mateArrows: [string, string, string][] = [[fromSq, toSq, "rgba(168, 85, 247, 0.95)"]];
+  if (oppKing) mateArrows.push([toSq, oppKing, "rgba(239, 68, 68, 0.8)"]);
+  const mateMarkers: { square: string; emoji: string }[] = [{ square: oppKing ?? toSq, emoji: "☠️" }];
+  const piece = movedPiece?.type ?? move.pieceType;
+  const pieceName = pn(piece, true);
+  const elo = summary.avgElo;
+  const totalMoves = move.moveNumber;
+
+  // Detect back rank mate
+  const backRank = detectBackRankMate(before, moverColor);
+  const isBackRankMate = backRank && backRank.matingSan === move.san;
+
+  // Detect smothered mate
+  const smothered = detectSmotheredMate(before, moverColor);
+  const isSmotheredMate = smothered && smothered.matingSan === move.san;
+
+  // Check if it was a sacrifice leading to mate
+  const isSacMate = move.isCapture && movedPiece && (PIECE_VALUES[movedPiece.type] ?? 0) > (PIECE_VALUES[move.capturedPiece ?? "p"] ?? 0) + 1;
+
+  // Check if it was a long game
+  const isLongGame = totalMoves >= 40;
+  const isShortGame = totalMoves <= 15;
+
+  // Check for queen delivery
+  const isQueenMate = piece === "q";
+  const isRookMate = piece === "r";
+  const isKnightMate = piece === "n";
+  const isBishopMate = piece === "b";
+  const isPawnMate = piece === "p";
+
+  // Build contextual lines
+  const lines: string[] = [];
+
+  // ── Special mate patterns ──────────────────────────────────────────
+  if (isSmotheredMate) {
+    lines.push(
+      `🐴☠️ ${move.san}!! SMOTHERED MATE!! The king is LITERALLY trapped by its own pieces and the knight ENDS it! This is the kind of mate that makes people quit chess AND come back to chess at the same time! DISGUSTING 💀🔥`,
+      `🐴💀 ${move.san}!! SMOTHERED MATE! The knight! THE KNIGHT! While everyone else is playing checkers, this person just pulled off the most beautiful way to end a game in all of chess! The king can't move because its OWN pieces are in the way! POETRY 🎭✨`,
+      `🐴🔥 ${move.san}!! A SMOTHERED MATE! Trapped by their own army and executed by a HORSE! Philidor is doing backflips in his grave! Tyler1 would slam his desk so hard NASA picks it up on the Richter scale! KNIGHT DIFF! 🗿💀`,
+    );
+  }
+
+  if (isBackRankMate) {
+    lines.push(
+      `☠️🏰 ${move.san}!! BACK RANK MATE! The pawns are the jail. The rook is the executioner. The king is DEAD. Maybe next time push h3?? Just a thought?? 🪦💀`,
+      `🏰💀 ${move.san}!! Back rank mate — the most PREVENTABLE pattern in all of chess and they STILL fell for it! The pawns formed a WALL. Their OWN pawns! Locked their own king in a coffin! 🪦🗿`,
+      `☠️ ${move.san}!! BACK RANK! IT'S ALWAYS THE BACK RANK! They had ONE job — push a pawn, make luft, be a normal human being — and they DIDN'T! The king dies in its own house! THE DISRESPECT! Tyler1 would flip his monitor! 💀🔥`,
+      `🔥 ${move.san}!! BACK RANK MATE! Levy would SLAM the desk! "PUSH! H! THREE!" He's been saying it for YEARS! Nobody listens! The back rank claims another victim! 🚨🪦`,
+    );
+  }
+
+  // ── Piece-specific mate lines ──────────────────────────────────────
+  if (isQueenMate && !isBackRankMate) {
+    lines.push(
+      `👑☠️ ${move.san}!! CHECKMATE WITH THE QUEEN! The most powerful piece delivers the final blow! That's a WRAP! Game, set, MATCH! SOMEBODY CALL AN AMBULANCE — but not for them! For the OPPONENT! 🚑💀`,
+      `👑🔥 ${move.san}!! The queen says GAME OVER! All that dancing around the board led to THIS! The queen doesn't just threaten — she EXECUTES! DEVASTATING! 💀⚡`,
+      `👑💀 ${move.san}!! QUEEN CHECKMATE! THAT'S IT! THAT'S THE GAME! The queen walked in, ENDED the opponent's whole career, and walked out! Not a single word spoken! Just VIOLENCE! 🗿🔥`,
+    );
+  }
+
+  if (isRookMate && !isBackRankMate) {
+    lines.push(
+      `🏰☠️ ${move.san}!! ROOK DELIVERS CHECKMATE! HEAVY PIECE ENERGY! The rook just cut off the king's escape and ENDED IT! No mercy! No remorse! Just MATE! 💀🔥`,
+      `🏰💀 ${move.san}!! Rook checkmate! The TOWER has spoken and it says "you're DONE!" Absolute authority! The king bows before the rook! GAME OVER! 🗿⚡`,
+    );
+  }
+
+  if (isKnightMate && !isSmotheredMate) {
+    lines.push(
+      `🐴☠️ ${move.san}!! KNIGHT CHECKMATE! The trickiest piece on the board delivers the killing blow! Nobody sees knight mates coming! NOBODY! That L-shape is LETHAL! 💀🔥`,
+      `🐴💀 ${move.san}!! THE HORSE HAS NO CHILL! Knight checkmate! The piece that moves in shapes people can't even VISUALIZE just ended the entire game! The horsey said "NEIGH" and it was OVER! 🗿🐎`,
+    );
+  }
+
+  if (isBishopMate) {
+    lines.push(
+      `⛪☠️ ${move.san}!! BISHOP CHECKMATE! A DIAGONAL ASSASSINATION! The bishop slid across the board and delivered JUDGMENT! Prayers were NOT answered today! 💀🗿`,
+      `⛪💀 ${move.san}!! BISHOP MATE! Death by DIAGONAL! The bishop: quiet, patient, DEADLY! It waited the ENTIRE game for this moment and then STRUCK! 🔥⚡`,
+    );
+  }
+
+  if (isPawnMate) {
+    lines.push(
+      `♟️☠️ ${move.san}!! PAWN CHECKMATE?! A PAWN?! THE smallest piece on the board just delivered the BIGGEST blow! This is the chess equivalent of getting KO'd by a chihuahua! HUMILIATION! 💀🤡`,
+      `♟️🔥 ${move.san}!! A PAWN delivers checkmate! The AUDACITY! The DISRESPECT! Getting mated by a pawn is a war crime! Delete the account! Start over! New identity! 🗿💀`,
+      `♟️💀 ${move.san}!! MATED BY A PAWN! A PAWN!! The lowest piece on the board! Tyler1 would literally combust! "MATED BY A PAWN?! A PAAAWN?!" Uninstall the game! 🔥🤡`,
+    );
+  }
+
+  // ── Sacrifice into mate ────────────────────────────────────────────
+  if (isSacMate) {
+    lines.push(
+      `⚡☠️ ${move.san}!! SACRIFICE INTO CHECKMATE! They gave up ${pieceName} to deliver the KILLING BLOW! Tal is standing up and APPLAUDING from chess heaven! ABSOLUTE CINEMA! 🎬🔥`,
+      `🎭☠️ ${move.san}!! A SACRIFICIAL CHECKMATE! The greatest flex in all of chess — give up material AND end the game! This is an ARTISTIC MASTERPIECE! Somebody frame this game! 🖼️💀`,
+    );
+  }
+
+  // ── Context-aware generic mate lines ───────────────────────────────
+  if (isShortGame) {
+    lines.push(
+      `⚡☠️ ${move.san}!! CHECKMATE IN ${totalMoves} MOVES! That's not even a game, that's a SPEEDRUN! The opponent barely got to sit down! BLITZ EXECUTION! ANY% WORLD RECORD! 🏎️💀`,
+      `💀🔥 ${move.san}!! MATE ON MOVE ${totalMoves}?! The game started ${totalMoves} moves ago and it's ALREADY OVER! That's not chess, that's a HIT JOB! The opponent got ASSASSINATED! 🔪⚡`,
+      `⚡ ${move.san}!! ${totalMoves}-MOVE CHECKMATE! The opening IS the endgame! They came, they saw, they MATED! Julius Caesar energy except with PIECES! 👑💀`,
+    );
+  }
+
+  if (isLongGame) {
+    lines.push(
+      `🏁☠️ ${move.san}!! CHECKMATE AFTER ${totalMoves} MOVES! A war of attrition! A battle of WILLPOWER! And it ends with a BANG, not a whimper! That's what PERSISTENCE looks like! 🔥💀`,
+      `⚔️💀 ${move.san}!! ${totalMoves} moves of WARFARE and it finally ends in CHECKMATE! Both players survived everything — trades, sacrifices, blunders — and THIS is how it ends! EPIC! 🏰🔥`,
+    );
+  }
+
+  if (ctx.playerBlunders >= 3) {
+    lines.push(
+      `☠️🤡 ${move.san}!! CHECKMATE! After ${ctx.playerBlunders} BLUNDERS this game?! They played like a drunk pirate for 90% of the game and STILL found mate at the end?! The AUDACITY! The REDEMPTION ARC! 🏴‍☠️🔥`,
+      `💀🤯 ${move.san}!! MATE! With ${ctx.playerBlunders} blunders on their record?! That's like failing every test and STILL graduating! The plot armor on this player is INSANE! 🛡️🗿`,
+    );
+  }
+
+  if (ctx.threwAdvantage) {
+    lines.push(
+      `☠️😤 ${move.san}!! CHECKMATE! They threw the advantage, everyone thought it was OVER, and then they pull THIS?! THE COMEBACK! THE REDEMPTION! 🔥⚡`,
+    );
+  }
+
+  // ── Streamer/meme reactions ────────────────────────────────────────
+  lines.push(
+    `☠️🔥 ${move.san}!! CHECKMATE!! THAT'S THE GAME!! Levy would SCREAM! Hikaru would speed-nod! The chat would go BERSERK! ABSOLUTE SCENES! What a way to end it! 💀⚡`,
+    `💀🎬 ${move.san}!! IT'S MATE! IT'S OVER! THE OPPONENT IS DECEASED! Not injured, not hurt — DECEASED! This is why we play chess! FOR MOMENTS LIKE THIS! 🔥🏁`,
+    `☠️ ${move.san}!! CHECKMATE! That's it! Send the flowers! Write the eulogy! The game is OVER and the opponent's position is in a CASKET! REST IN PIECES! 🪦⚡`,
+    `🔥💀 ${move.san}!! MATE! xQc would knock everything off his desk screaming "CHECKMATE DUDE!! CHECKMATE!!" at 2am while his neighbors call the police! 🚨🔊`,
+    `💀🔊 ${move.san}!! CHECKMATE!! Tyler1 energy! "GET THAT OUTTA HERE!! LET'S GOOOOO!!" Desk officially in orbit! The neighbors are NOT okay! 🗿🔥`,
+    `☠️👑 ${move.san}!! CHECKMATE! Magnus would analyze this calmly. We are NOT Magnus. WE ARE SCREAMING! THE KING IS DEAD! LONG LIVE THE WINNER! 🔥🏆`,
+    `🎭☠️ ${move.san}!! CHECKMATE! Andrea Botez would Botez Gambit her queen for this moment! Alexandra would be PROUD! Chat would be FERAL! What a GAME! 👑💀`,
+    `☠️ ${move.san}!! MATE!! Eric Rosen would tilt his head and softly say "oh... that's checkmate." THE MOST PEACEFUL VIOLENCE IN CHESS HISTORY! 😌💀`,
+    `💀⚡ ${move.san}!! THAT'S MATE! Tyler1 "RAAAHHH!! WHERE'S YOUR KING NOW?! WHERE IS HE?! HE'S DEAD!! GET OUTTA MY GAME!!" 🏠💪🔥`,
+    `☠️🐸 ${move.san}!! CHECKMATE and I literally cannot believe what I just witnessed! At ${elo} elo! This game had NO business ending this beautifully! 🗿🔥`,
+    `💀🔥 ${move.san}!! MATE! Ludwig would stand up, walk away from his desk, come back, and go "chat what just happened." WE DON'T KNOW EITHER LUDWIG! 🎮⚡`,
+    `☠️🏆 ${move.san}!! CHECKMATE! And with that, the game is SEALED! The king falls! The clock stops! One player celebrates, the other uninstalls! Circle of chess life! 🎭💀`,
+  );
+
+  // ── Elo-specific flavoring ─────────────────────────────────────────
+  if (elo < 1000) {
+    lines.push(
+      `☠️🤯 ${move.san}!! CHECKMATE! AT ${elo} ELO?! They actually found MATE?! I was fully expecting a stalemate or a timeout! But NO! They actually ENDED IT! Growth! GROWTH! 📈💀`,
+    );
+  } else if (elo >= 1800) {
+    lines.push(
+      `☠️🧠 ${move.san}!! CHECKMATE! Clean. Precise. Calculated. This is what ${elo} elo looks like when they're LOCKED IN! No accidents here — pure EXECUTION! 🎯💀`,
+    );
+  }
+
+  return { text: pickUnused(lines, used), annotations: { arrows: mateArrows, markers: mateMarkers } };
+}
+
 function _brilliantRoast(
   move: AnalyzedMove,
   before: Chess,
@@ -1707,10 +1885,6 @@ function _brilliantRoast(
     () => ({ text: `🍺 ${move.san}.${callback} Eric Hansen energy — bold, aggressive, slightly unhinged, and somehow CORRECT. GM-level chaos from a non-GM. Chessbrah would be proud 🔥🧠`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => ({ text: `🧠 ${move.san}.${callback} Aman Hambleton finds moves like this while looking completely calm. This player probably had a heart attack finding it. Same result tho ♟️🫡`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => {
-      // If the move is checkmate, skip fork detection — it's MATE, not a fork
-      if (move.san.includes("#")) {
-        return { text: `♟️💀 ${move.san}! CHECKMATE! They found the mate! At this elo?? I refuse to believe they calculated that. Must've been an accident 🧠✨`, annotations: { arrows: baseArrows, markers: [{ square: toSq, emoji: "♟️" }] } };
-      }
       const forks = landed ? detectForks(after, toSq, { type: landed.type, color: landed.color, square: toSq }) : [];
       if (forks.length >= 2) {
         const targets = forks.map(f => `${pn(f.type)} on ${f.square}`).join(" and ");
@@ -1744,6 +1918,9 @@ function _brilliantRoast(
     () => ({ text: `🐐 ${move.san}.${callback} Charlie would deadpan into the camera and say "that is the greatest chess move I've ever seen in my life" and somehow mean it. Moistmeter: 100 🎭🔥`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => ({ text: `🌸 ${move.san}.${callback} Pokimane PogChamps energy — except she was actually learning. This player apparently already knew. When did THAT happen 🎮🤯`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => ({ text: `📺 ${move.san}.${callback} Levy's thumbnail for this: zoomed in face, red circle around the piece, title "THIS MOVE IS ILLEGAL (it's not)." Classic GothamChess. Deserved tho 🔴📸`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `💪 ${move.san}.${callback} Tyler1 would stand up from his chair, flex, and go "WHAT WAS THAT?! REFORMED AND BRILLIANT! GET THAT OUTTA HERE!!" The neighbors are filing noise complaints! 🔊🏠`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `🔊 ${move.san}.${callback} Tyler1 reaction: *stands up* *headset flies off* "RAAAHHH!! THAT'S THE MOVE!! THAT'S THE MOVEEE!!" Sir please, this is a chess game, not a boxing match 💪🤯`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `💪 ${move.san}.${callback} This is Tyler1 "I'm built DIFFERENT" energy. Except they actually ARE built different for this one move. Just this one. Don't let it go to their head 🗿🔥`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
   ];
   return pick(lines)();
 }
@@ -1877,6 +2054,12 @@ function _goodMoveRoast(
       () => `📊 ${move.san}. Engine: "meh." Lichess database: "${wrPct}% win rate in ${gamesStr} games." Numbers don't lie 🤖🗳️`,
     );
   }
+
+  // Tyler1 good move lines
+  lines.push(
+    () => `💪 ${move.san}. Tyler1 would flex and go "THAT'S WHAT I'M TALKING ABOUT! REFORMED GAMEPLAY!" Sir, one good move does not equal reformed 🔊🗿`,
+    () => `🔊 ${move.san}. Tyler1 energy: "I AM THE BEST! I AM THE GREATEST!" You made one decent move. Calm down 💪🤡`,
+  );
 
   return { text: pick(lines)(), annotations: ann };
 }
@@ -2541,6 +2724,10 @@ function _blunderRoast(
     `💀 ${move.san}.${ctxLine} This has big "I'm 1660 and this is my peak" energy. The plateau isn't a phase, it's a lifestyle 📉🗿`,
     `☠️ ${move.san}.${ctxLine} Actual zombie chess. The position is dead but the game keeps going. Weekend at Bernie's but it's a chess game 🧟💀`,
     `🤡 ${move.san}.${ctxLine} This move belongs on the AnarchyChess Hall of Fame. Right next to the en passant brick and the Petrosian copypasta 🏛️⛪🗿`,
+    `💪 ${move.san}.${ctxLine} Tyler1 would literally HEADBUTT the monitor. "WHAT IS THAT MOVE?! I'M 6'5 AND THIS MOVE MAKES ME WANT TO FIGHT SOMEONE!!" Desk obliterated. Neighbors traumatized 🏠🔊`,
+    `🔊 ${move.san}.${ctxLine} Tyler1 reaction: *slams desk* *stands up* "THERE'S NO WAY! THERE'S NO WAYYY!!" The mic PEAKS. The neighbors call 911. The chess community weeps 💀💪`,
+    `💪 ${move.san}.${ctxLine} Tyler1 "REFORMED" energy except this move is NOT reformed. This move is the OPPOSITE of reformed. This move got BANNED from Riot AND from chess 🔨🤡`,
+    `🔊 ${move.san}.${ctxLine} If Tyler1 played chess and saw this move, he would unplug his PC, carry it outside, and throw it into traffic. And honestly? I get it 💀🚗`,
   ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: _toSq, emoji: "💀" }] } };
 }
 
@@ -2776,6 +2963,8 @@ function _mistakeRoast(
     `🤡 ${move.san}.${ctxFallback} Garry Chess did not invent this beautiful game for you to play like this. He's rolling in his... wait he's still alive. He's just rolling 🗿👑`,
     `😬 ${move.san}.${ctxFallback} r/AnarchyChess would love this. "Just played this game, am I improving?" Comments: "no" 💀⬆️🗿`,
     `🤡 ${move.san}.${ctxFallback} The horse moves in an L shape and even IT is confused by this decision. Neigh 🐴🗿`,
+    `💪 ${move.san}.${ctxFallback} Tyler1 seeing this: "WHAT ARE YOU DOING BRO?! WHAT ARE YOU DOOOOING?!" The desk takes another hit. The keyboard is never the same 🔊💀`,
+    `🔊 ${move.san}.${ctxFallback} Tyler1 would call this "OMEGA cringe gameplay." And for once I agree with the loud man. This move is indeed OMEGA cringe 💪🗿`,
     ], used), annotations: { arrows: [moveArrow, ...(move.bestMoveUci ? [[move.bestMoveUci.slice(0, 2), move.bestMoveUci.slice(2, 4), "rgba(34, 197, 94, 0.7)"] as [string, string, string]] : [])], markers: [{ square: toSq, emoji: pick(["😬", "📉", "🤡", "😤", "🗿"]) }] } };
 }
 
