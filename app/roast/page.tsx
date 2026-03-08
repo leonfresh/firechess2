@@ -3609,6 +3609,51 @@ export default function RoastPage() {
                   <span className="text-[10px] text-slate-500 font-mono tracking-wider">Round {gamesPlayed + 1}</span>
                 </div>
               )}
+              {/* Board + Crowd Bar row */}
+              <div className="flex items-stretch gap-2 w-full max-w-[680px]">
+                {/* ── Vertical Crowd Bar (left of board, like eval bar) ── */}
+                {(pageState === "watching" || pageState === "guessing") && (
+                  <div className="flex flex-col items-center gap-1 pt-6 pb-6">
+                    <span className="text-[9px] text-slate-600 font-bold uppercase tracking-wider whitespace-nowrap" style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}>
+                      👥 Crowd
+                    </span>
+                    <div
+                      className="relative flex-1 overflow-hidden rounded-lg border border-white/[0.08]"
+                      style={{ width: 22, minHeight: 120 }}
+                      title={`Crowd: ${audienceMeter}%`}
+                    >
+                      {/* Background (bored/empty) */}
+                      <div className="absolute inset-0 bg-white/[0.03]" />
+                      {/* Fill from bottom */}
+                      <div
+                        className="absolute bottom-0 left-0 w-full transition-all duration-700 ease-out"
+                        style={{
+                          height: `${audienceMeter}%`,
+                          background: audienceMeter > 70
+                            ? "linear-gradient(to top, #22c55e, #4ade80)"
+                            : audienceMeter > 40
+                            ? "linear-gradient(to top, #eab308, #facc15)"
+                            : "linear-gradient(to top, #ef4444, #f87171)",
+                          boxShadow: audienceMeter > 70
+                            ? "0 0 8px rgba(34,197,94,0.4)"
+                            : audienceMeter < 30
+                            ? "0 0 8px rgba(239,68,68,0.4)"
+                            : "none",
+                        }}
+                      />
+                      {/* Center line */}
+                      <div className="absolute left-0 top-1/2 w-full border-t border-white/10" />
+                    </div>
+                    <span className="text-[9px] font-bold tabular-nums" style={{
+                      color: audienceMeter > 70 ? "#4ade80" : audienceMeter > 40 ? "#facc15" : "#f87171",
+                    }}>
+                      {audienceMeter > 85 ? "🤯" : audienceMeter > 70 ? "😍" : audienceMeter > 55 ? "🙂" : audienceMeter > 40 ? "😐" : audienceMeter > 20 ? "😬" : "💀"}
+                    </span>
+                  </div>
+                )}
+
+                {/* Board + player labels column */}
+                <div className="flex-1 flex flex-col items-center gap-2 sm:gap-3 min-w-0">
               {/* Player labels */}
               <div className="w-full max-w-[640px] flex items-center justify-between px-1">
                 <div className="flex items-center gap-2 text-sm">
@@ -3822,7 +3867,35 @@ export default function RoastPage() {
                     </span>
                   )}
                 </div>
+                {/* Elimination stats (compact, next to player label) */}
+                {(pageState === "watching" || pageState === "guessing") && currentIdx >= 0 && (
+                  <div className="flex items-center gap-2">
+                    {(() => {
+                      const blundersNow = moves.slice(0, currentIdx + 1).filter(m => m.classification === "blunder").length;
+                      const mistakesNow = moves.slice(0, currentIdx + 1).filter(m => m.classification === "mistake").length;
+                      return (
+                        <>
+                          {blundersNow > 0 && (
+                            <span className="text-[10px] font-bold text-red-400 flex items-center gap-0.5">
+                              💀 {blundersNow}
+                            </span>
+                          )}
+                          {mistakesNow > 0 && (
+                            <span className="text-[10px] font-bold text-orange-400/60 flex items-center gap-0.5">
+                              ⚠️ {mistakesNow}
+                            </span>
+                          )}
+                        </>
+                      );
+                    })()}
+                    <span className="text-[10px] text-slate-600 tabular-nums">
+                      {Math.round(((currentIdx + 1) / moves.length) * 100)}%
+                    </span>
+                  </div>
+                )}
               </div>
+                </div>{/* end board + player labels column */}
+              </div>{/* end board + crowd bar row */}
 
               {/* Commentary text below board (hidden on mobile — mobile clippy shows it) */}
               {activeComment && (pageState === "watching" || pageState === "guessing") && (
@@ -3987,68 +4060,7 @@ export default function RoastPage() {
                 </div>
               )}
 
-              {/* Audience Reaction Meter */}
-              {(pageState === "watching" || pageState === "guessing") && (
-                <div className="w-full max-w-[640px]">
-                  <div className="flex items-center gap-2 px-1">
-                    <span className="text-[10px] text-slate-600 uppercase tracking-wider font-bold whitespace-nowrap">
-                      👥 Crowd
-                    </span>
-                    <div className="flex-1 h-2.5 rounded-full bg-white/[0.04] border border-white/[0.06] overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-700 ease-out"
-                        style={{
-                          width: `${audienceMeter}%`,
-                          background: audienceMeter > 70
-                            ? "linear-gradient(90deg, #22c55e, #4ade80)"
-                            : audienceMeter > 40
-                            ? "linear-gradient(90deg, #eab308, #facc15)"
-                            : "linear-gradient(90deg, #ef4444, #f87171)",
-                          boxShadow: audienceMeter > 70
-                            ? "0 0 8px rgba(34,197,94,0.4)"
-                            : audienceMeter < 30
-                            ? "0 0 8px rgba(239,68,68,0.4)"
-                            : "none",
-                        }}
-                      />
-                    </div>
-                    <span className="text-[10px] text-right tabular-nums whitespace-nowrap flex items-center gap-1" style={{
-                      color: audienceMeter > 70 ? "#4ade80" : audienceMeter > 40 ? "#facc15" : "#f87171",
-                    }}>
-                      {audienceMeter > 85 ? "🤯 Hyped" : audienceMeter > 70 ? "😍 Loving it" : audienceMeter > 55 ? "🙂 Engaged" : audienceMeter > 40 ? "😐 Meh" : audienceMeter > 20 ? "😬 Cringe" : "💀 Bored"}
-                    </span>
-                  </div>
 
-                  {/* Beast Games-style elimination + survival stats */}
-                  {currentIdx >= 0 && (
-                    <div className="flex items-center justify-between px-1 mt-1.5">
-                      <div className="flex items-center gap-3">
-                        {(() => {
-                          const blundersNow = moves.slice(0, currentIdx + 1).filter(m => m.classification === "blunder").length;
-                          const mistakesNow = moves.slice(0, currentIdx + 1).filter(m => m.classification === "mistake").length;
-                          return (
-                            <>
-                              {blundersNow > 0 && (
-                                <span className="text-[10px] font-bold text-red-400 flex items-center gap-0.5">
-                                  💀 {blundersNow} eliminated
-                                </span>
-                              )}
-                              {mistakesNow > 0 && (
-                                <span className="text-[10px] font-bold text-orange-400/60 flex items-center gap-0.5">
-                                  ⚠️ {mistakesNow}
-                                </span>
-                              )}
-                            </>
-                          );
-                        })()}
-                      </div>
-                      <span className="text-[10px] text-slate-600 tabular-nums">
-                        {Math.round(((currentIdx + 1) / moves.length) * 100)}% complete
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
 
               {/* Playback controls */}
               {(pageState === "watching" || pageState === "guessing" || pageState === "revealed") && (
