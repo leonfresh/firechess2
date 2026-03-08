@@ -243,6 +243,71 @@ type PageState = "choose-source" | "loading" | "intro" | "watching" | "guessing"
 const _PIECE_VAL: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
 function _pieceVal(p: string | undefined | null): number { return _PIECE_VAL[p ?? ""] ?? 0; }
 
+/**
+ * Chess.com-style brilliant move detection.
+ * A move is "brilliant" if:
+ *  1. It IS the engine's best move (cpLoss ~ 0)
+ *  2. It involves a real material sacrifice (piece moved to danger or high-value piece captured low-value on defended square)
+ *  3. The position wasn't already crushingly winning (eval < +600)
+ *  4. It's NOT a simple recapture on the previous move's square
+ *  5. The eval stays solid after the sacrifice (proving compensation)
+ */
+function _isBrilliantMove(
+  moveResult: { piece: string; captured?: string | null; from: string; to: string; san: string; flags: string },
+  fenAfter: string,
+  evalBeforeForSide: number,
+  evalAfterForSide: number,
+  isBestMove: boolean,
+  prevMoveTo: string | null,
+): boolean {
+  // Must be the engine's best move
+  if (!isBestMove) return false;
+
+  // Not already crushingly winning — sacrifice in a won position isn't brilliant
+  if (evalBeforeForSide > 600) return false;
+
+  // Not a simple recapture on the square the opponent just moved to
+  if (prevMoveTo && moveResult.to === prevMoveTo && moveResult.captured) return false;
+
+  // Castling and pawn moves are never brilliant
+  if (moveResult.piece === "p" || moveResult.san === "O-O" || moveResult.san === "O-O-O") return false;
+
+  const movingPieceVal = _pieceVal(moveResult.piece);
+  let isSacrifice = false;
+
+  if (moveResult.captured) {
+    // Capture sacrifice: mover gives up significantly more material
+    // e.g. Queen takes pawn on a defended square (Q=9, p=1, diff=8)
+    if (movingPieceVal > _pieceVal(moveResult.captured) + 1) {
+      // Check if opponent can recapture on the target square (piece is actually at risk)
+      try {
+        const sim = new Chess(fenAfter);
+        const replies = sim.moves({ verbose: true });
+        if (replies.some(r => r.to === moveResult.to)) isSacrifice = true;
+      } catch {}
+    }
+  } else {
+    // Non-capture sacrifice: piece moves to an attacked square (en prise)
+    // Only consider pieces worth >= 3 (knight/bishop/rook/queen)
+    if (movingPieceVal >= 3) {
+      try {
+        const sim = new Chess(fenAfter);
+        const replies = sim.moves({ verbose: true });
+        if (replies.some(r => r.to === moveResult.to && r.captured)) isSacrifice = true;
+      } catch {}
+    }
+  }
+
+  if (!isSacrifice) return false;
+
+  // The sacrifice must be sound — eval shouldn't drop significantly
+  // (it IS the best move, so by definition it's sound, but we double-check
+  //  that the eval didn't tank — sometimes depth is too shallow)
+  if (evalAfterForSide < evalBeforeForSide - 200) return false;
+
+  return true;
+}
+
 /** Convert a UCI PV line into SAN moves (best-effort, returns as many as parse successfully) */
 function uciPvToSan(fen: string, uciMoves: string[]): string[] {
   const result: string[] = [];
@@ -853,7 +918,13 @@ export default function RoastPage() {
         const cpLoss = Math.max(0, cpBefore + cpAfter);
 
         const isBestMove = bestMoveSan === moveResult.san;
-        const classification = classifyMove(cpLoss, isBestMove);
+        let classification = classifyMove(cpLoss, isBestMove);
+
+        // Chess.com-style brilliant move override
+        const prevMoveTo = i > 0 ? analyzed[i - 1]?.to ?? null : null;
+        if (_isBrilliantMove(moveResult, fenAfter, evalBeforeForSide, evalAfterForSide, isBestMove, prevMoveTo)) {
+          classification = "brilliant";
+        }
 
         if (classification === "blunder") totalBlunders++;
         if (classification === "mistake") totalMistakes++;
@@ -1200,7 +1271,13 @@ export default function RoastPage() {
         const evalAfterForSide = -cpAfter * sideMultiplier;
         const cpLoss = Math.max(0, cpBefore + cpAfter);
         const isBestMove = bestMoveSan === moveResult.san;
-        const classification = classifyMove(cpLoss, isBestMove);
+        let classification = classifyMove(cpLoss, isBestMove);
+
+        // Chess.com-style brilliant move override
+        const prevMoveTo2 = i > 0 ? analyzed[i - 1]?.to ?? null : null;
+        if (_isBrilliantMove(moveResult, fenAfter, evalBeforeForSide, evalAfterForSide, isBestMove, prevMoveTo2)) {
+          classification = "brilliant";
+        }
 
         if (classification === "blunder") totalBlunders++;
         if (classification === "mistake") totalMistakes++;
