@@ -34,7 +34,6 @@ import {
   ELO_BRACKETS,
   getEloBracketIdx,
   getGameIntro,
-  GAME_INTRO,
   GAME_SUMMARY_LINES,
   REVEAL_CORRECT,
   REVEAL_TOO_HIGH,
@@ -1047,8 +1046,8 @@ export default function RoastPage() {
       setInaccuracies(totalInaccuracies);
       setAnalyzing(false);
 
-      // Intro screen — generic line (personalized banter plays in-game with TTS)
-      const intro = GAME_INTRO[Math.floor(Math.random() * GAME_INTRO.length)];
+      // Intro screen — personalized line with name banter when possible
+      const intro = getGameIntro(whitePlayer, blackPlayer);
       setIntroLine(intro);
       setPageState("intro");
     } catch (err) {
@@ -1365,8 +1364,8 @@ export default function RoastPage() {
       setInaccuracies(totalInaccuracies);
       setAnalyzing(false);
 
-      // Intro screen — generic line (personalized banter plays in-game with TTS)
-      const intro = GAME_INTRO[Math.floor(Math.random() * GAME_INTRO.length)];
+      // Intro screen — personalized line with name banter when possible
+      const intro = getGameIntro(whitePlayer, blackPlayer);
       setIntroLine(intro);
       setPageState("intro");
     } catch (err) {
