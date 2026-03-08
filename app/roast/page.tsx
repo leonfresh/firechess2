@@ -3272,7 +3272,7 @@ export default function RoastPage() {
 
                 {/* Tagline — punchy and streamer-friendly */}
                 <p className="text-lg sm:text-xl text-slate-300 font-medium mb-1">
-                  A Pepe-powered AI commentator roasts chess games in real time.
+                  A Pepe-powered commentator roasts chess games in real time.
                 </p>
                 <p className="text-base sm:text-lg text-orange-400/80 font-bold mb-2">
                   Can you guess the Elo just from watching the moves?
