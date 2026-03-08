@@ -626,7 +626,11 @@ export default function RoastPage() {
     setDecisionAnswer(null);
     setDecisionShown(new Set());
     setPendingDecisionIdx(null);
-    usedLines.current.clear();
+    // Keep usedLines across games for session-level dedup (trim to last 200 to avoid unbounded growth)
+    if (usedLines.current.size > 200) {
+      const arr = [...usedLines.current];
+      usedLines.current = new Set(arr.slice(-200));
+    }
     setActiveComment(null);
     setCurrentMood("neutral");
     setScore(0);
@@ -1082,7 +1086,11 @@ export default function RoastPage() {
     setDecisionAnswer(null);
     setDecisionShown(new Set());
     setPendingDecisionIdx(null);
-    usedLines.current.clear();
+    // Keep usedLines across games for session-level dedup (trim to last 200 to avoid unbounded growth)
+    if (usedLines.current.size > 200) {
+      const arr = [...usedLines.current];
+      usedLines.current = new Set(arr.slice(-200));
+    }
     setActiveComment(null);
     setCurrentMood("neutral");
     setScore(0);

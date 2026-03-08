@@ -1378,6 +1378,11 @@ function _brilliantRoast(
     () => ({ text: `🎯 ${move.san}. That's a 1660 player finding a GM move. Google "1660 chess." Holy hell. This is NOT supposed to happen ⛪🤯`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => ({ text: `🔥 ${move.san}. r/AnarchyChess would NOT believe this came from a game like this. "Fake, must be engine." Nope, just raw talent. Briefly 🗿⬆️`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
     () => ({ text: `👑 ${move.san}. Even Garry Chess himself — inventor of chess — would nod approvingly. Then see the rest of the game and take the nod back 🗿♟️`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `🎙️ ${move.san}.${callback} xQc would slam the desk, spill his drink, and scream "WHAT IS THAT MOVE" at 4am. And for once? He'd be right to be hyped 🗿🔊`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `🎮 ${move.san}.${callback} Ludwig would pause the stream and go "chat... CHAT... did you see that?" And chat would be going absolutely feral. Deserved 🐒🔥`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `♟️ ${move.san}.${callback} Andrea Botez would scream. Alexandra would nod with approval. The duality of the Botez sisters perfectly captured in one move 👑🎭`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `🇸🇪 ${move.san}.${callback} Anna Cramling energy — her mom WGM Pia would be proud of this one. Finding GM-level moves at this elo is SUSPICIOUS 🕵️👩‍👧`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
+    () => ({ text: `🎓 ${move.san}.${callback} Danya would break this down on stream for 45 seconds explaining exactly WHY it's brilliant. We'll just say: it's good. Really good 🧠🫡`, annotations: { arrows: baseArrows, markers: baseMarkers } }),
   ];
   return pick(lines)();
 }
@@ -1467,6 +1472,11 @@ function _goodMoveRoast(
     () => `👑 ${move.san}. Magnus would play this while doing a crossword puzzle on his phone. For this player? It's the highlight of their chess career 🧩🗿`,
     () => `🏆 ${move.san}. This is the kind of move Magnus plays and then immediately looks bored by. Championship-level move, mortal-level excitement 👑💤`,
     () => `👑 ${move.san}. Magnus energy. Effortless. Clean. Now do it 50 more times in a row like he would. Spoiler: they won't 🗿♟️`,
+    () => `🎙️ ${move.san}. xQc would look at this move and go "düd that's literally just a normal move düd" and he'd be RIGHT for once 🗿🔊`,
+    () => `🎮 ${move.san}. Ludwig reacting to this: "Chat, that's just a mid move. I'm not clipping that. Chat stop typing W." Fair assessment 🎬🫠`,
+    () => `♟️ ${move.san}. Alexandra Botez would call this "solid" and move on. Andrea would try something spicy instead and blunder. Different energies 👑🤡`,
+    () => `🇸🇪 ${move.san}. Anna Cramling would narrate this move so enthusiastically you'd think it was mate. It's not. It's just a normal move. But Anna makes everything sound exciting 🎙️✨`,
+    () => `🎓 ${move.san}. Danya would spend 2 minutes explaining why this is the right move and what principle it follows. We'll just say: it's fine. Move on 🧠🫡`,
     () => `😤 ${move.san}. They played a normal chess move and want applause? This is the bare minimum? Like, the FLOOR? 📉👏`,
     () => ctx.playerBlunders > 0
       ? `🗿 ${move.san}. "Don't hang pieces" ✅ "Play the best move" ❌ Somewhere in between. Mid. Ultra mid 🫠`
@@ -1513,6 +1523,10 @@ function _missedMateRoast(move: AnalyzedMove): { text: string; annotations: Move
     () => `🤡 Mate in ${n}. They didn't see it. Of COURSE they didn't see it. Why would they see CHECKMATE when they can play ${move.san} instead. The Knook weeps 🗿♞🏰`,
     () => `😌 Mate in ${n}. Eric Rosen would have seen this instantly and said "oh that's nice" in the softest voice. This player saw it and said "nah" and played ${move.san} 💀😌`,
     () => `💀 Missing mate in ${n} is wild. Eric Rosen's chat would be screaming "MAAATE" in all caps. The streamer himself? Calm. The player who missed it? Also calm, but for worse reasons 😌🗿`,
+    () => `🎙️ Mate in ${n} on the board and they played ${move.san}. xQc would literally stand up from his chair and start pacing around the room. "DÜD ARE YOU SERIOUS RIGHT NOW" 🗿💥`,
+    () => `🎮 Mate in ${n}. MATE. IN. ${n}. Ludwig would stare into the camera with dead eyes and say "...no shot." And for once, the "no shot" is 100%% justified 📺💀`,
+    () => `♟️ Missed mate in ${n}?? Even Andrea Botez sees mate in ${n}. The BOTEZ GAMBIT wasn't THIS bad. At least that was giving away the queen ON PURPOSE 👑🤡`,
+    () => `🎓 Mate in ${n} was available. Danya would circle the mating square with his cursor and go "so the key idea here is... CHECKMATE" in the calmest voice. This player chose chaos instead 🧠😭`,
   ];
   return { text: pick(lines)(), annotations: ann };
 }
@@ -2011,7 +2025,13 @@ function _blunderRoast(
     `💀 ${move.san}.${ctxLine} "True will never die" — but this position? This position is DECEASED. Petrosian copypasta energy in move form 🪦🗿`,
     `☠️ ${move.san}.${ctxLine} W)esley S)o would never play this. "Proffesionals knew how to lose and congratulate." This player doesn't know how to NOT lose 🗿🤡`,
     `🤡 ${move.san}.${ctxLine} "You was doing PIPI in your pampers when I was beating players much more stronger then you!" — Petrosian's ghost watching this game 👻🗿`,
-    `🎯 ${move.san}.${ctxLine} Certified 1660 moment. This is EXACTLY the kind of move Levy pauses on and goes "WHAT. WHAT IS THAT." Peak Guess the Elo content 📺🤡`,
+    `�️ ${move.san}.${ctxLine} xQc would slam the desk so hard his webcam falls off. "WHAT IS THAT MOVE DÜD" echoing through the void. And honestly? Valid reaction 🗿💥`,
+    `🎮 ${move.san}.${ctxLine} Ludwig would just stare at the screen and say "no shot. NO SHOT." And then clip it for the YouTube video. Peak content 📺🤡`,
+    `♟️ ${move.san}.${ctxLine} Andrea Botez Gambit energy. Give away all the pieces and pray. Except Andrea at least commits to the bit. This is just sadness 👑💀`,
+    `🇸🇪 ${move.san}.${ctxLine} Anna Cramling would cover her mouth with both hands and go "NOOOO" in the most wholesome way possible. The move deserves a less wholesome reaction 😱🙈`,
+    `🎓 ${move.san}.${ctxLine} Danya would pause here and explain exactly why this loses in his calm teacher voice. "So the problem with this move is... everything." Class dismissed 🧠💀`,
+    `🎙️ ${move.san}.${ctxLine} This is what happens when you learn chess from xQc's Twitch chat instead of actual lessons. The juicer community is NOT a chess academy 🍊💀`,
+    `�🎯 ${move.san}.${ctxLine} Certified 1660 moment. This is EXACTLY the kind of move Levy pauses on and goes "WHAT. WHAT IS THAT." Peak Guess the Elo content 📺🤡`,
     `💀 ${move.san}.${ctxLine} This is 1660 behavior and I will not elaborate further. If you know you know. If you don't know, lucky you 🗿📺`,
     `🤡 ${move.san}.${ctxLine} Google "1660 chess." Holy hell. New response just dropped and it's this move. Actually just this entire game 💀⛪`,
     `🚨 ${move.san}.${ctxLine} The resssign button is RIGHT THERE. Right there. They can see it. They choose to suffer instead. Respect honestly 🗿🏳️`,
@@ -3191,6 +3211,8 @@ function _styleRoast(
       `🔥 ${move.san}. They watched one Hikaru speed chess video and said "I can do that." Spoiler: they cannot. But they're TRYING 🏎️💀`,
       `⚡ ${move.san}. Full Levy "SACRIFICE" energy rn. They're throwing pieces at the king like it's Black Friday and material is on sale 🛒🔥`,
       `😌 ${move.san}. Giving Eric Rosen Stafford Gambit vibes. Just throw everything at the king and see what sticks. Except Rosen actually calculates first 🎯😌`,
+      `🎙️ ${move.san}. xQc chess arc energy — just GO. Don't think. Don't calculate. Just PUSH PIECES FORWARD and scream about it later 🗿💥`,
+      `♟️ ${move.san}. Andrea Botez pre-move energy! When Andrea goes aggro it's either checkmate or disaster. No in-between. This player is channeling that right now 👑🔥`,
     ], used);
     return { text, annotations: ann };
   }
@@ -3207,6 +3229,8 @@ function _styleRoast(
       `😴 ${move.san}. The opposite of Tal energy. This is Petrosian energy but without the wins. Just the suffering 💀`,
       `🐢 ${move.san}. Playing like anti-Hikaru rn. Where Naka pushes, they retreat. Where Naka attacks, they shuffle. Polar opposites 🏎️↔️🐌`,
       `💤 ${move.san}. Levy would be BEGGING them to do something. "PUSH A PAWN. ATTACK SOMETHING. DO ANYTHING." They refuse 📺😤`,
+      `🎙️ ${move.san}. Even xQc — who has the attention span of a goldfish — would be bored watching this. "DÜD NOTHING IS HAPPENING" for once he'd be right 🗿😴`,
+      `🎮 ${move.san}. Ludwig would cut to a different game on stream because this is putting chat to sleep. Zero content. Zero drama. Just shuffling 📺💤`,
     ], used);
     return { text, annotations: ann };
   }
@@ -3222,6 +3246,7 @@ function _styleRoast(
       `🔄 ${move.san} — is this a chess game or a piece exchange program?? The board is getting emptier by the second 🏜️`,
       `🤝 Trade trade trade. "When in doubt, trade it out." The motto of every scared chess player ever 😬♻️`,
       `♻️ Hikaru voice: "captures, captures, captures, and we trade everything." Except when Hikaru does it, it's a PLAN. Here it's just fear 🏎️😬`,
+      `♟️ ${move.san}. Alexandra Botez simplification energy. Trade down, reach an endgame, and hope the opponent doesn't know theory. Actually not a terrible plan at this elo 👑🤝`,
     ], used);
     return { text, annotations: ann };
   }
