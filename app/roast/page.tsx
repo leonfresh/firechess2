@@ -578,6 +578,20 @@ export default function RoastPage() {
   const [scoreSaved, setScoreSaved] = useState(false);
   const [savingScore, setSavingScore] = useState(false);
 
+  /* ── Voice picker dropdown ── */
+  const [voiceDropdownOpen, setVoiceDropdownOpen] = useState<"sidebar" | "welcome" | null>(null);
+  const voiceDropdownRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!voiceDropdownOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (voiceDropdownRef.current && !voiceDropdownRef.current.contains(e.target as Node)) {
+        setVoiceDropdownOpen(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [voiceDropdownOpen]);
+
   /* ── Streamer Mode (OBS-friendly) ── */
   const [streamerMode, setStreamerMode] = useState(false);
   useEffect(() => {
@@ -3166,18 +3180,42 @@ export default function RoastPage() {
                   {tts.supported && tts.availableVoices.length > 1 && (
                     <div className="mt-3 flex items-center justify-center gap-2">
                       <label className="text-xs text-emerald-300/50 font-medium">Voice:</label>
-                      <select
-                        value={tts.voiceName}
-                        onChange={(e) => tts.setVoice(e.target.value)}
-                        className="rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-1.5 text-xs text-emerald-300 appearance-none cursor-pointer hover:border-emerald-500/40 transition-colors max-w-[200px] truncate"
-                      >
-                        {tts.availableVoices.map(v => (
-                          <option key={v.name} value={v.name}>{v.name}</option>
-                        ))}
-                      </select>
+                      <div className="relative" ref={voiceDropdownOpen === "welcome" ? voiceDropdownRef : undefined}>
+                        <button
+                          type="button"
+                          onClick={() => setVoiceDropdownOpen(voiceDropdownOpen === "welcome" ? null : "welcome")}
+                          className="flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] px-3 py-1.5 text-xs text-emerald-300 cursor-pointer hover:border-emerald-500/40 transition-colors max-w-[200px]"
+                        >
+                          <span className="truncate">{tts.voiceName.replace(/Microsoft\s+/, "").replace(/\s+Online\s+\(Natural\).*/, "")}</span>
+                          <svg className={`h-3 w-3 shrink-0 text-emerald-400/50 transition-transform ${voiceDropdownOpen === "welcome" ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        {voiceDropdownOpen === "welcome" && (
+                          <div className="absolute z-50 mt-1 left-1/2 -translate-x-1/2 w-56 max-h-64 overflow-y-auto rounded-xl border border-emerald-500/20 bg-zinc-900/95 backdrop-blur-md shadow-2xl shadow-black/60 py-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
+                            {tts.availableVoices.map(v => {
+                              const short = v.name.replace(/Microsoft\s+/, "").replace(/\s+Online\s+\(Natural\).*/, "");
+                              const isActive = v.name === tts.voiceName;
+                              return (
+                                <button
+                                  key={v.name}
+                                  type="button"
+                                  onClick={() => { tts.setVoice(v.name); setVoiceDropdownOpen(null); }}
+                                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs transition-colors cursor-pointer ${
+                                    isActive
+                                      ? "bg-emerald-500/15 text-emerald-300"
+                                      : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
+                                  }`}
+                                >
+                                  {isActive && <span className="text-emerald-400">✓</span>}
+                                  <span className={`truncate ${isActive ? "" : "ml-5"}`}>{short}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                       <button
                         onClick={() => tts.speak("Welcome to Roast the Elo! Let's see how bad this game really is.")}
-                        className="rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] px-2 py-1.5 text-xs text-emerald-300 hover:bg-emerald-500/[0.12] transition-colors"
+                        className="rounded-lg border border-emerald-500/20 bg-emerald-500/[0.06] px-2 py-1.5 text-xs text-emerald-300 hover:bg-emerald-500/[0.12] transition-colors cursor-pointer"
                         title="Preview voice"
                       >
                         ▶
@@ -4129,15 +4167,39 @@ export default function RoastPage() {
                   <div className="mb-3 space-y-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
                     <div className="flex items-center gap-2">
                       <label className="text-[10px] text-slate-500 font-medium whitespace-nowrap">Voice</label>
-                      <select
-                        value={tts.voiceName}
-                        onChange={(e) => tts.setVoice(e.target.value)}
-                        className="flex-1 min-w-0 rounded-md border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-[10px] text-slate-300 appearance-none cursor-pointer hover:border-orange-500/30 transition-colors truncate"
-                      >
-                        {tts.availableVoices.map(v => (
-                          <option key={v.name} value={v.name}>{v.name}</option>
-                        ))}
-                      </select>
+                      <div className="relative flex-1 min-w-0" ref={voiceDropdownOpen === "sidebar" ? voiceDropdownRef : undefined}>
+                        <button
+                          type="button"
+                          onClick={() => setVoiceDropdownOpen(voiceDropdownOpen === "sidebar" ? null : "sidebar")}
+                          className="flex w-full items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-[10px] text-slate-300 cursor-pointer hover:border-orange-500/30 transition-colors"
+                        >
+                          <span className="truncate flex-1 text-left">{tts.voiceName.replace(/Microsoft\s+/, "").replace(/\s+Online\s+\(Natural\).*/, "")}</span>
+                          <svg className={`h-3 w-3 shrink-0 text-slate-500 transition-transform ${voiceDropdownOpen === "sidebar" ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                        </button>
+                        {voiceDropdownOpen === "sidebar" && (
+                          <div className="absolute z-50 mt-1 left-0 right-0 w-64 max-h-56 overflow-y-auto rounded-xl border border-white/[0.08] bg-zinc-900/95 backdrop-blur-md shadow-2xl shadow-black/60 py-1 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10">
+                            {tts.availableVoices.map(v => {
+                              const short = v.name.replace(/Microsoft\s+/, "").replace(/\s+Online\s+\(Natural\).*/, "");
+                              const isActive = v.name === tts.voiceName;
+                              return (
+                                <button
+                                  key={v.name}
+                                  type="button"
+                                  onClick={() => { tts.setVoice(v.name); setVoiceDropdownOpen(null); }}
+                                  className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-[10px] transition-colors cursor-pointer ${
+                                    isActive
+                                      ? "bg-orange-500/15 text-orange-300"
+                                      : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
+                                  }`}
+                                >
+                                  {isActive && <span className="text-orange-400 text-xs">✓</span>}
+                                  <span className={`truncate ${isActive ? "" : "ml-4"}`}>{short}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <label className="text-[10px] text-slate-500 font-medium whitespace-nowrap">Speed</label>
