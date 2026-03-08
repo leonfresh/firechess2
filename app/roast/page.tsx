@@ -2980,18 +2980,21 @@ export default function RoastPage() {
                 </p>
 
                 {/* Alpha warning */}
-                <div className="mx-auto mb-4 max-w-md rounded-xl border border-amber-500/30 bg-amber-500/[0.06] px-4 py-3">
-                  <p className="text-xs font-bold text-amber-400 uppercase tracking-wider mb-1">⚠️ Alpha — Expect Rough Edges</p>
-                  <p className="text-[11px] text-amber-200/70 leading-relaxed">
+                <div className="mx-auto mb-5 max-w-lg rounded-2xl border-2 border-amber-500/40 bg-gradient-to-br from-amber-500/10 to-amber-600/5 px-5 py-4 shadow-lg shadow-amber-500/10">
+                  <p className="text-sm font-black text-amber-400 uppercase tracking-wider mb-1.5">⚠️ Alpha — Expect Rough Edges</p>
+                  <p className="text-sm text-amber-200/80 leading-relaxed">
                     Commentary lines may be inaccurate or out of context — we&apos;re still tuning the engine.
-                    Found a bug? Please report it in <a href="/feedback" className="underline text-amber-300 hover:text-amber-200 transition-colors">Feedback</a>!
+                    Found a bug? Please report it in <a href="/feedback" className="underline font-semibold text-amber-300 hover:text-amber-200 transition-colors">Feedback</a>!
                   </p>
                 </div>
 
                 {/* Sound suggestion */}
-                <div className="mx-auto mb-6 max-w-md rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] px-4 py-3">
-                  <p className="text-[11px] text-emerald-300/80 leading-relaxed text-center">
-                    🔊 <span className="font-bold text-emerald-300">Turn your sound on!</span> This mode has move sounds, meme SFX, and TTS voice narration for the full gameshow experience.
+                <div className="mx-auto mb-6 max-w-lg rounded-2xl border-2 border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 px-5 py-4 shadow-lg shadow-emerald-500/10">
+                  <p className="text-base text-emerald-200/90 leading-relaxed text-center">
+                    🔊 <span className="font-black text-emerald-300 text-lg">Turn your sound on!</span>
+                  </p>
+                  <p className="text-sm text-emerald-300/60 text-center mt-1">
+                    Move sounds, meme SFX, and TTS voice narration for the full gameshow experience.
                   </p>
                 </div>
 
