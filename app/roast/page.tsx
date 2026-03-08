@@ -3194,6 +3194,7 @@ export default function RoastPage() {
                             {tts.availableVoices.map(v => {
                               const short = v.name.replace(/Microsoft\s+/, "").replace(/\s+Online\s+\(Natural\).*/, "");
                               const isActive = v.name === tts.voiceName;
+                              const isAva = /\bAva\b/i.test(v.name);
                               return (
                                 <button
                                   key={v.name}
@@ -3207,6 +3208,7 @@ export default function RoastPage() {
                                 >
                                   {isActive && <span className="text-emerald-400">✓</span>}
                                   <span className={`truncate ${isActive ? "" : "ml-5"}`}>{short}</span>
+                                  {isAva && <span className="ml-auto shrink-0 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-1.5 py-0.5 text-[8px] font-bold text-emerald-400">⭐ Best</span>}
                                 </button>
                               );
                             })}
@@ -3557,43 +3559,62 @@ export default function RoastPage() {
               )}
               {/* Board + Crowd Bar row */}
               <div className="flex items-stretch gap-2 w-full max-w-[680px]">
-                {/* ── Vertical Crowd Bar (left of board, like eval bar) ── */}
+                {/* ── Vertical Crowd Bar (left of board) ── */}
                 {(pageState === "watching" || pageState === "guessing") && (
-                  <div className="flex flex-col items-center gap-1 pt-6 pb-6">
-                    <span className="text-[9px] text-slate-600 font-bold uppercase tracking-wider whitespace-nowrap" style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}>
-                      👥 Crowd
+                  <div className="flex flex-col items-center gap-1 pt-4 pb-4">
+                    {/* Top emoji — mood indicator */}
+                    <span className="text-base leading-none select-none" title={`Crowd mood: ${audienceMeter}%`}>
+                      {audienceMeter > 85 ? "🤯" : audienceMeter > 70 ? "😍" : audienceMeter > 55 ? "🙂" : audienceMeter > 40 ? "😐" : audienceMeter > 20 ? "😬" : "💀"}
                     </span>
+                    {/* Bar */}
                     <div
-                      className="relative flex-1 overflow-hidden rounded-lg border border-white/[0.08]"
-                      style={{ width: 22, minHeight: 120 }}
+                      className="relative flex-1 overflow-hidden rounded-full border-2 transition-colors duration-500"
+                      style={{
+                        width: 30,
+                        minHeight: 140,
+                        borderColor: audienceMeter > 70 ? "rgba(168,85,247,0.4)" : audienceMeter > 40 ? "rgba(234,179,8,0.3)" : "rgba(239,68,68,0.3)",
+                        background: "linear-gradient(to bottom, rgba(15,15,25,0.9), rgba(10,10,20,0.95))",
+                      }}
                       title={`Crowd: ${audienceMeter}%`}
                     >
-                      {/* Background (bored/empty) */}
-                      <div className="absolute inset-0 bg-white/[0.03]" />
+                      {/* Silhouette people at different heights */}
+                      <div className="absolute inset-0 flex flex-col items-center justify-end gap-[2px] pb-1 text-[7px] leading-none opacity-20 pointer-events-none select-none overflow-hidden">
+                        <span>🧑</span><span>👤</span><span>🧑</span><span>👤</span><span>🧑</span><span>👤</span><span>🧑</span><span>👤</span>
+                      </div>
                       {/* Fill from bottom */}
                       <div
                         className="absolute bottom-0 left-0 w-full transition-all duration-700 ease-out"
                         style={{
                           height: `${audienceMeter}%`,
                           background: audienceMeter > 70
-                            ? "linear-gradient(to top, #22c55e, #4ade80)"
+                            ? "linear-gradient(to top, #7c3aed, #a855f7, #c084fc)"
                             : audienceMeter > 40
-                            ? "linear-gradient(to top, #eab308, #facc15)"
-                            : "linear-gradient(to top, #ef4444, #f87171)",
+                            ? "linear-gradient(to top, #b45309, #eab308, #facc15)"
+                            : "linear-gradient(to top, #991b1b, #ef4444, #f87171)",
                           boxShadow: audienceMeter > 70
-                            ? "0 0 8px rgba(34,197,94,0.4)"
+                            ? "0 0 12px rgba(168,85,247,0.5), inset 0 0 8px rgba(168,85,247,0.3)"
                             : audienceMeter < 30
-                            ? "0 0 8px rgba(239,68,68,0.4)"
+                            ? "0 0 10px rgba(239,68,68,0.4)"
                             : "none",
                         }}
                       />
-                      {/* Center line */}
-                      <div className="absolute left-0 top-1/2 w-full border-t border-white/10" />
+                      {/* People silhouettes inside the fill */}
+                      <div
+                        className="absolute bottom-0 left-0 w-full flex flex-col items-center justify-end gap-[2px] pb-1 text-[8px] leading-none pointer-events-none select-none overflow-hidden"
+                        style={{ height: `${audienceMeter}%`, transition: "height 0.7s ease-out" }}
+                      >
+                        <span className="drop-shadow-sm">🧑</span><span className="drop-shadow-sm">👤</span><span className="drop-shadow-sm">🧑</span><span className="drop-shadow-sm">👤</span>
+                      </div>
                     </div>
-                    <span className="text-[9px] font-bold tabular-nums" style={{
-                      color: audienceMeter > 70 ? "#4ade80" : audienceMeter > 40 ? "#facc15" : "#f87171",
+                    {/* Percentage label */}
+                    <span className="text-[9px] font-black tabular-nums" style={{
+                      color: audienceMeter > 70 ? "#c084fc" : audienceMeter > 40 ? "#facc15" : "#f87171",
                     }}>
-                      {audienceMeter > 85 ? "🤯" : audienceMeter > 70 ? "😍" : audienceMeter > 55 ? "🙂" : audienceMeter > 40 ? "😐" : audienceMeter > 20 ? "😬" : "💀"}
+                      {audienceMeter}%
+                    </span>
+                    {/* "CROWD" label */}
+                    <span className="text-[8px] font-black uppercase tracking-[0.15em] text-slate-600 whitespace-nowrap" style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}>
+                      Crowd
                     </span>
                   </div>
                 )}
@@ -4336,6 +4357,7 @@ export default function RoastPage() {
                             {tts.availableVoices.map(v => {
                               const short = v.name.replace(/Microsoft\s+/, "").replace(/\s+Online\s+\(Natural\).*/, "");
                               const isActive = v.name === tts.voiceName;
+                              const isAva = /\bAva\b/i.test(v.name);
                               return (
                                 <button
                                   key={v.name}
@@ -4349,6 +4371,7 @@ export default function RoastPage() {
                                 >
                                   {isActive && <span className="text-orange-400 text-xs">✓</span>}
                                   <span className={`truncate ${isActive ? "" : "ml-4"}`}>{short}</span>
+                                  {isAva && <span className="ml-auto shrink-0 rounded-full bg-orange-500/15 border border-orange-500/30 px-1.5 py-0.5 text-[8px] font-bold text-orange-400">⭐ Best</span>}
                                 </button>
                               );
                             })}
