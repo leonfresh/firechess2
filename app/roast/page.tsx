@@ -1926,9 +1926,10 @@ export default function RoastPage() {
         setMyReaction(null);
 
         if (move.comment) {
-          // Add crowd flavor to commentary
+          // Add crowd flavor to commentary (only ~40% of the time to avoid repetition)
           let enrichedComment = move.comment;
           const crowdLevel = audienceMeter; // snapshot current level
+          const shouldAddCrowdFlavor = crowdFever || Math.random() < 0.4;
           if (crowdFever) {
             const feverLines = [
               " 🌈 THE CROWD IS IN FEVER MODE!",
@@ -1938,18 +1939,25 @@ export default function RoastPage() {
               " 🤯 The crowd meter is MAXED OUT! FEVER! FEVER! FEVER!",
             ];
             enrichedComment += feverLines[Math.floor(Math.random() * feverLines.length)];
-          } else if (crowdLevel >= 85) {
+          } else if (crowdLevel >= 85 && shouldAddCrowdFlavor) {
             const highCrowd = [
               " 🙌 The crowd is LOVING this!",
               " 👏 Standing ovation energy from the audience!",
               " The crowd is going WILD right now!",
+              " 🎊 The audience just erupted!",
+              " The crowd is electric right now!",
             ];
             enrichedComment += highCrowd[Math.floor(Math.random() * highCrowd.length)];
-          } else if (crowdLevel <= 20) {
+          } else if (crowdLevel <= 20 && shouldAddCrowdFlavor) {
             const lowCrowd = [
               " 💀 The crowd is dead silent. You can hear a pin drop.",
-              " 😶 The audience has given up on this game.",
               " The crowd is heading for the exits...",
+              " 😬 Awkward silence from the audience.",
+              " You can feel the disappointment in the room.",
+              " 🦗 Crickets from the crowd.",
+              " The audience is checking their phones.",
+              " Even the commentators are speechless.",
+              " The crowd is barely paying attention anymore.",
             ];
             enrichedComment += lowCrowd[Math.floor(Math.random() * lowCrowd.length)];
           }
