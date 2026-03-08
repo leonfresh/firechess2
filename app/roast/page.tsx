@@ -554,6 +554,7 @@ export default function RoastPage() {
   /* ── Board visual FX state ── */
   const [screenShake, setScreenShake] = useState<"mild" | "heavy" | "slam" | null>(null);
   const [boardFlash, setBoardFlash] = useState<"red" | "gold" | null>(null);
+  const [shareLoading, setShareLoading] = useState(false);
   const [eliminationText, setEliminationText] = useState<string | null>(null);
   const [pieceRain, setPieceRain] = useState<{ piece: string; id: number }[]>([]);
   const [streakFire, setStreakFire] = useState(false);
@@ -1911,6 +1912,68 @@ export default function RoastPage() {
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageState, autoplay, currentIdx, moves, speed, typingDone, activeComment, tts.enabled, tts.speaking, ttsDoneSignal, activeDecision, pendingDecisionIdx, tacticReplaying]);
+
+  /* ── Share This Moment — generate image with board + pepe ── */
+  const handleShareMoment = useCallback(async () => {
+    const move = currentIdx >= 0 && currentIdx < moves.length ? moves[currentIdx] : null;
+    if (!move || shareLoading) return;
+    setShareLoading(true);
+    try {
+      // Get static pepe image for current mood (GIFs don't work in OG images)
+      let pepeImg = MOOD_IMAGES[currentMood];
+      if (pepeImg.endsWith(".gif")) {
+        const fallbacks: Partial<Record<RoastMood, RoastMood>> = {
+          clapping: "smug", hyped: "mindblown", moneyrain: "king",
+          lmao: "laughing", gamercry: "crylaugh", madpuke: "rage",
+          bigeyes: "shocked", nope: "disappointed", clowntrain: "clown",
+          firesgun: "rage", toxic: "suspicious", dogehug: "smug",
+          cantwatch: "disappointed", loving: "smug",
+        };
+        pepeImg = MOOD_IMAGES[fallbacks[currentMood] ?? "neutral"];
+      }
+      const params = new URLSearchParams({
+        move: move.san,
+        moveNum: String(Math.floor(currentIdx / 2) + 1),
+        classification: move.classification,
+        comment: activeComment ?? "",
+        fen,
+        orientation,
+        pepeImg,
+        lightSq: boardTheme.lightSquare,
+        darkSq: boardTheme.darkSquare,
+        ...(game?.avgElo ? { elo: String(game.avgElo) } : {}),
+      });
+      const url = `/api/roast/moment-card?${params.toString()}`;
+      const res = await fetch(url);
+      const blob = await res.blob();
+      const file = new File([blob], "roast-moment.png", { type: "image/png" });
+      if (typeof navigator.share === "function" && navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ title: "Roast the Elo Moment", files: [file] });
+      } else {
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = "roast-moment.png";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      }
+    } catch {
+      // Fallback
+      const params = new URLSearchParams({
+        move: move.san,
+        moveNum: String(Math.floor(currentIdx / 2) + 1),
+        classification: move.classification,
+        comment: activeComment ?? "",
+        fen,
+        orientation,
+      });
+      window.open(`/api/roast/moment-card?${params.toString()}`, "_blank");
+    } finally {
+      setShareLoading(false);
+    }
+  }, [currentIdx, moves, shareLoading, currentMood, activeComment, fen, orientation, boardTheme, game]);
 
   /* ── Tactic Replay — animate through the engine's best continuation ── */
   const startTacticReplay = useCallback(() => {
@@ -3895,42 +3958,22 @@ export default function RoastPage() {
                             )}
                             {currentMove && (currentMove.classification === "blunder" || currentMove.classification === "brilliant") && (
                               <button
-                                onClick={async () => {
-                                  const params = new URLSearchParams({
-                                    move: currentMove.san,
-                                    moveNum: String(Math.floor(currentIdx / 2) + 1),
-                                    classification: currentMove.classification,
-                                    comment: activeComment ?? "",
-                                    ...(game?.avgElo ? { elo: String(game.avgElo) } : {}),
-                                  });
-                                  const url = `/api/roast/moment-card?${params.toString()}`;
-                                  try {
-                                    const res = await fetch(url);
-                                    const blob = await res.blob();
-                                    const file = new File([blob], "roast-moment.png", { type: "image/png" });
-                                    if (typeof navigator.share === "function" && navigator.canShare?.({ files: [file] })) {
-                                      await navigator.share({ title: "Roast the Elo Moment", files: [file] });
-                                      return;
-                                    }
-                                    const blobUrl = URL.createObjectURL(blob);
-                                    const a = document.createElement("a");
-                                    a.href = blobUrl;
-                                    a.download = "roast-moment.png";
-                                    document.body.appendChild(a);
-                                    a.click();
-                                    document.body.removeChild(a);
-                                    URL.revokeObjectURL(blobUrl);
-                                  } catch {
-                                    window.open(url, "_blank");
-                                  }
-                                }}
+                                onClick={handleShareMoment}
+                                disabled={shareLoading}
                                 className={`text-[10px] sm:text-xs px-3 py-1 rounded-full border font-medium transition-colors ${
-                                  currentMove.classification === "brilliant"
+                                  shareLoading
+                                    ? "opacity-60 cursor-wait"
+                                    : currentMove.classification === "brilliant"
                                     ? "bg-cyan-500/20 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/30"
                                     : "bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30"
                                 }`}
                               >
-                                📸 Share This Moment
+                                {shareLoading ? (
+                                  <span className="flex items-center gap-1">
+                                    <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                    Generating…
+                                  </span>
+                                ) : "📸 Share This Moment"}
                               </button>
                             )}
                           </div>
@@ -4228,42 +4271,22 @@ export default function RoastPage() {
                                   )}
                                   {currentMove && (currentMove.classification === "blunder" || currentMove.classification === "brilliant") && (
                                     <button
-                                      onClick={async () => {
-                                        const params = new URLSearchParams({
-                                          move: currentMove.san,
-                                          moveNum: String(Math.floor(currentIdx / 2) + 1),
-                                          classification: currentMove.classification,
-                                          comment: activeComment ?? "",
-                                          ...(game?.avgElo ? { elo: String(game.avgElo) } : {}),
-                                        });
-                                        const url = `/api/roast/moment-card?${params.toString()}`;
-                                        try {
-                                          const res = await fetch(url);
-                                          const blob = await res.blob();
-                                          const file = new File([blob], "roast-moment.png", { type: "image/png" });
-                                          if (typeof navigator.share === "function" && navigator.canShare?.({ files: [file] })) {
-                                            await navigator.share({ title: "Roast the Elo Moment", files: [file] });
-                                            return;
-                                          }
-                                          const blobUrl = URL.createObjectURL(blob);
-                                          const a = document.createElement("a");
-                                          a.href = blobUrl;
-                                          a.download = "roast-moment.png";
-                                          document.body.appendChild(a);
-                                          a.click();
-                                          document.body.removeChild(a);
-                                          URL.revokeObjectURL(blobUrl);
-                                        } catch {
-                                          window.open(url, "_blank");
-                                        }
-                                      }}
+                                      onClick={handleShareMoment}
+                                      disabled={shareLoading}
                                       className={`text-[10px] px-3 py-1 rounded-full border font-medium transition-colors ${
-                                        currentMove.classification === "brilliant"
+                                        shareLoading
+                                          ? "opacity-60 cursor-wait"
+                                          : currentMove.classification === "brilliant"
                                           ? "bg-cyan-500/20 border-cyan-500/30 text-cyan-400 hover:bg-cyan-500/30"
                                           : "bg-red-500/20 border-red-500/30 text-red-400 hover:bg-red-500/30"
                                       }`}
                                     >
-                                      📸 Share This Moment
+                                      {shareLoading ? (
+                                        <span className="flex items-center gap-1">
+                                          <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                          Generating…
+                                        </span>
+                                      ) : "📸 Share This Moment"}
                                     </button>
                                   )}
                                 </div>
