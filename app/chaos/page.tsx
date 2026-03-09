@@ -373,6 +373,36 @@ type EventLogEntry = {
   pepe?: string;
 };
 
+/* ────────────────────────── Multiplayer Perspective Helpers ────────────────── */
+
+/**
+ * The server stores ChaosState from a neutral (color-based) perspective:
+ *   playerModifiers → white's modifiers
+ *   aiModifiers     → black's modifiers
+ *
+ * Each client maps these to/from their local perspective based on
+ * what color they are playing.
+ */
+function toServerChaosState(localState: ChaosState, myColor: "white" | "black"): ChaosState {
+  if (myColor === "white") return localState; // already aligned
+  // Swap: my "player" mods = black's from server perspective → stored as aiModifiers
+  return {
+    ...localState,
+    playerModifiers: localState.aiModifiers,
+    aiModifiers: localState.playerModifiers,
+  };
+}
+
+function fromServerChaosState(serverState: ChaosState, myColor: "white" | "black"): ChaosState {
+  if (myColor === "white") return serverState; // already aligned
+  // Swap back: server playerModifiers = white's mods → my "ai" (opponent)
+  return {
+    ...serverState,
+    playerModifiers: serverState.aiModifiers,
+    aiModifiers: serverState.playerModifiers,
+  };
+}
+
 /* ────────────────────────── Pepe Emojis ────────────────────────── */
 
 const PEPE = {
@@ -1725,7 +1755,8 @@ export default function ChaosChessPage() {
       setGameMode("friend");
       setGameStatus("playing");
       setOpponentLabel("Friend");
-      const cs = data.chaosState ? data.chaosState as ChaosState : createChaosState();
+      const rawCs = data.chaosState ? data.chaosState as ChaosState : createChaosState();
+      const cs = fromServerChaosState(rawCs, guestColor as "white" | "black");
       setChaosState(cs);
       const g = new Chess(data.fen);
       setGame(g);
@@ -1822,7 +1853,8 @@ export default function ChaosChessPage() {
               setOpponentLabel("Opponent");
               setEventLog((p) => [...p, { type: "info", message: "🎮 Opponent joined! Game on!", icon: "🎮", pepe: PEPE.hyped }]);
               playSound("reveal-stinger");
-              const cs = data.chaosState ? data.chaosState as ChaosState : createChaosState();
+              const rawCs = data.chaosState ? data.chaosState as ChaosState : createChaosState();
+              const cs = fromServerChaosState(rawCs, myColor as "white" | "black");
               setChaosState(cs);
               prevPhaseRef.current = cs.currentPhase;
               const g = new Chess(data.fen);
@@ -1841,14 +1873,15 @@ export default function ChaosChessPage() {
 
           // Detect opponent draft pick (chaosState phase advanced while we weren't drafting)
           if (data.chaosState) {
-            const incoming = data.chaosState as ChaosState;
+            const incoming = fromServerChaosState(data.chaosState as ChaosState, myColor as "white" | "black");
             if (
               incoming.currentPhase > prevPhaseRef.current &&
               !justDraftedRef.current
             ) {
               // Opponent completed a draft — extract what they picked
-              const oppPick = incoming.playerModifiers[incoming.playerModifiers.length - 1];
-              const yourPick = incoming.aiModifiers[incoming.aiModifiers.length - 1];
+              // After perspective conversion: aiModifiers = opponent's mods, playerModifiers = my mods
+              const oppPick = incoming.aiModifiers[incoming.aiModifiers.length - 1];
+              const yourPick = incoming.playerModifiers[incoming.playerModifiers.length - 1];
               if (oppPick && yourPick) {
                 setOpponentDraftReveal({ opponentPick: oppPick, yourPick, phase: incoming.currentPhase });
                 setEventLog((prev) => [
@@ -1882,9 +1915,10 @@ export default function ChaosChessPage() {
             if (pollRef.current) clearInterval(pollRef.current);
           } else {
             // Check draft
-            const cs = data.chaosState ? data.chaosState as ChaosState : createChaosState();
-            checkDraft(g, cs);
-            recomputeChaosMoves(g, cs);
+            const rawCs2 = data.chaosState ? data.chaosState as ChaosState : createChaosState();
+            const cs2 = fromServerChaosState(rawCs2, myColor as "white" | "black");
+            checkDraft(g, cs2);
+            recomputeChaosMoves(g, cs2);
           }
         }
 
@@ -1902,6 +1936,8 @@ export default function ChaosChessPage() {
     async (g: Chess, from: string, to: string, cs: ChaosState) => {
       if (!roomId) return;
       try {
+        // Convert to server perspective (white=playerModifiers, black=aiModifiers)
+        const serverCs = toServerChaosState(cs, playerColor);
         await fetch("/api/chaos/move", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -1910,7 +1946,7 @@ export default function ChaosChessPage() {
             from,
             to,
             newFen: g.fen(),
-            chaosState: cs,
+            chaosState: serverCs,
             lastMoveFrom: from,
             lastMoveTo: to,
             capturedPawnsWhite: capturedPawns.w,
@@ -1923,7 +1959,7 @@ export default function ChaosChessPage() {
         // Upload error
       }
     },
-    [roomId, capturedPawns],
+    [roomId, capturedPawns, playerColor],
   );
 
   /* ── Player move ── */
@@ -2407,6 +2443,7 @@ export default function ChaosChessPage() {
                 }`}
               >
                 {mode === "ai" ? "🤖 vs AI" : mode === "friend" ? "👥 vs Friend" : "🎲 Matchmake"}
+                {mode !== "ai" && !authenticated && <span className="ml-1 text-[9px] opacity-50">🔒</span>}
               </button>
             ))}
           </div>
@@ -2453,6 +2490,20 @@ export default function ChaosChessPage() {
           {/* ── Friend Mode ── */}
           {gameMode === "friend" && (
             <div className="flex w-full max-w-md flex-col gap-6">
+              {!authenticated && (
+                <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-6 py-5 text-center">
+                  <p className="mb-2 text-sm font-medium text-yellow-400">🔒 Sign in required</p>
+                  <p className="mb-4 text-xs text-slate-500">You need an account to play with friends</p>
+                  <a
+                    href="/auth/signin"
+                    className="inline-block rounded-lg bg-purple-500/20 px-5 py-2.5 text-sm font-medium text-purple-400 transition-all hover:bg-purple-500/30"
+                  >
+                    Sign In
+                  </a>
+                </div>
+              )}
+              {authenticated && (
+                <>
               {/* Create room */}
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
                 <p className="mb-3 text-sm font-bold text-white">Create a Room</p>
@@ -2492,12 +2543,28 @@ export default function ChaosChessPage() {
                   </button>
                 </div>
               </div>
+                </>
+              )}
             </div>
           )}
 
           {/* ── Matchmake Mode ── */}
           {gameMode === "matchmake" && (
             <div className="flex flex-col items-center gap-4">
+              {!authenticated ? (
+                <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-6 py-5 text-center">
+                  <p className="mb-2 text-sm font-medium text-yellow-400">🔒 Sign in required</p>
+                  <p className="mb-4 text-xs text-slate-500">You need an account to matchmake with other players</p>
+                  <a
+                    href="/auth/signin"
+                    className="inline-block rounded-lg bg-purple-500/20 px-5 py-2.5 text-sm font-medium text-purple-400 transition-all hover:bg-purple-500/30"
+                  >
+                    Sign In
+                  </a>
+                  <p className="mt-3 text-xs text-slate-600">Or play 🤖 vs AI — no account needed!</p>
+                </div>
+              ) : (
+                <>
               <p className="text-sm text-slate-400">Find a random opponent to play Chaos Chess against</p>
               <ChaosLobby
                 isSignedIn={authenticated}
@@ -2539,6 +2606,8 @@ export default function ChaosChessPage() {
                   if (pollRef.current) clearInterval(pollRef.current);
                 }}
               />
+                </>
+              )}
             </div>
           )}
 
