@@ -341,3 +341,44 @@ export const roastDailyReactions = pgTable("roast_daily_reaction", {
   userId: text("userId"),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
 });
+
+/* ------------------------------------------------------------------ */
+/*  Chaos Chess multiplayer rooms                                       */
+/* ------------------------------------------------------------------ */
+
+export const chaosRooms = pgTable("chaos_room", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  /** Short 6-char code for inviting friends */
+  roomCode: text("roomCode").notNull().unique(),
+  /** Host user ID */
+  hostId: text("hostId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  /** Guest user ID (null until someone joins) */
+  guestId: text("guestId").references(() => users.id, { onDelete: "set null" }),
+  /** Host's chosen color */
+  hostColor: text("hostColor").notNull().default("white"),
+  /** Current FEN */
+  fen: text("fen").notNull().default("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"),
+  /** Full chaos state as JSON */
+  chaosState: jsonb("chaosState"),
+  /** Move history: array of { from, to, promotion?, chaosMove? } */
+  moveHistory: jsonb("moveHistory").default([]),
+  /** Game status */
+  status: text("status").notNull().default("waiting"),
+  /** Last move from/to for highlighting */
+  lastMoveFrom: text("lastMoveFrom"),
+  lastMoveTo: text("lastMoveTo"),
+  /** AI difficulty (used when looking for matchmaking) */
+  difficulty: text("difficulty").default("medium"),
+  /** Whether this room is open for matchmaking */
+  isMatchmaking: boolean("isMatchmaking").default(false),
+  /** Captured pawns count per side (for undead army) */
+  capturedPawnsWhite: integer("capturedPawnsWhite").default(0),
+  capturedPawnsBlack: integer("capturedPawnsBlack").default(0),
+  /** Timestamp tracking */
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow(),
+});
