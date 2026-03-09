@@ -344,15 +344,6 @@ button {
 }
 
 /* ── Chessboard drag-piece cursor fix ── */
-/* Hide cursor completely during piece drag (prevents Windows square cursor) */
-body.piece-dragging,
-body.piece-dragging * {
-  cursor: none !important;
-}
-[data-testid="drag-layer"],
-.react-chessboard-dragging {
-  cursor: none !important;
-}
 /* Ensure piece squares use grab cursor */
 [data-square] img,
 [data-square] svg {
@@ -360,7 +351,7 @@ body.piece-dragging * {
 }
 [data-square]:active img,
 [data-square]:active svg {
-  cursor: grabbing;
+  cursor: none;
 }
 
 /* ── Blog prose styling ── */

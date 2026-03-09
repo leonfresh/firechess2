@@ -874,6 +874,7 @@ export default function ChaosChessPage() {
   const [eventLog, setEventLog] = useState<EventLogEntry[]>([]);
   const moveLogRef = useRef<HTMLDivElement>(null);
   const eventLogRef = useRef<HTMLDivElement>(null);
+  const boardContainerRef = useRef<HTMLDivElement>(null);
 
   /* ── Board interaction state ── */
   const [selectedSquare, setSelectedSquare] = useState<CbSquare | null>(null);
@@ -900,6 +901,20 @@ export default function ChaosChessPage() {
   /* ── Preload sounds ── */
   useEffect(() => {
     preloadSounds();
+  }, []);
+
+  /* ── Suppress native drag ghost on board (fixes Windows square cursor) ── */
+  useEffect(() => {
+    const el = boardContainerRef.current;
+    if (!el) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = 1;
+    canvas.height = 1;
+    const handler = (e: DragEvent) => {
+      e.dataTransfer?.setDragImage(canvas, 0, 0);
+    };
+    el.addEventListener("dragstart", handler, true);
+    return () => el.removeEventListener("dragstart", handler, true);
   }, []);
 
   /* ── Scroll event log to bottom ── */
@@ -2052,7 +2067,7 @@ export default function ChaosChessPage() {
           </div>
 
           {/* Board — auto-sizes to fill container, capped at 640px */}
-          <div className="w-full max-w-[640px]">
+          <div ref={boardContainerRef} className="w-full max-w-[640px]">
             <div className="w-full">
               <Chessboard
                 id="chaos-board"
@@ -2061,8 +2076,6 @@ export default function ChaosChessPage() {
                 onBoardWidthChange={setBoardSize}
                 onPieceDrop={(from, to) => handlePlayerMove(from as CbSquare, to as CbSquare)}
                 onSquareClick={handleSquareClick}
-                onPieceDragBegin={() => document.body.classList.add("piece-dragging")}
-                onPieceDragEnd={() => document.body.classList.remove("piece-dragging")}
                 customSquareStyles={mergedSquareStyles}
                 customBoardStyle={{
                   borderRadius: "8px",
