@@ -779,23 +779,18 @@ function ModifierList({
   if (modifiers.length === 0) return null;
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-      <h3 className={`mb-2 text-xs font-bold uppercase tracking-wider ${color}`}>
+    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2 sm:p-2.5">
+      <h3 className={`mb-1.5 text-[10px] font-bold uppercase tracking-wider ${color}`}>
         {title}
       </h3>
-      <div className="space-y-1.5">
+      <div className="flex flex-wrap gap-1">
         {modifiers.map((mod) => (
           <ModifierTooltip key={mod.id} mod={mod}>
-            <div className="flex items-start gap-2.5 rounded-lg bg-white/[0.03] px-2.5 py-2 cursor-default transition-colors hover:bg-white/[0.06]">
-              <span className="text-2xl leading-none">{mod.icon}</span>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-white">
-                  {mod.name}
-                </p>
-                <p className="truncate text-[11px] text-slate-500">
-                  {mod.description}
-                </p>
-              </div>
+            <div className="flex items-center gap-1.5 rounded-md bg-white/[0.04] px-2 py-1 cursor-default transition-colors hover:bg-white/[0.08]">
+              <span className="text-base leading-none">{mod.icon}</span>
+              <span className="text-[11px] font-medium text-slate-300 whitespace-nowrap">
+                {mod.name}
+              </span>
             </div>
           </ModifierTooltip>
         ))}
@@ -1063,28 +1058,55 @@ export default function ChaosChessPage() {
         const aiColor = playerColor === "white" ? "b" : "w";
         const aiChaosMoves = getChaosMoves(g, cs.aiModifiers, aiColor as Color);
 
-        // 65% chance to pick a chaos move; prefer captures
-        if (aiChaosMoves.length > 0 && Math.random() < 0.65) {
-          const captures = aiChaosMoves.filter((m) => m.type === "capture");
-          const pool = captures.length > 0 && Math.random() < 0.7 ? captures : aiChaosMoves;
-          const chaosMove = pickRandom(pool);
-          const newGame = executeChaosMove(g, chaosMove, cs.aiModifiers);
-          if (newGame) {
-            const label = chaosMove.label;
-            addMoveToLog(newGame, `⚡${label.split("(")[0].trim()}`, aiColor as "w" | "b");
-            setLastMoveHighlight({
-              [chaosMove.from]: { backgroundColor: "rgba(255, 100, 0, 0.4)" },
-              [chaosMove.to]: { backgroundColor: "rgba(255, 100, 0, 0.4)" },
-            });
-            setEventLog((prev) => [...prev, { type: "chaos", message: `🤖 AI used: ${chaosMove.label}`, icon: "🤖", pepe: PEPE.shocked }]);
-            playSound("nani");
-            setGame(newGame);
-            setIsThinking(false);
-            if (!checkGameEnd(newGame)) {
-              checkDraft(newGame, cs);
-              recomputeChaosMoves(newGame, cs);
+        // Evaluate chaos moves with Stockfish instead of picking randomly
+        if (aiChaosMoves.length > 0) {
+          // Get normal Stockfish eval as baseline
+          const normalResult = await stockfishPool.evaluateFen(g.fen(), aiDepth);
+          const normalEval = normalResult?.cp ?? 0; // from AI's (side-to-move) perspective
+
+          // Evaluate a random sample of chaos moves (max 5 for speed)
+          const evalDepth = Math.min(aiDepth, 10);
+          const sample =
+            aiChaosMoves.length <= 5
+              ? aiChaosMoves
+              : [...aiChaosMoves].sort(() => Math.random() - 0.5).slice(0, 5);
+
+          type ScoredChaos = { move: ChaosMove; eval: number; game: Chess };
+          const scored: ScoredChaos[] = [];
+
+          for (const cm of sample) {
+            const newGame = executeChaosMove(g, cm, cs.aiModifiers);
+            if (!newGame) continue;
+            // Eval the resulting position — cp is from the player's perspective (side to move after AI's chaos move)
+            const er = await stockfishPool.evaluateFen(newGame.fen(), evalDepth);
+            if (er) scored.push({ move: cm, eval: -(er.cp ?? 0), game: newGame });
+          }
+
+          if (scored.length > 0) {
+            // Pick the best-evaluated chaos move
+            scored.sort((a, b) => b.eval - a.eval);
+            const best = scored[0];
+
+            // Only use chaos move if within 150cp of normal Stockfish play
+            if (best.eval >= normalEval - 150) {
+              const newGame = best.game;
+              const chaosMove = best.move;
+              const label = chaosMove.label;
+              addMoveToLog(newGame, `⚡${label.split("(")[0].trim()}`, aiColor as "w" | "b");
+              setLastMoveHighlight({
+                [chaosMove.from]: { backgroundColor: "rgba(255, 100, 0, 0.4)" },
+                [chaosMove.to]: { backgroundColor: "rgba(255, 100, 0, 0.4)" },
+              });
+              setEventLog((prev) => [...prev, { type: "chaos", message: `🤖 AI used: ${chaosMove.label}`, icon: "🤖", pepe: PEPE.shocked }]);
+              playSound("nani");
+              setGame(newGame);
+              setIsThinking(false);
+              if (!checkGameEnd(newGame)) {
+                checkDraft(newGame, cs);
+                recomputeChaosMoves(newGame, cs);
+              }
+              return;
             }
-            return;
           }
         }
 
@@ -2033,6 +2055,8 @@ export default function ChaosChessPage() {
                 onBoardWidthChange={setBoardSize}
                 onPieceDrop={(from, to) => handlePlayerMove(from as CbSquare, to as CbSquare)}
                 onSquareClick={handleSquareClick}
+                onPieceDragBegin={() => document.body.classList.add("piece-dragging")}
+                onPieceDragEnd={() => document.body.classList.remove("piece-dragging")}
                 customSquareStyles={mergedSquareStyles}
                 customBoardStyle={{
                   borderRadius: "8px",
