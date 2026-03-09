@@ -468,9 +468,9 @@ function getNuclearSquares(game: Chess, to: Square, color: Color): Square[] {
   for (const [df, dr] of [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]) {
     const s = sq(f + df, r + dr);
     if (s && game.get(s)) {
-      // Don't destroy own king!
+      // Don't destroy any king!
       const p = game.get(s);
-      if (p && p.type === "k" && p.color === color) continue;
+      if (p && p.type === "k") continue;
       result.push(s);
     }
   }
@@ -704,6 +704,211 @@ export function getChaosMoves(
   }
 
   return moves;
+}
+
+/**
+ * Get all squares attacked by a color's pieces via chaos modifiers.
+ * Used for king safety — no self-check or enemy-king filtering.
+ * This tells us which squares a side CONTROLS via its chaos-modified pieces,
+ * so the opponent's king must not walk into them.
+ */
+export function getChaosAttackedSquares(
+  game: Chess,
+  modifiers: ChaosModifier[],
+  attackerColor: Color,
+): Set<Square> {
+  const attacked = new Set<Square>();
+  const modIds = new Set(modifiers.map((m) => m.id));
+
+  /* helper: add sliding-ray attack squares */
+  const addSliding = (startF: number, startR: number, dirs: number[][]) => {
+    for (const [df, dr] of dirs) {
+      let cf = startF + df;
+      let cr = startR + dr;
+      while (cf >= 0 && cf <= 7 && cr >= 0 && cr <= 7) {
+        const t = sq(cf, cr)!;
+        attacked.add(t);
+        if (game.get(t)) break; // blocked by any piece
+        cf += df;
+        cr += dr;
+      }
+    }
+  };
+
+  const knightOffsets: number[][] = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
+  const cardinals: number[][] = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+  const diagonals: number[][] = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+  const allDirs: number[][] = [...cardinals, ...diagonals];
+
+  /* Knook: first knight attacks along rook lines */
+  if (modIds.has("knook")) {
+    const knights = allSquaresOf(game, "n", attackerColor);
+    if (knights.length > 0) {
+      const [f, r] = sqToCoords(knights[0]);
+      addSliding(f, r, cardinals);
+    }
+  }
+
+  /* Archbishop: first bishop attacks knight squares */
+  if (modIds.has("archbishop")) {
+    const bishops = allSquaresOf(game, "b", attackerColor);
+    if (bishops.length > 0) {
+      const [f, r] = sqToCoords(bishops[0]);
+      for (const [df, dr] of knightOffsets) {
+        const t = sq(f + df, r + dr);
+        if (t) attacked.add(t);
+      }
+    }
+  }
+
+  /* Amazon: all queens attack knight squares */
+  if (modIds.has("amazon")) {
+    for (const qs of allSquaresOf(game, "q", attackerColor)) {
+      const [f, r] = sqToCoords(qs);
+      for (const [df, dr] of knightOffsets) {
+        const t = sq(f + df, r + dr);
+        if (t) attacked.add(t);
+      }
+    }
+  }
+
+  /* King Ascension: king attacks like queen (beyond 1 sq — 1-sq already covered by chess.js) */
+  if (modIds.has("king-ascension")) {
+    const kings = allSquaresOf(game, "k", attackerColor);
+    if (kings.length > 0) {
+      const [f, r] = sqToCoords(kings[0]);
+      addSliding(f, r, allDirs);
+    }
+  }
+
+  /* Pegasus: all knights attack double-L squares (non-standard only) */
+  if (modIds.has("pegasus")) {
+    for (const ns of allSquaresOf(game, "n", attackerColor)) {
+      const [f, r] = sqToCoords(ns);
+      for (const [df1, dr1] of knightOffsets) {
+        const mf = f + df1;
+        const mr = r + dr1;
+        if (mf < 0 || mf > 7 || mr < 0 || mr > 7) continue;
+        for (const [df2, dr2] of knightOffsets) {
+          const ff = mf + df2;
+          const fr = mr + dr2;
+          if (ff < 0 || ff > 7 || fr < 0 || fr > 7) continue;
+          const t = sq(ff, fr);
+          if (!t || t === ns) continue;
+          const dff = ff - f;
+          const dfr = fr - r;
+          const isNormal = (Math.abs(dff) === 2 && Math.abs(dfr) === 1) || (Math.abs(dff) === 1 && Math.abs(dfr) === 2);
+          if (!isNormal) attacked.add(t);
+        }
+      }
+    }
+  }
+
+  /* Sniper Bishop: diag 1-2 squares */
+  if (modIds.has("sniper-bishop")) {
+    for (const bs of allSquaresOf(game, "b", attackerColor)) {
+      const [f, r] = sqToCoords(bs);
+      for (const [df, dr] of diagonals) {
+        for (let dist = 1; dist <= 2; dist++) {
+          const t = sq(f + df * dist, r + dr * dist);
+          if (!t) break;
+          attacked.add(t);
+          if (game.get(t)) break;
+        }
+      }
+    }
+  }
+
+  /* Knight Retreat: knights attack 1 sq in all 8 directions */
+  if (modIds.has("knight-retreat")) {
+    for (const ns of allSquaresOf(game, "n", attackerColor)) {
+      const [f, r] = sqToCoords(ns);
+      for (const [df, dr] of allDirs) {
+        const t = sq(f + df, r + dr);
+        if (t) attacked.add(t);
+      }
+    }
+  }
+
+  /* Bishop Slide: bishops attack 1 sq orthogonally */
+  if (modIds.has("bishop-slide")) {
+    for (const bs of allSquaresOf(game, "b", attackerColor)) {
+      const [f, r] = sqToCoords(bs);
+      for (const [df, dr] of cardinals) {
+        const t = sq(f + df, r + dr);
+        if (t) attacked.add(t);
+      }
+    }
+  }
+
+  /* Rook Charge: rooks attack 1 sq diagonally */
+  if (modIds.has("rook-charge")) {
+    for (const rs of allSquaresOf(game, "r", attackerColor)) {
+      const [f, r] = sqToCoords(rs);
+      for (const [df, dr] of diagonals) {
+        const t = sq(f + df, r + dr);
+        if (t) attacked.add(t);
+      }
+    }
+  }
+
+  /* Phantom Rook: rooks slide through friendly pieces */
+  if (modIds.has("phantom-rook")) {
+    for (const rs of allSquaresOf(game, "r", attackerColor)) {
+      const [f, r] = sqToCoords(rs);
+      for (const [df, dr] of cardinals) {
+        let cf = f + df;
+        let cr = r + dr;
+        while (cf >= 0 && cf <= 7 && cr >= 0 && cr <= 7) {
+          const t = sq(cf, cr)!;
+          attacked.add(t);
+          const p = game.get(t);
+          if (p && p.color !== attackerColor) break; // blocked by enemy
+          // friendly pieces are transparent
+          cf += df;
+          cr += dr;
+        }
+      }
+    }
+  }
+
+  /* Pawn Capture Forward (Bayonet): pawns attack 1 sq straight ahead */
+  if (modIds.has("pawn-capture-forward")) {
+    const dir = attackerColor === "w" ? 1 : -1;
+    for (const ps of allSquaresOf(game, "p", attackerColor)) {
+      const [f, r] = sqToCoords(ps);
+      const t = sq(f, r + dir);
+      if (t) attacked.add(t);
+    }
+  }
+
+  /* Rook Cannon: jump-capture squares */
+  if (modIds.has("rook-cannon")) {
+    for (const rs of allSquaresOf(game, "r", attackerColor)) {
+      const [f, r] = sqToCoords(rs);
+      for (const [df, dr] of cardinals) {
+        let cf = f + df;
+        let cr = r + dr;
+        let jumped = false;
+        while (cf >= 0 && cf <= 7 && cr >= 0 && cr <= 7) {
+          const t = sq(cf, cr)!;
+          const p = game.get(t);
+          if (p) {
+            if (!jumped) {
+              jumped = true;
+            } else {
+              attacked.add(t);
+              break;
+            }
+          }
+          cf += df;
+          cr += dr;
+        }
+      }
+    }
+  }
+
+  return attacked;
 }
 
 /** Piece values in centipawns for chaos threat evaluation */

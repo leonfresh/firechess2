@@ -42,6 +42,7 @@ import {
   applyPostMoveEffects,
   applyDraftEffect,
   computeChaosThreatPenalty,
+  getChaosAttackedSquares,
   type ChaosMove,
 } from "@/lib/chaos-moves";
 
@@ -173,16 +174,19 @@ const PIECE_CODE_MAP: Record<string, string> = {
 };
 
 /** Modifier IDs that only affect the first piece of their type (visual overlays).
- *  NOTE: knook & archbishop are NOT listed here so their fairy SVG
- *  applies to ALL pieces of that type — prevents the SVG from reverting
- *  to a normal piece when the transformed piece moves to a new square. */
-const SINGLE_PIECE_MODIFIERS: Record<string, true> = {};
+ *  The move gen (genKnook, genArchbishop) also uses the first piece found
+ *  in file/rank scan order, so the visual consistently matches. */
+const SINGLE_PIECE_MODIFIERS: Record<string, true> = {
+  knook: true,
+  archbishop: true,
+};
 
 /** Fairy piece SVG replacements — full piece image swap for transformative modifiers */
 const FAIRY_PIECE_SVGS: Record<string, Record<string, string>> = {
   knook:                  { w: "/pieces/fairy/wC.svg",  b: "/pieces/fairy/bC.svg" },
   archbishop:             { w: "/pieces/fairy/wA.svg",  b: "/pieces/fairy/bA.svg" },
   amazon:                 { w: "/pieces/fairy/wAm.svg", b: "/pieces/fairy/bAm.svg" },
+  pegasus:                { w: "/pieces/fairy/wPg.svg", b: "/pieces/fairy/bPg.svg" },
   "pawn-charge":          { w: "/pieces/fairy/wPC.svg", b: "/pieces/fairy/bPC.svg" },
   "pawn-capture-forward": { w: "/pieces/fairy/wPB.svg", b: "/pieces/fairy/bPB.svg" },
 };
@@ -784,6 +788,9 @@ function DraftModal({
   const [pickedId, setPickedId] = useState<string | null>(null);
   const [dismissing, setDismissing] = useState(false);
 
+  // Peek board state
+  const [peeking, setPeeking] = useState(false);
+
   // Play drumroll on mount, then reveal cards one by one
   useEffect(() => {
     playSound("drumroll");
@@ -819,6 +826,20 @@ function DraftModal({
     },
     [pickedId, allRevealed, onPick],
   );
+
+  // Floating "Back to Draft" button when peeking
+  if (peeking) {
+    return (
+      <button
+        type="button"
+        onClick={() => setPeeking(false)}
+        className="fixed bottom-4 left-1/2 z-50 -translate-x-1/2 flex items-center gap-2 rounded-full border border-purple-500/40 bg-[#0a0f1a]/90 px-5 py-2.5 text-sm font-bold text-purple-300 shadow-lg shadow-purple-500/20 backdrop-blur-sm transition-all hover:border-purple-400/60 hover:text-white hover:scale-105"
+        style={{ animation: "draft-modal-enter 0.3s ease-out both" }}
+      >
+        <span className="text-lg">🃏</span> Back to Draft
+      </button>
+    );
+  }
 
   return (
     <div
@@ -871,6 +892,15 @@ function DraftModal({
           <p className="mt-1 text-[10px] text-slate-500 sm:mt-2 sm:text-xs">
             Choose a modifier to permanently buff your pieces
           </p>
+          {allRevealed && !pickedId && (
+            <button
+              type="button"
+              onClick={() => setPeeking(true)}
+              className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-slate-600/40 bg-slate-800/50 px-3 py-1 text-[10px] font-medium text-slate-400 transition-all hover:border-purple-500/40 hover:text-purple-300 sm:text-xs"
+            >
+              <span>👁️</span> Peek Board
+            </button>
+          )}
         </div>
 
         {/* Cards */}
@@ -1254,6 +1284,33 @@ export default function ChaosChessPage() {
     };
   }, []);
 
+  /**
+   * Check if a standard king move would land on a square attacked by
+   * the opponent's chaos-modified pieces.  We simulate the king on
+   * the target square first so sliding-piece rays update correctly.
+   */
+  const isKingMoveChaosUnsafe = useCallback(
+    (g: Chess, from: string, to: string): boolean => {
+      const turnColor = g.turn() as Color;
+      const oppColor: Color = turnColor === "w" ? "b" : "w";
+      const isPlayerTurn =
+        (playerColor === "white" && turnColor === "w") ||
+        (playerColor === "black" && turnColor === "b");
+      const oppMods = isPlayerTurn ? chaosState.aiModifiers : chaosState.playerModifiers;
+      if (oppMods.length === 0) return false;
+
+      // Build a temp position with the king already on the target square
+      const tmp = new Chess(g.fen());
+      tmp.remove(from as any);
+      if (tmp.get(to as any)) tmp.remove(to as any);
+      tmp.put({ type: "k", color: turnColor }, to as any);
+
+      const chaosAttacked = getChaosAttackedSquares(tmp, oppMods, oppColor);
+      return chaosAttacked.has(to as any);
+    },
+    [playerColor, chaosState],
+  );
+
   /* ── Recompute chaos moves when board/modifiers change ── */
   const recomputeChaosMoves = useCallback(
     (g: Chess, cs: ChaosState) => {
@@ -1506,7 +1563,37 @@ export default function ChaosChessPage() {
         const promotion = bestUci.length > 4 ? bestUci[4] : undefined;
 
         const pieceAtFrom = g.get(from as any);
-        const moveResult = g.move({ from, to, promotion });
+
+        // Block AI king moves into chaos-attacked squares
+        if (pieceAtFrom && pieceAtFrom.type === "k") {
+          const aiTurn = g.turn() as Color;
+          const playerC: Color = playerColor === "white" ? "w" : "b";
+          if (cs.playerModifiers.length > 0) {
+            const tmp = new Chess(g.fen());
+            tmp.remove(from as any);
+            if (tmp.get(to as any)) tmp.remove(to as any);
+            tmp.put({ type: "k", color: aiTurn }, to as any);
+            const chaosAttacked = getChaosAttackedSquares(tmp, cs.playerModifiers, playerC);
+            if (chaosAttacked.has(to as any)) {
+              // Unsafe king move — try a random legal non-king move instead
+              const fallbackMoves = g.moves({ verbose: true }).filter((m) => m.piece !== "k");
+              if (fallbackMoves.length > 0) {
+                const fb = fallbackMoves[Math.floor(Math.random() * fallbackMoves.length)];
+                bestUci = fb.lan;
+              } else {
+                // Only king moves available — let it go (might be forced)
+              }
+            }
+          }
+        }
+
+        // Re-parse in case bestUci changed from fallback
+        const finalFrom = bestUci!.slice(0, 2) as CbSquare;
+        const finalTo = bestUci!.slice(2, 4) as CbSquare;
+        const finalPromo = bestUci!.length > 4 ? bestUci![4] : undefined;
+        const finalPieceAtFrom = g.get(finalFrom as any);
+
+        const moveResult = g.move({ from: finalFrom, to: finalTo, promotion: finalPromo });
         if (!moveResult) {
           setIsThinking(false);
           return;
@@ -1527,8 +1614,8 @@ export default function ChaosChessPage() {
 
         // Highlight
         setLastMoveHighlight({
-          [from]: { backgroundColor: "rgba(255, 170, 0, 0.3)" },
-          [to]: { backgroundColor: "rgba(255, 170, 0, 0.3)" },
+          [finalFrom]: { backgroundColor: "rgba(255, 170, 0, 0.3)" },
+          [finalTo]: { backgroundColor: "rgba(255, 170, 0, 0.3)" },
         });
 
         addMoveToLog(g, moveResult.san, moveResult.color);
@@ -1536,8 +1623,8 @@ export default function ChaosChessPage() {
         // Apply post-move chaos effects
         const aiMods = cs.aiModifiers;
         let finalGame: Chess = g;
-        if (moveResult.captured && pieceAtFrom) {
-          const afterEffects = applyPostMove(g, from, to, true, pieceAtFrom.type, pieceAtFrom.color as Color, aiMods);
+        if (moveResult.captured && finalPieceAtFrom) {
+          const afterEffects = applyPostMove(g, finalFrom, finalTo, true, finalPieceAtFrom.type, finalPieceAtFrom.color as Color, aiMods);
           if (afterEffects !== g) {
             finalGame = afterEffects;
           }
@@ -1555,7 +1642,7 @@ export default function ChaosChessPage() {
 
       setIsThinking(false);
     },
-    [playerColor, aiDepth, checkGameEnd, checkDraft, addMoveToLog, applyPostMove, recomputeChaosMoves],
+    [playerColor, aiDepth, checkGameEnd, checkDraft, addMoveToLog, applyPostMove, recomputeChaosMoves, chaosState],
   );
 
   /* ── Start game ── */
@@ -1898,6 +1985,11 @@ export default function ChaosChessPage() {
       let moveResult = null;
       const pieceAtFrom = game.get(from as any);
 
+      // Block king moves into chaos-attacked squares
+      if (pieceAtFrom && pieceAtFrom.type === "k" && isKingMoveChaosUnsafe(game, from, to)) {
+        return false;
+      }
+
       // Check if this is a promotion move (pawn reaching last rank)
       if (pieceAtFrom && pieceAtFrom.type === "p") {
         const lastRank = pieceAtFrom.color === "w" ? "8" : "1";
@@ -1981,7 +2073,7 @@ export default function ChaosChessPage() {
 
       return true;
     },
-    [game, gameStatus, playerColor, isThinking, chaosState, gameMode, availableChaosMoves, checkGameEnd, checkDraft, makeAiMove, addMoveToLog, applyPostMove, sendMoveToServer, spawnPepe, recomputeChaosMoves],
+    [game, gameStatus, playerColor, isThinking, chaosState, gameMode, availableChaosMoves, checkGameEnd, checkDraft, makeAiMove, addMoveToLog, applyPostMove, sendMoveToServer, spawnPepe, recomputeChaosMoves, isKingMoveChaosUnsafe],
   );
 
   /* ── Execute a pending chaos promotion after piece choice ── */
@@ -2102,6 +2194,8 @@ export default function ChaosChessPage() {
               [square]: { backgroundColor: "rgba(255, 255, 0, 0.3)" },
             };
             for (const m of moves) {
+              // Filter out king moves to chaos-attacked squares
+              if (m.piece === "k" && isKingMoveChaosUnsafe(game, m.from, m.to)) continue;
               highlights[m.to] = {
                 backgroundColor: m.captured
                   ? "rgba(255, 0, 0, 0.35)"
@@ -2134,6 +2228,8 @@ export default function ChaosChessPage() {
             [square]: { backgroundColor: "rgba(255, 255, 0, 0.3)" },
           };
           for (const m of moves) {
+            // Filter out king moves to chaos-attacked squares
+            if (m.piece === "k" && isKingMoveChaosUnsafe(game, m.from, m.to)) continue;
             highlights[m.to] = {
               backgroundColor: m.captured
                 ? "rgba(255, 0, 0, 0.35)"
@@ -2155,7 +2251,7 @@ export default function ChaosChessPage() {
         }
       }
     },
-    [game, gameStatus, playerColor, isThinking, selectedSquare, handlePlayerMove, availableChaosMoves],
+    [game, gameStatus, playerColor, isThinking, selectedSquare, handlePlayerMove, availableChaosMoves, isKingMoveChaosUnsafe],
   );
 
   /* ── Handle draft pick ── */
