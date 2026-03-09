@@ -465,6 +465,109 @@ function genSniperBishop(game: Chess, color: Color): ChaosMove[] {
   return moves;
 }
 
+/** Pegasus: Knights can make a double L-jump (two knight moves in one turn) */
+function genPegasus(game: Chess, color: Color): ChaosMove[] {
+  const moves: ChaosMove[] = [];
+  const knights = allSquaresOf(game, "n", color);
+  const knightOffsets = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
+  const seen = new Set<string>();
+
+  for (const ns of knights) {
+    const [f, r] = sqToCoords(ns);
+
+    // First jump: all 8 possible intermediate squares (Pegasus flies over everything)
+    for (const [df1, dr1] of knightOffsets) {
+      const midF = f + df1;
+      const midR = r + dr1;
+      if (midF < 0 || midF > 7 || midR < 0 || midR > 7) continue;
+
+      // Second jump from intermediate square
+      for (const [df2, dr2] of knightOffsets) {
+        const finalF = midF + df2;
+        const finalR = midR + dr2;
+        if (finalF < 0 || finalF > 7 || finalR < 0 || finalR > 7) continue;
+
+        const target = sq(finalF, finalR)!;
+
+        // Can't end on starting square
+        if (target === ns) continue;
+        // Can't land on friendly piece
+        if (isFriendly(game, target, color)) continue;
+
+        // Deduplicate same from→to (multiple intermediate paths)
+        const key = `${ns}-${target}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+
+        // Skip squares reachable by a normal single-knight jump (chess.js handles those)
+        const df = finalF - f;
+        const dr = finalR - r;
+        const isNormalKnight =
+          (Math.abs(df) === 2 && Math.abs(dr) === 1) ||
+          (Math.abs(df) === 1 && Math.abs(dr) === 2);
+        if (isNormalKnight) continue;
+
+        if (wouldLeaveKingInCheck(game, ns, target, color)) continue;
+
+        moves.push({
+          from: ns,
+          to: target,
+          type: isEnemy(game, target, color) ? "capture" : "move",
+          modifierId: "pegasus",
+          label: "Pegasus (double L-jump)",
+        });
+      }
+    }
+  }
+  return moves;
+}
+
+/** Rook Cannon: rooks can jump over exactly one piece to capture behind it (Xiangqi style) */
+function genRookCannon(game: Chess, color: Color): ChaosMove[] {
+  const moves: ChaosMove[] = [];
+  const rooks = allSquaresOf(game, "r", color);
+  const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
+  for (const rs of rooks) {
+    const [f, r] = sqToCoords(rs);
+    for (const [df, dr] of dirs) {
+      let cf = f + df;
+      let cr = r + dr;
+      let jumped = false;
+
+      while (cf >= 0 && cf <= 7 && cr >= 0 && cr <= 7) {
+        const target = sq(cf, cr)!;
+        const piece = game.get(target);
+
+        if (piece) {
+          if (!jumped) {
+            // First piece encountered: jump over it
+            jumped = true;
+          } else {
+            // Second piece encountered: can capture if enemy
+            if (piece.color !== color) {
+              if (!wouldLeaveKingInCheck(game, rs, target, color)) {
+                moves.push({
+                  from: rs,
+                  to: target,
+                  type: "capture",
+                  modifierId: "rook-cannon",
+                  label: "Rook Cannon (jump capture)",
+                });
+              }
+            }
+            break; // Can't go past second piece either way
+          }
+        }
+
+        cf += df;
+        cr += dr;
+      }
+    }
+  }
+  return moves;
+}
+
 /** Early promotion: pawns promote on rank 6 (white) or rank 3 (black) */
 function genEarlyPromotion(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
@@ -507,6 +610,8 @@ const MODIFIER_GENERATORS: Record<string, (game: Chess, color: Color) => ChaosMo
   "king-ascension": genKingAscension,
   "sniper-bishop": genSniperBishop,
   "pawn-promotion-early": genEarlyPromotion,
+  "pegasus": genPegasus,
+  "rook-cannon": genRookCannon,
 };
 
 /**

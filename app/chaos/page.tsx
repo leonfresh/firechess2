@@ -11,15 +11,16 @@
  * Supports: vs AI, vs Friend (room code invite), and random matchmaking.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chess, type Color, type PieceSymbol } from "chess.js";
 import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
 import { Chessboard } from "react-chessboard";
-import { EvalBar } from "@/components/eval-bar";
 import { stockfishPool } from "@/lib/stockfish-client";
-import { useBoardSize } from "@/lib/use-board-size";
-import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
+// useBoardSize removed — we use onBoardWidthChange from react-chessboard
+import { useBoardTheme, useShowCoordinates, useCustomPieces, usePieceTheme } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
+import { getPieceImageUrl } from "@/lib/board-themes";
+// Note: useBoardSize removed — we use onBoardWidthChange from react-chessboard for auto-responsive sizing
 import {
   createChaosState,
   checkDraftTrigger,
@@ -40,6 +41,397 @@ import {
   applyDraftEffect,
   type ChaosMove,
 } from "@/lib/chaos-moves";
+
+/* ────────────────────────── Chaos Piece Overlays ────────────────────────── */
+
+/**
+ * SVG overlay definitions keyed by modifier id.
+ * Each returns SVG elements drawn at various positions around the piece.
+ * `position` determines where the badge/effect goes when stacking.
+ */
+type OverlayDef = {
+  /** Render the SVG overlay. sw = squareWidth */
+  render: (sw: number) => React.ReactElement;
+  /** CSS filter to apply on the base piece */
+  filter?: string;
+  /** Pulsing glow color */
+  glow?: string;
+};
+
+const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
+  pegasus: {
+    glow: "rgba(168,85,247,0.4)",
+    render: (sw) => {
+      const s = sw * 0.35;
+      return (
+        <svg viewBox="0 0 24 24" width={s} height={s} style={{ position: "absolute", top: "2%", right: "2%", opacity: 0.9, filter: "drop-shadow(0 0 2px rgba(168,85,247,0.8))" }}>
+          {/* Wing shape */}
+          <path d="M4 12 C4 6, 12 2, 20 6 L16 10 C14 8, 10 8, 8 12 Z" fill="rgba(168,85,247,0.85)" stroke="rgba(216,180,254,0.9)" strokeWidth="0.5" />
+          <path d="M6 14 C6 9, 12 5, 18 8 L15 11 C13 9.5, 10 10, 9 13 Z" fill="rgba(192,132,252,0.5)" />
+        </svg>
+      );
+    },
+  },
+  "knight-retreat": {
+    render: (sw) => {
+      const s = sw * 0.22;
+      return (
+        <div style={{ position: "absolute", bottom: "4%", right: "4%", width: s, height: s, borderRadius: "50%", backgroundColor: "rgba(34,197,94,0.7)", border: "1px solid rgba(74,222,128,0.8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: s * 0.6, lineHeight: 1, filter: "drop-shadow(0 0 2px rgba(34,197,94,0.6))" }}>
+          🥾
+        </div>
+      );
+    },
+  },
+  knook: {
+    glow: "rgba(59,130,246,0.5)",
+    render: (sw) => {
+      const s = sw * 0.28;
+      return (
+        <svg viewBox="0 0 24 24" width={s} height={s} style={{ position: "absolute", top: "2%", left: "2%", opacity: 0.85, filter: "drop-shadow(0 0 3px rgba(59,130,246,0.8))" }}>
+          {/* Castle turret (rook symbol) */}
+          <rect x="4" y="8" width="16" height="14" rx="1" fill="rgba(59,130,246,0.7)" stroke="rgba(147,197,253,0.8)" strokeWidth="0.8" />
+          <rect x="5.5" y="4" width="3" height="6" fill="rgba(59,130,246,0.8)" />
+          <rect x="10" y="4" width="3" height="6" fill="rgba(59,130,246,0.8)" />
+          <rect x="15" y="4" width="3" height="6" fill="rgba(59,130,246,0.8)" />
+        </svg>
+      );
+    },
+  },
+  amazon: {
+    glow: "rgba(249,115,22,0.4)",
+    render: (sw) => {
+      const s = sw * 0.26;
+      return (
+        <svg viewBox="0 0 24 24" width={s} height={s} style={{ position: "absolute", top: "0%", right: "2%", opacity: 0.9, filter: "drop-shadow(0 0 3px rgba(249,115,22,0.8))" }}>
+          {/* Knight head silhouette on queen */}
+          <path d="M6 20 L8 12 L6 8 L10 4 L14 6 L18 4 L16 10 L18 14 L14 18 Z" fill="rgba(249,115,22,0.8)" stroke="rgba(251,191,36,0.8)" strokeWidth="0.6" />
+        </svg>
+      );
+    },
+  },
+  "king-ascension": {
+    glow: "rgba(234,179,8,0.5)",
+    render: (sw) => {
+      const s = sw * 0.32;
+      return (
+        <svg viewBox="0 0 24 24" width={s} height={s} style={{ position: "absolute", top: "-4%", left: "50%", transform: "translateX(-50%)", opacity: 0.9, filter: "drop-shadow(0 0 4px rgba(234,179,8,0.9))" }}>
+          {/* Crown */}
+          <path d="M2 18 L4 8 L8 12 L12 4 L16 12 L20 8 L22 18 Z" fill="rgba(234,179,8,0.8)" stroke="rgba(253,224,71,0.9)" strokeWidth="0.6" />
+          <circle cx="4" cy="8" r="1.5" fill="rgba(253,224,71,0.9)" />
+          <circle cx="12" cy="4" r="1.5" fill="rgba(253,224,71,0.9)" />
+          <circle cx="20" cy="8" r="1.5" fill="rgba(253,224,71,0.9)" />
+        </svg>
+      );
+    },
+  },
+  "phantom-rook": {
+    filter: "opacity(0.65) brightness(1.3)",
+    glow: "rgba(147,51,234,0.4)",
+    render: (sw) => {
+      const s = sw * 0.22;
+      return (
+        <div style={{ position: "absolute", bottom: "4%", left: "4%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 3px rgba(147,51,234,0.8))" }}>
+          👻
+        </div>
+      );
+    },
+  },
+  "sniper-bishop": {
+    render: (sw) => {
+      const s = sw * 0.35;
+      return (
+        <svg viewBox="0 0 24 24" width={s} height={s} style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", opacity: 0.5, filter: "drop-shadow(0 0 2px rgba(239,68,68,0.6))" }}>
+          {/* Crosshair */}
+          <circle cx="12" cy="12" r="9" stroke="rgba(239,68,68,0.7)" strokeWidth="1" fill="none" />
+          <circle cx="12" cy="12" r="4" stroke="rgba(239,68,68,0.5)" strokeWidth="0.8" fill="none" />
+          <line x1="12" y1="1" x2="12" y2="7" stroke="rgba(239,68,68,0.6)" strokeWidth="1" />
+          <line x1="12" y1="17" x2="12" y2="23" stroke="rgba(239,68,68,0.6)" strokeWidth="1" />
+          <line x1="1" y1="12" x2="7" y2="12" stroke="rgba(239,68,68,0.6)" strokeWidth="1" />
+          <line x1="17" y1="12" x2="23" y2="12" stroke="rgba(239,68,68,0.6)" strokeWidth="1" />
+        </svg>
+      );
+    },
+  },
+  "collateral-rook": {
+    glow: "rgba(249,115,22,0.4)",
+    render: (sw) => {
+      const s = sw * 0.24;
+      return (
+        <div style={{ position: "absolute", top: "2%", right: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 3px rgba(249,115,22,0.8))" }}>
+          💥
+        </div>
+      );
+    },
+  },
+  "nuclear-queen": {
+    glow: "rgba(34,197,94,0.5)",
+    render: (sw) => {
+      const s = sw * 0.28;
+      return (
+        <div style={{ position: "absolute", bottom: "2%", right: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 4px rgba(34,197,94,0.9))", animation: "pulse 2s ease-in-out infinite" }}>
+          ☢️
+        </div>
+      );
+    },
+  },
+  "rook-charge": {
+    render: (sw) => {
+      const s = sw * 0.2;
+      return (
+        <div style={{ position: "absolute", bottom: "4%", right: "4%", width: s, height: s, borderRadius: "50%", backgroundColor: "rgba(59,130,246,0.5)", border: "1px solid rgba(96,165,250,0.7)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: s * 0.7, lineHeight: 1 }}>
+          ⚔️
+        </div>
+      );
+    },
+  },
+  "pawn-charge": {
+    render: (sw) => {
+      const s = sw * 0.2;
+      return (
+        <div style={{ position: "absolute", top: "2%", right: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 2px rgba(59,130,246,0.6))" }}>
+          🚀
+        </div>
+      );
+    },
+  },
+  "pawn-capture-forward": {
+    render: (sw) => {
+      const s = sw * 0.2;
+      return (
+        <div style={{ position: "absolute", top: "2%", left: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 2px rgba(239,68,68,0.6))" }}>
+          🗡️
+        </div>
+      );
+    },
+  },
+  "bishop-slide": {
+    render: (sw) => {
+      const s = sw * 0.18;
+      return (
+        <svg viewBox="0 0 24 24" width={s} height={s} style={{ position: "absolute", bottom: "4%", right: "4%", opacity: 0.7 }}>
+          {/* Speed lines */}
+          <line x1="2" y1="6" x2="16" y2="6" stroke="rgba(96,165,250,0.8)" strokeWidth="2" strokeLinecap="round" />
+          <line x1="4" y1="12" x2="20" y2="12" stroke="rgba(96,165,250,0.6)" strokeWidth="2" strokeLinecap="round" />
+          <line x1="2" y1="18" x2="14" y2="18" stroke="rgba(96,165,250,0.8)" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      );
+    },
+  },
+  "pawn-promotion-early": {
+    glow: "rgba(234,179,8,0.3)",
+    render: (sw) => {
+      const s = sw * 0.2;
+      return (
+        <div style={{ position: "absolute", top: "0%", right: "0%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 3px rgba(234,179,8,0.8))" }}>
+          ⭐
+        </div>
+      );
+    },
+  },
+  "king-shield": {
+    render: (sw) => {
+      const s = sw * 0.24;
+      return (
+        <div style={{ position: "absolute", bottom: "2%", left: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 2px rgba(59,130,246,0.6))" }}>
+          🛡️
+        </div>
+      );
+    },
+  },
+  "king-wrath": {
+    render: (sw) => {
+      const s = sw * 0.22;
+      return (
+        <div style={{ position: "absolute", top: "2%", right: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 3px rgba(239,68,68,0.7))" }}>
+          ⚔️
+        </div>
+      );
+    },
+  },
+  "queen-teleport": {
+    glow: "rgba(168,85,247,0.4)",
+    render: (sw) => {
+      const s = sw * 0.24;
+      return (
+        <div style={{ position: "absolute", bottom: "2%", left: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 3px rgba(168,85,247,0.8))", animation: "pulse 3s ease-in-out infinite" }}>
+          🌀
+        </div>
+      );
+    },
+  },
+  "bishop-bounce": {
+    render: (sw) => {
+      const s = sw * 0.22;
+      return (
+        <div style={{ position: "absolute", top: "2%", right: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 2px rgba(249,115,22,0.6))" }}>
+          🪃
+        </div>
+      );
+    },
+  },
+  "rook-cannon": {
+    glow: "rgba(239,68,68,0.4)",
+    render: (sw) => {
+      const s = sw * 0.24;
+      return (
+        <div style={{ position: "absolute", top: "2%", left: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 3px rgba(239,68,68,0.8))" }}>
+          💣
+        </div>
+      );
+    },
+  },
+  "knight-horde": {
+    render: (sw) => {
+      const s = sw * 0.2;
+      return (
+        <svg viewBox="0 0 24 24" width={s} height={s} style={{ position: "absolute", bottom: "4%", left: "4%", opacity: 0.8, filter: "drop-shadow(0 0 2px rgba(34,197,94,0.7))" }}>
+          {/* Army helmet */}
+          <path d="M4 16 Q4 8 12 6 Q20 8 20 16 L18 18 L6 18 Z" fill="rgba(34,197,94,0.7)" stroke="rgba(74,222,128,0.8)" strokeWidth="0.6" />
+          <ellipse cx="12" cy="8" rx="8" ry="3" fill="rgba(34,197,94,0.5)" />
+        </svg>
+      );
+    },
+  },
+  "undead-army": {
+    filter: "sepia(0.3) hue-rotate(-20deg)",
+    render: (sw) => {
+      const s = sw * 0.2;
+      return (
+        <div style={{ position: "absolute", top: "2%", right: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 3px rgba(168,85,247,0.8))" }}>
+          💀
+        </div>
+      );
+    },
+  },
+  "il-vaticano": {
+    render: (sw) => {
+      const s = sw * 0.2;
+      return (
+        <div style={{ position: "absolute", top: "0%", left: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 2px rgba(234,179,8,0.6))" }}>
+          ✝️
+        </div>
+      );
+    },
+  },
+  "forced-en-passant": {
+    render: (sw) => {
+      const s = sw * 0.2;
+      return (
+        <div style={{ position: "absolute", bottom: "2%", right: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 2px rgba(249,115,22,0.6))" }}>
+          🧱
+        </div>
+      );
+    },
+  },
+  "pawn-shield-wall": {
+    render: (sw) => {
+      const s = sw * 0.2;
+      return (
+        <div style={{ position: "absolute", bottom: "2%", left: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 2px rgba(59,130,246,0.6))" }}>
+          🔰
+        </div>
+      );
+    },
+  },
+  "enpassant-everywhere": {
+    render: (sw) => {
+      const s = sw * 0.18;
+      return (
+        <div style={{ position: "absolute", bottom: "2%", right: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 2px rgba(234,179,8,0.6))" }}>
+          ⚡
+        </div>
+      );
+    },
+  },
+};
+
+/** Map piece code letter → PieceSymbol */
+const PIECE_CODE_MAP: Record<string, string> = {
+  P: "p", N: "n", B: "b", R: "r", Q: "q", K: "k",
+};
+
+/**
+ * Build customPieces with chaos modifier overlays.
+ * Wraps each piece image with SVG decorations based on active modifiers.
+ */
+function buildChaosCustomPieces(
+  setName: string | null,
+  playerModifiers: ChaosModifier[],
+  aiModifiers: ChaosModifier[],
+  playerColor: "white" | "black",
+): Record<string, ({ squareWidth }: { squareWidth: number }) => React.ReactElement> {
+  const codes = ["wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK"];
+  const result: Record<string, ({ squareWidth }: { squareWidth: number }) => React.ReactElement> = {};
+
+  // Fallback to cburnett if no custom set chosen
+  const actualSet = setName ?? "cburnett";
+
+  for (const code of codes) {
+    const pieceColor = code[0]; // "w" or "b"
+    const pieceType = PIECE_CODE_MAP[code[1]]; // "p", "n", etc.
+    const isPlayerPiece =
+      (pieceColor === "w" && playerColor === "white") ||
+      (pieceColor === "b" && playerColor === "black");
+    const mods = isPlayerPiece ? playerModifiers : aiModifiers;
+    const activeForPiece = mods.filter((m) => m.piece === pieceType);
+    const url = getPieceImageUrl(actualSet, code);
+
+    result[code] = ({ squareWidth }: { squareWidth: number }) => {
+      // Collect overlays & effects
+      const overlays: React.ReactElement[] = [];
+      let filter = "";
+      let glowColor = "";
+
+      for (const mod of activeForPiece) {
+        const def = MODIFIER_OVERLAYS[mod.id];
+        if (!def) continue;
+        overlays.push(<React.Fragment key={mod.id}>{def.render(squareWidth)}</React.Fragment>);
+        if (def.filter) filter = def.filter;
+        if (def.glow && !glowColor) glowColor = def.glow;
+      }
+
+      return (
+        <div style={{ width: squareWidth, height: squareWidth, position: "relative" }}>
+          {/* Glow aura behind piece */}
+          {glowColor && (
+            <div
+              style={{
+                position: "absolute",
+                inset: "10%",
+                borderRadius: "50%",
+                background: `radial-gradient(circle, ${glowColor} 0%, transparent 70%)`,
+                animation: "pulse 2.5s ease-in-out infinite",
+                pointerEvents: "none",
+              }}
+            />
+          )}
+          {/* Base piece image */}
+          <div
+            style={{
+              width: squareWidth,
+              height: squareWidth,
+              backgroundImage: `url(${url})`,
+              backgroundSize: "contain",
+              backgroundRepeat: "no-repeat",
+              backgroundPosition: "center",
+              filter: filter || undefined,
+              position: "relative",
+              zIndex: 1,
+            }}
+          />
+          {/* Modifier overlays */}
+          {overlays.length > 0 && (
+            <div style={{ position: "absolute", inset: 0, zIndex: 2, pointerEvents: "none" }}>
+              {overlays}
+            </div>
+          )}
+        </div>
+      );
+    };
+  }
+
+  return result;
+}
 
 /* ────────────────────────── Constants ────────────────────────── */
 
@@ -184,6 +576,10 @@ function ChaosParticles() {
           0%, 100% { transform: translateY(0); }
           50% { transform: translateY(-8px); }
         }
+        @keyframes tooltip-pop {
+          0% { transform: translateX(-50%) scale(0.9); opacity: 0; }
+          100% { transform: translateX(-50%) scale(1); opacity: 1; }
+        }
       `}</style>
     </div>
   );
@@ -231,34 +627,34 @@ function DraftModal({
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center">
       <div
-        className="relative mx-4 w-full max-w-2xl rounded-2xl border border-purple-500/30 bg-[#0a0f1a] p-6 md:p-8"
+        className="relative w-full max-w-2xl rounded-t-2xl border border-purple-500/30 bg-[#0a0f1a] p-4 sm:mx-4 sm:rounded-2xl sm:p-6 md:p-8 max-h-[90vh] overflow-y-auto"
         style={{ animation: "draft-pulse 2s ease-in-out infinite" }}
       >
         {/* Header */}
-        <div className="mb-6 text-center">
+        <div className="mb-4 text-center sm:mb-6">
           {/* Pepe reacts to hovered tier */}
-          <div className="mb-2 flex items-center justify-center gap-3">
+          <div className="mb-1.5 flex items-center justify-center gap-3 sm:mb-2">
             <img
               src={hoveredMod ? tierPepe(hoveredMod.tier) : PEPE.bigeyes}
               alt=""
-              className="h-12 w-12 object-contain"
+              className="h-9 w-9 object-contain sm:h-12 sm:w-12"
               style={{ animation: hoveredMod ? "pepe-pop 0.25s ease-out" : "pepe-bounce 1.5s ease-in-out infinite" }}
               key={hoveredId ?? "idle"}
             />
           </div>
-          <h2 className="text-2xl font-bold text-white">CHAOS DRAFT</h2>
-          <p className="mt-1 text-sm text-purple-400">
+          <h2 className="text-xl font-bold text-white sm:text-2xl">CHAOS DRAFT</h2>
+          <p className="mt-0.5 text-xs text-purple-400 sm:mt-1 sm:text-sm">
             Phase {phase} — {getPhaseLabel(phase)}
           </p>
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-1 text-[10px] text-slate-500 sm:mt-2 sm:text-xs">
             Choose a modifier to permanently buff your pieces
           </p>
         </div>
 
         {/* Cards */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 grid-cols-1 sm:gap-4 sm:grid-cols-3">
           {choices.map((mod, idx) => {
             const tier = TIER_COLORS[mod.tier];
             const isHovered = hoveredId === mod.id;
@@ -269,43 +665,45 @@ function DraftModal({
                 onClick={() => onPick(mod)}
                 onMouseEnter={() => setHoveredId(mod.id)}
                 onMouseLeave={() => setHoveredId(null)}
-                className={`group relative flex flex-col items-center rounded-xl border p-5 text-center transition-all duration-200 ${tier.bg} ${tier.border} ${tier.glow} ${
+                className={`group relative flex flex-row items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200 sm:flex-col sm:gap-0 sm:p-5 sm:text-center ${tier.bg} ${tier.border} ${tier.glow} ${
                   isHovered
-                    ? "scale-105 border-white/30 shadow-lg"
-                    : "hover:scale-[1.02]"
+                    ? "scale-[1.02] border-white/30 shadow-lg sm:scale-105"
+                    : "hover:scale-[1.01] sm:hover:scale-[1.02]"
                 }`}
                 style={{
                   animation: `card-appear 0.4s ease-out ${idx * 0.1}s both`,
                 }}
               >
-                {/* Tier badge */}
-                <span
-                  className={`mb-2 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${tier.text} ${tier.bg}`}
-                >
-                  {TIER_LABELS[mod.tier]}
-                </span>
-
                 {/* Icon */}
-                <div className="mb-2 text-5xl">{mod.icon}</div>
+                <div className="text-3xl shrink-0 sm:mb-2 sm:text-5xl">{mod.icon}</div>
 
-                {/* Name */}
-                <h3 className="mb-1 text-sm font-bold text-white">{mod.name}</h3>
-
-                {/* Piece target */}
-                {mod.piece && (
-                  <span className="mb-2 text-[10px] uppercase tracking-wider text-slate-500">
-                    {({ p: "Pawns", n: "Knights", b: "Bishops", r: "Rooks", q: "Queen", k: "King" })[mod.piece]}
+                <div className="flex-1 min-w-0 sm:flex-none">
+                  {/* Tier badge */}
+                  <span
+                    className={`mb-1 inline-block rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider sm:mb-2 sm:text-[10px] ${tier.text} ${tier.bg}`}
+                  >
+                    {TIER_LABELS[mod.tier]}
                   </span>
-                )}
 
-                {/* Description */}
-                <p className="text-xs leading-relaxed text-slate-400">
-                  {mod.description}
-                </p>
+                  {/* Name */}
+                  <h3 className="text-xs font-bold text-white sm:mb-1 sm:text-sm">{mod.name}</h3>
+
+                  {/* Piece target */}
+                  {mod.piece && (
+                    <span className="text-[9px] uppercase tracking-wider text-slate-500 sm:mb-2 sm:text-[10px] block">
+                      {({ p: "Pawns", n: "Knights", b: "Bishops", r: "Rooks", q: "Queen", k: "King" })[mod.piece]}
+                    </span>
+                  )}
+
+                  {/* Description */}
+                  <p className="text-[10px] leading-relaxed text-slate-400 sm:text-xs">
+                    {mod.description}
+                  </p>
+                </div>
 
                 {/* Pick hint */}
                 <div
-                  className={`mt-3 rounded-lg px-3 py-1 text-xs font-semibold transition-all ${
+                  className={`hidden sm:mt-3 sm:block rounded-lg px-3 py-1 text-xs font-semibold transition-all ${
                     isHovered
                       ? "bg-white/10 text-white"
                       : "bg-white/5 text-slate-500"
@@ -342,8 +740,8 @@ function ModifierTooltip({
     >
       {children}
       {show && (
-        <div className="absolute bottom-full left-1/2 z-[80] mb-2 w-56 -translate-x-1/2 rounded-xl border border-white/10 bg-[#0d1117] p-3 shadow-2xl shadow-black/50"
-          style={{ animation: "card-appear 0.15s ease-out" }}
+        <div className="absolute bottom-full left-1/2 z-[100] mb-2 w-56 -translate-x-1/2 rounded-xl border border-white/10 bg-[#0d1117] p-3 shadow-2xl shadow-black/50"
+          style={{ animation: "tooltip-pop 0.15s ease-out both" }}
         >
           <div className="flex items-center gap-2 mb-1.5">
             <span className="text-2xl">{mod.icon}</span>
@@ -427,17 +825,17 @@ function InlineModifierIcons({ modifiers }: { modifiers: ChaosModifier[] }) {
 
 export default function ChaosChessPage() {
   /* ── Board / theme hooks ── */
-  const { ref: boardContainerRef, size: boardSize } = useBoardSize(480);
+  const [boardSize, setBoardSize] = useState(0);
   const boardTheme = useBoardTheme();
   const showCoordinates = useShowCoordinates();
-  const customPieces = useCustomPieces();
+  const pieceTheme = usePieceTheme();
+  const baseCustomPieces = useCustomPieces();
 
   /* ── Game state ── */
   const [game, setGame] = useState(() => new Chess());
   const [gameStatus, setGameStatus] = useState<GameStatus>("setup");
   const [gameResult, setGameResult] = useState<GameResult>(null);
   const [playerColor, setPlayerColor] = useState<"white" | "black">("white");
-  const [eval_, setEval] = useState(0);
   const [isThinking, setIsThinking] = useState(false);
 
   /* ── Mode / multiplayer ── */
@@ -457,6 +855,18 @@ export default function ChaosChessPage() {
 
   /* ── Chaos moves (extra legal moves from modifiers) ── */
   const [availableChaosMoves, setAvailableChaosMoves] = useState<ChaosMove[]>([]);
+
+  /* ── Chaos-aware piece rendering (overlays on pieces with modifiers) ── */
+  const chaosCustomPieces = useMemo(() => {
+    const allMods = [...chaosState.playerModifiers, ...chaosState.aiModifiers];
+    if (allMods.length === 0) return baseCustomPieces;
+    return buildChaosCustomPieces(
+      pieceTheme.setName,
+      chaosState.playerModifiers,
+      chaosState.aiModifiers,
+      playerColor,
+    );
+  }, [pieceTheme.setName, chaosState.playerModifiers, chaosState.aiModifiers, playerColor, baseCustomPieces]);
 
   /* ── Move log ── */
   const [moveLog, setMoveLog] = useState<MoveLogEntry[]>([]);
@@ -653,9 +1063,11 @@ export default function ChaosChessPage() {
         const aiColor = playerColor === "white" ? "b" : "w";
         const aiChaosMoves = getChaosMoves(g, cs.aiModifiers, aiColor as Color);
 
-        // 30% chance to pick a chaos move if available
-        if (aiChaosMoves.length > 0 && Math.random() < 0.3) {
-          const chaosMove = pickRandom(aiChaosMoves);
+        // 65% chance to pick a chaos move; prefer captures
+        if (aiChaosMoves.length > 0 && Math.random() < 0.65) {
+          const captures = aiChaosMoves.filter((m) => m.type === "capture");
+          const pool = captures.length > 0 && Math.random() < 0.7 ? captures : aiChaosMoves;
+          const chaosMove = pickRandom(pool);
           const newGame = executeChaosMove(g, chaosMove, cs.aiModifiers);
           if (newGame) {
             const label = chaosMove.label;
@@ -714,7 +1126,6 @@ export default function ChaosChessPage() {
         });
 
         addMoveToLog(g, moveResult.san, moveResult.color);
-        setEval(result.cp / 100);
 
         // Apply post-move chaos effects
         const aiMods = cs.aiModifiers;
@@ -760,7 +1171,6 @@ export default function ChaosChessPage() {
         { type: "info", message: `⚡ Chaos Chess begins! ${mode === "ai" ? "vs Stockfish" : "vs Player"}. Modifiers appear at turns 5, 10, 15, 20, 25.`, icon: "⚡", pepe: PEPE.hyped },
       ]);
       playSound("reveal-stinger");
-      setEval(0);
       setSelectedSquare(null);
       setLegalMoveSquares({});
       setLastMoveHighlight({});
@@ -1275,20 +1685,6 @@ export default function ChaosChessPage() {
     }
   }, [playerColor, spawnPepe, gameMode, roomId, game]);
 
-  /* ── Eval update ── */
-  useEffect(() => {
-    if (gameMode !== "ai") return;
-    if (gameStatus !== "playing" && gameStatus !== "drafting") return;
-    let cancelled = false;
-    stockfishPool.evaluateFen(game.fen(), 10).then((r) => {
-      if (!cancelled && r) {
-        const cp = game.turn() === "w" ? r.cp : -r.cp;
-        setEval(cp / 100);
-      }
-    });
-    return () => { cancelled = true; };
-  }, [game, gameStatus, gameMode]);
-
   /* ── Next draft phase number for display ── */
   const nextDraftTurn = useMemo(() => {
     const nextPhase = chaosState.currentPhase + 1;
@@ -1311,45 +1707,45 @@ export default function ChaosChessPage() {
     return (
       <div className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-gradient-to-b from-[#030712] via-[#0a0f1a] to-[#030712]">
         <ChaosParticles />
-        <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-4 py-12 text-center">
+        <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-3 py-6 text-center sm:px-4 sm:py-12">
           {/* Title */}
           <img
             src={PEPE.hyped}
             alt=""
-            className="mb-3 h-16 w-16 object-contain"
+            className="mb-2 h-12 w-12 object-contain sm:mb-3 sm:h-16 sm:w-16"
             style={{ animation: "pepe-bounce 1.5s ease-in-out infinite" }}
           />
-          <h1 className="mb-3 bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 bg-clip-text text-4xl font-black tracking-tight text-transparent md:text-5xl">
+          <h1 className="mb-2 bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 bg-clip-text text-3xl font-black tracking-tight text-transparent sm:mb-3 sm:text-4xl md:text-5xl">
             CHAOS CHESS
           </h1>
-          <p className="mb-8 max-w-md text-base text-slate-400">
+          <p className="mb-5 max-w-md text-sm text-slate-400 sm:mb-8 sm:text-base">
             Play chess with wild modifiers. Every 5 turns, draft a permanent buff
             that actually changes how your pieces move. Pure chaos.
           </p>
 
           {/* How it works */}
-          <div className="mb-10 grid w-full max-w-lg gap-4 text-left md:grid-cols-3">
+          <div className="mb-6 grid w-full max-w-lg gap-3 text-left grid-cols-3 sm:mb-10 sm:gap-4">
             {[
               { icon: "♟️", title: "Play", desc: "Normal chess rules + chaos modifiers" },
               { icon: "⏸️", title: "Draft", desc: "At turns 5, 10, 15, 20, 25 — pick a modifier" },
               { icon: "💥", title: "Chaos", desc: "Modifiers actually work — pieces gain new moves!" },
             ].map((step) => (
-              <div key={step.title} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 text-center">
-                <div className="mb-2 text-2xl">{step.icon}</div>
-                <h3 className="mb-1 text-sm font-bold text-white">{step.title}</h3>
-                <p className="text-xs text-slate-500">{step.desc}</p>
+              <div key={step.title} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 text-center sm:p-4">
+                <div className="mb-1 text-xl sm:mb-2 sm:text-2xl">{step.icon}</div>
+                <h3 className="mb-0.5 text-xs font-bold text-white sm:mb-1 sm:text-sm">{step.title}</h3>
+                <p className="text-[10px] text-slate-500 sm:text-xs">{step.desc}</p>
               </div>
             ))}
           </div>
 
           {/* ── Mode Tabs ── */}
-          <div className="mb-6 flex gap-2">
+          <div className="mb-4 flex flex-wrap justify-center gap-1.5 sm:mb-6 sm:gap-2">
             {(["ai", "friend", "matchmake"] as GameMode[]).map((mode) => (
               <button
                 key={mode}
                 type="button"
                 onClick={() => setGameMode(mode)}
-                className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all sm:px-4 sm:py-2 sm:text-sm ${
                   gameMode === mode
                     ? "bg-purple-500/20 text-purple-400 border border-purple-500/40"
                     : "bg-white/[0.04] text-slate-400 border border-white/[0.06] hover:bg-white/[0.08]"
@@ -1363,15 +1759,15 @@ export default function ChaosChessPage() {
           {/* ── AI Mode ── */}
           {gameMode === "ai" && (
             <>
-              <div className="mb-6">
-                <p className="mb-2 text-xs font-medium uppercase tracking-wider text-slate-500">AI Difficulty</p>
-                <div className="flex gap-2">
+              <div className="mb-4 sm:mb-6">
+                <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-slate-500 sm:text-xs">AI Difficulty</p>
+                <div className="flex gap-1.5 sm:gap-2">
                   {(["easy", "medium", "hard"] as const).map((level) => (
                     <button
                       key={level}
                       type="button"
                       onClick={() => setAiLevel(level)}
-                      className={`rounded-lg px-4 py-2 text-sm font-medium capitalize transition-all ${
+                      className={`rounded-lg px-3 py-1.5 text-xs font-medium capitalize transition-all sm:px-4 sm:py-2 sm:text-sm ${
                         aiLevel === level
                           ? "bg-purple-500/20 text-purple-400 border border-purple-500/40"
                           : "bg-white/[0.04] text-slate-400 border border-white/[0.06] hover:bg-white/[0.08]"
@@ -1383,17 +1779,17 @@ export default function ChaosChessPage() {
                 </div>
               </div>
 
-              <p className="mb-3 text-xs font-medium uppercase tracking-wider text-slate-500">Choose your side</p>
-              <div className="flex gap-4">
+              <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-slate-500 sm:mb-3 sm:text-xs">Choose your side</p>
+              <div className="flex gap-3 sm:gap-4">
                 <button type="button" onClick={() => startGame("white", "ai")}
-                  className="group flex flex-col items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-8 py-5 transition-all hover:border-white/[0.2] hover:bg-white/[0.08] hover:scale-105">
-                  <span className="text-4xl">♔</span>
-                  <span className="text-sm font-bold text-white">White</span>
+                  className="group flex flex-col items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-5 py-3.5 transition-all hover:border-white/[0.2] hover:bg-white/[0.08] hover:scale-105 sm:gap-2 sm:px-8 sm:py-5">
+                  <span className="text-3xl sm:text-4xl">♔</span>
+                  <span className="text-xs font-bold text-white sm:text-sm">White</span>
                 </button>
                 <button type="button" onClick={() => startGame("black", "ai")}
-                  className="group flex flex-col items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-8 py-5 transition-all hover:border-white/[0.2] hover:bg-white/[0.08] hover:scale-105">
-                  <span className="text-4xl">♚</span>
-                  <span className="text-sm font-bold text-white">Black</span>
+                  className="group flex flex-col items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-5 py-3.5 transition-all hover:border-white/[0.2] hover:bg-white/[0.08] hover:scale-105 sm:gap-2 sm:px-8 sm:py-5">
+                  <span className="text-3xl sm:text-4xl">♚</span>
+                  <span className="text-xs font-bold text-white sm:text-sm">Black</span>
                 </button>
               </div>
             </>
@@ -1568,49 +1964,11 @@ export default function ChaosChessPage() {
         />
       )}
 
-      <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4 lg:flex-row lg:gap-6 lg:px-8 lg:py-6">
-        {/* ── Left sidebar: Modifiers ── */}
-        <div className="order-3 flex w-full flex-col gap-3 lg:order-1 lg:w-56 xl:w-64">
-          <ModifierList
-            title="Your Modifiers"
-            modifiers={chaosState.playerModifiers}
-            color="text-purple-400"
-          />
-          <ModifierList
-            title={gameMode === "ai" ? "AI Modifiers" : "Opponent Modifiers"}
-            modifiers={chaosState.aiModifiers}
-            color="text-red-400"
-          />
-
-          {/* Next draft info */}
-          {nextDraftTurn && gameStatus === "playing" && (
-            <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-3 text-center">
-              <p className="text-xs text-purple-400">
-                ⚡ Next draft at turn <span className="font-bold">{nextDraftTurn}</span>
-              </p>
-              <p className="mt-0.5 text-[10px] text-slate-500">
-                Current: turn {game.moveNumber()}
-              </p>
-            </div>
-          )}
-
-          {/* Chaos moves indicator */}
-          {chaosMovesCount > 0 && gameStatus === "playing" && (
-            <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 p-3 text-center">
-              <p className="text-xs text-purple-400">
-                ⚡ <span className="font-bold">{chaosMovesCount}</span> chaos {chaosMovesCount === 1 ? "move" : "moves"} available!
-              </p>
-              <p className="mt-0.5 text-[10px] text-slate-500">
-                Click a piece to see purple-highlighted chaos moves
-              </p>
-            </div>
-          )}
-        </div>
-
-        {/* ── Center: Board ── */}
-        <div className="order-1 flex flex-1 flex-col items-center lg:order-2">
+      <div className="relative z-10 mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 px-3 py-3 sm:px-4 sm:py-4 lg:grid-cols-[1fr_280px] lg:gap-6 lg:px-8 lg:py-6">
+        {/* ── Center: Board + Modifiers below ── */}
+        <div className="flex flex-col items-center gap-2 sm:gap-3 min-w-0">
           {/* Header */}
-          <div className="mb-3 flex w-full max-w-lg items-center justify-between">
+          <div className="flex w-full max-w-[640px] items-center justify-between px-1">
             <div className="flex items-center gap-2">
               <span className="text-lg">⚡</span>
               <h1 className="text-lg font-bold text-white">Chaos Chess</h1>
@@ -1657,49 +2015,50 @@ export default function ChaosChessPage() {
           </div>
 
           {/* Opponent label */}
-          <div className="mb-1 flex w-full max-w-lg items-center gap-2 rounded-lg bg-white/[0.02] px-3 py-1.5">
-            <span className="text-sm">{gameMode === "ai" ? "🤖" : "👤"}</span>
-            <span className="text-xs font-medium text-slate-400">
+          <div className="flex w-full max-w-[640px] items-center gap-2 rounded-lg bg-white/[0.02] px-2 py-1 sm:px-3 sm:py-1.5">
+            <span className="text-xs sm:text-sm">{gameMode === "ai" ? "🤖" : "👤"}</span>
+            <span className="text-[11px] sm:text-xs font-medium text-slate-400">
               {gameMode === "ai" ? `Stockfish (${aiLevel})` : opponentLabel}
             </span>
             <InlineModifierIcons modifiers={chaosState.aiModifiers} />
           </div>
 
-          {/* Board */}
-          <div ref={boardContainerRef} className="flex w-full max-w-lg items-start justify-center gap-2 sm:gap-3">
-            {gameMode === "ai" && <EvalBar evalCp={Math.round(eval_ * 100)} height={boardSize} />}
-            <Chessboard
-              id="chaos-board"
-              position={game.fen()}
-              boardWidth={boardSize}
-              boardOrientation={playerColor}
-              onPieceDrop={(from, to) => handlePlayerMove(from as CbSquare, to as CbSquare)}
-              onSquareClick={handleSquareClick}
-              customSquareStyles={mergedSquareStyles}
-              customBoardStyle={{
-                borderRadius: "8px",
-                boxShadow: "0 4px 30px rgba(0,0,0,0.4)",
-              }}
-              customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-              customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
-              showBoardNotation={showCoordinates}
-              customPieces={customPieces || undefined}
-              animationDuration={200}
-              arePiecesDraggable={gameStatus === "playing" && !isThinking}
-            />
+          {/* Board — auto-sizes to fill container, capped at 640px */}
+          <div className="w-full max-w-[640px]">
+            <div className="w-full">
+              <Chessboard
+                id="chaos-board"
+                position={game.fen()}
+                boardOrientation={playerColor}
+                onBoardWidthChange={setBoardSize}
+                onPieceDrop={(from, to) => handlePlayerMove(from as CbSquare, to as CbSquare)}
+                onSquareClick={handleSquareClick}
+                customSquareStyles={mergedSquareStyles}
+                customBoardStyle={{
+                  borderRadius: "8px",
+                  boxShadow: "0 4px 30px rgba(0,0,0,0.4)",
+                }}
+                customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+                customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                showBoardNotation={showCoordinates}
+                customPieces={chaosCustomPieces || undefined}
+                animationDuration={200}
+                arePiecesDraggable={gameStatus === "playing" && !isThinking}
+              />
+            </div>
           </div>
 
           {/* Player label */}
-          <div className="mt-1 flex w-full max-w-lg items-center gap-2 rounded-lg bg-white/[0.02] px-3 py-1.5">
-            <span className="text-sm">👤</span>
-            <span className="text-xs font-medium text-slate-400">
+          <div className="flex w-full max-w-[640px] items-center gap-2 rounded-lg bg-white/[0.02] px-2 py-1 sm:px-3 sm:py-1.5">
+            <span className="text-xs sm:text-sm">👤</span>
+            <span className="text-[11px] sm:text-xs font-medium text-slate-400">
               You ({playerColor})
             </span>
             <InlineModifierIcons modifiers={chaosState.playerModifiers} />
           </div>
 
           {/* Controls */}
-          <div className="mt-3 flex gap-2">
+          <div className="mt-2 sm:mt-3 flex gap-2">
             {gameStatus === "playing" && (
               <button
                 type="button"
@@ -1752,18 +2111,55 @@ export default function ChaosChessPage() {
               </div>
             )}
           </div>
+
+          {/* ── Modifiers (below board) ── */}
+          <div className="mt-3 sm:mt-4 flex w-full max-w-[640px] flex-col gap-2 sm:gap-3 sm:flex-row">
+            <div className="flex-1">
+              <ModifierList
+                title="Your Modifiers"
+                modifiers={chaosState.playerModifiers}
+                color="text-purple-400"
+              />
+            </div>
+            <div className="flex-1">
+              <ModifierList
+                title={gameMode === "ai" ? "AI Modifiers" : "Opponent Modifiers"}
+                modifiers={chaosState.aiModifiers}
+                color="text-red-400"
+              />
+            </div>
+          </div>
+
+          {/* Status badges below modifiers */}
+          <div className="mt-1.5 sm:mt-2 flex w-full max-w-[640px] flex-wrap justify-center gap-1.5 sm:gap-2">
+            {nextDraftTurn && gameStatus === "playing" && (
+              <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 px-3 py-1.5 text-center">
+                <p className="text-xs text-purple-400">
+                  ⚡ Next draft turn <span className="font-bold">{nextDraftTurn}</span>
+                  <span className="ml-1 text-slate-500">(now: {game.moveNumber()})</span>
+                </p>
+              </div>
+            )}
+            {chaosMovesCount > 0 && gameStatus === "playing" && (
+              <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 px-3 py-1.5 text-center">
+                <p className="text-xs text-purple-400">
+                  ⚡ <span className="font-bold">{chaosMovesCount}</span> chaos {chaosMovesCount === 1 ? "move" : "moves"} available
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* ── Right sidebar: Event log + Move log ── */}
-        <div className="order-2 flex w-full flex-col gap-3 lg:order-3 lg:w-56 xl:w-64">
+        {/* ── Right sidebar / bottom panel: Event log + Move log ── */}
+        <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-1">
           {/* Event log */}
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-            <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-purple-400">
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3">
+            <h3 className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-purple-400 sm:mb-2 sm:text-xs">
               ⚡ Chaos Log
             </h3>
             <div
               ref={eventLogRef}
-              className="max-h-48 space-y-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10"
+              className="max-h-32 space-y-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 sm:max-h-48"
             >
               {eventLog.map((entry, i) => (
                 <div
@@ -1788,13 +2184,13 @@ export default function ChaosChessPage() {
           </div>
 
           {/* Move log */}
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-            <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3">
+            <h3 className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:mb-2 sm:text-xs">
               Moves
             </h3>
             <div
               ref={moveLogRef}
-              className="max-h-40 space-y-0.5 overflow-y-auto font-mono text-[11px] scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10"
+              className="max-h-28 space-y-0.5 overflow-y-auto font-mono text-[10px] scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 sm:max-h-40 sm:text-[11px]"
             >
               {moveLog.map((entry) => (
                 <div key={entry.moveNumber} className="flex gap-2 text-slate-400">
@@ -1810,11 +2206,11 @@ export default function ChaosChessPage() {
           </div>
 
           {/* Quick info */}
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-            <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3 sm:col-span-2 lg:col-span-1">
+            <h3 className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:mb-2 sm:text-xs">
               Game Info
             </h3>
-            <div className="space-y-1 text-xs text-slate-400">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px] text-slate-400 sm:grid-cols-1 sm:space-y-1 sm:text-xs">
               <div className="flex justify-between">
                 <span>Mode</span>
                 <span className="text-white">{gameMode === "ai" ? "vs AI" : gameMode === "friend" ? "vs Friend" : "Matchmade"}</span>
