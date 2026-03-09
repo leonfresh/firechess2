@@ -1,49 +1,46 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" width="177.17" height="177.17">
   <defs>
-    <linearGradient id="wPC-body" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="wPC-b" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#fff"/>
       <stop offset="1" stop-color="#ddd"/>
     </linearGradient>
-    <linearGradient id="wPC-shine" x1="0.2" y1="0" x2="0.8" y2="1">
-      <stop offset="0" stop-color="#fff" stop-opacity="0.8"/>
-      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
-    </linearGradient>
-    <linearGradient id="wPC-chevron" x1="0.5" y1="1" x2="0.5" y2="0">
+    <linearGradient id="wPC-c" x1="0.5" y1="1" x2="0.5" y2="0">
       <stop offset="0" stop-color="#3b82f6" stop-opacity="0.9"/>
       <stop offset="1" stop-color="#60a5fa" stop-opacity="0.7"/>
     </linearGradient>
   </defs>
+  <!-- Shadow -->
+  <ellipse cx="25" cy="44" rx="13" ry="3" fill="#1f1a17"/>
+  <!-- Stem / flared skirt -->
+  <path d="M19.5 24 C18 29 15 37 14 43 L36 43 C35 37 32 29 30.5 24 Z"
+        fill="url(#wPC-b)" stroke="#1f1a17" stroke-width="0.7"/>
   <!-- Base platform -->
-  <ellipse cx="25" cy="46" rx="14" ry="3" fill="#1f1a17"/>
-  <ellipse cx="25" cy="46" rx="12.5" ry="2.2" fill="url(#wPC-body)" stroke="#1f1a17" stroke-width="0.8"/>
-  <!-- Pedestal -->
-  <path d="M14 44 Q14 42 16 40 L18 38 Q18.5 37.5 19 37 L31 37 Q31.5 37.5 32 38 L34 40 Q36 42 36 44 Z"
-        fill="url(#wPC-body)" stroke="#1f1a17" stroke-width="0.8"/>
-  <!-- Pawn body - standard tapered shape -->
-  <path d="M20 37 Q19.5 34 20 31 L20.5 28 Q21 25 22 23 L23 21 Q24 19 25 18 Q26 19 27 21 L28 23 Q29 25 29.5 28 L30 31 Q30.5 34 30 37 Z"
-        fill="url(#wPC-body)" stroke="#1f1a17" stroke-width="0.8" stroke-linejoin="round"/>
-  <!-- Pawn neck -->
-  <path d="M22.5 20 Q23 18 25 17 Q27 18 27.5 20 Q27 19 25 18.5 Q23 19 22.5 20 Z"
-        fill="url(#wPC-body)" stroke="#1f1a17" stroke-width="0.5"/>
-  <!-- Pawn head (ball) -->
-  <circle cx="25" cy="13" r="5.5" fill="url(#wPC-body)" stroke="#1f1a17" stroke-width="0.8"/>
-  <!-- Double upward chevrons on body — speed indicator -->
-  <path d="M22.5 33 L25 30.5 L27.5 33" fill="none" stroke="url(#wPC-chevron)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M22.5 29 L25 26.5 L27.5 29" fill="none" stroke="url(#wPC-chevron)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- Speed lines on the sides -->
-  <line x1="17" y1="30" x2="19" y2="28" stroke="#3b82f6" stroke-width="0.7" stroke-linecap="round" opacity="0.6"/>
-  <line x1="16.5" y1="33" x2="18.5" y2="31" stroke="#3b82f6" stroke-width="0.7" stroke-linecap="round" opacity="0.5"/>
-  <line x1="17" y1="36" x2="19" y2="34" stroke="#3b82f6" stroke-width="0.7" stroke-linecap="round" opacity="0.4"/>
-  <line x1="33" y1="30" x2="31" y2="28" stroke="#3b82f6" stroke-width="0.7" stroke-linecap="round" opacity="0.6"/>
-  <line x1="33.5" y1="33" x2="31.5" y2="31" stroke="#3b82f6" stroke-width="0.7" stroke-linecap="round" opacity="0.5"/>
-  <line x1="33" y1="36" x2="31" y2="34" stroke="#3b82f6" stroke-width="0.7" stroke-linecap="round" opacity="0.4"/>
-  <!-- Small upward arrow above head -->
-  <path d="M25 5 L27.5 8 L26 8 L26 10 L24 10 L24 8 L22.5 8 Z"
+  <ellipse cx="25" cy="43" rx="11.5" ry="2.3" fill="url(#wPC-b)" stroke="#1f1a17" stroke-width="0.7"/>
+  <!-- Collar / cup -->
+  <path d="M22 16.5 Q18 18.5 17.5 21 Q17 23 19 24 L31 24 Q33 23 32.5 21 Q32 18.5 28 16.5 Z"
+        fill="url(#wPC-b)" stroke="#1f1a17" stroke-width="0.7"/>
+  <!-- Collar rim/lip -->
+  <ellipse cx="25" cy="24" rx="6.2" ry="1.2" fill="url(#wPC-b)" stroke="#1f1a17" stroke-width="0.5"/>
+  <!-- Neck -->
+  <rect x="22.2" y="15" width="5.6" height="2.5" rx="1.5" fill="url(#wPC-b)" stroke="#1f1a17" stroke-width="0.5"/>
+  <!-- Head -->
+  <circle cx="25" cy="11" r="4.5" fill="url(#wPC-b)" stroke="#1f1a17" stroke-width="0.7"/>
+  <!-- Shine -->
+  <circle cx="23.5" cy="9.5" r="1.5" fill="#fff" opacity="0.3"/>
+  <!-- === CHARGER ACCENTS === -->
+  <!-- Double chevrons on skirt -->
+  <path d="M21 36 L25 32.5 L29 36" fill="none" stroke="url(#wPC-c)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M22 31.5 L25 28 L28 31.5" fill="none" stroke="url(#wPC-c)" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Speed lines L -->
+  <line x1="14.5" y1="33" x2="17" y2="30.5" stroke="#3b82f6" stroke-width="0.7" stroke-linecap="round" opacity="0.6"/>
+  <line x1="14" y1="36" x2="16.5" y2="33.5" stroke="#3b82f6" stroke-width="0.7" stroke-linecap="round" opacity="0.5"/>
+  <line x1="13.5" y1="39" x2="16" y2="36.5" stroke="#3b82f6" stroke-width="0.7" stroke-linecap="round" opacity="0.4"/>
+  <!-- Speed lines R -->
+  <line x1="35.5" y1="33" x2="33" y2="30.5" stroke="#3b82f6" stroke-width="0.7" stroke-linecap="round" opacity="0.6"/>
+  <line x1="36" y1="36" x2="33.5" y2="33.5" stroke="#3b82f6" stroke-width="0.7" stroke-linecap="round" opacity="0.5"/>
+  <line x1="36.5" y1="39" x2="34" y2="36.5" stroke="#3b82f6" stroke-width="0.7" stroke-linecap="round" opacity="0.4"/>
+  <!-- Arrow above head -->
+  <path d="M25 4 L27.5 6.5 L26 6.5 L26 8 L24 8 L24 6.5 L22.5 6.5 Z"
         fill="#3b82f6" opacity="0.7"/>
-  <!-- Collar detail -->
-  <path d="M20 37 Q25 35.5 30 37" fill="none" stroke="#1f1a17" stroke-width="0.5"/>
-  <!-- Shine highlight -->
-  <path d="M23.5 19 Q24 17 24.5 19 L24.2 34 Q24 35 24 36 L23.2 36 Q23 35 23.5 34 Z"
-        fill="url(#wPC-shine)" opacity="0.35"/>
 </svg>

@@ -57,6 +57,12 @@ function isEnemy(game: Chess, square: Square, color: Color): boolean {
   return !!p && p.color !== color;
 }
 
+/** Check if a square holds an enemy king — chaos moves must NEVER target the king */
+function isEnemyKing(game: Chess, square: Square, color: Color): boolean {
+  const p = game.get(square);
+  return !!p && p.color !== color && p.type === "k";
+}
+
 function isEmpty(game: Chess, square: Square): boolean {
   return !game.get(square);
 }
@@ -165,6 +171,7 @@ function genPawnBayonet(game: Chess, color: Color): ChaosMove[] {
     const target = sq(f, r + dir);
     if (!target) continue;
     if (!isEnemy(game, target, color)) continue;
+    if (isEnemyKing(game, target, color)) continue;
     if (wouldLeaveKingInCheck(game, ps, target, color)) continue;
 
     moves.push({
@@ -187,6 +194,7 @@ function genKnightRetreat(game: Chess, color: Color): ChaosMove[] {
       const target = sq(f + df, r + dr);
       if (!target) continue;
       if (isFriendly(game, target, color)) continue;
+      if (isEnemyKing(game, target, color)) continue;
       // chess.js already allows normal knight moves; skip squares knights can already reach
       if (wouldLeaveKingInCheck(game, ns, target, color)) continue;
 
@@ -211,6 +219,7 @@ function genBishopSlide(game: Chess, color: Color): ChaosMove[] {
       const target = sq(f + df, r + dr);
       if (!target) continue;
       if (isFriendly(game, target, color)) continue;
+      if (isEnemyKing(game, target, color)) continue;
       if (wouldLeaveKingInCheck(game, bs, target, color)) continue;
 
       moves.push({
@@ -234,6 +243,7 @@ function genRookCharge(game: Chess, color: Color): ChaosMove[] {
       const target = sq(f + df, r + dr);
       if (!target) continue;
       if (isFriendly(game, target, color)) continue;
+      if (isEnemyKing(game, target, color)) continue;
       if (wouldLeaveKingInCheck(game, rs, target, color)) continue;
 
       moves.push({
@@ -268,6 +278,7 @@ function genPhantomRook(game: Chess, color: Color): ChaosMove[] {
             // Continue sliding through
           } else {
             // Enemy piece — can capture if we passed through a friendly
+            if (piece.type === "k") break; // never target the king
             if (passedFriendly) {
               if (!wouldLeaveKingInCheck(game, rs, target, color)) {
                 moves.push({
@@ -315,6 +326,7 @@ function genKnook(game: Chess, color: Color): ChaosMove[] {
 
       if (piece) {
         if (piece.color !== color) {
+          if (piece.type === "k") break; // never target the king
           if (!wouldLeaveKingInCheck(game, knookSquare, target, color)) {
             moves.push({
               from: knookSquare, to: target, type: "capture",
@@ -352,6 +364,7 @@ function genArchbishop(game: Chess, color: Color): ChaosMove[] {
     const target = sq(f + df, r + dr);
     if (!target) continue;
     if (isFriendly(game, target, color)) continue;
+    if (isEnemyKing(game, target, color)) continue;
     if (wouldLeaveKingInCheck(game, archbishopSquare, target, color)) continue;
 
     moves.push({
@@ -375,6 +388,7 @@ function genAmazon(game: Chess, color: Color): ChaosMove[] {
       const target = sq(f + df, r + dr);
       if (!target) continue;
       if (isFriendly(game, target, color)) continue;
+      if (isEnemyKing(game, target, color)) continue;
       if (wouldLeaveKingInCheck(game, qs, target, color)) continue;
 
       moves.push({
@@ -410,6 +424,7 @@ function genKingAscension(game: Chess, color: Color): ChaosMove[] {
 
       if (piece) {
         if (piece.color !== color) {
+          if (piece.type === "k") break; // never target the enemy king
           if (!wouldLeaveKingInCheck(game, kingSquare, target, color)) {
             moves.push({
               from: kingSquare, to: target, type: "capture",
@@ -477,6 +492,7 @@ function genSniperBishop(game: Chess, color: Color): ChaosMove[] {
         const piece = game.get(target);
         if (piece) {
           if (piece.color !== color) {
+            if (piece.type === "k") break; // never target the king
             // Sniper: capture without moving
             moves.push({
               from: bs, to: target, type: "capture",
@@ -520,6 +536,8 @@ function genPegasus(game: Chess, color: Color): ChaosMove[] {
         if (target === ns) continue;
         // Can't land on friendly piece
         if (isFriendly(game, target, color)) continue;
+        // Never target the enemy king
+        if (isEnemyKing(game, target, color)) continue;
 
         // Deduplicate same from→to (multiple intermediate paths)
         const key = `${ns}-${target}`;
@@ -573,6 +591,7 @@ function genRookCannon(game: Chess, color: Color): ChaosMove[] {
           } else {
             // Second piece encountered: can capture if enemy
             if (piece.color !== color) {
+              if (piece.type === "k") break; // never target the king
               if (!wouldLeaveKingInCheck(game, rs, target, color)) {
                 moves.push({
                   from: rs,
@@ -625,6 +644,7 @@ function genEarlyPromotion(game: Chess, color: Color): ChaosMove[] {
       if (!capTarget) continue;
       const capPiece = game.get(capTarget as any);
       if (!capPiece || capPiece.color === color) continue; // must capture enemy
+      if (capPiece.type === "k") continue; // never target the king
       if (wouldLeaveKingInCheck(game, ps, capTarget, color)) continue;
       moves.push({
         from: ps, to: capTarget, type: "capture",

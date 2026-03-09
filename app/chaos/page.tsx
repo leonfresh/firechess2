@@ -170,8 +170,11 @@ const PIECE_CODE_MAP: Record<string, string> = {
   P: "p", N: "n", B: "b", R: "r", Q: "q", K: "k",
 };
 
-/** Modifier IDs that only affect the first piece of their type */
-const SINGLE_PIECE_MODIFIERS: Record<string, true> = { knook: true, archbishop: true };
+/** Modifier IDs that only affect the first piece of their type (visual overlays).
+ *  NOTE: knook & archbishop are NOT listed here so their fairy SVG
+ *  applies to ALL pieces of that type — prevents the SVG from reverting
+ *  to a normal piece when the transformed piece moves to a new square. */
+const SINGLE_PIECE_MODIFIERS: Record<string, true> = {};
 
 /** Fairy piece SVG replacements — full piece image swap for transformative modifiers */
 const FAIRY_PIECE_SVGS: Record<string, Record<string, string>> = {
@@ -495,6 +498,66 @@ function ChaosParticles() {
           0% { transform: translateX(-50%) scale(0.9); opacity: 0; }
           100% { transform: translateX(-50%) scale(1); opacity: 1; }
         }
+
+        /* ── Draft card tarot animations ── */
+        @keyframes card-deal {
+          0% { transform: translateY(120px) scale(0.3) rotate(25deg); opacity: 0; }
+          60% { transform: translateY(-10px) scale(1.03) rotate(-2deg); opacity: 1; }
+          80% { transform: translateY(3px) scale(0.99) rotate(0.5deg); }
+          100% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes card-flip {
+          0% { transform: rotateY(0deg); }
+          100% { transform: rotateY(180deg); }
+        }
+        @keyframes card-flip-reverse {
+          0% { transform: rotateY(180deg); }
+          100% { transform: rotateY(0deg); }
+        }
+        @keyframes card-shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        @keyframes card-glow-pulse {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.8; }
+        }
+        @keyframes card-picked {
+          0% { transform: scale(1); }
+          30% { transform: scale(1.15) rotate(-2deg); }
+          60% { transform: scale(1.1) rotate(1deg); }
+          100% { transform: scale(1.05) rotate(0deg); }
+        }
+        @keyframes card-dismiss {
+          0% { transform: scale(1) translateY(0) rotate(0deg); opacity: 1; }
+          100% { transform: scale(0.6) translateY(60px) rotate(10deg); opacity: 0; }
+        }
+        @keyframes sparkle-drift {
+          0% { transform: translate(0, 0) scale(0); opacity: 0; }
+          20% { opacity: 1; transform: scale(1); }
+          100% { transform: translate(var(--sx), var(--sy)) scale(0); opacity: 0; }
+        }
+        @keyframes draft-bg-enter {
+          0% { opacity: 0; backdrop-filter: blur(0px); }
+          100% { opacity: 1; backdrop-filter: blur(8px); }
+        }
+        @keyframes draft-modal-enter {
+          0% { transform: translateY(40px) scale(0.95); opacity: 0; }
+          100% { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        @keyframes draft-title-enter {
+          0% { transform: scale(0.7); opacity: 0; letter-spacing: 0.3em; }
+          60% { transform: scale(1.05); }
+          100% { transform: scale(1); opacity: 1; letter-spacing: 0.05em; }
+        }
+        @keyframes rune-spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes card-hover-glow {
+          0%, 100% { box-shadow: 0 0 15px var(--glow-color, rgba(168,85,247,0.3)); }
+          50% { box-shadow: 0 0 30px var(--glow-color, rgba(168,85,247,0.6)), 0 0 60px var(--glow-color, rgba(168,85,247,0.2)); }
+        }
       `}</style>
     </div>
   );
@@ -524,6 +587,55 @@ function FloatingPepe({ src, onDone }: { src: string; onDone: () => void }) {
 
 /* ────────────────────────── Draft Modal ────────────────────────── */
 
+/** Glow colours per tier for the card edge/shadow */
+const TIER_GLOW_COLORS: Record<ModifierTier, string> = {
+  common:    "rgba(148,163,184,0.4)",
+  rare:      "rgba(59,130,246,0.5)",
+  epic:      "rgba(168,85,247,0.55)",
+  legendary: "rgba(245,158,11,0.6)",
+};
+
+/** Card-back rune patterns (purely decorative) */
+const CARD_BACK_RUNES = ["⚔", "♜", "♞", "⚡", "♛", "✦"];
+
+/** Tiny sparkle particles for epic/legendary cards */
+function CardSparkles({ tier }: { tier: ModifierTier }) {
+  if (tier !== "epic" && tier !== "legendary") return null;
+  const sparkles = useMemo(() => {
+    const count = tier === "legendary" ? 8 : 5;
+    return Array.from({ length: count }, (_, i) => ({
+      id: i,
+      left: `${10 + Math.random() * 80}%`,
+      top: `${10 + Math.random() * 80}%`,
+      delay: `${Math.random() * 2}s`,
+      sx: `${(Math.random() - 0.5) * 30}px`,
+      sy: `${(Math.random() - 0.5) * 30}px`,
+      dur: `${1.5 + Math.random()}s`,
+    }));
+  }, [tier]);
+
+  return (
+    <>
+      {sparkles.map((s) => (
+        <span
+          key={s.id}
+          className="pointer-events-none absolute text-[8px]"
+          style={{
+            left: s.left,
+            top: s.top,
+            color: tier === "legendary" ? "#fbbf24" : "#c084fc",
+            animation: `sparkle-drift ${s.dur} ease-out ${s.delay} infinite`,
+            "--sx": s.sx,
+            "--sy": s.sy,
+          } as React.CSSProperties}
+        >
+          ✦
+        </span>
+      ))}
+    </>
+  );
+}
+
 function DraftModal({
   phase,
   choices,
@@ -536,30 +648,93 @@ function DraftModal({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const hoveredMod = choices.find((c) => c.id === hoveredId);
 
-  // Play drumroll on mount
+  // Staggered reveal: cards start face-down, flip one by one
+  const [revealedCards, setRevealedCards] = useState<Set<number>>(new Set());
+  const [allRevealed, setAllRevealed] = useState(false);
+  const [pickedId, setPickedId] = useState<string | null>(null);
+  const [dismissing, setDismissing] = useState(false);
+
+  // Play drumroll on mount, then reveal cards one by one
   useEffect(() => {
     playSound("drumroll");
-  }, []);
+
+    // Stagger the card reveals
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    choices.forEach((_, idx) => {
+      timers.push(
+        setTimeout(() => {
+          setRevealedCards((prev) => new Set([...prev, idx]));
+          // Play a subtle sound on each flip
+          if (idx < choices.length - 1) playSound("move");
+          else playSound("reveal-stinger");
+        }, 600 + idx * 450),
+      );
+    });
+    // Mark all revealed
+    timers.push(
+      setTimeout(() => setAllRevealed(true), 600 + choices.length * 450 + 100),
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [choices]);
+
+  // Handle card pick with a dismiss animation
+  const handlePick = useCallback(
+    (mod: ChaosModifier) => {
+      if (pickedId || !allRevealed) return; // prevent double-picks & picks before reveal
+      setPickedId(mod.id);
+      setDismissing(true);
+      playSound("vine-boom");
+      // Wait for dismiss animation, then call onPick
+      setTimeout(() => onPick(mod), 650);
+    },
+    [pickedId, allRevealed, onPick],
+  );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center">
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
+      style={{
+        animation: "draft-bg-enter 0.4s ease-out both",
+        backgroundColor: "rgba(0,0,0,0.75)",
+      }}
+    >
+      {/* Modal container */}
       <div
-        className="relative w-full max-w-2xl rounded-t-2xl border border-purple-500/30 bg-[#0a0f1a] p-4 sm:mx-4 sm:rounded-2xl sm:p-6 md:p-8 max-h-[90vh] overflow-y-auto"
-        style={{ animation: "draft-pulse 2s ease-in-out infinite" }}
+        className="relative w-full max-w-2xl rounded-t-2xl border border-purple-500/30 bg-[#0a0f1a]/95 p-4 sm:mx-4 sm:rounded-2xl sm:p-6 md:p-8 max-h-[90vh] overflow-y-auto"
+        style={{
+          animation: "draft-modal-enter 0.5s ease-out both, draft-pulse 2s ease-in-out 0.5s infinite",
+        }}
       >
+        {/* Decorative spinning rune behind header */}
+        <div
+          className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 -translate-y-1/2 text-[120px] text-purple-500/[0.04]"
+          style={{ animation: "rune-spin 30s linear infinite" }}
+        >
+          ✦
+        </div>
+
         {/* Header */}
-        <div className="mb-4 text-center sm:mb-6">
+        <div className="relative mb-4 text-center sm:mb-6">
           {/* Pepe reacts to hovered tier */}
           <div className="mb-1.5 flex items-center justify-center gap-3 sm:mb-2">
             <img
               src={hoveredMod ? tierPepe(hoveredMod.tier) : PEPE.bigeyes}
               alt=""
               className="h-9 w-9 object-contain sm:h-12 sm:w-12"
-              style={{ animation: hoveredMod ? "pepe-pop 0.25s ease-out" : "pepe-bounce 1.5s ease-in-out infinite" }}
+              style={{
+                animation: hoveredMod
+                  ? "pepe-pop 0.25s ease-out"
+                  : "pepe-bounce 1.5s ease-in-out infinite",
+              }}
               key={hoveredId ?? "idle"}
             />
           </div>
-          <h2 className="text-xl font-bold text-white sm:text-2xl">CHAOS DRAFT</h2>
+          <h2
+            className="text-xl font-bold tracking-wide text-white sm:text-2xl"
+            style={{ animation: "draft-title-enter 0.6s ease-out 0.15s both" }}
+          >
+            CHAOS DRAFT
+          </h2>
           <p className="mt-0.5 text-xs text-purple-400 sm:mt-1 sm:text-sm">
             Phase {phase} — {getPhaseLabel(phase)}
           </p>
@@ -569,67 +744,155 @@ function DraftModal({
         </div>
 
         {/* Cards */}
-        <div className="grid gap-3 grid-cols-1 sm:gap-4 sm:grid-cols-3">
+        <div className="grid gap-3 grid-cols-1 sm:gap-5 sm:grid-cols-3" style={{ perspective: "1200px" }}>
           {choices.map((mod, idx) => {
             const tier = TIER_COLORS[mod.tier];
             const isHovered = hoveredId === mod.id;
+            const isRevealed = revealedCards.has(idx);
+            const isPicked = pickedId === mod.id;
+            const isDismissed = dismissing && !isPicked;
+            const glowColor = TIER_GLOW_COLORS[mod.tier];
+
             return (
-              <button
+              <div
                 key={mod.id}
-                type="button"
-                onClick={() => onPick(mod)}
-                onMouseEnter={() => setHoveredId(mod.id)}
-                onMouseLeave={() => setHoveredId(null)}
-                className={`group relative flex flex-row items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200 sm:flex-col sm:gap-0 sm:p-5 sm:text-center ${tier.bg} ${tier.border} ${tier.glow} ${
-                  isHovered
-                    ? "scale-[1.02] border-white/30 shadow-lg sm:scale-105"
-                    : "hover:scale-[1.01] sm:hover:scale-[1.02]"
-                }`}
+                className="relative"
                 style={{
-                  animation: `card-appear 0.4s ease-out ${idx * 0.1}s both`,
+                  animation: `card-deal 0.5s cubic-bezier(0.34,1.56,0.64,1) ${idx * 0.15}s both`,
+                  transformStyle: "preserve-3d",
                 }}
               >
-                {/* Icon */}
-                <div className="text-3xl shrink-0 sm:mb-2 sm:text-5xl">{mod.icon}</div>
-
-                <div className="flex-1 min-w-0 sm:flex-none">
-                  {/* Tier badge */}
-                  <span
-                    className={`mb-1 inline-block rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider sm:mb-2 sm:text-[10px] ${tier.text} ${tier.bg}`}
-                  >
-                    {TIER_LABELS[mod.tier]}
-                  </span>
-
-                  {/* Name */}
-                  <h3 className="text-xs font-bold text-white sm:mb-1 sm:text-sm">{mod.name}</h3>
-
-                  {/* Piece target */}
-                  {mod.piece && (
-                    <span className="text-[9px] uppercase tracking-wider text-slate-500 sm:mb-2 sm:text-[10px] block">
-                      {({ p: "Pawns", n: "Knights", b: "Bishops", r: "Rooks", q: "Queen", k: "King" })[mod.piece]}
-                    </span>
-                  )}
-
-                  {/* Description */}
-                  <p className="text-[10px] leading-relaxed text-slate-400 sm:text-xs">
-                    {mod.description}
-                  </p>
-                </div>
-
-                {/* Pick hint */}
+                {/* 3D flip container */}
                 <div
-                  className={`hidden sm:mt-3 sm:block rounded-lg px-3 py-1 text-xs font-semibold transition-all ${
-                    isHovered
-                      ? "bg-white/10 text-white"
-                      : "bg-white/5 text-slate-500"
-                  }`}
+                  className="relative w-full transition-transform duration-500"
+                  style={{
+                    transformStyle: "preserve-3d",
+                    transform: isRevealed ? "rotateY(180deg)" : "rotateY(0deg)",
+                  }}
                 >
-                  {isHovered ? "Draft This!" : "Click to Draft"}
+                  {/* ─── Card Back (face-down) ─── */}
+                  <div
+                    className="absolute inset-0 flex flex-col items-center justify-center rounded-xl border border-purple-500/30 bg-gradient-to-br from-[#1a1040] via-[#0f0a2a] to-[#1a0a30] p-4 sm:p-5"
+                    style={{
+                      backfaceVisibility: "hidden",
+                      minHeight: "180px",
+                    }}
+                  >
+                    {/* Decorative rune pattern */}
+                    <div className="mb-2 text-3xl text-purple-500/20 sm:text-4xl" style={{ animation: "rune-spin 10s linear infinite" }}>
+                      ✦
+                    </div>
+                    <div className="grid grid-cols-3 gap-1 opacity-20">
+                      {CARD_BACK_RUNES.map((r, i) => (
+                        <span key={i} className="text-center text-sm text-purple-400">{r}</span>
+                      ))}
+                    </div>
+                    <div className="mt-2 text-[10px] uppercase tracking-[0.2em] text-purple-500/30">
+                      Chaos
+                    </div>
+                  </div>
+
+                  {/* ─── Card Front (face-up) ─── */}
+                  <button
+                    type="button"
+                    onClick={() => handlePick(mod)}
+                    onMouseEnter={() => allRevealed && setHoveredId(mod.id)}
+                    onMouseLeave={() => setHoveredId(null)}
+                    disabled={!allRevealed || !!pickedId}
+                    className={`relative flex w-full flex-row items-center gap-3 rounded-xl border p-3 text-left sm:flex-col sm:gap-0 sm:p-5 sm:text-center ${tier.bg} ${tier.border} ${
+                      allRevealed && !pickedId
+                        ? "cursor-pointer transition-all duration-200"
+                        : ""
+                    } ${
+                      isHovered && !pickedId
+                        ? "border-white/30 sm:scale-105"
+                        : ""
+                    }`}
+                    style={{
+                      backfaceVisibility: "hidden",
+                      transform: "rotateY(180deg)",
+                      minHeight: "180px",
+                      ...(isPicked
+                        ? { animation: "card-picked 0.5s ease-out both", zIndex: 10 }
+                        : isDismissed
+                        ? { animation: `card-dismiss 0.5s ease-in ${idx * 0.05}s both` }
+                        : {}),
+                      ...(isHovered && !pickedId
+                        ? {
+                            "--glow-color": glowColor,
+                            animation: "card-hover-glow 1.5s ease-in-out infinite",
+                            transform: "rotateY(180deg) translateY(-4px)",
+                          } as React.CSSProperties
+                        : {}),
+                    }}
+                  >
+                    {/* Tier shimmer overlay */}
+                    {(mod.tier === "epic" || mod.tier === "legendary") && (
+                      <div
+                        className="pointer-events-none absolute inset-0 rounded-xl opacity-30"
+                        style={{
+                          background: `linear-gradient(90deg, transparent 0%, ${glowColor} 50%, transparent 100%)`,
+                          backgroundSize: "200% 100%",
+                          animation: "card-shimmer 3s linear infinite",
+                        }}
+                      />
+                    )}
+
+                    {/* Sparkles */}
+                    <CardSparkles tier={mod.tier} />
+
+                    {/* Icon */}
+                    <div className="relative z-10 text-3xl shrink-0 sm:mb-2 sm:text-5xl">{mod.icon}</div>
+
+                    <div className="relative z-10 flex-1 min-w-0 sm:flex-none">
+                      {/* Tier badge */}
+                      <span
+                        className={`mb-1 inline-block rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider sm:mb-2 sm:text-[10px] ${tier.text} ${tier.bg}`}
+                      >
+                        {TIER_LABELS[mod.tier]}
+                      </span>
+
+                      {/* Name */}
+                      <h3 className="text-xs font-bold text-white sm:mb-1 sm:text-sm">{mod.name}</h3>
+
+                      {/* Piece target */}
+                      {mod.piece && (
+                        <span className="text-[9px] uppercase tracking-wider text-slate-500 sm:mb-2 sm:text-[10px] block">
+                          {({ p: "Pawns", n: "Knights", b: "Bishops", r: "Rooks", q: "Queen", k: "King" })[mod.piece]}
+                        </span>
+                      )}
+
+                      {/* Description */}
+                      <p className="text-[10px] leading-relaxed text-slate-400 sm:text-xs">
+                        {mod.description}
+                      </p>
+                    </div>
+
+                    {/* Pick hint */}
+                    {allRevealed && !pickedId && (
+                      <div
+                        className={`hidden sm:mt-3 sm:block rounded-lg px-3 py-1 text-xs font-semibold transition-all duration-200 ${
+                          isHovered
+                            ? "bg-white/15 text-white scale-105"
+                            : "bg-white/5 text-slate-500"
+                        }`}
+                      >
+                        {isHovered ? "⚡ Draft This!" : "Click to Draft"}
+                      </div>
+                    )}
+                  </button>
                 </div>
-              </button>
+              </div>
             );
           })}
         </div>
+
+        {/* "Revealing..." text while cards flip */}
+        {!allRevealed && (
+          <p className="mt-4 text-center text-xs text-purple-400/60 animate-pulse sm:mt-6">
+            Revealing your fate…
+          </p>
+        )}
       </div>
     </div>
   );

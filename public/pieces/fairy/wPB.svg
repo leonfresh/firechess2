@@ -1,48 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" width="177.17" height="177.17">
   <defs>
-    <linearGradient id="wPB-body" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="wPB-b" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#fff"/>
       <stop offset="1" stop-color="#ddd"/>
     </linearGradient>
-    <linearGradient id="wPB-shine" x1="0.2" y1="0" x2="0.8" y2="1">
-      <stop offset="0" stop-color="#fff" stop-opacity="0.8"/>
-      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
-    </linearGradient>
-    <linearGradient id="wPB-blade" x1="0.5" y1="1" x2="0.5" y2="0">
+    <linearGradient id="wPB-bl" x1="0.5" y1="1" x2="0.5" y2="0">
       <stop offset="0" stop-color="#c0c0c0"/>
       <stop offset="1" stop-color="#f0f0f0"/>
     </linearGradient>
   </defs>
+  <!-- Shadow -->
+  <ellipse cx="25" cy="44" rx="13" ry="3" fill="#1f1a17"/>
+  <!-- Stem / flared skirt -->
+  <path d="M19.5 24 C18 29 15 37 14 43 L36 43 C35 37 32 29 30.5 24 Z"
+        fill="url(#wPB-b)" stroke="#1f1a17" stroke-width="0.7"/>
   <!-- Base platform -->
-  <ellipse cx="25" cy="46" rx="14" ry="3" fill="#1f1a17"/>
-  <ellipse cx="25" cy="46" rx="12.5" ry="2.2" fill="url(#wPB-body)" stroke="#1f1a17" stroke-width="0.8"/>
-  <!-- Pedestal -->
-  <path d="M14 44 Q14 42 16 40 L18 38 Q18.5 37.5 19 37 L31 37 Q31.5 37.5 32 38 L34 40 Q36 42 36 44 Z"
-        fill="url(#wPB-body)" stroke="#1f1a17" stroke-width="0.8"/>
-  <!-- Pawn body -->
-  <path d="M20 37 Q19.5 34 20 31 L20.5 28 Q21 25 22 23 L23 21 Q24 19 25 18 Q26 19 27 21 L28 23 Q29 25 29.5 28 L30 31 Q30.5 34 30 37 Z"
-        fill="url(#wPB-body)" stroke="#1f1a17" stroke-width="0.8" stroke-linejoin="round"/>
-  <!-- Pawn neck -->
-  <path d="M22.5 20 Q23 18 25 17 Q27 18 27.5 20 Q27 19 25 18.5 Q23 19 22.5 20 Z"
-        fill="url(#wPB-body)" stroke="#1f1a17" stroke-width="0.5"/>
-  <!-- Pawn head (slightly more angular/aggressive) -->
-  <circle cx="25" cy="13.5" r="5.2" fill="url(#wPB-body)" stroke="#1f1a17" stroke-width="0.8"/>
-  <!-- Bayonet blade extending from top of pawn head -->
-  <path d="M24 8.5 L25 3 L26 8.5 Z"
-        fill="url(#wPB-blade)" stroke="#1f1a17" stroke-width="0.6" stroke-linejoin="round"/>
+  <ellipse cx="25" cy="43" rx="11.5" ry="2.3" fill="url(#wPB-b)" stroke="#1f1a17" stroke-width="0.7"/>
+  <!-- Collar / cup -->
+  <path d="M22 16.5 Q18 18.5 17.5 21 Q17 23 19 24 L31 24 Q33 23 32.5 21 Q32 18.5 28 16.5 Z"
+        fill="url(#wPB-b)" stroke="#1f1a17" stroke-width="0.7"/>
+  <!-- Collar rim/lip -->
+  <ellipse cx="25" cy="24" rx="6.2" ry="1.2" fill="url(#wPB-b)" stroke="#1f1a17" stroke-width="0.5"/>
+  <!-- Neck -->
+  <rect x="22.2" y="15" width="5.6" height="2.5" rx="1.5" fill="url(#wPB-b)" stroke="#1f1a17" stroke-width="0.5"/>
+  <!-- Head -->
+  <circle cx="25" cy="11" r="4.5" fill="url(#wPB-b)" stroke="#1f1a17" stroke-width="0.7"/>
+  <!-- Shine -->
+  <circle cx="23.5" cy="9.5" r="1.5" fill="#fff" opacity="0.3"/>
+  <!-- === BAYONET ACCENTS === -->
+  <!-- Blade extending from top of head -->
+  <path d="M24.2 7 L25 2 L25.8 7 Z"
+        fill="url(#wPB-bl)" stroke="#1f1a17" stroke-width="0.6" stroke-linejoin="round"/>
   <!-- Blade edge highlight -->
-  <line x1="25" y1="3.5" x2="25" y2="8" stroke="#fff" stroke-width="0.4" opacity="0.7"/>
+  <line x1="25" y1="2.5" x2="25" y2="6.5" stroke="#fff" stroke-width="0.4" opacity="0.7"/>
   <!-- Crossguard -->
-  <rect x="22" y="8" width="6" height="1.2" rx="0.4" fill="#1f1a17" opacity="0.85"/>
-  <!-- Small blade motif on body — forward-facing slash marks -->
-  <line x1="23" y1="26" x2="25" y2="24" stroke="#ef4444" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
-  <line x1="25" y1="24" x2="27" y2="26" stroke="#ef4444" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
-  <line x1="23.5" y1="31" x2="25" y2="29" stroke="#ef4444" stroke-width="0.7" stroke-linecap="round" opacity="0.45"/>
-  <line x1="25" y1="29" x2="26.5" y2="31" stroke="#ef4444" stroke-width="0.7" stroke-linecap="round" opacity="0.45"/>
-  <!-- Collar detail -->
-  <path d="M20 37 Q25 35.5 30 37" fill="none" stroke="#1f1a17" stroke-width="0.5"/>
-  <!-- Shine highlight -->
-  <path d="M23.5 19 Q24 17 24.5 19 L24.2 34 Q24 35 24 36 L23.2 36 Q23 35 23.5 34 Z"
-        fill="url(#wPB-shine)" opacity="0.35"/>
+  <rect x="22" y="6.3" width="6" height="1.2" rx="0.4" fill="#1f1a17" opacity="0.85"/>
+  <!-- Red V-slash marks on skirt -->
+  <line x1="22" y1="33" x2="25" y2="30" stroke="#ef4444" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+  <line x1="25" y1="30" x2="28" y2="33" stroke="#ef4444" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+  <line x1="22.5" y1="37" x2="25" y2="34.5" stroke="#ef4444" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
+  <line x1="25" y1="34.5" x2="27.5" y2="37" stroke="#ef4444" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
 </svg>
