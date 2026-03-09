@@ -16,6 +16,8 @@ import { createPortal } from "react-dom";
 import { Chess, type Color, type PieceSymbol } from "chess.js";
 import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { stockfishPool } from "@/lib/stockfish-client";
+import { ChaosLobby } from "@/components/chaos-lobby";
+import { useSession } from "@/components/session-provider";
 // useBoardSize removed — we use onBoardWidthChange from react-chessboard
 import { useBoardTheme, useShowCoordinates, useCustomPieces, usePieceTheme } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
@@ -563,6 +565,134 @@ function ChaosParticles() {
   );
 }
 
+/* ────────────────────────── Opponent Draft Reveal ────────────────────────── */
+
+interface OpponentDraftRevealData {
+  opponentPick: ChaosModifier;
+  yourPick: ChaosModifier;
+  phase: number;
+}
+
+function OpponentDraftReveal({
+  data,
+  onDismiss,
+}: {
+  data: OpponentDraftRevealData;
+  onDismiss: () => void;
+}) {
+  const [stage, setStage] = useState<"enter" | "reveal-1" | "reveal-2" | "done">("enter");
+
+  useEffect(() => {
+    playSound("record-scratch");
+    const t1 = setTimeout(() => { setStage("reveal-1"); playSound("move"); }, 600);
+    const t2 = setTimeout(() => { setStage("reveal-2"); playSound("vine-boom"); }, 1200);
+    const t3 = setTimeout(() => setStage("done"), 1600);
+    const t4 = setTimeout(onDismiss, 5500);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); clearTimeout(t4); };
+  }, [onDismiss]);
+
+  const cards: { label: string; mod: ChaosModifier; revealStage: "reveal-1" | "reveal-2" }[] = [
+    { label: "Opponent Drafted", mod: data.opponentPick, revealStage: "reveal-1" },
+    { label: "You Received", mod: data.yourPick, revealStage: "reveal-2" },
+  ];
+
+  const stageIdx = stage === "enter" ? 0 : stage === "reveal-1" ? 1 : 2;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ animation: "draft-bg-enter 0.4s ease-out both", backgroundColor: "rgba(0,0,0,0.7)" }}
+      onClick={onDismiss}
+    >
+      <div
+        className="mx-4 w-full max-w-md rounded-2xl border border-purple-500/30 bg-[#0a0f1a]/95 p-5 text-center sm:p-8"
+        style={{ animation: "draft-modal-enter 0.5s cubic-bezier(0.34,1.56,0.64,1) both" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Title */}
+        <p className="mb-1 text-xs font-bold uppercase tracking-widest text-purple-400/80">
+          Phase {data.phase}
+        </p>
+        <h2
+          className="mb-5 bg-gradient-to-r from-red-400 via-orange-400 to-yellow-400 bg-clip-text text-xl font-black tracking-wide text-transparent sm:text-2xl"
+          style={{ animation: "draft-title-enter 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.2s both" }}
+        >
+          ⚔️ OPPONENT DRAFTED!
+        </h2>
+
+        {/* Cards */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-5" style={{ perspective: "1000px" }}>
+          {cards.map(({ label, mod, revealStage }, idx) => {
+            const tier = TIER_COLORS[mod.tier];
+            const isRevealed = stageIdx > idx;
+            const glowColor = TIER_GLOW_COLORS[mod.tier];
+
+            return (
+              <div key={mod.id + idx} className="relative" style={{ transformStyle: "preserve-3d" }}>
+                <div
+                  className="relative w-full transition-transform duration-500"
+                  style={{
+                    transformStyle: "preserve-3d",
+                    transform: isRevealed ? "rotateY(180deg)" : "rotateY(0deg)",
+                  }}
+                >
+                  {/* Card back */}
+                  <div
+                    className="absolute inset-0 flex flex-col items-center justify-center rounded-xl border border-purple-500/30 bg-gradient-to-br from-[#1a1040] via-[#0f0a2a] to-[#1a0a30] p-3"
+                    style={{ backfaceVisibility: "hidden", minHeight: "160px" }}
+                  >
+                    <div className="text-2xl text-purple-500/20" style={{ animation: "rune-spin 10s linear infinite" }}>✦</div>
+                    <div className="mt-2 text-[10px] uppercase tracking-[0.2em] text-purple-500/30">Chaos</div>
+                  </div>
+
+                  {/* Card front */}
+                  <div
+                    className={`relative flex w-full flex-col items-center gap-1 rounded-xl border p-3 text-center sm:p-4 ${tier.bg} ${tier.border}`}
+                    style={{
+                      backfaceVisibility: "hidden",
+                      transform: "rotateY(180deg)",
+                      minHeight: "160px",
+                      ...(isRevealed && (mod.tier === "epic" || mod.tier === "legendary")
+                        ? { boxShadow: `0 0 20px ${glowColor}, 0 0 40px ${glowColor}` }
+                        : {}),
+                    }}
+                  >
+                    <CardSparkles tier={mod.tier} />
+
+                    {/* Label */}
+                    <span className="mb-1 text-[9px] font-bold uppercase tracking-wider text-slate-500">
+                      {label}
+                    </span>
+
+                    {/* Icon */}
+                    <div className="relative z-10 text-3xl sm:text-4xl">{mod.icon}</div>
+
+                    {/* Tier badge */}
+                    <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${tier.text} ${tier.bg}`}>
+                      {TIER_LABELS[mod.tier]}
+                    </span>
+
+                    {/* Name */}
+                    <h3 className="text-[11px] font-bold text-white sm:text-xs">{mod.name}</h3>
+
+                    {/* Description */}
+                    <p className="text-[9px] leading-snug text-slate-400 sm:text-[10px]">{mod.description}</p>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Dismiss hint */}
+        {stage === "done" && (
+          <p className="mt-4 text-[10px] text-slate-500 animate-pulse">Click anywhere to dismiss</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /* ────────────────────────── Floating Pepe Reaction ────────────────────────── */
 
 function FloatingPepe({ src, onDone }: { src: string; onDone: () => void }) {
@@ -1021,6 +1151,9 @@ function InlineModifierIcons({ modifiers }: { modifiers: ChaosModifier[] }) {
 /* ────────────────────────── Main Page ────────────────────────── */
 
 export default function ChaosChessPage() {
+  /* ── Auth ── */
+  const { authenticated } = useSession();
+
   /* ── Board / theme hooks ── */
   const [boardSize, setBoardSize] = useState(0);
   const boardTheme = useBoardTheme();
@@ -1049,6 +1182,11 @@ export default function ChaosChessPage() {
   const [chaosState, setChaosState] = useState<ChaosState>(createChaosState);
   const [pendingPhase, setPendingPhase] = useState(0);
   const [capturedPawns, setCapturedPawns] = useState({ w: 0, b: 0 });
+
+  /* ── Opponent draft reveal (multiplayer) ── */
+  const [opponentDraftReveal, setOpponentDraftReveal] = useState<OpponentDraftRevealData | null>(null);
+  const prevPhaseRef = useRef(0);
+  const justDraftedRef = useRef(false);
 
   /* ── Chaos moves (extra legal moves from modifiers) ── */
   const [availableChaosMoves, setAvailableChaosMoves] = useState<ChaosMove[]>([]);
@@ -1599,6 +1737,7 @@ export default function ChaosChessPage() {
               playSound("reveal-stinger");
               const cs = data.chaosState ? data.chaosState as ChaosState : createChaosState();
               setChaosState(cs);
+              prevPhaseRef.current = cs.currentPhase;
               const g = new Chess(data.fen);
               setGame(g);
               return "playing";
@@ -1612,7 +1751,35 @@ export default function ChaosChessPage() {
           lastFenRef.current = data.fen;
           const g = new Chess(data.fen);
           setGame(g);
-          if (data.chaosState) setChaosState(data.chaosState as ChaosState);
+
+          // Detect opponent draft pick (chaosState phase advanced while we weren't drafting)
+          if (data.chaosState) {
+            const incoming = data.chaosState as ChaosState;
+            if (
+              incoming.currentPhase > prevPhaseRef.current &&
+              !justDraftedRef.current
+            ) {
+              // Opponent completed a draft — extract what they picked
+              const oppPick = incoming.playerModifiers[incoming.playerModifiers.length - 1];
+              const yourPick = incoming.aiModifiers[incoming.aiModifiers.length - 1];
+              if (oppPick && yourPick) {
+                setOpponentDraftReveal({ opponentPick: oppPick, yourPick, phase: incoming.currentPhase });
+                setEventLog((prev) => [
+                  ...prev,
+                  { type: "modifier" as const, message: `⚔️ Opponent drafted: ${oppPick.icon} ${oppPick.name} — ${oppPick.description}`, icon: oppPick.icon, pepe: tierPepe(oppPick.tier) },
+                  { type: "modifier" as const, message: `🎲 You received: ${yourPick.icon} ${yourPick.name} — ${yourPick.description}`, icon: yourPick.icon, pepe: tierPepe(yourPick.tier) },
+                ]);
+                spawnPepe(tierPepe(oppPick.tier));
+              }
+              prevPhaseRef.current = incoming.currentPhase;
+            }
+            // Reset the justDrafted flag once we see the state reflected
+            if (justDraftedRef.current && incoming.currentPhase >= prevPhaseRef.current) {
+              justDraftedRef.current = false;
+            }
+            setChaosState(incoming);
+          }
+
           if (data.lastMoveFrom && data.lastMoveTo) {
             setLastMoveHighlight({
               [data.lastMoveFrom]: { backgroundColor: "rgba(255, 170, 0, 0.3)" },
@@ -1641,7 +1808,7 @@ export default function ChaosChessPage() {
         // Poll error — ignore
       }
     }, POLL_INTERVAL);
-  }, [checkGameEnd, checkDraft, recomputeChaosMoves]);
+  }, [checkGameEnd, checkDraft, recomputeChaosMoves, spawnPepe]);
 
   /* ── Send move to server (multiplayer) ── */
   const sendMoveToServer = useCallback(
@@ -1999,6 +2166,10 @@ export default function ChaosChessPage() {
       setGameStatus("playing");
       setPendingPhase(0);
 
+      // Track that WE just drafted (so polling doesn't show the reveal for our own draft)
+      justDraftedRef.current = true;
+      prevPhaseRef.current = newState.currentPhase;
+
       const aiMsg = getAiDraftMessage(newState);
       const aiLastMod = newState.aiModifiers[newState.aiModifiers.length - 1];
 
@@ -2232,22 +2403,46 @@ export default function ChaosChessPage() {
           {gameMode === "matchmake" && (
             <div className="flex flex-col items-center gap-4">
               <p className="text-sm text-slate-400">Find a random opponent to play Chaos Chess against</p>
-              <button
-                type="button"
-                onClick={startMatchmaking}
-                disabled={matchmakeState === "searching"}
-                className="rounded-xl border border-purple-500/30 bg-purple-500/10 px-8 py-4 text-lg font-bold text-purple-400 transition-all hover:bg-purple-500/20 hover:scale-105 disabled:opacity-50"
-              >
-                {matchmakeState === "searching" ? (
-                  <span className="flex items-center gap-2">
-                    <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
-                    Searching…
-                  </span>
-                ) : (
-                  "🎲 Find Opponent"
-                )}
-              </button>
-              <p className="text-xs text-slate-600">(Requires sign in)</p>
+              <ChaosLobby
+                isSignedIn={authenticated}
+                onMatchFound={(data) => {
+                  setRoomId(data.roomId);
+                  setRoomCode(data.roomCode);
+                  setGameMode("matchmake");
+                  setOpponentLabel("Random Opponent");
+
+                  if (data.joined) {
+                    // Joined an existing room — start playing immediately
+                    const guestColor = data.hostColor === "white" ? "black" : "white";
+                    setPlayerColor(guestColor as "white" | "black");
+                    setGameStatus("playing");
+                    setMatchmakeState("found");
+                    const cs = createChaosState();
+                    setChaosState(cs);
+                    const g = new Chess();
+                    setGame(g);
+                    setMoveLog([]);
+                    setFloatingPepes([]);
+                    setCapturedPawns({ w: 0, b: 0 });
+                    setEventLog([{ type: "info", message: "🎯 Opponent found! Game on!", icon: "🎯", pepe: PEPE.hyped }]);
+                    playSound("reveal-stinger");
+                    spawnPepe(PEPE.hyped);
+                    recomputeChaosMoves(g, cs);
+                    startPolling(data.roomId, guestColor);
+                  } else {
+                    // Created a new room — wait for opponent
+                    setPlayerColor(data.hostColor === "white" ? "white" : "black");
+                    setGameStatus("waiting");
+                    setMatchmakeState("searching");
+                    setEventLog([{ type: "info", message: "⏳ In matchmaking queue…", icon: "⏳", pepe: PEPE.prayge }]);
+                    startPolling(data.roomId, data.hostColor);
+                  }
+                }}
+                onCancel={() => {
+                  setMatchmakeState("idle");
+                  if (pollRef.current) clearInterval(pollRef.current);
+                }}
+              />
             </div>
           )}
 
@@ -2281,7 +2476,7 @@ export default function ChaosChessPage() {
           />
           <h1 className="mb-3 text-2xl font-bold text-white">Waiting for Opponent</h1>
 
-          {roomCode && (
+          {roomCode && gameMode === "friend" && (
             <div className="mb-6">
               <p className="mb-2 text-sm text-slate-400">Share this code with your friend:</p>
               <div className="flex items-center gap-3 rounded-xl border border-purple-500/30 bg-purple-500/10 px-6 py-4">
@@ -2300,22 +2495,61 @@ export default function ChaosChessPage() {
             </div>
           )}
 
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
-            {matchmakeState === "searching" ? "Looking for opponent…" : "Waiting for them to join…"}
-          </div>
+          {/* Matchmaking waiting: show lobby with chat */}
+          {gameMode === "matchmake" ? (
+            <div className="mb-6 w-full">
+              <ChaosLobby
+                isSignedIn={authenticated}
+                onMatchFound={(data) => {
+                  if (data.joined) {
+                    const guestColor = data.hostColor === "white" ? "black" : "white";
+                    setRoomId(data.roomId);
+                    setRoomCode(data.roomCode);
+                    setPlayerColor(guestColor as "white" | "black");
+                    setGameStatus("playing");
+                    setMatchmakeState("found");
+                    setOpponentLabel("Random Opponent");
+                    const cs = createChaosState();
+                    setChaosState(cs);
+                    const g = new Chess();
+                    setGame(g);
+                    setMoveLog([]);
+                    setFloatingPepes([]);
+                    setCapturedPawns({ w: 0, b: 0 });
+                    setEventLog([{ type: "info", message: "🎯 Opponent found! Game on!", icon: "🎯", pepe: PEPE.hyped }]);
+                    playSound("reveal-stinger");
+                    spawnPepe(PEPE.hyped);
+                    recomputeChaosMoves(g, cs);
+                    startPolling(data.roomId, guestColor);
+                  }
+                }}
+                onCancel={() => {
+                  setGameStatus("setup");
+                  if (pollRef.current) clearInterval(pollRef.current);
+                  setMatchmakeState("idle");
+                }}
+              />
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-2 text-sm text-slate-500">
+                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
+                Waiting for them to join…
+              </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              setGameStatus("setup");
-              if (pollRef.current) clearInterval(pollRef.current);
-              setMatchmakeState("idle");
-            }}
-            className="mt-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs font-medium text-red-400 transition-all hover:bg-red-500/20"
-          >
-            Cancel
-          </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setGameStatus("setup");
+                  if (pollRef.current) clearInterval(pollRef.current);
+                  setMatchmakeState("idle");
+                }}
+                className="mt-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs font-medium text-red-400 transition-all hover:bg-red-500/20"
+              >
+                Cancel
+              </button>
+            </>
+          )}
 
           {/* Event log for errors */}
           {eventLog.length > 0 && (
@@ -2349,6 +2583,14 @@ export default function ChaosChessPage() {
           phase={pendingPhase}
           choices={chaosState.draftChoices}
           onPick={handleDraftPick}
+        />
+      )}
+
+      {/* Opponent draft reveal (multiplayer) */}
+      {opponentDraftReveal && (
+        <OpponentDraftReveal
+          data={opponentDraftReveal}
+          onDismiss={() => setOpponentDraftReveal(null)}
         />
       )}
 

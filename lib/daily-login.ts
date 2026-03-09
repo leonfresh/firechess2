@@ -1,13 +1,9 @@
 /**
  * Daily Login Rewards — 7-day streak cycle for retention.
  *
- * Tracks consecutive daily logins and gives escalating coin rewards.
- * Cycle resets after day 7 or if a day is missed.
- *
- * Storage: localStorage key "fc-daily-login"
+ * Server-authoritative: streak state lives in the database via /api/daily-login.
+ * localStorage is used as a read-through cache and fallback for guests.
  */
-
-import { getBalance } from "@/lib/coins";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
@@ -48,7 +44,7 @@ export const LOGIN_REWARDS: DayReward[] = [
 ];
 
 /* ------------------------------------------------------------------ */
-/*  Storage                                                             */
+/*  Local cache helpers                                                 */
 /* ------------------------------------------------------------------ */
 
 const KEY = "fc-daily-login";
@@ -63,22 +59,28 @@ function yesterdayStr(): string {
   return d.toISOString().slice(0, 10);
 }
 
-function readState(): LoginState {
-  if (typeof window === "undefined") {
-    return { currentDay: 0, lastClaimDate: "", claimedToday: false, totalDaysLogged: 0, cyclesCompleted: 0 };
-  }
+const EMPTY: LoginState = {
+  currentDay: 0,
+  lastClaimDate: "",
+  claimedToday: false,
+  totalDaysLogged: 0,
+  cyclesCompleted: 0,
+};
+
+function readLocalState(): LoginState {
+  if (typeof window === "undefined") return { ...EMPTY };
   try {
     const raw = localStorage.getItem(KEY);
-    if (!raw) return { currentDay: 0, lastClaimDate: "", claimedToday: false, totalDaysLogged: 0, cyclesCompleted: 0 };
+    if (!raw) return { ...EMPTY };
     const parsed = JSON.parse(raw) as LoginState;
     parsed.claimedToday = parsed.lastClaimDate === todayStr();
     return parsed;
   } catch {
-    return { currentDay: 0, lastClaimDate: "", claimedToday: false, totalDaysLogged: 0, cyclesCompleted: 0 };
+    return { ...EMPTY };
   }
 }
 
-function writeState(state: LoginState): void {
+function writeLocalState(state: LoginState): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(KEY, JSON.stringify(state));
 }
@@ -87,34 +89,107 @@ function writeState(state: LoginState): void {
 /*  Public API                                                          */
 /* ------------------------------------------------------------------ */
 
-/** Get current login state (streak, claimed today, etc.) */
+/**
+ * Get login state from local cache (sync).
+ * Use `fetchLoginStateFromServer()` to refresh from DB.
+ */
 export function getLoginState(): LoginState {
-  return readState();
+  return readLocalState();
+}
+
+/**
+ * Fetch authoritative login state from the server.
+ * Updates local cache on success. Returns null if not logged in.
+ */
+export async function fetchLoginStateFromServer(): Promise<LoginState | null> {
+  try {
+    const res = await fetch("/api/daily-login", { credentials: "include" });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const state: LoginState = {
+      currentDay: data.state.currentDay,
+      lastClaimDate: data.state.lastClaimDate,
+      claimedToday: data.state.claimedToday,
+      totalDaysLogged: data.state.totalDaysLogged,
+      cyclesCompleted: data.state.cyclesCompleted,
+    };
+    writeLocalState(state);
+    return state;
+  } catch {
+    return null;
+  }
 }
 
 /**
  * Claim today's login reward.
- * Returns the reward for today, or null if already claimed.
+ * Tries the server first (DB authoritative); falls back to localStorage for guests.
  */
-export function claimDailyReward(): { reward: DayReward; newBalance: number; state: LoginState } | null {
-  const state = readState();
-  const today = todayStr();
+export async function claimDailyReward(): Promise<{
+  reward: DayReward;
+  newBalance: number;
+  state: LoginState;
+} | null> {
+  // ── Server claim ──
+  try {
+    const res = await fetch("/api/daily-login", {
+      method: "POST",
+      credentials: "include",
+    });
 
+    if (res.ok) {
+      const data = await res.json();
+      const state: LoginState = {
+        currentDay: data.state.currentDay,
+        lastClaimDate: data.state.lastClaimDate,
+        claimedToday: true,
+        totalDaysLogged: data.state.totalDaysLogged,
+        cyclesCompleted: data.state.cyclesCompleted,
+      };
+      writeLocalState(state);
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem("fc-coins", String(data.newBalance));
+        window.dispatchEvent(
+          new CustomEvent("fc-coins-changed", { detail: data.newBalance }),
+        );
+      }
+      return { reward: data.reward, newBalance: data.newBalance, state };
+    }
+
+    // Already claimed today
+    if (res.status === 400) return null;
+  } catch {
+    // API unreachable — fall through to local fallback
+  }
+
+  // ── Local fallback for guests ──
+  return claimLocal();
+}
+
+function claimLocal(): {
+  reward: DayReward;
+  newBalance: number;
+  state: LoginState;
+} | null {
+  const state = readLocalState();
+  const today = todayStr();
   if (state.lastClaimDate === today) return null;
 
   const yesterday = yesterdayStr();
-  let nextDay: number;
-
-  if (state.lastClaimDate === yesterday && state.currentDay < 7) {
-    nextDay = state.currentDay + 1;
-  } else {
-    nextDay = 1;
-  }
+  const nextDay =
+    state.lastClaimDate === yesterday && state.currentDay < 7
+      ? state.currentDay + 1
+      : 1;
 
   const reward = LOGIN_REWARDS[nextDay - 1];
 
-  const currentBalance = getBalance();
+  let currentBalance = 0;
+  if (typeof window !== "undefined") {
+    currentBalance =
+      parseInt(localStorage.getItem("fc-coins") ?? "0", 10) || 0;
+  }
   const newBalance = currentBalance + reward.coins;
+
   if (typeof window !== "undefined") {
     localStorage.setItem("fc-coins", String(newBalance));
 
@@ -129,16 +204,13 @@ export function claimDailyReward(): { reward: DayReward; newBalance: number; sta
       });
       if (log.length > 50) log.length = 50;
       localStorage.setItem("fc-coin-log", JSON.stringify(log));
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
 
-    window.dispatchEvent(new CustomEvent("fc-coins-changed", { detail: newBalance }));
-
-    // Background DB sync
-    fetch("/api/coins", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "earn", reason: "daily_streak" }),
-    }).catch(() => {});
+    window.dispatchEvent(
+      new CustomEvent("fc-coins-changed", { detail: newBalance }),
+    );
   }
 
   const newState: LoginState = {
@@ -148,13 +220,16 @@ export function claimDailyReward(): { reward: DayReward; newBalance: number; sta
     totalDaysLogged: state.totalDaysLogged + 1,
     cyclesCompleted: state.cyclesCompleted + (nextDay === 7 ? 1 : 0),
   };
-  writeState(newState);
+  writeLocalState(newState);
 
   return { reward, newBalance, state: newState };
 }
 
 /** Check if streak is still active (claimed yesterday or today). */
 export function isStreakActive(): boolean {
-  const state = readState();
-  return state.lastClaimDate === todayStr() || state.lastClaimDate === yesterdayStr();
+  const state = readLocalState();
+  return (
+    state.lastClaimDate === todayStr() ||
+    state.lastClaimDate === yesterdayStr()
+  );
 }

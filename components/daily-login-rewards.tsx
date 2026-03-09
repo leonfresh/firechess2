@@ -15,6 +15,7 @@ import {
   LOGIN_REWARDS,
   getLoginState,
   claimDailyReward,
+  fetchLoginStateFromServer,
   isStreakActive,
   type LoginState,
   type DayReward,
@@ -259,11 +260,15 @@ export function DailyLoginRewards() {
   const [showConfetti, setShowConfetti] = useState(false);
 
   useEffect(() => {
+    // Show cached state immediately, then refresh from server
     setLoginState(getLoginState());
+    fetchLoginStateFromServer().then((s) => {
+      if (s) setLoginState(s);
+    });
   }, []);
 
-  const handleClaim = useCallback(() => {
-    const result = claimDailyReward();
+  const handleClaim = useCallback(async () => {
+    const result = await claimDailyReward();
     if (!result) return;
 
     setAnimating(true);
@@ -314,16 +319,22 @@ export function DailyLoginPopup() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const s = getLoginState();
-    setLoginState(s);
-    // Auto-open if there's an unclaimed reward
-    if (s && !s.claimedToday) {
-      setOpen(true);
-    }
+    // Show cached state immediately
+    const cached = getLoginState();
+    setLoginState(cached);
+    if (cached && !cached.claimedToday) setOpen(true);
+
+    // Refresh from server (DB authoritative)
+    fetchLoginStateFromServer().then((s) => {
+      if (s) {
+        setLoginState(s);
+        if (!s.claimedToday) setOpen(true);
+      }
+    });
   }, []);
 
-  const handleClaim = useCallback(() => {
-    const result = claimDailyReward();
+  const handleClaim = useCallback(async () => {
+    const result = await claimDailyReward();
     if (!result) return;
 
     setAnimating(true);

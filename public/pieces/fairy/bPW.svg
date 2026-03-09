@@ -1,58 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" width="177.17" height="177.17">
-  <defs>
-    <linearGradient id="bPW-b" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#444"/>
-      <stop offset="1" stop-color="#1f1a17"/>
-    </linearGradient>
-    <linearGradient id="bPW-bl" x1="0.5" y1="1" x2="0.5" y2="0">
-      <stop offset="0" stop-color="#888"/>
-      <stop offset="1" stop-color="#ccc"/>
-    </linearGradient>
-    <linearGradient id="bPW-g" x1="0.5" y1="1" x2="0.5" y2="0">
-      <stop offset="0" stop-color="#f59e0b" stop-opacity="0.9"/>
-      <stop offset="1" stop-color="#fbbf24" stop-opacity="0.8"/>
-    </linearGradient>
-  </defs>
-  <!-- Shadow -->
-  <ellipse cx="25" cy="44" rx="14" ry="3.2" fill="#0a0a0a"/>
-  <!-- Wider stem / flared skirt -->
-  <path d="M18.5 24 C17 29 14 37 13 43 L37 43 C36 37 33 29 31.5 24 Z"
-        fill="url(#bPW-b)" stroke="#111" stroke-width="0.7"/>
-  <!-- Base platform -->
-  <ellipse cx="25" cy="43" rx="12.5" ry="2.5" fill="url(#bPW-b)" stroke="#111" stroke-width="0.7"/>
-  <!-- Wider collar / cup -->
-  <path d="M21.5 16 Q17 18.5 16.5 21 Q16 23.5 18 24.5 L32 24.5 Q34 23.5 33.5 21 Q33 18.5 28.5 16 Z"
-        fill="url(#bPW-b)" stroke="#111" stroke-width="0.7"/>
-  <!-- Collar rim/lip -->
-  <ellipse cx="25" cy="24.5" rx="7.2" ry="1.3" fill="url(#bPW-b)" stroke="#111" stroke-width="0.5"/>
-  <!-- Neck -->
-  <rect x="22" y="14.5" width="6" height="2.5" rx="1.5" fill="url(#bPW-b)" stroke="#111" stroke-width="0.5"/>
-  <!-- Head (slightly larger) -->
-  <circle cx="25" cy="11" r="4.8" fill="url(#bPW-b)" stroke="#111" stroke-width="0.7"/>
-  <!-- Shine -->
-  <circle cx="23.5" cy="9.5" r="1.3" fill="#888" opacity="0.25"/>
+  <!-- Outline — single Merida silhouette -->
+  <path d="M25 46.448H11.606a13.139 13.139 0 0 1-.99-5.043c0-2.975.863-5.644 2.598-8.018 1.736-2.365 3.971-4.054 6.697-5.067a6.824 6.824 0 0 1-2.861-2.398c-.737-1.071-1.1-2.283-1.1-3.634 0-1.69.575-3.156 1.735-4.392 1.151-1.244 2.574-1.961 4.267-2.15-1.346-.981-2.015-2.283-2.015-3.89 0-1.351.491-2.513 1.482-3.477.982-.964 2.176-1.442 3.581-1.442 1.389 0 2.582.478 3.573 1.442s1.49 2.126 1.49 3.477c0 1.607-.669 2.909-2.015 3.89 1.693.189 3.116.906 4.267 2.15 1.16 1.236 1.736 2.703 1.736 4.392 0 1.351-.373 2.563-1.126 3.634a7.036 7.036 0 0 1-2.862 2.398c2.726 1.013 4.962 2.702 6.697 5.067 1.736 2.374 2.6 5.043 2.6 8.018 0 1.739-.322 3.42-.966 5.043z" fill="#1f1a17"/>
   <!-- === WAR PAWN ACCENTS === -->
   <!-- Blade from top of head -->
-  <path d="M24.2 6.5 L25 1.5 L25.8 6.5 Z"
-        fill="url(#bPW-bl)" stroke="#111" stroke-width="0.5" stroke-linejoin="round"/>
-  <line x1="25" y1="2" x2="25" y2="6" stroke="#ccc" stroke-width="0.35" opacity="0.8"/>
+  <path d="M24.3 7 L25 1.5 L25.7 7 Z" fill="#ccc" stroke="#111" stroke-width="0.5" stroke-linejoin="round"/>
+  <line x1="25" y1="2" x2="25" y2="6.5" stroke="#eee" stroke-width="0.35" opacity="0.8"/>
   <!-- Gold crossguard -->
-  <rect x="21.5" y="5.8" width="7" height="1.3" rx="0.5" fill="url(#bPW-g)" stroke="#111" stroke-width="0.4"/>
-  <!-- Gold double chevrons on skirt -->
-  <path d="M20.5 36 L25 32 L29.5 36" fill="none" stroke="url(#bPW-g)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M21.5 31.5 L25 27.5 L28.5 31.5" fill="none" stroke="url(#bPW-g)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="21.8" y="6.2" width="6.4" height="1.2" rx="0.4" fill="#f59e0b" stroke="#111" stroke-width="0.4" opacity="0.9"/>
+  <!-- Gold double chevrons on body -->
+  <path d="M20 38 L25 33.5 L30 38" fill="none" stroke="#f59e0b" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
+  <path d="M21.5 34 L25 30 L28.5 34" fill="none" stroke="#f59e0b" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
   <!-- Speed lines L -->
-  <line x1="13" y1="33" x2="15.5" y2="30.5" stroke="#60a5fa" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
-  <line x1="12.5" y1="36" x2="15" y2="33.5" stroke="#60a5fa" stroke-width="0.8" stroke-linecap="round" opacity="0.5"/>
-  <line x1="12" y1="39" x2="14.5" y2="36.5" stroke="#60a5fa" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
+  <line x1="10.5" y1="35" x2="13" y2="32.5" stroke="#60a5fa" stroke-width="0.8" stroke-linecap="round" opacity="0.55"/>
+  <line x1="10" y1="38" x2="12.5" y2="35.5" stroke="#60a5fa" stroke-width="0.8" stroke-linecap="round" opacity="0.45"/>
+  <line x1="9.5" y1="41" x2="12" y2="38.5" stroke="#60a5fa" stroke-width="0.8" stroke-linecap="round" opacity="0.35"/>
   <!-- Speed lines R -->
-  <line x1="37" y1="33" x2="34.5" y2="30.5" stroke="#60a5fa" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
-  <line x1="37.5" y1="36" x2="35" y2="33.5" stroke="#60a5fa" stroke-width="0.8" stroke-linecap="round" opacity="0.5"/>
-  <line x1="38" y1="39" x2="35.5" y2="36.5" stroke="#60a5fa" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
-  <!-- Shoulder armor plates -->
-  <path d="M17.5 20 Q16 21.5 16 23.5 Q17 23 18 21.5 Z" fill="#ddd" opacity="0.25"/>
-  <path d="M32.5 20 Q34 21.5 34 23.5 Q33 23 32 21.5 Z" fill="#ddd" opacity="0.25"/>
+  <line x1="39.5" y1="35" x2="37" y2="32.5" stroke="#60a5fa" stroke-width="0.8" stroke-linecap="round" opacity="0.55"/>
+  <line x1="40" y1="38" x2="37.5" y2="35.5" stroke="#60a5fa" stroke-width="0.8" stroke-linecap="round" opacity="0.45"/>
+  <line x1="40.5" y1="41" x2="38" y2="38.5" stroke="#60a5fa" stroke-width="0.8" stroke-linecap="round" opacity="0.35"/>
   <!-- Red slash hints -->
   <line x1="21" y1="28" x2="22.5" y2="26.5" stroke="#f87171" stroke-width="0.7" stroke-linecap="round" opacity="0.4"/>
   <line x1="27.5" y1="26.5" x2="29" y2="28" stroke="#f87171" stroke-width="0.7" stroke-linecap="round" opacity="0.4"/>

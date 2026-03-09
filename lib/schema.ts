@@ -280,6 +280,25 @@ export const studyTasks = pgTable("study_task", {
 });
 
 /* ------------------------------------------------------------------ */
+/*  Daily login streak (server-authoritative)                           */
+/* ------------------------------------------------------------------ */
+
+export const dailyLogins = pgTable("daily_login", {
+  userId: text("userId")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  /** Current streak day 1-7 */
+  currentDay: integer("currentDay").notNull().default(0),
+  /** ISO date of last claim (YYYY-MM-DD) */
+  lastClaimDate: text("lastClaimDate").notNull().default(""),
+  /** Total days ever claimed */
+  totalDaysLogged: integer("totalDaysLogged").notNull().default(0),
+  /** Full 7-day cycles completed */
+  cyclesCompleted: integer("cyclesCompleted").notNull().default(0),
+  updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow(),
+});
+
+/* ------------------------------------------------------------------ */
 /*  Custom: coin economy (server-authoritative)                         */
 /* ------------------------------------------------------------------ */
 
@@ -381,4 +400,31 @@ export const chaosRooms = pgTable("chaos_room", {
   /** Timestamp tracking */
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
   updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow(),
+});
+
+/* ------------------------------------------------------------------ */
+/*  Chaos Chess lobby — online presence & chat                          */
+/* ------------------------------------------------------------------ */
+
+export const chaosPresence = pgTable("chaos_presence", {
+  userId: text("userId")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  userName: text("userName").notNull().default("Anonymous"),
+  userImage: text("userImage"),
+  /** Timestamp of last heartbeat — stale after ~30s */
+  lastSeen: timestamp("lastSeen", { mode: "date" }).notNull().defaultNow(),
+});
+
+export const chaosLobbyMessages = pgTable("chaos_lobby_message", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("userId")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  userName: text("userName").notNull().default("Anonymous"),
+  userImage: text("userImage"),
+  message: text("message").notNull(),
+  createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
 });

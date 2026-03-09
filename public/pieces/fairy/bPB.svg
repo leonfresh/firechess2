@@ -1,44 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" width="177.17" height="177.17">
-  <defs>
-    <linearGradient id="bPB-b" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#444"/>
-      <stop offset="1" stop-color="#1f1a17"/>
-    </linearGradient>
-    <linearGradient id="bPB-bl" x1="0.5" y1="1" x2="0.5" y2="0">
-      <stop offset="0" stop-color="#888"/>
-      <stop offset="1" stop-color="#ccc"/>
-    </linearGradient>
-  </defs>
-  <!-- Shadow -->
-  <ellipse cx="25" cy="44" rx="13" ry="3" fill="#0a0a0a"/>
-  <!-- Stem / flared skirt -->
-  <path d="M19.5 24 C18 29 15 37 14 43 L36 43 C35 37 32 29 30.5 24 Z"
-        fill="url(#bPB-b)" stroke="#111" stroke-width="0.7"/>
-  <!-- Base platform -->
-  <ellipse cx="25" cy="43" rx="11.5" ry="2.3" fill="url(#bPB-b)" stroke="#111" stroke-width="0.7"/>
-  <!-- Collar / cup -->
-  <path d="M22 16.5 Q18 18.5 17.5 21 Q17 23 19 24 L31 24 Q33 23 32.5 21 Q32 18.5 28 16.5 Z"
-        fill="url(#bPB-b)" stroke="#111" stroke-width="0.7"/>
-  <!-- Collar rim/lip -->
-  <ellipse cx="25" cy="24" rx="6.2" ry="1.2" fill="url(#bPB-b)" stroke="#111" stroke-width="0.5"/>
-  <!-- Neck -->
-  <rect x="22.2" y="15" width="5.6" height="2.5" rx="1.5" fill="url(#bPB-b)" stroke="#111" stroke-width="0.5"/>
-  <!-- Head -->
-  <circle cx="25" cy="11" r="4.5" fill="url(#bPB-b)" stroke="#111" stroke-width="0.7"/>
-  <!-- Shine -->
-  <circle cx="23.5" cy="9.5" r="1.3" fill="#888" opacity="0.25"/>
+  <!-- Outline — single Merida silhouette -->
+  <path d="M25 46.448H11.606a13.139 13.139 0 0 1-.99-5.043c0-2.975.863-5.644 2.598-8.018 1.736-2.365 3.971-4.054 6.697-5.067a6.824 6.824 0 0 1-2.861-2.398c-.737-1.071-1.1-2.283-1.1-3.634 0-1.69.575-3.156 1.735-4.392 1.151-1.244 2.574-1.961 4.267-2.15-1.346-.981-2.015-2.283-2.015-3.89 0-1.351.491-2.513 1.482-3.477.982-.964 2.176-1.442 3.581-1.442 1.389 0 2.582.478 3.573 1.442s1.49 2.126 1.49 3.477c0 1.607-.669 2.909-2.015 3.89 1.693.189 3.116.906 4.267 2.15 1.16 1.236 1.736 2.703 1.736 4.392 0 1.351-.373 2.563-1.126 3.634a7.036 7.036 0 0 1-2.862 2.398c2.726 1.013 4.962 2.702 6.697 5.067 1.736 2.374 2.6 5.043 2.6 8.018 0 1.739-.322 3.42-.966 5.043z" fill="#1f1a17"/>
   <!-- === BAYONET ACCENTS === -->
   <!-- Blade -->
-  <path d="M24.2 7 L25 2 L25.8 7 Z"
-        fill="url(#bPB-bl)" stroke="#111" stroke-width="0.6" stroke-linejoin="round"/>
-  <!-- Blade edge highlight -->
-  <line x1="25" y1="2.5" x2="25" y2="6.5" stroke="#ccc" stroke-width="0.4" opacity="0.7"/>
+  <path d="M24.3 7 L25 2 L25.7 7 Z" fill="#ccc" stroke="#111" stroke-width="0.5" stroke-linejoin="round"/>
+  <line x1="25" y1="2.5" x2="25" y2="6.5" stroke="#eee" stroke-width="0.35" opacity="0.7"/>
   <!-- Crossguard -->
-  <rect x="22" y="6.3" width="6" height="1.2" rx="0.4" fill="#ddd" opacity="0.85"/>
-  <!-- Red V-slash marks on skirt -->
-  <line x1="22" y1="33" x2="25" y2="30" stroke="#f87171" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
-  <line x1="25" y1="30" x2="28" y2="33" stroke="#f87171" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
-  <line x1="22.5" y1="37" x2="25" y2="34.5" stroke="#f87171" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
-  <line x1="25" y1="34.5" x2="27.5" y2="37" stroke="#f87171" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
+  <rect x="22.2" y="6.5" width="5.6" height="1.1" rx="0.4" fill="#ddd" opacity="0.85"/>
+  <!-- Red V-slash marks on body -->
+  <line x1="21" y1="36" x2="25" y2="32" stroke="#f87171" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+  <line x1="25" y1="32" x2="29" y2="36" stroke="#f87171" stroke-width="0.9" stroke-linecap="round" opacity="0.55"/>
+  <line x1="21.5" y1="40" x2="25" y2="36.5" stroke="#f87171" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
+  <line x1="25" y1="36.5" x2="28.5" y2="40" stroke="#f87171" stroke-width="0.8" stroke-linecap="round" opacity="0.4"/>
 </svg>
