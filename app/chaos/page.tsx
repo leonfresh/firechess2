@@ -12,9 +12,11 @@
  */
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Chess, type Color, type PieceSymbol } from "chess.js";
 import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
 import { Chessboard } from "react-chessboard";
+import { TouchBackend } from "react-dnd-touch-backend";
 import { stockfishPool } from "@/lib/stockfish-client";
 // useBoardSize removed — we use onBoardWidthChange from react-chessboard
 import { useBoardTheme, useShowCoordinates, useCustomPieces, usePieceTheme } from "@/lib/use-coins";
@@ -47,11 +49,25 @@ import {
 /**
  * SVG overlay definitions keyed by modifier id.
  * Each returns SVG elements drawn at various positions around the piece.
- * `position` determines where the badge/effect goes when stacking.
+ * Overlays that use `icon` are positioned dynamically in corners to avoid stacking.
+ * Overlays with custom `render` draw centred effects (wings, crosshairs, crowns).
  */
+type Corner = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+const CORNER_STYLES: Record<Corner, React.CSSProperties> = {
+  "top-left": { position: "absolute", top: "0%", left: "0%" },
+  "top-right": { position: "absolute", top: "0%", right: "0%" },
+  "bottom-left": { position: "absolute", bottom: "2%", left: "0%" },
+  "bottom-right": { position: "absolute", bottom: "2%", right: "0%" },
+};
+const CORNER_ORDER: Corner[] = ["top-right", "top-left", "bottom-right", "bottom-left"];
+
 type OverlayDef = {
-  /** Render the SVG overlay. sw = squareWidth */
-  render: (sw: number) => React.ReactElement;
+  /** Simple emoji badge — will be auto-positioned into a corner */
+  icon?: string;
+  /** Color for the icon's drop-shadow glow */
+  iconGlow?: string;
+  /** Custom render for complex shapes (centred, not corner-slotted) */
+  render?: (sw: number) => React.ReactElement;
   /** CSS filter to apply on the base piece */
   filter?: string;
   /** Pulsing glow color */
@@ -65,30 +81,19 @@ const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
       const s = sw * 0.35;
       return (
         <svg viewBox="0 0 24 24" width={s} height={s} style={{ position: "absolute", top: "2%", right: "2%", opacity: 0.9, filter: "drop-shadow(0 0 2px rgba(168,85,247,0.8))" }}>
-          {/* Wing shape */}
           <path d="M4 12 C4 6, 12 2, 20 6 L16 10 C14 8, 10 8, 8 12 Z" fill="rgba(168,85,247,0.85)" stroke="rgba(216,180,254,0.9)" strokeWidth="0.5" />
           <path d="M6 14 C6 9, 12 5, 18 8 L15 11 C13 9.5, 10 10, 9 13 Z" fill="rgba(192,132,252,0.5)" />
         </svg>
       );
     },
   },
-  "knight-retreat": {
-    render: (sw) => {
-      const s = sw * 0.22;
-      return (
-        <div style={{ position: "absolute", bottom: "4%", right: "4%", width: s, height: s, borderRadius: "50%", backgroundColor: "rgba(34,197,94,0.7)", border: "1px solid rgba(74,222,128,0.8)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: s * 0.6, lineHeight: 1, filter: "drop-shadow(0 0 2px rgba(34,197,94,0.6))" }}>
-          🥾
-        </div>
-      );
-    },
-  },
+  "knight-retreat": { icon: "🥾", iconGlow: "rgba(34,197,94,0.6)" },
   knook: {
     glow: "rgba(59,130,246,0.5)",
     render: (sw) => {
       const s = sw * 0.28;
       return (
         <svg viewBox="0 0 24 24" width={s} height={s} style={{ position: "absolute", top: "2%", left: "2%", opacity: 0.85, filter: "drop-shadow(0 0 3px rgba(59,130,246,0.8))" }}>
-          {/* Castle turret (rook symbol) */}
           <rect x="4" y="8" width="16" height="14" rx="1" fill="rgba(59,130,246,0.7)" stroke="rgba(147,197,253,0.8)" strokeWidth="0.8" />
           <rect x="5.5" y="4" width="3" height="6" fill="rgba(59,130,246,0.8)" />
           <rect x="10" y="4" width="3" height="6" fill="rgba(59,130,246,0.8)" />
@@ -103,7 +108,6 @@ const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
       const s = sw * 0.26;
       return (
         <svg viewBox="0 0 24 24" width={s} height={s} style={{ position: "absolute", top: "0%", right: "2%", opacity: 0.9, filter: "drop-shadow(0 0 3px rgba(249,115,22,0.8))" }}>
-          {/* Knight head silhouette on queen */}
           <path d="M6 20 L8 12 L6 8 L10 4 L14 6 L18 4 L16 10 L18 14 L14 18 Z" fill="rgba(249,115,22,0.8)" stroke="rgba(251,191,36,0.8)" strokeWidth="0.6" />
         </svg>
       );
@@ -115,7 +119,6 @@ const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
       const s = sw * 0.32;
       return (
         <svg viewBox="0 0 24 24" width={s} height={s} style={{ position: "absolute", top: "-4%", left: "50%", transform: "translateX(-50%)", opacity: 0.9, filter: "drop-shadow(0 0 4px rgba(234,179,8,0.9))" }}>
-          {/* Crown */}
           <path d="M2 18 L4 8 L8 12 L12 4 L16 12 L20 8 L22 18 Z" fill="rgba(234,179,8,0.8)" stroke="rgba(253,224,71,0.9)" strokeWidth="0.6" />
           <circle cx="4" cy="8" r="1.5" fill="rgba(253,224,71,0.9)" />
           <circle cx="12" cy="4" r="1.5" fill="rgba(253,224,71,0.9)" />
@@ -124,24 +127,12 @@ const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
       );
     },
   },
-  "phantom-rook": {
-    filter: "opacity(0.65) brightness(1.3)",
-    glow: "rgba(147,51,234,0.4)",
-    render: (sw) => {
-      const s = sw * 0.22;
-      return (
-        <div style={{ position: "absolute", bottom: "4%", left: "4%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 3px rgba(147,51,234,0.8))" }}>
-          👻
-        </div>
-      );
-    },
-  },
+  "phantom-rook": { icon: "👻", iconGlow: "rgba(147,51,234,0.8)", filter: "opacity(0.65) brightness(1.3)", glow: "rgba(147,51,234,0.4)" },
   "sniper-bishop": {
     render: (sw) => {
       const s = sw * 0.35;
       return (
         <svg viewBox="0 0 24 24" width={s} height={s} style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", opacity: 0.5, filter: "drop-shadow(0 0 2px rgba(239,68,68,0.6))" }}>
-          {/* Crosshair */}
           <circle cx="12" cy="12" r="9" stroke="rgba(239,68,68,0.7)" strokeWidth="1" fill="none" />
           <circle cx="12" cy="12" r="4" stroke="rgba(239,68,68,0.5)" strokeWidth="0.8" fill="none" />
           <line x1="12" y1="1" x2="12" y2="7" stroke="rgba(239,68,68,0.6)" strokeWidth="1" />
@@ -152,203 +143,33 @@ const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
       );
     },
   },
-  "collateral-rook": {
-    glow: "rgba(249,115,22,0.4)",
-    render: (sw) => {
-      const s = sw * 0.24;
-      return (
-        <div style={{ position: "absolute", top: "2%", right: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 3px rgba(249,115,22,0.8))" }}>
-          💥
-        </div>
-      );
-    },
-  },
-  "nuclear-queen": {
-    glow: "rgba(34,197,94,0.5)",
-    render: (sw) => {
-      const s = sw * 0.28;
-      return (
-        <div style={{ position: "absolute", bottom: "2%", right: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 4px rgba(34,197,94,0.9))", animation: "pulse 2s ease-in-out infinite" }}>
-          ☢️
-        </div>
-      );
-    },
-  },
-  "rook-charge": {
-    render: (sw) => {
-      const s = sw * 0.2;
-      return (
-        <div style={{ position: "absolute", bottom: "4%", right: "4%", width: s, height: s, borderRadius: "50%", backgroundColor: "rgba(59,130,246,0.5)", border: "1px solid rgba(96,165,250,0.7)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: s * 0.7, lineHeight: 1 }}>
-          ⚔️
-        </div>
-      );
-    },
-  },
-  "pawn-charge": {
-    render: (sw) => {
-      const s = sw * 0.2;
-      return (
-        <div style={{ position: "absolute", top: "2%", right: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 2px rgba(59,130,246,0.6))" }}>
-          🚀
-        </div>
-      );
-    },
-  },
-  "pawn-capture-forward": {
-    render: (sw) => {
-      const s = sw * 0.2;
-      return (
-        <div style={{ position: "absolute", top: "2%", left: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 2px rgba(239,68,68,0.6))" }}>
-          🗡️
-        </div>
-      );
-    },
-  },
-  "bishop-slide": {
-    render: (sw) => {
-      const s = sw * 0.18;
-      return (
-        <svg viewBox="0 0 24 24" width={s} height={s} style={{ position: "absolute", bottom: "4%", right: "4%", opacity: 0.7 }}>
-          {/* Speed lines */}
-          <line x1="2" y1="6" x2="16" y2="6" stroke="rgba(96,165,250,0.8)" strokeWidth="2" strokeLinecap="round" />
-          <line x1="4" y1="12" x2="20" y2="12" stroke="rgba(96,165,250,0.6)" strokeWidth="2" strokeLinecap="round" />
-          <line x1="2" y1="18" x2="14" y2="18" stroke="rgba(96,165,250,0.8)" strokeWidth="2" strokeLinecap="round" />
-        </svg>
-      );
-    },
-  },
-  "pawn-promotion-early": {
-    glow: "rgba(234,179,8,0.3)",
-    render: (sw) => {
-      const s = sw * 0.2;
-      return (
-        <div style={{ position: "absolute", top: "0%", right: "0%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 3px rgba(234,179,8,0.8))" }}>
-          ⭐
-        </div>
-      );
-    },
-  },
-  "king-shield": {
-    render: (sw) => {
-      const s = sw * 0.24;
-      return (
-        <div style={{ position: "absolute", bottom: "2%", left: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 2px rgba(59,130,246,0.6))" }}>
-          🛡️
-        </div>
-      );
-    },
-  },
-  "king-wrath": {
-    render: (sw) => {
-      const s = sw * 0.22;
-      return (
-        <div style={{ position: "absolute", top: "2%", right: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 3px rgba(239,68,68,0.7))" }}>
-          ⚔️
-        </div>
-      );
-    },
-  },
-  "queen-teleport": {
-    glow: "rgba(168,85,247,0.4)",
-    render: (sw) => {
-      const s = sw * 0.24;
-      return (
-        <div style={{ position: "absolute", bottom: "2%", left: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 3px rgba(168,85,247,0.8))", animation: "pulse 3s ease-in-out infinite" }}>
-          🌀
-        </div>
-      );
-    },
-  },
-  "bishop-bounce": {
-    render: (sw) => {
-      const s = sw * 0.22;
-      return (
-        <div style={{ position: "absolute", top: "2%", right: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 2px rgba(249,115,22,0.6))" }}>
-          🪃
-        </div>
-      );
-    },
-  },
-  "rook-cannon": {
-    glow: "rgba(239,68,68,0.4)",
-    render: (sw) => {
-      const s = sw * 0.24;
-      return (
-        <div style={{ position: "absolute", top: "2%", left: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 3px rgba(239,68,68,0.8))" }}>
-          💣
-        </div>
-      );
-    },
-  },
-  "knight-horde": {
-    render: (sw) => {
-      const s = sw * 0.2;
-      return (
-        <svg viewBox="0 0 24 24" width={s} height={s} style={{ position: "absolute", bottom: "4%", left: "4%", opacity: 0.8, filter: "drop-shadow(0 0 2px rgba(34,197,94,0.7))" }}>
-          {/* Army helmet */}
-          <path d="M4 16 Q4 8 12 6 Q20 8 20 16 L18 18 L6 18 Z" fill="rgba(34,197,94,0.7)" stroke="rgba(74,222,128,0.8)" strokeWidth="0.6" />
-          <ellipse cx="12" cy="8" rx="8" ry="3" fill="rgba(34,197,94,0.5)" />
-        </svg>
-      );
-    },
-  },
-  "undead-army": {
-    filter: "sepia(0.3) hue-rotate(-20deg)",
-    render: (sw) => {
-      const s = sw * 0.2;
-      return (
-        <div style={{ position: "absolute", top: "2%", right: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 3px rgba(168,85,247,0.8))" }}>
-          💀
-        </div>
-      );
-    },
-  },
-  "il-vaticano": {
-    render: (sw) => {
-      const s = sw * 0.2;
-      return (
-        <div style={{ position: "absolute", top: "0%", left: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 2px rgba(234,179,8,0.6))" }}>
-          ✝️
-        </div>
-      );
-    },
-  },
-  "forced-en-passant": {
-    render: (sw) => {
-      const s = sw * 0.2;
-      return (
-        <div style={{ position: "absolute", bottom: "2%", right: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 2px rgba(249,115,22,0.6))" }}>
-          🧱
-        </div>
-      );
-    },
-  },
-  "pawn-shield-wall": {
-    render: (sw) => {
-      const s = sw * 0.2;
-      return (
-        <div style={{ position: "absolute", bottom: "2%", left: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 2px rgba(59,130,246,0.6))" }}>
-          🔰
-        </div>
-      );
-    },
-  },
-  "enpassant-everywhere": {
-    render: (sw) => {
-      const s = sw * 0.18;
-      return (
-        <div style={{ position: "absolute", bottom: "2%", right: "2%", fontSize: s, lineHeight: 1, filter: "drop-shadow(0 0 2px rgba(234,179,8,0.6))" }}>
-          ⚡
-        </div>
-      );
-    },
-  },
+  "collateral-rook": { icon: "💥", iconGlow: "rgba(249,115,22,0.8)", glow: "rgba(249,115,22,0.4)" },
+  "nuclear-queen": { icon: "☢️", iconGlow: "rgba(34,197,94,0.9)", glow: "rgba(34,197,94,0.5)" },
+  "rook-charge": { icon: "⚔️", iconGlow: "rgba(59,130,246,0.6)" },
+  "pawn-charge": { icon: "🚀", iconGlow: "rgba(59,130,246,0.6)" },
+  "pawn-capture-forward": { icon: "🗡️", iconGlow: "rgba(239,68,68,0.6)" },
+  "bishop-slide": { icon: "💨", iconGlow: "rgba(96,165,250,0.6)" },
+  "pawn-promotion-early": { icon: "⭐", iconGlow: "rgba(234,179,8,0.8)", glow: "rgba(234,179,8,0.3)" },
+  "king-shield": { icon: "🛡️", iconGlow: "rgba(59,130,246,0.6)" },
+  "king-wrath": { icon: "⚔️", iconGlow: "rgba(239,68,68,0.7)" },
+  "queen-teleport": { icon: "🌀", iconGlow: "rgba(168,85,247,0.8)", glow: "rgba(168,85,247,0.4)" },
+  "bishop-bounce": { icon: "🪃", iconGlow: "rgba(249,115,22,0.6)" },
+  "rook-cannon": { icon: "💣", iconGlow: "rgba(239,68,68,0.8)", glow: "rgba(239,68,68,0.4)" },
+  "knight-horde": { icon: "🪖", iconGlow: "rgba(34,197,94,0.7)" },
+  "undead-army": { icon: "💀", iconGlow: "rgba(168,85,247,0.8)", filter: "sepia(0.3) hue-rotate(-20deg)" },
+  "il-vaticano": { icon: "✝️", iconGlow: "rgba(234,179,8,0.6)" },
+  "forced-en-passant": { icon: "🧱", iconGlow: "rgba(249,115,22,0.6)" },
+  "pawn-shield-wall": { icon: "🔰", iconGlow: "rgba(59,130,246,0.6)" },
+  "enpassant-everywhere": { icon: "⚡", iconGlow: "rgba(234,179,8,0.6)" },
 };
 
 /** Map piece code letter → PieceSymbol */
 const PIECE_CODE_MAP: Record<string, string> = {
   P: "p", N: "n", B: "b", R: "r", Q: "q", K: "k",
 };
+
+/** Modifier IDs that only affect the first piece of their type */
+const SINGLE_PIECE_MODIFIERS: Record<string, true> = { knook: true };
 
 /**
  * Build customPieces with chaos modifier overlays.
@@ -359,12 +180,35 @@ function buildChaosCustomPieces(
   playerModifiers: ChaosModifier[],
   aiModifiers: ChaosModifier[],
   playerColor: "white" | "black",
-): Record<string, ({ squareWidth }: { squareWidth: number }) => React.ReactElement> {
+  game: Chess,
+): Record<string, ({ squareWidth, square }: { squareWidth: number; square?: string }) => React.ReactElement> {
   const codes = ["wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK"];
-  const result: Record<string, ({ squareWidth }: { squareWidth: number }) => React.ReactElement> = {};
+  const result: Record<string, ({ squareWidth, square }: { squareWidth: number; square?: string }) => React.ReactElement> = {};
 
   // Fallback to cburnett if no custom set chosen
   const actualSet = setName ?? "cburnett";
+
+  // Pre-compute which square is the "single piece" for each modifier
+  // e.g. for knook: the first knight square of each color
+  const singlePieceSquares: Record<string, Record<string, string | null>> = {};
+  for (const modId of Object.keys(SINGLE_PIECE_MODIFIERS)) {
+    singlePieceSquares[modId] = {};
+    for (const color of ["w", "b"] as const) {
+      const mod = (color === (playerColor === "white" ? "w" : "b") ? playerModifiers : aiModifiers)
+        .find((m) => m.id === modId);
+      if (!mod) { singlePieceSquares[modId][color] = null; continue; }
+      // Find all pieces of this type for this color
+      const squares: string[] = [];
+      for (const f of "abcdefgh") {
+        for (const r of "12345678") {
+          const s = `${f}${r}`;
+          const p = game.get(s as any);
+          if (p && p.type === mod.piece && p.color === color) squares.push(s);
+        }
+      }
+      singlePieceSquares[modId][color] = squares[0] ?? null;
+    }
+  }
 
   for (const code of codes) {
     const pieceColor = code[0]; // "w" or "b"
@@ -376,16 +220,38 @@ function buildChaosCustomPieces(
     const activeForPiece = mods.filter((m) => m.piece === pieceType);
     const url = getPieceImageUrl(actualSet, code);
 
-    result[code] = ({ squareWidth }: { squareWidth: number }) => {
+    result[code] = ({ squareWidth, square }: { squareWidth: number; square?: string }) => {
       // Collect overlays & effects
       const overlays: React.ReactElement[] = [];
       let filter = "";
       let glowColor = "";
+      let cornerIdx = 0;
 
       for (const mod of activeForPiece) {
+        // Skip single-piece modifiers if this isn't the designated piece
+        if (SINGLE_PIECE_MODIFIERS[mod.id] && square) {
+          const designatedSquare = singlePieceSquares[mod.id]?.[pieceColor];
+          if (designatedSquare && square !== designatedSquare) continue;
+        }
         const def = MODIFIER_OVERLAYS[mod.id];
         if (!def) continue;
-        overlays.push(<React.Fragment key={mod.id}>{def.render(squareWidth)}</React.Fragment>);
+
+        if (def.icon) {
+          // Icon-based badge — auto-assign to next available corner
+          const corner = CORNER_ORDER[cornerIdx % CORNER_ORDER.length];
+          cornerIdx++;
+          const s = squareWidth * 0.24;
+          const style = CORNER_STYLES[corner];
+          overlays.push(
+            <div key={mod.id} style={{ position: "absolute", ...style, fontSize: s, lineHeight: 1, filter: `drop-shadow(0 0 3px ${def.iconGlow ?? "rgba(255,255,255,0.6)"})` }}>
+              {def.icon}
+            </div>
+          );
+        } else if (def.render) {
+          // Custom SVG render — uses its own positioning
+          overlays.push(<React.Fragment key={mod.id}>{def.render(squareWidth)}</React.Fragment>);
+        }
+
         if (def.filter) filter = def.filter;
         if (def.glow && !glowColor) glowColor = def.glow;
       }
@@ -736,18 +602,37 @@ function ModifierTooltip({
   children: React.ReactNode;
 }) {
   const [show, setShow] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
   const tier = TIER_COLORS[mod.tier];
+
+  useEffect(() => {
+    if (!show || !triggerRef.current) { setPos(null); return; }
+    const rect = triggerRef.current.getBoundingClientRect();
+    setPos({
+      top: rect.top - 8, // 8px gap above trigger
+      left: rect.left + rect.width / 2,
+    });
+  }, [show]);
 
   return (
     <div
-      className="relative"
+      ref={triggerRef}
       onMouseEnter={() => setShow(true)}
       onMouseLeave={() => setShow(false)}
     >
       {children}
-      {show && (
-        <div className="absolute bottom-full left-1/2 z-[100] mb-2 w-56 -translate-x-1/2 rounded-xl border border-white/10 bg-[#0d1117] p-3 shadow-2xl shadow-black/50"
-          style={{ animation: "tooltip-pop 0.15s ease-out both" }}
+      {show && pos && createPortal(
+        <div
+          className="fixed w-56 rounded-xl border border-white/10 bg-[#0d1117] p-3 shadow-2xl shadow-black/50"
+          style={{
+            top: pos.top,
+            left: pos.left,
+            transform: "translate(-50%, -100%)",
+            zIndex: 9999,
+            animation: "tooltip-pop 0.15s ease-out both",
+            pointerEvents: "none",
+          }}
         >
           <div className="flex items-center gap-2 mb-1.5">
             <span className="text-2xl">{mod.icon}</span>
@@ -765,7 +650,8 @@ function ModifierTooltip({
           )}
           <p className="text-xs leading-relaxed text-slate-400">{mod.description}</p>
           <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-[#0d1117]" />
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   );
@@ -789,16 +675,20 @@ function ModifierList({
       <h3 className={`mb-1.5 text-[10px] font-bold uppercase tracking-wider ${color}`}>
         {title}
       </h3>
-      <div className="flex flex-wrap gap-1">
+      <div className="space-y-1.5">
         {modifiers.map((mod) => (
-          <ModifierTooltip key={mod.id} mod={mod}>
-            <div className="flex items-center gap-1.5 rounded-md bg-white/[0.04] px-2 py-1 cursor-default transition-colors hover:bg-white/[0.08]">
-              <span className="text-base leading-none">{mod.icon}</span>
-              <span className="text-[11px] font-medium text-slate-300 whitespace-nowrap">
-                {mod.name}
+          <div key={mod.id} className="rounded-lg bg-white/[0.03] px-2.5 py-1.5 transition-colors hover:bg-white/[0.06]">
+            <div className="flex items-center gap-2">
+              <span className="text-lg leading-none">{mod.icon}</span>
+              <span className="text-xs font-semibold text-white">{mod.name}</span>
+              <span className={`ml-auto text-[9px] font-bold uppercase tracking-wider ${TIER_COLORS[mod.tier].text}`}>
+                {mod.tier}
               </span>
             </div>
-          </ModifierTooltip>
+            <p className="mt-0.5 text-[11px] leading-snug text-slate-500">
+              {mod.description}
+            </p>
+          </div>
         ))}
       </div>
     </div>
@@ -866,8 +756,9 @@ export default function ChaosChessPage() {
       chaosState.playerModifiers,
       chaosState.aiModifiers,
       playerColor,
+      game,
     );
-  }, [pieceTheme.setName, chaosState.playerModifiers, chaosState.aiModifiers, playerColor, baseCustomPieces]);
+  }, [pieceTheme.setName, chaosState.playerModifiers, chaosState.aiModifiers, playerColor, baseCustomPieces, game]);
 
   /* ── Move log ── */
   const [moveLog, setMoveLog] = useState<MoveLogEntry[]>([]);
@@ -881,6 +772,10 @@ export default function ChaosChessPage() {
   const [legalMoveSquares, setLegalMoveSquares] = useState<Record<string, React.CSSProperties>>({});
   const [lastMoveHighlight, setLastMoveHighlight] = useState<Record<string, React.CSSProperties>>({});
 
+  /* ── Chaos promotion choice dialog ── */
+  const [pendingPromotion, setPendingPromotion] = useState<ChaosMove | null>(null);
+  /* ── Standard promotion choice dialog ── */
+  const [pendingStdPromotion, setPendingStdPromotion] = useState<{ from: CbSquare; to: CbSquare } | null>(null);
   /* ── Difficulty ── */
   const [aiLevel, setAiLevel] = useState<"easy" | "medium" | "hard">("medium");
   const aiDepth = aiLevel === "easy" ? 6 : aiLevel === "medium" ? 10 : 14;
@@ -901,34 +796,6 @@ export default function ChaosChessPage() {
   /* ── Preload sounds ── */
   useEffect(() => {
     preloadSounds();
-  }, []);
-
-  /* ── Suppress Windows dashed-rectangle drag ghost on board ── */
-  useEffect(() => {
-    const el = boardContainerRef.current;
-    if (!el) return;
-
-    // Create an off-screen transparent element as drag image
-    const ghost = document.createElement("div");
-    ghost.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;";
-    document.body.appendChild(ghost);
-
-    const handler = (e: DragEvent) => {
-      if (!e.dataTransfer) return;
-      e.dataTransfer.effectAllowed = "move";
-      // Monkey-patch setDragImage so react-dnd's later call also uses our ghost
-      const origSetDragImage = e.dataTransfer.setDragImage.bind(e.dataTransfer);
-      e.dataTransfer.setDragImage = (_img: Element, _x: number, _y: number) => {
-        origSetDragImage(ghost, 0, 0);
-      };
-      e.dataTransfer.setDragImage(ghost, 0, 0);
-    };
-    el.addEventListener("dragstart", handler, true);
-
-    return () => {
-      el.removeEventListener("dragstart", handler, true);
-      ghost.remove();
-    };
   }, []);
 
   /* ── Scroll event log to bottom ── */
@@ -1478,6 +1345,12 @@ export default function ChaosChessPage() {
       );
 
       if (chaosMove) {
+        // If this chaos move needs a promotion choice, show picker first
+        if (chaosMove.promotionChoice) {
+          setPendingPromotion(chaosMove);
+          return true;
+        }
+
         const newGame = executeChaosMove(game, chaosMove, chaosState.playerModifiers);
         if (!newGame) return false;
 
@@ -1513,6 +1386,23 @@ export default function ChaosChessPage() {
       // Standard chess.js move
       let moveResult = null;
       const pieceAtFrom = game.get(from as any);
+
+      // Check if this is a promotion move (pawn reaching last rank)
+      if (pieceAtFrom && pieceAtFrom.type === "p") {
+        const lastRank = pieceAtFrom.color === "w" ? "8" : "1";
+        if (to[1] === lastRank) {
+          // Verify the move is legal (try with queen promotion)
+          try {
+            const tmp = new Chess(game.fen());
+            const result = tmp.move({ from, to, promotion: "q" });
+            if (result) {
+              setPendingStdPromotion({ from, to });
+              return true;
+            }
+          } catch { /* not a valid promotion */ }
+        }
+      }
+
       for (const promo of [undefined, "q", "r", "b", "n"] as const) {
         try {
           const tmp = new Chess(game.fen());
@@ -1581,6 +1471,103 @@ export default function ChaosChessPage() {
       return true;
     },
     [game, gameStatus, playerColor, isThinking, chaosState, gameMode, availableChaosMoves, checkGameEnd, checkDraft, makeAiMove, addMoveToLog, applyPostMove, sendMoveToServer, spawnPepe, recomputeChaosMoves],
+  );
+
+  /* ── Execute a pending chaos promotion after piece choice ── */
+  const executePromotion = useCallback(
+    (pieceType: "q" | "r" | "b" | "n") => {
+      if (!pendingPromotion) return;
+      const move = { ...pendingPromotion, spawnPiece: { type: pieceType as PieceSymbol, color: game.turn() as Color } };
+      setPendingPromotion(null);
+
+      const newGame = executeChaosMove(game, move, chaosState.playerModifiers);
+      if (!newGame) return;
+
+      const pieceName = pieceType === "q" ? "Queen" : pieceType === "r" ? "Rook" : pieceType === "b" ? "Bishop" : "Knight";
+      playSound("capture");
+      setLastMoveHighlight({
+        [move.from]: { backgroundColor: "rgba(168, 85, 247, 0.4)" },
+        [move.to]: { backgroundColor: "rgba(168, 85, 247, 0.4)" },
+      });
+      setSelectedSquare(null);
+      setLegalMoveSquares({});
+      addMoveToLog(newGame, `⚡Promo → ${pieceName}`, game.turn() as "w" | "b");
+      setEventLog((prev) => [...prev, { type: "chaos", message: `⚡ Battlefield Promotion → ${pieceName}!`, icon: "⭐", pepe: tierPepe("epic") }]);
+      spawnPepe(PEPE.lmao);
+      playSound("vine-boom");
+
+      setGame(newGame);
+
+      if (checkGameEnd(newGame)) return;
+      const drafted = checkDraft(newGame, chaosState);
+
+      if (gameMode !== "ai") {
+        sendMoveToServer(newGame, move.from, move.to, chaosState);
+      }
+
+      if (!drafted && gameMode === "ai") {
+        setTimeout(() => makeAiMove(newGame, chaosState), AI_MOVE_DELAY);
+      }
+      recomputeChaosMoves(newGame, chaosState);
+    },
+    [pendingPromotion, game, chaosState, gameMode, checkGameEnd, checkDraft, makeAiMove, addMoveToLog, sendMoveToServer, spawnPepe, recomputeChaosMoves],
+  );
+
+  /* ── Execute a pending standard promotion after piece choice ── */
+  const executeStdPromotion = useCallback(
+    (pieceType: "q" | "r" | "b" | "n") => {
+      if (!pendingStdPromotion) return;
+      const { from, to } = pendingStdPromotion;
+      setPendingStdPromotion(null);
+
+      const pieceAtFrom = game.get(from as any);
+      let moveResult;
+      try {
+        moveResult = game.move({ from, to, promotion: pieceType });
+      } catch { return; }
+      if (!moveResult) return;
+
+      if (game.isCheck()) playSound("check");
+      else if (moveResult.captured) playSound("capture");
+      else playSound("move");
+
+      if (moveResult.captured === "p") {
+        setCapturedPawns((prev) => ({
+          ...prev,
+          [moveResult.color === "w" ? "b" : "w"]: prev[moveResult.color === "w" ? "b" as const : "w" as const] + 1,
+        }));
+      }
+
+      setLastMoveHighlight({
+        [from]: { backgroundColor: "rgba(255, 170, 0, 0.3)" },
+        [to]: { backgroundColor: "rgba(255, 170, 0, 0.3)" },
+      });
+      setSelectedSquare(null);
+      setLegalMoveSquares({});
+      addMoveToLog(game, moveResult.san, moveResult.color);
+
+      let finalGame: Chess = game;
+      if (moveResult.captured && pieceAtFrom) {
+        const afterEffects = applyPostMove(game, from, to, true, pieceAtFrom.type, pieceAtFrom.color as Color, chaosState.playerModifiers);
+        if (afterEffects !== game) finalGame = afterEffects;
+      }
+
+      const newG = new Chess(finalGame.fen());
+      setGame(newG);
+
+      if (checkGameEnd(newG)) return;
+      const drafted = checkDraft(newG, chaosState);
+
+      if (gameMode !== "ai") {
+        sendMoveToServer(newG, from, to, chaosState);
+      }
+
+      if (!drafted && gameMode === "ai") {
+        setTimeout(() => makeAiMove(newG, chaosState), AI_MOVE_DELAY);
+      }
+      recomputeChaosMoves(newG, chaosState);
+    },
+    [pendingStdPromotion, game, chaosState, gameMode, checkGameEnd, checkDraft, makeAiMove, addMoveToLog, applyPostMove, sendMoveToServer, recomputeChaosMoves],
   );
 
   /* ── Square click for mobile + to show legal moves ── */
@@ -2101,9 +2088,79 @@ export default function ChaosChessPage() {
                 customPieces={chaosCustomPieces || undefined}
                 animationDuration={200}
                 arePiecesDraggable={gameStatus === "playing" && !isThinking}
+                customDndBackend={TouchBackend}
+                customDndBackendOptions={{ enableMouseEvents: true }}
               />
             </div>
           </div>
+
+          {/* Chaos Promotion Piece Picker */}
+          {pendingPromotion && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setPendingPromotion(null)}>
+              <div className="flex flex-col items-center gap-3 rounded-2xl border border-purple-500/30 bg-slate-900/95 p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                <p className="text-sm font-bold text-purple-300">⭐ Battlefield Promotion</p>
+                <p className="text-xs text-slate-400">Choose a piece:</p>
+                <div className="flex gap-2">
+                  {(["q", "r", "b", "n"] as const).map((p) => {
+                    const colorPrefix = game.turn() === "w" ? "w" : "b";
+                    const pieceCode = `${colorPrefix}${p.toUpperCase()}`;
+                    const labels: Record<string, string> = { q: "Queen", r: "Rook", b: "Bishop", n: "Knight" };
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => executePromotion(p)}
+                        className="group flex flex-col items-center gap-1 rounded-xl border border-slate-600/50 bg-slate-800/80 p-2 transition-all hover:border-purple-400/60 hover:bg-purple-500/20 hover:scale-110 active:scale-95"
+                      >
+                        <img
+                          src={`https://images.chesscomfiles.com/chess-themes/pieces/neo/150/${pieceCode}.png`}
+                          alt={labels[p]}
+                          className="h-12 w-12 sm:h-14 sm:w-14"
+                          draggable={false}
+                        />
+                        <span className="text-[10px] text-slate-400 group-hover:text-purple-300">{labels[p]}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button type="button" onClick={() => setPendingPromotion(null)} className="mt-1 text-[10px] text-slate-500 hover:text-slate-300">Cancel</button>
+              </div>
+            </div>
+          )}
+
+          {/* Standard Promotion Piece Picker */}
+          {pendingStdPromotion && (
+            <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setPendingStdPromotion(null)}>
+              <div className="flex flex-col items-center gap-3 rounded-2xl border border-amber-500/30 bg-slate-900/95 p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                <p className="text-sm font-bold text-amber-300">♛ Promote Pawn</p>
+                <p className="text-xs text-slate-400">Choose a piece:</p>
+                <div className="flex gap-2">
+                  {(["q", "r", "b", "n"] as const).map((p) => {
+                    const colorPrefix = game.turn() === "w" ? "w" : "b";
+                    const pieceCode = `${colorPrefix}${p.toUpperCase()}`;
+                    const labels: Record<string, string> = { q: "Queen", r: "Rook", b: "Bishop", n: "Knight" };
+                    return (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => executeStdPromotion(p)}
+                        className="group flex flex-col items-center gap-1 rounded-xl border border-slate-600/50 bg-slate-800/80 p-2 transition-all hover:border-amber-400/60 hover:bg-amber-500/20 hover:scale-110 active:scale-95"
+                      >
+                        <img
+                          src={`https://images.chesscomfiles.com/chess-themes/pieces/neo/150/${pieceCode}.png`}
+                          alt={labels[p]}
+                          className="h-12 w-12 sm:h-14 sm:w-14"
+                          draggable={false}
+                        />
+                        <span className="text-[10px] text-slate-400 group-hover:text-amber-300">{labels[p]}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <button type="button" onClick={() => setPendingStdPromotion(null)} className="mt-1 text-[10px] text-slate-500 hover:text-slate-300">Cancel</button>
+              </div>
+            </div>
+          )}
 
           {/* Player label */}
           <div className="flex w-full max-w-[640px] items-center gap-2 rounded-lg bg-white/[0.02] px-2 py-1 sm:px-3 sm:py-1.5">

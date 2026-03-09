@@ -32,6 +32,8 @@ export type ChaosMove = {
   spawnPiece?: { type: PieceSymbol; color: Color };
   /** If true the piece at `from` stays (sniper / spawn) */
   pieceStays?: boolean;
+  /** If true, the player should choose the promotion piece before execution */
+  promotionChoice?: boolean;
 };
 
 /* ================================================================== */
@@ -580,16 +582,33 @@ function genEarlyPromotion(game: Chess, color: Color): ChaosMove[] {
     // Must be one rank below promo rank
     if (r !== promoRank - dir) continue;
 
+    // Forward move (empty target)
     const target = sq(f, promoRank);
-    if (!target || !isEmpty(game, target)) continue;
-    if (wouldLeaveKingInCheck(game, ps, target, color)) continue;
+    if (target && isEmpty(game, target) && !wouldLeaveKingInCheck(game, ps, target, color)) {
+      moves.push({
+        from: ps, to: target, type: "move",
+        modifierId: "pawn-promotion-early",
+        label: "Battlefield Promotion (early promo)",
+        spawnPiece: { type: "q", color },
+        promotionChoice: true,
+      });
+    }
 
-    moves.push({
-      from: ps, to: target, type: "move",
-      modifierId: "pawn-promotion-early",
-      label: "Battlefield Promotion (early promo)",
-      spawnPiece: { type: "q", color },
-    });
+    // Diagonal captures (left and right)
+    for (const df of [-1, 1]) {
+      const capTarget = sq(f + df, promoRank);
+      if (!capTarget) continue;
+      const capPiece = game.get(capTarget as any);
+      if (!capPiece || capPiece.color === color) continue; // must capture enemy
+      if (wouldLeaveKingInCheck(game, ps, capTarget, color)) continue;
+      moves.push({
+        from: ps, to: capTarget, type: "capture",
+        modifierId: "pawn-promotion-early",
+        label: "Battlefield Promotion (capture & promo)",
+        spawnPiece: { type: "q", color },
+        promotionChoice: true,
+      });
+    }
   }
   return moves;
 }
