@@ -140,9 +140,15 @@ export function Chessboard(props: ChessboardCompatProps) {
 
   const squareWidth = measuredWidth / 8;
 
+  // v4 accepted "start" as a special keyword for the initial position; v5 only accepts FEN strings
+  const position =
+    props.position === "start"
+      ? "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+      : props.position;
+
   const options: ChessboardOptions = {
     id: props.id,
-    position: props.position,
+    position,
     boardOrientation: props.boardOrientation,
     allowDragging: props.arePiecesDraggable,
     animationDurationInMs: props.animationDuration,
