@@ -263,7 +263,7 @@ export async function GET(req: NextRequest) {
               <span style={{ fontSize: "20px", fontWeight: 900, color: "#fb923c", letterSpacing: "0.1em" }}>
                 ROAST THE ELO
               </span>
-              <span style={{ color: "#475569", fontSize: "15px", marginLeft: "8px" }}>firechess.app/roast</span>
+              <span style={{ color: "#475569", fontSize: "15px", marginLeft: "8px" }}>firechess.com/roast</span>
             </div>
           </div>
         </div>

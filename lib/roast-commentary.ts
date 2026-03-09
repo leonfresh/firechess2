@@ -2150,7 +2150,13 @@ function _blunderRoast(
   if (hanging.length > 0) {
     const worst = hanging.reduce((a, b) => (PIECE_VALUES[b.type] ?? 0) > (PIECE_VALUES[a.type] ?? 0) ? b : a);
     const hangMinCpLoss = Math.max((PIECE_VALUES[worst.type] ?? 0) * 50, 80);
-    if (move.cpLoss < hangMinCpLoss) { /* skip — engine doesn't agree this hang matters */ }
+    // Skip "donated/free" commentary when the move was a capture of equal-or-greater value.
+    // e.g. Nxg3 captures a knight — even if the capturing knight is now hanging,
+    // it's an exchange, NOT a "donation". The framing would be misleading.
+    const capturedVal = (move.isCapture && move.capturedPiece) ? (PIECE_VALUES[move.capturedPiece as PieceSymbol] ?? 0) : 0;
+    const hangingVal = PIECE_VALUES[worst.type] ?? 0;
+    const isEvenOrBetterCapture = move.isCapture && capturedVal >= hangingVal;
+    if (move.cpLoss < hangMinCpLoss || isEvenOrBetterCapture) { /* skip — engine doesn't agree or it's a trade */ }
     else {
     const vName = pn(worst.type);
     const onSq = worst.square;

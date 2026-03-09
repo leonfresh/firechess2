@@ -174,6 +174,15 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     piece: "n",
     phases: [2, 3, 4],
   },
+  {
+    id: "archbishop",
+    name: "The Archbishop",
+    description: "One of your Bishops transforms into an Archbishop — it moves as both a Bishop AND a Knight.",
+    tier: "rare",
+    icon: "⛪",
+    piece: "b",
+    phases: [2, 3, 4],
+  },
 
   // ── Phase 3-4 (Turn 15-20) — Powerful disruption ──
   {

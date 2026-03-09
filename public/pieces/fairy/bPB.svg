@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" width="177.17" height="177.17">
+  <defs>
+    <linearGradient id="bPB-body" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#444"/>
+      <stop offset="1" stop-color="#1f1a17"/>
+    </linearGradient>
+    <linearGradient id="bPB-shine" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#888" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#555" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="bPB-blade" x1="0.5" y1="1" x2="0.5" y2="0">
+      <stop offset="0" stop-color="#888"/>
+      <stop offset="1" stop-color="#ccc"/>
+    </linearGradient>
+  </defs>
+  <!-- Base platform -->
+  <ellipse cx="25" cy="46" rx="14" ry="3" fill="#1f1a17"/>
+  <ellipse cx="25" cy="46" rx="12.5" ry="2.2" fill="url(#bPB-body)" stroke="#111" stroke-width="0.8"/>
+  <!-- Pedestal -->
+  <path d="M14 44 Q14 42 16 40 L18 38 Q18.5 37.5 19 37 L31 37 Q31.5 37.5 32 38 L34 40 Q36 42 36 44 Z"
+        fill="url(#bPB-body)" stroke="#111" stroke-width="0.8"/>
+  <!-- Pawn body -->
+  <path d="M20 37 Q19.5 34 20 31 L20.5 28 Q21 25 22 23 L23 21 Q24 19 25 18 Q26 19 27 21 L28 23 Q29 25 29.5 28 L30 31 Q30.5 34 30 37 Z"
+        fill="url(#bPB-body)" stroke="#111" stroke-width="0.8" stroke-linejoin="round"/>
+  <!-- Pawn neck -->
+  <path d="M22.5 20 Q23 18 25 17 Q27 18 27.5 20 Q27 19 25 18.5 Q23 19 22.5 20 Z"
+        fill="url(#bPB-body)" stroke="#111" stroke-width="0.5"/>
+  <!-- Pawn head -->
+  <circle cx="25" cy="13.5" r="5.2" fill="url(#bPB-body)" stroke="#111" stroke-width="0.8"/>
+  <!-- Bayonet blade extending from top -->
+  <path d="M24 8.5 L25 3 L26 8.5 Z"
+        fill="url(#bPB-blade)" stroke="#111" stroke-width="0.6" stroke-linejoin="round"/>
+  <!-- Blade edge highlight -->
+  <line x1="25" y1="3.5" x2="25" y2="8" stroke="#ccc" stroke-width="0.4" opacity="0.7"/>
+  <!-- Crossguard -->
+  <rect x="22" y="8" width="6" height="1.2" rx="0.4" fill="#ddd" opacity="0.85"/>
+  <!-- Small blade motif on body — forward-facing slash marks -->
+  <line x1="23" y1="26" x2="25" y2="24" stroke="#f87171" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
+  <line x1="25" y1="24" x2="27" y2="26" stroke="#f87171" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>
+  <line x1="23.5" y1="31" x2="25" y2="29" stroke="#f87171" stroke-width="0.7" stroke-linecap="round" opacity="0.45"/>
+  <line x1="25" y1="29" x2="26.5" y2="31" stroke="#f87171" stroke-width="0.7" stroke-linecap="round" opacity="0.45"/>
+  <!-- Collar detail -->
+  <path d="M20 37 Q25 35.5 30 37" fill="none" stroke="#888" stroke-width="0.5"/>
+  <!-- Shine highlight -->
+  <path d="M23.5 19 Q24 17 24.5 19 L24.2 34 Q24 35 24 36 L23.2 36 Q23 35 23.5 34 Z"
+        fill="url(#bPB-shine)" opacity="0.25"/>
+</svg>

@@ -212,7 +212,7 @@ export async function GET(req: NextRequest) {
         {/* CTA */}
         <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "8px", color: "#64748b", fontSize: "16px" }}>
           <span>🐸</span>
-          <span style={{ fontWeight: 700 }}>firechess.app/roast</span>
+          <span style={{ fontWeight: 700 }}>firechess.com/roast</span>
           <span style={{ color: "#475569" }}>— Can you do better?</span>
         </div>
       </div>

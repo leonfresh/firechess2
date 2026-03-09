@@ -5084,7 +5084,7 @@ export default function RoastPage() {
                         const diff = selectedBracket !== null ? Math.abs(selectedBracket - getEloBracketIdx(game.avgElo)) : 99;
                         const emoji = diff === 0 ? "🎯" : diff === 1 ? "🔥" : "💀";
                         const tweet = `${emoji} Roast the Elo — I guessed ${bracket?.label ?? "?"} and the real Elo was ${game.avgElo}!\n\n💀 ${blunders} blunders · ❌ ${mistakes} mistakes\n\n🐸 Can you do better?`;
-                        const url = game.id ? `https://firechess.app/roast?game=${game.id}` : "https://firechess.app/roast";
+                        const url = game.id ? `https://firechess.com/roast?game=${game.id}` : "https://firechess.com/roast";
                         return `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweet)}&url=${encodeURIComponent(url)}`;
                       })()}
                       target="_blank"
@@ -5105,7 +5105,7 @@ export default function RoastPage() {
                           `💀 ${blunders} blunders · ❌ ${mistakes} mistakes · ⚠️ ${inaccuracies} inaccuracies`,
                           `🐸 Try it yourself:`,
                         ].join("\n");
-                        const url = game.id ? `https://firechess.app/roast?game=${game.id}` : "https://firechess.app/roast";
+                        const url = game.id ? `https://firechess.com/roast?game=${game.id}` : "https://firechess.com/roast";
                         // Use native share on mobile, clipboard fallback on desktop
                         if (typeof navigator.share === "function") {
                           try {
@@ -5132,7 +5132,7 @@ export default function RoastPage() {
                     {game.id && (
                       <button
                         onClick={() => {
-                          const url = `https://firechess.app/roast?game=${game.id}`;
+                          const url = `https://firechess.com/roast?game=${game.id}`;
                           navigator.clipboard.writeText(url).then(() => {
                             setShareText("Link copied!");
                             setTimeout(() => setShareText(null), 2000);
@@ -5386,7 +5386,7 @@ export default function RoastPage() {
         {streamerMode && (pageState === "watching" || pageState === "guessing") && (
           <div className="fixed bottom-4 left-4 z-[80] flex items-center gap-2 rounded-xl border border-orange-500/20 bg-black/60 backdrop-blur-sm px-4 py-2">
             <span className="text-sm">🔥</span>
-            <span className="text-sm font-black text-orange-400 tracking-wide">firechess.app/roast</span>
+            <span className="text-sm font-black text-orange-400 tracking-wide">firechess.com/roast</span>
             <div className="flex items-center gap-1 ml-2">
               <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
               <span className="text-[10px] font-bold text-red-400 uppercase tracking-wider">Live</span>

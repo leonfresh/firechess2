@@ -338,6 +338,31 @@ function genKnook(game: Chess, color: Color): ChaosMove[] {
   return moves;
 }
 
+/** Archbishop: first bishop gains knight movement */
+function genArchbishop(game: Chess, color: Color): ChaosMove[] {
+  const moves: ChaosMove[] = [];
+  const bishops = allSquaresOf(game, "b", color);
+  if (bishops.length === 0) return moves;
+
+  const archbishopSquare = bishops[0]; // First bishop becomes the Archbishop
+  const [f, r] = sqToCoords(archbishopSquare);
+  const knightOffsets = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
+
+  for (const [df, dr] of knightOffsets) {
+    const target = sq(f + df, r + dr);
+    if (!target) continue;
+    if (isFriendly(game, target, color)) continue;
+    if (wouldLeaveKingInCheck(game, archbishopSquare, target, color)) continue;
+
+    moves.push({
+      from: archbishopSquare, to: target,
+      type: isEnemy(game, target, color) ? "capture" : "move",
+      modifierId: "archbishop", label: "The Archbishop (knight-jump)",
+    });
+  }
+  return moves;
+}
+
 /** Amazon: queen also moves like a knight */
 function genAmazon(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
@@ -625,6 +650,7 @@ const MODIFIER_GENERATORS: Record<string, (game: Chess, color: Color) => ChaosMo
   "rook-charge": genRookCharge,
   "phantom-rook": genPhantomRook,
   "knook": genKnook,
+  "archbishop": genArchbishop,
   "amazon": genAmazon,
   "king-ascension": genKingAscension,
   "sniper-bishop": genSniperBishop,

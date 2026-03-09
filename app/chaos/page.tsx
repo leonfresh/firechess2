@@ -101,6 +101,9 @@ const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
       );
     },
   },
+  archbishop: {
+    glow: "rgba(168,85,247,0.5)",
+  },
   amazon: {
     glow: "rgba(249,115,22,0.4)",
     render: (sw) => {
@@ -168,7 +171,22 @@ const PIECE_CODE_MAP: Record<string, string> = {
 };
 
 /** Modifier IDs that only affect the first piece of their type */
-const SINGLE_PIECE_MODIFIERS: Record<string, true> = { knook: true };
+const SINGLE_PIECE_MODIFIERS: Record<string, true> = { knook: true, archbishop: true };
+
+/** Fairy piece SVG replacements — full piece image swap for transformative modifiers */
+const FAIRY_PIECE_SVGS: Record<string, Record<string, string>> = {
+  knook:                  { w: "/pieces/fairy/wC.svg",  b: "/pieces/fairy/bC.svg" },
+  archbishop:             { w: "/pieces/fairy/wA.svg",  b: "/pieces/fairy/bA.svg" },
+  amazon:                 { w: "/pieces/fairy/wAm.svg", b: "/pieces/fairy/bAm.svg" },
+  "pawn-charge":          { w: "/pieces/fairy/wPC.svg", b: "/pieces/fairy/bPC.svg" },
+  "pawn-capture-forward": { w: "/pieces/fairy/wPB.svg", b: "/pieces/fairy/bPB.svg" },
+};
+
+/** War Pawn SVG — shown when both pawn-charge AND pawn-capture-forward are active */
+const WAR_PAWN_SVGS: Record<string, string> = {
+  w: "/pieces/fairy/wPW.svg",
+  b: "/pieces/fairy/bPW.svg",
+};
 
 /**
  * Build customPieces with chaos modifier overlays.
@@ -225,6 +243,16 @@ function buildChaosCustomPieces(
       let filter = "";
       let glowColor = "";
       let cornerIdx = 0;
+      let pieceUrl = url; // default to standard piece
+
+      // Detect pawn modifier combo: both charge + bayonet = War Pawn
+      const hasPawnCharge = pieceType === "p" && activeForPiece.some(m => m.id === "pawn-charge");
+      const hasPawnBayonet = pieceType === "p" && activeForPiece.some(m => m.id === "pawn-capture-forward");
+      const pawnCombo = hasPawnCharge && hasPawnBayonet;
+      if (pawnCombo) {
+        pieceUrl = WAR_PAWN_SVGS[pieceColor];
+        glowColor = "rgba(245,158,11,0.45)"; // amber glow for war pawn
+      }
 
       for (const mod of activeForPiece) {
         // Skip single-piece modifiers if this isn't the designated piece
@@ -232,23 +260,39 @@ function buildChaosCustomPieces(
           const designatedSquare = singlePieceSquares[mod.id]?.[pieceColor];
           if (designatedSquare && square !== designatedSquare) continue;
         }
+
+        // Check for fairy piece SVG replacement (replaces the entire piece image)
+        const fairySvgs = FAIRY_PIECE_SVGS[mod.id];
+        // Skip individual pawn fairy SVGs when War Pawn combo is active
+        const skipForCombo = pawnCombo && (mod.id === "pawn-charge" || mod.id === "pawn-capture-forward");
+        if (fairySvgs && square && !skipForCombo) {
+          const designatedSquare = singlePieceSquares[mod.id]?.[pieceColor];
+          if (!designatedSquare || square === designatedSquare) {
+            pieceUrl = fairySvgs[pieceColor];
+          }
+        }
+
         const def = MODIFIER_OVERLAYS[mod.id];
         if (!def) continue;
 
-        if (def.icon) {
-          // Icon-based badge — auto-assign to next available corner
-          const corner = CORNER_ORDER[cornerIdx % CORNER_ORDER.length];
-          cornerIdx++;
-          const s = squareWidth * 0.24;
-          const style = CORNER_STYLES[corner];
-          overlays.push(
-            <div key={mod.id} style={{ position: "absolute", ...style, fontSize: s, lineHeight: 1, filter: `drop-shadow(0 0 3px ${def.iconGlow ?? "rgba(255,255,255,0.6)"})` }}>
-              {def.icon}
-            </div>
-          );
-        } else if (def.render) {
-          // Custom SVG render — uses its own positioning
-          overlays.push(<React.Fragment key={mod.id}>{def.render(squareWidth)}</React.Fragment>);
+        // Skip icon/render overlays for modifiers with fairy piece replacements
+        // (the fairy SVG IS the piece — no need for an overlay badge)
+        if (!fairySvgs && !skipForCombo) {
+          if (def.icon) {
+            // Icon-based badge — auto-assign to next available corner
+            const corner = CORNER_ORDER[cornerIdx % CORNER_ORDER.length];
+            cornerIdx++;
+            const s = squareWidth * 0.24;
+            const style = CORNER_STYLES[corner];
+            overlays.push(
+              <div key={mod.id} style={{ position: "absolute", ...style, fontSize: s, lineHeight: 1, filter: `drop-shadow(0 0 3px ${def.iconGlow ?? "rgba(255,255,255,0.6)"})` }}>
+                {def.icon}
+              </div>
+            );
+          } else if (def.render) {
+            // Custom SVG render — uses its own positioning
+            overlays.push(<React.Fragment key={mod.id}>{def.render(squareWidth)}</React.Fragment>);
+          }
         }
 
         if (def.filter) filter = def.filter;
@@ -275,7 +319,7 @@ function buildChaosCustomPieces(
             style={{
               width: squareWidth,
               height: squareWidth,
-              backgroundImage: `url(${url})`,
+              backgroundImage: `url(${pieceUrl})`,
               backgroundSize: "contain",
               backgroundRepeat: "no-repeat",
               backgroundPosition: "center",
