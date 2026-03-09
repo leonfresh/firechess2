@@ -217,12 +217,13 @@ class StockfishClient {
     await this.ensureReady();
     if (!this.worker) return [];
 
-    // Set multi-PV, run search, then reset to 1
-    await this.sendAndWaitFor(`setoption name MultiPV value ${numPv}`, (line) => true);
+    // Set multi-PV — setoption produces no output, so just postMessage then confirm with isready
+    this.worker.postMessage(`setoption name MultiPV value ${numPv}`);
     await this.sendAndWaitFor("isready", (line) => line.trim() === "readyok");
     this.worker.postMessage(`position fen ${fen}`);
     const searchLines = await this.sendAndWaitFor(`go depth ${depth}`, (line) => line.startsWith("bestmove "));
-    await this.sendAndWaitFor("setoption name MultiPV value 1", (line) => true);
+    // Reset multi-PV back to 1
+    this.worker.postMessage("setoption name MultiPV value 1");
     await this.sendAndWaitFor("isready", (line) => line.trim() === "readyok");
     return this.parseMultiPv(searchLines);
   }

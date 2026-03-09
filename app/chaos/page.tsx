@@ -1104,8 +1104,8 @@ export default function ChaosChessPage() {
           checkDraft(finalGame, cs);
           recomputeChaosMoves(new Chess(finalGame.fen()), cs);
         }
-      } catch {
-        // Engine error
+      } catch (err) {
+        console.warn("[Chaos AI] Engine error:", err);
       }
 
       setIsThinking(false);
