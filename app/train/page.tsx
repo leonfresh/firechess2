@@ -15,8 +15,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Chess } from "chess.js";
-import { Chessboard } from "react-chessboard";
-import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
+import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { useSession } from "@/components/session-provider";
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";

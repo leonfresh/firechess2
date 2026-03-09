@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
-import { Chessboard } from "react-chessboard";
+import { Chessboard } from "@/components/chessboard-compat";
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
 import type { RepeatedOpeningLeak } from "@/lib/types";

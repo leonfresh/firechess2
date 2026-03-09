@@ -660,6 +660,78 @@ export function getChaosMoves(
   return moves;
 }
 
+/** Piece values in centipawns for chaos threat evaluation */
+const PIECE_VALUE_CP: Record<string, number> = {
+  p: 100, n: 320, b: 330, r: 500, q: 900, k: 0,
+};
+
+/**
+ * Compute a centipawn penalty for a position based on the opponent's chaos threats.
+ *
+ * After the AI makes a move, the opponent (player) gets to respond.
+ * If the player has chaos modifiers (e.g. sniper bishop), they can capture
+ * AI pieces that Stockfish doesn't know are threatened.
+ *
+ * This function generates all opponent chaos moves in the given position
+ * and returns the value of the best capture the opponent can make.
+ * The AI should subtract this from its eval to account for the threat.
+ *
+ * @param game - Position after the AI's candidate move
+ * @param opponentModifiers - The opponent's (player's) chaos modifiers
+ * @param opponentColor - The opponent's color
+ * @returns centipawn penalty (positive = bad for the AI)
+ */
+export function computeChaosThreatPenalty(
+  game: Chess,
+  opponentModifiers: ChaosModifier[],
+  opponentColor: Color,
+): number {
+  const chaosMoves = getChaosMoves(game, opponentModifiers, opponentColor);
+  if (chaosMoves.length === 0) return 0;
+
+  let maxThreat = 0;
+
+  for (const cm of chaosMoves) {
+    // Only care about captures (moves that land on an enemy piece)
+    const targetPiece = game.get(cm.to as any);
+    if (!targetPiece || targetPiece.color === opponentColor) continue;
+
+    const value = PIECE_VALUE_CP[targetPiece.type] ?? 0;
+    if (value <= 0) continue;
+
+    // For sniper bishop (pieceStays = true), the capture is "free" — full value
+    // For normal chaos captures, the attacker moves there and may be recaptured,
+    // so discount by the attacker's value (like a trade)
+    let netThreat: number;
+    if (cm.pieceStays) {
+      // Free capture — attacker doesn't move (sniper, phantom)
+      netThreat = value;
+    } else {
+      // Attacker moves to the square — might get recaptured
+      const piece = game.get(cm.from as any);
+      const attackerValue = piece ? (PIECE_VALUE_CP[piece.type] ?? 0) : 0;
+      // If attacker is worth less than target, it's a good trade
+      // If attacker is worth more, the opponent might not take it
+      // Be conservative: assume the trade happens if target >= attacker
+      netThreat = Math.max(0, value - attackerValue * 0.5);
+    }
+
+    // Side effects (nuclear queen, collateral rook) — add value of destroyed pieces
+    if (cm.sideEffects) {
+      for (const sq of cm.sideEffects) {
+        const se = game.get(sq as any);
+        if (se && se.color !== opponentColor) {
+          netThreat += PIECE_VALUE_CP[se.type] ?? 0;
+        }
+      }
+    }
+
+    if (netThreat > maxThreat) maxThreat = netThreat;
+  }
+
+  return maxThreat;
+}
+
 /**
  * Execute a chaos move by directly manipulating the board.
  * Returns a new Chess instance with the resulting position, or null if invalid.

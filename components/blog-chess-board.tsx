@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Chessboard } from "react-chessboard";
+import { Chessboard } from "@/components/chessboard-compat";
 import { Chess } from "chess.js";
 
 interface BlogChessBoardProps {

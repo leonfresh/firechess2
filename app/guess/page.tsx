@@ -10,8 +10,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chess, type Move } from "chess.js";
-import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
-import { Chessboard } from "react-chessboard";
+import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { SAMPLE_GAMES, GAME_CATEGORIES, type SampleGame, type GameCategory } from "@/lib/sample-games";
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";

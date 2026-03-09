@@ -10,8 +10,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Chess } from "chess.js";
-import { Chessboard } from "react-chessboard";
-import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
+import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
@@ -391,7 +390,7 @@ function PuzzleBoard({
   );
 
   const onDrop = useCallback(
-    (from: string, to: string, _piece: string) => {
+    (from: string, to: string, _piece?: string) => {
       if (state !== "solving" || !puzzle) return false;
       const result = attemptMove(from, to);
       setSelectedSq(null);

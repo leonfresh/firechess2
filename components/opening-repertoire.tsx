@@ -10,7 +10,7 @@
 
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { Chess } from "chess.js";
-import { Chessboard } from "react-chessboard";
+import { Chessboard } from "@/components/chessboard-compat";
 import { useBoardSize } from "@/lib/use-board-size";
 import { earnCoins } from "@/lib/coins";
 import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";

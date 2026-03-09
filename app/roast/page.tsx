@@ -17,8 +17,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
-import { Chessboard } from "react-chessboard";
-import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
+import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 
 import { useBoardTheme, useShowCoordinates, useCustomPieces, usePieceTheme } from "@/lib/use-coins";
 import { BOARD_THEMES } from "@/lib/board-themes";

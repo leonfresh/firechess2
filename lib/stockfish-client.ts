@@ -152,6 +152,54 @@ class StockfishClient {
     };
   }
 
+  /** Parse multi-PV output — returns one LocalEngineLine per PV, sorted best-first */
+  private parseMultiPv(lines: string[]): LocalEngineLine[] {
+    // Collect the latest info line for each multipv index
+    const pvMap = new Map<number, { cp: number; pv: string[] }>();
+    let bestMove: string | null = null;
+
+    for (const line of lines) {
+      if (line.startsWith("info ") && line.includes(" multipv ")) {
+        const pvIdxMatch = line.match(/\bmultipv (\d+)/);
+        if (!pvIdxMatch) continue;
+        const pvIdx = Number(pvIdxMatch[1]);
+
+        let cp: number | null = null;
+        const scoreCpMatch = line.match(/\bscore cp (-?\d+)/);
+        const scoreMateMatch = line.match(/\bscore mate (-?\d+)/);
+        if (scoreMateMatch) {
+          const m = Number(scoreMateMatch[1]);
+          cp = (m > 0 ? 1 : -1) * (MATE_CP - Math.min(Math.abs(m), 1000));
+        } else if (scoreCpMatch) {
+          cp = Number(scoreCpMatch[1]);
+        }
+        if (cp === null) continue;
+
+        const pvMatch = line.match(/\bpv\s+(.+)$/);
+        const pv = pvMatch ? pvMatch[1].trim().split(/\s+/).filter(Boolean) : [];
+
+        pvMap.set(pvIdx, { cp, pv });
+      }
+
+      if (line.startsWith("bestmove ")) {
+        const parts = line.split(" ");
+        bestMove = parts[1] && parts[1] !== "(none)" ? parts[1] : null;
+      }
+    }
+
+    const results: LocalEngineLine[] = [];
+    for (const [, val] of [...pvMap.entries()].sort((a, b) => a[0] - b[0])) {
+      results.push({
+        cp: val.cp,
+        bestMove: val.pv[0] ?? null,
+        pvMoves: val.pv,
+      });
+    }
+    // Ensure the first result has the actual bestmove from the engine
+    if (results.length > 0 && bestMove) results[0].bestMove = bestMove;
+    return results;
+  }
+
   private async analyzeFenInternal(fen: string, depth: number, maxPvPlies: number): Promise<LocalEngineLine | null> {
     await this.ensureReady();
 
@@ -162,6 +210,21 @@ class StockfishClient {
     this.worker.postMessage(`position fen ${fen}`);
     const searchLines = await this.sendAndWaitFor(`go depth ${depth}`, (line) => line.startsWith("bestmove "));
     return this.parseInfo(searchLines, maxPvPlies);
+  }
+
+  /** Run multi-PV analysis and return the top N lines */
+  private async analyzeMultiPvInternal(fen: string, depth: number, numPv: number): Promise<LocalEngineLine[]> {
+    await this.ensureReady();
+    if (!this.worker) return [];
+
+    // Set multi-PV, run search, then reset to 1
+    await this.sendAndWaitFor(`setoption name MultiPV value ${numPv}`, (line) => true);
+    await this.sendAndWaitFor("isready", (line) => line.trim() === "readyok");
+    this.worker.postMessage(`position fen ${fen}`);
+    const searchLines = await this.sendAndWaitFor(`go depth ${depth}`, (line) => line.startsWith("bestmove "));
+    await this.sendAndWaitFor("setoption name MultiPV value 1", (line) => true);
+    await this.sendAndWaitFor("isready", (line) => line.trim() === "readyok");
+    return this.parseMultiPv(searchLines);
   }
 
   async evaluateFen(fen: string, depth = 10): Promise<LocalEngineEval | null> {
@@ -207,6 +270,18 @@ class StockfishClient {
     try {
       return await this.enqueue(async () => {
         return this.analyzeFenInternal(fen, depth, maxPlies);
+      });
+    } finally {
+      this._pendingTasks--;
+    }
+  }
+
+  /** Get the top N moves with evaluations (multi-PV) */
+  async getTopMoves(fen: string, numMoves = 5, depth = 10): Promise<LocalEngineLine[]> {
+    this._pendingTasks++;
+    try {
+      return await this.enqueue(async () => {
+        return this.analyzeMultiPvInternal(fen, depth, numMoves);
       });
     } finally {
       this._pendingTasks--;
@@ -299,6 +374,12 @@ export class StockfishPool {
   async getPrincipalVariation(fen: string, maxPlies = 10, depth = 12): Promise<LocalEngineLine | null> {
     const worker = this.pickWorker();
     return worker.getPrincipalVariation(fen, maxPlies, depth);
+  }
+
+  /** Get the top N moves with evaluations (multi-PV) */
+  async getTopMoves(fen: string, numMoves = 5, depth = 10): Promise<LocalEngineLine[]> {
+    const worker = this.pickWorker();
+    return worker.getTopMoves(fen, numMoves, depth);
   }
 
   /** Terminate all workers and free resources. */

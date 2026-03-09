@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { Chess } from "chess.js";
-import { Chessboard } from "react-chessboard";
+import { Chessboard } from "@/components/chessboard-compat";
 import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";
 import {
   OPENING_GUIDES,

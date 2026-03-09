@@ -26,8 +26,7 @@ import { explainOpeningLeak, describeEndPosition, type PositionExplanation } fro
 import { ExplanationModal } from "@/components/explanation-modal";
 import { stockfishClient } from "@/lib/stockfish-client";
 import { PersonalizedPuzzles } from "@/components/personalized-puzzles";
-import { Chessboard } from "react-chessboard";
-import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
+import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { Chess, type PieceSymbol } from "chess.js";
 import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";
 

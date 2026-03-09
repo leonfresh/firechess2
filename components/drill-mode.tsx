@@ -3,8 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess, type PieceSymbol } from "chess.js";
 import { EvalBar } from "@/components/eval-bar";
-import { Chessboard } from "react-chessboard";
-import type { Square as CbSquare, PromotionPieceOption } from "react-chessboard/dist/chessboard/types";
+import { Chessboard, type CbSquare, type PromotionPieceOption } from "@/components/chessboard-compat";
 import { playSound, preloadSounds } from "@/lib/sounds";
 import { stockfishClient } from "@/lib/stockfish-client";
 import { useBoardSize } from "@/lib/use-board-size";
@@ -365,14 +364,14 @@ export function DrillMode({ positions, tactics = [], endgameMistakes = [], oneOf
     } catch { /* ignore */ }
   };
 
-  const onDrop = (sourceSquare: string, targetSquare: string, piece: string) => {
+  const onDrop = (sourceSquare: string, targetSquare: string, piece?: string) => {
     if (!current || !effectiveBestMove || evaluating || solved || awaitingOpponent) return false;
 
     // Clear click-to-move selection
     setSelectedSq(null);
     setLegalMoveSqs([]);
 
-    const promotion = piece[1]?.toLowerCase();
+    const promotion = piece?.[1]?.toLowerCase();
 
     // Capture the pre-move position for snap-back and eval comparison
     const preFen = fen;

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { Chess } from "chess.js";
 import type { PieceSymbol } from "chess.js";
-import { Chessboard } from "react-chessboard";
+import { Chessboard } from "@/components/chessboard-compat";
 import { EvalBar } from "@/components/eval-bar";
 import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
 import { stockfishClient } from "@/lib/stockfish-client";

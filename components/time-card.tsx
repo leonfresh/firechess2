@@ -4,7 +4,7 @@ import { useMemo, useState, useCallback } from "react";
 import { Chess, type PieceSymbol } from "chess.js";
 import { EvalBar } from "@/components/eval-bar";
 import { ExplanationModal } from "@/components/explanation-modal";
-import { Chessboard } from "react-chessboard";
+import { Chessboard } from "@/components/chessboard-compat";
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
 import { explainMoves } from "@/lib/position-explainer";

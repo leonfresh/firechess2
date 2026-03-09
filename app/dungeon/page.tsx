@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Chess } from "chess.js";
-import { Chessboard } from "react-chessboard";
+import { Chessboard } from "@/components/chessboard-compat";
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useCustomPieces, useShowCoordinates } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";

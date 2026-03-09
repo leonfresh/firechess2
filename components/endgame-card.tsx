@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess, type PieceSymbol } from "chess.js";
 import { stockfishClient } from "@/lib/stockfish-client";
 import { EvalBar } from "@/components/eval-bar";
-import { Chessboard } from "react-chessboard";
+import { Chessboard } from "@/components/chessboard-compat";
 import { playSound } from "@/lib/sounds";
 import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";

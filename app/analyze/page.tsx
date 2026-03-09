@@ -13,8 +13,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
-import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
-import { Chessboard } from "react-chessboard";
+import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { EvalBar } from "@/components/eval-bar";
 import { ExplanationModal } from "@/components/explanation-modal";
 import { explainMoves, type PositionExplanation } from "@/lib/position-explainer";

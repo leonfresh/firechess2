@@ -10,7 +10,7 @@
  */
 
 import { useMemo } from "react";
-import { Chessboard } from "react-chessboard";
+import { Chessboard } from "@/components/chessboard-compat";
 import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
 import type { OpeningSummary, PlayerColor } from "@/lib/types";
 

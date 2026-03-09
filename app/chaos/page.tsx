@@ -14,9 +14,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Chess, type Color, type PieceSymbol } from "chess.js";
-import type { Square as CbSquare } from "react-chessboard/dist/chessboard/types";
-import { Chessboard } from "react-chessboard";
-import { TouchBackend } from "react-dnd-touch-backend";
+import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { stockfishPool } from "@/lib/stockfish-client";
 // useBoardSize removed — we use onBoardWidthChange from react-chessboard
 import { useBoardTheme, useShowCoordinates, useCustomPieces, usePieceTheme } from "@/lib/use-coins";
@@ -41,6 +39,7 @@ import {
   executeChaosMove,
   applyPostMoveEffects,
   applyDraftEffect,
+  computeChaosThreatPenalty,
   type ChaosMove,
 } from "@/lib/chaos-moves";
 
@@ -960,18 +959,19 @@ export default function ChaosChessPage() {
         const aiColor = playerColor === "white" ? "b" : "w";
         const aiChaosMoves = getChaosMoves(g, cs.aiModifiers, aiColor as Color);
 
-        // Evaluate chaos moves with Stockfish instead of picking randomly
-        if (aiChaosMoves.length > 0) {
+        // Evaluate chaos moves with Stockfish — only use if genuinely good
+        // 35% chance to even consider chaos moves (prevents spamming)
+        if (aiChaosMoves.length > 0 && Math.random() < 0.35) {
           // Get normal Stockfish eval as baseline
           const normalResult = await stockfishPool.evaluateFen(g.fen(), aiDepth);
           const normalEval = normalResult?.cp ?? 0; // from AI's (side-to-move) perspective
 
-          // Evaluate a random sample of chaos moves (max 5 for speed)
+          // Evaluate a random sample of chaos moves (max 4 for speed)
           const evalDepth = Math.min(aiDepth, 10);
           const sample =
-            aiChaosMoves.length <= 5
+            aiChaosMoves.length <= 4
               ? aiChaosMoves
-              : [...aiChaosMoves].sort(() => Math.random() - 0.5).slice(0, 5);
+              : [...aiChaosMoves].sort(() => Math.random() - 0.5).slice(0, 4);
 
           type ScoredChaos = { move: ChaosMove; eval: number; game: Chess };
           const scored: ScoredChaos[] = [];
@@ -989,8 +989,8 @@ export default function ChaosChessPage() {
             scored.sort((a, b) => b.eval - a.eval);
             const best = scored[0];
 
-            // Only use chaos move if within 150cp of normal Stockfish play
-            if (best.eval >= normalEval - 150) {
+            // Only use chaos move if it's at least as good as normal play (max 30cp worse)
+            if (best.eval >= normalEval - 30) {
               const newGame = best.game;
               const chaosMove = best.move;
               const label = chaosMove.label;
@@ -1012,16 +1012,53 @@ export default function ChaosChessPage() {
           }
         }
 
-        // Normal Stockfish move
-        const result = await stockfishPool.evaluateFen(g.fen(), aiDepth);
-        if (!result?.bestMove) {
+        // Chaos-threat-aware Stockfish move
+        // Get top 5 candidate moves, then pick the one with the best
+        // eval after accounting for the player's chaos threats
+        const playerColor_ = playerColor === "white" ? "w" : "b";
+        const hasPlayerChaosMods = cs.playerModifiers.length > 0;
+        const topMoves = hasPlayerChaosMods
+          ? await stockfishPool.getTopMoves(g.fen(), 5, aiDepth)
+          : [];
+
+        let bestUci: string | null = null;
+
+        if (hasPlayerChaosMods && topMoves.length > 0) {
+          // Evaluate each candidate for chaos vulnerability
+          let bestAdjusted = -Infinity;
+          for (const candidate of topMoves) {
+            const uci = candidate.bestMove ?? candidate.pvMoves[0];
+            if (!uci) continue;
+            // Simulate the move
+            const tmpGame = new Chess(g.fen());
+            const cf = uci.slice(0, 2);
+            const ct = uci.slice(2, 4);
+            const cp = uci.length > 4 ? uci[4] : undefined;
+            try { tmpGame.move({ from: cf, to: ct, promotion: cp }); } catch { continue; }
+            // Compute chaos threat penalty from the resulting position
+            const penalty = computeChaosThreatPenalty(tmpGame, cs.playerModifiers, playerColor_ as Color);
+            const adjusted = candidate.cp - penalty;
+            if (adjusted > bestAdjusted) {
+              bestAdjusted = adjusted;
+              bestUci = uci;
+            }
+          }
+        }
+
+        // Fallback to single best move if multi-PV didn't yield anything
+        if (!bestUci) {
+          const result = await stockfishPool.evaluateFen(g.fen(), aiDepth);
+          bestUci = result?.bestMove ?? null;
+        }
+
+        if (!bestUci) {
           setIsThinking(false);
           return;
         }
 
-        const from = result.bestMove.slice(0, 2) as CbSquare;
-        const to = result.bestMove.slice(2, 4) as CbSquare;
-        const promotion = result.bestMove.length > 4 ? result.bestMove[4] : undefined;
+        const from = bestUci.slice(0, 2) as CbSquare;
+        const to = bestUci.slice(2, 4) as CbSquare;
+        const promotion = bestUci.length > 4 ? bestUci[4] : undefined;
 
         const pieceAtFrom = g.get(from as any);
         const moveResult = g.move({ from, to, promotion });
@@ -1583,10 +1620,10 @@ export default function ChaosChessPage() {
       if (selectedSquare) {
         const success = handlePlayerMove(selectedSquare, square);
         if (!success) {
-          const piece = game.get(square);
+          const piece = game.get(square as any);
           if (piece && piece.color === game.turn()) {
             setSelectedSquare(square);
-            const moves = game.moves({ square, verbose: true });
+            const moves = game.moves({ square: square as any, verbose: true });
             const highlights: Record<string, React.CSSProperties> = {
               [square]: { backgroundColor: "rgba(255, 255, 0, 0.3)" },
             };
@@ -1615,10 +1652,10 @@ export default function ChaosChessPage() {
           }
         }
       } else {
-        const piece = game.get(square);
+        const piece = game.get(square as any);
         if (piece && piece.color === game.turn()) {
           setSelectedSquare(square);
-          const moves = game.moves({ square, verbose: true });
+          const moves = game.moves({ square: square as any, verbose: true });
           const highlights: Record<string, React.CSSProperties> = {
             [square]: { backgroundColor: "rgba(255, 255, 0, 0.3)" },
           };
@@ -2088,8 +2125,6 @@ export default function ChaosChessPage() {
                 customPieces={chaosCustomPieces || undefined}
                 animationDuration={200}
                 arePiecesDraggable={gameStatus === "playing" && !isThinking}
-                customDndBackend={TouchBackend}
-                customDndBackendOptions={{ enableMouseEvents: true }}
               />
             </div>
           </div>
