@@ -510,14 +510,20 @@ function tierPepe(tier: ModifierTier): string {
 }
 
 /** Meme sound pools per tier */
-type ChaosSound = "vine-boom" | "crowd-ooh" | "nani" | "airhorn" | "emotional-damage";
+type ChaosSound = "vine-boom" | "crowd-ooh" | "airhorn" | "emotional-damage" | "bruh" | "roblox-oof" | "record-scratch" | "honk" | "bell" | "buzzer" | "bro-serious" | "yeet";
 
 const TIER_SOUNDS: Record<ModifierTier, ChaosSound[]> = {
-  common:    ["vine-boom"],
-  rare:      ["crowd-ooh", "nani"],
-  epic:      ["airhorn", "emotional-damage"],
-  legendary: ["airhorn", "vine-boom"],
+  common:    ["vine-boom", "bruh", "roblox-oof"],
+  rare:      ["crowd-ooh", "record-scratch", "honk"],
+  epic:      ["airhorn", "emotional-damage", "bro-serious"],
+  legendary: ["airhorn", "vine-boom", "yeet"],
 };
+
+/** SFX pool for AI chaos moves — varied so it doesn't repeat the same clip */
+const AI_CHAOS_SOUNDS: ChaosSound[] = [
+  "vine-boom", "bruh", "roblox-oof", "crowd-ooh",
+  "record-scratch", "honk", "bro-serious", "yeet",
+];
 
 function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -1098,7 +1104,7 @@ export default function ChaosChessPage() {
                 [chaosMove.to]: { backgroundColor: "rgba(255, 100, 0, 0.4)" },
               });
               setEventLog((prev) => [...prev, { type: "chaos", message: `🤖 AI used: ${chaosMove.label}`, icon: "🤖", pepe: PEPE.shocked }]);
-              playSound("nani");
+              playSound(pickRandom(AI_CHAOS_SOUNDS));
               setGame(newGame);
               setIsThinking(false);
               if (!checkGameEnd(newGame)) {
