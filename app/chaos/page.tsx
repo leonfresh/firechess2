@@ -903,23 +903,31 @@ export default function ChaosChessPage() {
     preloadSounds();
   }, []);
 
-  /* ── Suppress native drag ghost on board (fixes Windows dashed-rectangle cursor) ── */
+  /* ── Suppress Windows dashed-rectangle drag ghost on board ── */
   useEffect(() => {
     const el = boardContainerRef.current;
     if (!el) return;
-    // Prevent native HTML5 drag entirely — react-chessboard uses pointer events
-    const prevent = (e: Event) => e.preventDefault();
-    el.addEventListener("dragstart", prevent, true);
-    // Also mark all images as non-draggable
-    const disableImgDrag = () => {
-      el.querySelectorAll("img").forEach((img) => img.setAttribute("draggable", "false"));
+
+    // Create an off-screen transparent element as drag image
+    const ghost = document.createElement("div");
+    ghost.style.cssText = "position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;";
+    document.body.appendChild(ghost);
+
+    const handler = (e: DragEvent) => {
+      if (!e.dataTransfer) return;
+      e.dataTransfer.effectAllowed = "move";
+      // Monkey-patch setDragImage so react-dnd's later call also uses our ghost
+      const origSetDragImage = e.dataTransfer.setDragImage.bind(e.dataTransfer);
+      e.dataTransfer.setDragImage = (_img: Element, _x: number, _y: number) => {
+        origSetDragImage(ghost, 0, 0);
+      };
+      e.dataTransfer.setDragImage(ghost, 0, 0);
     };
-    disableImgDrag();
-    const observer = new MutationObserver(disableImgDrag);
-    observer.observe(el, { childList: true, subtree: true });
+    el.addEventListener("dragstart", handler, true);
+
     return () => {
-      el.removeEventListener("dragstart", prevent, true);
-      observer.disconnect();
+      el.removeEventListener("dragstart", handler, true);
+      ghost.remove();
     };
   }, []);
 
