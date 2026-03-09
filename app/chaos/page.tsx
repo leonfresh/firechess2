@@ -903,18 +903,24 @@ export default function ChaosChessPage() {
     preloadSounds();
   }, []);
 
-  /* ── Suppress native drag ghost on board (fixes Windows square cursor) ── */
+  /* ── Suppress native drag ghost on board (fixes Windows dashed-rectangle cursor) ── */
   useEffect(() => {
     const el = boardContainerRef.current;
     if (!el) return;
-    const canvas = document.createElement("canvas");
-    canvas.width = 1;
-    canvas.height = 1;
-    const handler = (e: DragEvent) => {
-      e.dataTransfer?.setDragImage(canvas, 0, 0);
+    // Prevent native HTML5 drag entirely — react-chessboard uses pointer events
+    const prevent = (e: Event) => e.preventDefault();
+    el.addEventListener("dragstart", prevent, true);
+    // Also mark all images as non-draggable
+    const disableImgDrag = () => {
+      el.querySelectorAll("img").forEach((img) => img.setAttribute("draggable", "false"));
     };
-    el.addEventListener("dragstart", handler, true);
-    return () => el.removeEventListener("dragstart", handler, true);
+    disableImgDrag();
+    const observer = new MutationObserver(disableImgDrag);
+    observer.observe(el, { childList: true, subtree: true });
+    return () => {
+      el.removeEventListener("dragstart", prevent, true);
+      observer.disconnect();
+    };
   }, []);
 
   /* ── Scroll event log to bottom ── */
