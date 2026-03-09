@@ -140,14 +140,21 @@ export function Chessboard(props: ChessboardCompatProps) {
 
   const squareWidth = measuredWidth / 8;
 
-  // v4 accepted "start" as a special keyword for the initial position; v5 only accepts FEN strings
+  // v4 accepted "start" as a special keyword for the initial position; v5 only accepts FEN strings.
+  // Also guard against empty strings which produce garbage boards.
+  const STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
   const position =
-    props.position === "start"
-      ? "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+    !props.position || props.position === "start"
+      ? STARTING_FEN
       : props.position;
 
+  // v5 uses document.querySelector(`#${id}-square-...`) internally for
+  // animation calculations. IDs containing dots, slashes, or spaces break
+  // CSS selectors, so we sanitise the id to only keep safe characters.
+  const safeId = props.id?.replace(/[^a-zA-Z0-9_-]/g, "-");
+
   const options: ChessboardOptions = {
-    id: props.id,
+    id: safeId,
     position,
     boardOrientation: props.boardOrientation,
     allowDragging: props.arePiecesDraggable,

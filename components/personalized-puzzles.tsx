@@ -207,7 +207,7 @@ function PuzzleBoard({
 
   const [queue, setQueue] = useState<LichessPuzzle[]>(initialPuzzles);
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [fen, setFen] = useState("");
+  const [fen, setFen] = useState("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
   const [solutionIdx, setSolutionIdx] = useState(0);
   const [state, setState] = useState<PuzzleState>("setup");
   const [orientation, setOrientation] = useState<"white" | "black">("white");
