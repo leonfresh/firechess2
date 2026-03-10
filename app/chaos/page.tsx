@@ -1470,11 +1470,13 @@ export default function ChaosChessPage() {
     (g: Chess, state: ChaosState) => {
       const fullMove = g.moveNumber();
       const phase = checkDraftTrigger(fullMove, state);
-      if (phase > 0) {
+      if (phase > 0 && phase > prevPhaseRef.current) {
         const isMultiplayer = gameMode !== "ai";
 
         if (isMultiplayer) {
-          // Sequential drafting: White always drafts first, Black waits
+          // Staggered drafting: the player whose turn it is now picks immediately
+          // (draft triggers after Black's move, so White is next → White drafts now)
+          // Black will be prompted when they receive White's draftStep=1 broadcast.
           if (playerColor === "white") {
             // White drafts immediately
             setPendingPhase(phase);
@@ -1498,22 +1500,8 @@ export default function ChaosChessPage() {
             ]);
             playSound("record-scratch");
             spawnPepe(phase >= 4 ? PEPE.shocked : PEPE.bigeyes);
-          } else {
-            // Black waits for White to draft first
-            setPendingPhase(phase);
-            setGameStatus("drafting");
-            setWaitingForOpponentDraft(true);
-            setEventLog((prev) => [
-              ...prev,
-              {
-                type: "draft",
-                message: `⏸️ Turn ${fullMove} — CHAOS DRAFT Phase ${phase}! Waiting for opponent to draft first...`,
-                icon: "⏳",
-                pepe: PEPE.think,
-              },
-            ]);
-            playSound("record-scratch");
           }
+          // Black: no action here — Black picks when White's broadcast arrives
         } else {
           // AI mode: both draft simultaneously (existing behavior)
           setPendingPhase(phase);
@@ -2811,21 +2799,12 @@ export default function ChaosChessPage() {
 
       setChaosState(stateWithTracking);
 
-      // In multiplayer sequential drafting:
-      //   - First drafter (White): stays in "drafting" with waitingForOpponentDraft=true
-      //   - Second drafter (Black): game resumes
+      // In multiplayer staggered drafting: both players resume immediately after picking
       if (isMultiplayer) {
         const isFirstDrafter = playerColor === "white";
-        if (isFirstDrafter) {
-          // White drafted — wait for Black
-          setGameStatus("drafting");
-          setWaitingForOpponentDraft(true);
-        } else {
-          // Black drafted — both done, resume
-          setGameStatus("playing");
-          setPendingPhase(0);
-          setWaitingForOpponentDraft(false);
-        }
+        setGameStatus("playing");
+        if (!isFirstDrafter) setPendingPhase(0);
+        setWaitingForOpponentDraft(false);
       } else {
         setGameStatus("playing");
         setPendingPhase(0);
@@ -2852,7 +2831,7 @@ export default function ChaosChessPage() {
           ? [{ type: "modifier" as const, message: aiMsg, icon: "🤖", pepe: aiLastMod ? tierPepe(aiLastMod.tier) : PEPE.hmm }]
           : []),
         ...(isMultiplayer && playerColor === "white"
-          ? [{ type: "info" as const, message: "⏳ Waiting for opponent to draft...", icon: "⏳" }]
+          ? [{ type: "info" as const, message: "⚡ Powerup locked in! Make your move!", icon: "⚡" }]
           : [{ type: "info" as const, message: "⏯️ Game resumed!", icon: "▶️" }]),
       ]);
 
@@ -3373,34 +3352,13 @@ export default function ChaosChessPage() {
         <FloatingPepe key={p.id} src={p.src} onDone={() => removePepe(p.id)} />
       ))}
 
-      {/* Draft modal — only show when it's our turn to draft (not waiting for opponent) */}
-      {gameStatus === "drafting" && chaosState.draftChoices.length > 0 && !waitingForOpponentDraft && (
+      {/* Draft modal — only show when it's our turn to draft */}
+      {gameStatus === "drafting" && chaosState.draftChoices.length > 0 && (
         <DraftModal
           phase={pendingPhase}
           choices={chaosState.draftChoices}
           onPick={handleDraftPick}
         />
-      )}
-
-      {/* Waiting for opponent to draft overlay (multiplayer sequential draft) */}
-      {gameStatus === "drafting" && waitingForOpponentDraft && !opponentDraftReveal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ animation: "draft-bg-enter 0.4s ease-out both", backgroundColor: "rgba(0,0,0,0.6)" }}
-        >
-          <div
-            className="mx-4 w-full max-w-sm rounded-2xl border border-purple-500/30 bg-[#0a0f1a]/95 p-6 text-center"
-            style={{ animation: "draft-modal-enter 0.5s cubic-bezier(0.34,1.56,0.64,1) both" }}
-          >
-            <div className="mb-3 text-4xl" style={{ animation: "draft-pulse 2s ease-in-out infinite" }}>⏳</div>
-            <h2 className="mb-2 text-lg font-bold text-white">Waiting for Opponent</h2>
-            <p className="text-sm text-slate-400">Your opponent is choosing their powerup...</p>
-            <p className="mt-3 text-xs text-purple-400/60">Phase {pendingPhase} — {playerColor === "white" ? "You drafted first" : "Opponent drafts first"}</p>
-            <div className="mt-4 flex justify-center">
-              <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Opponent draft reveal (multiplayer) — with post-reveal action */}
