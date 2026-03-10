@@ -2333,50 +2333,47 @@ export default function ChaosChessPage() {
 
   /* ── Send move to server (multiplayer) ── */
   const sendMoveToServer = useCallback(
-    async (g: Chess, from: string, to: string, cs: ChaosState) => {
+    (g: Chess, from: string, to: string, cs: ChaosState) => {
       if (!roomId) return;
-      try {
-        // Convert to server perspective (white=playerModifiers, black=aiModifiers)
-        const serverCs = toServerChaosState(cs, playerColor);
-        const payload = {
-          roomId,
-          from,
-          to,
-          newFen: g.fen(),
-          chaosState: serverCs,
-          lastMoveFrom: from,
-          lastMoveTo: to,
-          capturedPawnsWhite: capturedPawns.w,
-          capturedPawnsBlack: capturedPawns.b,
-          status: g.isGameOver() ? "finished" : "playing",
-        };
-        // Persist to DB
-        await fetch("/api/chaos/move", {
-          method: "POST",
-          headers: chaosHeaders(true),
-          body: JSON.stringify(payload),
-        });
-        lastFenRef.current = g.fen();
+      // Convert to server perspective (white=playerModifiers, black=aiModifiers)
+      const serverCs = toServerChaosState(cs, playerColor);
+      const wsMsg: PartyMessage = from === "" && to === ""
+        ? { type: "draft", chaosState: serverCs, fen: g.fen() }
+        : {
+            type: "move",
+            fen: g.fen(),
+            chaosState: serverCs,
+            lastMoveFrom: from,
+            lastMoveTo: to,
+            capturedPawnsWhite: capturedPawns.w,
+            capturedPawnsBlack: capturedPawns.b,
+            status: g.isGameOver() ? "finished" : "playing",
+          };
 
-        // Broadcast via WebSocket for instant sync
-        if (partySendRef.current) {
-          const wsMsg: PartyMessage = from === "" && to === ""
-            ? { type: "draft", chaosState: serverCs, fen: g.fen() }
-            : {
-                type: "move",
-                fen: g.fen(),
-                chaosState: serverCs,
-                lastMoveFrom: from,
-                lastMoveTo: to,
-                capturedPawnsWhite: capturedPawns.w,
-                capturedPawnsBlack: capturedPawns.b,
-                status: g.isGameOver() ? "finished" : "playing",
-              };
-          partySendRef.current(wsMsg);
-        }
-      } catch {
-        // Upload error
+      // ── Broadcast via WebSocket FIRST for instant opponent sync ──
+      if (partySendRef.current) {
+        partySendRef.current(wsMsg);
       }
+      lastFenRef.current = g.fen();
+
+      // ── Persist to DB in the background (polling fallback) ──
+      const payload = {
+        roomId,
+        from,
+        to,
+        newFen: g.fen(),
+        chaosState: serverCs,
+        lastMoveFrom: from,
+        lastMoveTo: to,
+        capturedPawnsWhite: capturedPawns.w,
+        capturedPawnsBlack: capturedPawns.b,
+        status: g.isGameOver() ? "finished" : "playing",
+      };
+      fetch("/api/chaos/move", {
+        method: "POST",
+        headers: chaosHeaders(true),
+        body: JSON.stringify(payload),
+      }).catch(() => { /* network error — polling will resync */ });
     },
     [roomId, capturedPawns, playerColor],
   );
@@ -2801,7 +2798,7 @@ export default function ChaosChessPage() {
 
   /* ── Handle draft pick ── */
   const handleDraftPick = useCallback(
-    async (mod: ChaosModifier) => {
+    (mod: ChaosModifier) => {
       const isMultiplayer = gameMode !== "ai";
 
       // ── Build new state ──
@@ -2942,16 +2939,7 @@ export default function ChaosChessPage() {
           status: "playing",
         };
 
-        try {
-          await fetch("/api/chaos/move", {
-            method: "POST",
-            headers: chaosHeaders(true),
-            body: JSON.stringify(payload),
-          });
-          lastFenRef.current = currentGame.fen();
-        } catch { /* network error */ }
-
-        // Broadcast via WebSocket for instant sync
+        // Broadcast via WebSocket FIRST for instant sync
         if (partySendRef.current) {
           partySendRef.current({
             type: "draft",
@@ -2959,6 +2947,14 @@ export default function ChaosChessPage() {
             fen: currentGame.fen(),
           } as PartyMessage);
         }
+        lastFenRef.current = currentGame.fen();
+
+        // Persist to DB in the background
+        fetch("/api/chaos/move", {
+          method: "POST",
+          headers: chaosHeaders(true),
+          body: JSON.stringify(payload),
+        }).catch(() => { /* network error — polling will resync */ });
       }
 
       // If it's AI's turn, make AI move

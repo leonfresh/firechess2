@@ -187,6 +187,9 @@ async function sendReplyEmail(
         <p style="color: #52525b; font-size: 12px; margin-top: 24px;">
           This email was sent by FireChess Support. You're receiving this because you submitted a support ticket.
         </p>
+        <p style="color: #3f3f46; font-size: 12px; margin-top: 8px; padding-top: 12px; border-top: 1px solid #27272a;">
+          ⚠️ Please do not reply to this email — replies will not be received. To continue this conversation, use the ticket system at <a href="${ticketUrl}" style="color: #f97316; text-decoration: none;">firechess.com</a>.
+        </p>
       </div>
     </div>
   `;
