@@ -49,7 +49,7 @@ import {
   applyKingShield,
   type ChaosMove,
 } from "@/lib/chaos-moves";
-import { usePartyRoom, type PartyMessage } from "@/lib/use-party-room";
+import { usePartyRoom, PARTYKIT_HOST, type PartyMessage } from "@/lib/use-party-room";
 
 /* ────────────────────────── Chaos Piece Overlays ────────────────────────── */
 
@@ -1991,7 +1991,7 @@ export default function ChaosChessPage() {
     }
   }, [playerColor, checkGameEnd, checkDraft, recomputeChaosMoves, spawnPepe]);
 
-  const { send: partySend } = usePartyRoom(
+  const { send: partySend, isConnected: partyConnected } = usePartyRoom(
     gameMode !== "ai" ? roomId : null,
     onPartyMessage,
   );
@@ -3397,6 +3397,40 @@ export default function ChaosChessPage() {
                   <span className="font-bold text-purple-400">{chaosMovesCount}</span>
                 </div>
               )}
+              {/* Dev info */}
+              {gameMode !== "ai" && (
+                <>
+                  <div className="col-span-2 sm:col-span-1 my-1 border-t border-white/[0.06]" />
+                  <div className="flex justify-between">
+                    <span>Sync</span>
+                    <span className={partyConnected ? "font-semibold text-green-400" : "font-semibold text-yellow-400"}>
+                      {partyConnected ? "PartyKit ✓" : "Polling ⏳"}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>WS host</span>
+                    <span className="text-white truncate max-w-[120px] sm:max-w-[160px]" title={PARTYKIT_HOST}>{PARTYKIT_HOST}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Poll interval</span>
+                    <span className="text-white">{POLL_INTERVAL / 1000}s</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Room</span>
+                    <span className="text-white truncate max-w-[120px] sm:max-w-[160px] font-mono text-[10px]" title={roomId ?? "-"}>{roomId ?? "-"}</span>
+                  </div>
+                </>
+              )}
+              <div className="flex justify-between">
+                <span>Color</span>
+                <span className="text-white">{playerColor}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Auth</span>
+                <span className={authenticated ? "text-green-400" : "text-yellow-400"}>
+                  {authenticated ? "Signed in" : "Guest"}
+                </span>
+              </div>
             </div>
           </div>
         </div>

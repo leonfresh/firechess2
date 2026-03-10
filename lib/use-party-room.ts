@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import PartySocket from "partysocket";
 
 /* ------------------------------------------------------------------ */
@@ -57,7 +57,7 @@ export type PartyMessage =
 /*  Hook                                                                */
 /* ------------------------------------------------------------------ */
 
-const PARTYKIT_HOST =
+export const PARTYKIT_HOST =
   process.env.NEXT_PUBLIC_PARTYKIT_HOST ?? "localhost:1999";
 
 /**
@@ -74,16 +74,24 @@ export function usePartyRoom(
   const socketRef = useRef<PartySocket | null>(null);
   const onMessageRef = useRef(onMessage);
   onMessageRef.current = onMessage;
+  const [isConnected, setIsConnected] = useState(false);
 
   // Connect when roomId changes
   useEffect(() => {
-    if (!roomId) return;
+    if (!roomId) {
+      setIsConnected(false);
+      return;
+    }
 
     const socket = new PartySocket({
       host: PARTYKIT_HOST,
       room: roomId,
       party: "chaos",
     });
+
+    socket.addEventListener("open", () => setIsConnected(true));
+    socket.addEventListener("close", () => setIsConnected(false));
+    socket.addEventListener("error", () => setIsConnected(false));
 
     socket.addEventListener("message", (evt) => {
       try {
@@ -99,6 +107,7 @@ export function usePartyRoom(
     return () => {
       socket.close();
       socketRef.current = null;
+      setIsConnected(false);
     };
   }, [roomId]);
 
@@ -113,5 +122,5 @@ export function usePartyRoom(
     socketRef.current = null;
   }, []);
 
-  return { send, disconnect };
+  return { send, disconnect, isConnected };
 }
