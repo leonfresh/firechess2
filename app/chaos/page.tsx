@@ -1831,10 +1831,24 @@ export default function ChaosChessPage() {
 
   /* ── PartyKit WebSocket: real-time sync ── */
   const onPartyMessage = useCallback((msg: PartyMessage) => {
-    if (msg.type === "presence") return; // ignore presence for now
+    // Presence: detect opponent joining via connection count
+    if (msg.type === "presence") {
+      if (msg.count >= 2) {
+        setGameStatus((prev) => {
+          if (prev === "waiting") {
+            setOpponentLabel("Opponent");
+            setEventLog((p) => [...p, { type: "info", message: "🎮 Opponent connected! Game on!", icon: "🎮", pepe: PEPE.hyped }]);
+            playSound("reveal-stinger");
+            return "playing";
+          }
+          return prev;
+        });
+      }
+      return;
+    }
 
     if (msg.type === "join") {
-      // Opponent joined the room
+      // Fallback join detection (if presence didn't fire first)
       setGameStatus((prev) => {
         if (prev === "waiting") {
           setOpponentLabel("Opponent");
@@ -1898,6 +1912,8 @@ export default function ChaosChessPage() {
           ]);
           playSound("record-scratch");
           prevPhaseRef.current = incoming.currentPhase;
+          // Don't fall through to checkDraft — we've already set up our own draft
+          return;
         } else {
           setChaosState(incoming);
         }

@@ -12,14 +12,14 @@ export default class ChaosRoom implements Party.Server {
 
   onConnect(conn: Party.Connection) {
     // Announce player count to everyone in the room
-    const count = [...this.room.getConnections()].length;
+    const count = Array.from(this.room.getConnections()).length;
     this.room.broadcast(
       JSON.stringify({ type: "presence", count }),
     );
   }
 
   onClose(conn: Party.Connection) {
-    const count = [...this.room.getConnections()].length;
+    const count = Array.from(this.room.getConnections()).length;
     this.room.broadcast(
       JSON.stringify({ type: "presence", count }),
     );
