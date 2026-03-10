@@ -57,8 +57,9 @@ export type PartyMessage =
 /*  Hook                                                                */
 /* ------------------------------------------------------------------ */
 
-export const PARTYKIT_HOST =
-  process.env.NEXT_PUBLIC_PARTYKIT_HOST ?? "localhost:1999";
+export const PARTYKIT_HOST = (
+  process.env.NEXT_PUBLIC_PARTYKIT_HOST ?? "localhost:1999"
+).replace(/^https?:\/\//, "");
 
 /**
  * Connect to a PartyKit room for real-time Chaos Chess sync.

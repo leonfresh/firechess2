@@ -368,7 +368,7 @@ function buildChaosCustomPieces(
 /* ────────────────────────── Constants ────────────────────────── */
 
 const AI_MOVE_DELAY = 600;
-const POLL_INTERVAL = 10_000; // slow fallback — primary sync is via WebSocket
+const POLL_INTERVAL = 3_000; // fallback polling — primary sync is via WebSocket
 
 type GameMode = "ai" | "friend" | "matchmake";
 type GameStatus = "setup" | "waiting" | "playing" | "drafting" | "game-over";
