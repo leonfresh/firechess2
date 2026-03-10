@@ -3388,9 +3388,29 @@ export default function RoastPage() {
                       </button>
                     </div>
                   )}
+                  {/* Neural voice warning */}
+                  {tts.supported && !tts.hasNeuralVoice && (
+                    <div className="mt-3 rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-center">
+                      <p className="text-xs font-semibold text-amber-400 mb-1">⚠️ No neural voices detected</p>
+                      <p className="text-[10px] text-amber-300/60 leading-relaxed mb-2">
+                        TTS is disabled because your device only has basic robot voices.
+                        Install neural voices for a much better experience:
+                      </p>
+                      <ul className="text-[10px] text-amber-300/50 space-y-0.5 mb-2">
+                        <li><b className="text-amber-300/70">Windows:</b> Settings → Time &amp; Language → Speech → Add voices → download &quot;Natural&quot; voices</li>
+                        <li><b className="text-amber-300/70">Mac:</b> System Settings → Accessibility → Spoken Content → System Voice → Manage Voices</li>
+                        <li><b className="text-amber-300/70">Chrome:</b> Uses Google&apos;s online voices automatically — try refreshing</li>
+                      </ul>
+                      <button
+                        type="button"
+                        onClick={tts.toggle}
+                        className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-[10px] font-medium text-amber-300 hover:bg-amber-500/20 transition-colors cursor-pointer"
+                      >
+                        Enable TTS anyway
+                      </button>
+                    </div>
+                  )}
                 </div>
-
-                {/* How it works — 3 steps */}
                 <div className="grid grid-cols-3 gap-3 sm:gap-5 mb-8 max-w-xl mx-auto">
                   <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 sm:p-5">
                     <div className="text-2xl sm:text-3xl mb-2">👀</div>

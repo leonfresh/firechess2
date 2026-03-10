@@ -125,18 +125,22 @@ export interface TTSControls {
   rate: number;
   /** Set playback rate */
   setRate: (rate: number) => void;
+  /** Whether a high-quality neural/natural voice is available */
+  hasNeuralVoice: boolean;
 }
 
 export function useTTS(): TTSControls {
-  const [enabled, setEnabled] = useState(true);
+  const [enabled, setEnabled] = useState(false); // off by default — turned on once a neural voice is detected
   const [speaking, setSpeaking] = useState(false);
   const [voiceName, setVoiceName] = useState("");
   const [supported, setSupported] = useState(false);
   const [availableVoices, setAvailableVoices] = useState<{ name: string; lang: string }[]>([]);
   const [rate, setRateState] = useState(1.05);
+  const [hasNeuralVoice, setHasNeuralVoice] = useState(false);
   const voiceRef = useRef<SpeechSynthesisVoice | null>(null);
   const allVoicesRef = useRef<SpeechSynthesisVoice[]>([]);
   const onDone = useRef<(() => void) | null>(null);
+  const initialPickDone = useRef(false);
 
   // Detect support and pick best voice
   useEffect(() => {
@@ -156,10 +160,21 @@ export function useTTS(): TTSControls {
       allVoicesRef.current = scored.map(s => s.voice);
       setAvailableVoices(scored.map(s => ({ name: s.voice.name, lang: s.voice.lang })));
 
+      // Check if any neural/natural voice exists (score >= 50 means premium/neural)
+      const bestScore = scored.length > 0 ? scored[0].score : 0;
+      const neural = bestScore >= 50;
+      setHasNeuralVoice(neural);
+
       // Only auto-pick if no voice is selected yet
       if (!voiceRef.current && scored.length > 0) {
         voiceRef.current = scored[0].voice;
         setVoiceName(scored[0].voice.name);
+
+        // Auto-enable TTS only the first time if a neural voice is available
+        if (!initialPickDone.current) {
+          initialPickDone.current = true;
+          if (neural) setEnabled(true);
+        }
       }
     }
 
@@ -224,5 +239,5 @@ export function useTTS(): TTSControls {
     });
   }, []);
 
-  return { enabled, toggle, speak, stop, speaking, voiceName, supported, onDone, availableVoices, setVoice, rate, setRate };
+  return { enabled, toggle, speak, stop, speaking, voiceName, supported, onDone, availableVoices, setVoice, rate, setRate, hasNeuralVoice };
 }
