@@ -1,0 +1,5 @@
+{
+  "name": "firechess",
+  "main": "party/chaos.ts",
+  "compatibilityDate": "2024-12-01"
+}
