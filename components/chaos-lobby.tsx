@@ -31,11 +31,13 @@ type LobbyProps = {
     roomId: string;
     roomCode: string;
     hostColor: string;
-    joined: boolean; // true = joined existing room, false = created & waiting
+    joined: boolean; // true = joined existing room, false = opponent joined ours
   }) => void;
   onCancel: () => void;
   /** Whether the user is currently signed in */
   isSignedIn: boolean;
+  /** When true, only show online count + chat (no search UI) */
+  chatOnly?: boolean;
 };
 
 /* ------------------------------------------------------------------ */
@@ -57,7 +59,7 @@ const PEPE_GIFS = [
 /*  Component                                                           */
 /* ------------------------------------------------------------------ */
 
-export function ChaosLobby({ onMatchFound, onCancel, isSignedIn }: LobbyProps) {
+export function ChaosLobby({ onMatchFound, onCancel, isSignedIn, chatOnly }: LobbyProps) {
   /* ── State ── */
   const [onlineCount, setOnlineCount] = useState(0);
   const [messages, setMessages] = useState<LobbyMessage[]>([]);
@@ -73,6 +75,8 @@ export function ChaosLobby({ onMatchFound, onCancel, isSignedIn }: LobbyProps) {
   const matchPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const lastMsgCountRef = useRef(0);
+  /** Room we created while host-waiting (so we can cancel it) */
+  const ownRoomRef = useRef<{ roomId: string; roomCode: string; hostColor: string } | null>(null);
 
   /* ── Cleanup all intervals ── */
   const clearAllIntervals = useCallback(() => {
@@ -162,7 +166,7 @@ export function ChaosLobby({ onMatchFound, onCancel, isSignedIn }: LobbyProps) {
 
   /* ── Matchmaking: start search ── */
   const startSearch = useCallback(async () => {
-    if (!isSignedIn) return;
+    if (!isSignedIn || chatOnly) return;
     setSearchState("searching");
     setElapsed(0);
 
@@ -197,39 +201,93 @@ export function ChaosLobby({ onMatchFound, onCancel, isSignedIn }: LobbyProps) {
         return;
       }
 
+      // Track our room so we can cancel it
+      ownRoomRef.current = {
+        roomId: createData.roomId,
+        roomCode: createData.roomCode,
+        hostColor: createData.hostColor,
+      };
+
       // Start countdown timer
       searchTimerRef.current = setInterval(() => {
         setElapsed((prev) => {
           const next = prev + 1;
           if (next >= MAX_SEARCH_TIME) {
-            // Timed out — auto-cancel
+            // Timed out — auto-cancel and clean up on server
             clearAllIntervals();
             setSearchState("idle");
+            if (ownRoomRef.current) {
+              fetch("/api/chaos/matchmake", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ roomId: ownRoomRef.current.roomId }),
+                credentials: "include",
+              }).catch(() => {});
+              ownRoomRef.current = null;
+            }
+            onCancel();
             return 0;
           }
           return next;
         });
       }, 1000);
 
-      // Poll for opponent joining our room
+      // Poll for opponent joining our room + periodically re-check for other rooms
+      let pollCycle = 0;
       matchPollRef.current = setInterval(async () => {
+        pollCycle++;
         try {
+          // Every 3rd cycle, also try to find a different room to join
+          // This fixes the simultaneous-creation deadlock
+          if (pollCycle % 3 === 0 && ownRoomRef.current) {
+            const retryRes = await fetch("/api/chaos/matchmake", { credentials: "include" });
+            const retryData = await retryRes.json();
+            if (retryData.roomId) {
+              // Found another room! Cancel ours and join theirs
+              const oldRoom = ownRoomRef.current;
+              ownRoomRef.current = null;
+              fetch("/api/chaos/matchmake", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ roomId: oldRoom.roomId }),
+                credentials: "include",
+              }).catch(() => {});
+
+              setSearchState("found");
+              if (searchTimerRef.current) clearInterval(searchTimerRef.current);
+              if (matchPollRef.current) clearInterval(matchPollRef.current);
+              searchTimerRef.current = null;
+              matchPollRef.current = null;
+              onMatchFound({
+                roomId: retryData.roomId,
+                roomCode: retryData.roomCode,
+                hostColor: retryData.hostColor,
+                joined: true,
+              });
+              return;
+            }
+          }
+
+          // Normal poll: check if someone joined our room
+          if (!ownRoomRef.current) return;
           const pollRes = await fetch(
-            `/api/chaos/move?roomId=${createData.roomId}`,
+            `/api/chaos/move?roomId=${ownRoomRef.current.roomId}`,
             { credentials: "include" },
           );
           if (!pollRes.ok) return;
           const pollData = await pollRes.json();
           if (pollData.status === "playing" && pollData.guestId) {
+            const room = ownRoomRef.current;
+            ownRoomRef.current = null;
             setSearchState("found");
             if (searchTimerRef.current) clearInterval(searchTimerRef.current);
             if (matchPollRef.current) clearInterval(matchPollRef.current);
             searchTimerRef.current = null;
             matchPollRef.current = null;
             onMatchFound({
-              roomId: createData.roomId,
-              roomCode: createData.roomCode,
-              hostColor: createData.hostColor,
+              roomId: room.roomId,
+              roomCode: room.roomCode,
+              hostColor: room.hostColor,
               joined: false,
             });
           }
@@ -240,7 +298,7 @@ export function ChaosLobby({ onMatchFound, onCancel, isSignedIn }: LobbyProps) {
     } catch {
       setSearchState("idle");
     }
-  }, [isSignedIn, onMatchFound, clearAllIntervals]);
+  }, [isSignedIn, chatOnly, onMatchFound, onCancel, clearAllIntervals]);
 
   /* ── Cancel search ── */
   const cancelSearch = useCallback(() => {
@@ -250,6 +308,18 @@ export function ChaosLobby({ onMatchFound, onCancel, isSignedIn }: LobbyProps) {
     matchPollRef.current = null;
     setSearchState("idle");
     setElapsed(0);
+
+    // Cancel room on server
+    if (ownRoomRef.current) {
+      fetch("/api/chaos/matchmake", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ roomId: ownRoomRef.current.roomId }),
+        credentials: "include",
+      }).catch(() => {});
+      ownRoomRef.current = null;
+    }
+
     onCancel();
   }, [onCancel]);
 
@@ -272,6 +342,7 @@ export function ChaosLobby({ onMatchFound, onCancel, isSignedIn }: LobbyProps) {
       </div>
 
       {/* ── Search button / timer ── */}
+      {!chatOnly && (
       <div className="flex flex-col items-center gap-3">
         {searchState === "idle" && (
           <button
@@ -347,6 +418,7 @@ export function ChaosLobby({ onMatchFound, onCancel, isSignedIn }: LobbyProps) {
           <p className="text-xs text-slate-600">(Sign in required to matchmake)</p>
         )}
       </div>
+      )}
 
       {/* ── Lobby Chat ── */}
       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">

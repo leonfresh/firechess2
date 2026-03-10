@@ -30,6 +30,8 @@ import {
   applyDraft,
   getAiDraftMessage,
   getPhaseLabel,
+  updateTrackedPieces,
+  initTrackedPiece,
   TIER_COLORS,
   TIER_LABELS,
   type ChaosState,
@@ -43,6 +45,7 @@ import {
   applyDraftEffect,
   computeChaosThreatPenalty,
   getChaosAttackedSquares,
+  applyKingShield,
   type ChaosMove,
 } from "@/lib/chaos-moves";
 
@@ -207,6 +210,7 @@ function buildChaosCustomPieces(
   aiModifiers: ChaosModifier[],
   playerColor: "white" | "black",
   game: Chess,
+  assignedSquares?: Record<string, string | null>,
 ): Record<string, ({ squareWidth, square }: { squareWidth: number; square?: string }) => React.ReactElement> {
   const codes = ["wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK"];
   const result: Record<string, ({ squareWidth, square }: { squareWidth: number; square?: string }) => React.ReactElement> = {};
@@ -223,7 +227,15 @@ function buildChaosCustomPieces(
       const mod = (color === (playerColor === "white" ? "w" : "b") ? playerModifiers : aiModifiers)
         .find((m) => m.id === modId);
       if (!mod) { singlePieceSquares[modId][color] = null; continue; }
-      // Find all pieces of this type for this color
+
+      // Use tracked square from assignedSquares if available
+      const trackedKey = `${color}_${modId}`;
+      if (assignedSquares && trackedKey in assignedSquares) {
+        singlePieceSquares[modId][color] = assignedSquares[trackedKey];
+        continue;
+      }
+
+      // Fallback: find first piece of this type for this color
       const squares: string[] = [];
       for (const f of "abcdefgh") {
         for (const r of "12345678") {
@@ -1261,8 +1273,9 @@ export default function ChaosChessPage() {
       chaosState.aiModifiers,
       playerColor,
       game,
+      chaosState.assignedSquares ?? undefined,
     );
-  }, [pieceTheme.setName, chaosState.playerModifiers, chaosState.aiModifiers, playerColor, baseCustomPieces, game]);
+  }, [pieceTheme.setName, chaosState.playerModifiers, chaosState.aiModifiers, playerColor, baseCustomPieces, game, chaosState.assignedSquares]);
 
   /* ── Move log ── */
   const [moveLog, setMoveLog] = useState<MoveLogEntry[]>([]);
@@ -1335,7 +1348,7 @@ export default function ChaosChessPage() {
       if (tmp.get(to as any)) tmp.remove(to as any);
       tmp.put({ type: "k", color: turnColor }, to as any);
 
-      const chaosAttacked = getChaosAttackedSquares(tmp, oppMods, oppColor);
+      const chaosAttacked = getChaosAttackedSquares(tmp, oppMods, oppColor, chaosState.assignedSquares ?? undefined);
       return chaosAttacked.has(to as any);
     },
     [playerColor, chaosState],
@@ -1344,14 +1357,11 @@ export default function ChaosChessPage() {
   /* ── Recompute chaos moves when board/modifiers change ── */
   const recomputeChaosMoves = useCallback(
     (g: Chess, cs: ChaosState) => {
-      const color: Color = g.turn() === "w"
-        ? (playerColor === "white" ? "w" : "b")
-        : (playerColor === "black" ? "b" : "w");
       const isPlayerTurn =
         (playerColor === "white" && g.turn() === "w") ||
         (playerColor === "black" && g.turn() === "b");
       if (isPlayerTurn) {
-        const chaosMvs = getChaosMoves(g, cs.playerModifiers, g.turn() as Color);
+        const chaosMvs = getChaosMoves(g, cs.playerModifiers, g.turn() as Color, cs.assignedSquares);
         setAvailableChaosMoves(chaosMvs);
       } else {
         setAvailableChaosMoves([]);
@@ -1533,11 +1543,29 @@ export default function ChaosChessPage() {
               });
               setEventLog((prev) => [...prev, { type: "chaos", message: `🤖 AI used: ${chaosMove.label}`, icon: "🤖", pepe: PEPE.shocked }]);
               playSound(pickRandom(AI_CHAOS_SOUNDS));
-              setGame(newGame);
+
+              // Update tracked pieces
+              let cs2 = updateTrackedPieces(cs, chaosMove.from, chaosMove.to, chaosMove.type === "capture");
+              let activeGame = newGame;
+
+              // Check player's king-shield (AI moved, player may be in check)
+              if (activeGame.isCheck()) {
+                if (cs2.playerModifiers.some((m) => m.id === "king-shield")) {
+                  const shielded = applyKingShield(activeGame, activeGame.turn() as Color);
+                  if (shielded) {
+                    activeGame = shielded;
+                    cs2 = { ...cs2, playerModifiers: cs2.playerModifiers.filter((m) => m.id !== "king-shield") };
+                    setEventLog((prev) => [...prev, { type: "chaos" as const, message: "🛡️ Your Royal Guard blocked the check!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
+                    playSound("vine-boom");
+                  }
+                }
+              }
+              setChaosState(cs2);
+              setGame(activeGame);
               setIsThinking(false);
-              if (!checkGameEnd(newGame)) {
-                checkDraft(newGame, cs);
-                recomputeChaosMoves(newGame, cs);
+              if (!checkGameEnd(activeGame)) {
+                checkDraft(activeGame, cs2);
+                recomputeChaosMoves(activeGame, cs2);
               }
               return;
             }
@@ -1568,7 +1596,7 @@ export default function ChaosChessPage() {
             const cp = uci.length > 4 ? uci[4] : undefined;
             try { tmpGame.move({ from: cf, to: ct, promotion: cp }); } catch { continue; }
             // Compute chaos threat penalty from the resulting position
-            const penalty = computeChaosThreatPenalty(tmpGame, cs.playerModifiers, playerColor_ as Color);
+            const penalty = computeChaosThreatPenalty(tmpGame, cs.playerModifiers, playerColor_ as Color, cs.assignedSquares ?? undefined);
             const adjusted = candidate.cp - penalty;
             if (adjusted > bestAdjusted) {
               bestAdjusted = adjusted;
@@ -1603,7 +1631,7 @@ export default function ChaosChessPage() {
             tmp.remove(from as any);
             if (tmp.get(to as any)) tmp.remove(to as any);
             tmp.put({ type: "k", color: aiTurn }, to as any);
-            const chaosAttacked = getChaosAttackedSquares(tmp, cs.playerModifiers, playerC);
+            const chaosAttacked = getChaosAttackedSquares(tmp, cs.playerModifiers, playerC, cs.assignedSquares ?? undefined);
             if (chaosAttacked.has(to as any)) {
               // Unsafe king move — try a random legal non-king move instead
               const fallbackMoves = g.moves({ verbose: true }).filter((m) => m.piece !== "k");
@@ -1660,11 +1688,28 @@ export default function ChaosChessPage() {
           }
         }
 
-        setGame(new Chess(finalGame.fen()));
+        // Update tracked pieces
+        let cs2 = updateTrackedPieces(cs, finalFrom, finalTo, !!moveResult.captured);
+        let activeGame2 = new Chess(finalGame.fen());
 
-        if (!checkGameEnd(finalGame)) {
-          checkDraft(finalGame, cs);
-          recomputeChaosMoves(new Chess(finalGame.fen()), cs);
+        // Check player's king-shield (AI moved, player may be in check)
+        if (activeGame2.isCheck()) {
+          if (cs2.playerModifiers.some((m) => m.id === "king-shield")) {
+            const shielded = applyKingShield(activeGame2, activeGame2.turn() as Color);
+            if (shielded) {
+              activeGame2 = shielded;
+              cs2 = { ...cs2, playerModifiers: cs2.playerModifiers.filter((m) => m.id !== "king-shield") };
+              setEventLog((prev) => [...prev, { type: "chaos" as const, message: "🛡️ Your Royal Guard blocked the check!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
+              playSound("vine-boom");
+            }
+          }
+        }
+        setChaosState(cs2);
+        setGame(activeGame2);
+
+        if (!checkGameEnd(activeGame2)) {
+          checkDraft(activeGame2, cs2);
+          recomputeChaosMoves(activeGame2, cs2);
         }
       } catch (err) {
         console.warn("[Chaos AI] Engine error:", err);
@@ -1774,67 +1819,6 @@ export default function ChaosChessPage() {
     }
   }, [joinCode, recomputeChaosMoves]);
 
-  /* ── Multiplayer: Matchmaking ── */
-  const startMatchmaking = useCallback(async () => {
-    setMatchmakeState("searching");
-    setEventLog([{ type: "info", message: "🔍 Searching for opponent…", icon: "🔍", pepe: PEPE.detective }]);
-
-    try {
-      // Try to find an existing room
-      const res = await fetch("/api/chaos/matchmake");
-      const data = await res.json();
-
-      if (data.roomId) {
-        // Found one!
-        setRoomId(data.roomId);
-        setRoomCode(data.roomCode);
-        const guestColor = data.hostColor === "white" ? "black" : "white";
-        setPlayerColor(guestColor as "white" | "black");
-        setGameMode("matchmake");
-        setGameStatus("playing");
-        setMatchmakeState("found");
-        setOpponentLabel("Random Opponent");
-        const cs = createChaosState();
-        setChaosState(cs);
-        const g = new Chess();
-        setGame(g);
-        setMoveLog([]);
-        setFloatingPepes([]);
-        setCapturedPawns({ w: 0, b: 0 });
-        setEventLog([{ type: "info", message: "🎯 Opponent found! Game on!", icon: "🎯", pepe: PEPE.hyped }]);
-        playSound("reveal-stinger");
-        spawnPepe(PEPE.hyped);
-        recomputeChaosMoves(g, cs);
-        startPolling(data.roomId, guestColor);
-        return;
-      }
-
-      // No room found — create one for matchmaking
-      const createRes = await fetch("/api/chaos/matchmake", {
-        method: "POST",
-      });
-      const createData = await createRes.json();
-      if (createData.error) {
-        setMatchmakeState("idle");
-        setEventLog((prev) => [...prev, { type: "info", message: `❌ ${createData.error}`, icon: "❌" }]);
-        return;
-      }
-
-      setRoomId(createData.roomId);
-      setRoomCode(createData.roomCode);
-      setPlayerColor(createData.hostColor === "white" ? "white" : "black");
-      setGameMode("matchmake");
-      setGameStatus("waiting");
-      setOpponentLabel("Searching…");
-      setEventLog([{ type: "info", message: "⏳ In matchmaking queue. Waiting for opponent…", icon: "⏳", pepe: PEPE.prayge }]);
-
-      startPolling(createData.roomId, createData.hostColor);
-    } catch {
-      setMatchmakeState("idle");
-      setEventLog((prev) => [...prev, { type: "info", message: "❌ Matchmaking failed. Are you signed in?", icon: "❌" }]);
-    }
-  }, [spawnPepe, recomputeChaosMoves]);
-
   /* ── Polling for multiplayer state ── */
   const startPolling = useCallback((rId: string, myColor: string) => {
     if (pollRef.current) clearInterval(pollRef.current);
@@ -1867,6 +1851,7 @@ export default function ChaosChessPage() {
 
         // Check for new moves
         if (data.fen && data.fen !== lastFenRef.current) {
+          const oldFen = lastFenRef.current;
           lastFenRef.current = data.fen;
           const g = new Chess(data.fen);
           setGame(g);
@@ -1878,26 +1863,41 @@ export default function ChaosChessPage() {
               incoming.currentPhase > prevPhaseRef.current &&
               !justDraftedRef.current
             ) {
-              // Opponent completed a draft — extract what they picked
-              // After perspective conversion: aiModifiers = opponent's mods, playerModifiers = my mods
+              // Opponent completed a draft — show what they picked
               const oppPick = incoming.aiModifiers[incoming.aiModifiers.length - 1];
-              const yourPick = incoming.playerModifiers[incoming.playerModifiers.length - 1];
-              if (oppPick && yourPick) {
-                setOpponentDraftReveal({ opponentPick: oppPick, yourPick, phase: incoming.currentPhase });
+              if (oppPick) {
                 setEventLog((prev) => [
                   ...prev,
                   { type: "modifier" as const, message: `⚔️ Opponent drafted: ${oppPick.icon} ${oppPick.name} — ${oppPick.description}`, icon: oppPick.icon, pepe: tierPepe(oppPick.tier) },
-                  { type: "modifier" as const, message: `🎲 You received: ${yourPick.icon} ${yourPick.name} — ${yourPick.description}`, icon: yourPick.icon, pepe: tierPepe(yourPick.tier) },
                 ]);
                 spawnPepe(tierPepe(oppPick.tier));
               }
+
+              // Trigger OUR own draft for this phase (each player picks independently)
+              const phase = incoming.currentPhase;
+              const choices = rollDraftChoices(phase, incoming.playerModifiers);
+              setChaosState({
+                ...incoming,
+                isDrafting: true,
+                draftingSide: "player",
+                draftChoices: choices,
+              });
+              setPendingPhase(phase);
+              setGameStatus("drafting");
+              setEventLog((prev) => [
+                ...prev,
+                { type: "draft" as const, message: `⏸️ CHAOS DRAFT Phase ${phase}! Choose your modifier.`, icon: "⏸️", pepe: PEPE.think },
+              ]);
+              playSound("record-scratch");
+
               prevPhaseRef.current = incoming.currentPhase;
+            } else {
+              setChaosState(incoming);
             }
             // Reset the justDrafted flag once we see the state reflected
             if (justDraftedRef.current && incoming.currentPhase >= prevPhaseRef.current) {
               justDraftedRef.current = false;
             }
-            setChaosState(incoming);
           }
 
           if (data.lastMoveFrom && data.lastMoveTo) {
@@ -1906,19 +1906,53 @@ export default function ChaosChessPage() {
               [data.lastMoveTo]: { backgroundColor: "rgba(255, 170, 0, 0.3)" },
             });
             playSound("move");
+
+            // Update tracked pieces for single-piece modifiers (archbishop/knook)
+            if (oldFen) {
+              const oldBoard = new Chess(oldFen);
+              const hadPiece = oldBoard.get(data.lastMoveTo as any);
+              const wasCaptured = !!hadPiece;
+              setChaosState((prev) => updateTrackedPieces(prev, data.lastMoveFrom, data.lastMoveTo, wasCaptured));
+            }
           }
           setCapturedPawns({ w: data.capturedPawnsWhite ?? 0, b: data.capturedPawnsBlack ?? 0 });
 
+          // King-shield: if we or opponent are in check and have shield, activate it
+          let activeGame = g;
+          if (activeGame.isCheck()) {
+            const checkedColor: Color = activeGame.turn() as Color;
+            const isOurKingChecked = (myColor === "white" && checkedColor === "w") || (myColor === "black" && checkedColor === "b");
+            setChaosState((prev) => {
+              const mods = isOurKingChecked ? prev.playerModifiers : prev.aiModifiers;
+              if (mods.some((m) => m.id === "king-shield")) {
+                const shielded = applyKingShield(activeGame, checkedColor);
+                if (shielded) {
+                  activeGame = shielded;
+                  setGame(shielded);
+                  setEventLog((p) => [...p, { type: "chaos" as const, message: "🛡️ Royal Guard activated! Check blocked — attacker destroyed!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
+                  playSound("vine-boom");
+                  return {
+                    ...prev,
+                    ...(isOurKingChecked
+                      ? { playerModifiers: prev.playerModifiers.filter((m) => m.id !== "king-shield") }
+                      : { aiModifiers: prev.aiModifiers.filter((m) => m.id !== "king-shield") }),
+                  };
+                }
+              }
+              return prev;
+            });
+          }
+
           // Check game end from FEN
-          if (g.isCheckmate() || g.isStalemate() || g.isDraw()) {
-            checkGameEnd(g);
+          if (activeGame.isCheckmate() || activeGame.isStalemate() || activeGame.isDraw()) {
+            checkGameEnd(activeGame);
             if (pollRef.current) clearInterval(pollRef.current);
           } else {
             // Check draft
             const rawCs2 = data.chaosState ? data.chaosState as ChaosState : createChaosState();
             const cs2 = fromServerChaosState(rawCs2, myColor as "white" | "black");
-            checkDraft(g, cs2);
-            recomputeChaosMoves(g, cs2);
+            checkDraft(activeGame, cs2);
+            recomputeChaosMoves(activeGame, cs2);
           }
         }
 
@@ -2002,18 +2036,37 @@ export default function ChaosChessPage() {
 
         setGame(newGame);
 
-        if (checkGameEnd(newGame)) return true;
-        const drafted = checkDraft(newGame, chaosState);
+        // Update tracked pieces
+        let cs = updateTrackedPieces(chaosState, from, to, chaosMove.type === "capture");
+        let activeGame = newGame;
+
+        // Check opponent's king-shield
+        if (activeGame.isCheck()) {
+          if (cs.aiModifiers.some((m) => m.id === "king-shield")) {
+            const shielded = applyKingShield(activeGame, activeGame.turn() as Color);
+            if (shielded) {
+              activeGame = shielded;
+              setGame(shielded);
+              cs = { ...cs, aiModifiers: cs.aiModifiers.filter((m) => m.id !== "king-shield") };
+              setEventLog((prev) => [...prev, { type: "chaos" as const, message: "🛡️ Opponent's Royal Guard blocked your check!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
+              playSound("vine-boom");
+            }
+          }
+        }
+        setChaosState(cs);
+
+        if (checkGameEnd(activeGame)) return true;
+        const drafted = checkDraft(activeGame, cs);
 
         // Multiplayer: send to server
         if (gameMode !== "ai") {
-          sendMoveToServer(newGame, from, to, chaosState);
+          sendMoveToServer(activeGame, from, to, cs);
         }
 
         if (!drafted && gameMode === "ai") {
-          setTimeout(() => makeAiMove(newGame, chaosState), AI_MOVE_DELAY);
+          setTimeout(() => makeAiMove(activeGame, cs), AI_MOVE_DELAY);
         }
-        recomputeChaosMoves(newGame, chaosState);
+        recomputeChaosMoves(activeGame, cs);
         return true;
       }
 
@@ -2091,21 +2144,39 @@ export default function ChaosChessPage() {
       }
 
       const newG = new Chess(finalGame.fen());
-      setGame(newG);
 
-      if (checkGameEnd(newG)) return true;
+      // Update tracked pieces
+      let cs2 = updateTrackedPieces(chaosState, from, to, !!moveResult.captured);
+      let activeG = newG;
 
-      const drafted = checkDraft(newG, chaosState);
+      // Check opponent's king-shield
+      if (activeG.isCheck()) {
+        if (cs2.aiModifiers.some((m) => m.id === "king-shield")) {
+          const shielded = applyKingShield(activeG, activeG.turn() as Color);
+          if (shielded) {
+            activeG = shielded;
+            cs2 = { ...cs2, aiModifiers: cs2.aiModifiers.filter((m) => m.id !== "king-shield") };
+            setEventLog((prev) => [...prev, { type: "chaos" as const, message: "🛡️ Opponent's Royal Guard blocked your check!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
+            playSound("vine-boom");
+          }
+        }
+      }
+      setChaosState(cs2);
+      setGame(activeG);
+
+      if (checkGameEnd(activeG)) return true;
+
+      const drafted = checkDraft(activeG, cs2);
 
       // Multiplayer: send to server
       if (gameMode !== "ai") {
-        sendMoveToServer(newG, from, to, chaosState);
+        sendMoveToServer(activeG, from, to, cs2);
       }
 
       if (!drafted && gameMode === "ai") {
-        setTimeout(() => makeAiMove(newG, chaosState), AI_MOVE_DELAY);
+        setTimeout(() => makeAiMove(activeG, cs2), AI_MOVE_DELAY);
       }
-      recomputeChaosMoves(newG, chaosState);
+      recomputeChaosMoves(activeG, cs2);
 
       return true;
     },
@@ -2292,18 +2363,57 @@ export default function ChaosChessPage() {
 
   /* ── Handle draft pick ── */
   const handleDraftPick = useCallback(
-    (mod: ChaosModifier) => {
-      const newState = applyDraft(chaosState, mod, pendingPhase);
-      setChaosState(newState);
+    async (mod: ChaosModifier) => {
+      const isMultiplayer = gameMode !== "ai";
+      const newState = applyDraft(chaosState, mod, pendingPhase, isMultiplayer ? { skipOpponentRoll: true } : undefined);
+
+      // Track single-piece modifiers (archbishop, knook) to prevent transfer on capture
+      const SINGLE_PIECE_MODS: Record<string, string> = { archbishop: "b", knook: "n" };
+      let stateWithTracking = newState;
+
+      // Track the player's pick
+      if (SINGLE_PIECE_MODS[mod.id]) {
+        const pColor = playerColor === "white" ? "w" : "b";
+        const pieceType = SINGLE_PIECE_MODS[mod.id] as any;
+        const squares: string[] = [];
+        for (const f of "abcdefgh") for (const r of "12345678") {
+          const s = `${f}${r}`;
+          const p = game.get(s as any);
+          if (p && p.type === pieceType && p.color === pColor) squares.push(s);
+        }
+        if (squares[0]) {
+          stateWithTracking = initTrackedPiece(stateWithTracking, mod.id, pColor as "w" | "b", squares[0]);
+        }
+      }
+
+      // Track the AI's pick too (AI auto-drafts in single player mode)
+      if (!isMultiplayer) {
+        const aiLastMod2 = stateWithTracking.aiModifiers[stateWithTracking.aiModifiers.length - 1];
+        if (aiLastMod2 && SINGLE_PIECE_MODS[aiLastMod2.id]) {
+          const aiColor = playerColor === "white" ? "b" : "w";
+          const pieceType = SINGLE_PIECE_MODS[aiLastMod2.id] as any;
+          const squares: string[] = [];
+          for (const f of "abcdefgh") for (const r of "12345678") {
+            const s = `${f}${r}`;
+            const p = game.get(s as any);
+            if (p && p.type === pieceType && p.color === aiColor) squares.push(s);
+          }
+          if (squares[0]) {
+            stateWithTracking = initTrackedPiece(stateWithTracking, aiLastMod2.id, aiColor as "w" | "b", squares[0]);
+          }
+        }
+      }
+
+      setChaosState(stateWithTracking);
       setGameStatus("playing");
       setPendingPhase(0);
 
       // Track that WE just drafted (so polling doesn't show the reveal for our own draft)
       justDraftedRef.current = true;
-      prevPhaseRef.current = newState.currentPhase;
+      prevPhaseRef.current = stateWithTracking.currentPhase;
 
-      const aiMsg = getAiDraftMessage(newState);
-      const aiLastMod = newState.aiModifiers[newState.aiModifiers.length - 1];
+      const aiMsg = !isMultiplayer ? getAiDraftMessage(stateWithTracking) : null;
+      const aiLastMod = stateWithTracking.aiModifiers[stateWithTracking.aiModifiers.length - 1];
 
       setEventLog((prev) => [
         ...prev,
@@ -2334,11 +2444,30 @@ export default function ChaosChessPage() {
       playSound(pickRandom(TIER_SOUNDS[mod.tier]));
       spawnPepe(tierPepe(mod.tier));
 
-      recomputeChaosMoves(currentGame, newState);
+      recomputeChaosMoves(currentGame, stateWithTracking);
 
-      // Send updated state for multiplayer
-      if (gameMode !== "ai" && roomId) {
-        sendMoveToServer(currentGame, "", "", newState);
+      // Send updated state for multiplayer — fetch-merge-write to preserve opponent's picks
+      if (isMultiplayer && roomId) {
+        try {
+          const res = await fetch(`/api/chaos/move?roomId=${roomId}`);
+          const serverData = await res.json();
+          if (serverData.chaosState) {
+            const serverCs = fromServerChaosState(serverData.chaosState as ChaosState, playerColor);
+            // Preserve opponent's modifiers if they've already drafted
+            if (serverCs.aiModifiers.length > stateWithTracking.aiModifiers.length) {
+              stateWithTracking = { ...stateWithTracking, aiModifiers: serverCs.aiModifiers };
+            }
+            // Merge tracked pieces from server
+            if (serverCs.assignedSquares) {
+              stateWithTracking = {
+                ...stateWithTracking,
+                assignedSquares: { ...(serverCs.assignedSquares ?? {}), ...(stateWithTracking.assignedSquares ?? {}) },
+              };
+            }
+            setChaosState(stateWithTracking);
+          }
+        } catch { /* network error — proceed with our data */ }
+        sendMoveToServer(currentGame, "", "", stateWithTracking);
       }
 
       // If it's AI's turn, make AI move
@@ -2347,7 +2476,7 @@ export default function ChaosChessPage() {
           (playerColor === "white" && currentGame.turn() === "b") ||
           (playerColor === "black" && currentGame.turn() === "w");
         if (isAiTurn) {
-          setTimeout(() => makeAiMove(currentGame, newState), AI_MOVE_DELAY);
+          setTimeout(() => makeAiMove(currentGame, stateWithTracking), AI_MOVE_DELAY);
         }
       }
     },
@@ -2574,32 +2703,25 @@ export default function ChaosChessPage() {
                   setGameMode("matchmake");
                   setOpponentLabel("Random Opponent");
 
-                  if (data.joined) {
-                    // Joined an existing room — start playing immediately
-                    const guestColor = data.hostColor === "white" ? "black" : "white";
-                    setPlayerColor(guestColor as "white" | "black");
-                    setGameStatus("playing");
-                    setMatchmakeState("found");
-                    const cs = createChaosState();
-                    setChaosState(cs);
-                    const g = new Chess();
-                    setGame(g);
-                    setMoveLog([]);
-                    setFloatingPepes([]);
-                    setCapturedPawns({ w: 0, b: 0 });
-                    setEventLog([{ type: "info", message: "🎯 Opponent found! Game on!", icon: "🎯", pepe: PEPE.hyped }]);
-                    playSound("reveal-stinger");
-                    spawnPepe(PEPE.hyped);
-                    recomputeChaosMoves(g, cs);
-                    startPolling(data.roomId, guestColor);
-                  } else {
-                    // Created a new room — wait for opponent
-                    setPlayerColor(data.hostColor === "white" ? "white" : "black");
-                    setGameStatus("waiting");
-                    setMatchmakeState("searching");
-                    setEventLog([{ type: "info", message: "⏳ In matchmaking queue…", icon: "⏳", pepe: PEPE.prayge }]);
-                    startPolling(data.roomId, data.hostColor);
-                  }
+                  // Determine our color based on whether we joined or hosted
+                  const myColor = data.joined
+                    ? (data.hostColor === "white" ? "black" : "white")
+                    : (data.hostColor === "white" ? "white" : "black");
+                  setPlayerColor(myColor as "white" | "black");
+                  setGameStatus("playing");
+                  setMatchmakeState("found");
+                  const cs = createChaosState();
+                  setChaosState(cs);
+                  const g = new Chess();
+                  setGame(g);
+                  setMoveLog([]);
+                  setFloatingPepes([]);
+                  setCapturedPawns({ w: 0, b: 0 });
+                  setEventLog([{ type: "info", message: "🎯 Opponent found! Game on!", icon: "🎯", pepe: PEPE.hyped }]);
+                  playSound("reveal-stinger");
+                  spawnPepe(PEPE.hyped);
+                  recomputeChaosMoves(g, cs);
+                  startPolling(data.roomId, myColor);
                 }}
                 onCancel={() => {
                   setMatchmakeState("idle");
@@ -2662,38 +2784,36 @@ export default function ChaosChessPage() {
 
           {/* Matchmaking waiting: show lobby with chat */}
           {gameMode === "matchmake" ? (
-            <div className="mb-6 w-full">
+            <div className="mb-6 w-full flex flex-col items-center gap-4">
+              <div className="flex items-center gap-2 text-sm text-slate-400">
+                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
+                Waiting for opponent…
+              </div>
               <ChaosLobby
                 isSignedIn={authenticated}
-                onMatchFound={(data) => {
-                  if (data.joined) {
-                    const guestColor = data.hostColor === "white" ? "black" : "white";
-                    setRoomId(data.roomId);
-                    setRoomCode(data.roomCode);
-                    setPlayerColor(guestColor as "white" | "black");
-                    setGameStatus("playing");
-                    setMatchmakeState("found");
-                    setOpponentLabel("Random Opponent");
-                    const cs = createChaosState();
-                    setChaosState(cs);
-                    const g = new Chess();
-                    setGame(g);
-                    setMoveLog([]);
-                    setFloatingPepes([]);
-                    setCapturedPawns({ w: 0, b: 0 });
-                    setEventLog([{ type: "info", message: "🎯 Opponent found! Game on!", icon: "🎯", pepe: PEPE.hyped }]);
-                    playSound("reveal-stinger");
-                    spawnPepe(PEPE.hyped);
-                    recomputeChaosMoves(g, cs);
-                    startPolling(data.roomId, guestColor);
-                  }
-                }}
-                onCancel={() => {
+                chatOnly
+                onMatchFound={() => {}}
+                onCancel={() => {}}
+              />
+              <button
+                type="button"
+                onClick={() => {
                   setGameStatus("setup");
                   if (pollRef.current) clearInterval(pollRef.current);
                   setMatchmakeState("idle");
+                  // Cancel room on server
+                  if (roomId) {
+                    fetch("/api/chaos/matchmake", {
+                      method: "DELETE",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ roomId }),
+                    }).catch(() => {});
+                  }
                 }}
-              />
+                className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs font-medium text-red-400 transition-all hover:bg-red-500/20"
+              >
+                Cancel
+              </button>
             </div>
           ) : (
             <>

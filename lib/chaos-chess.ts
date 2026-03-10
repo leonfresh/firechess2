@@ -47,6 +47,12 @@ export interface ChaosState {
   draftingSide: "player" | "ai" | null;
   /** The 3 modifier choices offered in the current draft */
   draftChoices: ChaosModifier[];
+  /**
+   * Track assigned squares for single-piece modifiers (archbishop, knook).
+   * Key: "{color}_{modId}" e.g. "w_archbishop", "b_knook".
+   * Value: current square of the assigned piece, or null if captured.
+   */
+  assignedSquares?: Record<string, string | null>;
 }
 
 /* ================================================================== */
@@ -384,22 +390,27 @@ function seededRandom(seed: number): () => number {
 
 /**
  * Apply the player's chosen modifier and roll the AI's choice automatically.
+ * In multiplayer mode (skipOpponentRoll=true), only add the player's pick —
+ * the opponent picks for themselves independently.
  */
 export function applyDraft(
   state: ChaosState,
   playerChoice: ChaosModifier,
   phase: number,
+  options?: { skipOpponentRoll?: boolean },
 ): ChaosState {
   const newState = { ...state };
 
   // Player picks their modifier
   newState.playerModifiers = [...state.playerModifiers, playerChoice];
 
-  // AI picks the highest-tier remaining option it hasn't drafted
-  const aiChoices = rollDraftChoices(phase, state.aiModifiers, Date.now());
-  const aiPick = aiChoices.sort((a, b) => tierValue(b.tier) - tierValue(a.tier))[0] ?? aiChoices[0];
-  if (aiPick) {
-    newState.aiModifiers = [...state.aiModifiers, aiPick];
+  if (!options?.skipOpponentRoll) {
+    // AI picks the highest-tier remaining option it hasn't drafted
+    const aiChoices = rollDraftChoices(phase, state.aiModifiers, Date.now());
+    const aiPick = aiChoices.sort((a, b) => tierValue(b.tier) - tierValue(a.tier))[0] ?? aiChoices[0];
+    if (aiPick) {
+      newState.aiModifiers = [...state.aiModifiers, aiPick];
+    }
   }
 
   newState.currentPhase = phase;
@@ -412,6 +423,60 @@ export function applyDraft(
 
 function tierValue(tier: ModifierTier): number {
   return { common: 1, rare: 2, epic: 3, legendary: 4 }[tier];
+}
+
+/**
+ * Update tracked piece squares after a move.
+ * Call after every move to keep assignedSquares in sync.
+ *
+ * @param from - square the piece moved from
+ * @param to   - square the piece moved to
+ * @param captured - whether the move was a capture
+ */
+export function updateTrackedPieces(
+  state: ChaosState,
+  from: string,
+  to: string,
+  captured: boolean,
+): ChaosState {
+  if (!state.assignedSquares || Object.keys(state.assignedSquares).length === 0) return state;
+  const newSquares = { ...state.assignedSquares };
+  let changed = false;
+
+  for (const [key, square] of Object.entries(newSquares)) {
+    if (square === null || square === undefined) continue;
+
+    if (from === square) {
+      // The tracked piece moved
+      newSquares[key] = to;
+      changed = true;
+    } else if (to === square && captured) {
+      // A capture happened at the tracked square — tracked piece was captured
+      newSquares[key] = null;
+      changed = true;
+    }
+  }
+
+  return changed ? { ...state, assignedSquares: newSquares } : state;
+}
+
+/**
+ * Initialize tracked-piece square when a single-piece modifier is drafted.
+ * E.g. for "archbishop" with color "w", records which bishop square is the archbishop.
+ */
+export function initTrackedPiece(
+  state: ChaosState,
+  modId: string,
+  color: "w" | "b",
+  square: string,
+): ChaosState {
+  return {
+    ...state,
+    assignedSquares: {
+      ...(state.assignedSquares ?? {}),
+      [`${color}_${modId}`]: square,
+    },
+  };
 }
 
 /**

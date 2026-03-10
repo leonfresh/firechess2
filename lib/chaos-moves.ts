@@ -308,12 +308,22 @@ function genPhantomRook(game: Chess, color: Color): ChaosMove[] {
 }
 
 /** Knook: first knight gains rook movement */
-function genKnook(game: Chess, color: Color): ChaosMove[] {
+function genKnook(game: Chess, color: Color, trackedSquare?: string | null): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const knights = allSquaresOf(game, "n", color);
   if (knights.length === 0) return moves;
 
-  const knookSquare = knights[0]; // First knight becomes the Knook
+  // Use tracked square if available (prevents transfer when original is captured)
+  let knookSquare = knights[0];
+  if (trackedSquare !== undefined) {
+    if (trackedSquare === null) return moves; // Original piece was captured
+    const p = game.get(trackedSquare as any);
+    if (p && p.type === "n" && p.color === color) {
+      knookSquare = trackedSquare as Square;
+    } else {
+      return moves; // Tracked square no longer has our knight — piece is dead
+    }
+  }
   const [f, r] = sqToCoords(knookSquare);
   const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
 
@@ -351,12 +361,22 @@ function genKnook(game: Chess, color: Color): ChaosMove[] {
 }
 
 /** Archbishop: first bishop gains knight movement */
-function genArchbishop(game: Chess, color: Color): ChaosMove[] {
+function genArchbishop(game: Chess, color: Color, trackedSquare?: string | null): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const bishops = allSquaresOf(game, "b", color);
   if (bishops.length === 0) return moves;
 
-  const archbishopSquare = bishops[0]; // First bishop becomes the Archbishop
+  // Use tracked square if available (prevents transfer when original is captured)
+  let archbishopSquare: Square = bishops[0];
+  if (trackedSquare !== undefined) {
+    if (trackedSquare === null) return moves; // Original piece was captured
+    const p = game.get(trackedSquare as any);
+    if (p && p.type === "b" && p.color === color) {
+      archbishopSquare = trackedSquare as Square;
+    } else {
+      return moves; // Tracked square no longer has our bishop — piece is dead
+    }
+  }
   const [f, r] = sqToCoords(archbishopSquare);
   const knightOffsets = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
 
@@ -662,7 +682,7 @@ function genEarlyPromotion(game: Chess, color: Color): ChaosMove[] {
 /*  Main interface                                                      */
 /* ================================================================== */
 
-const MODIFIER_GENERATORS: Record<string, (game: Chess, color: Color) => ChaosMove[]> = {
+const MODIFIER_GENERATORS: Record<string, (game: Chess, color: Color, trackedSquare?: string | null) => ChaosMove[]> = {
   "pawn-charge": genPawnCharge,
   "pawn-capture-forward": genPawnBayonet,
   "knight-retreat": genKnightRetreat,
@@ -687,15 +707,21 @@ export function getChaosMoves(
   game: Chess,
   modifiers: ChaosModifier[],
   color: Color,
+  assignedSquares?: Record<string, string | null>,
 ): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const seen = new Set<string>();
+  const colorKey = color; // "w" or "b"
 
   for (const mod of modifiers) {
     const gen = MODIFIER_GENERATORS[mod.id];
     if (!gen) continue;
 
-    for (const m of gen(game, color)) {
+    // Pass tracked square for single-piece modifiers
+    const trackedKey = `${colorKey}_${mod.id}`;
+    const trackedSquare = assignedSquares?.[trackedKey];
+
+    for (const m of gen(game, color, trackedSquare)) {
       const key = `${m.from}-${m.to}-${m.modifierId}`;
       if (seen.has(key)) continue;
       seen.add(key);
@@ -716,6 +742,7 @@ export function getChaosAttackedSquares(
   game: Chess,
   modifiers: ChaosModifier[],
   attackerColor: Color,
+  assignedSquares?: Record<string, string | null>,
 ): Set<Square> {
   const attacked = new Set<Square>();
   const modIds = new Set(modifiers.map((m) => m.id));
@@ -742,18 +769,38 @@ export function getChaosAttackedSquares(
 
   /* Knook: first knight attacks along rook lines */
   if (modIds.has("knook")) {
-    const knights = allSquaresOf(game, "n", attackerColor);
-    if (knights.length > 0) {
-      const [f, r] = sqToCoords(knights[0]);
+    const trackedKnook = assignedSquares?.[`${attackerColor}_knook`];
+    let knookSq: Square | null = null;
+    if (trackedKnook !== undefined) {
+      if (trackedKnook !== null) {
+        const p = game.get(trackedKnook as any);
+        if (p && p.type === "n" && p.color === attackerColor) knookSq = trackedKnook as Square;
+      }
+    } else {
+      const knights = allSquaresOf(game, "n", attackerColor);
+      if (knights.length > 0) knookSq = knights[0];
+    }
+    if (knookSq) {
+      const [f, r] = sqToCoords(knookSq);
       addSliding(f, r, cardinals);
     }
   }
 
   /* Archbishop: first bishop attacks knight squares */
   if (modIds.has("archbishop")) {
-    const bishops = allSquaresOf(game, "b", attackerColor);
-    if (bishops.length > 0) {
-      const [f, r] = sqToCoords(bishops[0]);
+    const trackedArch = assignedSquares?.[`${attackerColor}_archbishop`];
+    let archSq: Square | null = null;
+    if (trackedArch !== undefined) {
+      if (trackedArch !== null) {
+        const p = game.get(trackedArch as any);
+        if (p && p.type === "b" && p.color === attackerColor) archSq = trackedArch as Square;
+      }
+    } else {
+      const bishops = allSquaresOf(game, "b", attackerColor);
+      if (bishops.length > 0) archSq = bishops[0];
+    }
+    if (archSq) {
+      const [f, r] = sqToCoords(archSq);
       for (const [df, dr] of knightOffsets) {
         const t = sq(f + df, r + dr);
         if (t) attacked.add(t);
@@ -936,8 +983,9 @@ export function computeChaosThreatPenalty(
   game: Chess,
   opponentModifiers: ChaosModifier[],
   opponentColor: Color,
+  assignedSquares?: Record<string, string | null>,
 ): number {
-  const chaosMoves = getChaosMoves(game, opponentModifiers, opponentColor);
+  const chaosMoves = getChaosMoves(game, opponentModifiers, opponentColor, assignedSquares);
   if (chaosMoves.length === 0) return 0;
 
   let maxThreat = 0;
@@ -1136,6 +1184,84 @@ export function applyDraftEffect(
   }
 
   if (!modified) return null;
+
+  try {
+    return new Chess(tmp.fen());
+  } catch {
+    return null;
+  }
+}
+
+/* ================================================================== */
+/*  King Shield — absorb check by removing the checking piece           */
+/* ================================================================== */
+
+/**
+ * Find which enemy squares are currently giving check to the specified king.
+ */
+export function findCheckingSquares(game: Chess, checkedColor: Color): Square[] {
+  const kingSquare = allSquaresOf(game, "k", checkedColor)[0];
+  if (!kingSquare) return [];
+  const [kf, kr] = sqToCoords(kingSquare);
+  const attColor: Color = checkedColor === "w" ? "b" : "w";
+  const checkers: Square[] = [];
+
+  // Knights
+  for (const [df, dr] of [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]]) {
+    const s = sq(kf + df, kr + dr);
+    if (s) { const p = game.get(s); if (p && p.type === "n" && p.color === attColor) checkers.push(s); }
+  }
+
+  // Diagonals (bishops/queen)
+  for (const [df, dr] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
+    let cf = kf + df, cr = kr + dr;
+    while (cf >= 0 && cf <= 7 && cr >= 0 && cr <= 7) {
+      const s = sq(cf, cr)!;
+      const p = game.get(s);
+      if (p) {
+        if (p.color === attColor && (p.type === "b" || p.type === "q")) checkers.push(s);
+        break;
+      }
+      cf += df; cr += dr;
+    }
+  }
+
+  // Files/ranks (rooks/queen)
+  for (const [df, dr] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+    let cf = kf + df, cr = kr + dr;
+    while (cf >= 0 && cf <= 7 && cr >= 0 && cr <= 7) {
+      const s = sq(cf, cr)!;
+      const p = game.get(s);
+      if (p) {
+        if (p.color === attColor && (p.type === "r" || p.type === "q")) checkers.push(s);
+        break;
+      }
+      cf += df; cr += dr;
+    }
+  }
+
+  // Pawns
+  const pawnDir = checkedColor === "w" ? 1 : -1;
+  for (const df of [-1, 1]) {
+    const s = sq(kf + df, kr + pawnDir);
+    if (s) { const p = game.get(s); if (p && p.type === "p" && p.color === attColor) checkers.push(s); }
+  }
+
+  return checkers;
+}
+
+/**
+ * Activate the King Shield: remove the first checking piece from the board.
+ * Returns a new Chess instance with the checking piece removed, or null if
+ * the position isn't actually in check.
+ */
+export function applyKingShield(game: Chess, checkedColor: Color): Chess | null {
+  if (!game.isCheck()) return null;
+  const checkers = findCheckingSquares(game, checkedColor);
+  if (checkers.length === 0) return null;
+
+  const tmp = new Chess(game.fen());
+  tmp.remove(checkers[0]); // Destroy the checking piece
 
   try {
     return new Chess(tmp.fen());
