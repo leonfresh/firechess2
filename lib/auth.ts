@@ -79,6 +79,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         publicPaths.some((p) => path === p || path.startsWith(p + "/")) ||
         path.startsWith("/api/auth") ||
         path.startsWith("/api/webhooks") ||
+        path.startsWith("/api/chaos") ||
         path.startsWith("/api/me") ||
         path.startsWith("/api/reports") ||
         path.startsWith("/api/puzzles") ||
