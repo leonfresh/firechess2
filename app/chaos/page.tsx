@@ -2433,6 +2433,17 @@ export default function ChaosChessPage() {
         // Multiplayer: send to server
         if (gameMode !== "ai") {
           sendMoveToServer(activeGame, from, to, cs);
+          // Staggered draft: fire Black's deferred draft pick after their move
+          if (pendingDraftAfterRevealRef.current) {
+            const deferred = pendingDraftAfterRevealRef.current;
+            pendingDraftAfterRevealRef.current = null;
+            setChaosState((prev) => ({ ...prev, ...deferred.chaosState, isDrafting: true, draftingSide: "player", draftChoices: deferred.choices }));
+            setPendingPhase(deferred.phase);
+            setGameStatus("drafting");
+            setEventLog((prev) => [...prev, { type: "draft" as const, message: `⏸️ CHAOS DRAFT Phase ${deferred.phase}! Your turn to pick!`, icon: "⏸️", pepe: PEPE.think }]);
+            playSound("record-scratch");
+            spawnPepe(PEPE.bigeyes);
+          }
         }
 
         if (!drafted && gameMode === "ai") {
@@ -2543,6 +2554,17 @@ export default function ChaosChessPage() {
       // Multiplayer: send to server
       if (gameMode !== "ai") {
         sendMoveToServer(activeG, from, to, cs2);
+        // Staggered draft: fire Black's deferred draft pick after their move
+        if (pendingDraftAfterRevealRef.current) {
+          const deferred = pendingDraftAfterRevealRef.current;
+          pendingDraftAfterRevealRef.current = null;
+          setChaosState((prev) => ({ ...prev, ...deferred.chaosState, isDrafting: true, draftingSide: "player", draftChoices: deferred.choices }));
+          setPendingPhase(deferred.phase);
+          setGameStatus("drafting");
+          setEventLog((prev) => [...prev, { type: "draft" as const, message: `⏸️ CHAOS DRAFT Phase ${deferred.phase}! Your turn to pick!`, icon: "⏸️", pepe: PEPE.think }]);
+          playSound("record-scratch");
+          spawnPepe(PEPE.bigeyes);
+        }
       }
 
       if (!drafted && gameMode === "ai") {
@@ -2585,6 +2607,17 @@ export default function ChaosChessPage() {
 
       if (gameMode !== "ai") {
         sendMoveToServer(newGame, move.from, move.to, chaosState);
+        // Staggered draft: fire Black's deferred draft pick after their move
+        if (pendingDraftAfterRevealRef.current) {
+          const deferred = pendingDraftAfterRevealRef.current;
+          pendingDraftAfterRevealRef.current = null;
+          setChaosState((prev) => ({ ...prev, ...deferred.chaosState, isDrafting: true, draftingSide: "player", draftChoices: deferred.choices }));
+          setPendingPhase(deferred.phase);
+          setGameStatus("drafting");
+          setEventLog((prev) => [...prev, { type: "draft" as const, message: `⏸️ CHAOS DRAFT Phase ${deferred.phase}! Your turn to pick!`, icon: "⏸️", pepe: PEPE.think }]);
+          playSound("record-scratch");
+          spawnPepe(PEPE.bigeyes);
+        }
       }
 
       if (!drafted && gameMode === "ai") {
@@ -2642,6 +2675,16 @@ export default function ChaosChessPage() {
 
       if (gameMode !== "ai") {
         sendMoveToServer(newG, from, to, chaosState);
+        // Staggered draft: fire Black's deferred draft pick after their move
+        if (pendingDraftAfterRevealRef.current) {
+          const deferred = pendingDraftAfterRevealRef.current;
+          pendingDraftAfterRevealRef.current = null;
+          setChaosState((prev) => ({ ...prev, ...deferred.chaosState, isDrafting: true, draftingSide: "player", draftChoices: deferred.choices }));
+          setPendingPhase(deferred.phase);
+          setGameStatus("drafting");
+          setEventLog((prev) => [...prev, { type: "draft" as const, message: `⏸️ CHAOS DRAFT Phase ${deferred.phase}! Your turn to pick!`, icon: "⏸️", pepe: PEPE.think }]);
+          playSound("record-scratch");
+        }
       }
 
       if (!drafted && gameMode === "ai") {
@@ -3367,27 +3410,7 @@ export default function ChaosChessPage() {
           data={opponentDraftReveal}
           onDismiss={() => {
             setOpponentDraftReveal(null);
-            // After seeing opponent's reveal, check if we need to draft next
-            const pending = pendingDraftAfterRevealRef.current;
-            if (pending) {
-              // I'm the second drafter (Black) — start my draft modal
-              pendingDraftAfterRevealRef.current = null;
-              setChaosState((prev) => ({
-                ...prev,
-                ...pending.chaosState,
-                isDrafting: true,
-                draftingSide: "player",
-                draftChoices: pending.choices,
-              }));
-              setPendingPhase(pending.phase);
-              setGameStatus("drafting");
-              setWaitingForOpponentDraft(false);
-              setEventLog((prev) => [
-                ...prev,
-                { type: "draft" as const, message: `⏸️ CHAOS DRAFT Phase ${pending.phase}! Your turn to choose.`, icon: "⏸️", pepe: PEPE.think },
-              ]);
-              playSound("record-scratch");
-            }
+            // Draft triggers after Black's own move — nothing to do here
           }}
         />
       )}
