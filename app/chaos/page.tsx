@@ -2255,11 +2255,16 @@ export default function ChaosChessPage() {
         // Check for new moves (FEN changed)
         if (data.fen && data.fen !== lastFenRef.current) {
           // Guard: skip if the DB returned a FEN behind our local state.
-          // This happens when our own fire-and-forget DB write hasn't landed yet
-          // but we've already applied the move optimistically.
-          const incomingHalfMoves = new Chess(data.fen).history().length;
-          const localHalfMoves = gameRef.current.history().length;
-          if (incomingHalfMoves < localHalfMoves) {
+          // Compute total half-moves from FEN fields directly — Chess.history() on a
+          // freshly-constructed instance is always [] so it can't be used here.
+          // FEN format: "pieces side castling ep halfclock fullmove"
+          // Total half-moves played = (fullmove - 1) * 2 + (side === 'b' ? 1 : 0)
+          const fenHalfMoves = (fen: string) => {
+            const p = fen.split(" ");
+            return (parseInt(p[5] ?? "1", 10) - 1) * 2 + (p[1] === "b" ? 1 : 0);
+          };
+          const localFen = gameRef.current.fen();
+          if (fenHalfMoves(data.fen) < fenHalfMoves(localFen)) {
             // DB is stale — do nothing; next poll will get the persisted FEN
             return;
           }
