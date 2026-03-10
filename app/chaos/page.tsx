@@ -475,10 +475,10 @@ function tierPepe(tier: ModifierTier): string {
 type ChaosSound = "vine-boom" | "crowd-ooh" | "airhorn" | "emotional-damage" | "bruh" | "roblox-oof" | "record-scratch" | "honk" | "bell" | "buzzer" | "bro-serious" | "yeet";
 
 const TIER_SOUNDS: Record<ModifierTier, ChaosSound[]> = {
-  common:    ["vine-boom", "bruh", "roblox-oof"],
+  common:    ["bruh", "roblox-oof"],
   rare:      ["crowd-ooh", "record-scratch", "honk"],
   epic:      ["airhorn", "emotional-damage", "bro-serious"],
-  legendary: ["airhorn", "vine-boom", "yeet"],
+  legendary: ["airhorn", "yeet"],
 };
 
 /** SFX pool for AI chaos moves — varied so it doesn't repeat the same clip */
@@ -1257,6 +1257,8 @@ export default function ChaosChessPage() {
   const [opponentDraftReveal, setOpponentDraftReveal] = useState<OpponentDraftRevealData | null>(null);
   const prevPhaseRef = useRef(0);
   const justDraftedRef = useRef(false);
+  /** Tracks the latest draft phase we've already shown a reveal/triggered a draft for (prevents poll re-triggering) */
+  const triggeredDraftForPhaseRef = useRef(-1);
 
   /* ── Sequential draft state (multiplayer: White drafts first, then Black) ── */
   const [waitingForOpponentDraft, setWaitingForOpponentDraft] = useState(false);
@@ -1333,6 +1335,11 @@ export default function ChaosChessPage() {
   useEffect(() => {
     eventLogRef.current?.scrollTo({ top: eventLogRef.current.scrollHeight, behavior: "smooth" });
   }, [eventLog]);
+
+  /* ── Scroll move log to bottom when game state changes ── */
+  useEffect(() => {
+    moveLogRef.current?.scrollTo({ top: moveLogRef.current.scrollHeight, behavior: "smooth" });
+  }, [game]);
 
   /* ── Cleanup polling on unmount ── */
   useEffect(() => {
@@ -1816,6 +1823,7 @@ export default function ChaosChessPage() {
       setDrawOfferReceived(false);
       setRematchRequested(false);
       setRematchReceived(false);
+      triggeredDraftForPhaseRef.current = -1;
       recomputeChaosMoves(g, cs);
 
       if (mode === "ai" && color === "black") {
@@ -1986,6 +1994,7 @@ export default function ChaosChessPage() {
         setDrawOfferReceived(false);
         setRematchRequested(false);
         setRematchReceived(false);
+        triggeredDraftForPhaseRef.current = -1;
         // Swap colors
         const newColor = playerColor === "white" ? "black" : "white";
         setPlayerColor(newColor);
@@ -2019,16 +2028,21 @@ export default function ChaosChessPage() {
 
         if (draftStep === 1 && playerColor === "black" && !justDraftedRef.current) {
           // White just drafted (step 1) → I'm Black: show reveal, then trigger my draft
+          const phaseForDraft = incoming.currentPhase + 1;
+          if (triggeredDraftForPhaseRef.current === phaseForDraft) {
+            // Already triggered for this phase — ignore duplicate
+            setChaosState(incoming);
+            return;
+          }
+          triggeredDraftForPhaseRef.current = phaseForDraft;
           const oppPick = incoming.aiModifiers[incoming.aiModifiers.length - 1];
           if (oppPick) {
             // Queue my own draft to start after the reveal animation
-            // White didn't advance currentPhase, so the draft phase = currentPhase + 1
-            const phase = incoming.currentPhase + 1;
-            const choices = rollDraftChoices(phase, incoming.playerModifiers);
-            pendingDraftAfterRevealRef.current = { phase, choices, chaosState: incoming };
+            const choices = rollDraftChoices(phaseForDraft, incoming.playerModifiers);
+            pendingDraftAfterRevealRef.current = { phase: phaseForDraft, choices, chaosState: incoming };
 
             // Show opponent's reveal
-            setOpponentDraftReveal({ opponentPick: oppPick, phase });
+            setOpponentDraftReveal({ opponentPick: oppPick, phase: phaseForDraft });
             setEventLog((prev) => [
               ...prev,
               { type: "modifier" as const, message: `⚔️ Opponent drafted: ${oppPick.icon} ${oppPick.name} — ${oppPick.description}`, icon: oppPick.icon, pepe: tierPepe(oppPick.tier) },
@@ -2041,6 +2055,13 @@ export default function ChaosChessPage() {
 
         if (draftStep === 2 && playerColor === "white" && !justDraftedRef.current) {
           // Black just drafted (step 2) → I'm White: show reveal, then resume game
+          const phaseForDraft = incoming.currentPhase;
+          if (triggeredDraftForPhaseRef.current === phaseForDraft) {
+            // Already triggered for this phase — ignore duplicate
+            setChaosState({ ...incoming, draftStep: 0 });
+            return;
+          }
+          triggeredDraftForPhaseRef.current = phaseForDraft;
           const oppPick = incoming.aiModifiers[incoming.aiModifiers.length - 1];
           if (oppPick) {
             setOpponentDraftReveal({ opponentPick: oppPick, phase: incoming.currentPhase });
@@ -2177,41 +2198,48 @@ export default function ChaosChessPage() {
 
           if (draftStep === 1 && myColor === "black" && !justDraftedRef.current) {
             // White just drafted (step 1) → I'm Black: show reveal, then trigger my draft
-            const oppPick = incoming.aiModifiers[incoming.aiModifiers.length - 1];
-            if (oppPick) {
-              const phase = incoming.currentPhase + 1;
-              const choices = rollDraftChoices(phase, incoming.playerModifiers);
-              pendingDraftAfterRevealRef.current = { phase, choices, chaosState: incoming };
-              setOpponentDraftReveal({ opponentPick: oppPick, phase });
-              setEventLog((prev) => [
-                ...prev,
-                { type: "modifier" as const, message: `⚔️ Opponent drafted: ${oppPick.icon} ${oppPick.name} — ${oppPick.description}`, icon: oppPick.icon, pepe: tierPepe(oppPick.tier) },
-              ]);
-              spawnPepe(tierPepe(oppPick.tier));
+            const phaseForDraft = incoming.currentPhase + 1;
+            if (triggeredDraftForPhaseRef.current !== phaseForDraft) {
+              triggeredDraftForPhaseRef.current = phaseForDraft;
+              const oppPick = incoming.aiModifiers[incoming.aiModifiers.length - 1];
+              if (oppPick) {
+                const choices = rollDraftChoices(phaseForDraft, incoming.playerModifiers);
+                pendingDraftAfterRevealRef.current = { phase: phaseForDraft, choices, chaosState: incoming };
+                setOpponentDraftReveal({ opponentPick: oppPick, phase: phaseForDraft });
+                setEventLog((prev) => [
+                  ...prev,
+                  { type: "modifier" as const, message: `⚔️ Opponent drafted: ${oppPick.icon} ${oppPick.name} — ${oppPick.description}`, icon: oppPick.icon, pepe: tierPepe(oppPick.tier) },
+                ]);
+                spawnPepe(tierPepe(oppPick.tier));
+              }
             }
             setChaosState(incoming);
           } else if (draftStep === 2 && myColor === "white" && !justDraftedRef.current) {
             // Black just drafted (step 2) → I'm White: show reveal, then resume
-            const oppPick = incoming.aiModifiers[incoming.aiModifiers.length - 1];
-            if (oppPick) {
-              const g2 = new Chess(data.fen);
-              setOpponentDraftReveal({ opponentPick: oppPick, phase: incoming.currentPhase });
+            const phaseForDraft = incoming.currentPhase;
+            if (triggeredDraftForPhaseRef.current !== phaseForDraft) {
+              triggeredDraftForPhaseRef.current = phaseForDraft;
+              const oppPick = incoming.aiModifiers[incoming.aiModifiers.length - 1];
+              if (oppPick) {
+                const g2 = new Chess(data.fen);
+                setOpponentDraftReveal({ opponentPick: oppPick, phase: incoming.currentPhase });
+                setEventLog((prev) => [
+                  ...prev,
+                  { type: "modifier" as const, message: `⚔️ Opponent drafted: ${oppPick.icon} ${oppPick.name} — ${oppPick.description}`, icon: oppPick.icon, pepe: tierPepe(oppPick.tier) },
+                ]);
+                spawnPepe(tierPepe(oppPick.tier));
+                recomputeChaosMoves(g2, incoming);
+              }
+              setChaosState({ ...incoming, draftStep: 0 });
+              setGameStatus("playing");
+              setWaitingForOpponentDraft(false);
+              setPendingPhase(0);
+              prevPhaseRef.current = incoming.currentPhase;
               setEventLog((prev) => [
                 ...prev,
-                { type: "modifier" as const, message: `⚔️ Opponent drafted: ${oppPick.icon} ${oppPick.name} — ${oppPick.description}`, icon: oppPick.icon, pepe: tierPepe(oppPick.tier) },
+                { type: "info" as const, message: "⏯️ Both players have drafted! Game resumed!", icon: "▶️" },
               ]);
-              spawnPepe(tierPepe(oppPick.tier));
-              recomputeChaosMoves(g2, incoming);
             }
-            setChaosState({ ...incoming, draftStep: 0 });
-            setGameStatus("playing");
-            setWaitingForOpponentDraft(false);
-            setPendingPhase(0);
-            prevPhaseRef.current = incoming.currentPhase;
-            setEventLog((prev) => [
-              ...prev,
-              { type: "info" as const, message: "⏯️ Both players have drafted! Game resumed!", icon: "▶️" },
-            ]);
           }
           // Reset the justDrafted flag once we see the state reflected
           if (justDraftedRef.current) {
@@ -2995,6 +3023,7 @@ export default function ChaosChessPage() {
     setDrawOfferReceived(false);
     setRematchRequested(false);
     setRematchReceived(false);
+    triggeredDraftForPhaseRef.current = -1;
     recomputeChaosMoves(g, cs);
     setEventLog([{ type: "info", message: "⚡ Rematch started! Good luck!", icon: "⚡", pepe: PEPE.hyped }]);
     playSound("reveal-stinger");
@@ -3801,16 +3830,22 @@ export default function ChaosChessPage() {
               ref={moveLogRef}
               className="max-h-28 space-y-0.5 overflow-y-auto font-mono text-[10px] scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 sm:max-h-40 sm:text-[11px]"
             >
-              {moveLog.map((entry) => (
-                <div key={entry.moveNumber} className="flex gap-2 text-slate-400">
-                  <span className="w-6 text-right text-slate-600">{entry.moveNumber}.</span>
-                  <span className="w-14">{entry.white ?? ""}</span>
-                  <span className="w-14">{entry.black ?? ""}</span>
-                </div>
-              ))}
-              {moveLog.length === 0 && (
-                <p className="text-center text-slate-600">No moves yet</p>
-              )}
+              {(() => {
+                const moves = game.history();
+                if (moves.length === 0) return <p className="text-center text-slate-600">No moves yet</p>;
+                const pairs: { num: number; w: string; b?: string }[] = [];
+                moves.forEach((san, i) => {
+                  if (i % 2 === 0) pairs.push({ num: Math.floor(i / 2) + 1, w: san });
+                  else pairs[pairs.length - 1].b = san;
+                });
+                return pairs.map((p) => (
+                  <div key={p.num} className="flex gap-2 text-slate-400">
+                    <span className="w-6 text-right text-slate-600">{p.num}.</span>
+                    <span className="w-14">{p.w}</span>
+                    <span className="w-14">{p.b ?? ""}</span>
+                  </div>
+                ));
+              })()}
             </div>
           </div>
 
