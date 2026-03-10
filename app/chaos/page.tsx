@@ -2000,6 +2000,8 @@ export default function ChaosChessPage() {
     if (msg.type === "move" || msg.type === "draft") {
       const data = msg as PartyMessage & { fen?: string; chaosState?: unknown; lastMoveFrom?: string; lastMoveTo?: string; capturedPawnsWhite?: number; capturedPawnsBlack?: number; status?: string };
       if (!data.fen) return;
+      // Don't apply opponent updates while the local player is actively picking a draft
+      if (gameStatusRef.current === "drafting") return;
 
       const g = new Chess(data.fen);
       const oldFen = lastFenRef.current;
@@ -2018,14 +2020,12 @@ export default function ChaosChessPage() {
           // White just drafted (step 1) → I'm Black: show reveal, then trigger my draft
           const phaseForDraft = incoming.currentPhase + 1;
           if (triggeredDraftForPhaseRef.current === phaseForDraft) {
-            // Already triggered for this phase — ignore duplicate
-            setChaosState(incoming);
-            return;
+            return; // Already triggered — don't overwrite active draft choices
           }
           triggeredDraftForPhaseRef.current = phaseForDraft;
           const oppPick = incoming.aiModifiers[incoming.aiModifiers.length - 1];
           if (oppPick) {
-            // Queue my own draft to start after the reveal animation
+            // Queue my own draft to fire after Black's own move
             const choices = rollDraftChoices(phaseForDraft, incoming.playerModifiers);
             pendingDraftAfterRevealRef.current = { phase: phaseForDraft, choices, chaosState: incoming };
 
@@ -2130,8 +2130,8 @@ export default function ChaosChessPage() {
         checkGameEnd(activeGame);
         if (pollRef.current) clearInterval(pollRef.current);
       } else if (data.chaosState) {
+        // Only recompute moves — checkDraft fires from handlePlayerMove (your own move) only
         const cs2 = fromServerChaosState(data.chaosState as ChaosState, playerColor);
-        checkDraft(activeGame, cs2);
         recomputeChaosMoves(activeGame, cs2);
       }
 
@@ -2139,7 +2139,7 @@ export default function ChaosChessPage() {
         if (pollRef.current) clearInterval(pollRef.current);
       }
     }
-  }, [playerColor, checkGameEnd, checkDraft, recomputeChaosMoves, spawnPepe]);
+  }, [playerColor, checkGameEnd, recomputeChaosMoves, spawnPepe]);
 
   const { send: partySend, isConnected: partyConnected } = usePartyRoom(
     gameMode !== "ai" ? roomId : null,
@@ -2148,6 +2148,16 @@ export default function ChaosChessPage() {
   // Keep ref in sync so sendMoveToServer (memoized) can use it
   partySendRef.current = partySend;
 
+  // Callback refs — updated every render so the polling setInterval always uses
+  // the latest version of these functions without needing to recreate the interval.
+  const checkGameEndCbRef = useRef(checkGameEnd);
+  checkGameEndCbRef.current = checkGameEnd;
+  const recomputeChaosMovesCbRef = useRef(recomputeChaosMoves);
+  recomputeChaosMovesCbRef.current = recomputeChaosMoves;
+  // Track current gameStatus in a ref so polling/WS guards can read it from stale closures
+  const gameStatusRef = useRef(gameStatus);
+  gameStatusRef.current = gameStatus;
+
   /* ── Polling for multiplayer state (slow fallback) ── */
   const startPolling = useCallback((rId: string, myColor: string) => {
     if (pollRef.current) clearInterval(pollRef.current);
@@ -2155,6 +2165,8 @@ export default function ChaosChessPage() {
 
     pollRef.current = setInterval(async () => {
       try {
+        // Don't poll while the user is actively picking a draft — avoids wiping draft choices
+        if (gameStatusRef.current === "drafting") return;
         const res = await fetch(`/api/chaos/move?roomId=${rId}`, { headers: chaosHeaders() });
         if (!res.ok) return;
         const data = await res.json();
@@ -2185,7 +2197,7 @@ export default function ChaosChessPage() {
           const draftStep = serverCs.draftStep ?? 0;
 
           if (draftStep === 1 && myColor === "black" && !justDraftedRef.current) {
-            // White just drafted (step 1) → I'm Black: show reveal, then trigger my draft
+            // White just drafted (step 1) → I'm Black: show reveal, then defer my draft
             const phaseForDraft = incoming.currentPhase + 1;
             if (triggeredDraftForPhaseRef.current !== phaseForDraft) {
               triggeredDraftForPhaseRef.current = phaseForDraft;
@@ -2200,8 +2212,10 @@ export default function ChaosChessPage() {
                 ]);
                 spawnPepe(tierPepe(oppPick.tier));
               }
+              // Only update state when first triggering — avoids wiping active draft choices on repeat polls
+              setChaosState(incoming);
             }
-            setChaosState(incoming);
+            // If already triggered, skip setChaosState to not overwrite open draft modal
           } else if (draftStep === 2 && myColor === "white" && !justDraftedRef.current) {
             // Black just drafted (step 2) → I'm White: show reveal, then resume
             const phaseForDraft = incoming.currentPhase;
@@ -2216,7 +2230,7 @@ export default function ChaosChessPage() {
                   { type: "modifier" as const, message: `⚔️ Opponent drafted: ${oppPick.icon} ${oppPick.name} — ${oppPick.description}`, icon: oppPick.icon, pepe: tierPepe(oppPick.tier) },
                 ]);
                 spawnPepe(tierPepe(oppPick.tier));
-                recomputeChaosMoves(g2, incoming);
+                recomputeChaosMovesCbRef.current(g2, incoming);
               }
               setChaosState({ ...incoming, draftStep: 0 });
               setGameStatus("playing");
@@ -2298,14 +2312,13 @@ export default function ChaosChessPage() {
 
           // Check game end from FEN
           if (activeGame.isCheckmate() || activeGame.isStalemate() || activeGame.isDraw()) {
-            checkGameEnd(activeGame);
+            checkGameEndCbRef.current(activeGame);
             if (pollRef.current) clearInterval(pollRef.current);
           } else {
-            // Check draft
+            // Only recompute moves — checkDraft fires from handlePlayerMove (your own move only)
             const rawCs2 = data.chaosState ? data.chaosState as ChaosState : createChaosState();
             const cs2 = fromServerChaosState(rawCs2, myColor as "white" | "black");
-            checkDraft(activeGame, cs2);
-            recomputeChaosMoves(activeGame, cs2);
+            recomputeChaosMovesCbRef.current(activeGame, cs2);
           }
         }
 
@@ -2316,7 +2329,7 @@ export default function ChaosChessPage() {
         // Poll error — ignore
       }
     }, POLL_INTERVAL);
-  }, [checkGameEnd, checkDraft, recomputeChaosMoves, spawnPepe]);
+  }, [spawnPepe]);
 
   /* ── Send move to server (multiplayer) ── */
   const sendMoveToServer = useCallback(
@@ -2389,6 +2402,12 @@ export default function ChaosChessPage() {
         if (chaosMove.promotionChoice) {
           setPendingPromotion(chaosMove);
           return true;
+        }
+
+        // Block king chaos moves (e.g. King Ascension) into chaos-defended squares
+        const pieceAtFromChaos = game.get(from as any);
+        if (pieceAtFromChaos && pieceAtFromChaos.type === "k" && isKingMoveChaosUnsafe(game, from, to)) {
+          return false;
         }
 
         const newGame = executeChaosMove(game, chaosMove, chaosState.playerModifiers);
@@ -2727,6 +2746,8 @@ export default function ChaosChessPage() {
             }
             // Add chaos move highlights for this square
             for (const cm of availableChaosMoves.filter((m) => m.from === square)) {
+              // Filter out king chaos moves to chaos-defended squares
+              if (piece && piece.type === "k" && isKingMoveChaosUnsafe(game, cm.from, cm.to)) continue;
               highlights[cm.to] = {
                 backgroundColor: cm.type === "capture"
                   ? "rgba(168, 85, 247, 0.5)"
@@ -2761,6 +2782,8 @@ export default function ChaosChessPage() {
           }
           // Add chaos move highlights for this square (purple)
           for (const cm of availableChaosMoves.filter((m) => m.from === square)) {
+            // Filter out king chaos moves to chaos-defended squares
+            if (piece && piece.type === "k" && isKingMoveChaosUnsafe(game, cm.from, cm.to)) continue;
             highlights[cm.to] = {
               backgroundColor: cm.type === "capture"
                 ? "rgba(168, 85, 247, 0.5)"
@@ -3241,6 +3264,20 @@ export default function ChaosChessPage() {
                   setChaosState(cs);
                   const g = new Chess();
                   setGame(g);
+                  // Reset all per-game state/refs
+                  prevPhaseRef.current = 0;
+                  triggeredDraftForPhaseRef.current = -1;
+                  pendingDraftAfterRevealRef.current = null;
+                  justDraftedRef.current = false;
+                  setEndReason("");
+                  setDrawOfferSent(false);
+                  setDrawOfferReceived(false);
+                  setRematchRequested(false);
+                  setRematchReceived(false);
+                  setSelectedSquare(null);
+                  setLegalMoveSquares({});
+                  setLastMoveHighlight({});
+                  setAvailableChaosMoves([]);
                   setMoveLog([]);
                   setFloatingPepes([]);
                   setCapturedPawns({ w: 0, b: 0 });
@@ -3402,6 +3439,18 @@ export default function ChaosChessPage() {
           choices={chaosState.draftChoices}
           onPick={handleDraftPick}
         />
+      )}
+      {/* Return to Draft — floating safety button if the modal was accidentally hidden */}
+      {gameStatus === "playing" && chaosState.isDrafting && chaosState.draftChoices.length > 0 && (
+        <div className="pointer-events-none fixed inset-0 z-50 flex items-end justify-center pb-8">
+          <button
+            type="button"
+            onClick={() => setGameStatus("drafting")}
+            className="pointer-events-auto animate-bounce rounded-xl border border-purple-500/50 bg-purple-600/90 px-6 py-3 font-bold text-white shadow-lg shadow-purple-900/50 backdrop-blur-sm hover:bg-purple-500 active:scale-95 transition-colors"
+          >
+            ⚡ Pick Your Power
+          </button>
+        </div>
       )}
 
       {/* Opponent draft reveal (multiplayer) — with post-reveal action */}
