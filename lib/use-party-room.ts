@@ -12,7 +12,11 @@ export type PartyMessageType =
   | "draft"      // A player completed their draft pick
   | "join"       // A guest joined the room
   | "resign"     // A player resigned
-  | "presence";  // Connection count changed
+  | "presence"   // Connection count changed
+  | "draw-offer" // A player offered a draw
+  | "draw-accept"// A player accepted the draw offer
+  | "draw-decline" // A player declined the draw offer
+  | "rematch";   // A player requested a rematch
 
 export type PartyMoveMessage = {
   type: "move";
@@ -46,12 +50,32 @@ export type PartyPresenceMessage = {
   count: number;
 };
 
+export type PartyDrawOfferMessage = {
+  type: "draw-offer";
+};
+
+export type PartyDrawAcceptMessage = {
+  type: "draw-accept";
+};
+
+export type PartyDrawDeclineMessage = {
+  type: "draw-decline";
+};
+
+export type PartyRematchMessage = {
+  type: "rematch";
+};
+
 export type PartyMessage =
   | PartyMoveMessage
   | PartyDraftMessage
   | PartyJoinMessage
   | PartyResignMessage
-  | PartyPresenceMessage;
+  | PartyPresenceMessage
+  | PartyDrawOfferMessage
+  | PartyDrawAcceptMessage
+  | PartyDrawDeclineMessage
+  | PartyRematchMessage;
 
 /* ------------------------------------------------------------------ */
 /*  Hook                                                                */

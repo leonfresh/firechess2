@@ -53,6 +53,13 @@ export interface ChaosState {
    * Value: current square of the assigned piece, or null if captured.
    */
   assignedSquares?: Record<string, string | null>;
+  /**
+   * Multiplayer draft step (server-perspective, always relative to White/Black):
+   *   0 = no draft in progress
+   *   1 = White has drafted, waiting for Black
+   *   2 = both have drafted, phase complete
+   */
+  draftStep?: number;
 }
 
 /* ================================================================== */
@@ -84,7 +91,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     name: "Tactical Retreat",
     description: "Knights can also move 1 square in any direction (like a King).",
     tier: "common",
-    icon: "🐴",
+    icon: "🥾",
     piece: "n",
     phases: [1, 2],
   },
@@ -93,7 +100,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     name: "Bishop's Sprint",
     description: "Bishops can also move 1 square horizontally or vertically.",
     tier: "common",
-    icon: "⛪",
+    icon: "🥾",
     piece: "b",
     phases: [1, 2],
   },
@@ -111,7 +118,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     name: "Rook Rush",
     description: "Rooks can also move 1 square diagonally.",
     tier: "common",
-    icon: "🏰",
+    icon: "🥾",
     piece: "r",
     phases: [1, 2],
   },
@@ -158,7 +165,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     name: "En Passant Everywhere",
     description: "En passant can be performed on any pawn that moved 1 or 2 squares, not just from the starting rank. Holy hell.",
     tier: "rare",
-    icon: "⚡",
+    icon: "♟️",
     piece: "p",
     phases: [2, 3],
   },
@@ -185,7 +192,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     name: "The Archbishop",
     description: "One of your Bishops transforms into an Archbishop — it moves as both a Bishop AND a Knight.",
     tier: "rare",
-    icon: "⛪",
+    icon: "🏛️",
     piece: "b",
     phases: [2, 3, 4],
   },
@@ -232,18 +239,18 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     name: "Il Vaticano",
     description: "Two Bishops can capture two enemy pawns trapped between them in a single move. The Vatican strikes!",
     tier: "epic",
-    icon: "⛪",
+    icon: "✝️",
     piece: "b",
     phases: [3, 4, 5],
   },
   {
     id: "forced-en-passant",
     name: "Forced En Passant",
-    description: "If en passant is available, it is the ONLY legal move. A brick is dropped if you try anything else.",
-    tier: "epic",
+    description: "Your OPPONENT is forced to play en passant whenever it's available — it becomes their only legal move. Brick incoming!",
+    tier: "rare",
     icon: "🧱",
     piece: "p",
-    phases: [3, 4],
+    phases: [2, 3],
   },
 
   // ── Phase 4-5 (Turn 20-25) — Pure Chaos ──
@@ -338,6 +345,7 @@ export function createChaosState(): ChaosState {
     isDrafting: false,
     draftingSide: null,
     draftChoices: [],
+    draftStep: 0,
   };
 }
 
