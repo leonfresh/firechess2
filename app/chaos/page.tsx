@@ -2157,6 +2157,9 @@ export default function ChaosChessPage() {
   // Track current gameStatus in a ref so polling/WS guards can read it from stale closures
   const gameStatusRef = useRef(gameStatus);
   gameStatusRef.current = gameStatus;
+  // Track current game in a ref so polling can compare move counts against local state
+  const gameRef = useRef(game);
+  gameRef.current = game;
 
   /* ── Polling for multiplayer state (slow fallback) ── */
   const startPolling = useCallback((rId: string, myColor: string) => {
@@ -2251,6 +2254,16 @@ export default function ChaosChessPage() {
 
         // Check for new moves (FEN changed)
         if (data.fen && data.fen !== lastFenRef.current) {
+          // Guard: skip if the DB returned a FEN behind our local state.
+          // This happens when our own fire-and-forget DB write hasn't landed yet
+          // but we've already applied the move optimistically.
+          const incomingHalfMoves = new Chess(data.fen).history().length;
+          const localHalfMoves = gameRef.current.history().length;
+          if (incomingHalfMoves < localHalfMoves) {
+            // DB is stale — do nothing; next poll will get the persisted FEN
+            return;
+          }
+
           const oldFen = lastFenRef.current;
           lastFenRef.current = data.fen;
           const g = new Chess(data.fen);
