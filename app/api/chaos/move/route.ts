@@ -6,14 +6,14 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { chaosRooms } from "@/lib/schema";
 import { eq } from "drizzle-orm";
+import { getChaosUserId } from "@/lib/chaos-auth";
 
 export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const userId = await getChaosUserId(req);
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -34,7 +34,7 @@ export async function GET(req: NextRequest) {
   const room = rooms[0];
 
   // Verify user is part of this room
-  if (room.hostId !== session.user.id && room.guestId !== session.user.id) {
+  if (room.hostId !== userId && room.guestId !== userId) {
     return NextResponse.json({ error: "Not in this room" }, { status: 403 });
   }
 
@@ -55,8 +55,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const userId = await getChaosUserId(req);
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
   const room = rooms[0];
 
   // Verify user is part of this room
-  if (room.hostId !== session.user.id && room.guestId !== session.user.id) {
+  if (room.hostId !== userId && room.guestId !== userId) {
     return NextResponse.json({ error: "Not in this room" }, { status: 403 });
   }
 

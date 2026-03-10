@@ -8,11 +8,11 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { chaosRooms } from "@/lib/schema";
 import { eq, and, ne, isNull, gte } from "drizzle-orm";
 import { createChaosState } from "@/lib/chaos-chess";
+import { getChaosUserId } from "@/lib/chaos-auth";
 
 /** Rooms older than this are considered abandoned */
 const STALE_THRESHOLD_MS = 90_000; // 90 seconds
@@ -27,8 +27,8 @@ function generateRoomCode(): string {
 }
 
 export async function GET(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const userId = await getChaosUserId(req);
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
         eq(chaosRooms.isMatchmaking, true),
         eq(chaosRooms.status, "waiting"),
         isNull(chaosRooms.guestId),
-        ne(chaosRooms.hostId, session.user.id),
+        ne(chaosRooms.hostId, userId),
         gte(chaosRooms.createdAt, cutoff),
       ),
     )
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest) {
     const result = await db
       .update(chaosRooms)
       .set({
-        guestId: session.user.id,
+        guestId: userId,
         status: "playing",
         isMatchmaking: false,
         updatedAt: new Date(),
@@ -86,8 +86,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const userId = await getChaosUserId(req);
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
     .set({ isMatchmaking: false, status: "cancelled", updatedAt: new Date() })
     .where(
       and(
-        eq(chaosRooms.hostId, session.user.id),
+        eq(chaosRooms.hostId, userId),
         eq(chaosRooms.isMatchmaking, true),
         eq(chaosRooms.status, "waiting"),
       ),
@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
     .insert(chaosRooms)
     .values({
       roomCode,
-      hostId: session.user.id,
+      hostId: userId,
       hostColor,
       chaosState,
       status: "waiting",
@@ -124,8 +124,8 @@ export async function POST(req: NextRequest) {
 
 /** Cancel a matchmaking room (on timeout, manual cancel, or switching rooms) */
 export async function DELETE(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const userId = await getChaosUserId(req);
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -143,7 +143,7 @@ export async function DELETE(req: NextRequest) {
       .where(
         and(
           eq(chaosRooms.id, body.roomId),
-          eq(chaosRooms.hostId, session.user.id),
+          eq(chaosRooms.hostId, userId),
         ),
       );
   } else {
@@ -152,7 +152,7 @@ export async function DELETE(req: NextRequest) {
       .set({ isMatchmaking: false, status: "cancelled", updatedAt: new Date() })
       .where(
         and(
-          eq(chaosRooms.hostId, session.user.id),
+          eq(chaosRooms.hostId, userId),
           eq(chaosRooms.isMatchmaking, true),
           eq(chaosRooms.status, "waiting"),
         ),

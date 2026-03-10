@@ -5,10 +5,10 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { chaosRooms } from "@/lib/schema";
 import { createChaosState } from "@/lib/chaos-chess";
+import { getChaosUserId } from "@/lib/chaos-auth";
 
 function generateRoomCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -20,8 +20,8 @@ function generateRoomCode(): string {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const userId = await getChaosUserId(req);
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     .insert(chaosRooms)
     .values({
       roomCode,
-      hostId: session.user.id,
+      hostId: userId,
       hostColor,
       chaosState,
       status: "waiting",

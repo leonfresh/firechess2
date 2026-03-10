@@ -18,6 +18,7 @@ import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { stockfishPool } from "@/lib/stockfish-client";
 import { ChaosLobby } from "@/components/chaos-lobby";
 import { useSession } from "@/components/session-provider";
+import { getGuestId } from "@/lib/guest-id";
 // useBoardSize removed — we use onBoardWidthChange from react-chessboard
 import { useBoardTheme, useShowCoordinates, useCustomPieces, usePieceTheme } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
@@ -1227,6 +1228,14 @@ export default function ChaosChessPage() {
   /* ── Auth ── */
   const { authenticated } = useSession();
 
+  /** Build headers for chaos API calls — adds X-Guest-Id for unauthenticated players */
+  const chaosHeaders = useCallback((json = false) => {
+    const h: Record<string, string> = {};
+    if (json) h["Content-Type"] = "application/json";
+    if (!authenticated) h["X-Guest-Id"] = getGuestId();
+    return h;
+  }, [authenticated]);
+
   /* ── Board / theme hooks ── */
   const [boardSize, setBoardSize] = useState(0);
   const boardTheme = useBoardTheme();
@@ -1760,7 +1769,7 @@ export default function ChaosChessPage() {
     try {
       const res = await fetch("/api/chaos/create", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: chaosHeaders(true),
         body: JSON.stringify({ hostColor: color }),
       });
       const data = await res.json();
@@ -1789,7 +1798,7 @@ export default function ChaosChessPage() {
     try {
       const res = await fetch("/api/chaos/join", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: chaosHeaders(true),
         body: JSON.stringify({ roomCode: joinCode.toUpperCase() }),
       });
       const data = await res.json();
@@ -1996,7 +2005,7 @@ export default function ChaosChessPage() {
 
     pollRef.current = setInterval(async () => {
       try {
-        const res = await fetch(`/api/chaos/move?roomId=${rId}`);
+        const res = await fetch(`/api/chaos/move?roomId=${rId}`, { headers: chaosHeaders() });
         if (!res.ok) return;
         const data = await res.json();
 
@@ -2157,7 +2166,7 @@ export default function ChaosChessPage() {
         // Persist to DB
         await fetch("/api/chaos/move", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: chaosHeaders(true),
           body: JSON.stringify(payload),
         });
         lastFenRef.current = g.fen();
@@ -2638,7 +2647,7 @@ export default function ChaosChessPage() {
       // Send updated state for multiplayer — fetch-merge-write to preserve opponent's picks
       if (isMultiplayer && roomId) {
         try {
-          const res = await fetch(`/api/chaos/move?roomId=${roomId}`);
+          const res = await fetch(`/api/chaos/move?roomId=${roomId}`, { headers: chaosHeaders() });
           const serverData = await res.json();
           if (serverData.chaosState) {
             const serverCs = fromServerChaosState(serverData.chaosState as ChaosState, playerColor);
@@ -2688,7 +2697,7 @@ export default function ChaosChessPage() {
       // Mark room as finished
       fetch("/api/chaos/move", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: chaosHeaders(true),
         body: JSON.stringify({ roomId, from: "", to: "", newFen: game.fen(), status: "finished" }),
       });
       // Notify opponent via WebSocket
@@ -2765,7 +2774,6 @@ export default function ChaosChessPage() {
                 }`}
               >
                 {mode === "ai" ? "🤖 vs AI" : mode === "friend" ? "👥 vs Friend" : "🎲 Matchmake"}
-                {mode !== "ai" && !authenticated && <span className="ml-1 text-[9px] opacity-50">🔒</span>}
               </button>
             ))}
           </div>
@@ -2812,20 +2820,6 @@ export default function ChaosChessPage() {
           {/* ── Friend Mode ── */}
           {gameMode === "friend" && (
             <div className="flex w-full max-w-md flex-col gap-6">
-              {!authenticated && (
-                <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-6 py-5 text-center">
-                  <p className="mb-2 text-sm font-medium text-yellow-400">🔒 Sign in required</p>
-                  <p className="mb-4 text-xs text-slate-500">You need an account to play with friends</p>
-                  <a
-                    href="/auth/signin"
-                    className="inline-block rounded-lg bg-purple-500/20 px-5 py-2.5 text-sm font-medium text-purple-400 transition-all hover:bg-purple-500/30"
-                  >
-                    Sign In
-                  </a>
-                </div>
-              )}
-              {authenticated && (
-                <>
               {/* Create room */}
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
                 <p className="mb-3 text-sm font-bold text-white">Create a Room</p>
@@ -2865,31 +2859,15 @@ export default function ChaosChessPage() {
                   </button>
                 </div>
               </div>
-                </>
-              )}
             </div>
           )}
 
           {/* ── Matchmake Mode ── */}
           {gameMode === "matchmake" && (
             <div className="flex flex-col items-center gap-4">
-              {!authenticated ? (
-                <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 px-6 py-5 text-center">
-                  <p className="mb-2 text-sm font-medium text-yellow-400">🔒 Sign in required</p>
-                  <p className="mb-4 text-xs text-slate-500">You need an account to matchmake with other players</p>
-                  <a
-                    href="/auth/signin"
-                    className="inline-block rounded-lg bg-purple-500/20 px-5 py-2.5 text-sm font-medium text-purple-400 transition-all hover:bg-purple-500/30"
-                  >
-                    Sign In
-                  </a>
-                  <p className="mt-3 text-xs text-slate-600">Or play 🤖 vs AI — no account needed!</p>
-                </div>
-              ) : (
-                <>
               <p className="text-sm text-slate-400">Find a random opponent to play Chaos Chess against</p>
               <ChaosLobby
-                isSignedIn={authenticated}
+                isSignedIn={true}
                 onMatchFound={(data) => {
                   setRoomId(data.roomId);
                   setRoomCode(data.roomCode);
@@ -2929,8 +2907,6 @@ export default function ChaosChessPage() {
                   if (pollRef.current) clearInterval(pollRef.current);
                 }}
               />
-                </>
-              )}
             </div>
           )}
 
@@ -2991,7 +2967,7 @@ export default function ChaosChessPage() {
                 Waiting for opponent…
               </div>
               <ChaosLobby
-                isSignedIn={authenticated}
+                isSignedIn={true}
                 chatOnly
                 onMatchFound={() => {}}
                 onCancel={() => {}}
@@ -3006,7 +2982,7 @@ export default function ChaosChessPage() {
                   if (roomId) {
                     fetch("/api/chaos/matchmake", {
                       method: "DELETE",
-                      headers: { "Content-Type": "application/json" },
+                      headers: chaosHeaders(true),
                       body: JSON.stringify({ roomId }),
                     }).catch(() => {});
                   }

@@ -371,12 +371,10 @@ export const chaosRooms = pgTable("chaos_room", {
     .$defaultFn(() => crypto.randomUUID()),
   /** Short 6-char code for inviting friends */
   roomCode: text("roomCode").notNull().unique(),
-  /** Host user ID */
-  hostId: text("hostId")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  /** Guest user ID (null until someone joins) */
-  guestId: text("guestId").references(() => users.id, { onDelete: "set null" }),
+  /** Host user ID (or guest_<uuid> for unauthenticated players) */
+  hostId: text("hostId").notNull(),
+  /** Guest user ID (null until someone joins; may be guest_<uuid>) */
+  guestId: text("guestId"),
   /** Host's chosen color */
   hostColor: text("hostColor").notNull().default("white"),
   /** Current FEN */

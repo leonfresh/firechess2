@@ -11,6 +11,16 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { getGuestId } from "@/lib/guest-id";
+
+/** Build headers for chaos API calls — includes guest ID for unauthenticated players */
+function chaosHeaders(json = false): Record<string, string> {
+  const h: Record<string, string> = {};
+  if (json) h["Content-Type"] = "application/json";
+  // Always include guest ID — server prefers session if available
+  h["X-Guest-Id"] = getGuestId();
+  return h;
+}
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
@@ -172,7 +182,7 @@ export function ChaosLobby({ onMatchFound, onCancel, isSignedIn, chatOnly }: Lob
 
     // Try to find an existing room first
     try {
-      const res = await fetch("/api/chaos/matchmake", { credentials: "include" });
+      const res = await fetch("/api/chaos/matchmake", { headers: chaosHeaders(), credentials: "include" });
       const data = await res.json();
       if (data.roomId) {
         setSearchState("found");
@@ -193,6 +203,7 @@ export function ChaosLobby({ onMatchFound, onCancel, isSignedIn, chatOnly }: Lob
     try {
       const createRes = await fetch("/api/chaos/matchmake", {
         method: "POST",
+        headers: chaosHeaders(),
         credentials: "include",
       });
       const createData = await createRes.json();
@@ -219,7 +230,7 @@ export function ChaosLobby({ onMatchFound, onCancel, isSignedIn, chatOnly }: Lob
             if (ownRoomRef.current) {
               fetch("/api/chaos/matchmake", {
                 method: "DELETE",
-                headers: { "Content-Type": "application/json" },
+                headers: chaosHeaders(true),
                 body: JSON.stringify({ roomId: ownRoomRef.current.roomId }),
                 credentials: "include",
               }).catch(() => {});
@@ -240,7 +251,7 @@ export function ChaosLobby({ onMatchFound, onCancel, isSignedIn, chatOnly }: Lob
           // Every 3rd cycle, also try to find a different room to join
           // This fixes the simultaneous-creation deadlock
           if (pollCycle % 3 === 0 && ownRoomRef.current) {
-            const retryRes = await fetch("/api/chaos/matchmake", { credentials: "include" });
+            const retryRes = await fetch("/api/chaos/matchmake", { headers: chaosHeaders(), credentials: "include" });
             const retryData = await retryRes.json();
             if (retryData.roomId) {
               // Found another room! Cancel ours and join theirs
@@ -248,7 +259,7 @@ export function ChaosLobby({ onMatchFound, onCancel, isSignedIn, chatOnly }: Lob
               ownRoomRef.current = null;
               fetch("/api/chaos/matchmake", {
                 method: "DELETE",
-                headers: { "Content-Type": "application/json" },
+                headers: chaosHeaders(true),
                 body: JSON.stringify({ roomId: oldRoom.roomId }),
                 credentials: "include",
               }).catch(() => {});
@@ -272,7 +283,7 @@ export function ChaosLobby({ onMatchFound, onCancel, isSignedIn, chatOnly }: Lob
           if (!ownRoomRef.current) return;
           const pollRes = await fetch(
             `/api/chaos/move?roomId=${ownRoomRef.current.roomId}`,
-            { credentials: "include" },
+            { headers: chaosHeaders(), credentials: "include" },
           );
           if (!pollRes.ok) return;
           const pollData = await pollRes.json();
@@ -313,7 +324,7 @@ export function ChaosLobby({ onMatchFound, onCancel, isSignedIn, chatOnly }: Lob
     if (ownRoomRef.current) {
       fetch("/api/chaos/matchmake", {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: chaosHeaders(true),
         body: JSON.stringify({ roomId: ownRoomRef.current.roomId }),
         credentials: "include",
       }).catch(() => {});
