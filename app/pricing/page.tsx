@@ -261,6 +261,183 @@ export default function PricingPage() {
             ))}
           </div>
 
+          {/* Competitor comparison — Aimchess vs FireChess */}
+          <div className="space-y-5">
+            <div className="text-center space-y-2">
+              <span className="inline-flex items-center gap-2 rounded-full border border-red-500/20 bg-red-500/[0.07] px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-red-400">
+                🆚 vs. Aimchess
+              </span>
+              <h3 className="text-2xl font-black text-white">Why not just use Aimchess?</h3>
+              <p className="text-sm text-slate-400 max-w-2xl mx-auto">
+                Aimchess is one of the most well-known chess analysis tools. But take a close look at what their free tier actually gives you — and what&apos;s locked behind their paywall.
+              </p>
+            </div>
+
+            {/* Side-by-side mock UI cards */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+              {/* Aimchess card */}
+              <div className="rounded-2xl border border-red-500/15 bg-red-500/[0.04] overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-red-500/10 px-5 py-4 bg-red-500/[0.06]">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/15 text-base font-black text-red-400">A</div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-200">Aimchess Free</p>
+                      <p className="text-[11px] text-slate-500">aimchess.com</p>
+                    </div>
+                  </div>
+                  <span className="rounded-full bg-red-500/15 px-2.5 py-1 text-[11px] font-bold text-red-400">40 games only</span>
+                </div>
+
+                {/* Performance categories (mimicking their UI) */}
+                <div className="px-5 py-4 space-y-2.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-3">Performance Rating by Category</p>
+
+                  {/* Unlocked categories */}
+                  {[
+                    { label: "Opening", pct: 59, color: "bg-emerald-500" },
+                    { label: "Advantage Capitalization", pct: 69, color: "bg-blue-500" },
+                  ].map((cat) => (
+                    <div key={cat.label} className="flex items-center gap-3">
+                      <span className="w-36 text-xs text-slate-400 shrink-0">{cat.label}</span>
+                      <div className="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                        <div className={`h-full rounded-full ${cat.color} opacity-60`} style={{ width: `${cat.pct}%` }} />
+                      </div>
+                      <span className="text-xs text-slate-500 tabular-nums w-8 text-right">{cat.pct}%</span>
+                    </div>
+                  ))}
+
+                  {/* Locked categories */}
+                  {["Tactics", "Resourcefulness", "Time Management", "Endgame"].map((cat) => (
+                    <div key={cat} className="flex items-center gap-3">
+                      <span className="w-36 text-xs text-slate-600 shrink-0">{cat}</span>
+                      <div className="flex-1 h-2 rounded-full bg-white/[0.04] overflow-hidden">
+                        <div className="h-full w-full bg-slate-700/40 rounded-full" />
+                      </div>
+                      <span className="text-slate-600">🔒</span>
+                    </div>
+                  ))}
+
+                  {/* Locked section previews */}
+                  <div className="mt-3 space-y-2 pt-2 border-t border-white/[0.04]">
+                    {["Tactics", "Resourcefulness", "Time Management", "Endgame"].map((section) => (
+                      <div key={section} className="flex items-center justify-between rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 opacity-50">
+                        <span className="text-xs font-medium text-slate-500">{section}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-600 text-sm">🔒</span>
+                          <span className="text-[10px] text-slate-600">Paid only</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-3 rounded-xl bg-red-500/[0.08] border border-red-500/15 px-4 py-3 text-center">
+                    <p className="text-xs font-semibold text-red-400">Register to get extended report for free</p>
+                    <p className="text-[10px] text-slate-600 mt-0.5">Still missing most features after signup</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* FireChess card */}
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.04] overflow-hidden">
+                {/* Header */}
+                <div className="flex items-center justify-between border-b border-emerald-500/10 px-5 py-4 bg-emerald-500/[0.06]">
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 text-base">🔥</div>
+                    <div>
+                      <p className="text-sm font-bold text-slate-200">FireChess Free</p>
+                      <p className="text-[11px] text-slate-500">firechess.com</p>
+                    </div>
+                  </div>
+                  <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-400">Up to 300 games</span>
+                </div>
+
+                {/* All categories unlocked */}
+                <div className="px-5 py-4 space-y-2.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-3">All Analysis Categories — Fully Unlocked</p>
+
+                  {[
+                    { label: "Opening Leaks", color: "bg-emerald-500" },
+                    { label: "Tactics Missed", color: "bg-blue-500" },
+                    { label: "Endgame Mistakes", color: "bg-violet-500" },
+                    { label: "Time Management", color: "bg-amber-500" },
+                    { label: "Mental Game", color: "bg-pink-500" },
+                    { label: "Strengths Radar", color: "bg-cyan-500" },
+                  ].map((cat, i) => (
+                    <div key={cat.label} className="flex items-center gap-3">
+                      <span className="w-36 text-xs text-slate-300 shrink-0">{cat.label}</span>
+                      <div className="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                        <div className={`h-full rounded-full ${cat.color}`} style={{ width: `${55 + i * 7}%` }} />
+                      </div>
+                      <span className="text-emerald-400 text-sm">✓</span>
+                    </div>
+                  ))}
+
+                  {/* Unlocked sections */}
+                  <div className="mt-3 space-y-2 pt-2 border-t border-white/[0.04]">
+                    {[
+                      { label: "Tactics", sub: "Up to 10 missed tactics per scan" },
+                      { label: "Endgame", sub: "Up to 10 endgame mistakes" },
+                      { label: "Time Management", sub: "Full time pressure analysis" },
+                      { label: "Mental Game", sub: "Tilt, stability & form stats" },
+                    ].map((section) => (
+                      <div key={section.label} className="flex items-center justify-between rounded-lg border border-emerald-500/10 bg-emerald-500/[0.04] px-3 py-2.5">
+                        <div>
+                          <p className="text-xs font-semibold text-slate-200">{section.label}</p>
+                          <p className="text-[10px] text-slate-500">{section.sub}</p>
+                        </div>
+                        <span className="text-emerald-400 text-sm">✓ Free</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-3 rounded-xl bg-emerald-500/[0.08] border border-emerald-500/20 px-4 py-3 text-center">
+                    <p className="text-xs font-semibold text-emerald-400">No account needed to start</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">Everything above is free immediately</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Quick stat callouts */}
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {[
+                { label: "Games scanned", aimchess: "40", firechess: "300", winner: "fc" },
+                { label: "Tactics section", aimchess: "🔒 Locked", firechess: "✓ Free", winner: "fc" },
+                { label: "Endgame section", aimchess: "🔒 Locked", firechess: "✓ Free", winner: "fc" },
+                { label: "Time Management", aimchess: "🔒 Locked", firechess: "✓ Free", winner: "fc" },
+              ].map((row) => (
+                <div key={row.label} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-center">
+                  <p className="text-[11px] text-slate-500 mb-2">{row.label}</p>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between gap-2 rounded-lg bg-red-500/[0.06] px-2 py-1">
+                      <span className="text-[10px] text-slate-600">Aimchess</span>
+                      <span className="text-xs font-semibold text-red-400">{row.aimchess}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 rounded-lg bg-emerald-500/[0.08] px-2 py-1">
+                      <span className="text-[10px] text-slate-500">FireChess</span>
+                      <span className="text-xs font-bold text-emerald-400">{row.firechess}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex flex-col items-center gap-1.5">
+              <Link
+                href="/blog/firechess-vs-aimchess-comparison-2026"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-400 transition-colors hover:text-emerald-300"
+              >
+                Read the full comparison article
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </Link>
+              <p className="text-[11px] text-slate-600">
+                Comparison based on Aimchess free tier as of March 2026. Aimchess is a registered trademark of their respective owners.
+              </p>
+            </div>
+          </div>
+
           {/* Comparison table */}
           <div className="glass-card overflow-hidden p-6">
             <h3 className="mb-4 text-lg font-bold text-white">Plan comparison</h3>

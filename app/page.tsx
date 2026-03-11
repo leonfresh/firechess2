@@ -1776,6 +1776,25 @@ export default function HomePage() {
               </div>
 
               {/* ── PNG-exportable region ── */}
+              {/* Loading banner: shown while mental stats / diagnostics are still computing */}
+              {state === "loading" && !sectionsDone.has("mental") && (
+                <div className="relative overflow-hidden rounded-2xl border border-violet-500/25 bg-gradient-to-br from-violet-500/[0.07] via-fuchsia-500/[0.04] to-transparent p-8 text-center">
+                  <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-violet-500/10 blur-[60px]" />
+                  <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-fuchsia-500/10 blur-[60px]" />
+                  <div className="relative">
+                    <p className="text-2xl font-extrabold text-white">🧠 Crunching your deep stats…</p>
+                    <p className="mt-2 text-sm text-slate-400">Opening Report, Accuracy, Radar Chart, Mental Game &amp; Insights are almost ready</p>
+                    <div className="mt-5 flex flex-wrap justify-center gap-2">
+                      {["Opening Report", "Accuracy Score", "Strengths Radar", "Mental Game", "Insights"].map((label) => (
+                        <span key={label} className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.07] bg-white/[0.03] px-3 py-1">
+                          <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-violet-400" />
+                          <span className="text-[11px] text-slate-400">{label}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
               <div ref={pngRef} className="space-y-8">
 
               {/* Report Card */}
@@ -1902,6 +1921,18 @@ export default function HomePage() {
                   }}
                   hasProAccess={hasProAccess}
                 />
+              )}
+
+              {/* Mental game loading skeleton */}
+              {state === "loading" && !sectionsDone.has("mental") && (
+                <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] p-6 md:p-8">
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.06] via-amber-500/[0.04] to-rose-500/[0.06]" />
+                  <div className="relative">
+                    <h2 className="text-xl font-bold text-white">Mental Game</h2>
+                    <p className="mt-1 text-xs text-slate-500">Analysing result patterns across your games…</p>
+                    <AnalysisSectionSkeleton label="Calculating stability, tilt rate, streaks &amp; more…" />
+                  </div>
+                </div>
               )}
 
               {/* Mental / Psychology Stats */}

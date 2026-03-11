@@ -105,7 +105,7 @@ type AnalyzeOptions = {
   since?: number;
   onProgress?: (progress: AnalysisProgress) => void;
   /** Called when each section finishes — enables progressive rendering. */
-  onSectionReady?: (section: "openings" | "tactics" | "endgames" | "time", partial: Partial<AnalyzeResponse>) => void;
+  onSectionReady?: (section: "openings" | "tactics" | "endgames" | "time" | "mental", partial: Partial<AnalyzeResponse>) => void;
 };
 
 const MIN_POSITION_REPEATS = 3;
@@ -2052,6 +2052,11 @@ export async function analyzeOpeningLeaksInBrowser(
     let dbGames: number | undefined;
     try {
       const explorer = await fetchExplorerMoves(fenBefore, sideToMove);
+      // If the API itself failed (429/network), skip this position — we can't validate it.
+      // Better to miss a real leak than to show a sideline as an inaccuracy.
+      if (explorer.failed) {
+        return;
+      }
       const dbMove = explorer.moves.find(
         (m) => m.san === chosenMove || m.uci === chosenMove
       );
@@ -2198,6 +2203,8 @@ export async function analyzeOpeningLeaksInBrowser(
     let dbGames: number | undefined;
     try {
       const explorer = await fetchExplorerMoves(fenBefore, sideToMove);
+      // If the API failed, skip this one-off entirely — can't validate without DB data.
+      if (explorer.failed) return;
       const dbMove = explorer.moves.find(
         (m) => m.san === chosenMove || m.uci === chosenMove
       );
@@ -3512,6 +3519,8 @@ export async function analyzeOpeningLeaksInBrowser(
       })(),
     };
   })();
+
+  options?.onSectionReady?.("mental", { mentalStats, diagnostics: { gameTraces, positionTraces } });
 
   emitProgress(options, {
     phase: "done",

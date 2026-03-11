@@ -31,6 +31,8 @@ export type ExplorerResult = {
   openingName?: string;
   /** ECO code, e.g. "A80" */
   openingEco?: string;
+  /** True when the API call failed (429 / 5xx / network) — distinct from a genuinely out-of-book position. */
+  failed?: boolean;
 };
 
 /* ------------------------------------------------------------------ */
@@ -72,9 +74,9 @@ function computeWinRate(
 /* ------------------------------------------------------------------ */
 
 const CONCURRENCY = 1;           // max parallel requests (1 = fully serial)
-const DELAY_BETWEEN_MS = 350;    // minimum gap between requests
-const MAX_RETRIES = 3;           // retry on 429 / 5xx
-const INITIAL_BACKOFF_MS = 1500; // first retry waits this long
+const DELAY_BETWEEN_MS = 500;    // minimum gap between requests — raised to avoid 429
+const MAX_RETRIES = 2;           // retry on 429 / 5xx (reduced — 3 retries × backoff was too slow)
+const INITIAL_BACKOFF_MS = 2000; // first retry waits this long
 
 /** In-flight count and pending queue */
 let inflight = 0;
@@ -107,7 +109,8 @@ function dequeue(): void {
 
 type CacheEntry = { result: ExplorerResult; timestamp: number };
 const cache = new Map<string, CacheEntry>();
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const CACHE_TTL_MS = 5 * 60 * 1000;   // 5 minutes for successful responses
+const CACHE_FAIL_TTL_MS = 30 * 1000;  // 30 seconds for failures — allows quick retry
 
 function cacheKey(fen: string, sideToMove: string): string {
   return `${fen}|${sideToMove}`;
@@ -134,12 +137,16 @@ export async function fetchExplorerMoves(
   sideToMove: "white" | "black",
 ): Promise<ExplorerResult> {
   const empty: ExplorerResult = { moves: [], totalGames: 0, topPick: null, openingName: undefined, openingEco: undefined };
+  const failed: ExplorerResult = { ...empty, failed: true };
 
   // Check cache first
   const key = cacheKey(fen, sideToMove);
   const cached = cache.get(key);
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
-    return cached.result;
+  if (cached) {
+    const ttl = cached.result.failed ? CACHE_FAIL_TTL_MS : CACHE_TTL_MS;
+    if (Date.now() - cached.timestamp < ttl) {
+      return cached.result;
+    }
   }
 
   // Wait for our turn in the queue
@@ -231,7 +238,7 @@ export async function fetchExplorerMoves(
         }
 
         // Retryable status codes: 429, 5xx
-        if (attempt < MAX_RETRIES && (res.status === 401 || res.status === 429 || res.status >= 500)) {
+        if (attempt < MAX_RETRIES && (res.status === 429 || res.status >= 500)) {
           const retryAfter = Number(res.headers.get("retry-after") ?? "0");
           const backoffMs = retryAfter > 0
             ? retryAfter * 1000
@@ -240,19 +247,21 @@ export async function fetchExplorerMoves(
           continue;
         }
 
-        // Non-retryable error
-        return empty;
+        // Non-retryable error or exhausted retries
+        cache.set(key, { result: failed, timestamp: Date.now() });
+        return failed;
       } catch (err) {
         // Network error / timeout — retry
         if (attempt < MAX_RETRIES) {
           await new Promise((r) => setTimeout(r, INITIAL_BACKOFF_MS * Math.pow(2, attempt)));
           continue;
         }
-        return empty;
+        cache.set(key, { result: failed, timestamp: Date.now() });
+        return failed;
       }
     }
 
-    return empty;
+    return failed;
   } finally {
     dequeue();
   }
