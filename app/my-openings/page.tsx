@@ -1,14 +1,6 @@
 "use client";
 
-/**
- * /my-openings — Personal Opening Tree
- *
- * Scans your recent games (Lichess or Chess.com) and builds an interactive
- * opening tree showing how many times you played each move, your win/draw/loss
- * record from each position, and how it compares to the Lichess opening database.
- */
-
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Chess } from "chess.js";
@@ -251,6 +243,415 @@ function getFenAtPath(path: string[]): string {
 function getSideToMoveAtFen(fen: string): PlayerColor {
   return fen.split(" ")[1] === "w" ? "white" : "black";
 }
+
+/* ── Visual Tree Layout ─────────────────────────────────────────────── */
+
+const VT_NODE_W = 124;
+const VT_NODE_H = 52;
+const VT_COL_W  = 196;  // column stride (left-edge to left-edge)
+const VT_ROW_SZ = 72;   // vertical pixels per leaf slot
+const VT_MX     = 16;   // horizontal margin
+const VT_MY     = 28;   // top margin (room for depth labels)
+const VT_MAX_CH = 3;    // max children shown per node
+const VT_MAX_D  = 5;    // max depth levels rendered
+
+type VTNode = {
+  node: TreeNode;
+  path: string[];
+  cx: number;
+  cy: number;
+};
+
+type VTEdge = {
+  from: VTNode;
+  to:   VTNode;
+  frac: number;    // 0-1, relative to global max count (for stroke width)
+  wr:   number;    // 0-1 win rate of destination node
+  onPath: boolean; // true when this edge is on the selected path
+};
+
+function buildVTLayout(
+  tree: Map<string, TreeNode>,
+  selectedPath: string[],
+): { nodes: VTNode[]; edges: VTEdge[]; W: number; H: number } {
+  const nodes: VTNode[] = [];
+  const edges: VTEdge[] = [];
+
+  // Find global max count for proportional edge widths
+  let globalMax = 1;
+  const scanMax = (m: Map<string, TreeNode>) => {
+    for (const n of m.values()) {
+      if (n.count > globalMax) globalMax = n.count;
+      scanMax(n.children);
+    }
+  };
+  scanMax(tree);
+
+  // Count leaf slots occupied by a subtree rooted at `map`, starting at `depth`
+  const countSlots = (m: Map<string, TreeNode>, depth: number): number => {
+    if (depth >= VT_MAX_D) return 1;
+    const top = [...m.values()].sort((a, b) => b.count - a.count).slice(0, VT_MAX_CH);
+    if (!top.length) return 1;
+    return top.reduce((s, c) => s + countSlots(c.children, depth + 1), 0);
+  };
+
+  let totalSlots = 0;
+
+  // Recursive layout: places nodes into the SVG coordinate space
+  const layout = (
+    m: Map<string, TreeNode>,
+    depth: number,
+    slotOffset: number,   // cumulative slot offset from top
+    parent: VTNode | null,
+    prefix: string[],
+  ): void => {
+    const top = [...m.values()].sort((a, b) => b.count - a.count).slice(0, VT_MAX_CH);
+    if (!top.length || depth >= VT_MAX_D) return;
+
+    let off = slotOffset;
+    for (const ch of top) {
+      const slots = countSlots(ch.children, depth + 1);
+      const cx = VT_MX + depth * VT_COL_W + VT_NODE_W / 2;
+      const cy = VT_MY + (off + slots / 2) * VT_ROW_SZ;
+      const path = [...prefix, ch.san];
+      const vn: VTNode = { node: ch, path, cx, cy };
+      nodes.push(vn);
+
+      if (parent) {
+        const tot = ch.wins + ch.draws + ch.losses;
+        const onPath =
+          path.length <= selectedPath.length &&
+          path.every((s, i) => selectedPath[i] === s);
+        edges.push({
+          from: parent,
+          to: vn,
+          frac: Math.max(0.05, ch.count / globalMax),
+          wr: tot ? ch.wins / tot : 0.5,
+          onPath,
+        });
+      }
+
+      layout(ch.children, depth + 1, off, vn, path);
+      off += slots;
+    }
+    if (depth === 0) totalSlots = off;
+  };
+
+  layout(tree, 0, 0, null, []);
+
+  const maxDepthUsed = nodes.length
+    ? nodes.reduce((m2, n) => Math.max(m2, n.node.depth), 0) + 1
+    : 0;
+  const W = VT_MX * 2 + maxDepthUsed * VT_COL_W + VT_NODE_W;
+  const H = VT_MY * 2 + Math.max(1, totalSlots) * VT_ROW_SZ;
+  return { nodes, edges, W, H };
+}
+
+/* ── VisualTree SVG component ────────────────────────────────────────── */
+
+const VisualTree = React.memo(function VisualTree({
+  tree,
+  selectedPath,
+  onSelect,
+}: {
+  tree: Map<string, TreeNode>;
+  selectedPath: string[];
+  onSelect: (path: string[]) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const { nodes, edges, W, H } = useMemo(
+    () => buildVTLayout(tree, selectedPath),
+    [tree, selectedPath],
+  );
+
+  // Auto-scroll to keep the selected node centred in the viewport
+  useEffect(() => {
+    if (!scrollRef.current || !selectedPath.length) return;
+    const sel = nodes.find(
+      (n) =>
+        n.path.length === selectedPath.length &&
+        n.path.every((s, i) => selectedPath[i] === s),
+    );
+    if (!sel) return;
+    const el = scrollRef.current;
+    el.scrollTo({
+      left: Math.max(0, sel.cx - el.clientWidth  / 2),
+      top:  Math.max(0, sel.cy - el.clientHeight / 2),
+      behavior: "smooth",
+    });
+  }, [selectedPath, nodes]);
+
+  if (!nodes.length) {
+    return (
+      <div className="flex h-56 items-center justify-center text-sm text-slate-600">
+        No moves found for this filter
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={scrollRef}
+      className="overflow-auto overscroll-contain"
+      style={{ maxHeight: 520 }}
+    >
+      <svg
+        width={W}
+        height={Math.max(H, 200)}
+        xmlns="http://www.w3.org/2000/svg"
+        style={{ display: "block" }}
+      >
+        <defs>
+          {/* Glow filter for selected nodes / path edges */}
+          <filter id="vtGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3.5" result="blurred" />
+            <feMerge>
+              <feMergeNode in="blurred" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          {/* Subtle node shadow */}
+          <filter id="vtShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="2" stdDeviation="4" floodColor="#000" floodOpacity="0.5" />
+          </filter>
+          {/* Glow for selected node halo */}
+          <filter id="nodeHalo" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="6" result="blur" />
+            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+
+        {/* Subtle vertical guide lines per column */}
+        {Array.from(
+          new Set(nodes.map((n) => n.node.depth)),
+        )
+          .sort((a, b) => a - b)
+          .map((d) => {
+            const x = VT_MX + d * VT_COL_W + VT_NODE_W / 2;
+            return (
+              <line
+                key={d}
+                x1={x} y1={VT_MY - 4}
+                x2={x} y2={Math.max(H, 200)}
+                stroke="#1e293b"
+                strokeWidth={1}
+                strokeDasharray="3 7"
+              />
+            );
+          })}
+
+        {/* Column depth labels */}
+        {Array.from(new Set(nodes.map((n) => n.node.depth)))
+          .sort((a, b) => a - b)
+          .map((d) => {
+            const x = VT_MX + d * VT_COL_W + VT_NODE_W / 2;
+            const isWhite = d % 2 === 0;
+            const mNum = Math.floor(d / 2) + 1;
+            return (
+              <text
+                key={d}
+                x={x}
+                y={14}
+                textAnchor="middle"
+                fill="#2d3e52"
+                fontSize={9}
+                fontFamily="ui-sans-serif, system-ui, sans-serif"
+                letterSpacing={0.5}
+              >
+                {isWhite ? `${mNum}. WHITE` : `${mNum}. BLACK`}
+              </text>
+            );
+          })}
+
+        {/* Edges — drawn beneath nodes */}
+        {edges.map((edge, i) => {
+          const x1 = edge.from.cx + VT_NODE_W / 2;
+          const y1 = edge.from.cy;
+          const x2 = edge.to.cx   - VT_NODE_W / 2;
+          const y2 = edge.to.cy;
+          const dx = x2 - x1;
+          const color =
+            edge.wr > 0.55   ? "#10b981"
+            : edge.wr < 0.40 ? "#ef4444"
+            : "#64748b";
+          const sw      = edge.onPath ? 2.5 + edge.frac * 2 : 0.8 + edge.frac * 1.8;
+          const opacity = edge.onPath ? 0.9 : 0.18 + edge.frac * 0.38;
+          return (
+            <path
+              key={i}
+              d={`M ${x1} ${y1} C ${x1 + dx * 0.45} ${y1} ${x2 - dx * 0.45} ${y2} ${x2} ${y2}`}
+              fill="none"
+              stroke={edge.onPath ? "#10b981" : color}
+              strokeWidth={sw}
+              opacity={opacity}
+              filter={edge.onPath ? "url(#vtGlow)" : undefined}
+            />
+          );
+        })}
+
+        {/* Nodes */}
+        {nodes.map((vn) => {
+          const isSelected =
+            vn.path.length === selectedPath.length &&
+            vn.path.every((s, i) => selectedPath[i] === s);
+          const isAncestor =
+            !isSelected &&
+            vn.path.length < selectedPath.length &&
+            vn.path.every((s, i) => selectedPath[i] === s);
+
+          const nx  = vn.cx - VT_NODE_W / 2;
+          const ny  = vn.cy - VT_NODE_H / 2;
+          const tot = vn.node.wins + vn.node.draws + vn.node.losses;
+          const wr  = tot ? vn.node.wins / tot : 0.5;
+          const wp  = Math.round(wr * 100);
+
+          // Bottom WDL bar widths (pixels)
+          const barInner = VT_NODE_W - 10;
+          const winW  = tot ? Math.round((vn.node.wins  / tot) * barInner) : 0;
+          const drawW = tot ? Math.round((vn.node.draws / tot) * barInner) : 0;
+          const lossW = Math.max(0, barInner - winW - drawW);
+
+          const borderColor = isSelected
+            ? "#10b981"
+            : isAncestor
+            ? "#60a5fa"
+            : wr > 0.55
+            ? "rgba(16,185,129,0.45)"
+            : wr < 0.40
+            ? "rgba(239,68,68,0.45)"
+            : "rgba(51,65,85,0.9)";
+
+          const bgFill = isSelected
+            ? "rgba(16,185,129,0.11)"
+            : isAncestor
+            ? "rgba(59,130,246,0.07)"
+            : "rgba(11,18,35,0.85)";
+
+          const textFill = isSelected
+            ? "#6ee7b7"
+            : isAncestor
+            ? "#93c5fd"
+            : "#e2e8f0";
+
+          const isWhiteMove = vn.node.depth % 2 === 0;
+          const mNum  = Math.floor(vn.node.depth / 2) + 1;
+          const prefix = isWhiteMove ? `${mNum}.` : `${mNum}…`;
+
+          return (
+            <g
+              key={vn.path.join(",")}
+              onClick={() => onSelect(vn.path)}
+              style={{ cursor: "pointer" }}
+            >
+              {/* Outer glow for selected */}
+              {isSelected && (
+                <rect
+                  x={nx - 4} y={ny - 4}
+                  width={VT_NODE_W + 8} height={VT_NODE_H + 8}
+                  rx={13}
+                  fill="none"
+                  stroke="#10b981"
+                  strokeWidth={1.5}
+                  opacity={0.25}
+                  filter="url(#nodeHalo)"
+                />
+              )}
+
+              {/* Main node rect */}
+              <rect
+                x={nx} y={ny}
+                width={VT_NODE_W} height={VT_NODE_H}
+                rx={10}
+                fill={bgFill}
+                stroke={borderColor}
+                strokeWidth={isSelected || isAncestor ? 1.5 : 0.8}
+                filter={isSelected ? "url(#vtShadow)" : undefined}
+              />
+
+              {/* Move number dim prefix */}
+              <text
+                x={nx + 8} y={ny + 14}
+                fill={isSelected ? "#34d399" : "#334155"}
+                fontSize={9}
+                fontFamily="ui-monospace, monospace"
+              >
+                {prefix}
+              </text>
+
+              {/* SAN — main label */}
+              <text
+                x={nx + 8} y={ny + 28}
+                fill={textFill}
+                fontSize={14}
+                fontWeight="700"
+                fontFamily="ui-monospace, monospace"
+              >
+                {vn.node.san}
+              </text>
+
+              {/* Count badge top-right */}
+              <text
+                x={nx + VT_NODE_W - 6} y={ny + 14}
+                fill="#374151"
+                fontSize={9}
+                textAnchor="end"
+                fontFamily="ui-sans-serif, sans-serif"
+              >
+                {vn.node.count}×
+              </text>
+
+              {/* Win% bottom-right */}
+              <text
+                x={nx + VT_NODE_W - 6} y={ny + 28}
+                fill={wr > 0.55 ? "#6ee7b7" : wr < 0.40 ? "#f87171" : "#94a3b8"}
+                fontSize={11}
+                fontWeight="600"
+                textAnchor="end"
+                fontFamily="ui-sans-serif, sans-serif"
+              >
+                {wp}%
+              </text>
+
+              {/* WDL bar strip at bottom of node */}
+              <rect
+                x={nx + 5} y={ny + VT_NODE_H - 8}
+                width={barInner} height={4}
+                rx={2}
+                fill="rgba(255,255,255,0.04)"
+              />
+              {winW > 0 && (
+                <rect
+                  x={nx + 5} y={ny + VT_NODE_H - 8}
+                  width={winW} height={4}
+                  rx={2}
+                  fill="#10b981"
+                  opacity={0.65}
+                />
+              )}
+              {drawW > 0 && (
+                <rect
+                  x={nx + 5 + winW} y={ny + VT_NODE_H - 8}
+                  width={drawW} height={4}
+                  fill="#64748b"
+                  opacity={0.5}
+                />
+              )}
+              {lossW > 0 && (
+                <rect
+                  x={nx + 5 + winW + drawW} y={ny + VT_NODE_H - 8}
+                  width={lossW} height={4}
+                  rx={2}
+                  fill="#ef4444"
+                  opacity={0.35}
+                />
+              )}
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+});
 
 /* ── Sub-components ─────────────────────────────────────────────────── */
 
@@ -532,6 +933,9 @@ function MyOpeningsInner() {
   const [explorerData, setExplorerData] = useState<ExplorerResult | null>(null);
   const [explorerLoading, setExplorerLoading] = useState(false);
 
+  /* view mode for opening tree panel */
+  const [viewMode, setViewMode] = useState<"visual" | "list">("visual");
+
   /* derived */
   const currentFen = useMemo(() => getFenAtPath(selectedPath), [selectedPath]);
   const sideToMove = useMemo(() => getSideToMoveAtFen(currentFen), [currentFen]);
@@ -674,8 +1078,14 @@ function MyOpeningsInner() {
   /* ── Render ─────────────────────────────────────────────────────── */
 
   return (
-    <div className="min-h-screen bg-[#050a12] text-white">
-      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="relative min-h-screen bg-[#050a12] text-white overflow-hidden">
+      {/* Ambient background glows */}
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
+        <div className="absolute -top-48 left-1/4 h-[500px] w-[500px] rounded-full bg-emerald-500/[0.05] blur-[110px]" />
+        <div className="absolute top-1/3 right-1/4 h-80 w-80 rounded-full bg-cyan-500/[0.04] blur-[90px]" />
+        <div className="absolute bottom-1/4 left-1/3 h-64 w-64 rounded-full bg-blue-500/[0.04] blur-[80px]" />
+      </div>
+      <div className="relative mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
 
         {/* Header */}
         <div className="mb-8">
@@ -684,8 +1094,10 @@ function MyOpeningsInner() {
             <span>·</span>
             <span className="text-slate-300">My Openings</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            My Opening Tree
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            <span className="bg-gradient-to-r from-emerald-400 via-teal-300 to-cyan-400 bg-clip-text text-transparent">
+              My Opening Tree
+            </span>
           </h1>
           <p className="mt-2 text-slate-400 max-w-2xl">
             See every opening line you&apos;ve played, how often, and your win rate — compared to
@@ -884,41 +1296,87 @@ function MyOpeningsInner() {
             )}
 
             {/* Main 2-column layout */}
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(280px,340px)_1fr]">
+            <div className={`grid grid-cols-1 gap-6 ${
+              viewMode === "visual"
+                ? "lg:grid-cols-[1fr_minmax(400px,500px)]"
+                : "lg:grid-cols-[minmax(280px,340px)_1fr]"
+            }`}>
 
               {/* ── LEFT: Opening tree ─────────────── */}
-              <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
-                <div className="border-b border-white/[0.06] px-4 py-3 flex items-center justify-between">
-                  <h2 className="text-sm font-semibold text-slate-200">Opening Tree</h2>
-                  <span className="text-[11px] text-slate-600">
-                    {rootSorted.length} first moves
-                  </span>
-                </div>
-
-                <div className="max-h-[600px] overflow-y-auto p-2 scrollbar-thin">
-                  {rootSorted.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-slate-600">
-                      No games found for this filter
-                    </p>
-                  ) : (
-                    rootSorted.map((node) => (
-                      <TreeNodeRow
-                        key={node.san}
-                        node={node}
-                        path={[node.san]}
-                        selectedPath={selectedPath}
-                        onSelect={setSelectedPath}
-                        indent={0}
-                        username={username}
-                        norm={username.toLowerCase()}
-                      />
-                    ))
+              <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] overflow-hidden flex flex-col">
+                {/* Tab header */}
+                <div className="border-b border-white/[0.06] px-4 py-3 flex items-center gap-3 shrink-0">
+                  <div className="flex rounded-lg border border-white/[0.07] bg-white/[0.03] p-0.5 gap-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("visual")}
+                      className={`rounded-md px-3 py-1 text-xs font-semibold transition-all ${
+                        viewMode === "visual"
+                          ? "bg-emerald-500/15 text-emerald-300 shadow"
+                          : "text-slate-500 hover:text-slate-300"
+                      }`}
+                    >
+                      🌲 Visual
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode("list")}
+                      className={`rounded-md px-3 py-1 text-xs font-semibold transition-all ${
+                        viewMode === "list"
+                          ? "bg-white/[0.08] text-slate-200 shadow"
+                          : "text-slate-500 hover:text-slate-300"
+                      }`}
+                    >
+                      📋 List
+                    </button>
+                  </div>
+                  {viewMode === "visual" && (
+                    <span className="ml-auto text-[10px] text-slate-600">
+                      top {VT_MAX_CH}/node · {VT_MAX_D} levels · scroll →
+                    </span>
+                  )}
+                  {viewMode === "list" && (
+                    <span className="ml-auto text-[11px] text-slate-600">
+                      {rootSorted.length} first moves
+                    </span>
                   )}
                 </div>
 
+                {/* Tree content */}
+                {viewMode === "visual" ? (
+                  <div className="min-h-[200px] bg-[#07101a]">
+                    <VisualTree
+                      tree={tree}
+                      selectedPath={selectedPath}
+                      onSelect={setSelectedPath}
+                    />
+                  </div>
+                ) : (
+                  <div className="max-h-[520px] overflow-y-auto p-2 scrollbar-thin">
+                    {rootSorted.length === 0 ? (
+                      <p className="py-8 text-center text-sm text-slate-600">
+                        No games found for this filter
+                      </p>
+                    ) : (
+                      rootSorted.map((node) => (
+                        <TreeNodeRow
+                          key={node.san}
+                          node={node}
+                          path={[node.san]}
+                          selectedPath={selectedPath}
+                          onSelect={setSelectedPath}
+                          indent={0}
+                          username={username}
+                          norm={username.toLowerCase()}
+                        />
+                      ))
+                    )}
+                  </div>
+                )}
+
                 {/* Legend */}
-                <div className="border-t border-white/[0.05] px-4 py-2 flex items-center gap-4 text-[10px] text-slate-600">
-                  <span>Win%</span>
+                <div className="mt-auto border-t border-white/[0.05] px-4 py-2 flex items-center gap-4 text-[10px] text-slate-600 shrink-0">
+                  <span>Win rate</span>
                   <span className="flex items-center gap-1">
                     <span className="inline-block h-1.5 w-3 rounded bg-emerald-500/70" />W
                   </span>
@@ -928,6 +1386,16 @@ function MyOpeningsInner() {
                   <span className="flex items-center gap-1">
                     <span className="inline-block h-1.5 w-3 rounded bg-red-500/50" />L
                   </span>
+                  {viewMode === "visual" && (
+                    <span className="ml-auto flex items-center gap-3">
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block h-px w-6 bg-emerald-500/60" />on path
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block h-[1px] w-6 bg-slate-500/40" />branch
+                      </span>
+                    </span>
+                  )}
                 </div>
               </div>
 
@@ -1101,33 +1569,82 @@ function MyOpeningsInner() {
 
         {/* Idle state — show feature overview */}
         {scanState === "idle" && (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 mt-2">
-            {[
-              {
-                icon: "🌲",
-                title: "Your Opening Tree",
-                desc: "See every line you've played, how many times, and your W/D/L record for each path.",
-              },
-              {
-                icon: "🔬",
-                title: "Database Comparison",
-                desc: "Compare your moves to the Lichess master game database — see where you deviate.",
-              },
-              {
-                icon: "📊",
-                title: "Move Statistics",
-                desc: "Instantly see your most-played openings, win rates, and problem positions.",
-              },
-            ].map((f) => (
-              <div
-                key={f.title}
-                className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5"
-              >
-                <div className="mb-2 text-2xl">{f.icon}</div>
-                <h3 className="mb-1 text-sm font-semibold text-white">{f.title}</h3>
-                <p className="text-xs text-slate-500">{f.desc}</p>
+          <div className="space-y-6">
+            {/* Visual tree preview hint */}
+            <div className="rounded-2xl border border-emerald-500/10 bg-gradient-to-br from-emerald-500/5 to-transparent p-6">
+              <div className="flex flex-col items-center gap-4 sm:flex-row">
+                {/* Mini SVG tree preview */}
+                <div className="shrink-0 overflow-hidden rounded-xl border border-white/[0.06] bg-[#07101a] p-3">
+                  <svg width={220} height={120} xmlns="http://www.w3.org/2000/svg">
+                    {/* Root */}
+                    <rect x={8} y={44} width={64} height={32} rx={6} fill="rgba(16,185,129,0.12)" stroke="#10b981" strokeWidth={1.5} />
+                    <text x={16} y={56} fill="#94a3b8" fontSize={8} fontFamily="monospace">1.</text>
+                    <text x={16} y={68} fill="#6ee7b7" fontSize={11} fontWeight="700" fontFamily="monospace">e4</text>
+                    <text x={60} y={56} fill="#374151" fontSize={8} fontFamily="sans-serif" textAnchor="end">42×</text>
+                    <text x={60} y={68} fill="#6ee7b7" fontSize={9} fontWeight="600" fontFamily="sans-serif" textAnchor="end">58%</text>
+                    {/* e4 bottom bar */}
+                    <rect x={10} y={70} width={60} height={3} rx={1.5} fill="#10b981" opacity={0.5} />
+                    {/* Edge e4→e5 */}
+                    <path d="M 72 60 C 90 60 92 36 110 36" fill="none" stroke="#10b981" strokeWidth={2} opacity={0.7} />
+                    {/* Edge e4→c5 */}
+                    <path d="M 72 60 C 90 60 92 84 110 84" fill="none" stroke="#64748b" strokeWidth={1.5} opacity={0.5} />
+                    {/* e5 */}
+                    <rect x={110} y={20} width={56} height={32} rx={6} fill="rgba(59,130,246,0.08)" stroke="rgba(59,130,246,0.5)" strokeWidth={1} />
+                    <text x={118} y={32} fill="#94a3b8" fontSize={8} fontFamily="monospace">1…</text>
+                    <text x={118} y={44} fill="#93c5fd" fontSize={11} fontWeight="700" fontFamily="monospace">e5</text>
+                    <text x={155} y={44} fill="#374151" fontSize={9} fontWeight="600" fontFamily="sans-serif" textAnchor="end">61%</text>
+                    {/* c5 */}
+                    <rect x={110} y={68} width={56} height={32} rx={6} fill="rgba(15,23,42,0.8)" stroke="rgba(51,65,85,0.9)" strokeWidth={0.8} />
+                    <text x={118} y={80} fill="#334155" fontSize={8} fontFamily="monospace">1…</text>
+                    <text x={118} y={92} fill="#e2e8f0" fontSize={11} fontWeight="700" fontFamily="monospace">c5</text>
+                    <text x={155} y={92} fill="#94a3b8" fontSize={9} fontWeight="600" fontFamily="sans-serif" textAnchor="end">52%</text>
+                    {/* depth label */}
+                    <text x={40} y={10} textAnchor="middle" fill="#1e3a2f" fontSize={7} fontFamily="sans-serif">1. WHITE</text>
+                    <text x={138} y={10} textAnchor="middle" fill="#1e3a2f" fontSize={7} fontFamily="sans-serif">1. BLACK</text>
+                  </svg>
+                </div>
+                <div>
+                  <div className="mb-1 flex items-center gap-2">
+                    <span className="text-lg">🌲</span>
+                    <h3 className="text-base font-semibold text-white">Visual Opening Tree</h3>
+                    <span className="rounded-full border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold text-emerald-400">NEW</span>
+                  </div>
+                  <p className="text-sm text-slate-400 max-w-sm">
+                    Enter your username above and scan your games to see an interactive node graph of every opening line you&apos;ve played — with win rates, move frequencies, and Lichess database comparisons.
+                  </p>
+                </div>
               </div>
-            ))}
+            </div>
+
+            {/* Feature cards */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {[
+                {
+                  icon: "🔬",
+                  title: "Database Comparison",
+                  desc: "Compare your moves to the Lichess master game database — discover where you deviate from theory.",
+                },
+                {
+                  icon: "📊",
+                  title: "Move Statistics",
+                  desc: "See your most-played openings, win rates by line, and positions where you consistently struggle.",
+                },
+                {
+                  icon: "🎯",
+                  title: "Practice Weak Lines",
+                  desc: "Identify openings where your win rate is low and drill them with targeted puzzles.",
+                },
+              ].map((f) => (
+                <div
+                  key={f.title}
+                  className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5"
+                >
+                  <div className="mb-2 text-2xl">{f.icon}</div>
+                  <h3 className="mb-1 text-sm font-semibold text-white">{f.title}</h3>
+                  <p className="text-xs text-slate-500">{f.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
