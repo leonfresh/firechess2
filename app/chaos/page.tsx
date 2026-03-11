@@ -1940,6 +1940,7 @@ export default function ChaosChessPage() {
       setRematchRequested(false);
       setRematchReceived(false);
       triggeredDraftForPhaseRef.current = -1;
+      prevPhaseRef.current = -1;
       // Reset timer and ELO state
       const tc = timeControlRef.current;
       setTimers({ w: (tc?.base ?? 0) * 1000, b: (tc?.base ?? 0) * 1000 });
@@ -2141,6 +2142,7 @@ export default function ChaosChessPage() {
         setRematchRequested(false);
         setRematchReceived(false);
         triggeredDraftForPhaseRef.current = -1;
+        prevPhaseRef.current = -1;
         // Swap colors
         const newColor = playerColor === "white" ? "black" : "white";
         setPlayerColor(newColor);
@@ -3074,6 +3076,9 @@ export default function ChaosChessPage() {
       setChaosState(stateWithTracking);
 
       // In multiplayer staggered drafting: both players resume immediately after picking
+      // Also update gameStatusRef synchronously so the WS guard ("drafting" → drop move)
+      // can't fire between setGameStatus() and React's next render commit.
+      gameStatusRef.current = "playing";
       if (isMultiplayer) {
         const isFirstDrafter = playerColor === "white";
         setGameStatus("playing");
@@ -3276,6 +3281,7 @@ export default function ChaosChessPage() {
     setRematchRequested(false);
     setRematchReceived(false);
     triggeredDraftForPhaseRef.current = -1;
+    prevPhaseRef.current = -1;
     recomputeChaosMoves(g, cs);
     setEventLog([{ type: "info", message: "⚡ Rematch started! Good luck!", icon: "⚡", pepe: PEPE.hyped }]);
     playSound("reveal-stinger");
