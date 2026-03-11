@@ -198,14 +198,10 @@ export function OpeningRankings({ openingSummaries }: Props) {
 
             <div className="flex items-center gap-3">
               {/* Board — larger */}
-              <div
-                className="shrink-0 border border-white/[0.08]"
-                style={{ width: 120, height: 120 }}
-              >
+              <div className="w-[120px] h-[120px] shrink-0 overflow-hidden border border-white/[0.08]">
                 <Chessboard
                   id={`opening-rank-${idx}`}
                   position={entry.fen}
-                  boardWidth={120}
                   arePiecesDraggable={false}
                   boardOrientation={entry.userColor}
                   animationDuration={0}

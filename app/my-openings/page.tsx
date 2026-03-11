@@ -7,7 +7,6 @@ import { Chess } from "chess.js";
 import { Chessboard } from "@/components/chessboard-compat";
 import { fetchExplorerMoves, type ExplorerResult } from "@/lib/lichess-explorer";
 import { useBoardTheme, useCustomPieces, useShowCoordinates } from "@/lib/use-coins";
-import { useBoardSize } from "@/lib/use-board-size";
 import type { AnalysisSource } from "@/lib/client-analysis";
 
 /* ── Constants ─────────────────────────────────────────────────────── */
@@ -905,7 +904,6 @@ function ExplorerPanel({
 
 function MyOpeningsInner() {
   const searchParams = useSearchParams();
-  const { ref: boardContainerRef, size: boardSize } = useBoardSize(480, { evalBar: false });
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
@@ -1404,13 +1402,11 @@ function MyOpeningsInner() {
 
                 {/* Board */}
                 <div
-                  ref={boardContainerRef}
                   className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4"
                 >
-                  <div className="flex justify-center">
+                  <div className="w-full max-w-[480px] mx-auto">
                     <Chessboard
                       position={currentFen}
-                      boardWidth={boardSize}
                       boardOrientation={boardOrientation}
                       arePiecesDraggable={false}
                       showBoardNotation={showCoords}

@@ -1450,6 +1450,297 @@ export default function HomePage() {
             ))}
           </section>
 
+          {/* ─── App Launcher ─── */}
+          {state === "idle" && (
+            <section className="animate-fade-in mx-auto w-full max-w-5xl">
+              <div className="mb-6 text-center">
+                <span className="mb-2 inline-block rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-400">
+                  All Tools
+                </span>
+                <h2 className="mt-2 text-2xl font-bold text-white sm:text-3xl">
+                  Your Chess <span className="gradient-text">Command Center</span>
+                </h2>
+                <p className="mt-1.5 text-sm text-slate-400">Tap to launch any tool</p>
+              </div>
+
+              {/* Tablet device mockup */}
+              <div className="relative mx-auto w-full max-w-[700px]">
+                {/* Device shadow glow */}
+                <div className="pointer-events-none absolute inset-x-8 bottom-0 h-16 rounded-[40px] bg-emerald-500/[0.08] blur-2xl" />
+
+                {/* Device outer body */}
+                <div className="relative rounded-[36px] border border-white/[0.1] bg-gradient-to-b from-[#1c2a3a] via-[#111c2a] to-[#0c1520] p-[10px] shadow-2xl shadow-black/70 ring-1 ring-white/[0.04]">
+                  {/* Side buttons (decorative) */}
+                  <div className="absolute -left-[3px] top-24 h-8 w-[3px] rounded-l-sm bg-gradient-to-b from-white/[0.08] to-white/[0.04]" />
+                  <div className="absolute -left-[3px] top-36 h-12 w-[3px] rounded-l-sm bg-gradient-to-b from-white/[0.08] to-white/[0.04]" />
+                  <div className="absolute -right-[3px] top-28 h-14 w-[3px] rounded-r-sm bg-gradient-to-b from-white/[0.08] to-white/[0.04]" />
+
+                  {/* Screen */}
+                  <div className="overflow-hidden rounded-[28px] bg-[#060e18]">
+                    {/* Status bar */}
+                    <div className="flex items-center justify-between bg-[#060e18] px-5 py-2">
+                      <span className="text-[11px] font-semibold tabular-nums text-white/50">9:41</span>
+                      <div className="flex items-center gap-1">
+                        {/* Signal bars */}
+                        <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
+                          <rect x="0" y="7" width="2.5" height="3" rx="0.5" fill="rgba(255,255,255,0.5)" />
+                          <rect x="3.5" y="4.5" width="2.5" height="5.5" rx="0.5" fill="rgba(255,255,255,0.5)" />
+                          <rect x="7" y="2" width="2.5" height="8" rx="0.5" fill="rgba(255,255,255,0.5)" />
+                          <rect x="10.5" y="0" width="2.5" height="10" rx="0.5" fill="rgba(255,255,255,0.2)" />
+                        </svg>
+                        {/* Wifi */}
+                        <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
+                          <path d="M7 8.5 C7 8.5 7 8.5 7 8.5" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" />
+                          <path d="M4.5 6.5 C5.5 5.2 8.5 5.2 9.5 6.5" stroke="rgba(255,255,255,0.6)" strokeWidth="1.3" strokeLinecap="round" fill="none" />
+                          <path d="M2 4 C4 1.5 10 1.5 12 4" stroke="rgba(255,255,255,0.4)" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+                        </svg>
+                        {/* Battery */}
+                        <svg width="22" height="11" viewBox="0 0 22 11" fill="none">
+                          <rect x="0.5" y="0.5" width="18" height="10" rx="2.5" stroke="rgba(255,255,255,0.5)" strokeWidth="1" />
+                          <rect x="1.5" y="1.5" width="13" height="8" rx="1.5" fill="rgba(255,255,255,0.55)" />
+                          <path d="M19.5 3.5 C20.3 3.5 20.3 7.5 19.5 7.5" stroke="rgba(255,255,255,0.4)" strokeWidth="1" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* Wallpaper + icons */}
+                    <div
+                      className="relative px-4 pb-3 pt-2"
+                      style={{
+                        background: "radial-gradient(ellipse at 30% 20%, rgba(16,185,129,0.08) 0%, transparent 55%), radial-gradient(ellipse at 70% 80%, rgba(59,130,246,0.07) 0%, transparent 55%), #060e18",
+                      }}
+                    >
+                      {/* Subtle dot grid wallpaper */}
+                      <div
+                        className="pointer-events-none absolute inset-0 opacity-[0.03]"
+                        style={{
+                          backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)",
+                          backgroundSize: "28px 28px",
+                        }}
+                      />
+
+                      {/* App grid */}
+                      <div className="relative grid grid-cols-4 gap-x-3 gap-y-4 sm:grid-cols-5 sm:gap-x-4">
+                        {([
+                          {
+                            label: "My Openings",
+                            href: "/my-openings",
+                            gradient: "from-emerald-500 to-teal-600",
+                            glow: "rgba(16,185,129,0.5)",
+                            icon: (
+                              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7" stroke="rgba(255,255,255,0.95)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 3 C12 3 8 7 8 11 C8 13 10 14 12 14 C14 14 16 13 16 11 C16 7 12 3 12 3Z" fill="rgba(255,255,255,0.15)" />
+                                <path d="M12 14 L12 21" />
+                                <path d="M12 14 C12 14 8 12 6 15" />
+                                <path d="M12 17 C12 17 15 15 17 18" />
+                              </svg>
+                            ),
+                          },
+                          {
+                            label: "Chaos Chess",
+                            href: "/chaos",
+                            gradient: "from-purple-600 to-fuchsia-600",
+                            glow: "rgba(168,85,247,0.5)",
+                            icon: (
+                              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7">
+                                <path d="M13 2 L9 11 H13 L11 22 L19 9 H14 Z" fill="rgba(255,255,255,0.9)" stroke="rgba(255,255,255,0.3)" strokeWidth={0.5} />
+                                <circle cx="6" cy="8" r="2.5" fill="rgba(255,255,255,0.25)" stroke="rgba(255,255,255,0.6)" strokeWidth={1} />
+                              </svg>
+                            ),
+                          },
+                          {
+                            label: "Train",
+                            href: "/train",
+                            gradient: "from-amber-500 to-orange-600",
+                            glow: "rgba(245,158,11,0.5)",
+                            icon: (
+                              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7" stroke="rgba(255,255,255,0.95)" strokeWidth={1.6} strokeLinecap="round">
+                                <circle cx="12" cy="12" r="9" opacity={0.2} fill="rgba(255,255,255,0.15)" />
+                                <circle cx="12" cy="12" r="4.5" opacity={0.4} fill="rgba(255,255,255,0.15)" />
+                                <circle cx="12" cy="12" r="2" fill="rgba(255,255,255,0.9)" />
+                                <line x1="12" y1="3" x2="12" y2="6" strokeWidth={1.8} />
+                                <line x1="12" y1="18" x2="12" y2="21" strokeWidth={1.8} />
+                                <line x1="3" y1="12" x2="6" y2="12" strokeWidth={1.8} />
+                                <line x1="18" y1="12" x2="21" y2="12" strokeWidth={1.8} />
+                              </svg>
+                            ),
+                          },
+                          {
+                            label: "Openings",
+                            href: "/openings",
+                            gradient: "from-sky-500 to-blue-600",
+                            glow: "rgba(14,165,233,0.5)",
+                            icon: (
+                              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7" stroke="rgba(255,255,255,0.9)" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M4 20 V6 C4 5 5 4 6 4 H18 C19 4 20 5 20 6 V20" fill="rgba(255,255,255,0.08)" />
+                                <path d="M4 20 H20" />
+                                <path d="M8 8 H16" />
+                                <path d="M8 12 H14" />
+                                <path d="M8 16 H12" />
+                                <path d="M12 20 L12 4" strokeWidth={0.4} stroke="rgba(255,255,255,0.25)" />
+                              </svg>
+                            ),
+                          },
+                          {
+                            label: "Leaderboard",
+                            href: "/leaderboard",
+                            gradient: "from-yellow-500 to-amber-600",
+                            glow: "rgba(234,179,8,0.5)",
+                            icon: (
+                              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7">
+                                <path d="M12 3 L13.5 8 H18.5 L14.5 11 L16 16 L12 13 L8 16 L9.5 11 L5.5 8 H10.5 Z" fill="rgba(255,255,255,0.9)" stroke="rgba(255,255,255,0.4)" strokeWidth={0.5} />
+                                <path d="M7 20 H17 M9 20 V16 M15 20 V16" stroke="rgba(255,255,255,0.8)" strokeWidth={1.5} strokeLinecap="round" />
+                              </svg>
+                            ),
+                          },
+                          {
+                            label: "Dungeon",
+                            href: "/dungeon",
+                            gradient: "from-red-600 to-rose-700",
+                            glow: "rgba(220,38,38,0.5)",
+                            icon: (
+                              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7" stroke="rgba(255,255,255,0.9)" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M4 20 V10 L8 6 H16 L20 10 V20" fill="rgba(255,255,255,0.07)" />
+                                <path d="M4 20 H20" />
+                                <path d="M10 20 V15 H14 V20" fill="rgba(255,255,255,0.1)" />
+                                <path d="M8 6 V3 M12 6 V3 M16 6 V3" />
+                              </svg>
+                            ),
+                          },
+                          {
+                            label: "Roast",
+                            href: "/roast",
+                            gradient: "from-orange-500 to-red-600",
+                            glow: "rgba(249,115,22,0.5)",
+                            icon: (
+                              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7">
+                                <path d="M12 3 C8 7 6 10 8 13 C9 14.5 10 14 10 13 C10 15 11 17 12 18 C13 17 14 15 14 13 C14 14 15 14.5 16 13 C18 10 16 7 12 3Z" fill="rgba(255,180,60,0.9)" stroke="rgba(255,220,100,0.5)" strokeWidth={0.5} />
+                                <path d="M12 10 C11 12 11.5 15 12 16 C12.5 15 13 12 12 10Z" fill="rgba(255,80,20,0.9)" />
+                                <path d="M4 21 Q6 17 8 20 Q10 23 12 21 Q14 23 16 20 Q18 17 20 21" stroke="rgba(255,255,255,0.5)" strokeWidth={1.2} fill="none" strokeLinecap="round" />
+                              </svg>
+                            ),
+                          },
+                          {
+                            label: "Guess ELO",
+                            href: "/guess",
+                            gradient: "from-violet-600 to-purple-700",
+                            glow: "rgba(124,58,237,0.5)",
+                            icon: (
+                              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7" stroke="rgba(255,255,255,0.9)" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="9" fill="rgba(255,255,255,0.05)" />
+                                <path d="M9 9 C9 7 15 7 15 9.5 C15 11.5 12 12 12 14" />
+                                <circle cx="12" cy="17" r="0.8" fill="rgba(255,255,255,0.9)" />
+                              </svg>
+                            ),
+                          },
+                          {
+                            label: "Changelog",
+                            href: "/changelog",
+                            gradient: "from-cyan-500 to-blue-600",
+                            glow: "rgba(6,182,212,0.5)",
+                            icon: (
+                              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7" stroke="rgba(255,255,255,0.9)" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M12 3 A9 9 0 0 1 21 12" strokeWidth={2} />
+                                <path d="M21 12 A9 9 0 0 1 12 21 A9 9 0 0 1 3 12 A9 9 0 0 1 12 3" strokeDasharray="3 3" opacity={0.4} />
+                                <path d="M16 12 L12 8 L8 12" />
+                                <path d="M12 8 L12 16" />
+                              </svg>
+                            ),
+                          },
+                          {
+                            label: "Pricing",
+                            href: "/pricing",
+                            gradient: "from-pink-500 to-rose-600",
+                            glow: "rgba(236,72,153,0.5)",
+                            icon: (
+                              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7">
+                                <path d="M12 3 L14 8 H20 L15.5 11.5 L17.5 17 L12 13.5 L6.5 17 L8.5 11.5 L4 8 H10 Z" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth={1} />
+                                <path d="M12 5 L13.5 9 H18 L14.5 11.5 L16 15.5 L12 13 L8 15.5 L9.5 11.5 L6 9 H10.5 Z" fill="rgba(255,255,255,0.88)" />
+                              </svg>
+                            ),
+                          },
+                        ] as const).map((app) => (
+                          <Link
+                            key={app.href}
+                            href={app.href}
+                            className="group flex flex-col items-center gap-1.5"
+                          >
+                            {/* Icon bubble */}
+                            <div
+                              className={`relative flex aspect-square w-full max-w-[72px] items-center justify-center rounded-[22%] bg-gradient-to-br ${app.gradient} shadow-lg transition-all duration-200 group-hover:-translate-y-1 group-hover:scale-110`}
+                              style={{ boxShadow: `0 6px 20px ${app.glow}` }}
+                            >
+                              {/* Gloss sheen */}
+                              <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-[22%] bg-gradient-to-b from-white/[0.22] to-transparent" />
+                              {app.icon}
+                            </div>
+                            <span className="line-clamp-1 text-center text-[10px] font-medium leading-tight text-white/75 group-hover:text-white">
+                              {app.label}
+                            </span>
+                          </Link>
+                        ))}
+                      </div>
+
+                      {/* Dock separator */}
+                      <div className="my-4 border-t border-white/[0.06]" />
+
+                      {/* Dock — 4 core apps */}
+                      <div className="flex items-center justify-around rounded-2xl border border-white/[0.06] bg-white/[0.04] px-4 py-2.5 backdrop-blur-md">
+                        {[
+                          { label: "Analyze", href: "/", gradient: "from-emerald-500 to-teal-600", icon: (
+                            <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="rgba(255,255,255,0.95)" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="11" cy="11" r="7" fill="rgba(255,255,255,0.08)" />
+                              <path d="M16 16 L21 21" />
+                              <path d="M8 10 L11 13 L15 8" />
+                            </svg>
+                          )},
+                          { label: "Play Chaos", href: "/chaos", gradient: "from-purple-500 to-fuchsia-600", icon: (
+                            <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6">
+                              <path d="M13 2 L9 11 H13 L11 22 L19 9 H14 Z" fill="rgba(255,255,255,0.9)" />
+                            </svg>
+                          )},
+                          { label: "My Openings", href: "/my-openings", gradient: "from-cyan-500 to-blue-600", icon: (
+                            <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="rgba(255,255,255,0.95)" strokeWidth={1.7} strokeLinecap="round">
+                              <path d="M12 3 C12 3 8 7 8 11 C8 13 10 14 12 14 C14 14 16 13 16 11 C16 7 12 3 12 3Z" fill="rgba(255,255,255,0.15)" />
+                              <path d="M12 14 L12 21" />
+                              <path d="M12 14 C12 14 8 12 6 15" />
+                              <path d="M12 17 C12 17 15 15 17 18" />
+                            </svg>
+                          )},
+                          { label: "Train", href: "/train", gradient: "from-amber-500 to-orange-600", icon: (
+                            <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" stroke="rgba(255,255,255,0.95)" strokeWidth={1.7} strokeLinecap="round">
+                              <circle cx="12" cy="12" r="9" fill="rgba(255,255,255,0.08)" />
+                              <circle cx="12" cy="12" r="2" fill="rgba(255,255,255,0.9)" />
+                            </svg>
+                          )},
+                        ].map((dock) => (
+                          <Link
+                            key={dock.href}
+                            href={dock.href}
+                            className="group flex flex-col items-center gap-1"
+                          >
+                            <div
+                              className={`flex h-12 w-12 items-center justify-center rounded-[20%] bg-gradient-to-br ${dock.gradient} shadow-md transition-all duration-200 group-hover:-translate-y-0.5 group-hover:scale-110`}
+                            >
+                              <div className="pointer-events-none absolute h-12 w-12 rounded-[20%] bg-gradient-to-b from-white/[0.18] to-transparent" />
+                              {dock.icon}
+                            </div>
+                            <span className="text-[9px] font-medium text-white/50 group-hover:text-white/80">{dock.label}</span>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Home indicator */}
+                    <div className="flex justify-center bg-[#060e18] pb-2 pt-1">
+                      <div className="h-1 w-24 rounded-full bg-white/20" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* ─── Training CTA ─── */}
           {state === "idle" && (
             <section className="animate-fade-in mx-auto w-full max-w-5xl">
@@ -2886,7 +3177,6 @@ export default function HomePage() {
                                       id={`pos-ex-${motif.name}-${ei}`}
                                       position={ex.fenBefore}
                                       arePiecesDraggable={false}
-                                      boardWidth={280}
                                       customArrows={arrows}
                                       boardOrientation={sideToMove === "black" ? "black" : "white"}
                                       customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}

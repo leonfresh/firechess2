@@ -45,7 +45,7 @@ function parseSanMoves(raw: string): string[] {
     .filter(Boolean);
 }
 
-function LinePlayer({ moves: rawMoves, boardWidth }: { moves: string; boardWidth: number }) {
+function LinePlayer({ moves: rawMoves }: { moves: string }) {
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
 
@@ -118,11 +118,10 @@ function LinePlayer({ moves: rawMoves, boardWidth }: { moves: string; boardWidth
   return (
     <div className="flex flex-col items-center gap-2">
       {/* Board */}
-      <div className="rounded-xl overflow-hidden">
+      <div className="w-full max-w-[340px] rounded-xl overflow-hidden">
         <Chessboard
           id={`opening-${rawMoves.slice(0, 20)}`}
           position={fens[index]}
-          boardWidth={boardWidth}
           arePiecesDraggable={false}
           animationDuration={300}
           customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
@@ -236,11 +235,10 @@ function PositionCard({ fen, label, note }: { fen: string; label: string; note: 
   return (
     <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
       <p className="text-xs font-bold text-white mb-2">{label}</p>
-      <div className="flex justify-center rounded-lg overflow-hidden mb-2">
+      <div className="w-full overflow-hidden rounded-lg mb-2">
         <Chessboard
           id={`pos-${fen.slice(0, 16)}`}
           position={fen}
-          boardWidth={180}
           arePiecesDraggable={false}
           animationDuration={0}
           showBoardNotation={false}
@@ -296,7 +294,7 @@ function GuideCard({ guide }: { guide: OpeningGuide }) {
         <div className="border-t border-white/[0.06] px-5 pb-5 pt-4 space-y-5">
           {/* Opening Line Board — play through the moves */}
           <div className="flex justify-center">
-            <LinePlayer moves={guide.moves} boardWidth={280} />
+            <LinePlayer moves={guide.moves} />
           </div>
 
           {/* Key Ideas */}
