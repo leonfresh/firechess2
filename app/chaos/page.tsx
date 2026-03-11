@@ -2641,7 +2641,12 @@ export default function ChaosChessPage() {
         let cs = updateTrackedPieces(chaosState, from, to, chaosMove.type === "capture");
         let activeGame = newGame;
 
-        // Check opponent's king-shield
+        // Check game end FIRST — checkmate/king-capture wins immediately;
+        // king-shield must not absorb the checking piece and prevent the win.
+        setChaosState(cs);
+        if (checkGameEnd(activeGame)) return true;
+
+        // Check opponent's king-shield (only if game is still ongoing)
         if (activeGame.isCheck()) {
           if (cs.aiModifiers.some((m) => m.id === "king-shield")) {
             const shielded = applyKingShield(activeGame, activeGame.turn() as Color);
@@ -2649,14 +2654,12 @@ export default function ChaosChessPage() {
               activeGame = shielded;
               setGame(shielded);
               cs = { ...cs, aiModifiers: cs.aiModifiers.filter((m) => m.id !== "king-shield") };
+              setChaosState(cs);
               setEventLog((prev) => [...prev, { type: "chaos" as const, message: "🛡️ Opponent's Royal Guard blocked your check!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
               playSound("vine-boom");
             }
           }
         }
-        setChaosState(cs);
-
-        if (checkGameEnd(activeGame)) return true;
         const drafted = checkDraft(activeGame, cs);
 
         // Multiplayer: send to server
@@ -2761,7 +2764,12 @@ export default function ChaosChessPage() {
       let cs2 = updateTrackedPieces(chaosState, from, to, !!moveResult.captured);
       let activeG = newG;
 
-      // Check opponent's king-shield
+      // Check game end FIRST — checkmate takes priority over king-shield activation.
+      setChaosState(cs2);
+      setGame(activeG);
+      if (checkGameEnd(activeG)) return true;
+
+      // Check opponent's king-shield (only if game is still ongoing)
       if (activeG.isCheck()) {
         if (cs2.aiModifiers.some((m) => m.id === "king-shield")) {
           const shielded = applyKingShield(activeG, activeG.turn() as Color);
@@ -2770,13 +2778,11 @@ export default function ChaosChessPage() {
             cs2 = { ...cs2, aiModifiers: cs2.aiModifiers.filter((m) => m.id !== "king-shield") };
             setEventLog((prev) => [...prev, { type: "chaos" as const, message: "🛡️ Opponent's Royal Guard blocked your check!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
             playSound("vine-boom");
+            setChaosState(cs2);
+            setGame(activeG);
           }
         }
       }
-      setChaosState(cs2);
-      setGame(activeG);
-
-      if (checkGameEnd(activeG)) return true;
 
       const drafted = checkDraft(activeG, cs2);
 
