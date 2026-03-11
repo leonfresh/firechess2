@@ -104,6 +104,8 @@ type AnalyzeOptions = {
   /** Only include games played after this epoch timestamp (milliseconds) */
   since?: number;
   onProgress?: (progress: AnalysisProgress) => void;
+  /** Called when each section finishes — enables progressive rendering. */
+  onSectionReady?: (section: "openings" | "tactics" | "endgames" | "time", partial: Partial<AnalyzeResponse>) => void;
 };
 
 const MIN_POSITION_REPEATS = 3;
@@ -2302,6 +2304,16 @@ export async function analyzeOpeningLeaksInBrowser(
 
   } // end if (doOpenings)
 
+  options?.onSectionReady?.("openings", {
+    username,
+    gamesAnalyzed,
+    repeatedPositions,
+    leaks,
+    oneOffMistakes,
+    positionalFindings: positionalFindings.length > 0 ? positionalFindings : undefined,
+    openingSummaries: openingSummaries.length > 0 ? openingSummaries : undefined,
+  });
+
   /* ── Phase: Missed Tactics Detection ─────────────────────────── */
 
   const TACTIC_CP_THRESHOLD = 200;
@@ -2558,6 +2570,8 @@ export async function analyzeOpeningLeaksInBrowser(
 
   missedTactics.sort((a, b) => b.cpLoss - a.cpLoss);
   } // end if (doTactics)
+
+  options?.onSectionReady?.("tactics", { missedTactics, totalTacticsFound });
 
   /* ── Phase: Endgame Analysis ────────────────────────────────── */
 
@@ -2858,6 +2872,8 @@ export async function analyzeOpeningLeaksInBrowser(
       weakestType,
     };
   })() : null;
+
+  options?.onSectionReady?.("endgames", { endgameMistakes, endgameStats });
 
   emitProgress(options, {
     phase: "done",
@@ -3282,6 +3298,8 @@ export async function analyzeOpeningLeaksInBrowser(
       rushedMoves: moments.filter(m => m.verdict === "rushed").length,
     };
   })();
+
+  options?.onSectionReady?.("time", { timeManagement, timeManagementScore });
 
   // ── Compute Mental / Psychology Stats from game outcomes ──
   const mentalStats: MentalStats | null = (() => {

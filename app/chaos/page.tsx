@@ -1499,6 +1499,45 @@ export default function ChaosChessPage() {
 
   /* ── Check for game end ── */
   const checkGameEnd = useCallback((g: Chess) => {
+    // King-capture fallback: chaos moves can land on the king square.
+    // If a king is missing from the board, the side that captured it wins.
+    const board = g.board();
+    let whiteKingFound = false;
+    let blackKingFound = false;
+    for (const row of board) {
+      for (const sq of row) {
+        if (sq?.type === "k") {
+          if (sq.color === "w") whiteKingFound = true;
+          else blackKingFound = true;
+        }
+      }
+    }
+    if (!whiteKingFound || !blackKingFound) {
+      const winner = !whiteKingFound ? "black" : "white";
+      setGameResult(winner);
+      setGameStatus("game-over");
+      setEndReason("King Captured");
+      const youWin = winner === playerColor;
+      setEventLog((prev) => [
+        ...prev,
+        {
+          type: "chaos",
+          message: `👑 ${winner === "white" ? "White" : "Black"} captured the enemy King!`,
+          icon: "👑",
+          pepe: youWin ? PEPE.gigachad : PEPE.gamercry,
+        },
+      ]);
+      if (youWin) {
+        playSound("airhorn");
+        spawnPepe(PEPE.gigachad);
+        setTimeout(() => spawnPepe(PEPE.clap), 400);
+      } else {
+        playSound("mario-death");
+        spawnPepe(PEPE.gamercry);
+      }
+      return true;
+    }
+
     if (g.isCheckmate()) {
       const winner = g.turn() === "w" ? "black" : "white";
       setGameResult(winner);

@@ -67,6 +67,26 @@ const FREE_ENDGAME_SAMPLE = 10;
 const LOCAL_PRO_HOTKEY_ENABLED = process.env.NEXT_PUBLIC_ENABLE_LOCAL_PRO_HOTKEY !== "false";
 const IS_DEV = process.env.NODE_ENV !== "production";
 
+function AnalysisSectionSkeleton({ label }: { label: string }) {
+  return (
+    <div className="space-y-4 animate-pulse py-2">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+          <div className="flex gap-4">
+            <div className="h-16 w-16 rounded-xl bg-white/[0.08] shrink-0" />
+            <div className="flex-1 space-y-2 pt-1">
+              <div className="h-3.5 w-3/4 rounded bg-white/[0.08]" />
+              <div className="h-3 w-1/2 rounded bg-white/[0.06]" />
+              <div className="h-3 w-2/3 rounded bg-white/[0.06]" />
+            </div>
+          </div>
+        </div>
+      ))}
+      <p className="text-center text-xs text-slate-500">{label}</p>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const { plan: sessionPlan, authenticated } = useSession();
   const [heroPhase, setHeroPhase] = useState<"idle" | "hiding" | "revealing">("idle");
@@ -108,6 +128,7 @@ export default function HomePage() {
   const [endgamesOpen, setEndgamesOpen] = useState(true);
   const [puzzleBoardOpen, setPuzzleBoardOpen] = useState(false);
   const [timeManagementOpen, setTimeManagementOpen] = useState(true);
+  const [sectionsDone, setSectionsDone] = useState<Set<string>>(new Set());
   const [timeVerdictTab, setTimeVerdictTab] = useState<"all" | "wasted" | "rushed" | "justified">("all");
   const [expandedMotifs, setExpandedMotifs] = useState<Set<string>>(new Set());
   const [posExplainModalOpen, setPosExplainModalOpen] = useState(false);
@@ -700,7 +721,31 @@ export default function HomePage() {
       maxTactics: effectiveMaxTactics,
       maxEndgames: effectiveMaxEndgames,
       since,
-      onProgress: onBrowserProgress
+      onProgress: onBrowserProgress,
+      onSectionReady: (section, partial) => {
+        setResult(prev => {
+          const base: AnalyzeResponse = prev ?? {
+            username: trimmed,
+            gamesAnalyzed: 0,
+            repeatedPositions: 0,
+            leaks: [],
+            oneOffMistakes: [],
+            missedTactics: [],
+            totalTacticsFound: 0,
+            endgameMistakes: [],
+            endgameStats: null,
+          };
+          return { ...base, ...partial };
+        });
+        setSectionsDone(prev => {
+          const isFirst = prev.size === 0;
+          const next = new Set([...prev, section]);
+          if (isFirst) {
+            setTimeout(() => reportRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
+          }
+          return next;
+        });
+      },
     });
     setResult(browserResult);
     setState("done");
@@ -797,6 +842,7 @@ export default function HomePage() {
       setError("");
       setNotice("");
       setResult(null);
+      setSectionsDone(new Set());
       setSaveStatus("idle");
       const rangeLabel = gameRangeMode === "since" ? `since ${sinceDate}` : `${safeGames} games`;
       setProgressInfo({ message: "🚀 Starting analysis", detail: `${safeSource === "chesscom" ? "Chess.com" : "Lichess"} · ${speed.includes("all") ? "All time controls" : speed.join(", ")} · ${rangeLabel} · Depth ${safeDepth}`, percent: 0, phase: "fetch" });
@@ -825,6 +871,7 @@ export default function HomePage() {
     setError("");
     setNotice("");
     setResult(null);
+    setSectionsDone(new Set());
     setSaveStatus("idle");
     setProgressInfo({ message: `🔄 Switching to ${mode} scan`, detail: "Re-analyzing with new scan mode...", percent: 0, phase: "fetch" });
     try {
@@ -1065,17 +1112,47 @@ export default function HomePage() {
 
             {/* Search bar */}
             <div className="flex flex-col gap-3 md:flex-row">
-              <div className="relative flex-1">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-slate-500" strokeWidth="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              {/* Composed input: platform toggle + username field in one bar */}
+              <div className={`flex flex-1 items-center overflow-hidden rounded-xl border bg-white/[0.04] transition-colors duration-200 focus-within:border-emerald-500/30 ${
+                !source
+                  ? "border-amber-500/30 ring-1 ring-amber-500/20"
+                  : "border-white/[0.08]"
+              }`}>
+                {/* Platform pill */}
+                <div className="flex shrink-0 items-center gap-0.5 px-1.5 py-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setSource("lichess")}
+                    className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
+                      source === "lichess"
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 shadow-glow-sm"
+                        : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
+                    }`}
+                  >
+                    Lichess
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSource("chesscom")}
+                    className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
+                      source === "chesscom"
+                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 shadow-glow-sm"
+                        : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
+                    }`}
+                  >
+                    Chess.com
+                  </button>
                 </div>
+                {/* Divider */}
+                <div className="h-5 w-px bg-white/[0.10] shrink-0" />
+                {/* Text input */}
                 <input
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="Enter your Lichess or Chess.com username"
+                  placeholder={source === "chesscom" ? "Your Chess.com username" : source === "lichess" ? "Your Lichess username" : "Pick a platform, then enter username"}
                   aria-label="Chess username"
-                  className="glass-input pl-11"
+                  className="flex-1 bg-transparent py-2.5 pl-3 pr-4 text-sm text-white outline-none placeholder:text-slate-500"
                 />
               </div>
               <button
@@ -1191,42 +1268,7 @@ export default function HomePage() {
 
             {/* Settings grid — row 1: toggles, row 2: number inputs */}
             <div className="space-y-3">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="stat-card space-y-2">
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Source<HelpTip text="Which chess platform to fetch your games from. Your username must match the platform you select." /></span>
-                  <div className={`grid h-10 grid-cols-2 gap-1 rounded-lg border p-1 transition-colors duration-200 ${
-                    !source
-                      ? "border-amber-500/30 bg-amber-500/[0.06] ring-1 ring-amber-500/20"
-                      : "border-white/[0.06] bg-white/[0.02]"
-                  }`}>
-                    <button
-                      type="button"
-                      onClick={() => setSource("lichess")}
-                      className={`rounded-md text-xs font-semibold transition-all duration-200 ${
-                        source === "lichess"
-                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 shadow-glow-sm"
-                          : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
-                      }`}
-                    >
-                      Lichess
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setSource("chesscom")}
-                      className={`rounded-md text-xs font-semibold transition-all duration-200 ${
-                        source === "chesscom"
-                          ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 shadow-glow-sm"
-                          : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
-                      }`}
-                    >
-                      Chess.com
-                    </button>
-                  </div>
-                  {!source && (
-                    <p className="text-[11px] font-medium text-amber-400/80">← Pick your platform</p>
-                  )}
-                </div>
-
+              <div className="grid gap-3">
                 <div className="stat-card space-y-2">
                   <span className="text-xs font-medium uppercase tracking-wider text-slate-500">Time Control<HelpTip text="Filter which game speeds to include. Pick specific ones or All. Multi-select is supported — click multiple to combine." /></span>
                   <div className="grid h-auto grid-cols-3 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1 sm:h-10 sm:grid-cols-5">
@@ -1581,7 +1623,7 @@ export default function HomePage() {
           )}
 
           {/* ─── Results ─── */}
-          {state === "done" && result && (
+          {result !== null && (state === "done" || state === "loading") && (
             <section ref={reportRef} className="animate-fade-in-up space-y-8">
 
               {/* Report Heading + Action Bar */}
@@ -2919,7 +2961,10 @@ export default function HomePage() {
               </button>
 
               {tacticsOpen && (<>
-              {/* Tactics Overview Stats */}
+              {state === "loading" && !sectionsDone.has("tactics") && (
+                <AnalysisSectionSkeleton label="Scanning for missed tactics…" />
+              )}
+              {/* Tactics Overview Stats */}}
               {missedTactics.length > 0 && (
                 <div className="glass-card space-y-4 p-5">
                   <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-400">
@@ -3263,7 +3308,10 @@ export default function HomePage() {
               </button>
 
               {endgamesOpen && (<>
-              {/* Endgame Stats Overview */}
+              {state === "loading" && !sectionsDone.has("endgames") && (
+                <AnalysisSectionSkeleton label="Analysing endgame positions…" />
+              )}
+              {/* Endgame Stats Overview */}}
               {endgameStats && (
                 <div className="glass-card space-y-4 p-5">
                   <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-400">
@@ -3608,6 +3656,14 @@ export default function HomePage() {
               )}
 
               {/* ─── Time Management Section ─── */}
+              {lastRunConfig?.scanMode === "time-management" && state === "loading" && !sectionsDone.has("time") && (
+              <>
+              <div className="my-4">
+                <div className="section-divider" />
+              </div>
+              <AnalysisSectionSkeleton label="Analysing clock usage…" />
+              </>
+              )}
               {lastRunConfig?.scanMode === "time-management" && timeManagement && timeManagement.moments.length > 0 && (
               <>
               <div className="my-4">
