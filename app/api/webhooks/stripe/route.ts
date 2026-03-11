@@ -211,7 +211,6 @@ export async function POST(req: NextRequest) {
 
     /* ── Subscription deleted — revert to free (but not lifetime) ── */
     case "customer.subscription.deleted": {
-    case "customer.subscription.deleted": {
       const sub = event.data.object as Stripe.Subscription;
       const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
       if (!customerId) break;
