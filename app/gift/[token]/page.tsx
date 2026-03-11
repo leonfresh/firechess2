@@ -1,5 +1,8 @@
 import { Metadata } from "next";
 import Link from "next/link";
+import { db } from "@/lib/db";
+import { giftLinks } from "@/lib/schema";
+import { eq } from "drizzle-orm";
 import { GiftClaim } from "./gift-claim";
 
 interface Props {
@@ -12,14 +15,26 @@ export const metadata: Metadata = {
 };
 
 async function getGiftInfo(token: string) {
-  try {
-    const base = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
-    const res = await fetch(`${base}/api/gift/${token}`, { cache: "no-store" });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch {
-    return null;
-  }
+  const [link] = await db
+    .select()
+    .from(giftLinks)
+    .where(eq(giftLinks.token, token))
+    .limit(1);
+
+  if (!link) return null;
+
+  let status: "valid" | "expired" | "revoked" | "exhausted" = "valid";
+  if (link.revokedAt) status = "revoked";
+  else if (link.expiresAt && link.expiresAt < new Date()) status = "expired";
+  else if (link.usedCount >= link.maxUses) status = "exhausted";
+
+  return {
+    label: link.label,
+    planType: link.planType,
+    durationDays: link.durationDays,
+    usesRemaining: Math.max(0, link.maxUses - link.usedCount),
+    status,
+  };
 }
 
 export default async function GiftPage({ params }: Props) {
