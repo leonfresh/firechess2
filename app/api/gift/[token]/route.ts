@@ -89,25 +89,25 @@ export async function POST(
       ? null
       : null; // permanent pro — no expiry tracked
 
-  // Record redemption and grant Pro (in a transaction)
-  await db.transaction(async (tx) => {
+  // Record redemption and grant Pro
+  try {
     // Record redemption
-    await tx.insert(giftRedemptions).values({ giftLinkId: link.id, userId });
+    await db.insert(giftRedemptions).values({ giftLinkId: link.id, userId });
 
     // Increment use count
-    await tx
+    await db
       .update(giftLinks)
       .set({ usedCount: link.usedCount + 1 })
       .where(eq(giftLinks.id, link.id));
 
     // Grant Pro / Lifetime
-    await tx
+    await db
       .insert(subscriptions)
       .values({
         userId,
         plan: link.planType,
         status: "active",
-        currentPeriodEnd: currentPeriodEnd ?? undefined,
+        currentPeriodEnd: currentPeriodEnd ?? null,
       })
       .onConflictDoUpdate({
         target: subscriptions.userId,
@@ -118,7 +118,10 @@ export async function POST(
           updatedAt: new Date(),
         },
       });
-  });
+  } catch (err: any) {
+    console.error("Gift redemption error:", err);
+    return NextResponse.json({ error: "Failed to redeem gift. Please try again." }, { status: 500 });
+  }
 
   return NextResponse.json({ success: true, plan: link.planType });
 }
