@@ -2964,7 +2964,7 @@ export default function HomePage() {
               {state === "loading" && !sectionsDone.has("tactics") && (
                 <AnalysisSectionSkeleton label="Scanning for missed tactics…" />
               )}
-              {/* Tactics Overview Stats */}}
+              {/* Tactics Overview Stats */}
               {missedTactics.length > 0 && (
                 <div className="glass-card space-y-4 p-5">
                   <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-400">
@@ -3311,7 +3311,7 @@ export default function HomePage() {
               {state === "loading" && !sectionsDone.has("endgames") && (
                 <AnalysisSectionSkeleton label="Analysing endgame positions…" />
               )}
-              {/* Endgame Stats Overview */}}
+              {/* Endgame Stats Overview */}
               {endgameStats && (
                 <div className="glass-card space-y-4 p-5">
                   <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-slate-400">
