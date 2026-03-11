@@ -47,6 +47,18 @@ function HelpTip({ text }: { text: string }) {
 
 type RequestState = "idle" | "loading" | "done" | "error";
 const PREFS_KEY = "firechess-user-prefs";
+const REPORT_CACHE_KEY_PREFIX = "fc-last-report";
+
+type CachedReportEntry = {
+  result: AnalyzeResponse;
+  config: { maxGames: number; maxMoves: number; cpThreshold: number; engineDepth: number; source: AnalysisSource; scanMode: ScanMode; speed: TimeControl[] };
+  savedAt: string; // ISO timestamp
+};
+
+function reportCacheKey(mode: ScanMode): string {
+  return `${REPORT_CACHE_KEY_PREFIX}-${mode}`;
+}
+
 const FREE_MAX_GAMES = 300;
 const FREE_MAX_DEPTH = 12;
 const FREE_MAX_MOVES = 30;
@@ -87,6 +99,8 @@ export default function HomePage() {
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [copyLinkLabel, setCopyLinkLabel] = useState("Copy Link");
   const [welcomeBack, setWelcomeBack] = useState<string | null>(null);
+  const [cachedReportEntry, setCachedReportEntry] = useState<CachedReportEntry | null>(null);
+  const [showRestoreBanner, setShowRestoreBanner] = useState(false);
   const [leakTab, setLeakTab] = useState<"repeated" | "one-off">("repeated");
   const [openingFolder, setOpeningFolder] = useState<"mistakes" | "rankings">("mistakes");
   const [tacticsOpen, setTacticsOpen] = useState(true);
@@ -239,6 +253,27 @@ export default function HomePage() {
       // ignore storage write failures
     }
   }, [gameCount, moveCount, cpThreshold, engineDepth, source, scanMode, speed, gameRangeMode, sinceDate, cardViewMode, username]);
+
+  /* ── Load cached report from localStorage (for unauthenticated users) ── */
+  useEffect(() => {
+    try {
+      const modes: ScanMode[] = ["openings", "tactics", "endgames", "both", "time-management"];
+      // Find the most recently saved across all modes
+      let newest: CachedReportEntry | null = null;
+      for (const mode of modes) {
+        const raw = window.localStorage.getItem(reportCacheKey(mode));
+        if (!raw) continue;
+        const parsed = JSON.parse(raw) as CachedReportEntry;
+        if (!newest || new Date(parsed.savedAt) > new Date(newest.savedAt)) {
+          newest = parsed;
+        }
+      }
+      if (newest) {
+        setCachedReportEntry(newest);
+        setShowRestoreBanner(true);
+      }
+    } catch { /* ignore */ }
+  }, []);
 
   /* ── Fetch latest saved report leaks for personalized hero board ── */
   const [heroLeaks, setHeroLeaks] = useState<RepeatedOpeningLeak[]>([]);
@@ -670,6 +705,25 @@ export default function HomePage() {
     setResult(browserResult);
     setState("done");
 
+    // Cache report in localStorage for offline restore
+    try {
+      const cacheKey = reportCacheKey(effectiveScanMode);
+      const entry: CachedReportEntry = {
+        result: browserResult,
+        config: {
+          maxGames: safeGames,
+          maxMoves: safeMoves,
+          cpThreshold: safeCpThreshold,
+          engineDepth: safeDepth,
+          source: safeSource,
+          scanMode: effectiveScanMode,
+          speed,
+        },
+        savedAt: new Date().toISOString(),
+      };
+      window.localStorage.setItem(cacheKey, JSON.stringify(entry));
+    } catch { /* ignore storage failures */ }
+
     // Toast + smooth scroll to report
     setToast("✅ Your report is ready!");
     if (toastTimer.current) clearTimeout(toastTimer.current);
@@ -952,6 +1006,55 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => setWelcomeBack(null)}
+                  className="text-slate-500 hover:text-slate-300 transition-colors"
+                  aria-label="Dismiss"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                </button>
+              </div>
+            )}
+
+            {/* Restore last report banner */}
+            {showRestoreBanner && cachedReportEntry && state === "idle" && !result && (
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.06] px-4 py-3">
+                <span className="text-lg">📋</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-slate-200">
+                    Last report: <span className="text-white">{cachedReportEntry.result.username}</span>
+                    <span className="ml-2 rounded-md bg-cyan-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-cyan-400 uppercase tracking-wide">
+                      {cachedReportEntry.config.scanMode}
+                    </span>
+                  </p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {cachedReportEntry.result.gamesAnalyzed} games · {cachedReportEntry.result.leaks.length} opening leaks · {cachedReportEntry.result.missedTactics.length} missed tactics
+                    {" · "}{new Date(cachedReportEntry.savedAt).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const entry = cachedReportEntry;
+                    setUsername(entry.result.username);
+                    setSource(entry.config.source);
+                    setScanMode(entry.config.scanMode);
+                    setSpeed(entry.config.speed);
+                    setLastRunConfig(entry.config);
+                    setResult(entry.result);
+                    setState("done");
+                    setSaveStatus("idle");
+                    setShowRestoreBanner(false);
+                    setTimeout(() => {
+                      reportRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }, 300);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-300 transition-all hover:bg-cyan-500/20"
+                >
+                  <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                  Load Last Report
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowRestoreBanner(false)}
                   className="text-slate-500 hover:text-slate-300 transition-colors"
                   aria-label="Dismiss"
                 >

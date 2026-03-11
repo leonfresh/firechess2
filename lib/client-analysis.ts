@@ -2861,9 +2861,9 @@ export async function analyzeOpeningLeaksInBrowser(
 
   emitProgress(options, {
     phase: "done",
-    message: `✅ Analysis complete`,
-    detail: `Found ${leaks.length} opening leak${leaks.length !== 1 ? "s" : ""}, ${missedTactics.length} missed tactic${missedTactics.length !== 1 ? "s" : ""}, and ${endgameMistakes.length} endgame mistake${endgameMistakes.length !== 1 ? "s" : ""}`,
-    percent: 100,
+    message: `⚙️ Finalising results`,
+    detail: `Building report…`,
+    percent: 97,
   });
 
   // Compute median player rating from games
@@ -3494,6 +3494,13 @@ export async function analyzeOpeningLeaksInBrowser(
       })(),
     };
   })();
+
+  emitProgress(options, {
+    phase: "done",
+    message: `✅ Analysis complete`,
+    detail: `Found ${leaks.length} opening leak${leaks.length !== 1 ? "s" : ""}, ${missedTactics.length} missed tactic${missedTactics.length !== 1 ? "s" : ""}, and ${endgameMistakes.length} endgame mistake${endgameMistakes.length !== 1 ? "s" : ""}`,
+    percent: 100,
+  });
 
   return {
     username,

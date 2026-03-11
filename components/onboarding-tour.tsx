@@ -122,12 +122,13 @@ export function clearDeferral(): void {
 /* ------------------------------------------------------------------ */
 
 export function OnboardingTour() {
+  const [showPrompt, setShowPrompt] = useState(false);
   const [active, setActive] = useState(false);
   const [step, setStep] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
 
-  /* ── Check if we should show the tour ── */
+  /* ── Check if we should show the tour prompt ── */
   useEffect(() => {
     if (isDone()) return;
 
@@ -138,8 +139,8 @@ export function OnboardingTour() {
       return;
     }
 
-    // Slight delay so the dashboard has rendered and elements exist
-    const t = setTimeout(() => setActive(true), 1200);
+    // Show the optional tour prompt after a slight delay
+    const t = setTimeout(() => setShowPrompt(true), 900);
     return () => clearTimeout(t);
   }, []);
 
@@ -173,6 +174,11 @@ export function OnboardingTour() {
   }, [updateRect]);
 
   /* ── Actions ── */
+  const startTour = () => {
+    setShowPrompt(false);
+    setActive(true);
+  };
+
   const next = () => {
     if (step < STEPS.length - 1) setStep((s) => s + 1);
     else finish();
@@ -184,52 +190,71 @@ export function OnboardingTour() {
 
   const finish = () => {
     markDone();
+    setShowPrompt(false);
     setActive(false);
   };
+
+  /* ── Prompt modal ── */
+  if (showPrompt && !active) {
+    return (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+        {/* Backdrop */}
+        <div
+          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          onClick={finish}
+        />
+        {/* Card */}
+        <div className="relative animate-fade-in-up rounded-2xl border border-white/10 bg-slate-900/98 p-7 shadow-2xl"
+          style={{ width: Math.min(380, (typeof window !== "undefined" ? window.innerWidth : 400) - 32) }}
+        >
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600/30 to-cyan-500/20 text-2xl">
+            👋
+          </div>
+          <h2 className="text-lg font-bold text-white">Welcome to FireChess!</h2>
+          <p className="mt-2 text-sm leading-relaxed text-slate-400">
+            Take a quick <span className="font-medium text-slate-200">2-minute tour</span> to learn what every section of your dashboard does — or dive straight in.
+          </p>
+          <div className="mt-6 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={startTour}
+              className="flex-1 rounded-xl bg-violet-600 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-500/20 transition-all hover:bg-violet-500 active:scale-95"
+            >
+              Start Tour
+            </button>
+            <button
+              type="button"
+              onClick={finish}
+              className="flex-1 rounded-xl border border-white/10 py-2.5 text-sm font-medium text-slate-400 transition-colors hover:bg-white/[0.05] hover:text-slate-200"
+            >
+              Skip for now
+            </button>
+          </div>
+          <p className="mt-3 text-center text-[10px] text-slate-600">You can always find help in the support page.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!active || !rect) return null;
 
   const current = STEPS[step];
   const pad = 8; // padding around the spotlight
 
-  /* ── Tooltip position ── */
-  const tooltipW = Math.min(320, window.innerWidth - 32);
-  const tooltipEstH = 170; // conservative estimate of tooltip height
-  const gap = 12;
-  const margin = 16; // min distance from screen edge
+  // Arrow direction: does the spotlight sit above or below the bottom toolbar?
+  const spotlightCenterY = rect.top + rect.height / 2;
+  const viewportCenter = window.innerHeight / 2;
+  const isAboveCenter = spotlightCenterY < viewportCenter;
 
-  const centerX = rect.left + rect.width / 2;
-  const clampedLeft = Math.max(margin, Math.min(centerX - tooltipW / 2, window.innerWidth - tooltipW - margin));
-
-  // Decide placement: prefer the step's declared side, but flip if it would go off-screen
-  let placement = current.placement ?? "bottom";
-  const spaceBelow = window.innerHeight - (rect.bottom + pad + gap);
-  const spaceAbove = rect.top - pad - gap;
-
-  if (placement === "bottom" && spaceBelow < tooltipEstH && spaceAbove > spaceBelow) {
-    placement = "top";
-  } else if (placement === "top" && spaceAbove < tooltipEstH && spaceBelow > spaceAbove) {
-    placement = "bottom";
-  }
-
-  let tooltipStyle: React.CSSProperties = { width: tooltipW };
-
-  if (placement === "bottom") {
-    const top = rect.bottom + pad + gap;
-    // Clamp so it doesn't go below viewport
-    tooltipStyle.top = Math.min(top, window.innerHeight - tooltipEstH - margin);
-    tooltipStyle.left = clampedLeft;
-  } else if (placement === "top") {
-    const bottom = window.innerHeight - rect.top + pad + gap;
-    // Clamp so it doesn't go above viewport
-    tooltipStyle.bottom = Math.min(bottom, window.innerHeight - tooltipEstH - margin);
-    tooltipStyle.left = clampedLeft;
-  }
+  const tooltipWidth = Math.min(400, window.innerWidth - 32);
 
   return (
-    <div className="fixed inset-0 z-[9999]" style={{ pointerEvents: "auto" }}>
-      {/* Dark overlay with cutout */}
-      <svg className="absolute inset-0 h-full w-full" style={{ pointerEvents: "none" }}>
+    <>
+      {/* Dark overlay with cutout — pointer-events disabled so clicks pass through */}
+      <svg
+        className="pointer-events-none fixed inset-0 z-[9998] h-full w-full"
+        style={{ top: 0, left: 0 }}
+      >
         <defs>
           <mask id="tour-mask">
             <rect width="100%" height="100%" fill="white" />
@@ -246,14 +271,14 @@ export function OnboardingTour() {
         <rect
           width="100%"
           height="100%"
-          fill="rgba(0,0,0,0.70)"
+          fill="rgba(0,0,0,0.72)"
           mask="url(#tour-mask)"
         />
       </svg>
 
       {/* Spotlight ring */}
       <div
-        className="pointer-events-none absolute rounded-2xl ring-2 ring-violet-500/60 transition-all duration-500"
+        className="pointer-events-none fixed z-[9999] rounded-2xl ring-2 ring-violet-500/70 transition-all duration-500"
         style={{
           left: rect.left - pad,
           top: rect.top - pad,
@@ -262,31 +287,31 @@ export function OnboardingTour() {
         }}
       />
 
-      {/* Click-through spotlight area */}
-      <div
-        className="absolute"
-        style={{
-          left: rect.left - pad,
-          top: rect.top - pad,
-          width: rect.width + pad * 2,
-          height: rect.height + pad * 2,
-          pointerEvents: "none",
-        }}
-      />
-
-      {/* Tooltip */}
+      {/* Tooltip — permanently fixed at bottom-center; never moves between steps */}
       <div
         ref={tooltipRef}
-        className="absolute animate-fade-in-up rounded-2xl border border-white/10 bg-slate-900/95 p-5 shadow-2xl backdrop-blur-sm"
-        style={{ ...tooltipStyle, pointerEvents: "auto" }}
+        className="fixed z-[10000] rounded-2xl border border-white/10 bg-slate-900/97 p-5 shadow-2xl backdrop-blur-md"
+        style={{
+          bottom: 24,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: tooltipWidth,
+        }}
       >
-        {/* Step indicator */}
-        <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
+        {/* Direction hint arrow */}
+        <div className="mb-3 flex items-center gap-2">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-violet-500/15 text-sm text-violet-400">
+            {isAboveCenter ? "↑" : "↓"}
+          </span>
+          <p className="text-[11px] text-slate-500">
+            {isAboveCenter ? "Highlighted above" : "Highlighted below"} · step {step + 1} of {STEPS.length}
+          </p>
+          {/* Progress dots */}
+          <div className="ml-auto flex items-center gap-1">
             {STEPS.map((_, i) => (
               <div
                 key={i}
-                className={`h-1.5 rounded-full transition-all ${
+                className={`h-1.5 rounded-full transition-all duration-300 ${
                   i === step
                     ? "w-5 bg-violet-500"
                     : i < step
@@ -296,43 +321,39 @@ export function OnboardingTour() {
               />
             ))}
           </div>
-          <span className="text-[10px] tabular-nums text-slate-500">
-            {step + 1} / {STEPS.length}
-          </span>
         </div>
 
         <h3 className="text-sm font-bold text-white">{current.title}</h3>
         <p className="mt-1.5 text-xs leading-relaxed text-slate-400">{current.body}</p>
 
-        {/* Nav buttons */}
-        <div className="mt-4 flex items-center justify-between">
+        {/* Nav — always the same layout so buttons never jump */}
+        <div className="mt-4 flex items-center justify-between gap-2">
           <button
             type="button"
             onClick={finish}
-            className="text-xs text-slate-500 transition-colors hover:text-slate-300"
+            className="shrink-0 text-xs text-slate-500 transition-colors hover:text-slate-300"
           >
-            Skip tour
+            End tour
           </button>
           <div className="flex items-center gap-2">
-            {step > 0 && (
-              <button
-                type="button"
-                onClick={prev}
-                className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-white/[0.06]"
-              >
-                Back
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={prev}
+              disabled={step === 0}
+              className="rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-white/[0.06] disabled:opacity-30"
+            >
+              Back
+            </button>
             <button
               type="button"
               onClick={next}
-              className="rounded-lg bg-violet-600 px-4 py-1.5 text-xs font-bold text-white shadow-lg shadow-violet-500/20 transition-all hover:bg-violet-500"
+              className="rounded-lg bg-violet-600 px-4 py-1.5 text-xs font-bold text-white shadow-lg shadow-violet-500/20 transition-all hover:bg-violet-500 active:scale-95"
             >
-              {step < STEPS.length - 1 ? "Next" : "Finish"}
+              {step < STEPS.length - 1 ? "Next →" : "Finish ✓"}
             </button>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

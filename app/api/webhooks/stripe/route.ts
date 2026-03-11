@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { subscriptions } from "@/lib/schema";
+import { subscriptions, affiliates, affiliateReferrals } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import Stripe from "stripe";
 
@@ -75,6 +75,55 @@ export async function POST(req: NextRequest) {
             updatedAt: new Date(),
           },
         });
+
+      // ── Affiliate referral tracking ──
+      // A promo code was used if session.discounts is non-empty.
+      // We need to expand the session to get discount details.
+      try {
+        const fullSession = await stripe.checkout.sessions.retrieve(
+          session.id,
+          { expand: ["discounts"] }
+        );
+        const discounts = (fullSession as any).discounts as Array<{
+          promotion_code?: string | { id: string } | null;
+        }> | null | undefined;
+
+        if (discounts && discounts.length > 0) {
+          // Get the Stripe Promotion Code ID (promo_XXXX)
+          const rawPromo = discounts[0].promotion_code;
+          const promoCodeId = typeof rawPromo === "string" ? rawPromo
+            : typeof rawPromo === "object" && rawPromo !== null ? rawPromo.id
+            : null;
+
+          if (promoCodeId) {
+            // Find which affiliate owns this promo code
+            const [affiliate] = await db
+              .select()
+              .from(affiliates)
+              .where(eq(affiliates.stripePromoCodeId, promoCodeId))
+              .limit(1);
+
+            if (affiliate) {
+              // amount_total is in cents, already after discount
+              const amountCents = fullSession.amount_total ?? 0;
+              const commissionCents = Math.round(amountCents * affiliate.commissionPct / 100);
+
+              await db.insert(affiliateReferrals).values({
+                affiliateId: affiliate.id,
+                userId,
+                stripeSessionId: session.id,
+                planType: isLifetime ? "lifetime" : "pro",
+                amountCents,
+                commissionCents,
+              });
+            }
+          }
+        }
+      } catch (affiliateErr) {
+        // Never fail the whole webhook because of affiliate tracking
+        console.error("Affiliate referral tracking error:", affiliateErr);
+      }
+
       break;
     }
 

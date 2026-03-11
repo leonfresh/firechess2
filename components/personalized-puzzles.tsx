@@ -298,7 +298,18 @@ function PuzzleBoard({
         from + to === expectedBase &&
         (!expectedPromo || promotion === expectedPromo);
 
+      // Also accept any legal move that delivers checkmate — puzzles with
+      // multiple mating pieces (e.g. Qxh7# or Rxh7#) should all be accepted.
+      let isAlternateMate = false;
       if (!matches) {
+        try {
+          const chess = new Chess(fen);
+          const testMove = chess.move({ from, to, promotion: promotion || undefined } as any);
+          if (testMove && chess.isCheckmate()) isAlternateMate = true;
+        } catch { /* illegal move */ }
+      }
+
+      if (!matches && !isAlternateMate) {
         setState("wrong");
         setStreak(0);
         setWrongMove({ from, to });
@@ -326,19 +337,18 @@ function PuzzleBoard({
         return false;
       }
 
-      // Correct move
+      // Correct move — use the actual move played (may differ from solution for alternate mates)
+      const actualFrom = isAlternateMate ? from : expected.slice(0, 2);
+      const actualTo   = isAlternateMate ? to   : expected.slice(2, 4);
+      const actualPromo = isAlternateMate ? (promotion || undefined) : (expectedPromo || undefined);
       try {
         const chess = new Chess(fen);
-        const targetPiece = chess.get(expected.slice(2, 4) as any);
+        const targetPiece = chess.get(actualTo as any);
         const isCapture = !!targetPiece;
-        chess.move({
-          from: expected.slice(0, 2),
-          to: expected.slice(2, 4),
-          promotion: expectedPromo || undefined,
-        } as any);
+        chess.move({ from: actualFrom, to: actualTo, promotion: actualPromo } as any);
         const newFen = chess.fen();
         setFen(newFen);
-        setLastMove({ from: expected.slice(0, 2), to: expected.slice(2, 4) });
+        setLastMove({ from: actualFrom, to: actualTo });
         setHintSquare(null);
         if (chess.isCheck()) playSound("check");
         else if (isCapture) playSound("capture");
@@ -346,7 +356,8 @@ function PuzzleBoard({
 
         const nextIdx = solutionIdx + 1;
 
-        if (nextIdx >= puzzle.puzzle.solution.length) {
+        // Alternate checkmates end the puzzle immediately regardless of solution length
+        if (isAlternateMate || nextIdx >= puzzle.puzzle.solution.length) {
           setState("correct");
           setSolved((s) => s + 1);
           setStreak((s) => {

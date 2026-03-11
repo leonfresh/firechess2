@@ -50,6 +50,7 @@ import {
   type ChaosMove,
 } from "@/lib/chaos-moves";
 import { usePartyRoom, PARTYKIT_HOST, type PartyMessage } from "@/lib/use-party-room";
+import { computeEloChange, DEFAULT_CHAOS_ELO, TIME_CONTROLS } from "@/lib/chaos-elo";
 
 /* ────────────────────────── Chaos Piece Overlays ────────────────────────── */
 
@@ -1276,8 +1277,39 @@ export default function ChaosChessPage() {
   /** Reason for game end (for display) */
   const [endReason, setEndReason] = useState<string>("");
 
+  /* ── Time controls ── */
+  const [timeControl, setTimeControl] = useState<{ label: string; base: number; inc: number } | null>(null);
+  const [timers, setTimers] = useState<{ w: number; b: number }>({ w: 0, b: 0 });
+  const timersRef = useRef<{ w: number; b: number }>({ w: 0, b: 0 });
+  timersRef.current = timers;
+  const timeControlRef = useRef<{ label: string; base: number; inc: number } | null>(null);
+  timeControlRef.current = timeControl;
+  const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  /* ── ELO ratings ── */
+  const [myRating, setMyRating] = useState<number | null>(null);
+  const [opponentRating, setOpponentRating] = useState<number | null>(null);
+  const [myGamesPlayed, setMyGamesPlayed] = useState(0);
+  const myRatingRef = useRef<number | null>(null);
+  myRatingRef.current = myRating;
+  const opponentRatingRef = useRef<number | null>(null);
+  opponentRatingRef.current = opponentRating;
+  const myGamesPlayedRef = useRef(0);
+  myGamesPlayedRef.current = myGamesPlayed;
+  const [eloChange, setEloChange] = useState<number | null>(null);
+  const [eloSaved, setEloSaved] = useState(false);
+
   /* ── Chaos moves (extra legal moves from modifiers) ── */
   const [availableChaosMoves, setAvailableChaosMoves] = useState<ChaosMove[]>([]);
+  /** When true, queen-teleport moves are included in click/highlight logic */
+  const [warpQueenActive, setWarpQueenActive] = useState(false);
+  /** Chaos moves visible to the player — warp queen is hidden until its button is toggled on */
+  const activeChaosMoves = useMemo(
+    () => warpQueenActive
+      ? availableChaosMoves
+      : availableChaosMoves.filter((m) => m.modifierId !== "queen-teleport"),
+    [availableChaosMoves, warpQueenActive],
+  );
 
   /* ── Chaos-aware piece rendering (overlays on pieces with modifiers) ── */
   const chaosCustomPieces = useMemo(() => {
@@ -1347,6 +1379,63 @@ export default function ChaosChessPage() {
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, []);
+
+  /* ── Timer tick (100ms interval) ── */
+  useEffect(() => {
+    if (timerIntervalRef.current) {
+      clearInterval(timerIntervalRef.current);
+      timerIntervalRef.current = null;
+    }
+    if (gameStatus !== "playing" || !timeControl) return;
+    timerIntervalRef.current = setInterval(() => {
+      const turn = gameRef.current.turn() as "w" | "b";
+      setTimers((prev) => ({ ...prev, [turn]: Math.max(0, prev[turn] - 100) }));
+    }, 100);
+    return () => {
+      if (timerIntervalRef.current) {
+        clearInterval(timerIntervalRef.current);
+        timerIntervalRef.current = null;
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameStatus, timeControl]);
+
+  /* ── Timer timeout check ── */
+  useEffect(() => {
+    if (!timeControl || gameStatus !== "playing") return;
+    if (timers.w === 0 && timers.b > 0) {
+      setGameResult("black");
+      setGameStatus("game-over");
+      setEndReason("White ran out of time");
+    } else if (timers.b === 0 && timers.w > 0) {
+      setGameResult("white");
+      setGameStatus("game-over");
+      setEndReason("Black ran out of time");
+    }
+  }, [timers.w, timers.b, gameStatus, timeControl]);
+
+  /* ── Fetch ELO ratings when multiplayer game starts ── */
+  useEffect(() => {
+    if (gameStatus !== "playing" || gameMode === "ai" || !roomId || !authenticated) return;
+    fetch(`/api/chaos/rating?roomId=${roomId}`, { headers: chaosHeaders() })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.myRating !== undefined) setMyRating(d.myRating);
+        if (d.opponentRating !== undefined) setOpponentRating(d.opponentRating);
+        if (d.myGamesPlayed !== undefined) setMyGamesPlayed(d.myGamesPlayed);
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameStatus, gameMode, roomId, authenticated]);
+
+  /* ── Compute ELO change when game ends (multiplayer only) ── */
+  useEffect(() => {
+    if (gameStatus !== "game-over" || gameMode === "ai") return;
+    if (myRatingRef.current === null || opponentRatingRef.current === null) return;
+    const result = gameResult === playerColor ? 1 : gameResult === "draw" ? 0.5 : 0;
+    setEloChange(computeEloChange(myRatingRef.current, opponentRatingRef.current, result, myGamesPlayedRef.current));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameStatus, gameMode, gameResult, playerColor]);
 
   /**
    * Check if a standard king move would land on a square attacked by
@@ -1812,6 +1901,13 @@ export default function ChaosChessPage() {
       setRematchRequested(false);
       setRematchReceived(false);
       triggeredDraftForPhaseRef.current = -1;
+      // Reset timer and ELO state
+      const tc = timeControlRef.current;
+      setTimers({ w: (tc?.base ?? 0) * 1000, b: (tc?.base ?? 0) * 1000 });
+      setEloChange(null);
+      setEloSaved(false);
+      setMyRating(null);
+      setOpponentRating(null);
       recomputeChaosMoves(g, cs);
 
       if (mode === "ai" && color === "black") {
@@ -1827,7 +1923,11 @@ export default function ChaosChessPage() {
       const res = await fetch("/api/chaos/create", {
         method: "POST",
         headers: chaosHeaders(true),
-        body: JSON.stringify({ hostColor: color }),
+        body: JSON.stringify({
+          hostColor: color,
+          timeControlSeconds: timeControlRef.current?.base ?? 0,
+          incrementSeconds: timeControlRef.current?.inc ?? 0,
+        }),
       });
       const data = await res.json();
       if (data.error) {
@@ -1841,7 +1941,13 @@ export default function ChaosChessPage() {
       setGameStatus("waiting");
       setOpponentLabel("Waiting for friend…");
       setEventLog([{ type: "info", message: `🏠 Room created! Code: ${data.roomCode}. Share it with a friend!`, icon: "🏠", pepe: PEPE.detective }]);
-
+      // Init timers so UI shows correct values when game starts
+      const tc = timeControlRef.current;
+      setTimers({ w: (tc?.base ?? 0) * 1000, b: (tc?.base ?? 0) * 1000 });
+      setEloChange(null);
+      setEloSaved(false);
+      setMyRating(null);
+      setOpponentRating(null);
       // Start polling for guest
       startPolling(data.roomId, color);
     } catch {
@@ -1880,6 +1986,19 @@ export default function ChaosChessPage() {
       setCapturedPawns({ w: 0, b: 0 });
       setEventLog([{ type: "info", message: `🎮 Joined room ${joinCode.toUpperCase()}! You are ${guestColor}. Game on!`, icon: "🎮", pepe: PEPE.hyped }]);
       playSound("reveal-stinger");
+      // Init time control and timers from room settings
+      if ((data.timeControlSeconds ?? 0) > 0) {
+        const tc = TIME_CONTROLS.find((t) => t.base === data.timeControlSeconds) ?? { label: "Custom", base: data.timeControlSeconds as number, inc: (data.incrementSeconds ?? 0) as number };
+        setTimeControl(tc);
+        setTimers({ w: data.timerWhiteMs ?? data.timeControlSeconds * 1000, b: data.timerBlackMs ?? data.timeControlSeconds * 1000 });
+      } else {
+        setTimeControl(null);
+        setTimers({ w: 0, b: 0 });
+      }
+      setEloChange(null);
+      setEloSaved(false);
+      setMyRating(null);
+      setOpponentRating(null);
       recomputeChaosMoves(g, cs);
 
       // Start slow fallback polling + notify host via WebSocket
@@ -1986,6 +2105,11 @@ export default function ChaosChessPage() {
         // Swap colors
         const newColor = playerColor === "white" ? "black" : "white";
         setPlayerColor(newColor);
+        // Reset ELO/timer state for new game
+        setEloChange(null);
+        setEloSaved(false);
+        setMyRating(null);
+        setOpponentRating(null);
         recomputeChaosMoves(g, cs);
         setEventLog([{ type: "info", message: "⚡ Rematch started! Good luck!", icon: "⚡", pepe: PEPE.hyped }]);
         playSound("reveal-stinger");
@@ -2098,6 +2222,10 @@ export default function ChaosChessPage() {
       if (data.capturedPawnsWhite !== undefined) {
         setCapturedPawns({ w: data.capturedPawnsWhite ?? 0, b: data.capturedPawnsBlack ?? 0 });
       }
+      // Sync timer values from opponent's move
+      if ((data as any).timerWhiteMs !== undefined && (data as any).timerBlackMs !== undefined) {
+        setTimers({ w: (data as any).timerWhiteMs, b: (data as any).timerBlackMs });
+      }
 
       // King-shield
       let activeGame = g;
@@ -2187,6 +2315,12 @@ export default function ChaosChessPage() {
               prevPhaseRef.current = cs.currentPhase;
               const g = new Chess(data.fen);
               setGame(g);
+              // Init timer from room settings
+              if ((data.timeControlSeconds ?? 0) > 0) {
+                const tc = TIME_CONTROLS.find((t) => t.base === data.timeControlSeconds) ?? { label: "Custom", base: data.timeControlSeconds as number, inc: (data.incrementSeconds ?? 0) as number };
+                setTimeControl(tc);
+                setTimers({ w: data.timerWhiteMs ?? data.timeControlSeconds * 1000, b: data.timerBlackMs ?? data.timeControlSeconds * 1000 });
+              }
               return "playing";
             }
             return prev;
@@ -2302,6 +2436,11 @@ export default function ChaosChessPage() {
           }
           setCapturedPawns({ w: data.capturedPawnsWhite ?? 0, b: data.capturedPawnsBlack ?? 0 });
 
+          // Sync opponent's timer values from DB
+          if (data.timerWhiteMs !== undefined && data.timerBlackMs !== undefined) {
+            setTimers({ w: data.timerWhiteMs, b: data.timerBlackMs });
+          }
+
           // King-shield: if we or opponent are in check and have shield, activate it
           let activeGame = g;
           if (activeGame.isCheck()) {
@@ -2355,6 +2494,17 @@ export default function ChaosChessPage() {
       if (!roomId) return;
       // Convert to server perspective (white=playerModifiers, black=aiModifiers)
       const serverCs = toServerChaosState(cs, playerColor);
+
+      // Compute post-increment timers (real moves only, not draft syncs)
+      const isRealMove = from !== "" && to !== "";
+      const movedSide = isRealMove ? (g.turn() === "w" ? "b" : "w") : null;
+      const incMs = (isRealMove && timeControlRef.current) ? timeControlRef.current.inc * 1000 : 0;
+      const timerW = movedSide === "w" ? timersRef.current.w + incMs : timersRef.current.w;
+      const timerB = movedSide === "b" ? timersRef.current.b + incMs : timersRef.current.b;
+      if (isRealMove && incMs > 0) {
+        setTimers({ w: timerW, b: timerB });
+      }
+
       const wsMsg: PartyMessage = from === "" && to === ""
         ? { type: "draft", chaosState: serverCs, fen: g.fen() }
         : {
@@ -2366,6 +2516,8 @@ export default function ChaosChessPage() {
             capturedPawnsWhite: capturedPawns.w,
             capturedPawnsBlack: capturedPawns.b,
             status: g.isGameOver() ? "finished" : "playing",
+            timerWhiteMs: timerW,
+            timerBlackMs: timerB,
           };
 
       // ── Broadcast via WebSocket FIRST for instant opponent sync ──
@@ -2386,6 +2538,8 @@ export default function ChaosChessPage() {
         capturedPawnsWhite: capturedPawns.w,
         capturedPawnsBlack: capturedPawns.b,
         status: g.isGameOver() ? "finished" : "playing",
+        timerWhiteMs: timerW,
+        timerBlackMs: timerB,
       };
       fetch("/api/chaos/move", {
         method: "POST",
@@ -2408,7 +2562,7 @@ export default function ChaosChessPage() {
       if (!isPlayerTurn) return false;
 
       // First check if this is a chaos move
-      const chaosMove = availableChaosMoves.find(
+      const chaosMove = activeChaosMoves.find(
         (m) => m.from === from && m.to === to,
       );
 
@@ -2608,7 +2762,7 @@ export default function ChaosChessPage() {
 
       return true;
     },
-    [game, gameStatus, playerColor, isThinking, chaosState, gameMode, availableChaosMoves, checkGameEnd, checkDraft, makeAiMove, addMoveToLog, applyPostMove, sendMoveToServer, spawnPepe, recomputeChaosMoves, isKingMoveChaosUnsafe],
+    [game, gameStatus, playerColor, isThinking, chaosState, gameMode, activeChaosMoves, checkGameEnd, checkDraft, makeAiMove, addMoveToLog, applyPostMove, sendMoveToServer, spawnPepe, recomputeChaosMoves, isKingMoveChaosUnsafe],
   );
 
   /* ── Execute a pending chaos promotion after piece choice ── */
@@ -2760,7 +2914,7 @@ export default function ChaosChessPage() {
               };
             }
             // Add chaos move highlights for this square
-            for (const cm of availableChaosMoves.filter((m) => m.from === square)) {
+            for (const cm of activeChaosMoves.filter((m) => m.from === square)) {
               // Filter out king chaos moves to chaos-defended squares
               if (piece && piece.type === "k" && isKingMoveChaosUnsafe(game, cm.from, cm.to)) continue;
               highlights[cm.to] = {
@@ -2796,7 +2950,7 @@ export default function ChaosChessPage() {
             };
           }
           // Add chaos move highlights for this square (purple)
-          for (const cm of availableChaosMoves.filter((m) => m.from === square)) {
+          for (const cm of activeChaosMoves.filter((m) => m.from === square)) {
             // Filter out king chaos moves to chaos-defended squares
             if (piece && piece.type === "k" && isKingMoveChaosUnsafe(game, cm.from, cm.to)) continue;
             highlights[cm.to] = {
@@ -2811,7 +2965,7 @@ export default function ChaosChessPage() {
         }
       }
     },
-    [game, gameStatus, playerColor, isThinking, selectedSquare, handlePlayerMove, availableChaosMoves, isKingMoveChaosUnsafe],
+    [game, gameStatus, playerColor, isThinking, selectedSquare, handlePlayerMove, activeChaosMoves, isKingMoveChaosUnsafe],
   );
 
   /* ── Handle draft pick ── */
@@ -3112,8 +3266,19 @@ export default function ChaosChessPage() {
     return { ...lastMoveHighlight, ...legalMoveSquares };
   }, [lastMoveHighlight, legalMoveSquares]);
 
+  /* ── Reset warp-queen toggle after every move ── */
+  useEffect(() => {
+    setWarpQueenActive(false);
+  }, [game]);
+
   /* ── Active chaos moves count badge ── */
-  const chaosMovesCount = availableChaosMoves.length;
+  const chaosMovesCount = activeChaosMoves.length;
+
+  /* ── Timer format helper ── */
+  const formatTimer = (ms: number) => {
+    const s = Math.max(0, Math.ceil(ms / 1000));
+    return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
+  };
 
   /* ────────────────────────── Render ────────────────────────── */
 
@@ -3151,6 +3316,30 @@ export default function ChaosChessPage() {
                 <p className="text-[10px] text-slate-500 sm:text-xs">{step.desc}</p>
               </div>
             ))}
+          </div>
+
+          {/* ── Time Control Picker ── */}
+          <div className="mb-4 sm:mb-6">
+            <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-slate-500 sm:text-xs">Time Control</p>
+            <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
+              {TIME_CONTROLS.map((tc) => {
+                const isSelected = tc.base === 0 ? timeControl === null : timeControl?.base === tc.base && timeControl?.inc === tc.inc;
+                return (
+                  <button
+                    key={tc.label}
+                    type="button"
+                    onClick={() => setTimeControl(tc.base === 0 ? null : tc)}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all sm:px-4 sm:py-2 sm:text-sm ${
+                      isSelected
+                        ? "bg-purple-500/20 text-purple-400 border border-purple-500/40"
+                        : "bg-white/[0.04] text-slate-400 border border-white/[0.06] hover:bg-white/[0.08]"
+                    }`}
+                  >
+                    {tc.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* ── Mode Tabs ── */}
@@ -3296,6 +3485,13 @@ export default function ChaosChessPage() {
                   setFloatingPepes([]);
                   setCapturedPawns({ w: 0, b: 0 });
                   setEventLog([{ type: "info", message: "🎯 Opponent found! Game on!", icon: "🎯", pepe: PEPE.hyped }]);
+                  // Reset ELO and timer state (timers will be synced from first poll)
+                  setEloChange(null);
+                  setEloSaved(false);
+                  setMyRating(null);
+                  setOpponentRating(null);
+                  setTimers({ w: 0, b: 0 });
+                  setTimeControl(null);
                   playSound("reveal-stinger");
                   spawnPepe(PEPE.hyped);
                   recomputeChaosMoves(g, cs);
@@ -3535,6 +3731,13 @@ export default function ChaosChessPage() {
               {gameMode === "ai" ? `Stockfish (${aiLevel})` : opponentLabel}
             </span>
             <InlineModifierIcons modifiers={chaosState.aiModifiers} />
+            {timeControl && gameMode !== "ai" && (
+              <span className={`ml-auto font-mono text-sm font-bold tabular-nums ${
+                (playerColor === "white" ? timers.b : timers.w) < 10000 ? "text-red-400 animate-pulse" : "text-slate-300"
+              }`}>
+                {formatTimer(playerColor === "white" ? timers.b : timers.w)}
+              </span>
+            )}
           </div>
 
           {/* Board — auto-sizes to fill container, capped at 640px */}
@@ -3637,12 +3840,34 @@ export default function ChaosChessPage() {
               You ({playerColor})
             </span>
             <InlineModifierIcons modifiers={chaosState.playerModifiers} />
+            {timeControl && gameMode !== "ai" && (
+              <span className={`ml-auto font-mono text-sm font-bold tabular-nums ${
+                (playerColor === "white" ? timers.w : timers.b) < 10000 ? "text-red-400 animate-pulse" : "text-slate-300"
+              }`}>
+                {formatTimer(playerColor === "white" ? timers.w : timers.b)}
+              </span>
+            )}
           </div>
 
           {/* Controls */}
           <div className="mt-2 sm:mt-3 flex gap-2">
             {gameStatus === "playing" && (
               <>
+                {/* Warp Queen activation button */}
+                {chaosState.playerModifiers.some((m) => m.id === "queen-teleport") &&
+                  ((playerColor === "white" && game.turn() === "w") || (playerColor === "black" && game.turn() === "b")) && (
+                  <button
+                    type="button"
+                    onClick={() => setWarpQueenActive((v) => !v)}
+                    className={`rounded-lg border px-4 py-2 text-xs font-bold transition-all ${
+                      warpQueenActive
+                        ? "border-purple-400/60 bg-purple-500/30 text-purple-200 shadow-[0_0_8px_rgba(168,85,247,0.5)]"
+                        : "border-purple-500/30 bg-purple-500/10 text-purple-400 hover:bg-purple-500/20"
+                    }`}
+                  >
+                    🌀 Warp Queen {warpQueenActive ? "— active" : ""}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={handleResign}
@@ -3729,6 +3954,69 @@ export default function ChaosChessPage() {
                       : "Skill issue. Maybe draft better next time."}
                   </p>
                 </div>
+
+                {/* ── ELO section (multiplayer only) ── */}
+                {gameMode !== "ai" && (
+                  <div className="w-full rounded-xl border border-purple-500/20 bg-purple-500/5 px-4 py-3 text-center">
+                    {eloChange !== null ? (
+                      <>
+                        <div className={`text-lg font-black ${eloChange >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                          {eloChange >= 0 ? "+" : ""}{eloChange} ELO
+                        </div>
+                        <div className="mt-0.5 text-xs text-slate-500">
+                          {myRating !== null
+                            ? `Rating: ${myRating} → ${(myRating + (eloSaved ? 0 : eloChange))} `
+                            : `Base: ${DEFAULT_CHAOS_ELO}`}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-xs text-slate-500">⚡ Chaos ELO — sign in to track your rating</div>
+                    )}
+
+                    {/* Save / Auth CTA */}
+                    {eloChange !== null && !authenticated && (
+                      <a
+                        href="/auth/signin"
+                        className="mt-2 block w-full rounded-lg border border-purple-500/40 bg-purple-500/20 px-4 py-2 text-xs font-bold text-purple-300 transition-all hover:bg-purple-500/30"
+                      >
+                        🔐 Sign in to save your Chaos ELO
+                      </a>
+                    )}
+                    {eloChange !== null && authenticated && !eloSaved && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const result = gameResult === playerColor ? "win" : gameResult === "draw" ? "draw" : "loss";
+                          try {
+                            await fetch("/api/chaos/rating", {
+                              method: "POST",
+                              headers: chaosHeaders(true),
+                              body: JSON.stringify({ roomId, result }),
+                            });
+                            setEloSaved(true);
+                            setMyRating((prev) => (prev ?? DEFAULT_CHAOS_ELO) + eloChange);
+                          } catch { /* ignore */ }
+                        }}
+                        className="mt-2 w-full rounded-lg border border-purple-500/40 bg-purple-600/20 px-4 py-2 text-xs font-bold text-purple-300 transition-all hover:bg-purple-600/30"
+                      >
+                        💾 Save Rating
+                      </button>
+                    )}
+                    {eloSaved && (
+                      <div className="mt-2 text-xs font-bold text-emerald-400">
+                        ✅ Rating saved! New rating: {myRating ?? DEFAULT_CHAOS_ELO}
+                      </div>
+                    )}
+
+                    {/* Leaderboard link */}
+                    <a
+                      href="/leaderboard/chaos"
+                      className="mt-2 block text-[10px] text-slate-500 hover:text-purple-400 transition-colors"
+                    >
+                      🏆 View Chaos Leaderboard
+                    </a>
+                  </div>
+                )}
 
                 {/* Action buttons */}
                 <div className="flex flex-col items-center gap-2 w-full">

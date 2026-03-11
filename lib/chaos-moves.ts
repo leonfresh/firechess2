@@ -682,6 +682,42 @@ function genEarlyPromotion(game: Chess, color: Color): ChaosMove[] {
 /*  Main interface                                                      */
 /* ================================================================== */
 
+/** Queen can teleport to any empty square on the board */
+function genQueenTeleport(game: Chess, color: Color): ChaosMove[] {
+  const moves: ChaosMove[] = [];
+  const queens = allSquaresOf(game, "q", color);
+  if (queens.length === 0) return moves;
+
+  // Standard queen reachable squares (via chess.js) — skip duplicates so we
+  // only add squares the queen cannot already reach through normal movement.
+  const normalReach = new Set<string>();
+  for (const qs of queens) {
+    for (const m of game.moves({ square: qs as any, verbose: true })) {
+      normalReach.add(`${qs}-${m.to}`);
+    }
+  }
+
+  for (const qs of queens) {
+    for (const f of FILES) {
+      for (const r of RANKS) {
+        const target = `${f}${r}` as Square;
+        if (target === qs) continue;
+        if (!isEmpty(game, target)) continue; // teleport to empty squares only
+        if (normalReach.has(`${qs}-${target}`)) continue; // already reachable normally
+        if (wouldLeaveKingInCheck(game, qs, target, color)) continue;
+        moves.push({
+          from: qs,
+          to: target,
+          type: "move",
+          modifierId: "queen-teleport",
+          label: "Warp Queen (teleport)",
+        });
+      }
+    }
+  }
+  return moves;
+}
+
 const MODIFIER_GENERATORS: Record<string, (game: Chess, color: Color, trackedSquare?: string | null) => ChaosMove[]> = {
   "pawn-charge": genPawnCharge,
   "pawn-capture-forward": genPawnBayonet,
@@ -697,6 +733,7 @@ const MODIFIER_GENERATORS: Record<string, (game: Chess, color: Color, trackedSqu
   "pawn-promotion-early": genEarlyPromotion,
   "pegasus": genPegasus,
   "rook-cannon": genRookCannon,
+  "queen-teleport": genQueenTeleport,
 };
 
 /**

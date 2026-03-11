@@ -50,6 +50,10 @@ export async function GET(req: NextRequest) {
     hostColor: room.hostColor,
     capturedPawnsWhite: room.capturedPawnsWhite,
     capturedPawnsBlack: room.capturedPawnsBlack,
+    timeControlSeconds: room.timeControlSeconds,
+    incrementSeconds: room.incrementSeconds,
+    timerWhiteMs: room.timerWhiteMs,
+    timerBlackMs: room.timerBlackMs,
     updatedAt: room.updatedAt?.toISOString(),
   });
 }
@@ -98,6 +102,8 @@ export async function POST(req: NextRequest) {
       status: body.status ?? room.status,
       capturedPawnsWhite: body.capturedPawnsWhite ?? room.capturedPawnsWhite,
       capturedPawnsBlack: body.capturedPawnsBlack ?? room.capturedPawnsBlack,
+      timerWhiteMs: body.timerWhiteMs ?? room.timerWhiteMs,
+      timerBlackMs: body.timerBlackMs ?? room.timerBlackMs,
       updatedAt: new Date(),
     })
     .where(eq(chaosRooms.id, roomId));

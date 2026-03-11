@@ -392,6 +392,13 @@ export const chaosRooms = pgTable("chaos_room", {
   difficulty: text("difficulty").default("medium"),
   /** Whether this room is open for matchmaking */
   isMatchmaking: boolean("isMatchmaking").default(false),
+  /** Time control: base seconds per player (null = unlimited) */
+  timeControlSeconds: integer("timeControlSeconds"),
+  /** Increment: seconds added after each move */
+  incrementSeconds: integer("incrementSeconds").default(0),
+  /** Current remaining time per player in ms (synced on each move) */
+  timerWhiteMs: integer("timerWhiteMs"),
+  timerBlackMs: integer("timerBlackMs"),
   /** Captured pawns count per side (for undead army) */
   capturedPawnsWhite: integer("capturedPawnsWhite").default(0),
   capturedPawnsBlack: integer("capturedPawnsBlack").default(0),
@@ -425,4 +432,80 @@ export const chaosLobbyMessages = pgTable("chaos_lobby_message", {
   userImage: text("userImage"),
   message: text("message").notNull(),
   createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
+});
+
+/* ------------------------------------------------------------------ */
+/*  Affiliate system                                                    */
+/* ------------------------------------------------------------------ */
+
+/**
+ * One row per affiliate (YouTuber / streamer / creator).
+ * stripePromoCodeId — the ID of the Stripe Promotion Code object (not its code string).
+ * stripePromoCode   — the human-readable code, e.g. "GOTHAM".
+ * commissionPct     — integer, e.g. 20 = 20% of each sale.
+ */
+export const affiliates = pgTable("affiliate", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  /** Creator's display name, e.g. "GothamChess" */
+  name: text("name").notNull(),
+  /** Their contact/payment email */
+  email: text("email"),
+  /** Stripe Promotion Code ID (promo_XXXX) — used to match webhook events */
+  stripePromoCodeId: text("stripePromoCodeId"),
+  /** The code string users type, e.g. "GOTHAM" — for display only */
+  stripePromoCode: text("stripePromoCode"),
+  /** Commission percentage, e.g. 20 */
+  commissionPct: integer("commissionPct").notNull().default(20),
+  /** Optional admin notes */
+  notes: text("notes"),
+  /** Whether the affiliate is still active */
+  active: boolean("active").notNull().default(true),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+});
+
+/**
+ * One row per successful sale that used an affiliate code.
+ */
+export const affiliateReferrals = pgTable("affiliate_referral", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  affiliateId: text("affiliateId")
+    .notNull()
+    .references(() => affiliates.id, { onDelete: "cascade" }),
+  /** FireChess user who bought */
+  userId: text("userId").references(() => users.id, { onDelete: "set null" }),
+  /** Stripe Checkout Session ID for audit trail */
+  stripeSessionId: text("stripeSessionId"),
+  /** "pro" (monthly) or "lifetime" */
+  planType: text("planType").$type<"pro" | "lifetime">().notNull().default("pro"),
+  /** Amount paid in cents after discount, e.g. 900 = $9.00 */
+  amountCents: integer("amountCents").notNull().default(0),
+  /** Commission owed in cents */
+  commissionCents: integer("commissionCents").notNull().default(0),
+  /** Whether this commission has been paid out */
+  paid: boolean("paid").notNull().default(false),
+  paidAt: timestamp("paidAt", { mode: "date" }),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+});
+
+/* ------------------------------------------------------------------ */
+/*  Chaos Chess — player ELO ratings                                   */
+/* ------------------------------------------------------------------ */
+
+export const chaosRatings = pgTable("chaos_rating", {
+  userId: text("userId")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  /** Current ELO rating (default 1200) */
+  rating: integer("rating").notNull().default(1200),
+  wins: integer("wins").notNull().default(0),
+  losses: integer("losses").notNull().default(0),
+  draws: integer("draws").notNull().default(0),
+  gamesPlayed: integer("gamesPlayed").notNull().default(0),
+  /** Highest rating ever achieved */
+  peakRating: integer("peakRating").notNull().default(1200),
+  updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow(),
 });

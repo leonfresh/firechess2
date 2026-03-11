@@ -27,6 +27,8 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const hostColor = body.hostColor === "black" ? "black" : "white";
+  const timeControlSeconds: number | undefined = body.timeControlSeconds ?? undefined;
+  const incrementSeconds: number = body.incrementSeconds ?? 0;
 
   const roomCode = generateRoomCode();
   const chaosState = createChaosState();
@@ -40,6 +42,8 @@ export async function POST(req: NextRequest) {
       chaosState,
       status: "waiting",
       isMatchmaking: body.matchmaking === true,
+      timeControlSeconds: timeControlSeconds ?? null,
+      incrementSeconds,
     })
     .returning({ id: chaosRooms.id, roomCode: chaosRooms.roomCode });
 

@@ -27,6 +27,9 @@ export type PartyMoveMessage = {
   capturedPawnsWhite: number;
   capturedPawnsBlack: number;
   status: string;
+  /** Timer state synced with each move (ms remaining) */
+  timerWhiteMs?: number;
+  timerBlackMs?: number;
 };
 
 export type PartyDraftMessage = {
