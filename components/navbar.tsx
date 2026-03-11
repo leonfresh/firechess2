@@ -491,6 +491,16 @@ export function Navbar() {
                           </svg>
                           Affiliates
                         </Link>
+                        <Link
+                          href="/admin/gift"
+                          onClick={() => setProfileOpen(false)}
+                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-orange-400 transition-colors hover:bg-orange-500/10 hover:text-orange-300"
+                        >
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                          </svg>
+                          Gift Links
+                        </Link>
                         </>
                       )}
 
@@ -612,7 +622,7 @@ export function Navbar() {
                       { href: "/changelog", label: "Dev Notes" },
                       { href: "/support", label: "My Tickets" },
                       { href: "/account", label: "Account & Billing" },
-                      ...(isAdmin ? [{ href: "/admin/feedback", label: "Admin Panel" }, { href: "/admin/users", label: "Manage Users" }, { href: "/admin/affiliates", label: "Affiliates" }] : []),
+                      ...(isAdmin ? [{ href: "/admin/feedback", label: "Admin Panel" }, { href: "/admin/users", label: "Manage Users" }, { href: "/admin/affiliates", label: "Affiliates" }, { href: "/admin/gift", label: "Gift Links" }] : []),
                     ]
                   : [
                       { href: "/changelog", label: "Dev Notes" },

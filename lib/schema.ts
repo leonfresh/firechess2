@@ -14,6 +14,7 @@ import {
   real,
   text,
   timestamp,
+  unique,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
 
@@ -490,6 +491,58 @@ export const affiliateReferrals = pgTable("affiliate_referral", {
   paidAt: timestamp("paidAt", { mode: "date" }),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
 });
+
+/* ------------------------------------------------------------------ */
+/*  Gift Links (Pro access gifting system)                             */
+/* ------------------------------------------------------------------ */
+
+/**
+ * One row per gift link. Each link can be used up to maxUses times.
+ * durationDays — how many days of Pro the recipient gets (null = permanent).
+ */
+export const giftLinks = pgTable("gift_link", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  /** Short human-readable label for admin reference, e.g. "YouTube Outreach March" */
+  label: text("label").notNull(),
+  /** URL-safe random token, e.g. "ab12cd34ef56" */
+  token: text("token").notNull().unique(),
+  /** Maximum number of times this link can be redeemed */
+  maxUses: integer("maxUses").notNull().default(50),
+  /** How many times it has been redeemed so far */
+  usedCount: integer("usedCount").notNull().default(0),
+  /** Plan type granted on redemption */
+  planType: text("planType").$type<"pro" | "lifetime">().notNull().default("pro"),
+  /** Days of Pro access granted (null = permanent) */
+  durationDays: integer("durationDays"),
+  /** Optional hard expiry — link stops working after this date */
+  expiresAt: timestamp("expiresAt", { mode: "date" }),
+  /** Set to a timestamp to manually revoke the link */
+  revokedAt: timestamp("revokedAt", { mode: "date" }),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+});
+
+/**
+ * One row per redemption — tracks who claimed which link.
+ * Unique constraint prevents double-claiming the same link per user.
+ */
+export const giftRedemptions = pgTable(
+  "gift_redemption",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    giftLinkId: text("giftLinkId")
+      .notNull()
+      .references(() => giftLinks.id, { onDelete: "cascade" }),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    redeemedAt: timestamp("redeemedAt", { mode: "date" }).defaultNow(),
+  },
+  (t) => [unique().on(t.giftLinkId, t.userId)],
+);
 
 /* ------------------------------------------------------------------ */
 /*  Chaos Chess — player ELO ratings                                   */
