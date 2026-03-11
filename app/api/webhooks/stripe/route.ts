@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { subscriptions, affiliates, affiliateReferrals } from "@/lib/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import Stripe from "stripe";
 
 function getStripe() {
@@ -77,46 +77,37 @@ export async function POST(req: NextRequest) {
         });
 
       // ── Affiliate referral tracking ──
-      // A promo code was used if session.discounts is non-empty.
-      // We need to expand the session to get discount details.
+      // session.discounts is already present in the webhook event (no expand needed).
+      // Each discount item has promotion_code as a string ID like "promo_XXXX".
       try {
-        const fullSession = await stripe.checkout.sessions.retrieve(
-          session.id,
-          { expand: ["discounts"] }
-        );
-        const discounts = (fullSession as any).discounts as Array<{
-          promotion_code?: string | { id: string } | null;
+        const discounts = session.discounts as Array<{
+          coupon: string;
+          promotion_code: string | null;
         }> | null | undefined;
 
-        if (discounts && discounts.length > 0) {
-          // Get the Stripe Promotion Code ID (promo_XXXX)
-          const rawPromo = discounts[0].promotion_code;
-          const promoCodeId = typeof rawPromo === "string" ? rawPromo
-            : typeof rawPromo === "object" && rawPromo !== null ? rawPromo.id
-            : null;
+        const promoCodeId = discounts?.[0]?.promotion_code ?? null;
 
-          if (promoCodeId) {
-            // Find which affiliate owns this promo code
-            const [affiliate] = await db
-              .select()
-              .from(affiliates)
-              .where(eq(affiliates.stripePromoCodeId, promoCodeId))
-              .limit(1);
+        if (promoCodeId) {
+          // Find which affiliate owns this promo code
+          const [affiliate] = await db
+            .select()
+            .from(affiliates)
+            .where(eq(affiliates.stripePromoCodeId, promoCodeId))
+            .limit(1);
 
-            if (affiliate) {
-              // amount_total is in cents, already after discount
-              const amountCents = fullSession.amount_total ?? 0;
-              const commissionCents = Math.round(amountCents * affiliate.commissionPct / 100);
+          if (affiliate) {
+            // amount_total is in cents, already after discount
+            const amountCents = session.amount_total ?? 0;
+            const commissionCents = Math.round(amountCents * affiliate.commissionPct / 100);
 
-              await db.insert(affiliateReferrals).values({
-                affiliateId: affiliate.id,
-                userId,
-                stripeSessionId: session.id,
-                planType: isLifetime ? "lifetime" : "pro",
-                amountCents,
-                commissionCents,
-              });
-            }
+            await db.insert(affiliateReferrals).values({
+              affiliateId: affiliate.id,
+              userId,
+              stripeSessionId: session.id,
+              planType: isLifetime ? "lifetime" : "pro",
+              amountCents,
+              commissionCents,
+            });
           }
         }
       } catch (affiliateErr) {
@@ -159,7 +150,67 @@ export async function POST(req: NextRequest) {
       break;
     }
 
+    /* ── Invoice paid — track recurring affiliate commission ── */
+    case "invoice.paid": {
+      const invoice = event.data.object as Stripe.Invoice;
+
+      // Only track renewals — first payment is already captured via checkout.session.completed
+      if (invoice.billing_reason === "subscription_create") break;
+
+      const customerId = typeof invoice.customer === "string" ? invoice.customer : (invoice.customer as any)?.id;
+      if (!customerId) break;
+
+      // Find the FireChess user for this Stripe customer
+      const [userSub] = await db
+        .select({ userId: subscriptions.userId })
+        .from(subscriptions)
+        .where(eq(subscriptions.stripeCustomerId, customerId))
+        .limit(1);
+      if (!userSub?.userId) break;
+
+      // Look up their original affiliate referral to find which affiliate referred them
+      try {
+        const [originalReferral] = await db
+          .select({
+            affiliateId: affiliateReferrals.affiliateId,
+          })
+          .from(affiliateReferrals)
+          .where(eq(affiliateReferrals.userId, userSub.userId))
+          .limit(1);
+
+        if (!originalReferral) break;
+
+        // Get the affiliate's current commission % (may have changed since signup)
+        const [affiliate] = await db
+          .select({ commissionPct: affiliates.commissionPct, active: affiliates.active })
+          .from(affiliates)
+          .where(eq(affiliates.id, originalReferral.affiliateId))
+          .limit(1);
+
+        // Don't pay commission for deactivated affiliates
+        if (!affiliate || !affiliate.active) break;
+
+        const amountCents = invoice.amount_paid ?? 0;
+        if (amountCents === 0) break;
+
+        const commissionCents = Math.round(amountCents * affiliate.commissionPct / 100);
+
+        await db.insert(affiliateReferrals).values({
+          affiliateId: originalReferral.affiliateId,
+          userId: userSub.userId,
+          stripeSessionId: typeof invoice.id === "string" ? invoice.id : null,
+          planType: "pro",
+          amountCents,
+          commissionCents,
+        });
+      } catch (recurringErr) {
+        console.error("Recurring affiliate commission error:", recurringErr);
+      }
+      break;
+    }
+
     /* ── Subscription deleted — revert to free (but not lifetime) ── */
+    case "customer.subscription.deleted": {
     case "customer.subscription.deleted": {
       const sub = event.data.object as Stripe.Subscription;
       const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;

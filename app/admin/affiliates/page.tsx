@@ -53,6 +53,7 @@ export default function AdminAffiliatesPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [actionId, setActionId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !isAdmin) router.replace("/");
@@ -63,8 +64,11 @@ export default function AdminAffiliatesPage() {
     setFetching(true);
     fetch("/api/admin/affiliates")
       .then((r) => r.json())
-      .then((d) => setList(d.affiliates ?? []))
-      .catch(() => setError("Failed to load"))
+      .then((d) => {
+        if (d.error) setListError(d.error);
+        else setList(d.affiliates ?? []);
+      })
+      .catch(() => setListError("Failed to load — the DB migration may not have run yet."))
       .finally(() => setFetching(false));
   };
 
@@ -75,6 +79,7 @@ export default function AdminAffiliatesPage() {
   const openCreate = () => {
     setEditId(null);
     setForm(EMPTY_FORM);
+    setError(null);
     setShowForm(true);
   };
 
@@ -88,6 +93,7 @@ export default function AdminAffiliatesPage() {
       commissionPct: String(a.commissionPct),
       notes: a.notes ?? "",
     });
+    setError(null);
     setShowForm(true);
   };
 
@@ -198,9 +204,9 @@ export default function AdminAffiliatesPage() {
           ))}
         </div>
 
-        {error && (
+        {listError && (
           <div className="rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-            {error}
+            ⚠️ {listError}
           </div>
         )}
 
