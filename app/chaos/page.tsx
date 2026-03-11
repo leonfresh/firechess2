@@ -3033,8 +3033,8 @@ export default function ChaosChessPage() {
           // draftStep is set below in the server-perspective state
         };
       } else {
-        // AI mode: both draft simultaneously
-        stateWithTracking = applyDraft(chaosState, mod, pendingPhase);
+        // AI mode: player picks first, AI picks sequentially after a reveal delay
+        stateWithTracking = applyDraft(chaosState, mod, pendingPhase, { skipOpponentRoll: true });
       }
 
       // Track single-piece modifiers (archbishop, knook) to prevent transfer on capture
@@ -3095,9 +3095,6 @@ export default function ChaosChessPage() {
         ? pendingPhase // track by pending phase even if currentPhase hasn't advanced yet
         : stateWithTracking.currentPhase;
 
-      const aiMsg = !isMultiplayer ? getAiDraftMessage(stateWithTracking) : null;
-      const aiLastMod = stateWithTracking.aiModifiers[stateWithTracking.aiModifiers.length - 1];
-
       setEventLog((prev) => [
         ...prev,
         {
@@ -3106,9 +3103,6 @@ export default function ChaosChessPage() {
           icon: mod.icon,
           pepe: tierPepe(mod.tier),
         },
-        ...(gameMode === "ai" && aiMsg
-          ? [{ type: "modifier" as const, message: aiMsg, icon: "🤖", pepe: aiLastMod ? tierPepe(aiLastMod.tier) : PEPE.hmm }]
-          : []),
         ...(isMultiplayer && playerColor === "white"
           ? [{ type: "info" as const, message: "⚡ Powerup locked in! Make your move!", icon: "⚡" }]
           : [{ type: "info" as const, message: "⏯️ Game resumed!", icon: "▶️" }]),
@@ -3130,6 +3124,33 @@ export default function ChaosChessPage() {
       spawnPepe(tierPepe(mod.tier));
 
       recomputeChaosMoves(currentGame, stateWithTracking);
+
+      // AI sequential pick: after player confirms, reveal the AI's auto-pick
+      if (!isMultiplayer) {
+        const phaseForAi = pendingPhase;
+        const isAiTurn =
+          (playerColor === "white" && currentGame.turn() === "b") ||
+          (playerColor === "black" && currentGame.turn() === "w");
+        const aiChoices = rollDraftChoices(phaseForAi, stateWithTracking.aiModifiers, Date.now());
+        const tierRank: Record<string, number> = { common: 1, rare: 2, epic: 3, legendary: 4 };
+        const aiPick = [...aiChoices].sort((a, b) => (tierRank[b.tier] ?? 0) - (tierRank[a.tier] ?? 0))[0];
+        if (aiPick) {
+          setTimeout(() => {
+            const newState = { ...stateWithTracking, aiModifiers: [...stateWithTracking.aiModifiers, aiPick] };
+            setChaosState(newState);
+            recomputeChaosMoves(currentGame, newState);
+            setOpponentDraftReveal({ opponentPick: aiPick, phase: phaseForAi });
+            setEventLog((p) => [
+              ...p,
+              { type: "modifier" as const, message: `🤖 Stockfish drafted: ${aiPick.icon} ${aiPick.name} — ${aiPick.description}`, icon: aiPick.icon, pepe: tierPepe(aiPick.tier) },
+            ]);
+            spawnPepe(tierPepe(aiPick.tier));
+            if (isAiTurn) {
+              setTimeout(() => makeAiMove(currentGame, newState), AI_MOVE_DELAY);
+            }
+          }, 800);
+        }
+      }
 
       // Send updated state for multiplayer with draftStep
       if (isMultiplayer && roomId) {
@@ -3173,15 +3194,7 @@ export default function ChaosChessPage() {
         }).catch(() => { /* network error — polling will resync */ });
       }
 
-      // If it's AI's turn, make AI move
-      if (gameMode === "ai") {
-        const isAiTurn =
-          (playerColor === "white" && currentGame.turn() === "b") ||
-          (playerColor === "black" && currentGame.turn() === "w");
-        if (isAiTurn) {
-          setTimeout(() => makeAiMove(currentGame, stateWithTracking), AI_MOVE_DELAY);
-        }
-      }
+      // (AI move is handled inside the sequential reveal timeout above for gameMode === "ai")
     },
     [chaosState, pendingPhase, playerColor, game, gameMode, makeAiMove, roomId, capturedPawns, spawnPepe, recomputeChaosMoves],
   );
