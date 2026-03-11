@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { useSession } from "@/components/session-provider";
 
 interface GiftLinkInfo {
@@ -20,7 +19,6 @@ interface Props {
 
 export function GiftClaim({ token, info }: Props) {
   const { authenticated } = useSession();
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [claimed, setClaimed] = useState(false);
@@ -45,7 +43,7 @@ export function GiftClaim({ token, info }: Props) {
         setError(data.error ?? "Something went wrong.");
       } else {
         setClaimed(true);
-        setTimeout(() => router.push("/dashboard"), 2500);
+        setTimeout(() => { window.location.href = "/dashboard"; }, 2500);
       }
     } catch {
       setError("Network error. Please try again.");
