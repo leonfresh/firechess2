@@ -76,8 +76,9 @@ export default class ChaosRoom implements Party.Server {
 
     // ── Standard chess move (validate server-side) ──
     if (msg.type === "move") {
-      const from = msg.from as string;
-      const to   = msg.to   as string;
+      // Client sends lastMoveFrom/lastMoveTo; fall back to those if from/to absent
+      const from = (msg.from ?? msg.lastMoveFrom) as string;
+      const to   = (msg.to   ?? msg.lastMoveTo)   as string;
       const promotion = msg.promotion as string | undefined;
 
       // Turn check

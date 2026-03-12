@@ -2081,8 +2081,6 @@ export default function ChaosChessPage() {
         setOpponentLabel("Opponent");
         setEventLog((p) => [...p, { type: "info", message: "🎮 Opponent connected! Game on!", icon: "🎮", pepe: PEPE.hyped }]);
         playSound("reveal-stinger");
-        // Fetch initial game state from DB (chaosState + timer sync for the new opponent)
-        if (roomIdRef.current) fetchRoomSnapshotRef.current(roomIdRef.current, playerColor);
       }
       return;
     }
