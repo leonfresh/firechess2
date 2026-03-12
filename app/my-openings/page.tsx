@@ -8,6 +8,7 @@ import { Chessboard } from "@/components/chessboard-compat";
 import { fetchExplorerMoves, type ExplorerResult } from "@/lib/lichess-explorer";
 import { useBoardTheme, useCustomPieces, useShowCoordinates } from "@/lib/use-coins";
 import type { AnalysisSource } from "@/lib/client-analysis";
+import { stockfishClient } from "@/lib/stockfish-client";
 
 /* ── Constants ─────────────────────────────────────────────────────── */
 
@@ -348,6 +349,18 @@ function buildVTLayout(
   return { nodes, edges, W, H };
 }
 
+/* ── Node auto-tagger ───────────────────────────────────────────────── */
+
+function getNodeTag(node: TreeNode): { label: string; color: string } | null {
+  const total = node.wins + node.draws + node.losses;
+  if (total < 5) return null;
+  const wr = node.wins / total;
+  if (wr >= 0.65) return { label: "Strong", color: "#10b981" };
+  if (wr < 0.35)  return { label: "Weak",   color: "#ef4444" };
+  if (wr < 0.45)  return { label: "Study",  color: "#f59e0b" };
+  return null;
+}
+
 /* ── VisualTree SVG component ────────────────────────────────────────── */
 
 const VisualTree = React.memo(function VisualTree({
@@ -361,6 +374,74 @@ const VisualTree = React.memo(function VisualTree({
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [expandedPaths, setExpandedPaths] = React.useState<Set<string>>(new Set());
+  // ── Pan state ───────────────────────────────────────────────────────────────
+  const [spaceHeld, setSpaceHeld] = useState(false);
+  const spaceRef = useRef(false); // read in event handlers w/o stale closure
+  const panRef = useRef<{ startX: number; startY: number; scrollLeft: number; scrollTop: number } | null>(null);
+  const [grabbing, setGrabbing] = useState(false);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.code !== "Space" || e.repeat) return;
+      const tag = (document.activeElement?.tagName ?? "").toLowerCase();
+      if (tag === "input" || tag === "textarea" || tag === "select") return;
+      spaceRef.current = true;
+      setSpaceHeld(true);
+      e.preventDefault();
+    };
+    const onKeyUp = (e: KeyboardEvent) => {
+      if (e.code !== "Space") return;
+      spaceRef.current = false;
+      setSpaceHeld(false);
+      panRef.current = null;
+      setGrabbing(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, []);
+
+  // Shared pan start helper
+  const startPan = useCallback((clientX: number, clientY: number, el: HTMLDivElement) => {
+    panRef.current = { startX: clientX, startY: clientY, scrollLeft: el.scrollLeft, scrollTop: el.scrollTop };
+    setGrabbing(true);
+  }, []);
+
+  const applyPan = useCallback((clientX: number, clientY: number) => {
+    if (!panRef.current || !scrollRef.current) return;
+    scrollRef.current.scrollLeft = panRef.current.scrollLeft - (clientX - panRef.current.startX);
+    scrollRef.current.scrollTop  = panRef.current.scrollTop  - (clientY - panRef.current.startY);
+  }, []);
+
+  const endPan = useCallback(() => {
+    panRef.current = null;
+    setGrabbing(false);
+  }, []);
+
+  // Overlay (spacebar mode) handlers
+  const onOverlayDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    startPan(e.clientX, e.clientY, el);
+    e.currentTarget.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  }, [startPan]);
+
+  // Scroll-container empty-area drag handlers (no spacebar needed)
+  const onContainerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (spaceRef.current) return; // overlay handles it
+    const isOnNode = (e.target as Element).closest("[data-vtnode]") !== null;
+    if (isOnNode) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    startPan(e.clientX, e.clientY, el);
+    e.currentTarget.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  }, [startPan]);
+
   const { nodes, edges, W, H } = useMemo(
     () => buildVTLayout(tree, selectedPath, expandedPaths),
     [tree, selectedPath, expandedPaths],
@@ -392,11 +473,17 @@ const VisualTree = React.memo(function VisualTree({
   }
 
   return (
-    <div
-      ref={scrollRef}
-      className="overflow-auto overscroll-contain"
-      style={{ height: "100%" }}
-    >
+    <div style={{ height: "100%", position: "relative" }}>
+      {/* Scroll & pan container */}
+      <div
+        ref={scrollRef}
+        className="overflow-auto overscroll-contain"
+        style={{ height: "100%", cursor: grabbing ? "grabbing" : "default" }}
+        onPointerDown={onContainerDown}
+        onPointerMove={(e) => applyPan(e.clientX, e.clientY)}
+        onPointerUp={endPan}
+        onPointerCancel={endPan}
+      >
       <svg
         width={W}
         height={Math.max(H, 200)}
@@ -576,6 +663,7 @@ const VisualTree = React.memo(function VisualTree({
           return (
             <g
               key={nodeKey}
+              data-vtnode="true"
               onClick={() => {
                 onSelect(vn.path);
                 if (hasHiddenChildren) {
@@ -700,6 +788,33 @@ const VisualTree = React.memo(function VisualTree({
                 />
               )}
 
+              {/* Tag indicator — left edge stripe + label */}
+              {(() => {
+                const tag = getNodeTag(vn.node);
+                if (!tag) return null;
+                return (
+                  <>
+                    <rect
+                      x={nx} y={ny + 8}
+                      width={3} height={VT_NODE_H - 16}
+                      rx={1.5}
+                      fill={tag.color}
+                      opacity={0.85}
+                    />
+                    <text
+                      x={nx + 8} y={ny + VT_NODE_H - 14}
+                      fill={tag.color}
+                      fontSize={8}
+                      fontWeight="700"
+                      fontFamily="ui-sans-serif, sans-serif"
+                      opacity={0.9}
+                    >
+                      {tag.label}
+                    </text>
+                  </>
+                );
+              })()}
+
               {/* Expand badge for nodes with hidden children */}
               {hasHiddenChildren && (
                 <>
@@ -727,6 +842,17 @@ const VisualTree = React.memo(function VisualTree({
           );
         })}
       </svg>
+      </div>{/* end scroll container */}
+      {/* Spacebar pan overlay — covers the whole tree, blocks node clicks */}
+      {spaceHeld && (
+        <div
+          style={{ position: "absolute", inset: 0, zIndex: 2, cursor: grabbing ? "grabbing" : "grab" }}
+          onPointerDown={onOverlayDown}
+          onPointerMove={(e) => applyPan(e.clientX, e.clientY)}
+          onPointerUp={endPan}
+          onPointerCancel={endPan}
+        />
+      )}
     </div>
   );
 });
@@ -843,6 +969,20 @@ function TreeNodeRow({
         <span className={`text-[11px] tabular-nums font-medium ${winColor} min-w-[30px] text-right`}>
           {winRate}%
         </span>
+
+        {/* Auto-tag badge */}
+        {(() => {
+          const tag = getNodeTag(node);
+          if (!tag) return null;
+          const bg = tag.color === "#10b981" ? "bg-emerald-500/15 text-emerald-400"
+            : tag.color === "#ef4444" ? "bg-red-500/15 text-red-400"
+            : "bg-amber-500/15 text-amber-400";
+          return (
+            <span className={`ml-1 shrink-0 rounded px-1 py-0.5 text-[9px] font-bold ${bg}`}>
+              {tag.label}
+            </span>
+          );
+        })()}
       </div>
 
       {/* Win rate bar (when selected) */}
@@ -996,6 +1136,9 @@ interface DraggablePanelProps {
   explorerLoading: boolean;
   currentNodeChildren: TreeNode[];
   userTopMove: string | null;
+  sfBestMove: string | null;
+  sfLoading: boolean;
+  boardArrows: [string, string, string][];
   onClose: () => void;
   onSelectMove: (san: string) => void;
 }
@@ -1003,18 +1146,28 @@ interface DraggablePanelProps {
 function DraggablePanel({
   currentFen, boardOrientation, squareStyles, customPieces, showCoords,
   boardTheme, selectedPath, sideToMove, explorerData, explorerLoading,
-  currentNodeChildren, userTopMove, onClose, onSelectMove,
+  currentNodeChildren, userTopMove, sfBestMove, sfLoading, boardArrows, onClose, onSelectMove,
 }: DraggablePanelProps) {
+  /* ── Detect mobile ── */
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  /* ── Desktop drag state ── */
   const [pos, setPos] = useState({ x: 20, y: 80 });
   const dragRef = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null);
 
   useEffect(() => {
-    setPos({ x: Math.max(20, window.innerWidth - 420), y: 80 });
-  }, []);
+    if (!isMobile) setPos({ x: Math.max(20, window.innerWidth - 420), y: 80 });
+  }, [isMobile]);
 
   const onHandlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
-    const ox = pos.x;
-    const oy = pos.y;
+    if (isMobile) return;
+    const ox = pos.x, oy = pos.y;
     dragRef.current = { sx: e.clientX, sy: e.clientY, ox, oy };
     const onMove = (ev: PointerEvent) => {
       if (!dragRef.current) return;
@@ -1032,8 +1185,190 @@ function DraggablePanel({
     document.addEventListener("pointerup", onUp);
     e.currentTarget.setPointerCapture(e.pointerId);
     e.preventDefault();
-  }, [pos.x, pos.y]);
+  }, [pos.x, pos.y, isMobile]);
 
+  /* ── Mobile bottom-sheet swipe-to-dismiss ── */
+  const [sheetY, setSheetY] = useState(0);
+  const swipeRef = useRef<{ startY: number } | null>(null);
+
+  const onSheetDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    swipeRef.current = { startY: e.clientY };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  }, []);
+  const onSheetMove = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!swipeRef.current) return;
+    setSheetY(Math.max(0, e.clientY - swipeRef.current.startY));
+  }, []);
+  const onSheetUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    if (!swipeRef.current) return;
+    const dy = e.clientY - swipeRef.current.startY;
+    swipeRef.current = null;
+    if (dy > 120) { onClose(); setSheetY(0); } else { setSheetY(0); }
+  }, [onClose]);
+
+  /* ── Shared panel body ── */
+  const panelTitle = selectedPath.length > 0
+    ? (explorerData?.openingName ?? selectedPath[selectedPath.length - 1])
+    : "Starting position";
+
+  const panelBody = (
+    <>
+      {/* Chessboard */}
+      <div className="p-3">
+        <Chessboard
+          position={currentFen}
+          boardOrientation={boardOrientation}
+          arePiecesDraggable={false}
+          showBoardNotation={showCoords}
+          customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+          customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+          customSquareStyles={squareStyles}
+          customPieces={customPieces}
+          customArrows={boardArrows}
+        />
+      </div>
+
+      {/* Stockfish indicator */}
+      <div className="flex items-center gap-2 px-4 pb-2 text-[11px]">
+        {sfLoading ? (
+          <>
+            <span className="inline-block h-3 w-3 animate-spin rounded-full border border-emerald-500 border-t-transparent" />
+            <span className="text-slate-600">Analysing…</span>
+          </>
+        ) : sfBestMove ? (
+          <>
+            <span className="font-semibold text-emerald-400">♙</span>
+            <span className="text-slate-500">SF best:</span>
+            <span className="font-mono font-bold text-emerald-300">{sfBestMove.slice(0,2)}→{sfBestMove.slice(2,4)}</span>
+            {boardArrows[0]?.[2] === "#3b82f6" && (
+              <span className="ml-1 rounded bg-blue-500/15 px-1 py-0.5 text-[9px] font-bold text-blue-300">your move ✓</span>
+            )}
+          </>
+        ) : null}
+      </div>
+
+      {/* Position info */}
+      <div className="flex flex-wrap items-center gap-2 px-4 pb-3 text-xs text-slate-500 border-b border-white/[0.06]">
+        {selectedPath.length > 0 ? (
+          <>
+            <span>Move {Math.ceil(selectedPath.length / 2)} · {sideToMove === "white" ? "White" : "Black"} to move</span>
+            {explorerData?.openingName && (
+              <>
+                <span className="text-slate-700">·</span>
+                <span className="text-slate-400">{explorerData.openingName}</span>
+              </>
+            )}
+          </>
+        ) : (
+          <span>Starting position · tap a move in the tree to navigate</span>
+        )}
+      </div>
+
+      {/* Your moves from here */}
+      {currentNodeChildren.length > 0 && (
+        <div className="p-3 border-b border-white/[0.06]">
+          <h4 className="mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Your moves from here</h4>
+          <div className="space-y-1.5">
+            {[...currentNodeChildren]
+              .sort((a, b) => b.count - a.count)
+              .slice(0, 5)
+              .map((child) => {
+                const total = child.wins + child.draws + child.losses;
+                const wr = total ? Math.round((child.wins / total) * 100) : 0;
+                const isTop = child.san === userTopMove;
+                const isDbBest = explorerData?.topPick?.san === child.san;
+                const moveNum = Math.floor(child.depth / 2) + 1;
+                const prefix = child.depth % 2 === 0 ? `${moveNum}.` : `${moveNum}…`;
+                return (
+                  <button
+                    key={child.san}
+                    type="button"
+                    onClick={() => onSelectMove(child.san)}
+                    className={`w-full rounded-lg border px-2.5 py-2 text-left transition-colors ${
+                      isTop && isDbBest
+                        ? "border-emerald-500/20 bg-emerald-500/08 hover:bg-emerald-500/12"
+                        : isDbBest
+                          ? "border-blue-500/15 bg-blue-500/05 hover:bg-blue-500/10"
+                          : "border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.04]"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-sm">
+                        <span className="text-slate-600">{prefix} </span>
+                        <span className="font-semibold text-slate-100">{child.san}</span>
+                      </span>
+                      {isTop && <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 rounded px-1">top</span>}
+                      {isDbBest && <span className="text-[10px] font-bold text-blue-300 bg-blue-400/10 rounded px-1">DB best</span>}
+                      <span className="ml-auto text-xs tabular-nums text-slate-500">{child.count}× · {wr}%</span>
+                    </div>
+                    <div className="mt-1">
+                      <WinRateBar wins={child.wins} draws={child.draws} losses={child.losses} />
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+        </div>
+      )}
+
+      {/* Explorer */}
+      <div className="p-3">
+        <h4 className="mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Lichess Explorer</h4>
+        <ExplorerPanel explorerData={explorerData} loading={explorerLoading} userTopMove={userTopMove} />
+      </div>
+    </>
+  );
+
+  /* ── Mobile: full-width bottom sheet ── */
+  if (isMobile) {
+    return (
+      <>
+        {/* Dim backdrop */}
+        <div
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          onClick={onClose}
+        />
+        {/* Sheet */}
+        <div
+          className="fixed inset-x-0 bottom-0 z-50 flex flex-col rounded-t-2xl border-t border-white/[0.14] bg-[#0a1628]/98 backdrop-blur-xl shadow-2xl overflow-hidden"
+          style={{
+            maxHeight: "calc(100dvh - 64px)",
+            transform: `translateY(${sheetY}px)`,
+            transition: swipeRef.current ? "none" : "transform 0.22s cubic-bezier(0.32,0.72,0,1)",
+          }}
+        >
+          {/* Swipe handle */}
+          <div
+            className="shrink-0 select-none pt-2.5 pb-2 px-4 cursor-ns-resize touch-none"
+            onPointerDown={onSheetDown}
+            onPointerMove={onSheetMove}
+            onPointerUp={onSheetUp}
+            onPointerCancel={onSheetUp}
+          >
+            <div className="mx-auto mb-2.5 h-1 w-12 rounded-full bg-white/20" />
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-slate-300 truncate max-w-[80%]">{panelTitle}</span>
+              <button
+                type="button"
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={onClose}
+                className="rounded-lg p-1 text-slate-500 hover:bg-white/[0.07] hover:text-white transition-colors"
+                aria-label="Close"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+                  <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          {/* Body */}
+          <div className="overflow-y-auto flex-1">{panelBody}</div>
+        </div>
+      </>
+    );
+  }
+
+  /* ── Desktop: draggable floating panel ── */
   return (
     <div
       className="fixed z-30 w-[380px] rounded-2xl border border-white/[0.12] bg-[#0a1628]/95 backdrop-blur-xl shadow-2xl overflow-hidden"
@@ -1050,11 +1385,7 @@ function DraggablePanel({
             <circle cx="7" cy="10" r="1.5" /><circle cx="13" cy="10" r="1.5" />
             <circle cx="7" cy="16" r="1.5" /><circle cx="13" cy="16" r="1.5" />
           </svg>
-          <span className="text-xs font-semibold text-slate-400 truncate">
-            {selectedPath.length > 0
-              ? `Move ${Math.ceil(selectedPath.length / 2)} · ${explorerData?.openingName ?? selectedPath[selectedPath.length - 1]}`
-              : "Starting position"}
-          </span>
+          <span className="text-xs font-semibold text-slate-400 truncate">{panelTitle}</span>
         </div>
         <button
           type="button"
@@ -1068,92 +1399,9 @@ function DraggablePanel({
           </svg>
         </button>
       </div>
-
-      {/* Scrollable body */}
+      {/* Body */}
       <div className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 160px)" }}>
-        {/* Chessboard */}
-        <div className="p-3">
-          <Chessboard
-            position={currentFen}
-            boardOrientation={boardOrientation}
-            arePiecesDraggable={false}
-            showBoardNotation={showCoords}
-            customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-            customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
-            customSquareStyles={squareStyles}
-            customPieces={customPieces}
-          />
-        </div>
-
-        {/* Position info */}
-        <div className="flex flex-wrap items-center gap-2 px-4 pb-3 text-xs text-slate-500 border-b border-white/[0.06]">
-          {selectedPath.length > 0 ? (
-            <>
-              <span>Move {Math.ceil(selectedPath.length / 2)} · {sideToMove === "white" ? "White" : "Black"} to move</span>
-              {explorerData?.openingName && (
-                <>
-                  <span className="text-slate-700">·</span>
-                  <span className="text-slate-400">{explorerData.openingName}</span>
-                </>
-              )}
-            </>
-          ) : (
-            <span>Starting position · click a node to navigate</span>
-          )}
-        </div>
-
-        {/* Your moves from here */}
-        {currentNodeChildren.length > 0 && (
-          <div className="p-3 border-b border-white/[0.06]">
-            <h4 className="mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Your moves from here</h4>
-            <div className="space-y-1.5">
-              {[...currentNodeChildren]
-                .sort((a, b) => b.count - a.count)
-                .slice(0, 5)
-                .map((child) => {
-                  const total = child.wins + child.draws + child.losses;
-                  const wr = total ? Math.round((child.wins / total) * 100) : 0;
-                  const isTop = child.san === userTopMove;
-                  const isDbBest = explorerData?.topPick?.san === child.san;
-                  const moveNum = Math.floor(child.depth / 2) + 1;
-                  const prefix = child.depth % 2 === 0 ? `${moveNum}.` : `${moveNum}…`;
-                  return (
-                    <button
-                      key={child.san}
-                      type="button"
-                      onClick={() => onSelectMove(child.san)}
-                      className={`w-full rounded-lg border px-2.5 py-1.5 text-left transition-colors ${
-                        isTop && isDbBest
-                          ? "border-emerald-500/20 bg-emerald-500/08 hover:bg-emerald-500/12"
-                          : isDbBest
-                            ? "border-blue-500/15 bg-blue-500/05 hover:bg-blue-500/10"
-                            : "border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.04]"
-                      }`}
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-sm">
-                          <span className="text-slate-600">{prefix} </span>
-                          <span className="font-semibold text-slate-100">{child.san}</span>
-                        </span>
-                        {isTop && <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 rounded px-1">most played</span>}
-                        {isDbBest && <span className="text-[10px] font-bold text-blue-300 bg-blue-400/10 rounded px-1">DB best</span>}
-                        <span className="ml-auto text-xs tabular-nums text-slate-500">{child.count}× · {wr}%</span>
-                      </div>
-                      <div className="mt-1">
-                        <WinRateBar wins={child.wins} draws={child.draws} losses={child.losses} />
-                      </div>
-                    </button>
-                  );
-                })}
-            </div>
-          </div>
-        )}
-
-        {/* Explorer */}
-        <div className="p-3">
-          <h4 className="mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Lichess Explorer</h4>
-          <ExplorerPanel explorerData={explorerData} loading={explorerLoading} userTopMove={userTopMove} />
-        </div>
+        {panelBody}
       </div>
     </div>
   );
@@ -1191,8 +1439,18 @@ function MyOpeningsInner() {
   /* view mode for opening tree panel */
   const [viewMode, setViewMode] = useState<"visual" | "list">("visual");
 
+  /* default to list view on mobile (after mount to avoid SSR mismatch) */
+  useEffect(() => {
+    if (window.innerWidth < 640) setViewMode("list");
+  }, []);
+
   /* floating board panel */
   const [panelOpen, setPanelOpen] = useState(false);
+
+  /* stockfish analysis */
+  const [sfBestMove, setSfBestMove] = useState<string | null>(null);
+  const [sfLoading, setSfLoading] = useState(false);
+  const sfFenRef = useRef<string>("");
 
   /* derived */
   const currentFen = useMemo(() => getFenAtPath(selectedPath), [selectedPath]);
@@ -1215,6 +1473,25 @@ function MyOpeningsInner() {
     if (!children.length) return null;
     return [...children].sort((a, b) => b.count - a.count)[0]?.san ?? null;
   }, [currentNodeChildren]);
+
+  const userTopMoveUci = useMemo(() => {
+    const sorted = [...currentNodeChildren].sort((a, b) => b.count - a.count);
+    return sorted[0]?.uci ?? null;
+  }, [currentNodeChildren]);
+
+  /* Stockfish arrows: green = SF best, amber = user's top, blue = both match */
+  const boardArrows = useMemo((): [string, string, string][] => {
+    const sfFrom = sfBestMove?.slice(0, 2);
+    const sfTo   = sfBestMove?.slice(2, 4);
+    const uFrom  = userTopMoveUci?.slice(0, 2);
+    const uTo    = userTopMoveUci?.slice(2, 4);
+    const matches = sfFrom && uFrom && sfFrom === uFrom && sfTo === uTo;
+    if (matches) return [[sfFrom!, sfTo!, "#3b82f6"]]; // blue = user plays best
+    const arrows: [string, string, string][] = [];
+    if (sfFrom && sfTo) arrows.push([sfFrom, sfTo, "#10b981"]); // green = SF best
+    if (uFrom  && uTo)  arrows.push([uFrom,  uTo,  "#f59e0b"]); // amber = user's move
+    return arrows;
+  }, [sfBestMove, userTopMoveUci]);
 
   const rootSorted = useMemo(
     () => [...tree.values()].sort((a, b) => b.count - a.count),
@@ -1266,6 +1543,24 @@ function MyOpeningsInner() {
       .catch(() => setExplorerData(null))
       .finally(() => setExplorerLoading(false));
   }, [currentFen, sideToMove, scanState]);
+
+  /* Stockfish best-move analysis */
+  useEffect(() => {
+    if (scanState !== "done") return;
+    setSfBestMove(null);
+    setSfLoading(true);
+    const thisFen = currentFen;
+    sfFenRef.current = thisFen;
+    stockfishClient.evaluateFen(thisFen, 14)
+      .then((result) => {
+        if (sfFenRef.current !== thisFen) return;
+        setSfBestMove(result?.bestMove ?? null);
+      })
+      .catch(() => { /* silently ignore */ })
+      .finally(() => {
+        if (sfFenRef.current === thisFen) setSfLoading(false);
+      });
+  }, [currentFen, scanState]);
 
   const runScan = useCallback(async (
     user: string,
@@ -1590,7 +1885,9 @@ function MyOpeningsInner() {
                   </div>
                   {viewMode === "visual" && (
                     <span className="ml-auto text-[10px] text-slate-600">
-                      top {VT_MAX_CH}/node · {VT_MAX_D} lvls · click node to expand →
+                      top {VT_MAX_CH}/node · {VT_MAX_D} lvls ·{" "}
+                      <span className="hidden sm:inline">hold space or</span>{" "}
+                      drag blank area to pan
                     </span>
                   )}
                   {viewMode === "list" && (
@@ -1918,129 +2215,155 @@ function MyOpeningsInner() {
           </div>
 
           {/* ── Compact toolbar ── */}
-          <div className="relative shrink-0 border-b border-white/[0.07] bg-[#050a12]/95 backdrop-blur px-4 py-2 flex flex-wrap items-center gap-2">
-            {/* Back / title */}
-            <Link
-              href="/"
-              className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors shrink-0"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
-                <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
-              </svg>
-              <span className="hidden sm:inline font-semibold text-slate-300">Opening Tree</span>
-            </Link>
-            <div className="h-4 w-px bg-white/[0.06] shrink-0" />
-
-            {/* Compact rescan form */}
-            <form onSubmit={handleSubmit} className="flex items-center gap-2 flex-1 min-w-0">
-              <div className="flex shrink-0 rounded-lg border border-white/[0.08] bg-white/[0.04] p-0.5">
-                <button
-                  type="button"
-                  onClick={() => setSource("lichess")}
-                  className={`rounded-md px-2 py-0.5 text-[11px] font-semibold transition-colors ${source === "lichess" ? "bg-white/[0.1] text-white" : "text-slate-500 hover:text-slate-300"}`}
-                >Lichess</button>
-                <button
-                  type="button"
-                  onClick={() => setSource("chesscom")}
-                  className={`rounded-md px-2 py-0.5 text-[11px] font-semibold transition-colors ${source === "chesscom" ? "bg-white/[0.1] text-white" : "text-slate-500 hover:text-slate-300"}`}
-                >Chess.com</button>
-              </div>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="username"
-                className="w-24 min-w-0 rounded-lg border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-xs text-white placeholder-slate-600 outline-none focus:border-emerald-500/40"
-                autoComplete="off"
-                spellCheck={false}
-              />
-              <button
-                type="submit"
-                disabled={isLoading || !username.trim()}
-                className="shrink-0 rounded-lg bg-emerald-500/90 px-3 py-1 text-xs font-semibold text-white transition-all hover:bg-emerald-400 disabled:opacity-40"
+          <div className="relative shrink-0 border-b border-white/[0.07] bg-[#050a12]/95 backdrop-blur flex flex-col">
+            {/* Row 1: always visible — back link + form */}
+            <div className="flex items-center gap-2 px-3 py-2 sm:px-4">
+              {/* Back / title */}
+              <Link
+                href="/"
+                className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors shrink-0"
               >
-                {isLoading ? "…" : "Scan"}
-              </button>
-            </form>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                  <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
+                </svg>
+                <span className="hidden sm:inline font-semibold text-slate-300">Opening Tree</span>
+              </Link>
+              <div className="h-4 w-px bg-white/[0.06] shrink-0" />
 
-            {/* Stats pill */}
-            {isDone && (
-              <div className="hidden sm:flex shrink-0 items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1 text-[11px] text-slate-400">
-                <span><span className="font-semibold text-white">{totalGames}</span> games</span>
-                <span className="text-slate-700">·</span>
-                <span><span className="font-semibold text-white">{rootSorted.reduce((s, n) => s + n.count, 0)}</span> positions</span>
-              </div>
-            )}
-
-            {/* Color filter */}
-            {isDone && (
-              <div className="shrink-0 flex items-center rounded-lg border border-white/[0.07] bg-white/[0.03] p-0.5">
-                {(["both", "white", "black"] as ColorFilter[]).map((c) => (
+              {/* Compact rescan form */}
+              <form onSubmit={handleSubmit} className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
+                <div className="flex shrink-0 rounded-lg border border-white/[0.08] bg-white/[0.04] p-0.5">
                   <button
-                    key={c}
                     type="button"
-                    onClick={() => handleColorChange(c)}
-                    className={`rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors ${colorFilter === c ? "bg-white/[0.08] text-white" : "text-slate-500 hover:text-slate-300"}`}
-                  >
-                    {c === "both" ? "Both" : c === "white" ? "⬜" : "⬛"}
-                  </button>
-                ))}
-              </div>
-            )}
+                    onClick={() => setSource("lichess")}
+                    className={`rounded-md px-1.5 sm:px-2 py-0.5 text-[11px] font-semibold transition-colors ${source === "lichess" ? "bg-white/[0.1] text-white" : "text-slate-500 hover:text-slate-300"}`}
+                  >Lichess</button>
+                  <button
+                    type="button"
+                    onClick={() => setSource("chesscom")}
+                    className={`rounded-md px-1.5 sm:px-2 py-0.5 text-[11px] font-semibold transition-colors ${source === "chesscom" ? "bg-white/[0.1] text-white" : "text-slate-500 hover:text-slate-300"}`}
+                  >Chess.com</button>
+                </div>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="username"
+                  className="flex-1 min-w-0 max-w-[130px] sm:max-w-[160px] rounded-lg border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-xs text-white placeholder-slate-600 outline-none focus:border-emerald-500/40"
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+                <button
+                  type="submit"
+                  disabled={isLoading || !username.trim()}
+                  className="shrink-0 rounded-lg bg-emerald-500/90 px-2.5 sm:px-3 py-1 text-xs font-semibold text-white transition-all hover:bg-emerald-400 disabled:opacity-40"
+                >
+                  {isLoading ? "…" : "Scan"}
+                </button>
+              </form>
 
-            {/* View mode toggle */}
+              {/* Stats pill (sm+) */}
+              {isDone && (
+                <div className="hidden sm:flex shrink-0 items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1 text-[11px] text-slate-400">
+                  <span><span className="font-semibold text-white">{totalGames}</span> games</span>
+                  <span className="text-slate-700">·</span>
+                  <span><span className="font-semibold text-white">{rootSorted.reduce((s, n) => s + n.count, 0)}</span> positions</span>
+                </div>
+              )}
+            </div>
+
+            {/* Row 2: done-state controls */}
             {isDone && (
-              <div className="shrink-0 flex items-center rounded-lg border border-white/[0.07] bg-white/[0.03] p-0.5">
-                <button
-                  type="button"
-                  onClick={() => setViewMode("visual")}
-                  title="Visual tree"
-                  className={`rounded-md px-2 py-0.5 text-[11px] font-semibold transition-all ${viewMode === "visual" ? "bg-emerald-500/15 text-emerald-300" : "text-slate-500 hover:text-slate-300"}`}
-                >🌲</button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode("list")}
-                  title="List view"
-                  className={`rounded-md px-2 py-0.5 text-[11px] font-semibold transition-all ${viewMode === "list" ? "bg-white/[0.08] text-slate-200" : "text-slate-500 hover:text-slate-300"}`}
-                >📋</button>
-              </div>
-            )}
+              <div className="flex items-center gap-2 px-3 py-1.5 sm:px-4 border-t border-white/[0.04]">
+                {/* Color filter */}
+                <div className="shrink-0 flex items-center rounded-lg border border-white/[0.07] bg-white/[0.03] p-0.5">
+                  {(["both", "white", "black"] as ColorFilter[]).map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => handleColorChange(c)}
+                      className={`rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors ${colorFilter === c ? "bg-white/[0.08] text-white" : "text-slate-500 hover:text-slate-300"}`}
+                    >
+                      {c === "both" ? <span className="hidden sm:inline">Both</span> : c === "white" ? "⬜" : "⬛"}
+                      {c === "both" && <span className="sm:hidden">⬜⬛</span>}
+                    </button>
+                  ))}
+                </div>
 
-            {/* Show/hide board panel */}
-            {isDone && (
-              <button
-                type="button"
-                onClick={() => setPanelOpen((v) => !v)}
-                title={panelOpen ? "Hide board" : "Show board"}
-                className={`shrink-0 rounded-lg border px-2.5 py-1 text-[11px] transition-colors ${
-                  panelOpen
-                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-                    : "border-white/[0.07] bg-white/[0.03] text-slate-400 hover:text-white"
-                }`}
-              >
-                ♟ Board
-              </button>
-            )}
+                {/* View mode toggle */}
+                <div className="shrink-0 flex items-center rounded-lg border border-white/[0.07] bg-white/[0.03] p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("visual")}
+                    title="Visual tree"
+                    className={`rounded-md px-2 py-0.5 text-[11px] font-semibold transition-all ${viewMode === "visual" ? "bg-emerald-500/15 text-emerald-300" : "text-slate-500 hover:text-slate-300"}`}
+                  >🌲</button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode("list")}
+                    title="List view"
+                    className={`rounded-md px-2 py-0.5 text-[11px] font-semibold transition-all ${viewMode === "list" ? "bg-white/[0.08] text-slate-200" : "text-slate-500 hover:text-slate-300"}`}
+                  >📋</button>
+                </div>
 
-            {/* Breadcrumb — last 4 moves */}
-            {isDone && selectedPath.length > 0 && (
-              <div className="hidden lg:flex shrink-0 items-center gap-1 text-[11px] text-slate-500 ml-auto max-w-[240px] overflow-hidden">
+                {/* Show/hide board panel */}
                 <button
                   type="button"
-                  onClick={() => setSelectedPath([])}
-                  className="text-slate-600 hover:text-slate-300 shrink-0 transition-colors"
-                >Start</button>
-                {selectedPath.slice(-4).map((san, i, arr) => (
-                  <span key={i} className="flex items-center gap-1 shrink-0">
-                    <span className="text-slate-700">›</span>
+                  onClick={() => setPanelOpen((v) => !v)}
+                  title={panelOpen ? "Hide board" : "Show board"}
+                  className={`shrink-0 rounded-lg border px-2.5 py-1 text-[11px] transition-colors ${
+                    panelOpen
+                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                      : "border-white/[0.07] bg-white/[0.03] text-slate-400 hover:text-white"
+                  }`}
+                >
+                  ♟ <span className="hidden sm:inline">Board</span>
+                </button>
+
+                {/* Breadcrumb — last 4 moves */}
+                {selectedPath.length > 0 && (
+                  <div className="hidden lg:flex shrink-0 items-center gap-1 text-[11px] text-slate-500 ml-auto max-w-[240px] overflow-hidden">
                     <button
                       type="button"
-                      onClick={() => setSelectedPath(selectedPath.slice(0, selectedPath.length - arr.length + i + 1))}
-                      className={`font-mono transition-colors ${i === arr.length - 1 ? "text-emerald-400 font-semibold" : "hover:text-slate-300"}`}
-                    >{san}</button>
-                  </span>
-                ))}
-                {selectedPath.length > 4 && <span className="text-slate-700 shrink-0">…</span>}
+                      onClick={() => setSelectedPath([])}
+                      className="text-slate-600 hover:text-slate-300 shrink-0 transition-colors"
+                    >Start</button>
+                    {selectedPath.slice(-4).map((san, i, arr) => (
+                      <span key={i} className="flex items-center gap-1 shrink-0">
+                        <span className="text-slate-700">›</span>
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPath(selectedPath.slice(0, selectedPath.length - arr.length + i + 1))}
+                          className={`font-mono transition-colors ${i === arr.length - 1 ? "text-emerald-400 font-semibold" : "hover:text-slate-300"}`}
+                        >{san}</button>
+                      </span>
+                    ))}
+                    {selectedPath.length > 4 && <span className="text-slate-700 shrink-0">…</span>}
+                  </div>
+                )}
+
+                {/* Mini breadcrumb path pill for small screens */}
+                {selectedPath.length > 0 && (
+                  <div className="lg:hidden ml-auto flex items-center gap-1 text-[11px] overflow-hidden max-w-[120px] sm:max-w-[200px]">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPath(selectedPath.slice(0, -1))}
+                      className="shrink-0 text-slate-600 hover:text-slate-300 transition-colors"
+                      title="Go back one move"
+                    >
+                      ‹
+                    </button>
+                    <span className="font-mono text-emerald-400 font-semibold truncate">
+                      {selectedPath[selectedPath.length - 1]}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPath([])}
+                      className="shrink-0 text-slate-700 hover:text-slate-400 transition-colors text-[9px]"
+                      title="Reset to start"
+                    >✕</button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -2151,6 +2474,9 @@ function MyOpeningsInner() {
           explorerLoading={explorerLoading}
           currentNodeChildren={currentNodeChildren}
           userTopMove={userTopMove}
+          sfBestMove={sfBestMove}
+          sfLoading={sfLoading}
+          boardArrows={boardArrows}
           onClose={() => setPanelOpen(false)}
           onSelectMove={(san) => setSelectedPath([...selectedPath, san])}
         />

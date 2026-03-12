@@ -2052,28 +2052,27 @@ export async function analyzeOpeningLeaksInBrowser(
     let dbGames: number | undefined;
     try {
       const explorer = await fetchExplorerMoves(fenBefore, sideToMove);
-      // If the API itself failed (429/network), skip this position — we can't validate it.
-      // Better to miss a real leak than to show a sideline as an inaccuracy.
-      if (explorer.failed) {
-        return;
-      }
-      const dbMove = explorer.moves.find(
-        (m) => m.san === chosenMove || m.uci === chosenMove
-      );
-      if (dbMove && dbMove.totalGames >= 50 && dbMove.winRate >= 0.35) {
-        // Very popular lines (50K+) with decent WR are always known openings
-        if (dbMove.totalGames >= 50000 && dbMove.winRate >= 0.35) {
-          dbApproved = true;
-          dbWinRate = dbMove.winRate;
-          dbGames = dbMove.totalGames;
-        } else {
-          const dbScore = Math.min(300, Math.log10(dbMove.totalGames) * 40 * (dbMove.winRate / 0.50));
-          // Popularity bonus: well-known gambits/sidelines get extra CPL tolerance
-          const popularityBonus = dbMove.totalGames >= 5000 ? 50 : dbMove.totalGames >= 1000 ? 25 : 0;
-          if (cpLoss <= dbScore + popularityBonus) {
+      // If the API failed (429/network/timeout), skip DB validation but keep the leak.
+      // A cpLoss > threshold is already a significant mistake; better to show it than lose it.
+      if (!explorer.failed) {
+        const dbMove = explorer.moves.find(
+          (m) => m.san === chosenMove || m.uci === chosenMove
+        );
+        if (dbMove && dbMove.totalGames >= 50 && dbMove.winRate >= 0.35) {
+          // Very popular lines (50K+) with decent WR are always known openings
+          if (dbMove.totalGames >= 50000 && dbMove.winRate >= 0.35) {
             dbApproved = true;
             dbWinRate = dbMove.winRate;
             dbGames = dbMove.totalGames;
+          } else {
+            const dbScore = Math.min(300, Math.log10(dbMove.totalGames) * 40 * (dbMove.winRate / 0.50));
+            // Popularity bonus: well-known gambits/sidelines get extra CPL tolerance
+            const popularityBonus = dbMove.totalGames >= 5000 ? 50 : dbMove.totalGames >= 1000 ? 25 : 0;
+            if (cpLoss <= dbScore + popularityBonus) {
+              dbApproved = true;
+              dbWinRate = dbMove.winRate;
+              dbGames = dbMove.totalGames;
+            }
           }
         }
       }
@@ -2203,23 +2202,24 @@ export async function analyzeOpeningLeaksInBrowser(
     let dbGames: number | undefined;
     try {
       const explorer = await fetchExplorerMoves(fenBefore, sideToMove);
-      // If the API failed, skip this one-off entirely — can't validate without DB data.
-      if (explorer.failed) return;
-      const dbMove = explorer.moves.find(
-        (m) => m.san === chosenMove || m.uci === chosenMove
-      );
-      if (dbMove && dbMove.totalGames >= 50 && dbMove.winRate >= 0.35) {
-        if (dbMove.totalGames >= 50000 && dbMove.winRate >= 0.35) {
-          dbApproved = true;
-          dbWinRate = dbMove.winRate;
-          dbGames = dbMove.totalGames;
-        } else {
-          const dbScore = Math.min(300, Math.log10(dbMove.totalGames) * 40 * (dbMove.winRate / 0.50));
-          const popularityBonus = dbMove.totalGames >= 5000 ? 50 : dbMove.totalGames >= 1000 ? 25 : 0;
-          if (cpLoss <= dbScore + popularityBonus) {
+      // If the API failed, skip DB validation but keep the one-off mistake.
+      if (!explorer.failed) {
+        const dbMove = explorer.moves.find(
+          (m) => m.san === chosenMove || m.uci === chosenMove
+        );
+        if (dbMove && dbMove.totalGames >= 50 && dbMove.winRate >= 0.35) {
+          if (dbMove.totalGames >= 50000 && dbMove.winRate >= 0.35) {
             dbApproved = true;
             dbWinRate = dbMove.winRate;
             dbGames = dbMove.totalGames;
+          } else {
+            const dbScore = Math.min(300, Math.log10(dbMove.totalGames) * 40 * (dbMove.winRate / 0.50));
+            const popularityBonus = dbMove.totalGames >= 5000 ? 50 : dbMove.totalGames >= 1000 ? 25 : 0;
+            if (cpLoss <= dbScore + popularityBonus) {
+              dbApproved = true;
+              dbWinRate = dbMove.winRate;
+              dbGames = dbMove.totalGames;
+            }
           }
         }
       }
