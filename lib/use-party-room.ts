@@ -190,9 +190,8 @@ export function usePartyRoom(
   }, [roomId]);
 
   const send = useCallback((msg: PartyMessage) => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify(msg));
-    }
+    // Use PartySocket's native send — it buffers internally if not yet OPEN
+    socketRef.current?.send(JSON.stringify(msg));
   }, []);
 
   const disconnect = useCallback(() => {

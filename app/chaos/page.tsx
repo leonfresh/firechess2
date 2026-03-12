@@ -2534,6 +2534,17 @@ export default function ChaosChessPage() {
       }
   }, [spawnPepe, checkGameEnd, recomputeChaosMoves]);
   fetchRoomSnapshotRef.current = fetchRoomSnapshot;
+
+  // ── Polling fallback: re-sync from DB while in an active multiplayer game ──
+  // Ensures moves are visible even if the WebSocket relay misses a message.
+  useEffect(() => {
+    if (gameMode !== "friend" || gameStatus !== "playing" || !roomId) return;
+    const id = setInterval(() => {
+      void fetchRoomSnapshotRef.current(roomId, playerColor);
+    }, 1500);
+    return () => clearInterval(id);
+  }, [gameMode, gameStatus, roomId, playerColor]);
+
   const sendMoveToServer = useCallback(
     (g: Chess, from: string, to: string, cs: ChaosState, isChaosMove = false) => {
       if (!roomId) return;
