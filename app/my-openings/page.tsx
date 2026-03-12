@@ -245,14 +245,14 @@ function getSideToMoveAtFen(fen: string): PlayerColor {
 
 /* ── Visual Tree Layout ─────────────────────────────────────────────── */
 
-const VT_NODE_W = 124;
-const VT_NODE_H = 52;
-const VT_COL_W  = 196;  // column stride (left-edge to left-edge)
-const VT_ROW_SZ = 72;   // vertical pixels per leaf slot
-const VT_MX     = 16;   // horizontal margin
-const VT_MY     = 28;   // top margin (room for depth labels)
+const VT_NODE_W = 148;
+const VT_NODE_H = 72;
+const VT_COL_W  = 224;  // column stride (left-edge to left-edge)
+const VT_ROW_SZ = 86;   // vertical pixels per leaf slot
+const VT_MX     = 20;   // horizontal margin
+const VT_MY     = 34;   // top margin (room for depth labels)
 const VT_MAX_CH = 3;    // max children shown per node
-const VT_MAX_D  = 5;    // max depth levels rendered
+const VT_MAX_D  = 8;    // max depth levels rendered
 
 type VTNode = {
   node: TreeNode;
@@ -392,7 +392,7 @@ const VisualTree = React.memo(function VisualTree({
     <div
       ref={scrollRef}
       className="overflow-auto overscroll-contain"
-      style={{ maxHeight: 520 }}
+      style={{ maxHeight: 660 }}
     >
       <svg
         width={W}
@@ -446,19 +446,29 @@ const VisualTree = React.memo(function VisualTree({
             const x = VT_MX + d * VT_COL_W + VT_NODE_W / 2;
             const isWhite = d % 2 === 0;
             const mNum = Math.floor(d / 2) + 1;
+            const label = isWhite ? `${mNum}. White` : `${mNum}… Black`;
+            const badgeW = 60;
             return (
-              <text
-                key={d}
-                x={x}
-                y={14}
-                textAnchor="middle"
-                fill="#2d3e52"
-                fontSize={9}
-                fontFamily="ui-sans-serif, system-ui, sans-serif"
-                letterSpacing={0.5}
-              >
-                {isWhite ? `${mNum}. WHITE` : `${mNum}. BLACK`}
-              </text>
+              <g key={d}>
+                <rect
+                  x={x - badgeW / 2} y={4}
+                  width={badgeW} height={16}
+                  rx={8}
+                  fill={isWhite ? "rgba(248,250,252,0.06)" : "rgba(30,41,59,0.5)"}
+                />
+                <text
+                  x={x}
+                  y={15}
+                  textAnchor="middle"
+                  fill={isWhite ? "#94a3b8" : "#64748b"}
+                  fontSize={9}
+                  fontWeight="600"
+                  fontFamily="ui-sans-serif, system-ui, sans-serif"
+                  letterSpacing={0.4}
+                >
+                  {label}
+                </text>
+              </g>
             );
           })}
 
@@ -505,10 +515,30 @@ const VisualTree = React.memo(function VisualTree({
           const wp  = Math.round(wr * 100);
 
           // Bottom WDL bar widths (pixels)
-          const barInner = VT_NODE_W - 10;
+          const barInner = VT_NODE_W - 12;
           const winW  = tot ? Math.round((vn.node.wins  / tot) * barInner) : 0;
           const drawW = tot ? Math.round((vn.node.draws / tot) * barInner) : 0;
           const lossW = Math.max(0, barInner - winW - drawW);
+
+          // Count badge dimensions
+          const countStr = vn.node.count >= 1000
+            ? `${(vn.node.count / 1000).toFixed(1)}k`
+            : String(vn.node.count);
+          const badgeFill = vn.node.count >= 50
+            ? "rgba(16,185,129,0.22)"
+            : vn.node.count >= 10
+            ? "rgba(59,130,246,0.2)"
+            : "rgba(71,85,105,0.3)";
+          const badgeStroke = vn.node.count >= 50
+            ? "rgba(16,185,129,0.5)"
+            : vn.node.count >= 10
+            ? "rgba(59,130,246,0.45)"
+            : "rgba(71,85,105,0.4)";
+          const badgeText = vn.node.count >= 50
+            ? "#34d399"
+            : vn.node.count >= 10
+            ? "#93c5fd"
+            : "#94a3b8";
 
           const borderColor = isSelected
             ? "#10b981"
@@ -567,43 +597,51 @@ const VisualTree = React.memo(function VisualTree({
                 filter={isSelected ? "url(#vtShadow)" : undefined}
               />
 
-              {/* Move number dim prefix */}
+              {/* Move number prefix (top-left, faint) */}
               <text
-                x={nx + 8} y={ny + 14}
-                fill={isSelected ? "#34d399" : "#334155"}
+                x={nx + 8} y={ny + 15}
+                fill={isSelected ? "#34d399" : "#3d5068"}
                 fontSize={9}
                 fontFamily="ui-monospace, monospace"
               >
                 {prefix}
               </text>
 
-              {/* SAN — main label */}
+              {/* SAN — main label, big and bold */}
               <text
-                x={nx + 8} y={ny + 28}
+                x={nx + 8} y={ny + 40}
                 fill={textFill}
-                fontSize={14}
+                fontSize={18}
                 fontWeight="700"
                 fontFamily="ui-monospace, monospace"
               >
                 {vn.node.san}
               </text>
 
-              {/* Count badge top-right */}
-              <text
-                x={nx + VT_NODE_W - 6} y={ny + 14}
-                fill="#374151"
-                fontSize={9}
-                textAnchor="end"
-                fontFamily="ui-sans-serif, sans-serif"
-              >
-                {vn.node.count}×
-              </text>
+              {/* Count pill badge (top-right) */}
+              {(() => {
+                const bw = countStr.length * 6.5 + 12;
+                const bx = nx + VT_NODE_W - bw - 6;
+                const by = ny + 6;
+                return (
+                  <>
+                    <rect x={bx} y={by} width={bw} height={16} rx={8}
+                      fill={badgeFill} stroke={badgeStroke} strokeWidth={0.8} />
+                    <text x={bx + bw / 2} y={by + 11}
+                      fill={badgeText} fontSize={9} fontWeight="700"
+                      textAnchor="middle"
+                      fontFamily="ui-sans-serif, sans-serif">
+                      {countStr}×
+                    </text>
+                  </>
+                );
+              })()}
 
-              {/* Win% bottom-right */}
+              {/* Win% (bottom-right of move text area) */}
               <text
-                x={nx + VT_NODE_W - 6} y={ny + 28}
-                fill={wr > 0.55 ? "#6ee7b7" : wr < 0.40 ? "#f87171" : "#94a3b8"}
-                fontSize={11}
+                x={nx + VT_NODE_W - 8} y={ny + 40}
+                fill={wr > 0.55 ? "#6ee7b7" : wr < 0.40 ? "#f87171" : "#64748b"}
+                fontSize={12}
                 fontWeight="600"
                 textAnchor="end"
                 fontFamily="ui-sans-serif, sans-serif"
@@ -613,35 +651,35 @@ const VisualTree = React.memo(function VisualTree({
 
               {/* WDL bar strip at bottom of node */}
               <rect
-                x={nx + 5} y={ny + VT_NODE_H - 8}
-                width={barInner} height={4}
-                rx={2}
+                x={nx + 6} y={ny + VT_NODE_H - 10}
+                width={barInner} height={5}
+                rx={2.5}
                 fill="rgba(255,255,255,0.04)"
               />
               {winW > 0 && (
                 <rect
-                  x={nx + 5} y={ny + VT_NODE_H - 8}
-                  width={winW} height={4}
-                  rx={2}
+                  x={nx + 6} y={ny + VT_NODE_H - 10}
+                  width={winW} height={5}
+                  rx={2.5}
                   fill="#10b981"
-                  opacity={0.65}
+                  opacity={0.7}
                 />
               )}
               {drawW > 0 && (
                 <rect
-                  x={nx + 5 + winW} y={ny + VT_NODE_H - 8}
-                  width={drawW} height={4}
+                  x={nx + 6 + winW} y={ny + VT_NODE_H - 10}
+                  width={drawW} height={5}
                   fill="#64748b"
-                  opacity={0.5}
+                  opacity={0.55}
                 />
               )}
               {lossW > 0 && (
                 <rect
-                  x={nx + 5 + winW + drawW} y={ny + VT_NODE_H - 8}
-                  width={lossW} height={4}
-                  rx={2}
+                  x={nx + 6 + winW + drawW} y={ny + VT_NODE_H - 10}
+                  width={lossW} height={5}
+                  rx={2.5}
                   fill="#ef4444"
-                  opacity={0.35}
+                  opacity={0.4}
                 />
               )}
             </g>
@@ -1296,7 +1334,7 @@ function MyOpeningsInner() {
             {/* Main 2-column layout */}
             <div className={`grid grid-cols-1 gap-6 ${
               viewMode === "visual"
-                ? "lg:grid-cols-[1fr_minmax(400px,500px)]"
+                ? "xl:grid-cols-[1fr_minmax(360px,460px)]"
                 : "lg:grid-cols-[minmax(280px,340px)_1fr]"
             }`}>
 
