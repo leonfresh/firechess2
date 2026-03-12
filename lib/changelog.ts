@@ -15,6 +15,45 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: 22,
+    date: "Mar 12, 2026",
+    title: "Chaos Chess — Roguelike Multiplayer",
+    description:
+      "A full roguelike chess mode where every 5 turns the game freezes and both players draft permanent modifiers that mutate how pieces move — fairy pieces, explosive captures, ghost rooks, and more. Play against Stockfish AI, invite a friend with a room code, or find a random opponent through matchmaking.",
+    changes: [
+      { type: "feature", text: "Chaos Chess page (/chaos) — roguelike chess against Stockfish AI, a friend via invite code, or a random opponent through 60-second auto-matchmaking" },
+      { type: "feature", text: "5 draft phases at move milestones (turns 5, 10, 15, 20, 25) — the game freezes and each player picks one of 3 offered modifiers; the AI drafts its own counter-modifiers" },
+      { type: "feature", text: "40+ modifiers across 4 tiers (Common 🟢, Rare 🔵, Epic 🟣, Legendary 🟡) — each modifier permanently adds new legal moves or passive effects to your pieces" },
+      { type: "feature", text: "Custom move engine layered on top of chess.js — generates extra legal moves the base library doesn't know about, applied transparently to both sides" },
+      { type: "feature", text: "Fairy pieces with custom SVG piece art — Knook (knight+rook hybrid), Archbishop (bishop+knight hybrid), Amazon (queen+knight), Pegasus (flying knight), War Pawn (charge + bayonet combo)" },
+      { type: "feature", text: "Modifier overlays on pieces — emoji badges, SVG decorations, pulsing glows, and full piece-image replacement for transformative modifiers visible at a glance" },
+      { type: "feature", text: "ELO rating system for Chaos Chess — all players start at 1200, standard ELO with variable K-factor (K=40 provisional, K=20 below 2000, K=10 above 2000)" },
+      { type: "feature", text: "5 time control presets — Unlimited, Bullet (3+0), Blitz (5+3), Rapid (10+5), Rapid (15+10) — clocks run during draft phases too" },
+      { type: "feature", text: "Real-time multiplayer lobby — live online player count, lobby chat with Pepe emotes, and 60-second matchmaking timer with auto-cancel" },
+      { type: "feature", text: "Chaos Chess Leaderboard (/leaderboard/chaos) — top 50 players ranked by ELO with rating tier badges (1200 Challenger, 1400 Expert, 1600 Master, 2000+ Elite)" },
+      { type: "feature", text: "PartyKit real-time sync — moves, draft picks, clock values, and game results all sync in real time between players without polling" },
+      { type: "feature", text: "AI draft strategy — Stockfish's modifier choices are weighted by phase: early phases favour movement buffs, late phases favour heavy hitters like Nuclear Queen and King Ascension" },
+      { type: "improvement", text: "Added ⚡ Chaos Chess link to the navbar More dropdown and mobile menu" },
+    ],
+  },
+  {
+    version: 21,
+    date: "Mar 12, 2026",
+    title: "My Opening Tree",
+    description:
+      "A personal opening explorer that fetches all your games from Lichess or Chess.com and builds a live interactive move tree — see every opening path you've ever played, your win rate at each branch, and click any node to see the board position.",
+    changes: [
+      { type: "feature", text: "My Opening Tree page (/my-openings) — fetches up to 500 of your Lichess or Chess.com games and builds a personal opening move tree" },
+      { type: "feature", text: "SVG visual tree layout — nodes arranged as a scrollable branching diagram with proportional edge widths based on how often each line is played" },
+      { type: "feature", text: "W/D/L stats on every node — win-rate-coloured cards (green ≥55%, red ≤40%, gray otherwise) showing count, wins, draws, and losses" },
+      { type: "feature", text: "Interactive board preview — click any node in the tree to see the exact board position at that point in the opening" },
+      { type: "feature", text: "Color filter — view your tree as White, Black, or both sides combined" },
+      { type: "feature", text: "8 plies deep by default with click-to-expand for deeper lines — top 3 moves per position sorted by frequency" },
+      { type: "feature", text: "Lichess and Chess.com support — automatically detects your platform and streams games via the ndjson API for fast incremental loading with a live progress counter" },
+      { type: "improvement", text: "Added 🌳 My Opening Tree link to the navbar More dropdown and mobile menu" },
+    ],
+  },
+  {
     version: 20,
     date: "Mar 5, 2026",
     title: "Opening Cheat Sheets, Daily Tips & Avatar Frames",
