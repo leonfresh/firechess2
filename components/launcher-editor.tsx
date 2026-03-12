@@ -137,10 +137,12 @@ export function LauncherEditor({
           return { ...prev, [section]: arr };
         });
       } else {
-        // Move between sections (swap if target occupied, else append)
+        // Move between sections
+        const maxSlots = section === "grid" ? 10 : 4;
         setConfig((prev) => {
           const fromArr = [...prev[fromSection]];
           const toArr = [...prev[section]];
+          if (toArr.length >= maxSlots) return prev; // section full — no-op
           const [item] = fromArr.splice(fromIndex, 1);
           toArr.splice(toIndex, 0, item);
           return { ...prev, [fromSection]: fromArr, [section]: toArr };
@@ -157,6 +159,36 @@ export function LauncherEditor({
     dragSrc.current = null;
     setDropTarget(null);
   }, []);
+
+  // Allow dropping onto the section container itself (not just individual icons)
+  const handleSectionDrop = useCallback(
+    (section: Section) => (e: React.DragEvent) => {
+      e.preventDefault();
+      if (!dragSrc.current) return;
+      const { section: fromSection, index: fromIndex } = dragSrc.current;
+      if (fromSection === section) { dragSrc.current = null; setDropTarget(null); return; }
+      const maxSlots = section === "grid" ? 10 : 4;
+      setConfig((prev) => {
+        const fromArr = [...prev[fromSection]];
+        const toArr = [...prev[section]];
+        if (toArr.length >= maxSlots) return prev;
+        const [item] = fromArr.splice(fromIndex, 1);
+        toArr.push(item);
+        return { ...prev, [fromSection]: fromArr, [section]: toArr };
+      });
+      dragSrc.current = null;
+      setDropTarget(null);
+    },
+    [],
+  );
+
+  const handleSectionDragOver = useCallback(
+    (section: Section) => (e: React.DragEvent) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+    },
+    [],
+  );
 
   /* ── Render app icon ────────────────────────────────── */
 
@@ -194,7 +226,7 @@ export function LauncherEditor({
         <div
           className={[
             "relative flex items-center justify-center rounded-[22%]",
-            `bg-gradient-to-br ${app.gradient}`,
+            app.bg,
             isGrid
               ? "aspect-square w-full max-w-[72px] shadow-lg transition-all duration-200 group-hover:-translate-y-1 group-hover:scale-110"
               : "h-12 w-12 shadow-md transition-all duration-200 group-hover:-translate-y-0.5 group-hover:scale-110",
@@ -205,7 +237,7 @@ export function LauncherEditor({
         >
           {/* Gloss sheen */}
           <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-[22%] bg-gradient-to-b from-white/[0.22] to-transparent" />
-          {app.icon(isGrid ? "h-7 w-7" : "h-6 w-6")}
+          {app.icon(isGrid ? "h-9 w-9" : "h-7 w-7")}
 
           {/* Delete badge (jiggle mode) */}
           {isEditing && (
@@ -310,7 +342,7 @@ export function LauncherEditor({
                   className="group flex flex-col items-center gap-1.5"
                 >
                   <div
-                    className={`flex aspect-square w-full items-center justify-center rounded-[22%] bg-gradient-to-br ${app.gradient} transition-all group-hover:scale-110 group-hover:shadow-lg`}
+                    className={`flex aspect-square w-full items-center justify-center rounded-[22%] ${app.bg} transition-all group-hover:scale-110 group-hover:shadow-lg`}
                     style={{ boxShadow: `0 4px 14px ${app.glow}` }}
                   >
                     <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-[22%] bg-gradient-to-b from-white/[0.2] to-transparent" />
@@ -440,7 +472,11 @@ export function LauncherEditor({
               )}
 
               {/* App grid */}
-              <div className="relative grid grid-cols-4 gap-x-3 gap-y-4 sm:grid-cols-5 sm:gap-x-4">
+              <div
+                className="relative grid grid-cols-4 gap-x-3 gap-y-4 sm:grid-cols-5 sm:gap-x-4"
+                onDragOver={isEditing ? handleSectionDragOver("grid") : undefined}
+                onDrop={isEditing ? handleSectionDrop("grid") : undefined}
+              >
                 {gridSlots.map((app, i) =>
                   app ? (
                     <AppIcon key={app.id + i} app={app} section="grid" index={i} />
@@ -454,7 +490,11 @@ export function LauncherEditor({
               <div className="my-4 border-t border-white/[0.06]" />
 
               {/* Dock */}
-              <div className="flex items-center justify-around rounded-2xl border border-white/[0.06] bg-white/[0.04] px-4 py-2.5 backdrop-blur-md">
+              <div
+                className="flex items-center justify-around rounded-2xl border border-white/[0.06] bg-white/[0.04] px-4 py-2.5 backdrop-blur-md"
+                onDragOver={isEditing ? handleSectionDragOver("dock") : undefined}
+                onDrop={isEditing ? handleSectionDrop("dock") : undefined}
+              >
                 {dockApps.map((app, i) => (
                   <AppIcon key={app.id + i} app={app} section="dock" index={i} />
                 ))}

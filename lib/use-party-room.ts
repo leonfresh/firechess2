@@ -8,15 +8,16 @@ import PartySocket from "partysocket";
 /* ------------------------------------------------------------------ */
 
 export type PartyMessageType =
-  | "move"       // A player made a move
-  | "draft"      // A player completed their draft pick
-  | "join"       // A guest joined the room
-  | "resign"     // A player resigned
-  | "presence"   // Connection count changed
-  | "draw-offer" // A player offered a draw
-  | "draw-accept"// A player accepted the draw offer
+  | "move"         // A player made a move
+  | "draft"        // A player completed their draft pick
+  | "draft_freeze" // Opponent entered draft phase — freeze board immediately
+  | "join"         // A guest joined the room
+  | "resign"       // A player resigned
+  | "presence"     // Connection count changed
+  | "draw-offer"   // A player offered a draw
+  | "draw-accept"  // A player accepted the draw offer
   | "draw-decline" // A player declined the draw offer
-  | "rematch";   // A player requested a rematch
+  | "rematch";     // A player requested a rematch
 
 export type PartyMoveMessage = {
   type: "move";
@@ -36,6 +37,10 @@ export type PartyDraftMessage = {
   type: "draft";
   chaosState: unknown;
   fen: string;
+};
+
+export type PartyDraftFreezeMessage = {
+  type: "draft_freeze";
 };
 
 export type PartyJoinMessage = {
@@ -72,6 +77,7 @@ export type PartyRematchMessage = {
 export type PartyMessage =
   | PartyMoveMessage
   | PartyDraftMessage
+  | PartyDraftFreezeMessage
   | PartyJoinMessage
   | PartyResignMessage
   | PartyPresenceMessage

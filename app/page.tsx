@@ -1540,12 +1540,12 @@ export default function HomePage() {
                           >
                             {/* Icon bubble */}
                             <div
-                              className={`relative flex aspect-square w-full max-w-[72px] items-center justify-center rounded-[22%] bg-gradient-to-br ${app!.gradient} shadow-lg transition-all duration-200 group-hover:-translate-y-1 group-hover:scale-110`}
+                              className={`relative flex aspect-square w-full max-w-[72px] items-center justify-center rounded-[22%] ${app!.bg} shadow-lg transition-all duration-200 group-hover:-translate-y-1 group-hover:scale-110`}
                               style={{ boxShadow: `0 6px 20px ${app!.glow}` }}
                             >
                               {/* Gloss sheen */}
-                              <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-[22%] bg-gradient-to-b from-white/[0.22] to-transparent" />
-                              {app!.icon("h-7 w-7")}
+                              <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-[22%] bg-gradient-to-b from-white/[0.16] to-transparent" />
+                              {app!.icon("h-9 w-9")}
                             </div>
                             <span className="line-clamp-1 text-center text-[10px] font-medium leading-tight text-white/75 group-hover:text-white">
                               {app!.label}
@@ -1566,10 +1566,10 @@ export default function HomePage() {
                             className="group flex flex-col items-center gap-1"
                           >
                             <div
-                              className={`flex h-12 w-12 items-center justify-center rounded-[20%] bg-gradient-to-br ${dock!.gradient} shadow-md transition-all duration-200 group-hover:-translate-y-0.5 group-hover:scale-110`}
+                              className={`flex h-12 w-12 items-center justify-center rounded-[20%] ${dock!.bg} shadow-md transition-all duration-200 group-hover:-translate-y-0.5 group-hover:scale-110`}
                             >
-                              <div className="pointer-events-none absolute h-12 w-12 rounded-[20%] bg-gradient-to-b from-white/[0.18] to-transparent" />
-                              {dock!.icon("h-6 w-6")}
+                              <div className="pointer-events-none absolute h-12 w-12 rounded-[20%] bg-gradient-to-b from-white/[0.12] to-transparent" />
+                              {dock!.icon("h-7 w-7")}
                             </div>
                             <span className="text-[9px] font-medium text-white/50 group-hover:text-white/80">{dock!.label}</span>
                           </Link>

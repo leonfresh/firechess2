@@ -1617,6 +1617,10 @@ export default function ChaosChessPage() {
             }));
             setGameStatus("drafting");
             setWaitingForOpponentDraft(false);
+            // Immediately freeze opponent's board so they can't move while we pick
+            if (partySendRef.current) {
+              partySendRef.current({ type: "draft_freeze" });
+            }
             setEventLog((prev) => [
               ...prev,
               {
@@ -1988,6 +1992,11 @@ export default function ChaosChessPage() {
       setEloSaved(false);
       setMyRating(null);
       setOpponentRating(null);
+      // Reset draft refs so a new game always starts with a clean slate
+      justDraftedRef.current = false;
+      triggeredDraftForPhaseRef.current = -1;
+      pendingDraftAfterRevealRef.current = null;
+      setWaitingForOpponentDraft(false);
       // Start polling for guest
       startPolling(data.roomId, color);
     } catch {
@@ -2040,6 +2049,11 @@ export default function ChaosChessPage() {
       setMyRating(null);
       setOpponentRating(null);
       recomputeChaosMoves(g, cs);
+      // Reset draft refs so a new game always starts with a clean slate
+      justDraftedRef.current = false;
+      triggeredDraftForPhaseRef.current = -1;
+      pendingDraftAfterRevealRef.current = null;
+      setWaitingForOpponentDraft(false);
 
       // Start slow fallback polling + notify host via WebSocket
       startPolling(data.roomId, guestColor);
@@ -2143,6 +2157,9 @@ export default function ChaosChessPage() {
         setRematchReceived(false);
         triggeredDraftForPhaseRef.current = -1;
         prevPhaseRef.current = -1;
+        justDraftedRef.current = false;
+        pendingDraftAfterRevealRef.current = null;
+        setWaitingForOpponentDraft(false);
         // Swap colors
         const newColor = playerColor === "white" ? "black" : "white";
         setPlayerColor(newColor);
@@ -2159,6 +2176,13 @@ export default function ChaosChessPage() {
         setEventLog((prev) => [...prev, { type: "info", message: "🔄 Opponent wants a rematch!", icon: "🔄", pepe: PEPE.hyped }]);
         playSound("reveal-stinger");
       }
+      return;
+    }
+
+    if (msg.type === "draft_freeze") {
+      // Opponent entered their draft phase — freeze our board immediately so we can't
+      // make moves that would corrupt the draft state while they're picking
+      setWaitingForOpponentDraft(true);
       return;
     }
 
@@ -2596,6 +2620,7 @@ export default function ChaosChessPage() {
     (from: CbSquare, to: CbSquare) => {
       if (gameStatus !== "playing") return false;
       if (isThinking) return false;
+      if (waitingForOpponentDraft) return false;
 
       const isPlayerTurn =
         (playerColor === "white" && game.turn() === "w") ||
@@ -2809,7 +2834,7 @@ export default function ChaosChessPage() {
 
       return true;
     },
-    [game, gameStatus, playerColor, isThinking, chaosState, gameMode, activeChaosMoves, checkGameEnd, checkDraft, makeAiMove, addMoveToLog, applyPostMove, sendMoveToServer, spawnPepe, recomputeChaosMoves, isKingMoveChaosUnsafe],
+    [game, gameStatus, playerColor, isThinking, waitingForOpponentDraft, chaosState, gameMode, activeChaosMoves, checkGameEnd, checkDraft, makeAiMove, addMoveToLog, applyPostMove, sendMoveToServer, spawnPepe, recomputeChaosMoves, isKingMoveChaosUnsafe],
   );
 
   /* ── Execute a pending chaos promotion after piece choice ── */
@@ -3824,7 +3849,7 @@ export default function ChaosChessPage() {
                 showBoardNotation={showCoordinates}
                 customPieces={chaosCustomPieces || undefined}
                 animationDuration={200}
-                arePiecesDraggable={gameStatus === "playing" && !isThinking}
+                arePiecesDraggable={gameStatus === "playing" && !isThinking && !waitingForOpponentDraft}
               />
             </div>
           </div>

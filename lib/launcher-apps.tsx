@@ -1,16 +1,21 @@
-/**
+﻿/**
  * Launcher App Registry
  *
  * All available apps for the iPad launcher.
- * Icons are render functions so the same SVG can be sized for grid (h-7 w-7) vs dock (h-6 w-6).
+ * Icons are render functions so the same SVG can be sized for grid vs dock.
+ * Backgrounds use flat solid colours (iOS-style) rather than gradients.
  */
 
 export type AppDef = {
   id: string;
   label: string;
-  href: string;
-  gradient: string;
+  /** Tailwind bg utility class for the icon tile */
+  bg: string;
+  /** Subtle glow colour for hover/active shadows */
   glow: string;
+  /** Legacy gradient string kept for page.tsx compatibility */
+  gradient: string;
+  href: string;
   icon: (className: string) => React.ReactNode;
 };
 
@@ -38,342 +43,273 @@ export const DEFAULT_LAUNCHER: LauncherConfig = {
 };
 
 export const LAUNCHER_APPS: AppDef[] = [
-  /* ── Analyze (home scanner) ─────────────────────────────── */
+  /*  Analyze  */
   {
     id: "analyze",
     label: "Analyze",
     href: "/",
-    gradient: "from-emerald-500 to-teal-600",
+    bg: "bg-[#16653a]",
     glow: "rgba(16,185,129,0.5)",
+    gradient: "from-emerald-600 to-emerald-800",
     icon: (cls) => (
       <svg viewBox="0 0 24 24" fill="none" className={cls}>
-        <circle
-          cx="10.5"
-          cy="10.5"
-          r="6.5"
-          fill="rgba(255,255,255,0.12)"
-          stroke="rgba(255,255,255,0.9)"
-          strokeWidth="1.8"
-        />
-        <path
-          d="M15.5 15.5 L20.5 20.5"
-          stroke="rgba(255,255,255,0.9)"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-        />
-        <path
-          d="M8 10.5 L10 12.5 L13.5 8.5"
-          stroke="rgba(255,255,255,0.95)"
-          strokeWidth="1.7"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
+        <path d="M7 20 L17 20 L16 17 C15.5 15 14 13.5 13 13 L13 11 C14.5 10 16 8.5 15 6 C14 3.5 11 2.5 9 3.5 C7 4.5 6.5 7 7 9 C7.5 11 9 11.5 9 11.5 L8.5 13 C7.5 13.5 6.5 15.5 6.5 17 Z" fill="rgba(255,255,255,0.9)" />
+        <circle cx="16.5" cy="9.5" r="4" fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="1.8" />
+        <path d="M19.3 12.3 L22 15" stroke="rgba(255,255,255,0.55)" strokeWidth="2" strokeLinecap="round" />
+        <path d="M15 8.5 L16 9.8 L18.2 7.8" stroke="rgba(170,255,200,0.9)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
-
-  /* ── My Openings ─────────────────────────────────────────── */
+  /*  My Openings  */
   {
     id: "my-openings",
     label: "My Openings",
     href: "/my-openings",
-    gradient: "from-emerald-500 to-teal-600",
-    glow: "rgba(16,185,129,0.5)",
+    bg: "bg-[#0c5f9e]",
+    glow: "rgba(14,165,233,0.5)",
+    gradient: "from-sky-600 to-blue-800",
     icon: (cls) => (
       <svg viewBox="0 0 24 24" fill="none" className={cls}>
-        <circle cx="4" cy="12" r="2.2" fill="rgba(255,255,255,0.95)" />
-        <line x1="6.2" y1="12" x2="9.5" y2="7" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6" strokeLinecap="round" />
-        <line x1="6.2" y1="12" x2="9.5" y2="17" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6" strokeLinecap="round" />
-        <circle cx="11.5" cy="7" r="2" fill="rgba(255,255,255,0.9)" />
-        <circle cx="11.5" cy="17" r="2" fill="rgba(255,255,255,0.9)" />
-        <line x1="13.5" y1="7" x2="17" y2="4.5" stroke="rgba(255,255,255,0.65)" strokeWidth="1.3" strokeLinecap="round" />
-        <line x1="13.5" y1="7" x2="17" y2="9.5" stroke="rgba(255,255,255,0.65)" strokeWidth="1.3" strokeLinecap="round" />
-        <circle cx="18.5" cy="4.5" r="1.6" fill="rgba(255,255,255,0.7)" />
-        <circle cx="18.5" cy="9.5" r="1.6" fill="rgba(255,255,255,0.7)" />
-        <line x1="13.5" y1="17" x2="17" y2="14.5" stroke="rgba(255,255,255,0.65)" strokeWidth="1.3" strokeLinecap="round" />
-        <line x1="13.5" y1="17" x2="17" y2="19.5" stroke="rgba(255,255,255,0.65)" strokeWidth="1.3" strokeLinecap="round" />
-        <circle cx="18.5" cy="14.5" r="1.6" fill="rgba(255,255,255,0.55)" />
-        <circle cx="18.5" cy="19.5" r="1.6" fill="rgba(255,255,255,0.55)" />
+        <path d="M3 6.5 Q3 5 5 5 L11.3 5.5 L11.3 20 L5 19.5 Q3 19.5 3 18 Z" fill="rgba(255,255,255,0.9)" />
+        <path d="M12.7 5.5 L19 5 Q21 5 21 6.5 L21 18 Q21 19.5 19 19.5 L12.7 20 Z" fill="rgba(255,255,255,0.72)" />
+        <path d="M12 5 L12 20" stroke="rgba(0,50,130,0.3)" strokeWidth="1.5" />
+        <line x1="5.5" y1="9" x2="10.5" y2="9" stroke="rgba(0,50,130,0.55)" strokeWidth="1.3" strokeLinecap="round" />
+        <line x1="5.5" y1="11.5" x2="10.5" y2="11.5" stroke="rgba(0,50,130,0.4)" strokeWidth="1.2" strokeLinecap="round" />
+        <line x1="5.5" y1="14" x2="8.5" y2="14" stroke="rgba(0,50,130,0.3)" strokeWidth="1.2" strokeLinecap="round" />
+        <path d="M15 10.5 L13.5 13.5 H15.5 L13.5 18 L20 12 H17.5 Z" fill="rgba(30,100,220,0.85)" />
       </svg>
     ),
   },
-
-  /* ── Chaos Chess ─────────────────────────────────────────── */
+  /*  Chaos Chess  */
   {
     id: "chaos",
     label: "Chaos Chess",
     href: "/chaos",
-    gradient: "from-purple-600 to-fuchsia-600",
-    glow: "rgba(168,85,247,0.5)",
+    bg: "bg-[#5b21b6]",
+    glow: "rgba(168,85,247,0.55)",
+    gradient: "from-purple-700 to-fuchsia-800",
     icon: (cls) => (
       <svg viewBox="0 0 24 24" fill="none" className={cls}>
-        <path
-          d="M3 16 H21 L19.5 11.5 L16 7 L12 12 L8 7 L4.5 11.5 Z"
-          fill="rgba(255,255,255,0.88)"
-        />
-        <circle cx="4.5" cy="6.5" r="1.8" fill="rgba(255,220,255,0.9)" />
-        <circle cx="12" cy="4.5" r="2.2" fill="rgba(255,230,255,1)" />
-        <circle cx="19.5" cy="6.5" r="1.8" fill="rgba(255,220,255,0.9)" />
-        <rect x="3" y="17" width="18" height="2.5" rx="1.2" fill="rgba(255,255,255,0.6)" />
-        <path
-          d="M13.5 2.5 L10.5 9.5 H13 L10 17 L17.5 8 H14.5 Z"
-          fill="rgba(255,240,80,0.92)"
-          stroke="rgba(255,255,150,0.4)"
-          strokeWidth="0.4"
-        />
+        <path d="M3 17.5 H21 L19.5 12.5 L15.5 7.5 L12 12.5 L8.5 7.5 L4.5 12.5 Z" fill="rgba(255,255,255,0.9)" />
+        <circle cx="4.5" cy="6.5" r="2" fill="rgba(220,180,255,0.9)" />
+        <circle cx="12" cy="4.5" r="2.4" fill="rgba(240,210,255,1)" />
+        <circle cx="19.5" cy="6.5" r="2" fill="rgba(220,180,255,0.9)" />
+        <rect x="3" y="17.5" width="18" height="2.5" rx="1.2" fill="rgba(255,255,255,0.55)" />
+        <path d="M14 2 L10.5 10.5 H13.5 L10 22 L18.5 9.5 H15 Z" fill="rgba(255,240,50,0.95)" stroke="rgba(255,255,150,0.4)" strokeWidth="0.4" />
       </svg>
     ),
   },
-
-  /* ── Train ───────────────────────────────────────────────── */
+  /*  Train  */
   {
     id: "train",
     label: "Train",
     href: "/train",
-    gradient: "from-amber-500 to-orange-600",
+    bg: "bg-[#b45309]",
     glow: "rgba(245,158,11,0.5)",
+    gradient: "from-amber-600 to-orange-800",
     icon: (cls) => (
       <svg viewBox="0 0 24 24" fill="none" className={cls}>
-        <rect x="1.5" y="9.5" width="4" height="5" rx="1.5" fill="rgba(255,255,255,0.9)" />
-        <rect x="18.5" y="9.5" width="4" height="5" rx="1.5" fill="rgba(255,255,255,0.9)" />
-        <rect x="3.5" y="8" width="2.5" height="8" rx="1.2" fill="rgba(255,255,255,0.75)" />
-        <rect x="18" y="8" width="2.5" height="8" rx="1.2" fill="rgba(255,255,255,0.75)" />
-        <rect x="6" y="11" width="12" height="2" rx="1" fill="rgba(255,255,255,0.6)" />
+        <circle cx="12" cy="12" r="9.5" stroke="rgba(255,255,255,0.8)" strokeWidth="1.8" fill="none" />
+        <circle cx="12" cy="12" r="5.8" stroke="rgba(255,255,255,0.55)" strokeWidth="1.4" fill="none" />
+        <circle cx="12" cy="12" r="2.6" fill="rgba(255,255,255,0.95)" />
+        <line x1="12" y1="12" x2="20" y2="4" stroke="rgba(255,220,80,0.9)" strokeWidth="1.8" strokeLinecap="round" />
+        <path d="M17 2.5 L22 2.5 L22 7.5" stroke="rgba(255,220,80,0.9)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" fill="none" />
       </svg>
     ),
   },
-
-  /* ── Openings ─────────────────────────────────────────────── */
+  /*  Openings Explorer  */
   {
     id: "openings",
     label: "Openings",
     href: "/openings",
-    gradient: "from-sky-500 to-blue-600",
-    glow: "rgba(14,165,233,0.5)",
+    bg: "bg-[#1d4ed8]",
+    glow: "rgba(59,130,246,0.5)",
+    gradient: "from-blue-700 to-blue-900",
     icon: (cls) => (
       <svg viewBox="0 0 24 24" fill="none" className={cls}>
-        <path d="M3 5 Q3 4 4.5 4 L11 4.5 L11 20 L4.5 20 Q3 20 3 19 Z" fill="rgba(255,255,255,0.9)" />
-        <path d="M13 4.5 L19.5 4 Q21 4 21 5 L21 19 Q21 20 19.5 20 L13 20 Z" fill="rgba(255,255,255,0.78)" />
-        <path d="M12 4 L12 20" stroke="rgba(0,60,140,0.35)" strokeWidth="2" />
-        <line x1="5" y1="8" x2="10" y2="8" stroke="rgba(10,60,150,0.6)" strokeWidth="1.4" strokeLinecap="round" />
-        <line x1="5" y1="11" x2="10" y2="11" stroke="rgba(10,60,150,0.5)" strokeWidth="1.2" strokeLinecap="round" />
-        <line x1="5" y1="14" x2="8.5" y2="14" stroke="rgba(10,60,150,0.4)" strokeWidth="1.2" strokeLinecap="round" />
-        <line x1="5" y1="17" x2="9" y2="17" stroke="rgba(10,60,150,0.35)" strokeWidth="1.2" strokeLinecap="round" />
-        <path d="M15.5 9 L14 12 H16 L14 17 L19 11 H16.5 Z" fill="rgba(14,60,160,0.75)" />
+        <rect x="2.5" y="2.5" width="19" height="19" rx="2" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
+        <rect x="2.5" y="2.5" width="4.75" height="4.75" fill="rgba(255,255,255,0.72)" />
+        <rect x="11.87" y="2.5" width="4.75" height="4.75" fill="rgba(255,255,255,0.72)" />
+        <rect x="7.12" y="7.25" width="4.75" height="4.75" fill="rgba(255,255,255,0.72)" />
+        <rect x="16.75" y="7.25" width="4.75" height="4.75" fill="rgba(255,255,255,0.72)" />
+        <rect x="2.5" y="12" width="4.75" height="4.75" fill="rgba(255,255,255,0.72)" />
+        <rect x="11.87" y="12" width="4.75" height="4.75" fill="rgba(255,255,255,0.72)" />
+        <rect x="7.12" y="16.75" width="4.75" height="4.75" fill="rgba(255,255,255,0.72)" />
+        <rect x="16.75" y="16.75" width="4.75" height="4.75" fill="rgba(255,255,255,0.72)" />
+        <circle cx="12" cy="12" r="3.8" fill="rgba(99,179,255,0.95)" stroke="rgba(255,255,255,0.7)" strokeWidth="1" />
       </svg>
     ),
   },
-
-  /* ── Leaderboard ──────────────────────────────────────────── */
+  /*  Leaderboard  */
   {
     id: "leaderboard",
     label: "Leaderboard",
     href: "/leaderboard",
-    gradient: "from-yellow-500 to-amber-600",
-    glow: "rgba(234,179,8,0.5)",
+    bg: "bg-[#92400e]",
+    glow: "rgba(234,179,8,0.55)",
+    gradient: "from-yellow-700 to-amber-800",
     icon: (cls) => (
       <svg viewBox="0 0 24 24" fill="none" className={cls}>
-        <path
-          d="M7 3 H17 L16 10 C16 13 14.5 14.5 12 14.5 C9.5 14.5 8 13 8 10 Z"
-          fill="rgba(255,255,255,0.92)"
-        />
-        <path
-          d="M7 5 C5 5 4 6 4 8 C4 10 5.5 11 7.5 10.5"
-          fill="none"
-          stroke="rgba(255,255,255,0.7)"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-        <path
-          d="M17 5 C19 5 20 6 20 8 C20 10 18.5 11 16.5 10.5"
-          fill="none"
-          stroke="rgba(255,255,255,0.7)"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-        />
-        <path d="M10.5 14.5 L10 18 H9 L9 20 H15 L15 18 H14 L13.5 14.5 Z" fill="rgba(255,255,255,0.75)" />
-        <rect x="8" y="20" width="8" height="1.5" rx="0.75" fill="rgba(255,255,255,0.6)" />
-        <path d="M10 7.5 L11.2 6 L12 8.5 L13.5 6 L14 8 L12 9.5 Z" fill="rgba(250,200,0,0.85)" />
+        <path d="M7.5 2.5 H16.5 L15.5 10.5 C15.5 13.5 14 15.5 12 15.5 C10 15.5 8.5 13.5 8.5 10.5 Z" fill="rgba(255,220,50,0.95)" stroke="rgba(255,255,255,0.4)" strokeWidth="0.7" />
+        <path d="M7.5 5 C5.5 5 4.5 6 4.5 8.5 C4.5 10.5 6 12 8 11.5" fill="none" stroke="rgba(255,210,40,0.75)" strokeWidth="2" strokeLinecap="round" />
+        <path d="M16.5 5 C18.5 5 19.5 6 19.5 8.5 C19.5 10.5 18 12 16 11.5" fill="none" stroke="rgba(255,210,40,0.75)" strokeWidth="2" strokeLinecap="round" />
+        <path d="M10.5 15.5 L10 19 H9 L9 21 H15 L15 19 H14 L13.5 15.5 Z" fill="rgba(255,255,255,0.75)" />
+        <rect x="8" y="21" width="8" height="1.5" rx="0.7" fill="rgba(255,255,255,0.5)" />
+        <path d="M12 5.5 L13 8.5 H16 L13.5 10.2 L14.5 13.2 L12 11.5 L9.5 13.2 L10.5 10.2 L8 8.5 H11 Z" fill="rgba(255,255,255,0.9)" />
       </svg>
     ),
   },
-
-  /* ── Dungeon ──────────────────────────────────────────────── */
+  /*  Dungeon  */
   {
     id: "dungeon",
     label: "Dungeon",
     href: "/dungeon",
-    gradient: "from-red-600 to-rose-700",
-    glow: "rgba(220,38,38,0.5)",
+    bg: "bg-[#7f1d1d]",
+    glow: "rgba(220,38,38,0.55)",
+    gradient: "from-red-800 to-red-950",
     icon: (cls) => (
       <svg viewBox="0 0 24 24" fill="none" className={cls}>
-        <path
-          d="M12 3 C8 3 5.5 6 5.5 9.5 C5.5 12.5 7 14 8 14.5 L8 16.5 H16 L16 14.5 C17 14 18.5 12.5 18.5 9.5 C18.5 6 16 3 12 3 Z"
-          fill="rgba(255,255,255,0.88)"
-        />
-        <circle cx="9.5" cy="10" r="1.8" fill="rgba(180,0,0,0.7)" />
-        <circle cx="14.5" cy="10" r="1.8" fill="rgba(180,0,0,0.7)" />
-        <path d="M10.5 13.5 C10.5 12.5 13.5 12.5 13.5 13.5" stroke="rgba(180,0,0,0.6)" strokeWidth="1.4" strokeLinecap="round" />
-        <rect x="9" y="16.5" width="2" height="1.8" rx="0.5" fill="rgba(255,255,255,0.55)" />
-        <rect x="13" y="16.5" width="2" height="1.8" rx="0.5" fill="rgba(255,255,255,0.55)" />
-        <line x1="3" y1="21" x2="21" y2="3" stroke="rgba(255,255,255,0.4)" strokeWidth="1.4" strokeLinecap="round" />
-        <line x1="21" y1="21" x2="3" y2="3" stroke="rgba(255,255,255,0.4)" strokeWidth="1.4" strokeLinecap="round" />
+        <rect x="2" y="3" width="4.5" height="9" fill="rgba(255,255,255,0.65)" rx="0.5" />
+        <rect x="17.5" y="3" width="4.5" height="9" fill="rgba(255,255,255,0.65)" rx="0.5" />
+        <rect x="2" y="3" width="1.5" height="3" fill="rgba(255,255,255,0.45)" />
+        <rect x="5" y="3" width="1.5" height="3" fill="rgba(255,255,255,0.45)" />
+        <rect x="17.5" y="3" width="1.5" height="3" fill="rgba(255,255,255,0.45)" />
+        <rect x="20.5" y="3" width="1.5" height="3" fill="rgba(255,255,255,0.45)" />
+        <rect x="6.5" y="9" width="11" height="13" rx="0.5" fill="rgba(255,255,255,0.5)" />
+        <path d="M9.5 22 L9.5 14.5 Q9.5 12 12 12 Q14.5 12 14.5 14.5 L14.5 22 Z" fill="rgba(120,0,0,0.9)" />
+        <circle cx="12" cy="16.5" r="2.8" fill="rgba(255,200,200,0.85)" />
+        <circle cx="11" cy="16" r="0.75" fill="rgba(100,0,0,0.9)" />
+        <circle cx="13" cy="16" r="0.75" fill="rgba(100,0,0,0.9)" />
+        <path d="M10.8 18 C10.8 17.4 13.2 17.4 13.2 18" stroke="rgba(100,0,0,0.8)" strokeWidth="1" strokeLinecap="round" />
       </svg>
     ),
   },
-
-  /* ── Roast ────────────────────────────────────────────────── */
+  /*  Roast  */
   {
     id: "roast",
     label: "Roast",
     href: "/roast",
-    gradient: "from-orange-500 to-red-600",
-    glow: "rgba(249,115,22,0.5)",
+    bg: "bg-[#c2410c]",
+    glow: "rgba(249,115,22,0.55)",
+    gradient: "from-orange-700 to-red-800",
     icon: (cls) => (
       <svg viewBox="0 0 24 24" fill="none" className={cls}>
-        <path
-          d="M12 2 C9 6 7 9 8.5 12.5 C9.2 14 10.5 14 10.5 12.5 C10.5 14.5 11 17 12 18.5 C13 17 13.5 14.5 13.5 12.5 C13.5 14 14.8 14 15.5 12.5 C17 9 15 6 12 2 Z"
-          fill="rgba(255,190,50,0.95)"
-        />
-        <path d="M12 8 C11 10.5 11.2 14 12 16 C12.8 14 13 10.5 12 8 Z" fill="rgba(255,60,10,0.95)" />
-        <ellipse cx="12" cy="20.5" rx="5" ry="1.5" fill="rgba(255,255,255,0.18)" />
+        <path d="M12 1 C8 6 6 10 8.5 14 C9.5 15.8 11 15.8 11 14 C11 16.5 11.5 19.5 12 21 C12.5 19.5 13 16.5 13 14 C13 15.8 14.5 15.8 15.5 14 C18 10 16 6 12 1 Z" fill="rgba(255,175,30,0.97)" />
+        <path d="M12 6 C10.5 9.5 10.5 15 12 18 C13.5 15 13.5 9.5 12 6 Z" fill="rgba(255,40,0,0.97)" />
+        <ellipse cx="12" cy="22" rx="5.5" ry="1.5" fill="rgba(255,100,0,0.25)" />
       </svg>
     ),
   },
-
-  /* ── Guess ELO ────────────────────────────────────────────── */
+  /*  Guess ELO  */
   {
     id: "guess-elo",
     label: "Guess ELO",
     href: "/guess",
-    gradient: "from-violet-600 to-purple-700",
-    glow: "rgba(124,58,237,0.5)",
+    bg: "bg-[#4c1d95]",
+    glow: "rgba(139,92,246,0.55)",
+    gradient: "from-violet-800 to-purple-950",
     icon: (cls) => (
       <svg viewBox="0 0 24 24" fill="none" className={cls}>
-        <rect x="3" y="16" width="3" height="5" rx="1" fill="rgba(255,255,255,0.5)" />
-        <rect x="7.5" y="12" width="3" height="9" rx="1" fill="rgba(255,255,255,0.65)" />
-        <rect x="12" y="14" width="3" height="7" rx="1" fill="rgba(255,255,255,0.5)" />
-        <circle cx="17" cy="9" r="5" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2" />
-        <path d="M21 13 L23.5 15.5" stroke="rgba(255,255,255,0.85)" strokeWidth="2.2" strokeLinecap="round" />
-        <path
-          d="M15.5 7.5 C16 6 17.5 5.5 19 6.5"
-          stroke="rgba(255,255,255,0.6)"
-          strokeWidth="1.3"
-          strokeLinecap="round"
-          fill="none"
-        />
+        <rect x="2" y="15.5" width="5" height="7" rx="1.2" fill="rgba(180,150,255,0.65)" />
+        <rect x="9.5" y="10.5" width="5" height="12" rx="1.2" fill="rgba(200,170,255,0.85)" />
+        <rect x="17" y="13" width="5" height="9.5" rx="1.2" fill="rgba(180,150,255,0.65)" />
+        <circle cx="4.5" cy="13.5" r="2" fill="rgba(180,150,255,0.55)" />
+        <circle cx="12" cy="8.5" r="2" fill="rgba(220,200,255,0.9)" />
+        <circle cx="19.5" cy="11" r="2" fill="rgba(180,150,255,0.55)" />
+        <path d="M4.5 13.5 L12 8.5 L19.5 11" stroke="rgba(200,170,255,0.6)" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+        <path d="M10.5 6.5 L12 3 L13.5 6.5" stroke="rgba(255,220,80,0.8)" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <line x1="10.5" y1="6" x2="13.5" y2="6" stroke="rgba(255,220,80,0.8)" strokeWidth="1.3" strokeLinecap="round" />
       </svg>
     ),
   },
-
-  /* ── Changelog ────────────────────────────────────────────── */
+  /*  Changelog  */
   {
     id: "changelog",
     label: "Changelog",
     href: "/changelog",
-    gradient: "from-cyan-500 to-blue-600",
+    bg: "bg-[#0e7490]",
     glow: "rgba(6,182,212,0.5)",
+    gradient: "from-cyan-700 to-teal-800",
     icon: (cls) => (
       <svg viewBox="0 0 24 24" fill="none" className={cls}>
-        <path
-          d="M5 4 Q5 2.5 6.5 2.5 L16 2.5 Q18 2.5 18 4.5 L18 19.5 Q18 21 16.5 21 L6.5 21 Q5 21 5 19.5 Z"
-          fill="rgba(255,255,255,0.88)"
-        />
-        <line x1="8" y1="7" x2="15" y2="7" stroke="rgba(0,70,160,0.55)" strokeWidth="1.3" strokeLinecap="round" />
-        <line x1="8" y1="10" x2="15" y2="10" stroke="rgba(0,70,160,0.45)" strokeWidth="1.2" strokeLinecap="round" />
-        <line x1="8" y1="13" x2="12" y2="13" stroke="rgba(0,70,160,0.4)" strokeWidth="1.2" strokeLinecap="round" />
-        <circle cx="17" cy="18" r="6" fill="rgba(6,182,212,0.95)" />
-        <path
-          d="M17 14.5 L17 17 L19 17"
-          stroke="rgba(255,255,255,0.95)"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          fill="none"
-        />
-        <path
-          d="M20.5 15 C19.5 13.5 18.3 13 17 13 C15 13 13.5 14.5 13.5 16.5"
-          stroke="rgba(255,255,255,0.7)"
-          strokeWidth="1.3"
-          strokeLinecap="round"
-          fill="none"
-        />
+        <path d="M5 3.5 Q5 2 7 2 L16 2 L20.5 6.5 L20.5 21 Q20.5 22.5 18.5 22.5 L7 22.5 Q5 22.5 5 21 Z" fill="rgba(255,255,255,0.88)" />
+        <path d="M16 2 L16 6.5 L20.5 6.5" fill="rgba(0,100,130,0.25)" stroke="rgba(0,100,140,0.3)" strokeWidth="0.8" />
+        <line x1="8" y1="10" x2="17" y2="10" stroke="rgba(0,70,120,0.55)" strokeWidth="1.4" strokeLinecap="round" />
+        <line x1="8" y1="13" x2="17" y2="13" stroke="rgba(0,70,120,0.4)" strokeWidth="1.2" strokeLinecap="round" />
+        <line x1="8" y1="16" x2="14" y2="16" stroke="rgba(0,70,120,0.35)" strokeWidth="1.2" strokeLinecap="round" />
+        <rect x="8" y="18.5" width="9" height="2.8" rx="1.4" fill="rgba(6,182,212,0.9)" />
+        <text x="9.2" y="20.6" fontSize="2.8" fill="rgba(255,255,255,0.95)" fontFamily="sans-serif" fontWeight="bold" letterSpacing="0.4">NEW</text>
       </svg>
     ),
   },
-
-  /* ── Pricing ──────────────────────────────────────────────── */
+  /*  Pricing  */
   {
     id: "pricing",
     label: "Pricing",
     href: "/pricing",
-    gradient: "from-pink-500 to-rose-600",
+    bg: "bg-[#9d174d]",
     glow: "rgba(236,72,153,0.5)",
+    gradient: "from-pink-800 to-rose-950",
     icon: (cls) => (
       <svg viewBox="0 0 24 24" fill="none" className={cls}>
-        <polygon points="12,3 20,9 17,21 7,21 4,9" fill="rgba(255,255,255,0.88)" />
-        <polygon points="12,3 20,9 12,9 4,9" fill="rgba(255,255,255,0.3)" />
-        <polygon points="12,9 20,9 17,21 12,15" fill="rgba(255,100,150,0.25)" />
-        <polygon points="12,9 4,9 7,21 12,15" fill="rgba(255,150,180,0.2)" />
-        <line x1="12" y1="3" x2="12" y2="21" stroke="rgba(255,255,255,0.35)" strokeWidth="0.8" />
-        <line x1="4" y1="9" x2="20" y2="9" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
-        <polygon points="9,4.5 11,7 8,7" fill="rgba(255,255,255,0.55)" />
+        <path d="M12 2 L20.5 5.5 L20.5 12 C20.5 17.5 16.5 21 12 22.5 C7.5 21 3.5 17.5 3.5 12 L3.5 5.5 Z" fill="rgba(255,255,255,0.88)" stroke="rgba(255,255,255,0.4)" strokeWidth="0.7" />
+        <path d="M12 6.5 L13.5 11 H18 L14.5 13.5 L16 18 L12 15.5 L8 18 L9.5 13.5 L6 11 H10.5 Z" fill="rgba(180,0,70,0.9)" />
       </svg>
     ),
   },
-
-  /* ── About ────────────────────────────────────────────────── */
+  /*  About  */
   {
     id: "about",
     label: "About",
     href: "/about",
-    gradient: "from-slate-500 to-slate-600",
-    glow: "rgba(100,116,139,0.5)",
+    bg: "bg-[#374151]",
+    glow: "rgba(100,116,139,0.45)",
+    gradient: "from-slate-600 to-slate-800",
     icon: (cls) => (
       <svg viewBox="0 0 24 24" fill="none" className={cls}>
-        <circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,0.85)" strokeWidth="1.8" fill="rgba(255,255,255,0.08)" />
-        <circle cx="12" cy="8.5" r="1.5" fill="rgba(255,255,255,0.9)" />
-        <rect x="11" y="11.5" width="2" height="6.5" rx="1" fill="rgba(255,255,255,0.85)" />
+        <circle cx="12" cy="12" r="9.5" stroke="rgba(255,255,255,0.8)" strokeWidth="1.8" fill="rgba(255,255,255,0.06)" />
+        <circle cx="12" cy="8" r="2" fill="rgba(255,255,255,0.95)" />
+        <rect x="10.75" y="11.5" width="2.5" height="7" rx="1.25" fill="rgba(255,255,255,0.9)" />
       </svg>
     ),
   },
-
-  /* ── Blog ─────────────────────────────────────────────────── */
+  /*  Blog  */
   {
     id: "blog",
     label: "Blog",
     href: "/blog",
-    gradient: "from-teal-500 to-cyan-600",
-    glow: "rgba(20,184,166,0.5)",
+    bg: "bg-[#065f46]",
+    glow: "rgba(16,185,129,0.45)",
+    gradient: "from-emerald-800 to-teal-900",
     icon: (cls) => (
       <svg viewBox="0 0 24 24" fill="none" className={cls}>
-        <rect x="3" y="4" width="18" height="16" rx="2.5" fill="rgba(255,255,255,0.85)" />
-        <line x1="7" y1="9" x2="17" y2="9" stroke="rgba(0,80,120,0.6)" strokeWidth="1.4" strokeLinecap="round" />
-        <line x1="7" y1="12" x2="17" y2="12" stroke="rgba(0,80,120,0.45)" strokeWidth="1.2" strokeLinecap="round" />
-        <line x1="7" y1="15" x2="13" y2="15" stroke="rgba(0,80,120,0.35)" strokeWidth="1.2" strokeLinecap="round" />
+        <rect x="2.5" y="3.5" width="19" height="17" rx="2.5" fill="rgba(255,255,255,0.88)" />
+        <rect x="5" y="6" width="7" height="5.5" rx="1" fill="rgba(6,150,100,0.45)" />
+        <path d="M5 9.5 L7 8 L9 10.5 L10.5 9 L12 11.5 L5 11.5 Z" fill="rgba(6,150,100,0.7)" />
+        <line x1="14" y1="7" x2="19.5" y2="7" stroke="rgba(0,60,80,0.55)" strokeWidth="1.3" strokeLinecap="round" />
+        <line x1="14" y1="9.5" x2="19.5" y2="9.5" stroke="rgba(0,60,80,0.4)" strokeWidth="1.2" strokeLinecap="round" />
+        <line x1="5" y1="14" x2="19.5" y2="14" stroke="rgba(0,60,80,0.35)" strokeWidth="1.2" strokeLinecap="round" />
+        <line x1="5" y1="16.5" x2="19.5" y2="16.5" stroke="rgba(0,60,80,0.3)" strokeWidth="1.2" strokeLinecap="round" />
+        <line x1="5" y1="19" x2="14" y2="19" stroke="rgba(0,60,80,0.25)" strokeWidth="1.2" strokeLinecap="round" />
       </svg>
     ),
   },
-
-  /* ── Support ──────────────────────────────────────────────── */
+  /*  Support  */
   {
     id: "support",
     label: "Support",
     href: "/support",
-    gradient: "from-indigo-500 to-blue-600",
-    glow: "rgba(99,102,241,0.5)",
+    bg: "bg-[#1e3a8a]",
+    glow: "rgba(59,130,246,0.5)",
+    gradient: "from-blue-900 to-indigo-950",
     icon: (cls) => (
       <svg viewBox="0 0 24 24" fill="none" className={cls}>
-        <circle cx="12" cy="12" r="9" stroke="rgba(255,255,255,0.85)" strokeWidth="1.8" fill="rgba(255,255,255,0.08)" />
-        <path
-          d="M9 9.5 C9 7.5 15 7.5 15 9.5 C15 11 13.5 11.5 12.5 12.5 C12 13 12 13.5 12 14"
-          stroke="rgba(255,255,255,0.9)"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-          fill="none"
-        />
-        <circle cx="12" cy="16.5" r="1.2" fill="rgba(255,255,255,0.9)" />
+        <path d="M12 3 C7 3 4 6.5 4 11 L4 14.5" stroke="rgba(255,255,255,0.7)" strokeWidth="2" fill="none" strokeLinecap="round" />
+        <path d="M12 3 C17 3 20 6.5 20 11 L20 14.5" stroke="rgba(255,255,255,0.7)" strokeWidth="2" fill="none" strokeLinecap="round" />
+        <rect x="2.5" y="12.5" width="4" height="6.5" rx="2" fill="rgba(255,255,255,0.88)" />
+        <rect x="17.5" y="12.5" width="4" height="6.5" rx="2" fill="rgba(255,255,255,0.88)" />
+        <path d="M21.5 17 C21.5 20 19.5 21.5 17" stroke="rgba(255,255,255,0.5)" strokeWidth="1.5" strokeLinecap="round" fill="none" />
+        <circle cx="16.5" cy="21.5" r="1.3" fill="rgba(255,255,255,0.75)" />
       </svg>
     ),
   },
