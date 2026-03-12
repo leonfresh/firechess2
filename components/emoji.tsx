@@ -11,7 +11,7 @@ function twemojiUrl(emoji: string): string {
 /**
  * Renders an emoji as a Twemoji SVG image — identical on all platforms,
  * including iOS where native emoji rendering can be inconsistent.
- * Use Tailwind `w-*/h-*` classes for sizing.
+ * Use Tailwind size classes (e.g. `w-6 h-6`) for sizing.
  */
 export function Emoji({
   emoji,
