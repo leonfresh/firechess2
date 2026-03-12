@@ -369,7 +369,7 @@ function buildChaosCustomPieces(
 /* ────────────────────────── Constants ────────────────────────── */
 
 const AI_MOVE_DELAY = 600;
-const POLL_INTERVAL = 3_000; // fallback polling — primary sync is via WebSocket
+const POLL_INTERVAL = 1_500; // fallback polling — primary sync is via WebSocket
 
 type GameMode = "ai" | "friend" | "matchmake";
 type GameStatus = "setup" | "waiting" | "playing" | "drafting" | "game-over";
@@ -1265,6 +1265,8 @@ export default function ChaosChessPage() {
   const [waitingForOpponentDraft, setWaitingForOpponentDraft] = useState(false);
   /** Queued data for the second drafter's own draft after seeing opponent reveal */
   const pendingDraftAfterRevealRef = useRef<{ phase: number; choices: ChaosModifier[]; chaosState: ChaosState } | null>(null);
+  /** Move held back when a draft opens — sent bundled with the draft pick */
+  const pendingMoveBeforeDraftRef = useRef<{ from: string; to: string } | null>(null);
 
   /* ── PartyKit WebSocket ref for send ── */
   const partySendRef = useRef<((msg: PartyMessage) => void) | null>(null);
@@ -1996,6 +1998,7 @@ export default function ChaosChessPage() {
       justDraftedRef.current = false;
       triggeredDraftForPhaseRef.current = -1;
       pendingDraftAfterRevealRef.current = null;
+      pendingMoveBeforeDraftRef.current = null;
       setWaitingForOpponentDraft(false);
       // Start polling for guest
       startPolling(data.roomId, color);
@@ -2053,6 +2056,7 @@ export default function ChaosChessPage() {
       justDraftedRef.current = false;
       triggeredDraftForPhaseRef.current = -1;
       pendingDraftAfterRevealRef.current = null;
+      pendingMoveBeforeDraftRef.current = null;
       setWaitingForOpponentDraft(false);
 
       // Start slow fallback polling + notify host via WebSocket
@@ -2159,6 +2163,7 @@ export default function ChaosChessPage() {
         prevPhaseRef.current = -1;
         justDraftedRef.current = false;
         pendingDraftAfterRevealRef.current = null;
+        pendingMoveBeforeDraftRef.current = null;
         setWaitingForOpponentDraft(false);
         // Swap colors
         const newColor = playerColor === "white" ? "black" : "white";
@@ -2687,9 +2692,14 @@ export default function ChaosChessPage() {
         }
         const drafted = checkDraft(activeGame, cs);
 
-        // Multiplayer: send to server
+        // Multiplayer: send to server (or hold for draft pick)
         if (gameMode !== "ai") {
-          sendMoveToServer(activeGame, from, to, cs);
+          if (!drafted && !pendingDraftAfterRevealRef.current) {
+            sendMoveToServer(activeGame, from, to, cs);
+          } else {
+            // Draft about to open — hold the move and send it bundled with the pick
+            pendingMoveBeforeDraftRef.current = { from, to };
+          }
           // Staggered draft: fire Black's deferred draft pick after their move
           if (pendingDraftAfterRevealRef.current) {
             const deferred = pendingDraftAfterRevealRef.current;
@@ -2811,9 +2821,14 @@ export default function ChaosChessPage() {
 
       const drafted = checkDraft(activeG, cs2);
 
-      // Multiplayer: send to server
+      // Multiplayer: send to server (or hold for draft pick)
       if (gameMode !== "ai") {
-        sendMoveToServer(activeG, from, to, cs2);
+        if (!drafted && !pendingDraftAfterRevealRef.current) {
+          sendMoveToServer(activeG, from, to, cs2);
+        } else {
+          // Draft about to open — hold the move and send it bundled with the pick
+          pendingMoveBeforeDraftRef.current = { from, to };
+        }
         // Staggered draft: fire Black's deferred draft pick after their move
         if (pendingDraftAfterRevealRef.current) {
           const deferred = pendingDraftAfterRevealRef.current;
@@ -2866,7 +2881,11 @@ export default function ChaosChessPage() {
       const drafted = checkDraft(newGame, chaosState);
 
       if (gameMode !== "ai") {
-        sendMoveToServer(newGame, move.from, move.to, chaosState);
+        if (!drafted && !pendingDraftAfterRevealRef.current) {
+          sendMoveToServer(newGame, move.from, move.to, chaosState);
+        } else {
+          pendingMoveBeforeDraftRef.current = { from: move.from, to: move.to };
+        }
         // Staggered draft: fire Black's deferred draft pick after their move
         if (pendingDraftAfterRevealRef.current) {
           const deferred = pendingDraftAfterRevealRef.current;
@@ -2934,7 +2953,11 @@ export default function ChaosChessPage() {
       const drafted = checkDraft(newG, chaosState);
 
       if (gameMode !== "ai") {
-        sendMoveToServer(newG, from, to, chaosState);
+        if (!drafted && !pendingDraftAfterRevealRef.current) {
+          sendMoveToServer(newG, from, to, chaosState);
+        } else {
+          pendingMoveBeforeDraftRef.current = { from, to };
+        }
         // Staggered draft: fire Black's deferred draft pick after their move
         if (pendingDraftAfterRevealRef.current) {
           const deferred = pendingDraftAfterRevealRef.current;
@@ -3194,25 +3217,32 @@ export default function ChaosChessPage() {
           serverCs.currentPhase = pendingPhase;
         }
 
+        // Pick up any move that was held pending this draft pick
+        const pendingMove = pendingMoveBeforeDraftRef.current;
+        pendingMoveBeforeDraftRef.current = null;
+        const moveFrom = pendingMove?.from ?? "";
+        const moveTo   = pendingMove?.to   ?? "";
+
         const payload = {
           roomId,
-          from: "",
-          to: "",
+          from: moveFrom,
+          to:   moveTo,
           newFen: currentGame.fen(),
           chaosState: serverCs,
-          lastMoveFrom: "",
-          lastMoveTo: "",
+          lastMoveFrom: moveFrom,
+          lastMoveTo:   moveTo,
           capturedPawnsWhite: capturedPawns.w,
           capturedPawnsBlack: capturedPawns.b,
           status: "playing",
         };
 
-        // Broadcast via WebSocket FIRST for instant sync
+        // Broadcast via WebSocket FIRST for instant sync (move + modifier in one packet)
         if (partySendRef.current) {
           partySendRef.current({
             type: "draft",
             chaosState: serverCs,
             fen: currentGame.fen(),
+            ...(moveFrom ? { lastMoveFrom: moveFrom, lastMoveTo: moveTo } : {}),
           } as PartyMessage);
         }
         lastFenRef.current = currentGame.fen();

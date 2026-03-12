@@ -37,6 +37,9 @@ export type PartyDraftMessage = {
   type: "draft";
   chaosState: unknown;
   fen: string;
+  /** Move that triggered this draft — bundled for atomic move+pick sync */
+  lastMoveFrom?: string;
+  lastMoveTo?: string;
 };
 
 export type PartyDraftFreezeMessage = {

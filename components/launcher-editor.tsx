@@ -162,7 +162,11 @@ export function LauncherEditor({
   const [showPicker, setShowPicker] = useState<Section | null>(null);
 
   // Drag state refs (avoid re-renders during drag)
-  const dragSrc = useRef<{ section: Section; index: number } | null>(null);
+  const dragSrc = useRef<
+    | { kind: "placed"; section: Section; index: number }
+    | { kind: "tray"; id: string }
+    | null
+  >(null);
   const [dropTarget, setDropTarget] = useState<{ section: Section; index: number } | null>(null);
 
   /* ── Derived ─────────────────────────────────────────── */
@@ -212,7 +216,15 @@ export function LauncherEditor({
 
   const handleDragStart = useCallback(
     (section: Section, index: number) => (e: React.DragEvent) => {
-      dragSrc.current = { section, index };
+      dragSrc.current = { kind: "placed", section, index };
+      e.dataTransfer.effectAllowed = "move";
+    },
+    [],
+  );
+
+  const handleTrayDragStart = useCallback(
+    (id: string) => (e: React.DragEvent) => {
+      dragSrc.current = { kind: "tray", id };
       e.dataTransfer.effectAllowed = "move";
     },
     [],
@@ -230,28 +242,52 @@ export function LauncherEditor({
   const handleDrop = useCallback(
     (section: Section, toIndex: number) => (e: React.DragEvent) => {
       e.preventDefault();
+      e.stopPropagation(); // prevent container handler from double-firing
       if (!dragSrc.current) return;
-      const { section: fromSection, index: fromIndex } = dragSrc.current;
+      const src = dragSrc.current;
 
-      if (fromSection === section) {
-        // Reorder within the same section
-        setConfig((prev) => {
-          const arr = [...prev[section]];
-          const [item] = arr.splice(fromIndex, 1);
-          arr.splice(toIndex, 0, item);
-          return { ...prev, [section]: arr };
-        });
-      } else {
-        // Move between sections
+      if (src.kind === "tray") {
+        // Dragging from the available-apps tray into the grid or dock
+        const { id } = src;
         const maxSlots = section === "grid" ? 10 : 4;
         setConfig((prev) => {
-          const fromArr = [...prev[fromSection]];
           const toArr = [...prev[section]];
-          if (toArr.length >= maxSlots) return prev; // section full — no-op
-          const [item] = fromArr.splice(fromIndex, 1);
-          toArr.splice(toIndex, 0, item);
-          return { ...prev, [fromSection]: fromArr, [section]: toArr };
+          if (toArr.length < maxSlots) {
+            toArr.splice(toIndex, 0, id);
+          } else {
+            // Section full — replace the target slot (displaces it back to tray)
+            toArr.splice(toIndex, 1, id);
+          }
+          return { ...prev, [section]: toArr };
         });
+      } else {
+        const { section: fromSection, index: fromIndex } = src;
+        if (fromSection === section) {
+          // Same section reorder
+          setConfig((prev) => {
+            const arr = [...prev[section]];
+            const [item] = arr.splice(fromIndex, 1);
+            arr.splice(toIndex, 0, item);
+            return { ...prev, [section]: arr };
+          });
+        } else {
+          // Cross-section move
+          const maxSlots = section === "grid" ? 10 : 4;
+          setConfig((prev) => {
+            const fromArr = [...prev[fromSection]];
+            const toArr = [...prev[section]];
+            const [item] = fromArr.splice(fromIndex, 1);
+            if (toArr.length < maxSlots) {
+              // Space available — insert at position
+              toArr.splice(toIndex, 0, item);
+            } else {
+              // Section full — swap: displaced item moves to the source slot
+              const [displaced] = toArr.splice(toIndex, 1, item);
+              fromArr.splice(fromIndex, 0, displaced);
+            }
+            return { ...prev, [fromSection]: fromArr, [section]: toArr };
+          });
+        }
       }
 
       dragSrc.current = null;
@@ -270,17 +306,30 @@ export function LauncherEditor({
     (section: Section) => (e: React.DragEvent) => {
       e.preventDefault();
       if (!dragSrc.current) return;
-      const { section: fromSection, index: fromIndex } = dragSrc.current;
-      if (fromSection === section) { dragSrc.current = null; setDropTarget(null); return; }
-      const maxSlots = section === "grid" ? 10 : 4;
-      setConfig((prev) => {
-        const fromArr = [...prev[fromSection]];
-        const toArr = [...prev[section]];
-        if (toArr.length >= maxSlots) return prev;
-        const [item] = fromArr.splice(fromIndex, 1);
-        toArr.push(item);
-        return { ...prev, [fromSection]: fromArr, [section]: toArr };
-      });
+      const src = dragSrc.current;
+
+      if (src.kind === "tray") {
+        const { id } = src;
+        const maxSlots = section === "grid" ? 10 : 4;
+        setConfig((prev) => {
+          const toArr = [...prev[section]];
+          if (toArr.length >= maxSlots) return prev;
+          return { ...prev, [section]: [...toArr, id] };
+        });
+      } else {
+        const { section: fromSection, index: fromIndex } = src;
+        if (fromSection === section) { dragSrc.current = null; setDropTarget(null); return; }
+        const maxSlots = section === "grid" ? 10 : 4;
+        setConfig((prev) => {
+          const fromArr = [...prev[fromSection]];
+          const toArr = [...prev[section]];
+          if (toArr.length >= maxSlots) return prev;
+          const [item] = fromArr.splice(fromIndex, 1);
+          toArr.push(item);
+          return { ...prev, [fromSection]: fromArr, [section]: toArr };
+        });
+      }
+
       dragSrc.current = null;
       setDropTarget(null);
     },
@@ -473,7 +522,7 @@ export function LauncherEditor({
               {/* Editing banner */}
               {isEditing && (
                 <div className="relative mb-3 rounded-xl border border-white/[0.06] bg-white/[0.04] px-4 py-2 text-center text-[11px] text-white/50">
-                  Drag to reorder · Tap <span className="font-bold text-white/70">✕</span> to remove · Tap <span className="font-bold text-emerald-400">+</span> to add
+                  Drag to reorder or swap · Tap <span className="font-bold text-white/70">✕</span> to remove · Drag from tray below to add
                 </div>
               )}
 
@@ -552,6 +601,42 @@ export function LauncherEditor({
           </div>
         </div>
       </div>
+
+      {/* Available apps tray — shows when editing and there are unplaced apps */}
+      {isEditing && availableApps.length > 0 && (
+        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] px-4 py-4">
+          <p className="mb-3 text-center text-[11px] font-medium text-white/40">
+            Available apps — drag into the grid or dock, or tap to add
+          </p>
+          <div className="flex flex-wrap justify-center gap-4">
+            {availableApps.map((app) => (
+              <button
+                key={app.id}
+                draggable
+                onDragStart={handleTrayDragStart(app.id)}
+                onDragEnd={handleDragEnd}
+                onClick={() =>
+                  setConfig((prev) => {
+                    if (prev.grid.length < 10) return { ...prev, grid: [...prev.grid, app.id] };
+                    if (prev.dock.length < 4)  return { ...prev, dock: [...prev.dock, app.id] };
+                    return prev;
+                  })
+                }
+                className="group flex cursor-grab flex-col items-center gap-1.5 active:cursor-grabbing"
+              >
+                <div
+                  className={`relative flex h-14 w-14 items-center justify-center rounded-[22%] ${app.bg} opacity-70 shadow-md transition-all duration-150 group-hover:scale-110 group-hover:opacity-100`}
+                  style={{ boxShadow: `0 4px 16px ${app.glow}` }}
+                >
+                  <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-[22%] bg-gradient-to-b from-white/[0.2] to-transparent" />
+                  {app.icon("h-8 w-8")}
+                </div>
+                <span className="text-[10px] font-medium text-white/40 group-hover:text-white/70">{app.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Save row */}
       <div className="flex items-center justify-end gap-3">
