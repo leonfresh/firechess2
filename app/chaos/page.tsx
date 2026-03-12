@@ -1,5 +1,15 @@
 "use client";
 
+/* ── Twemoji helper — consistent cross-platform emoji rendering ── */
+function _twemojiUrl(emoji: string): string {
+  const pts = [...emoji].map((c) => c.codePointAt(0)!.toString(16)).filter((cp) => cp !== "fe0f");
+  return `https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/${pts.join("-")}.svg`;
+}
+function Emoji({ emoji, className, style }: { emoji: string; className?: string; style?: React.CSSProperties }) {
+  return <img src={_twemojiUrl(emoji)} alt={emoji} className={className} style={{ display: "inline-block", verticalAlign: "-0.125em", ...style }} draggable={false} />;
+}
+
+
 /**
  * /chaos — Chaos Chess
  *
@@ -309,8 +319,8 @@ function buildChaosCustomPieces(
             const s = squareWidth * 0.24;
             const style = CORNER_STYLES[corner];
             overlays.push(
-              <div key={mod.id} style={{ position: "absolute", ...style, fontSize: s, lineHeight: 1, filter: `drop-shadow(0 0 3px ${def.iconGlow ?? "rgba(255,255,255,0.6)"})` }}>
-                {def.icon}
+              <div key={mod.id} style={{ position: "absolute", ...style, lineHeight: 1, filter: `drop-shadow(0 0 3px ${def.iconGlow ?? "rgba(255,255,255,0.6)"})` }}>
+                <Emoji emoji={def.icon} style={{ width: s, height: s }} />
               </div>
             );
           } else if (def.render) {
@@ -704,7 +714,9 @@ function OpponentDraftReveal({
                 </span>
 
                 {/* Icon */}
-                <div className="relative z-10 text-4xl sm:text-5xl">{mod.icon}</div>
+                <div className="relative z-10">
+                  <Emoji emoji={mod.icon} className="w-9 h-9 sm:w-12 sm:h-12" />
+                </div>
 
                 {/* Tier badge */}
                 <span className={`mt-1 inline-block rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${tier.text} ${tier.bg}`}>
@@ -1035,7 +1047,9 @@ function DraftModal({
                     <CardSparkles tier={mod.tier} />
 
                     {/* Icon */}
-                    <div className="relative z-10 text-3xl shrink-0 sm:mb-2 sm:text-5xl">{mod.icon}</div>
+                    <div className="relative z-10 shrink-0 sm:mb-2">
+                      <Emoji emoji={mod.icon} className="w-8 h-8 sm:w-12 sm:h-12" />
+                    </div>
 
                     <div className="relative z-10 flex-1 min-w-0 sm:flex-none">
                       {/* Tier badge */}
@@ -1134,7 +1148,7 @@ function ModifierTooltip({
           }}
         >
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-2xl">{mod.icon}</span>
+            <Emoji emoji={mod.icon} className="w-6 h-6" />
             <div>
               <p className="text-sm font-bold text-white">{mod.name}</p>
               <span className={`text-[10px] font-bold uppercase tracking-wider ${tier.text}`}>
@@ -1178,7 +1192,7 @@ function ModifierList({
         {modifiers.map((mod) => (
           <div key={mod.id} className="rounded-lg bg-white/[0.03] px-2.5 py-1.5 transition-colors hover:bg-white/[0.06]">
             <div className="flex items-center gap-2">
-              <span className="text-lg leading-none">{mod.icon}</span>
+              <Emoji emoji={mod.icon} className="w-5 h-5" />
               <span className="text-xs font-semibold text-white">{mod.name}</span>
               <span className={`ml-auto text-[9px] font-bold uppercase tracking-wider ${TIER_COLORS[mod.tier].text}`}>
                 {mod.tier}
@@ -1202,8 +1216,8 @@ function InlineModifierIcons({ modifiers }: { modifiers: ChaosModifier[] }) {
     <div className="ml-auto flex gap-1">
       {modifiers.map((m) => (
         <ModifierTooltip key={m.id} mod={m}>
-          <span className="text-xl cursor-default transition-transform hover:scale-125">
-            {m.icon}
+          <span className="cursor-default transition-transform inline-block hover:scale-125">
+            <Emoji emoji={m.icon} className="w-5 h-5" />
           </span>
         </ModifierTooltip>
       ))}
@@ -1666,10 +1680,10 @@ export default function ChaosChessPage() {
     [spawnPepe, gameMode, playerColor],
   );
 
-  /* ── Apply post-move effects (collateral rook, nuclear queen) ── */
+  /* ── Apply post-move effects (collateral rook, nuclear queen, pawn fortress) ── */
   const applyPostMove = useCallback(
-    (g: Chess, from: CbSquare, to: CbSquare, captured: boolean, pieceType: PieceSymbol, color: Color, mods: ChaosModifier[]) => {
-      const result = applyPostMoveEffects(g, from as any, to as any, captured, pieceType, color, mods);
+    (g: Chess, from: CbSquare, to: CbSquare, captured: boolean, pieceType: PieceSymbol, color: Color, mods: ChaosModifier[], opponentMods?: ChaosModifier[], capturedType?: PieceSymbol) => {
+      const result = applyPostMoveEffects(g, from as any, to as any, captured, pieceType, color, mods, opponentMods, capturedType);
       if (result) {
         if (mods.some((m) => m.id === "collateral-rook") && pieceType === "r" && captured) {
           setEventLog((prev) => [...prev, { type: "chaos", message: "💥 Collateral Damage! The rook destroyed the piece behind its target!", icon: "💥", pepe: PEPE.firesgun }]);
@@ -1680,6 +1694,11 @@ export default function ChaosChessPage() {
           setEventLog((prev) => [...prev, { type: "chaos", message: "☢️ NUCLEAR QUEEN! All surrounding pieces destroyed!", icon: "☢️", pepe: PEPE.madpuke }]);
           spawnPepe(PEPE.madpuke);
           playSound("airhorn");
+        }
+        if (opponentMods?.some((m) => m.id === "pawn-fortress") && capturedType === "p" && captured) {
+          setEventLog((prev) => [...prev, { type: "chaos", message: "🏰 Pawn Fortress! The captured pawn respawned on its starting square!", icon: "🏰", pepe: PEPE.shocked }]);
+          spawnPepe(PEPE.shocked);
+          playSound("vine-boom");
         }
         return result;
       }
@@ -1880,7 +1899,7 @@ export default function ChaosChessPage() {
         const aiMods = cs.aiModifiers;
         let finalGame: Chess = g;
         if (moveResult.captured && finalPieceAtFrom) {
-          const afterEffects = applyPostMove(g, finalFrom, finalTo, true, finalPieceAtFrom.type, finalPieceAtFrom.color as Color, aiMods);
+          const afterEffects = applyPostMove(g, finalFrom, finalTo, true, finalPieceAtFrom.type, finalPieceAtFrom.color as Color, aiMods, cs.playerModifiers, moveResult.captured || undefined);
           if (afterEffects !== g) {
             finalGame = afterEffects;
           }
@@ -2342,6 +2361,7 @@ export default function ChaosChessPage() {
   const { send: partySend, isConnected: partyConnected } = usePartyRoom(
     gameMode !== "ai" ? roomId : null,
     onPartyMessage,
+    playerColor,
   );
   // Keep ref in sync so sendMoveToServer (memoized) can use it
   partySendRef.current = partySend;
@@ -2560,7 +2580,7 @@ export default function ChaosChessPage() {
 
   /* ── Send move to server (multiplayer) ── */
   const sendMoveToServer = useCallback(
-    (g: Chess, from: string, to: string, cs: ChaosState) => {
+    (g: Chess, from: string, to: string, cs: ChaosState, isChaosMove = false) => {
       if (!roomId) return;
       // Convert to server perspective (white=playerModifiers, black=aiModifiers)
       const serverCs = toServerChaosState(cs, playerColor);
@@ -2575,20 +2595,38 @@ export default function ChaosChessPage() {
         setTimers({ w: timerW, b: timerB });
       }
 
-      const wsMsg: PartyMessage = from === "" && to === ""
-        ? { type: "draft", chaosState: serverCs, fen: g.fen() }
-        : {
-            type: "move",
-            fen: g.fen(),
-            chaosState: serverCs,
-            lastMoveFrom: from,
-            lastMoveTo: to,
-            capturedPawnsWhite: capturedPawns.w,
-            capturedPawnsBlack: capturedPawns.b,
-            status: g.isGameOver() ? "finished" : "playing",
-            timerWhiteMs: timerW,
-            timerBlackMs: timerB,
-          };
+      let wsMsg: PartyMessage;
+      if (from === "" && to === "") {
+        wsMsg = { type: "draft", chaosState: serverCs, fen: g.fen() };
+      } else if (isChaosMove) {
+        // Chaos moves (non-standard): server relays without validation
+        wsMsg = {
+          type: "chaos_move",
+          newFen: g.fen(),
+          chaosState: serverCs,
+          lastMoveFrom: from,
+          lastMoveTo: to,
+          capturedPawnsWhite: capturedPawns.w,
+          capturedPawnsBlack: capturedPawns.b,
+          status: g.isGameOver() ? "finished" : "playing",
+          timerWhiteMs: timerW,
+          timerBlackMs: timerB,
+        };
+      } else {
+        // Standard move: server validates with chess.js before broadcasting
+        wsMsg = {
+          type: "move",
+          fen: g.fen(),
+          chaosState: serverCs,
+          lastMoveFrom: from,
+          lastMoveTo: to,
+          capturedPawnsWhite: capturedPawns.w,
+          capturedPawnsBlack: capturedPawns.b,
+          status: g.isGameOver() ? "finished" : "playing",
+          timerWhiteMs: timerW,
+          timerBlackMs: timerB,
+        };
+      }
 
       // ── Broadcast via WebSocket FIRST for instant opponent sync ──
       if (partySendRef.current) {
@@ -2700,7 +2738,7 @@ export default function ChaosChessPage() {
         if (gameMode !== "ai") {
           const holdForDraft = (drafted && playerColor === "white") || !!pendingDraftAfterRevealRef.current;
           if (!holdForDraft) {
-            sendMoveToServer(activeGame, from, to, cs);
+            sendMoveToServer(activeGame, from, to, cs, true);
           } else {
             // Draft about to open — hold the move and send it bundled with the pick
             pendingMoveBeforeDraftRef.current = { from, to };
@@ -2789,10 +2827,10 @@ export default function ChaosChessPage() {
 
       addMoveToLog(game, moveResult.san, moveResult.color);
 
-      // Apply post-move chaos effects (collateral rook, nuclear queen)
+      // Apply post-move chaos effects (collateral rook, nuclear queen, pawn fortress)
       let finalGame: Chess = game;
       if (moveResult.captured && pieceAtFrom) {
-        const afterEffects = applyPostMove(game, from, to, true, pieceAtFrom.type, pieceAtFrom.color as Color, chaosState.playerModifiers);
+        const afterEffects = applyPostMove(game, from, to, true, pieceAtFrom.type, pieceAtFrom.color as Color, chaosState.playerModifiers, chaosState.aiModifiers, moveResult.captured || undefined);
         if (afterEffects !== game) {
           finalGame = afterEffects;
         }
@@ -2890,7 +2928,7 @@ export default function ChaosChessPage() {
       if (gameMode !== "ai") {
         const holdForDraft = (drafted && playerColor === "white") || !!pendingDraftAfterRevealRef.current;
         if (!holdForDraft) {
-          sendMoveToServer(newGame, move.from, move.to, chaosState);
+          sendMoveToServer(newGame, move.from, move.to, chaosState, true);
         } else {
           pendingMoveBeforeDraftRef.current = { from: move.from, to: move.to };
         }
@@ -2950,7 +2988,7 @@ export default function ChaosChessPage() {
 
       let finalGame: Chess = game;
       if (moveResult.captured && pieceAtFrom) {
-        const afterEffects = applyPostMove(game, from, to, true, pieceAtFrom.type, pieceAtFrom.color as Color, chaosState.playerModifiers);
+        const afterEffects = applyPostMove(game, from, to, true, pieceAtFrom.type, pieceAtFrom.color as Color, chaosState.playerModifiers, chaosState.aiModifiers, moveResult.captured || undefined);
         if (afterEffects !== game) finalGame = afterEffects;
       }
 
@@ -3439,7 +3477,9 @@ export default function ChaosChessPage() {
               { icon: "💥", title: "Chaos", desc: "Modifiers actually work — pieces gain new moves!" },
             ].map((step) => (
               <div key={step.title} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 text-center sm:p-4">
-                <div className="mb-1 text-xl sm:mb-2 sm:text-2xl">{step.icon}</div>
+                <div className="mb-1 sm:mb-2">
+                <Emoji emoji={step.icon} className="w-5 h-5 sm:w-6 sm:h-6" />
+              </div>
                 <h3 className="mb-0.5 text-xs font-bold text-white sm:mb-1 sm:text-sm">{step.title}</h3>
                 <p className="text-[10px] text-slate-500 sm:text-xs">{step.desc}</p>
               </div>

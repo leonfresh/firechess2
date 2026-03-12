@@ -77,8 +77,27 @@ export type PartyRematchMessage = {
   type: "rematch";
 };
 
+export type PartyRegisterMessage = {
+  type: "register";
+  color: "white" | "black";
+};
+
+export type PartyChaosMove = {
+  type: "chaos_move";
+  newFen: string;
+  chaosState: unknown;
+  lastMoveFrom: string;
+  lastMoveTo: string;
+  capturedPawnsWhite: number;
+  capturedPawnsBlack: number;
+  status: string;
+  timerWhiteMs?: number;
+  timerBlackMs?: number;
+};
+
 export type PartyMessage =
   | PartyMoveMessage
+  | PartyChaosMove
   | PartyDraftMessage
   | PartyDraftFreezeMessage
   | PartyJoinMessage
@@ -87,7 +106,8 @@ export type PartyMessage =
   | PartyDrawOfferMessage
   | PartyDrawAcceptMessage
   | PartyDrawDeclineMessage
-  | PartyRematchMessage;
+  | PartyRematchMessage
+  | PartyRegisterMessage;
 
 /* ------------------------------------------------------------------ */
 /*  Hook                                                                */
@@ -102,11 +122,13 @@ export const PARTYKIT_HOST = (
  *
  * @param roomId  - The game room ID (null = not connected)
  * @param onMessage - Callback for incoming messages
+ * @param playerColor - This player's color (sent to server on connect for auth)
  * @returns { send, disconnect, isConnected }
  */
 export function usePartyRoom(
   roomId: string | null,
   onMessage: (msg: PartyMessage) => void,
+  playerColor?: "white" | "black",
 ) {
   const socketRef = useRef<PartySocket | null>(null);
   const onMessageRef = useRef(onMessage);
@@ -126,7 +148,13 @@ export function usePartyRoom(
       party: "chaos",
     });
 
-    socket.addEventListener("open", () => setIsConnected(true));
+    socket.addEventListener("open", () => {
+      setIsConnected(true);
+      // Register with server so it knows this connection's color
+      if (playerColor) {
+        socket.send(JSON.stringify({ type: "register", color: playerColor }));
+      }
+    });
     socket.addEventListener("close", () => setIsConnected(false));
     socket.addEventListener("error", () => setIsConnected(false));
 

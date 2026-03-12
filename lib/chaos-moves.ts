@@ -1149,6 +1149,10 @@ export function applyPostMoveEffects(
   movingPieceType: PieceSymbol,
   color: Color,
   modifiers: ChaosModifier[],
+  /** The opponent (victim) side's modifiers — for reactive effects like Pawn Fortress */
+  opponentModifiers?: ChaosModifier[],
+  /** The type of the captured piece (needed for Pawn Fortress check) */
+  capturedType?: PieceSymbol,
 ): Chess | null {
   let modified = false;
   const fen = game.fen();
@@ -1168,6 +1172,25 @@ export function applyPostMoveEffects(
     const nukes = getNuclearSquares(tmp, to, color);
     for (const s of nukes) {
       tmp.remove(s);
+      modified = true;
+    }
+  }
+
+  // Pawn Fortress — victim's captured pawn has 50% chance to respawn on its start square
+  if (
+    capturedPiece &&
+    capturedType === "p" &&
+    opponentModifiers?.some((m) => m.id === "pawn-fortress") &&
+    Math.random() < 0.5
+  ) {
+    // The captured pawn's color is the opponent of the mover
+    const pawnColor: Color = color === "w" ? "b" : "w";
+    // Starting rank for that pawn color
+    const startRank = pawnColor === "w" ? "2" : "7";
+    const file = to[0] as string; // file of capture square = pawn's file
+    const startSquare = `${file}${startRank}` as Square;
+    if (!tmp.get(startSquare)) {
+      tmp.put({ type: "p", color: pawnColor }, startSquare);
       modified = true;
     }
   }
