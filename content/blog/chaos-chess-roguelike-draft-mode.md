@@ -11,70 +11,87 @@ Chess is 1,500 years old. The rules haven't changed since the 15th century. And 
 We built Chaos Chess — and the design spark didn't come from another chess game. It came from **Clash Royale**.
 
 <div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="700" height="300" viewBox="0 0 700 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+<svg width="680" height="260" viewBox="0 0 680 260" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="chBg" x1="0" y1="0" x2="700" y2="300" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#0a0618"/><stop offset="1" stop-color="#12071e"/>
+    <linearGradient id="dc-bg" x1="0" y1="0" x2="680" y2="260" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0a0618"/><stop offset="1" stop-color="#0d0a1e"/>
     </linearGradient>
-    <radialGradient id="purpGlow" cx="350" cy="150" r="260" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#a855f7" stop-opacity="0.12"/><stop offset="1" stop-color="#a855f7" stop-opacity="0"/>
+    <radialGradient id="dc-glow" cx="340" cy="130" r="220" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#a855f7" stop-opacity="0.14"/><stop offset="1" stop-color="#a855f7" stop-opacity="0"/>
     </radialGradient>
-    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
-      <feGaussianBlur stdDeviation="5" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
   </defs>
-  <rect width="700" height="300" rx="18" fill="url(#chBg)"/>
-  <rect x="1" y="1" width="698" height="298" rx="17" stroke="#a855f7" stroke-opacity="0.15"/>
-  <rect width="700" height="300" rx="18" fill="url(#purpGlow)"/>
+  <rect width="680" height="260" rx="18" fill="url(#dc-bg)"/>
+  <rect x="1" y="1" width="678" height="258" rx="17" stroke="#a855f7" stroke-opacity="0.18"/>
+  <rect width="680" height="260" rx="18" fill="url(#dc-glow)"/>
 
-  <!-- Title -->
-  <text x="350" y="38" text-anchor="middle" fill="white" font-size="18" font-weight="800" letter-spacing="0.5">Draft Phase — Pick Your Modifier</text>
-  <text x="350" y="58" text-anchor="middle" fill="#94a3b8" font-size="12">Turn 10 · Phase 2 of 5 · Your pick</text>
+  <!-- Header -->
+  <text x="340" y="32" text-anchor="middle" fill="white" font-size="15" font-weight="800">Draft Phase 2 of 5 — Pick Your Modifier</text>
+  <text x="340" y="50" text-anchor="middle" fill="#94a3b8" font-size="11">Turn 10 reached · Choose one permanent upgrade for your pieces</text>
 
-  <!-- Card 1 — Common -->
-  <rect x="30" y="76" width="194" height="196" rx="14" fill="#1e293b" stroke="#22c55e" stroke-opacity="0.4" stroke-width="1.5"/>
-  <rect x="30" y="76" width="194" height="40" rx="14" fill="#22c55e" fill-opacity="0.12"/>
-  <rect x="30" y="102" width="194" height="14" rx="0" fill="#22c55e" fill-opacity="0.12"/>
-  <text x="127" y="98" text-anchor="middle" fill="#22c55e" font-size="10" font-weight="700" letter-spacing="1">COMMON</text>
-  <text x="127" y="138" text-anchor="middle" fill="white" font-size="28">🏃</text>
-  <text x="127" y="166" text-anchor="middle" fill="white" font-size="14" font-weight="700">Pawn Charge</text>
-  <text x="127" y="186" text-anchor="middle" fill="#94a3b8" font-size="11">Pawns can move 2</text>
-  <text x="127" y="202" text-anchor="middle" fill="#94a3b8" font-size="11">squares from any rank,</text>
-  <text x="127" y="218" text-anchor="middle" fill="#94a3b8" font-size="11">not just the start.</text>
-  <rect x="68" y="246" width="118" height="18" rx="9" fill="#22c55e" fill-opacity="0.15" stroke="#22c55e" stroke-opacity="0.3"/>
-  <text x="127" y="259" text-anchor="middle" fill="#4ade80" font-size="10" font-weight="600">♟ Affects Pawns</text>
+  <!-- Divider -->
+  <line x1="40" y1="60" x2="640" y2="60" stroke="#a855f7" stroke-opacity="0.12" stroke-width="1"/>
 
-  <!-- Card 2 — Epic (highlighted/selected) -->
-  <rect x="253" y="68" width="194" height="212" rx="14" fill="#1e1030" stroke="#a855f7" stroke-opacity="0.8" stroke-width="2"/>
-  <rect x="253" y="68" width="194" height="40" rx="14" fill="#a855f7" fill-opacity="0.18"/>
-  <rect x="253" y="94" width="194" height="14" rx="0" fill="#a855f7" fill-opacity="0.18"/>
-  <text x="350" y="90" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="700" letter-spacing="1">EPIC</text>
-  <text x="350" y="133" text-anchor="middle" fill="white" font-size="30">🌀</text>
-  <text x="350" y="162" text-anchor="middle" fill="white" font-size="14" font-weight="700">Queen Teleport</text>
-  <text x="350" y="182" text-anchor="middle" fill="#94a3b8" font-size="11">Your queen can teleport</text>
-  <text x="350" y="198" text-anchor="middle" fill="#94a3b8" font-size="11">to any empty square</text>
-  <text x="350" y="214" text-anchor="middle" fill="#94a3b8" font-size="11">once per game.</text>
-  <rect x="291" y="242" width="118" height="18" rx="9" fill="#a855f7" fill-opacity="0.15" stroke="#a855f7" stroke-opacity="0.4"/>
-  <text x="350" y="255" text-anchor="middle" fill="#c084fc" font-size="10" font-weight="600">♛ Affects Queen</text>
-  <!-- selected glow ring -->
-  <rect x="250" y="65" width="200" height="218" rx="16" fill="none" stroke="#a855f7" stroke-opacity="0.35" stroke-width="4"/>
+  <!-- CARD 1: Common — Pawn Charge -->
+  <rect x="28" y="74" width="190" height="158" rx="12" fill="#0f1a2e" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.5"/>
+  <!-- tier strip -->
+  <rect x="28" y="74" width="190" height="28" rx="12" fill="#22c55e" fill-opacity="0.10"/>
+  <rect x="28" y="90" width="190" height="12" fill="#22c55e" fill-opacity="0.10"/>
+  <text x="123" y="91" text-anchor="middle" fill="#4ade80" font-size="9" font-weight="700" letter-spacing="1.5">COMMON</text>
+  <!-- icon area -->
+  <rect x="90" y="110" width="66" height="50" rx="10" fill="#22c55e" fill-opacity="0.07"/>
+  <text x="123" y="145" text-anchor="middle" font-size="30">&#x1F3C3;</text>
+  <!-- name -->
+  <text x="123" y="178" text-anchor="middle" fill="white" font-size="12" font-weight="700">Pawn Charge</text>
+  <!-- desc lines -->
+  <text x="123" y="196" text-anchor="middle" fill="#94a3b8" font-size="9.5">Pawns move 2 squares from</text>
+  <text x="123" y="209" text-anchor="middle" fill="#94a3b8" font-size="9.5">any rank, not just the start.</text>
+  <!-- piece tag -->
+  <rect x="73" y="218" width="100" height="14" rx="7" fill="#22c55e" fill-opacity="0.12" stroke="#22c55e" stroke-opacity="0.25"/>
+  <text x="123" y="228" text-anchor="middle" fill="#4ade80" font-size="8.5" font-weight="600">Affects Pawns</text>
 
-  <!-- Card 3 — Rare -->
-  <rect x="476" y="76" width="194" height="196" rx="14" fill="#1e293b" stroke="#3b82f6" stroke-opacity="0.4" stroke-width="1.5"/>
-  <rect x="476" y="76" width="194" height="40" rx="14" fill="#3b82f6" fill-opacity="0.10"/>
-  <rect x="476" y="102" width="194" height="14" rx="0" fill="#3b82f6" fill-opacity="0.10"/>
-  <text x="573" y="98" text-anchor="middle" fill="#60a5fa" font-size="10" font-weight="700" letter-spacing="1">RARE</text>
-  <text x="573" y="138" text-anchor="middle" fill="white" font-size="28">💥</text>
-  <text x="573" y="166" text-anchor="middle" fill="white" font-size="14" font-weight="700">Collateral Rook</text>
-  <text x="573" y="186" text-anchor="middle" fill="#94a3b8" font-size="11">Your rook captures</text>
-  <text x="573" y="202" text-anchor="middle" fill="#94a3b8" font-size="11">all pieces in its path,</text>
-  <text x="573" y="218" text-anchor="middle" fill="#94a3b8" font-size="11">not just the first.</text>
-  <rect x="514" y="246" width="118" height="18" rx="9" fill="#3b82f6" fill-opacity="0.12" stroke="#3b82f6" stroke-opacity="0.3"/>
-  <text x="573" y="259" text-anchor="middle" fill="#60a5fa" font-size="10" font-weight="600">♜ Affects Rooks</text>
+  <!-- CARD 2: Epic — Queen Teleport (selected, enlarged) -->
+  <rect x="244" y="64" width="192" height="178" rx="12" fill="#150b2a" stroke="#a855f7" stroke-opacity="0.85" stroke-width="2"/>
+  <!-- outer glow ring -->
+  <rect x="241" y="61" width="198" height="184" rx="14" fill="none" stroke="#a855f7" stroke-opacity="0.22" stroke-width="5"/>
+  <!-- tier strip -->
+  <rect x="244" y="64" width="192" height="28" rx="12" fill="#a855f7" fill-opacity="0.16"/>
+  <rect x="244" y="80" width="192" height="12" fill="#a855f7" fill-opacity="0.16"/>
+  <text x="340" y="81" text-anchor="middle" fill="#c084fc" font-size="9" font-weight="700" letter-spacing="1.5">EPIC</text>
+  <!-- icon area -->
+  <rect x="304" y="100" width="72" height="54" rx="10" fill="#a855f7" fill-opacity="0.10"/>
+  <text x="340" y="138" text-anchor="middle" font-size="33">&#x1F300;</text>
+  <!-- name -->
+  <text x="340" y="172" text-anchor="middle" fill="white" font-size="13" font-weight="800">Queen Teleport</text>
+  <!-- desc lines -->
+  <text x="340" y="191" text-anchor="middle" fill="#e2d9f3" font-size="9.5">Your queen warps to any</text>
+  <text x="340" y="204" text-anchor="middle" fill="#e2d9f3" font-size="9.5">empty square, once per game.</text>
+  <!-- piece tag -->
+  <rect x="284" y="214" width="112" height="14" rx="7" fill="#a855f7" fill-opacity="0.15" stroke="#a855f7" stroke-opacity="0.35"/>
+  <text x="340" y="224" text-anchor="middle" fill="#c084fc" font-size="8.5" font-weight="600">Affects Queen</text>
+  <!-- Selected badge -->
+  <rect x="294" y="235" width="92" height="14" rx="7" fill="#a855f7" fill-opacity="0.3"/>
+  <text x="340" y="245" text-anchor="middle" fill="#f3e8ff" font-size="8" font-weight="700" letter-spacing="0.5">&#x2713; SELECTED</text>
 
-  <!-- "Choose" label at bottom -->
-  <text x="350" y="291" text-anchor="middle" fill="#475569" font-size="11">Tap or click any card to draft it permanently</text>
+  <!-- CARD 3: Rare — Collateral Rook -->
+  <rect x="462" y="74" width="190" height="158" rx="12" fill="#0f1a2e" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.5"/>
+  <!-- tier strip -->
+  <rect x="462" y="74" width="190" height="28" rx="12" fill="#3b82f6" fill-opacity="0.10"/>
+  <rect x="462" y="90" width="190" height="12" fill="#3b82f6" fill-opacity="0.10"/>
+  <text x="557" y="91" text-anchor="middle" fill="#60a5fa" font-size="9" font-weight="700" letter-spacing="1.5">RARE</text>
+  <!-- icon area -->
+  <rect x="524" y="110" width="66" height="50" rx="10" fill="#3b82f6" fill-opacity="0.07"/>
+  <text x="557" y="145" text-anchor="middle" font-size="30">&#x1F4A5;</text>
+  <!-- name -->
+  <text x="557" y="178" text-anchor="middle" fill="white" font-size="12" font-weight="700">Collateral Rook</text>
+  <!-- desc lines -->
+  <text x="557" y="196" text-anchor="middle" fill="#94a3b8" font-size="9.5">Your rook captures every</text>
+  <text x="557" y="209" text-anchor="middle" fill="#94a3b8" font-size="9.5">piece in its path at once.</text>
+  <!-- piece tag -->
+  <rect x="507" y="218" width="100" height="14" rx="7" fill="#3b82f6" fill-opacity="0.12" stroke="#3b82f6" stroke-opacity="0.25"/>
+  <text x="557" y="228" text-anchor="middle" fill="#60a5fa" font-size="8.5" font-weight="600">Affects Rooks</text>
+
+  <!-- Footer -->
+  <text x="340" y="251" text-anchor="middle" fill="#4b5563" font-size="10">Click or tap a card to permanently draft it for the rest of the game</text>
 </svg>
 </div>
 

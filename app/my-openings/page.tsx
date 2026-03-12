@@ -395,7 +395,7 @@ const VisualTree = React.memo(function VisualTree({
     <div
       ref={scrollRef}
       className="overflow-auto overscroll-contain"
-      style={{ maxHeight: 660 }}
+      style={{ height: "100%" }}
     >
       <svg
         width={W}
@@ -981,6 +981,184 @@ function ExplorerPanel({
 
 /* ── Main page ─────────────────────────────────────────────────────── */
 
+/* ── Draggable floating board panel ─────────────────────────────────── */
+
+interface DraggablePanelProps {
+  currentFen: string;
+  boardOrientation: "white" | "black";
+  squareStyles: Record<string, React.CSSProperties>;
+  customPieces: ReturnType<typeof useCustomPieces>;
+  showCoords: boolean;
+  boardTheme: ReturnType<typeof useBoardTheme>;
+  selectedPath: string[];
+  sideToMove: "white" | "black";
+  explorerData: ExplorerResult | null;
+  explorerLoading: boolean;
+  currentNodeChildren: TreeNode[];
+  userTopMove: string | null;
+  onClose: () => void;
+  onSelectMove: (san: string) => void;
+}
+
+function DraggablePanel({
+  currentFen, boardOrientation, squareStyles, customPieces, showCoords,
+  boardTheme, selectedPath, sideToMove, explorerData, explorerLoading,
+  currentNodeChildren, userTopMove, onClose, onSelectMove,
+}: DraggablePanelProps) {
+  const [pos, setPos] = useState({ x: 20, y: 80 });
+  const dragRef = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null);
+
+  useEffect(() => {
+    setPos({ x: Math.max(20, window.innerWidth - 420), y: 80 });
+  }, []);
+
+  const onHandlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
+    const ox = pos.x;
+    const oy = pos.y;
+    dragRef.current = { sx: e.clientX, sy: e.clientY, ox, oy };
+    const onMove = (ev: PointerEvent) => {
+      if (!dragRef.current) return;
+      setPos({
+        x: Math.max(0, Math.min(dragRef.current.ox + ev.clientX - dragRef.current.sx, window.innerWidth - 380)),
+        y: Math.max(60, Math.min(dragRef.current.oy + ev.clientY - dragRef.current.sy, window.innerHeight - 60)),
+      });
+    };
+    const onUp = () => {
+      dragRef.current = null;
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+    };
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+    e.currentTarget.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  }, [pos.x, pos.y]);
+
+  return (
+    <div
+      className="fixed z-30 w-[380px] rounded-2xl border border-white/[0.12] bg-[#0a1628]/95 backdrop-blur-xl shadow-2xl overflow-hidden"
+      style={{ left: pos.x, top: pos.y }}
+    >
+      {/* Drag handle */}
+      <div
+        className="flex items-center justify-between px-4 py-2.5 cursor-grab active:cursor-grabbing border-b border-white/[0.07] bg-white/[0.02] select-none"
+        onPointerDown={onHandlePointerDown}
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <svg className="h-4 w-4 text-white/20 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+            <circle cx="7" cy="4" r="1.5" /><circle cx="13" cy="4" r="1.5" />
+            <circle cx="7" cy="10" r="1.5" /><circle cx="13" cy="10" r="1.5" />
+            <circle cx="7" cy="16" r="1.5" /><circle cx="13" cy="16" r="1.5" />
+          </svg>
+          <span className="text-xs font-semibold text-slate-400 truncate">
+            {selectedPath.length > 0
+              ? `Move ${Math.ceil(selectedPath.length / 2)} · ${explorerData?.openingName ?? selectedPath[selectedPath.length - 1]}`
+              : "Starting position"}
+          </span>
+        </div>
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={onClose}
+          className="ml-2 shrink-0 rounded-lg p-1 text-slate-500 hover:bg-white/[0.07] hover:text-white transition-colors"
+          aria-label="Close panel"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4">
+            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Scrollable body */}
+      <div className="overflow-y-auto" style={{ maxHeight: "calc(100dvh - 160px)" }}>
+        {/* Chessboard */}
+        <div className="p-3">
+          <Chessboard
+            position={currentFen}
+            boardOrientation={boardOrientation}
+            arePiecesDraggable={false}
+            showBoardNotation={showCoords}
+            customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+            customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+            customSquareStyles={squareStyles}
+            customPieces={customPieces}
+          />
+        </div>
+
+        {/* Position info */}
+        <div className="flex flex-wrap items-center gap-2 px-4 pb-3 text-xs text-slate-500 border-b border-white/[0.06]">
+          {selectedPath.length > 0 ? (
+            <>
+              <span>Move {Math.ceil(selectedPath.length / 2)} · {sideToMove === "white" ? "White" : "Black"} to move</span>
+              {explorerData?.openingName && (
+                <>
+                  <span className="text-slate-700">·</span>
+                  <span className="text-slate-400">{explorerData.openingName}</span>
+                </>
+              )}
+            </>
+          ) : (
+            <span>Starting position · click a node to navigate</span>
+          )}
+        </div>
+
+        {/* Your moves from here */}
+        {currentNodeChildren.length > 0 && (
+          <div className="p-3 border-b border-white/[0.06]">
+            <h4 className="mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Your moves from here</h4>
+            <div className="space-y-1.5">
+              {[...currentNodeChildren]
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 5)
+                .map((child) => {
+                  const total = child.wins + child.draws + child.losses;
+                  const wr = total ? Math.round((child.wins / total) * 100) : 0;
+                  const isTop = child.san === userTopMove;
+                  const isDbBest = explorerData?.topPick?.san === child.san;
+                  const moveNum = Math.floor(child.depth / 2) + 1;
+                  const prefix = child.depth % 2 === 0 ? `${moveNum}.` : `${moveNum}…`;
+                  return (
+                    <button
+                      key={child.san}
+                      type="button"
+                      onClick={() => onSelectMove(child.san)}
+                      className={`w-full rounded-lg border px-2.5 py-1.5 text-left transition-colors ${
+                        isTop && isDbBest
+                          ? "border-emerald-500/20 bg-emerald-500/08 hover:bg-emerald-500/12"
+                          : isDbBest
+                            ? "border-blue-500/15 bg-blue-500/05 hover:bg-blue-500/10"
+                            : "border-white/[0.05] bg-white/[0.02] hover:bg-white/[0.04]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-sm">
+                          <span className="text-slate-600">{prefix} </span>
+                          <span className="font-semibold text-slate-100">{child.san}</span>
+                        </span>
+                        {isTop && <span className="text-[10px] font-bold text-amber-400 bg-amber-400/10 rounded px-1">most played</span>}
+                        {isDbBest && <span className="text-[10px] font-bold text-blue-300 bg-blue-400/10 rounded px-1">DB best</span>}
+                        <span className="ml-auto text-xs tabular-nums text-slate-500">{child.count}× · {wr}%</span>
+                      </div>
+                      <div className="mt-1">
+                        <WinRateBar wins={child.wins} draws={child.draws} losses={child.losses} />
+                      </div>
+                    </button>
+                  );
+                })}
+            </div>
+          </div>
+        )}
+
+        {/* Explorer */}
+        <div className="p-3">
+          <h4 className="mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Lichess Explorer</h4>
+          <ExplorerPanel explorerData={explorerData} loading={explorerLoading} userTopMove={userTopMove} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function MyOpeningsInner() {
   const searchParams = useSearchParams();
   const boardTheme = useBoardTheme();
@@ -1012,6 +1190,9 @@ function MyOpeningsInner() {
 
   /* view mode for opening tree panel */
   const [viewMode, setViewMode] = useState<"visual" | "list">("visual");
+
+  /* floating board panel */
+  const [panelOpen, setPanelOpen] = useState(false);
 
   /* derived */
   const currentFen = useMemo(() => getFenAtPath(selectedPath), [selectedPath]);
@@ -1723,6 +1904,257 @@ function MyOpeningsInner() {
           </div>
         )}
       </div>
+
+      {/* ─── Active overlay: full-viewport below navbar when scanning / done ─── */}
+      {scanState !== "idle" && (
+        <div
+          className="fixed left-0 right-0 bottom-0 z-30 flex flex-col bg-[#050a12] text-white overflow-hidden"
+          style={{ top: 60 }}
+        >
+          {/* Subtle ambient glows */}
+          <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+            <div className="absolute -top-32 left-1/4 h-96 w-96 rounded-full bg-emerald-500/[0.04] blur-[100px]" />
+            <div className="absolute bottom-1/4 right-0 h-64 w-64 rounded-full bg-cyan-500/[0.03] blur-[80px]" />
+          </div>
+
+          {/* ── Compact toolbar ── */}
+          <div className="relative shrink-0 border-b border-white/[0.07] bg-[#050a12]/95 backdrop-blur px-4 py-2 flex flex-wrap items-center gap-2">
+            {/* Back / title */}
+            <Link
+              href="/"
+              className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-300 transition-colors shrink-0"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-3.5 w-3.5">
+                <path fillRule="evenodd" d="M17 10a.75.75 0 01-.75.75H5.612l4.158 3.96a.75.75 0 11-1.04 1.08l-5.5-5.25a.75.75 0 010-1.08l5.5-5.25a.75.75 0 111.04 1.08L5.612 9.25H16.25A.75.75 0 0117 10z" clipRule="evenodd" />
+              </svg>
+              <span className="hidden sm:inline font-semibold text-slate-300">Opening Tree</span>
+            </Link>
+            <div className="h-4 w-px bg-white/[0.06] shrink-0" />
+
+            {/* Compact rescan form */}
+            <form onSubmit={handleSubmit} className="flex items-center gap-2 flex-1 min-w-0">
+              <div className="flex shrink-0 rounded-lg border border-white/[0.08] bg-white/[0.04] p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setSource("lichess")}
+                  className={`rounded-md px-2 py-0.5 text-[11px] font-semibold transition-colors ${source === "lichess" ? "bg-white/[0.1] text-white" : "text-slate-500 hover:text-slate-300"}`}
+                >Lichess</button>
+                <button
+                  type="button"
+                  onClick={() => setSource("chesscom")}
+                  className={`rounded-md px-2 py-0.5 text-[11px] font-semibold transition-colors ${source === "chesscom" ? "bg-white/[0.1] text-white" : "text-slate-500 hover:text-slate-300"}`}
+                >Chess.com</button>
+              </div>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="username"
+                className="w-24 min-w-0 rounded-lg border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-xs text-white placeholder-slate-600 outline-none focus:border-emerald-500/40"
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <button
+                type="submit"
+                disabled={isLoading || !username.trim()}
+                className="shrink-0 rounded-lg bg-emerald-500/90 px-3 py-1 text-xs font-semibold text-white transition-all hover:bg-emerald-400 disabled:opacity-40"
+              >
+                {isLoading ? "…" : "Scan"}
+              </button>
+            </form>
+
+            {/* Stats pill */}
+            {isDone && (
+              <div className="hidden sm:flex shrink-0 items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1 text-[11px] text-slate-400">
+                <span><span className="font-semibold text-white">{totalGames}</span> games</span>
+                <span className="text-slate-700">·</span>
+                <span><span className="font-semibold text-white">{rootSorted.reduce((s, n) => s + n.count, 0)}</span> positions</span>
+              </div>
+            )}
+
+            {/* Color filter */}
+            {isDone && (
+              <div className="shrink-0 flex items-center rounded-lg border border-white/[0.07] bg-white/[0.03] p-0.5">
+                {(["both", "white", "black"] as ColorFilter[]).map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => handleColorChange(c)}
+                    className={`rounded-md px-2 py-0.5 text-[11px] font-medium transition-colors ${colorFilter === c ? "bg-white/[0.08] text-white" : "text-slate-500 hover:text-slate-300"}`}
+                  >
+                    {c === "both" ? "Both" : c === "white" ? "⬜" : "⬛"}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* View mode toggle */}
+            {isDone && (
+              <div className="shrink-0 flex items-center rounded-lg border border-white/[0.07] bg-white/[0.03] p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("visual")}
+                  title="Visual tree"
+                  className={`rounded-md px-2 py-0.5 text-[11px] font-semibold transition-all ${viewMode === "visual" ? "bg-emerald-500/15 text-emerald-300" : "text-slate-500 hover:text-slate-300"}`}
+                >🌲</button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("list")}
+                  title="List view"
+                  className={`rounded-md px-2 py-0.5 text-[11px] font-semibold transition-all ${viewMode === "list" ? "bg-white/[0.08] text-slate-200" : "text-slate-500 hover:text-slate-300"}`}
+                >📋</button>
+              </div>
+            )}
+
+            {/* Show/hide board panel */}
+            {isDone && (
+              <button
+                type="button"
+                onClick={() => setPanelOpen((v) => !v)}
+                title={panelOpen ? "Hide board" : "Show board"}
+                className={`shrink-0 rounded-lg border px-2.5 py-1 text-[11px] transition-colors ${
+                  panelOpen
+                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                    : "border-white/[0.07] bg-white/[0.03] text-slate-400 hover:text-white"
+                }`}
+              >
+                ♟ Board
+              </button>
+            )}
+
+            {/* Breadcrumb — last 4 moves */}
+            {isDone && selectedPath.length > 0 && (
+              <div className="hidden lg:flex shrink-0 items-center gap-1 text-[11px] text-slate-500 ml-auto max-w-[240px] overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setSelectedPath([])}
+                  className="text-slate-600 hover:text-slate-300 shrink-0 transition-colors"
+                >Start</button>
+                {selectedPath.slice(-4).map((san, i, arr) => (
+                  <span key={i} className="flex items-center gap-1 shrink-0">
+                    <span className="text-slate-700">›</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedPath(selectedPath.slice(0, selectedPath.length - arr.length + i + 1))}
+                      className={`font-mono transition-colors ${i === arr.length - 1 ? "text-emerald-400 font-semibold" : "hover:text-slate-300"}`}
+                    >{san}</button>
+                  </span>
+                ))}
+                {selectedPath.length > 4 && <span className="text-slate-700 shrink-0">…</span>}
+              </div>
+            )}
+          </div>
+
+          {/* ── Loading ── */}
+          {isLoading && (
+            <div className="relative flex flex-1 items-center justify-center">
+              <div className="text-center">
+                <span className="inline-block h-7 w-7 animate-spin rounded-full border-[3px] border-emerald-500 border-t-transparent" />
+                <p className="mt-3 text-sm text-slate-300">
+                  {scanState === "fetching"
+                    ? `Downloading games… (${gamesFetched} / ${totalGames})`
+                    : "Building opening tree…"}
+                </p>
+                {scanState === "fetching" && totalGames > 0 && (
+                  <div className="mt-3 mx-auto max-w-xs">
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                      <div
+                        className="h-full rounded-full bg-emerald-500 transition-all"
+                        style={{ width: `${Math.min(100, (gamesFetched / totalGames) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Error ── */}
+          {scanState === "error" && error && (
+            <div className="relative flex flex-1 items-center justify-center">
+              <div className="text-center max-w-md">
+                <div className="rounded-xl border border-red-500/20 bg-red-500/08 p-6 text-sm text-red-300">{error}</div>
+                <button
+                  type="button"
+                  onClick={() => setScanState("idle")}
+                  className="mt-4 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+                >← Back to search</button>
+              </div>
+            </div>
+          )}
+
+          {/* ── Done: full-height tree ── */}
+          {isDone && (
+            <div className="relative flex-1 min-h-0">
+              {viewMode === "visual" ? (
+                <div className="h-full bg-[#07101a]">
+                  <VisualTree
+                    tree={tree}
+                    selectedPath={selectedPath}
+                    onSelect={(path) => {
+                      setSelectedPath(path);
+                      if (path.length > 0) setPanelOpen(true);
+                    }}
+                  />
+                </div>
+              ) : (
+                <div className="h-full overflow-y-auto">
+                  <div className="mx-auto max-w-2xl p-4">
+                    {rootSorted.length === 0 ? (
+                      <p className="py-8 text-center text-sm text-slate-600">No games found for this filter</p>
+                    ) : (
+                      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.02] overflow-hidden">
+                        <div className="border-b border-white/[0.05] px-4 py-2 flex items-center justify-between">
+                          <span className="text-xs text-slate-500">{rootSorted.length} first moves</span>
+                          <div className="flex items-center gap-3 text-[10px] text-slate-600">
+                            <span className="flex items-center gap-1"><span className="inline-block h-1.5 w-3 rounded bg-emerald-500/70" />W</span>
+                            <span className="flex items-center gap-1"><span className="inline-block h-1.5 w-3 rounded bg-slate-500/50" />D</span>
+                            <span className="flex items-center gap-1"><span className="inline-block h-1.5 w-3 rounded bg-red-500/50" />L</span>
+                          </div>
+                        </div>
+                        <div className="p-2">
+                          {rootSorted.map((node) => (
+                            <TreeNodeRow
+                              key={node.san}
+                              node={node}
+                              path={[node.san]}
+                              selectedPath={selectedPath}
+                              onSelect={(path) => { setSelectedPath(path); if (path.length > 0) setPanelOpen(true); }}
+                              indent={0}
+                              username={username}
+                              norm={username.toLowerCase()}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ─── Draggable floating board panel ─── */}
+      {isDone && panelOpen && (
+        <DraggablePanel
+          currentFen={currentFen}
+          boardOrientation={boardOrientation}
+          squareStyles={squareStyles}
+          customPieces={customPieces}
+          showCoords={showCoords}
+          boardTheme={boardTheme}
+          selectedPath={selectedPath}
+          sideToMove={sideToMove}
+          explorerData={explorerData}
+          explorerLoading={explorerLoading}
+          currentNodeChildren={currentNodeChildren}
+          userTopMove={userTopMove}
+          onClose={() => setPanelOpen(false)}
+          onSelectMove={(san) => setSelectedPath([...selectedPath, san])}
+        />
+      )}
     </div>
   );
 }

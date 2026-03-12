@@ -26,6 +26,8 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <PlateauArt />;
     case "chess-middlegame-strategy-finding-a-plan":
       return <MiddlegameArt />;
+    case "chaos-chess-roguelike-draft-mode":
+      return <ChaosArt />;
     default:
       return <DefaultArt />;
   }
@@ -589,6 +591,106 @@ function MiddlegameArt() {
       {/* Compass needle pointing NE */}
       <line x1="200" y1="115" x2="240" y2="70" stroke="#ef4444" strokeWidth="1.5" strokeOpacity="0.35" />
       <line x1="200" y1="115" x2="160" y2="160" stroke="#e2e8f0" strokeWidth="1.5" strokeOpacity="0.2" />
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  11. Chaos Chess  stormy board, glowing modified pieces, purple    */
+/* ================================================================== */
+function ChaosArt() {
+  return (
+    <svg viewBox="0 0 400 210" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ch-bg" x1="0" y1="0" x2="400" y2="210" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0a0618" /><stop offset="1" stopColor="#0d0520" />
+        </linearGradient>
+        <radialGradient id="ch-center" cx="200" cy="105" r="130" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#a855f7" stopOpacity="0.22" /><stop offset="1" stopColor="#a855f7" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="ch-left" cx="95" cy="130" r="60" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#22c55e" stopOpacity="0.18" /><stop offset="1" stopColor="#22c55e" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="ch-right" cx="305" cy="118" r="60" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#ef4444" stopOpacity="0.18" /><stop offset="1" stopColor="#ef4444" stopOpacity="0" />
+        </radialGradient>
+        <filter id="ch-glow"><feGaussianBlur stdDeviation="4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+        <filter id="ch-soft"><feGaussianBlur stdDeviation="2" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="210" fill="url(#ch-bg)" />
+      <rect width="400" height="210" fill="url(#ch-center)" />
+      <rect width="400" height="210" fill="url(#ch-left)" />
+      <rect width="400" height="210" fill="url(#ch-right)" />
+
+      {/* Chessboard grid (subtle, warped feel) */}
+      {[0,1,2,3,4,5,6,7,8].map(i => (
+        <line key={`cv${i}`} x1={115+i*22} y1="48" x2={115+i*22} y2="172" stroke="#2d1a5a" strokeWidth="0.5" strokeOpacity="0.7" />
+      ))}
+      {[0,1,2,3,4,5,6,7,8].map(i => (
+        <line key={`ch${i}`} x1="115" y1={48+i*15.5} x2="291" y2={48+i*15.5} stroke="#2d1a5a" strokeWidth="0.5" strokeOpacity="0.7" />
+      ))}
+      {[0,1,2,3,4,5,6,7].map(r =>
+        [0,1,2,3,4,5,6,7].filter(c => (r+c)%2===1).map(c => (
+          <rect key={`sq${r}${c}`} x={115+c*22} y={48+r*15.5} width="22" height="15.5" fill="#1e0f3a" fillOpacity="0.55" />
+        ))
+      )}
+
+      {/* Lightning arc across the board */}
+      <path d="M115,105 L148,92 L160,110 L185,88 L200,105 L222,80 L240,100 L265,85 L291,105"
+        fill="none" stroke="#a855f7" strokeWidth="2.5" strokeOpacity="0.55" strokeLinejoin="round"
+        filter="url(#ch-glow)">
+        <animate attributeName="opacity" values="0.55;0.15;0.55;0.35;0.55" dur="3.5s" repeatCount="indefinite" />
+      </path>
+
+      {/* Queen — nuclear glow (centre) */}
+      <g transform="translate(200,100)" filter="url(#ch-glow)">
+        <circle cx="0" cy="-20" r="3" fill="#a855f7" fillOpacity="0.6" />
+        <path d="M-7,-14 L-7,-20 L-3,-16 L0,-22 L3,-16 L7,-20 L7,-14 Z" fill="#a855f7" fillOpacity="0.55" />
+        <circle cx="0" cy="-10" r="8" fill="#a855f7" fillOpacity="0.45" />
+        <path d="M-5,-4 L-8,10 Q0,14 8,10 L5,-4 Z" fill="#a855f7" fillOpacity="0.5" />
+        <ellipse cx="0" cy="12" rx="12" ry="4" fill="#a855f7" fillOpacity="0.4" />
+        {/* ☢️ badge */}
+        <circle cx="9" cy="-22" r="5" fill="#22c55e" fillOpacity="0.8" />
+        <text x="9" y="-19" textAnchor="middle" fill="white" fontSize="6" fontWeight="700">{"☢"}</text>
+      </g>
+
+      {/* Knight — ghost (left) */}
+      <g transform="translate(95,128)" opacity="0.6">
+        <path d="M-6,6 L-8,-14 Q-9,-24 -3,-28 L-1,-30 Q2,-27 4,-24 L6,-18 Q8,-14 6,-9 L6,-1 Q3,2 -4,2 Z"
+          fill="#94a3b8" fillOpacity="0.4" filter="url(#ch-soft)" />
+        <ellipse cx="0" cy="6" rx="9" ry="3" fill="#94a3b8" fillOpacity="0.35" />
+        {/* 👻 badge */}
+        <circle cx="8" cy="-28" r="5" fill="#7c3aed" fillOpacity="0.85" />
+        <text x="8" y="-25" textAnchor="middle" fill="white" fontSize="6">{"👻"}</text>
+      </g>
+
+      {/* Rook — collateral (right) */}
+      <g transform="translate(305,115)">
+        <rect x="-9" y="-22" width="18" height="20" rx="1" fill="#ef4444" fillOpacity="0.35" />
+        <rect x="-11" y="-26" width="5" height="6" fill="#ef4444" fillOpacity="0.4" />
+        <rect x="-3" y="-26" width="5" height="6" fill="#ef4444" fillOpacity="0.4" />
+        <rect x="5" y="-26" width="5" height="6" fill="#ef4444" fillOpacity="0.4" />
+        <ellipse cx="0" cy="0" rx="12" ry="4" fill="#ef4444" fillOpacity="0.35" />
+        {/* 💥 badge */}
+        <circle cx="10" cy="-26" r="5" fill="#ef4444" fillOpacity="0.85" />
+        <text x="10" y="-23" textAnchor="middle" fill="white" fontSize="6">{"💥"}</text>
+      </g>
+
+      {/* Draft card silhouettes floating above */}
+      {[[-70,-2,"#22c55e","COMMON"],[0,-12,"#a855f7","EPIC"],[70,-2,"#3b82f6","RARE"]].map(([dx, dy, col, lbl], i) => (
+        <g key={`card${i}`} transform={`translate(${200+(dx as number)},${38+(dy as number)})`}>
+          <rect x="-14" y="-16" width="28" height="34" rx="4"
+            fill="#13082a" fillOpacity="0.8"
+            stroke={col as string} strokeOpacity={i===1?0.8:0.35} strokeWidth={i===1?1.5:1} />
+          <text x="0" y="-4" textAnchor="middle" fill={col as string} fillOpacity="0.85" fontSize="5" fontWeight="700">{lbl as string}</text>
+          <rect x="-8" y="0" width="16" height="1.5" rx="0.8" fill={col as string} fillOpacity="0.35" />
+          <rect x="-6" y="4" width="12" height="1.5" rx="0.8" fill={col as string} fillOpacity="0.25" />
+          <rect x="-6" y="8" width="10" height="1.5" rx="0.8" fill={col as string} fillOpacity="0.2" />
+        </g>
+      ))}
+
+      {/* "DRAFT PHASE" watermark text */}
+      <text x="200" y="196" textAnchor="middle" fill="white" fillOpacity="0.06" fontSize="18" fontWeight="900" letterSpacing="3">{"DRAFT PHASE"}</text>
     </svg>
   );
 }
