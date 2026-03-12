@@ -12,6 +12,7 @@
  */
 
 import { useCallback, useRef, useState } from "react";
+import Link from "next/link";
 import {
   LAUNCHER_APPS,
   DEFAULT_LAUNCHER,
@@ -36,6 +37,110 @@ interface LauncherEditorProps {
 }
 
 type Section = "grid" | "dock";
+
+/* ------------------------------------------------------------------ */
+/*  AppIcon & EmptySlot — top-level so their identity is stable across  */
+/*  re-renders; nested functions would remount on every state change,  */
+/*  breaking drag-and-drop entirely.                                   */
+/* ------------------------------------------------------------------ */
+
+interface AppIconProps {
+  app: AppDef;
+  section: Section;
+  index: number;
+  isEditing: boolean;
+  isDrop: boolean;
+  onDragStart: (e: React.DragEvent) => void;
+  onDragOver: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent) => void;
+  onDragEnd: () => void;
+  onRemove: () => void;
+}
+
+function AppIcon({ app, section, isEditing, isDrop, onDragStart, onDragOver, onDrop, onDragEnd, onRemove }: AppIconProps) {
+  const isGrid = section === "grid";
+
+  const bubble = (
+    <div
+      className={[
+        "relative flex items-center justify-center rounded-[22%]",
+        app.bg,
+        isGrid
+          ? "aspect-square w-full max-w-[72px] shadow-lg transition-all duration-200 group-hover:-translate-y-1 group-hover:scale-110"
+          : "h-12 w-12 shadow-md transition-all duration-200 group-hover:-translate-y-0.5 group-hover:scale-110",
+      ].join(" ")}
+      style={{ boxShadow: `0 6px 20px ${app.glow}` }}
+    >
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-[22%] bg-gradient-to-b from-white/[0.22] to-transparent" />
+      {app.icon(isGrid ? "h-9 w-9" : "h-7 w-7")}
+      {isEditing && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onRemove(); }}
+          className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/80 text-white ring-1 ring-white/30 transition-transform hover:scale-110"
+          aria-label={`Remove ${app.label}`}
+        >
+          <svg viewBox="0 0 10 10" fill="none" className="h-2.5 w-2.5">
+            <line x1="2" y1="2" x2="8" y2="8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+            <line x1="8" y1="2" x2="2" y2="8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+
+  const wrapperClass = [
+    "group relative flex flex-col items-center",
+    isGrid ? "gap-1.5" : "gap-1",
+    isEditing ? "animate-jiggle cursor-grab" : "",
+    isDrop ? "opacity-50" : "",
+  ].filter(Boolean).join(" ");
+
+  const labelEl = (
+    <span className={[
+      "line-clamp-1 text-center font-medium leading-tight",
+      isGrid ? "text-[10px] text-white/75 group-hover:text-white" : "text-[9px] text-white/50 group-hover:text-white/80",
+    ].join(" ")}>
+      {app.label}
+    </span>
+  );
+
+  if (isEditing) {
+    return (
+      <div
+        draggable
+        onDragStart={onDragStart}
+        onDragOver={onDragOver}
+        onDrop={onDrop}
+        onDragEnd={onDragEnd}
+        className={wrapperClass}
+      >
+        {bubble}
+        {labelEl}
+      </div>
+    );
+  }
+
+  return (
+    <Link href={app.href} className={wrapperClass}>
+      {bubble}
+      {labelEl}
+    </Link>
+  );
+}
+
+function EmptySlot({ section, onAdd }: { section: Section; onAdd: () => void }) {
+  return (
+    <button onClick={onAdd} className="group flex flex-col items-center gap-1.5">
+      <div className="flex aspect-square w-full max-w-[72px] items-center justify-center rounded-[22%] border-2 border-dashed border-white/20 bg-white/[0.03] transition-colors group-hover:border-emerald-500/50 group-hover:bg-emerald-500/10">
+        <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6 text-white/30 group-hover:text-emerald-400">
+          <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+        </svg>
+      </div>
+      <span className="text-[10px] text-white/25 group-hover:text-emerald-400/70">Add</span>
+    </button>
+  );
+}
 
 /* ------------------------------------------------------------------ */
 /*  Component                                                           */
@@ -189,105 +294,6 @@ export function LauncherEditor({
     },
     [],
   );
-
-  /* ── Render app icon ────────────────────────────────── */
-
-  function AppIcon({
-    app,
-    section,
-    index,
-  }: {
-    app: AppDef;
-    section: Section;
-    index: number;
-  }) {
-    const isGrid = section === "grid";
-    const isDrop =
-      dropTarget?.section === section && dropTarget?.index === index;
-
-    return (
-      <div
-        key={app.id + index}
-        draggable={isEditing}
-        onDragStart={isEditing ? handleDragStart(section, index) : undefined}
-        onDragOver={isEditing ? handleDragOver(section, index) : undefined}
-        onDrop={isEditing ? handleDrop(section, index) : undefined}
-        onDragEnd={handleDragEnd}
-        className={[
-          "group relative flex flex-col items-center",
-          isGrid ? "gap-1.5" : "gap-1",
-          isEditing ? "animate-jiggle cursor-grab" : "",
-          isDrop ? "opacity-50" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-      >
-        {/* Icon bubble */}
-        <div
-          className={[
-            "relative flex items-center justify-center rounded-[22%]",
-            app.bg,
-            isGrid
-              ? "aspect-square w-full max-w-[72px] shadow-lg transition-all duration-200 group-hover:-translate-y-1 group-hover:scale-110"
-              : "h-12 w-12 shadow-md transition-all duration-200 group-hover:-translate-y-0.5 group-hover:scale-110",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          style={{ boxShadow: `0 6px 20px ${app.glow}` }}
-        >
-          {/* Gloss sheen */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-[22%] bg-gradient-to-b from-white/[0.22] to-transparent" />
-          {app.icon(isGrid ? "h-9 w-9" : "h-7 w-7")}
-
-          {/* Delete badge (jiggle mode) */}
-          {isEditing && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                removeApp(section, index);
-              }}
-              className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-black/80 text-white ring-1 ring-white/30 transition-transform hover:scale-110"
-              aria-label={`Remove ${app.label}`}
-            >
-              <svg viewBox="0 0 10 10" fill="none" className="h-2.5 w-2.5">
-                <line x1="2" y1="2" x2="8" y2="8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-                <line x1="8" y1="2" x2="2" y2="8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-              </svg>
-            </button>
-          )}
-        </div>
-
-        <span
-          className={[
-            "line-clamp-1 text-center font-medium leading-tight",
-            isGrid ? "text-[10px] text-white/75 group-hover:text-white" : "text-[9px] text-white/50 group-hover:text-white/80",
-          ].join(" ")}
-        >
-          {app.label}
-        </span>
-      </div>
-    );
-  }
-
-  /* ── Empty slot ────────────────────────────────────── */
-
-  function EmptySlot({ section }: { section: Section }) {
-    if (!isEditing) return null;
-    return (
-      <button
-        onClick={() => setShowPicker(section)}
-        className="group flex flex-col items-center gap-1.5"
-      >
-        <div className="flex aspect-square w-full max-w-[72px] items-center justify-center rounded-[22%] border-2 border-dashed border-white/20 bg-white/[0.03] transition-colors group-hover:border-emerald-500/50 group-hover:bg-emerald-500/10">
-          <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6 text-white/30 group-hover:text-emerald-400">
-            <line x1="12" y1="5" x2="12" y2="19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            <line x1="5" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
-        </div>
-        <span className="text-[10px] text-white/25 group-hover:text-emerald-400/70">Add</span>
-      </button>
-    );
-  }
 
   /* ── App picker modal ─────────────────────────────── */
 
@@ -479,9 +485,21 @@ export function LauncherEditor({
               >
                 {gridSlots.map((app, i) =>
                   app ? (
-                    <AppIcon key={app.id + i} app={app} section="grid" index={i} />
+                    <AppIcon
+                      key={app.id}
+                      app={app}
+                      section="grid"
+                      index={i}
+                      isEditing={isEditing}
+                      isDrop={dropTarget?.section === "grid" && dropTarget?.index === i}
+                      onDragStart={handleDragStart("grid", i)}
+                      onDragOver={handleDragOver("grid", i)}
+                      onDrop={handleDrop("grid", i)}
+                      onDragEnd={handleDragEnd}
+                      onRemove={() => removeApp("grid", i)}
+                    />
                   ) : (
-                    <EmptySlot key={`empty-grid-${i}`} section="grid" />
+                    <EmptySlot key={`empty-grid-${i}`} section="grid" onAdd={() => setShowPicker("grid")} />
                   ),
                 )}
               </div>
@@ -496,7 +514,19 @@ export function LauncherEditor({
                 onDrop={isEditing ? handleSectionDrop("dock") : undefined}
               >
                 {dockApps.map((app, i) => (
-                  <AppIcon key={app.id + i} app={app} section="dock" index={i} />
+                  <AppIcon
+                    key={app.id}
+                    app={app}
+                    section="dock"
+                    index={i}
+                    isEditing={isEditing}
+                    isDrop={dropTarget?.section === "dock" && dropTarget?.index === i}
+                    onDragStart={handleDragStart("dock", i)}
+                    onDragOver={handleDragOver("dock", i)}
+                    onDrop={handleDrop("dock", i)}
+                    onDragEnd={handleDragEnd}
+                    onRemove={() => removeApp("dock", i)}
+                  />
                 ))}
                 {isEditing && dockApps.length < 4 && (
                   <button

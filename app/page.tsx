@@ -29,7 +29,8 @@ import { PersonalizedPuzzles } from "@/components/personalized-puzzles";
 import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { Chess, type PieceSymbol } from "chess.js";
 import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";
-import { DEFAULT_LAUNCHER, getAppById, type LauncherConfig } from "@/lib/launcher-apps";
+import { DEFAULT_LAUNCHER, type LauncherConfig } from "@/lib/launcher-apps";
+import { LauncherEditor } from "@/components/launcher-editor";
 
 /* ── Inline help tooltip ── */
 function HelpTip({ text }: { text: string }) {
@@ -153,6 +154,15 @@ export default function HomePage() {
       .then((r) => r.json())
       .then((data) => { if (data?.config) setLauncherConfig(data.config); })
       .catch(() => {});
+  }, []);
+
+  const saveLauncherConfig = useCallback(async (config: LauncherConfig) => {
+    await fetch("/api/launcher", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(config),
+    });
+    setLauncherConfig(config);
   }, []);
 
   const hasProAccess = sessionPlan === "pro" || sessionPlan === "lifetime" || localProEnabled;
@@ -1473,117 +1483,10 @@ export default function HomePage() {
                 </h2>
                 <p className="mt-1.5 text-sm text-slate-400">Tap to launch any tool</p>
               </div>
-
-              {/* Tablet device mockup */}
-              <div className="relative mx-auto w-full max-w-[700px]">
-                {/* Device shadow glow */}
-                <div className="pointer-events-none absolute inset-x-8 bottom-0 h-16 rounded-[40px] bg-emerald-500/[0.08] blur-2xl" />
-
-                {/* Device outer body */}
-                <div className="relative rounded-[36px] border border-white/[0.1] bg-gradient-to-b from-[#1c2a3a] via-[#111c2a] to-[#0c1520] p-[10px] shadow-2xl shadow-black/70 ring-1 ring-white/[0.04]">
-                  {/* Side buttons (decorative) */}
-                  <div className="absolute -left-[3px] top-24 h-8 w-[3px] rounded-l-sm bg-gradient-to-b from-white/[0.08] to-white/[0.04]" />
-                  <div className="absolute -left-[3px] top-36 h-12 w-[3px] rounded-l-sm bg-gradient-to-b from-white/[0.08] to-white/[0.04]" />
-                  <div className="absolute -right-[3px] top-28 h-14 w-[3px] rounded-r-sm bg-gradient-to-b from-white/[0.08] to-white/[0.04]" />
-
-                  {/* Screen */}
-                  <div className="overflow-hidden rounded-[28px] bg-[#060e18]">
-                    {/* Status bar */}
-                    <div className="flex items-center justify-between bg-[#060e18] px-5 py-2">
-                      <span className="text-[11px] font-semibold tabular-nums text-white/50">9:41</span>
-                      <div className="flex items-center gap-1">
-                        {/* Signal bars */}
-                        <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
-                          <rect x="0" y="7" width="2.5" height="3" rx="0.5" fill="rgba(255,255,255,0.5)" />
-                          <rect x="3.5" y="4.5" width="2.5" height="5.5" rx="0.5" fill="rgba(255,255,255,0.5)" />
-                          <rect x="7" y="2" width="2.5" height="8" rx="0.5" fill="rgba(255,255,255,0.5)" />
-                          <rect x="10.5" y="0" width="2.5" height="10" rx="0.5" fill="rgba(255,255,255,0.2)" />
-                        </svg>
-                        {/* Wifi */}
-                        <svg width="14" height="10" viewBox="0 0 14 10" fill="none">
-                          <path d="M7 8.5 C7 8.5 7 8.5 7 8.5" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" />
-                          <path d="M4.5 6.5 C5.5 5.2 8.5 5.2 9.5 6.5" stroke="rgba(255,255,255,0.6)" strokeWidth="1.3" strokeLinecap="round" fill="none" />
-                          <path d="M2 4 C4 1.5 10 1.5 12 4" stroke="rgba(255,255,255,0.4)" strokeWidth="1.2" strokeLinecap="round" fill="none" />
-                        </svg>
-                        {/* Battery */}
-                        <svg width="22" height="11" viewBox="0 0 22 11" fill="none">
-                          <rect x="0.5" y="0.5" width="18" height="10" rx="2.5" stroke="rgba(255,255,255,0.5)" strokeWidth="1" />
-                          <rect x="1.5" y="1.5" width="13" height="8" rx="1.5" fill="rgba(255,255,255,0.55)" />
-                          <path d="M19.5 3.5 C20.3 3.5 20.3 7.5 19.5 7.5" stroke="rgba(255,255,255,0.4)" strokeWidth="1" strokeLinecap="round" />
-                        </svg>
-                      </div>
-                    </div>
-
-                    {/* Wallpaper + icons */}
-                    <div
-                      className="relative px-4 pb-3 pt-2"
-                      style={{
-                        background: "radial-gradient(ellipse at 30% 20%, rgba(16,185,129,0.08) 0%, transparent 55%), radial-gradient(ellipse at 70% 80%, rgba(59,130,246,0.07) 0%, transparent 55%), #060e18",
-                      }}
-                    >
-                      {/* Subtle dot grid wallpaper */}
-                      <div
-                        className="pointer-events-none absolute inset-0 opacity-[0.03]"
-                        style={{
-                          backgroundImage: "radial-gradient(circle, #fff 1px, transparent 1px)",
-                          backgroundSize: "28px 28px",
-                        }}
-                      />
-
-                      {/* App grid */}
-                      <div className="relative grid grid-cols-4 gap-x-3 gap-y-4 sm:grid-cols-5 sm:gap-x-4">
-                        {launcherConfig.grid.map((id) => getAppById(id)).filter(Boolean).map((app) => (
-                          <Link
-                            key={app!.id}
-                            href={app!.href}
-                            className="group flex flex-col items-center gap-1.5"
-                          >
-                            {/* Icon bubble */}
-                            <div
-                              className={`relative flex aspect-square w-full max-w-[72px] items-center justify-center rounded-[22%] ${app!.bg} shadow-lg transition-all duration-200 group-hover:-translate-y-1 group-hover:scale-110`}
-                              style={{ boxShadow: `0 6px 20px ${app!.glow}` }}
-                            >
-                              {/* Gloss sheen */}
-                              <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-[22%] bg-gradient-to-b from-white/[0.16] to-transparent" />
-                              {app!.icon("h-9 w-9")}
-                            </div>
-                            <span className="line-clamp-1 text-center text-[10px] font-medium leading-tight text-white/75 group-hover:text-white">
-                              {app!.label}
-                            </span>
-                          </Link>
-                        ))}
-                      </div>
-
-                      {/* Dock separator */}
-                      <div className="my-4 border-t border-white/[0.06]" />
-
-                      {/* Dock — 4 core apps */}
-                      <div className="flex items-center justify-around rounded-2xl border border-white/[0.06] bg-white/[0.04] px-4 py-2.5 backdrop-blur-md">
-                        {launcherConfig.dock.map((id) => getAppById(id)).filter(Boolean).map((dock) => (
-                          <Link
-                            key={dock!.id}
-                            href={dock!.href}
-                            className="group flex flex-col items-center gap-1"
-                          >
-                            <div
-                              className={`flex h-12 w-12 items-center justify-center rounded-[20%] ${dock!.bg} shadow-md transition-all duration-200 group-hover:-translate-y-0.5 group-hover:scale-110`}
-                            >
-                              <div className="pointer-events-none absolute h-12 w-12 rounded-[20%] bg-gradient-to-b from-white/[0.12] to-transparent" />
-                              {dock!.icon("h-7 w-7")}
-                            </div>
-                            <span className="text-[9px] font-medium text-white/50 group-hover:text-white/80">{dock!.label}</span>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Home indicator */}
-                    <div className="flex justify-center bg-[#060e18] pb-2 pt-1">
-                      <div className="h-1 w-24 rounded-full bg-white/20" />
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <LauncherEditor
+                initialConfig={launcherConfig}
+                onSave={saveLauncherConfig}
+              />
             </section>
           )}
 

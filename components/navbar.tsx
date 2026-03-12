@@ -171,7 +171,7 @@ export function Navbar() {
                     isActive("/my-openings") ? "text-emerald-300 bg-emerald-500/[0.08]" : "text-slate-400 hover:text-emerald-300 hover:bg-emerald-500/[0.06]"
                   }`}
                 >
-                  🌲 My Openings
+                  🌲 My Opening Tree
                 </Link>
               </div>
             </div>
@@ -641,7 +641,7 @@ export function Navbar() {
               {[
                 { href: "/", label: "Home" },
                 ...NAV_LINKS,
-                { href: "/my-openings", label: "🌲 My Openings" },
+                { href: "/my-openings", label: "🌲 My Opening Tree" },
                 { href: "/blog", label: "Blog" },
                 { href: "/chaos", label: "⚡ Chaos Chess" },
                 { href: "/dungeon", label: "⚔️ Dungeon Tactics" },

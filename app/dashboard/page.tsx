@@ -26,8 +26,6 @@ import { CoinShop } from "@/components/coin-shop";
 import { DailyLoginRewards } from "@/components/daily-login-rewards";
 import { DailyTipWidget } from "@/components/daily-tip";
 import { OnboardingTour } from "@/components/onboarding-tour";
-import { LauncherEditor } from "@/components/launcher-editor";
-import { DEFAULT_LAUNCHER, type LauncherConfig } from "@/lib/launcher-apps";
 import { useCoinBalance } from "@/lib/use-coins";
 import { useProfileTitle } from "@/lib/use-coins";
 import { earnCoins } from "@/lib/coins";
@@ -145,23 +143,6 @@ export default function DashboardPage() {
   const coinBalance = useCoinBalance();
   const [reports, setReports] = useState<SavedReport[]>([]);
   const [loading, setLoading] = useState(true);
-  const [launcherConfig, setLauncherConfig] = useState<LauncherConfig>(DEFAULT_LAUNCHER);
-
-  useEffect(() => {
-    fetch("/api/launcher")
-      .then((r) => r.json())
-      .then((data) => { if (data?.config) setLauncherConfig(data.config); })
-      .catch(() => {});
-  }, []);
-
-  async function saveLauncherConfig(config: LauncherConfig) {
-    await fetch("/api/launcher", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(config),
-    });
-    setLauncherConfig(config);
-  }
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<string>(() => {
@@ -781,15 +762,6 @@ export default function DashboardPage() {
                 />
               ))}
             </div>
-          </div>
-
-          {/* ─── Launcher Customizer ─── */}
-          <div className="animate-fade-in-up" style={{ animationDelay: "0.55s" }}>
-            <LauncherEditor
-              title="Customize Your Home Screen"
-              initialConfig={launcherConfig}
-              onSave={saveLauncherConfig}
-            />
           </div>
 
           {/* ─── Onboarding Tour ─── */}

@@ -252,7 +252,7 @@ const VT_ROW_SZ = 86;   // vertical pixels per leaf slot
 const VT_MX     = 20;   // horizontal margin
 const VT_MY     = 34;   // top margin (room for depth labels)
 const VT_MAX_CH = 3;    // max children shown per node
-const VT_MAX_D  = 8;    // max depth levels rendered
+const VT_MAX_D  = Infinity; // no depth limit — render all levels
 
 type VTNode = {
   node: TreeNode;
