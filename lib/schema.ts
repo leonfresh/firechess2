@@ -30,6 +30,8 @@ export const users = pgTable("user", {
   email: text("email").unique(),
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
+  /** Custom iPad launcher layout — stored as { grid: string[], dock: string[] } */
+  launcherConfig: jsonb("launcher_config"),
 });
 
 export const accounts = pgTable(
@@ -560,5 +562,15 @@ export const chaosRatings = pgTable("chaos_rating", {
   gamesPlayed: integer("gamesPlayed").notNull().default(0),
   /** Highest rating ever achieved */
   peakRating: integer("peakRating").notNull().default(1200),
+  updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow(),
+});
+
+/* ------------------------------------------------------------------ */
+/*  Site-wide configuration (key-value store for admin settings)        */
+/* ------------------------------------------------------------------ */
+
+export const siteConfig = pgTable("site_config", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").notNull(),
   updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow(),
 });

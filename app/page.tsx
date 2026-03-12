@@ -29,6 +29,7 @@ import { PersonalizedPuzzles } from "@/components/personalized-puzzles";
 import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { Chess, type PieceSymbol } from "chess.js";
 import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";
+import { DEFAULT_LAUNCHER, getAppById, type LauncherConfig } from "@/lib/launcher-apps";
 
 /* ── Inline help tooltip ── */
 function HelpTip({ text }: { text: string }) {
@@ -144,6 +145,16 @@ export default function HomePage() {
   const pngRef = useRef<HTMLDivElement>(null);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
+
+  /* ── Launcher config (fetched from API on mount) ── */
+  const [launcherConfig, setLauncherConfig] = useState<LauncherConfig>(DEFAULT_LAUNCHER);
+  useEffect(() => {
+    fetch("/api/launcher")
+      .then((r) => r.json())
+      .then((data) => { if (data?.config) setLauncherConfig(data.config); })
+      .catch(() => {});
+  }, []);
+
   const hasProAccess = sessionPlan === "pro" || sessionPlan === "lifetime" || localProEnabled;
   const gamesOverFreeLimit = gameRangeMode === "count" && gameCount > FREE_MAX_GAMES;
   const depthOverFreeLimit = engineDepth > FREE_MAX_DEPTH;
@@ -1521,203 +1532,23 @@ export default function HomePage() {
 
                       {/* App grid */}
                       <div className="relative grid grid-cols-4 gap-x-3 gap-y-4 sm:grid-cols-5 sm:gap-x-4">
-                        {([
-                          {
-                            label: "My Openings",
-                            href: "/my-openings",
-                            gradient: "from-emerald-500 to-teal-600",
-                            glow: "rgba(16,185,129,0.5)",
-                            icon: (
-                              // Decision tree: root → branches → leaves, representing opening repertoire
-                              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7">
-                                <circle cx="4" cy="12" r="2.2" fill="rgba(255,255,255,0.95)" />
-                                <line x1="6.2" y1="12" x2="9.5" y2="7" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6" strokeLinecap="round" />
-                                <line x1="6.2" y1="12" x2="9.5" y2="17" stroke="rgba(255,255,255,0.9)" strokeWidth="1.6" strokeLinecap="round" />
-                                <circle cx="11.5" cy="7" r="2" fill="rgba(255,255,255,0.9)" />
-                                <circle cx="11.5" cy="17" r="2" fill="rgba(255,255,255,0.9)" />
-                                <line x1="13.5" y1="7" x2="17" y2="4.5" stroke="rgba(255,255,255,0.65)" strokeWidth="1.3" strokeLinecap="round" />
-                                <line x1="13.5" y1="7" x2="17" y2="9.5" stroke="rgba(255,255,255,0.65)" strokeWidth="1.3" strokeLinecap="round" />
-                                <circle cx="18.5" cy="4.5" r="1.6" fill="rgba(255,255,255,0.7)" />
-                                <circle cx="18.5" cy="9.5" r="1.6" fill="rgba(255,255,255,0.7)" />
-                                <line x1="13.5" y1="17" x2="17" y2="14.5" stroke="rgba(255,255,255,0.65)" strokeWidth="1.3" strokeLinecap="round" />
-                                <line x1="13.5" y1="17" x2="17" y2="19.5" stroke="rgba(255,255,255,0.65)" strokeWidth="1.3" strokeLinecap="round" />
-                                <circle cx="18.5" cy="14.5" r="1.6" fill="rgba(255,255,255,0.55)" />
-                                <circle cx="18.5" cy="19.5" r="1.6" fill="rgba(255,255,255,0.55)" />
-                              </svg>
-                            ),
-                          },
-                          {
-                            label: "Chaos Chess",
-                            href: "/chaos",
-                            gradient: "from-purple-600 to-fuchsia-600",
-                            glow: "rgba(168,85,247,0.5)",
-                            icon: (
-                              // Queen crown silhouette + lightning bolt = chaos energy
-                              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7">
-                                <path d="M3 16 H21 L19.5 11.5 L16 7 L12 12 L8 7 L4.5 11.5 Z" fill="rgba(255,255,255,0.88)" />
-                                <circle cx="4.5" cy="6.5" r="1.8" fill="rgba(255,220,255,0.9)" />
-                                <circle cx="12" cy="4.5" r="2.2" fill="rgba(255,230,255,1)" />
-                                <circle cx="19.5" cy="6.5" r="1.8" fill="rgba(255,220,255,0.9)" />
-                                <rect x="3" y="17" width="18" height="2.5" rx="1.2" fill="rgba(255,255,255,0.6)" />
-                                <path d="M13.5 2.5 L10.5 9.5 H13 L10 17 L17.5 8 H14.5 Z" fill="rgba(255,240,80,0.92)" stroke="rgba(255,255,150,0.4)" strokeWidth="0.4" />
-                              </svg>
-                            ),
-                          },
-                          {
-                            label: "Train",
-                            href: "/train",
-                            gradient: "from-amber-500 to-orange-600",
-                            glow: "rgba(245,158,11,0.5)",
-                            icon: (
-                              // Dumbbell / barbell = training & strength
-                              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7">
-                                <rect x="1.5" y="9.5" width="4" height="5" rx="1.5" fill="rgba(255,255,255,0.9)" />
-                                <rect x="18.5" y="9.5" width="4" height="5" rx="1.5" fill="rgba(255,255,255,0.9)" />
-                                <rect x="3.5" y="8" width="2.5" height="8" rx="1.2" fill="rgba(255,255,255,0.75)" />
-                                <rect x="18" y="8" width="2.5" height="8" rx="1.2" fill="rgba(255,255,255,0.75)" />
-                                <rect x="6" y="11" width="12" height="2" rx="1" fill="rgba(255,255,255,0.6)" />
-                              </svg>
-                            ),
-                          },
-                          {
-                            label: "Openings",
-                            href: "/openings",
-                            gradient: "from-sky-500 to-blue-600",
-                            glow: "rgba(14,165,233,0.5)",
-                            icon: (
-                              // Open book with chess moves / notation
-                              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7">
-                                <path d="M3 5 Q3 4 4.5 4 L11 4.5 L11 20 L4.5 20 Q3 20 3 19 Z" fill="rgba(255,255,255,0.9)" />
-                                <path d="M13 4.5 L19.5 4 Q21 4 21 5 L21 19 Q21 20 19.5 20 L13 20 Z" fill="rgba(255,255,255,0.78)" />
-                                <path d="M12 4 L12 20" stroke="rgba(0,60,140,0.35)" strokeWidth="2" />
-                                <line x1="5" y1="8" x2="10" y2="8" stroke="rgba(10,60,150,0.6)" strokeWidth="1.4" strokeLinecap="round" />
-                                <line x1="5" y1="11" x2="10" y2="11" stroke="rgba(10,60,150,0.5)" strokeWidth="1.2" strokeLinecap="round" />
-                                <line x1="5" y1="14" x2="8.5" y2="14" stroke="rgba(10,60,150,0.4)" strokeWidth="1.2" strokeLinecap="round" />
-                                <line x1="5" y1="17" x2="9" y2="17" stroke="rgba(10,60,150,0.35)" strokeWidth="1.2" strokeLinecap="round" />
-                                <path d="M15.5 9 L14 12 H16 L14 17 L19 11 H16.5 Z" fill="rgba(14,60,160,0.75)" />
-                              </svg>
-                            ),
-                          },
-                          {
-                            label: "Leaderboard",
-                            href: "/leaderboard",
-                            gradient: "from-yellow-500 to-amber-600",
-                            glow: "rgba(234,179,8,0.5)",
-                            icon: (
-                              // Trophy cup with tiered podium
-                              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7">
-                                <path d="M7 3 H17 L16 10 C16 13 14.5 14.5 12 14.5 C9.5 14.5 8 13 8 10 Z" fill="rgba(255,255,255,0.92)" />
-                                <path d="M7 5 C5 5 4 6 4 8 C4 10 5.5 11 7.5 10.5" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5" strokeLinecap="round" />
-                                <path d="M17 5 C19 5 20 6 20 8 C20 10 18.5 11 16.5 10.5" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.5" strokeLinecap="round" />
-                                <path d="M10.5 14.5 L10 18 H9 L9 20 H15 L15 18 H14 L13.5 14.5 Z" fill="rgba(255,255,255,0.75)" />
-                                <rect x="8" y="20" width="8" height="1.5" rx="0.75" fill="rgba(255,255,255,0.6)" />
-                                <path d="M10 7.5 L11.2 6 L12 8.5 L13.5 6 L14 8 L12 9.5 Z" fill="rgba(250,200,0,0.85)" />
-                              </svg>
-                            ),
-                          },
-                          {
-                            label: "Dungeon",
-                            href: "/dungeon",
-                            gradient: "from-red-600 to-rose-700",
-                            glow: "rgba(220,38,38,0.5)",
-                            icon: (
-                              // Skull with crossed swords = danger dungeon
-                              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7">
-                                <path d="M12 3 C8 3 5.5 6 5.5 9.5 C5.5 12.5 7 14 8 14.5 L8 16.5 H16 L16 14.5 C17 14 18.5 12.5 18.5 9.5 C18.5 6 16 3 12 3 Z" fill="rgba(255,255,255,0.88)" />
-                                <circle cx="9.5" cy="10" r="1.8" fill="rgba(180,0,0,0.7)" />
-                                <circle cx="14.5" cy="10" r="1.8" fill="rgba(180,0,0,0.7)" />
-                                <path d="M10.5 13.5 C10.5 12.5 13.5 12.5 13.5 13.5 L13.5 13.5" stroke="rgba(180,0,0,0.6)" strokeWidth="1.4" strokeLinecap="round" />
-                                <rect x="9" y="16.5" width="2" height="1.8" rx="0.5" fill="rgba(255,255,255,0.55)" />
-                                <rect x="13" y="16.5" width="2" height="1.8" rx="0.5" fill="rgba(255,255,255,0.55)" />
-                                <line x1="3" y1="21" x2="21" y2="3" stroke="rgba(255,255,255,0.4)" strokeWidth="1.4" strokeLinecap="round" />
-                                <line x1="21" y1="21" x2="3" y2="3" stroke="rgba(255,255,255,0.4)" strokeWidth="1.4" strokeLinecap="round" />
-                              </svg>
-                            ),
-                          },
-                          {
-                            label: "Roast",
-                            href: "/roast",
-                            gradient: "from-orange-500 to-red-600",
-                            glow: "rgba(249,115,22,0.5)",
-                            icon: (
-                              // Bold flame silhouette — outer warm + inner hot core
-                              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7">
-                                <path d="M12 2 C9 6 7 9 8.5 12.5 C9.2 14 10.5 14 10.5 12.5 C10.5 14.5 11 17 12 18.5 C13 17 13.5 14.5 13.5 12.5 C13.5 14 14.8 14 15.5 12.5 C17 9 15 6 12 2 Z" fill="rgba(255,190,50,0.95)" />
-                                <path d="M12 8 C11 10.5 11.2 14 12 16 C12.8 14 13 10.5 12 8 Z" fill="rgba(255,60,10,0.95)" />
-                                <ellipse cx="12" cy="20.5" rx="5" ry="1.5" fill="rgba(255,255,255,0.18)" />
-                              </svg>
-                            ),
-                          },
-                          {
-                            label: "Guess ELO",
-                            href: "/guess",
-                            gradient: "from-violet-600 to-purple-700",
-                            glow: "rgba(124,58,237,0.5)",
-                            icon: (
-                              // Magnifying glass over a bar chart = analysing rating
-                              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7">
-                                <rect x="3" y="16" width="3" height="5" rx="1" fill="rgba(255,255,255,0.5)" />
-                                <rect x="7.5" y="12" width="3" height="9" rx="1" fill="rgba(255,255,255,0.65)" />
-                                <rect x="12" y="14" width="3" height="7" rx="1" fill="rgba(255,255,255,0.5)" />
-                                <circle cx="17" cy="9" r="5" fill="none" stroke="rgba(255,255,255,0.9)" strokeWidth="2" />
-                                <path d="M21 13 L23.5 15.5" stroke="rgba(255,255,255,0.85)" strokeWidth="2.2" strokeLinecap="round" />
-                                <path d="M15.5 7.5 C16 6 17.5 5.5 19 6.5" stroke="rgba(255,255,255,0.6)" strokeWidth="1.3" strokeLinecap="round" fill="none" />
-                              </svg>
-                            ),
-                          },
-                          {
-                            label: "Changelog",
-                            href: "/changelog",
-                            gradient: "from-cyan-500 to-blue-600",
-                            glow: "rgba(6,182,212,0.5)",
-                            icon: (
-                              // Scroll/document with starburst = new update log
-                              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7">
-                                <path d="M5 4 Q5 2.5 6.5 2.5 L16 2.5 Q18 2.5 18 4.5 L18 19.5 Q18 21 16.5 21 L6.5 21 Q5 21 5 19.5 Z" fill="rgba(255,255,255,0.88)" />
-                                <line x1="8" y1="7" x2="15" y2="7" stroke="rgba(0,70,160,0.55)" strokeWidth="1.3" strokeLinecap="round" />
-                                <line x1="8" y1="10" x2="15" y2="10" stroke="rgba(0,70,160,0.45)" strokeWidth="1.2" strokeLinecap="round" />
-                                <line x1="8" y1="13" x2="12" y2="13" stroke="rgba(0,70,160,0.4)" strokeWidth="1.2" strokeLinecap="round" />
-                                <circle cx="17" cy="18" r="6" fill="rgba(6,182,212,0.95)" />
-                                <path d="M17 14.5 L17 17 L19 17" stroke="rgba(255,255,255,0.95)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                                <path d="M20.5 15 C19.5 13.5 18.3 13 17 13 C15 13 13.5 14.5 13.5 16.5" stroke="rgba(255,255,255,0.7)" strokeWidth="1.3" strokeLinecap="round" fill="none" />
-                              </svg>
-                            ),
-                          },
-                          {
-                            label: "Pricing",
-                            href: "/pricing",
-                            gradient: "from-pink-500 to-rose-600",
-                            glow: "rgba(236,72,153,0.5)",
-                            icon: (
-                              // Faceted gem / diamond shape with light reflections
-                              <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7">
-                                <polygon points="12,3 20,9 17,21 7,21 4,9" fill="rgba(255,255,255,0.88)" />
-                                <polygon points="12,3 20,9 12,9 4,9" fill="rgba(255,255,255,0.3)" />
-                                <polygon points="12,9 20,9 17,21 12,15" fill="rgba(255,100,150,0.25)" />
-                                <polygon points="12,9 4,9 7,21 12,15" fill="rgba(255,150,180,0.2)" />
-                                <line x1="12" y1="3" x2="12" y2="21" stroke="rgba(255,255,255,0.35)" strokeWidth="0.8" />
-                                <line x1="4" y1="9" x2="20" y2="9" stroke="rgba(255,255,255,0.4)" strokeWidth="0.8" />
-                                <polygon points="9,4.5 11,7 8,7" fill="rgba(255,255,255,0.55)" />
-                              </svg>
-                            ),
-                          },
-                        ] as const).map((app) => (
+                        {launcherConfig.grid.map((id) => getAppById(id)).filter(Boolean).map((app) => (
                           <Link
-                            key={app.href}
-                            href={app.href}
+                            key={app!.id}
+                            href={app!.href}
                             className="group flex flex-col items-center gap-1.5"
                           >
                             {/* Icon bubble */}
                             <div
-                              className={`relative flex aspect-square w-full max-w-[72px] items-center justify-center rounded-[22%] bg-gradient-to-br ${app.gradient} shadow-lg transition-all duration-200 group-hover:-translate-y-1 group-hover:scale-110`}
-                              style={{ boxShadow: `0 6px 20px ${app.glow}` }}
+                              className={`relative flex aspect-square w-full max-w-[72px] items-center justify-center rounded-[22%] bg-gradient-to-br ${app!.gradient} shadow-lg transition-all duration-200 group-hover:-translate-y-1 group-hover:scale-110`}
+                              style={{ boxShadow: `0 6px 20px ${app!.glow}` }}
                             >
                               {/* Gloss sheen */}
                               <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 rounded-t-[22%] bg-gradient-to-b from-white/[0.22] to-transparent" />
-                              {app.icon}
+                              {app!.icon("h-7 w-7")}
                             </div>
                             <span className="line-clamp-1 text-center text-[10px] font-medium leading-tight text-white/75 group-hover:text-white">
-                              {app.label}
+                              {app!.label}
                             </span>
                           </Link>
                         ))}
@@ -1728,64 +1559,19 @@ export default function HomePage() {
 
                       {/* Dock — 4 core apps */}
                       <div className="flex items-center justify-around rounded-2xl border border-white/[0.06] bg-white/[0.04] px-4 py-2.5 backdrop-blur-md">
-                        {[
-                          { label: "Analyze", href: "/", gradient: "from-emerald-500 to-teal-600", icon: (
-                            // Magnifying glass + checkmark = analysis complete
-                            <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6">
-                              <circle cx="10.5" cy="10.5" r="6.5" fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.9)" strokeWidth="1.8" />
-                              <path d="M15.5 15.5 L20.5 20.5" stroke="rgba(255,255,255,0.9)" strokeWidth="2.2" strokeLinecap="round" />
-                              <path d="M8 10.5 L10 12.5 L13.5 8.5" stroke="rgba(255,255,255,0.95)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                            </svg>
-                          )},
-                          { label: "Play Chaos", href: "/chaos", gradient: "from-purple-500 to-fuchsia-600", icon: (
-                            // Queen crown + lightning = chaos chess
-                            <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6">
-                              <path d="M4 17 H20 L18.5 12 L15 7.5 L12 12 L9 7.5 L5.5 12 Z" fill="rgba(255,255,255,0.85)" />
-                              <rect x="4" y="17.5" width="16" height="2" rx="1" fill="rgba(255,255,255,0.55)" />
-                              <path d="M14 3 L11 10 H13.5 L10.5 18.5 L18 8.5 H15 Z" fill="rgba(255,240,80,0.9)" />
-                            </svg>
-                          )},
-                          { label: "My Openings", href: "/my-openings", gradient: "from-cyan-500 to-blue-600", icon: (
-                            // Decision tree compact = opening lines
-                            <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6">
-                              <circle cx="4.5" cy="12" r="2" fill="rgba(255,255,255,0.95)" />
-                              <line x1="6.5" y1="12" x2="9.5" y2="7.5" stroke="rgba(255,255,255,0.85)" strokeWidth="1.5" strokeLinecap="round" />
-                              <line x1="6.5" y1="12" x2="9.5" y2="16.5" stroke="rgba(255,255,255,0.85)" strokeWidth="1.5" strokeLinecap="round" />
-                              <circle cx="11" cy="7.5" r="1.8" fill="rgba(255,255,255,0.85)" />
-                              <circle cx="11" cy="16.5" r="1.8" fill="rgba(255,255,255,0.85)" />
-                              <line x1="12.8" y1="7.5" x2="16" y2="5" stroke="rgba(255,255,255,0.6)" strokeWidth="1.2" strokeLinecap="round" />
-                              <line x1="12.8" y1="7.5" x2="16" y2="10" stroke="rgba(255,255,255,0.6)" strokeWidth="1.2" strokeLinecap="round" />
-                              <circle cx="17" cy="5" r="1.5" fill="rgba(255,255,255,0.65)" />
-                              <circle cx="17" cy="10" r="1.5" fill="rgba(255,255,255,0.65)" />
-                              <line x1="12.8" y1="16.5" x2="16" y2="14" stroke="rgba(255,255,255,0.6)" strokeWidth="1.2" strokeLinecap="round" />
-                              <line x1="12.8" y1="16.5" x2="16" y2="19" stroke="rgba(255,255,255,0.6)" strokeWidth="1.2" strokeLinecap="round" />
-                              <circle cx="17" cy="14" r="1.5" fill="rgba(255,255,255,0.5)" />
-                              <circle cx="17" cy="19" r="1.5" fill="rgba(255,255,255,0.5)" />
-                            </svg>
-                          )},
-                          { label: "Train", href: "/train", gradient: "from-amber-500 to-orange-600", icon: (
-                            // Barbell = training
-                            <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6">
-                              <rect x="1.5" y="9" width="4" height="6" rx="1.5" fill="rgba(255,255,255,0.85)" />
-                              <rect x="18.5" y="9" width="4" height="6" rx="1.5" fill="rgba(255,255,255,0.85)" />
-                              <rect x="3.5" y="7.5" width="2.5" height="9" rx="1.2" fill="rgba(255,255,255,0.7)" />
-                              <rect x="18" y="7.5" width="2.5" height="9" rx="1.2" fill="rgba(255,255,255,0.7)" />
-                              <rect x="6" y="11" width="12" height="2" rx="1" fill="rgba(255,255,255,0.55)" />
-                            </svg>
-                          )},
-                        ].map((dock) => (
+                        {launcherConfig.dock.map((id) => getAppById(id)).filter(Boolean).map((dock) => (
                           <Link
-                            key={dock.href}
-                            href={dock.href}
+                            key={dock!.id}
+                            href={dock!.href}
                             className="group flex flex-col items-center gap-1"
                           >
                             <div
-                              className={`flex h-12 w-12 items-center justify-center rounded-[20%] bg-gradient-to-br ${dock.gradient} shadow-md transition-all duration-200 group-hover:-translate-y-0.5 group-hover:scale-110`}
+                              className={`flex h-12 w-12 items-center justify-center rounded-[20%] bg-gradient-to-br ${dock!.gradient} shadow-md transition-all duration-200 group-hover:-translate-y-0.5 group-hover:scale-110`}
                             >
                               <div className="pointer-events-none absolute h-12 w-12 rounded-[20%] bg-gradient-to-b from-white/[0.18] to-transparent" />
-                              {dock.icon}
+                              {dock!.icon("h-6 w-6")}
                             </div>
-                            <span className="text-[9px] font-medium text-white/50 group-hover:text-white/80">{dock.label}</span>
+                            <span className="text-[9px] font-medium text-white/50 group-hover:text-white/80">{dock!.label}</span>
                           </Link>
                         ))}
                       </div>
