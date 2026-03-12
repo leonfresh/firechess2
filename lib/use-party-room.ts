@@ -129,16 +129,10 @@ export function usePartyRoom(
   roomId: string | null,
   onMessage: (msg: PartyMessage) => void,
   playerColor?: "white" | "black",
-  onReconnect?: () => void,
 ) {
   const socketRef = useRef<PartySocket | null>(null);
   const onMessageRef = useRef(onMessage);
   onMessageRef.current = onMessage;
-  const onReconnectRef = useRef(onReconnect);
-  onReconnectRef.current = onReconnect;
-  const playerColorRef = useRef(playerColor);
-  playerColorRef.current = playerColor;
-  const hasConnectedRef = useRef(false);
   const [isConnected, setIsConnected] = useState(false);
 
   // Connect when roomId changes
@@ -155,16 +149,10 @@ export function usePartyRoom(
     });
 
     socket.addEventListener("open", () => {
-      const isReconnect = hasConnectedRef.current;
-      hasConnectedRef.current = true;
       setIsConnected(true);
-      // Register with server so it knows this connection's color (use ref — always current)
-      if (playerColorRef.current) {
-        socket.send(JSON.stringify({ type: "register", color: playerColorRef.current }));
-      }
-      // On reconnect, trigger a state snapshot to catch up on missed moves
-      if (isReconnect) {
-        onReconnectRef.current?.();
+      // Register with server so it knows this connection's color
+      if (playerColor) {
+        socket.send(JSON.stringify({ type: "register", color: playerColor }));
       }
     });
     socket.addEventListener("close", () => setIsConnected(false));
@@ -184,14 +172,14 @@ export function usePartyRoom(
     return () => {
       socket.close();
       socketRef.current = null;
-      hasConnectedRef.current = false;
       setIsConnected(false);
     };
   }, [roomId]);
 
   const send = useCallback((msg: PartyMessage) => {
-    // Use PartySocket's native send — it buffers internally if not yet OPEN
-    socketRef.current?.send(JSON.stringify(msg));
+    if (socketRef.current?.readyState === WebSocket.OPEN) {
+      socketRef.current.send(JSON.stringify(msg));
+    }
   }, []);
 
   const disconnect = useCallback(() => {

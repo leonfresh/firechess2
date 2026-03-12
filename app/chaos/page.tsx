@@ -379,6 +379,7 @@ function buildChaosCustomPieces(
 /* ────────────────────────── Constants ────────────────────────── */
 
 const AI_MOVE_DELAY = 600;
+const POLL_INTERVAL = 1_500; // fallback polling — primary sync is via WebSocket
 
 type GameMode = "ai" | "friend" | "matchmake";
 type GameStatus = "setup" | "waiting" | "playing" | "drafting" | "game-over";
@@ -1259,6 +1260,7 @@ export default function ChaosChessPage() {
   const [joinCode, setJoinCode] = useState<string>("");
   const [matchmakeState, setMatchmakeState] = useState<"idle" | "searching" | "found">("idle");
   const [opponentLabel, setOpponentLabel] = useState<string>("Opponent");
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastFenRef = useRef<string>("");
 
   /* ── Chaos state ── */
@@ -1375,6 +1377,23 @@ export default function ChaosChessPage() {
   /* ── Preload sounds ── */
   useEffect(() => {
     preloadSounds();
+  }, []);
+
+  /* ── Scroll event log to bottom ── */
+  useEffect(() => {
+    eventLogRef.current?.scrollTo({ top: eventLogRef.current.scrollHeight, behavior: "smooth" });
+  }, [eventLog]);
+
+  /* ── Scroll move log to bottom when game state changes ── */
+  useEffect(() => {
+    moveLogRef.current?.scrollTo({ top: moveLogRef.current.scrollHeight, behavior: "smooth" });
+  }, [game]);
+
+  /* ── Cleanup polling on unmount ── */
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
   }, []);
 
   /* ── Timer tick (100ms interval) ── */
@@ -2000,6 +2019,8 @@ export default function ChaosChessPage() {
       pendingDraftAfterRevealRef.current = null;
       pendingMoveBeforeDraftRef.current = null;
       setWaitingForOpponentDraft(false);
+      // Start polling for guest
+      startPolling(data.roomId, color);
     } catch {
       setEventLog((prev) => [...prev, { type: "info", message: "❌ Failed to create room. Are you signed in?", icon: "❌" }]);
     }
@@ -2057,6 +2078,8 @@ export default function ChaosChessPage() {
       pendingMoveBeforeDraftRef.current = null;
       setWaitingForOpponentDraft(false);
 
+      // Start slow fallback polling + notify host via WebSocket
+      startPolling(data.roomId, guestColor);
       // WebSocket join notification is sent after usePartyRoom connects (roomId is set above)
       setTimeout(() => {
         if (partySendRef.current) {
@@ -2069,18 +2092,19 @@ export default function ChaosChessPage() {
   }, [joinCode, recomputeChaosMoves]);
 
   /* ── PartyKit WebSocket: real-time sync ── */
-  // Forward ref to fetchRoomSnapshot — assigned after function is defined below
-  const fetchRoomSnapshotRef = useRef<(rId: string, myColor: string) => void>(() => {});
-  const roomIdRef = useRef(roomId);
-  roomIdRef.current = roomId;
   const onPartyMessage = useCallback((msg: PartyMessage) => {
     // Presence: detect opponent joining via connection count
     if (msg.type === "presence") {
-      if (msg.count >= 2 && gameStatusRef.current === "waiting") {
-        setGameStatus("playing");
-        setOpponentLabel("Opponent");
-        setEventLog((p) => [...p, { type: "info", message: "🎮 Opponent connected! Game on!", icon: "🎮", pepe: PEPE.hyped }]);
-        playSound("reveal-stinger");
+      if (msg.count >= 2) {
+        setGameStatus((prev) => {
+          if (prev === "waiting") {
+            setOpponentLabel("Opponent");
+            setEventLog((p) => [...p, { type: "info", message: "🎮 Opponent connected! Game on!", icon: "🎮", pepe: PEPE.hyped }]);
+            playSound("reveal-stinger");
+            return "playing";
+          }
+          return prev;
+        });
       }
       return;
     }
@@ -2105,6 +2129,7 @@ export default function ChaosChessPage() {
       setEndReason("Opponent Resigned");
       setEventLog((prev) => [...prev, { type: "info", message: `🏳️ Opponent resigned! ${msg.winner === "white" ? "White" : "Black"} wins.`, icon: "🏳️", pepe: PEPE.hyped }]);
       playSound("reveal-stinger");
+      if (pollRef.current) clearInterval(pollRef.current);
       return;
     }
 
@@ -2122,6 +2147,7 @@ export default function ChaosChessPage() {
       setDrawOfferSent(false);
       setEventLog((prev) => [...prev, { type: "info", message: "🤝 Draw accepted!", icon: "🤝", pepe: PEPE.pepeok }]);
       playSound("reveal-stinger");
+      if (pollRef.current) clearInterval(pollRef.current);
       return;
     }
 
@@ -2184,17 +2210,15 @@ export default function ChaosChessPage() {
       return;
     }
 
-    if (msg.type === "move" || msg.type === "draft" || msg.type === "chaos_move") {
-      // chaos_move from server arrives as type:"move" with fen set; handle direct chaos_move too
-      const data = msg as PartyMessage & { fen?: string; newFen?: string; chaosState?: unknown; lastMoveFrom?: string; lastMoveTo?: string; capturedPawnsWhite?: number; capturedPawnsBlack?: number; status?: string };
-      const fen = data.fen ?? (data as { newFen?: string }).newFen;
-      if (!fen) return;
+    if (msg.type === "move" || msg.type === "draft") {
+      const data = msg as PartyMessage & { fen?: string; chaosState?: unknown; lastMoveFrom?: string; lastMoveTo?: string; capturedPawnsWhite?: number; capturedPawnsBlack?: number; status?: string };
+      if (!data.fen) return;
       // Don't apply opponent updates while the local player is actively picking a draft
       if (gameStatusRef.current === "drafting") return;
 
-      const g = new Chess(fen);
+      const g = new Chess(data.fen);
       const oldFen = lastFenRef.current;
-      lastFenRef.current = fen;
+      lastFenRef.current = data.fen;
       setGame(g);
 
       // Process chaosState (perspective swap) — sequential draft handling
@@ -2321,10 +2345,15 @@ export default function ChaosChessPage() {
       // Check game end / draft
       if (activeGame.isCheckmate() || activeGame.isStalemate() || activeGame.isDraw()) {
         checkGameEnd(activeGame);
+        if (pollRef.current) clearInterval(pollRef.current);
       } else if (data.chaosState) {
         // Only recompute moves — checkDraft fires from handlePlayerMove (your own move) only
         const cs2 = fromServerChaosState(data.chaosState as ChaosState, playerColor);
         recomputeChaosMoves(activeGame, cs2);
+      }
+
+      if (data.status === "finished") {
+        if (pollRef.current) clearInterval(pollRef.current);
       }
     }
   }, [playerColor, checkGameEnd, recomputeChaosMoves, spawnPepe]);
@@ -2333,22 +2362,31 @@ export default function ChaosChessPage() {
     gameMode !== "ai" ? roomId : null,
     onPartyMessage,
     playerColor,
-    () => { if (roomIdRef.current && gameMode !== "ai") void fetchRoomSnapshotRef.current(roomIdRef.current, playerColor); },
   );
   // Keep ref in sync so sendMoveToServer (memoized) can use it
   partySendRef.current = partySend;
 
-  // Track current gameStatus in a ref so WS guards and snapshot can read it from stale closures
+  // Callback refs — updated every render so the polling setInterval always uses
+  // the latest version of these functions without needing to recreate the interval.
+  const checkGameEndCbRef = useRef(checkGameEnd);
+  checkGameEndCbRef.current = checkGameEnd;
+  const recomputeChaosMovesCbRef = useRef(recomputeChaosMoves);
+  recomputeChaosMovesCbRef.current = recomputeChaosMoves;
+  // Track current gameStatus in a ref so polling/WS guards can read it from stale closures
   const gameStatusRef = useRef(gameStatus);
   gameStatusRef.current = gameStatus;
-  // Track current game in a ref so the snapshot can compare move counts against local state
+  // Track current game in a ref so polling can compare move counts against local state
   const gameRef = useRef(game);
   gameRef.current = game;
 
-  /* ── One-shot room snapshot (WebSocket reconnect / opponent join) ── */
-  const fetchRoomSnapshot = useCallback(async (rId: string, myColor: string) => {
+  /* ── Polling for multiplayer state (slow fallback) ── */
+  const startPolling = useCallback((rId: string, myColor: string) => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    lastFenRef.current = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+    pollRef.current = setInterval(async () => {
       try {
-        // Don't apply snapshot while the user is actively picking a draft
+        // Don't poll while the user is actively picking a draft — avoids wiping draft choices
         if (gameStatusRef.current === "drafting") return;
         const res = await fetch(`/api/chaos/move?roomId=${rId}`, { headers: chaosHeaders() });
         if (!res.ok) return;
@@ -2419,7 +2457,7 @@ export default function ChaosChessPage() {
                   { type: "modifier" as const, message: `⚔️ Opponent drafted: ${oppPick.icon} ${oppPick.name} — ${oppPick.description}`, icon: oppPick.icon, pepe: tierPepe(oppPick.tier) },
                 ]);
                 spawnPepe(tierPepe(oppPick.tier));
-                recomputeChaosMoves(g2, incoming);
+                recomputeChaosMovesCbRef.current(g2, incoming);
               }
               setChaosState({ ...incoming, draftStep: 0 });
               setGameStatus("playing");
@@ -2521,30 +2559,26 @@ export default function ChaosChessPage() {
 
           // Check game end from FEN
           if (activeGame.isCheckmate() || activeGame.isStalemate() || activeGame.isDraw()) {
-          checkGameEnd(activeGame);
-        } else {
-          // Only recompute moves — checkDraft fires from handlePlayerMove (your own move only)
-          const rawCs2 = data.chaosState ? data.chaosState as ChaosState : createChaosState();
-          const cs2 = fromServerChaosState(rawCs2, myColor as "white" | "black");
-          recomputeChaosMoves(activeGame, cs2);
+            checkGameEndCbRef.current(activeGame);
+            if (pollRef.current) clearInterval(pollRef.current);
+          } else {
+            // Only recompute moves — checkDraft fires from handlePlayerMove (your own move only)
+            const rawCs2 = data.chaosState ? data.chaosState as ChaosState : createChaosState();
+            const cs2 = fromServerChaosState(rawCs2, myColor as "white" | "black");
+            recomputeChaosMovesCbRef.current(activeGame, cs2);
+          }
         }
-      }
+
+        if (data.status === "finished") {
+          if (pollRef.current) clearInterval(pollRef.current);
+        }
       } catch {
-        // Snapshot error — ignore
+        // Poll error — ignore
       }
-  }, [spawnPepe, checkGameEnd, recomputeChaosMoves]);
-  fetchRoomSnapshotRef.current = fetchRoomSnapshot;
+    }, POLL_INTERVAL);
+  }, [spawnPepe]);
 
-  // ── Polling fallback: re-sync from DB while in an active multiplayer game ──
-  // Ensures moves are visible even if the WebSocket relay misses a message.
-  useEffect(() => {
-    if (gameMode !== "friend" || gameStatus !== "playing" || !roomId) return;
-    const id = setInterval(() => {
-      void fetchRoomSnapshotRef.current(roomId, playerColor);
-    }, 1500);
-    return () => clearInterval(id);
-  }, [gameMode, gameStatus, roomId, playerColor]);
-
+  /* ── Send move to server (multiplayer) ── */
   const sendMoveToServer = useCallback(
     (g: Chess, from: string, to: string, cs: ChaosState, isChaosMove = false) => {
       if (!roomId) return;
@@ -3285,6 +3319,7 @@ export default function ChaosChessPage() {
     ]);
     playSound("sad-trombone");
     spawnPepe(PEPE.sadge);
+    if (pollRef.current) clearInterval(pollRef.current);
     if (gameMode !== "ai" && roomId) {
       // Mark room as finished
       fetch("/api/chaos/move", {
@@ -3316,6 +3351,7 @@ export default function ChaosChessPage() {
     setDrawOfferReceived(false);
     setEventLog((prev) => [...prev, { type: "info", message: "🤝 Draw accepted!", icon: "🤝", pepe: PEPE.pepeok }]);
     playSound("reveal-stinger");
+    if (pollRef.current) clearInterval(pollRef.current);
     if (partySendRef.current) {
       partySendRef.current({ type: "draw-accept" });
     }
@@ -3617,7 +3653,7 @@ export default function ChaosChessPage() {
                   setFloatingPepes([]);
                   setCapturedPawns({ w: 0, b: 0 });
                   setEventLog([{ type: "info", message: "🎯 Opponent found! Game on!", icon: "🎯", pepe: PEPE.hyped }]);
-                  // Reset ELO and timer state (timers will be synced on next WS move)
+                  // Reset ELO and timer state (timers will be synced from first poll)
                   setEloChange(null);
                   setEloSaved(false);
                   setMyRating(null);
@@ -3627,6 +3663,7 @@ export default function ChaosChessPage() {
                   playSound("reveal-stinger");
                   spawnPepe(PEPE.hyped);
                   recomputeChaosMoves(g, cs);
+                  startPolling(data.roomId, myColor);
                   // Notify via WebSocket
                   if (data.joined) {
                     setTimeout(() => {
@@ -3638,6 +3675,7 @@ export default function ChaosChessPage() {
                 }}
                 onCancel={() => {
                   setMatchmakeState("idle");
+                  if (pollRef.current) clearInterval(pollRef.current);
                 }}
               />
             </div>
@@ -3709,6 +3747,7 @@ export default function ChaosChessPage() {
                 type="button"
                 onClick={() => {
                   setGameStatus("setup");
+                  if (pollRef.current) clearInterval(pollRef.current);
                   setMatchmakeState("idle");
                   // Cancel room on server
                   if (roomId) {
@@ -3735,6 +3774,7 @@ export default function ChaosChessPage() {
                 type="button"
                 onClick={() => {
                   setGameStatus("setup");
+                  if (pollRef.current) clearInterval(pollRef.current);
                   setMatchmakeState("idle");
                 }}
                 className="mt-6 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs font-medium text-red-400 transition-all hover:bg-red-500/20"
@@ -4199,6 +4239,7 @@ export default function ChaosChessPage() {
                       setDrawOfferReceived(false);
                       setRematchRequested(false);
                       setRematchReceived(false);
+                      if (pollRef.current) clearInterval(pollRef.current);
                     }}
                     className="w-full rounded-lg border border-purple-500/30 bg-purple-500/10 px-4 py-2.5 text-sm font-bold text-purple-400 transition-all hover:bg-purple-500/20"
                   >
@@ -4355,8 +4396,8 @@ export default function ChaosChessPage() {
                     <span className="text-white truncate max-w-[120px] sm:max-w-[160px]" title={PARTYKIT_HOST}>{PARTYKIT_HOST}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Connection</span>
-                    <span className="text-white">{partyConnected ? "WebSocket" : "Reconnecting…"}</span>
+                    <span>Poll interval</span>
+                    <span className="text-white">{POLL_INTERVAL / 1000}s</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Room</span>
