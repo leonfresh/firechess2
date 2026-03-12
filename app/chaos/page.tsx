@@ -2693,8 +2693,13 @@ export default function ChaosChessPage() {
         const drafted = checkDraft(activeGame, cs);
 
         // Multiplayer: send to server (or hold for draft pick)
+        // Only hold the move if THIS player is actually about to open the draft picker:
+        //   - White triggered the draft (White drafts first in multiplayer)
+        //   - Black has a deferred draft queued from White's step-1 broadcast
+        // If Black's move merely hit the draft counter threshold, send immediately.
         if (gameMode !== "ai") {
-          if (!drafted && !pendingDraftAfterRevealRef.current) {
+          const holdForDraft = (drafted && playerColor === "white") || !!pendingDraftAfterRevealRef.current;
+          if (!holdForDraft) {
             sendMoveToServer(activeGame, from, to, cs);
           } else {
             // Draft about to open — hold the move and send it bundled with the pick
@@ -2822,8 +2827,10 @@ export default function ChaosChessPage() {
       const drafted = checkDraft(activeG, cs2);
 
       // Multiplayer: send to server (or hold for draft pick)
+      // Only hold the move if THIS player is actually about to open the draft picker.
       if (gameMode !== "ai") {
-        if (!drafted && !pendingDraftAfterRevealRef.current) {
+        const holdForDraft = (drafted && playerColor === "white") || !!pendingDraftAfterRevealRef.current;
+        if (!holdForDraft) {
           sendMoveToServer(activeG, from, to, cs2);
         } else {
           // Draft about to open — hold the move and send it bundled with the pick
@@ -2881,7 +2888,8 @@ export default function ChaosChessPage() {
       const drafted = checkDraft(newGame, chaosState);
 
       if (gameMode !== "ai") {
-        if (!drafted && !pendingDraftAfterRevealRef.current) {
+        const holdForDraft = (drafted && playerColor === "white") || !!pendingDraftAfterRevealRef.current;
+        if (!holdForDraft) {
           sendMoveToServer(newGame, move.from, move.to, chaosState);
         } else {
           pendingMoveBeforeDraftRef.current = { from: move.from, to: move.to };
@@ -2953,7 +2961,8 @@ export default function ChaosChessPage() {
       const drafted = checkDraft(newG, chaosState);
 
       if (gameMode !== "ai") {
-        if (!drafted && !pendingDraftAfterRevealRef.current) {
+        const holdForDraft = (drafted && playerColor === "white") || !!pendingDraftAfterRevealRef.current;
+        if (!holdForDraft) {
           sendMoveToServer(newG, from, to, chaosState);
         } else {
           pendingMoveBeforeDraftRef.current = { from, to };

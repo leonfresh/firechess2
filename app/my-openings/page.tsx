@@ -252,7 +252,7 @@ const VT_ROW_SZ = 86;   // vertical pixels per leaf slot
 const VT_MX     = 20;   // horizontal margin
 const VT_MY     = 34;   // top margin (room for depth labels)
 const VT_MAX_CH = 3;    // max children shown per node
-const VT_MAX_D  = Infinity; // no depth limit — render all levels
+const VT_MAX_D  = 8;  // default visible depth — deeper nodes expand on click
 
 type VTNode = {
   node: TreeNode;
@@ -272,6 +272,7 @@ type VTEdge = {
 function buildVTLayout(
   tree: Map<string, TreeNode>,
   selectedPath: string[],
+  expandedPaths: Set<string>,
 ): { nodes: VTNode[]; edges: VTEdge[]; W: number; H: number } {
   const nodes: VTNode[] = [];
   const edges: VTEdge[] = [];
@@ -287,11 +288,11 @@ function buildVTLayout(
   scanMax(tree);
 
   // Count leaf slots occupied by a subtree rooted at `map`, starting at `depth`
-  const countSlots = (m: Map<string, TreeNode>, depth: number): number => {
-    if (depth >= VT_MAX_D) return 1;
+  const countSlots = (m: Map<string, TreeNode>, depth: number, parentPath: string[]): number => {
+    if (depth >= VT_MAX_D && !expandedPaths.has(parentPath.join(","))) return 1;
     const top = [...m.values()].sort((a, b) => b.count - a.count).slice(0, VT_MAX_CH);
     if (!top.length) return 1;
-    return top.reduce((s, c) => s + countSlots(c.children, depth + 1), 0);
+    return top.reduce((s, c) => s + countSlots(c.children, depth + 1, [...parentPath, c.san]), 0);
   };
 
   let totalSlots = 0;
@@ -305,11 +306,12 @@ function buildVTLayout(
     prefix: string[],
   ): void => {
     const top = [...m.values()].sort((a, b) => b.count - a.count).slice(0, VT_MAX_CH);
-    if (!top.length || depth >= VT_MAX_D) return;
+    if (!top.length) return;
+    if (depth >= VT_MAX_D && !expandedPaths.has(prefix.join(","))) return;
 
     let off = slotOffset;
     for (const ch of top) {
-      const slots = countSlots(ch.children, depth + 1);
+      const slots = countSlots(ch.children, depth + 1, [...prefix, ch.san]);
       const cx = VT_MX + depth * VT_COL_W + VT_NODE_W / 2;
       const cy = VT_MY + (off + slots / 2) * VT_ROW_SZ;
       const path = [...prefix, ch.san];
@@ -358,9 +360,10 @@ const VisualTree = React.memo(function VisualTree({
   onSelect: (path: string[]) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [expandedPaths, setExpandedPaths] = React.useState<Set<string>>(new Set());
   const { nodes, edges, W, H } = useMemo(
-    () => buildVTLayout(tree, selectedPath),
-    [tree, selectedPath],
+    () => buildVTLayout(tree, selectedPath, expandedPaths),
+    [tree, selectedPath, expandedPaths],
   );
 
   // Auto-scroll to keep the selected node centred in the viewport
@@ -566,10 +569,24 @@ const VisualTree = React.memo(function VisualTree({
           const mNum  = Math.floor(vn.node.depth / 2) + 1;
           const prefix = isWhiteMove ? `${mNum}.` : `${mNum}…`;
 
+          const nodeKey = vn.path.join(",");
+          const isExpanded = expandedPaths.has(nodeKey);
+          const hasHiddenChildren = vn.node.children.size > 0 && vn.node.depth >= VT_MAX_D - 1;
+
           return (
             <g
-              key={vn.path.join(",")}
-              onClick={() => onSelect(vn.path)}
+              key={nodeKey}
+              onClick={() => {
+                onSelect(vn.path);
+                if (hasHiddenChildren) {
+                  setExpandedPaths(prev => {
+                    const next = new Set(prev);
+                    if (next.has(nodeKey)) next.delete(nodeKey);
+                    else next.add(nodeKey);
+                    return next;
+                  });
+                }
+              }}
               style={{ cursor: "pointer" }}
             >
               {/* Outer glow for selected */}
@@ -681,6 +698,30 @@ const VisualTree = React.memo(function VisualTree({
                   fill="#ef4444"
                   opacity={0.4}
                 />
+              )}
+
+              {/* Expand badge for nodes with hidden children */}
+              {hasHiddenChildren && (
+                <>
+                  <rect
+                    x={nx + VT_NODE_W / 2 - 11} y={ny + VT_NODE_H + 3}
+                    width={22} height={12}
+                    rx={6}
+                    fill={isExpanded ? "rgba(16,185,129,0.25)" : "rgba(71,85,105,0.4)"}
+                    stroke={isExpanded ? "#34d399" : "#64748b"}
+                    strokeWidth={0.8}
+                  />
+                  <text
+                    x={nx + VT_NODE_W / 2} y={ny + VT_NODE_H + 12}
+                    textAnchor="middle"
+                    fill={isExpanded ? "#34d399" : "#94a3b8"}
+                    fontSize={10}
+                    fontWeight="700"
+                    fontFamily="ui-sans-serif, sans-serif"
+                  >
+                    {isExpanded ? "−" : "+"}
+                  </text>
+                </>
               )}
             </g>
           );
@@ -1368,7 +1409,7 @@ function MyOpeningsInner() {
                   </div>
                   {viewMode === "visual" && (
                     <span className="ml-auto text-[10px] text-slate-600">
-                      top {VT_MAX_CH}/node · {VT_MAX_D} levels · scroll →
+                      top {VT_MAX_CH}/node · {VT_MAX_D} lvls · click node to expand →
                     </span>
                   )}
                   {viewMode === "list" && (
