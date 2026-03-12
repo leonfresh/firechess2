@@ -136,6 +136,8 @@ export function usePartyRoom(
   onMessageRef.current = onMessage;
   const onReconnectRef = useRef(onReconnect);
   onReconnectRef.current = onReconnect;
+  const playerColorRef = useRef(playerColor);
+  playerColorRef.current = playerColor;
   const hasConnectedRef = useRef(false);
   const [isConnected, setIsConnected] = useState(false);
 
@@ -156,9 +158,9 @@ export function usePartyRoom(
       const isReconnect = hasConnectedRef.current;
       hasConnectedRef.current = true;
       setIsConnected(true);
-      // Register with server so it knows this connection's color
-      if (playerColor) {
-        socket.send(JSON.stringify({ type: "register", color: playerColor }));
+      // Register with server so it knows this connection's color (use ref — always current)
+      if (playerColorRef.current) {
+        socket.send(JSON.stringify({ type: "register", color: playerColorRef.current }));
       }
       // On reconnect, trigger a state snapshot to catch up on missed moves
       if (isReconnect) {

@@ -1377,16 +1377,6 @@ export default function ChaosChessPage() {
     preloadSounds();
   }, []);
 
-  /* ── Scroll event log to bottom ── */
-  useEffect(() => {
-    eventLogRef.current?.scrollTo({ top: eventLogRef.current.scrollHeight, behavior: "smooth" });
-  }, [eventLog]);
-
-  /* ── Scroll move log to bottom when game state changes ── */
-  useEffect(() => {
-    moveLogRef.current?.scrollTo({ top: moveLogRef.current.scrollHeight, behavior: "smooth" });
-  }, [game]);
-
   /* ── Timer tick (100ms interval) ── */
   useEffect(() => {
     if (timerIntervalRef.current) {
@@ -2196,15 +2186,17 @@ export default function ChaosChessPage() {
       return;
     }
 
-    if (msg.type === "move" || msg.type === "draft") {
-      const data = msg as PartyMessage & { fen?: string; chaosState?: unknown; lastMoveFrom?: string; lastMoveTo?: string; capturedPawnsWhite?: number; capturedPawnsBlack?: number; status?: string };
-      if (!data.fen) return;
+    if (msg.type === "move" || msg.type === "draft" || msg.type === "chaos_move") {
+      // chaos_move from server arrives as type:"move" with fen set; handle direct chaos_move too
+      const data = msg as PartyMessage & { fen?: string; newFen?: string; chaosState?: unknown; lastMoveFrom?: string; lastMoveTo?: string; capturedPawnsWhite?: number; capturedPawnsBlack?: number; status?: string };
+      const fen = data.fen ?? (data as { newFen?: string }).newFen;
+      if (!fen) return;
       // Don't apply opponent updates while the local player is actively picking a draft
       if (gameStatusRef.current === "drafting") return;
 
-      const g = new Chess(data.fen);
+      const g = new Chess(fen);
       const oldFen = lastFenRef.current;
-      lastFenRef.current = data.fen;
+      lastFenRef.current = fen;
       setGame(g);
 
       // Process chaosState (perspective swap) — sequential draft handling
