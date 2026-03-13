@@ -10,89 +10,61 @@ Chess is 1,500 years old. The rules haven't changed since the 15th century. And 
 
 We built Chaos Chess — and the design spark didn't come from another chess game. It came from **Clash Royale**.
 
-<div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="680" height="260" viewBox="0 0 680 260" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="dc-bg" x1="0" y1="0" x2="680" y2="260" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#0a0618"/><stop offset="1" stop-color="#0d0a1e"/>
-    </linearGradient>
-    <radialGradient id="dc-glow" cx="340" cy="130" r="220" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#a855f7" stop-opacity="0.14"/><stop offset="1" stop-color="#a855f7" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-  <rect width="680" height="260" rx="18" fill="url(#dc-bg)"/>
-  <rect x="1" y="1" width="678" height="258" rx="17" stroke="#a855f7" stroke-opacity="0.18"/>
-  <rect width="680" height="260" rx="18" fill="url(#dc-glow)"/>
+<div style="margin: 2rem 0; border-radius: 16px; background: linear-gradient(135deg, #0a0618 0%, #0d0a1e 100%); border: 1px solid rgba(168,85,247,0.18); padding: 20px 16px; box-shadow: 0 0 40px rgba(168,85,247,0.08);">
+  <div style="text-align: center; margin-bottom: 12px;">
+    <div style="color: white; font-size: 15px; font-weight: 800; margin-bottom: 4px;">Draft Phase 2 of 5 — Pick Your Modifier</div>
+    <div style="color: #94a3b8; font-size: 12px;">Turn 10 reached · Choose one permanent upgrade for your pieces</div>
+  </div>
+  <div style="height: 1px; background: rgba(168,85,247,0.12); margin-bottom: 16px;"></div>
+  <div style="display: flex; gap: 10px; justify-content: center; align-items: center;">
 
-  <!-- Header -->
-  <text x="340" y="32" text-anchor="middle" fill="white" font-size="15" font-weight="800">Draft Phase 2 of 5 — Pick Your Modifier</text>
-  <text x="340" y="50" text-anchor="middle" fill="#94a3b8" font-size="11">Turn 10 reached · Choose one permanent upgrade for your pieces</text>
+    <div style="flex: 1; max-width: 185px; background: #0f1a2e; border: 1.5px solid rgba(34,197,94,0.35); border-radius: 12px; overflow: hidden;">
+      <div style="background: rgba(34,197,94,0.1); padding: 6px 0; text-align: center;">
+        <span style="color: #4ade80; font-size: 10px; font-weight: 700; letter-spacing: 1.5px;">COMMON</span>
+      </div>
+      <div style="padding: 14px 10px; text-align: center;">
+        <div style="font-size: 30px; margin-bottom: 8px; line-height: 1;">🏃</div>
+        <div style="color: white; font-size: 13px; font-weight: 700; margin-bottom: 6px;">Pawn Charge</div>
+        <div style="color: #94a3b8; font-size: 11px; line-height: 1.5;">Pawns move 2 squares from any rank, not just the start.</div>
+      </div>
+      <div style="background: rgba(34,197,94,0.08); border-top: 1px solid rgba(34,197,94,0.18); padding: 6px; text-align: center;">
+        <span style="color: #4ade80; font-size: 10px; font-weight: 600;">Affects Pawns</span>
+      </div>
+    </div>
 
-  <!-- Divider -->
-  <line x1="40" y1="60" x2="640" y2="60" stroke="#a855f7" stroke-opacity="0.12" stroke-width="1"/>
+    <div style="flex: 1; max-width: 205px; background: #150b2a; border: 2px solid rgba(168,85,247,0.85); border-radius: 12px; overflow: hidden; box-shadow: 0 0 28px rgba(168,85,247,0.22), 0 0 0 4px rgba(168,85,247,0.08);">
+      <div style="background: rgba(168,85,247,0.18); padding: 6px 0; text-align: center;">
+        <span style="color: #c084fc; font-size: 10px; font-weight: 700; letter-spacing: 1.5px;">EPIC</span>
+      </div>
+      <div style="padding: 16px 10px 12px; text-align: center;">
+        <div style="font-size: 34px; margin-bottom: 8px; line-height: 1;">🌀</div>
+        <div style="color: white; font-size: 14px; font-weight: 800; margin-bottom: 6px;">Queen Teleport</div>
+        <div style="color: #e2d9f3; font-size: 11px; line-height: 1.5;">Your queen warps to any empty square, once per game.</div>
+      </div>
+      <div style="background: rgba(168,85,247,0.1); border-top: 1px solid rgba(168,85,247,0.25); padding: 6px; text-align: center;">
+        <span style="color: #c084fc; font-size: 10px; font-weight: 600;">Affects Queen</span>
+      </div>
+      <div style="background: rgba(168,85,247,0.28); padding: 5px; text-align: center;">
+        <span style="color: #f3e8ff; font-size: 10px; font-weight: 700; letter-spacing: 0.5px;">✓ SELECTED</span>
+      </div>
+    </div>
 
-  <!-- CARD 1: Common — Pawn Charge -->
-  <rect x="28" y="74" width="190" height="158" rx="12" fill="#0f1a2e" stroke="#22c55e" stroke-opacity="0.35" stroke-width="1.5"/>
-  <!-- tier strip -->
-  <rect x="28" y="74" width="190" height="28" rx="12" fill="#22c55e" fill-opacity="0.10"/>
-  <rect x="28" y="90" width="190" height="12" fill="#22c55e" fill-opacity="0.10"/>
-  <text x="123" y="91" text-anchor="middle" fill="#4ade80" font-size="9" font-weight="700" letter-spacing="1.5">COMMON</text>
-  <!-- icon area -->
-  <rect x="90" y="110" width="66" height="50" rx="10" fill="#22c55e" fill-opacity="0.07"/>
-  <text x="123" y="145" text-anchor="middle" font-size="30">&#x1F3C3;</text>
-  <!-- name -->
-  <text x="123" y="178" text-anchor="middle" fill="white" font-size="12" font-weight="700">Pawn Charge</text>
-  <!-- desc lines -->
-  <text x="123" y="196" text-anchor="middle" fill="#94a3b8" font-size="9.5">Pawns move 2 squares from</text>
-  <text x="123" y="209" text-anchor="middle" fill="#94a3b8" font-size="9.5">any rank, not just the start.</text>
-  <!-- piece tag -->
-  <rect x="73" y="218" width="100" height="14" rx="7" fill="#22c55e" fill-opacity="0.12" stroke="#22c55e" stroke-opacity="0.25"/>
-  <text x="123" y="228" text-anchor="middle" fill="#4ade80" font-size="8.5" font-weight="600">Affects Pawns</text>
+    <div style="flex: 1; max-width: 185px; background: #0f1a2e; border: 1.5px solid rgba(59,130,246,0.35); border-radius: 12px; overflow: hidden;">
+      <div style="background: rgba(59,130,246,0.1); padding: 6px 0; text-align: center;">
+        <span style="color: #60a5fa; font-size: 10px; font-weight: 700; letter-spacing: 1.5px;">RARE</span>
+      </div>
+      <div style="padding: 14px 10px; text-align: center;">
+        <div style="font-size: 30px; margin-bottom: 8px; line-height: 1;">💥</div>
+        <div style="color: white; font-size: 13px; font-weight: 700; margin-bottom: 6px;">Collateral Rook</div>
+        <div style="color: #94a3b8; font-size: 11px; line-height: 1.5;">Your rook captures every piece in its path at once.</div>
+      </div>
+      <div style="background: rgba(59,130,246,0.08); border-top: 1px solid rgba(59,130,246,0.18); padding: 6px; text-align: center;">
+        <span style="color: #60a5fa; font-size: 10px; font-weight: 600;">Affects Rooks</span>
+      </div>
+    </div>
 
-  <!-- CARD 2: Epic — Queen Teleport (selected, enlarged) -->
-  <rect x="244" y="64" width="192" height="178" rx="12" fill="#150b2a" stroke="#a855f7" stroke-opacity="0.85" stroke-width="2"/>
-  <!-- outer glow ring -->
-  <rect x="241" y="61" width="198" height="184" rx="14" fill="none" stroke="#a855f7" stroke-opacity="0.22" stroke-width="5"/>
-  <!-- tier strip -->
-  <rect x="244" y="64" width="192" height="28" rx="12" fill="#a855f7" fill-opacity="0.16"/>
-  <rect x="244" y="80" width="192" height="12" fill="#a855f7" fill-opacity="0.16"/>
-  <text x="340" y="81" text-anchor="middle" fill="#c084fc" font-size="9" font-weight="700" letter-spacing="1.5">EPIC</text>
-  <!-- icon area -->
-  <rect x="304" y="100" width="72" height="54" rx="10" fill="#a855f7" fill-opacity="0.10"/>
-  <text x="340" y="138" text-anchor="middle" font-size="33">&#x1F300;</text>
-  <!-- name -->
-  <text x="340" y="172" text-anchor="middle" fill="white" font-size="13" font-weight="800">Queen Teleport</text>
-  <!-- desc lines -->
-  <text x="340" y="191" text-anchor="middle" fill="#e2d9f3" font-size="9.5">Your queen warps to any</text>
-  <text x="340" y="204" text-anchor="middle" fill="#e2d9f3" font-size="9.5">empty square, once per game.</text>
-  <!-- piece tag -->
-  <rect x="284" y="214" width="112" height="14" rx="7" fill="#a855f7" fill-opacity="0.15" stroke="#a855f7" stroke-opacity="0.35"/>
-  <text x="340" y="224" text-anchor="middle" fill="#c084fc" font-size="8.5" font-weight="600">Affects Queen</text>
-  <!-- Selected badge -->
-  <rect x="294" y="235" width="92" height="14" rx="7" fill="#a855f7" fill-opacity="0.3"/>
-  <text x="340" y="245" text-anchor="middle" fill="#f3e8ff" font-size="8" font-weight="700" letter-spacing="0.5">&#x2713; SELECTED</text>
-
-  <!-- CARD 3: Rare — Collateral Rook -->
-  <rect x="462" y="74" width="190" height="158" rx="12" fill="#0f1a2e" stroke="#3b82f6" stroke-opacity="0.35" stroke-width="1.5"/>
-  <!-- tier strip -->
-  <rect x="462" y="74" width="190" height="28" rx="12" fill="#3b82f6" fill-opacity="0.10"/>
-  <rect x="462" y="90" width="190" height="12" fill="#3b82f6" fill-opacity="0.10"/>
-  <text x="557" y="91" text-anchor="middle" fill="#60a5fa" font-size="9" font-weight="700" letter-spacing="1.5">RARE</text>
-  <!-- icon area -->
-  <rect x="524" y="110" width="66" height="50" rx="10" fill="#3b82f6" fill-opacity="0.07"/>
-  <text x="557" y="145" text-anchor="middle" font-size="30">&#x1F4A5;</text>
-  <!-- name -->
-  <text x="557" y="178" text-anchor="middle" fill="white" font-size="12" font-weight="700">Collateral Rook</text>
-  <!-- desc lines -->
-  <text x="557" y="196" text-anchor="middle" fill="#94a3b8" font-size="9.5">Your rook captures every</text>
-  <text x="557" y="209" text-anchor="middle" fill="#94a3b8" font-size="9.5">piece in its path at once.</text>
-  <!-- piece tag -->
-  <rect x="507" y="218" width="100" height="14" rx="7" fill="#3b82f6" fill-opacity="0.12" stroke="#3b82f6" stroke-opacity="0.25"/>
-  <text x="557" y="228" text-anchor="middle" fill="#60a5fa" font-size="8.5" font-weight="600">Affects Rooks</text>
-
-  <!-- Footer -->
-  <text x="340" y="251" text-anchor="middle" fill="#4b5563" font-size="10">Click or tap a card to permanently draft it for the rest of the game</text>
-</svg>
+  </div>
+  <div style="text-align: center; margin-top: 14px; color: #4b5563; font-size: 11px;">Click or tap a card to permanently draft it for the rest of the game</div>
 </div>
 
 ## The Clash Royale Draft Problem — and the Chess Opportunity
