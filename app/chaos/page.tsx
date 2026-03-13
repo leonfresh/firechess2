@@ -4356,7 +4356,7 @@ export default function ChaosChessPage() {
               <img src={PEPE.clowntrain} alt="" className="h-10 w-10 object-contain sm:h-14 sm:w-14" style={{ animation: "pepe-bounce 1.5s ease-in-out infinite 0.4s" }} />
             </div>
             <p className="max-w-lg text-sm text-slate-400 sm:text-base">
-              Chess, but every 5 turns you draft a permanent modifier that rewires how your pieces move. Camel knights. Dragon bishops. Nuclear queens. Pure anarchy.
+              Chess, but every 5 turns you draft a permanent power-up that rewires how your pieces move. Camel knights. Dragon bishops. Nuclear queens. Pure anarchy.
             </p>
           </div>
 
