@@ -4418,19 +4418,19 @@ export default function ChaosChessPage() {
           </div>
 
           {/* ── Mode picker ── */}
-          <div className="mb-6 flex w-full max-w-xs gap-1.5 rounded-xl border border-white/[0.07] bg-white/[0.02] p-1 sm:max-w-sm sm:gap-2">
+          <div className="mb-6 flex w-full max-w-xs gap-1.5 rounded-xl border border-white/[0.07] bg-white/[0.02] p-1.5 sm:max-w-sm sm:gap-2">
             {(["ai", "friend", "matchmake"] as GameMode[]).map((mode) => (
               <button
                 key={mode}
                 type="button"
                 onClick={() => setGameMode(mode)}
-                className={`flex-1 rounded-lg py-2 text-[11px] font-semibold transition-all sm:text-xs ${
+                className={`flex-1 rounded-lg py-3 text-xs font-semibold transition-all sm:py-3.5 sm:text-sm ${
                   gameMode === mode
                     ? "bg-purple-500/25 text-purple-300 shadow-inner"
                     : "text-slate-500 hover:text-slate-300"
                 }`}
               >
-                {mode === "ai" ? "🤖 vs AI" : mode === "friend" ? "👥 Friend" : "🎲 Random"}
+                {mode === "ai" ? "🤖 vs AI" : mode === "friend" ? "👥 Friend" : "🌐 Matchmake"}
               </button>
             ))}
           </div>
