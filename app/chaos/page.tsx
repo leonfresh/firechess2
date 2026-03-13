@@ -1238,7 +1238,162 @@ function InlineModifierIcons({ modifiers }: { modifiers: ChaosModifier[] }) {
   );
 }
 
+/* ════════════════════ Board Effect Overlay ════════════════════ */
+
+/**
+ * CSS keyframe animations for board effects.
+ * Injected once via a <style> tag inside the overlay component.
+ */
+const EFFECT_KEYFRAMES = `
+@keyframes ce-burst  { 0%{transform:scale(.15);opacity:1} 55%{opacity:.85} 100%{transform:scale(2.4);opacity:0} }
+@keyframes ce-nuke   { 0%{transform:scale(0);opacity:1} 45%{opacity:1} 100%{transform:scale(3.5);opacity:0} }
+@keyframes ce-spin   { 0%{transform:scale(1.4) rotate(0deg);opacity:.9} 100%{transform:scale(0) rotate(560deg);opacity:0} }
+@keyframes ce-flash  { 0%{opacity:0} 15%{opacity:1} 100%{opacity:0} }
+@keyframes ce-slide  { 0%{transform:scaleX(0);opacity:1;transform-origin:left center} 40%{opacity:1} 100%{transform:scaleX(1);opacity:0} }
+@keyframes ce-shield { 0%{transform:scale(.15);opacity:1} 50%{transform:scale(1.2);opacity:.8} 100%{transform:scale(1.7);opacity:0} }
+@keyframes ce-spawn  { 0%{transform:scale(0) rotate(-20deg);opacity:1} 60%{transform:scale(1.1);opacity:.9} 100%{transform:scale(1.8);opacity:0} }
+`;
+
+type BoardEffect = { id: number; type: string; squares: string[] };
+
+function BoardEffectsOverlay({
+  effects,
+  boardSize,
+  orientation,
+}: {
+  effects: BoardEffect[];
+  boardSize: number;
+  orientation: "white" | "black";
+}) {
+  if (!boardSize || effects.length === 0) return null;
+  const sq = boardSize / 8;
+
+  return (
+    <>
+      <style>{EFFECT_KEYFRAMES}</style>
+      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[8px]">
+        {effects.flatMap(({ id, type, squares }) =>
+          squares.map((square) => {
+            const file = square.charCodeAt(0) - 97;
+            const rank = parseInt(square[1], 10) - 1;
+            const x = orientation === "white" ? file * sq : (7 - file) * sq;
+            const y = orientation === "white" ? (7 - rank) * sq : rank * sq;
+
+            let inner: React.ReactNode = null;
+            if (type === "explosion") {
+              inner = (
+                <div style={{
+                  width: "88%", height: "88%", borderRadius: "50%",
+                  background: "radial-gradient(circle, #fff 0%, #ff9500 25%, #ff4500 55%, transparent 100%)",
+                  boxShadow: "0 0 14px #ff8c00",
+                  animation: "ce-burst 700ms ease-out forwards",
+                }} />
+              );
+            } else if (type === "nuke") {
+              inner = (
+                <div style={{
+                  width: "100%", height: "100%", borderRadius: "50%",
+                  background: "radial-gradient(circle, #fff 0%, #00ff88 20%, #00cc66 50%, transparent 100%)",
+                  boxShadow: "0 0 22px #00ff88",
+                  animation: "ce-nuke 950ms ease-out forwards",
+                }} />
+              );
+            } else if (type === "teleport") {
+              inner = (
+                <div style={{
+                  width: "90%", height: "90%", borderRadius: "50%",
+                  background: "conic-gradient(from 0deg, #a855f7, transparent 30%, #c084fc 60%, transparent 80%, #a855f7)",
+                  boxShadow: "0 0 14px #a855f7",
+                  animation: "ce-spin 800ms ease-in forwards",
+                }} />
+              );
+            } else if (type === "ricochet") {
+              inner = (
+                <div style={{
+                  width: "78%", height: "78%",
+                  background: "radial-gradient(circle, #fde68a 0%, #fb923c 50%, transparent 100%)",
+                  transform: "rotate(45deg)",
+                  animation: "ce-burst 550ms ease-out forwards",
+                }} />
+              );
+            } else if (type === "cannon") {
+              inner = (
+                <div style={{
+                  width: "95%", height: "38%",
+                  background: "linear-gradient(to right, transparent, #ef4444 35%, #ff8c00 70%, #fff 100%)",
+                  borderRadius: "3px",
+                  animation: "ce-slide 500ms ease-out forwards",
+                }} />
+              );
+            } else if (type === "shield") {
+              inner = (
+                <div style={{
+                  width: "84%", height: "84%", borderRadius: "8px",
+                  border: "3px solid #60a5fa",
+                  background: "rgba(96,165,250,0.15)",
+                  boxShadow: "0 0 16px #60a5fa",
+                  animation: "ce-shield 850ms ease-out forwards",
+                }} />
+              );
+            } else if (type === "spawn") {
+              inner = (
+                <div style={{
+                  width: "84%", height: "84%", borderRadius: "50%",
+                  background: "radial-gradient(circle, #a3e635 0%, #65a30d 50%, transparent 100%)",
+                  boxShadow: "0 0 12px #a3e635",
+                  animation: "ce-spawn 750ms ease-out forwards",
+                }} />
+              );
+            } else if (type === "pegasus") {
+              inner = (
+                <div style={{
+                  width: "84%", height: "84%", borderRadius: "50%",
+                  background: "radial-gradient(circle, #e879f9 0%, #a855f7 50%, transparent 100%)",
+                  boxShadow: "0 0 12px #a855f7",
+                  animation: "ce-burst 700ms ease-out forwards",
+                }} />
+              );
+            } else if (type === "flash") {
+              inner = (
+                <div style={{
+                  width: "100%", height: "100%",
+                  background: "rgba(168,85,247,0.5)",
+                  animation: "ce-flash 500ms ease-out forwards",
+                }} />
+              );
+            }
+
+            if (!inner) return null;
+            return (
+              <div
+                key={`${id}-${square}`}
+                style={{
+                  position: "absolute",
+                  left: x,
+                  top: y,
+                  width: sq,
+                  height: sq,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {inner}
+              </div>
+            );
+          })
+        )}
+      </div>
+    </>
+  );
+}
+
 /* ────────────────────────── Main Page ────────────────────────── */
+
+const EFFECT_DURATIONS: Record<string, number> = {
+  explosion: 750, nuke: 1000, teleport: 850, ricochet: 600,
+  cannon: 550, shield: 900, spawn: 800, pegasus: 750, flash: 550,
+};
 
 export default function ChaosChessPage() {
   /* ── Auth ── */
@@ -1387,6 +1542,17 @@ export default function ChaosChessPage() {
     setFloatingPepes((prev) => prev.filter((p) => p.id !== id));
   }, []);
 
+  /* ── Board effect overlays (explosions, teleports, etc.) ── */
+  const [boardEffects, setBoardEffects] = useState<BoardEffect[]>([]);
+  const effectIdRef = useRef(0);
+
+  const triggerEffect = useCallback((type: string, squares: string[], durationOverride?: number) => {
+    const id = ++effectIdRef.current;
+    setBoardEffects((prev) => [...prev, { id, type, squares }]);
+    const dur = durationOverride ?? EFFECT_DURATIONS[type] ?? 700;
+    setTimeout(() => setBoardEffects((prev) => prev.filter((e) => e.id !== id)), dur);
+  }, []);
+
   /* ── Preload sounds ── */
   useEffect(() => {
     preloadSounds();
@@ -1500,7 +1666,7 @@ export default function ChaosChessPage() {
         (playerColor === "white" && g.turn() === "w") ||
         (playerColor === "black" && g.turn() === "b");
       if (isPlayerTurn) {
-        const chaosMvs = getChaosMoves(g, cs.playerModifiers, g.turn() as Color, cs.assignedSquares);
+        const chaosMvs = getChaosMoves(g, cs.playerModifiers, g.turn() as Color, cs.assignedSquares, cs.aiModifiers);
         setAvailableChaosMoves(chaosMvs);
       } else {
         setAvailableChaosMoves([]);
@@ -1568,6 +1734,25 @@ export default function ChaosChessPage() {
     }
 
     if (g.isCheckmate()) {
+      // Before declaring checkmate, check if the checkmated side has chaos escape moves.
+      const checkmatedColor = g.turn() as Color;
+      const isPlayerCheckmated =
+        (playerColor === "white" && checkmatedColor === "w") ||
+        (playerColor === "black" && checkmatedColor === "b");
+      const checkmatedMods = isPlayerCheckmated
+        ? chaosStateRef.current.playerModifiers
+        : chaosStateRef.current.aiModifiers;
+      const attackerModsForCheckmate = isPlayerCheckmated
+        ? chaosStateRef.current.aiModifiers
+        : chaosStateRef.current.playerModifiers;
+      if (checkmatedMods.length > 0) {
+        const chaosEscapes = getChaosMoves(
+          g, checkmatedMods, checkmatedColor,
+          chaosStateRef.current.assignedSquares ?? undefined,
+          attackerModsForCheckmate,
+        );
+        if (chaosEscapes.length > 0) return false;
+      }
       const winner = g.turn() === "w" ? "black" : "white";
       setGameResult(winner);
       setGameStatus("game-over");
@@ -1593,6 +1778,24 @@ export default function ChaosChessPage() {
       return true;
     }
     if (g.isStalemate() || g.isDraw() || g.isThreefoldRepetition() || g.isInsufficientMaterial()) {
+      // Before declaring stalemate, check if the stalemated side has chaos moves available.
+      // Chaos moves are extra legal moves; if any exist, it's not truly stalemate.
+      if (g.isStalemate()) {
+        const stalematedColor = g.turn() as Color;
+        const isPlayerStalemated =
+          (playerColor === "white" && stalematedColor === "w") ||
+          (playerColor === "black" && stalematedColor === "b");
+        const stalematedMods = isPlayerStalemated
+          ? chaosStateRef.current.playerModifiers
+          : chaosStateRef.current.aiModifiers;
+        if (stalematedMods.length > 0) {
+          const staleChaosMoves = getChaosMoves(
+            g, stalematedMods, stalematedColor,
+            chaosStateRef.current.assignedSquares ?? undefined,
+          );
+          if (staleChaosMoves.length > 0) return false;
+        }
+      }
       setGameResult("draw");
       setGameStatus("game-over");
       const reason = g.isStalemate()
@@ -1631,7 +1834,10 @@ export default function ChaosChessPage() {
       const attackerMods = isPlayerChecked
         ? chaosStateRef.current.aiModifiers
         : chaosStateRef.current.playerModifiers;
-      if (isChaosCheckmate(g, attackerMods, attackerColor, chaosStateRef.current.assignedSquares ?? undefined)) {
+      const defenderMods = isPlayerChecked
+        ? chaosStateRef.current.playerModifiers
+        : chaosStateRef.current.aiModifiers;
+      if (isChaosCheckmate(g, attackerMods, attackerColor, chaosStateRef.current.assignedSquares ?? undefined, defenderMods)) {
         const winner = checkedColor === "w" ? "black" : "white";
         setGameResult(winner);
         setGameStatus("game-over");
@@ -1741,16 +1947,45 @@ export default function ChaosChessPage() {
       const result = applyPostMoveEffects(g, from as any, to as any, captured, pieceType, color, mods, opponentMods, capturedType);
       if (result) {
         if (mods.some((m) => m.id === "collateral-rook") && pieceType === "r" && captured) {
+          // Explosion on capture square + collateral square one step beyond
+          const dirF = Math.sign(to.charCodeAt(0) - from.charCodeAt(0));
+          const dirR = Math.sign(parseInt(to[1]) - parseInt(from[1]));
+          const colFile = String.fromCharCode(to.charCodeAt(0) + dirF);
+          const colRank = String(parseInt(to[1]) + dirR);
+          const effectSqs = [to as string];
+          if (colFile >= "a" && colFile <= "h" && colRank >= "1" && colRank <= "8") {
+            effectSqs.push(`${colFile}${colRank}`);
+          }
+          triggerEffect("explosion", effectSqs);
           setEventLog((prev) => [...prev, { type: "chaos", message: "💥 Collateral Damage! The rook destroyed the piece behind its target!", icon: "💥", pepe: PEPE.firesgun }]);
           spawnPepe(PEPE.firesgun);
           playSound("yeet");
         }
         if (mods.some((m) => m.id === "nuclear-queen") && pieceType === "q" && captured) {
+          // Nuke burst on capture square, standard explosions on all 8 adjacent squares
+          triggerEffect("nuke", [to as string]);
+          const qf = to.charCodeAt(0) - 97;
+          const qr = parseInt(to[1]) - 1;
+          const surrounding: string[] = [];
+          for (let df = -1; df <= 1; df++) {
+            for (let dr = -1; dr <= 1; dr++) {
+              if (df === 0 && dr === 0) continue;
+              const nf = qf + df; const nr = qr + dr;
+              if (nf >= 0 && nf <= 7 && nr >= 0 && nr <= 7) {
+                surrounding.push(`${String.fromCharCode(97 + nf)}${nr + 1}`);
+              }
+            }
+          }
+          setTimeout(() => triggerEffect("explosion", surrounding), 150);
           setEventLog((prev) => [...prev, { type: "chaos", message: "☢️ NUCLEAR QUEEN! All surrounding pieces destroyed!", icon: "☢️", pepe: PEPE.madpuke }]);
           spawnPepe(PEPE.madpuke);
           playSound("airhorn");
         }
         if (opponentMods?.some((m) => m.id === "pawn-fortress") && capturedType === "p" && captured) {
+          // Spawn glow on the pawn's starting square (same file, back rank)
+          const pawnColor: Color = color === "w" ? "b" : "w";
+          const startRank = pawnColor === "w" ? "2" : "7";
+          triggerEffect("spawn", [`${to[0]}${startRank}`]);
           setEventLog((prev) => [...prev, { type: "chaos", message: "🏰 Pawn Fortress! The captured pawn respawned on its starting square!", icon: "🏰", pepe: PEPE.shocked }]);
           spawnPepe(PEPE.shocked);
           playSound("crowd-ooh");
@@ -1759,7 +1994,7 @@ export default function ChaosChessPage() {
       }
       return g;
     },
-    [spawnPepe],
+    [spawnPepe, triggerEffect],
   );
 
   /* ── AI move (with chaos modifiers) ── */
@@ -1771,7 +2006,7 @@ export default function ChaosChessPage() {
       try {
         // AI can also use chaos moves
         const aiColor = playerColor === "white" ? "b" : "w";
-        const aiChaosMoves = getChaosMoves(g, cs.aiModifiers, aiColor as Color, cs.assignedSquares);
+        const aiChaosMoves = getChaosMoves(g, cs.aiModifiers, aiColor as Color, cs.assignedSquares, cs.playerModifiers);
 
         // Evaluate chaos moves with Stockfish — only use if genuinely good
         // 35% chance to even consider chaos moves (prevents spamming)
@@ -1837,6 +2072,24 @@ export default function ChaosChessPage() {
               setEventLog((prev) => [...prev, { type: "chaos", message: `🤖 AI used: ${chaosMove.label}`, icon: "🤖", pepe: PEPE.shocked }]);
               playSound(pickRandom(AI_CHAOS_SOUNDS));
 
+              // Trigger board effect for AI chaos move
+              { const mid = chaosMove.modifierId;
+                if (mid === "queen-teleport") {
+                  triggerEffect("teleport", [chaosMove.from, chaosMove.to]);
+                } else if (mid === "pegasus") {
+                  triggerEffect("pegasus", [chaosMove.from, chaosMove.to]);
+                } else if (mid === "bishop-bounce") {
+                  triggerEffect("ricochet", [chaosMove.from, chaosMove.to]);
+                } else if (mid === "rook-cannon") {
+                  triggerEffect("cannon", [chaosMove.to]);
+                  setTimeout(() => triggerEffect("explosion", [chaosMove.to]), 350);
+                } else if (chaosMove.type === "capture") {
+                  triggerEffect("explosion", [chaosMove.to]);
+                } else {
+                  triggerEffect("flash", [chaosMove.to]);
+                }
+              }
+
               // Update tracked pieces
               let cs2 = updateTrackedPieces(cs, chaosMove.from, chaosMove.to, chaosMove.type === "capture");
               let activeGame = newGame;
@@ -1848,6 +2101,17 @@ export default function ChaosChessPage() {
                   if (shielded) {
                     activeGame = shielded;
                     cs2 = { ...cs2, playerModifiers: cs2.playerModifiers.filter((m) => m.id !== "king-shield") };
+                    // Trigger shield effect on the player's king square
+                    const board = activeGame.board();
+                    outer: for (let ri = 0; ri < 8; ri++) {
+                      for (let fi = 0; fi < 8; fi++) {
+                        const p = board[ri][fi];
+                        if (p && p.type === "k" && p.color === (playerColor === "white" ? "w" : "b")) {
+                          triggerEffect("shield", [`${"abcdefgh"[fi]}${8 - ri}`]);
+                          break outer;
+                        }
+                      }
+                    }
                     setEventLog((prev) => [...prev, { type: "chaos" as const, message: "🛡️ Your Royal Guard blocked the check!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
                     playSound("bell");
                   }
@@ -2010,7 +2274,7 @@ export default function ChaosChessPage() {
 
       setIsThinking(false);
     },
-    [playerColor, aiDepth, checkGameEnd, checkDraft, addMoveToLog, applyPostMove, recomputeChaosMoves, chaosState],
+    [playerColor, aiDepth, checkGameEnd, checkDraft, addMoveToLog, applyPostMove, recomputeChaosMoves, chaosState, spawnPepe, triggerEffect],
   );
 
   /* ── Start game ── */
@@ -2788,6 +3052,26 @@ export default function ChaosChessPage() {
         const newGame = executeChaosMove(game, chaosMove, chaosState.playerModifiers);
         if (!newGame) return false;
 
+        // Trigger board effect based on the modifier used
+        { const mid = chaosMove.modifierId;
+          if (mid === "queen-teleport") {
+            triggerEffect("teleport", [from, to]);
+          } else if (mid === "pegasus") {
+            triggerEffect("pegasus", [from, to]);
+          } else if (mid === "bishop-bounce") {
+            triggerEffect("ricochet", [from, to]);
+          } else if (mid === "rook-cannon") {
+            triggerEffect("cannon", [to]);
+            setTimeout(() => triggerEffect("explosion", [to]), 350);
+          } else if (mid === "king-ascension") {
+            triggerEffect("explosion", [to]);
+          } else if (chaosMove.type === "capture") {
+            triggerEffect("explosion", [to]);
+          } else {
+            triggerEffect("flash", [to]);
+          }
+        }
+
         playSound("capture");
         setLastMoveHighlight({
           [from]: { backgroundColor: "rgba(168, 85, 247, 0.4)" },
@@ -2820,6 +3104,17 @@ export default function ChaosChessPage() {
               setGame(shielded);
               cs = { ...cs, aiModifiers: cs.aiModifiers.filter((m) => m.id !== "king-shield") };
               setChaosState(cs);
+              // Shield effect on the AI king's square
+              const board = activeGame.board();
+              outer: for (let ri = 0; ri < 8; ri++) {
+                for (let fi = 0; fi < 8; fi++) {
+                  const p = board[ri][fi];
+                  if (p && p.type === "k" && p.color === (playerColor === "white" ? "b" : "w")) {
+                    triggerEffect("shield", [`${"abcdefgh"[fi]}${8 - ri}`]);
+                    break outer;
+                  }
+                }
+              }
               setEventLog((prev) => [...prev, { type: "chaos" as const, message: "🛡️ Opponent's Royal Guard blocked your check!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
               playSound("bruh");
             }
@@ -2951,6 +3246,17 @@ export default function ChaosChessPage() {
           if (shielded) {
             activeG = shielded;
             cs2 = { ...cs2, aiModifiers: cs2.aiModifiers.filter((m) => m.id !== "king-shield") };
+            // Shield effect on the AI king
+            const board = activeG.board();
+            outer: for (let ri = 0; ri < 8; ri++) {
+              for (let fi = 0; fi < 8; fi++) {
+                const p = board[ri][fi];
+                if (p && p.type === "k" && p.color === (playerColor === "white" ? "b" : "w")) {
+                  triggerEffect("shield", [`${"abcdefgh"[fi]}${8 - ri}`]);
+                  break outer;
+                }
+              }
+            }
             setEventLog((prev) => [...prev, { type: "chaos" as const, message: "🛡️ Opponent's Royal Guard blocked your check!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
               playSound("bruh");
             setGame(activeG);
@@ -2990,7 +3296,7 @@ export default function ChaosChessPage() {
 
       return true;
     },
-    [game, gameStatus, playerColor, isThinking, waitingForOpponentDraft, chaosState, gameMode, activeChaosMoves, checkGameEnd, checkDraft, makeAiMove, addMoveToLog, applyPostMove, sendMoveToServer, spawnPepe, recomputeChaosMoves, isKingMoveChaosUnsafe],
+    [game, gameStatus, playerColor, isThinking, waitingForOpponentDraft, chaosState, gameMode, activeChaosMoves, checkGameEnd, checkDraft, makeAiMove, addMoveToLog, applyPostMove, sendMoveToServer, spawnPepe, recomputeChaosMoves, isKingMoveChaosUnsafe, triggerEffect],
   );
 
   /* ── Execute a pending chaos promotion after piece choice ── */
@@ -3310,6 +3616,18 @@ export default function ChaosChessPage() {
       const draftResult = applyDraftEffect(game, mod, pColor as Color, capturedPawns[pColor as "w" | "b"]);
       let currentGame = game;
       if (draftResult) {
+        // Find newly spawned squares by diffing the board before/after
+        const beforeBoard = game.board();
+        const afterBoard = draftResult.board();
+        const spawnedSquares: string[] = [];
+        for (let ri = 0; ri < 8; ri++) {
+          for (let fi = 0; fi < 8; fi++) {
+            if (!beforeBoard[ri][fi] && afterBoard[ri][fi]) {
+              spawnedSquares.push(`${"abcdefgh"[fi]}${8 - ri}`);
+            }
+          }
+        }
+        if (spawnedSquares.length > 0) triggerEffect("spawn", spawnedSquares);
         currentGame = draftResult;
         setGame(draftResult);
         setEventLog((prev) => [...prev, { type: "chaos", message: `🎭 ${mod.name} effect activated! Check the board!`, icon: "🎭", pepe: PEPE.galaxybrain }]);
@@ -3414,7 +3732,7 @@ export default function ChaosChessPage() {
 
       // (AI move is handled inside the sequential reveal timeout above for gameMode === "ai")
     },
-    [chaosState, pendingPhase, playerColor, game, gameMode, makeAiMove, roomId, capturedPawns, spawnPepe, recomputeChaosMoves],
+    [chaosState, pendingPhase, playerColor, game, gameMode, makeAiMove, roomId, capturedPawns, spawnPepe, recomputeChaosMoves, triggerEffect],
   );
 
   /* ── Resign ── */
@@ -4022,7 +4340,7 @@ export default function ChaosChessPage() {
 
           {/* Board — auto-sizes to fill container, capped at 640px */}
           <div ref={boardContainerRef} className="w-full max-w-[640px]">
-            <div className="w-full">
+            <div className="relative w-full">
               <Chessboard
                 id="chaos-board"
                 position={game.fen()}
@@ -4042,6 +4360,7 @@ export default function ChaosChessPage() {
                 animationDuration={200}
                 arePiecesDraggable={gameStatus === "playing" && !isThinking && !waitingForOpponentDraft}
               />
+              <BoardEffectsOverlay effects={boardEffects} boardSize={boardSize} orientation={playerColor} />
             </div>
           </div>
 
