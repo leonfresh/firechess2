@@ -1455,6 +1455,8 @@ function getPieceDisplayName(
     if (m.id === "pegasus" && pieceType === "n") return "Pegasus";
     if (m.id === "amazon" && pieceType === "q") return "The Amazon";
     if (m.id === "king-ascension" && pieceType === "k") return "Ascended King";
+    if (m.id === "dragon-bishop" && pieceType === "b") return "Dragon Bishop";
+    if (m.id === "dragon-rook" && pieceType === "r") return "Dragon Rook";
   }
   return PIECE_BASE_LABELS[pieceType]?.name ?? pieceType.toUpperCase();
 }
@@ -1545,6 +1547,24 @@ function PieceMovementGrid({ pieceType, isWhite, mods }: {
   );
 }
 
+/** Build a move-description string that includes any chaos additions for the given piece */
+function getChaosMoveLabel(pieceType: string, mods: ChaosModifier[]): string {
+  const base = PIECE_BASE_LABELS[pieceType]?.moveLabel ?? "";
+  const extra: string[] = [];
+  const modIds = new Set(mods.map(m => m.id));
+  if (modIds.has("dragon-bishop") && pieceType === "b") extra.push("+ 1 orthogonal step");
+  if (modIds.has("dragon-rook")   && pieceType === "r") extra.push("+ 1 diagonal step");
+  if (modIds.has("knook")         && pieceType === "n") extra.push("+ Rook slides");
+  if (modIds.has("archbishop")    && pieceType === "b") extra.push("+ Knight jumps");
+  if (modIds.has("amazon")        && pieceType === "q") extra.push("+ Knight jumps");
+  if (modIds.has("king-ascension")&& pieceType === "k") extra.push("+ Full queen movement");
+  if (modIds.has("camel")         && pieceType === "n") extra.push("+ 3+1 camel jump");
+  if (modIds.has("pegasus")       && pieceType === "n") extra.push("+ 3+2 extended jump");
+  if (modIds.has("pawn-charge")   && pieceType === "p") extra.push("+ always 2-square push");
+  if (modIds.has("pawn-capture-forward") && pieceType === "p") extra.push("+ forward capture");
+  return extra.length > 0 ? `${base} ${extra.join("; ")}.` : base;
+}
+
 /** Sidebar panel: rendered when the user hovers a piece */
 function PieceInfoPanel({
   square, game, playerMods, aiMods, playerColorCode, assignedSquares,
@@ -1569,7 +1589,6 @@ function PieceInfoPanel({
   const isPlayerPiece = piece.color === playerColorCode;
   const mods = isPlayerPiece ? playerMods : aiMods;
   const pieceTypeMods = mods.filter(m => m.piece === (piece.type as PieceType));
-  const pieceLabel = PIECE_BASE_LABELS[piece.type] ?? { name: piece.type.toUpperCase(), moveLabel: "" };
   const displayName = getPieceDisplayName(piece.type, mods, square, assignedSquares, piece.color);
   const sideClass = isPlayerPiece ? "text-emerald-400" : "text-red-400";
 
@@ -1591,7 +1610,7 @@ function PieceInfoPanel({
           <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-purple-500/55" />Chaos</span>
         )}
       </div>
-      <p className="mt-1.5 text-[10px] text-slate-500">{pieceLabel.moveLabel}</p>
+      <p className="mt-1.5 text-[10px] text-slate-500">{getChaosMoveLabel(piece.type, pieceTypeMods)}</p>
       {pieceTypeMods.length > 0 ? (
         <div className="mt-2 space-y-1.5">
           <p className="text-[10px] font-semibold uppercase tracking-wider text-purple-400">Special rules:</p>
@@ -3805,7 +3824,7 @@ export default function ChaosChessPage() {
     [game, gameStatus, playerColor, isThinking, selectedSquare, handlePlayerMove, activeChaosMoves, isKingMoveChaosUnsafe],
   );
 
-  /* ── Hover: show enemy piece moves on board + piece info in sidebar ── */
+  /* ── Hover: show piece moves on board + piece info in sidebar ── */
   const handleMouseOverSquare = useCallback((square: CbSquare) => {
     setHoveredSquare(square);
     if (selectedSquare) return; // don't overlay when a piece is already selected
@@ -3813,8 +3832,30 @@ export default function ChaosChessPage() {
     if (!piece) return;
     const playerCode = playerColor === "white" ? "w" : "b";
     const isEnemyPiece = piece.color !== playerCode;
-    if (!isEnemyPiece) return;
-    // Compute enemy moves (display-only: flip turn in a temp FEN)
+
+    if (!isEnemyPiece) {
+      // Player piece — show legal moves in blue/indigo
+      const highlights: Record<string, React.CSSProperties> = {
+        [square]: { backgroundColor: "rgba(99,102,241,0.3)" },
+      };
+      const legalMoves = game.moves({ square: square as any, verbose: true });
+      for (const m of legalMoves) {
+        highlights[m.to] = {
+          backgroundColor: (m as any).captured ? "rgba(99,102,241,0.45)" : "rgba(99,102,241,0.18)",
+          borderRadius: (m as any).captured ? undefined : "50%",
+        };
+      }
+      for (const cm of activeChaosMoves.filter(m => m.from === square)) {
+        highlights[cm.to] = {
+          backgroundColor: cm.type === "capture" ? "rgba(168,85,247,0.45)" : "rgba(168,85,247,0.18)",
+          borderRadius: cm.type === "capture" ? undefined : "50%",
+        };
+      }
+      setHoverMoveSquares(highlights);
+      return;
+    }
+
+    // Enemy piece — show hypothetical moves in red
     const highlights: Record<string, React.CSSProperties> = {
       [square]: { backgroundColor: "rgba(239,68,68,0.3)" },
     };
@@ -3842,7 +3883,7 @@ export default function ChaosChessPage() {
       };
     }
     setHoverMoveSquares(highlights);
-  }, [game, playerColor, chaosState, selectedSquare]);
+  }, [game, playerColor, chaosState, selectedSquare, activeChaosMoves]);
 
   const handleMouseOutSquare = useCallback(() => {
     setHoveredSquare(null);
@@ -3919,6 +3960,9 @@ export default function ChaosChessPage() {
       // Also update gameStatusRef synchronously so the WS guard ("drafting" → drop move)
       // can't fire between setGameStatus() and React's next render commit.
       gameStatusRef.current = "playing";
+      setSelectedSquare(null);
+      setLegalMoveSquares({});
+      setHoverMoveSquares({});
       if (isMultiplayer) {
         const isFirstDrafter = playerColor === "white";
         setGameStatus("playing");
@@ -5060,10 +5104,10 @@ export default function ChaosChessPage() {
 
         {/* ── Right sidebar / bottom panel: Event log + Move log ── */}
         <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-1">
-          {/* Piece info panel — shows on hover */}
+          {/* Piece info panel — selected or hovered piece */}
           <div className="sm:col-span-2 lg:col-span-1">
             <PieceInfoPanel
-              square={hoveredSquare}
+              square={hoveredSquare ?? selectedSquare}
               game={game}
               playerMods={chaosState.playerModifiers}
               aiMods={chaosState.aiModifiers}
