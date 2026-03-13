@@ -2260,19 +2260,34 @@ export default function ChaosChessPage() {
         const aiColor = playerColor === "white" ? "b" : "w";
         const aiChaosMoves = getChaosMoves(g, cs.aiModifiers, aiColor as Color, cs.assignedSquares, cs.playerModifiers);
 
-        // Evaluate chaos moves with Stockfish — only use if genuinely good
-        // 35% chance to even consider chaos moves (prevents spamming)
-        if (aiChaosMoves.length > 0 && Math.random() < 0.35) {
+        // Evaluate chaos moves — captures sorted by material gain are always evaluated;
+        // positional (non-capture) chaos moves are considered 30% of the time.
+        if (aiChaosMoves.length > 0) {
+          const PIECE_VAL: Record<string, number> = { p: 100, n: 325, b: 325, r: 500, q: 900, k: 20000 };
+
+          // Sort captures by net material gain (greedy-first), always evaluate up to 6
+          const chaosCaps = aiChaosMoves
+            .filter(cm => cm.type === "capture")
+            .map(cm => {
+              const target  = g.get(cm.to   as any);
+              const attacker = g.get(cm.from as any);
+              const gain = (PIECE_VAL[target?.type ?? ""] ?? 0) - (PIECE_VAL[attacker?.type ?? ""] ?? 0) * 0.35;
+              return { cm, gain };
+            })
+            .sort((a, b) => b.gain - a.gain);
+
+          const chaosNonCaps = aiChaosMoves.filter(cm => cm.type !== "capture");
+          const sample = [
+            ...chaosCaps.slice(0, 6).map(x => x.cm),
+            ...(Math.random() < 0.30 ? chaosNonCaps.slice(0, 3) : []),
+          ];
+
+          if (sample.length > 0) {
           // Get normal Stockfish eval as baseline
           const normalResult = await stockfishPool.evaluateFen(g.fen(), aiDepth);
           const normalEval = normalResult?.cp ?? 0; // from AI's (side-to-move) perspective
 
-          // Evaluate a random sample of chaos moves (max 4 for speed)
           const evalDepth = Math.min(aiDepth, 10);
-          const sample =
-            aiChaosMoves.length <= 4
-              ? aiChaosMoves
-              : [...aiChaosMoves].sort(() => Math.random() - 0.5).slice(0, 4);
 
           type ScoredChaos = { move: ChaosMove; eval: number; game: Chess };
           const scored: ScoredChaos[] = [];
@@ -2296,8 +2311,9 @@ export default function ChaosChessPage() {
             scored.sort((a, b) => b.eval - a.eval);
             const best = scored[0];
 
-            // Only use chaos move if it's at least as good as normal play (max 30cp worse)
-            if (best.eval >= normalEval - 30) {
+            // Captures tolerated 50 cp below normal eval (Stockfish was blind to this threat);
+            // non-captures need to roughly match normal play (30 cp tolerance)
+            if (best.eval >= normalEval - (best.move.type === "capture" ? 50 : 30)) {
               // AI captured the player's king via chaos move
               if (best.eval >= 1_000_000) {
                 const aiWinner = playerColor === "white" ? "black" : "white";
@@ -2387,6 +2403,7 @@ export default function ChaosChessPage() {
               return;
             }
           }
+          } // if (sample.length > 0)
         }
 
         // Chaos-threat-aware Stockfish move
