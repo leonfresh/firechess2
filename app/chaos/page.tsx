@@ -172,7 +172,7 @@ const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
   "collateral-rook": { icon: "💥", iconGlow: "rgba(249,115,22,0.8)", glow: "rgba(249,115,22,0.4)" },
   "nuclear-queen": { icon: "☢️", iconGlow: "rgba(34,197,94,0.9)", glow: "rgba(34,197,94,0.5)" },
   "dragon-rook": {
-    glow: "rgba(217,119,6,0.4)",
+    glow: "rgba(220,38,38,0.4)",
   },
   "pawn-charge": { icon: "🚀", iconGlow: "rgba(59,130,246,0.6)", glow: "rgba(59,130,246,0.4)" },
   "pawn-capture-forward": { icon: "🗡️", iconGlow: "rgba(239,68,68,0.6)", glow: "rgba(239,68,68,0.4)" },

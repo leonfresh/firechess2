@@ -17,17 +17,19 @@
   </defs>
 
   <!-- Teal fin wings at the bishop waist -->
-  <!-- Left fin -->
-  <path d="M18,23 C12,19.5 5,21 7.5,25 C5,29 12,29.5 18,27 Z"
+  <!-- Left fin — swept dragon wing from shoulder to hip -->
+  <path d="M18,20 C11,15.5 3,18 4,25 C3,32 11,34 18,30 Z"
         fill="url(#bDb-fin-l)" opacity="0.88"/>
-  <path d="M17,24 C12,21 7,23 8.5,25 C7,27 12,27.5 17,26 Z"
-        fill="#22d3ee" opacity="0.18"/>
+  <!-- Left fin inner highlight ridge -->
+  <path d="M17.5,22 C12,18.5 5.5,20.5 6,25 C5.5,29.5 12,31.5 17.5,28 Z"
+        fill="#22d3ee" opacity="0.2"/>
 
-  <!-- Right fin -->
-  <path d="M32,23 C38,19.5 45,21 42.5,25 C45,29 38,29.5 32,27 Z"
+  <!-- Right fin — mirror -->
+  <path d="M32,20 C39,15.5 47,18 46,25 C47,32 39,34 32,30 Z"
         fill="url(#bDb-fin-r)" opacity="0.88"/>
-  <path d="M33,24 C38,21 43,23 41.5,25 C43,27 38,27.5 33,26 Z"
-        fill="#22d3ee" opacity="0.18"/>
+  <!-- Right fin inner highlight ridge -->
+  <path d="M32.5,22 C38,18.5 44.5,20.5 44,25 C44.5,29.5 38,31.5 32.5,28 Z"
+        fill="#22d3ee" opacity="0.2"/>
 
   <!-- Teal halo ring around bishop ball -->
   <circle cx="25" cy="10.8" r="4.2" fill="none" stroke="#0891b2" stroke-width="0.9" opacity="0.6"/>
