@@ -108,7 +108,9 @@ const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
       );
     },
   },
-  "knight-retreat": { icon: "🥾", iconGlow: "rgba(34,197,94,0.6)" },
+  "camel": {
+    glow: "rgba(245,158,11,0.45)",
+  },
   knook: {
     glow: "rgba(59,130,246,0.5)",
     render: (sw) => {
@@ -169,10 +171,30 @@ const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
   },
   "collateral-rook": { icon: "💥", iconGlow: "rgba(249,115,22,0.8)", glow: "rgba(249,115,22,0.4)" },
   "nuclear-queen": { icon: "☢️", iconGlow: "rgba(34,197,94,0.9)", glow: "rgba(34,197,94,0.5)" },
-  "rook-charge": { icon: "🥾", iconGlow: "rgba(59,130,246,0.6)" },
+  "rook-vault": {
+    glow: "rgba(148,163,184,0.35)",
+    render: (sw) => {
+      const s = sw * 0.28;
+      return (
+        <svg viewBox="0 0 24 24" width={s} height={s} style={{ position: "absolute", top: "2%", right: "2%", opacity: 0.9, filter: "drop-shadow(0 0 3px rgba(148,163,184,0.9))" }}>
+          <path d="M10 2 L14 2 L14 10 L22 10 L22 14 L14 14 L14 22 L10 22 L10 14 L2 14 L2 10 L10 10 Z" fill="rgba(148,163,184,0.85)" stroke="rgba(226,232,240,0.8)" strokeWidth="0.5"/>
+        </svg>
+      );
+    },
+  },
   "pawn-charge": { icon: "🚀", iconGlow: "rgba(59,130,246,0.6)", glow: "rgba(59,130,246,0.4)" },
   "pawn-capture-forward": { icon: "🗡️", iconGlow: "rgba(239,68,68,0.6)", glow: "rgba(239,68,68,0.4)" },
-  "bishop-slide": { icon: "🥾", iconGlow: "rgba(96,165,250,0.6)" },
+  "bishop-vault": {
+    glow: "rgba(251,191,36,0.35)",
+    render: (sw) => {
+      const s = sw * 0.28;
+      return (
+        <svg viewBox="0 0 24 24" width={s} height={s} style={{ position: "absolute", top: "2%", left: "2%", opacity: 0.9, filter: "drop-shadow(0 0 3px rgba(251,191,36,0.9))" }}>
+          <path d="M12 3 L15 9 L21 12 L15 15 L12 21 L9 15 L3 12 L9 9 Z" fill="rgba(251,191,36,0.85)" stroke="rgba(254,240,138,0.8)" strokeWidth="0.5"/>
+        </svg>
+      );
+    },
+  },
   "pawn-promotion-early": { icon: "⭐", iconGlow: "rgba(234,179,8,0.8)", glow: "rgba(234,179,8,0.3)" },
   "king-shield": { icon: "🛡️", iconGlow: "rgba(59,130,246,0.6)" },
   "king-wrath": { icon: "⚔️", iconGlow: "rgba(239,68,68,0.7)" },
@@ -198,6 +220,7 @@ const PIECE_CODE_MAP: Record<string, string> = {
 const SINGLE_PIECE_MODIFIERS: Record<string, true> = {
   knook: true,
   archbishop: true,
+  camel: true,
 };
 
 /** Fairy piece SVG replacements — full piece image swap for transformative modifiers */
@@ -206,6 +229,7 @@ const FAIRY_PIECE_SVGS: Record<string, Record<string, string>> = {
   archbishop:             { w: "/pieces/fairy/wA.svg",  b: "/pieces/fairy/bA.svg" },
   amazon:                 { w: "/pieces/fairy/wAm.svg", b: "/pieces/fairy/bAm.svg" },
   pegasus:                { w: "/pieces/fairy/wPg.svg", b: "/pieces/fairy/bPg.svg" },
+  camel:                  { w: "/pieces/fairy/wCa.svg", b: "/pieces/fairy/bCa.svg" },
   "pawn-charge":          { w: "/pieces/fairy/wPC.svg", b: "/pieces/fairy/bPC.svg" },
   "pawn-capture-forward": { w: "/pieces/fairy/wPB.svg", b: "/pieces/fairy/bPB.svg" },
 };
@@ -1388,6 +1412,195 @@ function BoardEffectsOverlay({
   );
 }
 
+/* ────────────────────── Piece Info Panel ─────────────────────── */
+
+const PIECE_BASE_LABELS: Record<string, { name: string; moveLabel: string }> = {
+  p: { name: "Pawn",   moveLabel: "Moves 1 forward; 2 from start. Captures diagonally." },
+  n: { name: "Knight", moveLabel: "L-jump (2+1). Leaps over all pieces." },
+  b: { name: "Bishop", moveLabel: "Any distance diagonally. Stays on one color." },
+  r: { name: "Rook",   moveLabel: "Any distance horizontally or vertically." },
+  q: { name: "Queen",  moveLabel: "Any direction, any distance." },
+  k: { name: "King",   moveLabel: "1 square in any direction. Keep it safe!" },
+};
+
+/** Get fancy display name for a piece when it carries a transformative modifier */
+function getPieceDisplayName(
+  pieceType: string,
+  mods: ChaosModifier[],
+  square: string,
+  assignedSquares?: Record<string, string | null>,
+  color?: string,
+): string {
+  const singlePieceMods: Record<string, true> = { knook: true, archbishop: true, camel: true, pegasus: true };
+  for (const m of mods) {
+    if (singlePieceMods[m.id]) {
+      const trackedKey = `${color}_${m.id}`;
+      const trackedSq = assignedSquares?.[trackedKey];
+      if (trackedSq !== undefined && trackedSq !== square) continue;
+    }
+    if (m.id === "knook" && pieceType === "n") return "The Knook";
+    if (m.id === "archbishop" && pieceType === "b") return "The Archbishop";
+    if (m.id === "camel" && pieceType === "n") return "Camel";
+    if (m.id === "pegasus" && pieceType === "n") return "Pegasus";
+    if (m.id === "amazon" && pieceType === "q") return "The Amazon";
+    if (m.id === "king-ascension" && pieceType === "k") return "Ascended King";
+  }
+  return PIECE_BASE_LABELS[pieceType]?.name ?? pieceType.toUpperCase();
+}
+
+/** 7×7 relative-movement schematic for the piece info panel */
+function PieceMovementGrid({ pieceType, isWhite, mods }: {
+  pieceType: string;
+  isWhite: boolean;
+  mods: ChaosModifier[];
+}) {
+  const SIZE = 7;
+  const C = 3;
+  type CellType = "piece" | "base" | "capture-base" | "chaos" | "capture-chaos" | null;
+  const cells: CellType[][] = Array.from({ length: SIZE }, () => Array(SIZE).fill(null) as CellType[]);
+  cells[C][C] = "piece";
+  const fwd = isWhite ? -1 : 1;
+  function mark(dr: number, dc: number, ct: CellType) {
+    const r = C + dr, co = C + dc;
+    if (r >= 0 && r < SIZE && co >= 0 && co < SIZE && !(dr === 0 && dc === 0)) cells[r][co] = ct;
+  }
+  function tryMark(dr: number, dc: number, ct: CellType) {
+    const r = C + dr, co = C + dc;
+    if (r >= 0 && r < SIZE && co >= 0 && co < SIZE && !cells[r][co]) mark(dr, dc, ct);
+  }
+  if (pieceType === "p") {
+    mark(fwd, 0, "base"); mark(2 * fwd, 0, "base");
+    mark(fwd, -1, "capture-base"); mark(fwd, 1, "capture-base");
+  } else if (pieceType === "n") {
+    for (const [dr, dc] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]])
+      mark(dr, dc, "capture-base");
+  } else if (pieceType === "b") {
+    for (let d = 1; d <= 3; d++)
+      for (const [dr, dc] of [[d,d],[d,-d],[-d,d],[-d,-d]] as [number,number][]) mark(dr, dc, "base");
+  } else if (pieceType === "r") {
+    for (let d = 1; d <= 3; d++)
+      for (const [dr, dc] of [[d,0],[-d,0],[0,d],[0,-d]] as [number,number][]) mark(dr, dc, "base");
+  } else if (pieceType === "q") {
+    for (let d = 1; d <= 3; d++)
+      for (const [dr, dc] of [[d,0],[-d,0],[0,d],[0,-d],[d,d],[d,-d],[-d,d],[-d,-d]] as [number,number][]) mark(dr, dc, "base");
+  } else if (pieceType === "k") {
+    for (const [dr, dc] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]] as [number,number][])
+      mark(dr, dc, "capture-base");
+  }
+  const modIds = new Set(mods.map(m => m.id));
+  if (modIds.has("camel"))
+    for (const [dr,dc] of [[-3,-1],[-3,1],[-1,-3],[-1,3],[1,-3],[1,3],[3,-1],[3,1]] as [number,number][]) tryMark(dr, dc, "chaos");
+  if (modIds.has("bishop-vault"))
+    for (const [dr,dc] of [[-2,-2],[-2,2],[2,-2],[2,2]] as [number,number][]) tryMark(dr, dc, "chaos");
+  if (modIds.has("rook-vault"))
+    for (const [dr,dc] of [[-2,0],[2,0],[0,-2],[0,2]] as [number,number][]) tryMark(dr, dc, "chaos");
+  if (modIds.has("pawn-charge")) tryMark(2 * fwd, 0, "chaos");
+  if (modIds.has("pawn-capture-forward")) tryMark(fwd, 0, "capture-chaos");
+  if (modIds.has("knook"))
+    for (let d = 1; d <= 3; d++)
+      for (const [dr,dc] of [[d,0],[-d,0],[0,d],[0,-d]] as [number,number][]) tryMark(dr, dc, "chaos");
+  if (modIds.has("archbishop"))
+    for (const [dr,dc] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]] as [number,number][]) tryMark(dr, dc, "chaos");
+  if (modIds.has("amazon"))
+    for (const [dr,dc] of [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]] as [number,number][]) tryMark(dr, dc, "chaos");
+  if (modIds.has("king-ascension"))
+    for (let d = 1; d <= 3; d++)
+      for (const [dr,dc] of [[d,0],[-d,0],[0,d],[0,-d],[d,d],[d,-d],[-d,d],[-d,-d]] as [number,number][]) tryMark(dr, dc, "chaos");
+  if (modIds.has("pegasus"))
+    for (const [dr,dc] of [[-3,-2],[-3,2],[3,-2],[3,2],[-2,-3],[-2,3],[2,-3],[2,3]] as [number,number][]) tryMark(dr, dc, "chaos");
+
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: `repeat(${SIZE}, 1fr)`, gap: "1px", backgroundColor: "rgba(255,255,255,0.05)", borderRadius: "6px", overflow: "hidden", padding: "1px" }}>
+      {cells.flatMap((row, ri) =>
+        row.map((cell, ci) => {
+          const isDark = (ri + ci) % 2 === 0;
+          const bg =
+            cell === "piece"         ? "rgba(168,85,247,0.85)" :
+            cell === "base"          ? "rgba(34,197,94,0.55)"  :
+            cell === "capture-base"  ? "rgba(239,68,68,0.55)"  :
+            cell === "chaos"         ? "rgba(168,85,247,0.55)" :
+            cell === "capture-chaos" ? "rgba(249,115,22,0.6)"  :
+            isDark ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.25)";
+          return (
+            <div key={`${ri}-${ci}`} style={{
+              aspectRatio: "1",
+              backgroundColor: bg,
+              borderRadius: (cell === "base" || cell === "chaos") ? "50%" : undefined,
+            }} />
+          );
+        })
+      )}
+    </div>
+  );
+}
+
+/** Sidebar panel: rendered when the user hovers a piece */
+function PieceInfoPanel({
+  square, game, playerMods, aiMods, playerColorCode, assignedSquares,
+}: {
+  square: string | null;
+  game: Chess;
+  playerMods: ChaosModifier[];
+  aiMods: ChaosModifier[];
+  playerColorCode: "w" | "b";
+  assignedSquares?: Record<string, string | null>;
+}) {
+  if (!square) {
+    return (
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+        <p className="text-[11px] text-slate-600">Hover a piece to see its movement</p>
+      </div>
+    );
+  }
+  const piece = game.get(square as any);
+  if (!piece) return null;
+
+  const isPlayerPiece = piece.color === playerColorCode;
+  const mods = isPlayerPiece ? playerMods : aiMods;
+  const pieceTypeMods = mods.filter(m => m.piece === (piece.type as PieceType));
+  const pieceLabel = PIECE_BASE_LABELS[piece.type] ?? { name: piece.type.toUpperCase(), moveLabel: "" };
+  const displayName = getPieceDisplayName(piece.type, mods, square, assignedSquares, piece.color);
+  const sideClass = isPlayerPiece ? "text-emerald-400" : "text-red-400";
+
+  return (
+    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3">
+      <div className="mb-2 flex items-center gap-2">
+        <span className={`text-sm font-bold ${sideClass}`}>{displayName}</span>
+        <span className={`ml-auto rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${
+          isPlayerPiece ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400"
+        }`}>
+          {isPlayerPiece ? "Yours" : "Enemy"}
+        </span>
+      </div>
+      <PieceMovementGrid pieceType={piece.type} isWhite={piece.color === "w"} mods={pieceTypeMods} />
+      <div className="mt-1.5 flex flex-wrap gap-2.5 text-[10px] text-slate-500">
+        <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-emerald-500/55" />Move</span>
+        <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 bg-red-500/55" />Capture</span>
+        {pieceTypeMods.length > 0 && (
+          <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-purple-500/55" />Chaos</span>
+        )}
+      </div>
+      <p className="mt-1.5 text-[10px] text-slate-500">{pieceLabel.moveLabel}</p>
+      {pieceTypeMods.length > 0 ? (
+        <div className="mt-2 space-y-1.5">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-purple-400">Special rules:</p>
+          {pieceTypeMods.map(m => (
+            <div key={m.id} className="rounded-lg border border-purple-500/20 bg-purple-500/5 px-2 py-1.5">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-purple-300">
+                <Emoji emoji={m.icon} style={{ width: 12, height: 12 }} />
+                {m.name}
+              </div>
+              <p className="mt-0.5 text-[10px] leading-relaxed text-slate-400">{m.description}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-1 text-[10px] text-slate-600">Special rules: None.</p>
+      )}
+    </div>
+  );
+}
+
 /* ────────────────────────── Main Page ────────────────────────── */
 
 const EFFECT_DURATIONS: Record<string, number> = {
@@ -1520,6 +1733,8 @@ export default function ChaosChessPage() {
   const [selectedSquare, setSelectedSquare] = useState<CbSquare | null>(null);
   const [legalMoveSquares, setLegalMoveSquares] = useState<Record<string, React.CSSProperties>>({});
   const [lastMoveHighlight, setLastMoveHighlight] = useState<Record<string, React.CSSProperties>>({});
+  const [hoveredSquare, setHoveredSquare] = useState<string | null>(null);
+  const [hoverMoveSquares, setHoverMoveSquares] = useState<Record<string, React.CSSProperties>>({});
 
   /* ── Chaos promotion choice dialog ── */
   const [pendingPromotion, setPendingPromotion] = useState<ChaosMove | null>(null);
@@ -3512,6 +3727,50 @@ export default function ChaosChessPage() {
     [game, gameStatus, playerColor, isThinking, selectedSquare, handlePlayerMove, activeChaosMoves, isKingMoveChaosUnsafe],
   );
 
+  /* ── Hover: show enemy piece moves on board + piece info in sidebar ── */
+  const handleMouseOverSquare = useCallback((square: CbSquare) => {
+    setHoveredSquare(square);
+    if (selectedSquare) return; // don't overlay when a piece is already selected
+    const piece = game.get(square as any);
+    if (!piece) return;
+    const playerCode = playerColor === "white" ? "w" : "b";
+    const isEnemyPiece = piece.color !== playerCode;
+    if (!isEnemyPiece) return;
+    // Compute enemy moves (display-only: flip turn in a temp FEN)
+    const highlights: Record<string, React.CSSProperties> = {
+      [square]: { backgroundColor: "rgba(239,68,68,0.3)" },
+    };
+    try {
+      const parts = game.fen().split(" ");
+      parts[1] = piece.color;
+      parts[3] = "-";
+      const enemyGame = new Chess(parts.join(" "));
+      const stdMoves = enemyGame.moves({ square: square as any, verbose: true });
+      for (const m of stdMoves) {
+        highlights[m.to] = {
+          backgroundColor: m.captured ? "rgba(239,68,68,0.45)" : "rgba(239,68,68,0.18)",
+          borderRadius: m.captured ? undefined : "50%",
+        };
+      }
+    } catch { /* ignore invalid FEN edge-cases */ }
+    // Enemy chaos moves for this square
+    const enemyColor = piece.color as Color;
+    const enemyMods = enemyColor === playerCode ? chaosState.playerModifiers : chaosState.aiModifiers;
+    const enemyChaosMoves = getChaosMoves(game, enemyMods, enemyColor, chaosState.assignedSquares ?? undefined);
+    for (const cm of enemyChaosMoves.filter(m => m.from === square)) {
+      highlights[cm.to] = {
+        backgroundColor: cm.type === "capture" ? "rgba(249,115,22,0.45)" : "rgba(249,115,22,0.18)",
+        borderRadius: cm.type === "capture" ? undefined : "50%",
+      };
+    }
+    setHoverMoveSquares(highlights);
+  }, [game, playerColor, chaosState, selectedSquare]);
+
+  const handleMouseOutSquare = useCallback(() => {
+    setHoveredSquare(null);
+    setHoverMoveSquares({});
+  }, []);
+
   /* ── Handle draft pick ── */
   const handleDraftPick = useCallback(
     (mod: ChaosModifier) => {
@@ -3540,8 +3799,8 @@ export default function ChaosChessPage() {
         stateWithTracking = applyDraft(chaosState, mod, pendingPhase, { skipOpponentRoll: true });
       }
 
-      // Track single-piece modifiers (archbishop, knook) to prevent transfer on capture
-      const SINGLE_PIECE_MODS: Record<string, string> = { archbishop: "b", knook: "n", pegasus: "n" };
+      // Track single-piece modifiers (archbishop, knook, camel) to prevent transfer on capture
+      const SINGLE_PIECE_MODS: Record<string, string> = { archbishop: "b", knook: "n", pegasus: "n", camel: "n" };
 
       // Track the player's pick
       if (SINGLE_PIECE_MODS[mod.id]) {
@@ -3654,7 +3913,7 @@ export default function ChaosChessPage() {
           setTimeout(() => {
             let newState = { ...stateWithTracking, aiModifiers: [...stateWithTracking.aiModifiers, aiPick] };
             // Initialize tracking for the AI's new single-piece modifier
-            const SINGLE_PIECE_MODS: Record<string, string> = { archbishop: "b", knook: "n", pegasus: "n" };
+            const SINGLE_PIECE_MODS: Record<string, string> = { archbishop: "b", knook: "n", pegasus: "n", camel: "n" };
             if (SINGLE_PIECE_MODS[aiPick.id]) {
               const pieceType = SINGLE_PIECE_MODS[aiPick.id] as any;
               for (const f of "abcdefgh") for (const r of "12345678") {
@@ -3857,8 +4116,8 @@ export default function ChaosChessPage() {
 
   /* ── Board squares merging ── */
   const mergedSquareStyles = useMemo(() => {
-    return { ...lastMoveHighlight, ...legalMoveSquares };
-  }, [lastMoveHighlight, legalMoveSquares]);
+    return { ...lastMoveHighlight, ...hoverMoveSquares, ...legalMoveSquares };
+  }, [lastMoveHighlight, hoverMoveSquares, legalMoveSquares]);
 
   /* ── Reset warp-queen toggle after every move ── */
   useEffect(() => {
@@ -4348,6 +4607,8 @@ export default function ChaosChessPage() {
                 onBoardWidthChange={setBoardSize}
                 onPieceDrop={(from, to) => handlePlayerMove(from as CbSquare, to as CbSquare)}
                 onSquareClick={handleSquareClick}
+                onMouseOverSquare={handleMouseOverSquare}
+                onMouseOutSquare={handleMouseOutSquare}
                 customSquareStyles={mergedSquareStyles}
                 customBoardStyle={{
                   borderRadius: "8px",
@@ -4721,6 +4982,18 @@ export default function ChaosChessPage() {
 
         {/* ── Right sidebar / bottom panel: Event log + Move log ── */}
         <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-1">
+          {/* Piece info panel — shows on hover */}
+          <div className="sm:col-span-2 lg:col-span-1">
+            <PieceInfoPanel
+              square={hoveredSquare}
+              game={game}
+              playerMods={chaosState.playerModifiers}
+              aiMods={chaosState.aiModifiers}
+              playerColorCode={playerColor === "white" ? "w" : "b"}
+              assignedSquares={chaosState.assignedSquares ?? undefined}
+            />
+          </div>
+
           {/* Event log */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3">
             <h3 className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-purple-400 sm:mb-2 sm:text-xs">

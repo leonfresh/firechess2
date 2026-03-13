@@ -52,6 +52,8 @@ export interface ChessboardCompatProps {
   // Callbacks — v4 signatures
   onPieceDrop?: (sourceSquare: string, targetSquare: string, piece?: string) => boolean;
   onSquareClick?: (square: string) => void;
+  onMouseOverSquare?: (square: string) => void;
+  onMouseOutSquare?: (square: string) => void;
   onPieceDragBegin?: (piece: string, sourceSquare: string) => void;
   onBoardWidthChange?: (width: number) => void;
   onPromotionPieceSelect?: (
@@ -203,6 +205,18 @@ export function Chessboard(props: ChessboardCompatProps) {
             piece: piece.pieceType,
             sourceSquare: square ?? "",
           });
+        }
+      : undefined,
+
+    onMouseOverSquare: props.onMouseOverSquare
+      ? ({ square }: SquareHandlerArgs) => {
+          props.onMouseOverSquare!(square ?? "");
+        }
+      : undefined,
+
+    onMouseOutSquare: props.onMouseOutSquare
+      ? ({ square }: SquareHandlerArgs) => {
+          props.onMouseOutSquare!(square ?? "");
         }
       : undefined,
 
