@@ -66,6 +66,7 @@ const FREE_MAX_DEPTH = 12;
 const FREE_MAX_MOVES = 30;
 const FREE_TACTIC_SAMPLE = 10;
 const FREE_ENDGAME_SAMPLE = 10;
+const FREE_POSITIONAL_SAMPLE = 3;
 const LOCAL_PRO_HOTKEY_ENABLED = process.env.NEXT_PUBLIC_ENABLE_LOCAL_PRO_HOTKEY !== "false";
 const IS_DEV = process.env.NODE_ENV !== "production";
 
@@ -2699,8 +2700,13 @@ export default function HomePage() {
                     <h2 className="text-2xl font-extrabold text-white tracking-tight">
                       Positional Patterns
                       <span className="ml-3 inline-flex items-center rounded-full bg-amber-500/15 px-3 py-1 text-base font-bold text-amber-400">
-                        {positionalMotifs.length}
+                        {hasProAccess ? positionalMotifs.length : `${Math.min(positionalMotifs.length, FREE_POSITIONAL_SAMPLE)} of ${positionalMotifs.length}`}
                       </span>
+                      {!hasProAccess && positionalMotifs.length > FREE_POSITIONAL_SAMPLE && (
+                        <span className="ml-2 inline-flex items-center rounded-full bg-slate-700/60 px-2.5 py-1 text-xs font-semibold text-slate-400">
+                          🔒 Free preview
+                        </span>
+                      )}
                     </h2>
                     <p className="mt-1 text-sm text-slate-400">
                       Recurring positional habits detected across your games — premature trades, released tension, passive retreats, and more
@@ -2712,7 +2718,7 @@ export default function HomePage() {
 
               {patternsOpen && (
               <div className="space-y-3">
-                {positionalMotifs.map((motif) => {
+                {(hasProAccess ? positionalMotifs : positionalMotifs.slice(0, FREE_POSITIONAL_SAMPLE)).map((motif) => {
                   const pattern = POSITIONAL_PATTERNS.find(p => motif.name.startsWith(p.label) || motif.name.includes(p.tag));
                   const quote = pattern?.quote;
                   const author = pattern?.author;
@@ -2982,6 +2988,24 @@ export default function HomePage() {
                         Head to the <Link href="/train" className="text-amber-400 underline underline-offset-2 hover:text-amber-300">Training Center</Link> to practice positions with these exact patterns.
                       </span>
                     </p>
+                  </div>
+                )}
+
+                {!hasProAccess && positionalMotifs.length > FREE_POSITIONAL_SAMPLE && (
+                  <div className="glass-card border-amber-500/20 bg-amber-500/[0.04] p-6 text-center">
+                    <span className="text-3xl">🔒</span>
+                    <p className="mt-3 text-lg font-bold text-white">
+                      {positionalMotifs.length - FREE_POSITIONAL_SAMPLE} more pattern{positionalMotifs.length - FREE_POSITIONAL_SAMPLE === 1 ? "" : "s"} locked
+                    </p>
+                    <p className="mt-1 text-sm text-slate-400">
+                      Pro users see all {positionalMotifs.length} detected patterns
+                    </p>
+                    <Link
+                      href="/pricing"
+                      className="mt-4 inline-flex items-center gap-2 rounded-full bg-amber-500 px-5 py-2 text-sm font-bold text-white shadow-lg shadow-amber-500/30 transition-opacity hover:opacity-90"
+                    >
+                      Unlock Pro
+                    </Link>
                   </div>
                 )}
 

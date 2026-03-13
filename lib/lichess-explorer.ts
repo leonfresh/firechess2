@@ -39,7 +39,9 @@ export type ExplorerResult = {
 /*  Constants                                                          */
 /* ------------------------------------------------------------------ */
 
-const API_BASE = "https://explorer.lichess.org/lichess";
+// Route through our server-side proxy to avoid CORS/COEP issues when called
+// from the browser under Cross-Origin-Embedder-Policy: require-corp.
+const API_BASE = "/api/explorer";
 
 /** Only consider moves with at least this many games. */
 const MIN_GAMES = 100;
@@ -157,18 +159,13 @@ export async function fetchExplorerMoves(
 
     for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
       try {
-        const url = new URL(API_BASE);
-        url.searchParams.set("variant", "standard");
+        const url = new URL(API_BASE, window.location.origin);
         url.searchParams.set("fen", fen);
-        url.searchParams.set("speeds", "bullet,blitz,rapid,classical");
-        url.searchParams.set("ratings", "1600,1800,2000,2200,2500");
-        url.searchParams.set("topGames", "0");
-        url.searchParams.set("recentGames", "0");
-        url.searchParams.set("source", "analysis");
+        url.searchParams.set("sideToMove", sideToMove);
 
         const res = await fetch(url.toString(), {
           headers: { Accept: "application/json" },
-          signal: AbortSignal.timeout(8000),
+          signal: AbortSignal.timeout(12000),
         });
 
         lastResponse = res;

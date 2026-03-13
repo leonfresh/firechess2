@@ -38,6 +38,7 @@ import {
   createChaosState,
   checkDraftTrigger,
   rollDraftChoices,
+  countPiecesFromFen,
   applyDraft,
   getAiDraftMessage,
   getPhaseLabel,
@@ -48,6 +49,7 @@ import {
   type ChaosState,
   type ChaosModifier,
   type ModifierTier,
+  type PieceType,
 } from "@/lib/chaos-chess";
 import {
   getChaosMoves,
@@ -57,6 +59,7 @@ import {
   computeChaosThreatPenalty,
   getChaosAttackedSquares,
   applyKingShield,
+  isChaosCheckmate,
   type ChaosMove,
 } from "@/lib/chaos-moves";
 import { usePartyRoom, PARTYKIT_HOST, type PartyMessage } from "@/lib/use-party-room";
@@ -819,11 +822,16 @@ function DraftModal({
   phase,
   choices,
   onPick,
+  fen,
+  playerColor,
 }: {
   phase: number;
   choices: ChaosModifier[];
   onPick: (mod: ChaosModifier) => void;
+  fen?: string;
+  playerColor?: "w" | "b";
 }) {
+  const pieceCounts = fen && playerColor ? countPiecesFromFen(fen, playerColor) : null;
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const hoveredMod = choices.find((c) => c.id === hoveredId);
 
@@ -1066,6 +1074,11 @@ function DraftModal({
                       {mod.piece && (
                         <span className="text-[9px] uppercase tracking-wider text-slate-500 sm:mb-2 sm:text-[10px] block">
                           {({ p: "Pawns", n: "Knights", b: "Bishops", r: "Rooks", q: "Queen", k: "King" })[mod.piece]}
+                          {pieceCounts && (
+                            <span className={`ml-1 font-bold ${(pieceCounts[mod.piece as PieceType] ?? 0) === 0 ? "text-red-400" : "text-emerald-400"}`}>
+                              ×{pieceCounts[mod.piece as PieceType] ?? 0}
+                            </span>
+                          )}
                         </span>
                       )}
 
@@ -1606,6 +1619,45 @@ export default function ChaosChessPage() {
       playSound("sad-trombone");
       return true;
     }
+
+    // Chaos checkmate: king is in check but chess.js doesn't detect checkmate
+    // because all "legal" king escapes land on chaos-controlled squares.
+    if (g.inCheck() && !g.isCheckmate()) {
+      const checkedColor = g.turn() as "w" | "b";
+      const attackerColor: Color = checkedColor === "w" ? "b" : "w";
+      const isPlayerChecked =
+        (playerColor === "white" && checkedColor === "w") ||
+        (playerColor === "black" && checkedColor === "b");
+      const attackerMods = isPlayerChecked
+        ? chaosStateRef.current.aiModifiers
+        : chaosStateRef.current.playerModifiers;
+      if (isChaosCheckmate(g, attackerMods, attackerColor, chaosStateRef.current.assignedSquares ?? undefined)) {
+        const winner = checkedColor === "w" ? "black" : "white";
+        setGameResult(winner);
+        setGameStatus("game-over");
+        setEndReason("Checkmate");
+        const youWin = winner === playerColor;
+        setEventLog((prev) => [
+          ...prev,
+          {
+            type: "chaos",
+            message: `♟️ Chaos Checkmate! ${winner === "white" ? "White" : "Black"} wins — every escape was sealed!`,
+            icon: "♟️",
+            pepe: youWin ? PEPE.gigachad : PEPE.gamercry,
+          },
+        ]);
+        if (youWin) {
+          playSound("airhorn");
+          spawnPepe(PEPE.gigachad);
+          setTimeout(() => spawnPepe(PEPE.clap), 400);
+        } else {
+          playSound("mario-death");
+          spawnPepe(PEPE.gamercry);
+        }
+        return true;
+      }
+    }
+
     return false;
   }, [playerColor, spawnPepe]);
 
@@ -1624,7 +1676,8 @@ export default function ChaosChessPage() {
           if (playerColor === "white") {
             // White drafts immediately
             setPendingPhase(phase);
-            const choices = rollDraftChoices(phase, state.playerModifiers);
+            const playerPieceCounts = countPiecesFromFen(g.fen(), "w");
+            const choices = rollDraftChoices(phase, state.playerModifiers, undefined, playerPieceCounts);
             setChaosState((prev) => ({
               ...prev,
               isDrafting: true,
@@ -1653,7 +1706,9 @@ export default function ChaosChessPage() {
         } else {
           // AI mode: both draft simultaneously (existing behavior)
           setPendingPhase(phase);
-          const choices = rollDraftChoices(phase, state.playerModifiers);
+          const playerColor_ = playerColor === "white" ? "w" : "b";
+          const playerPieceCounts = countPiecesFromFen(g.fen(), playerColor_);
+          const choices = rollDraftChoices(phase, state.playerModifiers, undefined, playerPieceCounts);
           setChaosState((prev) => ({
             ...prev,
             isDrafting: true,
@@ -1736,6 +1791,12 @@ export default function ChaosChessPage() {
           const scored: ScoredChaos[] = [];
 
           for (const cm of sample) {
+            // King-capture via chaos move — declare instant win for AI
+            const targetAtChaosTo = g.get(cm.to as any);
+            if (targetAtChaosTo?.type === "k") {
+              scored.push({ move: cm, eval: 1_000_000, game: g });
+              continue;
+            }
             const newGame = executeChaosMove(g, cm, cs.aiModifiers);
             if (!newGame) continue;
             // Eval the resulting position — cp is from the player's perspective (side to move after AI's chaos move)
@@ -1750,6 +1811,21 @@ export default function ChaosChessPage() {
 
             // Only use chaos move if it's at least as good as normal play (max 30cp worse)
             if (best.eval >= normalEval - 30) {
+              // AI captured the player's king via chaos move
+              if (best.eval >= 1_000_000) {
+                const aiWinner = playerColor === "white" ? "black" : "white";
+                setGameResult(aiWinner);
+                setGameStatus("game-over");
+                setEndReason("King Captured");
+                setEventLog((prev) => [
+                  ...prev,
+                  { type: "chaos", message: `👑 AI captured your King!`, icon: "👑", pepe: PEPE.gamercry },
+                ]);
+                playSound("mario-death");
+                spawnPepe(PEPE.gamercry);
+                setIsThinking(false);
+                return;
+              }
               const newGame = best.game;
               const chaosMove = best.move;
               const label = chaosMove.label;
@@ -2239,7 +2315,7 @@ export default function ChaosChessPage() {
           const oppPick = incoming.aiModifiers[incoming.aiModifiers.length - 1];
           if (oppPick) {
             // Queue my own draft to fire after Black's own move
-            const choices = rollDraftChoices(phaseForDraft, incoming.playerModifiers);
+            const choices = rollDraftChoices(phaseForDraft, incoming.playerModifiers, undefined, countPiecesFromFen(gameRef.current.fen(), "b"));
             pendingDraftAfterRevealRef.current = { phase: phaseForDraft, choices, chaosState: incoming };
 
             // Show opponent's reveal
@@ -2378,6 +2454,9 @@ export default function ChaosChessPage() {
   // Track current game in a ref so polling can compare move counts against local state
   const gameRef = useRef(game);
   gameRef.current = game;
+  // Keep chaosState in a ref so stale closures (e.g. checkGameEnd, polling) can access the latest value
+  const chaosStateRef = useRef(chaosState);
+  chaosStateRef.current = chaosState;
 
   /* ── Polling for multiplayer state (slow fallback) ── */
   const startPolling = useCallback((rId: string, myColor: string) => {
@@ -2430,7 +2509,8 @@ export default function ChaosChessPage() {
               triggeredDraftForPhaseRef.current = phaseForDraft;
               const oppPick = incoming.aiModifiers[incoming.aiModifiers.length - 1];
               if (oppPick) {
-                const choices = rollDraftChoices(phaseForDraft, incoming.playerModifiers);
+                const myColor_ = (myColor as string) === "white" ? "w" : "b" as "w" | "b";
+                const choices = rollDraftChoices(phaseForDraft, incoming.playerModifiers, undefined, countPiecesFromFen(gameRef.current.fen(), myColor_));
                 pendingDraftAfterRevealRef.current = { phase: phaseForDraft, choices, chaosState: incoming };
                 setOpponentDraftReveal({ opponentPick: oppPick, phase: phaseForDraft });
                 setEventLog((prev) => [
@@ -2686,6 +2766,23 @@ export default function ChaosChessPage() {
         const pieceAtFromChaos = game.get(from as any);
         if (pieceAtFromChaos && pieceAtFromChaos.type === "k" && isKingMoveChaosUnsafe(game, from, to)) {
           return false;
+        }
+
+        // King-capture via chaos move — chess.js rejects kingless FENs so we must
+        // intercept and declare the win before calling executeChaosMove.
+        const targetPieceAtTo = game.get(chaosMove.to as any);
+        if (targetPieceAtTo?.type === "k") {
+          setGameResult(playerColor);
+          setGameStatus("game-over");
+          setEndReason("King Captured");
+          setEventLog((prev) => [
+            ...prev,
+            { type: "chaos", message: `👑 You captured the enemy King!`, icon: "👑", pepe: PEPE.gigachad },
+          ]);
+          playSound("airhorn");
+          spawnPepe(PEPE.gigachad);
+          setTimeout(() => spawnPepe(PEPE.clap), 400);
+          return true;
         }
 
         const newGame = executeChaosMove(game, chaosMove, chaosState.playerModifiers);
@@ -3139,7 +3236,7 @@ export default function ChaosChessPage() {
       }
 
       // Track single-piece modifiers (archbishop, knook) to prevent transfer on capture
-      const SINGLE_PIECE_MODS: Record<string, string> = { archbishop: "b", knook: "n" };
+      const SINGLE_PIECE_MODS: Record<string, string> = { archbishop: "b", knook: "n", pegasus: "n" };
 
       // Track the player's pick
       if (SINGLE_PIECE_MODS[mod.id]) {
@@ -3232,7 +3329,8 @@ export default function ChaosChessPage() {
         const isAiTurn =
           (playerColor === "white" && currentGame.turn() === "b") ||
           (playerColor === "black" && currentGame.turn() === "w");
-        const aiChoices = rollDraftChoices(phaseForAi, stateWithTracking.aiModifiers, Date.now());
+        const aiColor_ = playerColor === "white" ? "b" : "w";
+        const aiChoices = rollDraftChoices(phaseForAi, stateWithTracking.aiModifiers, Date.now(), countPiecesFromFen(currentGame.fen(), aiColor_));
         const tierRank: Record<string, number> = { common: 1, rare: 2, epic: 3, legendary: 4 };
         const aiPick = [...aiChoices].sort((a, b) => (tierRank[b.tier] ?? 0) - (tierRank[a.tier] ?? 0))[0];
         if (aiPick) {
@@ -3816,6 +3914,8 @@ export default function ChaosChessPage() {
           phase={pendingPhase}
           choices={chaosState.draftChoices}
           onPick={handleDraftPick}
+          fen={game.fen()}
+          playerColor={playerColor === "white" ? "w" : "b"}
         />
       )}
       {/* Return to Draft — floating safety button if the modal was accidentally hidden */}

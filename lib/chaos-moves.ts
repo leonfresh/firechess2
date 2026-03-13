@@ -171,7 +171,6 @@ function genPawnBayonet(game: Chess, color: Color): ChaosMove[] {
     const target = sq(f, r + dir);
     if (!target) continue;
     if (!isEnemy(game, target, color)) continue;
-    if (isEnemyKing(game, target, color)) continue;
     if (wouldLeaveKingInCheck(game, ps, target, color)) continue;
 
     moves.push({
@@ -194,7 +193,6 @@ function genKnightRetreat(game: Chess, color: Color): ChaosMove[] {
       const target = sq(f + df, r + dr);
       if (!target) continue;
       if (isFriendly(game, target, color)) continue;
-      if (isEnemyKing(game, target, color)) continue;
       // chess.js already allows normal knight moves; skip squares knights can already reach
       if (wouldLeaveKingInCheck(game, ns, target, color)) continue;
 
@@ -219,7 +217,6 @@ function genBishopSlide(game: Chess, color: Color): ChaosMove[] {
       const target = sq(f + df, r + dr);
       if (!target) continue;
       if (isFriendly(game, target, color)) continue;
-      if (isEnemyKing(game, target, color)) continue;
       if (wouldLeaveKingInCheck(game, bs, target, color)) continue;
 
       moves.push({
@@ -243,7 +240,6 @@ function genRookCharge(game: Chess, color: Color): ChaosMove[] {
       const target = sq(f + df, r + dr);
       if (!target) continue;
       if (isFriendly(game, target, color)) continue;
-      if (isEnemyKing(game, target, color)) continue;
       if (wouldLeaveKingInCheck(game, rs, target, color)) continue;
 
       moves.push({
@@ -278,7 +274,6 @@ function genPhantomRook(game: Chess, color: Color): ChaosMove[] {
             // Continue sliding through
           } else {
             // Enemy piece — can capture if we passed through a friendly
-            if (piece.type === "k") break; // never target the king
             if (passedFriendly) {
               if (!wouldLeaveKingInCheck(game, rs, target, color)) {
                 moves.push({
@@ -336,7 +331,6 @@ function genKnook(game: Chess, color: Color, trackedSquare?: string | null): Cha
 
       if (piece) {
         if (piece.color !== color) {
-          if (piece.type === "k") break; // never target the king
           if (!wouldLeaveKingInCheck(game, knookSquare, target, color)) {
             moves.push({
               from: knookSquare, to: target, type: "capture",
@@ -384,7 +378,6 @@ function genArchbishop(game: Chess, color: Color, trackedSquare?: string | null)
     const target = sq(f + df, r + dr);
     if (!target) continue;
     if (isFriendly(game, target, color)) continue;
-    if (isEnemyKing(game, target, color)) continue;
     if (wouldLeaveKingInCheck(game, archbishopSquare, target, color)) continue;
 
     moves.push({
@@ -408,7 +401,6 @@ function genAmazon(game: Chess, color: Color): ChaosMove[] {
       const target = sq(f + df, r + dr);
       if (!target) continue;
       if (isFriendly(game, target, color)) continue;
-      if (isEnemyKing(game, target, color)) continue;
       if (wouldLeaveKingInCheck(game, qs, target, color)) continue;
 
       moves.push({
@@ -444,7 +436,6 @@ function genKingAscension(game: Chess, color: Color): ChaosMove[] {
 
       if (piece) {
         if (piece.color !== color) {
-          if (piece.type === "k") break; // never target the enemy king
           if (!wouldLeaveKingInCheck(game, kingSquare, target, color)) {
             moves.push({
               from: kingSquare, to: target, type: "capture",
@@ -512,7 +503,6 @@ function genSniperBishop(game: Chess, color: Color): ChaosMove[] {
         const piece = game.get(target);
         if (piece) {
           if (piece.color !== color) {
-            if (piece.type === "k") break; // never target the king
             // Sniper: capture without moving
             moves.push({
               from: bs, to: target, type: "capture",
@@ -528,60 +518,72 @@ function genSniperBishop(game: Chess, color: Color): ChaosMove[] {
   return moves;
 }
 
-/** Pegasus: Knights can make a double L-jump (two knight moves in one turn) */
-function genPegasus(game: Chess, color: Color): ChaosMove[] {
+/** Pegasus: One knight can make a double L-jump (two knight moves in one turn, 2nd jump forward only) */
+function genPegasus(game: Chess, color: Color, trackedSquare?: string | null): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const knights = allSquaresOf(game, "n", color);
+  if (knights.length === 0) return moves;
+
+  // Only the tracked knight (or first knight) is the Pegasus
+  let pegasusSquare: Square = knights[0];
+  if (trackedSquare !== undefined) {
+    if (trackedSquare === null) return moves; // Pegasus knight was captured
+    const p = game.get(trackedSquare as any);
+    if (p && p.type === "n" && p.color === color) {
+      pegasusSquare = trackedSquare as Square;
+    } else {
+      return moves; // Tracked square no longer has our knight
+    }
+  }
+
   const knightOffsets = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
   const seen = new Set<string>();
+  const [f, r] = sqToCoords(pegasusSquare);
 
-  for (const ns of knights) {
-    const [f, r] = sqToCoords(ns);
+  // First jump: all 8 possible intermediate squares (Pegasus flies over everything)
+  for (const [df1, dr1] of knightOffsets) {
+    const midF = f + df1;
+    const midR = r + dr1;
+    if (midF < 0 || midF > 7 || midR < 0 || midR > 7) continue;
 
-    // First jump: all 8 possible intermediate squares (Pegasus flies over everything)
-    for (const [df1, dr1] of knightOffsets) {
-      const midF = f + df1;
-      const midR = r + dr1;
-      if (midF < 0 || midF > 7 || midR < 0 || midR > 7) continue;
+    // Second jump: forward only (rank must advance toward opponent's side)
+    for (const [df2, dr2] of knightOffsets) {
+      const isForward = color === "w" ? dr2 > 0 : dr2 < 0;
+      if (!isForward) continue;
 
-      // Second jump from intermediate square
-      for (const [df2, dr2] of knightOffsets) {
-        const finalF = midF + df2;
-        const finalR = midR + dr2;
-        if (finalF < 0 || finalF > 7 || finalR < 0 || finalR > 7) continue;
+      const finalF = midF + df2;
+      const finalR = midR + dr2;
+      if (finalF < 0 || finalF > 7 || finalR < 0 || finalR > 7) continue;
 
-        const target = sq(finalF, finalR)!;
+      const target = sq(finalF, finalR)!;
 
-        // Can't end on starting square
-        if (target === ns) continue;
-        // Can't land on friendly piece
-        if (isFriendly(game, target, color)) continue;
-        // Never target the enemy king
-        if (isEnemyKing(game, target, color)) continue;
+      // Can't end on starting square
+      if (target === pegasusSquare) continue;
+      // Can't land on friendly piece
+      if (isFriendly(game, target, color)) continue;
 
-        // Deduplicate same from→to (multiple intermediate paths)
-        const key = `${ns}-${target}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
+      // Deduplicate same from→to (multiple intermediate paths)
+      const key = `${pegasusSquare}-${target}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
 
-        // Skip squares reachable by a normal single-knight jump (chess.js handles those)
-        const df = finalF - f;
-        const dr = finalR - r;
-        const isNormalKnight =
-          (Math.abs(df) === 2 && Math.abs(dr) === 1) ||
-          (Math.abs(df) === 1 && Math.abs(dr) === 2);
-        if (isNormalKnight) continue;
+      // Skip squares reachable by a normal single-knight jump (chess.js handles those)
+      const df = finalF - f;
+      const dr = finalR - r;
+      const isNormalKnight =
+        (Math.abs(df) === 2 && Math.abs(dr) === 1) ||
+        (Math.abs(df) === 1 && Math.abs(dr) === 2);
+      if (isNormalKnight) continue;
 
-        if (wouldLeaveKingInCheck(game, ns, target, color)) continue;
+      if (wouldLeaveKingInCheck(game, pegasusSquare, target, color)) continue;
 
-        moves.push({
-          from: ns,
-          to: target,
-          type: isEnemy(game, target, color) ? "capture" : "move",
-          modifierId: "pegasus",
-          label: "Pegasus (double L-jump)",
-        });
-      }
+      moves.push({
+        from: pegasusSquare,
+        to: target,
+        type: isEnemy(game, target, color) ? "capture" : "move",
+        modifierId: "pegasus",
+        label: "Pegasus (double L-jump)",
+      });
     }
   }
   return moves;
@@ -611,7 +613,6 @@ function genRookCannon(game: Chess, color: Color): ChaosMove[] {
           } else {
             // Second piece encountered: can capture if enemy
             if (piece.color !== color) {
-              if (piece.type === "k") break; // never target the king
               if (!wouldLeaveKingInCheck(game, rs, target, color)) {
                 moves.push({
                   from: rs,
@@ -664,7 +665,6 @@ function genEarlyPromotion(game: Chess, color: Color): ChaosMove[] {
       if (!capTarget) continue;
       const capPiece = game.get(capTarget as any);
       if (!capPiece || capPiece.color === color) continue; // must capture enemy
-      if (capPiece.type === "k") continue; // never target the king
       if (wouldLeaveKingInCheck(game, ps, capTarget, color)) continue;
       moves.push({
         from: ps, to: capTarget, type: "capture",
@@ -865,20 +865,34 @@ export function getChaosAttackedSquares(
     }
   }
 
-  /* Pegasus: all knights attack double-L squares (non-standard only) */
+  /* Pegasus: tracked/first knight attacks double-L squares (forward-only 2nd jump) */
   if (modIds.has("pegasus")) {
-    for (const ns of allSquaresOf(game, "n", attackerColor)) {
-      const [f, r] = sqToCoords(ns);
+    const trackedPegasus = assignedSquares?.[`${attackerColor}_pegasus`];
+    let pegasusSq: Square | null = null;
+    if (trackedPegasus !== undefined) {
+      if (trackedPegasus !== null) {
+        const p = game.get(trackedPegasus as any);
+        if (p && p.type === "n" && p.color === attackerColor) pegasusSq = trackedPegasus as Square;
+      }
+    } else {
+      const knights = allSquaresOf(game, "n", attackerColor);
+      if (knights.length > 0) pegasusSq = knights[0];
+    }
+    if (pegasusSq) {
+      const [f, r] = sqToCoords(pegasusSq);
       for (const [df1, dr1] of knightOffsets) {
         const mf = f + df1;
         const mr = r + dr1;
         if (mf < 0 || mf > 7 || mr < 0 || mr > 7) continue;
         for (const [df2, dr2] of knightOffsets) {
+          // Forward-only 2nd jump
+          const isForward = attackerColor === "w" ? dr2 > 0 : dr2 < 0;
+          if (!isForward) continue;
           const ff = mf + df2;
           const fr = mr + dr2;
           if (ff < 0 || ff > 7 || fr < 0 || fr > 7) continue;
           const t = sq(ff, fr);
-          if (!t || t === ns) continue;
+          if (!t || t === pegasusSq) continue;
           const dff = ff - f;
           const dfr = fr - r;
           const isNormal = (Math.abs(dff) === 2 && Math.abs(dfr) === 1) || (Math.abs(dff) === 1 && Math.abs(dfr) === 2);
@@ -1328,4 +1342,56 @@ export function applyKingShield(game: Chess, checkedColor: Color): Chess | null 
   } catch {
     return null;
   }
+}
+
+/**
+ * Detect "chaos checkmate": the side to move is in check according to chess.js,
+ * but chess.js doesn't call it checkmate because there are ostensibly legal
+ * king-escape moves — however all those escapes land on squares controlled
+ * by the opponent's chaos pieces (e.g. Pegasus controlling many squares).
+ *
+ * Supplements Chess.isCheckmate() for positions where chaos modifiers seal off
+ * every standard escape. Returns true only when:
+ *   1. The king is in standard check
+ *   2. chess.js does NOT already call it checkmate
+ *   3. Every legal move is a king move that ends on a chaos-controlled square
+ *   4. No non-king (blocking/interposing) legal move exists
+ */
+export function isChaosCheckmate(
+  game: Chess,
+  oppModifiers: ChaosModifier[],
+  oppColor: Color,
+  assignedSquares?: Record<string, string | null>,
+): boolean {
+  if (!game.inCheck()) return false;
+  if (game.isCheckmate()) return false; // already handled by standard path
+
+  const legalMoves = game.moves({ verbose: true });
+  if (legalMoves.length === 0) return true;
+
+  const myColor = game.turn() as Color;
+
+  for (const move of legalMoves) {
+    const piece = game.get(move.from as Square);
+    if (!piece) continue;
+
+    if (piece.type !== "k") {
+      // A non-king blocking/interposing move exists — not chaos checkmate
+      return false;
+    }
+
+    // King move: check if the destination is safe from chaos attacks
+    const tmp = new Chess(game.fen());
+    tmp.remove(move.from as Square);
+    const occupant = tmp.get(move.to as Square);
+    if (occupant) tmp.remove(move.to as Square);
+    tmp.put({ type: "k", color: myColor }, move.to as Square);
+
+    const chaosAttacked = getChaosAttackedSquares(tmp, oppModifiers, oppColor, assignedSquares);
+    if (!chaosAttacked.has(move.to as Square)) {
+      return false; // A safe king escape exists — not chaos checkmate
+    }
+  }
+
+  return true; // Every king escape goes to a chaos-controlled square
 }

@@ -127,7 +127,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "pegasus",
     name: "Pegasus",
-    description: "Knights can make a double L-jump — two knight moves in a single turn.",
+    description: "One knight gains a double L-jump — the second jump must advance toward the opponent (forward ranks only).",
     tier: "rare",
     icon: "🦄",
     piece: "n",
@@ -361,13 +361,37 @@ export function checkDraftTrigger(fullMoveNumber: number, state: ChaosState): nu
 }
 
 /**
+ * Count pieces of each type for a given color from a FEN string.
+ * Returns e.g. { p: 6, n: 2, b: 1, r: 2, q: 1, k: 1 }
+ */
+export function countPiecesFromFen(
+  fen: string,
+  color: "w" | "b",
+): Partial<Record<PieceType, number>> {
+  const board = fen.split(" ")[0];
+  const counts: Partial<Record<PieceType, number>> = {};
+  for (const ch of board) {
+    if (ch === "/" || /\d/.test(ch)) continue;
+    const isWhite = ch === ch.toUpperCase();
+    if ((color === "w") !== isWhite) continue;
+    const piece = ch.toLowerCase() as PieceType;
+    counts[piece] = (counts[piece] ?? 0) + 1;
+  }
+  return counts;
+}
+
+/**
  * Roll 3 random modifier choices for a given phase.
  * Avoids modifiers already drafted by the given side.
+ * When pieceCounts is provided, ensures at least one choice is viable
+ * (targets a piece the player still has on the board) and down-weights
+ * modifiers for pieces the player has zero of.
  */
 export function rollDraftChoices(
   phase: number,
   alreadyDrafted: ChaosModifier[],
   seed?: number,
+  pieceCounts?: Partial<Record<PieceType, number>>,
 ): ChaosModifier[] {
   const draftedIds = new Set(alreadyDrafted.map((m) => m.id));
   const pool = ALL_MODIFIERS.filter(
@@ -382,7 +406,26 @@ export function rollDraftChoices(
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
 
-  return shuffled.slice(0, 3);
+  if (!pieceCounts) return shuffled.slice(0, 3);
+
+  // Split into viable (has the piece or global) and non-viable (0 of target piece)
+  const isViable = (m: ChaosModifier) =>
+    m.piece === null || (pieceCounts[m.piece] ?? 0) > 0;
+  const viable = shuffled.filter(isViable);
+  const nonViable = shuffled.filter((m) => !isViable(m));
+
+  // Build result: take from viable first, pad with non-viable if needed
+  const result: ChaosModifier[] = [];
+  for (const m of viable) {
+    if (result.length >= 3) break;
+    result.push(m);
+  }
+  for (const m of nonViable) {
+    if (result.length >= 3) break;
+    result.push(m);
+  }
+
+  return result;
 }
 
 /** Simple seeded PRNG (mulberry32) */

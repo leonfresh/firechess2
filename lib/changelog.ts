@@ -15,6 +15,38 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: 24,
+    date: "Mar 13, 2026",
+    title: "Guess the Move — EnhancedEdition",
+    description:
+      "Major upgrades to the Guess the Move experience: a larger game library, deeper engine ratings, per-collection leaderboards, and a revamped score breakdown screen.",
+    changes: [
+      { type: "improvement", text: "Game library expanded — more collections and games across all difficulty tiers" },
+      { type: "improvement", text: "Score breakdown screen after finishing a game — accuracy %, move-by-move rating distribution chart, best and worst moves highlighted" },
+      { type: "feature", text: "Per-collection high scores saved locally — your best score for each collection is persisted and shown in the collection picker" },
+      { type: "feature", text: "Keyboard shortcuts — arrow keys step through moves, spacebar toggles autoplay, H shows a hint" },
+      { type: "improvement", text: "Move commentary now distinguishes between master move and your guess — shows both ratings side by side after each guess" },
+      { type: "fix", text: "Autoplay no longer continues past the last move — stops cleanly and shows the result screen" },
+    ],
+  },
+  {
+    version: 23,
+    date: "Mar 13, 2026",
+    title: "Roast My Elo",
+    description:
+      "Watch real Lichess games move by move with Gotham Chess / AnarchyChess-style roast commentary powered by Stockfish, then guess the players' Elo rating. Features a 600+ line commentary pool, animated roast avatar that reacts to blunders, autoplay, and a shareable result card.",
+    changes: [
+      { type: "feature", text: "Roast My Elo page (/roast) — watch real Lichess games with live Stockfish analysis and AnarchyChess-style commentary after every move" },
+      { type: "feature", text: "600+ unique roast lines across 6 categories — opening roasts, blunder roasts, Elo flavor lines, guess comments, closing roasts, and positional shade" },
+      { type: "feature", text: "Animated roast avatar — reacts with different moods (hyped, shocked, crying, smug, confused) based on blunder count, best-move streaks, and Elo bracket" },
+      { type: "feature", text: "Elo bracket guessing — after watching the game, pick a bracket (e.g. 600–800, 1200–1400, 2000+) and find out how far off you were" },
+      { type: "feature", text: "Autoplay with adjustable speed — 0.5×, 1×, 2×, 4× — commentary triggers on each move automatically" },
+      { type: "feature", text: "Roast leaderboard (/roast/leaderboard) — top scores ranked by Elo-guess accuracy across all games" },
+      { type: "feature", text: "Shareable result card — shows your Elo guess, actual Elo, roast grade, and a copy-to-clipboard share link" },
+      { type: "improvement", text: "Added 🔥 Roast My Elo link to the navbar More dropdown and mobile menu" },
+    ],
+  },
+  {
     version: 22,
     date: "Mar 12, 2026",
     title: "Chaos Chess — Roguelike Multiplayer",
