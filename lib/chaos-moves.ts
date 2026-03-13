@@ -228,9 +228,8 @@ function genCamel(game: Chess, color: Color, trackedSquare?: string | null): Cha
     const p = game.get(trackedSquare as any);
     if (p && p.type === "n" && p.color === color) {
       camelSquare = trackedSquare as Square;
-    } else {
-      return moves; // Tracked square no longer has our knight — piece is dead
     }
+    // else: tracking is stale (knight moved) — fall back to first knight found
   }
 
   const [f, r] = sqToCoords(camelSquare);

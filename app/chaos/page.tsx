@@ -1578,8 +1578,8 @@ function PieceInfoPanel({
 }) {
   if (!square) {
     return (
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
-        <p className="text-[11px] text-slate-600">Hover a piece to see its movement</p>
+      <div className="h-[280px] rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 flex items-center justify-center">
+        <p className="text-[11px] text-slate-600">Hover or select a piece to see its movement</p>
       </div>
     );
   }
@@ -1593,7 +1593,7 @@ function PieceInfoPanel({
   const sideClass = isPlayerPiece ? "text-emerald-400" : "text-red-400";
 
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3">
+    <div className="h-[280px] overflow-y-auto rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3">
       <div className="mb-2 flex items-center gap-2">
         <span className={`text-sm font-bold ${sideClass}`}>{displayName}</span>
         <span className={`ml-auto rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${
@@ -3851,24 +3851,8 @@ export default function ChaosChessPage() {
     const isEnemyPiece = piece.color !== playerCode;
 
     if (!isEnemyPiece) {
-      // Player piece — show legal moves in blue/indigo
-      const highlights: Record<string, React.CSSProperties> = {
-        [square]: { backgroundColor: "rgba(99,102,241,0.3)" },
-      };
-      const legalMoves = game.moves({ square: square as any, verbose: true });
-      for (const m of legalMoves) {
-        highlights[m.to] = {
-          backgroundColor: (m as any).captured ? "rgba(99,102,241,0.45)" : "rgba(99,102,241,0.18)",
-          borderRadius: (m as any).captured ? undefined : "50%",
-        };
-      }
-      for (const cm of activeChaosMoves.filter(m => m.from === square)) {
-        highlights[cm.to] = {
-          backgroundColor: cm.type === "capture" ? "rgba(168,85,247,0.45)" : "rgba(168,85,247,0.18)",
-          borderRadius: cm.type === "capture" ? undefined : "50%",
-        };
-      }
-      setHoverMoveSquares(highlights);
+      // Player piece — info panel only; don't set board highlights to avoid
+      // interfering with click-to-select (the click handler manages legalMoveSquares).
       return;
     }
 
@@ -3900,7 +3884,7 @@ export default function ChaosChessPage() {
       };
     }
     setHoverMoveSquares(highlights);
-  }, [game, playerColor, chaosState, selectedSquare, activeChaosMoves]);
+  }, [game, playerColor, chaosState, selectedSquare]);
 
   const handleMouseOutSquare = useCallback(() => {
     setHoveredSquare(null);
