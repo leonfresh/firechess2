@@ -1,6 +1,6 @@
 ---
-title: "Chaos Chess: We Built a Roguelike Draft Mode Inspired by Clash Royale"
-description: "How we took the addictive card-drafting loop from Clash Royale's new draft mode and built Chaos Chess — a roguelike chess experience where both players draft permanent piece modifiers every 5 turns."
+title: "Chaos Chess: We Built a Chess Variant Inspired by Clash Royale's C.H.A.O.S Mode"
+description: "How we took the permanent modifier system from Clash Royale's C.H.A.O.S mode and built Chaos Chess — a chess experience where both players pick permanent piece modifiers every 5 turns, with rarity escalating as the game goes on."
 date: "2026-03-12"
 author: "FireChess Team"
 tags: ["chaos chess", "game modes", "chess variants", "feature"]
@@ -83,9 +83,9 @@ We built Chaos Chess — and the design spark didn't come from another chess gam
 </svg>
 </div>
 
-## The Clash Royale Draft Problem — and the Chess Opportunity
+## The Clash Royale C.H.A.O.S Mode — and the Chess Opportunity
 
-If you've played Clash Royale recently, you know the new **Draft Challenges** mode. You and your opponent alternate picking cards from a shared pool, so you're always reacting to what the other person takes. It's tense, it's strategic, and it completely changes how the game feels even though the underlying mechanics didn't change at all.
+If you've played Clash Royale recently, you might know **C.H.A.O.S mode**. Every 50–60 seconds, the battle pauses and both players are simultaneously shown two modifier options for one of their cards — each card has three possible modifiers across the rarity tiers. You both pick at the same time; pick randomly if you don't choose in 10 seconds. Once both players have chosen, the battle resumes with the modifier now permanently active for the rest of the match. The modifiers get rarer and more powerful as the game progresses: Common on the first pick, Rare through the middle rounds, and a guaranteed Epic in overtime.
 
 That last part is what got me thinking.
 
@@ -99,9 +99,9 @@ The rules start simple: it's regular chess. You play against Stockfish AI, a fri
 
 But at **turns 5, 10, 15, 20, and 25**, the game freezes.
 
-Both players are shown three modifier cards — like a Clash Royale draft — and each picks one. The modifier they choose is **permanent for the rest of the game**. It changes how their pieces move, what they can capture, or grants entirely new abilities.
+Both players are shown three modifier cards — mirroring the simultaneous pick structure of C.H.A.O.S — and each picks one. The modifier they choose is **permanent for the rest of the game**. It changes how their pieces move, what they can capture, or grants entirely new abilities.
 
-Your opponent picks their own modifier at the same time. You watch what they chose. Now you know they have a ghost rook that slides through pieces, or a queen that can teleport once per game. You play around it. You draft counters. The same strategic layer that makes draft modes compelling in Clash Royale plays out over a chessboard.
+Your opponent picks their own modifier at the same time. You watch what they chose. Now you know they have a ghost rook that slides through pieces, or a queen that can teleport once per game. You play around it. You pick counters. The same strategic tension that makes C.H.A.O.S so compelling in Clash Royale plays out over a chessboard.
 
 After the draft, the game resumes. Both players now have different pieces than they started with. By turn 25, you and your opponent will have 5 modifiers each, and the board is playing by rules that didn't exist at move one.
 
@@ -143,7 +143,7 @@ The **Chaos Chess Leaderboard** at [firechess.com/leaderboard/chaos](https://fir
 
 ## Why Draft Modes Work
 
-The reason Clash Royale's draft mode is so popular — and why we think Chaos Chess captures the same energy — is that drafting solves a specific frustration in pure skill games: the feeling that your loss was inevitable before it started because your opponent's deck was better.
+The reason Clash Royale's C.H.A.O.S mode is so satisfying — and why we think Chaos Chess captures the same energy — is that simultaneous modifier selection solves a specific frustration in pure skill games: the feeling that your loss was inevitable before it started because your opponent was already stronger.
 
 When both players are building their "deck" simultaneously in real time over the course of the game, wins and losses feel earned. You're not just playing better chess than your opponent — you're out-drafting them, out-adapting them, and finding combinations they didn't see coming.
 
