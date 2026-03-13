@@ -311,10 +311,13 @@ function buildChaosCustomPieces(
         // Check for fairy piece SVG replacement (replaces the entire piece image)
         const fairySvgs = FAIRY_PIECE_SVGS[mod.id];
         // Skip individual pawn fairy SVGs when War Pawn combo is active
-        const skipForCombo = pawnCombo && (mod.id === "pawn-charge" || mod.id === "pawn-capture-forward");
-        if (fairySvgs && square && !skipForCombo) {
+        const skipForCombo = pawnCombo && (mod.id === "pawn-capture-forward" || mod.id === "pawn-charge");
+        if (fairySvgs && !skipForCombo) {
           const designatedSquare = singlePieceSquares[mod.id]?.[pieceColor];
-          if (!designatedSquare || square === designatedSquare) {
+          // When square is undefined (animation ghost piece), apply fairy SVG regardless — there's
+          // only one archbishop/knook/etc. per side so the wrong piece briefly wearing the skin
+          // during animation is undetectable. Without this, the piece reverts to the base image.
+          if (!square || !designatedSquare || square === designatedSquare) {
             pieceUrl = fairySvgs[pieceColor];
           }
         }
