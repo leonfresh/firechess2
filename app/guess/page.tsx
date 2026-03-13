@@ -356,19 +356,20 @@ export default function GuessTheMovePage() {
     const guessIdx = guesses.length; // index of the guess we just pushed
     (async () => {
       try {
-        // Evaluate position before the move
-        const sideToMove = fenBefore.split(" ")[1]; // "w" or "b"
+        // Evaluate position before the move.
+        // Stockfish always reports cp from the current side-to-move's perspective,
+        // so evalBefore.cp > 0 means "the player whose turn it is is winning".
         const evalBefore = await stockfishClient.evaluateFen(fenBefore, 12);
         if (!evalBefore) return;
-        // Eval from perspective of side to move
-        const cpBefore = sideToMove === "w" ? evalBefore.cp : -evalBefore.cp;
+        const cpBefore = evalBefore.cp; // from mover's perspective
 
         // Evaluate after user's move
         const chessUser = new Chess(fenBefore);
         const um = chessUser.move(userSan);
         if (!um) return;
         const evalAfterUser = await stockfishClient.evaluateFen(chessUser.fen(), 12);
-        const cpAfterUser = evalAfterUser ? (sideToMove === "w" ? -evalAfterUser.cp : evalAfterUser.cp) : cpBefore;
+        // After the move the opponent is now to move, so negate to stay in the original mover's frame
+        const cpAfterUser = evalAfterUser ? -evalAfterUser.cp : cpBefore;
         const userCpLoss = Math.max(0, cpBefore - cpAfterUser);
 
         // Evaluate after master's move
@@ -376,7 +377,7 @@ export default function GuessTheMovePage() {
         const mm = chessMaster.move(actualSan);
         if (!mm) return;
         const evalAfterMaster = await stockfishClient.evaluateFen(chessMaster.fen(), 12);
-        const cpAfterMasterVal = evalAfterMaster ? (sideToMove === "w" ? -evalAfterMaster.cp : evalAfterMaster.cp) : cpBefore;
+        const cpAfterMasterVal = evalAfterMaster ? -evalAfterMaster.cp : cpBefore;
         const masterCpLoss = Math.max(0, cpBefore - cpAfterMasterVal);
 
         // If user's move is as good or better than GM's, upgrade to "correct"

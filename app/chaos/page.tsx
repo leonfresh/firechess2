@@ -31,7 +31,7 @@ import { useSession } from "@/components/session-provider";
 import { getGuestId } from "@/lib/guest-id";
 // useBoardSize removed — we use onBoardWidthChange from react-chessboard
 import { useBoardTheme, useShowCoordinates, useCustomPieces, usePieceTheme } from "@/lib/use-coins";
-import { playSound, preloadSounds } from "@/lib/sounds";
+import { playSound, preloadSounds, getSoundVolume, setSoundVolume } from "@/lib/sounds";
 import { getPieceImageUrl } from "@/lib/board-themes";
 // Note: useBoardSize removed — we use onBoardWidthChange from react-chessboard for auto-responsive sizing
 import {
@@ -302,6 +302,27 @@ function buildChaosCustomPieces(
         glowColor = "rgba(245,158,11,0.45)"; // amber glow for war pawn
       }
 
+      // Choose the fairy piece SVG using the same priority as getPieceDisplayName:
+      // identity mods beat movement mods; newest draft wins within each tier.
+      const IDENTITY_MOD_IDS = ["knook", "archbishop", "camel", "pegasus", "amazon", "king-ascension"];
+      const MOVEMENT_MOD_IDS = ["dragon-bishop", "dragon-rook"];
+      const fairyTiers = [IDENTITY_MOD_IDS, MOVEMENT_MOD_IDS];
+      for (const tier of fairyTiers) {
+        // newest-first within the tier
+        const found = [...activeForPiece].reverse().find(m => {
+          if (!tier.includes(m.id)) return false;
+          if (!FAIRY_PIECE_SVGS[m.id]) return false;
+          if (pawnCombo && (m.id === "pawn-capture-forward" || m.id === "pawn-charge")) return false;
+          const designatedSquare = singlePieceSquares[m.id]?.[pieceColor];
+          return !square || !designatedSquare || square === designatedSquare;
+        });
+        if (found) {
+          pieceUrl = FAIRY_PIECE_SVGS[found.id][pieceColor];
+          break;
+        }
+      }
+
+      // Now iterate all active mods for overlays, glows, and filters
       for (const mod of activeForPiece) {
         // Skip single-piece modifiers if this isn't the designated piece
         if (SINGLE_PIECE_MODIFIERS[mod.id] && square) {
@@ -309,19 +330,8 @@ function buildChaosCustomPieces(
           if (designatedSquare && square !== designatedSquare) continue;
         }
 
-        // Check for fairy piece SVG replacement (replaces the entire piece image)
         const fairySvgs = FAIRY_PIECE_SVGS[mod.id];
-        // Skip individual pawn fairy SVGs when War Pawn combo is active
         const skipForCombo = pawnCombo && (mod.id === "pawn-capture-forward" || mod.id === "pawn-charge");
-        if (fairySvgs && !skipForCombo) {
-          const designatedSquare = singlePieceSquares[mod.id]?.[pieceColor];
-          // When square is undefined (animation ghost piece), apply fairy SVG regardless — there's
-          // only one archbishop/knook/etc. per side so the wrong piece briefly wearing the skin
-          // during animation is undetectable. Without this, the piece reverts to the base image.
-          if (!square || !designatedSquare || square === designatedSquare) {
-            pieceUrl = fairySvgs[pieceColor];
-          }
-        }
 
         const def = MODIFIER_OVERLAYS[mod.id];
         if (!def) continue;
@@ -1443,20 +1453,29 @@ function getPieceDisplayName(
   color?: string,
 ): string {
   const singlePieceMods: Record<string, true> = { knook: true, archbishop: true, camel: true, pegasus: true };
-  for (const m of mods) {
-    if (singlePieceMods[m.id]) {
-      const trackedKey = `${color}_${m.id}`;
-      const trackedSq = assignedSquares?.[trackedKey];
-      if (trackedSq !== undefined && trackedSq !== square) continue;
+
+  // Identity-changing mods take full priority over movement-adding mods.
+  // Within each tier, last-drafted wins (iterate in reverse = newest first).
+  const identityMods = ["knook", "archbishop", "camel", "pegasus", "amazon", "king-ascension"];
+  const movementMods = ["dragon-bishop", "dragon-rook"];
+
+  for (const tier of [identityMods, movementMods]) {
+    for (const m of [...mods].reverse()) {
+      if (!tier.includes(m.id)) continue;
+      if (singlePieceMods[m.id]) {
+        const trackedKey = `${color}_${m.id}`;
+        const trackedSq = assignedSquares?.[trackedKey];
+        if (trackedSq !== undefined && trackedSq !== square) continue;
+      }
+      if (m.id === "knook"         && pieceType === "n") return "The Knook";
+      if (m.id === "archbishop"    && pieceType === "b") return "The Archbishop";
+      if (m.id === "camel"         && pieceType === "n") return "Camel";
+      if (m.id === "pegasus"       && pieceType === "n") return "Pegasus";
+      if (m.id === "amazon"        && pieceType === "q") return "The Amazon";
+      if (m.id === "king-ascension"&& pieceType === "k") return "Ascended King";
+      if (m.id === "dragon-bishop" && pieceType === "b") return "Dragon Bishop";
+      if (m.id === "dragon-rook"   && pieceType === "r") return "Dragon Rook";
     }
-    if (m.id === "knook" && pieceType === "n") return "The Knook";
-    if (m.id === "archbishop" && pieceType === "b") return "The Archbishop";
-    if (m.id === "camel" && pieceType === "n") return "Camel";
-    if (m.id === "pegasus" && pieceType === "n") return "Pegasus";
-    if (m.id === "amazon" && pieceType === "q") return "The Amazon";
-    if (m.id === "king-ascension" && pieceType === "k") return "Ascended King";
-    if (m.id === "dragon-bishop" && pieceType === "b") return "Dragon Bishop";
-    if (m.id === "dragon-rook" && pieceType === "r") return "Dragon Rook";
   }
   return PIECE_BASE_LABELS[pieceType]?.name ?? pieceType.toUpperCase();
 }
@@ -1578,7 +1597,7 @@ function PieceInfoPanel({
 }) {
   if (!square) {
     return (
-      <div className="h-[280px] rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 flex items-center justify-center">
+      <div className="h-[280px] rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 flex items-center justify-center overflow-hidden">
         <p className="text-[11px] text-slate-600">Hover or select a piece to see its movement</p>
       </div>
     );
@@ -1593,7 +1612,7 @@ function PieceInfoPanel({
   const sideClass = isPlayerPiece ? "text-emerald-400" : "text-red-400";
 
   return (
-    <div className="h-[280px] overflow-y-auto rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3">
+    <div className="h-[280px] overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3">
       <div className="mb-2 flex items-center gap-2">
         <span className={`text-sm font-bold ${sideClass}`}>{displayName}</span>
         <span className={`ml-auto rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${
@@ -1620,7 +1639,7 @@ function PieceInfoPanel({
                 <Emoji emoji={m.icon} style={{ width: 12, height: 12 }} />
                 {m.name}
               </div>
-              <p className="mt-0.5 text-[10px] leading-relaxed text-slate-400">{m.description}</p>
+              <p className="mt-0.5 text-[10px] leading-relaxed text-slate-400 line-clamp-2">{m.description}</p>
             </div>
           ))}
         </div>
@@ -1656,6 +1675,11 @@ export default function ChaosChessPage() {
 
   /* ── Board / theme hooks ── */
   const [boardSize, setBoardSize] = useState(0);
+  const [soundVolume, setSoundVolumeState] = useState(() => getSoundVolume());
+  const handleVolumeChange = useCallback((v: number) => {
+    setSoundVolume(v);
+    setSoundVolumeState(v);
+  }, []);
   const boardTheme = useBoardTheme();
   const showCoordinates = useShowCoordinates();
   const pieceTheme = usePieceTheme();
@@ -1696,6 +1720,8 @@ export default function ChaosChessPage() {
   const pendingDraftAfterRevealRef = useRef<{ phase: number; choices: ChaosModifier[]; chaosState: ChaosState } | null>(null);
   /** Move held back when a draft opens — sent bundled with the draft pick */
   const pendingMoveBeforeDraftRef = useRef<{ from: string; to: string } | null>(null);
+  /** In AI mode: draft data queued while AI makes its response move */
+  const pendingAiDraftRef = useRef<{ phase: number; choices: ChaosModifier[] } | null>(null);
 
   /* ── PartyKit WebSocket ref for send ── */
   const partySendRef = useRef<((msg: PartyMessage) => void) | null>(null);
@@ -2162,29 +2188,16 @@ export default function ChaosChessPage() {
           }
           // Black: no action here — Black picks when White's broadcast arrives
         } else {
-          // AI mode: both draft simultaneously (existing behavior)
+          // AI mode: defer draft until AFTER the AI makes its response move.
+          // This prevents the player from knowing their powerup before choosing their next move.
           setPendingPhase(phase);
+          prevPhaseRef.current = phase; // guard against re-triggering during AI's move
           const playerColor_ = playerColor === "white" ? "w" : "b";
           const playerPieceCounts = countPiecesFromFen(g.fen(), playerColor_);
           const choices = rollDraftChoices(phase, state.playerModifiers, undefined, playerPieceCounts);
-          setChaosState((prev) => ({
-            ...prev,
-            isDrafting: true,
-            draftingSide: "player",
-            draftChoices: choices,
-          }));
-          setGameStatus("drafting");
-          setEventLog((prev) => [
-            ...prev,
-            {
-              type: "draft",
-              message: `⏸️ Turn ${fullMove} — CHAOS DRAFT Phase ${phase}! Choose your modifier.`,
-              icon: "⏸️",
-              pepe: phase <= 2 ? PEPE.think : phase <= 4 ? PEPE.shocked : PEPE.galaxybrain,
-            },
-          ]);
-          playSound("record-scratch");
-          spawnPepe(phase >= 4 ? PEPE.shocked : PEPE.bigeyes);
+          pendingAiDraftRef.current = { phase, choices };
+          // Return false so the caller proceeds to makeAiMove immediately
+          return false;
         }
         return true;
       }
@@ -2574,6 +2587,25 @@ export default function ChaosChessPage() {
           checkDraft(activeGame2, cs2);
           recomputeChaosMoves(activeGame2, cs2);
         }
+
+        // Flush any draft that was deferred while we made this move
+        const pendingDraft = pendingAiDraftRef.current;
+        if (pendingDraft) {
+          pendingAiDraftRef.current = null;
+          const { phase: dPhase, choices: dChoices } = pendingDraft;
+          setTimeout(() => {
+            setChaosState((prev) => ({ ...prev, isDrafting: true, draftingSide: "player", draftChoices: dChoices }));
+            setGameStatus("drafting");
+            setEventLog((prev) => [...prev, {
+              type: "draft",
+              message: `⏸️ CHAOS DRAFT Phase ${dPhase}! Choose your modifier.`,
+              icon: "⏸️",
+              pepe: dPhase <= 2 ? PEPE.think : dPhase <= 4 ? PEPE.shocked : PEPE.galaxybrain,
+            }]);
+            playSound("record-scratch");
+            spawnPepe(dPhase >= 4 ? PEPE.shocked : PEPE.bigeyes);
+          }, 300);
+        }
       } catch (err) {
         console.warn("[Chaos AI] Engine error:", err);
       }
@@ -2612,7 +2644,7 @@ export default function ChaosChessPage() {
       setRematchReceived(false);
       triggeredDraftForPhaseRef.current = -1;
       prevPhaseRef.current = -1;
-      // Reset timer and ELO state
+      pendingAiDraftRef.current = null;
       const tc = timeControlRef.current;
       setTimers({ w: (tc?.base ?? 0) * 1000, b: (tc?.base ?? 0) * 1000 });
       setEloChange(null);
@@ -2664,6 +2696,7 @@ export default function ChaosChessPage() {
       triggeredDraftForPhaseRef.current = -1;
       pendingDraftAfterRevealRef.current = null;
       pendingMoveBeforeDraftRef.current = null;
+      pendingAiDraftRef.current = null;
       setWaitingForOpponentDraft(false);
       // Start polling for guest
       startPolling(data.roomId, color);
@@ -2829,6 +2862,7 @@ export default function ChaosChessPage() {
         justDraftedRef.current = false;
         pendingDraftAfterRevealRef.current = null;
         pendingMoveBeforeDraftRef.current = null;
+        pendingAiDraftRef.current = null;
         setWaitingForOpponentDraft(false);
         // Swap colors
         const newColor = playerColor === "white" ? "black" : "white";
@@ -4320,6 +4354,31 @@ export default function ChaosChessPage() {
             </div>
           </div>
 
+          {/* ── Sound Settings ── */}
+          <div className="mb-4 sm:mb-6">
+            <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-slate-500 sm:text-xs">Sound</p>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => handleVolumeChange(soundVolume === 0 ? 0.8 : 0)}
+                className="text-lg leading-none transition-opacity hover:opacity-70"
+                title={soundVolume === 0 ? "Unmute" : "Mute"}
+              >
+                {soundVolume === 0 ? "🔇" : soundVolume < 0.4 ? "🔈" : soundVolume < 0.75 ? "🔉" : "🔊"}
+              </button>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={soundVolume}
+                onChange={e => handleVolumeChange(parseFloat(e.target.value))}
+                className="w-32 accent-purple-500"
+              />
+              <span className="w-8 text-right text-[11px] text-slate-500">{Math.round(soundVolume * 100)}%</span>
+            </div>
+          </div>
+
           {/* ── Mode Tabs ── */}
           <div className="mb-4 flex flex-wrap justify-center gap-1.5 sm:mb-6 sm:gap-2">
             {(["ai", "friend", "matchmake"] as GameMode[]).map((mode) => (
@@ -5242,6 +5301,33 @@ export default function ChaosChessPage() {
                   {authenticated ? "Signed in" : "Guest"}
                 </span>
               </div>
+            </div>
+          </div>
+
+          {/* ── Settings ── */}
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3 sm:col-span-2 lg:col-span-1">
+            <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:text-xs">
+              ⚙️ Settings
+            </h3>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleVolumeChange(soundVolume === 0 ? 0.8 : 0)}
+                className="text-base leading-none transition-opacity hover:opacity-70"
+                title={soundVolume === 0 ? "Unmute" : "Mute"}
+              >
+                {soundVolume === 0 ? "🔇" : soundVolume < 0.4 ? "🔈" : soundVolume < 0.75 ? "🔉" : "🔊"}
+              </button>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={soundVolume}
+                onChange={e => handleVolumeChange(parseFloat(e.target.value))}
+                className="flex-1 accent-purple-500"
+              />
+              <span className="w-7 text-right text-[10px] text-slate-500">{Math.round(soundVolume * 100)}%</span>
             </div>
           </div>
         </div>

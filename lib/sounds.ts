@@ -110,6 +110,22 @@ const SOUND_VOLUMES: Partial<Record<SoundName, number>> = {
 
 const audioCache = new Map<SoundName, HTMLAudioElement>();
 
+/** Global volume multiplier (0–1). Persisted to localStorage. */
+let globalVolume: number = (() => {
+  if (typeof window === "undefined") return 0.8;
+  const saved = localStorage.getItem("chaos-sound-volume");
+  return saved !== null ? parseFloat(saved) : 0.8;
+})();
+
+export function getSoundVolume(): number { return globalVolume; }
+
+export function setSoundVolume(v: number): void {
+  globalVolume = Math.max(0, Math.min(1, v));
+  if (typeof window !== "undefined") {
+    localStorage.setItem("chaos-sound-volume", String(globalVolume));
+  }
+}
+
 function getAudio(name: SoundName): HTMLAudioElement {
   let audio = audioCache.get(name);
   if (!audio) {
@@ -123,9 +139,10 @@ function getAudio(name: SoundName): HTMLAudioElement {
 /** Play a sound effect. Fails silently if audio is blocked. */
 export function playSound(name: SoundName): void {
   try {
+    if (globalVolume === 0) return;
     const audio = getAudio(name);
     audio.currentTime = 0;
-    audio.volume = SOUND_VOLUMES[name] ?? 0.6;
+    audio.volume = Math.min(1, (SOUND_VOLUMES[name] ?? 0.6) * globalVolume);
     audio.play().catch(() => {});
   } catch {
     // Audio not available (SSR, permissions, etc.)
