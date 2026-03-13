@@ -381,6 +381,66 @@ export function countPiecesFromFen(
 }
 
 /**
+ * Get the centipawn value of a piece at a given square, accounting for
+ * any chaos modifier upgrades (single-piece or type-wide).
+ *
+ * Single-piece identity upgrades (archbishop, knook, camel, pegasus) only
+ * apply when the `assignedSquares` entry matches the given square.
+ * Type-wide modifier bonuses stack as the highest applicable bonus.
+ */
+export function getChaosPieceValCp(
+  square: string,
+  pieceType: string,
+  pieceColor: "w" | "b",
+  mods: ChaosModifier[],
+  assignedSquares?: Record<string, string | null>,
+): number {
+  const BASE: Record<string, number> = { p: 100, n: 325, b: 325, r: 500, q: 900, k: 20000 };
+  const base = BASE[pieceType] ?? 100;
+  if (!mods.length) return base;
+
+  // Single-piece identity upgrades — only apply if this square is the assigned square
+  const SINGLE_PIECE_VALS: Record<string, number> = {
+    archbishop: 600,  // bishop + knight ≈ 6 pawns (user-specified)
+    knook: 800,       // knight + rook ≈ 8 pawns (user-specified)
+    camel: 300,       // colorbound leaper ≈ 3 pawns
+    pegasus: 450,     // enhanced knight ≈ 4.5 pawns
+  };
+  if (assignedSquares) {
+    for (const [modId, val] of Object.entries(SINGLE_PIECE_VALS)) {
+      const key = `${pieceColor}_${modId}`;
+      if (assignedSquares[key] === square && mods.some(m => m.id === modId)) return val;
+    }
+  }
+
+  // Type-wide upgrades — largest applicable bonus wins (no stacking)
+  const TYPE_BONUSES: Partial<Record<string, number>> = {
+    "dragon-bishop"      : 50,   // bishop + orthogonal step ≈ 3.75 pawns
+    "dragon-rook"        : 60,   // rook + diagonal step ≈ 5.6 pawns
+    "phantom-rook"       : 50,   // rook passes through friendlies
+    "sniper-bishop"      : 75,   // bishop captures without moving
+    "bishop-bounce"      : 75,   // bishop bounces off edges
+    "il-vaticano"        : 50,   // bishops co-capture pawns
+    "collateral-rook"    : 100,  // rook captures destroy piece behind ≈ 6 pawns
+    "rook-cannon"        : 100,  // rook jumps to capture ≈ 6 pawns
+    "nuclear-queen"      : 200,  // queen captures clear 8 squares ≈ 11 pawns
+    "amazon"             : 150,  // queen + knight ≈ 10.5 pawns
+    "queen-teleport"     : 50,   // queen teleports once
+    "king-ascension"     : 5000, // king moves like queen
+    "pawn-charge"        : 10,
+    "pawn-capture-forward": 15,
+  };
+  let bonus = 0;
+  for (const mod of mods) {
+    if (mod.piece === (pieceType as PieceType)) {
+      const b = TYPE_BONUSES[mod.id];
+      if (b !== undefined && b > bonus) bonus = b;
+    }
+  }
+  return base + bonus;
+}
+
+/**
  * Roll 3 random modifier choices for a given phase.
  * Avoids modifiers already drafted by the given side.
  * When pieceCounts is provided, ensures at least one choice is viable

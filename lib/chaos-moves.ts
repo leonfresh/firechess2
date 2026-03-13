@@ -1219,9 +1219,11 @@ export function computeChaosThreatPenalty(
   opponentModifiers: ChaosModifier[],
   opponentColor: Color,
   assignedSquares?: Record<string, string | null>,
+  getCustomVal?: (sq: string, type: string, color: "w" | "b") => number,
 ): number {
   const chaosMoves = getChaosMoves(game, opponentModifiers, opponentColor, assignedSquares);
   if (chaosMoves.length === 0) return 0;
+  const valFn = getCustomVal ?? ((_sq: string, type: string) => PIECE_VALUE_CP[type] ?? 0);
 
   let maxThreat = 0;
 
@@ -1230,7 +1232,7 @@ export function computeChaosThreatPenalty(
     const targetPiece = game.get(cm.to as any);
     if (!targetPiece || targetPiece.color === opponentColor) continue;
 
-    const value = PIECE_VALUE_CP[targetPiece.type] ?? 0;
+    const value = valFn(cm.to, targetPiece.type, targetPiece.color as "w" | "b");
     if (value <= 0) continue;
 
     // For sniper bishop (pieceStays = true), the capture is "free" — full value
@@ -1243,7 +1245,7 @@ export function computeChaosThreatPenalty(
     } else {
       // Attacker moves to the square — might get recaptured
       const piece = game.get(cm.from as any);
-      const attackerValue = piece ? (PIECE_VALUE_CP[piece.type] ?? 0) : 0;
+      const attackerValue = piece ? valFn(cm.from, piece.type, piece.color as "w" | "b") : 0;
       // If attacker is worth less than target, it's a good trade
       // If attacker is worth more, the opponent might not take it
       // Be conservative: assume the trade happens if target >= attacker
@@ -1255,7 +1257,7 @@ export function computeChaosThreatPenalty(
       for (const sq of cm.sideEffects) {
         const se = game.get(sq as any);
         if (se && se.color !== opponentColor) {
-          netThreat += PIECE_VALUE_CP[se.type] ?? 0;
+          netThreat += valFn(sq, se.type, se.color as "w" | "b");
         }
       }
     }

@@ -44,6 +44,7 @@ import {
   getPhaseLabel,
   updateTrackedPieces,
   initTrackedPiece,
+  getChaosPieceValCp,
   TIER_COLORS,
   TIER_LABELS,
   type ChaosState,
@@ -1610,11 +1611,16 @@ function PieceInfoPanel({
   const pieceTypeMods = mods.filter(m => m.piece === (piece.type as PieceType));
   const displayName = getPieceDisplayName(piece.type, mods, square, assignedSquares, piece.color);
   const sideClass = isPlayerPiece ? "text-emerald-400" : "text-red-400";
+  const valCp = getChaosPieceValCp(square, piece.type, piece.color as "w" | "b", mods, assignedSquares);
+  const valStr = valCp >= 20000 ? "\u221e" : (valCp / 100).toFixed(1).replace(/\.0$/, "");
 
   return (
     <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3">
       <div className="mb-2 flex items-center gap-2">
         <span className={`text-sm font-bold ${sideClass}`}>{displayName}</span>
+        <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-amber-400" title="Material value in pawns">
+          ♟ {valStr}
+        </span>
         <span className={`ml-auto rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${
           isPlayerPiece ? "bg-emerald-500/15 text-emerald-400" : "bg-red-500/15 text-red-400"
         }`}>
@@ -1739,7 +1745,13 @@ export default function ChaosChessPage() {
   /** Reason for game end (for display) */
   const [endReason, setEndReason] = useState<string>("");
 
+  /* ── Piece info floating panel ── */
+  const [pieceInfoOpen, setPieceInfoOpen] = useState(true);
+  const [pieceInfoPos, setPieceInfoPos] = useState({ x: -1, y: -1 }); // -1 = use default (bottom-right)
+  const pieceInfoDragRef = useRef<{ sx: number; sy: number; ox: number; oy: number } | null>(null);
+
   /* ── Time controls ── */
+
   const [timeControl, setTimeControl] = useState<{ label: string; base: number; inc: number } | null>(null);
   const [timers, setTimers] = useState<{ w: number; b: number }>({ w: 0, b: 0 });
   const timersRef = useRef<{ w: number; b: number }>({ w: 0, b: 0 });
@@ -1806,7 +1818,7 @@ export default function ChaosChessPage() {
   /* ── Standard promotion choice dialog ── */
   const [pendingStdPromotion, setPendingStdPromotion] = useState<{ from: CbSquare; to: CbSquare } | null>(null);
   /* ── Difficulty ── */
-  const [aiLevel, setAiLevel] = useState<"easy" | "medium" | "hard">("medium");
+  const [aiLevel, setAiLevel] = useState<"easy" | "medium" | "hard">("easy");
   const aiDepth = aiLevel === "easy" ? 6 : aiLevel === "medium" ? 10 : 14;
 
   /* ── Floating pepe reactions ── */
@@ -2193,16 +2205,26 @@ export default function ChaosChessPage() {
           }
           // Black: no action here — Black picks when White's broadcast arrives
         } else {
-          // AI mode: defer draft until AFTER the AI makes its response move.
-          // This prevents the player from knowing their powerup before choosing their next move.
+          // AI mode: show draft immediately after player's move, before AI responds
           setPendingPhase(phase);
-          prevPhaseRef.current = phase; // guard against re-triggering during AI's move
+          prevPhaseRef.current = phase;
           const playerColor_ = playerColor === "white" ? "w" : "b";
           const playerPieceCounts = countPiecesFromFen(g.fen(), playerColor_);
           const choices = rollDraftChoices(phase, state.playerModifiers, undefined, playerPieceCounts);
-          pendingAiDraftRef.current = { phase, choices };
-          // Return false so the caller proceeds to makeAiMove immediately
-          return false;
+          setChaosState((prev) => ({ ...prev, isDrafting: true, draftingSide: "player", draftChoices: choices }));
+          setGameStatus("drafting");
+          setEventLog((prev) => [
+            ...prev,
+            {
+              type: "draft",
+              message: `⏸️ Turn ${g.moveNumber()} — CHAOS DRAFT Phase ${phase}! Choose your power-up.`,
+              icon: "⏸️",
+              pepe: phase <= 2 ? PEPE.think : phase <= 4 ? PEPE.shocked : PEPE.galaxybrain,
+            },
+          ]);
+          playSound("record-scratch");
+          spawnPepe(phase >= 4 ? PEPE.shocked : PEPE.bigeyes);
+          return true;
         }
         return true;
       }
@@ -2281,15 +2303,21 @@ export default function ChaosChessPage() {
         // Evaluate chaos moves — captures sorted by material gain are always evaluated;
         // positional (non-capture) chaos moves are considered 30% of the time.
         if (aiChaosMoves.length > 0) {
-          const PIECE_VAL: Record<string, number> = { p: 100, n: 325, b: 325, r: 500, q: 900, k: 20000 };
+          // Chaos-aware piece value lookup: upgraded pieces are worth more
+          const getVal = (sq: string, pieceType: string, pColor: "w" | "b") =>
+            getChaosPieceValCp(sq, pieceType, pColor,
+              pColor === (aiColor as string) ? cs.aiModifiers : cs.playerModifiers,
+              cs.assignedSquares ?? undefined);
 
           // Sort captures by net material gain (greedy-first), always evaluate up to 6
           const chaosCaps = aiChaosMoves
             .filter(cm => cm.type === "capture")
             .map(cm => {
-              const target  = g.get(cm.to   as any);
+              const target   = g.get(cm.to   as any);
               const attacker = g.get(cm.from as any);
-              const gain = (PIECE_VAL[target?.type ?? ""] ?? 0) - (PIECE_VAL[attacker?.type ?? ""] ?? 0) * 0.35;
+              const targetVal   = target   ? getVal(cm.to,   target.type,   target.color   as "w" | "b") : 0;
+              const attackerVal = attacker ? getVal(cm.from, attacker.type, attacker.color as "w" | "b") : 0;
+              const gain = targetVal - attackerVal * 0.35;
               return { cm, gain };
             })
             .sort((a, b) => b.gain - a.gain);
@@ -2447,8 +2475,13 @@ export default function ChaosChessPage() {
             const ct = uci.slice(2, 4);
             const cp = uci.length > 4 ? uci[4] : undefined;
             try { tmpGame.move({ from: cf, to: ct, promotion: cp }); } catch { continue; }
-            // Compute chaos threat penalty from the resulting position
-            const penalty = computeChaosThreatPenalty(tmpGame, cs.playerModifiers, playerColor_ as Color, cs.assignedSquares ?? undefined);
+            // Compute chaos threat penalty from the resulting position (chaos-value-aware)
+            const penalty = computeChaosThreatPenalty(
+              tmpGame, cs.playerModifiers, playerColor_ as Color, cs.assignedSquares ?? undefined,
+              (sq, type, col) => getChaosPieceValCp(sq, type, col as "w" | "b",
+                col === playerColor_ ? cs.playerModifiers : cs.aiModifiers,
+                cs.assignedSquares ?? undefined),
+            );
             const adjusted = candidate.cp - penalty;
             if (adjusted > bestAdjusted) {
               bestAdjusted = adjusted;
@@ -2479,19 +2512,42 @@ export default function ChaosChessPage() {
           const aiTurn = g.turn() as Color;
           const playerC: Color = playerColor === "white" ? "w" : "b";
           if (cs.playerModifiers.length > 0) {
-            const tmp = new Chess(g.fen());
-            tmp.remove(from as any);
-            if (tmp.get(to as any)) tmp.remove(to as any);
-            tmp.put({ type: "k", color: aiTurn }, to as any);
-            const chaosAttacked = getChaosAttackedSquares(tmp, cs.playerModifiers, playerC, cs.assignedSquares ?? undefined);
-            if (chaosAttacked.has(to as any)) {
-              // Unsafe king move — try a random legal non-king move instead
-              const fallbackMoves = g.moves({ verbose: true }).filter((m) => m.piece !== "k");
-              if (fallbackMoves.length > 0) {
-                const fb = fallbackMoves[Math.floor(Math.random() * fallbackMoves.length)];
-                bestUci = fb.lan;
+            // Helper: is king move from->to chaos-unsafe?
+            const isKingChaosUnsafe = (fromSq: string, toSq: string): boolean => {
+              const tmp = new Chess(g.fen());
+              tmp.remove(fromSq as any);
+              if (tmp.get(toSq as any)) tmp.remove(toSq as any);
+              tmp.put({ type: "k", color: aiTurn }, toSq as any);
+              const ca = getChaosAttackedSquares(tmp, cs.playerModifiers, playerC, cs.assignedSquares ?? undefined);
+              return ca.has(toSq as any);
+            };
+
+            if (isKingChaosUnsafe(from, to)) {
+              const allLegal = g.moves({ verbose: true });
+              // Prefer top-ranked non-king moves (can't land king in danger if king doesn't move)
+              const nonKingMoves = allLegal.filter((m) => m.piece !== "k");
+              if (nonKingMoves.length > 0) {
+                // Pick the non-king move with the highest Stockfish ranking (topMoves order)
+                const topUciOrder = topMoves
+                  .map((t) => t.bestMove ?? t.pvMoves[0])
+                  .filter(Boolean) as string[];
+                const topRanked = topUciOrder.find((u) => nonKingMoves.some((m) => m.lan === u));
+                bestUci = topRanked ?? nonKingMoves[0].lan;
               } else {
-                // Only king moves available — let it go (might be forced)
+                // Only king moves available — find a chaos-safe one
+                const safeKingMoves = allLegal.filter(
+                  (m) => m.piece === "k" && !isKingChaosUnsafe(m.from, m.to),
+                );
+                if (safeKingMoves.length > 0) {
+                  const topUciOrder = topMoves
+                    .map((t) => t.bestMove ?? t.pvMoves[0])
+                    .filter(Boolean) as string[];
+                  const topRankedSafe = topUciOrder.find((u) =>
+                    safeKingMoves.some((m) => m.lan === u),
+                  );
+                  bestUci = topRankedSafe ?? safeKingMoves[0].lan;
+                }
+                // else: all king moves are chaos-unsafe — forced, bestUci stays
               }
             }
           }
@@ -2512,7 +2568,7 @@ export default function ChaosChessPage() {
             chaosEscaped = !isKingUnderChaosAttack(ceTmp, playerChaosMods, playerC3, cs.assignedSquares ?? undefined);
           } catch { /* invalid move */ }
           if (!chaosEscaped) {
-            // Find any legal move that escapes the chaos check
+            // Find all legal moves that escape the chaos check — prefer topMoves order
             const allLegal = g.moves({ verbose: true });
             const escaping = allLegal.filter((mv) => {
               const t = new Chess(ceFen);
@@ -2520,7 +2576,11 @@ export default function ChaosChessPage() {
               return !isKingUnderChaosAttack(t, playerChaosMods, playerC3, cs.assignedSquares ?? undefined);
             });
             if (escaping.length > 0) {
-              bestUci = escaping[Math.floor(Math.random() * escaping.length)].lan;
+              const topUciOrder = topMoves
+                .map((t) => t.bestMove ?? t.pvMoves[0])
+                .filter(Boolean) as string[];
+              const topRanked = topUciOrder.find((u) => escaping.some((m) => m.lan === u));
+              bestUci = topRanked ?? escaping[0].lan;
             }
             // else: truly trapped — checkmate logic will handle it
           }
@@ -2602,24 +2662,6 @@ export default function ChaosChessPage() {
           recomputeChaosMoves(activeGame2, cs2);
         }
 
-        // Flush any draft that was deferred while we made this move
-        const pendingDraft = pendingAiDraftRef.current;
-        if (pendingDraft) {
-          pendingAiDraftRef.current = null;
-          const { phase: dPhase, choices: dChoices } = pendingDraft;
-          setTimeout(() => {
-            setChaosState((prev) => ({ ...prev, isDrafting: true, draftingSide: "player", draftChoices: dChoices }));
-            setGameStatus("drafting");
-            setEventLog((prev) => [...prev, {
-              type: "draft",
-              message: `⏸️ CHAOS DRAFT Phase ${dPhase}! Choose your modifier.`,
-              icon: "⏸️",
-              pepe: dPhase <= 2 ? PEPE.think : dPhase <= 4 ? PEPE.shocked : PEPE.galaxybrain,
-            }]);
-            playSound("record-scratch");
-            spawnPepe(dPhase >= 4 ? PEPE.shocked : PEPE.bigeyes);
-          }, 300);
-        }
       } catch (err) {
         console.warn("[Chaos AI] Engine error:", err);
       }
@@ -4718,6 +4760,7 @@ export default function ChaosChessPage() {
 
   // Game / Drafting / Game Over
   return (
+    <>
     <div className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-gradient-to-b from-[#030712] via-[#0a0f1a] to-[#030712]">
       <ChaosParticles />
 
@@ -5211,18 +5254,6 @@ export default function ChaosChessPage() {
 
         {/* ── Right sidebar / bottom panel: Event log + Move log ── */}
         <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-1">
-          {/* Piece info panel — selected or hovered piece */}
-          <div className="sm:col-span-2 lg:col-span-1">
-            <PieceInfoPanel
-              square={hoveredSquare ?? selectedSquare}
-              game={game}
-              playerMods={chaosState.playerModifiers}
-              aiMods={chaosState.aiModifiers}
-              playerColorCode={playerColor === "white" ? "w" : "b"}
-              assignedSquares={chaosState.assignedSquares ?? undefined}
-            />
-          </div>
-
           {/* Event log */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3">
             <h3 className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-purple-400 sm:mb-2 sm:text-xs">
@@ -5397,9 +5428,79 @@ export default function ChaosChessPage() {
               <span className="w-7 text-right text-[10px] text-slate-500">{Math.round(memeVolumeState * 100)}%</span>
               <span className="text-[9px] text-slate-600">memes</span>
             </div>
+            {!pieceInfoOpen && (
+              <button
+                type="button"
+                onClick={() => setPieceInfoOpen(true)}
+                className="mt-2 w-full rounded-lg border border-purple-500/20 bg-purple-500/5 py-1.5 text-[11px] font-medium text-purple-400 transition-all hover:bg-purple-500/10"
+              >
+                🔍 Show Piece Info
+              </button>
+            )}
           </div>
         </div>
       </div>
     </div>
+
+    {/* ── Floating draggable piece info panel ── */}
+    {pieceInfoOpen && gameStatus === "playing" && (() => {
+      const sq = hoveredSquare ?? selectedSquare;
+      if (!sq || !game.get(sq as any)) return null;
+      const defaultX = typeof window !== "undefined" ? Math.max(20, window.innerWidth - 290) : 20;
+      const defaultY = typeof window !== "undefined" ? Math.max(80, window.innerHeight - 480) : 80;
+      const px = pieceInfoPos.x < 0 ? defaultX : pieceInfoPos.x;
+      const py = pieceInfoPos.y < 0 ? defaultY : pieceInfoPos.y;
+      return (
+        <div
+          style={{ position: "fixed", left: px, top: py, zIndex: 60, width: 260 }}
+          className="rounded-xl border border-white/[0.1] bg-[#0d1117]/95 shadow-2xl shadow-black/50 backdrop-blur-md"
+        >
+          <div
+            className="flex cursor-grab items-center gap-2 rounded-t-xl border-b border-white/[0.06] px-3 py-2 select-none active:cursor-grabbing"
+            onPointerDown={(e) => {
+              const ox = pieceInfoPos.x < 0 ? defaultX : pieceInfoPos.x;
+              const oy = pieceInfoPos.y < 0 ? defaultY : pieceInfoPos.y;
+              pieceInfoDragRef.current = { sx: e.clientX, sy: e.clientY, ox, oy };
+              const onMove = (ev: PointerEvent) => {
+                if (!pieceInfoDragRef.current) return;
+                setPieceInfoPos({
+                  x: Math.max(0, Math.min(pieceInfoDragRef.current.ox + ev.clientX - pieceInfoDragRef.current.sx, window.innerWidth - 265)),
+                  y: Math.max(60, Math.min(pieceInfoDragRef.current.oy + ev.clientY - pieceInfoDragRef.current.sy, window.innerHeight - 60)),
+                });
+              };
+              const onUp = () => {
+                pieceInfoDragRef.current = null;
+                document.removeEventListener("pointermove", onMove);
+                document.removeEventListener("pointerup", onUp);
+              };
+              document.addEventListener("pointermove", onMove);
+              document.addEventListener("pointerup", onUp);
+              e.currentTarget.setPointerCapture(e.pointerId);
+              e.preventDefault();
+            }}
+          >
+            <span className="text-slate-600">⠿⠿</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Piece Info</span>
+            <button
+              type="button"
+              onClick={() => setPieceInfoOpen(false)}
+              className="ml-auto rounded p-0.5 text-slate-600 transition-colors hover:bg-white/10 hover:text-slate-300 text-xs leading-none"
+              title="Close"
+            >✕</button>
+          </div>
+          <div className="p-2.5">
+            <PieceInfoPanel
+              square={sq}
+              game={game}
+              playerMods={chaosState.playerModifiers}
+              aiMods={chaosState.aiModifiers}
+              playerColorCode={playerColor === "white" ? "w" : "b"}
+              assignedSquares={chaosState.assignedSquares ?? undefined}
+            />
+          </div>
+        </div>
+      );
+    })()}
+    </>
   );
 }
