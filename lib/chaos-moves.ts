@@ -575,6 +575,10 @@ function genPegasus(game: Chess, color: Color, trackedSquare?: string | null): C
         (Math.abs(df) === 1 && Math.abs(dr) === 2);
       if (isNormalKnight) continue;
 
+      // Nerf: only allow long-range jumps (Chebyshev distance >= 3).
+      // Removes adjacent diagonal captures and other nearby squares.
+      if (Math.max(Math.abs(df), Math.abs(dr)) < 3) continue;
+
       if (wouldLeaveKingInCheck(game, pegasusSquare, target, color)) continue;
 
       moves.push({
@@ -896,7 +900,7 @@ export function getChaosAttackedSquares(
           const dff = ff - f;
           const dfr = fr - r;
           const isNormal = (Math.abs(dff) === 2 && Math.abs(dfr) === 1) || (Math.abs(dff) === 1 && Math.abs(dfr) === 2);
-          if (!isNormal) attacked.add(t);
+          if (!isNormal && Math.max(Math.abs(dff), Math.abs(dfr)) >= 3) attacked.add(t);
         }
       }
     }
@@ -1136,6 +1140,25 @@ export function executeChaosMove(
   const fenParts = tmp.fen().split(" ");
   fenParts[1] = fenParts[1] === "w" ? "b" : "w";
   fenParts[3] = "-"; // Reset en passant
+
+  // Strip castling rights that are no longer valid after chaos manipulation.
+  // chess.js v4 throws if a castling right exists but its rook/king is gone.
+  const rawCastling = fenParts[2] || "-";
+  if (rawCastling !== "-") {
+    const wk  = tmp.get("e1" as Square);
+    const bk  = tmp.get("e8" as Square);
+    const wKR = tmp.get("h1" as Square);
+    const wQR = tmp.get("a1" as Square);
+    const bKR = tmp.get("h8" as Square);
+    const bQR = tmp.get("a8" as Square);
+    let c = "";
+    if (rawCastling.includes("K") && wk?.type === "k" && wk.color === "w" && wKR?.type === "r" && wKR.color === "w") c += "K";
+    if (rawCastling.includes("Q") && wk?.type === "k" && wk.color === "w" && wQR?.type === "r" && wQR.color === "w") c += "Q";
+    if (rawCastling.includes("k") && bk?.type === "k" && bk.color === "b" && bKR?.type === "r" && bKR.color === "b") c += "k";
+    if (rawCastling.includes("q") && bk?.type === "k" && bk.color === "b" && bQR?.type === "r" && bQR.color === "b") c += "q";
+    fenParts[2] = c || "-";
+  }
+
   fenParts[4] = String(Math.max(0, parseInt(fenParts[4] || "0")));
   if (fenParts[1] === "w") {
     fenParts[5] = String(parseInt(fenParts[5] || "1") + 1);
