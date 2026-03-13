@@ -518,6 +518,74 @@ function genSniperBishop(game: Chess, color: Color): ChaosMove[] {
   return moves;
 }
 
+/** Ricochet Bishop: bishops can bounce their diagonal off the board edge once per move */
+function genBishopBounce(game: Chess, color: Color): ChaosMove[] {
+  const moves: ChaosMove[] = [];
+  const bishops = allSquaresOf(game, "b", color);
+  const diagDirs: [number, number][] = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+
+  for (const bs of bishops) {
+    const [sf, sr] = sqToCoords(bs);
+
+    for (const [idf, idr] of diagDirs) {
+      let cf = sf;
+      let cr = sr;
+      let df = idf;
+      let dr = idr;
+      let bounced = false;
+
+      // Walk up to 14 steps (max diagonal across the board after a bounce)
+      for (let step = 0; step < 14; step++) {
+        const nf = cf + df;
+        const nr = cr + dr;
+
+        // Both axes off-board: corner bounce — reverse both
+        const fOff = nf < 0 || nf > 7;
+        const rOff = nr < 0 || nr > 7;
+
+        if (fOff && rOff) {
+          if (bounced) break;
+          bounced = true;
+          df = -df;
+          dr = -dr;
+          continue;
+        }
+
+        if (fOff || rOff) {
+          // One axis off-board: reflect that component
+          if (bounced) break;
+          bounced = true;
+          if (fOff) df = -df;
+          if (rOff) dr = -dr;
+          continue;
+        }
+
+        cf = nf;
+        cr = nr;
+
+        // Skip the squares chess.js already covers (pre-bounce straight diagonal from origin)
+        if (!bounced) continue;
+
+        const target = sq(cf, cr)!;
+
+        if (isFriendly(game, target, color)) break; // blocked by own piece
+
+        if (!wouldLeaveKingInCheck(game, bs, target, color)) {
+          moves.push({
+            from: bs, to: target,
+            type: isEnemy(game, target, color) ? "capture" : "move",
+            modifierId: "bishop-bounce",
+            label: "Ricochet Bishop (wall bounce)",
+          });
+        }
+
+        if (isEnemy(game, target, color)) break; // can't pass through captures
+      }
+    }
+  }
+  return moves;
+}
+
 /** Pegasus: One knight can make a double L-jump (two knight moves in one turn, 2nd jump forward only) */
 function genPegasus(game: Chess, color: Color, trackedSquare?: string | null): ChaosMove[] {
   const moves: ChaosMove[] = [];
@@ -734,6 +802,7 @@ const MODIFIER_GENERATORS: Record<string, (game: Chess, color: Color, trackedSqu
   "pegasus": genPegasus,
   "rook-cannon": genRookCannon,
   "queen-teleport": genQueenTeleport,
+  "bishop-bounce": genBishopBounce,
 };
 
 /**
@@ -906,6 +975,33 @@ export function getChaosAttackedSquares(
         for (let dist = 1; dist <= 2; dist++) {
           const t = sq(f + df * dist, r + dr * dist);
           if (!t) break;
+          attacked.add(t);
+          if (game.get(t)) break;
+        }
+      }
+    }
+  }
+
+  /* Ricochet Bishop: bishops attack the bounced-diagonal squares */
+  if (modIds.has("bishop-bounce")) {
+    for (const bs of allSquaresOf(game, "b", attackerColor)) {
+      const [sf, sr] = sqToCoords(bs);
+      for (const [idf, idr] of diagonals) {
+        let cf = sf;
+        let cr = sr;
+        let df = idf as number;
+        let dr = idr as number;
+        let bounced = false;
+        for (let step = 0; step < 14; step++) {
+          const nf = cf + df;
+          const nr = cr + dr;
+          const fOff = nf < 0 || nf > 7;
+          const rOff = nr < 0 || nr > 7;
+          if (fOff && rOff) { if (bounced) break; bounced = true; df = -df; dr = -dr; continue; }
+          if (fOff || rOff) { if (bounced) break; bounced = true; if (fOff) df = -df; if (rOff) dr = -dr; continue; }
+          cf = nf; cr = nr;
+          if (!bounced) continue;
+          const t = sq(cf, cr)!;
           attacked.add(t);
           if (game.get(t)) break;
         }
