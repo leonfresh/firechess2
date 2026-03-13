@@ -31,7 +31,7 @@ import { useSession } from "@/components/session-provider";
 import { getGuestId } from "@/lib/guest-id";
 // useBoardSize removed — we use onBoardWidthChange from react-chessboard
 import { useBoardTheme, useShowCoordinates, useCustomPieces, usePieceTheme } from "@/lib/use-coins";
-import { playSound, preloadSounds, getSoundVolume, setSoundVolume } from "@/lib/sounds";
+import { playSound, preloadSounds, getSoundVolume, setSoundVolume, getMemeVolume, setMemeVolume } from "@/lib/sounds";
 import { getPieceImageUrl } from "@/lib/board-themes";
 // Note: useBoardSize removed — we use onBoardWidthChange from react-chessboard for auto-responsive sizing
 import {
@@ -1597,7 +1597,7 @@ function PieceInfoPanel({
 }) {
   if (!square) {
     return (
-      <div className="h-[280px] rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 flex items-center justify-center overflow-hidden">
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 flex items-center justify-center min-h-[60px]">
         <p className="text-[11px] text-slate-600">Hover or select a piece to see its movement</p>
       </div>
     );
@@ -1612,7 +1612,7 @@ function PieceInfoPanel({
   const sideClass = isPlayerPiece ? "text-emerald-400" : "text-red-400";
 
   return (
-    <div className="h-[280px] overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3">
+    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3">
       <div className="mb-2 flex items-center gap-2">
         <span className={`text-sm font-bold ${sideClass}`}>{displayName}</span>
         <span className={`ml-auto rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${
@@ -1679,6 +1679,11 @@ export default function ChaosChessPage() {
   const handleVolumeChange = useCallback((v: number) => {
     setSoundVolume(v);
     setSoundVolumeState(v);
+  }, []);
+  const [memeVolumeState, setMemeVolumeState] = useState(() => getMemeVolume());
+  const handleMemeVolumeChange = useCallback((v: number) => {
+    setMemeVolume(v);
+    setMemeVolumeState(v);
   }, []);
   const boardTheme = useBoardTheme();
   const showCoordinates = useShowCoordinates();
@@ -2583,7 +2588,16 @@ export default function ChaosChessPage() {
         setChaosState(cs2);
         setGame(activeGame2);
 
-        if (!checkGameEnd(activeGame2)) {
+        // If the AI just checkmated the player, let the board show the move first
+        const checkmatedColor = activeGame2.turn() as Color;
+        const aiJustCheckmatedPlayer =
+          activeGame2.isCheckmate() &&
+          ((playerColor === "white" && checkmatedColor === "w") ||
+           (playerColor === "black" && checkmatedColor === "b"));
+
+        if (aiJustCheckmatedPlayer) {
+          setTimeout(() => { checkGameEnd(activeGame2); }, 1500);
+        } else if (!checkGameEnd(activeGame2)) {
           checkDraft(activeGame2, cs2);
           recomputeChaosMoves(activeGame2, cs2);
         }
@@ -3024,7 +3038,11 @@ export default function ChaosChessPage() {
 
       // Check game end / draft
       if (activeGame.isCheckmate() || activeGame.isStalemate() || activeGame.isDraw()) {
-        checkGameEnd(activeGame);
+        if (activeGame.isCheckmate()) {
+          setTimeout(() => checkGameEnd(activeGame), 1500);
+        } else {
+          checkGameEnd(activeGame);
+        }
         if (pollRef.current) clearInterval(pollRef.current);
       } else if (data.chaosState) {
         // Only recompute moves — checkDraft fires from handlePlayerMove (your own move) only
@@ -3600,6 +3618,10 @@ export default function ChaosChessPage() {
       // Check game end FIRST — checkmate takes priority over king-shield activation.
       setChaosState(cs2);
       setGame(activeG);
+      if (activeG.isCheckmate()) {
+        setTimeout(() => checkGameEnd(activeG), 1500);
+        return true;
+      }
       if (checkGameEnd(activeG)) return true;
 
       // Check opponent's king-shield (only if game is still ongoing)
@@ -3687,6 +3709,10 @@ export default function ChaosChessPage() {
 
       setGame(newGame);
 
+      if (newGame.isCheckmate()) {
+        setTimeout(() => checkGameEnd(newGame), 1500);
+        return;
+      }
       if (checkGameEnd(newGame)) return;
       const drafted = checkDraft(newGame, chaosState);
 
@@ -3760,6 +3786,10 @@ export default function ChaosChessPage() {
       const newG = new Chess(finalGame.fen());
       setGame(newG);
 
+      if (newG.isCheckmate()) {
+        setTimeout(() => checkGameEnd(newG), 1500);
+        return;
+      }
       if (checkGameEnd(newG)) return;
       const drafted = checkDraft(newG, chaosState);
 
@@ -3884,36 +3914,34 @@ export default function ChaosChessPage() {
     const playerCode = playerColor === "white" ? "w" : "b";
     const isEnemyPiece = piece.color !== playerCode;
 
-    if (!isEnemyPiece) {
-      // Player piece — info panel only; don't set board highlights to avoid
-      // interfering with click-to-select (the click handler manages legalMoveSquares).
-      return;
-    }
+    // Build move highlights — green for player pieces, red for enemy pieces
+    const highlightColor = isEnemyPiece
+      ? { base: "rgba(239,68,68,0.3)", move: "rgba(239,68,68,0.18)", capture: "rgba(239,68,68,0.45)", chaos: "rgba(249,115,22,0.18)", chaosCapture: "rgba(249,115,22,0.45)" }
+      : { base: "rgba(34,197,94,0.3)", move: "rgba(34,197,94,0.18)", capture: "rgba(34,197,94,0.45)", chaos: "rgba(34,197,94,0.18)", chaosCapture: "rgba(34,197,94,0.45)" };
 
-    // Enemy piece — show hypothetical moves in red
     const highlights: Record<string, React.CSSProperties> = {
-      [square]: { backgroundColor: "rgba(239,68,68,0.3)" },
+      [square]: { backgroundColor: highlightColor.base },
     };
     try {
       const parts = game.fen().split(" ");
       parts[1] = piece.color;
       parts[3] = "-";
-      const enemyGame = new Chess(parts.join(" "));
-      const stdMoves = enemyGame.moves({ square: square as any, verbose: true });
+      const tempGame = new Chess(parts.join(" "));
+      const stdMoves = tempGame.moves({ square: square as any, verbose: true });
       for (const m of stdMoves) {
         highlights[m.to] = {
-          backgroundColor: m.captured ? "rgba(239,68,68,0.45)" : "rgba(239,68,68,0.18)",
+          backgroundColor: m.captured ? highlightColor.capture : highlightColor.move,
           borderRadius: m.captured ? undefined : "50%",
         };
       }
     } catch { /* ignore invalid FEN edge-cases */ }
-    // Enemy chaos moves for this square
-    const enemyColor = piece.color as Color;
-    const enemyMods = enemyColor === playerCode ? chaosState.playerModifiers : chaosState.aiModifiers;
-    const enemyChaosMoves = getChaosMoves(game, enemyMods, enemyColor, chaosState.assignedSquares ?? undefined);
-    for (const cm of enemyChaosMoves.filter(m => m.from === square)) {
+    // Chaos moves for this square
+    const pieceColor = piece.color as Color;
+    const pieceMods = pieceColor === playerCode ? chaosState.playerModifiers : chaosState.aiModifiers;
+    const chaosMoves = getChaosMoves(game, pieceMods, pieceColor, chaosState.assignedSquares ?? undefined);
+    for (const cm of chaosMoves.filter(m => m.from === square)) {
       highlights[cm.to] = {
-        backgroundColor: cm.type === "capture" ? "rgba(249,115,22,0.45)" : "rgba(249,115,22,0.18)",
+        backgroundColor: cm.type === "capture" ? highlightColor.chaosCapture : highlightColor.chaos,
         borderRadius: cm.type === "capture" ? undefined : "50%",
       };
     }
@@ -4082,8 +4110,27 @@ export default function ChaosChessPage() {
                 }
               }
             }
+            // Apply one-time draft effects for AI (knight horde, undead army)
+            const aiColor__ = playerColor === "white" ? "b" : "w";
+            const aiDraftResult = applyDraftEffect(currentGame, aiPick, aiColor__ as Color, capturedPawns[aiColor__ as "w" | "b"]);
+            let currentGameAfterAiDraft = currentGame;
+            if (aiDraftResult) {
+              const beforeBoard_ = currentGame.board();
+              const afterBoard_ = aiDraftResult.board();
+              const spawnedSqs: string[] = [];
+              for (let ri = 0; ri < 8; ri++) {
+                for (let fi = 0; fi < 8; fi++) {
+                  if (!beforeBoard_[ri][fi] && afterBoard_[ri][fi]) {
+                    spawnedSqs.push(`${'abcdefgh'[fi]}${8 - ri}`);
+                  }
+                }
+              }
+              if (spawnedSqs.length > 0) triggerEffect("spawn", spawnedSqs);
+              currentGameAfterAiDraft = aiDraftResult;
+              setGame(aiDraftResult);
+            }
             setChaosState(newState);
-            recomputeChaosMoves(currentGame, newState);
+            recomputeChaosMoves(currentGameAfterAiDraft, newState);
             setOpponentDraftReveal({ opponentPick: aiPick, phase: phaseForAi });
             setEventLog((p) => [
               ...p,
@@ -4091,7 +4138,7 @@ export default function ChaosChessPage() {
             ]);
             spawnPepe(tierPepe(aiPick.tier));
             if (isAiTurn) {
-              setTimeout(() => makeAiMove(currentGame, newState), AI_MOVE_DELAY);
+              setTimeout(() => makeAiMove(currentGameAfterAiDraft, newState), AI_MOVE_DELAY);
             }
           }, 800);
         }
@@ -4297,168 +4344,148 @@ export default function ChaosChessPage() {
     return (
       <div className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-gradient-to-b from-[#030712] via-[#0a0f1a] to-[#030712]">
         <ChaosParticles />
-        <div className="relative z-10 mx-auto flex max-w-4xl flex-col items-center px-3 py-6 text-center sm:px-4 sm:py-12">
-          {/* Title */}
-          <img
-            src={PEPE.hyped}
-            alt=""
-            className="mb-2 h-12 w-12 object-contain sm:mb-3 sm:h-16 sm:w-16"
-            style={{ animation: "pepe-bounce 1.5s ease-in-out infinite" }}
-          />
-          <h1 className="mb-2 bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 bg-clip-text text-3xl font-black tracking-tight text-transparent sm:mb-3 sm:text-4xl md:text-5xl">
-            CHAOS CHESS
-          </h1>
-          <p className="mb-5 max-w-md text-sm text-slate-400 sm:mb-8 sm:text-base">
-            Play chess with wild modifiers. Every 5 turns, draft a permanent buff
-            that actually changes how your pieces move. Pure chaos.
-          </p>
+        <div className="relative z-10 mx-auto flex max-w-3xl flex-col items-center px-4 py-8 text-center sm:py-14">
 
-          {/* How it works */}
-          <div className="mb-6 grid w-full max-w-lg gap-3 text-left grid-cols-3 sm:mb-10 sm:gap-4">
+          {/* ── Hero ── */}
+          <div className="mb-6 flex flex-col items-center sm:mb-10">
+            <div className="mb-3 flex items-center gap-3 sm:mb-4">
+              <img src={PEPE.hyped} alt="" className="h-10 w-10 object-contain sm:h-14 sm:w-14" style={{ animation: "pepe-bounce 1.5s ease-in-out infinite" }} />
+              <h1 className="bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 bg-clip-text text-4xl font-black tracking-tight text-transparent sm:text-5xl md:text-6xl">
+                CHAOS CHESS
+              </h1>
+              <img src={PEPE.clowntrain} alt="" className="h-10 w-10 object-contain sm:h-14 sm:w-14" style={{ animation: "pepe-bounce 1.5s ease-in-out infinite 0.4s" }} />
+            </div>
+            <p className="max-w-lg text-sm text-slate-400 sm:text-base">
+              Chess, but every 5 turns you draft a permanent modifier that rewires how your pieces move. Camel knights. Dragon bishops. Nuclear queens. Pure anarchy.
+            </p>
+          </div>
+
+          {/* ── How it works (horizontal pills) ── */}
+          <div className="mb-8 flex w-full max-w-xl flex-wrap justify-center gap-2 sm:mb-10">
             {[
-              { icon: "♟️", title: "Play", desc: "Normal chess rules + chaos modifiers" },
-              { icon: "⏸️", title: "Draft", desc: "At turns 5, 10, 15, 20, 25 — pick a modifier" },
-              { icon: "💥", title: "Chaos", desc: "Modifiers actually work — pieces gain new moves!" },
-            ].map((step) => (
-              <div key={step.title} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 text-center sm:p-4">
-                <div className="mb-1 sm:mb-2">
-                <Emoji emoji={step.icon} className="w-5 h-5 sm:w-6 sm:h-6" />
-              </div>
-                <h3 className="mb-0.5 text-xs font-bold text-white sm:mb-1 sm:text-sm">{step.title}</h3>
-                <p className="text-[10px] text-slate-500 sm:text-xs">{step.desc}</p>
+              { icon: "♟️", label: "Normal chess rules" },
+              { icon: "⏸️", label: "Draft at turns 5·10·15·20·25" },
+              { icon: "🐫", label: "Pieces gain new moves" },
+              { icon: "💥", label: "Fairy pieces & chaos combos" },
+            ].map((p) => (
+              <div key={p.label} className="flex items-center gap-1.5 rounded-full border border-white/[0.07] bg-white/[0.03] px-3 py-1.5 text-xs text-slate-400">
+                <Emoji emoji={p.icon} className="h-3.5 w-3.5" />
+                {p.label}
               </div>
             ))}
           </div>
 
-          {/* ── Time Control Picker ── */}
-          <div className="mb-4 sm:mb-6">
-            <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-slate-500 sm:text-xs">Time Control</p>
-            <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
-              {TIME_CONTROLS.map((tc) => {
-                const isSelected = tc.base === 0 ? timeControl === null : timeControl?.base === tc.base && timeControl?.inc === tc.inc;
-                return (
-                  <button
-                    key={tc.label}
-                    type="button"
-                    onClick={() => setTimeControl(tc.base === 0 ? null : tc)}
-                    className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all sm:px-4 sm:py-2 sm:text-sm ${
-                      isSelected
-                        ? "bg-purple-500/20 text-purple-400 border border-purple-500/40"
-                        : "bg-white/[0.04] text-slate-400 border border-white/[0.06] hover:bg-white/[0.08]"
-                    }`}
-                  >
-                    {tc.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* ── Sound Settings ── */}
-          <div className="mb-4 sm:mb-6">
-            <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-slate-500 sm:text-xs">Sound</p>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => handleVolumeChange(soundVolume === 0 ? 0.8 : 0)}
-                className="text-lg leading-none transition-opacity hover:opacity-70"
-                title={soundVolume === 0 ? "Unmute" : "Mute"}
-              >
-                {soundVolume === 0 ? "🔇" : soundVolume < 0.4 ? "🔈" : soundVolume < 0.75 ? "🔉" : "🔊"}
-              </button>
-              <input
-                type="range"
-                min={0}
-                max={1}
-                step={0.05}
-                value={soundVolume}
-                onChange={e => handleVolumeChange(parseFloat(e.target.value))}
-                className="w-32 accent-purple-500"
-              />
-              <span className="w-8 text-right text-[11px] text-slate-500">{Math.round(soundVolume * 100)}%</span>
-            </div>
-          </div>
-
-          {/* ── Mode Tabs ── */}
-          <div className="mb-4 flex flex-wrap justify-center gap-1.5 sm:mb-6 sm:gap-2">
+          {/* ── Mode picker ── */}
+          <div className="mb-6 flex w-full max-w-xs gap-1.5 rounded-xl border border-white/[0.07] bg-white/[0.02] p-1 sm:max-w-sm sm:gap-2">
             {(["ai", "friend", "matchmake"] as GameMode[]).map((mode) => (
               <button
                 key={mode}
                 type="button"
                 onClick={() => setGameMode(mode)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all sm:px-4 sm:py-2 sm:text-sm ${
+                className={`flex-1 rounded-lg py-2 text-[11px] font-semibold transition-all sm:text-xs ${
                   gameMode === mode
-                    ? "bg-purple-500/20 text-purple-400 border border-purple-500/40"
-                    : "bg-white/[0.04] text-slate-400 border border-white/[0.06] hover:bg-white/[0.08]"
+                    ? "bg-purple-500/25 text-purple-300 shadow-inner"
+                    : "text-slate-500 hover:text-slate-300"
                 }`}
               >
-                {mode === "ai" ? "🤖 vs AI" : mode === "friend" ? "👥 vs Friend" : "🎲 Matchmake"}
+                {mode === "ai" ? "🤖 vs AI" : mode === "friend" ? "👥 Friend" : "🎲 Random"}
               </button>
             ))}
           </div>
 
+          {/* ── Time Control (shared across all modes) ── */}
+          <div className="mb-5 flex flex-wrap items-center justify-center gap-1.5 sm:mb-6">
+            {TIME_CONTROLS.map((tc) => {
+              const isSelected = tc.base === 0 ? timeControl === null : timeControl?.base === tc.base && timeControl?.inc === tc.inc;
+              return (
+                <button
+                  key={tc.label}
+                  type="button"
+                  onClick={() => setTimeControl(tc.base === 0 ? null : tc)}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                    isSelected
+                      ? "bg-purple-500/20 text-purple-400 border border-purple-500/40"
+                      : "bg-white/[0.03] text-slate-500 border border-white/[0.06] hover:text-slate-300 hover:bg-white/[0.06]"
+                  }`}
+                >
+                  {tc.label}
+                </button>
+              );
+            })}
+          </div>
+
           {/* ── AI Mode ── */}
           {gameMode === "ai" && (
-            <>
-              <div className="mb-4 sm:mb-6">
-                <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-slate-500 sm:text-xs">AI Difficulty</p>
-                <div className="flex gap-1.5 sm:gap-2">
-                  {(["easy", "medium", "hard"] as const).map((level) => (
+            <div className="flex w-full max-w-sm flex-col items-center gap-5">
+              {/* Difficulty */}
+              <div className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">AI Difficulty</p>
+                <div className="flex gap-2">
+                  {([
+                    { id: "easy",   label: "Easy",   emoji: "🌱", desc: "Casual fun" },
+                    { id: "medium", label: "Medium", emoji: "⚔️", desc: "A real fight" },
+                    { id: "hard",   label: "Hard",   emoji: "💀", desc: "Good luck" },
+                  ] as const).map(({ id, label, emoji, desc }) => (
                     <button
-                      key={level}
+                      key={id}
                       type="button"
-                      onClick={() => setAiLevel(level)}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-medium capitalize transition-all sm:px-4 sm:py-2 sm:text-sm ${
-                        aiLevel === level
-                          ? "bg-purple-500/20 text-purple-400 border border-purple-500/40"
-                          : "bg-white/[0.04] text-slate-400 border border-white/[0.06] hover:bg-white/[0.08]"
+                      onClick={() => setAiLevel(id)}
+                      className={`flex flex-1 flex-col items-center gap-1 rounded-lg border py-2.5 text-xs font-medium transition-all ${
+                        aiLevel === id
+                          ? "border-purple-500/40 bg-purple-500/15 text-purple-300"
+                          : "border-white/[0.06] bg-white/[0.02] text-slate-400 hover:bg-white/[0.06]"
                       }`}
                     >
-                      {level}
+                      <Emoji emoji={emoji} className="h-4 w-4" />
+                      <span className="font-bold">{label}</span>
+                      <span className="text-[10px] font-normal opacity-60">{desc}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-slate-500 sm:mb-3 sm:text-xs">Choose your side</p>
-              <div className="flex gap-3 sm:gap-4">
-                <button type="button" onClick={() => startGame("white", "ai")}
-                  className="group flex flex-col items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-5 py-3.5 transition-all hover:border-white/[0.2] hover:bg-white/[0.08] hover:scale-105 sm:gap-2 sm:px-8 sm:py-5">
-                  <span className="text-3xl sm:text-4xl">♔</span>
-                  <span className="text-xs font-bold text-white sm:text-sm">White</span>
-                </button>
-                <button type="button" onClick={() => startGame("black", "ai")}
-                  className="group flex flex-col items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-5 py-3.5 transition-all hover:border-white/[0.2] hover:bg-white/[0.08] hover:scale-105 sm:gap-2 sm:px-8 sm:py-5">
-                  <span className="text-3xl sm:text-4xl">♚</span>
-                  <span className="text-xs font-bold text-white sm:text-sm">Black</span>
-                </button>
+              {/* Side picker */}
+              <div className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">Choose Your Side</p>
+                <div className="flex gap-3">
+                  <button type="button" onClick={() => startGame("white", "ai")}
+                    className="flex flex-1 flex-col items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] py-4 font-medium text-white transition-all hover:scale-105 hover:border-white/20 hover:bg-white/[0.08]">
+                    <span className="text-4xl">♔</span>
+                    <span className="text-sm font-bold">White</span>
+                    <span className="text-[10px] text-slate-500">Move first</span>
+                  </button>
+                  <button type="button" onClick={() => startGame("black", "ai")}
+                    className="flex flex-1 flex-col items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] py-4 font-medium text-white transition-all hover:scale-105 hover:border-white/20 hover:bg-white/[0.08]">
+                    <span className="text-4xl">♚</span>
+                    <span className="text-sm font-bold">Black</span>
+                    <span className="text-[10px] text-slate-500">Respond</span>
+                  </button>
+                </div>
               </div>
-            </>
+            </div>
           )}
 
           {/* ── Friend Mode ── */}
           {gameMode === "friend" && (
-            <div className="flex w-full max-w-md flex-col gap-6">
-              {/* Create room */}
+            <div className="flex w-full max-w-sm flex-col gap-4">
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
-                <p className="mb-3 text-sm font-bold text-white">Create a Room</p>
-                <p className="mb-4 text-xs text-slate-500">Choose your color and share the code with a friend</p>
-                <div className="flex justify-center gap-3">
+                <p className="mb-1 text-sm font-bold text-white">Create a Room</p>
+                <p className="mb-4 text-xs text-slate-500">Share the code with a friend after creating</p>
+                <div className="flex gap-2">
                   <button type="button" onClick={() => createRoom("white")}
-                    className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.04] px-5 py-3 text-sm font-medium text-white transition-all hover:bg-white/[0.1]">
-                    ♔ Play White
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.04] py-2.5 text-sm font-medium text-white transition-all hover:bg-white/[0.1]">
+                    ♔ White
                   </button>
                   <button type="button" onClick={() => createRoom("black")}
-                    className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.04] px-5 py-3 text-sm font-medium text-white transition-all hover:bg-white/[0.1]">
-                    ♚ Play Black
+                    className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.04] py-2.5 text-sm font-medium text-white transition-all hover:bg-white/[0.1]">
+                    ♚ Black
                   </button>
                 </div>
               </div>
 
-              {/* Join room */}
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
-                <p className="mb-3 text-sm font-bold text-white">Join a Room</p>
-                <p className="mb-4 text-xs text-slate-500">Enter the 6-character code your friend shared</p>
+                <p className="mb-1 text-sm font-bold text-white">Join a Room</p>
+                <p className="mb-4 text-xs text-slate-500">Enter the 6-letter code your friend sent</p>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -4483,7 +4510,7 @@ export default function ChaosChessPage() {
 
           {/* ── Matchmake Mode ── */}
           {gameMode === "matchmake" && (
-            <div className="flex flex-col items-center gap-4">
+            <div className="flex w-full max-w-sm flex-col items-center gap-4">
               <p className="text-sm text-slate-400">Find a random opponent to play Chaos Chess against</p>
               <ChaosLobby
                 isSignedIn={true}
@@ -4550,16 +4577,36 @@ export default function ChaosChessPage() {
             </div>
           )}
 
-          {/* AnarchyChess callout */}
-          <div className="mt-12 rounded-xl border border-orange-500/20 bg-orange-500/5 px-6 py-4 text-center">
-            <div className="mb-2 flex items-center justify-center gap-2">
-              <img src={PEPE.clownge} alt="" className="h-8 w-8 object-contain" />
-              <img src={PEPE.clowntrain} alt="" className="h-8 w-8 object-contain" />
+          {/* ── Sound settings (compact) ── */}
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-5 py-3 sm:mt-10">
+            <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Sound</span>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => handleVolumeChange(soundVolume === 0 ? 0.8 : 0)} className="text-base leading-none transition-opacity hover:opacity-70" title={soundVolume === 0 ? "Unmute" : "Mute"}>
+                {soundVolume === 0 ? "🔇" : soundVolume < 0.4 ? "🔈" : soundVolume < 0.75 ? "🔉" : "🔊"}
+              </button>
+              <input type="range" min={0} max={1} step={0.05} value={soundVolume} onChange={e => handleVolumeChange(parseFloat(e.target.value))} className="w-24 accent-purple-500" />
+              <span className="w-7 text-right text-[11px] text-slate-500">{Math.round(soundVolume * 100)}%</span>
             </div>
-            <p className="text-sm text-orange-400">
-              🧱 Yes, we have <span className="font-bold">Forced En Passant</span>, <span className="font-bold">The Knook</span>, and <span className="font-bold">Il Vaticano</span>.
-            </p>
-            <p className="mt-1 text-xs text-slate-500">You&apos;re welcome, r/AnarchyChess.</p>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => handleMemeVolumeChange(memeVolumeState === 0 ? 1 : 0)} className="text-base leading-none transition-opacity hover:opacity-70" title="Meme sounds">
+                {memeVolumeState === 0 ? "🤐" : "😂"}
+              </button>
+              <input type="range" min={0} max={1} step={0.05} value={memeVolumeState} onChange={e => handleMemeVolumeChange(parseFloat(e.target.value))} className="w-24 accent-yellow-500" />
+              <span className="w-7 text-right text-[11px] text-slate-500">{Math.round(memeVolumeState * 100)}%</span>
+              <span className="text-[10px] text-slate-600">memes</span>
+            </div>
+          </div>
+
+          {/* AnarchyChess callout */}
+          <div className="mt-6 rounded-xl border border-orange-500/20 bg-orange-500/5 px-5 py-3 text-center">
+            <div className="flex items-center justify-center gap-2">
+              <img src={PEPE.clownge} alt="" className="h-6 w-6 object-contain" />
+              <p className="text-xs text-orange-400">
+                Yes, we have <span className="font-bold">Forced En Passant</span>, <span className="font-bold">The Knook</span>, and <span className="font-bold">Il Vaticano</span>.
+              </p>
+              <img src={PEPE.clowntrain} alt="" className="h-6 w-6 object-contain" />
+            </div>
+            <p className="mt-0.5 text-[11px] text-slate-500">You&apos;re welcome, r/AnarchyChess.</p>
           </div>
         </div>
       </div>
@@ -5309,7 +5356,7 @@ export default function ChaosChessPage() {
             <h3 className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500 sm:text-xs">
               ⚙️ Settings
             </h3>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-1.5">
               <button
                 type="button"
                 onClick={() => handleVolumeChange(soundVolume === 0 ? 0.8 : 0)}
@@ -5328,6 +5375,27 @@ export default function ChaosChessPage() {
                 className="flex-1 accent-purple-500"
               />
               <span className="w-7 text-right text-[10px] text-slate-500">{Math.round(soundVolume * 100)}%</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleMemeVolumeChange(memeVolumeState === 0 ? 1 : 0)}
+                className="text-base leading-none transition-opacity hover:opacity-70"
+                title={memeVolumeState === 0 ? "Unmute memes" : "Mute memes"}
+              >
+                {memeVolumeState === 0 ? "🤐" : "😂"}
+              </button>
+              <input
+                type="range"
+                min={0}
+                max={1}
+                step={0.05}
+                value={memeVolumeState}
+                onChange={e => handleMemeVolumeChange(parseFloat(e.target.value))}
+                className="flex-1 accent-yellow-500"
+              />
+              <span className="w-7 text-right text-[10px] text-slate-500">{Math.round(memeVolumeState * 100)}%</span>
+              <span className="text-[9px] text-slate-600">memes</span>
             </div>
           </div>
         </div>

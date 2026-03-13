@@ -110,6 +110,12 @@ const SOUND_VOLUMES: Partial<Record<SoundName, number>> = {
 
 const audioCache = new Map<SoundName, HTMLAudioElement>();
 
+const MEME_SOUNDS = new Set<SoundName>([
+  "vine-boom", "bruh", "mario-death", "record-scratch", "roblox-oof",
+  "airhorn", "emotional-damage", "taco-bell-bong", "yeet", "he-needs-milk",
+  "ohnono-laugh", "cute-laugh", "nani", "baka", "bro-serious",
+]);
+
 /** Global volume multiplier (0–1). Persisted to localStorage. */
 let globalVolume: number = (() => {
   if (typeof window === "undefined") return 0.8;
@@ -117,12 +123,27 @@ let globalVolume: number = (() => {
   return saved !== null ? parseFloat(saved) : 0.8;
 })();
 
+/** Meme sound volume multiplier (0–1), applied on top of globalVolume. */
+let memeVolume: number = (() => {
+  if (typeof window === "undefined") return 1;
+  const saved = localStorage.getItem("chaos-meme-volume");
+  return saved !== null ? parseFloat(saved) : 1;
+})();
+
 export function getSoundVolume(): number { return globalVolume; }
+export function getMemeVolume(): number { return memeVolume; }
 
 export function setSoundVolume(v: number): void {
   globalVolume = Math.max(0, Math.min(1, v));
   if (typeof window !== "undefined") {
     localStorage.setItem("chaos-sound-volume", String(globalVolume));
+  }
+}
+
+export function setMemeVolume(v: number): void {
+  memeVolume = Math.max(0, Math.min(1, v));
+  if (typeof window !== "undefined") {
+    localStorage.setItem("chaos-meme-volume", String(memeVolume));
   }
 }
 
@@ -140,9 +161,11 @@ function getAudio(name: SoundName): HTMLAudioElement {
 export function playSound(name: SoundName): void {
   try {
     if (globalVolume === 0) return;
+    const effectiveMemeMultiplier = MEME_SOUNDS.has(name) ? memeVolume : 1;
+    if (effectiveMemeMultiplier === 0) return;
     const audio = getAudio(name);
     audio.currentTime = 0;
-    audio.volume = Math.min(1, (SOUND_VOLUMES[name] ?? 0.6) * globalVolume);
+    audio.volume = Math.min(1, (SOUND_VOLUMES[name] ?? 0.6) * globalVolume * effectiveMemeMultiplier);
     audio.play().catch(() => {});
   } catch {
     // Audio not available (SSR, permissions, etc.)
