@@ -2700,13 +2700,8 @@ export default function HomePage() {
                     <h2 className="text-2xl font-extrabold text-white tracking-tight">
                       Positional Patterns
                       <span className="ml-3 inline-flex items-center rounded-full bg-amber-500/15 px-3 py-1 text-base font-bold text-amber-400">
-                        {hasProAccess ? positionalMotifs.length : `${Math.min(positionalMotifs.length, FREE_POSITIONAL_SAMPLE)} of ${positionalMotifs.length}`}
+                        {positionalMotifs.length}
                       </span>
-                      {!hasProAccess && positionalMotifs.length > FREE_POSITIONAL_SAMPLE && (
-                        <span className="ml-2 inline-flex items-center rounded-full bg-slate-700/60 px-2.5 py-1 text-xs font-semibold text-slate-400">
-                          🔒 Free preview
-                        </span>
-                      )}
                     </h2>
                     <p className="mt-1 text-sm text-slate-400">
                       Recurring positional habits detected across your games — premature trades, released tension, passive retreats, and more
@@ -2718,7 +2713,7 @@ export default function HomePage() {
 
               {patternsOpen && (
               <div className="space-y-3">
-                {(hasProAccess ? positionalMotifs : positionalMotifs.slice(0, FREE_POSITIONAL_SAMPLE)).map((motif) => {
+                {positionalMotifs.map((motif) => {
                   const pattern = POSITIONAL_PATTERNS.find(p => motif.name.startsWith(p.label) || motif.name.includes(p.tag));
                   const quote = pattern?.quote;
                   const author = pattern?.author;
@@ -2792,7 +2787,7 @@ export default function HomePage() {
                       {isExpanded && hasExamples && (
                         <div className="border-t border-white/[0.06] bg-white/[0.015] px-5 py-4">
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {motif.examples.map((ex, ei) => {
+                            {(hasProAccess ? motif.examples : motif.examples.slice(0, FREE_POSITIONAL_SAMPLE)).map((ex, ei) => {
                               const resolveMove = (fen: string, move: string | null | undefined): { from: string; to: string; san: string } | null => {
                                 if (!move) return null;
                                 try {
@@ -2968,6 +2963,29 @@ export default function HomePage() {
                               );
                             })}
                           </div>
+                          </div>
+                          {!hasProAccess && motif.examples.length > FREE_POSITIONAL_SAMPLE && (
+                            <>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                                {motif.examples.slice(FREE_POSITIONAL_SAMPLE).map((_, li) => (
+                                  <div key={li} className="flex flex-col items-center gap-2">
+                                    <div className="w-full max-w-[280px] aspect-square rounded-lg overflow-hidden border border-white/[0.06] bg-white/[0.02] flex flex-col items-center justify-center gap-3">
+                                      <span className="text-3xl">🔒</span>
+                                      <p className="text-xs font-semibold text-slate-400 text-center px-4">Pro</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                              <div className="mt-4 text-center">
+                                <Link
+                                  href="/pricing"
+                                  className="inline-flex items-center gap-2 rounded-full bg-amber-500/90 px-4 py-1.5 text-xs font-bold text-white shadow-lg shadow-amber-500/20 transition-opacity hover:opacity-90"
+                                >
+                                  🔓 Unlock {motif.examples.length - FREE_POSITIONAL_SAMPLE} more example{motif.examples.length - FREE_POSITIONAL_SAMPLE === 1 ? "" : "s"}
+                                </Link>
+                              </div>
+                            </>
+                          )}
                           <div className="mt-4 flex items-center gap-2 text-xs text-slate-500">
                             <span className="inline-block h-2 w-4 rounded-sm" style={{ backgroundColor: "rgba(239, 68, 68, 0.85)" }} />
                             <span>Your move</span>
@@ -2991,23 +3009,7 @@ export default function HomePage() {
                   </div>
                 )}
 
-                {!hasProAccess && positionalMotifs.length > FREE_POSITIONAL_SAMPLE && (
-                  <div className="glass-card border-amber-500/20 bg-amber-500/[0.04] p-6 text-center">
-                    <span className="text-3xl">🔒</span>
-                    <p className="mt-3 text-lg font-bold text-white">
-                      {positionalMotifs.length - FREE_POSITIONAL_SAMPLE} more pattern{positionalMotifs.length - FREE_POSITIONAL_SAMPLE === 1 ? "" : "s"} locked
-                    </p>
-                    <p className="mt-1 text-sm text-slate-400">
-                      Pro users see all {positionalMotifs.length} detected patterns
-                    </p>
-                    <Link
-                      href="/pricing"
-                      className="mt-4 inline-flex items-center gap-2 rounded-full bg-amber-500 px-5 py-2 text-sm font-bold text-white shadow-lg shadow-amber-500/30 transition-opacity hover:opacity-90"
-                    >
-                      Unlock Pro
-                    </Link>
-                  </div>
-                )}
+
 
                 {/* Positional motif explanation modal (shared) */}
                 <ExplanationModal

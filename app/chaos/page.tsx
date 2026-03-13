@@ -486,7 +486,7 @@ function tierPepe(tier: ModifierTier): string {
 }
 
 /** Meme sound pools per tier */
-type ChaosSound = "vine-boom" | "crowd-ooh" | "airhorn" | "emotional-damage" | "bruh" | "roblox-oof" | "record-scratch" | "honk" | "bell" | "buzzer" | "bro-serious" | "yeet";
+type ChaosSound = "bell" | "bell-double" | "taco-bell-bong" | "crowd-ooh" | "airhorn" | "emotional-damage" | "bruh" | "roblox-oof" | "record-scratch" | "honk" | "buzzer" | "bro-serious" | "yeet";
 
 const TIER_SOUNDS: Record<ModifierTier, ChaosSound[]> = {
   common:    ["bruh", "roblox-oof"],
@@ -497,7 +497,7 @@ const TIER_SOUNDS: Record<ModifierTier, ChaosSound[]> = {
 
 /** SFX pool for AI chaos moves — varied so it doesn't repeat the same clip */
 const AI_CHAOS_SOUNDS: ChaosSound[] = [
-  "vine-boom", "bruh", "roblox-oof", "crowd-ooh",
+  "bruh", "roblox-oof", "crowd-ooh",
   "record-scratch", "honk", "bro-serious", "yeet",
 ];
 
@@ -645,7 +645,7 @@ function OpponentDraftReveal({
 
   useEffect(() => {
     playSound("record-scratch");
-    const t1 = setTimeout(() => { setStage("reveal"); playSound("vine-boom"); }, 800);
+    const t1 = setTimeout(() => { setStage("reveal"); playSound("bell-double"); }, 800);
     const t2 = setTimeout(() => setStage("done"), 1400);
     const t3 = setTimeout(onDismiss, 4500);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
@@ -873,7 +873,7 @@ function DraftModal({
       if (pickedId || !allRevealed) return; // prevent double-picks & picks before reveal
       setPickedId(mod.id);
       setDismissing(true);
-      playSound("vine-boom");
+      playSound("taco-bell-bong");
       // Wait for dismiss animation, then call onPick
       setTimeout(() => onPick(mod), 650);
     },
@@ -1743,7 +1743,7 @@ export default function ChaosChessPage() {
         if (mods.some((m) => m.id === "collateral-rook") && pieceType === "r" && captured) {
           setEventLog((prev) => [...prev, { type: "chaos", message: "💥 Collateral Damage! The rook destroyed the piece behind its target!", icon: "💥", pepe: PEPE.firesgun }]);
           spawnPepe(PEPE.firesgun);
-          playSound("vine-boom");
+          playSound("yeet");
         }
         if (mods.some((m) => m.id === "nuclear-queen") && pieceType === "q" && captured) {
           setEventLog((prev) => [...prev, { type: "chaos", message: "☢️ NUCLEAR QUEEN! All surrounding pieces destroyed!", icon: "☢️", pepe: PEPE.madpuke }]);
@@ -1753,7 +1753,7 @@ export default function ChaosChessPage() {
         if (opponentMods?.some((m) => m.id === "pawn-fortress") && capturedType === "p" && captured) {
           setEventLog((prev) => [...prev, { type: "chaos", message: "🏰 Pawn Fortress! The captured pawn respawned on its starting square!", icon: "🏰", pepe: PEPE.shocked }]);
           spawnPepe(PEPE.shocked);
-          playSound("vine-boom");
+          playSound("crowd-ooh");
         }
         return result;
       }
@@ -1849,7 +1849,7 @@ export default function ChaosChessPage() {
                     activeGame = shielded;
                     cs2 = { ...cs2, playerModifiers: cs2.playerModifiers.filter((m) => m.id !== "king-shield") };
                     setEventLog((prev) => [...prev, { type: "chaos" as const, message: "🛡️ Your Royal Guard blocked the check!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
-                    playSound("vine-boom");
+                    playSound("bell");
                   }
                 }
               }
@@ -1993,7 +1993,7 @@ export default function ChaosChessPage() {
               activeGame2 = shielded;
               cs2 = { ...cs2, playerModifiers: cs2.playerModifiers.filter((m) => m.id !== "king-shield") };
               setEventLog((prev) => [...prev, { type: "chaos" as const, message: "🛡️ Your Royal Guard blocked the check!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
-              playSound("vine-boom");
+              playSound("bell");
             }
           }
         }
@@ -2405,7 +2405,7 @@ export default function ChaosChessPage() {
               activeGame = shielded;
               setGame(shielded);
               setEventLog((p) => [...p, { type: "chaos" as const, message: "🛡️ Royal Guard activated! Check blocked — attacker destroyed!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
-              playSound("vine-boom");
+              playSound("bell");
               return {
                 ...prev,
                 ...(isOurKingChecked
@@ -2624,7 +2624,7 @@ export default function ChaosChessPage() {
                   activeGame = shielded;
                   setGame(shielded);
                   setEventLog((p) => [...p, { type: "chaos" as const, message: "🛡️ Royal Guard activated! Check blocked — attacker destroyed!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
-                  playSound("vine-boom");
+                  playSound("bell");
                   return {
                     ...prev,
                     ...(isOurKingChecked
@@ -2798,7 +2798,7 @@ export default function ChaosChessPage() {
         addMoveToLog(newGame, `⚡${chaosMove.label.split("(")[0].trim()}`, game.turn() as "w" | "b");
         setEventLog((prev) => [...prev, { type: "chaos", message: `⚡ You used: ${chaosMove.label}`, icon: "⚡", pepe: tierPepe("rare") }]);
         spawnPepe(PEPE.lmao);
-        playSound("vine-boom");
+        playSound("crowd-ooh");
 
         setGame(newGame);
 
@@ -2821,7 +2821,7 @@ export default function ChaosChessPage() {
               cs = { ...cs, aiModifiers: cs.aiModifiers.filter((m) => m.id !== "king-shield") };
               setChaosState(cs);
               setEventLog((prev) => [...prev, { type: "chaos" as const, message: "🛡️ Opponent's Royal Guard blocked your check!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
-              playSound("vine-boom");
+              playSound("bruh");
             }
           }
         }
@@ -2952,8 +2952,7 @@ export default function ChaosChessPage() {
             activeG = shielded;
             cs2 = { ...cs2, aiModifiers: cs2.aiModifiers.filter((m) => m.id !== "king-shield") };
             setEventLog((prev) => [...prev, { type: "chaos" as const, message: "🛡️ Opponent's Royal Guard blocked your check!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
-            playSound("vine-boom");
-            setChaosState(cs2);
+              playSound("bruh");
             setGame(activeG);
           }
         }
@@ -3015,7 +3014,7 @@ export default function ChaosChessPage() {
       addMoveToLog(newGame, `⚡Promo → ${pieceName}`, game.turn() as "w" | "b");
       setEventLog((prev) => [...prev, { type: "chaos", message: `⚡ Battlefield Promotion → ${pieceName}!`, icon: "⭐", pepe: tierPepe("epic") }]);
       spawnPepe(PEPE.lmao);
-      playSound("vine-boom");
+      playSound("crowd-ooh");
 
       setGame(newGame);
 
