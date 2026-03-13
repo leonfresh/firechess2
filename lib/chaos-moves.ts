@@ -521,20 +521,16 @@ function genSniperBishop(game: Chess, color: Color): ChaosMove[] {
 /** Pegasus: One knight can make a double L-jump (two knight moves in one turn, 2nd jump forward only) */
 function genPegasus(game: Chess, color: Color, trackedSquare?: string | null): ChaosMove[] {
   const moves: ChaosMove[] = [];
-  const knights = allSquaresOf(game, "n", color);
-  if (knights.length === 0) return moves;
 
-  // Only the tracked knight (or first knight) is the Pegasus
-  let pegasusSquare: Square = knights[0];
-  if (trackedSquare !== undefined) {
-    if (trackedSquare === null) return moves; // Pegasus knight was captured
-    const p = game.get(trackedSquare as any);
-    if (p && p.type === "n" && p.color === color) {
-      pegasusSquare = trackedSquare as Square;
-    } else {
-      return moves; // Tracked square no longer has our knight
-    }
-  }
+  // Require explicit tracking — never fall back to knights[0].
+  // undefined means the key was never written (shouldn't happen after draft),
+  // null means the tracked knight was captured. Either way: no moves.
+  if (trackedSquare === undefined || trackedSquare === null) return moves;
+
+  const p = game.get(trackedSquare as any);
+  if (!p || p.type !== "n" || p.color !== color) return moves; // knight is gone
+
+  const pegasusSquare = trackedSquare as Square;
 
   const knightOffsets = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
   const seen = new Set<string>();
@@ -873,15 +869,11 @@ export function getChaosAttackedSquares(
   if (modIds.has("pegasus")) {
     const trackedPegasus = assignedSquares?.[`${attackerColor}_pegasus`];
     let pegasusSq: Square | null = null;
-    if (trackedPegasus !== undefined) {
-      if (trackedPegasus !== null) {
-        const p = game.get(trackedPegasus as any);
-        if (p && p.type === "n" && p.color === attackerColor) pegasusSq = trackedPegasus as Square;
-      }
-    } else {
-      const knights = allSquaresOf(game, "n", attackerColor);
-      if (knights.length > 0) pegasusSq = knights[0];
+    if (trackedPegasus !== undefined && trackedPegasus !== null) {
+      const p = game.get(trackedPegasus as any);
+      if (p && p.type === "n" && p.color === attackerColor) pegasusSq = trackedPegasus as Square;
     }
+    // If trackedPegasus is undefined or null, no Pegasus attack squares exist.
     if (pegasusSq) {
       const [f, r] = sqToCoords(pegasusSq);
       for (const [df1, dr1] of knightOffsets) {
