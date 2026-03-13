@@ -2963,7 +2963,6 @@ export default function HomePage() {
                               );
                             })}
                           </div>
-                          </div>
                           {!hasProAccess && motif.examples.length > FREE_POSITIONAL_SAMPLE && (
                             <>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
