@@ -1771,7 +1771,7 @@ export default function ChaosChessPage() {
       try {
         // AI can also use chaos moves
         const aiColor = playerColor === "white" ? "b" : "w";
-        const aiChaosMoves = getChaosMoves(g, cs.aiModifiers, aiColor as Color);
+        const aiChaosMoves = getChaosMoves(g, cs.aiModifiers, aiColor as Color, cs.assignedSquares);
 
         // Evaluate chaos moves with Stockfish — only use if genuinely good
         // 35% chance to even consider chaos moves (prevents spamming)
@@ -3334,7 +3334,20 @@ export default function ChaosChessPage() {
         const aiPick = [...aiChoices].sort((a, b) => (tierRank[b.tier] ?? 0) - (tierRank[a.tier] ?? 0))[0];
         if (aiPick) {
           setTimeout(() => {
-            const newState = { ...stateWithTracking, aiModifiers: [...stateWithTracking.aiModifiers, aiPick] };
+            let newState = { ...stateWithTracking, aiModifiers: [...stateWithTracking.aiModifiers, aiPick] };
+            // Initialize tracking for the AI's new single-piece modifier
+            const SINGLE_PIECE_MODS: Record<string, string> = { archbishop: "b", knook: "n", pegasus: "n" };
+            if (SINGLE_PIECE_MODS[aiPick.id]) {
+              const pieceType = SINGLE_PIECE_MODS[aiPick.id] as any;
+              for (const f of "abcdefgh") for (const r of "12345678") {
+                const s = `${f}${r}`;
+                const p = currentGame.get(s as any);
+                if (p && p.type === pieceType && p.color === aiColor_) {
+                  newState = initTrackedPiece(newState, aiPick.id, aiColor_ as "w" | "b", s);
+                  break;
+                }
+              }
+            }
             setChaosState(newState);
             recomputeChaosMoves(currentGame, newState);
             setOpponentDraftReveal({ opponentPick: aiPick, phase: phaseForAi });
