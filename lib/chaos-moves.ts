@@ -1176,6 +1176,24 @@ export function getChaosAttackedSquares(
   return attacked;
 }
 
+/**
+ * Returns true if the side-to-move's king is attacked by the opponent's
+ * chaos-modifier abilities (e.g. archbishop knight jumps) but NOT necessarily
+ * by standard piece attacks. Use this to enforce chaos-check evasion.
+ */
+export function isKingUnderChaosAttack(
+  game: Chess,
+  attackerModifiers: ChaosModifier[],
+  attackerColor: Color,
+  assignedSquares?: Record<string, string | null>,
+): boolean {
+  const defenderColor: Color = attackerColor === "w" ? "b" : "w";
+  const kings = allSquaresOf(game, "k", defenderColor);
+  if (kings.length === 0) return false;
+  const attacked = getChaosAttackedSquares(game, attackerModifiers, attackerColor, assignedSquares);
+  return attacked.has(kings[0]);
+}
+
 /** Piece values in centipawns for chaos threat evaluation */
 const PIECE_VALUE_CP: Record<string, number> = {
   p: 100, n: 320, b: 330, r: 500, q: 900, k: 0,

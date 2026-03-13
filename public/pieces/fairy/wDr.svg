@@ -1,36 +1,35 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" width="50mm" height="50mm" clip-rule="evenodd" fill-rule="evenodd" image-rendering="optimizeQuality" shape-rendering="geometricPrecision">
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" width="50mm" height="50mm" clip-rule="evenodd" fill-rule="evenodd" image-rendering="optimizeQuality" shape-rendering="geometricPrecision">
   <defs>
-    <linearGradient id="wDr-fire" gradientUnits="userSpaceOnUse" x1="11" x2="43" y1="14" y2="44">
-      <stop offset="0"    stop-color="#ef4444"/>
-      <stop offset="0.5"  stop-color="#dc2626" stop-opacity="0.75"/>
-      <stop offset="1"    stop-color="#991b1b" stop-opacity="0"/>
+    <linearGradient id="wDr-pearl" gradientUnits="userSpaceOnUse" x1="12" x2="40" y1="8" y2="44">
+      <stop offset="0" stop-color="#f5f5f5"/>
+      <stop offset="1" stop-color="#d4d4d4"/>
     </linearGradient>
     <linearGradient id="wDr-claw" gradientUnits="userSpaceOnUse" x1="18" y1="20" x2="32" y2="34">
-      <stop offset="0" stop-color="#fca5a5" stop-opacity="0.9"/>
-      <stop offset="1" stop-color="#dc2626" stop-opacity="0.15"/>
+      <stop offset="0" stop-color="#dc2626" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#dc2626" stop-opacity="0.05"/>
     </linearGradient>
     <linearGradient id="wDr-claw2" gradientUnits="userSpaceOnUse" x1="32" y1="20" x2="18" y2="34">
-      <stop offset="0" stop-color="#fca5a5" stop-opacity="0.85"/>
-      <stop offset="1" stop-color="#dc2626" stop-opacity="0.1"/>
+      <stop offset="0" stop-color="#dc2626" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#dc2626" stop-opacity="0.05"/>
     </linearGradient>
   </defs>
   <!-- Crown spike above center merlon -->
   <path d="M23.4,5.825 L25,2.4 L26.6,5.825 Z" fill="#dc2626"/>
   <circle cx="25" cy="1.9" r="1.0" fill="#fca5a5" opacity="0.85"/>
   <circle cx="25" cy="1.9" r="0.42" fill="#fee2e2"/>
-  <!-- Crenel teeth (behind dark outline  visible through gap holes) -->
+  <!-- Crenel teeth (drawn behind the outline, visible through gap holes) -->
   <path d="M17.95,9.22 L19.5,6.4 L21.05,9.22 Z" fill="#dc2626" opacity="0.92"/>
   <path d="M28.95,9.22 L30.5,6.4 L32.05,9.22 Z" fill="#dc2626" opacity="0.92"/>
   <!-- Rook dark outline (Merida) -->
   <path d="M28.408 9.22h4.216V5.825h6.799v9.296l-5.503 4.242v11.862l4.216 4.216v5.08h3.793v5.927H8.071V40.52h3.793v-5.08l4.242-4.216V19.363l-5.504-4.242V5.825h6.774V9.22h4.242V5.825h6.79z" fill="#1f1a17"/>
-  <!-- Dragon-fire body fill -->
-  <path d="M33.073 17.678l3.15-2.557h-22.42l3.175 2.557zm7.197 24.528H9.756v2.557H40.27zm-3.844-5.055H13.6v3.37h22.826zm-4.217-17.788H17.816v11.862h14.393zm5.504-5.927V7.51h-3.395v3.395h-7.646V7.51h-3.344v3.395h-7.62V7.51h-3.395v5.926zm-1.914 22.005l-2.548-2.531H16.8l-2.6 2.531z" fill="url(#wDr-fire)"/>
+  <!-- White rook pearl body fill -->
+  <path d="M33.073 17.678l3.15-2.557h-22.42l3.175 2.557zm7.197 24.528H9.756v2.557H40.27zm-3.844-5.055H13.6v3.37h22.826zm-4.217-17.788H17.816v11.862h14.393zm5.504-5.927V7.51h-3.395v3.395h-7.646V7.51h-3.344v3.395h-7.62V7.51h-3.395v5.926zm-1.914 22.005l-2.548-2.531H16.8l-2.6 2.531z" fill="url(#wDr-pearl)"/>
   <!-- Diagonal claw marks on tower body -->
-  <line x1="18.2" y1="20.0" x2="28.5" y2="33.8" stroke="url(#wDr-claw)"  stroke-width="0.9"  stroke-linecap="round"/>
-  <line x1="22.0" y1="20.0" x2="32.3" y2="33.8" stroke="url(#wDr-claw)"  stroke-width="0.75" stroke-linecap="round" opacity="0.5"/>
-  <line x1="31.8" y1="20.0" x2="21.5" y2="33.8" stroke="url(#wDr-claw2)" stroke-width="0.9"  stroke-linecap="round" opacity="0.7"/>
+  <line x1="18.2" y1="20.0" x2="28.5" y2="33.8" stroke="url(#wDr-claw)" stroke-width="1.1" stroke-linecap="round"/>
+  <line x1="22.0" y1="20.0" x2="32.3" y2="33.8" stroke="url(#wDr-claw)" stroke-width="0.85" stroke-linecap="round" opacity="0.5"/>
+  <line x1="31.8" y1="20.0" x2="21.5" y2="33.8" stroke="url(#wDr-claw2)" stroke-width="1.1" stroke-linecap="round" opacity="0.8"/>
   <!-- Dragon eye -->
   <ellipse cx="25" cy="27.2" rx="2.8" ry="1.9" fill="#dc2626"/>
-  <ellipse cx="25" cy="27.2" rx="1.0"  ry="1.7" fill="#1f1a17"/>
-  <circle  cx="25.7" cy="26.6" r="0.4"  fill="#fca5a5"/>
+  <ellipse cx="25" cy="27.2" rx="1.0" ry="1.7" fill="#1f1a17"/>
+  <circle cx="25.7" cy="26.6" r="0.4" fill="#fca5a5"/>
 </svg>

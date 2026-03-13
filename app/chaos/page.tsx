@@ -58,6 +58,7 @@ import {
   applyDraftEffect,
   computeChaosThreatPenalty,
   getChaosAttackedSquares,
+  isKingUnderChaosAttack,
   applyKingShield,
   isChaosCheckmate,
   type ChaosMove,
@@ -2406,6 +2407,35 @@ export default function ChaosChessPage() {
           }
         }
 
+        // If AI king is under chaos-only check, force it to play an escaping move
+        const playerChaosMods = cs.playerModifiers;
+        const playerC3: Color = playerColor === "white" ? "w" : "b";
+        if (playerChaosMods.length > 0 && isKingUnderChaosAttack(g, playerChaosMods, playerC3, cs.assignedSquares ?? undefined)) {
+          const ceFen = g.fen();
+          const ceFrom = bestUci!.slice(0, 2);
+          const ceTo = bestUci!.slice(2, 4);
+          const cePromo = bestUci!.length > 4 ? bestUci![4] : undefined;
+          const ceTmp = new Chess(ceFen);
+          let chaosEscaped = false;
+          try {
+            ceTmp.move({ from: ceFrom, to: ceTo, promotion: cePromo });
+            chaosEscaped = !isKingUnderChaosAttack(ceTmp, playerChaosMods, playerC3, cs.assignedSquares ?? undefined);
+          } catch { /* invalid move */ }
+          if (!chaosEscaped) {
+            // Find any legal move that escapes the chaos check
+            const allLegal = g.moves({ verbose: true });
+            const escaping = allLegal.filter((mv) => {
+              const t = new Chess(ceFen);
+              try { t.move({ from: mv.from, to: mv.to, promotion: mv.promotion }); } catch { return false; }
+              return !isKingUnderChaosAttack(t, playerChaosMods, playerC3, cs.assignedSquares ?? undefined);
+            });
+            if (escaping.length > 0) {
+              bestUci = escaping[Math.floor(Math.random() * escaping.length)].lan;
+            }
+            // else: truly trapped — checkmate logic will handle it
+          }
+        }
+
         // Re-parse in case bestUci changed from fallback
         const finalFrom = bestUci!.slice(0, 2) as CbSquare;
         const finalTo = bestUci!.slice(2, 4) as CbSquare;
@@ -3366,6 +3396,18 @@ export default function ChaosChessPage() {
       // Block king moves into chaos-attacked squares
       if (pieceAtFrom && pieceAtFrom.type === "k" && isKingMoveChaosUnsafe(game, from, to)) {
         return false;
+      }
+
+      // Block moves that don't escape a chaos-only check on the player's king
+      const aiColorCode: Color = playerColor === "white" ? "b" : "w";
+      if (chaosState.aiModifiers.length > 0 && isKingUnderChaosAttack(game, chaosState.aiModifiers, aiColorCode, chaosState.assignedSquares ?? undefined)) {
+        const simTmp = new Chess(game.fen());
+        let escapesCheck = false;
+        try {
+          simTmp.move({ from, to, promotion: pieceAtFrom?.type === "p" ? "q" : undefined });
+          escapesCheck = !isKingUnderChaosAttack(simTmp, chaosState.aiModifiers, aiColorCode, chaosState.assignedSquares ?? undefined);
+        } catch { /* invalid move; will fail naturally below */ }
+        if (!escapesCheck) return false;
       }
 
       // Check if this is a promotion move (pawn reaching last rank)
