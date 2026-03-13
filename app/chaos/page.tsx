@@ -1259,13 +1259,15 @@ function InlineModifierIcons({ modifiers }: { modifiers: ChaosModifier[] }) {
  * Injected once via a <style> tag inside the overlay component.
  */
 const EFFECT_KEYFRAMES = `
-@keyframes ce-burst  { 0%{transform:scale(.15);opacity:1} 55%{opacity:.85} 100%{transform:scale(2.4);opacity:0} }
-@keyframes ce-nuke   { 0%{transform:scale(0);opacity:1} 45%{opacity:1} 100%{transform:scale(3.5);opacity:0} }
-@keyframes ce-spin   { 0%{transform:scale(1.4) rotate(0deg);opacity:.9} 100%{transform:scale(0) rotate(560deg);opacity:0} }
-@keyframes ce-flash  { 0%{opacity:0} 15%{opacity:1} 100%{opacity:0} }
-@keyframes ce-slide  { 0%{transform:scaleX(0);opacity:1;transform-origin:left center} 40%{opacity:1} 100%{transform:scaleX(1);opacity:0} }
-@keyframes ce-shield { 0%{transform:scale(.15);opacity:1} 50%{transform:scale(1.2);opacity:.8} 100%{transform:scale(1.7);opacity:0} }
-@keyframes ce-spawn  { 0%{transform:scale(0) rotate(-20deg);opacity:1} 60%{transform:scale(1.1);opacity:.9} 100%{transform:scale(1.8);opacity:0} }
+@keyframes ce-burst      { 0%{transform:scale(.15);opacity:1} 55%{opacity:.85} 100%{transform:scale(2.4);opacity:0} }
+@keyframes ce-nuke       { 0%{transform:scale(0);opacity:1} 45%{opacity:1} 100%{transform:scale(3.5);opacity:0} }
+@keyframes ce-spin       { 0%{transform:scale(1.4) rotate(0deg);opacity:.9} 100%{transform:scale(0) rotate(560deg);opacity:0} }
+@keyframes ce-flash      { 0%{opacity:0} 15%{opacity:1} 100%{opacity:0} }
+@keyframes ce-slide      { 0%{transform:scaleX(0);opacity:1;transform-origin:left center} 40%{opacity:1} 100%{transform:scaleX(1);opacity:0} }
+@keyframes ce-shield     { 0%{transform:scale(.15);opacity:1} 50%{transform:scale(1.2);opacity:.8} 100%{transform:scale(1.7);opacity:0} }
+@keyframes ce-spawn      { 0%{transform:scale(0) rotate(-20deg);opacity:1} 60%{transform:scale(1.1);opacity:.9} 100%{transform:scale(1.8);opacity:0} }
+@keyframes ce-king-death { 0%{transform:scale(.2);opacity:1} 30%{transform:scale(1.8);opacity:1} 65%{transform:scale(1.4);opacity:.85} 100%{transform:scale(2.8);opacity:0} }
+@keyframes ce-king-ring  { 0%{transform:scale(.1);opacity:.9;border-width:6px} 100%{transform:scale(2.6);opacity:0;border-width:1px} }
 `;
 
 type BoardEffect = { id: number; type: string; squares: string[] };
@@ -1374,6 +1376,25 @@ function BoardEffectsOverlay({
                   background: "rgba(168,85,247,0.5)",
                   animation: "ce-flash 500ms ease-out forwards",
                 }} />
+              );
+            } else if (type === "king-death") {
+              inner = (
+                <>
+                  <div style={{
+                    position: "absolute",
+                    width: "96%", height: "96%", borderRadius: "50%",
+                    background: "radial-gradient(circle, #fff 0%, #fde68a 18%, #f59e0b 38%, #dc2626 62%, transparent 100%)",
+                    boxShadow: "0 0 28px #f59e0b, 0 0 56px rgba(220,38,38,0.7)",
+                    animation: "ce-king-death 1300ms ease-out forwards",
+                  }} />
+                  <div style={{
+                    position: "absolute",
+                    width: "80%", height: "80%", borderRadius: "50%",
+                    border: "5px solid #fbbf24",
+                    boxShadow: "0 0 12px #fbbf24",
+                    animation: "ce-king-ring 1300ms ease-out forwards",
+                  }} />
+                </>
               );
             }
 
@@ -1596,7 +1617,11 @@ function PieceInfoPanel({
 const EFFECT_DURATIONS: Record<string, number> = {
   explosion: 750, nuke: 1000, teleport: 850, ricochet: 600,
   cannon: 550, shield: 900, spawn: 800, pegasus: 750, flash: 550,
+  "king-death": 1300,
 };
+
+/** How long to wait after king-death effect before showing game-over popup */
+const KING_DEATH_POPUP_DELAY = 950;
 
 export default function ChaosChessPage() {
   /* ── Auth ── */
@@ -1750,6 +1775,8 @@ export default function ChaosChessPage() {
   /* ── Board effect overlays (explosions, teleports, etc.) ── */
   const [boardEffects, setBoardEffects] = useState<BoardEffect[]>([]);
   const effectIdRef = useRef(0);
+  /** True during the ~950ms king-death animation window — blocks input so the popup can't be raced. */
+  const isAnimatingEndRef = useRef(false);
 
   const triggerEffect = useCallback((type: string, squares: string[], durationOverride?: number) => {
     const id = ++effectIdRef.current;
@@ -1898,7 +1925,7 @@ export default function ChaosChessPage() {
   }, []);
 
   /* ── Check for game end ── */
-  const checkGameEnd = useCallback((g: Chess) => {
+  const checkGameEnd = useCallback((g: Chess, captureAt?: string) => {
     // King-capture fallback: chaos moves can land on the king square.
     // If a king is missing from the board, the side that captured it wins.
     const board = g.board();
@@ -1914,27 +1941,28 @@ export default function ChaosChessPage() {
     }
     if (!whiteKingFound || !blackKingFound) {
       const winner = !whiteKingFound ? "black" : "white";
-      setGameResult(winner);
-      setGameStatus("game-over");
-      setEndReason("King Captured");
       const youWin = winner === playerColor;
-      setEventLog((prev) => [
-        ...prev,
-        {
-          type: "chaos",
-          message: `👑 ${winner === "white" ? "White" : "Black"} captured the enemy King!`,
-          icon: "👑",
-          pepe: youWin ? PEPE.gigachad : PEPE.gamercry,
-        },
-      ]);
-      if (youWin) {
-        playSound("airhorn");
-        spawnPepe(PEPE.gigachad);
-        setTimeout(() => spawnPepe(PEPE.clap), 400);
-      } else {
-        playSound("mario-death");
-        spawnPepe(PEPE.gamercry);
-      }
+      // Fire king-death effect then delay popup
+      if (captureAt) triggerEffect("king-death", [captureAt]);
+      isAnimatingEndRef.current = true;
+      if (youWin) { playSound("airhorn"); spawnPepe(PEPE.gigachad); }
+      else { playSound("mario-death"); spawnPepe(PEPE.gamercry); }
+      setTimeout(() => {
+        isAnimatingEndRef.current = false;
+        setGameResult(winner);
+        setGameStatus("game-over");
+        setEndReason("King Captured");
+        setEventLog((prev) => [
+          ...prev,
+          {
+            type: "chaos",
+            message: `👑 ${winner === "white" ? "White" : "Black"} captured the enemy King!`,
+            icon: "👑",
+            pepe: youWin ? PEPE.gigachad : PEPE.gamercry,
+          },
+        ]);
+        if (youWin) spawnPepe(PEPE.clap);
+      }, captureAt ? KING_DEATH_POPUP_DELAY : 0);
       return true;
     }
 
@@ -2254,16 +2282,24 @@ export default function ChaosChessPage() {
               // AI captured the player's king via chaos move
               if (best.eval >= 1_000_000) {
                 const aiWinner = playerColor === "white" ? "black" : "white";
-                setGameResult(aiWinner);
-                setGameStatus("game-over");
-                setEndReason("King Captured");
-                setEventLog((prev) => [
-                  ...prev,
-                  { type: "chaos", message: `👑 AI captured your King!`, icon: "👑", pepe: PEPE.gamercry },
-                ]);
+                const captured = best.move.to;
+                setLastMoveHighlight({
+                  [best.move.from]: { backgroundColor: "rgba(220,38,38,0.4)" },
+                  [captured]: { backgroundColor: "rgba(255,215,0,0.55)" },
+                });
+                triggerEffect("king-death", [captured]);
                 playSound("mario-death");
                 spawnPepe(PEPE.gamercry);
                 setIsThinking(false);
+                setTimeout(() => {
+                  setGameResult(aiWinner);
+                  setGameStatus("game-over");
+                  setEndReason("King Captured");
+                  setEventLog((prev) => [
+                    ...prev,
+                    { type: "chaos", message: `👑 AI captured your King!`, icon: "👑", pepe: PEPE.gamercry },
+                  ]);
+                }, KING_DEATH_POPUP_DELAY);
                 return;
               }
               const newGame = best.game;
@@ -2325,7 +2361,7 @@ export default function ChaosChessPage() {
               setChaosState(cs2);
               setGame(activeGame);
               setIsThinking(false);
-              if (!checkGameEnd(activeGame)) {
+              if (!checkGameEnd(activeGame, chaosMove.to)) {
                 checkDraft(activeGame, cs2);
                 recomputeChaosMoves(activeGame, cs2);
               }
@@ -3241,6 +3277,7 @@ export default function ChaosChessPage() {
     (from: CbSquare, to: CbSquare) => {
       if (gameStatus !== "playing") return false;
       if (isThinking) return false;
+      if (isAnimatingEndRef.current) return false;
       if (waitingForOpponentDraft) return false;
 
       const isPlayerTurn =
@@ -3270,16 +3307,26 @@ export default function ChaosChessPage() {
         // intercept and declare the win before calling executeChaosMove.
         const targetPieceAtTo = game.get(chaosMove.to as any);
         if (targetPieceAtTo?.type === "k") {
-          setGameResult(playerColor);
-          setGameStatus("game-over");
-          setEndReason("King Captured");
-          setEventLog((prev) => [
-            ...prev,
-            { type: "chaos", message: `👑 You captured the enemy King!`, icon: "👑", pepe: PEPE.gigachad },
-          ]);
+          // Let the board animation play before showing game-over popup
+          isAnimatingEndRef.current = true;
+          setLastMoveHighlight({
+            [from]: { backgroundColor: "rgba(220,38,38,0.4)" },
+            [to]: { backgroundColor: "rgba(255,215,0,0.55)" },
+          });
+          triggerEffect("king-death", [to]);
           playSound("airhorn");
           spawnPepe(PEPE.gigachad);
-          setTimeout(() => spawnPepe(PEPE.clap), 400);
+          setTimeout(() => {
+            isAnimatingEndRef.current = false;
+            setGameResult(playerColor);
+            setGameStatus("game-over");
+            setEndReason("King Captured");
+            setEventLog((prev) => [
+              ...prev,
+              { type: "chaos", message: `👑 You captured the enemy King!`, icon: "👑", pepe: PEPE.gigachad },
+            ]);
+            spawnPepe(PEPE.clap);
+          }, KING_DEATH_POPUP_DELAY);
           return true;
         }
 
@@ -3327,7 +3374,7 @@ export default function ChaosChessPage() {
         // Check game end FIRST — checkmate/king-capture wins immediately;
         // king-shield must not absorb the checking piece and prevent the win.
         setChaosState(cs);
-        if (checkGameEnd(activeGame)) return true;
+        if (checkGameEnd(activeGame, chaosMove.type === "capture" ? chaosMove.to : undefined)) return true;
 
         // Check opponent's king-shield (only if game is still ongoing)
         if (activeGame.isCheck()) {
