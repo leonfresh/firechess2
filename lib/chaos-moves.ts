@@ -128,6 +128,40 @@ function wouldLeaveKingInCheck(
   return tmp.isAttacked(kingSquares[0], color === "w" ? "b" : "w");
 }
 
+/**
+ * Check if a chaos move would expose our king to an opponent's chaos-modifier attack.
+ * Supplements wouldLeaveKingInCheck which only covers standard piece attacks.
+ */
+function wouldLeaveKingToChaosAttack(
+  game: Chess,
+  move: ChaosMove,
+  color: Color,
+  opponentModifiers: ChaosModifier[],
+  assignedSquares?: Record<string, string | null>,
+): boolean {
+  const piece = game.get(move.from);
+  if (!piece) return false;
+
+  const tmp = new Chess(game.fen());
+  if (!move.pieceStays) tmp.remove(move.from);
+  tmp.remove(move.to);
+  if (move.spawnPiece) {
+    tmp.put(move.spawnPiece, move.to);
+  } else if (!move.pieceStays) {
+    tmp.put({ type: piece.type, color: piece.color }, move.to);
+  }
+  if (move.sideEffects) {
+    for (const s of move.sideEffects) tmp.remove(s);
+  }
+
+  const kingSquares = allSquaresOf(tmp, "k", color);
+  if (kingSquares.length === 0) return true;
+
+  const oppColor: Color = color === "w" ? "b" : "w";
+  const chaosAttacked = getChaosAttackedSquares(tmp, opponentModifiers, oppColor, assignedSquares);
+  return chaosAttacked.has(kingSquares[0]);
+}
+
 /* ================================================================== */
 /*  Move generators per modifier                                        */
 /* ================================================================== */
@@ -181,39 +215,52 @@ function genPawnBayonet(game: Chess, color: Color): ChaosMove[] {
   return moves;
 }
 
-/** Knights can also move 1 square in any direction */
-function genKnightRetreat(game: Chess, color: Color): ChaosMove[] {
+/** Camel: first knight becomes a Camel — leaps (1,3) or (3,1) in any orientation */
+function genCamel(game: Chess, color: Color, trackedSquare?: string | null): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const knights = allSquaresOf(game, "n", color);
-  const kingDirs = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
+  if (knights.length === 0) return moves;
 
-  for (const ns of knights) {
-    const [f, r] = sqToCoords(ns);
-    for (const [df, dr] of kingDirs) {
-      const target = sq(f + df, r + dr);
-      if (!target) continue;
-      if (isFriendly(game, target, color)) continue;
-      // chess.js already allows normal knight moves; skip squares knights can already reach
-      if (wouldLeaveKingInCheck(game, ns, target, color)) continue;
-
-      moves.push({
-        from: ns, to: target, type: isEnemy(game, target, color) ? "capture" : "move",
-        modifierId: "knight-retreat", label: "Tactical Retreat (1-sq move)",
-      });
+  // Use tracked square if available
+  let camelSquare: Square = knights[0];
+  if (trackedSquare !== undefined) {
+    if (trackedSquare === null) return moves; // Original piece was captured
+    const p = game.get(trackedSquare as any);
+    if (p && p.type === "n" && p.color === color) {
+      camelSquare = trackedSquare as Square;
+    } else {
+      return moves; // Tracked square no longer has our knight — piece is dead
     }
+  }
+
+  const [f, r] = sqToCoords(camelSquare);
+  // Camel leaps: all (1,3) and (3,1) offsets (8 destinations)
+  const camelLeaps = [[-3,-1],[-3,1],[-1,-3],[-1,3],[1,-3],[1,3],[3,-1],[3,1]];
+
+  for (const [df, dr] of camelLeaps) {
+    const target = sq(f + df, r + dr);
+    if (!target) continue;
+    if (isFriendly(game, target, color)) continue;
+    if (wouldLeaveKingInCheck(game, camelSquare, target, color)) continue;
+
+    moves.push({
+      from: camelSquare, to: target,
+      type: isEnemy(game, target, color) ? "capture" : "move",
+      modifierId: "camel", label: "Camel leap (1×3)",
+    });
   }
   return moves;
 }
 
-/** Bishops can move 1 square orthogonally */
-function genBishopSlide(game: Chess, color: Color): ChaosMove[] {
+/** Dragon Bishop (dragon-bishop): bishops also step 1 square orthogonally — Shogi Dragon Horse (龍馬) */
+function genDragonBishop(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const bishops = allSquaresOf(game, "b", color);
-  const orthoDirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+  const orthSteps: [number, number][] = [[-1,0],[1,0],[0,-1],[0,1]];
 
   for (const bs of bishops) {
     const [f, r] = sqToCoords(bs);
-    for (const [df, dr] of orthoDirs) {
+    for (const [df, dr] of orthSteps) {
       const target = sq(f + df, r + dr);
       if (!target) continue;
       if (isFriendly(game, target, color)) continue;
@@ -221,22 +268,22 @@ function genBishopSlide(game: Chess, color: Color): ChaosMove[] {
 
       moves.push({
         from: bs, to: target, type: isEnemy(game, target, color) ? "capture" : "move",
-        modifierId: "bishop-slide", label: "Bishop Sprint (1-sq ortho)",
+        modifierId: "dragon-bishop", label: "Dragon Bishop step (ortho)",
       });
     }
   }
   return moves;
 }
 
-/** Rooks can move 1 square diagonally */
-function genRookCharge(game: Chess, color: Color): ChaosMove[] {
+/** Dragon Rook (dragon-rook): rooks also step 1 square diagonally — Shogi Dragon King (龍王) */
+function genDragonRook(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const rooks = allSquaresOf(game, "r", color);
-  const diagDirs = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+  const diagSteps: [number, number][] = [[-1,-1],[-1,1],[1,-1],[1,1]];
 
   for (const rs of rooks) {
     const [f, r] = sqToCoords(rs);
-    for (const [df, dr] of diagDirs) {
+    for (const [df, dr] of diagSteps) {
       const target = sq(f + df, r + dr);
       if (!target) continue;
       if (isFriendly(game, target, color)) continue;
@@ -244,7 +291,7 @@ function genRookCharge(game: Chess, color: Color): ChaosMove[] {
 
       moves.push({
         from: rs, to: target, type: isEnemy(game, target, color) ? "capture" : "move",
-        modifierId: "rook-charge", label: "Rook Rush (1-sq diagonal)",
+        modifierId: "dragon-rook", label: "Dragon Rook step (diag)",
       });
     }
   }
@@ -789,9 +836,9 @@ function genQueenTeleport(game: Chess, color: Color): ChaosMove[] {
 const MODIFIER_GENERATORS: Record<string, (game: Chess, color: Color, trackedSquare?: string | null) => ChaosMove[]> = {
   "pawn-charge": genPawnCharge,
   "pawn-capture-forward": genPawnBayonet,
-  "knight-retreat": genKnightRetreat,
-  "bishop-slide": genBishopSlide,
-  "rook-charge": genRookCharge,
+  "camel": genCamel,
+  "dragon-bishop": genDragonBishop,
+  "dragon-rook": genDragonRook,
   "phantom-rook": genPhantomRook,
   "knook": genKnook,
   "archbishop": genArchbishop,
@@ -808,12 +855,18 @@ const MODIFIER_GENERATORS: Record<string, (game: Chess, color: Color, trackedSqu
 /**
  * Generate all extra legal moves enabled by the active modifiers.
  * These are moves BEYOND what chess.js considers legal.
+ *
+ * @param opponentModifiers - Pass opponent's modifiers to also filter out moves
+ *   that would expose our king to an opponent chaos-modifier attack (e.g. Pegasus,
+ *   Amazon). Without this the standard `wouldLeaveKingInCheck` check is used alone,
+ *   which is blind to chaos-controlled squares.
  */
 export function getChaosMoves(
   game: Chess,
   modifiers: ChaosModifier[],
   color: Color,
   assignedSquares?: Record<string, string | null>,
+  opponentModifiers?: ChaosModifier[],
 ): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const seen = new Set<string>();
@@ -831,6 +884,14 @@ export function getChaosMoves(
       const key = `${m.from}-${m.to}-${m.modifierId}`;
       if (seen.has(key)) continue;
       seen.add(key);
+      // Also verify this move doesn't expose our king to an opponent chaos attack
+      if (
+        opponentModifiers &&
+        opponentModifiers.length > 0 &&
+        wouldLeaveKingToChaosAttack(game, m, color, opponentModifiers, assignedSquares)
+      ) {
+        continue;
+      }
       moves.push(m);
     }
   }
@@ -1009,33 +1070,47 @@ export function getChaosAttackedSquares(
     }
   }
 
-  /* Knight Retreat: knights attack 1 sq in all 8 directions */
-  if (modIds.has("knight-retreat")) {
-    for (const ns of allSquaresOf(game, "n", attackerColor)) {
+  /* Camel: first knight attacks all (1,3) and (3,1) leap squares */
+  if (modIds.has("camel")) {
+    const trackedKey = `${attackerColor}_camel`;
+    const tracked = assignedSquares?.[trackedKey];
+    let camelSquares: Square[];
+    if (tracked !== undefined) {
+      if (tracked === null) {
+        camelSquares = [];
+      } else {
+        const p = game.get(tracked as Square);
+        camelSquares = (p && p.type === "n" && p.color === attackerColor) ? [tracked as Square] : [];
+      }
+    } else {
+      camelSquares = allSquaresOf(game, "n", attackerColor).slice(0, 1);
+    }
+    const camelLeaps = [[-3,-1],[-3,1],[-1,-3],[-1,3],[1,-3],[1,3],[3,-1],[3,1]];
+    for (const ns of camelSquares) {
       const [f, r] = sqToCoords(ns);
-      for (const [df, dr] of allDirs) {
+      for (const [df, dr] of camelLeaps) {
         const t = sq(f + df, r + dr);
         if (t) attacked.add(t);
       }
     }
   }
 
-  /* Bishop Slide: bishops attack 1 sq orthogonally */
-  if (modIds.has("bishop-slide")) {
-    for (const bs of allSquaresOf(game, "b", attackerColor)) {
-      const [f, r] = sqToCoords(bs);
-      for (const [df, dr] of cardinals) {
-        const t = sq(f + df, r + dr);
-        if (t) attacked.add(t);
-      }
-    }
-  }
-
-  /* Rook Charge: rooks attack 1 sq diagonally */
-  if (modIds.has("rook-charge")) {
+  /* Dragon Rook: rooks also attack 1 step diagonally (Shogi Dragon King) */
+  if (modIds.has("dragon-rook")) {
     for (const rs of allSquaresOf(game, "r", attackerColor)) {
       const [f, r] = sqToCoords(rs);
-      for (const [df, dr] of diagonals) {
+      for (const [df, dr] of [[-1,-1],[-1,1],[1,-1],[1,1]] as [number,number][]) {
+        const t = sq(f + df, r + dr);
+        if (t) attacked.add(t);
+      }
+    }
+  }
+
+  /* Dragon Bishop: bishops also attack 1 step orthogonally (Shogi Dragon Horse) */
+  if (modIds.has("dragon-bishop")) {
+    for (const bs of allSquaresOf(game, "b", attackerColor)) {
+      const [f, r] = sqToCoords(bs);
+      for (const [df, dr] of [[-1,0],[1,0],[0,-1],[0,1]] as [number,number][]) {
         const t = sq(f + df, r + dr);
         if (t) attacked.add(t);
       }
@@ -1445,11 +1520,17 @@ export function applyKingShield(game: Chess, checkedColor: Color): Chess | null 
   const checkers = findCheckingSquares(game, checkedColor);
   if (checkers.length === 0) return null;
 
-  const tmp = new Chess(game.fen());
-  tmp.remove(checkers[0]); // Destroy the checking piece
+  // The check is "ignored" — the Royal Guard blocks the check WITHOUT destroying
+  // the attacker's piece. The attacker's turn comes back so they must re-check
+  // from the same position (their piece stays where it landed).
+  const fenParts = game.fen().split(" ");
+  // Currently it is checkedColor's turn (they're in check).
+  // Flip back to the attacker so they must move again.
+  fenParts[1] = checkedColor === "w" ? "b" : "w";
+  fenParts[3] = "-"; // reset en passant
 
   try {
-    return new Chess(tmp.fen());
+    return new Chess(fenParts.join(" "));
   } catch {
     return null;
   }
@@ -1473,14 +1554,23 @@ export function isChaosCheckmate(
   oppModifiers: ChaosModifier[],
   oppColor: Color,
   assignedSquares?: Record<string, string | null>,
+  /** The checked side's own chaos modifiers — if they have chaos moves that escape check, it's not checkmate */
+  defenderModifiers?: ChaosModifier[],
 ): boolean {
   if (!game.inCheck()) return false;
   if (game.isCheckmate()) return false; // already handled by standard path
 
+  const myColor = game.turn() as Color;
+
+  // If the defender has chaos moves available, those may also escape check.
+  // getChaosMoves filters via wouldLeaveKingInCheck so only genuine escapes survive.
+  if (defenderModifiers && defenderModifiers.length > 0) {
+    const defChaos = getChaosMoves(game, defenderModifiers, myColor, assignedSquares, oppModifiers);
+    if (defChaos.length > 0) return false;
+  }
+
   const legalMoves = game.moves({ verbose: true });
   if (legalMoves.length === 0) return true;
-
-  const myColor = game.turn() as Color;
 
   for (const move of legalMoves) {
     const piece = game.get(move.from as Square);

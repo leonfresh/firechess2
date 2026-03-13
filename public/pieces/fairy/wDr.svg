@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" width="50mm" height="50mm" clip-rule="evenodd" fill-rule="evenodd" image-rendering="optimizeQuality" shape-rendering="geometricPrecision">
+  <defs>
+    <linearGradient id="wDr-body" gradientUnits="userSpaceOnUse" x1="21.376" x2="77.641" y1="37.469" y2="37.469">
+      <stop offset="0" stop-color="#fde68a"/>
+      <stop offset="1" stop-color="#fde68a" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="wDr-spark" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0" stop-color="#fcd34d"/>
+      <stop offset="0.5" stop-color="#f59e0b"/>
+      <stop offset="1" stop-color="#d97706"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Diagonal corner sparks — indicating added diagonal movement (Dragon King) -->
+  <!-- NW spark -->
+  <path d="M9.5,8 L7,5 L5.5,7.5 L8,9 Z" fill="url(#wDr-spark)" opacity="0.92"/>
+  <path d="M7.5,4.5 L9,7 L6.5,6.5 Z" fill="#fde68a" opacity="0.7"/>
+  <!-- NE spark -->
+  <path d="M40.5,8 L43,5 L44.5,7.5 L42,9 Z" fill="url(#wDr-spark)" opacity="0.92"/>
+  <path d="M42.5,4.5 L41,7 L43.5,6.5 Z" fill="#fde68a" opacity="0.7"/>
+  <!-- SW spark -->
+  <path d="M9.5,42 L7,45 L5.5,42.5 L8,41 Z" fill="url(#wDr-spark)" opacity="0.92"/>
+  <path d="M7.5,45.5 L9,43 L6.5,43.5 Z" fill="#fde68a" opacity="0.7"/>
+  <!-- SE spark -->
+  <path d="M40.5,42 L43,45 L44.5,42.5 L42,41 Z" fill="url(#wDr-spark)" opacity="0.92"/>
+  <path d="M42.5,45.5 L41,43 L43.5,43.5 Z" fill="#fde68a" opacity="0.7"/>
+
+  <!-- Small amber ember between the battlements (decorative, suggesting fire) -->
+  <circle cx="25" cy="7" r="1.8" fill="#f59e0b" opacity="0.55"/>
+  <circle cx="25" cy="7" r="0.8" fill="#fef3c7" opacity="0.7"/>
+
+  <!-- White rook body — dark outline -->
+  <path d="M28.408 9.22h4.216V5.825h6.799v9.296l-5.503 4.242v11.862l4.216 4.216v5.08h3.793v5.927H8.071V40.52h3.793v-5.08l4.242-4.216V19.363l-5.504-4.242V5.825h6.774V9.22h4.242V5.825h6.79z" fill="#1f1a17"/>
+  <!-- White rook body — amber gradient highlight -->
+  <path d="M33.073 17.678l3.15-2.557h-22.42l3.175 2.557zm7.197 24.528H9.756v2.557H40.27zm-3.844-5.055H13.6v3.37h22.826zm-4.217-17.788H17.816v11.862h14.393zm5.504-5.927V7.51h-3.395v3.395h-7.646V7.51h-3.344v3.395h-7.62V7.51h-3.395v5.926zm-1.914 22.005l-2.548-2.531H16.8l-2.6 2.531z" fill="url(#wDr-body)"/>
+
+  <!-- Small amber glow dot above rook centre battlement -->
+  <circle cx="25" cy="5.3" r="1.1" fill="#d97706" opacity="0.9"/>
+  <circle cx="25" cy="5.3" r="0.45" fill="#fef3c7"/>
+</svg>

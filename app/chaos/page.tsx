@@ -171,29 +171,13 @@ const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
   },
   "collateral-rook": { icon: "💥", iconGlow: "rgba(249,115,22,0.8)", glow: "rgba(249,115,22,0.4)" },
   "nuclear-queen": { icon: "☢️", iconGlow: "rgba(34,197,94,0.9)", glow: "rgba(34,197,94,0.5)" },
-  "rook-vault": {
-    glow: "rgba(148,163,184,0.35)",
-    render: (sw) => {
-      const s = sw * 0.28;
-      return (
-        <svg viewBox="0 0 24 24" width={s} height={s} style={{ position: "absolute", top: "2%", right: "2%", opacity: 0.9, filter: "drop-shadow(0 0 3px rgba(148,163,184,0.9))" }}>
-          <path d="M10 2 L14 2 L14 10 L22 10 L22 14 L14 14 L14 22 L10 22 L10 14 L2 14 L2 10 L10 10 Z" fill="rgba(148,163,184,0.85)" stroke="rgba(226,232,240,0.8)" strokeWidth="0.5"/>
-        </svg>
-      );
-    },
+  "dragon-rook": {
+    glow: "rgba(217,119,6,0.4)",
   },
   "pawn-charge": { icon: "🚀", iconGlow: "rgba(59,130,246,0.6)", glow: "rgba(59,130,246,0.4)" },
   "pawn-capture-forward": { icon: "🗡️", iconGlow: "rgba(239,68,68,0.6)", glow: "rgba(239,68,68,0.4)" },
-  "bishop-vault": {
-    glow: "rgba(251,191,36,0.35)",
-    render: (sw) => {
-      const s = sw * 0.28;
-      return (
-        <svg viewBox="0 0 24 24" width={s} height={s} style={{ position: "absolute", top: "2%", left: "2%", opacity: 0.9, filter: "drop-shadow(0 0 3px rgba(251,191,36,0.9))" }}>
-          <path d="M12 3 L15 9 L21 12 L15 15 L12 21 L9 15 L3 12 L9 9 Z" fill="rgba(251,191,36,0.85)" stroke="rgba(254,240,138,0.8)" strokeWidth="0.5"/>
-        </svg>
-      );
-    },
+  "dragon-bishop": {
+    glow: "rgba(8,145,178,0.4)",
   },
   "pawn-promotion-early": { icon: "⭐", iconGlow: "rgba(234,179,8,0.8)", glow: "rgba(234,179,8,0.3)" },
   "king-shield": { icon: "🛡️", iconGlow: "rgba(59,130,246,0.6)" },
@@ -230,6 +214,8 @@ const FAIRY_PIECE_SVGS: Record<string, Record<string, string>> = {
   amazon:                 { w: "/pieces/fairy/wAm.svg", b: "/pieces/fairy/bAm.svg" },
   pegasus:                { w: "/pieces/fairy/wPg.svg", b: "/pieces/fairy/bPg.svg" },
   camel:                  { w: "/pieces/fairy/wCa.svg", b: "/pieces/fairy/bCa.svg" },
+  "dragon-bishop":        { w: "/pieces/fairy/wDb.svg", b: "/pieces/fairy/bDb.svg" },
+  "dragon-rook":          { w: "/pieces/fairy/wDr.svg", b: "/pieces/fairy/bDr.svg" },
   "pawn-charge":          { w: "/pieces/fairy/wPC.svg", b: "/pieces/fairy/bPC.svg" },
   "pawn-capture-forward": { w: "/pieces/fairy/wPB.svg", b: "/pieces/fairy/bPB.svg" },
 };
@@ -1490,10 +1476,10 @@ function PieceMovementGrid({ pieceType, isWhite, mods }: {
   const modIds = new Set(mods.map(m => m.id));
   if (modIds.has("camel"))
     for (const [dr,dc] of [[-3,-1],[-3,1],[-1,-3],[-1,3],[1,-3],[1,3],[3,-1],[3,1]] as [number,number][]) tryMark(dr, dc, "chaos");
-  if (modIds.has("bishop-vault"))
-    for (const [dr,dc] of [[-2,-2],[-2,2],[2,-2],[2,2]] as [number,number][]) tryMark(dr, dc, "chaos");
-  if (modIds.has("rook-vault"))
-    for (const [dr,dc] of [[-2,0],[2,0],[0,-2],[0,2]] as [number,number][]) tryMark(dr, dc, "chaos");
+  if (modIds.has("dragon-bishop"))
+    for (const [dr,dc] of [[-1,0],[1,0],[0,-1],[0,1]] as [number,number][]) tryMark(dr, dc, "chaos");
+  if (modIds.has("dragon-rook"))
+    for (const [dr,dc] of [[-1,-1],[-1,1],[1,-1],[1,1]] as [number,number][]) tryMark(dr, dc, "chaos");
   if (modIds.has("pawn-charge")) tryMark(2 * fwd, 0, "chaos");
   if (modIds.has("pawn-capture-forward")) tryMark(fwd, 0, "capture-chaos");
   if (modIds.has("knook"))
