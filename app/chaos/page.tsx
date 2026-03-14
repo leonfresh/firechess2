@@ -5726,6 +5726,7 @@ export default function ChaosChessPage() {
             <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Piece Info</span>
             <button
               type="button"
+              onPointerDown={(e) => e.stopPropagation()}
               onClick={() => setPieceInfoOpen(false)}
               className="ml-auto rounded p-0.5 text-slate-600 transition-colors hover:bg-white/10 hover:text-slate-300 text-xs leading-none"
               title="Close"
