@@ -218,6 +218,7 @@ const FAIRY_PIECE_SVGS: Record<string, Record<string, string>> = {
   camel:                  { w: "/pieces/fairy/wCa.svg", b: "/pieces/fairy/bCa.svg" },
   "dragon-bishop":        { w: "/pieces/fairy/wDb.svg", b: "/pieces/fairy/bDb.svg" },
   "dragon-rook":          { w: "/pieces/fairy/wDr.svg", b: "/pieces/fairy/bDr.svg" },
+  "rook-cannon":          { w: "/pieces/fairy/wRC.svg",  b: "/pieces/fairy/bRC.svg" },
   "pawn-charge":          { w: "/pieces/fairy/wPC.svg", b: "/pieces/fairy/bPC.svg" },
   "pawn-capture-forward": { w: "/pieces/fairy/wPB.svg", b: "/pieces/fairy/bPB.svg" },
 };
@@ -239,6 +240,7 @@ function buildChaosCustomPieces(
   playerColor: "white" | "black",
   game: Chess,
   assignedSquares?: Record<string, string | null>,
+  undeadRevived?: { w: boolean; b: boolean },
 ): Record<string, ({ squareWidth, square }: { squareWidth: number; square?: string }) => React.ReactElement> {
   const codes = ["wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK"];
   const result: Record<string, ({ squareWidth, square }: { squareWidth: number; square?: string }) => React.ReactElement> = {};
@@ -306,7 +308,7 @@ function buildChaosCustomPieces(
       // Choose the fairy piece SVG using the same priority as getPieceDisplayName:
       // identity mods beat movement mods; newest draft wins within each tier.
       const IDENTITY_MOD_IDS = ["knook", "archbishop", "camel", "pegasus", "amazon", "king-ascension"];
-      const MOVEMENT_MOD_IDS = ["dragon-bishop", "dragon-rook"];
+      const MOVEMENT_MOD_IDS = ["dragon-bishop", "dragon-rook", "rook-cannon"];
       const fairyTiers = [IDENTITY_MOD_IDS, MOVEMENT_MOD_IDS];
       for (const tier of fairyTiers) {
         // newest-first within the tier
@@ -333,13 +335,15 @@ function buildChaosCustomPieces(
 
         const fairySvgs = FAIRY_PIECE_SVGS[mod.id];
         const skipForCombo = pawnCombo && (mod.id === "pawn-capture-forward" || mod.id === "pawn-charge");
+        // Undead army: hide skull icon once revival has been spent
+        const skipUndeadIcon = mod.id === "undead-army" && !!undeadRevived?.[pieceColor as "w" | "b"];
 
         const def = MODIFIER_OVERLAYS[mod.id];
         if (!def) continue;
 
         // Skip icon/render overlays for modifiers with fairy piece replacements
         // (the fairy SVG IS the piece — no need for an overlay badge)
-        if (!fairySvgs && !skipForCombo) {
+        if (!fairySvgs && !skipForCombo && !skipUndeadIcon) {
           if (def.icon) {
             // Icon-based badge — auto-assign to next available corner
             const corner = CORNER_ORDER[cornerIdx % CORNER_ORDER.length];
@@ -1596,22 +1600,21 @@ function PieceInfoPanel({
   playerColorCode: "w" | "b";
   assignedSquares?: Record<string, string | null>;
 }) {
-  if (!square) {
+  const piece = square ? game.get(square as any) : null;
+  if (!piece) {
     return (
-      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 flex items-center justify-center min-h-[60px]">
-        <p className="text-[11px] text-slate-600">Hover or select a piece to see its movement</p>
+      <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3">
+        <PieceMovementGrid pieceType="" isWhite mods={[]} />
       </div>
     );
   }
-  const piece = game.get(square as any);
-  if (!piece) return null;
 
   const isPlayerPiece = piece.color === playerColorCode;
   const mods = isPlayerPiece ? playerMods : aiMods;
   const pieceTypeMods = mods.filter(m => m.piece === (piece.type as PieceType));
-  const displayName = getPieceDisplayName(piece.type, mods, square, assignedSquares, piece.color);
+  const displayName = getPieceDisplayName(piece.type, mods, square!, assignedSquares, piece.color);
   const sideClass = isPlayerPiece ? "text-emerald-400" : "text-red-400";
-  const valCp = getChaosPieceValCp(square, piece.type, piece.color as "w" | "b", mods, assignedSquares);
+  const valCp = getChaosPieceValCp(square!, piece.type, piece.color as "w" | "b", mods, assignedSquares);
   const valStr = valCp >= 20000 ? "\u221e" : (valCp / 100).toFixed(1).replace(/\.0$/, "");
 
   return (
@@ -1717,6 +1720,7 @@ export default function ChaosChessPage() {
   const [chaosState, setChaosState] = useState<ChaosState>(createChaosState);
   const [pendingPhase, setPendingPhase] = useState(0);
   const [capturedPawns, setCapturedPawns] = useState({ w: 0, b: 0 });
+  const [undeadRevived, setUndeadRevived] = useState({ w: false, b: false });
 
   /* ── Opponent draft reveal (multiplayer) ── */
   const [opponentDraftReveal, setOpponentDraftReveal] = useState<OpponentDraftRevealData | null>(null);
@@ -1772,6 +1776,9 @@ export default function ChaosChessPage() {
   myGamesPlayedRef.current = myGamesPlayed;
   const [eloChange, setEloChange] = useState<number | null>(null);
   const [eloSaved, setEloSaved] = useState(false);
+  const [aiEloSaved, setAiEloSaved] = useState(false);
+  type LeaderboardMini = { userId: string; rating: number; userName: string | null; userImage: string | null; wins: number; gamesPlayed: number };
+  const [setupLeaderboard, setSetupLeaderboard] = useState<LeaderboardMini[]>([]);
 
   /* ── Chaos moves (extra legal moves from modifiers) ── */
   const [availableChaosMoves, setAvailableChaosMoves] = useState<ChaosMove[]>([]);
@@ -1796,8 +1803,9 @@ export default function ChaosChessPage() {
       playerColor,
       game,
       chaosState.assignedSquares ?? undefined,
+      undeadRevived,
     );
-  }, [pieceTheme.setName, chaosState.playerModifiers, chaosState.aiModifiers, playerColor, baseCustomPieces, game, chaosState.assignedSquares]);
+  }, [pieceTheme.setName, chaosState.playerModifiers, chaosState.aiModifiers, playerColor, baseCustomPieces, game, chaosState.assignedSquares, undeadRevived]);
 
   /* ── Move log ── */
   const [moveLog, setMoveLog] = useState<MoveLogEntry[]>([]);
@@ -1925,6 +1933,38 @@ export default function ChaosChessPage() {
     setEloChange(computeEloChange(myRatingRef.current, opponentRatingRef.current, result, myGamesPlayedRef.current));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameStatus, gameMode, gameResult, playerColor]);
+
+  /* ── Fetch own rating when an AI game starts (so we know the baseline) ── */
+  useEffect(() => {
+    if (gameStatus !== "playing" || gameMode !== "ai" || !authenticated) return;
+    fetch("/api/chaos/rating", { headers: chaosHeaders() })
+      .then(r => r.json())
+      .then(d => {
+        if (d.rating !== undefined) setMyRating(d.rating);
+        if (d.gamesPlayed !== undefined) setMyGamesPlayed(d.gamesPlayed);
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameStatus, gameMode, authenticated]);
+
+  /* ── Compute ELO change when an AI game ends ── */
+  useEffect(() => {
+    if (gameStatus !== "game-over" || gameMode !== "ai") return;
+    const aiRating = aiLevel === "hard" ? 1600 : aiLevel === "medium" ? 1200 : 800;
+    const result: 1 | 0.5 | 0 = gameResult === playerColor ? 1 : gameResult === "draw" ? 0.5 : 0;
+    const baseline = myRatingRef.current ?? DEFAULT_CHAOS_ELO;
+    const games = myGamesPlayedRef.current;
+    setEloChange(computeEloChange(baseline, aiRating, result, games));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameStatus, gameMode, gameResult, playerColor, aiLevel]);
+
+  /* ── Fetch top 5 leaderboard entries for the setup screen ── */
+  useEffect(() => {
+    fetch("/api/chaos/leaderboard?limit=5")
+      .then(r => r.json())
+      .then(d => setSetupLeaderboard(d.entries ?? []))
+      .catch(() => {});
+  }, []);
 
   /**
    * Check if a standard king move would land on a square attacked by
@@ -2705,6 +2745,7 @@ export default function ChaosChessPage() {
       setTimers({ w: (tc?.base ?? 0) * 1000, b: (tc?.base ?? 0) * 1000 });
       setEloChange(null);
       setEloSaved(false);
+      setAiEloSaved(false);
       setMyRating(null);
       setOpponentRating(null);
       recomputeChaosMoves(g, cs);
@@ -2745,6 +2786,7 @@ export default function ChaosChessPage() {
       setTimers({ w: (tc?.base ?? 0) * 1000, b: (tc?.base ?? 0) * 1000 });
       setEloChange(null);
       setEloSaved(false);
+      setAiEloSaved(false);
       setMyRating(null);
       setOpponentRating(null);
       // Reset draft refs so a new game always starts with a clean slate
@@ -2803,6 +2845,7 @@ export default function ChaosChessPage() {
       }
       setEloChange(null);
       setEloSaved(false);
+      setAiEloSaved(false);
       setMyRating(null);
       setOpponentRating(null);
       recomputeChaosMoves(g, cs);
@@ -2926,6 +2969,7 @@ export default function ChaosChessPage() {
         // Reset ELO/timer state for new game
         setEloChange(null);
         setEloSaved(false);
+        setAiEloSaved(false);
         setMyRating(null);
         setOpponentRating(null);
         recomputeChaosMoves(g, cs);
@@ -4099,6 +4143,7 @@ export default function ChaosChessPage() {
 
       // Apply one-time draft effects (knight horde, undead army)
       const pColor = playerColor === "white" ? "w" : "b";
+      if (mod.id === "undead-army") setUndeadRevived((prev) => ({ ...prev, [pColor]: true }));
       const draftResult = applyDraftEffect(game, mod, pColor as Color, capturedPawns[pColor as "w" | "b"]);
       let currentGame = game;
       if (draftResult) {
@@ -4154,6 +4199,7 @@ export default function ChaosChessPage() {
             }
             // Apply one-time draft effects for AI (knight horde, undead army)
             const aiColor__ = playerColor === "white" ? "b" : "w";
+            if (aiPick.id === "undead-army") setUndeadRevived((prev) => ({ ...prev, [aiColor__]: true }));
             const aiDraftResult = applyDraftEffect(currentGame, aiPick, aiColor__ as Color, capturedPawns[aiColor__ as "w" | "b"]);
             let currentGameAfterAiDraft = currentGame;
             if (aiDraftResult) {
@@ -4402,17 +4448,87 @@ export default function ChaosChessPage() {
             </p>
           </div>
 
-          {/* ── How it works (horizontal pills) ── */}
-          <div className="mb-8 flex w-full max-w-xl flex-wrap justify-center gap-2 sm:mb-10">
-            {[
-              { icon: "♟️", label: "Normal chess rules" },
-              { icon: "⏸️", label: "Draft at turns 5·10·15·20·25" },
-              { icon: "🐫", label: "Pieces gain new moves" },
-              { icon: "💥", label: "Fairy pieces & chaos combos" },
-            ].map((p) => (
-              <div key={p.label} className="flex items-center gap-1.5 rounded-full border border-white/[0.07] bg-white/[0.03] px-3 py-1.5 text-xs text-slate-400">
-                <Emoji emoji={p.icon} className="h-3.5 w-3.5" />
-                {p.label}
+          {/* ── Example draft cards (flip on hover) ── */}
+          <div className="mb-8 flex w-full max-w-2xl flex-wrap justify-center gap-3 sm:mb-10">
+            <p className="w-full text-[11px] font-semibold uppercase tracking-wider text-slate-600 mb-1">Example draft picks — hover to learn more</p>
+            {([
+              {
+                icon: "🏰", piece: "♜", name: "The Knook", tier: "epic",
+                tierColor: "text-purple-400 border-purple-500/30 bg-purple-500/10",
+                glow: "rgba(168,85,247,0.25)",
+                desc: "Your knight merges with a rook. It can move like BOTH. Combined power rated at ~12 pawns.",
+              },
+              {
+                icon: "☢️", piece: "♛", name: "Nuclear Queen", tier: "legendary",
+                tierColor: "text-amber-400 border-amber-500/30 bg-amber-500/10",
+                glow: "rgba(234,179,8,0.25)",
+                desc: "When your queen captures, it nukes all adjacent enemy pieces too. Absolute mayhem.",
+              },
+              {
+                icon: "🐫", piece: "♞", name: "Camel Knight", tier: "rare",
+                tierColor: "text-cyan-400 border-cyan-500/30 bg-cyan-500/10",
+                glow: "rgba(6,182,212,0.2)",
+                desc: "Your knight gains a (1,3) leap — the camel move. Reaches squares normal knights can't.",
+              },
+              {
+                icon: "🧱", piece: "♟", name: "Forced En Passant", tier: "common",
+                tierColor: "text-slate-400 border-white/10 bg-white/[0.04]",
+                glow: "rgba(255,255,255,0.08)",
+                desc: "En passant is now mandatory. If you CAN take en passant, you MUST. Tu dois.",
+              },
+              {
+                icon: "💀", piece: "♟", name: "Undead Army", tier: "legendary",
+                tierColor: "text-amber-400 border-amber-500/30 bg-amber-500/10",
+                glow: "rgba(234,179,8,0.25)",
+                desc: "All your captured pawns instantly revive on your back ranks. From ashes they return.",
+              },
+            ] as const).map((card) => (
+              <div
+                key={card.name}
+                className="group"
+                style={{ perspective: "800px", width: 120, height: 148 }}
+              >
+                <div
+                  style={{
+                    width: "100%", height: "100%",
+                    position: "relative",
+                    transformStyle: "preserve-3d",
+                    transition: "transform 0.55s cubic-bezier(0.4,0.2,0.2,1)",
+                  }}
+                  className="group-hover:[transform:rotateY(180deg)]"
+                >
+                  {/* ── Front ── */}
+                  <div
+                    style={{
+                      position: "absolute", inset: 0,
+                      backfaceVisibility: "hidden",
+                      WebkitBackfaceVisibility: "hidden",
+                      background: `radial-gradient(ellipse at 50% 0%, ${card.glow} 0%, transparent 70%), rgba(255,255,255,0.02)`,
+                    }}
+                    className="flex flex-col items-center justify-center gap-1.5 rounded-xl border border-white/[0.07] p-3"
+                  >
+                    <Emoji emoji={card.icon} className="h-7 w-7" />
+                    <span className="text-2xl leading-none" style={{ filter: "drop-shadow(0 0 4px rgba(255,255,255,0.3))" }}>{card.piece}</span>
+                    <p className="mt-0.5 text-center text-[11px] font-bold leading-tight text-white">{card.name}</p>
+                    <span className={`rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide ${card.tierColor}`}>
+                      {card.tier}
+                    </span>
+                  </div>
+                  {/* ── Back ── */}
+                  <div
+                    style={{
+                      position: "absolute", inset: 0,
+                      backfaceVisibility: "hidden",
+                      WebkitBackfaceVisibility: "hidden",
+                      transform: "rotateY(180deg)",
+                      background: `radial-gradient(ellipse at 50% 100%, ${card.glow} 0%, transparent 70%), rgba(255,255,255,0.03)`,
+                    }}
+                    className="flex flex-col items-center justify-center gap-2 rounded-xl border border-white/[0.1] p-3"
+                  >
+                    <Emoji emoji={card.icon} className="h-5 w-5 opacity-70" />
+                    <p className="text-center text-[10px] leading-relaxed text-slate-300">{card.desc}</p>
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -4594,6 +4710,7 @@ export default function ChaosChessPage() {
                   // Reset ELO and timer state (timers will be synced from first poll)
                   setEloChange(null);
                   setEloSaved(false);
+                  setAiEloSaved(false);
                   setMyRating(null);
                   setOpponentRating(null);
                   setTimers({ w: 0, b: 0 });
@@ -4638,6 +4755,39 @@ export default function ChaosChessPage() {
               <span className="text-[10px] text-slate-600">memes</span>
             </div>
           </div>
+
+          {/* ── Mini Leaderboard ── */}
+          {setupLeaderboard.length > 0 && (
+            <div className="mt-8 w-full max-w-sm rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">⚡ Top Chaos Players</p>
+                <a href="/leaderboard/chaos" className="text-[10px] text-slate-600 hover:text-purple-400 transition-colors">
+                  View all →
+                </a>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                {setupLeaderboard.map((entry, i) => {
+                  const ratingColor = entry.rating >= 2000 ? "text-amber-400" : entry.rating >= 1600 ? "text-purple-400" : entry.rating >= 1400 ? "text-cyan-400" : "text-slate-300";
+                  return (
+                    <div key={entry.userId} className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-white/[0.03] transition-colors">
+                      <span className="w-4 text-center text-[11px] font-bold text-slate-600">
+                        {i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}`}
+                      </span>
+                      {entry.userImage ? (
+                        <img src={entry.userImage} alt="" className="h-5 w-5 rounded-full object-cover" />
+                      ) : (
+                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-purple-500/20 text-[9px] font-bold text-purple-400">
+                          {(entry.userName?.[0] ?? "?").toUpperCase()}
+                        </div>
+                      )}
+                      <span className="flex-1 truncate text-xs text-slate-300">{entry.userName ?? "Anonymous"}</span>
+                      <span className={`text-xs font-black tabular-nums ${ratingColor}`}>{entry.rating}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* AnarchyChess callout */}
           <div className="mt-6 rounded-xl border border-orange-500/20 bg-orange-500/5 px-5 py-3 text-center">
@@ -5150,6 +5300,70 @@ export default function ChaosChessPage() {
                   </div>
                 )}
 
+                {/* ── ELO section (AI games) ── */}
+                {gameMode === "ai" && (
+                  <div className="w-full rounded-xl border border-purple-500/20 bg-purple-500/5 px-4 py-3 text-center">
+                    {eloChange !== null ? (
+                      <>
+                        <div className={`text-lg font-black ${eloChange >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                          {eloChange >= 0 ? "+" : ""}{eloChange} ELO
+                        </div>
+                        <div className="mt-0.5 text-xs text-slate-500">
+                          {`vs ${aiLevel === "hard" ? "Hard AI (1600)" : aiLevel === "medium" ? "Medium AI (1200)" : "Easy AI (800)"}`}
+                        </div>
+                        <div className="mt-0.5 text-xs text-slate-500">
+                          {`Rating: ${myRating ?? DEFAULT_CHAOS_ELO} → ${(myRating ?? DEFAULT_CHAOS_ELO) + (aiEloSaved ? 0 : eloChange)}`}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-xs text-slate-500">⚡ Chaos ELO — sign in to track your rating</div>
+                    )}
+
+                    {eloChange !== null && !authenticated && (
+                      <a
+                        href="/auth/signin"
+                        className="mt-2 block w-full rounded-lg border border-purple-500/40 bg-purple-500/20 px-4 py-2 text-xs font-bold text-purple-300 transition-all hover:bg-purple-500/30"
+                      >
+                        🔐 Sign in to save your Chaos ELO
+                      </a>
+                    )}
+                    {eloChange !== null && authenticated && !aiEloSaved && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const result = gameResult === playerColor ? "win" : gameResult === "draw" ? "draw" : "loss";
+                          try {
+                            const res = await fetch("/api/chaos/rating", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ mode: "ai", difficulty: aiLevel, result }),
+                            });
+                            const data = await res.json();
+                            if (data.ok) {
+                              setAiEloSaved(true);
+                              setMyRating(data.newRating);
+                            }
+                          } catch { /* ignore */ }
+                        }}
+                        className="mt-2 w-full rounded-lg border border-purple-500/40 bg-purple-600/20 px-4 py-2 text-xs font-bold text-purple-300 transition-all hover:bg-purple-600/30"
+                      >
+                        🏆 Save to Leaderboard
+                      </button>
+                    )}
+                    {aiEloSaved && (
+                      <div className="mt-2 text-xs font-bold text-emerald-400">
+                        ✅ Saved! New rating: {myRating ?? DEFAULT_CHAOS_ELO}
+                      </div>
+                    )}
+                    <a
+                      href="/leaderboard/chaos"
+                      className="mt-2 block text-[10px] text-slate-500 hover:text-purple-400 transition-colors"
+                    >
+                      🏆 View Chaos Leaderboard
+                    </a>
+                  </div>
+                )}
+
                 {/* Action buttons */}
                 <div className="flex flex-col items-center gap-2 w-full">
                   {/* Rematch (multiplayer) */}
@@ -5445,7 +5659,7 @@ export default function ChaosChessPage() {
     {/* ── Floating draggable piece info panel ── */}
     {pieceInfoOpen && gameStatus === "playing" && (() => {
       const sq = hoveredSquare ?? selectedSquare;
-      if (!sq || !game.get(sq as any)) return null;
+      const activeSq = (sq && game.get(sq as any)) ? sq : null;
       const defaultX = typeof window !== "undefined" ? Math.max(20, window.innerWidth - 290) : 20;
       const defaultY = typeof window !== "undefined" ? Math.max(80, window.innerHeight - 480) : 80;
       const px = pieceInfoPos.x < 0 ? defaultX : pieceInfoPos.x;
@@ -5490,7 +5704,7 @@ export default function ChaosChessPage() {
           </div>
           <div className="p-2.5">
             <PieceInfoPanel
-              square={sq}
+              square={activeSq}
               game={game}
               playerMods={chaosState.playerModifiers}
               aiMods={chaosState.aiModifiers}

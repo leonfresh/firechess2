@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" width="50mm" height="50mm" clip-rule="evenodd" fill-rule="evenodd" image-rendering="optimizeQuality" shape-rendering="geometricPrecision">
+  <defs>
+    <linearGradient id="bRC-shimmer" gradientUnits="userSpaceOnUse" x1="21" x2="78" y1="37" y2="37">
+      <stop offset="0" stop-color="#fff"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="bRC-barrel" gradientUnits="userSpaceOnUse" x1="7" y1="24" x2="7" y2="31">
+      <stop offset="0" stop-color="#4b5563"/>
+      <stop offset="0.45" stop-color="#1f2937"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <radialGradient id="bRC-muzzle" cx="44" cy="27.5" r="5" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fbbf24" stop-opacity="0.9"/>
+      <stop offset="0.5" stop-color="#f97316" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#dc2626" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Rook dark outline (Merida) -->
+  <path d="M28.408 9.22h4.216V5.825h6.799v9.296l-5.503 4.242v11.862l4.216 4.216v5.08h3.793v5.927H8.071V40.52h3.793v-5.08l4.242-4.216V19.363l-5.504-4.242V5.825h6.774V9.22h4.242V5.825h6.79z" fill="#1f1a17"/>
+  <!-- Black rook shimmer highlight -->
+  <path d="M25.013 35.043h-10.27L13.6 36.11v1.44h22.826v-1.44l-1.143-1.067zM13.6 40.123v2.532h22.826v-2.532zM25.013 13.04h-12.7v1.142l1.812 1.364h21.801l1.761-1.364V13.04zm0 4.19h-8.679l1.482 1.169v1.414h14.393v-1.414l1.482-1.168zm0 13.547h-7.197v1.143l-1.482 1.44h17.357l-1.482-1.44v-1.143z" fill="url(#bRC-shimmer)"/>
+
+  <!-- Cannon barrel cylinder (extends beyond tower, horizontal mount) -->
+  <rect x="6" y="24.8" width="38" height="5.4" rx="2.7" fill="url(#bRC-barrel)"/>
+  <!-- Barrel top highlight -->
+  <rect x="7" y="25.5" width="36" height="1.5" rx="0.75" fill="#6b7280" opacity="0.45"/>
+  <rect x="8" y="25.7" width="34" height="0.7" rx="0.35" fill="#fff" opacity="0.14"/>
+
+  <!-- Left mounting ring (tower left wall) -->
+  <circle cx="14.5" cy="27.5" r="3.5" fill="#111827"/>
+  <circle cx="14.5" cy="27.5" r="2.4" fill="#374151"/>
+  <circle cx="14.5" cy="27.5" r="1.1" fill="#1f2937"/>
+  <circle cx="13.7" cy="26.7" r="0.65" fill="#9ca3af" opacity="0.55"/>
+
+  <!-- Right mounting ring (tower right wall) -->
+  <circle cx="35.5" cy="27.5" r="3.5" fill="#111827"/>
+  <circle cx="35.5" cy="27.5" r="2.4" fill="#374151"/>
+  <circle cx="35.5" cy="27.5" r="1.1" fill="#1f2937"/>
+  <circle cx="34.7" cy="26.7" r="0.65" fill="#9ca3af" opacity="0.55"/>
+
+  <!-- Left muzzle opening -->
+  <circle cx="6.5" cy="27.5" r="2.2" fill="#0f172a"/>
+  <circle cx="6.5" cy="27.5" r="1.1" fill="#020617"/>
+
+  <!-- Right muzzle glow aura -->
+  <circle cx="44" cy="27.5" r="5" fill="url(#bRC-muzzle)"/>
+  <!-- Right muzzle opening -->
+  <circle cx="43.5" cy="27.5" r="2.2" fill="#0f172a"/>
+  <circle cx="43.5" cy="27.5" r="1.1" fill="#020617"/>
+
+  <!-- Muzzle sparks / fire (right end) -->
+  <path d="M46 25.8 L47.8 27.5 L46 29.2 L48.2 28.5 L49 27.5 L48.2 26.5 Z" fill="#f97316" opacity="0.85"/>
+  <path d="M46.5 26.5 L47.5 27.5 L46.5 28.5" stroke="#fbbf24" stroke-width="0.9" fill="none" stroke-linecap="round" opacity="0.75"/>
+  <circle cx="47.8" cy="27.5" r="0.55" fill="#fef3c7" opacity="0.9"/>
+</svg>

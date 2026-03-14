@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" width="50mm" height="50mm" clip-rule="evenodd" fill-rule="evenodd" image-rendering="optimizeQuality" shape-rendering="geometricPrecision">
+  <defs>
+    <linearGradient id="wRC-pearl" gradientUnits="userSpaceOnUse" x1="12" x2="40" y1="8" y2="44">
+      <stop offset="0" stop-color="#f5f5f5"/>
+      <stop offset="1" stop-color="#d4d4d4"/>
+    </linearGradient>
+    <linearGradient id="wRC-barrel" gradientUnits="userSpaceOnUse" x1="7" y1="24" x2="7" y2="31">
+      <stop offset="0" stop-color="#4b5563"/>
+      <stop offset="0.45" stop-color="#1f2937"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <radialGradient id="wRC-muzzle" cx="44" cy="27.5" r="5" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fbbf24" stop-opacity="0.9"/>
+      <stop offset="0.5" stop-color="#f97316" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#dc2626" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Rook dark outline (Merida) -->
+  <path d="M28.408 9.22h4.216V5.825h6.799v9.296l-5.503 4.242v11.862l4.216 4.216v5.08h3.793v5.927H8.071V40.52h3.793v-5.08l4.242-4.216V19.363l-5.504-4.242V5.825h6.774V9.22h4.242V5.825h6.79z" fill="#1f1a17"/>
+  <!-- White rook pearl body fill -->
+  <path d="M33.073 17.678l3.15-2.557h-22.42l3.175 2.557zm7.197 24.528H9.756v2.557H40.27zm-3.844-5.055H13.6v3.37h22.826zm-4.217-17.788H17.816v11.862h14.393zm5.504-5.927V7.51h-3.395v3.395h-7.646V7.51h-3.344v3.395h-7.62V7.51h-3.395v5.926zm-1.914 22.005l-2.548-2.531H16.8l-2.6 2.531z" fill="url(#wRC-pearl)"/>
+
+  <!-- Cannon barrel cylinder (extends beyond tower, horizontal mount) -->
+  <rect x="6" y="24.8" width="38" height="5.4" rx="2.7" fill="url(#wRC-barrel)"/>
+  <!-- Barrel top highlight -->
+  <rect x="7" y="25.5" width="36" height="1.5" rx="0.75" fill="#6b7280" opacity="0.45"/>
+  <rect x="8" y="25.7" width="34" height="0.7" rx="0.35" fill="#fff" opacity="0.14"/>
+
+  <!-- Left mounting ring (tower left wall) -->
+  <circle cx="14.5" cy="27.5" r="3.5" fill="#111827"/>
+  <circle cx="14.5" cy="27.5" r="2.4" fill="#374151"/>
+  <circle cx="14.5" cy="27.5" r="1.1" fill="#1f2937"/>
+  <circle cx="13.7" cy="26.7" r="0.65" fill="#9ca3af" opacity="0.55"/>
+
+  <!-- Right mounting ring (tower right wall) -->
+  <circle cx="35.5" cy="27.5" r="3.5" fill="#111827"/>
+  <circle cx="35.5" cy="27.5" r="2.4" fill="#374151"/>
+  <circle cx="35.5" cy="27.5" r="1.1" fill="#1f2937"/>
+  <circle cx="34.7" cy="26.7" r="0.65" fill="#9ca3af" opacity="0.55"/>
+
+  <!-- Left muzzle opening -->
+  <circle cx="6.5" cy="27.5" r="2.2" fill="#0f172a"/>
+  <circle cx="6.5" cy="27.5" r="1.1" fill="#020617"/>
+
+  <!-- Right muzzle glow aura -->
+  <circle cx="44" cy="27.5" r="5" fill="url(#wRC-muzzle)"/>
+  <!-- Right muzzle opening -->
+  <circle cx="43.5" cy="27.5" r="2.2" fill="#0f172a"/>
+  <circle cx="43.5" cy="27.5" r="1.1" fill="#020617"/>
+
+  <!-- Muzzle sparks / fire (right end) -->
+  <path d="M46 25.8 L47.8 27.5 L46 29.2 L48.2 28.5 L49 27.5 L48.2 26.5 Z" fill="#f97316" opacity="0.85"/>
+  <path d="M46.5 26.5 L47.5 27.5 L46.5 28.5" stroke="#fbbf24" stroke-width="0.9" fill="none" stroke-linecap="round" opacity="0.75"/>
+  <circle cx="47.8" cy="27.5" r="0.55" fill="#fef3c7" opacity="0.9"/>
+</svg>

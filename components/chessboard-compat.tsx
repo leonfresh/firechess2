@@ -193,6 +193,14 @@ export function Chessboard(props: ChessboardCompatProps) {
         }
       : undefined,
 
+    // Also forward piece clicks to the same handler — onPieceClick fires when
+    // allowDragging=false (e.g. while waiting for opponent draft in multiplayer).
+    onPieceClick: props.onSquareClick
+      ? ({ square }: PieceHandlerArgs) => {
+          props.onSquareClick!(square ?? "");
+        }
+      : undefined,
+
     onPieceDrag: props.onPieceDragBegin
       ? ({ piece, square }: PieceHandlerArgs) => {
           props.onPieceDragBegin!(piece.pieceType, square ?? "");

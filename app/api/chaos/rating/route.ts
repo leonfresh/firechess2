@@ -3,6 +3,7 @@
  * GET  /api/chaos/rating             — returns just the caller's rating
  * POST /api/chaos/rating             — submit game result; saves ELO for both players
  *   Body: { roomId, result: "win" | "loss" | "draw" }
+ *         { mode: "ai", difficulty: "easy"|"medium"|"hard", result }  — AI game (no roomId)
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -73,9 +74,42 @@ export async function POST(req: NextRequest) {
 
   const userId = session.user.id;
   const body = await req.json();
-  const { roomId, result } = body as { roomId: string; result: "win" | "loss" | "draw" };
+  const { roomId, result, mode, difficulty } = body as {
+    roomId?: string;
+    result: "win" | "loss" | "draw";
+    mode?: string;
+    difficulty?: string;
+  };
 
-  if (!roomId || !result) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  if (!result) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+
+  /* ── AI game: no room required, use fixed AI rating by difficulty ── */
+  if (mode === "ai") {
+    const aiRating = difficulty === "hard" ? 1600 : difficulty === "medium" ? 1200 : 800;
+    const myRow = await getRating(userId);
+    const score: 1 | 0.5 | 0 = result === "win" ? 1 : result === "draw" ? 0.5 : 0;
+    const delta = computeEloChange(myRow.rating, aiRating, score, myRow.gamesPlayed);
+    const newRating = Math.max(100, myRow.rating + delta);
+    const myUpdate = {
+      rating: newRating,
+      wins: myRow.wins + (result === "win" ? 1 : 0),
+      losses: myRow.losses + (result === "loss" ? 1 : 0),
+      draws: myRow.draws + (result === "draw" ? 1 : 0),
+      gamesPlayed: myRow.gamesPlayed + 1,
+      peakRating: Math.max(myRow.peakRating, newRating),
+      updatedAt: new Date(),
+    };
+    const existing = await db.select().from(chaosRatings).where(eq(chaosRatings.userId, userId));
+    if (existing.length > 0) {
+      await db.update(chaosRatings).set(myUpdate).where(eq(chaosRatings.userId, userId));
+    } else {
+      await db.insert(chaosRatings).values({ userId, ...myUpdate });
+    }
+    return NextResponse.json({ ok: true, newRating, delta });
+  }
+
+  /* ── Multiplayer game: needs roomId ── */
+  if (!roomId) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
   const rooms = await db.select().from(chaosRooms).where(eq(chaosRooms.id, roomId));
   if (rooms.length === 0) return NextResponse.json({ error: "Room not found" }, { status: 404 });
