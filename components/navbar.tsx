@@ -15,6 +15,7 @@ const NAV_LINKS = [
   { href: "/train", label: "Training" },
   { href: "/guess", label: "Guess the Move" },
   { href: "/chaos", label: "⚡ Chaos Chess" },
+  { href: "/escape", label: "🎮 Escape Chess" },
   { href: "/roast", label: "🔥 Roast the Elo" },
   { href: "/about", label: "About" },
 ];

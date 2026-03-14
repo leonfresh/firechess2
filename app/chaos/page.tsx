@@ -319,7 +319,13 @@ function buildChaosCustomPieces(
           if (pawnCombo && (m.id === "pawn-capture-forward" || m.id === "pawn-charge")) return false;
           const designatedSquare = singlePieceSquares[m.id]?.[pieceColor];
           if (designatedSquare === null) return false; // piece was captured
-          return !square || !designatedSquare || square === designatedSquare;
+          if (!square || !designatedSquare) return true;
+          if (square === designatedSquare) return true;
+          // Animation ghost: react-chessboard passes the *source* square while sliding.
+          // After updateTrackedPieces, designatedSquare already points to the target,
+          // so `square` (source) won't match. If no piece exists at `square` in the
+          // current game state, we're rendering the ghost — show the fairy SVG.
+          return !game.get(square as any);
         });
         if (found) {
           pieceUrl = FAIRY_PIECE_SVGS[found.id][pieceColor];
@@ -332,21 +338,41 @@ function buildChaosCustomPieces(
         // Skip single-piece modifiers if this isn't the designated piece
         if (SINGLE_PIECE_MODIFIERS[mod.id] && square) {
           const designatedSquare = singlePieceSquares[mod.id]?.[pieceColor];
-          if (designatedSquare && square !== designatedSquare) continue;
+          // Also allow through when the piece has left `square` — animation ghost of the fairy piece
+          if (designatedSquare && square !== designatedSquare && game.get(square as any)) continue;
         }
 
         const fairySvgs = FAIRY_PIECE_SVGS[mod.id];
-        const skipForCombo = pawnCombo && (mod.id === "pawn-capture-forward" || mod.id === "pawn-charge");
         // Undead army: hide skull icon once revival has been spent
         const skipUndeadIcon = mod.id === "undead-army" && !!undeadRevived?.[pieceColor as "w" | "b"];
 
         const def = MODIFIER_OVERLAYS[mod.id];
         if (!def) continue;
 
-        // Skip icon/render overlays for modifiers with fairy piece replacements
-        // (the fairy SVG IS the piece — no need for an overlay badge)
-        if (!fairySvgs && !skipForCombo && !skipUndeadIcon) {
+        // Skip icon/render overlays for most fairy piece replacements.
+        // Exception: torpedo/bayonet pawn mods should still show their icon badge
+        // so the upgrade remains visible even when custom pawn SVGs are active.
+        const allowIconWithFairy = mod.id === "pawn-charge" || mod.id === "pawn-capture-forward";
+        if ((!fairySvgs || allowIconWithFairy) && !skipUndeadIcon) {
           if (def.icon) {
+            // For the War Pawn combo (Torpedo + Bayonet), render icons in all
+            // 4 corners: each modifier occupies two opposite corners.
+            if (pawnCombo && (mod.id === "pawn-charge" || mod.id === "pawn-capture-forward")) {
+              const corners: Corner[] = mod.id === "pawn-charge"
+                ? ["top-left", "bottom-right"]
+                : ["top-right", "bottom-left"];
+              const s = squareWidth * 0.24;
+              for (const c of corners) {
+                const style = CORNER_STYLES[c];
+                overlays.push(
+                  <div key={`${mod.id}-${c}`} style={{ position: "absolute", ...style, lineHeight: 1, filter: `drop-shadow(0 0 3px ${def.iconGlow ?? "rgba(255,255,255,0.6)"})` }}>
+                    <Emoji emoji={def.icon} style={{ width: s, height: s }} />
+                  </div>
+                );
+              }
+              continue;
+            }
+
             // Icon-based badge — auto-assign to next available corner
             const corner = CORNER_ORDER[cornerIdx % CORNER_ORDER.length];
             cornerIdx++;
@@ -2027,7 +2053,10 @@ export default function ChaosChessPage() {
   const addMoveToLog = useCallback((g: Chess, san: string, moveColor: "w" | "b") => {
     setMoveLog((prev) => {
       const copy = [...prev];
-      const mn = moveColor === "w" ? g.moveNumber() - 1 : g.moveNumber();
+      // chess.js fullmove number increments after Black moves:
+      // - White move belongs to current fullmove number
+      // - Black move belongs to previous fullmove number
+      const mn = Math.max(1, moveColor === "w" ? g.moveNumber() : g.moveNumber() - 1);
       const existing = copy.find((e) => e.moveNumber === mn);
       if (moveColor === "w") {
         if (existing) existing.white = san;
@@ -2036,6 +2065,7 @@ export default function ChaosChessPage() {
         if (existing) existing.black = san;
         else copy.push({ moveNumber: mn, black: san });
       }
+      copy.sort((a, b) => a.moveNumber - b.moveNumber);
       return copy;
     });
   }, []);
@@ -2352,7 +2382,7 @@ export default function ChaosChessPage() {
 
   /* ── AI move (with chaos modifiers) ── */
   const makeAiMove = useCallback(
-    async (g: Chess, cs: ChaosState) => {
+    async (g: Chess, cs: ChaosState, onComplete?: (finalGame: Chess, finalCs: ChaosState) => void) => {
       if (g.isGameOver()) return;
       setIsThinking(true);
 
@@ -2506,11 +2536,13 @@ export default function ChaosChessPage() {
               }
               setChaosState(cs2);
               setGame(activeGame);
+              setSelectedSquare(null);
+              setLegalMoveSquares({});
               setIsThinking(false);
               if (!checkGameEnd(activeGame, chaosMove.to)) {
-                checkDraft(activeGame, cs2);
                 recomputeChaosMoves(activeGame, cs2);
               }
+              onComplete?.(activeGame, cs2);
               return;
             }
           }
@@ -2525,6 +2557,34 @@ export default function ChaosChessPage() {
         const topMoves = hasPlayerChaosMods
           ? await stockfishPool.getTopMoves(g.fen(), 5, aiDepth)
           : [];
+
+        // Escape-move injection: Stockfish's top-5 are blind to chaos rules, so if the player
+        // already threatens an AI piece right now (e.g. bayonet pawn in front of the queen),
+        // inject legal escape moves for those pieces so the penalty loop can find them.
+        if (hasPlayerChaosMods) {
+          const valFn = (sq: string, type: string, col: string) =>
+            getChaosPieceValCp(sq, type, col as "w" | "b",
+              col === playerColor_ ? cs.playerModifiers : cs.aiModifiers,
+              cs.assignedSquares ?? undefined);
+          const immediateThreats = computeChaosThreatPenalty(
+            g, cs.playerModifiers, playerColor_ as Color, cs.assignedSquares ?? undefined, valFn);
+          if (immediateThreats > 200) {
+            const chaosAttacked = getChaosAttackedSquares(
+              g, cs.playerModifiers, playerColor_ as Color, cs.assignedSquares ?? undefined);
+            // Collect legal moves that save the threatened piece(s) — skip king (handled separately)
+            const escapeMoves = g.moves({ verbose: true }).filter(
+              (mv: { from: string; piece: string }) => chaosAttacked.has(mv.from as any) && mv.piece !== "k",
+            );
+            const escapeDepth = Math.min(aiDepth, 8);
+            for (const mv of escapeMoves.slice(0, 6)) {
+              const tmpGame = new Chess(g.fen());
+              try { tmpGame.move({ from: mv.from, to: mv.to, promotion: mv.promotion }); } catch { continue; }
+              // cp after AI's escape is from the player's (side-to-move) perspective — negate for AI
+              const er = await stockfishPool.evaluateFen(tmpGame.fen(), escapeDepth);
+              if (er) topMoves.push({ bestMove: mv.lan, pvMoves: [mv.lan], cp: -(er.cp ?? 0) });
+            }
+          }
+        }
 
         let bestUci: string | null = null;
 
@@ -2720,6 +2780,9 @@ export default function ChaosChessPage() {
         }
         setChaosState(cs2);
         setGame(activeGame2);
+        // Clear any piece selection the player may have made while the AI was thinking
+        setSelectedSquare(null);
+        setLegalMoveSquares({});
 
         // If the AI just checkmated the player, let the board show the move first
         const checkmatedColor = activeGame2.turn() as Color;
@@ -2731,9 +2794,9 @@ export default function ChaosChessPage() {
         if (aiJustCheckmatedPlayer) {
           setTimeout(() => { checkGameEnd(activeGame2); }, 1500);
         } else if (!checkGameEnd(activeGame2)) {
-          checkDraft(activeGame2, cs2);
           recomputeChaosMoves(activeGame2, cs2);
         }
+        onComplete?.(activeGame2, cs2);
 
       } catch (err) {
         console.warn("[Chaos AI] Engine error:", err);
@@ -2741,7 +2804,7 @@ export default function ChaosChessPage() {
 
       setIsThinking(false);
     },
-    [playerColor, aiDepth, checkGameEnd, checkDraft, addMoveToLog, applyPostMove, recomputeChaosMoves, chaosState, spawnPepe, triggerEffect],
+    [playerColor, aiDepth, checkGameEnd, addMoveToLog, applyPostMove, recomputeChaosMoves, chaosState, spawnPepe, triggerEffect],
   );
 
   /* ── Start game ── */
@@ -3952,45 +4015,87 @@ export default function ChaosChessPage() {
   /* ── Square click for mobile + to show legal moves ── */
   const handleSquareClick = useCallback(
     (square: CbSquare) => {
-      if (gameStatus !== "playing" || isThinking) return;
+      if (gameStatus !== "playing") return;
 
-      const isPlayerTurn =
-        (playerColor === "white" && game.turn() === "w") ||
-        (playerColor === "black" && game.turn() === "b");
+      const playerCode = playerColor === "white" ? "w" : "b";
+      const isPlayerTurn = game.turn() === playerCode;
+
+      // Helper: build highlight map for a given square using real game.moves()
+      const buildHighlights = (sq: CbSquare): Record<string, React.CSSProperties> => {
+        const p = game.get(sq as any);
+        const highlights: Record<string, React.CSSProperties> = {
+          [sq]: { backgroundColor: "rgba(255, 255, 0, 0.3)" },
+        };
+        const moves = game.moves({ square: sq as any, verbose: true });
+        for (const m of moves) {
+          if (m.piece === "k" && isKingMoveChaosUnsafe(game, m.from, m.to)) continue;
+          highlights[m.to] = {
+            background: m.captured
+              ? "radial-gradient(circle, transparent 68%, rgba(255,0,0,0.55) 69%)"
+              : "radial-gradient(circle, rgba(0,180,0,0.75) 14%, transparent 15%)",
+          };
+        }
+        for (const cm of activeChaosMoves.filter((m) => m.from === sq)) {
+          if (p?.type === "k" && isKingMoveChaosUnsafe(game, cm.from, cm.to)) continue;
+          highlights[cm.to] = {
+            background: cm.type === "capture"
+              ? "radial-gradient(circle, transparent 68%, rgba(168,85,247,0.65) 69%)"
+              : "radial-gradient(circle, rgba(168,85,247,0.75) 14%, transparent 15%)",
+          };
+        }
+        return highlights;
+      };
+
+      // While AI is thinking: allow selecting own pieces for preview, but never deselect or move
+      if (isThinking) {
+        const piece = game.get(square as any);
+        if (piece && piece.color === playerCode) {
+          // Use a temp game to generate the player's piece moves when it's the AI's turn
+          const parts = game.fen().split(" ");
+          parts[1] = playerCode;
+          parts[3] = "-";
+          const highlights: Record<string, React.CSSProperties> = {
+            [square]: { backgroundColor: "rgba(255, 255, 0, 0.3)" },
+          };
+          try {
+            const tmp = new Chess(parts.join(" "));
+            const moves = tmp.moves({ square: square as any, verbose: true });
+            for (const m of moves) {
+              if (m.piece === "k" && isKingMoveChaosUnsafe(game, m.from, m.to)) continue;
+              highlights[m.to] = {
+                background: m.captured
+                  ? "radial-gradient(circle, transparent 68%, rgba(255,0,0,0.55) 69%)"
+                  : "radial-gradient(circle, rgba(0,180,0,0.75) 14%, transparent 15%)",
+              };
+            }
+          } catch { /* ignore */ }
+          for (const cm of activeChaosMoves.filter((m) => m.from === square)) {
+            if (piece.type === "k" && isKingMoveChaosUnsafe(game, cm.from, cm.to)) continue;
+            highlights[cm.to] = {
+              background: cm.type === "capture"
+                ? "radial-gradient(circle, transparent 68%, rgba(168,85,247,0.65) 69%)"
+                : "radial-gradient(circle, rgba(168,85,247,0.75) 14%, transparent 15%)",
+            };
+          }
+          setSelectedSquare(square);
+          setLegalMoveSquares(highlights);
+          playSound("select");
+        }
+        // Don't deselect — clicking empty squares / enemy pieces while AI thinks is a no-op
+        return;
+      }
+
+      // Not the player's turn (and not thinking) — do nothing
       if (!isPlayerTurn) return;
 
+      // Player's turn, AI idle
       if (selectedSquare) {
         const success = handlePlayerMove(selectedSquare, square);
         if (!success) {
           const piece = game.get(square as any);
           if (piece && piece.color === game.turn()) {
             setSelectedSquare(square);
-            const moves = game.moves({ square: square as any, verbose: true });
-            const highlights: Record<string, React.CSSProperties> = {
-              [square]: { backgroundColor: "rgba(255, 255, 0, 0.3)" },
-            };
-            for (const m of moves) {
-              // Filter out king moves to chaos-attacked squares
-              if (m.piece === "k" && isKingMoveChaosUnsafe(game, m.from, m.to)) continue;
-              highlights[m.to] = {
-                backgroundColor: m.captured
-                  ? "rgba(255, 0, 0, 0.35)"
-                  : "rgba(0, 180, 0, 0.25)",
-                borderRadius: m.captured ? undefined : "50%",
-              };
-            }
-            // Add chaos move highlights for this square
-            for (const cm of activeChaosMoves.filter((m) => m.from === square)) {
-              // Filter out king chaos moves to chaos-defended squares
-              if (piece && piece.type === "k" && isKingMoveChaosUnsafe(game, cm.from, cm.to)) continue;
-              highlights[cm.to] = {
-                backgroundColor: cm.type === "capture"
-                  ? "rgba(168, 85, 247, 0.5)"
-                  : "rgba(168, 85, 247, 0.3)",
-                borderRadius: cm.type === "capture" ? undefined : "50%",
-              };
-            }
-            setLegalMoveSquares(highlights);
+            setLegalMoveSquares(buildHighlights(square));
             playSound("select");
           } else {
             setSelectedSquare(null);
@@ -4001,32 +4106,7 @@ export default function ChaosChessPage() {
         const piece = game.get(square as any);
         if (piece && piece.color === game.turn()) {
           setSelectedSquare(square);
-          const moves = game.moves({ square: square as any, verbose: true });
-          const highlights: Record<string, React.CSSProperties> = {
-            [square]: { backgroundColor: "rgba(255, 255, 0, 0.3)" },
-          };
-          for (const m of moves) {
-            // Filter out king moves to chaos-attacked squares
-            if (m.piece === "k" && isKingMoveChaosUnsafe(game, m.from, m.to)) continue;
-            highlights[m.to] = {
-              backgroundColor: m.captured
-                ? "rgba(255, 0, 0, 0.35)"
-                : "rgba(0, 180, 0, 0.25)",
-              borderRadius: m.captured ? undefined : "50%",
-            };
-          }
-          // Add chaos move highlights for this square (purple)
-          for (const cm of activeChaosMoves.filter((m) => m.from === square)) {
-            // Filter out king chaos moves to chaos-defended squares
-            if (piece && piece.type === "k" && isKingMoveChaosUnsafe(game, cm.from, cm.to)) continue;
-            highlights[cm.to] = {
-              backgroundColor: cm.type === "capture"
-                ? "rgba(168, 85, 247, 0.5)"
-                : "rgba(168, 85, 247, 0.3)",
-              borderRadius: cm.type === "capture" ? undefined : "50%",
-            };
-          }
-          setLegalMoveSquares(highlights);
+          setLegalMoveSquares(buildHighlights(square));
           playSound("select");
         }
       }
@@ -4034,48 +4114,10 @@ export default function ChaosChessPage() {
     [game, gameStatus, playerColor, isThinking, selectedSquare, handlePlayerMove, activeChaosMoves, isKingMoveChaosUnsafe],
   );
 
-  /* ── Hover: show piece moves on board + piece info in sidebar ── */
+  /* ── Hover: no move dots, just track hovered square for sidebar info ── */
   const handleMouseOverSquare = useCallback((square: CbSquare) => {
     setHoveredSquare(square);
-    if (selectedSquare) return; // don't overlay when a piece is already selected
-    const piece = game.get(square as any);
-    if (!piece) return;
-    const playerCode = playerColor === "white" ? "w" : "b";
-    const isEnemyPiece = piece.color !== playerCode;
-
-    // Build move highlights — green for player pieces, red for enemy pieces
-    const highlightColor = isEnemyPiece
-      ? { base: "rgba(239,68,68,0.3)", move: "rgba(239,68,68,0.18)", capture: "rgba(239,68,68,0.45)", chaos: "rgba(249,115,22,0.18)", chaosCapture: "rgba(249,115,22,0.45)" }
-      : { base: "rgba(34,197,94,0.3)", move: "rgba(34,197,94,0.18)", capture: "rgba(34,197,94,0.45)", chaos: "rgba(34,197,94,0.18)", chaosCapture: "rgba(34,197,94,0.45)" };
-
-    const highlights: Record<string, React.CSSProperties> = {
-      [square]: { backgroundColor: highlightColor.base },
-    };
-    try {
-      const parts = game.fen().split(" ");
-      parts[1] = piece.color;
-      parts[3] = "-";
-      const tempGame = new Chess(parts.join(" "));
-      const stdMoves = tempGame.moves({ square: square as any, verbose: true });
-      for (const m of stdMoves) {
-        highlights[m.to] = {
-          backgroundColor: m.captured ? highlightColor.capture : highlightColor.move,
-          borderRadius: m.captured ? undefined : "50%",
-        };
-      }
-    } catch { /* ignore invalid FEN edge-cases */ }
-    // Chaos moves for this square
-    const pieceColor = piece.color as Color;
-    const pieceMods = pieceColor === playerCode ? chaosState.playerModifiers : chaosState.aiModifiers;
-    const chaosMoves = getChaosMoves(game, pieceMods, pieceColor, chaosState.assignedSquares ?? undefined);
-    for (const cm of chaosMoves.filter(m => m.from === square)) {
-      highlights[cm.to] = {
-        backgroundColor: cm.type === "capture" ? highlightColor.chaosCapture : highlightColor.chaos,
-        borderRadius: cm.type === "capture" ? undefined : "50%",
-      };
-    }
-    setHoverMoveSquares(highlights);
-  }, [game, playerColor, chaosState, selectedSquare]);
+  }, []);
 
   const handleMouseOutSquare = useCallback(() => {
     setHoveredSquare(null);
@@ -4214,7 +4256,8 @@ export default function ChaosChessPage() {
 
       recomputeChaosMoves(currentGame, stateWithTracking);
 
-      // AI sequential pick: after player confirms, reveal the AI's auto-pick
+      // AI sequential pick: AI moves first (matching the player's "move then draft" rule),
+      // then its auto-pick is revealed after the move completes.
       if (!isMultiplayer) {
         const phaseForAi = pendingPhase;
         const isAiTurn =
@@ -4225,28 +4268,27 @@ export default function ChaosChessPage() {
         const tierRank: Record<string, number> = { common: 1, rare: 2, epic: 3, legendary: 4 };
         const aiPick = [...aiChoices].sort((a, b) => (tierRank[b.tier] ?? 0) - (tierRank[a.tier] ?? 0))[0];
         if (aiPick) {
-          setTimeout(() => {
-            let newState = { ...stateWithTracking, aiModifiers: [...stateWithTracking.aiModifiers, aiPick] };
-            // Initialize tracking for the AI's new single-piece modifier
+          const aiColor__ = aiColor_;
+          const capturedForAi = capturedPawns[aiColor__ as "w" | "b"];
+          const applyAiPick = (baseGame: Chess, baseState: ChaosState) => {
+            let newState = { ...baseState, aiModifiers: [...baseState.aiModifiers, aiPick] };
             const SINGLE_PIECE_MODS: Record<string, string> = { archbishop: "b", knook: "n", pegasus: "n", camel: "n" };
             if (SINGLE_PIECE_MODS[aiPick.id]) {
               const pieceType = SINGLE_PIECE_MODS[aiPick.id] as any;
               for (const f of "abcdefgh") for (const r of "12345678") {
                 const s = `${f}${r}`;
-                const p = currentGame.get(s as any);
+                const p = baseGame.get(s as any);
                 if (p && p.type === pieceType && p.color === aiColor_) {
                   newState = initTrackedPiece(newState, aiPick.id, aiColor_ as "w" | "b", s);
                   break;
                 }
               }
             }
-            // Apply one-time draft effects for AI (knight horde, undead army)
-            const aiColor__ = playerColor === "white" ? "b" : "w";
             if (aiPick.id === "undead-army") setUndeadRevived((prev) => ({ ...prev, [aiColor__]: true }));
-            const aiDraftResult = applyDraftEffect(currentGame, aiPick, aiColor__ as Color, capturedPawns[aiColor__ as "w" | "b"]);
-            let currentGameAfterAiDraft = currentGame;
+            const aiDraftResult = applyDraftEffect(baseGame, aiPick, aiColor__ as Color, capturedForAi);
+            let finalGame = baseGame;
             if (aiDraftResult) {
-              const beforeBoard_ = currentGame.board();
+              const beforeBoard_ = baseGame.board();
               const afterBoard_ = aiDraftResult.board();
               const spawnedSqs: string[] = [];
               for (let ri = 0; ri < 8; ri++) {
@@ -4257,21 +4299,27 @@ export default function ChaosChessPage() {
                 }
               }
               if (spawnedSqs.length > 0) triggerEffect("spawn", spawnedSqs);
-              currentGameAfterAiDraft = aiDraftResult;
+              finalGame = aiDraftResult;
               setGame(aiDraftResult);
             }
             setChaosState(newState);
-            recomputeChaosMoves(currentGameAfterAiDraft, newState);
+            recomputeChaosMoves(finalGame, newState);
             setOpponentDraftReveal({ opponentPick: aiPick, phase: phaseForAi });
             setEventLog((p) => [
               ...p,
               { type: "modifier" as const, message: `🤖 Stockfish drafted: ${aiPick.icon} ${aiPick.name} — ${aiPick.description}`, icon: aiPick.icon, pepe: tierPepe(aiPick.tier) },
             ]);
             spawnPepe(tierPepe(aiPick.tier));
-            if (isAiTurn) {
-              setTimeout(() => makeAiMove(currentGameAfterAiDraft, newState), AI_MOVE_DELAY);
-            }
-          }, 800);
+          };
+          if (isAiTurn) {
+            // AI moves first without the new powerup — then its pick is revealed, same rule as the player
+            setTimeout(() => makeAiMove(currentGame, stateWithTracking, (finalGame, finalState) => {
+              setTimeout(() => applyAiPick(finalGame, finalState), 400);
+            }), AI_MOVE_DELAY);
+          } else {
+            // AI already moved this turn; apply pick immediately
+            setTimeout(() => applyAiPick(currentGame, stateWithTracking), 800);
+          }
         }
       }
 
@@ -4449,10 +4497,55 @@ export default function ChaosChessPage() {
     return chaosState.phaseTriggers[nextPhase - 1];
   }, [chaosState]);
 
+  const checkKingHighlight = useMemo(() => {
+    const styles: Record<string, React.CSSProperties> = {};
+
+    const kingSquare = (color: Color): string | null => {
+      const board = game.board();
+      for (let r = 0; r < board.length; r++) {
+        for (let c = 0; c < board[r].length; c++) {
+          const p = board[r][c];
+          if (p && p.type === "k" && p.color === color) {
+            return `${"abcdefgh"[c]}${8 - r}`;
+          }
+        }
+      }
+      return null;
+    };
+
+    const markChecked = (sq: string | null) => {
+      if (!sq) return;
+      styles[sq] = {
+        boxShadow: "inset 0 0 0 2px rgba(248,113,113,0.85), inset 0 0 18px rgba(239,68,68,0.55), 0 0 12px rgba(239,68,68,0.45)",
+        backgroundColor: "rgba(239,68,68,0.18)",
+      };
+    };
+
+    if (game.isCheck()) {
+      markChecked(kingSquare(game.turn() as Color));
+    }
+
+    const myColor: Color = playerColor === "white" ? "w" : "b";
+    const oppColor: Color = myColor === "w" ? "b" : "w";
+
+    // Also glow kings under chaos-only check pressure.
+    if (isKingUnderChaosAttack(game, chaosState.playerModifiers, myColor, chaosState.assignedSquares)) {
+      markChecked(kingSquare(oppColor));
+    }
+    if (isKingUnderChaosAttack(game, chaosState.aiModifiers, oppColor, chaosState.assignedSquares)) {
+      markChecked(kingSquare(myColor));
+    }
+
+    return styles;
+  }, [game, playerColor, chaosState.playerModifiers, chaosState.aiModifiers, chaosState.assignedSquares]);
+
   /* ── Board squares merging ── */
   const mergedSquareStyles = useMemo(() => {
-    return { ...lastMoveHighlight, ...hoverMoveSquares, ...legalMoveSquares };
-  }, [lastMoveHighlight, hoverMoveSquares, legalMoveSquares]);
+    // hoverMoveSquares last so hovering a piece always shows its dots,
+    // even when another piece is already selected (legalMoveSquares).
+    // checkKingHighlight stays on top of everything.
+    return { ...lastMoveHighlight, ...legalMoveSquares, ...hoverMoveSquares, ...checkKingHighlight };
+  }, [lastMoveHighlight, hoverMoveSquares, legalMoveSquares, checkKingHighlight]);
 
   /* ── Reset warp-queen toggle after every move ── */
   useEffect(() => {
@@ -5565,10 +5658,10 @@ export default function ChaosChessPage() {
               {moveLog.length === 0
                 ? <p className="text-center text-slate-600">No moves yet</p>
                 : moveLog.map((p) => (
-                  <div key={p.moveNumber} className="flex gap-2 text-slate-400">
-                    <span className="w-6 text-right text-slate-600">{p.moveNumber}.</span>
-                    <span className="w-14">{p.white ?? ""}</span>
-                    <span className="w-14">{p.black ?? ""}</span>
+                  <div key={p.moveNumber} className="grid grid-cols-[2.25rem_minmax(0,1fr)_minmax(0,1fr)] gap-2 text-slate-400">
+                    <span className="text-right tabular-nums text-slate-600">{p.moveNumber}.</span>
+                    <span className="truncate">{p.white ?? ""}</span>
+                    <span className="truncate">{p.black ?? ""}</span>
                   </div>
                 ))
               }
@@ -5760,7 +5853,7 @@ export default function ChaosChessPage() {
               title="Close"
             >✕</button>
           </div>
-          <div className="p-2.5">
+          <div className="p-2.5" style={{ maxHeight: `calc(100vh - ${py + 52}px)`, overflowY: "auto" }}>
             <PieceInfoPanel
               square={activeSq}
               game={game}
