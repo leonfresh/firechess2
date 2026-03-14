@@ -117,6 +117,10 @@ export function Chessboard(props: ChessboardCompatProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [measuredWidth, setMeasuredWidth] = useState(props.boardWidth ?? 400);
 
+  // Dedup ref: prevent double-fire when both onPieceClick and onSquareClick
+  // trigger for the same square within a single event cycle.
+  const lastPieceClickRef = useRef<{ square: string; time: number } | null>(null);
+
   // Measure board width for customPieces squareWidth calculation
   useEffect(() => {
     if (props.boardWidth) {
@@ -195,14 +199,22 @@ export function Chessboard(props: ChessboardCompatProps) {
 
     onSquareClick: props.onSquareClick
       ? ({ square }: SquareHandlerArgs) => {
+          // Skip if onPieceClick already handled this square in the same event cycle
+          const last = lastPieceClickRef.current;
+          if (last && last.square === square && Date.now() - last.time < 50) return;
           props.onSquareClick!(square);
         }
       : undefined,
 
-    // Note: we intentionally do NOT set onPieceClick here. In v5, clicking a
-    // piece fires the Piece component's onClick (which calls onPieceClick)
-    // and then the event bubbles to the Square's onClick (which calls
-    // onSquareClick). Mapping both to handleSquareClick would double-fire it.
+    // Forward piece clicks to the same handler. In v5, the dnd-kit Draggable
+    // wrapper can prevent click events from bubbling from Piece to Square, so
+    // we need onPieceClick as the primary click path for occupied squares.
+    onPieceClick: props.onSquareClick
+      ? ({ square }: PieceHandlerArgs) => {
+          lastPieceClickRef.current = { square: square ?? "", time: Date.now() };
+          props.onSquareClick!(square ?? "");
+        }
+      : undefined,
 
     onPieceDrag: props.onPieceDragBegin
       ? ({ piece, square }: PieceHandlerArgs) => {
