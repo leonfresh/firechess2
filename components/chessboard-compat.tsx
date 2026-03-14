@@ -180,6 +180,12 @@ export function Chessboard(props: ChessboardCompatProps) {
       ? convertCustomPieces(props.customPieces, squareWidth)
       : undefined,
 
+    // Drag activation distance — prevent dnd-kit's PointerSensor from
+    // blocking click events due to natural mouse jitter (<5px). Without this,
+    // even 1px of movement during a click activates the drag and adds a
+    // document-level click-event stopper that prevents onSquareClick from firing.
+    dragActivationDistance: 5,
+
     // Callbacks — adapt v4 signatures to v5
     onPieceDrop: props.onPieceDrop
       ? ({ piece, sourceSquare, targetSquare }: PieceDropHandlerArgs) => {
@@ -193,13 +199,10 @@ export function Chessboard(props: ChessboardCompatProps) {
         }
       : undefined,
 
-    // Also forward piece clicks to the same handler — onPieceClick fires when
-    // allowDragging=false (e.g. while waiting for opponent draft in multiplayer).
-    onPieceClick: props.onSquareClick
-      ? ({ square }: PieceHandlerArgs) => {
-          props.onSquareClick!(square ?? "");
-        }
-      : undefined,
+    // Note: we intentionally do NOT set onPieceClick here. In v5, clicking a
+    // piece fires the Piece component's onClick (which calls onPieceClick)
+    // and then the event bubbles to the Square's onClick (which calls
+    // onSquareClick). Mapping both to handleSquareClick would double-fire it.
 
     onPieceDrag: props.onPieceDragBegin
       ? ({ piece, square }: PieceHandlerArgs) => {

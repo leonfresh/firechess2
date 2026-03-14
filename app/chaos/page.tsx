@@ -318,6 +318,7 @@ function buildChaosCustomPieces(
           if (!FAIRY_PIECE_SVGS[m.id]) return false;
           if (pawnCombo && (m.id === "pawn-capture-forward" || m.id === "pawn-charge")) return false;
           const designatedSquare = singlePieceSquares[m.id]?.[pieceColor];
+          if (designatedSquare === null) return false; // piece was captured
           return !square || !designatedSquare || square === designatedSquare;
         });
         if (found) {
@@ -5068,23 +5069,23 @@ export default function ChaosChessPage() {
                 id="chaos-board"
                 position={game.fen()}
                 boardOrientation={playerColor}
-                onPieceDrop={({ sourceSquare, targetSquare }) =>
+                onPieceDrop={(sourceSquare, targetSquare) =>
                   targetSquare ? handlePlayerMove(sourceSquare as CbSquare, targetSquare as CbSquare) : false
                 }
-                onSquareClick={({ square }) => handleSquareClick(square as CbSquare)}
-                onMouseOverSquare={({ square }) => handleMouseOverSquare(square as CbSquare)}
-                onMouseOutSquare={({ square }) => handleMouseOutSquare(square as CbSquare)}
-                squareStyles={mergedSquareStyles}
-                boardStyle={{
+                onSquareClick={(square) => handleSquareClick(square as CbSquare)}
+                onMouseOverSquare={(square) => handleMouseOverSquare(square as CbSquare)}
+                onMouseOutSquare={() => handleMouseOutSquare()}
+                customSquareStyles={mergedSquareStyles}
+                customBoardStyle={{
                   borderRadius: "8px",
                   boxShadow: "0 4px 30px rgba(0,0,0,0.4)",
                 }}
-                darkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-                lightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
-                showNotation={showCoordinates}
-                pieces={chaosCustomPieces || undefined}
-                animationDurationInMs={200}
-                allowDragging={gameStatus === "playing" && !isThinking && !waitingForOpponentDraft}
+                customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+                customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                showBoardNotation={showCoordinates}
+                customPieces={chaosCustomPieces || undefined}
+                animationDuration={200}
+                arePiecesDraggable={gameStatus === "playing" && !isThinking && !waitingForOpponentDraft}
               />
               <BoardEffectsOverlay effects={boardEffects} boardSize={boardSize} orientation={playerColor} />
             </div>
