@@ -703,6 +703,52 @@ function genPegasus(game: Chess, color: Color, trackedSquare?: string | null): C
   return moves;
 }
 
+/** Bishop Cannon: bishops can jump over exactly one piece diagonally to capture behind it (Xiangqi-style, diagonal) */
+function genBishopCannon(game: Chess, color: Color): ChaosMove[] {
+  const moves: ChaosMove[] = [];
+  const bishops = allSquaresOf(game, "b", color);
+  const dirs = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+
+  for (const bs of bishops) {
+    const [f, r] = sqToCoords(bs);
+    for (const [df, dr] of dirs) {
+      let cf = f + df;
+      let cr = r + dr;
+      let jumped = false;
+
+      while (cf >= 0 && cf <= 7 && cr >= 0 && cr <= 7) {
+        const target = sq(cf, cr)!;
+        const piece = game.get(target);
+
+        if (piece) {
+          if (!jumped) {
+            // First piece: jump over it
+            jumped = true;
+          } else {
+            // Second piece: capture if enemy
+            if (piece.color !== color) {
+              if (!wouldLeaveKingInCheck(game, bs, target, color)) {
+                moves.push({
+                  from: bs,
+                  to: target,
+                  type: "capture",
+                  modifierId: "bishop-cannon",
+                  label: "Bishop Cannon (diagonal jump capture)",
+                });
+              }
+            }
+            break;
+          }
+        }
+
+        cf += df;
+        cr += dr;
+      }
+    }
+  }
+  return moves;
+}
+
 /** Rook Cannon: rooks can jump over exactly one piece to capture behind it (Xiangqi style) */
 function genRookCannon(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
@@ -745,6 +791,52 @@ function genRookCannon(game: Chess, color: Color): ChaosMove[] {
         cr += dr;
       }
     }
+  }
+  return moves;
+}
+
+/** En Passant Everywhere: capture any pawn that moved just 1 square (2-sq is already chess.js EP) */
+function genEnPassantEverywhere(game: Chess, color: Color): ChaosMove[] {
+  const moves: ChaosMove[] = [];
+  const history = game.history({ verbose: true });
+  if (history.length === 0) return moves;
+
+  const last = history[history.length - 1];
+  // Only opponent pawn moves
+  if (last.piece !== "p" || last.color === color) return moves;
+
+  const [toFile, toRank] = sqToCoords(last.to as Square);
+  const [, fromRank] = sqToCoords(last.from as Square);
+
+  // Standard 2-square advance already generates EP via chess.js FEN — only add 1-square
+  if (Math.abs(toRank - fromRank) !== 1) return moves;
+
+  // EP landing = the square the pawn just came from (one step back)
+  const epLanding = sq(toFile, fromRank);
+  if (!epLanding || !isEmpty(game, epLanding)) return moves;
+
+  const ourDir = color === "w" ? 1 : -1;
+
+  // Our pawns on the same rank as the opponent pawn, ±1 file
+  for (const df of [-1, 1]) {
+    const ourPawnSq = sq(toFile + df, toRank);
+    if (!ourPawnSq) continue;
+    const p = game.get(ourPawnSq);
+    if (!p || p.type !== "p" || p.color !== color) continue;
+
+    // EP landing must be forward for our color (fromRank - toRank is opposite to pawnDir)
+    if ((fromRank - toRank) * ourDir <= 0) continue;
+
+    if (wouldLeaveKingInCheck(game, ourPawnSq, epLanding, color, [last.to as Square])) continue;
+
+    moves.push({
+      from: ourPawnSq,
+      to: epLanding,
+      type: "capture",
+      modifierId: "enpassant-everywhere",
+      label: "En Passant Everywhere!",
+      sideEffects: [last.to as Square],
+    });
   }
   return moves;
 }
@@ -847,8 +939,10 @@ const MODIFIER_GENERATORS: Record<string, (game: Chess, color: Color, trackedSqu
   "pawn-promotion-early": genEarlyPromotion,
   "pegasus": genPegasus,
   "rook-cannon": genRookCannon,
+  "bishop-cannon": genBishopCannon,
   "queen-teleport": genQueenTeleport,
   "bishop-bounce": genBishopBounce,
+  "enpassant-everywhere": genEnPassantEverywhere,
 };
 
 /**
@@ -1172,6 +1266,33 @@ export function getChaosAttackedSquares(
     }
   }
 
+  /* Bishop Cannon: diagonal jump-capture squares */
+  if (modIds.has("bishop-cannon")) {
+    const diags = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+    for (const bs of allSquaresOf(game, "b", attackerColor)) {
+      const [f, r] = sqToCoords(bs);
+      for (const [df, dr] of diags) {
+        let cf = f + df;
+        let cr = r + dr;
+        let jumped = false;
+        while (cf >= 0 && cf <= 7 && cr >= 0 && cr <= 7) {
+          const t = sq(cf, cr)!;
+          const p = game.get(t);
+          if (p) {
+            if (!jumped) {
+              jumped = true;
+            } else {
+              attacked.add(t);
+              break;
+            }
+          }
+          cf += df;
+          cr += dr;
+        }
+      }
+    }
+  }
+
   return attacked;
 }
 
@@ -1355,6 +1476,27 @@ export function executeChaosMove(
   }
 }
 
+/** Returns the most valuable piece type missing from the board vs starting count */
+function getMostValuableCapturedPiece(game: Chess, color: Color, modifiers: ChaosModifier[]): PieceSymbol | null {
+  const start: Record<string, number> = { q: 1, r: 2, b: 2, n: 2, p: 8 };
+  // Knight-horde spawns 2 extra knights — count those as "expected"
+  if (modifiers.some((m) => m.id === "knight-horde")) start.n += 2;
+  const onBoard: Record<string, number> = { q: 0, r: 0, b: 0, n: 0, p: 0 };
+  for (const f of FILES) {
+    for (const r of RANKS) {
+      const s = `${f}${r}` as Square;
+      const p = game.get(s);
+      if (p && p.color === color && p.type !== "k") {
+        onBoard[p.type] = (onBoard[p.type] ?? 0) + 1;
+      }
+    }
+  }
+  for (const type of ["q", "r", "b", "n", "p"] as PieceSymbol[]) {
+    if ((onBoard[type] ?? 0) < (start[type] ?? 0)) return type;
+  }
+  return null;
+}
+
 /**
  * Apply side effects to a standard chess.js move result.
  * Call this after a normal move() to apply collateral/nuclear damage.
@@ -1411,6 +1553,20 @@ export function applyPostMoveEffects(
     if (!tmp.get(startSquare)) {
       tmp.put({ type: "p", color: pawnColor }, startSquare);
       modified = true;
+    }
+  }
+
+  // Regicide (king-wrath) — king capture revives the most valuable fallen piece on the back rank
+  if (capturedPiece && movingPieceType === "k" && modifiers.some((m) => m.id === "king-wrath")) {
+    const revivedType = getMostValuableCapturedPiece(tmp, color, modifiers);
+    if (revivedType) {
+      const backRank = color === "w" ? "1" : "8";
+      const empties = FILES.map((f) => `${f}${backRank}` as Square).filter((s) => !tmp.get(s));
+      if (empties.length > 0) {
+        const chosen = empties[Math.floor(Math.random() * empties.length)];
+        tmp.put({ type: revivedType, color }, chosen);
+        modified = true;
+      }
     }
   }
 

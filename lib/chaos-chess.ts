@@ -235,11 +235,11 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     phases: [3, 4],
   },
   {
-    id: "il-vaticano",
-    name: "Il Vaticano",
-    description: "Two Bishops can capture two enemy pawns trapped between them in a single move. The Vatican strikes!",
+    id: "bishop-cannon",
+    name: "Bishop Cannon",
+    description: "Bishops can jump over exactly one piece on a diagonal to capture the piece behind it — Xiangqi cannon, but diagonal.",
     tier: "epic",
-    icon: "✝️",
+    icon: "🔮",
     piece: "b",
     phases: [3, 4, 5],
   },
@@ -420,7 +420,7 @@ export function getChaosPieceValCp(
     "phantom-rook"       : 50,   // rook passes through friendlies
     "sniper-bishop"      : 75,   // bishop captures without moving
     "bishop-bounce"      : 75,   // bishop bounces off edges
-    "il-vaticano"        : 50,   // bishops co-capture pawns
+    "bishop-cannon"      : 90,   // bishop diagonal cannon capture
     "collateral-rook"    : 100,  // rook captures destroy piece behind ≈ 6 pawns
     "rook-cannon"        : 100,  // rook jumps to capture ≈ 6 pawns
     "nuclear-queen"      : 200,  // queen captures clear 8 squares ≈ 11 pawns

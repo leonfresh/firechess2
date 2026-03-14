@@ -189,7 +189,7 @@ const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
   "rook-cannon": { icon: "💣", iconGlow: "rgba(239,68,68,0.8)", glow: "rgba(239,68,68,0.4)" },
   "knight-horde": { icon: "🪖", iconGlow: "rgba(34,197,94,0.7)" },
   "undead-army": { icon: "💀", iconGlow: "rgba(168,85,247,0.8)", filter: "sepia(0.3) hue-rotate(-20deg)" },
-  "il-vaticano": { icon: "✝️", iconGlow: "rgba(234,179,8,0.6)" },
+  "bishop-cannon": { icon: "🔮", iconGlow: "rgba(168,85,247,0.7)", glow: "rgba(168,85,247,0.3)" },
   "forced-en-passant": { icon: "🧱", iconGlow: "rgba(249,115,22,0.6)" },
   "pawn-shield-wall": { icon: "🔰", iconGlow: "rgba(59,130,246,0.6)" },
   "enpassant-everywhere": { icon: "♟️", iconGlow: "rgba(234,179,8,0.6)" },
@@ -2322,6 +2322,13 @@ export default function ChaosChessPage() {
           spawnPepe(PEPE.shocked);
           playSound("crowd-ooh");
         }
+        if (mods.some((m) => m.id === "king-wrath") && pieceType === "k" && captured) {
+          // Regicide: a piece was revived on the back rank
+          triggerEffect("spawn", [to as string]);
+          setEventLog((prev) => [...prev, { type: "chaos", message: "👑 Regicide! The King's conquest summoned a fallen warrior!", icon: "👑", pepe: PEPE.gigachad }]);
+          spawnPepe(PEPE.gigachad);
+          playSound("crowd-ooh");
+        }
         return result;
       }
       return g;
@@ -2340,9 +2347,13 @@ export default function ChaosChessPage() {
         const aiColor = playerColor === "white" ? "b" : "w";
         const aiChaosMoves = getChaosMoves(g, cs.aiModifiers, aiColor as Color, cs.assignedSquares, cs.playerModifiers);
 
+        // Forced En Passant: if player has this, AI must play EP when available — skip chaos
+        const forcedEpForAI = cs.playerModifiers.some((m) => m.id === "forced-en-passant") &&
+          g.moves({ verbose: true }).some((m: { flags: string }) => m.flags.includes("e"));
+
         // Evaluate chaos moves — captures sorted by material gain are always evaluated;
         // positional (non-capture) chaos moves are considered 30% of the time.
-        if (aiChaosMoves.length > 0) {
+        if (aiChaosMoves.length > 0 && !forcedEpForAI) {
           // Chaos-aware piece value lookup: upgraded pieces are worth more
           const getVal = (sq: string, pieceType: string, pColor: "w" | "b") =>
             getChaosPieceValCp(sq, pieceType, pColor,
@@ -2623,6 +2634,14 @@ export default function ChaosChessPage() {
               bestUci = topRanked ?? escaping[0].lan;
             }
             // else: truly trapped — checkmate logic will handle it
+          }
+        }
+
+        // Forced En Passant: if player has this modifier and EP is available, AI must play it
+        if (cs.playerModifiers.some((m) => m.id === "forced-en-passant")) {
+          const epMoves = g.moves({ verbose: true }).filter((m: { flags: string; from: string; to: string }) => m.flags.includes("e"));
+          if (epMoves.length > 0) {
+            bestUci = `${epMoves[0].from}${epMoves[0].to}`;
           }
         }
 
@@ -3458,6 +3477,16 @@ export default function ChaosChessPage() {
         (playerColor === "white" && game.turn() === "w") ||
         (playerColor === "black" && game.turn() === "b");
       if (!isPlayerTurn) return false;
+
+      // Forced En Passant: if AI has this modifier and standard EP is available, player must play it
+      if (chaosState.aiModifiers.some((m) => m.id === "forced-en-passant")) {
+        const epMoves = game.moves({ verbose: true }).filter(
+          (m: { flags: string; from: string; to: string }) => m.flags.includes("e")
+        );
+        if (epMoves.length > 0 && !epMoves.some((m: { from: string; to: string }) => m.from === from && m.to === to)) {
+          return false; // must play en passant
+        }
+      }
 
       // First check if this is a chaos move
       const chaosMove = activeChaosMoves.find(
@@ -4794,7 +4823,7 @@ export default function ChaosChessPage() {
             <div className="flex items-center justify-center gap-2">
               <img src={PEPE.clownge} alt="" className="h-6 w-6 object-contain" />
               <p className="text-xs text-orange-400">
-                Yes, we have <span className="font-bold">Forced En Passant</span>, <span className="font-bold">The Knook</span>, and <span className="font-bold">Il Vaticano</span>.
+                Yes, we have <span className="font-bold">Forced En Passant</span>, <span className="font-bold">The Knook</span>, and <span className="font-bold">the Bishop Cannon</span>.
               </p>
               <img src={PEPE.clowntrain} alt="" className="h-6 w-6 object-contain" />
             </div>
