@@ -1,19 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" width="177.17" height="177.17">
-  <!-- Outline — single Merida silhouette -->
+  <!-- Standard dark pawn outline -->
   <path d="M25 46.448H11.606a13.139 13.139 0 0 1-.99-5.043c0-2.975.863-5.644 2.598-8.018 1.736-2.365 3.971-4.054 6.697-5.067a6.824 6.824 0 0 1-2.861-2.398c-.737-1.071-1.1-2.283-1.1-3.634 0-1.69.575-3.156 1.735-4.392 1.151-1.244 2.574-1.961 4.267-2.15-1.346-.981-2.015-2.283-2.015-3.89 0-1.351.491-2.513 1.482-3.477.982-.964 2.176-1.442 3.581-1.442 1.389 0 2.582.478 3.573 1.442s1.49 2.126 1.49 3.477c0 1.607-.669 2.909-2.015 3.89 1.693.189 3.116.906 4.267 2.15 1.16 1.236 1.736 2.703 1.736 4.392 0 1.351-.373 2.563-1.126 3.634a7.036 7.036 0 0 1-2.862 2.398c2.726 1.013 4.962 2.702 6.697 5.067 1.736 2.374 2.6 5.043 2.6 8.018 0 1.739-.322 3.42-.966 5.043z" fill="#1f1a17"/>
-  <!-- === CHARGER ACCENTS === -->
-  <!-- Double chevrons on body -->
-  <path d="M20 38 L25 34 L30 38" fill="none" stroke="#60a5fa" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>
-  <path d="M21.5 34 L25 30.5 L28.5 34" fill="none" stroke="#60a5fa" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
-  <!-- Speed lines L -->
-  <line x1="11" y1="35" x2="13.5" y2="32.5" stroke="#60a5fa" stroke-width="0.7" stroke-linecap="round" opacity="0.55"/>
-  <line x1="10.5" y1="38" x2="13" y2="35.5" stroke="#60a5fa" stroke-width="0.7" stroke-linecap="round" opacity="0.45"/>
-  <line x1="10" y1="41" x2="12.5" y2="38.5" stroke="#60a5fa" stroke-width="0.7" stroke-linecap="round" opacity="0.35"/>
-  <!-- Speed lines R -->
-  <line x1="39" y1="35" x2="36.5" y2="32.5" stroke="#60a5fa" stroke-width="0.7" stroke-linecap="round" opacity="0.55"/>
-  <line x1="39.5" y1="38" x2="37" y2="35.5" stroke="#60a5fa" stroke-width="0.7" stroke-linecap="round" opacity="0.45"/>
-  <line x1="40" y1="41" x2="37.5" y2="38.5" stroke="#60a5fa" stroke-width="0.7" stroke-linecap="round" opacity="0.35"/>
-  <!-- Arrow above head -->
-  <path d="M25 3.5 L27.2 5.8 L25.8 5.8 L25.8 7.5 L24.2 7.5 L24.2 5.8 L22.8 5.8 Z" fill="#60a5fa" opacity="0.75"/>
+  <!-- === TORPEDO ACCENTS === -->
+  <!-- Orange chevron streaks on body -->
+  <path d="M19.5 39 L25 34.5 L30.5 39" fill="none" stroke="#f97316" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+  <path d="M21 34.5 L25 31 L29 34.5" fill="none" stroke="#f97316" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+  <!-- Flame exhaust streaks -->
+  <line x1="16" y1="43" x2="13" y2="46" stroke="#f97316" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+  <line x1="16.5" y1="45" x2="14" y2="47.5" stroke="#fb923c" stroke-width="0.8" stroke-linecap="round" opacity="0.45"/>
+  <line x1="34" y1="43" x2="37" y2="46" stroke="#f97316" stroke-width="1" stroke-linecap="round" opacity="0.6"/>
+  <line x1="33.5" y1="45" x2="36" y2="47.5" stroke="#fb923c" stroke-width="0.8" stroke-linecap="round" opacity="0.45"/>
+  <!-- Torpedo nose cone at top -->
+  <path d="M22.2 9.5 L25 3.5 L27.8 9.5 Q26.5 10.5 25 10.5 Q23.5 10.5 22.2 9.5 Z" fill="#f97316" opacity="0.85"/>
+  <circle cx="25" cy="3.8" r="0.9" fill="#fef3c7" opacity="0.9"/>
 </svg>

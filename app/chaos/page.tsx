@@ -176,7 +176,7 @@ const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
   "dragon-rook": {
     glow: "rgba(220,38,38,0.4)",
   },
-  "pawn-charge": { icon: "🚀", iconGlow: "rgba(59,130,246,0.6)", glow: "rgba(59,130,246,0.4)" },
+  "pawn-charge": { icon: "🚀", iconGlow: "rgba(249,115,22,0.8)", glow: "rgba(249,115,22,0.4)" },
   "pawn-capture-forward": { icon: "🗡️", iconGlow: "rgba(239,68,68,0.6)", glow: "rgba(239,68,68,0.4)" },
   "dragon-bishop": {
     glow: "rgba(8,145,178,0.4)",
@@ -207,6 +207,7 @@ const SINGLE_PIECE_MODIFIERS: Record<string, true> = {
   knook: true,
   archbishop: true,
   camel: true,
+  pegasus: true,
 };
 
 /** Fairy piece SVG replacements — full piece image swap for transformative modifiers */
@@ -1813,6 +1814,18 @@ export default function ChaosChessPage() {
   const moveLogRef = useRef<HTMLDivElement>(null);
   const eventLogRef = useRef<HTMLDivElement>(null);
   const boardContainerRef = useRef<HTMLDivElement>(null);
+
+  /* ── Measure board size via ResizeObserver (react-chessboard v5 removed onBoardWidthChange) ── */
+  useEffect(() => {
+    const el = boardContainerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width;
+      if (w) setBoardSize(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   /* ── Board interaction state ── */
   const [selectedSquare, setSelectedSquare] = useState<CbSquare | null>(null);
@@ -5055,22 +5068,23 @@ export default function ChaosChessPage() {
                 id="chaos-board"
                 position={game.fen()}
                 boardOrientation={playerColor}
-                onBoardWidthChange={setBoardSize}
-                onPieceDrop={(from, to) => handlePlayerMove(from as CbSquare, to as CbSquare)}
-                onSquareClick={handleSquareClick}
-                onMouseOverSquare={handleMouseOverSquare}
-                onMouseOutSquare={handleMouseOutSquare}
-                customSquareStyles={mergedSquareStyles}
-                customBoardStyle={{
+                onPieceDrop={({ sourceSquare, targetSquare }) =>
+                  targetSquare ? handlePlayerMove(sourceSquare as CbSquare, targetSquare as CbSquare) : false
+                }
+                onSquareClick={({ square }) => handleSquareClick(square as CbSquare)}
+                onMouseOverSquare={({ square }) => handleMouseOverSquare(square as CbSquare)}
+                onMouseOutSquare={({ square }) => handleMouseOutSquare(square as CbSquare)}
+                squareStyles={mergedSquareStyles}
+                boardStyle={{
                   borderRadius: "8px",
                   boxShadow: "0 4px 30px rgba(0,0,0,0.4)",
                 }}
-                customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-                customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
-                showBoardNotation={showCoordinates}
-                customPieces={chaosCustomPieces || undefined}
-                animationDuration={200}
-                arePiecesDraggable={gameStatus === "playing" && !isThinking && !waitingForOpponentDraft}
+                darkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+                lightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                showNotation={showCoordinates}
+                pieces={chaosCustomPieces || undefined}
+                animationDurationInMs={200}
+                allowDragging={gameStatus === "playing" && !isThinking && !waitingForOpponentDraft}
               />
               <BoardEffectsOverlay effects={boardEffects} boardSize={boardSize} orientation={playerColor} />
             </div>
@@ -5452,6 +5466,16 @@ export default function ChaosChessPage() {
                   >
                     ⚡ New Game
                   </button>
+
+                  {/* Guest upsell */}
+                  {!authenticated && (
+                    <a
+                      href="/auth/signin"
+                      className="mt-1 flex items-center justify-center gap-2 rounded-lg border border-amber-500/25 bg-amber-500/8 px-4 py-2.5 text-xs font-medium text-amber-300/80 transition-all hover:bg-amber-500/15 w-full"
+                    >
+                      🎨 Sign in for custom pieces &amp; board themes
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
@@ -5537,22 +5561,16 @@ export default function ChaosChessPage() {
               ref={moveLogRef}
               className="max-h-28 space-y-0.5 overflow-y-auto font-mono text-[10px] scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 sm:max-h-40 sm:text-[11px]"
             >
-              {(() => {
-                const moves = game.history();
-                if (moves.length === 0) return <p className="text-center text-slate-600">No moves yet</p>;
-                const pairs: { num: number; w: string; b?: string }[] = [];
-                moves.forEach((san, i) => {
-                  if (i % 2 === 0) pairs.push({ num: Math.floor(i / 2) + 1, w: san });
-                  else pairs[pairs.length - 1].b = san;
-                });
-                return pairs.map((p) => (
-                  <div key={p.num} className="flex gap-2 text-slate-400">
-                    <span className="w-6 text-right text-slate-600">{p.num}.</span>
-                    <span className="w-14">{p.w}</span>
-                    <span className="w-14">{p.b ?? ""}</span>
+              {moveLog.length === 0
+                ? <p className="text-center text-slate-600">No moves yet</p>
+                : moveLog.map((p) => (
+                  <div key={p.moveNumber} className="flex gap-2 text-slate-400">
+                    <span className="w-6 text-right text-slate-600">{p.moveNumber}.</span>
+                    <span className="w-14">{p.white ?? ""}</span>
+                    <span className="w-14">{p.black ?? ""}</span>
                   </div>
-                ));
-              })()}
+                ))
+              }
             </div>
           </div>
 
@@ -5679,6 +5697,15 @@ export default function ChaosChessPage() {
               >
                 🔍 Show Piece Info
               </button>
+            )}
+            {!authenticated && (
+              <a
+                href="/auth/signin"
+                className="mt-2 flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-[11px] text-amber-300/80 transition-all hover:bg-amber-500/10"
+              >
+                <span>🎨</span>
+                <span>Sign in to unlock custom <strong>pieces &amp; board themes</strong></span>
+              </a>
             )}
           </div>
         </div>

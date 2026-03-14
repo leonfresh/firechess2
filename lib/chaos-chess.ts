@@ -70,10 +70,10 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   // ── Phase 1 (Turn 5) — Movement & Minor Buffs ──
   {
     id: "pawn-charge",
-    name: "Pawn Charge",
-    description: "Pawns can move 2 squares forward from any rank, not just their starting rank.",
+    name: "Torpedo Pawns",
+    description: "Your pawns can move 2 squares forward from ANY rank, not just their starting rank. Suddenly every pawn is a threat.",
     tier: "common",
-    icon: "🏃",
+    icon: "🚀",
     piece: "p",
     phases: [1, 2],
   },
