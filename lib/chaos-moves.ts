@@ -1842,9 +1842,20 @@ export function isChaosCheckmate(
   const legalMoves = game.moves({ verbose: true });
   if (legalMoves.length === 0) return true;
 
+  // Determine which squares are chained (can't move) due to King's Chains
+  const chainedSquares = new Set<string>();
+  if (assignedSquares) {
+    const oppChainKey = `${oppColor}_kings-chains`;
+    const chained = assignedSquares[oppChainKey];
+    if (chained) chainedSquares.add(chained);
+  }
+
   for (const move of legalMoves) {
     const piece = game.get(move.from as Square);
     if (!piece) continue;
+
+    // Chained piece can't move — treat this move as unavailable
+    if (chainedSquares.has(move.from)) continue;
 
     if (piece.type !== "k") {
       // A non-king blocking/interposing move exists — not chaos checkmate

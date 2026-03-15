@@ -3305,6 +3305,20 @@ export default function ChaosChessPage() {
           checkGameEnd(activeGame);
         }
         if (pollRef.current) clearInterval(pollRef.current);
+      } else if (activeGame.inCheck()) {
+        // Chaos-checkmate: king is in check but chess.js doesn't see checkmate
+        // because escape squares are all chaos-controlled
+        const cs2 = data.chaosState ? fromServerChaosState(data.chaosState as ChaosState, playerColor) : undefined;
+        if (cs2) {
+          // Update ref synchronously so checkGameEnd sees fresh modifiers
+          chaosStateRef.current = cs2;
+          setChaosState(cs2);
+        }
+        if (checkGameEnd(activeGame)) {
+          if (pollRef.current) clearInterval(pollRef.current);
+        } else if (cs2) {
+          recomputeChaosMoves(activeGame, cs2);
+        }
       } else if (data.chaosState) {
         // Only recompute moves — checkDraft fires from handlePlayerMove (your own move) only
         const cs2 = fromServerChaosState(data.chaosState as ChaosState, playerColor);
@@ -3500,6 +3514,18 @@ export default function ChaosChessPage() {
           if (activeGame.isCheckmate() || activeGame.isStalemate() || activeGame.isDraw()) {
             checkGameEndCbRef.current(activeGame);
             if (pollRef.current) clearInterval(pollRef.current);
+          } else if (activeGame.inCheck()) {
+            // Chaos-checkmate: in check but not standard checkmate
+            const rawCs2 = data.chaosState ? data.chaosState as ChaosState : createChaosState();
+            const cs2 = fromServerChaosState(rawCs2, myColor as "white" | "black");
+            // Update ref synchronously so checkGameEnd sees fresh modifiers
+            chaosStateRef.current = cs2;
+            setChaosState(cs2);
+            if (checkGameEndCbRef.current(activeGame)) {
+              if (pollRef.current) clearInterval(pollRef.current);
+            } else {
+              recomputeChaosMovesCbRef.current(activeGame, cs2);
+            }
           } else {
             // Only recompute moves — checkDraft fires from handlePlayerMove (your own move only)
             const rawCs2 = data.chaosState ? data.chaosState as ChaosState : createChaosState();
