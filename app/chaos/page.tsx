@@ -2598,7 +2598,9 @@ export default function ChaosChessPage() {
         // eval after accounting for the player's chaos threats
         const playerColor_ = playerColor === "white" ? "w" : "b";
         const hasPlayerChaosMods = cs.playerModifiers.length > 0;
-        const topMoves = hasPlayerChaosMods
+        const hasAiChaosMods = cs.aiModifiers.length > 0;
+        const needsTopMoves = hasPlayerChaosMods || hasAiChaosMods;
+        const topMoves = needsTopMoves
           ? await stockfishPool.getTopMoves(g.fen(), 5, aiDepth)
           : [];
 
@@ -2630,9 +2632,42 @@ export default function ChaosChessPage() {
           }
         }
 
+        // Enhanced-piece protection injection: if any AI extra-value piece (Knook, Pegasus, etc.)
+        // is capturable by the player in the current position, Stockfish won't try to escape it
+        // (it sees knight=knight, not Knook=800). Inject escape moves so the penalty loop can pick them.
+        if (hasAiChaosMods) {
+          const aiCol2 = playerColor_ === "w" ? "b" : "w";
+          const STD_VAL: Record<string, number> = { p: 100, n: 325, b: 325, r: 500, q: 900 };
+          // Flip FEN active color to get player's candidate captures in the current position
+          const fenParts = g.fen().split(" ");
+          fenParts[1] = playerColor_;
+          const threatenedAiSqs = new Set<string>();
+          try {
+            const flipGame = new Chess(fenParts.join(" "));
+            for (const mv of flipGame.moves({ verbose: true }) as any[]) {
+              if (!mv.flags.includes("c")) continue;
+              const p = g.get(mv.to as any);
+              if (!p || p.color !== aiCol2) continue;
+              const chaosVal = getChaosPieceValCp(mv.to, p.type, aiCol2 as "w" | "b", cs.aiModifiers, cs.assignedSquares ?? undefined);
+              if (chaosVal - (STD_VAL[p.type] ?? 100) > 100) threatenedAiSqs.add(mv.to);
+            }
+          } catch { /* flipped position illegal – skip */ }
+          if (threatenedAiSqs.size > 0) {
+            const escDepth2 = Math.min(aiDepth, 8);
+            for (const mv of (g.moves({ verbose: true }) as any[]).filter((m: { from: string }) => threatenedAiSqs.has(m.from)).slice(0, 6)) {
+              const tmpEsc = new Chess(g.fen());
+              try { tmpEsc.move({ from: mv.from, to: mv.to, promotion: mv.promotion }); } catch { continue; }
+              const er = await stockfishPool.evaluateFen(tmpEsc.fen(), escDepth2);
+              if (er) topMoves.push({ bestMove: mv.lan, pvMoves: [mv.lan], cp: -(er.cp ?? 0) });
+            }
+          }
+        }
+
         let bestUci: string | null = null;
 
-        if (hasPlayerChaosMods && topMoves.length > 0) {
+        if (needsTopMoves && topMoves.length > 0) {
+          const aiCol3 = playerColor_ === "w" ? "b" : "w";
+          const STD_VAL2: Record<string, number> = { p: 100, n: 325, b: 325, r: 500, q: 900 };
           // Evaluate each candidate for chaos vulnerability
           let bestAdjusted = -Infinity;
           for (const candidate of topMoves) {
@@ -2644,14 +2679,37 @@ export default function ChaosChessPage() {
             const ct = uci.slice(2, 4);
             const cp = uci.length > 4 ? uci[4] : undefined;
             try { tmpGame.move({ from: cf, to: ct, promotion: cp }); } catch { continue; }
-            // Compute chaos threat penalty from the resulting position (chaos-value-aware)
-            const penalty = computeChaosThreatPenalty(
+            // 1. Chaos threat penalty: player's chaos pieces threatening AI pieces
+            const penalty = hasPlayerChaosMods ? computeChaosThreatPenalty(
               tmpGame, cs.playerModifiers, playerColor_ as Color, cs.assignedSquares ?? undefined,
               (sq, type, col) => getChaosPieceValCp(sq, type, col as "w" | "b",
                 col === playerColor_ ? cs.playerModifiers : cs.aiModifiers,
                 cs.assignedSquares ?? undefined),
-            );
-            const adjusted = candidate.cp - penalty;
+            ) : 0;
+            // 2. Enhanced exposure penalty: Stockfish undervalues the AI's own chaos-enhanced pieces.
+            // If an AI enhanced piece sits on a square the player can capture after this move,
+            // penalise by the extra value above what Stockfish's standard eval accounts for.
+            let enhancedPenalty = 0;
+            if (hasAiChaosMods) {
+              const playerCaptures = new Set<string>(
+                (tmpGame.moves({ verbose: true }) as any[])
+                  .filter((mv: { flags: string }) => mv.flags.includes("c") || mv.flags.includes("e"))
+                  .map((mv: { to: string }) => mv.to)
+              );
+              const board2 = tmpGame.board();
+              for (let ri = 0; ri < 8; ri++) {
+                for (let fi = 0; fi < 8; fi++) {
+                  const p = board2[ri][fi];
+                  if (!p || p.color !== aiCol3) continue;
+                  const sqName = `${"abcdefgh"[fi]}${8 - ri}`;
+                  if (!playerCaptures.has(sqName)) continue;
+                  const chaosVal = getChaosPieceValCp(sqName, p.type, aiCol3 as "w" | "b", cs.aiModifiers, cs.assignedSquares ?? undefined);
+                  const stdVal = STD_VAL2[p.type] ?? 100;
+                  if (chaosVal > stdVal) enhancedPenalty += chaosVal - stdVal;
+                }
+              }
+            }
+            const adjusted = candidate.cp - penalty - enhancedPenalty;
             if (adjusted > bestAdjusted) {
               bestAdjusted = adjusted;
               bestUci = uci;

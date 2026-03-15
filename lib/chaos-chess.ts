@@ -293,7 +293,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "king-ascension",
     name: "King Ascension",
-    description: "Your King gains Queen movement. The royal piece has had enough of hiding.",
+    description: "Your King can capture like a Queen — striking any range along diagonals and files. It still moves one square at a time, so it can be checkmated.",
     tier: "legendary",
     icon: "🔱",
     piece: "k",
@@ -426,7 +426,7 @@ export function getChaosPieceValCp(
     "nuclear-queen"      : 200,  // queen captures clear 8 squares ≈ 11 pawns
     "amazon"             : 150,  // queen + knight ≈ 10.5 pawns
     "queen-teleport"     : 50,   // queen teleports once
-    "king-ascension"     : 5000, // king moves like queen
+    "king-ascension"     : 5000, // king captures like queen
     "pawn-charge"        : 10,
     "pawn-capture-forward": 15,
   };
