@@ -1343,6 +1343,7 @@ const EFFECT_KEYFRAMES = `
 `;
 
 type BoardEffect = { id: number; type: string; squares: string[] };
+type RicochetAnimState = { id: number; from: string; bounceSquare: string; to: string; pieceUrl: string };
 
 function BoardEffectsOverlay({
   effects,
@@ -1490,6 +1491,73 @@ function BoardEffectsOverlay({
             );
           })
         )}
+      </div>
+    </>
+  );
+}
+
+/* ════════════════════ Ricochet Bishop Animator ════════════════════ */
+
+function RicochetBishopAnimator({
+  anim,
+  boardSize,
+  orientation,
+}: {
+  anim: RicochetAnimState;
+  boardSize: number;
+  orientation: "white" | "black";
+}) {
+  const sqPx = boardSize / 8;
+  const pieceSize = sqPx * 0.82;
+  const offset = (sqPx - pieceSize) / 2;
+
+  const toPixel = (square: string) => {
+    const file = square.charCodeAt(0) - 97;
+    const rank = parseInt(square[1], 10) - 1;
+    const px = (orientation === "white" ? file : 7 - file) * sqPx + offset;
+    const py = (orientation === "white" ? 7 - rank : rank) * sqPx + offset;
+    return { px, py };
+  };
+
+  const from   = toPixel(anim.from);
+  const bounce = toPixel(anim.bounceSquare);
+  const to     = toPixel(anim.to);
+
+  // Proportional timing by distance so speed looks constant
+  const dist1 = Math.hypot(bounce.px - from.px, bounce.py - from.py);
+  const dist2 = Math.hypot(to.px - bounce.px, to.py - bounce.py);
+  const totalDist = dist1 + dist2 || 1;
+  const pct1 = Math.round((dist1 / totalDist) * 100);
+
+  const totalDuration = 900;
+  const kfName = `rico-${anim.id}`;
+  const kfCSS = `
+    @keyframes ${kfName} {
+      0%        { transform: translate(${from.px}px, ${from.py}px); opacity: 1; }
+      ${pct1}%  { transform: translate(${bounce.px}px, ${bounce.py}px); opacity: 1; filter: drop-shadow(0 0 ${(sqPx * 0.35).toFixed(1)}px #fb923c) drop-shadow(0 0 ${(sqPx * 0.18).toFixed(1)}px #fff) brightness(1.7); }
+      ${Math.min(pct1 + 8, 96)}% { filter: drop-shadow(0 0 ${(sqPx * 0.2).toFixed(1)}px #fb923c); }
+      88%       { transform: translate(${to.px}px, ${to.py}px); opacity: 1; }
+      100%      { transform: translate(${to.px}px, ${to.py}px); opacity: 0; }
+    }
+  `;
+
+  return (
+    <>
+      <style>{kfCSS}</style>
+      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-[8px]" style={{ zIndex: 30 }}>
+        <img
+          src={anim.pieceUrl}
+          alt=""
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            width: pieceSize,
+            height: pieceSize,
+            filter: `drop-shadow(0 0 ${(sqPx * 0.22).toFixed(1)}px #fb923c) drop-shadow(0 0 ${(sqPx * 0.08).toFixed(1)}px #fff)`,
+            animation: `${kfName} ${totalDuration}ms linear forwards`,
+          }}
+        />
       </div>
     </>
   );
@@ -1914,6 +1982,8 @@ export default function ChaosChessPage() {
   /* ── Board effect overlays (explosions, teleports, etc.) ── */
   const [boardEffects, setBoardEffects] = useState<BoardEffect[]>([]);
   const effectIdRef = useRef(0);
+  const [ricochetAnim, setRicochetAnim] = useState<RicochetAnimState | null>(null);
+  const ricochetAnimIdRef = useRef(0);
   /** True during the ~950ms king-death animation window — blocks input so the popup can't be raced. */
   const isAnimatingEndRef = useRef(false);
 
@@ -1923,6 +1993,18 @@ export default function ChaosChessPage() {
     const dur = durationOverride ?? EFFECT_DURATIONS[type] ?? 700;
     setTimeout(() => setBoardEffects((prev) => prev.filter((e) => e.id !== id)), dur);
   }, []);
+
+  const startRicochetAnim = useCallback((
+    move: { from: string; to: string; bounceSquare?: string },
+    bishopColor: "w" | "b",
+  ) => {
+    const bounceSquare = move.bounceSquare ?? move.from;
+    const pieceCode = `${bishopColor}B`;
+    const pieceUrl = getPieceImageUrl(pieceTheme.setName ?? "cburnett", pieceCode);
+    const id = ++ricochetAnimIdRef.current;
+    setRicochetAnim({ id, from: move.from, bounceSquare, to: move.to, pieceUrl });
+    setTimeout(() => setRicochetAnim((prev) => (prev?.id === id ? null : prev)), 950);
+  }, [pieceTheme.setName]);
 
   /* ── Preload sounds ── */
   useEffect(() => {
@@ -2564,6 +2646,7 @@ export default function ChaosChessPage() {
                   triggerEffect("pegasus", [chaosMove.from, chaosMove.to]);
                 } else if (mid === "bishop-bounce") {
                   triggerEffect("ricochet", [chaosMove.from, chaosMove.to]);
+                  startRicochetAnim(chaosMove, aiColor as "w" | "b");
                 } else if (mid === "rook-cannon") {
                   triggerEffect("cannon", [chaosMove.to]);
                   setTimeout(() => triggerEffect("explosion", [chaosMove.to]), 350);
@@ -3707,6 +3790,7 @@ export default function ChaosChessPage() {
             triggerEffect("pegasus", [from, to]);
           } else if (mid === "bishop-bounce") {
             triggerEffect("ricochet", [from, to]);
+            startRicochetAnim(chaosMove, playerColor === "white" ? "w" : "b");
           } else if (mid === "rook-cannon") {
             triggerEffect("cannon", [to]);
             setTimeout(() => triggerEffect("explosion", [to]), 350);
@@ -5212,10 +5296,13 @@ export default function ChaosChessPage() {
                 customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
                 showBoardNotation={showCoordinates}
                 customPieces={chaosCustomPieces || undefined}
-                animationDuration={200}
+                animationDuration={ricochetAnim ? 0 : 200}
                 arePiecesDraggable={gameStatus === "playing" && !isThinking && !waitingForOpponentDraft}
               />
               <BoardEffectsOverlay effects={boardEffects} boardSize={boardSize} orientation={playerColor} />
+              {ricochetAnim && boardSize > 0 && (
+                <RicochetBishopAnimator anim={ricochetAnim} boardSize={boardSize} orientation={playerColor} />
+              )}
             </div>
           </div>
 

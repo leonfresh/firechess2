@@ -34,6 +34,8 @@ export type ChaosMove = {
   pieceStays?: boolean;
   /** If true, the player should choose the promotion piece before execution */
   promotionChoice?: boolean;
+  /** Last valid square before the wall reflection (ricochet bishop animation waypoint) */
+  bounceSquare?: string;
 };
 
 /* ================================================================== */
@@ -574,6 +576,7 @@ function genBishopBounce(game: Chess, color: Color): ChaosMove[] {
       let df = idf;
       let dr = idr;
       let bounced = false;
+      let bounceSquareSq: string | null = null;
 
       // Walk up to 14 steps (max diagonal across the board after a bounce)
       for (let step = 0; step < 14; step++) {
@@ -587,6 +590,7 @@ function genBishopBounce(game: Chess, color: Color): ChaosMove[] {
         if (fOff && rOff) {
           if (bounced) break;
           bounced = true;
+          bounceSquareSq = sq(cf, cr) ?? null;
           df = -df;
           dr = -dr;
           continue;
@@ -596,6 +600,7 @@ function genBishopBounce(game: Chess, color: Color): ChaosMove[] {
           // One axis off-board: reflect that component
           if (bounced) break;
           bounced = true;
+          bounceSquareSq = sq(cf, cr) ?? null;
           if (fOff) df = -df;
           if (rOff) dr = -dr;
           continue;
@@ -621,6 +626,7 @@ function genBishopBounce(game: Chess, color: Color): ChaosMove[] {
             type: isEnemy(game, target, color) ? "capture" : "move",
             modifierId: "bishop-bounce",
             label: "Ricochet Bishop (wall bounce)",
+            bounceSquare: bounceSquareSq ?? undefined,
           });
         }
 
