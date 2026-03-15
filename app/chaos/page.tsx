@@ -60,7 +60,7 @@ import {
   computeChaosThreatPenalty,
   getChaosAttackedSquares,
   isKingUnderChaosAttack,
-  applyKingShield,
+  computeChainedSquare,
   isChaosCheckmate,
   type ChaosMove,
 } from "@/lib/chaos-moves";
@@ -182,7 +182,19 @@ const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
     glow: "rgba(8,145,178,0.4)",
   },
   "pawn-promotion-early": { icon: "⭐", iconGlow: "rgba(234,179,8,0.8)", glow: "rgba(234,179,8,0.3)" },
-  "king-shield": { icon: "🛡️", iconGlow: "rgba(59,130,246,0.6)" },
+  "kings-chains": {
+    render: (sw: number) => {
+      const s = sw * 0.42;
+      return (
+        <svg viewBox="0 0 100 100" width={s} height={s} style={{ position: "absolute", bottom: "0%", left: "50%", transform: "translateX(-50%)", opacity: 0.93, filter: "drop-shadow(0 0 4px rgba(200,160,40,0.9))" }}>
+          <ellipse cx="28" cy="72" rx="13" ry="8" fill="none" stroke="#C8A030" strokeWidth="5.5" transform="rotate(-38 28 72)"/>
+          <ellipse cx="50" cy="78" rx="13" ry="8" fill="none" stroke="#C8A030" strokeWidth="5.5"/>
+          <ellipse cx="72" cy="72" rx="13" ry="8" fill="none" stroke="#C8A030" strokeWidth="5.5" transform="rotate(38 72 72)"/>
+        </svg>
+      );
+    },
+    glow: "rgba(200,160,40,0.45)",
+  },
   "king-wrath": { icon: "⚔️", iconGlow: "rgba(239,68,68,0.7)" },
   "queen-teleport": { icon: "🌀", iconGlow: "rgba(168,85,247,0.8)", glow: "rgba(168,85,247,0.4)" },
   "bishop-bounce": { icon: "🪃", iconGlow: "rgba(249,115,22,0.6)" },
@@ -391,6 +403,23 @@ function buildChaosCustomPieces(
 
         if (def.filter) filter = def.filter;
         if (def.glow && !glowColor) glowColor = def.glow;
+      }
+
+      // King's Chains: draw chain overlay on the currently-chained enemy piece square
+      const wChained = assignedSquares?.["w_kings-chains"];
+      const bChained = assignedSquares?.["b_kings-chains"];
+      if (square && (square === wChained || square === bChained)) {
+        const s = squareWidth * 0.42;
+        overlays.push(
+          <React.Fragment key="kings-chains-chain">
+            <svg viewBox="0 0 100 100" width={s} height={s} style={{ position: "absolute", bottom: "0%", left: "50%", transform: "translateX(-50%)", opacity: 0.93, filter: "drop-shadow(0 0 4px rgba(200,160,40,0.9))", zIndex: 3 }}>
+              <ellipse cx="28" cy="72" rx="13" ry="8" fill="none" stroke="#C8A030" strokeWidth="5.5" transform="rotate(-38 28 72)"/>
+              <ellipse cx="50" cy="78" rx="13" ry="8" fill="none" stroke="#C8A030" strokeWidth="5.5"/>
+              <ellipse cx="72" cy="72" rx="13" ry="8" fill="none" stroke="#C8A030" strokeWidth="5.5" transform="rotate(38 72 72)"/>
+            </svg>
+          </React.Fragment>
+        );
+        if (!glowColor) glowColor = "rgba(200,160,40,0.35)";
       }
 
       return (
@@ -2045,8 +2074,20 @@ export default function ChaosChessPage() {
       } else {
         setAvailableChaosMoves([]);
       }
+
+      // Recompute chained squares for kings-chains modifier
+      const playerC: Color = playerColor === "white" ? "w" : "b";
+      const aiC: Color = playerColor === "white" ? "b" : "w";
+      const hasPlayerChains = cs.playerModifiers.some((m) => m.id === "kings-chains");
+      const hasAiChains = cs.aiModifiers.some((m) => m.id === "kings-chains");
+      if (hasPlayerChains || hasAiChains) {
+        const newAssigned = { ...(cs.assignedSquares ?? {}) };
+        if (hasPlayerChains) newAssigned[`${playerC}_kings-chains`] = computeChainedSquare(g, playerC);
+        if (hasAiChains) newAssigned[`${aiC}_kings-chains`] = computeChainedSquare(g, aiC);
+        setChaosState((prev) => ({ ...prev, assignedSquares: newAssigned }));
+      }
     },
-    [playerColor],
+    [playerColor, setChaosState],
   );
 
   /* ── Helper: add move to log ── */
@@ -2426,7 +2467,18 @@ export default function ChaosChessPage() {
           if (sample.length > 0) {
           // Get normal Stockfish eval as baseline
           const normalResult = await stockfishPool.evaluateFen(g.fen(), aiDepth);
-          const normalEval = normalResult?.cp ?? 0; // from AI's (side-to-move) perspective
+          const normalEvalRaw = normalResult?.cp ?? 0; // from AI's (side-to-move) perspective
+          // Adjust the baseline by the phantom/chaos threat already present in the current position
+          // so the chaos-move comparison is on the same scale as the adjusted chaos evals below.
+          const playerColorForChaos = playerColor === "white" ? "w" : "b";
+          const chaosValFnBase = (sq: string, type: string, col: string) =>
+            getChaosPieceValCp(sq, type, col as "w" | "b",
+              col === playerColorForChaos ? cs.playerModifiers : cs.aiModifiers,
+              cs.assignedSquares ?? undefined);
+          const baselinePenalty = cs.playerModifiers.length > 0
+            ? computeChaosThreatPenalty(g, cs.playerModifiers, playerColorForChaos as Color, cs.assignedSquares ?? undefined, chaosValFnBase)
+            : 0;
+          const normalEval = normalEvalRaw - baselinePenalty;
 
           const evalDepth = Math.min(aiDepth, 10);
 
@@ -2444,7 +2496,22 @@ export default function ChaosChessPage() {
             if (!newGame) continue;
             // Eval the resulting position — cp is from the player's perspective (side to move after AI's chaos move)
             const er = await stockfishPool.evaluateFen(newGame.fen(), evalDepth);
-            if (er) scored.push({ move: cm, eval: -(er.cp ?? 0), game: newGame });
+            if (er) {
+              let chaosEval = -(er.cp ?? 0);
+              // Subtract chaos threat penalty from the resulting position so the AI doesn't
+              // pick a chaos move that enables the player's phantom rook (or other chaos piece)
+              // to recapture through friendly pieces.
+              if (cs.playerModifiers.length > 0) {
+                const pCol = playerColorForChaos as Color;
+                const chaosValFn = (sq: string, type: string, col: string) =>
+                  getChaosPieceValCp(sq, type, col as "w" | "b",
+                    col === playerColorForChaos ? cs.playerModifiers : cs.aiModifiers,
+                    cs.assignedSquares ?? undefined);
+                chaosEval -= computeChaosThreatPenalty(
+                  newGame, cs.playerModifiers, pCol, cs.assignedSquares ?? undefined, chaosValFn);
+              }
+              scored.push({ move: cm, eval: chaosEval, game: newGame });
+            }
           }
 
           if (scored.length > 0) {
@@ -2511,29 +2578,6 @@ export default function ChaosChessPage() {
               let cs2 = updateTrackedPieces(cs, chaosMove.from, chaosMove.to, chaosMove.type === "capture");
               let activeGame = newGame;
 
-              // Check player's king-shield (AI moved, player may be in check)
-              if (activeGame.isCheck()) {
-                if (cs2.playerModifiers.some((m) => m.id === "king-shield")) {
-                  const shielded = applyKingShield(activeGame, activeGame.turn() as Color);
-                  if (shielded) {
-                    activeGame = shielded;
-                    cs2 = { ...cs2, playerModifiers: cs2.playerModifiers.filter((m) => m.id !== "king-shield") };
-                    // Trigger shield effect on the player's king square
-                    const board = activeGame.board();
-                    outer: for (let ri = 0; ri < 8; ri++) {
-                      for (let fi = 0; fi < 8; fi++) {
-                        const p = board[ri][fi];
-                        if (p && p.type === "k" && p.color === (playerColor === "white" ? "w" : "b")) {
-                          triggerEffect("shield", [`${"abcdefgh"[fi]}${8 - ri}`]);
-                          break outer;
-                        }
-                      }
-                    }
-                    setEventLog((prev) => [...prev, { type: "chaos" as const, message: "🛡️ Your Royal Guard blocked the check!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
-                    playSound("bell");
-                  }
-                }
-              }
               setChaosState(cs2);
               setGame(activeGame);
               setSelectedSquare(null);
@@ -2719,6 +2763,19 @@ export default function ChaosChessPage() {
           }
         }
 
+        // King's Chains: don't move the piece chained by the player's king
+        const playerChainColor: Color = playerColor === "white" ? "w" : "b";
+        const chainedByPlayer = cs.assignedSquares?.[`${playerChainColor}_kings-chains`];
+        if (chainedByPlayer && bestUci && bestUci.startsWith(chainedByPlayer)) {
+          const allLegal = g.moves({ verbose: true });
+          const nonChained = allLegal.filter((mv: { from: string }) => mv.from !== chainedByPlayer);
+          if (nonChained.length > 0) {
+            const topUciOrder = topMoves.map((t) => t.bestMove ?? t.pvMoves[0]).filter(Boolean) as string[];
+            const topRanked = topUciOrder.find((u) => nonChained.some((m: { lan: string }) => m.lan === u));
+            bestUci = topRanked ?? (nonChained[0] as { lan: string }).lan;
+          }
+        }
+
         // Re-parse in case bestUci changed from fallback
         const finalFrom = bestUci!.slice(0, 2) as CbSquare;
         const finalTo = bestUci!.slice(2, 4) as CbSquare;
@@ -2766,18 +2823,6 @@ export default function ChaosChessPage() {
         let cs2 = updateTrackedPieces(cs, finalFrom, finalTo, !!moveResult.captured);
         let activeGame2 = new Chess(finalGame.fen());
 
-        // Check player's king-shield (AI moved, player may be in check)
-        if (activeGame2.isCheck()) {
-          if (cs2.playerModifiers.some((m) => m.id === "king-shield")) {
-            const shielded = applyKingShield(activeGame2, activeGame2.turn() as Color);
-            if (shielded) {
-              activeGame2 = shielded;
-              cs2 = { ...cs2, playerModifiers: cs2.playerModifiers.filter((m) => m.id !== "king-shield") };
-              setEventLog((prev) => [...prev, { type: "chaos" as const, message: "🛡️ Your Royal Guard blocked the check!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
-              playSound("bell");
-            }
-          }
-        }
         setChaosState(cs2);
         setGame(activeGame2);
         // Clear any piece selection the player may have made while the AI was thinking
@@ -3192,31 +3237,7 @@ export default function ChaosChessPage() {
         setTimers({ w: (data as any).timerWhiteMs, b: (data as any).timerBlackMs });
       }
 
-      // King-shield
-      let activeGame = g;
-      if (activeGame.isCheck()) {
-        const checkedColor: Color = activeGame.turn() as Color;
-        const isOurKingChecked = (playerColor === "white" && checkedColor === "w") || (playerColor === "black" && checkedColor === "b");
-        setChaosState((prev) => {
-          const mods = isOurKingChecked ? prev.playerModifiers : prev.aiModifiers;
-          if (mods.some((m) => m.id === "king-shield")) {
-            const shielded = applyKingShield(activeGame, checkedColor);
-            if (shielded) {
-              activeGame = shielded;
-              setGame(shielded);
-              setEventLog((p) => [...p, { type: "chaos" as const, message: "🛡️ Royal Guard activated! Check blocked — attacker destroyed!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
-              playSound("bell");
-              return {
-                ...prev,
-                ...(isOurKingChecked
-                  ? { playerModifiers: prev.playerModifiers.filter((m) => m.id !== "king-shield") }
-                  : { aiModifiers: prev.aiModifiers.filter((m) => m.id !== "king-shield") }),
-              };
-            }
-          }
-          return prev;
-        });
-      }
+      const activeGame = g;
 
       // Check game end / draft
       if (activeGame.isCheckmate() || activeGame.isStalemate() || activeGame.isDraw()) {
@@ -3415,31 +3436,7 @@ export default function ChaosChessPage() {
             setTimers({ w: data.timerWhiteMs, b: data.timerBlackMs });
           }
 
-          // King-shield: if we or opponent are in check and have shield, activate it
-          let activeGame = g;
-          if (activeGame.isCheck()) {
-            const checkedColor: Color = activeGame.turn() as Color;
-            const isOurKingChecked = (myColor === "white" && checkedColor === "w") || (myColor === "black" && checkedColor === "b");
-            setChaosState((prev) => {
-              const mods = isOurKingChecked ? prev.playerModifiers : prev.aiModifiers;
-              if (mods.some((m) => m.id === "king-shield")) {
-                const shielded = applyKingShield(activeGame, checkedColor);
-                if (shielded) {
-                  activeGame = shielded;
-                  setGame(shielded);
-                  setEventLog((p) => [...p, { type: "chaos" as const, message: "🛡️ Royal Guard activated! Check blocked — attacker destroyed!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
-                  playSound("bell");
-                  return {
-                    ...prev,
-                    ...(isOurKingChecked
-                      ? { playerModifiers: prev.playerModifiers.filter((m) => m.id !== "king-shield") }
-                      : { aiModifiers: prev.aiModifiers.filter((m) => m.id !== "king-shield") }),
-                  };
-                }
-              }
-              return prev;
-            });
-          }
+          const activeGame = g;
 
           // Check game end from FEN
           if (activeGame.isCheckmate() || activeGame.isStalemate() || activeGame.isDraw()) {
@@ -3555,6 +3552,11 @@ export default function ChaosChessPage() {
         (playerColor === "black" && game.turn() === "b");
       if (!isPlayerTurn) return false;
 
+      // King's Chains: block the piece chained by the opponent's king from moving
+      const aiChainColor = playerColor === "white" ? "b" : "w";
+      const chainedByAi = chaosState.assignedSquares?.[`${aiChainColor}_kings-chains`];
+      if (chainedByAi && from === chainedByAi) return false;
+
       // Forced En Passant: if AI has this modifier and standard EP is available, player must play it
       if (chaosState.aiModifiers.some((m) => m.id === "forced-en-passant")) {
         const epMoves = game.moves({ verbose: true }).filter(
@@ -3651,36 +3653,10 @@ export default function ChaosChessPage() {
         let cs = updateTrackedPieces(chaosState, from, to, chaosMove.type === "capture");
         let activeGame = newGame;
 
-        // Check game end FIRST — checkmate/king-capture wins immediately;
-        // king-shield must not absorb the checking piece and prevent the win.
+        // Check game end first — checkmate wins immediately
         setChaosState(cs);
         if (checkGameEnd(activeGame, chaosMove.type === "capture" ? chaosMove.to : undefined)) return true;
 
-        // Check opponent's king-shield (only if game is still ongoing)
-        if (activeGame.isCheck()) {
-          if (cs.aiModifiers.some((m) => m.id === "king-shield")) {
-            const shielded = applyKingShield(activeGame, activeGame.turn() as Color);
-            if (shielded) {
-              activeGame = shielded;
-              setGame(shielded);
-              cs = { ...cs, aiModifiers: cs.aiModifiers.filter((m) => m.id !== "king-shield") };
-              setChaosState(cs);
-              // Shield effect on the AI king's square
-              const board = activeGame.board();
-              outer: for (let ri = 0; ri < 8; ri++) {
-                for (let fi = 0; fi < 8; fi++) {
-                  const p = board[ri][fi];
-                  if (p && p.type === "k" && p.color === (playerColor === "white" ? "b" : "w")) {
-                    triggerEffect("shield", [`${"abcdefgh"[fi]}${8 - ri}`]);
-                    break outer;
-                  }
-                }
-              }
-              setEventLog((prev) => [...prev, { type: "chaos" as const, message: "🛡️ Opponent's Royal Guard blocked your check!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
-              playSound("bruh");
-            }
-          }
-        }
         const drafted = checkDraft(activeGame, cs);
 
         // Multiplayer: send to server (or hold for draft pick)
@@ -3807,7 +3783,7 @@ export default function ChaosChessPage() {
       let cs2 = updateTrackedPieces(chaosState, from, to, !!moveResult.captured);
       let activeG = newG;
 
-      // Check game end FIRST — checkmate takes priority over king-shield activation.
+      // Check game end first — checkmate takes priority.
       setChaosState(cs2);
       setGame(activeG);
       if (activeG.isCheckmate()) {
@@ -3815,31 +3791,6 @@ export default function ChaosChessPage() {
         return true;
       }
       if (checkGameEnd(activeG)) return true;
-
-      // Check opponent's king-shield (only if game is still ongoing)
-      if (activeG.isCheck()) {
-        if (cs2.aiModifiers.some((m) => m.id === "king-shield")) {
-          const shielded = applyKingShield(activeG, activeG.turn() as Color);
-          if (shielded) {
-            activeG = shielded;
-            cs2 = { ...cs2, aiModifiers: cs2.aiModifiers.filter((m) => m.id !== "king-shield") };
-            // Shield effect on the AI king
-            const board = activeG.board();
-            outer: for (let ri = 0; ri < 8; ri++) {
-              for (let fi = 0; fi < 8; fi++) {
-                const p = board[ri][fi];
-                if (p && p.type === "k" && p.color === (playerColor === "white" ? "b" : "w")) {
-                  triggerEffect("shield", [`${"abcdefgh"[fi]}${8 - ri}`]);
-                  break outer;
-                }
-              }
-            }
-            setEventLog((prev) => [...prev, { type: "chaos" as const, message: "🛡️ Opponent's Royal Guard blocked your check!", icon: "🛡️", pepe: PEPE.galaxybrain }]);
-              playSound("bruh");
-            setGame(activeG);
-          }
-        }
-      }
 
       const drafted = checkDraft(activeG, cs2);
 

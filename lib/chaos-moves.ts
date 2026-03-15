@@ -1689,6 +1689,37 @@ export function findCheckingSquares(game: Chess, checkedColor: Color): Square[] 
 }
 
 /**
+ * Compute which enemy square the Kings-Chains modifier should freeze.
+ * Returns the square of the highest-value enemy piece adjacent to `ownerColor`'s
+ * king, or null if none are adjacent.
+ */
+export function computeChainedSquare(
+  game: Chess,
+  ownerColor: Color,
+): string | null {
+  const enemyColor: Color = ownerColor === "w" ? "b" : "w";
+  const kingSquares = allSquaresOf(game, "k", ownerColor);
+  if (kingSquares.length === 0) return null;
+  const [kf, kr] = sqToCoords(kingSquares[0]);
+
+  let bestSq: string | null = null;
+  let bestVal = 0;
+
+  for (const [df, dr] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]] as [number,number][]) {
+    const s = sq(kf + df, kr + dr);
+    if (!s) continue;
+    const piece = game.get(s as Square);
+    if (!piece || piece.color !== enemyColor || piece.type === "k") continue;
+    const val = PIECE_VALUE_CP[piece.type] ?? 0;
+    if (val > bestVal) {
+      bestVal = val;
+      bestSq = s;
+    }
+  }
+  return bestSq;
+}
+
+/**
  * Activate the King Shield: remove the first checking piece from the board.
  * Returns a new Chess instance with the checking piece removed, or null if
  * the position isn't actually in check.
@@ -1698,20 +1729,66 @@ export function applyKingShield(game: Chess, checkedColor: Color): Chess | null 
   const checkers = findCheckingSquares(game, checkedColor);
   if (checkers.length === 0) return null;
 
-  // The check is "ignored" — the Royal Guard blocks the check WITHOUT destroying
-  // the attacker's piece. The attacker's turn comes back so they must re-check
-  // from the same position (their piece stays where it landed).
+  // Flip the turn back to the attacker so they must make another move.
+  const attackerColor: Color = checkedColor === "w" ? "b" : "w";
   const fenParts = game.fen().split(" ");
-  // Currently it is checkedColor's turn (they're in check).
-  // Flip back to the attacker so they must move again.
-  fenParts[1] = checkedColor === "w" ? "b" : "w";
+  fenParts[1] = attackerColor;
   fenParts[3] = "-"; // reset en passant
 
+  let shielded: Chess;
   try {
-    return new Chess(fenParts.join(" "));
+    shielded = new Chess(fenParts.join(" "));
   } catch {
     return null;
   }
+
+  // Find the defended king
+  const kingSquares = allSquaresOf(shielded, "k", checkedColor);
+  if (kingSquares.length === 0) return null;
+  const kingSq = kingSquares[0];
+  const [kf, kr] = sqToCoords(kingSq);
+
+  // Prevent the attacker from immediately capturing the king on the very next move.
+  // For each checking piece:
+  //   - knights / adjacent pieces: remove the checker (guard absorbed the attack)
+  //   - sliding pieces at distance > 1: insert a guard pawn between them and the king
+  for (const checkerSq of checkers) {
+    const piece = shielded.get(checkerSq as Square);
+    if (!piece) continue;
+
+    const [cf, cr] = sqToCoords(checkerSq as Square);
+    const dist = Math.max(Math.abs(kf - cf), Math.abs(kr - cr));
+
+    if (piece.type === "n" || dist <= 1) {
+      // Cannot be blocked by an interposing pawn — remove the checker
+      shielded.remove(checkerSq as Square);
+      continue;
+    }
+
+    // Sliding piece at distance > 1: walk from checker toward king and place a
+    // guard pawn on the first empty, non-promotion-rank square in that ray.
+    const dtf = Math.sign(kf - cf);
+    const dtr = Math.sign(kr - cr);
+    let inserted = false;
+    let sf = cf + dtf;
+    let sr = cr + dtr;
+    while (sf !== kf || sr !== kr) {
+      const guardSq = sq(sf, sr);
+      if (guardSq && !shielded.get(guardSq as Square) && sr > 0 && sr < 7) {
+        shielded.put({ type: "p", color: checkedColor }, guardSq as Square);
+        inserted = true;
+        break;
+      }
+      sf += dtf;
+      sr += dtr;
+    }
+    if (!inserted) {
+      // No safe interposing square — remove the checker
+      shielded.remove(checkerSq as Square);
+    }
+  }
+
+  return shielded;
 }
 
 /**
