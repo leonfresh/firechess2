@@ -137,6 +137,8 @@ export default function HomePage() {
   const [posExplainModalOpen, setPosExplainModalOpen] = useState(false);
   const [posExplainRich, setPosExplainRich] = useState<PositionExplanation | null>(null);
   const [posExplainAnimUci, setPosExplainAnimUci] = useState<string[]>([]);
+  const [posExplainAltUci, setPosExplainAltUci] = useState<string[]>([]);
+  const [posExplainAltLabel, setPosExplainAltLabel] = useState<string | undefined>();
   const [posExplainFen, setPosExplainFen] = useState("");
   const [posExplainOrientation, setPosExplainOrientation] = useState<"white" | "black">("white");
   const [posExplainTitle, setPosExplainTitle] = useState("");
@@ -3014,6 +3016,8 @@ export default function HomePage() {
                                   // ── Compute the BEST continuation (like the openings modal) ──
                                   let fullBestLine: string[] = [];
                                   let bestSan = bestUci;
+                                  let fullNaturalLine: string[] = [];
+                                  let naturalLabel: string | undefined;
                                   try {
                                     const bestChess = new Chess(ex.fenBefore);
                                     const bestIsUci = /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(bestUci);
@@ -3059,6 +3063,31 @@ export default function HomePage() {
                                       if (outlook.summary) rich.observations.push(`**Position outlook**: ${outlook.summary}`);
                                       for (const d of outlook.details) rich.observations.push(`  · ${d}`);
                                     } catch { /* skip outlook */ }
+
+                                    // ── Detect natural recapture ("if they take?") ──
+                                    try {
+                                      const destSq = bestIsUci ? bestUci.slice(2, 4) : (bestChess.history({ verbose: true }).slice(-1)[0]?.to ?? "");
+                                      const oppMoves = bestChess.moves({ verbose: true });
+                                      const captureMoves = oppMoves.filter(m => m.to === destSq && (m.flags.includes('c') || m.flags.includes('e')));
+                                      if (captureMoves.length > 0) {
+                                        const pieceOrder: string[] = ['p','n','b','r','q','k'];
+                                        captureMoves.sort((a, b) => pieceOrder.indexOf(a.piece) - pieceOrder.indexOf(b.piece));
+                                        const recapture = captureMoves[0];
+                                        const recaptureUci = `${recapture.from}${recapture.to}${recapture.promotion ?? ''}`;
+                                        // Set the 2-move baseline immediately so the toggle always shows
+                                        fullNaturalLine = [bestUci, recaptureUci];
+                                        naturalLabel = `If ${recapture.san}?`;
+                                        // Then try to extend with engine continuation
+                                        try {
+                                          const afterRecapChess = new Chess(bestChess.fen());
+                                          afterRecapChess.move({ from: recapture.from, to: recapture.to, promotion: recapture.promotion as PieceSymbol | undefined });
+                                          const recapPv = await stockfishClient.getPrincipalVariation(afterRecapChess.fen(), 9, 10);
+                                          if (recapPv?.pvMoves?.length) {
+                                            fullNaturalLine = [bestUci, recaptureUci, ...recapPv.pvMoves];
+                                          }
+                                        } catch { /* keep 2-move baseline */ }
+                                      }
+                                    } catch { /* skip natural recapture */ }
                                   } catch { /* skip best PV */ }
 
                                   // Also add the punishment line for context
@@ -3089,6 +3118,8 @@ export default function HomePage() {
                                   setPosExplainRich(rich);
                                   // Animate the BEST continuation (like the openings modal)
                                   setPosExplainAnimUci(fullBestLine.length > 0 ? fullBestLine : [playedUci]);
+                                  setPosExplainAltUci(fullNaturalLine);
+                                  setPosExplainAltLabel(naturalLabel);
                                   setPosExplainFen(ex.fenBefore);
                                   setPosExplainOrientation(sideToMove === "black" ? "black" : "white");
                                   setPosExplainTitle(`Best Move: ${bestSan}`);
@@ -3210,6 +3241,8 @@ export default function HomePage() {
                   richExplanation={posExplainRich}
                   fen={posExplainFen}
                   uciMoves={posExplainAnimUci}
+                  altUciMoves={posExplainAltUci.length > 0 ? posExplainAltUci : undefined}
+                  altUciLabel={posExplainAltLabel}
                   boardOrientation={posExplainOrientation}
                   autoPlay
                   title={posExplainTitle}

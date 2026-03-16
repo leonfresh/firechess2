@@ -43,6 +43,10 @@ export type ExplanationModalProps = {
   fen?: string;
   /** UCI moves to animate on the board */
   uciMoves?: string[];
+  /** Alternate UCI line to toggle to (e.g. "if they take?") */
+  altUciMoves?: string[];
+  /** Label shown on the alternate-line toggle button */
+  altUciLabel?: string;
   /** Board orientation */
   boardOrientation?: "white" | "black";
   /** Auto-start playback after a short delay when the modal opens */
@@ -108,6 +112,8 @@ export function ExplanationModal({
   subtitle,
   fen: startFen,
   uciMoves,
+  altUciMoves,
+  altUciLabel,
   boardOrientation = "white",
   autoPlay,
 }: ExplanationModalProps) {
@@ -121,6 +127,15 @@ export function ExplanationModal({
     () => (startFen && uciMoves?.length ? buildSteps(startFen, uciMoves) : []),
     [startFen, uciMoves],
   );
+  const altSteps = useMemo(
+    () => (startFen && altUciMoves?.length ? buildSteps(startFen, altUciMoves) : []),
+    [startFen, altUciMoves],
+  );
+  const [activeLine, setActiveLine] = useState<0 | 1>(0);
+  const activeSteps = useMemo(
+    () => activeLine === 1 && altSteps.length > 0 ? altSteps : steps,
+    [activeLine, steps, altSteps],
+  );
   const [stepIdx, setStepIdx] = useState(-1); // -1 = starting position
   const [playing, setPlaying] = useState(false);
   const [evalCp, setEvalCp] = useState<number | null>(null);
@@ -128,7 +143,7 @@ export function ExplanationModal({
   const boardContainerRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState(320);
 
-  const currentFen = stepIdx < 0 ? (startFen ?? "start") : (steps[stepIdx]?.fen ?? startFen ?? "start");
+  const currentFen = stepIdx < 0 ? (startFen ?? "start") : (activeSteps[stepIdx]?.fen ?? startFen ?? "start");
   const hasBoard = !!startFen;
 
   /* ── Board sizing ── */
@@ -153,6 +168,7 @@ export function ExplanationModal({
       setStepIdx(-1);
       setPlaying(false);
       setEvalCp(null);
+      setActiveLine(0);
 
       // Auto-start playback after a short delay
       if (autoPlay && steps.length > 0) {
@@ -169,10 +185,10 @@ export function ExplanationModal({
   /* ── Auto-play timer ── */
   useEffect(() => {
     if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
-    if (!playing || steps.length === 0) return;
+    if (!playing || activeSteps.length === 0) return;
     const id = setInterval(() => {
       setStepIdx(prev => {
-        if (prev >= steps.length - 1) {
+        if (prev >= activeSteps.length - 1) {
           setPlaying(false);
           return prev;
         }
@@ -181,7 +197,7 @@ export function ExplanationModal({
     }, 1500);
     intervalRef.current = id;
     return () => clearInterval(id);
-  }, [playing, steps.length]);
+  }, [playing, activeSteps.length]);
 
   /* ── Eval updates for each step ── */
   useEffect(() => {
@@ -215,11 +231,16 @@ export function ExplanationModal({
   /* ── Playback controls ── */
   const goFirst = () => { setPlaying(false); setStepIdx(-1); };
   const goPrev = () => { setPlaying(false); setStepIdx(p => Math.max(-1, p - 1)); };
-  const goNext = () => { setPlaying(false); setStepIdx(p => Math.min(steps.length - 1, p + 1)); };
-  const goLast = () => { setPlaying(false); setStepIdx(steps.length - 1); };
+  const goNext = () => { setPlaying(false); setStepIdx(p => Math.min(activeSteps.length - 1, p + 1)); };
+  const goLast = () => { setPlaying(false); setStepIdx(activeSteps.length - 1); };
   const togglePlay = () => {
-    if (stepIdx >= steps.length - 1) { setStepIdx(-1); setPlaying(true); }
+    if (stepIdx >= activeSteps.length - 1) { setStepIdx(-1); setPlaying(true); }
     else setPlaying(p => !p);
+  };
+  const handleSwitchLine = (line: 0 | 1) => {
+    setActiveLine(line);
+    setStepIdx(-1);
+    setPlaying(false);
   };
 
   if (!open) return null;
@@ -299,14 +320,38 @@ export function ExplanationModal({
                 </div>
               </div>
 
+              {/* Line toggle — shown when alternate line is provided */}
+              {altSteps.length > 0 && (
+                <div className="w-full max-w-[460px] flex gap-1 rounded-xl border border-white/[0.06] bg-white/[0.02] p-1">
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchLine(0)}
+                    className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                      activeLine === 0 ? `${colors.pill}` : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    ✓ Best Line
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSwitchLine(1)}
+                    className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+                      activeLine === 1 ? "bg-rose-500/15 text-rose-400" : "text-slate-400 hover:text-white"
+                    }`}
+                  >
+                    ⚔️ {altUciLabel ?? "If they take?"}
+                  </button>
+                </div>
+              )}
+
               {/* Move list display */}
-              {steps.length > 0 && (
+              {activeSteps.length > 0 && (
                 <div className="w-full max-w-[460px] rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
                   <div className="flex flex-wrap gap-1">
-                    {steps.map((s, i) => {
+                    {activeSteps.map((s, i) => {
                       const moveNum = (() => {
                         try {
-                          const prevFen = i === 0 ? startFen! : steps[i - 1].fen;
+                          const prevFen = i === 0 ? startFen! : activeSteps[i - 1].fen;
                           const turn = new Chess(prevFen).turn();
                           const fullMove = parseInt(prevFen!.split(" ")[5] ?? "1");
                           return turn === "w" ? `${fullMove}.` : (i === 0 || new Chess(steps[i - 1].fen).turn() === "w" ? `${fullMove}...` : null);
@@ -333,7 +378,7 @@ export function ExplanationModal({
               )}
 
               {/* Playback controls */}
-              {steps.length > 0 && (
+              {activeSteps.length > 0 && (
                 <div className="flex items-center gap-1.5">
                   <button type="button" onClick={goFirst} disabled={stepIdx <= -1}
                     className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">
@@ -353,16 +398,16 @@ export function ExplanationModal({
                       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                     )}
                   </button>
-                  <button type="button" onClick={goNext} disabled={stepIdx >= steps.length - 1}
+                  <button type="button" onClick={goNext} disabled={stepIdx >= activeSteps.length - 1}
                     className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
                   </button>
-                  <button type="button" onClick={goLast} disabled={stepIdx >= steps.length - 1}
+                  <button type="button" onClick={goLast} disabled={stepIdx >= activeSteps.length - 1}
                     className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="13 19 22 12 13 5"/><line x1="2" y1="5" x2="2" y2="19"/></svg>
                   </button>
                   <span className="ml-2 text-[11px] font-mono text-slate-500 tabular-nums">
-                    {stepIdx + 1 < 0 ? 0 : stepIdx + 1}/{steps.length}
+                    {stepIdx + 1 < 0 ? 0 : stepIdx + 1}/{activeSteps.length}
                   </span>
                 </div>
               )}

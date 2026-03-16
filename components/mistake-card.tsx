@@ -257,6 +257,8 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   const [activeExplainTab, setActiveExplainTab] = useState<"played" | "best" | "db" | null>(null);
   const [explainModalOpen, setExplainModalOpen] = useState(false);
   const [animLineUci, setAnimLineUci] = useState<string[]>([]);
+  const [altLineUci, setAltLineUci] = useState<string[]>([]);
+  const [altLineLabel, setAltLineLabel] = useState<string | undefined>();
   const [fenCopied, setFenCopied] = useState(false);
   const [boardInstance, setBoardInstance] = useState(0);
   const timerIds = useRef<number[]>([]);
@@ -1005,6 +1007,8 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     setRichExplanation(null);
     setActiveExplainTab("played");
     setAnimLineUci([]);
+    setAltLineUci([]);
+    setAltLineLabel(undefined);
 
     try {
       const playedUci = moveToUci(badMove);
@@ -1076,6 +1080,8 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     setRichExplanation(null);
     setActiveExplainTab("best");
     setAnimLineUci([]);
+    setAltLineUci([]);
+    setAltLineLabel(undefined);
 
     try {
       const bestUci = moveToUci(bestMove);
@@ -1134,6 +1140,35 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
         } : prev);
       }
 
+      // ── Detect natural recapture ("if they take?") ──
+      let fullNaturalLine: string[] = [];
+      let naturalLabel: string | undefined;
+      try {
+        const destSq = bestUci.slice(2, 4);
+        const oppMoves = bestFenChess.moves({ verbose: true });
+        const captureMoves = oppMoves.filter(m => m.to === destSq && (m.flags.includes('c') || m.flags.includes('e')));
+        if (captureMoves.length > 0) {
+          const pieceOrder: string[] = ['p','n','b','r','q','k'];
+          captureMoves.sort((a, b) => pieceOrder.indexOf(a.piece) - pieceOrder.indexOf(b.piece));
+          const recapture = captureMoves[0];
+          const recaptureUci = `${recapture.from}${recapture.to}${recapture.promotion ?? ''}`;
+          // Set the 2-move baseline immediately
+          fullNaturalLine = [bestUci, recaptureUci];
+          naturalLabel = `If ${recapture.san}?`;
+          // Then try to extend with engine continuation
+          try {
+            const afterRecapChess = new Chess(bestFenChess.fen());
+            afterRecapChess.move({ from: recapture.from, to: recapture.to, promotion: recapture.promotion as PieceSymbol | undefined });
+            const recapPv = await stockfishClient.getPrincipalVariation(afterRecapChess.fen(), 9, engineDepth);
+            if (recapPv?.pvMoves?.length) {
+              fullNaturalLine = [bestUci, recaptureUci, ...recapPv.pvMoves];
+            }
+          } catch { /* keep 2-move baseline */ }
+        }
+      } catch { /* skip natural recapture */ }
+
+      setAltLineUci(fullNaturalLine);
+      setAltLineLabel(naturalLabel);
       setAnimLineUci(fullBestLine);
       setExplainModalOpen(true);
     } catch (error) {
@@ -1953,6 +1988,8 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
             plainExplanation={explanation || undefined}
             fen={leak.fenBefore}
             uciMoves={animLineUci}
+            altUciMoves={activeExplainTab === "best" && altLineUci.length > 0 ? altLineUci : undefined}
+            altUciLabel={activeExplainTab === "best" ? altLineLabel : undefined}
             boardOrientation={boardOrientation}
             autoPlay
             title={
