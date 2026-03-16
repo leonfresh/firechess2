@@ -1816,6 +1816,106 @@ export default function HomePage() {
                 </div>
               </div>
 
+              {/* ── Scan Overview — Big Typography ── */}
+              {state === "done" && (
+                <div className="relative overflow-hidden rounded-2xl border border-white/[0.06] p-8 md:p-10">
+                  <div className="pointer-events-none absolute -right-32 -top-32 h-80 w-80 rounded-full bg-emerald-500/[0.06] blur-[110px]" />
+                  <div className="pointer-events-none absolute -left-32 bottom-0 h-80 w-80 rounded-full bg-violet-500/[0.06] blur-[110px]" />
+                  <div className="pointer-events-none absolute left-1/3 top-1/2 h-48 w-48 -translate-y-1/2 rounded-full bg-cyan-500/[0.04] blur-[80px]" />
+                  <div className="relative">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-emerald-400/70">
+                      Scan complete &middot; {result.gamesAnalyzed} games &middot; Stockfish 18
+                    </p>
+                    <h2 className="mt-3 text-4xl font-black leading-[1.05] tracking-tight text-white md:text-5xl xl:text-[3.5rem]">
+                      Here&apos;s everything<br />
+                      <span className="bg-gradient-to-r from-emerald-400 via-cyan-400 to-violet-400 bg-clip-text text-transparent">
+                        we found.
+                      </span>
+                    </h2>
+                    <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-400">
+                      Every position in your first <span className="font-medium text-slate-300">{lastRunConfig?.maxMoves ?? moveCount} moves</span> was compared against the engine. Jump to any section below for the full breakdown.
+                    </p>
+
+                    {/* Section jump pills */}
+                    <div className="mt-7 flex flex-wrap gap-2.5">
+                      {report && (
+                        <button type="button" onClick={() => document.getElementById("section-report")?.scrollIntoView({ behavior: "smooth", block: "start" })} className="flex items-center gap-2 rounded-xl border border-fuchsia-500/20 bg-fuchsia-500/[0.07] px-4 py-2.5 text-sm font-semibold text-fuchsia-300 transition-all hover:border-fuchsia-500/35 hover:bg-fuchsia-500/[0.12] cursor-pointer">
+                          <span>📋</span>
+                          <span>Opening Report</span>
+                          <span className="rounded-full bg-fuchsia-500/15 px-2 py-0.5 text-xs font-bold text-fuchsia-400">{report.estimatedAccuracy.toFixed(0)}% acc</span>
+                        </button>
+                      )}
+                      {(leaks.length > 0 || oneOffMistakes.length > 0) && (
+                        <button type="button" onClick={() => document.getElementById("section-openings")?.scrollIntoView({ behavior: "smooth", block: "start" })} className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.07] px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-all hover:border-emerald-500/35 hover:bg-emerald-500/[0.12] cursor-pointer">
+                          <span>📖</span>
+                          <span>Opening Mistakes</span>
+                          <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-bold text-emerald-400">{leaks.length + oneOffMistakes.length}</span>
+                        </button>
+                      )}
+                      {positionalMotifs.length > 0 && (
+                        <button type="button" onClick={() => { document.getElementById("section-positional")?.scrollIntoView({ behavior: "smooth", block: "start" }); setPatternsOpen(true); }} className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/[0.07] px-4 py-2.5 text-sm font-semibold text-amber-300 transition-all hover:border-amber-500/35 hover:bg-amber-500/[0.12] cursor-pointer">
+                          <span>🧠</span>
+                          <span>Positional Patterns</span>
+                          <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-bold text-amber-400">{positionalMotifs.length}</span>
+                        </button>
+                      )}
+                      {missedTactics.length > 0 && (
+                        <button type="button" onClick={() => { document.getElementById("section-tactics")?.scrollIntoView({ behavior: "smooth", block: "start" }); setTacticsOpen(true); }} className="flex items-center gap-2 rounded-xl border border-yellow-500/20 bg-yellow-500/[0.07] px-4 py-2.5 text-sm font-semibold text-yellow-300 transition-all hover:border-yellow-500/35 hover:bg-yellow-500/[0.12] cursor-pointer">
+                          <span>⚡</span>
+                          <span>Missed Tactics</span>
+                          <span className="rounded-full bg-yellow-500/15 px-2 py-0.5 text-xs font-bold text-yellow-400">{missedTactics.length}</span>
+                        </button>
+                      )}
+                      {endgameMistakes.length > 0 && (
+                        <button type="button" onClick={() => { document.getElementById("section-endgames")?.scrollIntoView({ behavior: "smooth", block: "start" }); setEndgamesOpen(true); }} className="flex items-center gap-2 rounded-xl border border-sky-500/20 bg-sky-500/[0.07] px-4 py-2.5 text-sm font-semibold text-sky-300 transition-all hover:border-sky-500/35 hover:bg-sky-500/[0.12] cursor-pointer">
+                          <span>♟️</span>
+                          <span>Endgame Analysis</span>
+                          <span className="rounded-full bg-sky-500/15 px-2 py-0.5 text-xs font-bold text-sky-400">{endgameMistakes.length}</span>
+                        </button>
+                      )}
+                      {result.mentalStats && (
+                        <button type="button" onClick={() => document.getElementById("section-mental")?.scrollIntoView({ behavior: "smooth", block: "start" })} className="flex items-center gap-2 rounded-xl border border-violet-500/20 bg-violet-500/[0.07] px-4 py-2.5 text-sm font-semibold text-violet-300 transition-all hover:border-violet-500/35 hover:bg-violet-500/[0.12] cursor-pointer">
+                          <span>🧘</span>
+                          <span>Mental Game</span>
+                        </button>
+                      )}
+                      {(missedTactics.length > 0 || endgameMistakes.length > 0 || leaks.length > 0) && (
+                        <button type="button" onClick={() => document.getElementById("section-training")?.scrollIntoView({ behavior: "smooth", block: "start" })} className="flex items-center gap-2 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.07] px-4 py-2.5 text-sm font-semibold text-cyan-300 transition-all hover:border-cyan-500/35 hover:bg-cyan-500/[0.12] cursor-pointer">
+                          <span>🎯</span>
+                          <span>Training Puzzles</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Positional DNA strip */}
+                    {positionalMotifs.length > 0 && (
+                      <div className="mt-6 border-t border-white/[0.05] pt-5">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">Recurring positional habits in your games</p>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {positionalMotifs.map(m => {
+                            const pat = POSITIONAL_PATTERNS.find(p => m.name.startsWith(p.label) || m.name.includes(p.tag));
+                            const motifMax = Math.max(...positionalMotifs.map(x => x.count));
+                            const severity = m.count >= Math.ceil(motifMax * 0.7) ? "border-red-500/25 bg-red-500/[0.06] text-red-300 hover:bg-red-500/[0.1]" : m.count >= Math.ceil(motifMax * 0.4) ? "border-amber-500/25 bg-amber-500/[0.06] text-amber-300 hover:bg-amber-500/[0.1]" : "border-white/[0.08] bg-white/[0.04] text-slate-300 hover:bg-white/[0.07]";
+                            return (
+                              <button
+                                key={m.name}
+                                type="button"
+                                onClick={() => { document.getElementById("section-positional")?.scrollIntoView({ behavior: "smooth", block: "start" }); setPatternsOpen(true); }}
+                                className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all hover:scale-[1.03] cursor-pointer ${severity}`}
+                              >
+                                <span>{pat?.icon ?? m.icon}</span>
+                                <span>{m.name}</span>
+                                <span className="font-normal opacity-55">×{m.count}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* ── PNG-exportable region ── */}
               {/* Loading banner: shown while mental stats / diagnostics are still computing */}
               {state === "loading" && !sectionsDone.has("mental") && (
@@ -1840,7 +1940,7 @@ export default function HomePage() {
 
               {/* Report Card */}
               {report && (
-                <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] p-6 md:p-8">
+                <div id="section-report" className="relative overflow-hidden rounded-2xl border border-white/[0.08] p-6 md:p-8">
                   {/* Decorative gradient background */}
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-fuchsia-500/[0.08] via-emerald-500/[0.05] to-cyan-500/[0.08]" />
                   <div className="pointer-events-none absolute -right-20 -top-20 h-40 w-40 rounded-full bg-fuchsia-500/10 blur-[60px]" />
@@ -1978,7 +2078,7 @@ export default function HomePage() {
 
               {/* Mental / Psychology Stats */}
               {result?.mentalStats && (
-                <div className="relative overflow-hidden rounded-2xl border border-white/[0.08] p-6 md:p-8">
+                <div id="section-mental" className="relative overflow-hidden rounded-2xl border border-white/[0.08] p-6 md:p-8">
                   {/* Decorative gradient background */}
                   <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.08] via-amber-500/[0.05] to-rose-500/[0.08]" />
                   <div className="pointer-events-none absolute -right-20 -top-20 h-40 w-40 rounded-full bg-violet-500/10 blur-[60px]" />
@@ -2356,7 +2456,9 @@ export default function HomePage() {
 
               {/* ─── Personalized Puzzles ─── */}
               {(missedTactics.length > 0 || endgameMistakes.length > 0 || leaks.length > 0) && (
+                <div id="section-training">
                 <PersonalizedPuzzles tactics={missedTactics} endgames={endgameMistakes} leaks={leaks} onExpandedChange={setPuzzleBoardOpen} />
+                </div>
               )}
 
               </div>{/* end pngRef wrapper */}
@@ -2400,7 +2502,7 @@ export default function HomePage() {
 
               {/* ─── Opening Analysis — Folder Tabs ─── */}
               {(lastRunConfig?.scanMode === "openings" || lastRunConfig?.scanMode === "both") && (
-              <div>
+              <div id="section-openings">
                 {/* Folder tab bar */}
                 <div className="flex items-end gap-0.5 px-1">
                   {/* Mistakes tab */}
@@ -2690,50 +2792,90 @@ export default function HomePage() {
               {/* ─── Positional Patterns — Standalone Section ─── */}
               {(lastRunConfig?.scanMode === "openings" || lastRunConfig?.scanMode === "both") && positionalMotifs.length > 0 && (
               <>
-              <div className="my-4">
+              <div id="section-positional" className="my-4">
                 <div className="section-divider" />
               </div>
-              <button type="button" onClick={() => setPatternsOpen(o => !o)} className="glass-card border-amber-500/15 bg-gradient-to-r from-amber-500/[0.04] to-transparent p-6 w-full text-left cursor-pointer transition-colors hover:border-amber-500/25">
-                <div className="flex items-center gap-4">
-                  <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10">🧠</span>
-                  <div className="flex-1">
-                    <h2 className="text-2xl font-extrabold text-white tracking-tight">
-                      Positional Patterns
-                      <span className="ml-3 inline-flex items-center rounded-full bg-amber-500/15 px-3 py-1 text-base font-bold text-amber-400">
-                        {positionalMotifs.length}
-                      </span>
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-400">
-                      Recurring positional habits detected across your games — premature trades, released tension, passive retreats, and more
-                    </p>
+              <button type="button" onClick={() => setPatternsOpen(o => !o)} className="w-full text-left cursor-pointer group">
+                <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.07] via-amber-500/[0.03] to-transparent p-6 transition-all hover:border-amber-500/30 hover:from-amber-500/[0.1]">
+                  <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-amber-500/[0.08] blur-[60px]" />
+                  <div className="relative flex items-center gap-4">
+                    <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-amber-500/15 text-3xl shadow-lg shadow-amber-500/10 ring-1 ring-amber-500/20">
+                      🧠
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <h2 className="text-2xl font-extrabold text-white tracking-tight">Positional Patterns</h2>
+                        <span className="inline-flex items-center rounded-full bg-amber-500/15 px-3 py-1 text-sm font-bold text-amber-400 ring-1 ring-amber-500/20">
+                          {positionalMotifs.length} found
+                        </span>
+                        {positionalMotifs.reduce((s, m) => s + m.count, 0) > 0 && (
+                          <span className="inline-flex items-center rounded-full bg-white/[0.05] px-3 py-1 text-xs font-medium text-slate-400">
+                            {positionalMotifs.reduce((s, m) => s + m.count, 0)} total occurrences
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1.5 text-sm text-slate-400 leading-relaxed">
+                        Recurring positional habits detected from your games — these subtle decisions quietly cost you material and position.
+                      </p>
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`shrink-0 text-slate-400 transition-transform duration-200 ${patternsOpen ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
                   </div>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`shrink-0 text-slate-400 transition-transform duration-200 ${patternsOpen ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
                 </div>
               </button>
 
               {patternsOpen && (
-              <div className="space-y-3">
-                {positionalMotifs.map((motif) => {
+              <div className="space-y-4">
+                {/* Patterns overview header */}
+                {positionalMotifs.length > 0 && (
+                  <div className="rounded-2xl border border-amber-500/12 bg-gradient-to-r from-amber-500/[0.05] to-transparent px-5 py-4">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-400/70">Your Positional DNA</p>
+                        <p className="mt-1 text-sm text-slate-300 leading-relaxed">
+                          {positionalMotifs.length === 1
+                            ? "One recurring habit stands out across your games."
+                            : `${positionalMotifs.length} recurring habits detected — the ones at the top are your highest-priority fixes.`}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {positionalMotifs.slice(0, 3).map(m => {
+                          const pat = POSITIONAL_PATTERNS.find(p => m.name.startsWith(p.label) || m.name.includes(p.tag));
+                          return (
+                            <span key={m.name} className="inline-flex items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/[0.08] px-2.5 py-1 text-[11px] font-semibold text-amber-300">
+                              {pat?.icon ?? m.icon} {m.name} <span className="opacity-60">×{m.count}</span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {positionalMotifs.map((motif, motifIdx) => {
                   const pattern = POSITIONAL_PATTERNS.find(p => motif.name.startsWith(p.label) || motif.name.includes(p.tag));
                   const quote = pattern?.quote;
                   const author = pattern?.author;
                   const icon = pattern?.icon ?? motif.icon;
-                  const colorMap: Record<string, string> = {
-                    amber: "border-amber-500/20 bg-amber-500/[0.04]",
-                    orange: "border-orange-500/20 bg-orange-500/[0.04]",
-                    rose: "border-rose-500/20 bg-rose-500/[0.04]",
-                    red: "border-red-500/20 bg-red-500/[0.04]",
-                    slate: "border-slate-500/20 bg-slate-500/[0.04]",
-                    violet: "border-violet-500/20 bg-violet-500/[0.04]",
-                    yellow: "border-yellow-500/20 bg-yellow-500/[0.04]",
-                    blue: "border-blue-500/20 bg-blue-500/[0.04]",
-                    cyan: "border-cyan-500/20 bg-cyan-500/[0.04]",
-                    indigo: "border-indigo-500/20 bg-indigo-500/[0.04]",
-                    teal: "border-teal-500/20 bg-teal-500/[0.04]",
+                  const colorMap: Record<string, { card: string; bar: string; ring: string; chip: string; icon: string }> = {
+                    amber:  { card: "border-amber-500/20 bg-amber-500/[0.03]",   bar: "bg-amber-400",   ring: "ring-amber-500/25",   chip: "bg-amber-500/15 text-amber-400",   icon: "bg-amber-500/15 shadow-amber-500/10" },
+                    orange: { card: "border-orange-500/20 bg-orange-500/[0.03]", bar: "bg-orange-400",  ring: "ring-orange-500/25",  chip: "bg-orange-500/15 text-orange-400",  icon: "bg-orange-500/15 shadow-orange-500/10" },
+                    rose:   { card: "border-rose-500/20 bg-rose-500/[0.03]",     bar: "bg-rose-400",    ring: "ring-rose-500/25",    chip: "bg-rose-500/15 text-rose-400",     icon: "bg-rose-500/15 shadow-rose-500/10" },
+                    red:    { card: "border-red-500/20 bg-red-500/[0.03]",       bar: "bg-red-400",     ring: "ring-red-500/25",     chip: "bg-red-500/15 text-red-400",      icon: "bg-red-500/15 shadow-red-500/10" },
+                    slate:  { card: "border-slate-500/20 bg-slate-500/[0.03]",   bar: "bg-slate-400",   ring: "ring-slate-500/25",   chip: "bg-slate-500/15 text-slate-300",   icon: "bg-slate-500/15 shadow-slate-500/10" },
+                    violet: { card: "border-violet-500/20 bg-violet-500/[0.03]", bar: "bg-violet-400",  ring: "ring-violet-500/25",  chip: "bg-violet-500/15 text-violet-400",  icon: "bg-violet-500/15 shadow-violet-500/10" },
+                    yellow: { card: "border-yellow-500/20 bg-yellow-500/[0.03]", bar: "bg-yellow-400",  ring: "ring-yellow-500/25",  chip: "bg-yellow-500/15 text-yellow-400",  icon: "bg-yellow-500/15 shadow-yellow-500/10" },
+                    blue:   { card: "border-blue-500/20 bg-blue-500/[0.03]",     bar: "bg-blue-400",    ring: "ring-blue-500/25",    chip: "bg-blue-500/15 text-blue-400",     icon: "bg-blue-500/15 shadow-blue-500/10" },
+                    cyan:   { card: "border-cyan-500/20 bg-cyan-500/[0.03]",     bar: "bg-cyan-400",    ring: "ring-cyan-500/25",    chip: "bg-cyan-500/15 text-cyan-400",     icon: "bg-cyan-500/15 shadow-cyan-500/10" },
+                    indigo: { card: "border-indigo-500/20 bg-indigo-500/[0.03]", bar: "bg-indigo-400",  ring: "ring-indigo-500/25",  chip: "bg-indigo-500/15 text-indigo-400",  icon: "bg-indigo-500/15 shadow-indigo-500/10" },
+                    teal:   { card: "border-teal-500/20 bg-teal-500/[0.03]",     bar: "bg-teal-400",    ring: "ring-teal-500/25",    chip: "bg-teal-500/15 text-teal-400",     icon: "bg-teal-500/15 shadow-teal-500/10" },
                   };
-                  const borderClass = colorMap[pattern?.color ?? "amber"] ?? colorMap.amber;
+                  const colors = colorMap[pattern?.color ?? "amber"] ?? colorMap.amber;
                   const ratio = motif.avgCpLoss < 99000 ? motif.avgCpLoss : 0;
                   const severityColor = ratio >= 15000 ? "text-red-400" : ratio >= 8000 ? "text-amber-400" : "text-yellow-400";
+                  const motifMax = Math.max(...positionalMotifs.map(m => m.count));
+                  const freqPct = Math.max(8, Math.round((motif.count / motifMax) * 100));
+                  const priorityLabel = motifIdx === 0 ? "Top Priority" : motif.count >= Math.ceil(motifMax * 0.6) ? "High Impact" : motif.count >= Math.ceil(motifMax * 0.3) ? "Watch Out" : "Minor Habit";
+                  const priorityClass = motifIdx === 0 ? "bg-red-500/15 text-red-400 ring-1 ring-red-500/20" : motif.count >= Math.ceil(motifMax * 0.6) ? "bg-orange-500/15 text-orange-400 ring-1 ring-orange-500/20" : motif.count >= Math.ceil(motifMax * 0.3) ? "bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/20" : "bg-white/[0.05] text-slate-400";
 
                   const isExpanded = expandedMotifs.has(motif.name);
                   const toggleExpand = () => setExpandedMotifs(prev => {
@@ -2745,48 +2887,84 @@ export default function HomePage() {
                   const hasExamples = motif.examples.length > 0;
 
                   return (
-                    <div key={motif.name} className={`glass-card ${borderClass} overflow-hidden`}>
-                      <div className="p-5">
-                        <div className="flex items-start gap-4">
-                          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/[0.06] text-2xl">{icon}</span>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-3 flex-wrap">
-                              <h3 className="text-lg font-bold text-white">{motif.name}</h3>
-                              <span className={`rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs font-bold ${severityColor}`}>
-                                {motif.count}× detected
-                              </span>
-                              {motif.avgCpLoss < 99000 && (
-                                <span className="text-xs text-slate-500">
-                                  avg −{(motif.avgCpLoss / 100).toFixed(1)} pawns
-                                </span>
-                              )}
-                            </div>
-                            {quote && (
-                              <blockquote className="mt-3 border-l-2 border-amber-500/30 pl-4">
-                                <p className="text-sm italic leading-relaxed text-slate-300">
-                                  &ldquo;{quote}&rdquo;
-                                </p>
-                                <p className="mt-1 text-xs text-slate-500">— {author}</p>
-                              </blockquote>
-                            )}
-                            {hasExamples && (
-                              <button
-                                type="button"
-                                onClick={toggleExpand}
-                                className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
-                                {isExpanded ? "Hide" : "Show"} {motif.examples.length} example{motif.examples.length !== 1 ? "s" : ""} from your games
-                              </button>
+                    <div key={motif.name} className={`overflow-hidden rounded-2xl border ${colors.card}`}>
+                      {/* Top severity strip */}
+                      <div className={`h-[3px] w-full ${colors.bar} opacity-60`} style={{ width: `${freqPct}%` }} />
+
+                      <div className="p-5 md:p-6">
+                        {/* Row 1: priority chip + avg cp loss */}
+                        <div className="flex items-center justify-between gap-3 mb-4">
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${priorityClass}`}>
+                            {motifIdx === 0 && <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />}
+                            {priorityLabel}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs font-bold ${severityColor}`}>{motif.count}× detected</span>
+                            {motif.avgCpLoss < 99000 && (
+                              <span className="text-[11px] text-slate-500">· avg −{(motif.avgCpLoss / 100).toFixed(1)} pawns</span>
                             )}
                           </div>
                         </div>
+
+                        {/* Row 2: icon + name + frequency bar */}
+                        <div className="flex items-start gap-4">
+                          <div className={`relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl ${colors.icon} text-2xl shadow-lg ring-1 ${colors.ring}`}>
+                            {icon}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <h3 className="text-lg font-bold text-white leading-snug">{motif.name}</h3>
+                            {/* Frequency bar */}
+                            <div className="mt-2 flex items-center gap-2">
+                              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
+                                <div
+                                  className={`h-full rounded-full ${colors.bar} transition-all duration-700`}
+                                  style={{ width: `${freqPct}%` }}
+                                />
+                              </div>
+                              <span className="shrink-0 text-[10px] font-medium text-slate-500">{motif.count}/{motifMax} max</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* GM Quote */}
+                        {quote && (
+                          <blockquote className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
+                            <p className="text-sm italic leading-relaxed text-slate-300">&ldquo;{quote}&rdquo;</p>
+                            <p className="mt-1.5 text-[11px] font-medium text-slate-500">— {author}</p>
+                          </blockquote>
+                        )}
+
+                        {/* Expand button */}
+                        {hasExamples && (
+                          <button
+                            type="button"
+                            onClick={toggleExpand}
+                            className={`mt-4 w-full flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-semibold transition-all cursor-pointer ${
+                              isExpanded
+                                ? `border-amber-500/25 bg-amber-500/[0.08] text-amber-300`
+                                : `border-white/[0.08] bg-white/[0.03] text-slate-300 hover:border-amber-500/20 hover:bg-amber-500/[0.05] hover:text-amber-200`
+                            }`}
+                          >
+                            <span className="flex items-center gap-2.5">
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+                              {isExpanded ? "Hide positions" : `See ${motif.examples.length} position${motif.examples.length !== 1 ? "s" : ""} from your games`}
+                            </span>
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={`shrink-0 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
+                          </button>
+                        )}
                       </div>
 
                       {/* Batch example positions */}
                       {isExpanded && hasExamples && (
-                        <div className="border-t border-white/[0.06] bg-white/[0.015] px-5 py-4">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="border-t border-white/[0.06] bg-white/[0.015] px-5 pb-5 pt-4">
+                          <div className="mb-4 flex items-center justify-between">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">Positions from your games</p>
+                            <div className="flex items-center gap-3 text-[10px] text-slate-500">
+                              <span className="flex items-center gap-1"><span className="inline-block h-2 w-3.5 rounded-sm" style={{ backgroundColor: "rgba(239, 68, 68, 0.85)" }} /> Your move</span>
+                              <span className="flex items-center gap-1"><span className="inline-block h-2 w-3.5 rounded-sm" style={{ backgroundColor: "rgba(34, 197, 94, 0.85)" }} /> Best move</span>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             {(hasProAccess ? motif.examples : motif.examples.slice(0, FREE_POSITIONAL_SAMPLE)).map((ex, ei) => {
                               const resolveMove = (fen: string, move: string | null | undefined): { from: string; to: string; san: string } | null => {
                                 if (!move) return null;
@@ -2921,8 +3099,9 @@ export default function HomePage() {
                               };
 
                               return (
-                                <div key={`${ex.fenBefore}-${ei}`} className="flex flex-col items-center gap-2">
-                                  <div className="w-full max-w-[280px] aspect-square rounded-lg overflow-hidden border border-white/[0.08]">
+                                <div key={`${ex.fenBefore}-${ei}`} className="flex flex-col gap-2">
+                                  {/* Board */}
+                                  <div className="relative w-full aspect-square rounded-xl overflow-hidden border border-white/[0.09] shadow-lg">
                                     <Chessboard
                                       id={`pos-ex-${motif.name}-${ei}`}
                                       position={ex.fenBefore}
@@ -2936,28 +3115,41 @@ export default function HomePage() {
                                       customPieces={customPieces}
                                     />
                                   </div>
-                                  <div className="text-center">
-                                    <span className="text-xs font-bold text-red-400">
-                                      −{(ex.cpLoss / 100).toFixed(1)}
-                                    </span>
-                                    {userR && (
-                                      <span className="ml-1.5 text-xs text-slate-500">
-                                        played <span className="font-mono text-red-400/80">{userR.san}</span>
-                                      </span>
-                                    )}
+                                  {/* Move info row */}
+                                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 space-y-1">
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="h-2 w-2 rounded-full bg-red-400/80" />
+                                        <span className="text-[11px] text-slate-400">Played</span>
+                                        {userR && <span className="font-mono text-[11px] font-semibold text-red-400">{userR.san}</span>}
+                                      </div>
+                                      <span className="text-[11px] font-bold text-red-400">−{(ex.cpLoss / 100).toFixed(1)}</span>
+                                    </div>
                                     {bestR && (
-                                      <span className="ml-1 text-xs text-slate-500">
-                                        best <span className="font-mono text-emerald-400/80">{bestR.san}</span>
-                                      </span>
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="h-2 w-2 rounded-full bg-emerald-400/80" />
+                                        <span className="text-[11px] text-slate-400">Best</span>
+                                        <span className="font-mono text-[11px] font-semibold text-emerald-400">{bestR.san}</span>
+                                      </div>
                                     )}
                                   </div>
                                   <button
                                     type="button"
                                     onClick={onExplain}
                                     disabled={isExplaining}
-                                    className="text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-wait"
+                                    className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/[0.07] py-2 text-xs font-semibold text-amber-400 transition-all hover:border-amber-500/35 hover:bg-amber-500/[0.12] hover:text-amber-300 disabled:opacity-50 disabled:cursor-wait cursor-pointer"
                                   >
-                                    {isExplaining ? "Loading…" : "Explain"}
+                                    {isExplaining ? (
+                                      <>
+                                        <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20"/><path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
+                                        Analyzing…
+                                      </>
+                                    ) : (
+                                      <>
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+                                        Explain
+                                      </>
+                                    )}
                                   </button>
                                 </div>
                               );
@@ -2965,46 +3157,45 @@ export default function HomePage() {
                           </div>
                           {!hasProAccess && motif.examples.length > FREE_POSITIONAL_SAMPLE && (
                             <>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+                              <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3 mt-3">
                                 {motif.examples.slice(FREE_POSITIONAL_SAMPLE).map((_, li) => (
-                                  <div key={li} className="flex flex-col items-center gap-2">
-                                    <div className="w-full max-w-[280px] aspect-square rounded-lg overflow-hidden border border-white/[0.06] bg-white/[0.02] flex flex-col items-center justify-center gap-3">
-                                      <span className="text-3xl">🔒</span>
-                                      <p className="text-xs font-semibold text-slate-400 text-center px-4">Pro</p>
+                                  <div key={li} className="flex flex-col gap-2">
+                                    <div className="w-full aspect-square rounded-xl overflow-hidden border border-white/[0.06] bg-white/[0.02] flex flex-col items-center justify-center gap-2">
+                                      <span className="text-2xl">🔒</span>
+                                      <p className="text-[10px] font-semibold text-slate-500 text-center px-3">Pro only</p>
                                     </div>
+                                    <div className="rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2 h-[52px]" />
                                   </div>
                                 ))}
                               </div>
                               <div className="mt-4 text-center">
                                 <Link
                                   href="/pricing"
-                                  className="inline-flex items-center gap-2 rounded-full bg-amber-500/90 px-4 py-1.5 text-xs font-bold text-white shadow-lg shadow-amber-500/20 transition-opacity hover:opacity-90"
+                                  className="inline-flex items-center gap-2 rounded-full bg-amber-500/90 px-5 py-2 text-xs font-bold text-white shadow-lg shadow-amber-500/20 transition-opacity hover:opacity-90"
                                 >
-                                  🔓 Unlock {motif.examples.length - FREE_POSITIONAL_SAMPLE} more example{motif.examples.length - FREE_POSITIONAL_SAMPLE === 1 ? "" : "s"}
+                                  🔓 Unlock {motif.examples.length - FREE_POSITIONAL_SAMPLE} more position{motif.examples.length - FREE_POSITIONAL_SAMPLE === 1 ? "" : "s"}
                                 </Link>
                               </div>
                             </>
                           )}
-                          <div className="mt-4 flex items-center gap-2 text-xs text-slate-500">
-                            <span className="inline-block h-2 w-4 rounded-sm" style={{ backgroundColor: "rgba(239, 68, 68, 0.85)" }} />
-                            <span>Your move</span>
-                            <span className="inline-block h-2 w-4 rounded-sm ml-2" style={{ backgroundColor: "rgba(34, 197, 94, 0.85)" }} />
-                            <span>Best move</span>
-                          </div>
                         </div>
                       )}
                     </div>
                   );
                 })}
+
                 {positionalMotifs.length >= 2 && (
-                  <div className="glass-card border-amber-500/10 p-4">
-                    <p className="flex items-start gap-2 text-sm text-slate-400">
-                      <span className="mt-0.5 shrink-0 text-amber-400">💡</span>
-                      <span>
-                        These patterns often repeat unconsciously. Awareness is the first step — try to catch yourself <em>before</em> making the move.
-                        Head to the <Link href="/train" className="text-amber-400 underline underline-offset-2 hover:text-amber-300">Training Center</Link> to practice positions with these exact patterns.
-                      </span>
-                    </p>
+                  <div className="rounded-2xl border border-amber-500/10 bg-amber-500/[0.03] p-5">
+                    <div className="flex items-start gap-3">
+                      <span className="mt-0.5 shrink-0 text-lg">💡</span>
+                      <div>
+                        <p className="text-sm font-semibold text-white">These habits often repeat unconsciously.</p>
+                        <p className="mt-1 text-sm leading-relaxed text-slate-400">
+                          Awareness is the first step — try to pause and ask yourself <em>&ldquo;am I doing this for a concrete reason?&rdquo;</em> before committing to the move.
+                          Head to the <Link href="/train" className="font-semibold text-amber-400 underline underline-offset-2 hover:text-amber-300">Training Center</Link> to drill the exact positions where these patterns appear.
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
 
@@ -3032,7 +3223,7 @@ export default function HomePage() {
               {/* Missed Tactics Section — shown when tactics were scanned */}
               {(lastRunConfig?.scanMode === "tactics" || lastRunConfig?.scanMode === "both") && (
               <>
-              <div className="my-4">
+              <div id="section-tactics" className="my-4">
                 <div className="section-divider" />
               </div>
               <button type="button" onClick={() => setTacticsOpen(o => !o)} className="glass-card border-amber-500/15 bg-gradient-to-r from-amber-500/[0.04] to-transparent p-6 w-full text-left cursor-pointer transition-colors hover:border-amber-500/25">
@@ -3379,7 +3570,7 @@ export default function HomePage() {
               {/* ─── Endgame Section ─── */}
               {(lastRunConfig?.scanMode === "endgames" || lastRunConfig?.scanMode === "both") && (
               <>
-              <div className="my-4">
+              <div id="section-endgames" className="my-4">
                 <div className="section-divider" />
               </div>
               <button type="button" onClick={() => setEndgamesOpen(o => !o)} className="glass-card border-sky-500/15 bg-gradient-to-r from-sky-500/[0.04] to-transparent p-6 w-full text-left cursor-pointer transition-colors hover:border-sky-500/25">

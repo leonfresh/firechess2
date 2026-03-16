@@ -254,6 +254,7 @@ function buildChaosCustomPieces(
   game: Chess,
   assignedSquares?: Record<string, string | null>,
   undeadRevived?: { w: boolean; b: boolean },
+  lastMoveRef?: React.MutableRefObject<{ from: string; to: string } | null>,
 ): Record<string, ({ squareWidth, square }: { squareWidth: number; square?: string }) => React.ReactElement> {
   const codes = ["wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK"];
   const result: Record<string, ({ squareWidth, square }: { squareWidth: number; square?: string }) => React.ReactElement> = {};
@@ -335,9 +336,12 @@ function buildChaosCustomPieces(
           if (square === designatedSquare) return true;
           // Animation ghost: react-chessboard passes the *source* square while sliding.
           // After updateTrackedPieces, designatedSquare already points to the target,
-          // so `square` (source) won't match. If no piece exists at `square` in the
-          // current game state, we're rendering the ghost — show the fairy SVG.
-          return !game.get(square as any);
+          // so `square` (source) won't match. Only show the fairy SVG for the ghost
+          // if the last move went FROM this square TO the designated square — otherwise
+          // a different piece moving away from an adjacent square would incorrectly
+          // inherit the fairy skin.
+          const lm = lastMoveRef?.current;
+          return !game.get(square as any) && !!lm && lm.from === square && lm.to === designatedSquare;
         });
         if (found) {
           pieceUrl = FAIRY_PIECE_SVGS[found.id][pieceColor];
@@ -1831,6 +1835,17 @@ export default function ChaosChessPage() {
   const [playerColor, setPlayerColor] = useState<"white" | "black">("white");
   const [isThinking, setIsThinking] = useState(false);
 
+  /* ── Undo (AI mode only, up to 3 times) ── */
+  type UndoSnapshot = { fen: string; chaosState: ChaosState; capturedPawns: { w: number; b: number }; undeadRevived: { w: boolean; b: boolean } };
+  const [undoStack, setUndoStack] = useState<UndoSnapshot[]>([]);
+  const [undoUsed, setUndoUsed] = useState(0);
+  /** Ref updated every render so handlePlayerMove can access pre-move state without stale closures */
+  const undoSnapshotRef = useRef<UndoSnapshot | null>(null);
+  /** Ref for animation ghost fix — tracks the last from/to so fairy SVGs animate correctly */
+  const lastMoveRef = useRef<{ from: string; to: string } | null>(null);
+  /** Cancel token — replaced on every undo/restart so in-flight AI moves discard their results */
+  const aiMoveTokenRef = useRef({ cancelled: false });
+
   /* ── Mode / multiplayer ── */
   const [gameMode, setGameMode] = useState<GameMode>("ai");
   const [roomId, setRoomId] = useState<string | null>(null);
@@ -1917,6 +1932,11 @@ export default function ChaosChessPage() {
     [availableChaosMoves, warpQueenActive],
   );
 
+  // Keep undoSnapshotRef current so handlePlayerMove can read pre-move state
+  undoSnapshotRef.current = (gameMode === "ai" && undoUsed < 3)
+    ? { fen: game.fen(), chaosState, capturedPawns, undeadRevived }
+    : null;
+
   /* ── Chaos-aware piece rendering (overlays on pieces with modifiers) ── */
   const chaosCustomPieces = useMemo(() => {
     const allMods = [...chaosState.playerModifiers, ...chaosState.aiModifiers];
@@ -1929,6 +1949,7 @@ export default function ChaosChessPage() {
       game,
       chaosState.assignedSquares ?? undefined,
       undeadRevived,
+      lastMoveRef,
     );
   }, [pieceTheme.setName, chaosState.playerModifiers, chaosState.aiModifiers, playerColor, baseCustomPieces, game, chaosState.assignedSquares, undeadRevived]);
 
@@ -2508,6 +2529,7 @@ export default function ChaosChessPage() {
     async (g: Chess, cs: ChaosState, onComplete?: (finalGame: Chess, finalCs: ChaosState) => void) => {
       if (g.isGameOver()) return;
       setIsThinking(true);
+      const thisToken = aiMoveTokenRef.current; // capture — if cancelled before we finish, discard results
 
       try {
         // AI can also use chaos moves
@@ -2661,6 +2683,8 @@ export default function ChaosChessPage() {
               let cs2 = updateTrackedPieces(cs, chaosMove.from, chaosMove.to, chaosMove.type === "capture");
               let activeGame = newGame;
 
+              if (thisToken.cancelled) { setIsThinking(false); return; }
+              lastMoveRef.current = { from: chaosMove.from, to: chaosMove.to };
               setChaosState(cs2);
               setGame(activeGame);
               setSelectedSquare(null);
@@ -2964,6 +2988,8 @@ export default function ChaosChessPage() {
         let cs2 = updateTrackedPieces(cs, finalFrom, finalTo, !!moveResult.captured);
         let activeGame2 = new Chess(finalGame.fen());
 
+        if (thisToken.cancelled) { setIsThinking(false); return; }
+        lastMoveRef.current = { from: finalFrom, to: finalTo };
         setChaosState(cs2);
         setGame(activeGame2);
         // Clear any piece selection the player may have made while the AI was thinking
@@ -3030,6 +3056,12 @@ export default function ChaosChessPage() {
       setAiEloSaved(false);
       setMyRating(null);
       setOpponentRating(null);
+      // Cancel any in-flight AI computation and reset undo state
+      aiMoveTokenRef.current.cancelled = true;
+      aiMoveTokenRef.current = { cancelled: false };
+      setUndoStack([]);
+      setUndoUsed(0);
+      lastMoveRef.current = null;
       recomputeChaosMoves(g, cs);
 
       if (mode === "ai" && color === "black") {
@@ -3815,6 +3847,12 @@ export default function ChaosChessPage() {
         spawnPepe(PEPE.lmao);
         playSound("crowd-ooh");
 
+        // Push undo snapshot (before applying move)
+        if (undoSnapshotRef.current) {
+          const snap = undoSnapshotRef.current;
+          setUndoStack((prev) => [...prev.slice(-2), snap]);
+        }
+        lastMoveRef.current = { from, to };
         setGame(newGame);
 
         // Update tracked pieces
@@ -3913,6 +3951,12 @@ export default function ChaosChessPage() {
 
       if (!moveResult) return false;
 
+      // Push undo snapshot (AI mode only, captured before game.move() mutated the instance)
+      if (undoSnapshotRef.current) {
+        const snap = undoSnapshotRef.current;
+        setUndoStack((prev) => [...prev.slice(-2), snap]);
+      }
+
       // Sound
       if (game.isCheck()) playSound("check");
       else if (moveResult.captured) playSound("capture");
@@ -3931,6 +3975,7 @@ export default function ChaosChessPage() {
         [from]: { backgroundColor: "rgba(255, 170, 0, 0.3)" },
         [to]: { backgroundColor: "rgba(255, 170, 0, 0.3)" },
       });
+      lastMoveRef.current = { from, to };
       setSelectedSquare(null);
       setLegalMoveSquares({});
 
@@ -4522,6 +4567,36 @@ export default function ChaosChessPage() {
       }
     }
   }, [playerColor, spawnPepe, gameMode, roomId, game]);
+
+  /* ── Undo (AI mode only, up to 3 times) ── */
+  const handleUndo = useCallback(() => {
+    if (undoStack.length === 0 || undoUsed >= 3 || gameMode !== "ai") return;
+    const snapshot = undoStack[undoStack.length - 1];
+    setUndoStack((prev) => prev.slice(0, -1));
+    setUndoUsed((prev) => prev + 1);
+    // Cancel any in-flight AI computation
+    aiMoveTokenRef.current.cancelled = true;
+    aiMoveTokenRef.current = { cancelled: false };
+    setIsThinking(false);
+    // Restore state
+    const restoredGame = new Chess(snapshot.fen);
+    setGame(restoredGame);
+    setChaosState(snapshot.chaosState);
+    setCapturedPawns(snapshot.capturedPawns);
+    setUndeadRevived(snapshot.undeadRevived);
+    recomputeChaosMoves(restoredGame, snapshot.chaosState);
+    setLastMoveHighlight({});
+    lastMoveRef.current = null;
+    setSelectedSquare(null);
+    setLegalMoveSquares({});
+    setEventLog((prev) => [...prev, { type: "info", message: `↩️ Undo used (${undoUsed + 1}/3)`, icon: "↩️" }]);
+  }, [undoStack, undoUsed, gameMode, recomputeChaosMoves]);
+
+  /* ── Restart (AI mode only) ── */
+  const handleRestart = useCallback(() => {
+    if (gameMode !== "ai") return;
+    startGame(playerColor, "ai");
+  }, [gameMode, playerColor, startGame]);
 
   /* ── Draw Offer ── */
   const handleDrawOffer = useCallback(() => {
@@ -5416,6 +5491,26 @@ export default function ChaosChessPage() {
                 >
                   🏳️ Resign
                 </button>
+                {gameMode === "ai" && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleUndo}
+                      disabled={undoStack.length === 0 || undoUsed >= 3 || isThinking}
+                      className="rounded-lg border border-sky-500/30 bg-sky-500/10 px-4 py-2 text-xs font-medium text-sky-400 transition-all hover:bg-sky-500/20 disabled:opacity-40 disabled:cursor-not-allowed"
+                      title={undoUsed >= 3 ? "No undos remaining" : `Undo move (${3 - undoUsed} left)`}
+                    >
+                      ↩️ Undo ({3 - undoUsed})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRestart}
+                      className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-xs font-medium text-emerald-400 transition-all hover:bg-emerald-500/20"
+                    >
+                      🔄 Restart
+                    </button>
+                  </>
+                )}
                 {gameMode !== "ai" && !drawOfferSent && (
                   <button
                     type="button"
