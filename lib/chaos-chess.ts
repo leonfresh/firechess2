@@ -228,7 +228,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "pawn-promotion-early",
     name: "Battlefield Promotion",
-    description: "Pawns can promote on the 6th rank (3rd for black) instead of the last rank.",
+    description: "Pawns on the 4th rank or below (5th rank or above for black) can promote early on the 5th rank (4th for black).",
     tier: "epic",
     icon: "⭐",
     piece: "p",
@@ -284,7 +284,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "undead-army",
     name: "Undead Army",
-    description: "Revive ALL your captured pawns on random empty squares on your back two ranks.",
+    description: "Spawns all your missing pawns on random empty squares on your 2nd and 3rd ranks (6th and 7th for black). Any pawn not currently on the board will come back.",
     tier: "legendary",
     icon: "💀",
     piece: "p",

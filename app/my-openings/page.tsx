@@ -1663,7 +1663,7 @@ function MyOpeningsInner() {
           onSubmit={handleSubmit}
           className="mb-8 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-5"
         >
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             {/* Source toggle + username */}
             <div className="flex min-w-0 flex-1 items-center gap-0 overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.04] pl-1 pr-0">
               {/* Source buttons */}

@@ -26,6 +26,7 @@ import { explainOpeningLeak, describeEndPosition, type PositionExplanation } fro
 import { ExplanationModal } from "@/components/explanation-modal";
 import { stockfishClient } from "@/lib/stockfish-client";
 import { PersonalizedPuzzles } from "@/components/personalized-puzzles";
+import { PositionalMotifTrainer } from "@/components/positional-motif-trainer";
 import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { Chess, type PieceSymbol } from "chess.js";
 import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";
@@ -2456,12 +2457,7 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* ─── Personalized Puzzles ─── */}
-              {(missedTactics.length > 0 || endgameMistakes.length > 0 || leaks.length > 0) && (
-                <div id="section-training">
-                <PersonalizedPuzzles tactics={missedTactics} endgames={endgameMistakes} leaks={leaks} onExpandedChange={setPuzzleBoardOpen} />
-                </div>
-              )}
+
 
               </div>{/* end pngRef wrapper */}
 
@@ -4462,6 +4458,18 @@ export default function HomePage() {
                     </Link>
                   </div>
                 </div>
+              )}
+
+              {/* ─── Personalized Quiz CTA ─── */}
+              {(missedTactics.length > 0 || endgameMistakes.length > 0 || leaks.length > 0) && (
+                <div id="section-training">
+                  <PersonalizedPuzzles tactics={missedTactics} endgames={endgameMistakes} leaks={leaks} onExpandedChange={setPuzzleBoardOpen} />
+                </div>
+              )}
+
+              {/* ─── Positional Motif Trainer ─── */}
+              {positionalMotifs.length > 0 && (
+                <PositionalMotifTrainer motifs={positionalMotifs} />
               )}
 
               {/* Viral share CTA — always visible */}

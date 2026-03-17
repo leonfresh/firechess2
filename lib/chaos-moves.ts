@@ -188,9 +188,14 @@ function genPawnCharge(game: Chess, color: Color): ChaosMove[] {
     if (!isEmpty(game, oneAhead) || !isEmpty(game, twoAhead)) continue;
     if (wouldLeaveKingInCheck(game, ps, twoAhead, color)) continue;
 
+    const lastRank = color === "w" ? 7 : 0;
+    const [, twoAheadRank] = sqToCoords(twoAhead);
+    const isPromotion = twoAheadRank === lastRank;
+
     moves.push({
       from: ps, to: twoAhead, type: "move",
       modifierId: "pawn-charge", label: "Pawn Charge (2 forward)",
+      ...(isPromotion ? { spawnPiece: { type: "q" as const, color }, promotionChoice: true } : {}),
     });
   }
   return moves;
@@ -502,7 +507,9 @@ function genKingAscension(game: Chess, color: Color): ChaosMove[] {
   return moves;
 }
 
-/** Collateral Damage Rook: after rook capture, also destroy piece behind target */
+/** Collateral Damage Rook: after rook capture, also destroy piece behind target.
+ * Never targets a king — chess.js rejects kingless FENs and the king can't be
+ * killed as a side effect anyway. */
 function getCollateralSquare(game: Chess, from: Square, to: Square): Square | null {
   const [ff, fr] = sqToCoords(from);
   const [tf, tr] = sqToCoords(to);
@@ -512,6 +519,7 @@ function getCollateralSquare(game: Chess, from: Square, to: Square): Square | nu
   if (!behind) return null;
   const piece = game.get(behind);
   if (!piece) return null;
+  if (piece.type === "k") return null; // never collateral-kill a king
   return behind;
 }
 
@@ -846,10 +854,11 @@ function genEnPassantEverywhere(game: Chess, color: Color): ChaosMove[] {
   return moves;
 }
 
-/** Early promotion: pawns promote on rank 6 (white) or rank 3 (black) */
+/** Early promotion: pawns promote on rank 5 (white) or rank 4 (black).
+ * Only pawns on rank 4 or below (white) / rank 5 or above (black) can trigger. */
 function genEarlyPromotion(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
-  const promoRank = color === "w" ? 5 : 2; // 0-indexed: rank 6 = index 5, rank 3 = index 2
+  const promoRank = color === "w" ? 4 : 3; // 0-indexed: rank 5 = index 4, rank 4 = index 3
   const dir = color === "w" ? 1 : -1;
   const pawns = allSquaresOf(game, "p", color);
 
@@ -1631,11 +1640,21 @@ export function applyDraftEffect(
   }
 
   if (modifier.id === "undead-army") {
-    // Revive captured pawns on back 2 ranks
-    const backRanks = color === "w" ? [0, 1] : [6, 7];
+    // Count missing pawns directly from the board so chaos-move captures are included
+    let pawnsOnBoard = 0;
+    for (const f of FILES) {
+      for (const r of RANKS) {
+        const p = tmp.get(`${f}${r}` as Square);
+        if (p && p.type === "p" && p.color === color) pawnsOnBoard++;
+      }
+    }
+    const missingPawns = Math.max(0, 8 - pawnsOnBoard);
+    // Pawns cannot be placed on rank 1 (white back rank) or rank 8 (black back rank) —
+    // chess.js silently rejects those put() calls. Use ranks 2-3 for white, 6-7 for black.
+    const backRanks = color === "w" ? [1, 2] : [5, 6];
     const empties = emptySquaresInRanks(tmp, backRanks);
     const shuffled = empties.sort(() => Math.random() - 0.5);
-    const toRevive = Math.min(capturedPawns, shuffled.length);
+    const toRevive = Math.min(missingPawns, shuffled.length);
     for (let i = 0; i < toRevive; i++) {
       tmp.put({ type: "p", color }, shuffled[i]);
       modified = true;

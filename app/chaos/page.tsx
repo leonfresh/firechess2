@@ -3395,7 +3395,11 @@ export default function ChaosChessPage() {
           [data.lastMoveTo]: { backgroundColor: "rgba(255, 170, 0, 0.3)" },
         });
         playSound("move");
-        if (oldFen) {
+        // Only update tracked pieces if the server did NOT provide a chaosState.
+        // When chaosState is present it already has the correct assignedSquares;
+        // running updateTrackedPieces on top would treat the piece's NEW square as
+        // "captured" and null-out archbishop/knook/pegasus tracking.
+        if (!data.chaosState && oldFen) {
           const oldBoard = new Chess(oldFen);
           const hadPiece = oldBoard.get(data.lastMoveTo as any);
           const wasCaptured = !!hadPiece;
@@ -3608,8 +3612,11 @@ export default function ChaosChessPage() {
             });
             playSound("move");
 
-            // Update tracked pieces for single-piece modifiers (archbishop/knook)
-            if (oldFen) {
+            // Update tracked pieces for single-piece modifiers (archbishop/knook).
+            // Skip when chaosState is provided — it already has correct assignedSquares.
+            // Re-running updateTrackedPieces would falsely null-out the tracking by
+            // treating the piece's new square as a captured piece.
+            if (!data.chaosState && oldFen) {
               const oldBoard = new Chess(oldFen);
               const hadPiece = oldBoard.get(data.lastMoveTo as any);
               const wasCaptured = !!hadPiece;
