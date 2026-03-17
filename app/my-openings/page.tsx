@@ -1704,39 +1704,40 @@ function MyOpeningsInner() {
               />
             </div>
 
-            {/* Games count */}
-            <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2">
-              <span className="text-xs text-slate-500 shrink-0">Games:</span>
-              <input
-                type="number"
-                min={10}
-                max={500}
-                step={10}
-                value={maxGames}
-                onChange={(e) => setMaxGames(Number(e.target.value))}
-                className="w-16 bg-transparent text-sm text-white outline-none"
-              />
-            </div>
+            {/* Games count + Depth — share a row on mobile */}
+            <div className="flex gap-3">
+              <div className="flex flex-1 items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2">
+                <span className="text-xs text-slate-500 shrink-0">Games:</span>
+                <input
+                  type="number"
+                  min={10}
+                  max={500}
+                  step={10}
+                  value={maxGames}
+                  onChange={(e) => setMaxGames(Number(e.target.value))}
+                  className="w-full min-w-0 bg-transparent text-sm text-white outline-none"
+                />
+              </div>
 
-            {/* Depth */}
-            <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2">
-              <span className="text-xs text-slate-500 shrink-0">Depth:</span>
-              <select
-                value={maxDepth}
-                onChange={(e) => setMaxDepth(Number(e.target.value))}
-                className="bg-transparent text-sm text-white outline-none"
-              >
-                {[8, 10, 12, 15, 20, 25].map((d) => (
-                  <option key={d} value={d} className="bg-slate-900">{d} plies</option>
-                ))}
-              </select>
+              <div className="flex flex-1 items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2">
+                <span className="text-xs text-slate-500 shrink-0">Depth:</span>
+                <select
+                  value={maxDepth}
+                  onChange={(e) => setMaxDepth(Number(e.target.value))}
+                  className="w-full bg-transparent text-sm text-white outline-none"
+                >
+                  {[8, 10, 12, 15, 20, 25].map((d) => (
+                    <option key={d} value={d} className="bg-slate-900">{d} plies</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Scan button */}
             <button
               type="submit"
               disabled={isLoading || !username.trim()}
-              className="rounded-xl bg-emerald-500 px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-emerald-400 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+              className="w-full rounded-xl bg-emerald-500 px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-emerald-400 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
             >
               {isLoading ? "Scanning…" : "Scan Games"}
             </button>
