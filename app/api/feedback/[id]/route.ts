@@ -200,7 +200,7 @@ async function sendReplyEmail(
     body: JSON.stringify({
       from,
       to,
-      reply_to: `reply+${ticketId}@${process.env.RESEND_INBOUND_DOMAIN ?? "reply.firechess.com"}`,
+      reply_to: `reply+${ticketId}@${process.env.RESEND_INBOUND_DOMAIN ?? "firechess.com"}`,
       subject: `Re: ${subject} — FireChess Support`,
       html,
     }),
