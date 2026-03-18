@@ -185,7 +185,7 @@ async function sendReplyEmail(
           View Ticket &amp; Reply
         </a>
         <p style="color: #52525b; font-size: 12px; margin-top: 24px;">
-          This email was sent by FireChess Support. You can reply directly to this email and your message will be added to the ticket.
+          You can reply directly to this email and your message will be added to the ticket. For longer replies, use the ticket link above.
         </p>
       </div>
     </div>

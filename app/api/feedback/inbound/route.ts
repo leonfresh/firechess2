@@ -103,7 +103,9 @@ export async function POST(req: NextRequest) {
       ? [toRaw]
       : [];
 
-    // Resend webhook payloads sometimes omit body — try all known field names
+    // Resend's inbound webhook sometimes omits body (known limitation of shared resend.app domain)
+    // Try all known field names, fall back to subject as context
+    const subject = (payload as any).subject ?? "";
     let rawText =
       (payload as any).text?.trim() ||
       (payload as any).html?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() ||
@@ -111,7 +113,13 @@ export async function POST(req: NextRequest) {
       (payload as any).plain?.trim() ||
       "";
 
+    // If no body, use subject as context so the admin knows what the reply was about
+    if (!rawText && subject) {
+      rawText = `[No body captured — reply subject: "${subject}"]`;
+    }
+
     console.log("[inbound email] from:", from, "to:", to, "rawText:", rawText.slice(0, 200));
+
 
     if (!to.length) {
       return NextResponse.json({ ok: true });
