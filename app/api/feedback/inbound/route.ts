@@ -89,7 +89,7 @@ function stripQuotedText(text: string): string {
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json()) as ResendInboundPayload;
-    console.log("[inbound email] raw body:", JSON.stringify(body).slice(0, 500));
+    console.log("[inbound email] full payload:", JSON.stringify(body));
 
     // Resend wraps inbound email data under `data`, but support flat too
     const payload = body.data ?? body;
@@ -103,34 +103,15 @@ export async function POST(req: NextRequest) {
       ? [toRaw]
       : [];
 
-    // Resend webhook payloads don't include the email body — fetch it via API
-    let rawText = payload.text?.trim() || payload.html?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() || "";
+    // Resend webhook payloads sometimes omit body — try all known field names
+    let rawText =
+      (payload as any).text?.trim() ||
+      (payload as any).html?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() ||
+      (payload as any).body?.trim() ||
+      (payload as any).plain?.trim() ||
+      "";
 
-    if (!rawText) {
-      const emailId = (payload as any).email_id;
-      const resendKey = process.env.AUTH_RESEND_KEY;
-      if (emailId && resendKey) {
-        try {
-          const emailRes = await fetch(`https://api.resend.com/emails/${emailId}`, {
-            headers: { Authorization: `Bearer ${resendKey}` },
-          });
-          if (emailRes.ok) {
-            const emailData = await emailRes.json();
-            rawText =
-              emailData.text?.trim() ||
-              emailData.html?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() ||
-              "";
-            console.log("[inbound email] fetched body length:", rawText.length);
-          }
-        } catch (e) {
-          console.error("[inbound email] failed to fetch email body:", e);
-        }
-      }
-    }
-
-    if (!rawText) rawText = "(replied via email — no body content)";
-
-    console.log("[inbound email] from:", from, "to:", to, "text length:", rawText.length);
+    console.log("[inbound email] from:", from, "to:", to, "rawText:", rawText.slice(0, 200));
 
     if (!to.length) {
       return NextResponse.json({ ok: true });
