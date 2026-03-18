@@ -100,20 +100,37 @@ export async function POST(req: NextRequest) {
     }
 
     const body = (await req.json()) as ResendInboundPayload;
+    console.log("[inbound email] raw body:", JSON.stringify(body).slice(0, 500));
 
     // Resend wraps inbound email data under `data`, but support flat too
     const payload = body.data ?? body;
     const from = payload.from ?? "";
-    const to: string[] = payload.to ?? [];
-    const text = payload.text ?? "";
 
-    if (!to?.length || !text) {
-      return NextResponse.json({ ok: true }); // nothing to process
+    // `to` can be a string or string[] depending on Resend version
+    const toRaw = (payload as any).to;
+    const to: string[] = Array.isArray(toRaw)
+      ? toRaw
+      : typeof toRaw === "string"
+      ? [toRaw]
+      : [];
+
+    // Use text body, fall back to stripping HTML tags, fall back to subject
+    const rawText =
+      payload.text?.trim() ||
+      payload.html?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() ||
+      (payload as any).subject ||
+      "(no message body)";
+
+    console.log("[inbound email] from:", from, "to:", to, "text length:", rawText.length);
+
+    if (!to.length) {
+      return NextResponse.json({ ok: true });
     }
 
     const ticketId = extractTicketId(to);
     if (!ticketId) {
-      return NextResponse.json({ ok: true }); // not a ticket reply address
+      console.log("[inbound email] no ticket ID found in to:", to);
+      return NextResponse.json({ ok: true });
     }
 
     // Look up the ticket
@@ -124,10 +141,11 @@ export async function POST(req: NextRequest) {
       .limit(1);
 
     if (!ticket) {
-      return NextResponse.json({ ok: true }); // ticket not found, ignore
+      console.log("[inbound email] ticket not found:", ticketId);
+      return NextResponse.json({ ok: true });
     }
 
-    const cleanMessage = stripQuotedText(text);
+    const cleanMessage = stripQuotedText(rawText);
     if (!cleanMessage) {
       return NextResponse.json({ ok: true }); // empty after stripping
     }
