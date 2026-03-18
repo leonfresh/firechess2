@@ -88,17 +88,6 @@ function stripQuotedText(text: string): string {
 /* ------------------------------------------------------------------ */
 export async function POST(req: NextRequest) {
   try {
-    // Verify shared secret if configured
-    const secret = process.env.RESEND_INBOUND_SECRET;
-    if (secret) {
-      const provided =
-        req.headers.get("x-resend-signature") ??
-        req.nextUrl.searchParams.get("secret");
-      if (provided !== secret) {
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-    }
-
     const body = (await req.json()) as ResendInboundPayload;
     console.log("[inbound email] raw body:", JSON.stringify(body).slice(0, 500));
 
