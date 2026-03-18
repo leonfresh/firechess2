@@ -14,6 +14,6 @@ export const config = {
      * - _next/static, _next/image, favicon.ico (Next.js internals)
      * - Public assets (images, wasm, stockfish worker files, sounds, robots.txt)
      */
-    "/((?!_next/static|_next/image|favicon\\.ico|stockfish-18-lite\\.js|stockfish-18-lite\\.wasm|stockfish\\.wasm|stockfish\\.worker\\.js|sitemap\\.xml|robots\\.txt|manifest\\.webmanifest|sounds/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|wasm)$).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|stockfish-18-lite\\.js|stockfish-18-lite\\.wasm|stockfish\\.wasm|stockfish\\.worker\\.js|sitemap\\.xml|robots\\.txt|manifest\\.webmanifest|sounds/|api/feedback/inbound|.*\\.(?:svg|png|jpg|jpeg|gif|webp|wasm)$).*)",
   ],
 };
