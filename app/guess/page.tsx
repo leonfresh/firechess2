@@ -803,8 +803,8 @@ export default function GuessTheMovePage() {
         {/* Main content */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_320px]">
           {/* Board column */}
-          <div ref={boardRef} className="flex flex-col items-center gap-3">
-            <div className="w-full max-w-[560px]">
+          <div className="flex flex-col items-center gap-3">
+            <div ref={boardRef} className="w-full max-w-[560px]">
               <div className="overflow-hidden rounded-xl">
                 <Chessboard
                   id="guess-board"

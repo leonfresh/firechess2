@@ -610,22 +610,21 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
   }
 
   return (
-    <div ref={boardRef} className="flex flex-col items-center gap-3">
+    <div className="flex flex-col items-center gap-3">
       {/* Turn indicator */}
       <div className="flex items-center gap-2 text-xs">
         <div className={`h-3 w-3 rounded-full ${orientation === "white" ? "bg-white border border-slate-400" : "bg-slate-800 border border-slate-500"}`} />
         <span className="text-slate-400">Your turn as {orientation}</span>
       </div>
       <div
-        style={{ width: boardSize, height: boardSize }}
-        className={`relative shrink-0 overflow-hidden rounded-xl shadow-2xl transition-transform ${shaking ? "animate-[shake_0.3s_ease-in-out]" : ""}`}
+        ref={boardRef}
+        className={`relative w-full max-w-[720px] overflow-hidden rounded-xl shadow-2xl transition-transform ${shaking ? "animate-[shake_0.3s_ease-in-out]" : ""}`}
       >
         <Chessboard
           id="train-board"
           position={game.fen()}
           onPieceDrop={handleDrop}
           boardOrientation={orientation}
-          boardWidth={boardSize}
           animationDuration={200}
           arePiecesDraggable={status === "playing"}
           customSquareStyles={customSquareStyles}
@@ -767,22 +766,21 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
   }
 
   return (
-    <div ref={boardRef} className="flex flex-col items-center gap-3">
+    <div className="flex flex-col items-center gap-3">
       {/* Turn indicator */}
       <div className="flex items-center gap-2 text-xs">
         <div className={`h-3 w-3 rounded-full ${orientation === "white" ? "bg-white border border-slate-400" : "bg-slate-800 border border-slate-500"}`} />
         <span className="text-slate-400">Your turn as {orientation}</span>
       </div>
       <div
-        style={{ width: boardSize, height: boardSize }}
-        className={`relative shrink-0 overflow-hidden rounded-xl shadow-2xl transition-transform ${shaking ? "animate-[shake_0.3s_ease-in-out]" : ""}`}
+        ref={boardRef}
+        className={`relative w-full max-w-[720px] overflow-hidden rounded-xl shadow-2xl transition-transform ${shaking ? "animate-[shake_0.3s_ease-in-out]" : ""}`}
       >
         <Chessboard
           id="simple-train-board"
           position={game.fen()}
           onPieceDrop={handleDrop}
           boardOrientation={orientation}
-          boardWidth={boardSize}
           animationDuration={200}
           arePiecesDraggable={status === "playing"}
           customSquareStyles={customSquareStyles}
@@ -946,7 +944,7 @@ function TimePressureBoard({ position, onResult, showHint }: TimePressureBoardPr
   const verdictColor = position.verdict === "rushed" ? "text-red-400" : "text-amber-400";
 
   return (
-    <div ref={boardRef} className="flex flex-col items-center gap-3">
+    <div className="flex flex-col items-center gap-3">
       {/* Timer + Context */}
       <div className="flex items-center gap-4 text-sm">
         <div className="flex items-center gap-2 rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-1.5">
@@ -973,15 +971,14 @@ function TimePressureBoard({ position, onResult, showHint }: TimePressureBoardPr
       </div>
 
       <div
-        style={{ width: boardSize, height: boardSize }}
-        className={`relative shrink-0 overflow-hidden rounded-xl shadow-2xl transition-transform ${shaking ? "animate-[shake_0.3s_ease-in-out]" : ""}`}
+        ref={boardRef}
+        className={`relative w-full max-w-[720px] overflow-hidden rounded-xl shadow-2xl transition-transform ${shaking ? "animate-[shake_0.3s_ease-in-out]" : ""}`}
       >
         <Chessboard
           id="time-pressure-board"
           position={game.fen()}
           onPieceDrop={handleDrop}
           boardOrientation={orientation}
-          boardWidth={boardSize}
           animationDuration={200}
           arePiecesDraggable={status === "playing"}
           customSquareStyles={customSquareStyles}

@@ -1,6 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+
+// useLayoutEffect fires before paint on the client; fall back to useEffect on the server
+// to avoid the "useLayoutEffect does nothing on the server" React warning.
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 /**
  * Returns a responsive board width that fits inside the container element.
@@ -8,13 +13,16 @@ import { useEffect, useRef, useState } from "react";
  * plus flex gap.  Falls back to `fallback` until the ref is mounted.
  *
  * Pass `evalBar: false` when the board has no eval bar sidebar.
+ *
+ * Uses useLayoutEffect so the correct size is calculated before the first paint,
+ * preventing a flash of the oversized fallback value on mobile.
  */
 export function useBoardSize(fallback = 400, opts?: { evalBar?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(fallback);
   const hasEvalBar = opts?.evalBar !== false;
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
 

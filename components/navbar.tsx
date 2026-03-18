@@ -249,7 +249,7 @@ export function Navbar() {
               type="button"
               aria-haspopup="true"
               className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                isActive("/about") || isActive("/blog") || isActive("/feedback") || isActive("/leaderboard") || isActive("/shop") || isActive("/openings")
+                isActive("/about") || isActive("/blog") || isActive("/feedback") || isActive("/leaderboard") || isActive("/shop") || isActive("/openings") || isActive("/coaches") || isActive("/youtubers")
                   ? "text-white bg-white/[0.06]"
                   : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
               }`}
@@ -312,6 +312,23 @@ export function Navbar() {
                   }`}
                 >
                   🪙 Coin Shop
+                </Link>
+                <div className="my-1 h-px bg-white/[0.06]" />
+                <Link
+                  href="/coaches"
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive("/coaches") ? "text-emerald-400 bg-emerald-500/[0.08]" : "text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/[0.06]"
+                  }`}
+                >
+                  🎓 For Coaches
+                </Link>
+                <Link
+                  href="/youtubers"
+                  className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive("/youtubers") ? "text-fuchsia-400 bg-fuchsia-500/[0.08]" : "text-slate-400 hover:text-fuchsia-400 hover:bg-fuchsia-500/[0.06]"
+                  }`}
+                >
+                  🎬 For Creators
                 </Link>
               </div>
             </div>
@@ -649,6 +666,8 @@ export function Navbar() {
                 { href: "/openings", label: "📖 Openings" },
                 { href: "/leaderboard", label: "🏆 Leaderboard" },
                 { href: "/shop", label: "🪙 Coin Shop" },
+                { href: "/coaches", label: "🎓 For Coaches" },
+                { href: "/youtubers", label: "🎬 For Creators" },
                 { href: "/feedback", label: "Feedback" },
                 ...(authenticated
                   ? [

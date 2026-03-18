@@ -185,10 +185,7 @@ async function sendReplyEmail(
           View Ticket &amp; Reply
         </a>
         <p style="color: #52525b; font-size: 12px; margin-top: 24px;">
-          This email was sent by FireChess Support. You're receiving this because you submitted a support ticket.
-        </p>
-        <p style="color: #3f3f46; font-size: 12px; margin-top: 8px; padding-top: 12px; border-top: 1px solid #27272a;">
-          ⚠️ Please do not reply to this email — replies will not be received. To continue this conversation, use the ticket system at <a href="${ticketUrl}" style="color: #f97316; text-decoration: none;">firechess.com</a>.
+          This email was sent by FireChess Support. You can reply directly to this email and your message will be added to the ticket.
         </p>
       </div>
     </div>
@@ -203,6 +200,7 @@ async function sendReplyEmail(
     body: JSON.stringify({
       from,
       to,
+      reply_to: `reply+${ticketId}@${process.env.RESEND_INBOUND_DOMAIN ?? "beliaxe.resend.app"}`,
       subject: `Re: ${subject} — FireChess Support`,
       html,
     }),

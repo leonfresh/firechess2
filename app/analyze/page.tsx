@@ -1366,7 +1366,7 @@ export default function AnalyzePage() {
               </div>
 
               {/* Move list column */}
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden flex flex-col w-[280px] lg:w-auto" style={{ maxHeight: boardSize + 120 }}>
+              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] overflow-hidden flex flex-col w-full lg:w-auto" style={{ maxHeight: boardSize + 120 }}>
                 <div className="border-b border-white/[0.06] px-4 py-2.5">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500">Moves</h3>
                 </div>
