@@ -114,12 +114,32 @@ export async function POST(req: NextRequest) {
       ? [toRaw]
       : [];
 
-    // Use text body, fall back to stripping HTML tags, fall back to subject
-    const rawText =
-      payload.text?.trim() ||
-      payload.html?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() ||
-      (payload as any).subject ||
-      "(no message body)";
+    // Resend webhook payloads don't include the email body — fetch it via API
+    let rawText = payload.text?.trim() || payload.html?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() || "";
+
+    if (!rawText) {
+      const emailId = (payload as any).email_id;
+      const resendKey = process.env.AUTH_RESEND_KEY;
+      if (emailId && resendKey) {
+        try {
+          const emailRes = await fetch(`https://api.resend.com/emails/${emailId}`, {
+            headers: { Authorization: `Bearer ${resendKey}` },
+          });
+          if (emailRes.ok) {
+            const emailData = await emailRes.json();
+            rawText =
+              emailData.text?.trim() ||
+              emailData.html?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() ||
+              "";
+            console.log("[inbound email] fetched body length:", rawText.length);
+          }
+        } catch (e) {
+          console.error("[inbound email] failed to fetch email body:", e);
+        }
+      }
+    }
+
+    if (!rawText) rawText = "(replied via email — no body content)";
 
     console.log("[inbound email] from:", from, "to:", to, "text length:", rawText.length);
 
