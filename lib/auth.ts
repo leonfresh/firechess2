@@ -84,7 +84,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         path.startsWith("/api/reports") ||
         path.startsWith("/api/puzzles") ||
         path.startsWith("/api/roast") ||
-        path.startsWith("/api/explorer");
+        path.startsWith("/api/explorer") ||
+        path.startsWith("/api/feedback");
 
       if (isPublic) return true;
 
