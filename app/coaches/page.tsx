@@ -71,20 +71,24 @@ function PartnershipForm({ type }: { type: "coach" | "creator" }) {
       setError("Please write at least a few words.");
       return;
     }
+    if (!email.trim()) {
+      setError("Please enter your email so we can reply.");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
       const subject = isCoach ? "Coach Partnership Request" : "Creator Partnership Request";
       const fullMessage = [
         isCoach ? `Coach profile: ${profile || "(not provided)"}` : `Channel/profile: ${profile || "(not provided)"}`,
-        `Email: ${email || "(not provided)"}`,
+        name ? `Name: ${name}` : null,
         "",
         message.trim(),
-      ].join("\n");
+      ].filter(Boolean).join("\n");
       const res = await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: "other", subject, message: fullMessage }),
+        body: JSON.stringify({ category: "other", subject, message: fullMessage, email: email.trim() || undefined }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -138,13 +142,14 @@ function PartnershipForm({ type }: { type: "coach" | "creator" }) {
       </div>
       <div>
         <label className="mb-1.5 block text-sm font-medium text-slate-300">
-          Email <span className="text-slate-500">(for reply)</span>
+          Email <span className="text-red-400">*</span>
         </label>
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
+          required
           className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white placeholder-slate-500 transition focus:border-emerald-500/50 focus:outline-none focus:ring-1 focus:ring-emerald-500/30"
         />
       </div>

@@ -70,14 +70,14 @@ function PartnershipForm() {
     try {
       const fullMessage = [
         `Channel/profile: ${profile || "(not provided)"}`,
-        `Email: ${email || "(not provided)"}`,
+        name ? `Name: ${name}` : null,
         "",
         message.trim() || "(no additional message)",
-      ].join("\n");
+      ].filter(Boolean).join("\n");
       const res = await fetch("/api/feedback", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ category: "other", subject: "Creator Partnership Request", message: fullMessage }),
+        body: JSON.stringify({ category: "other", subject: "Creator Partnership Request", message: fullMessage, email: email.trim() || undefined }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -127,13 +127,14 @@ function PartnershipForm() {
       </div>
       <div>
         <label className="mb-1.5 block text-sm font-medium text-slate-300">
-          Email <span className="text-slate-500">(for reply)</span>
+          Email <span className="text-red-400">*</span>
         </label>
         <input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
+          required
           className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm text-white placeholder-slate-500 transition focus:border-fuchsia-500/50 focus:outline-none focus:ring-1 focus:ring-fuchsia-500/30"
         />
       </div>
