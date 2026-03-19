@@ -170,24 +170,28 @@ async function sendReplyEmail(
   const ticketUrl = `${appUrl}/support/${ticketId}${guestToken ? `?token=${guestToken}` : ""}`;
 
   const html = `
-    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; color: #e4e4e7;">
-      <div style="background: #0a0a0a; border-radius: 12px; padding: 32px; border: 1px solid #27272a;">
-        <div style="margin-bottom: 24px;">
-          <span style="font-size: 24px; font-weight: 700; color: #fff;">🔥 FireChess</span>
-        </div>
-        <p style="color: #a1a1aa; font-size: 14px; margin-bottom: 16px;">
-          You have a new reply on your support ticket: <strong style="color: #fff;">${subject}</strong>
-        </p>
-        <div style="background: #18181b; border-radius: 8px; padding: 16px; border-left: 3px solid #f97316; margin-bottom: 24px;">
-          <p style="color: #e4e4e7; font-size: 14px; line-height: 1.6; margin: 0; white-space: pre-wrap;">${replyText}</p>
-        </div>
-        <a href="${ticketUrl}" style="display: inline-block; background: linear-gradient(to right, #f97316, #f59e0b); color: #000; font-weight: 600; font-size: 14px; padding: 10px 24px; border-radius: 8px; text-decoration: none;">
-          View Ticket &amp; Reply
-        </a>
-        <p style="color: #52525b; font-size: 12px; margin-top: 24px;">
-          To reply, click the button above to open your ticket.
-        </p>
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; color: #e4e4e7; background: #0a0a0a; border-radius: 12px; padding: 32px; border: 1px solid #27272a;">
+      <div style="margin-bottom: 20px;">
+        <span style="font-size: 22px; font-weight: 700; color: #fff;">🔥 FireChess Support</span>
       </div>
+
+      <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 8px 0;">New reply on your ticket:</p>
+      <p style="color: #fff; font-size: 14px; font-weight: 600; margin: 0 0 20px 0;">${subject}</p>
+
+      <div style="background: #18181b; border-radius: 8px; padding: 16px; border-left: 3px solid #f97316; margin-bottom: 24px;">
+        <p style="color: #e4e4e7; font-size: 14px; line-height: 1.6; margin: 0; white-space: pre-wrap;">${replyText}</p>
+      </div>
+
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+        <tr>
+          <td>
+            <a href="${ticketUrl}" style="display: inline-block; background: #f97316; color: #000; font-weight: 700; font-size: 15px; padding: 12px 28px; border-radius: 8px; text-decoration: none;">&#128172; Reply to this ticket</a>
+          </td>
+        </tr>
+      </table>
+
+      <p style="color: #ef4444; font-size: 13px; font-weight: 600; margin: 0 0 4px 0;">&#9888; This email was sent from a no-reply address.</p>
+      <p style="color: #71717a; font-size: 12px; margin: 0;">Replies sent directly to this email will not be received. Use the button above to respond.</p>
     </div>
   `;
 
