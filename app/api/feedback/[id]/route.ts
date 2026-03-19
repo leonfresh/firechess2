@@ -175,14 +175,9 @@ async function sendReplyEmail(
         <span style="font-size: 22px; font-weight: 700; color: #fff;">🔥 FireChess Support</span>
       </div>
 
-      <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 8px 0;">New reply on your ticket:</p>
-      <p style="color: #fff; font-size: 14px; font-weight: 600; margin: 0 0 20px 0;">${subject}</p>
+      <p style="color: #a1a1aa; font-size: 14px; margin: 0 0 16px 0;">New reply on your ticket: <strong style="color: #fff;">${subject}</strong></p>
 
-      <div style="background: #18181b; border-radius: 8px; padding: 16px; border-left: 3px solid #f97316; margin-bottom: 24px;">
-        <p style="color: #e4e4e7; font-size: 14px; line-height: 1.6; margin: 0; white-space: pre-wrap;">${replyText}</p>
-      </div>
-
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 16px;">
         <tr>
           <td>
             <a href="${ticketUrl}" style="display: inline-block; background: #f97316; color: #000; font-weight: 700; font-size: 15px; padding: 12px 28px; border-radius: 8px; text-decoration: none;">&#128172; Reply to this ticket</a>
@@ -190,8 +185,11 @@ async function sendReplyEmail(
         </tr>
       </table>
 
-      <p style="color: #ef4444; font-size: 13px; font-weight: 600; margin: 0 0 4px 0;">&#9888; This email was sent from a no-reply address.</p>
-      <p style="color: #71717a; font-size: 12px; margin: 0;">Replies sent directly to this email will not be received. Use the button above to respond.</p>
+      <p style="color: #ef4444; font-size: 12px; font-weight: 600; margin: 0 0 20px 0;">&#9888; Do not reply to this email — use the button above to respond.</p>
+
+      <div style="background: #18181b; border-radius: 8px; padding: 16px; border-left: 3px solid #f97316;">
+        <p style="color: #e4e4e7; font-size: 14px; line-height: 1.6; margin: 0; white-space: pre-wrap;">${replyText}</p>
+      </div>
     </div>
   `;
 
