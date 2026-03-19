@@ -71,6 +71,8 @@ type SourceGame = {
   termination?: GameTermination;
   /** Opening name if available from source (Lichess or Chess.com PGN) */
   openingName?: string;
+  /** Direct URL to the game on Lichess or Chess.com */
+  gameUrl?: string;
 };
 
 export type AnalysisSource = "lichess" | "chesscom";
@@ -212,6 +214,7 @@ function sourceGamesFromLichess(games: LichessGame[]): SourceGame[] {
         winner,
         termination,
         openingName: game.opening?.name,
+        gameUrl: game.id ? `https://lichess.org/${game.id}` : undefined,
       };
     });
 }
@@ -561,6 +564,7 @@ async function fetchChessComGamesInReverse(
         winner,
         termination,
         openingName: extractOpeningFromPgn(game.pgn!),
+        gameUrl: (() => { const m = game.pgn?.match(/\[Site\s+"([^"]+)"\]/); return m?.[1]; })(),
       });
     }
   }
@@ -1109,6 +1113,78 @@ function deriveLeakTags(args: {
         const userCenterDist = Math.abs(userToFile - 3.5) + Math.abs(parseInt(userParsed.to[1]) - 4.5);
         if (bestCenterDist <= 2 && userCenterDist >= 4 && cpLoss >= 15) {
           tags.add("Center Neglect");
+        }
+      }
+
+      // --- Isolated Pawn: user pawn capture creates an isolated pawn (no neighboring pawns) ---
+      if (userPiece?.type === "p" && isUserCapture && cpLoss >= 30) {
+        try {
+          const afterChess = new Chess(fenBefore);
+          afterChess.move({ from: userParsed.from, to: userParsed.to, promotion: userParsed.promotion } as any);
+          const board = afterChess.board().flat().filter(Boolean);
+          const myPawns = board.filter(p => p && p.type === "p" && p.color === userPiece!.color);
+          const pawnFiles = myPawns.map(p => p!.square.charCodeAt(0) - 97);
+          const captureFile = userParsed.to.charCodeAt(0) - 97;
+          const hasNeighbor = pawnFiles.some(f => Math.abs(f - captureFile) === 1);
+          if (!hasNeighbor) {
+            tags.add("Isolated Pawn");
+          }
+        } catch { /* best effort */ }
+      }
+
+      // --- Missed Outpost: best move places knight on advanced pawn-protected square opponent can't attack ---
+      if (bestPiece?.type === "n" && userPiece?.type !== "n" && cpLoss >= 50) {
+        try {
+          const toRankNum = parseInt(bestParsed.to[1]);
+          const isAdvanced = bestPiece.color === "w" ? toRankNum >= 5 : toRankNum <= 4;
+          if (isAdvanced) {
+            const testChess = new Chess(fenBefore);
+            testChess.move({ from: bestParsed.from, to: bestParsed.to } as any);
+            // No opponent pawn can recapture on that square = stable outpost
+            const oppMoves = testChess.moves({ verbose: true });
+            const oppPawnThreats = oppMoves.filter(m => m.piece === "p" && m.to === bestParsed.to);
+            if (oppPawnThreats.length === 0) {
+              tags.add("Missed Outpost");
+            }
+          }
+        } catch { /* best effort */ }
+      }
+
+      // --- Rook Misplacement: user rook lands on file blocked by own pawn; engine goes to open/semi-open file ---
+      if (userPiece?.type === "r" && bestPiece?.type === "r" && cpLoss >= 40) {
+        try {
+          const afterChess = new Chess(fenBefore);
+          afterChess.move({ from: userParsed.from, to: userParsed.to } as any);
+          const board = afterChess.board().flat().filter(Boolean);
+          const userRookFile = userParsed.to.charCodeAt(0) - 97;
+          const bestRookFile = bestParsed.to.charCodeAt(0) - 97;
+          const myColor = userPiece.color;
+          const ownPawnOnUserFile = board.some(p => p && p.type === "p" && p.color === myColor && p.square.charCodeAt(0) - 97 === userRookFile);
+          const ownPawnOnBestFile = board.some(p => p && p.type === "p" && p.color === myColor && p.square.charCodeAt(0) - 97 === bestRookFile);
+          if (ownPawnOnUserFile && !ownPawnOnBestFile) {
+            tags.add("Rook Misplacement");
+          }
+        } catch { /* best effort */ }
+      }
+
+      // --- Bishop Pair Surrender: user bishop captures opponent knight, giving up the bishop pair ---
+      if (userPiece?.type === "b" && isUserCapture && userCapturedType === "n" && !isBestCapture && cpLoss >= 40) {
+        try {
+          const myBishops = chess.board().flat().filter(p => p && p.type === "b" && p.color === userPiece!.color);
+          if (myBishops.length === 2) {
+            tags.add("Bishop Pair Surrender");
+          }
+        } catch { /* best effort */ }
+      }
+
+      // --- Rook on Seventh: best move activates rook to the 7th rank (2nd for black), user doesn't ---
+      if (bestPiece?.type === "r" && cpLoss >= 50) {
+        const bestToRank = parseInt(bestParsed.to[1]);
+        const isSeventhRank = (bestPiece.color === "w" && bestToRank === 7) || (bestPiece.color === "b" && bestToRank === 2);
+        const userToRank = parseInt(userParsed.to[1]);
+        const userAlsoOnSeventh = userPiece?.type === "r" && ((userPiece.color === "w" && userToRank === 7) || (userPiece.color === "b" && userToRank === 2));
+        if (isSeventhRank && !userAlsoOnSeventh) {
+          tags.add("Rook on Seventh");
         }
       }
     }
@@ -1745,6 +1821,8 @@ export async function analyzeOpeningLeaksInBrowser(
   const byFen = new Map<string, { totalReachCount: number; moveCounts: Map<string, number>; moveOutcomes: Map<string, { w: number; d: number; l: number }>; openingName?: string }>();
   /** Track the last known opening name for each FEN (from source API) */
   const fenOpeningName = new Map<string, string>();
+  /** Track a representative game URL for each FEN position (first game that reached it) */
+  const fenToGameUrl = new Map<string, string>();
   let gamesAnalyzed = 0;
   const playerRatings: number[] = [];
   const gameTraces: GameOpeningTrace[] = [];
@@ -1813,6 +1891,11 @@ export async function analyzeOpeningLeaksInBrowser(
           fenOpeningName.set(fenBefore, lastKnownOpening);
         }
 
+        // Track first game URL that reached this FEN
+        if (game.gameUrl && !fenToGameUrl.has(fenBefore)) {
+          fenToGameUrl.set(fenBefore, game.gameUrl);
+        }
+
         const existing = byFen.get(fenBefore) ?? {
           totalReachCount: 0,
           moveCounts: new Map<string, number>(),
@@ -1876,7 +1959,7 @@ export async function analyzeOpeningLeaksInBrowser(
 
   const leaks: RepeatedOpeningLeak[] = [];
   const oneOffMistakes: RepeatedOpeningLeak[] = [];
-  const positionalFindings: { fenBefore: string; userMove: string; bestMove: string | null; cpLoss: number; tags: string[] }[] = [];
+  const positionalFindings: { fenBefore: string; userMove: string; bestMove: string | null; cpLoss: number; tags: string[]; gameUrl?: string }[] = [];
   const positionTraces: PositionEvalTrace[] = [];
 
   // Tags that count as positional patterns (lower cpLoss threshold)
@@ -1886,7 +1969,8 @@ export async function analyzeOpeningLeaksInBrowser(
     "Premature Pawn Break", "Weakened Pawn Structure", "Wrong Recapture",
     "Missed Development", "Piece Activity", "King Exposure",
     "Neglected Castling", "Aimless Move", "Overextended Pawn", "Center Neglect",
-    "Hanging Piece",
+    "Hanging Piece", "Isolated Pawn", "Missed Outpost", "Rook Misplacement",
+    "Bishop Pair Surrender", "Rook on Seventh",
   ]);
   let repeatedPositions = 0;
 
@@ -2036,8 +2120,8 @@ export async function analyzeOpeningLeaksInBrowser(
       // Even if not flagged as a main leak, capture positional patterns at lower cpLoss
       // Skip if engine's best move is the same as the user's move (noise at low depth)
       const userUci = moveToUci(new Chess(fenBefore), chosenMove);
-      if (cpLoss >= 15 && tags.some(t => POSITIONAL_TAGS.has(t)) && userUci !== beforeEval.bestMove) {
-        positionalFindings.push({ fenBefore, userMove: chosenMove, bestMove: beforeEval.bestMove, cpLoss, tags });
+      if (cpLoss >= 50 && tags.some(t => POSITIONAL_TAGS.has(t)) && userUci !== beforeEval.bestMove) {
+        positionalFindings.push({ fenBefore, userMove: chosenMove, bestMove: beforeEval.bestMove, cpLoss, tags, gameUrl: fenToGameUrl.get(fenBefore) });
       }
       return;
     }
@@ -2154,7 +2238,7 @@ export async function analyzeOpeningLeaksInBrowser(
     const screenCpLoss = screenEvalBefore - screenEvalAfter;
 
     // Capture positional patterns even below ONE_OFF_CP_THRESHOLD
-    if (screenCpLoss >= 15 && screenCpLoss < ONE_OFF_CP_THRESHOLD) {
+    if (screenCpLoss >= 50 && screenCpLoss < ONE_OFF_CP_THRESHOLD) {
       // Skip if engine's best move is the same as the user's move (noise at low depth)
       const userUci = moveToUci(new Chess(fenBefore), chosenMove);
       if (userUci !== screenBefore.bestMove) {
@@ -2167,7 +2251,7 @@ export async function analyzeOpeningLeaksInBrowser(
           moveCount: chosenCount,
         });
         if (posTags.some(t => POSITIONAL_TAGS.has(t))) {
-          positionalFindings.push({ fenBefore, userMove: chosenMove, bestMove: screenBefore.bestMove, cpLoss: screenCpLoss, tags: posTags });
+          positionalFindings.push({ fenBefore, userMove: chosenMove, bestMove: screenBefore.bestMove, cpLoss: screenCpLoss, tags: posTags, gameUrl: fenToGameUrl.get(fenBefore) });
         }
       }
       return; // not a big enough mistake for one-off leak
@@ -2289,7 +2373,7 @@ export async function analyzeOpeningLeaksInBrowser(
       const scEvalAfter = scoreToCpFromUserPerspective(scAfter.cp, oppToMove, sideToMove);
       const scCpLoss = scEvalBefore - scEvalAfter;
 
-      if (scCpLoss < 15 || scCpLoss > 300) return; // minimum 15cp to avoid depth-5 noise
+      if (scCpLoss < 50 || scCpLoss > 300) return; // minimum 50cp (0.5 pawns) to avoid noise
 
       // Skip if engine's best move is the same as the user's move
       const userUci = moveToUci(new Chess(fenBefore), chosenMove);
@@ -2304,7 +2388,7 @@ export async function analyzeOpeningLeaksInBrowser(
         moveCount: chosenCount,
       });
       if (posTags.some(t => POSITIONAL_TAGS.has(t))) {
-        positionalFindings.push({ fenBefore, userMove: chosenMove, bestMove: scBefore.bestMove, cpLoss: scCpLoss, tags: posTags });
+        positionalFindings.push({ fenBefore, userMove: chosenMove, bestMove: scBefore.bestMove, cpLoss: scCpLoss, tags: posTags, gameUrl: fenToGameUrl.get(fenBefore) });
       }
     });
   }

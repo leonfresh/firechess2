@@ -175,6 +175,46 @@ export const POSITIONAL_PATTERNS: PositionalPattern[] = [
     author: "GM Dan Heisman",
     color: "red",
   },
+  {
+    tag: "Isolated Pawn",
+    label: "Isolated Pawn",
+    icon: "🏝️",
+    quote: "An isolated pawn spreads gloom all over the chessboard.",
+    author: "GM Savielly Tartakower",
+    color: "yellow",
+  },
+  {
+    tag: "Missed Outpost",
+    label: "Missed Outpost",
+    icon: "🏔️",
+    quote: "A knight on the fifth rank is worth more than a rook on the first.",
+    author: "GM Nimzowitsch",
+    color: "teal",
+  },
+  {
+    tag: "Rook Misplacement",
+    label: "Rook on Closed File",
+    icon: "🚧",
+    quote: "Rooks belong on open files. A rook blocked by its own pawns is a sleeping giant.",
+    author: "GM Edmar Mednis",
+    color: "cyan",
+  },
+  {
+    tag: "Bishop Pair Surrender",
+    label: "Bishop Pair Surrender",
+    icon: "⚖️",
+    quote: "Two bishops are nearly always better than bishop and knight, or two knights.",
+    author: "GM Reuben Fine",
+    color: "amber",
+  },
+  {
+    tag: "Rook on Seventh",
+    label: "Missed Rook on 7th",
+    icon: "🏹",
+    quote: "A rook on the seventh rank is worth half a pawn and terrorizes the enemy position.",
+    author: "GM Siegbert Tarrasch",
+    color: "violet",
+  },
 ];
 
 const patternMap = new Map(POSITIONAL_PATTERNS.map((p) => [p.tag, p]));

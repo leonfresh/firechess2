@@ -281,6 +281,8 @@ export type PositionalFinding = {
   bestMove: string | null;
   cpLoss: number;
   tags: string[];
+  /** URL to the source game (Lichess or Chess.com) */
+  gameUrl?: string;
 };
 
 export type AnalyzeResponse = {

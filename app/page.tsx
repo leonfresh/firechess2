@@ -2955,14 +2955,17 @@ export default function HomePage() {
                       {/* Batch example positions */}
                       {isExpanded && hasExamples && (
                         <div className="border-t border-white/[0.06] bg-white/[0.015] px-5 pb-5 pt-4">
-                          <div className="mb-4 flex items-center justify-between">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">Positions from your games</p>
+                          <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-500">Positions from your games</p>
+                              <p className="mt-0.5 text-[11px] text-slate-500">{icon} Each board shows your move (red) vs. the engine&apos;s preferred move (green)</p>
+                            </div>
                             <div className="flex items-center gap-3 text-[10px] text-slate-500">
                               <span className="flex items-center gap-1"><span className="inline-block h-2 w-3.5 rounded-sm" style={{ backgroundColor: "rgba(239, 68, 68, 0.85)" }} /> Your move</span>
                               <span className="flex items-center gap-1"><span className="inline-block h-2 w-3.5 rounded-sm" style={{ backgroundColor: "rgba(34, 197, 94, 0.85)" }} /> Best move</span>
                             </div>
                           </div>
-                          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             {(hasProAccess ? motif.examples : motif.examples.slice(0, FREE_POSITIONAL_SAMPLE)).map((ex, ei) => {
                               const resolveMove = (fen: string, move: string | null | undefined): { from: string; to: string; san: string } | null => {
                                 if (!move) return null;
@@ -3125,10 +3128,22 @@ export default function HomePage() {
                                 setPosExplaining(null);
                               };
 
+                              const moveNum = ex.fenBefore.split(" ")[5] ?? "?";
+                              const evalColor = ex.cpLoss >= 100 ? "bg-red-500/15 text-red-400" : ex.cpLoss >= 70 ? "bg-orange-500/15 text-orange-400" : "bg-amber-500/15 text-amber-400";
+
                               return (
-                                <div key={`${ex.fenBefore}-${ei}`} className="flex flex-col gap-2">
+                                <div key={`${ex.fenBefore}-${ei}`} className="flex flex-col overflow-hidden rounded-2xl border border-white/[0.09] shadow-lg">
+                                  {/* Card header */}
+                                  <div className="flex items-center justify-between px-3.5 py-2.5 bg-white/[0.02] border-b border-white/[0.06]">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                                      Move {moveNum} · as {sideToMove}
+                                    </span>
+                                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${evalColor}`}>
+                                      −{(ex.cpLoss / 100).toFixed(1)} pawns
+                                    </span>
+                                  </div>
                                   {/* Board */}
-                                  <div className="relative w-full aspect-square rounded-xl overflow-hidden border border-white/[0.09] shadow-lg">
+                                  <div className="relative w-full aspect-square border-b border-white/[0.06]">
                                     <Chessboard
                                       id={`pos-ex-${motif.name}-${ei}`}
                                       position={ex.fenBefore}
@@ -3142,56 +3157,76 @@ export default function HomePage() {
                                       customPieces={customPieces}
                                     />
                                   </div>
-                                  {/* Move info row */}
-                                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-2 space-y-1">
-                                    <div className="flex items-center justify-between">
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="h-2 w-2 rounded-full bg-red-400/80" />
-                                        <span className="text-[11px] text-slate-400">Played</span>
-                                        {userR && <span className="font-mono text-[11px] font-semibold text-red-400">{userR.san}</span>}
-                                      </div>
-                                      <span className="text-[11px] font-bold text-red-400">−{(ex.cpLoss / 100).toFixed(1)}</span>
+                                  {/* Move comparison: two-column side-by-side */}
+                                  <div className="grid grid-cols-2 divide-x divide-white/[0.06]">
+                                    <div className="flex flex-col items-center py-3 px-3 gap-0.5">
+                                      <span className="text-[9px] uppercase tracking-widest font-semibold text-slate-500">You played</span>
+                                      {userR
+                                        ? <span className="font-mono text-sm font-bold text-red-400">{userR.san}</span>
+                                        : <span className="text-[10px] text-slate-600">—</span>
+                                      }
                                     </div>
-                                    {bestR && (
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="h-2 w-2 rounded-full bg-emerald-400/80" />
-                                        <span className="text-[11px] text-slate-400">Best</span>
-                                        <span className="font-mono text-[11px] font-semibold text-emerald-400">{bestR.san}</span>
-                                      </div>
+                                    <div className="flex flex-col items-center py-3 px-3 gap-0.5">
+                                      <span className="text-[9px] uppercase tracking-widest font-semibold text-slate-500">Engine best</span>
+                                      {bestR
+                                        ? <span className="font-mono text-sm font-bold text-emerald-400">{bestR.san}</span>
+                                        : <span className="text-[10px] text-slate-600">—</span>
+                                      }
+                                    </div>
+                                  </div>
+                                  {/* Explain button + View game */}
+                                  <div className="border-t border-white/[0.06] px-3.5 pb-3.5 pt-3 flex flex-col gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={onExplain}
+                                      disabled={isExplaining}
+                                      className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-amber-500/20 bg-amber-500/[0.07] py-2.5 text-xs font-semibold text-amber-400 transition-all hover:border-amber-500/35 hover:bg-amber-500/[0.12] hover:text-amber-300 disabled:opacity-50 disabled:cursor-wait cursor-pointer"
+                                    >
+                                      {isExplaining ? (
+                                        <>
+                                          <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20"/><path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
+                                          Analyzing…
+                                        </>
+                                      ) : (
+                                        <>
+                                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+                                          Explain this position
+                                        </>
+                                      )}
+                                    </button>
+                                    {ex.gameUrl && (
+                                      <a
+                                        href={ex.gameUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] py-2 text-xs font-semibold text-slate-400 transition-all hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-slate-200"
+                                      >
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                        View game
+                                      </a>
                                     )}
                                   </div>
-                                  <button
-                                    type="button"
-                                    onClick={onExplain}
-                                    disabled={isExplaining}
-                                    className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/[0.07] py-2 text-xs font-semibold text-amber-400 transition-all hover:border-amber-500/35 hover:bg-amber-500/[0.12] hover:text-amber-300 disabled:opacity-50 disabled:cursor-wait cursor-pointer"
-                                  >
-                                    {isExplaining ? (
-                                      <>
-                                        <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20"/><path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/></svg>
-                                        Analyzing…
-                                      </>
-                                    ) : (
-                                      <>
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
-                                        Explain
-                                      </>
-                                    )}
-                                  </button>
                                 </div>
                               );
                             })}
                           </div>
                           {!hasProAccess && motif.examples.length > FREE_POSITIONAL_SAMPLE && (
                             <>
-                              <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3 mt-3">
+                              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 mt-4">
                                 {motif.examples.slice(FREE_POSITIONAL_SAMPLE).map((_, li) => (
-                                  <div key={li} className="flex flex-col gap-2">
-                                    <div className="w-full aspect-square rounded-xl overflow-hidden border border-white/[0.06] bg-white/[0.02] flex flex-col items-center justify-center gap-2">
+                                  <div key={li} className="flex flex-col overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.015]">
+                                    <div className="flex items-center justify-between px-3.5 py-2.5 bg-white/[0.02] border-b border-white/[0.06]">
+                                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600">Locked</span>
+                                      <span className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[10px] text-slate-600">Pro</span>
+                                    </div>
+                                    <div className="w-full aspect-square flex flex-col items-center justify-center gap-2 border-b border-white/[0.04] bg-white/[0.01]">
                                       <span className="text-2xl">🔒</span>
                                       <p className="text-[10px] font-semibold text-slate-500 text-center px-3">Pro only</p>
                                     </div>
-                                    <div className="rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2 h-[52px]" />
+                                    <div className="grid grid-cols-2 divide-x divide-white/[0.04] opacity-30">
+                                      <div className="py-3 px-3 h-[52px]" />
+                                      <div className="py-3 px-3 h-[52px]" />
+                                    </div>
                                   </div>
                                 ))}
                               </div>
