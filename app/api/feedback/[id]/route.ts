@@ -185,7 +185,7 @@ async function sendReplyEmail(
           View Ticket &amp; Reply
         </a>
         <p style="color: #52525b; font-size: 12px; margin-top: 24px;">
-          You can reply directly to this email and your message will be added to the ticket. For longer replies, use the ticket link above.
+          To reply, click the button above to open your ticket.
         </p>
       </div>
     </div>
@@ -200,7 +200,6 @@ async function sendReplyEmail(
     body: JSON.stringify({
       from,
       to,
-      reply_to: `reply+${ticketId}@${process.env.RESEND_INBOUND_DOMAIN ?? "firechess.com"}`,
       subject: `Re: ${subject} — FireChess Support`,
       html,
     }),
