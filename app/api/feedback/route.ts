@@ -38,6 +38,9 @@ export async function POST(req: NextRequest) {
       ? (category as (typeof validCategories)[number])
       : "other";
 
+    const isGuest = !session?.user?.id;
+    const guestToken = isGuest ? crypto.randomUUID() : null;
+
     const [ticket] = await db.insert(feedback).values({
       userId: session?.user?.id ?? null,
       email: email ?? session?.user?.email ?? null,
@@ -45,9 +48,10 @@ export async function POST(req: NextRequest) {
       category: cat,
       message: message.trim(),
       status: "new",
+      guestToken,
     }).returning({ id: feedback.id });
 
-    return NextResponse.json({ ok: true, ticketId: ticket.id });
+    return NextResponse.json({ ok: true, ticketId: ticket.id, guestToken });
   } catch (err) {
     console.error("[feedback POST]", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });

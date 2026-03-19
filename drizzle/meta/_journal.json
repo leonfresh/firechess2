@@ -8,6 +8,13 @@
       "when": 1772480411572,
       "tag": "0000_tough_ken_ellis",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773911643813,
+      "tag": "0001_guest_token",
+      "breakpoints": true
     }
   ]
 }

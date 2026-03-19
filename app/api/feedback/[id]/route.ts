@@ -16,17 +16,13 @@ import { eq, asc } from "drizzle-orm";
 /*  GET — get ticket + thread                                          */
 /* ------------------------------------------------------------------ */
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
     const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const admin = await isAdmin(session.user.id);
+    const guestToken = req.nextUrl.searchParams.get("token");
 
     const [ticket] = await db
       .select()
@@ -38,9 +34,12 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // Only the ticket owner or admin can view
-    if (!admin && ticket.userId !== session.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const isGuestOwner = guestToken && ticket.guestToken && guestToken === ticket.guestToken;
+    const admin = session?.user?.id ? await isAdmin(session.user.id) : false;
+    const isOwner = session?.user?.id && ticket.userId === session.user.id;
+
+    if (!admin && !isOwner && !isGuestOwner) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Fetch replies
@@ -76,11 +75,7 @@ export async function POST(
   try {
     const { id } = await params;
     const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const admin = await isAdmin(session.user.id);
+    const guestToken = req.nextUrl.searchParams.get("token");
 
     const [ticket] = await db
       .select()
@@ -92,9 +87,12 @@ export async function POST(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // Only the ticket owner or admin can reply
-    if (!admin && ticket.userId !== session.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    const isGuestOwner = guestToken && ticket.guestToken && guestToken === ticket.guestToken;
+    const admin = session?.user?.id ? await isAdmin(session.user.id) : false;
+    const isOwner = session?.user?.id && ticket.userId === session.user.id;
+
+    if (!admin && !isOwner && !isGuestOwner) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await req.json();
@@ -107,7 +105,7 @@ export async function POST(
     // Insert reply
     const [reply] = await db.insert(ticketReplies).values({
       feedbackId: id,
-      userId: session.user.id,
+      userId: session?.user?.id ?? null,
       isAdmin: admin,
       message: message.trim(),
       emailSent: false,
@@ -122,6 +120,7 @@ export async function POST(
           ticket.subject || `Ticket #${id.slice(0, 8)}`,
           message.trim(),
           id,
+          ticket.guestToken ?? null,
         );
         if (emailSent) {
           await db
@@ -157,6 +156,7 @@ async function sendReplyEmail(
   subject: string,
   replyText: string,
   ticketId: string,
+  guestToken: string | null,
 ): Promise<boolean> {
   const resendKey = process.env.AUTH_RESEND_KEY;
   const from = process.env.AUTH_RESEND_FROM ?? "FireChess <noreply@firechess.com>";
@@ -167,7 +167,7 @@ async function sendReplyEmail(
     return false;
   }
 
-  const ticketUrl = `${appUrl}/support/${ticketId}`;
+  const ticketUrl = `${appUrl}/support/${ticketId}${guestToken ? `?token=${guestToken}` : ""}`;
 
   const html = `
     <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; color: #e4e4e7;">

@@ -178,6 +178,7 @@ export const feedback = pgTable("feedback", {
     .$type<"new" | "read" | "resolved">()
     .notNull()
     .default("new"),
+  guestToken: text("guestToken"),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
 });
 

@@ -7,7 +7,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useSession } from "@/components/session-provider";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 type Ticket = {
@@ -47,7 +47,9 @@ export default function TicketThreadPage() {
   const { loading, authenticated, user } = useSession();
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const ticketId = params.id as string;
+  const guestToken = searchParams.get("token");
 
   const [ticket, setTicket] = useState<Ticket | null>(null);
   const [replies, setReplies] = useState<Reply[]>([]);
@@ -58,9 +60,14 @@ export default function TicketThreadPage() {
   const threadEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!authenticated || !ticketId) return;
+    if (loading) return;
+    if (!authenticated && !guestToken) return;
+    if (!ticketId) return;
     setFetching(true);
-    fetch(`/api/feedback/${ticketId}`)
+    const url = guestToken
+      ? `/api/feedback/${ticketId}?token=${encodeURIComponent(guestToken)}`
+      : `/api/feedback/${ticketId}`;
+    fetch(url)
       .then((r) => {
         if (!r.ok) throw new Error("Not found");
         return r.json();
@@ -71,7 +78,7 @@ export default function TicketThreadPage() {
       })
       .catch(() => setError("Ticket not found or access denied."))
       .finally(() => setFetching(false));
-  }, [authenticated, ticketId]);
+  }, [loading, authenticated, guestToken, ticketId]);
 
   useEffect(() => {
     threadEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -81,7 +88,10 @@ export default function TicketThreadPage() {
     if (!replyText.trim()) return;
     setReplying(true);
     try {
-      const res = await fetch(`/api/feedback/${ticketId}`, {
+      const url = guestToken
+        ? `/api/feedback/${ticketId}?token=${encodeURIComponent(guestToken)}`
+        : `/api/feedback/${ticketId}`;
+      const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: replyText.trim() }),
@@ -103,7 +113,7 @@ export default function TicketThreadPage() {
     );
   }
 
-  if (!authenticated) {
+  if (!authenticated && !guestToken) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#0a0a0a] text-zinc-400">
         <span className="text-4xl">🔒</span>
