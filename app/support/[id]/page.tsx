@@ -60,7 +60,7 @@ export default function TicketThreadPage() {
   const threadEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading && !guestToken) return;
     if (!authenticated && !guestToken) return;
     if (!ticketId) return;
     setFetching(true);
@@ -105,7 +105,7 @@ export default function TicketThreadPage() {
     finally { setReplying(false); }
   };
 
-  if (loading) {
+  if (loading && !guestToken) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a] text-zinc-400">
         Loading…
