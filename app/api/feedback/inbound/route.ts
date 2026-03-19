@@ -103,9 +103,10 @@ export async function POST(req: NextRequest) {
       ? [toRaw]
       : [];
 
-    // Resend's inbound webhook sometimes omits body (known limitation of shared resend.app domain)
-    // Try all known field names, fall back to subject as context
     const subject = (payload as any).subject ?? "";
+    const emailId = (payload as any).email_id ?? "";
+
+    // Try body fields from payload first
     let rawText =
       (payload as any).text?.trim() ||
       (payload as any).html?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() ||
@@ -113,7 +114,32 @@ export async function POST(req: NextRequest) {
       (payload as any).plain?.trim() ||
       "";
 
-    // If no body, use subject as context so the admin knows what the reply was about
+    // If no body in webhook, fetch the full email via Resend API
+    if (!rawText && emailId) {
+      const resendKey = process.env.AUTH_RESEND_KEY;
+      if (resendKey) {
+        try {
+          const emailRes = await fetch(
+            `https://api.resend.com/emails/${encodeURIComponent(emailId)}`,
+            { headers: { Authorization: `Bearer ${resendKey}` } },
+          );
+          if (emailRes.ok) {
+            const emailData = await emailRes.json();
+            console.log("[inbound email] fetched email data keys:", Object.keys(emailData));
+            rawText =
+              emailData.text?.trim() ||
+              emailData.html?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() ||
+              "";
+          } else {
+            console.log("[inbound email] Resend API fetch failed:", emailRes.status);
+          }
+        } catch (e) {
+          console.error("[inbound email] Resend API fetch error:", e);
+        }
+      }
+    }
+
+    // Last resort: use subject so admin has context
     if (!rawText && subject) {
       rawText = `[No body captured — reply subject: "${subject}"]`;
     }
