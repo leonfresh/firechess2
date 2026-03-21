@@ -7884,28 +7884,54 @@ export default function ChaosChessPage() {
               )}
             </div>
 
-            {/* Per-move countdown bar (PvP only — 30s per turn) */}
-            {gameMode !== "ai" && gameStatus === "playing" && (
-              <div className="w-full max-w-[640px]">
-                <div className="relative h-1.5 overflow-hidden rounded-full bg-white/10">
+            {/* Per-move countdown (PvP only — 30s per turn) */}
+            {gameMode !== "ai" && gameStatus === "playing" && (() => {
+              const isMyTurn =
+                (playerColor === "white" && game.turn() === "w") ||
+                (playerColor === "black" && game.turn() === "b");
+              const pct = (perMoveSecs / 30) * 100;
+              const color =
+                perMoveSecs > 15
+                  ? "text-emerald-400 border-emerald-500/60"
+                  : perMoveSecs > 7
+                    ? "text-amber-400 border-amber-500/60"
+                    : "text-red-400 border-red-500/60";
+              const barColor =
+                perMoveSecs > 15
+                  ? "bg-emerald-500"
+                  : perMoveSecs > 7
+                    ? "bg-amber-400"
+                    : "bg-red-500";
+              return (
+                <div className="w-full max-w-[640px] flex items-center gap-2">
+                  {/* Circular badge */}
                   <div
-                    className={`h-full rounded-full transition-[width] duration-1000 ease-linear ${
-                      perMoveSecs > 15
-                        ? "bg-emerald-500"
-                        : perMoveSecs > 7
-                          ? "bg-amber-400"
-                          : "bg-red-500"
-                    }`}
-                    style={{ width: `${(perMoveSecs / 30) * 100}%` }}
-                  />
+                    className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 bg-black/40 font-mono text-sm font-black tabular-nums transition-colors ${color} ${perMoveSecs <= 7 ? "animate-pulse" : ""}`}
+                  >
+                    {isMyTurn ? perMoveSecs : "—"}
+                  </div>
+                  {/* Bar + label */}
+                  <div className="flex-1">
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className={`text-[10px] font-semibold ${isMyTurn ? color.split(" ")[0] : "text-slate-600"}`}>
+                        {isMyTurn ? "Your move" : "Opponent's turn"}
+                      </span>
+                      {isMyTurn && perMoveSecs <= 10 && (
+                        <span className="text-[10px] font-bold text-red-400 animate-pulse">
+                          ⚠ Hurry!
+                        </span>
+                      )}
+                    </div>
+                    <div className="relative h-2 overflow-hidden rounded-full bg-white/[0.07]">
+                      <div
+                        className={`h-full rounded-full transition-[width] duration-1000 ease-linear ${isMyTurn ? barColor : "bg-white/10"}`}
+                        style={{ width: `${isMyTurn ? pct : 100}%` }}
+                      />
+                    </div>
+                  </div>
                 </div>
-                {perMoveSecs <= 10 && (
-                  <p className="mt-0.5 text-center text-[10px] font-bold text-red-400 animate-pulse">
-                    ⏱ {perMoveSecs}s to move!
-                  </p>
-                )}
-              </div>
-            )}
+              );
+            })()}
 
             {/* Board — auto-sizes to fill container, capped at 640px wide and by viewport height */}
             <div
