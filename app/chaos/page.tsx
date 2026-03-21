@@ -8687,7 +8687,7 @@ export default function ChaosChessPage() {
               </div>
             )}
 
-            {/* Event log */}}
+            {/* Event log */}
             <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3">
               <h3 className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-purple-400 sm:mb-2 sm:text-xs">
                 ⚡ Chaos Log
