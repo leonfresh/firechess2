@@ -1944,6 +1944,13 @@ type RicochetAnimState = {
   pieceUrl: string;
 };
 
+type KingCaptureAnimState = {
+  id: number;
+  from: string;
+  to: string;
+  pieceUrl: string;
+};
+
 function BoardEffectsOverlay({
   effects,
   boardSize,
@@ -2208,6 +2215,65 @@ function RicochetBishopAnimator({
             height: pieceSize,
             filter: `drop-shadow(0 0 ${(sqPx * 0.22).toFixed(1)}px #fb923c) drop-shadow(0 0 ${(sqPx * 0.08).toFixed(1)}px #fff)`,
             animation: `${kfName} ${totalDuration}ms linear forwards`,
+          }}
+        />
+      </div>
+    </>
+  );
+}
+
+/** Slides the capturing piece straight to the king's square before the explosion */
+function KingCaptureSlideAnimator({
+  anim,
+  boardSize,
+  orientation,
+}: {
+  anim: KingCaptureAnimState;
+  boardSize: number;
+  orientation: "white" | "black";
+}) {
+  const sqPx = boardSize / 8;
+  const pieceSize = sqPx * 0.82;
+  const offset = (sqPx - pieceSize) / 2;
+
+  const toPixel = (square: string) => {
+    const file = square.charCodeAt(0) - 97;
+    const rank = parseInt(square[1], 10) - 1;
+    const px = (orientation === "white" ? file : 7 - file) * sqPx + offset;
+    const py = (orientation === "white" ? 7 - rank : rank) * sqPx + offset;
+    return { px, py };
+  };
+
+  const from = toPixel(anim.from);
+  const to = toPixel(anim.to);
+  const kfName = `kcs-${anim.id}`;
+  const glow = (sqPx * 0.3).toFixed(1);
+  const kfCSS = `
+    @keyframes ${kfName} {
+      0%   { transform: translate(${from.px}px, ${from.py}px); opacity: 1; }
+      72%  { transform: translate(${to.px}px, ${to.py}px); opacity: 1; filter: drop-shadow(0 0 ${glow}px #ef4444) drop-shadow(0 0 ${(sqPx * 0.15).toFixed(1)}px #fff) brightness(1.6); }
+      100% { transform: translate(${to.px}px, ${to.py}px); opacity: 0; }
+    }
+  `;
+
+  return (
+    <>
+      <style>{kfCSS}</style>
+      <div
+        className="pointer-events-none absolute inset-0 overflow-hidden rounded-[8px]"
+        style={{ zIndex: 31 }}
+      >
+        <img
+          src={anim.pieceUrl}
+          alt=""
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            width: pieceSize,
+            height: pieceSize,
+            filter: `drop-shadow(0 0 ${(sqPx * 0.22).toFixed(1)}px #fb923c) drop-shadow(0 0 ${(sqPx * 0.08).toFixed(1)}px #fff)`,
+            animation: `${kfName} 650ms ease-in forwards`,
           }}
         />
       </div>
@@ -2985,6 +3051,11 @@ export default function ChaosChessPage() {
   /** True during the ~950ms king-death animation window — blocks input so the popup can't be raced. */
   const isAnimatingEndRef = useRef(false);
 
+  /** Slide animation state for king captures (capturing piece glides to king's square) */
+  const [kingCaptureAnim, setKingCaptureAnim] =
+    useState<KingCaptureAnimState | null>(null);
+  const kingCaptureAnimIdRef = useRef(0);
+
   const triggerEffect = useCallback(
     (type: string, squares: string[], durationOverride?: number) => {
       const id = ++effectIdRef.current;
@@ -3020,6 +3091,25 @@ export default function ChaosChessPage() {
       setTimeout(
         () => setRicochetAnim((prev) => (prev?.id === id ? null : prev)),
         950,
+      );
+    },
+    [pieceTheme.setName],
+  );
+
+  /** Start the king-capture slide: capturing piece glides from `from` to the king's square `to` */
+  const startKingCaptureAnim = useCallback(
+    (from: string, to: string, pieceCode: string) => {
+      const pieceUrl = getPieceImageUrl(
+        pieceTheme.setName ?? "cburnett",
+        pieceCode,
+      );
+      const id = ++kingCaptureAnimIdRef.current;
+      setKingCaptureAnim({ id, from, to, pieceUrl });
+      // Clear after the 650ms animation + a short buffer
+      setTimeout(
+        () =>
+          setKingCaptureAnim((prev) => (prev?.id === id ? null : prev)),
+        750,
       );
     },
     [pieceTheme.setName],
@@ -3323,7 +3413,7 @@ export default function ChaosChessPage() {
 
   /* ── Check for game end ── */
   const checkGameEnd = useCallback(
-    (g: Chess, captureAt?: string) => {
+    (g: Chess, captureAt?: string, captureFrom?: string) => {
       // King-capture fallback: chaos moves can land on the king square.
       // If a king is missing from the board, the side that captured it wins.
       const board = g.board();
@@ -3340,8 +3430,19 @@ export default function ChaosChessPage() {
       if (!whiteKingFound || !blackKingFound) {
         const winner = !whiteKingFound ? "black" : "white";
         const youWin = winner === playerColor;
-        // Fire king-death effect then delay popup
-        if (captureAt) triggerEffect("king-death", [captureAt]);
+
+        // Animate: slide the capturing piece to the king's square, then explode
+        const slideDelay = captureAt && captureFrom ? 400 : 0;
+        if (captureAt && captureFrom) {
+          const capPiece = g.get(captureAt as any);
+          if (capPiece) {
+            const capCode = `${capPiece.color}${capPiece.type.toUpperCase()}`;
+            startKingCaptureAnim(captureFrom, captureAt, capCode);
+          }
+        }
+        if (captureAt) {
+          setTimeout(() => triggerEffect("king-death", [captureAt]), slideDelay);
+        }
         isAnimatingEndRef.current = true;
         if (youWin) {
           playSound("airhorn");
@@ -3367,7 +3468,7 @@ export default function ChaosChessPage() {
             ]);
             if (youWin) spawnPepe(PEPE.clap);
           },
-          captureAt ? KING_DEATH_POPUP_DELAY : 0,
+          captureAt ? KING_DEATH_POPUP_DELAY + slideDelay : 0,
         );
         return true;
       }
@@ -3522,8 +3623,7 @@ export default function ChaosChessPage() {
 
       return false;
     },
-    [playerColor, spawnPepe],
-  );
+    [playerColor, spawnPepe, triggerEffect, startKingCaptureAnim],  );
 
   /* ── Check draft trigger after a full move ── */
   const checkDraft = useCallback(
@@ -3931,7 +4031,13 @@ export default function ChaosChessPage() {
                     },
                     [captured]: { backgroundColor: "rgba(255,215,0,0.55)" },
                   });
-                  triggerEffect("king-death", [captured]);
+                  // Slide the capturing piece to the king's square, then explode
+                  const capPiece = g.get(best.move.from as any);
+                  if (capPiece) {
+                    const capCode = `${capPiece.color}${capPiece.type.toUpperCase()}`;
+                    startKingCaptureAnim(best.move.from, captured, capCode);
+                  }
+                  setTimeout(() => triggerEffect("king-death", [captured]), 400);
                   playSound("mario-death");
                   spawnPepe(PEPE.gamercry);
                   setIsThinking(false);
@@ -3948,7 +4054,7 @@ export default function ChaosChessPage() {
                         pepe: PEPE.gamercry,
                       },
                     ]);
-                  }, KING_DEATH_POPUP_DELAY);
+                  }, KING_DEATH_POPUP_DELAY + 400);
                   return;
                 }
                 const newGame = best.game;
@@ -4021,7 +4127,7 @@ export default function ChaosChessPage() {
                 setSelectedSquare(null);
                 setLegalMoveSquares({});
                 setIsThinking(false);
-                if (!checkGameEnd(activeGame, chaosMove.to)) {
+                if (!checkGameEnd(activeGame, chaosMove.to, chaosMove.from)) {
                   recomputeChaosMoves(activeGame, cs2);
                 }
                 onComplete?.(activeGame, cs2);
@@ -4327,6 +4433,7 @@ export default function ChaosChessPage() {
         // If AI king is under chaos-only check, force it to play an escaping move
         const playerChaosMods = cs.playerModifiers;
         const playerC3: Color = playerColor === "white" ? "w" : "b";
+        let appliedChaosEscape = false;
         if (
           playerChaosMods.length > 0 &&
           isKingUnderChaosAttack(
@@ -4378,13 +4485,16 @@ export default function ChaosChessPage() {
                 escaping.some((m) => m.lan === u),
               );
               bestUci = topRanked ?? escaping[0].lan;
+              // Mark that we applied a chaos escape so later overrides don't undo it
+              appliedChaosEscape = true;
             }
             // else: truly trapped — checkmate logic will handle it
           }
         }
 
         // Forced En Passant: if player has this modifier and EP is available, AI must play it
-        if (cs.playerModifiers.some((m) => m.id === "forced-en-passant")) {
+        // (but NOT if we just set bestUci to escape a chaos check — escaping takes priority)
+        if (!appliedChaosEscape && cs.playerModifiers.some((m) => m.id === "forced-en-passant")) {
           const epMoves = g
             .moves({ verbose: true })
             .filter((m: { flags: string; from: string; to: string }) =>
@@ -4396,10 +4506,11 @@ export default function ChaosChessPage() {
         }
 
         // King's Chains: don't move the piece chained by the player's king
+        // (skip if we already found a chaos escape move)
         const playerChainColor: Color = playerColor === "white" ? "w" : "b";
         const chainedByPlayer =
           cs.assignedSquares?.[`${playerChainColor}_kings-chains`];
-        if (chainedByPlayer && bestUci && bestUci.startsWith(chainedByPlayer)) {
+        if (!appliedChaosEscape && chainedByPlayer && bestUci && bestUci.startsWith(chainedByPlayer)) {
           const allLegal = g.moves({ verbose: true });
           const nonChained = allLegal.filter(
             (mv: { from: string }) => mv.from !== chainedByPlayer,
@@ -4525,6 +4636,7 @@ export default function ChaosChessPage() {
       chaosState,
       spawnPepe,
       triggerEffect,
+      startKingCaptureAnim,
     ],
   );
 
@@ -5723,6 +5835,7 @@ export default function ChaosChessPage() {
           checkGameEnd(
             activeGame,
             chaosMove.type === "capture" ? chaosMove.to : undefined,
+            chaosMove.type === "capture" ? chaosMove.from : undefined,
           )
         )
           return true;
@@ -7672,7 +7785,11 @@ export default function ChaosChessPage() {
             rel="noopener noreferrer"
             className="mt-4 flex items-center gap-2.5 rounded-xl border border-indigo-500/25 bg-indigo-500/[0.08] px-5 py-3 text-sm font-semibold text-indigo-300/80 transition-all hover:bg-indigo-500/15"
           >
-            <svg className="h-4 w-4 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="h-4 w-4 shrink-0"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.033.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
             </svg>
             Join the Discord — strategies, bugs &amp; updates
@@ -8001,7 +8118,8 @@ export default function ChaosChessPage() {
               ref={boardContainerRef}
               className="max-w-[640px]"
               style={{
-                width: "min(100%, min(640px, max(200px, calc(100dvh - 460px))))",
+                width:
+                  "min(100%, min(640px, max(200px, calc(100dvh - 460px))))",
               }}
             >
               <div className="relative w-full">
@@ -8052,6 +8170,13 @@ export default function ChaosChessPage() {
                 {ricochetAnim && boardSize > 0 && (
                   <RicochetBishopAnimator
                     anim={ricochetAnim}
+                    boardSize={boardSize}
+                    orientation={playerColor}
+                  />
+                )}
+                {kingCaptureAnim && boardSize > 0 && (
+                  <KingCaptureSlideAnimator
+                    anim={kingCaptureAnim}
                     boardSize={boardSize}
                     orientation={playerColor}
                   />
@@ -8705,7 +8830,9 @@ export default function ChaosChessPage() {
                 className="max-h-24 overflow-y-auto font-mono text-[10px] scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 sm:text-[11px]"
               >
                 {moveLog.length === 0 ? (
-                  <p className="text-center text-slate-600 py-1">No moves yet</p>
+                  <p className="text-center text-slate-600 py-1">
+                    No moves yet
+                  </p>
                 ) : (
                   <div className="space-y-0.5">
                     {moveLog.map((p) => (
@@ -8713,7 +8840,9 @@ export default function ChaosChessPage() {
                         key={p.moveNumber}
                         className="grid grid-cols-[2.25rem_minmax(0,1fr)_minmax(0,1fr)] gap-2 text-slate-400"
                       >
-                        <span className="text-right tabular-nums text-slate-600">{p.moveNumber}.</span>
+                        <span className="text-right tabular-nums text-slate-600">
+                          {p.moveNumber}.
+                        </span>
                         <span className="truncate">{p.white ?? ""}</span>
                         <span className="truncate">{p.black ?? ""}</span>
                       </div>
@@ -8845,8 +8974,11 @@ export default function ChaosChessPage() {
               <h3 className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-purple-400 sm:mb-2 sm:text-xs">
                 ⚡ Power-ups
               </h3>
-              {chaosState.playerModifiers.length === 0 && chaosState.aiModifiers.length === 0 ? (
-                <p className="text-center text-[11px] text-slate-600 py-1">Draft starts at turn 5</p>
+              {chaosState.playerModifiers.length === 0 &&
+              chaosState.aiModifiers.length === 0 ? (
+                <p className="text-center text-[11px] text-slate-600 py-1">
+                  Draft starts at turn 5
+                </p>
               ) : (
                 <div className="space-y-2">
                   <ModifierList
@@ -9060,7 +9192,11 @@ export default function ChaosChessPage() {
                 rel="noopener noreferrer"
                 className="mt-2 flex items-center justify-center gap-1.5 rounded-lg border border-indigo-500/20 bg-indigo-500/[0.06] px-3 py-2 text-[11px] font-semibold text-indigo-400/70 transition-all hover:bg-indigo-500/[0.12]"
               >
-                <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="h-3 w-3"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.033.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
                 </svg>
                 Join our Discord
