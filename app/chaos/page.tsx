@@ -2947,8 +2947,8 @@ export default function ChaosChessPage() {
     to: CbSquare;
   } | null>(null);
   /* ── Difficulty ── */
-  const [aiLevel, setAiLevel] = useState<"easy" | "medium" | "hard">("easy");
-  const aiDepth = aiLevel === "easy" ? 6 : aiLevel === "medium" ? 10 : 14;
+  const [aiLevel, setAiLevel] = useState<"beginner" | "easy" | "medium" | "hard">("beginner");
+  const aiDepth = aiLevel === "beginner" ? 3 : aiLevel === "easy" ? 6 : aiLevel === "medium" ? 10 : 14;
 
   /* ── Floating pepe reactions ── */
   const [floatingPepes, setFloatingPepes] = useState<
@@ -3189,7 +3189,7 @@ export default function ChaosChessPage() {
   useEffect(() => {
     if (gameStatus !== "game-over" || gameMode !== "ai") return;
     const aiRating =
-      aiLevel === "hard" ? 1600 : aiLevel === "medium" ? 1200 : 800;
+      aiLevel === "hard" ? 1600 : aiLevel === "medium" ? 1200 : aiLevel === "easy" ? 800 : 400;
     const result: 1 | 0.5 | 0 =
       gameResult === playerColor ? 1 : gameResult === "draw" ? 0.5 : 0;
     const baseline = myRatingRef.current ?? DEFAULT_CHAOS_ELO;
@@ -7319,6 +7319,12 @@ export default function ChaosChessPage() {
                   {(
                     [
                       {
+                        id: "beginner",
+                        label: "Beginner",
+                        emoji: "🐣",
+                        desc: "Just learning",
+                      },
+                      {
                         id: "easy",
                         label: "Easy",
                         emoji: "🌱",
@@ -8424,7 +8430,7 @@ export default function ChaosChessPage() {
                             {eloChange} ELO
                           </div>
                           <div className="mt-0.5 text-xs text-slate-500">
-                            {`vs ${aiLevel === "hard" ? "Hard AI (1600)" : aiLevel === "medium" ? "Medium AI (1200)" : "Easy AI (800)"}`}
+                            {`vs ${aiLevel === "hard" ? "Hard AI (1600)" : aiLevel === "medium" ? "Medium AI (1200)" : aiLevel === "easy" ? "Easy AI (800)" : "Beginner AI (400)"}`}
                           </div>
                           <div className="mt-0.5 text-xs text-slate-500">
                             {`Rating: ${myRating ?? DEFAULT_CHAOS_ELO} → ${(myRating ?? DEFAULT_CHAOS_ELO) + (aiEloSaved ? 0 : eloChange)}`}
