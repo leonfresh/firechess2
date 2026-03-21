@@ -2299,6 +2299,65 @@ export default function HomePage() {
             </section>
           )}
 
+          {/* ─── Chaos Chess CTA ─── */}
+          {state === "idle" && (
+            <section className="animate-fade-in mx-auto w-full max-w-5xl">
+              <Link
+                href="/chaos"
+                className="group relative block overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-purple-500/[0.08] via-transparent to-violet-500/[0.08] p-8 transition-all hover:border-white/[0.15] hover:shadow-lg hover:shadow-purple-500/[0.06] sm:p-10"
+              >
+                <div className="relative z-10 flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500/20 to-violet-500/20 text-3xl transition-transform group-hover:scale-110">
+                    ⚡
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-white sm:text-2xl">
+                      Chaos Chess
+                    </h3>
+                    <p className="mt-1 text-sm text-slate-400 sm:text-base">
+                      Draft permanent power-ups every 5 turns — Knooks, ghost rooks, nuclear queens and more. Play free vs AI or friends, no account needed.
+                    </p>
+                    <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
+                      {[
+                        "vs Stockfish AI",
+                        "vs Friend",
+                        "Matchmaking",
+                        "ELO Ranked",
+                        "5 Time Controls",
+                      ].map((m) => (
+                        <span
+                          key={m}
+                          className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-medium text-slate-300"
+                        >
+                          {m}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all group-hover:shadow-purple-500/25 group-hover:scale-105">
+                    Play Now
+                    <svg
+                      className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </div>
+                </div>
+                {/* Decorative glow */}
+                <div className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-purple-500/[0.06] blur-[80px] transition-opacity group-hover:opacity-100 opacity-50" />
+                <div className="pointer-events-none absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-violet-500/[0.06] blur-[80px] transition-opacity group-hover:opacity-100 opacity-50" />
+              </Link>
+            </section>
+          )}
+
           {/* ─── Testimonials ─── */}
           {state === "idle" && (
             <section className="animate-fade-in mx-auto w-full max-w-5xl space-y-6">
