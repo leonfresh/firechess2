@@ -1419,7 +1419,7 @@ function DraftModal({
 
   // Auto-pick countdown (PvP only — counts down after all cards reveal)
   const [countdown, setCountdown] = useState<number | null>(null);
-  const handlePickRef = useRef(handlePick);
+  const handlePickRef = useRef<(mod: ChaosModifier) => void>(() => {});
   useEffect(() => {
     handlePickRef.current = handlePick;
   });
@@ -7254,7 +7254,7 @@ export default function ChaosChessPage() {
             ))}
           </div>
 
-          {/* ── AI Mode ── */
+          {/* ── AI Mode ── */}
           {gameMode === "ai" && (
             <div className="flex w-full max-w-sm flex-col items-center gap-5">
               {/* Difficulty */}
