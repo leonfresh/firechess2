@@ -2783,6 +2783,8 @@ export default function ChaosChessPage() {
   const [drawOfferSent, setDrawOfferSent] = useState(false);
   const [drawOfferReceived, setDrawOfferReceived] = useState(false);
   const [rematchRequested, setRematchRequested] = useState(false);
+  const rematchRequestedRef = useRef(false);
+  rematchRequestedRef.current = rematchRequested;
   const [rematchReceived, setRematchReceived] = useState(false);
   /** Reason for game end (for display) */
   const [endReason, setEndReason] = useState<string>("");
@@ -3084,6 +3086,8 @@ export default function ChaosChessPage() {
   }, [timers.w, timers.b, gameStatus, timeControl]);
 
   /* ── Per-move countdown timer (PvP only, 30s per turn — auto-resign at 0) ── */
+  // Ref so the setInterval callback can check turn without a stale closure
+  const isMyTurnRef = useRef(false);
   useEffect(() => {
     // Only relevant for PvP games in progress
     if (gameMode === "ai" || gameStatus !== "playing") {
@@ -3098,18 +3102,9 @@ export default function ChaosChessPage() {
     const isMyTurn =
       (playerColor === "white" && game.turn() === "w") ||
       (playerColor === "black" && game.turn() === "b");
+    isMyTurnRef.current = isMyTurn;
 
-    if (!isMyTurn) {
-      // Opponent's turn — clear the countdown and reset
-      if (perMoveTimerRef.current) {
-        clearInterval(perMoveTimerRef.current);
-        perMoveTimerRef.current = null;
-      }
-      setPerMoveSecs(30);
-      return;
-    }
-
-    // My turn — start a fresh 30-second countdown
+    // Always count down from 30 on each turn change (so both players' timers are visible)
     setPerMoveSecs(30);
     if (perMoveTimerRef.current) clearInterval(perMoveTimerRef.current);
     perMoveTimerRef.current = setInterval(() => {
@@ -3117,8 +3112,10 @@ export default function ChaosChessPage() {
         if (prev <= 1) {
           clearInterval(perMoveTimerRef.current!);
           perMoveTimerRef.current = null;
-          // Auto-resign via ref (avoids stale closure)
-          handleResignRef.current?.();
+          // Auto-resign only when it's MY turn hitting 0
+          if (isMyTurnRef.current) {
+            handleResignRef.current?.();
+          }
           return 0;
         }
         return prev - 1;
@@ -4866,7 +4863,7 @@ export default function ChaosChessPage() {
       }
 
       if (msg.type === "rematch") {
-        if (rematchRequested) {
+        if (rematchRequestedRef.current) {
           // Both players want a rematch — auto-start
           const g = new Chess();
           setGame(g);
@@ -7885,17 +7882,25 @@ export default function ChaosChessPage() {
                 {gameMode === "ai" ? `Stockfish (${aiLevel})` : opponentLabel}
               </span>
               <InlineModifierIcons modifiers={chaosState.aiModifiers} />
-              {timeControl && gameMode !== "ai" && (
-                <span
-                  className={`ml-auto font-mono text-sm font-bold tabular-nums ${
-                    (playerColor === "white" ? timers.b : timers.w) < 10000
-                      ? "text-red-400 animate-pulse"
-                      : "text-slate-300"
-                  }`}
-                >
-                  {formatTimer(playerColor === "white" ? timers.b : timers.w)}
-                </span>
-              )}
+              {gameMode !== "ai" && gameStatus === "playing" && (() => {
+                const isOppTurn =
+                  (playerColor === "white" && game.turn() === "b") ||
+                  (playerColor === "black" && game.turn() === "w");
+                if (!isOppTurn) return null;
+                return (
+                  <span
+                    className={`ml-auto font-mono text-sm font-bold tabular-nums ${
+                      perMoveSecs <= 7
+                        ? "text-red-400 animate-pulse"
+                        : perMoveSecs <= 15
+                          ? "text-amber-400"
+                          : "text-slate-400"
+                    }`}
+                  >
+                    {perMoveSecs}s
+                  </span>
+                );
+              })()}
             </div>
 
             {/* Per-move countdown (PvP only — 30s per turn) */}
@@ -7924,26 +7929,26 @@ export default function ChaosChessPage() {
                     <div
                       className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 bg-black/40 font-mono text-sm font-black tabular-nums transition-colors ${color} ${perMoveSecs <= 7 ? "animate-pulse" : ""}`}
                     >
-                      {isMyTurn ? perMoveSecs : "—"}
+                      {perMoveSecs}
                     </div>
                     {/* Bar + label */}
                     <div className="flex-1">
                       <div className="mb-1 flex items-center justify-between">
                         <span
-                          className={`text-[10px] font-semibold ${isMyTurn ? color.split(" ")[0] : "text-slate-600"}`}
+                          className={`text-[10px] font-semibold ${color.split(" ")[0]}`}
                         >
                           {isMyTurn ? "Your move" : "Opponent's turn"}
                         </span>
-                        {isMyTurn && perMoveSecs <= 10 && (
-                          <span className="text-[10px] font-bold text-red-400 animate-pulse">
-                            ⚠ Hurry!
+                        {perMoveSecs <= 10 && (
+                          <span className={`text-[10px] font-bold animate-pulse ${isMyTurn ? "text-red-400" : "text-orange-400"}`}>
+                            {isMyTurn ? "⚠ Hurry!" : "⏳ Waiting…"}
                           </span>
                         )}
                       </div>
                       <div className="relative h-2 overflow-hidden rounded-full bg-white/[0.07]">
                         <div
-                          className={`h-full rounded-full transition-[width] duration-1000 ease-linear ${isMyTurn ? barColor : "bg-white/10"}`}
-                          style={{ width: `${isMyTurn ? pct : 100}%` }}
+                          className={`h-full rounded-full transition-[width] duration-1000 ease-linear ${barColor}`}
+                          style={{ width: `${pct}%` }}
                         />
                       </div>
                     </div>
