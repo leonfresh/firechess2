@@ -23,6 +23,8 @@ export interface ChaosModifier {
   id: string;
   name: string;
   description: string;
+  /** Optional caveat shown as a warning note in the tooltip */
+  warning?: string;
   tier: ModifierTier;
   icon: string;
   /** Which piece type this modifies (null = global) */
@@ -211,6 +213,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     id: "collateral-rook",
     name: "Collateral Damage",
     description: "When a Rook captures, it also destroys any piece immediately behind the captured target.",
+    warning: "Collateral hits do not capture the King — the Rook must land on the King's square directly.",
     tier: "epic",
     icon: "💥",
     piece: "r",
@@ -258,6 +261,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     id: "nuclear-queen",
     name: "Nuclear Queen",
     description: "When the Queen captures, all 8 surrounding squares are cleared of ALL pieces (friend AND foe).",
+    warning: "The explosion does not kill the King — only a direct capture wins the game.",
     tier: "legendary",
     icon: "☢️",
     piece: "q",
