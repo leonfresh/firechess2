@@ -107,7 +107,7 @@ import {
 import {
   computeEloChange,
   DEFAULT_CHAOS_ELO,
-  TIME_CONTROLS,
+
 } from "@/lib/chaos-elo";
 
 /* ────────────────────────── Chaos Piece Overlays ────────────────────────── */
@@ -1462,7 +1462,8 @@ function DraftModal({
       setCountdown(remaining);
       if (remaining <= 0) {
         clearInterval(id);
-        handlePickRef.current(choicesRef.current[0]);
+        const opts = choicesRef.current;
+        handlePickRef.current(opts[Math.floor(Math.random() * opts.length)]);
       }
     }, 1000);
     return () => clearInterval(id);
@@ -4678,24 +4679,9 @@ export default function ChaosChessPage() {
         },
       ]);
       playSound("reveal-stinger");
-      // Init time control and timers from room settings
-      if ((data.timeControlSeconds ?? 0) > 0) {
-        const tc = TIME_CONTROLS.find(
-          (t) => t.base === data.timeControlSeconds,
-        ) ?? {
-          label: "Custom",
-          base: data.timeControlSeconds as number,
-          inc: (data.incrementSeconds ?? 0) as number,
-        };
-        setTimeControl(tc);
-        setTimers({
-          w: data.timerWhiteMs ?? data.timeControlSeconds * 1000,
-          b: data.timerBlackMs ?? data.timeControlSeconds * 1000,
-        });
-      } else {
-        setTimeControl(null);
-        setTimers({ w: 0, b: 0 });
-      }
+      // No clock time controls — always untimed
+      setTimeControl(null);
+      setTimers({ w: 0, b: 0 });
       setEloChange(null);
       setEloSaved(false);
       setAiEloSaved(false);
@@ -5225,21 +5211,7 @@ export default function ChaosChessPage() {
                 prevPhaseRef.current = cs.currentPhase;
                 const g = new Chess(data.fen);
                 setGame(g);
-                // Init timer from room settings
-                if ((data.timeControlSeconds ?? 0) > 0) {
-                  const tc = TIME_CONTROLS.find(
-                    (t) => t.base === data.timeControlSeconds,
-                  ) ?? {
-                    label: "Custom",
-                    base: data.timeControlSeconds as number,
-                    inc: (data.incrementSeconds ?? 0) as number,
-                  };
-                  setTimeControl(tc);
-                  setTimers({
-                    w: data.timerWhiteMs ?? data.timeControlSeconds * 1000,
-                    b: data.timerBlackMs ?? data.timeControlSeconds * 1000,
-                  });
-                }
+                // No clock time controls — untimed
                 return "playing";
               }
               return prev;
@@ -7282,32 +7254,7 @@ export default function ChaosChessPage() {
             ))}
           </div>
 
-          {/* ── Time Control (shared across all modes) ── */}
-          <div className="mb-5 flex flex-wrap items-center justify-center gap-1.5 sm:mb-6">
-            {TIME_CONTROLS.map((tc) => {
-              const isSelected =
-                tc.base === 0
-                  ? timeControl === null
-                  : timeControl?.base === tc.base &&
-                    timeControl?.inc === tc.inc;
-              return (
-                <button
-                  key={tc.label}
-                  type="button"
-                  onClick={() => setTimeControl(tc.base === 0 ? null : tc)}
-                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-                    isSelected
-                      ? "bg-purple-500/20 text-purple-400 border border-purple-500/40"
-                      : "bg-white/[0.03] text-slate-500 border border-white/[0.06] hover:text-slate-300 hover:bg-white/[0.06]"
-                  }`}
-                >
-                  {tc.label}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* ── AI Mode ── */}
+          {/* ── AI Mode ── */
           {gameMode === "ai" && (
             <div className="flex w-full max-w-sm flex-col items-center gap-5">
               {/* Difficulty */}
