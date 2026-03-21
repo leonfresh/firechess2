@@ -6478,11 +6478,20 @@ export default function ChaosChessPage() {
                     candidateSqs.push(s);
                 }
               const alreadyClaimedDeferred = new Set(
-                Object.values(newState.assignedSquares ?? {}).filter(Boolean) as string[],
+                Object.values(newState.assignedSquares ?? {}).filter(
+                  Boolean,
+                ) as string[],
               );
-              const freeSq = candidateSqs.find((s) => !alreadyClaimedDeferred.has(s)) ?? candidateSqs[0];
+              const freeSq =
+                candidateSqs.find((s) => !alreadyClaimedDeferred.has(s)) ??
+                candidateSqs[0];
               if (freeSq) {
-                newState = initTrackedPiece(newState, aiPick.id, aiColor_ as "w" | "b", freeSq);
+                newState = initTrackedPiece(
+                  newState,
+                  aiPick.id,
+                  aiColor_ as "w" | "b",
+                  freeSq,
+                );
               }
             }
             if (aiPick.id === "undead-army")
@@ -8321,6 +8330,28 @@ export default function ChaosChessPage() {
                       ⚡ New Game
                     </button>
 
+                    {/* Share button */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const mods = chaosState.playerModifiers.map((m) => m.name).join(", ");
+                        const resultText =
+                          gameResult === playerColor ? "won" : gameResult === "draw" ? "drew" : "lost";
+                        const opponent = gameMode === "ai" ? `Stockfish (${aiLevel})` : "a friend";
+                        const modsText = mods ? ` with ${mods}` : "";
+                        const text = `Just ${resultText} a Chaos Chess game against ${opponent}${modsText} 🔥\n\nFree to play → firechess.com/chaos`;
+                        window.open(
+                          `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`,
+                          "_blank",
+                          "noopener,noreferrer",
+                        );
+                      }}
+                      className="w-full rounded-lg border border-sky-500/25 bg-sky-500/8 px-4 py-2.5 text-xs font-semibold text-sky-400/80 transition-all hover:bg-sky-500/15 flex items-center justify-center gap-2"
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                      Share result
+                    </button>
+
                     {/* Guest upsell */}
                     {!authenticated && (
                       <a
@@ -8331,6 +8362,18 @@ export default function ChaosChessPage() {
                       </a>
                     )}
                   </div>
+
+                  {/* Scan your real games CTA */}
+                  <a
+                    href="/"
+                    className="mt-1 flex w-full items-center justify-between gap-3 rounded-xl border border-orange-500/20 bg-orange-500/5 px-4 py-3 transition-all hover:border-orange-500/35 hover:bg-orange-500/10 group"
+                  >
+                    <div className="text-left">
+                      <p className="text-xs font-bold text-orange-300">🔥 Losing games on chess.com too?</p>
+                      <p className="mt-0.5 text-[11px] text-slate-500">Scan your real games for patterns &amp; mistakes</p>
+                    </div>
+                    <svg className="h-4 w-4 shrink-0 text-orange-400/60 transition-transform group-hover:translate-x-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  </a>
                 </div>
               </div>
             )}
