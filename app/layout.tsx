@@ -7,6 +7,7 @@ import { SessionProvider } from "@/components/session-provider";
 import { Navbar } from "@/components/navbar";
 import { OrganizationJsonLd, WebApplicationJsonLd, WebSiteJsonLd } from "@/components/json-ld";
 import { Analytics } from "@vercel/analytics/next";
+import { GoogleTranslate } from "@/components/google-translate";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -172,7 +173,10 @@ export default function RootLayout({
             {/* Bottom bar */}
             <div className="mt-10 flex flex-col items-center justify-between gap-2 border-t border-white/[0.04] pt-6 sm:flex-row">
               <p className="text-[11px] text-slate-500">&copy; {new Date().getFullYear()} FireChess. All rights reserved.</p>
-              <p className="text-[11px] text-slate-500">Powered by Stockfish 18 &middot; Built with Next.js</p>
+              <div className="flex items-center gap-4">
+                <GoogleTranslate />
+                <p className="text-[11px] text-slate-500">Powered by Stockfish 18 &middot; Built with Next.js</p>
+              </div>
             </div>
           </div>
         </footer>
