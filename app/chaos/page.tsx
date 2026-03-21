@@ -1393,12 +1393,15 @@ function DraftModal({
   onPick,
   fen,
   playerColor,
+  timeLimit,
 }: {
   phase: number;
   choices: ChaosModifier[];
   onPick: (mod: ChaosModifier) => void;
   fen?: string;
   playerColor?: "w" | "b";
+  /** Seconds before auto-picking first card (PvP only). Undefined = no timer. */
+  timeLimit?: number;
 }) {
   const pieceCounts =
     fen && playerColor ? countPiecesFromFen(fen, playerColor) : null;
@@ -1414,7 +1417,16 @@ function DraftModal({
   // Peek board state
   const [peeking, setPeeking] = useState(false);
 
-  // Play drumroll on mount, then reveal cards one by one
+  // Auto-pick countdown (PvP only — counts down after all cards reveal)
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const handlePickRef = useRef(handlePick);
+  useEffect(() => {
+    handlePickRef.current = handlePick;
+  });
+  const choicesRef = useRef(choices);
+  useEffect(() => {
+    choicesRef.current = choices;
+  });
   useEffect(() => {
     playSound("drumroll");
 
@@ -1439,6 +1451,22 @@ function DraftModal({
     );
     return () => timers.forEach(clearTimeout);
   }, [choices]);
+
+  // Countdown timer: starts when all cards are revealed (PvP only)
+  useEffect(() => {
+    if (!timeLimit || !allRevealed) return;
+    setCountdown(timeLimit);
+    let remaining = timeLimit;
+    const id = setInterval(() => {
+      remaining--;
+      setCountdown(remaining);
+      if (remaining <= 0) {
+        clearInterval(id);
+        handlePickRef.current(choicesRef.current[0]);
+      }
+    }, 1000);
+    return () => clearInterval(id);
+  }, [allRevealed, timeLimit]);
 
   // Handle card pick with a dismiss animation
   const handlePick = useCallback(
@@ -1519,6 +1547,17 @@ function DraftModal({
           <p className="mt-1 text-[10px] text-slate-500 sm:mt-2 sm:text-xs">
             Choose a modifier to permanently buff your pieces
           </p>
+          {timeLimit && countdown !== null && (
+            <div
+              className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold tabular-nums ${
+                countdown > 7
+                  ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                  : "border border-red-500/40 bg-red-500/15 text-red-400 animate-pulse"
+              }`}
+            >
+              ⏱ {countdown}s to pick
+            </div>
+          )}
           {allRevealed && !pickedId && (
             <button
               type="button"
@@ -2782,6 +2821,19 @@ export default function ChaosChessPage() {
   timeControlRef.current = timeControl;
   const timerIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  /* ── Per-move timer (PvP only, 30s per turn) ── */
+  const [perMoveSecs, setPerMoveSecs] = useState(30);
+  const perMoveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  /** Always points to the latest handleResign — safe to call from inside timer interval */
+  const handleResignRef = useRef<(() => void) | null>(null);
+
+  /* ── In-game chat (PvP only, ephemeral via PartyKit — not saved to DB) ── */
+  const [chatMessages, setChatMessages] = useState<
+    { text: string; mine: boolean; ts: number }[]
+  >([]);
+  const [chatInput, setChatInput] = useState("");
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
   /* ── ELO ratings ── */
   const [myRating, setMyRating] = useState<number | null>(null);
   const [opponentRating, setOpponentRating] = useState<number | null>(null);
@@ -3024,6 +3076,63 @@ export default function ChaosChessPage() {
       setEndReason("Black ran out of time");
     }
   }, [timers.w, timers.b, gameStatus, timeControl]);
+
+  /* ── Per-move countdown timer (PvP only, 30s per turn — auto-resign at 0) ── */
+  useEffect(() => {
+    // Only relevant for PvP games in progress
+    if (gameMode === "ai" || gameStatus !== "playing") {
+      if (perMoveTimerRef.current) {
+        clearInterval(perMoveTimerRef.current);
+        perMoveTimerRef.current = null;
+      }
+      setPerMoveSecs(30);
+      return;
+    }
+
+    const isMyTurn =
+      (playerColor === "white" && game.turn() === "w") ||
+      (playerColor === "black" && game.turn() === "b");
+
+    if (!isMyTurn) {
+      // Opponent's turn — clear the countdown and reset
+      if (perMoveTimerRef.current) {
+        clearInterval(perMoveTimerRef.current);
+        perMoveTimerRef.current = null;
+      }
+      setPerMoveSecs(30);
+      return;
+    }
+
+    // My turn — start a fresh 30-second countdown
+    setPerMoveSecs(30);
+    if (perMoveTimerRef.current) clearInterval(perMoveTimerRef.current);
+    perMoveTimerRef.current = setInterval(() => {
+      setPerMoveSecs((prev) => {
+        if (prev <= 1) {
+          clearInterval(perMoveTimerRef.current!);
+          perMoveTimerRef.current = null;
+          // Auto-resign via ref (avoids stale closure)
+          handleResignRef.current?.();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => {
+      if (perMoveTimerRef.current) {
+        clearInterval(perMoveTimerRef.current);
+        perMoveTimerRef.current = null;
+      }
+    };
+    // `game` is a new Chess() instance on every move, so this effect re-runs each move
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game, gameMode, gameStatus, playerColor]);
+
+  /* ── Auto-scroll chat to bottom on new messages ── */
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages.length]);
 
   /* ── Fetch ELO ratings when multiplayer game starts ── */
   useEffect(() => {
@@ -4639,6 +4748,26 @@ export default function ChaosChessPage() {
             }
             return prev;
           });
+        } else {
+          // count dropped to 1 — opponent disconnected during an active game
+          setGameStatus((prev) => {
+            if (prev === "playing" || prev === "drafting") {
+              setGameResult(playerColor);
+              setEndReason("Opponent Disconnected");
+              setEventLog((p) => [
+                ...p,
+                {
+                  type: "info",
+                  message: "💨 Opponent disconnected — you win!",
+                  icon: "💨",
+                  pepe: PEPE.king,
+                },
+              ]);
+              playSound("reveal-stinger");
+              return "game-over";
+            }
+            return prev;
+          });
         }
         return;
       }
@@ -4727,6 +4856,14 @@ export default function ChaosChessPage() {
             icon: "❌",
             pepe: PEPE.sadge,
           },
+        ]);
+        return;
+      }
+
+      if (msg.type === "chat") {
+        setChatMessages((prev) => [
+          ...prev.slice(-49),
+          { text: msg.text, mine: false, ts: Date.now() },
         ]);
         return;
       }
@@ -6675,6 +6812,22 @@ export default function ChaosChessPage() {
     }
   }, [playerColor, spawnPepe, gameMode, roomId, game]);
 
+  /* Keep resign ref current so the per-move timer interval can call it without stale closure */
+  handleResignRef.current = handleResign;
+
+  /* ── Send an in-game chat message (PvP only, ephemeral via PartyKit) ── */
+  const sendChat = useCallback((text: string) => {
+    const trimmed = text.trim().slice(0, 200);
+    if (!trimmed || !partySendRef.current) return;
+    // Send to opponent via PartyKit relay
+    partySendRef.current({ type: "chat", text: trimmed } as import("@/lib/use-party-room").PartyChatMessage);
+    // Append locally as "mine"
+    setChatMessages((prev) => [
+      ...prev.slice(-49),
+      { text: trimmed, mine: true, ts: Date.now() },
+    ]);
+  }, []);
+
   /* ── Undo (AI mode only, up to 3 times) ── */
   const handleUndo = useCallback(() => {
     if (undoStack.length === 0 || undoUsed >= 3 || gameMode !== "ai") return;
@@ -7673,6 +7826,7 @@ export default function ChaosChessPage() {
             onPick={handleDraftPick}
             fen={game.fen()}
             playerColor={playerColor === "white" ? "w" : "b"}
+            timeLimit={gameMode !== "ai" ? 15 : undefined}
           />
         )}
         {/* Return to Draft — floating safety button if the modal was accidentally hidden */}
@@ -7776,6 +7930,29 @@ export default function ChaosChessPage() {
                 </span>
               )}
             </div>
+
+            {/* Per-move countdown bar (PvP only — 30s per turn) */}
+            {gameMode !== "ai" && gameStatus === "playing" && (
+              <div className="w-full max-w-[640px]">
+                <div className="relative h-1.5 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className={`h-full rounded-full transition-[width] duration-1000 ease-linear ${
+                      perMoveSecs > 15
+                        ? "bg-emerald-500"
+                        : perMoveSecs > 7
+                          ? "bg-amber-400"
+                          : "bg-red-500"
+                    }`}
+                    style={{ width: `${(perMoveSecs / 30) * 100}%` }}
+                  />
+                </div>
+                {perMoveSecs <= 10 && (
+                  <p className="mt-0.5 text-center text-[10px] font-bold text-red-400 animate-pulse">
+                    ⏱ {perMoveSecs}s to move!
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Board — auto-sizes to fill container, capped at 640px */}
             <div ref={boardContainerRef} className="w-full max-w-[640px]">
@@ -8063,6 +8240,47 @@ export default function ChaosChessPage() {
                 >
                   ❌ Decline
                 </button>
+              </div>
+            )}
+
+            {/* ── In-game share / invite CTA ── */}
+            {(gameStatus === "playing" || gameStatus === "drafting") && (
+              <div className="mt-2 flex w-full max-w-[640px] items-center justify-center gap-2">
+                {gameMode !== "ai" ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const mods = chaosState.playerModifiers
+                        .map((m) => m.name)
+                        .join(", ");
+                      const modsText = mods ? ` with ${mods}` : "";
+                      const text = `Playing Chaos Chess right now${modsText} 🔥 — this game is INSANE\n\nFree to play → firechess.com/chaos`;
+                      window.open(
+                        `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`,
+                        "_blank",
+                        "noopener,noreferrer",
+                      );
+                    }}
+                    className="flex items-center gap-1.5 rounded-lg border border-sky-500/20 bg-sky-500/[0.08] px-3 py-1.5 text-[11px] font-medium text-sky-400/70 transition-all hover:bg-sky-500/15 hover:text-sky-300"
+                  >
+                    <svg
+                      width="11"
+                      height="11"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622Zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                    </svg>
+                    Brag on X
+                  </button>
+                ) : (
+                  <a
+                    href="/chaos?mode=friend"
+                    className="flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.08] px-3 py-1.5 text-[11px] font-medium text-emerald-400/70 transition-all hover:bg-emerald-500/15 hover:text-emerald-300"
+                  >
+                    ⚡ Challenge a friend
+                  </a>
+                )}
               </div>
             )}
 
@@ -8458,7 +8676,61 @@ export default function ChaosChessPage() {
 
           {/* ── Right sidebar / bottom panel: Event log + Move log ── */}
           <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3 lg:grid-cols-1">
-            {/* Event log */}
+            {/* In-game chat (PvP only, ephemeral — not saved to DB) */}
+            {gameMode !== "ai" && (
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3 sm:col-span-2 lg:col-span-1">
+                <h3 className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-blue-400 sm:mb-2 sm:text-xs">
+                  💬 Chat
+                </h3>
+                <div className="max-h-28 space-y-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/10 sm:max-h-36">
+                  {chatMessages.length === 0 && (
+                    <p className="text-center text-[11px] text-slate-600">No messages yet…</p>
+                  )}
+                  {chatMessages.map((m, i) => (
+                    <div
+                      key={i}
+                      className={`rounded px-2 py-1 text-[11px] leading-relaxed break-words ${
+                        m.mine
+                          ? "ml-4 bg-blue-500/15 text-blue-200"
+                          : "mr-4 bg-white/[0.04] text-slate-300"
+                      }`}
+                    >
+                      <span className="mr-1 text-[10px] text-slate-600">
+                        {m.mine ? "You" : "Opp"}
+                      </span>
+                      {m.text}
+                    </div>
+                  ))}
+                  <div ref={chatEndRef} />
+                </div>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    sendChat(chatInput);
+                    setChatInput("");
+                  }}
+                  className="mt-1.5 flex gap-1.5"
+                >
+                  <input
+                    type="text"
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    placeholder="Type a message…"
+                    maxLength={200}
+                    className="flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1.5 text-[11px] text-slate-300 placeholder-slate-600 outline-none focus:border-blue-500/40 focus:bg-white/[0.06]"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!chatInput.trim()}
+                    className="rounded-lg border border-blue-500/20 bg-blue-500/10 px-2.5 py-1.5 text-[11px] font-semibold text-blue-400 transition-all hover:bg-blue-500/20 disabled:opacity-40"
+                  >
+                    ➤
+                  </button>
+                </form>
+              </div>
+            )}
+
+            {/* Event log */}}
             <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 sm:p-3">
               <h3 className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-purple-400 sm:mb-2 sm:text-xs">
                 ⚡ Chaos Log
