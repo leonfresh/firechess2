@@ -7960,8 +7960,12 @@ export default function ChaosChessPage() {
               </div>
             )}
 
-            {/* Board — auto-sizes to fill container, capped at 640px */}
-            <div ref={boardContainerRef} className="w-full max-w-[640px]">
+            {/* Board — auto-sizes to fill container, capped at 640px wide and by viewport height */}
+            <div
+              ref={boardContainerRef}
+              className="w-full max-w-[640px]"
+              style={{ maxWidth: "min(640px, max(220px, calc(100dvh - 360px)))" }}
+            >
               <div className="relative w-full">
                 <Chessboard
                   id="chaos-board"
