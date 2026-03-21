@@ -2238,123 +2238,80 @@ export default function HomePage() {
             </section>
           )}
 
-          {/* ─── Training CTA ─── */}
+          {/* ─── Chaos Chess + Training CTA (side-by-side on desktop, chaos first on mobile) ─── */}
           {state === "idle" && (
             <section className="animate-fade-in mx-auto w-full max-w-5xl">
-              <Link
-                href="/train"
-                className="group relative block overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-fuchsia-500/[0.08] via-transparent to-cyan-500/[0.08] p-8 transition-all hover:border-white/[0.15] hover:shadow-lg hover:shadow-fuchsia-500/[0.06] sm:p-10"
-              >
-                <div className="relative z-10 flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500/20 to-cyan-500/20 text-3xl transition-transform group-hover:scale-110">
-                    🎯
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-white sm:text-2xl">
-                      Training Center
-                    </h3>
-                    <p className="mt-1 text-sm text-slate-400 sm:text-base">
-                      5 modes that drill your real weaknesses — from tactic
-                      puzzles to opening leaks to endgame practice. Sign in and
-                      run a scan to unlock personalized training.
-                    </p>
-                    <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
-                      {[
-                        "Weakness Trainer",
-                        "Speed Drill",
-                        "Blunder Spotter",
-                        "Opening Trainer",
-                        "Endgame Gym",
-                      ].map((m) => (
-                        <span
-                          key={m}
-                          className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-medium text-slate-300"
-                        >
-                          {m}
-                        </span>
-                      ))}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {/* Chaos Chess — first in DOM = first on mobile */}
+                <Link
+                  href="/chaos"
+                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-purple-500/[0.08] via-transparent to-violet-500/[0.08] p-7 transition-all hover:border-white/[0.15] hover:shadow-lg hover:shadow-purple-500/[0.06]"
+                >
+                  <div className="relative z-10 flex flex-1 flex-col gap-3">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500/20 to-violet-500/20 text-3xl transition-transform group-hover:scale-110">
+                      ⚡
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-white">
+                        Chaos Chess
+                      </h3>
+                      <p className="mt-1 text-sm text-slate-400">
+                        Draft permanent power-ups every 5 turns — Knooks, ghost rooks, nuclear queens and more. Free vs AI or friends.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {["vs Stockfish AI", "vs Friend", "ELO Ranked"].map((m) => (
+                          <span key={m} className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-medium text-slate-300">
+                            {m}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="mt-2 flex items-center gap-1.5 self-start rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg transition-all group-hover:shadow-purple-500/25 group-hover:scale-105">
+                      Play Now
+                      <svg className="h-4 w-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-fuchsia-600 to-cyan-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all group-hover:shadow-fuchsia-500/25 group-hover:scale-105">
-                    Start Training
-                    <svg
-                      className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                {/* Decorative glow */}
-                <div className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-fuchsia-500/[0.06] blur-[80px] transition-opacity group-hover:opacity-100 opacity-50" />
-                <div className="pointer-events-none absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-cyan-500/[0.06] blur-[80px] transition-opacity group-hover:opacity-100 opacity-50" />
-              </Link>
-            </section>
-          )}
+                  <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-purple-500/[0.07] blur-[60px] opacity-50 transition-opacity group-hover:opacity-100" />
+                  <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-violet-500/[0.07] blur-[60px] opacity-50 transition-opacity group-hover:opacity-100" />
+                </Link>
 
-          {/* ─── Chaos Chess CTA ─── */}
-          {state === "idle" && (
-            <section className="animate-fade-in mx-auto w-full max-w-5xl">
-              <Link
-                href="/chaos"
-                className="group relative block overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-purple-500/[0.08] via-transparent to-violet-500/[0.08] p-8 transition-all hover:border-white/[0.15] hover:shadow-lg hover:shadow-purple-500/[0.06] sm:p-10"
-              >
-                <div className="relative z-10 flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500/20 to-violet-500/20 text-3xl transition-transform group-hover:scale-110">
-                    ⚡
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-white sm:text-2xl">
-                      Chaos Chess
-                    </h3>
-                    <p className="mt-1 text-sm text-slate-400 sm:text-base">
-                      Draft permanent power-ups every 5 turns — Knooks, ghost rooks, nuclear queens and more. Play free vs AI or friends, no account needed.
-                    </p>
-                    <div className="mt-3 flex flex-wrap justify-center gap-2 sm:justify-start">
-                      {[
-                        "vs Stockfish AI",
-                        "vs Friend",
-                        "Matchmaking",
-                        "ELO Ranked",
-                        "5 Time Controls",
-                      ].map((m) => (
-                        <span
-                          key={m}
-                          className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-medium text-slate-300"
-                        >
-                          {m}
-                        </span>
-                      ))}
+                {/* Training Center — second in DOM = second on mobile */}
+                <Link
+                  href="/train"
+                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-fuchsia-500/[0.08] via-transparent to-cyan-500/[0.08] p-7 transition-all hover:border-white/[0.15] hover:shadow-lg hover:shadow-fuchsia-500/[0.06]"
+                >
+                  <div className="relative z-10 flex flex-1 flex-col gap-3">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500/20 to-cyan-500/20 text-3xl transition-transform group-hover:scale-110">
+                      🎯
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-white">
+                        Training Center
+                      </h3>
+                      <p className="mt-1 text-sm text-slate-400">
+                        5 modes that drill your real weaknesses — tactic puzzles, opening leaks, endgame practice. Run a scan to unlock personalized training.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-1.5">
+                        {["Weakness Trainer", "Blunder Spotter", "Endgame Gym"].map((m) => (
+                          <span key={m} className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-medium text-slate-300">
+                            {m}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="mt-2 flex items-center gap-1.5 self-start rounded-xl bg-gradient-to-r from-fuchsia-600 to-cyan-600 px-4 py-2 text-sm font-semibold text-white shadow-lg transition-all group-hover:shadow-fuchsia-500/25 group-hover:scale-105">
+                      Start Training
+                      <svg className="h-4 w-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      </svg>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg transition-all group-hover:shadow-purple-500/25 group-hover:scale-105">
-                    Play Now
-                    <svg
-                      className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
-                  </div>
-                </div>
-                {/* Decorative glow */}
-                <div className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-purple-500/[0.06] blur-[80px] transition-opacity group-hover:opacity-100 opacity-50" />
-                <div className="pointer-events-none absolute -bottom-20 -left-20 h-60 w-60 rounded-full bg-violet-500/[0.06] blur-[80px] transition-opacity group-hover:opacity-100 opacity-50" />
-              </Link>
+                  <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-fuchsia-500/[0.07] blur-[60px] opacity-50 transition-opacity group-hover:opacity-100" />
+                  <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-cyan-500/[0.07] blur-[60px] opacity-50 transition-opacity group-hover:opacity-100" />
+                </Link>
+              </div>
             </section>
           )}
 
