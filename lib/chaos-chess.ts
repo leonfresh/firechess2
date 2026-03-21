@@ -73,7 +73,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "pawn-charge",
     name: "Torpedo Pawns",
-    description: "Your pawns can move 2 squares forward from ANY rank, not just their starting rank. Suddenly every pawn is a threat.",
+    description:
+      "Your pawns can move 2 squares forward from ANY rank, not just their starting rank. Suddenly every pawn is a threat.",
     tier: "common",
     icon: "🚀",
     piece: "p",
@@ -91,7 +92,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "camel",
     name: "Camel",
-    description: "One of your Knights transforms into a Camel — it leaps 1 square in one direction and 3 in the other, a colorbound extended jump.",
+    description:
+      "One of your Knights transforms into a Camel — it leaps 1 square in one direction and 3 in the other, a colorbound extended jump.",
     tier: "common",
     icon: "🐫",
     piece: "n",
@@ -100,7 +102,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "dragon-bishop",
     name: "Dragon Bishop",
-    description: "Your bishops ascend — each bishop can also step one square in any cardinal direction (orthogonal), mirroring the Shogi Dragon Horse (龍馬).",
+    description:
+      "Your bishops ascend — each bishop can also step one square in any cardinal direction (orthogonal), mirroring the Shogi Dragon Horse (龍馬).",
     tier: "common",
     icon: "🐉",
     piece: "b",
@@ -109,7 +112,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "kings-chains",
     name: "King's Chains",
-    description: "Your king's presence paralyzes the highest-value adjacent enemy piece — it cannot move or capture. The chained piece still threatens squares.",
+    description:
+      "Your king's presence paralyzes the highest-value adjacent enemy piece — it cannot move or capture. The chained piece still threatens squares.",
     tier: "common",
     icon: "⛓️",
     piece: "k",
@@ -118,7 +122,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "dragon-rook",
     name: "Dragon Rook",
-    description: "Your rooks are promoted — each rook can also step one square diagonally, mirroring the Shogi Dragon King (龍王).",
+    description:
+      "Your rooks are promoted — each rook can also step one square diagonally, mirroring the Shogi Dragon King (龍王).",
     tier: "common",
     icon: "🐲",
     piece: "r",
@@ -129,7 +134,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "pegasus",
     name: "Pegasus",
-    description: "One knight gains a double L-jump — the second jump must advance toward the opponent (forward ranks only).",
+    description:
+      "One knight gains a double L-jump — the second jump must advance toward the opponent (forward ranks only).",
     tier: "rare",
     icon: "🦄",
     piece: "n",
@@ -138,7 +144,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "phantom-rook",
     name: "Phantom Rook",
-    description: "Rooks can move through friendly pieces (but not enemy pieces).",
+    description:
+      "Rooks can move through friendly pieces (but not enemy pieces).",
     tier: "rare",
     icon: "👻",
     piece: "r",
@@ -147,7 +154,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "sniper-bishop",
     name: "Sniper Bishop",
-    description: "Bishops can 'shoot' and capture any enemy piece on the same diagonal up to 2 squares away, without moving.",
+    description:
+      "Bishops can 'shoot' and capture any enemy piece on the same diagonal up to 2 squares away, without moving.",
     tier: "rare",
     icon: "🎯",
     piece: "b",
@@ -156,7 +164,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "pawn-fortress",
     name: "Pawn Fortress",
-    description: "When one of your pawns is captured, there's a 50% chance it respawns on its starting square (if empty).",
+    description:
+      "When one of your pawns is captured, there's a 50% chance it respawns on its starting square (if empty).",
     tier: "rare",
     icon: "🏰",
     piece: "p",
@@ -165,7 +174,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "enpassant-everywhere",
     name: "En Passant Everywhere",
-    description: "En passant can be performed on any pawn that moved 1 or 2 squares, not just from the starting rank. Holy hell.",
+    description:
+      "En passant can be performed on any pawn that moved 1 or 2 squares, not just from the starting rank. Holy hell.",
     tier: "rare",
     icon: "♟️",
     piece: "p",
@@ -174,7 +184,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "king-wrath",
     name: "Regicide",
-    description: "When your King captures an enemy piece, revive one of your captured pieces on any empty square in your back rank.",
+    description:
+      "When your King captures an enemy piece, revive one of your captured pieces on any empty square in your back rank.",
     tier: "rare",
     icon: "👑",
     piece: "k",
@@ -183,7 +194,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "knook",
     name: "The Knook",
-    description: "One of your Knights transforms into the legendary Knook — it moves as both a Knight AND a Rook.",
+    description:
+      "One of your Knights transforms into the legendary Knook — it moves as both a Knight AND a Rook.",
     tier: "rare",
     icon: "🏇",
     piece: "n",
@@ -192,7 +204,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "archbishop",
     name: "The Archbishop",
-    description: "One of your Bishops transforms into an Archbishop — it moves as both a Bishop AND a Knight.",
+    description:
+      "One of your Bishops transforms into an Archbishop — it moves as both a Bishop AND a Knight.",
     tier: "rare",
     icon: "🏛️",
     piece: "b",
@@ -203,7 +216,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "queen-teleport",
     name: "Warp Queen",
-    description: "Once per game, the Queen can teleport to any empty square on the board.",
+    description:
+      "Once per game, the Queen can teleport to any empty square on the board.",
     tier: "epic",
     icon: "🌀",
     piece: "q",
@@ -212,8 +226,10 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "collateral-rook",
     name: "Collateral Damage",
-    description: "When a Rook captures, it also destroys any piece immediately behind the captured target.",
-    warning: "Collateral hits do not capture the King — the Rook must land on the King's square directly.",
+    description:
+      "When a Rook captures, it also destroys any piece immediately behind the captured target.",
+    warning:
+      "Collateral hits do not capture the King — the Rook must land on the King's square directly.",
     tier: "epic",
     icon: "💥",
     piece: "r",
@@ -222,7 +238,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "bishop-bounce",
     name: "Ricochet Bishop",
-    description: "Bishops can bounce their movement off the edge of the board once per turn.",
+    description:
+      "Bishops can bounce their movement off the edge of the board once per turn.",
     tier: "epic",
     icon: "🪃",
     piece: "b",
@@ -231,7 +248,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "pawn-promotion-early",
     name: "Battlefield Promotion",
-    description: "Pawns on the 4th rank or below (5th rank or above for black) can promote early on the 5th rank (4th for black).",
+    description:
+      "Pawns on the 4th rank or below (5th rank or above for black) can promote early on the 5th rank (4th for black).",
     tier: "epic",
     icon: "⭐",
     piece: "p",
@@ -240,7 +258,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "bishop-cannon",
     name: "Bishop Cannon",
-    description: "Bishops can jump over exactly one piece on a diagonal to capture the piece behind it — Xiangqi cannon, but diagonal.",
+    description:
+      "Bishops can jump over exactly one piece on a diagonal to capture the piece behind it — Xiangqi cannon, but diagonal.",
     tier: "epic",
     icon: "🔮",
     piece: "b",
@@ -249,7 +268,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "forced-en-passant",
     name: "Forced En Passant",
-    description: "Your OPPONENT is forced to play en passant whenever it's available — it becomes their only legal move. Brick incoming!",
+    description:
+      "Your OPPONENT is forced to play en passant whenever it's available — it becomes their only legal move. Brick incoming!",
     tier: "rare",
     icon: "🧱",
     piece: "p",
@@ -260,8 +280,10 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "nuclear-queen",
     name: "Nuclear Queen",
-    description: "When the Queen captures, all 8 surrounding squares are cleared of ALL pieces (friend AND foe).",
-    warning: "The explosion does not kill the King — only a direct capture wins the game.",
+    description:
+      "When the Queen captures, all 8 surrounding squares are cleared of ALL pieces (friend AND foe).",
+    warning:
+      "The explosion does not kill the King — only a direct capture wins the game.",
     tier: "legendary",
     icon: "☢️",
     piece: "q",
@@ -270,7 +292,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "amazon",
     name: "The Amazon",
-    description: "Your Queen transforms into an Amazon — she can also move like a Knight.",
+    description:
+      "Your Queen transforms into an Amazon — she can also move like a Knight.",
     tier: "legendary",
     icon: "👸",
     piece: "q",
@@ -279,7 +302,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "knight-horde",
     name: "Knight Horde",
-    description: "Spawn 2 extra Knights on random empty squares on your side of the board.",
+    description:
+      "Spawn 2 extra Knights on random empty squares on your side of the board.",
     tier: "legendary",
     icon: "🐎",
     piece: "n",
@@ -288,7 +312,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "undead-army",
     name: "Undead Army",
-    description: "Spawns all your missing pawns on random empty squares on your 2nd and 3rd ranks (6th and 7th for black). Any pawn not currently on the board will come back.",
+    description:
+      "Spawns all your missing pawns on random empty squares on your 2nd and 3rd ranks (6th and 7th for black). Any pawn not currently on the board will come back.",
     tier: "legendary",
     icon: "💀",
     piece: "p",
@@ -297,7 +322,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "king-ascension",
     name: "King Ascension",
-    description: "Your King can capture like a Queen — striking any range along diagonals and files. It still moves one square at a time, so it can be checkmated.",
+    description:
+      "Your King can capture like a Queen — striking any range along diagonals and files. It still moves one square at a time, so it can be checkmated.",
     tier: "legendary",
     icon: "🔱",
     piece: "k",
@@ -306,7 +332,8 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
   {
     id: "rook-cannon",
     name: "Rook Cannon",
-    description: "Rooks can jump over exactly one piece (like a cannon in Xiangqi) to capture behind it.",
+    description:
+      "Rooks can jump over exactly one piece (like a cannon in Xiangqi) to capture behind it.",
     tier: "legendary",
     icon: "💣",
     piece: "r",
@@ -318,11 +345,34 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
 /*   Tier styling                                                       */
 /* ================================================================== */
 
-export const TIER_COLORS: Record<ModifierTier, { bg: string; border: string; text: string; glow: string }> = {
-  common:    { bg: "bg-slate-800/60",    border: "border-slate-600/40",   text: "text-slate-300",   glow: "" },
-  rare:      { bg: "bg-blue-950/60",     border: "border-blue-500/40",    text: "text-blue-400",    glow: "shadow-blue-500/10" },
-  epic:      { bg: "bg-purple-950/60",   border: "border-purple-500/40",  text: "text-purple-400",  glow: "shadow-purple-500/20" },
-  legendary: { bg: "bg-amber-950/60",    border: "border-amber-500/40",   text: "text-amber-400",   glow: "shadow-amber-500/20" },
+export const TIER_COLORS: Record<
+  ModifierTier,
+  { bg: string; border: string; text: string; glow: string }
+> = {
+  common: {
+    bg: "bg-slate-800/60",
+    border: "border-slate-600/40",
+    text: "text-slate-300",
+    glow: "",
+  },
+  rare: {
+    bg: "bg-blue-950/60",
+    border: "border-blue-500/40",
+    text: "text-blue-400",
+    glow: "shadow-blue-500/10",
+  },
+  epic: {
+    bg: "bg-purple-950/60",
+    border: "border-purple-500/40",
+    text: "text-purple-400",
+    glow: "shadow-purple-500/20",
+  },
+  legendary: {
+    bg: "bg-amber-950/60",
+    border: "border-amber-500/40",
+    text: "text-amber-400",
+    glow: "shadow-amber-500/20",
+  },
 };
 
 export const TIER_LABELS: Record<ModifierTier, string> = {
@@ -357,7 +407,10 @@ export function createChaosState(): ChaosState {
  * Check whether the current full-move number should trigger a draft.
  * Returns the phase number (1-5) or 0 if no trigger.
  */
-export function checkDraftTrigger(fullMoveNumber: number, state: ChaosState): number {
+export function checkDraftTrigger(
+  fullMoveNumber: number,
+  state: ChaosState,
+): number {
   const nextPhase = state.currentPhase + 1;
   if (nextPhase > state.phaseTriggers.length) return 0;
   if (fullMoveNumber >= state.phaseTriggers[nextPhase - 1]) return nextPhase;
@@ -399,39 +452,47 @@ export function getChaosPieceValCp(
   mods: ChaosModifier[],
   assignedSquares?: Record<string, string | null>,
 ): number {
-  const BASE: Record<string, number> = { p: 100, n: 325, b: 325, r: 500, q: 900, k: 20000 };
+  const BASE: Record<string, number> = {
+    p: 100,
+    n: 325,
+    b: 325,
+    r: 500,
+    q: 900,
+    k: 20000,
+  };
   const base = BASE[pieceType] ?? 100;
   if (!mods.length) return base;
 
   // Single-piece identity upgrades — only apply if this square is the assigned square
   const SINGLE_PIECE_VALS: Record<string, number> = {
-    archbishop: 600,  // bishop + knight ≈ 6 pawns (user-specified)
-    knook: 800,       // knight + rook ≈ 8 pawns (user-specified)
-    camel: 300,       // colorbound leaper ≈ 3 pawns
-    pegasus: 450,     // enhanced knight ≈ 4.5 pawns
+    archbishop: 600, // bishop + knight ≈ 6 pawns (user-specified)
+    knook: 800, // knight + rook ≈ 8 pawns (user-specified)
+    camel: 300, // colorbound leaper ≈ 3 pawns
+    pegasus: 450, // enhanced knight ≈ 4.5 pawns
   };
   if (assignedSquares) {
     for (const [modId, val] of Object.entries(SINGLE_PIECE_VALS)) {
       const key = `${pieceColor}_${modId}`;
-      if (assignedSquares[key] === square && mods.some(m => m.id === modId)) return val;
+      if (assignedSquares[key] === square && mods.some((m) => m.id === modId))
+        return val;
     }
   }
 
   // Type-wide upgrades — largest applicable bonus wins (no stacking)
   const TYPE_BONUSES: Partial<Record<string, number>> = {
-    "dragon-bishop"      : 50,   // bishop + orthogonal step ≈ 3.75 pawns
-    "dragon-rook"        : 60,   // rook + diagonal step ≈ 5.6 pawns
-    "phantom-rook"       : 50,   // rook passes through friendlies
-    "sniper-bishop"      : 75,   // bishop captures without moving
-    "bishop-bounce"      : 75,   // bishop bounces off edges
-    "bishop-cannon"      : 90,   // bishop diagonal cannon capture
-    "collateral-rook"    : 100,  // rook captures destroy piece behind ≈ 6 pawns
-    "rook-cannon"        : 100,  // rook jumps to capture ≈ 6 pawns
-    "nuclear-queen"      : 200,  // queen captures clear 8 squares ≈ 11 pawns
-    "amazon"             : 150,  // queen + knight ≈ 10.5 pawns
-    "queen-teleport"     : 50,   // queen teleports once
-    "king-ascension"     : 5000, // king captures like queen
-    "pawn-charge"        : 10,
+    "dragon-bishop": 50, // bishop + orthogonal step ≈ 3.75 pawns
+    "dragon-rook": 60, // rook + diagonal step ≈ 5.6 pawns
+    "phantom-rook": 50, // rook passes through friendlies
+    "sniper-bishop": 75, // bishop captures without moving
+    "bishop-bounce": 75, // bishop bounces off edges
+    "bishop-cannon": 90, // bishop diagonal cannon capture
+    "collateral-rook": 100, // rook captures destroy piece behind ≈ 6 pawns
+    "rook-cannon": 100, // rook jumps to capture ≈ 6 pawns
+    "nuclear-queen": 200, // queen captures clear 8 squares ≈ 11 pawns
+    amazon: 150, // queen + knight ≈ 10.5 pawns
+    "queen-teleport": 50, // queen teleports once
+    "king-ascension": 5000, // king captures like queen
+    "pawn-charge": 10,
     "pawn-capture-forward": 15,
   };
   let bonus = 0;
@@ -522,7 +583,9 @@ export function applyDraft(
   if (!options?.skipOpponentRoll) {
     // AI picks the highest-tier remaining option it hasn't drafted
     const aiChoices = rollDraftChoices(phase, state.aiModifiers, Date.now());
-    const aiPick = aiChoices.sort((a, b) => tierValue(b.tier) - tierValue(a.tier))[0] ?? aiChoices[0];
+    const aiPick =
+      aiChoices.sort((a, b) => tierValue(b.tier) - tierValue(a.tier))[0] ??
+      aiChoices[0];
     if (aiPick) {
       newState.aiModifiers = [...state.aiModifiers, aiPick];
     }
@@ -554,7 +617,8 @@ export function updateTrackedPieces(
   to: string,
   captured: boolean,
 ): ChaosState {
-  if (!state.assignedSquares || Object.keys(state.assignedSquares).length === 0) return state;
+  if (!state.assignedSquares || Object.keys(state.assignedSquares).length === 0)
+    return state;
   const newSquares = { ...state.assignedSquares };
   let changed = false;
 
@@ -608,12 +672,18 @@ export function getAiDraftMessage(state: ChaosState): string | null {
  */
 export function getPhaseLabel(phase: number): string {
   switch (phase) {
-    case 1: return "Early Game — Movement Buffs";
-    case 2: return "Early-Mid — Positioning";
-    case 3: return "Mid Game — Disruption";
-    case 4: return "Late-Mid — Power Spike";
-    case 5: return "Late Game — Pure Chaos";
-    default: return "Draft Phase";
+    case 1:
+      return "Early Game — Movement Buffs";
+    case 2:
+      return "Early-Mid — Positioning";
+    case 3:
+      return "Mid Game — Disruption";
+    case 4:
+      return "Late-Mid — Power Spike";
+    case 5:
+      return "Late Game — Pure Chaos";
+    default:
+      return "Draft Phase";
   }
 }
 

@@ -2256,20 +2256,36 @@ export default function HomePage() {
                         Chaos Chess
                       </h3>
                       <p className="mt-1 text-sm text-slate-400">
-                        Draft permanent power-ups every 5 turns — Knooks, ghost rooks, nuclear queens and more. Free vs AI or friends.
+                        Draft permanent power-ups every 5 turns — Knooks, ghost
+                        rooks, nuclear queens and more. Free vs AI or friends.
                       </p>
                       <div className="mt-3 flex flex-wrap gap-1.5">
-                        {["vs Stockfish AI", "vs Friend", "ELO Ranked"].map((m) => (
-                          <span key={m} className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-medium text-slate-300">
-                            {m}
-                          </span>
-                        ))}
+                        {["vs Stockfish AI", "vs Friend", "ELO Ranked"].map(
+                          (m) => (
+                            <span
+                              key={m}
+                              className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-medium text-slate-300"
+                            >
+                              {m}
+                            </span>
+                          ),
+                        )}
                       </div>
                     </div>
                     <div className="mt-2 flex items-center gap-1.5 self-start rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg transition-all group-hover:shadow-purple-500/25 group-hover:scale-105">
                       Play Now
-                      <svg className="h-4 w-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      <svg
+                        className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M9 5l7 7-7 7"
+                        />
                       </svg>
                     </div>
                   </div>
@@ -2291,11 +2307,20 @@ export default function HomePage() {
                         Training Center
                       </h3>
                       <p className="mt-1 text-sm text-slate-400">
-                        5 modes that drill your real weaknesses — tactic puzzles, opening leaks, endgame practice. Run a scan to unlock personalized training.
+                        5 modes that drill your real weaknesses — tactic
+                        puzzles, opening leaks, endgame practice. Run a scan to
+                        unlock personalized training.
                       </p>
                       <div className="mt-3 flex flex-wrap gap-1.5">
-                        {["Weakness Trainer", "Blunder Spotter", "Endgame Gym"].map((m) => (
-                          <span key={m} className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-medium text-slate-300">
+                        {[
+                          "Weakness Trainer",
+                          "Blunder Spotter",
+                          "Endgame Gym",
+                        ].map((m) => (
+                          <span
+                            key={m}
+                            className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-medium text-slate-300"
+                          >
                             {m}
                           </span>
                         ))}
@@ -2303,8 +2328,18 @@ export default function HomePage() {
                     </div>
                     <div className="mt-2 flex items-center gap-1.5 self-start rounded-xl bg-gradient-to-r from-fuchsia-600 to-cyan-600 px-4 py-2 text-sm font-semibold text-white shadow-lg transition-all group-hover:shadow-fuchsia-500/25 group-hover:scale-105">
                       Start Training
-                      <svg className="h-4 w-4 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                      <svg
+                        className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M9 5l7 7-7 7"
+                        />
                       </svg>
                     </div>
                   </div>

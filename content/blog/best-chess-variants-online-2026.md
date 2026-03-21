@@ -108,7 +108,7 @@ This is probably the most skill-demanding variant on this list. Knowing when to 
 
 **Where to play:** chess.com, Lichess
 
-You win by checkmating your opponent OR by marching your king to one of the four central squares (d4, d5, e4, e5). 
+You win by checkmating your opponent OR by marching your king to one of the four central squares (d4, d5, e4, e5).
 
 This turns the king from the piece you protect into a piece you actively advance. Opening theory is completely different — king marches are legitimate opening strategies. It also leads to bizarre endgames where both kings are racing to the centre.
 
@@ -147,6 +147,7 @@ This leads to spectacular sacrificial tactics where blowing up the centre of the
 This is the newest variant on the list and the one we built. The setup: it's regular chess, but at turns 5, 10, 15, 20, and 25, the game pauses and both players are shown three modifier cards. You each pick one permanently — and it changes how your pieces move for the rest of the game.
 
 Modifiers escalate in rarity as the game progresses:
+
 - **🟢 Common** — Pawn Charge, Knight Step, Bishop Sprint
 - **🔵 Rare** — Collateral Rook, Ricochet Bishop, Phantom Rook
 - **🟣 Epic** — Knook (knight + rook moves), Archbishop (bishop + knight), Queen Teleport
@@ -164,18 +165,18 @@ It has full matchmaking, a ranked ELO system starting at 1200, five time control
 
 ## Which Should You Play?
 
-| Variant | Good if you... |
-|---|---|
-| Chess960 | Hate opening prep, want pure chess |
-| Three-Check | Love attacking and sacrifices |
-| Crazyhouse | Want the highest skill ceiling |
-| King of the Hill | Want something immediately fun |
-| Antichess | Want a complete brain flip |
-| Atomic | Love explosions and tactics |
-| **Chaos Chess** | **Want a draft game + chess hybrid** |
+| Variant          | Good if you...                       |
+| ---------------- | ------------------------------------ |
+| Chess960         | Hate opening prep, want pure chess   |
+| Three-Check      | Love attacking and sacrifices        |
+| Crazyhouse       | Want the highest skill ceiling       |
+| King of the Hill | Want something immediately fun       |
+| Antichess        | Want a complete brain flip           |
+| Atomic           | Love explosions and tactics          |
+| **Chaos Chess**  | **Want a draft game + chess hybrid** |
 
 All of these are available free online. The best way to find your favourite is to spend 20 minutes on each — most games are short enough that you can run through several in an afternoon.
 
 ---
 
-*If you're looking to improve at standard chess alongside playing variants, FireChess also offers a [free game analysis tool](https://firechess.com) that scans your chess.com or Lichess games for repeated patterns and missed tactics — no account required.*
+_If you're looking to improve at standard chess alongside playing variants, FireChess also offers a [free game analysis tool](https://firechess.com) that scans your chess.com or Lichess games for repeated patterns and missed tactics — no account required._

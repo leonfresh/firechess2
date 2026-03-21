@@ -9,7 +9,7 @@ declare global {
       translate: {
         TranslateElement: new (
           options: { pageLanguage: string; autoDisplay: boolean },
-          id: string
+          id: string,
         ) => void;
       };
     };
@@ -21,7 +21,7 @@ export function GoogleTranslate() {
     window.googleTranslateElementInit = () => {
       new window.google!.translate.TranslateElement(
         { pageLanguage: "en", autoDisplay: false },
-        "google_translate_element"
+        "google_translate_element",
       );
     };
 
