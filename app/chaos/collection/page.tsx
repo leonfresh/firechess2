@@ -12,7 +12,7 @@
  *  - Guests see the 13 default-unlocked modifiers.
  */
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "@/components/session-provider";
@@ -53,7 +53,7 @@ const TIER_FILTER_LABELS: Record<ModifierTier | "all", string> = {
   legendary: "Legendary",
 };
 
-export default function ChaosCollectionPage() {
+function ChaosCollectionInner() {
   const searchParams = useSearchParams();
   const username = searchParams.get("user");
   const { authenticated } = useSession();
@@ -242,6 +242,14 @@ export default function ChaosCollectionPage() {
         )}
       </div>
     </main>
+  );
+}
+
+export default function ChaosCollectionPage() {
+  return (
+    <Suspense>
+      <ChaosCollectionInner />
+    </Suspense>
   );
 }
 
