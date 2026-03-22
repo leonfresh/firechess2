@@ -3924,7 +3924,7 @@ export default function ChaosChessPage() {
     string | null
   >(null);
   /** Duck Chess: pending game+state waiting for player to place duck before AI moves */
-  const pendingDuckRef = useRef<{ game: Chess; cs: ChaosState } | null>(null);
+  const pendingDuckRef = useRef<{ game: Chess; cs: ChaosState; from: string; to: string } | null>(null);
   /** Sun: pawn surge already applied this game */
   const [sunSurgeUsed, setSunSurgeUsed] = useState(false);
   /** World: bonus turn is active (player can play an extra move before regular turn) */
@@ -7468,29 +7468,10 @@ export default function ChaosChessPage() {
           }
         }
 
-        if (!drafted && gameMode === "ai") {
-          if (worldBonusTurnActive) {
-            // World: grant a free bonus move — flip FEN turn back to player
-            setWorldBonusTurnActive(false);
-            const fenParts = activeGame.fen().split(" ");
-            fenParts[1] = playerColor === "white" ? "w" : "b";
-            fenParts[3] = "-"; // clear en passant after flip
-            const bonusGame = new Chess(fenParts.join(" "));
-            setGame(bonusGame);
-            recomputeChaosMoves(bonusGame, cs);
-            setEventLog((prev) => [
-              ...prev,
-              {
-                type: "chaos" as const,
-                message: "🌍 World: Bonus move! Play your extra move now.",
-                icon: "🌍",
-                pepe: PEPE.hyped,
-              },
-            ]);
-            playSound("crowd-ooh");
-          } else if (selectedAnomaly?.id === "duck-chess") {
-            // Duck Chess: player must place duck before AI moves
-            pendingDuckRef.current = { game: activeGame, cs };
+        if (!drafted) {
+          if (selectedAnomaly?.id === "duck-chess") {
+            // Duck Chess: player must place duck before turn passes
+            pendingDuckRef.current = { game: activeGame, cs, from, to };
             setAnomalyActivationMode("duck-place");
             setEventLog((prev) => [
               ...prev,
@@ -7501,8 +7482,29 @@ export default function ChaosChessPage() {
                 pepe: PEPE.think,
               },
             ]);
-          } else {
-            setTimeout(() => makeAiMove(activeGame, cs), AI_MOVE_DELAY);
+          } else if (gameMode === "ai") {
+            if (worldBonusTurnActive) {
+              // World: grant a free bonus move — flip FEN turn back to player
+              setWorldBonusTurnActive(false);
+              const fenParts = activeGame.fen().split(" ");
+              fenParts[1] = playerColor === "white" ? "w" : "b";
+              fenParts[3] = "-"; // clear en passant after flip
+              const bonusGame = new Chess(fenParts.join(" "));
+              setGame(bonusGame);
+              recomputeChaosMoves(bonusGame, cs);
+              setEventLog((prev) => [
+                ...prev,
+                {
+                  type: "chaos" as const,
+                  message: "🌍 World: Bonus move! Play your extra move now.",
+                  icon: "🌍",
+                  pepe: PEPE.hyped,
+                },
+              ]);
+              playSound("crowd-ooh");
+            } else {
+              setTimeout(() => makeAiMove(activeGame, cs), AI_MOVE_DELAY);
+            }
           }
         }
         recomputeChaosMoves(activeGame, cs);
@@ -7727,14 +7729,16 @@ export default function ChaosChessPage() {
       const drafted = checkDraft(activeG, cs2);
 
       // Multiplayer: send to server (or hold for draft pick)
-      // Only hold the move if THIS player is actually about to open the draft picker.
+      // Only hold the move if THIS player is actually about to open the draft picker,
+      // or if duck-chess anomaly requires placing the duck first.
       if (gameMode !== "ai") {
         const holdForDraft =
           (drafted && playerColor === "white") ||
           !!pendingDraftAfterRevealRef.current;
-        if (!holdForDraft) {
+        const holdForDuck = !drafted && selectedAnomaly?.id === "duck-chess";
+        if (!holdForDraft && !holdForDuck) {
           sendMoveToServer(activeG, from, to, cs2);
-        } else {
+        } else if (holdForDraft) {
           // Draft about to open — hold the move and send it bundled with the pick
           pendingMoveBeforeDraftRef.current = { from, to };
         }
@@ -7765,29 +7769,10 @@ export default function ChaosChessPage() {
         }
       }
 
-      if (!drafted && gameMode === "ai") {
-        if (worldBonusTurnActive) {
-          // World: grant a free bonus move — flip FEN turn back to player
-          setWorldBonusTurnActive(false);
-          const fenParts = activeG.fen().split(" ");
-          fenParts[1] = playerColor === "white" ? "w" : "b";
-          fenParts[3] = "-"; // clear en passant after flip
-          const bonusGame = new Chess(fenParts.join(" "));
-          setGame(bonusGame);
-          recomputeChaosMoves(bonusGame, cs2);
-          setEventLog((prev) => [
-            ...prev,
-            {
-              type: "chaos" as const,
-              message: "🌍 World: Bonus move! Play your extra move now.",
-              icon: "🌍",
-              pepe: PEPE.hyped,
-            },
-          ]);
-          playSound("crowd-ooh");
-        } else if (selectedAnomaly?.id === "duck-chess") {
-          // Duck Chess: player must place duck before AI moves
-          pendingDuckRef.current = { game: activeG, cs: cs2 };
+      if (!drafted) {
+        if (selectedAnomaly?.id === "duck-chess") {
+          // Duck Chess: player must place duck before turn passes
+          pendingDuckRef.current = { game: activeG, cs: cs2, from, to };
           setAnomalyActivationMode("duck-place");
           setEventLog((prev) => [
             ...prev,
@@ -7798,8 +7783,29 @@ export default function ChaosChessPage() {
               pepe: PEPE.think,
             },
           ]);
-        } else {
-          setTimeout(() => makeAiMove(activeG, cs2), AI_MOVE_DELAY);
+        } else if (gameMode === "ai") {
+          if (worldBonusTurnActive) {
+            // World: grant a free bonus move — flip FEN turn back to player
+            setWorldBonusTurnActive(false);
+            const fenParts = activeG.fen().split(" ");
+            fenParts[1] = playerColor === "white" ? "w" : "b";
+            fenParts[3] = "-"; // clear en passant after flip
+            const bonusGame = new Chess(fenParts.join(" "));
+            setGame(bonusGame);
+            recomputeChaosMoves(bonusGame, cs2);
+            setEventLog((prev) => [
+              ...prev,
+              {
+                type: "chaos" as const,
+                message: "🌍 World: Bonus move! Play your extra move now.",
+                icon: "🌍",
+                pepe: PEPE.hyped,
+              },
+            ]);
+            playSound("crowd-ooh");
+          } else {
+            setTimeout(() => makeAiMove(activeG, cs2), AI_MOVE_DELAY);
+          }
         }
       }
       recomputeChaosMoves(activeG, cs2);
@@ -8283,6 +8289,9 @@ export default function ChaosChessPage() {
           ]);
           if (gameMode === "ai") {
             setTimeout(() => makeAiMove(pending.game, newCs), AI_MOVE_DELAY);
+          } else {
+            // Multiplayer: now that duck is placed, send the move+duck state to server
+            sendMoveToServer(pending.game, pending.from, pending.to, newCs);
           }
           return;
         }
