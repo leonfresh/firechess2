@@ -1064,6 +1064,24 @@ type EventLogEntry = {
  * Each client maps these to/from their local perspective based on
  * what color they are playing.
  */
+
+/** Apply an anomaly choice to a ChaosState, injecting any built-in modifiers.
+ * Safe to call anywhere — used for both AI and multiplayer game init. */
+function applyAnomalyToCs(cs: ChaosState, anomaly: AnomalyDefinition | null): ChaosState {
+  if (!anomaly) return cs;
+  let result: ChaosState = { ...cs, playerAnomaly: anomaly.id as AnomalyId };
+  if (anomaly.injectModifiers) {
+    for (const modId of anomaly.injectModifiers) {
+      if (modId === "amazon") continue; // amazon is delayed to turn 10
+      const mod = ALL_MODIFIERS.find((m) => m.id === modId);
+      if (mod && !result.playerModifiers.some((m) => m.id === mod.id)) {
+        result = { ...result, playerModifiers: [...result.playerModifiers, mod] };
+      }
+    }
+  }
+  return result;
+}
+
 /** All paired player/ai fields that must be swapped when applying a Black-perspective state
  * to the server (where "player" = White, "ai" = Black) and vice-versa. */
 function swapPlayerAiFields(s: ChaosState): ChaosState {
@@ -3842,6 +3860,18 @@ export default function ChaosChessPage() {
   /** The pre-game anomaly picked by the local player */
   const [selectedAnomaly, setSelectedAnomaly] =
     useState<AnomalyDefinition | null>(null);
+
+  /** Pending multiplayer action: executed after anomaly picker completes */
+  const pendingMpActionRef = useRef<
+    | { type: "createRoom"; color: "white" | "black" }
+    | { type: "joinRoom" }
+    | { type: "matchmake" }
+    | null
+  >(null);
+  /** The anomaly chosen before a multiplayer game — applied when game initialises */
+  const pendingMpAnomalyRef = useRef<AnomalyDefinition | null>(null);
+  /** Matchmake mode: has the player picked their anomaly yet (gates ChaosLobby)? */
+  const [matchmakeAnomalyPicked, setMatchmakeAnomalyPicked] = useState(false);
   /**
    * Anomaly activation mode:
    * - null: no activation in progress
@@ -6143,7 +6173,14 @@ export default function ChaosChessPage() {
       const rawCs = data.chaosState
         ? (data.chaosState as ChaosState)
         : createChaosState();
-      const cs = fromServerChaosState(rawCs, guestColor as "white" | "black");
+      let cs = fromServerChaosState(rawCs, guestColor as "white" | "black");
+      // Apply the anomaly the joiner chose before typing the room code
+      const joinAnomaly = pendingMpAnomalyRef.current;
+      if (joinAnomaly) {
+        pendingMpAnomalyRef.current = null;
+        cs = applyAnomalyToCs(cs, joinAnomaly);
+        setSelectedAnomaly(joinAnomaly);
+      }
       setChaosState(cs);
       const g = new Chess(data.fen);
       setGame(g);
@@ -9432,7 +9469,11 @@ export default function ChaosChessPage() {
               <button
                 key={mode}
                 type="button"
-                onClick={() => setGameMode(mode)}
+                onClick={() => {
+                  setGameMode(mode);
+                  // Reset matchmake anomaly pick when switching tabs
+                  if (mode !== "matchmake") setMatchmakeAnomalyPicked(false);
+                }}
                 className={`flex-1 rounded-lg py-3 text-xs font-semibold transition-all sm:py-3.5 sm:text-sm ${
                   gameMode === mode
                     ? "bg-purple-500/25 text-purple-300 shadow-inner"
@@ -9549,14 +9590,22 @@ export default function ChaosChessPage() {
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => createRoom("white")}
+                    onClick={() => {
+                      pendingMpActionRef.current = { type: "createRoom", color: "white" };
+                      setAnomalyPickerChoices(rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)));
+                      setGameStatus("picking-anomaly");
+                    }}
                     className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.04] py-2.5 text-sm font-medium text-white transition-all hover:bg-white/[0.1]"
                   >
                     ♔ White
                   </button>
                   <button
                     type="button"
-                    onClick={() => createRoom("black")}
+                    onClick={() => {
+                      pendingMpActionRef.current = { type: "createRoom", color: "black" };
+                      setAnomalyPickerChoices(rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)));
+                      setGameStatus("picking-anomaly");
+                    }}
                     className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.04] py-2.5 text-sm font-medium text-white transition-all hover:bg-white/[0.1]"
                   >
                     ♚ Black
@@ -9580,7 +9629,12 @@ export default function ChaosChessPage() {
                   />
                   <button
                     type="button"
-                    onClick={joinRoom}
+                    onClick={() => {
+                      if (joinCode.length !== 6) return;
+                      pendingMpActionRef.current = { type: "joinRoom" };
+                      setAnomalyPickerChoices(rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)));
+                      setGameStatus("picking-anomaly");
+                    }}
                     disabled={joinCode.length !== 6}
                     className="rounded-lg bg-purple-500/20 px-5 py-2.5 text-sm font-medium text-purple-400 transition-all hover:bg-purple-500/30 disabled:opacity-40"
                   >
@@ -9597,9 +9651,31 @@ export default function ChaosChessPage() {
               <p className="text-sm text-slate-400">
                 Find a random opponent to play Chaos Chess against
               </p>
-              <ChaosLobby
-                isSignedIn={true}
-                onMatchFound={(data) => {
+              {!matchmakeAnomalyPicked ? (
+                /* Step 1: pick anomaly before searching */
+                <div className="flex flex-col items-center gap-3 rounded-xl border border-purple-500/20 bg-purple-500/5 p-5 w-full text-center">
+                  <p className="text-xs font-bold uppercase tracking-wider text-purple-400">
+                    ✦ Choose Your Anomaly First ✦
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Pick your special power before entering the matchmaking queue.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      pendingMpActionRef.current = { type: "matchmake" };
+                      setAnomalyPickerChoices(rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)));
+                      setGameStatus("picking-anomaly");
+                    }}
+                    className="rounded-xl border border-purple-500/30 bg-purple-500/10 px-6 py-3 text-sm font-bold text-purple-400 transition-all hover:bg-purple-500/20 hover:scale-105"
+                  >
+                    🪄 Pick Anomaly
+                  </button>
+                </div>
+              ) : (
+                <ChaosLobby
+                  isSignedIn={true}
+                  onMatchFound={(data) => {
                   setRoomId(data.roomId);
                   setRoomCode(data.roomCode);
                   setGameMode("matchmake");
@@ -9616,7 +9692,13 @@ export default function ChaosChessPage() {
                   setPlayerColor(myColor as "white" | "black");
                   setGameStatus("playing");
                   setMatchmakeState("found");
-                  const cs = createChaosState();
+                  const anomalyForMatch = pendingMpAnomalyRef.current;
+                  pendingMpAnomalyRef.current = null;
+                  let cs = createChaosState();
+                  if (anomalyForMatch) {
+                    cs = applyAnomalyToCs(cs, anomalyForMatch);
+                    setSelectedAnomaly(anomalyForMatch);
+                  }
                   setChaosState(cs);
                   const g = new Chess();
                   setGame(g);
@@ -9671,6 +9753,7 @@ export default function ChaosChessPage() {
                   if (pollRef.current) clearInterval(pollRef.current);
                 }}
               />
+              )}
             </div>
           )}
 
@@ -10029,10 +10112,41 @@ export default function ChaosChessPage() {
             choices={anomalyPickerChoices}
             isPro={plan === "pro" || plan === "lifetime"}
             onPick={(anomaly) => {
-              launchGame(playerColor, gameMode, anomaly);
+              const mpAction = pendingMpActionRef.current;
+              if (!mpAction) {
+                // AI mode (no pending mp action)
+                launchGame(playerColor, gameMode, anomaly);
+                return;
+              }
+              // Multiplayer: store anomaly, apply to chaosState, then execute action
+              pendingMpActionRef.current = null;
+              pendingMpAnomalyRef.current = anomaly;
+              setSelectedAnomaly(anomaly);
+              setChaosState((prev) => applyAnomalyToCs(prev, anomaly));
+              if (mpAction.type === "createRoom") {
+                createRoom(mpAction.color);
+              } else if (mpAction.type === "joinRoom") {
+                joinRoom();
+              } else if (mpAction.type === "matchmake") {
+                setMatchmakeAnomalyPicked(true);
+                setGameStatus("setup");
+              }
             }}
             onSkip={() => {
-              launchGame(playerColor, gameMode, null);
+              const mpAction = pendingMpActionRef.current;
+              if (!mpAction) {
+                launchGame(playerColor, gameMode, null);
+                return;
+              }
+              pendingMpActionRef.current = null;
+              if (mpAction.type === "createRoom") {
+                createRoom(mpAction.color);
+              } else if (mpAction.type === "joinRoom") {
+                joinRoom();
+              } else if (mpAction.type === "matchmake") {
+                setMatchmakeAnomalyPicked(true);
+                setGameStatus("setup");
+              }
             }}
           />
         )}
