@@ -3016,7 +3016,17 @@ export default function ChaosChessPage() {
   /* ── Difficulty ── */
   const [aiLevel, setAiLevel] = useState<
     "beginner" | "easy" | "medium" | "hard"
-  >("beginner");
+  >(() => {
+    if (typeof window === "undefined") return "easy";
+    const stored = window.localStorage.getItem("chaos_ai_level");
+    return (stored === "beginner" || stored === "easy" || stored === "medium" || stored === "hard")
+      ? stored
+      : "easy";
+  });
+  // Persist choice
+  useEffect(() => {
+    localStorage.setItem("chaos_ai_level", aiLevel);
+  }, [aiLevel]);
   const aiDepth =
     aiLevel === "beginner"
       ? 3
@@ -3107,8 +3117,7 @@ export default function ChaosChessPage() {
       setKingCaptureAnim({ id, from, to, pieceUrl });
       // Clear after the 650ms animation + a short buffer
       setTimeout(
-        () =>
-          setKingCaptureAnim((prev) => (prev?.id === id ? null : prev)),
+        () => setKingCaptureAnim((prev) => (prev?.id === id ? null : prev)),
         750,
       );
     },
@@ -3226,9 +3235,15 @@ export default function ChaosChessPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [game, gameMode, gameStatus, playerColor]);
 
-  /* ── Auto-scroll chat to bottom on new messages ── */
+  /* ── Auto-scroll chat to bottom on new messages (skip bulk initial load) ── */
+  const prevChatLengthRef = useRef(0);
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const prev = prevChatLengthRef.current;
+    prevChatLengthRef.current = chatMessages.length;
+    // Only scroll if exactly one new message arrived (not a bulk history load)
+    if (chatMessages.length === prev + 1) {
+      chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   }, [chatMessages.length]);
 
   /* ── Fetch ELO ratings when multiplayer game starts ── */
@@ -3441,7 +3456,10 @@ export default function ChaosChessPage() {
           }
         }
         if (captureAt) {
-          setTimeout(() => triggerEffect("king-death", [captureAt]), slideDelay);
+          setTimeout(
+            () => triggerEffect("king-death", [captureAt]),
+            slideDelay,
+          );
         }
         isAnimatingEndRef.current = true;
         if (youWin) {
@@ -3623,7 +3641,8 @@ export default function ChaosChessPage() {
 
       return false;
     },
-    [playerColor, spawnPepe, triggerEffect, startKingCaptureAnim],  );
+    [playerColor, spawnPepe, triggerEffect, startKingCaptureAnim],
+  );
 
   /* ── Check draft trigger after a full move ── */
   const checkDraft = useCallback(
@@ -4037,7 +4056,10 @@ export default function ChaosChessPage() {
                     const capCode = `${capPiece.color}${capPiece.type.toUpperCase()}`;
                     startKingCaptureAnim(best.move.from, captured, capCode);
                   }
-                  setTimeout(() => triggerEffect("king-death", [captured]), 400);
+                  setTimeout(
+                    () => triggerEffect("king-death", [captured]),
+                    400,
+                  );
                   playSound("mario-death");
                   spawnPepe(PEPE.gamercry);
                   setIsThinking(false);
@@ -4317,7 +4339,58 @@ export default function ChaosChessPage() {
                     ),
                 )
               : 0;
-            // 2. Enhanced exposure penalty: Stockfish undervalues the AI's own chaos-enhanced pieces.
+            // 2a. Collateral-rook / nuclear-queen bonus: Stockfish only sees the direct
+            // capture; it doesn't know the rook also destroys the piece behind it, or that
+            // the queen nukes all 8 surrounding squares. Add the value of those extra pieces.
+            let postEffectBonus = 0;
+            if (hasAiChaosMods) {
+              const movedPiece = g.get(cf as any);
+              if (movedPiece && movedPiece.color === aiCol3) {
+                const capturedAtTarget = g.get(ct as any);
+                if (capturedAtTarget && capturedAtTarget.color !== aiCol3) {
+                  // Collateral rook: piece one step beyond target in direction of movement
+                  if (movedPiece.type === "r" && cs.aiModifiers.some((m) => m.id === "collateral-rook")) {
+                    const ff2 = cf.charCodeAt(0) - 97;
+                    const fr2 = parseInt(cf[1], 10) - 1;
+                    const tf2 = ct.charCodeAt(0) - 97;
+                    const tr2 = parseInt(ct[1], 10) - 1;
+                    const dff = Math.sign(tf2 - ff2);
+                    const dfr = Math.sign(tr2 - fr2);
+                    const colFile = String.fromCharCode(97 + tf2 + dff);
+                    const colRank = String(tr2 + dfr + 1);
+                    if (colFile >= "a" && colFile <= "h" && colRank >= "1" && colRank <= "8") {
+                      const colSq = `${colFile}${colRank}`;
+                      const colPiece = g.get(colSq as any);
+                      if (colPiece && colPiece.color !== aiCol3 && colPiece.type !== "k") {
+                        postEffectBonus += getChaosPieceValCp(
+                          colSq, colPiece.type, colPiece.color as "w" | "b",
+                          cs.playerModifiers, cs.assignedSquares ?? undefined,
+                        );
+                      }
+                    }
+                  }
+                  // Nuclear queen: destroy all 8 surrounding squares
+                  if (movedPiece.type === "q" && cs.aiModifiers.some((m) => m.id === "nuclear-queen")) {
+                    const qtf = ct.charCodeAt(0) - 97;
+                    const qtr = parseInt(ct[1], 10) - 1;
+                    for (const [dff, dfr] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]] as [number,number][]) {
+                      const nf = qtf + dff;
+                      const nr = qtr + dfr;
+                      if (nf < 0 || nf > 7 || nr < 0 || nr > 7) continue;
+                      const nSq = `${String.fromCharCode(97 + nf)}${nr + 1}`;
+                      const nPiece = g.get(nSq as any);
+                      if (nPiece && nPiece.color !== aiCol3 && nPiece.type !== "k") {
+                        postEffectBonus += getChaosPieceValCp(
+                          nSq, nPiece.type, nPiece.color as "w" | "b",
+                          cs.playerModifiers, cs.assignedSquares ?? undefined,
+                        );
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            // 2b. Enhanced exposure penalty: Stockfish undervalues the AI's own chaos-enhanced pieces.
             // If an AI enhanced piece sits on a square the player can capture after this move,
             // penalise by the extra value above what Stockfish's standard eval accounts for.
             let enhancedPenalty = 0;
@@ -4349,7 +4422,7 @@ export default function ChaosChessPage() {
                 }
               }
             }
-            const adjusted = candidate.cp - penalty - enhancedPenalty;
+            const adjusted = candidate.cp - penalty - enhancedPenalty + postEffectBonus;
             if (adjusted > bestAdjusted) {
               bestAdjusted = adjusted;
               bestUci = uci;
@@ -4494,7 +4567,10 @@ export default function ChaosChessPage() {
 
         // Forced En Passant: if player has this modifier and EP is available, AI must play it
         // (but NOT if we just set bestUci to escape a chaos check — escaping takes priority)
-        if (!appliedChaosEscape && cs.playerModifiers.some((m) => m.id === "forced-en-passant")) {
+        if (
+          !appliedChaosEscape &&
+          cs.playerModifiers.some((m) => m.id === "forced-en-passant")
+        ) {
           const epMoves = g
             .moves({ verbose: true })
             .filter((m: { flags: string; from: string; to: string }) =>
@@ -4510,7 +4586,12 @@ export default function ChaosChessPage() {
         const playerChainColor: Color = playerColor === "white" ? "w" : "b";
         const chainedByPlayer =
           cs.assignedSquares?.[`${playerChainColor}_kings-chains`];
-        if (!appliedChaosEscape && chainedByPlayer && bestUci && bestUci.startsWith(chainedByPlayer)) {
+        if (
+          !appliedChaosEscape &&
+          chainedByPlayer &&
+          bestUci &&
+          bestUci.startsWith(chainedByPlayer)
+        ) {
           const allLegal = g.moves({ verbose: true });
           const nonChained = allLegal.filter(
             (mv: { from: string }) => mv.from !== chainedByPlayer,
