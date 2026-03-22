@@ -5232,6 +5232,10 @@ export default function ChaosChessPage() {
                   chaosMove.to,
                   chaosMove.type === "capture",
                 );
+                // queen-teleport is once per game — remove modifier after AI uses it
+                if (chaosMove.modifierId === "queen-teleport") {
+                  cs2 = { ...cs2, aiModifiers: cs2.aiModifiers.filter((m) => m.id !== "queen-teleport") };
+                }
                 let activeGame = newGame;
 
                 if (thisToken.cancelled) {
@@ -7456,6 +7460,11 @@ export default function ChaosChessPage() {
           to,
           chaosMove.type === "capture",
         );
+        // queen-teleport is once per game — remove modifier after use
+        if (chaosMove.modifierId === "queen-teleport") {
+          cs = { ...cs, playerModifiers: cs.playerModifiers.filter((m) => m.id !== "queen-teleport") };
+          setWarpQueenActive(false);
+        }
         // Decrement Justice / Devil counters (player's half-move)
         cs = decrementAnomalyCounters(cs, "player", from, to);
         // Magician: inject amazon modifier at turn 10+
