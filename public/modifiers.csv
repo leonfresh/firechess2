@@ -1,0 +1,27 @@
+id,name,tier,piece,phases,icon,description
+pawn-charge,Torpedo Pawns,common,p,"1,2",🚀,"Your pawns can move 2 squares forward from ANY rank, not just their starting rank. Suddenly every pawn is a threat."
+pawn-capture-forward,Pawn Bayonet,common,p,"1,2",🗡️,Pawns can capture straight ahead as well as diagonally.
+camel,Camel,common,n,"1,2",🐫,"One of your Knights transforms into a Camel — it leaps 1 square in one direction and 3 in the other, a colorbound extended jump."
+dragon-bishop,Dragon Bishop,common,b,"1,2",🐉,"Your bishops ascend — each bishop can also step one square in any cardinal direction (orthogonal), mirroring the Shogi Dragon Horse (龍馬)."
+kings-chains,King's Chains,common,k,"1,2",⛓️,"Your king's presence paralyzes the highest-value adjacent enemy piece — it cannot move or capture. The chained piece still threatens squares."
+dragon-rook,Dragon Rook,common,r,"1,2",🐲,"Your rooks are promoted — each rook can also step one square diagonally, mirroring the Shogi Dragon King (龍王)."
+pegasus,Pegasus,rare,n,"2,3",🦄,"One knight gains a double L-jump — the second jump must advance toward the opponent (forward ranks only)."
+phantom-rook,Phantom Rook,rare,r,"2,3",👻,"Rooks can move through friendly pieces (but not enemy pieces)."
+sniper-bishop,Sniper Bishop,rare,b,"2,3",🎯,"Bishops can 'shoot' and capture any enemy piece on the same diagonal up to 2 squares away, without moving."
+pawn-fortress,Pawn Fortress,rare,p,"2,3",🏰,"When one of your pawns is captured, there's a 50% chance it respawns on its starting square (if empty)."
+enpassant-everywhere,En Passant Everywhere,rare,p,"2,3",♟️,"En passant can be performed on any pawn that moved 1 or 2 squares, not just from the starting rank. Holy hell."
+king-wrath,Regicide,rare,k,"2,3",👑,"When your King captures an enemy piece, revive one of your captured pieces on any empty square in your back rank."
+knook,The Knook,rare,n,"2,3,4",🏇,"One of your Knights transforms into the legendary Knook — it moves as both a Knight AND a Rook."
+archbishop,The Archbishop,rare,b,"2,3,4",🏛️,"One of your Bishops transforms into an Archbishop — it moves as both a Bishop AND a Knight."
+queen-teleport,Warp Queen,epic,q,"3,4",🌀,"Once per game, the Queen can teleport to any empty square on the board."
+collateral-rook,Collateral Damage,epic,r,"3,4",💥,"When a Rook captures, it also destroys any piece immediately behind the captured target."
+bishop-bounce,Ricochet Bishop,epic,b,"3,4",🪃,Bishops can bounce their movement off the edge of the board once per turn.
+pawn-promotion-early,Battlefield Promotion,epic,p,"3,4",⭐,"Pawns on the 4th rank or below can promote early on the 5th rank (4th for black)."
+bishop-cannon,Bishop Cannon,epic,b,"3,4,5",🔮,"Bishops can jump over exactly one piece on a diagonal to capture the piece behind it — Xiangqi cannon, but diagonal."
+forced-en-passant,Forced En Passant,rare,p,"2,3",🧱,"Your OPPONENT is forced to play en passant whenever it's available — it becomes their only legal move."
+nuclear-queen,Nuclear Queen,legendary,q,"4,5",☢️,"When the Queen captures, all 8 surrounding squares are cleared of ALL pieces (friend AND foe)."
+amazon,The Amazon,legendary,q,"4,5",👸,"Your Queen transforms into an Amazon — she can also move like a Knight."
+knight-horde,Knight Horde,legendary,n,"4,5",🐎,Spawn 2 extra Knights on random empty squares on your side of the board.
+undead-army,Undead Army,legendary,p,"4,5",💀,"Spawns all your missing pawns on random empty squares on your 2nd and 3rd ranks. Any pawn not currently on the board will come back."
+king-ascension,King Ascension,legendary,k,"4,5",🔱,"Your King can capture like a Queen — striking any range along diagonals and files. It still moves one square at a time."
+rook-cannon,Rook Cannon,legendary,r,"4,5",💣,"Rooks can jump over exactly one piece (like a cannon in Xiangqi) to capture behind it."

@@ -293,6 +293,8 @@ const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
     glow: "rgba(147,51,234,0.4)",
   },
   "sniper-bishop": {
+    icon: "🎯",
+    iconGlow: "rgba(239,68,68,0.8)",
     render: (sw) => {
       const s = sw * 0.35;
       return (
@@ -372,6 +374,8 @@ const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
     glow: "rgba(34,197,94,0.5)",
   },
   "dragon-rook": {
+    icon: "🐲",
+    iconGlow: "rgba(220,38,38,0.7)",
     glow: "rgba(220,38,38,0.4)",
   },
   "pawn-charge": {
@@ -385,6 +389,8 @@ const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
     glow: "rgba(239,68,68,0.4)",
   },
   "dragon-bishop": {
+    icon: "🐉",
+    iconGlow: "rgba(8,145,178,0.7)",
     glow: "rgba(8,145,178,0.4)",
   },
   "pawn-promotion-early": {
@@ -469,6 +475,7 @@ const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
   "forced-en-passant": { icon: "🧱", iconGlow: "rgba(249,115,22,0.6)" },
   "pawn-shield-wall": { icon: "🔰", iconGlow: "rgba(59,130,246,0.6)" },
   "enpassant-everywhere": { icon: "♟️", iconGlow: "rgba(234,179,8,0.6)" },
+  "pawn-fortress": { icon: "🏰", iconGlow: "rgba(245,158,11,0.8)" },
 };
 
 /** Map piece code letter → PieceSymbol */
@@ -531,6 +538,13 @@ function buildChaosCustomPieces(
   playerNukeOnCooldown?: boolean,
   /** Whether the AI's nuclear queen blast is currently on cooldown */
   aiNukeOnCooldown?: boolean,
+  /** Player's active anomaly ID — used for per-anomaly piece visuals */
+  playerAnomalyId?: string | null,
+  /** AI's active anomaly ID — used for per-anomaly piece visuals */
+  aiAnomalyId?: string | null,
+  /** Moon anomaly: whether the queen's nocturnal ability is active */
+  playerMoonUnlocked?: boolean,
+  aiMoonUnlocked?: boolean,
 ): Record<
   string,
   ({
@@ -687,6 +701,16 @@ function buildChaosCustomPieces(
         }
       }
 
+      // Star anomaly: all knights become camels visually (camel SVG)
+      if (
+        pieceType === "n" &&
+        ((isPlayerPiece && playerAnomalyId === "star") ||
+          (!isPlayerPiece && aiAnomalyId === "star")) &&
+        FAIRY_PIECE_SVGS["camel"]
+      ) {
+        pieceUrl = FAIRY_PIECE_SVGS["camel"][pieceColor];
+      }
+
       // Now iterate all active mods for overlays, glows, and filters
       for (const mod of activeForPiece) {
         // Skip single-piece modifiers if this isn't the designated piece
@@ -711,10 +735,12 @@ function buildChaosCustomPieces(
         if (!def) continue;
 
         // Skip icon/render overlays for most fairy piece replacements.
-        // Exception: torpedo/bayonet pawn mods should still show their icon badge
-        // so the upgrade remains visible even when custom pawn SVGs are active.
+        // Exception: mods whose badge should still be visible alongside the fairy SVG.
         const allowIconWithFairy =
-          mod.id === "pawn-charge" || mod.id === "pawn-capture-forward";
+          mod.id === "pawn-charge" ||
+          mod.id === "pawn-capture-forward" ||
+          mod.id === "dragon-bishop" ||
+          mod.id === "dragon-rook";
         if ((!fairySvgs || allowIconWithFairy) && !skipUndeadIcon) {
           if (def.icon) {
             // For the War Pawn combo (Torpedo + Bayonet), render icons in all
@@ -774,10 +800,11 @@ function buildChaosCustomPieces(
                 <Emoji emoji={badgeIcon} style={{ width: s, height: s }} />
               </div>,
             );
-          } else if (def.render) {
-            // Custom SVG render — uses its own positioning
+          }
+          if (def.render) {
+            // Custom SVG render — uses its own positioning (can stack with icon badge above)
             overlays.push(
-              <React.Fragment key={mod.id}>
+              <React.Fragment key={`${mod.id}-render`}>
                 {def.render(squareWidth)}
               </React.Fragment>,
             );
@@ -786,6 +813,73 @@ function buildChaosCustomPieces(
 
         if (def.filter) filter = def.filter;
         if (def.glow && !glowColor) glowColor = def.glow;
+      }
+
+      // Anomaly-specific piece badges (passive anomalies that change piece movement)
+      {
+        const pAnom = isPlayerPiece ? playerAnomalyId : aiAnomalyId;
+        const pMoon = isPlayerPiece ? playerMoonUnlocked : aiMoonUnlocked;
+        if (pAnom) {
+          // Hanged Man — Inversion: 🙃 on all pawns
+          if (pAnom === "hanged-man" && pieceType === "p") {
+            const corner = CORNER_ORDER[cornerIdx % CORNER_ORDER.length];
+            cornerIdx++;
+            const s = squareWidth * 0.24;
+            overlays.push(
+              <div
+                key="anom-badge"
+                style={{
+                  position: "absolute",
+                  ...CORNER_STYLES[corner],
+                  lineHeight: 1,
+                  filter: "drop-shadow(0 0 2px rgba(20,184,166,0.7))",
+                }}
+              >
+                <Emoji emoji="🙃" style={{ width: s, height: s }} />
+              </div>,
+            );
+          }
+          // Emperor — Dominion: 👑 badge on king + gold glow
+          if (pAnom === "emperor" && pieceType === "k") {
+            if (!glowColor) glowColor = "rgba(245,158,11,0.5)";
+            const corner = CORNER_ORDER[cornerIdx % CORNER_ORDER.length];
+            cornerIdx++;
+            const s = squareWidth * 0.24;
+            overlays.push(
+              <div
+                key="anom-badge"
+                style={{
+                  position: "absolute",
+                  ...CORNER_STYLES[corner],
+                  lineHeight: 1,
+                  filter: "drop-shadow(0 0 3px rgba(245,158,11,0.9))",
+                }}
+              >
+                <Emoji emoji="👑" style={{ width: s, height: s }} />
+              </div>,
+            );
+          }
+          // Moon — Nocturnal Hunt: 🌑 on queen when unlocked
+          if (pAnom === "moon" && pieceType === "q" && pMoon) {
+            if (!glowColor) glowColor = "rgba(100,116,139,0.4)";
+            const corner = CORNER_ORDER[cornerIdx % CORNER_ORDER.length];
+            cornerIdx++;
+            const s = squareWidth * 0.24;
+            overlays.push(
+              <div
+                key="anom-badge"
+                style={{
+                  position: "absolute",
+                  ...CORNER_STYLES[corner],
+                  lineHeight: 1,
+                  filter: "drop-shadow(0 0 3px rgba(148,163,184,0.9))",
+                }}
+              >
+                <Emoji emoji="🌑" style={{ width: s, height: s }} />
+              </div>,
+            );
+          }
+        }
       }
 
       // King's Chains: draw chain overlay on the currently-chained enemy piece square
@@ -1373,7 +1467,7 @@ function AnomalyPickerScreen({
                       {anomaly.name}
                     </p>
                     {/* Description */}
-                    <p className="mt-1.5 text-[10px] leading-snug text-slate-400 line-clamp-4">
+                    <p className="mt-1.5 text-[10px] leading-snug text-slate-400">
                       {anomaly.description}
                     </p>
                     {/* Trigger badge */}
@@ -3174,7 +3268,7 @@ function PieceInfoPanel({
                 <Emoji emoji={m.icon} style={{ width: 12, height: 12 }} />
                 {m.name}
               </div>
-              <p className="mt-0.5 text-[10px] leading-relaxed text-slate-400 line-clamp-2">
+              <p className="mt-0.5 text-[10px] leading-relaxed text-slate-400 line-clamp-3">
                 {m.description}
               </p>
             </div>
@@ -3434,7 +3528,7 @@ export default function ChaosChessPage() {
    * - "lovers-second": waiting for player to click second piece
    * - "strength": king queen-range captures highlighted
    * - "justice": waiting for player to mark a piece immune
-   * - "hanged-man": waiting for player to click piece to transform
+   * - "duck-place": waiting for player to click empty square to place duck
    * - "devil": waiting for player to click opponent piece to freeze
    * - "judgement": resurrection picker modal shown
    */
@@ -3443,17 +3537,17 @@ export default function ChaosChessPage() {
     | "lovers-second"
     | "strength"
     | "justice"
-    | "hanged-man"
+    | "duck-place"
     | "devil"
     | "judgement"
     | null
   >(null);
-  /** First piece selected during a two-click activation (Lovers, Hanged Man) */
+  /** First piece selected during a two-click activation (Lovers) */
   const [anomalyActivationPiece, setAnomalyActivationPiece] = useState<
     string | null
   >(null);
-  /** Hanged Man: transform type picker open */
-  const [showTransformPicker, setShowTransformPicker] = useState(false);
+  /** Duck Chess: pending game+state waiting for player to place duck before AI moves */
+  const pendingDuckRef = useRef<{ game: Chess; cs: ChaosState } | null>(null);
   /** Sun: pawn surge already applied this game */
   const [sunSurgeUsed, setSunSurgeUsed] = useState(false);
   /** World: bonus turn is active (player can play an extra move before regular turn) */
@@ -3475,7 +3569,8 @@ export default function ChaosChessPage() {
   /* ── Chaos-aware piece rendering (overlays on pieces with modifiers) ── */
   const chaosCustomPieces = useMemo(() => {
     const allMods = [...chaosState.playerModifiers, ...chaosState.aiModifiers];
-    if (allMods.length === 0) return baseCustomPieces;
+    const anyAnomaly = !!(chaosState.playerAnomaly || chaosState.aiAnomaly);
+    if (allMods.length === 0 && !anyAnomaly) return baseCustomPieces;
     const currentMove = game.moveNumber();
     return buildChaosCustomPieces(
       pieceTheme.setName,
@@ -3488,6 +3583,10 @@ export default function ChaosChessPage() {
       lastMoveRef,
       currentMove < (chaosState.playerNuclearCooldownUntil ?? 0),
       currentMove < (chaosState.aiNuclearCooldownUntil ?? 0),
+      chaosState.playerAnomaly ?? null,
+      chaosState.aiAnomaly ?? null,
+      chaosState.playerMoonUnlocked ?? false,
+      chaosState.aiMoonUnlocked ?? false,
     );
   }, [
     pieceTheme.setName,
@@ -3499,6 +3598,10 @@ export default function ChaosChessPage() {
     chaosState.assignedSquares,
     chaosState.playerNuclearCooldownUntil,
     chaosState.aiNuclearCooldownUntil,
+    chaosState.playerAnomaly,
+    chaosState.aiAnomaly,
+    chaosState.playerMoonUnlocked,
+    chaosState.aiMoonUnlocked,
     undeadRevived,
   ]);
 
@@ -5249,6 +5352,26 @@ export default function ChaosChessPage() {
           }
         }
 
+        // Duck Chess: AI cannot move to the player's duck square
+        if (
+          cs.playerDuckSquare &&
+          bestUci?.slice(2, 4) === cs.playerDuckSquare
+        ) {
+          const allLegal = g.moves({ verbose: true });
+          const notDuck = allLegal.filter(
+            (mv: { to: string }) => mv.to !== cs.playerDuckSquare,
+          );
+          if (notDuck.length > 0) {
+            const topUciOrder = topMoves
+              .map((t) => t.bestMove ?? t.pvMoves[0])
+              .filter(Boolean) as string[];
+            const topRanked = topUciOrder.find((u) =>
+              notDuck.some((m: { lan: string }) => m.lan === u),
+            );
+            bestUci = topRanked ?? (notDuck[0] as { lan: string }).lan;
+          }
+        }
+
         // Re-parse in case bestUci changed from fallback
         const finalFrom = bestUci!.slice(0, 2) as CbSquare;
         const finalTo = bestUci!.slice(2, 4) as CbSquare;
@@ -6529,6 +6652,10 @@ export default function ChaosChessPage() {
       )
         return false;
 
+      // Duck Chess: block moves to the duck's square (duck is impassable)
+      if (chaosState.playerDuckSquare && to === chaosState.playerDuckSquare)
+        return false;
+
       // Forced En Passant: if AI has this modifier and standard EP is available, player must play it
       if (chaosState.aiModifiers.some((m) => m.id === "forced-en-passant")) {
         const epMoves = game
@@ -6747,6 +6874,19 @@ export default function ChaosChessPage() {
               },
             ]);
             playSound("crowd-ooh");
+          } else if (selectedAnomaly?.id === "duck-chess") {
+            // Duck Chess: player must place duck before AI moves
+            pendingDuckRef.current = { game: activeGame, cs };
+            setAnomalyActivationMode("duck-place");
+            setEventLog((prev) => [
+              ...prev,
+              {
+                type: "chaos" as const,
+                message: "🦆 Place your duck! Click any empty square.",
+                icon: "🦆",
+                pepe: PEPE.think,
+              },
+            ]);
           } else {
             setTimeout(() => makeAiMove(activeGame, cs), AI_MOVE_DELAY);
           }
@@ -7008,6 +7148,19 @@ export default function ChaosChessPage() {
             },
           ]);
           playSound("crowd-ooh");
+        } else if (selectedAnomaly?.id === "duck-chess") {
+          // Duck Chess: player must place duck before AI moves
+          pendingDuckRef.current = { game: activeG, cs: cs2 };
+          setAnomalyActivationMode("duck-place");
+          setEventLog((prev) => [
+            ...prev,
+            {
+              type: "chaos" as const,
+              message: "🦆 Place your duck! Click any empty square.",
+              icon: "🦆",
+              pepe: PEPE.think,
+            },
+          ]);
         } else {
           setTimeout(() => makeAiMove(activeG, cs2), AI_MOVE_DELAY);
         }
@@ -7036,6 +7189,7 @@ export default function ChaosChessPage() {
       isKingMoveChaosUnsafe,
       triggerEffect,
       worldBonusTurnActive,
+      selectedAnomaly,
     ],
   );
 
@@ -7286,6 +7440,12 @@ export default function ChaosChessPage() {
         for (const m of moves) {
           if (m.piece === "k" && isKingMoveChaosUnsafe(game, m.from, m.to))
             continue;
+          // Duck Chess: can't move to duck's square
+          if (
+            chaosState.playerDuckSquare &&
+            m.to === chaosState.playerDuckSquare
+          )
+            continue;
           highlights[m.to] = {
             background: m.captured
               ? "radial-gradient(circle, transparent 68%, rgba(255,0,0,0.55) 69%)"
@@ -7294,6 +7454,12 @@ export default function ChaosChessPage() {
         }
         for (const cm of activeChaosMoves.filter((m) => m.from === sq)) {
           if (p?.type === "k" && isKingMoveChaosUnsafe(game, cm.from, cm.to))
+            continue;
+          // Duck Chess: can't move to duck's square
+          if (
+            chaosState.playerDuckSquare &&
+            cm.to === chaosState.playerDuckSquare
+          )
             continue;
           highlights[cm.to] = {
             background:
@@ -7403,16 +7569,24 @@ export default function ChaosChessPage() {
               { type: secondPiece.type, color: playerC },
               firstSq as any,
             );
+            // Flip FEN turn so AI knows the player's move is done
+            const fenParts = newG.fen().split(" ");
+            const wasWhite = fenParts[1] === "w";
+            fenParts[1] = wasWhite ? "b" : "w";
+            fenParts[3] = "-"; // clear en passant
+            fenParts[4] = String(parseInt(fenParts[4]) + 1); // halfmove clock
+            if (!wasWhite) fenParts[5] = String(parseInt(fenParts[5]) + 1); // fullmove when black moved
+            const swapG = new Chess(fenParts.join(" "));
             const cs = { ...chaosState, playerAnomalyUsed: true };
             setChaosState(cs);
-            setGame(newG);
+            setGame(swapG);
             setAnomalyActivationMode(null);
             setAnomalyActivationPiece(null);
             setLegalMoveSquares({
               [firstSq]: { backgroundColor: "rgba(236,72,153,0.4)" },
               [square]: { backgroundColor: "rgba(236,72,153,0.4)" },
             });
-            recomputeChaosMoves(newG, cs, {
+            recomputeChaosMoves(swapG, cs, {
               playerAnomaly: selectedAnomaly?.id as AnomalyId | null,
             });
             setEventLog((prev) => [
@@ -7427,7 +7601,39 @@ export default function ChaosChessPage() {
             playSound("move");
             // Lovers swap counts as the player's turn — make AI move
             if (gameMode === "ai")
-              setTimeout(() => makeAiMove(newG, cs), AI_MOVE_DELAY);
+              setTimeout(() => makeAiMove(swapG, cs), AI_MOVE_DELAY);
+          }
+          return;
+        }
+
+        if (anomalyActivationMode === "duck-place") {
+          // Place duck on any empty square (not occupied by a piece)
+          if (clickedPiece) return; // can't place on occupied square
+          // Must move duck to a different square than it's already on
+          if (
+            chaosState.playerDuckSquare &&
+            square === chaosState.playerDuckSquare
+          )
+            return;
+          const pending = pendingDuckRef.current;
+          if (!pending) return;
+          pendingDuckRef.current = null;
+          const newCs = { ...pending.cs, playerDuckSquare: square };
+          setChaosState(newCs);
+          setAnomalyActivationMode(null);
+          setLegalMoveSquares({});
+          playSound("select");
+          setEventLog((prev) => [
+            ...prev,
+            {
+              type: "chaos" as const,
+              message: `🦆 Duck placed on ${square}!`,
+              icon: "🦆",
+              pepe: PEPE.think,
+            },
+          ]);
+          if (gameMode === "ai") {
+            setTimeout(() => makeAiMove(pending.game, newCs), AI_MOVE_DELAY);
           }
           return;
         }
@@ -7459,22 +7665,6 @@ export default function ChaosChessPage() {
               },
             ]);
             playSound("crowd-ooh");
-          }
-          return;
-        }
-
-        if (anomalyActivationMode === "hanged-man") {
-          // Transform own piece
-          if (
-            clickedPiece &&
-            clickedPiece.color === playerC &&
-            clickedPiece.type !== "k"
-          ) {
-            setAnomalyActivationPiece(square);
-            setShowTransformPicker(true);
-            setLegalMoveSquares({
-              [square]: { backgroundColor: "rgba(20,184,166,0.4)" },
-            });
           }
           return;
         }
@@ -8492,6 +8682,50 @@ export default function ChaosChessPage() {
         borderRadius: "2px",
       };
     }
+
+    // Pawn Fortress: amber outline on all fortified pawns
+    const playerC = playerColor === "white" ? "w" : "b";
+    const aiC: "w" | "b" = playerC === "w" ? "b" : "w";
+    if (chaosState.playerModifiers.some((m) => m.id === "pawn-fortress")) {
+      for (const f of ["a", "b", "c", "d", "e", "f", "g", "h"]) {
+        for (const r of ["1", "2", "3", "4", "5", "6", "7", "8"]) {
+          const sqName = `${f}${r}`;
+          const piece = game.get(sqName as any);
+          if (piece && piece.type === "p" && piece.color === playerC) {
+            immuneFrozenHighlights[sqName] = {
+              boxShadow: "inset 0 0 0 3px rgba(245,158,11,0.7)",
+              borderRadius: "2px",
+            };
+          }
+        }
+      }
+    }
+    if (chaosState.aiModifiers.some((m) => m.id === "pawn-fortress")) {
+      for (const f of ["a", "b", "c", "d", "e", "f", "g", "h"]) {
+        for (const r of ["1", "2", "3", "4", "5", "6", "7", "8"]) {
+          const sqName = `${f}${r}`;
+          const piece = game.get(sqName as any);
+          if (piece && piece.type === "p" && piece.color === aiC) {
+            immuneFrozenHighlights[sqName] = {
+              ...immuneFrozenHighlights[sqName],
+              boxShadow: "inset 0 0 0 3px rgba(245,158,11,0.45)",
+              borderRadius: "2px",
+            };
+          }
+        }
+      }
+    }
+
+    // Duck Chess: show duck image on its current square
+    if (chaosState.playerDuckSquare) {
+      immuneFrozenHighlights[chaosState.playerDuckSquare] = {
+        backgroundImage: "url(/pieces/duck.svg)",
+        backgroundSize: "78%",
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+      };
+    }
+
     return {
       ...immuneFrozenHighlights,
       ...lastMoveHighlight,
@@ -8512,6 +8746,11 @@ export default function ChaosChessPage() {
     chaosState.aiFrozenTurnsLeft,
     chaosState.playerFrozenSquare,
     chaosState.playerFrozenTurnsLeft,
+    chaosState.playerModifiers,
+    chaosState.aiModifiers,
+    chaosState.playerDuckSquare,
+    game,
+    playerColor,
   ]);
 
   /* ── Reset warp-queen toggle after every move ── */
@@ -9306,89 +9545,6 @@ export default function ChaosChessPage() {
           />
         )}
 
-        {/* Hanged Man — Transmutation: pick piece type to transform into */}
-        {showTransformPicker && anomalyActivationPiece && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-            <div className="rounded-2xl border border-teal-500/40 bg-gray-950 p-6 text-center shadow-2xl">
-              <p className="mb-1 text-xs font-bold uppercase tracking-widest text-teal-400">
-                🔄 Transmutation
-              </p>
-              <p className="mb-4 text-sm text-slate-300">
-                Transform piece on{" "}
-                <span className="font-mono text-teal-300">
-                  {anomalyActivationPiece}
-                </span>{" "}
-                into:
-              </p>
-              <div className="flex gap-3 justify-center">
-                {(["q", "r", "b", "n"] as const).map((t) => {
-                  const labels: Record<string, string> = {
-                    q: "♛ Queen",
-                    r: "♜ Rook",
-                    b: "♝ Bishop",
-                    n: "♞ Knight",
-                  };
-                  return (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => {
-                        const playerC: Color =
-                          playerColor === "white" ? "w" : "b";
-                        const newG = new Chess(game.fen());
-                        newG.remove(anomalyActivationPiece as any);
-                        newG.put(
-                          { type: t, color: playerC },
-                          anomalyActivationPiece as any,
-                        );
-                        const cs = { ...chaosState, playerAnomalyUsed: true };
-                        setChaosState(cs);
-                        setGame(newG);
-                        setShowTransformPicker(false);
-                        setAnomalyActivationMode(null);
-                        setAnomalyActivationPiece(null);
-                        setLegalMoveSquares({
-                          [anomalyActivationPiece]: {
-                            backgroundColor: "rgba(20,184,166,0.45)",
-                          },
-                        });
-                        recomputeChaosMoves(newG, cs, {
-                          playerAnomaly:
-                            selectedAnomaly?.id as AnomalyId | null,
-                        });
-                        setEventLog((prev) => [
-                          ...prev,
-                          {
-                            type: "chaos" as const,
-                            message: `🔄 Transmutation: piece on ${anomalyActivationPiece} became a ${labels[t]}!`,
-                            icon: "🔄",
-                            pepe: PEPE.hyped,
-                          },
-                        ]);
-                        playSound("crowd-ooh");
-                      }}
-                      className="rounded-lg border border-teal-500/30 bg-teal-500/10 px-4 py-3 text-lg text-teal-300 hover:bg-teal-500/20 transition-all"
-                    >
-                      {labels[t]}
-                    </button>
-                  );
-                })}
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowTransformPicker(false);
-                  setAnomalyActivationMode(null);
-                  setAnomalyActivationPiece(null);
-                }}
-                className="mt-4 text-xs text-slate-500 hover:text-slate-300"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Judgement — Resurrection: pick a captured piece to revive */}
         {anomalyActivationMode === "judgement" && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
@@ -9931,9 +10087,6 @@ export default function ChaosChessPage() {
                           } else if (anomId === "justice") {
                             setAnomalyActivationMode("justice");
                             setSelectedSquare(null);
-                          } else if (anomId === "hanged-man") {
-                            setAnomalyActivationMode("hanged-man");
-                            setSelectedSquare(null);
                           } else if (anomId === "devil") {
                             setAnomalyActivationMode("devil");
                             setSelectedSquare(null);
@@ -9958,9 +10111,24 @@ export default function ChaosChessPage() {
                       <button
                         type="button"
                         onClick={() => {
+                          if (
+                            anomalyActivationMode === "duck-place" &&
+                            pendingDuckRef.current
+                          ) {
+                            // Duck placement cancelled — still trigger AI so game doesn't freeze
+                            const pending = pendingDuckRef.current;
+                            pendingDuckRef.current = null;
+                            setAnomalyActivationMode(null);
+                            if (gameMode === "ai") {
+                              setTimeout(
+                                () => makeAiMove(pending.game, pending.cs),
+                                AI_MOVE_DELAY,
+                              );
+                            }
+                            return;
+                          }
                           setAnomalyActivationMode(null);
                           setAnomalyActivationPiece(null);
-                          setShowTransformPicker(false);
                           recomputeChaosMoves(game, chaosState, {
                             playerAnomaly:
                               selectedAnomaly?.id as AnomalyId | null,
@@ -9977,8 +10145,8 @@ export default function ChaosChessPage() {
                               ? "(pick target)"
                               : anomalyActivationMode === "justice"
                                 ? "(mark immune)"
-                                : anomalyActivationMode === "hanged-man"
-                                  ? "(pick to transform)"
+                                : anomalyActivationMode === "duck-place"
+                                  ? "(place duck 🦆)"
                                   : anomalyActivationMode === "devil"
                                     ? "(pick to freeze)"
                                     : ""}

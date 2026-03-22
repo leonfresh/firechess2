@@ -1135,27 +1135,44 @@ export interface AnomalyMoveOptions {
   strengthMode?: boolean;
 }
 
-/** Fool — Wanderer: pawns move 1 sq diagonally forward (empty squares only, no promo rank) */
-function genAnomalyWanderer(game: Chess, color: Color): ChaosMove[] {
+/** Duck Chess — placement is handled in the UI; no extra move gen needed */
+function genAnomalyDuckChess(_game: Chess, _color: Color): ChaosMove[] {
+  return [];
+}
+
+/** Hanged Man — Inversion: pawns can move/capture 1 square backwards */
+function genAnomalyHangedMan(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
-  const dir = color === "w" ? 1 : -1;
-  const lastRank = color === "w" ? 7 : 0;
+  // Backwards: white goes down (-1 rank), black goes up (+1 rank)
+  const dir = color === "w" ? -1 : 1;
   const pawns = allSquaresOf(game, "p", color);
   for (const ps of pawns) {
     const [f, r] = sqToCoords(ps);
+    // Single step backwards (no captures, empty square)
+    const backSq = sq(f, r + dir);
+    if (backSq && isEmpty(game, backSq)) {
+      if (!wouldLeaveKingInCheck(game, ps, backSq, color)) {
+        moves.push({
+          from: ps,
+          to: backSq,
+          type: "move",
+          modifierId: "anomaly-hanged-man",
+          label: "Inversion (pawn step backwards)",
+        });
+      }
+    }
+    // Diagonal captures backwards
     for (const df of [-1, 1]) {
-      const target = sq(f + df, r + dir);
-      if (!target) continue;
-      if (!isEmpty(game, target)) continue;
-      const [, tr] = sqToCoords(target);
-      if (tr === lastRank) continue;
-      if (wouldLeaveKingInCheck(game, ps, target, color)) continue;
+      const capSq = sq(f + df, r + dir);
+      if (!capSq) continue;
+      if (!isEnemy(game, capSq, color)) continue;
+      if (wouldLeaveKingInCheck(game, ps, capSq, color)) continue;
       moves.push({
         from: ps,
-        to: target,
-        type: "move",
-        modifierId: "anomaly-fool",
-        label: "Wanderer (diagonal pawn step)",
+        to: capSq,
+        type: "capture",
+        modifierId: "anomaly-hanged-man",
+        label: "Inversion (pawn capture backwards)",
       });
     }
   }
@@ -1443,8 +1460,11 @@ export function getChaosMoves(
   if (anomalyOpts?.playerAnomaly) {
     let anomalyMoves: ChaosMove[] = [];
     switch (anomalyOpts.playerAnomaly) {
-      case "fool":
-        anomalyMoves = genAnomalyWanderer(game, color);
+      case "duck-chess":
+        anomalyMoves = genAnomalyDuckChess(game, color);
+        break;
+      case "hanged-man":
+        anomalyMoves = genAnomalyHangedMan(game, color);
         break;
       case "emperor":
         anomalyMoves = genAnomalyEmperor(game, color);

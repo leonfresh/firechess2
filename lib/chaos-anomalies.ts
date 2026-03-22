@@ -12,7 +12,7 @@
 /* ================================================================== */
 
 export type AnomalyId =
-  | "fool"
+  | "duck-chess"
   | "magician"
   | "high-priestess"
   | "empress"
@@ -71,14 +71,14 @@ export interface AnomalyDefinition {
 export const ALL_ANOMALIES: AnomalyDefinition[] = [
   /* 0 — The Fool */
   {
-    id: "fool",
+    id: "duck-chess",
     tarotNumber: 0,
     tarotRoman: "0",
     tarotName: "The Fool",
-    name: "Wanderer",
+    name: "Duck Chess",
     description:
-      "Your pawns can move 1 square diagonally forward (movement only — not a capture). Blocked and last-rank-reaching squares are skipped.",
-    icon: "🃏",
+      "After each of your moves, place your rubber duck on any empty square. The duck blocks all movement — no piece (yours or your opponent's) can enter that square. Reposition it each turn.",
+    icon: "🦆",
     trigger: "passive",
     bgGradient: "from-yellow-950/90 to-amber-900/50",
     borderClass: "border-yellow-500/40",
@@ -285,11 +285,11 @@ export const ALL_ANOMALIES: AnomalyDefinition[] = [
     tarotNumber: 12,
     tarotRoman: "XII",
     tarotName: "The Hanged Man",
-    name: "Transmutation",
+    name: "Inversion",
     description:
-      "Once per game: transform any one of your pieces into any other type (not King). Perspective shifts everything.",
-    icon: "🔄",
-    trigger: "once-per-game",
+      "Your pawns can also move 1 square backwards or capture diagonally backwards. Upside-down perspective unlocks new paths — they cannot promote by moving backwards.",
+    icon: "🙃",
+    trigger: "passive",
     bgGradient: "from-teal-950/90 to-cyan-900/50",
     borderClass: "border-teal-500/40",
     glowColor: "rgba(20,184,166,0.3)",
@@ -377,6 +377,7 @@ export const ALL_ANOMALIES: AnomalyDefinition[] = [
       "All your Knights permanently gain Camel leaps (1,3 jumps) on top of their normal movement. Stars align.",
     icon: "⭐",
     trigger: "passive",
+    removesFromDraft: ["camel"],
     bgGradient: "from-purple-950/90 to-fuchsia-900/50",
     borderClass: "border-purple-400/40",
     glowColor: "rgba(168,85,247,0.3)",

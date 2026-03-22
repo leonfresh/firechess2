@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- Shadow -->
+  <ellipse cx="50" cy="93" rx="28" ry="5" fill="rgba(0,0,0,0.2)"/>
+  <!-- Body -->
+  <ellipse cx="50" cy="70" rx="30" ry="22" fill="#FFD700" stroke="#B8860B" stroke-width="2.5"/>
+  <!-- Belly highlight -->
+  <ellipse cx="50" cy="74" rx="18" ry="13" fill="#FFE44D" opacity="0.5"/>
+  <!-- Neck -->
+  <ellipse cx="66" cy="55" rx="12" ry="10" fill="#FFD700" stroke="#B8860B" stroke-width="2"/>
+  <!-- Head -->
+  <circle cx="68" cy="42" r="17" fill="#FFD700" stroke="#B8860B" stroke-width="2.5"/>
+  <!-- Head highlight -->
+  <ellipse cx="63" cy="38" rx="8" ry="6" fill="#FFE44D" opacity="0.45"/>
+  <!-- Beak upper -->
+  <path d="M82 41 Q95 40 93 44 Q95 48 82 46 Z" fill="#FF8C00" stroke="#B8860B" stroke-width="1.5"/>
+  <!-- Beak lower -->
+  <path d="M82 46 Q90 46 89 50 Q86 52 82 50 Z" fill="#E07800" stroke="#B8860B" stroke-width="1.5"/>
+  <!-- Eye white -->
+  <circle cx="74" cy="37" r="5" fill="white"/>
+  <!-- Eye iris -->
+  <circle cx="75" cy="37" r="3.5" fill="#1a1a2e"/>
+  <!-- Eye highlight -->
+  <circle cx="76.5" cy="35.5" r="1.2" fill="white"/>
+  <!-- Wing -->
+  <path d="M30 66 Q42 56 55 65 Q50 73 30 70 Z" fill="#F0C000" stroke="#B8860B" stroke-width="1.5"/>
+  <!-- Tail feather -->
+  <path d="M22 65 Q14 60 16 70 Q18 75 25 72 Z" fill="#FFD700" stroke="#B8860B" stroke-width="1.5"/>
+</svg>

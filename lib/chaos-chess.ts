@@ -102,6 +102,8 @@ export interface ChaosState {
    */
   playerNuclearCooldownUntil?: number;
   aiNuclearCooldownUntil?: number;
+  /** Duck Chess anomaly: current duck square (blocks all movement to this square) */
+  playerDuckSquare?: string | null;
 }
 
 /* ================================================================== */
@@ -461,6 +463,7 @@ export function createChaosState(): ChaosState {
     aiCapturedForJudgement: [],
     playerNuclearCooldownUntil: 0,
     aiNuclearCooldownUntil: 0,
+    playerDuckSquare: null,
   };
 }
 
