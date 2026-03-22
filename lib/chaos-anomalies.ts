@@ -164,11 +164,9 @@ export const ALL_ANOMALIES: AnomalyDefinition[] = [
     tarotName: "The Hierophant",
     name: "Sacred Passage",
     description:
-      "Your Bishops slide through your own pieces diagonally. Dragon Bishop is built-in and removed from your draft pool.",
+      "Your Bishops can slide through any of your own pieces diagonally — they phase right through friendly units to reach squares beyond.",
     icon: "⛩️",
     trigger: "passive",
-    injectModifiers: ["dragon-bishop"],
-    removesFromDraft: ["dragon-bishop"],
     bgGradient: "from-cyan-950/90 to-sky-900/50",
     borderClass: "border-cyan-500/40",
     glowColor: "rgba(6,182,212,0.25)",

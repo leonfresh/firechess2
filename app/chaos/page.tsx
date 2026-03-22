@@ -513,6 +513,8 @@ const FAIRY_PIECE_SVGS: Record<string, Record<string, string>> = {
     w: "/pieces/fairy/wPB.svg",
     b: "/pieces/fairy/bPB.svg",
   },
+  /** Emperor king — standard king body with gold reach-ring and corner triangles */
+  "emperor-king": { w: "/pieces/fairy/wEK.svg", b: "/pieces/fairy/bEK.svg" },
 };
 
 /** War Pawn SVG — shown when both pawn-charge AND pawn-capture-forward are active */
@@ -711,6 +713,17 @@ function buildChaosCustomPieces(
         pieceUrl = FAIRY_PIECE_SVGS["camel"][pieceColor];
       }
 
+      // Emperor anomaly: king gets a special SVG with golden reach-ring
+      if (
+        pieceType === "k" &&
+        ((isPlayerPiece && playerAnomalyId === "emperor") ||
+          (!isPlayerPiece && aiAnomalyId === "emperor")) &&
+        FAIRY_PIECE_SVGS["emperor-king"]
+      ) {
+        pieceUrl = FAIRY_PIECE_SVGS["emperor-king"][pieceColor];
+        if (!glowColor) glowColor = "rgba(245,158,11,0.45)";
+      }
+
       // Now iterate all active mods for overlays, glows, and filters
       for (const mod of activeForPiece) {
         // Skip single-piece modifiers if this isn't the designated piece
@@ -839,26 +852,7 @@ function buildChaosCustomPieces(
               </div>,
             );
           }
-          // Emperor — Dominion: 👑 badge on king + gold glow
-          if (pAnom === "emperor" && pieceType === "k") {
-            if (!glowColor) glowColor = "rgba(245,158,11,0.5)";
-            const corner = CORNER_ORDER[cornerIdx % CORNER_ORDER.length];
-            cornerIdx++;
-            const s = squareWidth * 0.24;
-            overlays.push(
-              <div
-                key="anom-badge"
-                style={{
-                  position: "absolute",
-                  ...CORNER_STYLES[corner],
-                  lineHeight: 1,
-                  filter: "drop-shadow(0 0 3px rgba(245,158,11,0.9))",
-                }}
-              >
-                <Emoji emoji="👑" style={{ width: s, height: s }} />
-              </div>,
-            );
-          }
+          // Emperor — Dominion: SVG handles the visual (see emperor-king in FAIRY_PIECE_SVGS)
           // Moon — Nocturnal Hunt: 🌑 on queen when unlocked
           if (pAnom === "moon" && pieceType === "q" && pMoon) {
             if (!glowColor) glowColor = "rgba(100,116,139,0.4)";
