@@ -6092,7 +6092,7 @@ export default function ChaosChessPage() {
    */
   const startMpGameWithAnomalies = useCallback(
     (myAnomalyId: string | null, oppAnomalyId: string | null) => {
-      const myAnomaly = myAnomalyId ? getAnomalyById(myAnomalyId) : null;
+      const myAnomaly = myAnomalyId ? getAnomalyById(myAnomalyId as AnomalyId) : null;
       // Always start multiplayer from a fresh chaos state
       let cs = createChaosState();
       if (myAnomaly) cs = applyAnomalyToCs(cs, myAnomaly);
