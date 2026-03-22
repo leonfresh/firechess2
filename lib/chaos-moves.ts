@@ -1931,14 +1931,20 @@ export function computeChaosThreatPenalty(
   opponentColor: Color,
   assignedSquares?: Record<string, string | null>,
   getCustomVal?: (sq: string, type: string, color: "w" | "b") => number,
+  anomalyOpts?: AnomalyMoveOptions,
 ): number {
   const chaosMoves = getChaosMoves(
     game,
     opponentModifiers,
     opponentColor,
     assignedSquares,
+    undefined,
+    anomalyOpts,
   );
-  if (chaosMoves.length === 0) return 0;
+  const hasNuclearQueen = opponentModifiers.some(
+    (m) => m.id === "nuclear-queen",
+  );
+  if (chaosMoves.length === 0 && !hasNuclearQueen) return 0;
   const valFn =
     getCustomVal ?? ((_sq: string, type: string) => PIECE_VALUE_CP[type] ?? 0);
 
@@ -1986,6 +1992,44 @@ export function computeChaosThreatPenalty(
     }
 
     if (netThreat > maxThreat) maxThreat = netThreat;
+  }
+
+  // Nuclear queen: standard queen captures are NOT in getChaosMoves (the blast is
+  // a post-move side effect applied in applyPostMoveEffects, not a chaos move).
+  // Score them manually so the AI knows the opponent's queen can destroy many extra
+  // pieces in a single capture and treats those squares as high-priority threats.
+  if (hasNuclearQueen) {
+    try {
+      // Flip the active colour so chess.js generates the opponent's queen moves
+      const fenParts = game.fen().split(" ");
+      fenParts[1] = opponentColor;
+      const tmpGame = new Chess(fenParts.join(" "));
+      for (const mv of tmpGame.moves({ verbose: true }) as any[]) {
+        if (mv.piece !== "q" || !mv.flags.includes("c")) continue;
+        const capturedPiece = game.get(mv.to as any);
+        if (!capturedPiece || capturedPiece.color === opponentColor) continue;
+        // Direct capture value
+        let nukeVal = valFn(
+          mv.to,
+          capturedPiece.type,
+          capturedPiece.color as "w" | "b",
+        );
+        // Add blast value — 8 surrounding squares, skip opponent's own and kings
+        const blastSqs = getNuclearSquares(game, mv.to as Square, opponentColor);
+        for (const bsq of blastSqs) {
+          const bp = game.get(bsq as any);
+          if (bp && bp.color !== opponentColor) {
+            nukeVal += valFn(bsq, bp.type, bp.color as "w" | "b");
+          }
+        }
+        // Discount by half the queen's value (queen moves there, may be recaptured)
+        const queenVal = valFn(mv.from, "q", opponentColor);
+        const netNukeVal = Math.max(0, nukeVal - queenVal * 0.5);
+        if (netNukeVal > maxThreat) maxThreat = netNukeVal;
+      }
+    } catch {
+      /* flipped FEN invalid — skip */
+    }
   }
 
   return maxThreat;

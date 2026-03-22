@@ -1,7 +1,7 @@
 ---
 title: "Chaos Chess: We Built a Chess Variant Inspired by Clash Royale's C.H.A.O.S Mode"
 description: "How we took the permanent modifier system from Clash Royale's C.H.A.O.S mode and built Chaos Chess — a chess experience where both players pick permanent piece modifiers every 5 turns, with rarity escalating as the game goes on."
-date: "2026-03-12"
+date: "2026-03-14"
 author: "FireChess Team"
 tags: ["chaos chess", "game modes", "chess variants", "feature"]
 ---
@@ -117,7 +117,37 @@ Modifiers come in four tiers, just like card rarities in Clash Royale:
 
 **🟡 Legendary** — Game-warping. Nuclear Queen — captures destroy adjacent squares. King Ascension — your king gains the movement of a queen. Undead Army — captures revive your pieces on the back rank. The AI saving a Legendary for phase 5 is terrifying.
 
-## Fairy Pieces with Real Custom Art
+## Opening Anomalies: The Pre-Game Layer
+
+The modifier draft starts at move 5. But we wanted to add a strategic layer that began *before* move one.
+
+**Opening Anomalies** are a set of 22 Tarot-themed pre-game powers. Before the game starts, each player secretly picks one anomaly from a revealed set of four choices (free players choose from two; Pro unlocks all four). The choice is permanent for the entire match — your opponent never sees what you picked until you use it.
+
+Anomalies are different from modifiers in a key way: they're **board-shaping passives, not piece upgrades**. Where a modifier turns your knight into a Knook or gives your rook collateral damage, an anomaly rewires the rules around you.
+
+Some examples:
+
+- **The Fool** — Your pawns can also step diagonally forward onto empty squares, like a wandering knight pawn.
+- **The Emperor** — Your king can leap up to two squares in any direction, once per turn.
+- **The Moon** — After turn 10, your queen gains ghost movement: she can pass through any piece to reach her target.
+- **The Star** — Your knights also move as camel pieces (3+1 jumps), making them almost impossible to block.
+- **Death** — Every 5 turns, a pawn is born on a random empty square on your second rank. You start generating material for free.
+- **Strength** — Activate once per game: your king can move and capture like a queen for that turn.
+- **Judgement** — Activate once per game: revive any piece you've lost and place it anywhere on your back rank.
+
+Each anomaly also has a **once-per-game activation ability** — a button you can press at any point in the match. The Sun anomaly adds a free random modifier mid-game. Judgement brings a captured piece back to life. The Hanged Man lets you transform one of your pieces into any other.
+
+The strategic tension is the same as the modifier draft — you're reading your opponent's anomaly, playing around what they might do — but compressed into a single secret pick at the start.
+
+### The Stockfish Challenge
+
+One honest engineering note: Stockfish doesn't know about anomaly powers. It evaluates positions using standard chess rules. A queen with Moon anomaly can move through pieces after turn 10, but Stockfish doesn't know that — it only sees the resulting position after each move, not the ghost movement that created it.
+
+We've addressed this with a custom threat-scoring layer: after each Stockfish evaluation, we run a secondary pass that scores the anomaly-powered threats the engine can't see. Fool diagonal pawn captures, Emperor king leaps, Star camel captures, nuclear queen blast radii — these all feed into a penalty/bonus system that adjusts Stockfish's raw evaluations. It's not perfect, but it means the AI at least *responds* to the presence of these powers when choosing its moves, rather than being completely blind to them.
+
+It's a more interesting opponent because of it. You can still surprise it. But you can't just steamroll it with a Moon queen after turn 10 and have it do nothing.
+
+
 
 When a transformative modifier turns your knight into an Archbishop or your rook into a Knook, the piece image actually changes on the board. We commissioned custom SVG fairy piece sets that show up the moment you draft the modifier.
 

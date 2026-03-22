@@ -1180,21 +1180,29 @@ function AnomalyPickerScreen({
 }) {
   const [selected, setSelected] = useState<AnomalyDefinition | null>(null);
   const [hoveredLocked, setHoveredLocked] = useState<number | null>(null);
-  // Timer: 20s to pick, then auto-skip
-  const [timeLeft, setTimeLeft] = useState(20);
+  // Timer: 15s to pick, then auto-pick random unlocked anomaly
+  const [timeLeft, setTimeLeft] = useState(15);
   useEffect(() => {
     const interval = setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
           clearInterval(interval);
-          onSkip();
+          // Auto-pick a random unlocked anomaly rather than skipping
+          const pickableCount = isPro ? 4 : 2;
+          const pickable = choices.slice(0, pickableCount);
+          if (pickable.length > 0) {
+            const randomPick = pickable[Math.floor(Math.random() * pickable.length)];
+            onPick(randomPick);
+          } else {
+            onSkip();
+          }
           return 0;
         }
         return t - 1;
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [onSkip]);
+  }, [onSkip, onPick, isPro, choices]);
 
   // 4 cards shown always; Free can only pick first 2 (last 2 are locked)
   const activeCount = isPro ? 4 : 2;
@@ -1248,16 +1256,24 @@ function AnomalyPickerScreen({
               A permanent power that shapes your game — yours alone, all match
               long.
             </p>
-            {/* Timer bar */}
-            <div className="mx-auto mt-3 h-1 max-w-48 overflow-hidden rounded-full bg-white/[0.06]">
+            {/* Timer bar + countdown pill */}
+            <div className="mt-3 flex flex-col items-center gap-1.5">
               <div
-                className={`h-full rounded-full transition-[width] duration-1000 ease-linear ${timeLeft > 10 ? "bg-purple-500" : timeLeft > 5 ? "bg-amber-500" : "bg-red-500"}`}
-                style={{ width: `${(timeLeft / 20) * 100}%` }}
-              />
+                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold tabular-nums ${
+                  timeLeft > 7
+                    ? "border border-purple-500/30 bg-purple-500/10 text-purple-400"
+                    : "animate-pulse border border-red-500/40 bg-red-500/15 text-red-400"
+                }`}
+              >
+                ⏱ {timeLeft}s to choose
+              </div>
+              <div className="h-0.5 w-48 overflow-hidden rounded-full bg-white/[0.06]">
+                <div
+                  className={`h-full rounded-full transition-[width] duration-1000 ease-linear ${timeLeft > 7 ? "bg-purple-500" : timeLeft > 4 ? "bg-amber-500" : "bg-red-500"}`}
+                  style={{ width: `${(timeLeft / 15) * 100}%` }}
+                />
+              </div>
             </div>
-            <p className="mt-1 text-[10px] text-slate-600">
-              {timeLeft}s remaining
-            </p>
           </div>
 
           {/* Cards grid */}
@@ -4324,6 +4340,19 @@ export default function ChaosChessPage() {
             .moves({ verbose: true })
             .some((m: { flags: string }) => m.flags.includes("e"));
 
+        // Anomaly move options for the human player — passed to computeChaosThreatPenalty
+        // so Stockfish is aware of anomaly-powered moves (Fool diagonal pawns, Emperor king
+        // leaps, Star camel leaps, Moon ghost captures, etc.) when evaluating positions.
+        const playerMoonUnlocked =
+          cs.playerMoonUnlocked || (cs.currentPhase ?? 0) >= 2;
+        const playerAnomalyOpts: AnomalyMoveOptions | undefined =
+          cs.playerAnomaly
+            ? {
+                playerAnomaly: cs.playerAnomaly,
+                moonUnlocked: playerMoonUnlocked,
+              }
+            : undefined;
+
         // Evaluate chaos moves — captures sorted by material gain are always evaluated;
         // positional (non-capture) chaos moves are considered 30% of the time.
         if (aiChaosMoves.length > 0 && !forcedEpForAI) {
@@ -4392,6 +4421,7 @@ export default function ChaosChessPage() {
                     playerColorForChaos as Color,
                     cs.assignedSquares ?? undefined,
                     chaosValFnBase,
+                    playerAnomalyOpts,
                   )
                 : 0;
             const normalEval = normalEvalRaw - baselinePenalty;
@@ -4438,6 +4468,7 @@ export default function ChaosChessPage() {
                     pCol,
                     cs.assignedSquares ?? undefined,
                     chaosValFn,
+                    playerAnomalyOpts,
                   );
                 }
                 scored.push({ move: cm, eval: chaosEval, game: newGame });
@@ -4603,6 +4634,7 @@ export default function ChaosChessPage() {
             playerColor_ as Color,
             cs.assignedSquares ?? undefined,
             valFn,
+            playerAnomalyOpts,
           );
           if (immediateThreats > 200) {
             const chaosAttacked = getChaosAttackedSquares(
@@ -4752,6 +4784,7 @@ export default function ChaosChessPage() {
                         : cs.aiModifiers,
                       cs.assignedSquares ?? undefined,
                     ),
+                  playerAnomalyOpts,
                 )
               : 0;
             // 2a. Collateral-rook / nuclear-queen bonus: Stockfish only sees the direct

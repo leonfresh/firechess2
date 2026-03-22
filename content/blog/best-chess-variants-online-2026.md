@@ -146,6 +146,8 @@ This leads to spectacular sacrificial tactics where blowing up the centre of the
 
 This is the newest variant on the list and the one we built. The setup: it's regular chess, but at turns 5, 10, 15, 20, and 25, the game pauses and both players are shown three modifier cards. You each pick one permanently — and it changes how your pieces move for the rest of the game.
 
+**Before the game even starts**, you now also choose an **Opening Anomaly** — one of 22 Tarot-themed pre-game powers that shape your match from move one. The Fool gives your pawns diagonal movement. The Moon unlocks ghost-queen captures after turn 10. Death spawns a new pawn on your second rank every 5 turns for free. Each anomaly also has a once-per-game activation ability you can deploy at the right moment.
+
 Modifiers escalate in rarity as the game progresses:
 
 - **🟢 Common** — Pawn Charge, Knight Step, Bishop Sprint

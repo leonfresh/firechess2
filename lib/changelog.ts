@@ -15,6 +15,25 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: 25,
+    date: "Mar 14, 2026",
+    title: "Chaos Chess — Opening Anomalies",
+    description:
+      "A new pre-game layer for Chaos Chess: before the first move, each player secretly chooses one of four Tarot-inspired Opening Anomalies — a permanent passive power that shapes the entire match. 22 anomalies across all tiers, each with unique mechanics and a once-per-game activation ability.",
+    changes: [
+      { type: "feature", text: "Opening Anomaly picker — before the game starts, pick one of 4 Tarot-themed anomalies (free players choose from 2; Pro unlocks all 4)" },
+      { type: "feature", text: "22 anomaly cards across 4 tiers: The Fool (wanderer pawns), The Emperor (king leaps), The High Priestess (hidden queen), The Hermit (invisible bishop), The Chariot (sprint rook), Strength (titan king), The Hierophant (pillar bishop), Wheel of Fortune (swap), The Lovers (linked pawns), Justice (mirror capture), The Hanged Man (transform), Death (pawn spawner), Temperance (partial move), The Devil (sacrifice), The Tower (fortress), The Star (camel knight), The Moon (ghost queen), The Sun (surge), Judgement (resurrection), The World (all pieces), The Magician (pawn boost), and The Hermit (phantom bishop)" },
+      { type: "feature", text: "Anomaly activation abilities — each anomaly grants a one-time in-game power (e.g. Sun Surge: add a random modifier, Judgement: revive a captured piece, Strength: move king up to queen range)" },
+      { type: "feature", text: "Death passive — every 5 turns, a pawn spawns on a random empty square on your second rank" },
+      { type: "feature", text: "Moon auto-unlock — Moon anomaly's ghost queen becomes available after Phase 2 (turn 10) without needing manual activation" },
+      { type: "feature", text: "Anomaly cards shown in the sidebar during the game — see your anomaly and its activation status at a glance" },
+      { type: "improvement", text: "Anomaly picker timer reduced from 20s to 15s — auto-picks a random unlocked anomaly when time runs out instead of skipping" },
+      { type: "improvement", text: "Anomaly picker timer upgraded to match the draft modal UX — countdown pill with colour-coded urgency (purple → red with pulse at ≤7s)" },
+      { type: "fix", text: "Nuclear Queen Stockfish blindness — the AI now correctly factors in the 8-square blast value when evaluating player queen captures, fixing a critical threat-scoring gap" },
+      { type: "fix", text: "Anomaly moves Stockfish blindness — Stockfish now accounts for anomaly-powered moves (Fool diagonal pawns, Emperor king leaps, Star camel leaps, Moon ghost captures) when choosing defensive moves" },
+    ],
+  },
+  {
     version: 24,
     date: "Mar 13, 2026",
     title: "Guess the Move — EnhancedEdition",
