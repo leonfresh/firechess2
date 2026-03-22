@@ -1352,11 +1352,13 @@ function AnomalyPickerScreen({
   isPro,
   onPick,
   onSkip,
+  waitingForOpponent = false,
 }: {
   choices: AnomalyDefinition[];
   isPro: boolean;
   onPick: (anomaly: AnomalyDefinition) => void;
   onSkip: () => void;
+  waitingForOpponent?: boolean;
 }) {
   const [selected, setSelected] = useState<AnomalyDefinition | null>(null);
   const [hoveredLocked, setHoveredLocked] = useState<number | null>(null);
@@ -1364,6 +1366,13 @@ function AnomalyPickerScreen({
   const [timeLeft, setTimeLeft] = useState(30);
   // Flip state: each card starts face-down (back visible), then flips to reveal
   const [revealed, setRevealed] = useState([false, false, false, false]);
+
+  // Keep callbacks in refs so the timer interval never stales or resets when
+  // the parent re-renders (inline functions change reference every render).
+  const onPickRef = useRef(onPick);
+  onPickRef.current = onPick;
+  const onSkipRef = useRef(onSkip);
+  onSkipRef.current = onSkip;
 
   // Staggered card reveal on mount
   useEffect(() => {
@@ -1377,6 +1386,7 @@ function AnomalyPickerScreen({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Timer — depends only on isPro/choices (stable after mount), never onPick/onSkip
   useEffect(() => {
     const interval = setInterval(() => {
       setTimeLeft((t) => {
@@ -1388,14 +1398,14 @@ function AnomalyPickerScreen({
               !isPro &&
               (choices.indexOf(a) === 0 || choices.indexOf(a) === 3);
             if (currentSelected && !isLocked(currentSelected)) {
-              onPick(currentSelected);
+              onPickRef.current(currentSelected);
             } else {
               const freePicks = isPro ? choices : [choices[1], choices[2]];
               const validPicks = freePicks.filter(Boolean);
               if (validPicks.length > 0) {
-                onPick(validPicks[Math.floor(Math.random() * validPicks.length)]);
+                onPickRef.current(validPicks[Math.floor(Math.random() * validPicks.length)]);
               } else {
-                onSkip();
+                onSkipRef.current();
               }
             }
             return currentSelected;
@@ -1406,7 +1416,8 @@ function AnomalyPickerScreen({
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [onSkip, onPick, isPro, choices]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPro, choices]);
 
   // Middle 2 (indices 1 & 2) are free; outer 2 (indices 0 & 3) are Pro-locked
   const isLocked = (i: number) => !isPro && (i === 0 || i === 3);
@@ -1689,25 +1700,34 @@ function AnomalyPickerScreen({
           )}
 
           {/* Actions */}
-          <div className="mt-5 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
-            <button
-              type="button"
-              disabled={!selected}
-              onClick={() => selected && onPick(selected)}
-              className="btn-primary w-full px-8 py-3 text-sm font-bold disabled:opacity-40 sm:w-auto"
-            >
-              {selected
-                ? `Confirm — ${selected.icon} ${selected.name}`
-                : "Pick an anomaly to confirm"}
-            </button>
-            <button
-              type="button"
-              onClick={onSkip}
-              className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
-            >
-              Skip — play without anomaly
-            </button>
-          </div>
+          {waitingForOpponent ? (
+            <div className="mt-5 flex flex-col items-center gap-3">
+              <div className="flex items-center gap-2 rounded-xl border border-purple-500/30 bg-purple-500/10 px-5 py-3">
+                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
+                <span className="text-sm font-semibold text-purple-300">Pick sent — waiting for opponent…</span>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-5 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+              <button
+                type="button"
+                disabled={!selected}
+                onClick={() => selected && onPickRef.current(selected)}
+                className="btn-primary w-full px-8 py-3 text-sm font-bold disabled:opacity-40 sm:w-auto"
+              >
+                {selected
+                  ? `Confirm — ${selected.icon} ${selected.name}`
+                  : "Pick an anomaly to confirm"}
+              </button>
+              <button
+                type="button"
+                onClick={() => onSkipRef.current()}
+                className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
+              >
+                Skip — play without anomaly
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -3867,12 +3887,14 @@ export default function ChaosChessPage() {
    * - pendingMpAnomalyRef: our own pick, stored until the opponent's pick also arrives
    * - opponentAnomalyPickedId: opponent's anomalyId received via PartyKit (undefined = not yet received)
    * - myAnomalyPickSentRef: true once we've sent our anomaly_pick message
+   * - myPickSent: same as above but as state, so the picker UI updates to "waiting" mode
    */
   const pendingMpAnomalyRef = useRef<AnomalyDefinition | null>(null);
   const [opponentAnomalyPickedId, setOpponentAnomalyPickedId] = useState<
     string | null | undefined
   >(undefined);
   const myAnomalyPickSentRef = useRef(false);
+  const [myPickSent, setMyPickSent] = useState(false);
   /** setTimeout handle for "matched" → "picking-anomaly" transition — so it can be cancelled on disconnect */
   const matchedTransitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /**
@@ -6227,6 +6249,7 @@ export default function ChaosChessPage() {
       pendingMoveBeforeDraftRef.current = null;
       pendingMpAnomalyRef.current = null;
       myAnomalyPickSentRef.current = false;
+      setMyPickSent(false);
       setOpponentAnomalyPickedId(undefined);
       setWaitingForOpponentDraft(false);
       setEndReason("");
@@ -6293,6 +6316,7 @@ export default function ChaosChessPage() {
               // Reset sync state and init choices for the picker
               pendingMpAnomalyRef.current = null;
               myAnomalyPickSentRef.current = false;
+              setMyPickSent(false);
               setOpponentAnomalyPickedId(undefined);
               // Transition to "matched" animation, then after 2.5s open anomaly picker
               if (matchedTransitionTimeoutRef.current)
@@ -6361,6 +6385,7 @@ export default function ChaosChessPage() {
             playSound("reveal-stinger");
             pendingMpAnomalyRef.current = null;
             myAnomalyPickSentRef.current = false;
+            setMyPickSent(false);
             setOpponentAnomalyPickedId(undefined);
             if (matchedTransitionTimeoutRef.current)
               clearTimeout(matchedTransitionTimeoutRef.current);
@@ -6806,7 +6831,6 @@ export default function ChaosChessPage() {
                     pepe: PEPE.hyped,
                   },
                 ]);
-                playSound("reveal-stinger");
                 const rawCs = data.chaosState
                   ? (data.chaosState as ChaosState)
                   : createChaosState();
@@ -6818,8 +6842,19 @@ export default function ChaosChessPage() {
                 prevPhaseRef.current = cs.currentPhase;
                 const g = new Chess(data.fen);
                 setGame(g);
-                // No clock time controls — untimed
-                return "playing";
+                // Transition through matched → picking-anomaly (same as WebSocket path)
+                pendingMpAnomalyRef.current = null;
+                myAnomalyPickSentRef.current = false;
+                setMyPickSent(false);
+                setOpponentAnomalyPickedId(undefined);
+                playSound("reveal-stinger");
+                if (matchedTransitionTimeoutRef.current)
+                  clearTimeout(matchedTransitionTimeoutRef.current);
+                matchedTransitionTimeoutRef.current = setTimeout(() => {
+                  setAnomalyPickerChoices(rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)));
+                  setGameStatus("picking-anomaly");
+                }, 2500);
+                return "matched";
               }
               return prev;
             });
@@ -9756,6 +9791,7 @@ export default function ChaosChessPage() {
                   justDraftedRef.current = false;
                   pendingMpAnomalyRef.current = null;
                   myAnomalyPickSentRef.current = false;
+                  setMyPickSent(false);
                   setOpponentAnomalyPickedId(undefined);
                   setEndReason("");
                   setDrawOfferSent(false);
@@ -10221,6 +10257,7 @@ export default function ChaosChessPage() {
               // Multiplayer: store pick, broadcast to opponent, wait for their pick
               pendingMpAnomalyRef.current = anomaly;
               myAnomalyPickSentRef.current = true;
+              setMyPickSent(true);
               partySendRef.current?.({ type: "anomaly_pick", anomalyId: anomaly.id });
               // If opponent already picked, start the game now
               if (opponentAnomalyPickedId !== undefined) {
@@ -10236,11 +10273,13 @@ export default function ChaosChessPage() {
               // Multiplayer: skip = no anomaly
               pendingMpAnomalyRef.current = null;
               myAnomalyPickSentRef.current = true;
+              setMyPickSent(true);
               partySendRef.current?.({ type: "anomaly_pick", anomalyId: null });
               if (opponentAnomalyPickedId !== undefined) {
                 startMpGameWithAnomalies(null, opponentAnomalyPickedId);
               }
             }}
+            waitingForOpponent={myPickSent && gameMode !== "ai"}
           />
         )}
 
