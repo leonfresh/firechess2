@@ -14,6 +14,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useSession } from "@/components/session-provider";
 import {
   ALL_MODIFIERS,
@@ -52,12 +53,9 @@ const TIER_FILTER_LABELS: Record<ModifierTier | "all", string> = {
   legendary: "Legendary",
 };
 
-export default function ChaosCollectionPage({
-  searchParams,
-}: {
-  searchParams?: { user?: string };
-}) {
-  const username = searchParams?.user ?? null;
+export default function ChaosCollectionPage() {
+  const searchParams = useSearchParams();
+  const username = searchParams.get("user");
   const { authenticated } = useSession();
 
   const [unlockedIds, setUnlockedIds] =
