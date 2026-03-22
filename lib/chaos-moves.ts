@@ -123,7 +123,9 @@ function wouldLeaveKingInCheck(
 
   if (!pieceStays) tmp.remove(from);
   tmp.remove(to);
-  tmp.put({ type: piece.type, color: piece.color }, to);
+  if (!pieceStays) {
+    tmp.put({ type: piece.type, color: piece.color }, to);
+  }
 
   if (sideEffects) {
     for (const s of sideEffects) {
@@ -693,15 +695,17 @@ function genSniperBishop(game: Chess, color: Color): ChaosMove[] {
         const piece = game.get(target);
         if (piece) {
           if (piece.color !== color) {
-            // Sniper: capture without moving
-            moves.push({
-              from: bs,
-              to: target,
-              type: "capture",
-              modifierId: "sniper-bishop",
-              label: "Sniper Bishop (ranged capture)",
-              pieceStays: true,
-            });
+            // Sniper: capture without moving — only if the king isn't left in check
+            if (!wouldLeaveKingInCheck(game, bs, target, color, undefined, true)) {
+              moves.push({
+                from: bs,
+                to: target,
+                type: "capture",
+                modifierId: "sniper-bishop",
+                label: "Sniper Bishop (ranged capture)",
+                pieceStays: true,
+              });
+            }
           }
           break; // can't see past pieces
         }
@@ -2600,6 +2604,8 @@ export function isChaosCheckmate(
   assignedSquares?: Record<string, string | null>,
   /** The checked side's own chaos modifiers — if they have chaos moves that escape check, it's not checkmate */
   defenderModifiers?: ChaosModifier[],
+  /** Anomaly options for the defending side — ensures anomaly-powered escapes (e.g. Star camel leaps) are counted */
+  defenderAnomalyOpts?: AnomalyMoveOptions,
 ): boolean {
   if (!game.inCheck()) return false;
   if (game.isCheckmate()) return false; // already handled by standard path
@@ -2615,6 +2621,7 @@ export function isChaosCheckmate(
       myColor,
       assignedSquares,
       oppModifiers,
+      defenderAnomalyOpts,
     );
     if (defChaos.length > 0) return false;
   }

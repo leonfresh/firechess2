@@ -4536,12 +4536,20 @@ export default function ChaosChessPage() {
           ? chaosStateRef.current.aiModifiers
           : chaosStateRef.current.playerModifiers;
         if (checkmatedMods.length > 0) {
+          const defAnomaly = isPlayerCheckmated
+            ? chaosStateRef.current.playerAnomaly
+            : chaosStateRef.current.aiAnomaly;
+          const defMoonUnlocked = isPlayerCheckmated
+            ? chaosStateRef.current.playerMoonUnlocked ||
+              (chaosStateRef.current.currentPhase ?? 0) >= 2
+            : false;
           const chaosEscapes = getChaosMoves(
             g,
             checkmatedMods,
             checkmatedColor,
             chaosStateRef.current.assignedSquares ?? undefined,
             attackerModsForCheckmate,
+            defAnomaly ? { playerAnomaly: defAnomaly, moonUnlocked: defMoonUnlocked ?? false } : undefined,
           );
           if (chaosEscapes.length > 0) return false;
         }
@@ -4586,11 +4594,23 @@ export default function ChaosChessPage() {
             ? chaosStateRef.current.playerModifiers
             : chaosStateRef.current.aiModifiers;
           if (stalematedMods.length > 0) {
+            const stalemateAnomaly = isPlayerStalemated
+              ? chaosStateRef.current.playerAnomaly
+              : chaosStateRef.current.aiAnomaly;
+            const stalemateMoonUnlocked = isPlayerStalemated
+              ? chaosStateRef.current.playerMoonUnlocked ||
+                (chaosStateRef.current.currentPhase ?? 0) >= 2
+              : false;
+            const attackerModsForStale = isPlayerStalemated
+              ? chaosStateRef.current.aiModifiers
+              : chaosStateRef.current.playerModifiers;
             const staleChaosMoves = getChaosMoves(
               g,
               stalematedMods,
               stalematedColor,
               chaosStateRef.current.assignedSquares ?? undefined,
+              attackerModsForStale,
+              stalemateAnomaly ? { playerAnomaly: stalemateAnomaly, moonUnlocked: stalemateMoonUnlocked ?? false } : undefined,
             );
             if (staleChaosMoves.length > 0) return false;
           }
@@ -4636,6 +4656,13 @@ export default function ChaosChessPage() {
         const defenderMods = isPlayerChecked
           ? chaosStateRef.current.playerModifiers
           : chaosStateRef.current.aiModifiers;
+        const defenderAnomaly = isPlayerChecked
+          ? chaosStateRef.current.playerAnomaly
+          : chaosStateRef.current.aiAnomaly;
+        const defenderMoonUnlocked = isPlayerChecked
+          ? chaosStateRef.current.playerMoonUnlocked ||
+            (chaosStateRef.current.currentPhase ?? 0) >= 2
+          : false;
         if (
           isChaosCheckmate(
             g,
@@ -4643,6 +4670,9 @@ export default function ChaosChessPage() {
             attackerColor,
             chaosStateRef.current.assignedSquares ?? undefined,
             defenderMods,
+            defenderAnomaly
+              ? { playerAnomaly: defenderAnomaly, moonUnlocked: defenderMoonUnlocked ?? false }
+              : undefined,
           )
         ) {
           const winner = checkedColor === "w" ? "black" : "white";
