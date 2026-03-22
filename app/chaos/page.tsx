@@ -4044,7 +4044,7 @@ export default function ChaosChessPage() {
       stored === "medium" ||
       stored === "hard"
       ? stored
-      : "easy";
+      : "beginner";
   });
   // Persist choice
   useEffect(() => {
@@ -9082,6 +9082,9 @@ export default function ChaosChessPage() {
     };
     setChaosState(cs);
     setWorldBonusTurnActive(true);
+    if (gameMode !== "ai") {
+      sendMoveToServer(game, "", "", cs);
+    }
     setEventLog((prev) => [
       ...prev,
       {
@@ -9092,7 +9095,7 @@ export default function ChaosChessPage() {
       },
     ]);
     playSound("crowd-ooh");
-  }, [chaosState]);
+  }, [chaosState, gameMode, game, sendMoveToServer]);
 
   const handleOpponentTimeout = useCallback(() => {
     setGameResult(playerColor);
