@@ -11,7 +11,7 @@
  * or passive effects (shield, revive, collateral).
  */
 
-import type { AnomalyId } from "./chaos-anomalies";
+import { ALL_ANOMALIES, type AnomalyId } from "./chaos-anomalies";
 
 /* ================================================================== */
 /*  Types                                                               */
@@ -567,21 +567,54 @@ export function getChaosPieceValCp(
 }
 
 /**
- * Roll 3 random modifier choices for a given phase.
+ * Roll modifier choices for a given phase.
  * Avoids modifiers already drafted by the given side.
  * When pieceCounts is provided, ensures at least one choice is viable
  * (targets a piece the player still has on the board) and down-weights
  * modifiers for pieces the player has zero of.
+ *
+ * Anomaly effects applied here:
+ *   High Priestess  — returns 4 choices instead of 3
+ *   Hermit          — draws from phase+1 pool (deeper wells)
+ *   Wheel of Fortune — draws from a random phase between 1 and current
+ *   removesFromDraft — any IDs on the anomaly's removesFromDraft list
+ *                      are excluded from the pool entirely
  */
 export function rollDraftChoices(
   phase: number,
   alreadyDrafted: ChaosModifier[],
   seed?: number,
   pieceCounts?: Partial<Record<PieceType, number>>,
+  playerAnomaly?: AnomalyId | null,
 ): ChaosModifier[] {
   const draftedIds = new Set(alreadyDrafted.map((m) => m.id));
+
+  // ── Anomaly: look up definition once ──
+  const anomalyDef = playerAnomaly
+    ? (ALL_ANOMALIES.find((a) => a.id === playerAnomaly) ?? null)
+    : null;
+  const removedIds = new Set(anomalyDef?.removesFromDraft ?? []);
+
+  // ── Anomaly: effective phase for pool filtering ──
+  let effectivePhase = phase;
+  if (playerAnomaly === "hermit") {
+    // Hermit: draw from 1 phase higher (capped at 5)
+    effectivePhase = Math.min(phase + 1, 5);
+  } else if (playerAnomaly === "wheel-of-fortune") {
+    // Wheel: random phase between 1 and current (inclusive)
+    const wheelRng =
+      seed != null ? seededRandom(seed + phase * 777) : Math.random;
+    effectivePhase = Math.floor(wheelRng() * phase) + 1;
+  }
+
+  // ── Anomaly: number of choices ──
+  const maxChoices = playerAnomaly === "high-priestess" ? 4 : 3;
+
   const pool = ALL_MODIFIERS.filter(
-    (m) => m.phases.includes(phase) && !draftedIds.has(m.id),
+    (m) =>
+      m.phases.includes(effectivePhase) &&
+      !draftedIds.has(m.id) &&
+      !removedIds.has(m.id),
   );
 
   // Seeded shuffle (Fisher-Yates)
@@ -592,7 +625,7 @@ export function rollDraftChoices(
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
 
-  if (!pieceCounts) return shuffled.slice(0, 3);
+  if (!pieceCounts) return shuffled.slice(0, maxChoices);
 
   // Split into viable (has the piece or global) and non-viable (0 of target piece)
   const isViable = (m: ChaosModifier) =>
@@ -603,11 +636,11 @@ export function rollDraftChoices(
   // Build result: take from viable first, pad with non-viable if needed
   const result: ChaosModifier[] = [];
   for (const m of viable) {
-    if (result.length >= 3) break;
+    if (result.length >= maxChoices) break;
     result.push(m);
   }
   for (const m of nonViable) {
-    if (result.length >= 3) break;
+    if (result.length >= maxChoices) break;
     result.push(m);
   }
 

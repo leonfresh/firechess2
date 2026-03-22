@@ -1753,6 +1753,55 @@ function CardSparkles({ tier }: { tier: ModifierTier }) {
   );
 }
 
+/**
+ * Decrement per-turn immunity / freeze counters after each half-move.
+ * Pure utility — no React state dependencies, safe to call anywhere.
+ *  - playerImmuneTurnsLeft / aiFrozenTurnsLeft  → decrement on player's move
+ *  - aiImmuneTurnsLeft / playerFrozenTurnsLeft  → decrement on AI's move
+ */
+function decrementAnomalyCounters(
+  cs: ChaosState,
+  mover: "player" | "ai",
+): ChaosState {
+  let next = { ...cs };
+  if (mover === "player") {
+    if ((next.playerImmuneTurnsLeft ?? 0) > 0) {
+      const left = next.playerImmuneTurnsLeft! - 1;
+      next = {
+        ...next,
+        playerImmuneTurnsLeft: left,
+        playerImmuneSquare: left > 0 ? next.playerImmuneSquare : null,
+      };
+    }
+    if ((next.aiFrozenTurnsLeft ?? 0) > 0) {
+      const left = next.aiFrozenTurnsLeft! - 1;
+      next = {
+        ...next,
+        aiFrozenTurnsLeft: left,
+        aiFrozenSquare: left > 0 ? next.aiFrozenSquare : null,
+      };
+    }
+  } else {
+    if ((next.aiImmuneTurnsLeft ?? 0) > 0) {
+      const left = next.aiImmuneTurnsLeft! - 1;
+      next = {
+        ...next,
+        aiImmuneTurnsLeft: left,
+        aiImmuneSquare: left > 0 ? next.aiImmuneSquare : null,
+      };
+    }
+    if ((next.playerFrozenTurnsLeft ?? 0) > 0) {
+      const left = next.playerFrozenTurnsLeft! - 1;
+      next = {
+        ...next,
+        playerFrozenTurnsLeft: left,
+        playerFrozenSquare: left > 0 ? next.playerFrozenSquare : null,
+      };
+    }
+  }
+  return next;
+}
+
 function DraftModal({
   phase,
   choices,
@@ -1760,6 +1809,9 @@ function DraftModal({
   fen,
   playerColor,
   timeLimit,
+  anomaly,
+  temperanceUsed,
+  onTemperanceReroll,
 }: {
   phase: number;
   choices: ChaosModifier[];
@@ -1768,6 +1820,12 @@ function DraftModal({
   playerColor?: "w" | "b";
   /** Seconds before auto-picking first card (PvP only). Undefined = no timer. */
   timeLimit?: number;
+  /** Player's anomaly id — used to show Temperance reroll button */
+  anomaly?: import("@/lib/chaos-anomalies").AnomalyId | null;
+  /** Whether Temperance reroll has already been used this phase */
+  temperanceUsed?: boolean;
+  /** Called with the discarded card when Temperance reroll is triggered */
+  onTemperanceReroll?: (discarded: ChaosModifier) => void;
 }) {
   const pieceCounts =
     fen && playerColor ? countPiecesFromFen(fen, playerColor) : null;
@@ -2113,12 +2171,46 @@ function DraftModal({
                         {isHovered ? "⚡ Draft This!" : "Click to Draft"}
                       </div>
                     )}
+
+                    {/* Temperance reroll button — shown on each card */}
+                    {anomaly === "temperance" &&
+                      !temperanceUsed &&
+                      allRevealed &&
+                      !pickedId && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onTemperanceReroll?.(mod);
+                          }}
+                          className="mt-2 w-full rounded-md border border-sky-500/40 bg-sky-500/10 px-2 py-1 text-[9px] font-bold text-sky-400 transition-all hover:bg-sky-500/20 hover:text-sky-300 sm:text-[10px]"
+                          title="Discard this card and draw 2 fresh replacements (once per phase)"
+                        >
+                          🌊 Discard & Reroll
+                        </button>
+                      )}
                   </button>
                 </div>
               </div>
             );
           })}
         </div>
+
+        {/* Temperance hint */}
+        {anomaly === "temperance" &&
+          !temperanceUsed &&
+          allRevealed &&
+          !pickedId && (
+            <p className="mt-3 text-center text-[10px] text-sky-400/70 sm:mt-4">
+              🌊 Rebalance: discard one card to draw 2 fresh replacements (once
+              per phase)
+            </p>
+          )}
+        {anomaly === "temperance" && temperanceUsed && (
+          <p className="mt-3 text-center text-[10px] text-slate-500 sm:mt-4">
+            🌊 Rebalance used — pick from the refreshed options
+          </p>
+        )}
 
         {/* "Revealing..." text while cards flip */}
         {!allRevealed && (
@@ -4115,12 +4207,14 @@ export default function ChaosChessPage() {
               state.playerModifiers,
               undefined,
               playerPieceCounts,
+              state.playerAnomaly,
             );
             setChaosState((prev) => ({
               ...prev,
               isDrafting: true,
               draftingSide: "player",
               draftChoices: choices,
+              playerTemperanceUsedThisPhase: false,
             }));
             setGameStatus("drafting");
             setWaitingForOpponentDraft(false);
@@ -4157,12 +4251,14 @@ export default function ChaosChessPage() {
             state.playerModifiers,
             undefined,
             playerPieceCounts,
+            state.playerAnomaly,
           );
           setChaosState((prev) => ({
             ...prev,
             isDrafting: true,
             draftingSide: "player",
             draftChoices: choices,
+            playerTemperanceUsedThisPhase: false,
           }));
           setGameStatus("drafting");
           setEventLog((prev) => [
@@ -4273,7 +4369,8 @@ export default function ChaosChessPage() {
             ...prev,
             {
               type: "chaos",
-              message: "☢️ NUCLEAR QUEEN! All surrounding pieces destroyed! (3-turn cooldown)",
+              message:
+                "☢️ NUCLEAR QUEEN! All surrounding pieces destroyed! (3-turn cooldown)",
               icon: "☢️",
               pepe: PEPE.madpuke,
             },
@@ -5109,6 +5206,49 @@ export default function ChaosChessPage() {
           }
         }
 
+        // Devil: AI cannot move its frozen piece (player used Devil on it)
+        if (
+          cs.aiFrozenSquare &&
+          (cs.aiFrozenTurnsLeft ?? 0) > 0 &&
+          bestUci?.startsWith(cs.aiFrozenSquare)
+        ) {
+          const allLegal = g.moves({ verbose: true });
+          const notFrozen = allLegal.filter(
+            (mv: { from: string }) => mv.from !== cs.aiFrozenSquare,
+          );
+          if (notFrozen.length > 0) {
+            const topUciOrder = topMoves
+              .map((t) => t.bestMove ?? t.pvMoves[0])
+              .filter(Boolean) as string[];
+            const topRanked = topUciOrder.find((u) =>
+              notFrozen.some((m: { lan: string }) => m.lan === u),
+            );
+            bestUci = topRanked ?? (notFrozen[0] as { lan: string }).lan;
+          }
+        }
+
+        // Justice: AI cannot capture the player's immune piece
+        if (
+          cs.playerImmuneSquare &&
+          (cs.playerImmuneTurnsLeft ?? 0) > 0 &&
+          bestUci?.slice(2, 4) === cs.playerImmuneSquare
+        ) {
+          const allLegal = g.moves({ verbose: true });
+          const notCapturingImmune = allLegal.filter(
+            (mv: { to: string }) => mv.to !== cs.playerImmuneSquare,
+          );
+          if (notCapturingImmune.length > 0) {
+            const topUciOrder = topMoves
+              .map((t) => t.bestMove ?? t.pvMoves[0])
+              .filter(Boolean) as string[];
+            const topRanked = topUciOrder.find((u) =>
+              notCapturingImmune.some((m: { lan: string }) => m.lan === u),
+            );
+            bestUci =
+              topRanked ?? (notCapturingImmune[0] as { lan: string }).lan;
+          }
+        }
+
         // Re-parse in case bestUci changed from fallback
         const finalFrom = bestUci!.slice(0, 2) as CbSquare;
         const finalTo = bestUci!.slice(2, 4) as CbSquare;
@@ -5191,6 +5331,8 @@ export default function ChaosChessPage() {
         if (nukeJustFiredAi) {
           cs2 = { ...cs2, aiNuclearCooldownUntil: g.moveNumber() + 4 };
         }
+        // Decrement Justice / Devil counters (AI's half-move)
+        cs2 = decrementAnomalyCounters(cs2, "ai");
 
         // Judgement: track player pieces captured by AI
         if (
@@ -5776,6 +5918,7 @@ export default function ChaosChessPage() {
                 incoming.playerModifiers,
                 undefined,
                 countPiecesFromFen(gameRef.current.fen(), "b"),
+                incoming.playerAnomaly,
               );
               pendingDraftAfterRevealRef.current = {
                 phase: phaseForDraft,
@@ -6051,6 +6194,7 @@ export default function ChaosChessPage() {
                     incoming.playerModifiers,
                     undefined,
                     countPiecesFromFen(gameRef.current.fen(), myColor_),
+                    incoming.playerAnomaly,
                   );
                   pendingDraftAfterRevealRef.current = {
                     phase: phaseForDraft,
@@ -6369,6 +6513,22 @@ export default function ChaosChessPage() {
         chaosState.assignedSquares?.[`${aiChainColor}_kings-chains`];
       if (chainedByAi && from === chainedByAi) return false;
 
+      // Devil: block player from moving their own frozen piece (AI used Devil on it)
+      if (
+        chaosState.playerFrozenSquare &&
+        (chaosState.playerFrozenTurnsLeft ?? 0) > 0 &&
+        from === chaosState.playerFrozenSquare
+      )
+        return false;
+
+      // Justice: block player from capturing AI's immune piece
+      if (
+        chaosState.aiImmuneSquare &&
+        (chaosState.aiImmuneTurnsLeft ?? 0) > 0 &&
+        to === chaosState.aiImmuneSquare
+      )
+        return false;
+
       // Forced En Passant: if AI has this modifier and standard EP is available, player must play it
       if (chaosState.aiModifiers.some((m) => m.id === "forced-en-passant")) {
         const epMoves = game
@@ -6508,6 +6668,8 @@ export default function ChaosChessPage() {
           to,
           chaosMove.type === "capture",
         );
+        // Decrement Justice / Devil counters (player's half-move)
+        cs = decrementAnomalyCounters(cs, "player");
         let activeGame = newGame;
 
         // Check game end first — checkmate wins immediately
@@ -6566,7 +6728,28 @@ export default function ChaosChessPage() {
         }
 
         if (!drafted && gameMode === "ai") {
-          setTimeout(() => makeAiMove(activeGame, cs), AI_MOVE_DELAY);
+          if (worldBonusTurnActive) {
+            // World: grant a free bonus move — flip FEN turn back to player
+            setWorldBonusTurnActive(false);
+            const fenParts = activeGame.fen().split(" ");
+            fenParts[1] = playerColor === "white" ? "w" : "b";
+            fenParts[3] = "-"; // clear en passant after flip
+            const bonusGame = new Chess(fenParts.join(" "));
+            setGame(bonusGame);
+            recomputeChaosMoves(bonusGame, cs);
+            setEventLog((prev) => [
+              ...prev,
+              {
+                type: "chaos" as const,
+                message: "🌍 World: Bonus move! Play your extra move now.",
+                icon: "🌍",
+                pepe: PEPE.hyped,
+              },
+            ]);
+            playSound("crowd-ooh");
+          } else {
+            setTimeout(() => makeAiMove(activeGame, cs), AI_MOVE_DELAY);
+          }
         }
         recomputeChaosMoves(activeGame, cs);
         return true;
@@ -6751,6 +6934,8 @@ export default function ChaosChessPage() {
       if (nukeJustFiredPlayer) {
         cs2 = { ...cs2, playerNuclearCooldownUntil: game.moveNumber() + 4 };
       }
+      // Decrement Justice / Devil counters (player's half-move)
+      cs2 = decrementAnomalyCounters(cs2, "player");
       let activeG = newG;
 
       // Check game end first — checkmate takes priority.
@@ -6804,7 +6989,28 @@ export default function ChaosChessPage() {
       }
 
       if (!drafted && gameMode === "ai") {
-        setTimeout(() => makeAiMove(activeG, cs2), AI_MOVE_DELAY);
+        if (worldBonusTurnActive) {
+          // World: grant a free bonus move — flip FEN turn back to player
+          setWorldBonusTurnActive(false);
+          const fenParts = activeG.fen().split(" ");
+          fenParts[1] = playerColor === "white" ? "w" : "b";
+          fenParts[3] = "-"; // clear en passant after flip
+          const bonusGame = new Chess(fenParts.join(" "));
+          setGame(bonusGame);
+          recomputeChaosMoves(bonusGame, cs2);
+          setEventLog((prev) => [
+            ...prev,
+            {
+              type: "chaos" as const,
+              message: "🌍 World: Bonus move! Play your extra move now.",
+              icon: "🌍",
+              pepe: PEPE.hyped,
+            },
+          ]);
+          playSound("crowd-ooh");
+        } else {
+          setTimeout(() => makeAiMove(activeG, cs2), AI_MOVE_DELAY);
+        }
       }
       recomputeChaosMoves(activeG, cs2);
 
@@ -6829,6 +7035,7 @@ export default function ChaosChessPage() {
       recomputeChaosMoves,
       isKingMoveChaosUnsafe,
       triggerEffect,
+      worldBonusTurnActive,
     ],
   );
 
@@ -7404,6 +7611,48 @@ export default function ChaosChessPage() {
     setHoverMoveSquares({});
   }, []);
 
+  /* ── Temperance: reroll one draft card, draw 2 replacements ── */
+  const handleTemperanceReroll = useCallback(
+    (discarded: ChaosModifier) => {
+      if (chaosState.playerTemperanceUsedThisPhase) return;
+      const pCode = playerColor === "white" ? "w" : "b";
+      // Exclude already-drafted + currently-shown cards so replacements are truly fresh
+      const excludeAll = [
+        ...chaosState.playerModifiers,
+        ...chaosState.draftChoices,
+      ];
+      const fresh = rollDraftChoices(
+        pendingPhase,
+        excludeAll,
+        Date.now(),
+        countPiecesFromFen(game.fen(), pCode),
+        chaosState.playerAnomaly,
+      );
+      const remaining = chaosState.draftChoices.filter(
+        (m) => m.id !== discarded.id,
+      );
+      // fresh already excludes all current choices — just take up to 2
+      const newCards = fresh.slice(0, 2);
+      const newChoices = [...remaining, ...newCards];
+      setChaosState((prev) => ({
+        ...prev,
+        draftChoices: newChoices,
+        playerTemperanceUsedThisPhase: true,
+      }));
+      setEventLog((prev) => [
+        ...prev,
+        {
+          type: "chaos" as const,
+          message: `🌊 Rebalance: discarded ${discarded.icon} ${discarded.name}, drew 2 fresh choices!`,
+          icon: "🌊",
+          pepe: PEPE.think,
+        },
+      ]);
+      playSound("move");
+    },
+    [chaosState, pendingPhase, playerColor, game],
+  );
+
   /* ── Handle draft pick ── */
   const handleDraftPick = useCallback(
     (mod: ChaosModifier) => {
@@ -7616,6 +7865,7 @@ export default function ChaosChessPage() {
           stateWithTracking.aiModifiers,
           Date.now(),
           countPiecesFromFen(currentGame.fen(), aiColor_),
+          stateWithTracking.aiAnomaly,
         );
         const tierRank: Record<string, number> = {
           common: 1,
@@ -8207,7 +8457,43 @@ export default function ChaosChessPage() {
     // hoverMoveSquares last so hovering a piece always shows its dots,
     // even when another piece is already selected (legalMoveSquares).
     // checkKingHighlight stays on top of everything.
+    const immuneFrozenHighlights: Record<string, React.CSSProperties> = {};
+    // Justice: player's own immune piece (indigo glow)
+    if (
+      chaosState.playerImmuneSquare &&
+      (chaosState.playerImmuneTurnsLeft ?? 0) > 0
+    ) {
+      immuneFrozenHighlights[chaosState.playerImmuneSquare] = {
+        boxShadow: "inset 0 0 0 3px rgba(99,102,241,0.7)",
+        borderRadius: "2px",
+      };
+    }
+    // Justice: AI's immune piece (indigo glow — blocked for player)
+    if (chaosState.aiImmuneSquare && (chaosState.aiImmuneTurnsLeft ?? 0) > 0) {
+      immuneFrozenHighlights[chaosState.aiImmuneSquare] = {
+        boxShadow: "inset 0 0 0 3px rgba(99,102,241,0.55)",
+        borderRadius: "2px",
+      };
+    }
+    // Devil: AI's frozen piece (red glow — frozen by player)
+    if (chaosState.aiFrozenSquare && (chaosState.aiFrozenTurnsLeft ?? 0) > 0) {
+      immuneFrozenHighlights[chaosState.aiFrozenSquare] = {
+        boxShadow: "inset 0 0 0 3px rgba(225,29,72,0.75)",
+        borderRadius: "2px",
+      };
+    }
+    // Devil: player's frozen piece (red glow — frozen by AI)
+    if (
+      chaosState.playerFrozenSquare &&
+      (chaosState.playerFrozenTurnsLeft ?? 0) > 0
+    ) {
+      immuneFrozenHighlights[chaosState.playerFrozenSquare] = {
+        boxShadow: "inset 0 0 0 3px rgba(225,29,72,0.75)",
+        borderRadius: "2px",
+      };
+    }
     return {
+      ...immuneFrozenHighlights,
       ...lastMoveHighlight,
       ...legalMoveSquares,
       ...hoverMoveSquares,
@@ -8218,6 +8504,14 @@ export default function ChaosChessPage() {
     hoverMoveSquares,
     legalMoveSquares,
     checkKingHighlight,
+    chaosState.playerImmuneSquare,
+    chaosState.playerImmuneTurnsLeft,
+    chaosState.aiImmuneSquare,
+    chaosState.aiImmuneTurnsLeft,
+    chaosState.aiFrozenSquare,
+    chaosState.aiFrozenTurnsLeft,
+    chaosState.playerFrozenSquare,
+    chaosState.playerFrozenTurnsLeft,
   ]);
 
   /* ── Reset warp-queen toggle after every move ── */
@@ -8952,12 +9246,16 @@ export default function ChaosChessPage() {
         {/* Draft modal — only show when it's our turn to draft */}
         {gameStatus === "drafting" && chaosState.draftChoices.length > 0 && (
           <DraftModal
+            key={chaosState.draftChoices.map((m) => m.id).join(",")}
             phase={pendingPhase}
             choices={chaosState.draftChoices}
             onPick={handleDraftPick}
             fen={game.fen()}
             playerColor={playerColor === "white" ? "w" : "b"}
             timeLimit={gameMode !== "ai" ? 15 : undefined}
+            anomaly={chaosState.playerAnomaly}
+            temperanceUsed={chaosState.playerTemperanceUsedThisPhase}
+            onTemperanceReroll={handleTemperanceReroll}
           />
         )}
         {/* Return to Draft — floating safety button if the modal was accidentally hidden */}
