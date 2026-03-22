@@ -416,11 +416,17 @@ export default function GuessTheMovePage() {
     if (!shouldGuess(currentMoveIdx)) return;
 
     if (selectedSquare) {
-      // Second click — attempt move
+      // Deselect on same square
       if (selectedSquare === square) {
         setSelectedSquare(null);
         return;
       }
+      // Re-select if clicking another own piece
+      if (legalMoves.has(square)) {
+        setSelectedSquare(square);
+        return;
+      }
+      // Otherwise attempt the guess
       handleGuess(selectedSquare, square);
       setSelectedSquare(null);
     } else {
@@ -452,8 +458,7 @@ export default function GuessTheMovePage() {
       const targets = legalMoves.get(selectedSquare) ?? [];
       for (const t of targets) {
         styles[t] = {
-          background: "radial-gradient(circle, rgba(0,0,0,0.15) 25%, transparent 25%)",
-          borderRadius: "50%",
+          background: "radial-gradient(circle, rgba(0,180,0,0.75) 14%, transparent 15%)",
         };
       }
     }
@@ -814,6 +819,7 @@ export default function GuessTheMovePage() {
                   arePiecesDraggable={!gameComplete && shouldGuess(currentMoveIdx)}
                   onPieceDrop={onPieceDrop}
                   onSquareClick={onSquareClick}
+                  onPieceClick={(_piece, square) => onSquareClick(square as CbSquare)}
                   animationDuration={300}
                   customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
                   customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
