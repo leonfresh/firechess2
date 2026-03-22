@@ -4788,7 +4788,19 @@ export default function ChaosChessPage() {
       cs: ChaosState,
       onComplete?: (finalGame: Chess, finalCs: ChaosState) => void,
     ) => {
-      if (g.isGameOver()) return;
+      if (g.isGameOver()) {
+        // chess.js says game over, but if AI has chaos escape moves the game continues
+        const aiColorForEscape = playerColor === "white" ? "b" : "w";
+        const chaosEscapes = getChaosMoves(
+          g,
+          cs.aiModifiers,
+          aiColorForEscape as Color,
+          cs.assignedSquares,
+          cs.playerModifiers,
+        );
+        if (chaosEscapes.length === 0) return; // truly over
+        // else: fall through — chaos move evaluator will handle it
+      }
       setIsThinking(true);
       const thisToken = aiMoveTokenRef.current; // capture — if cancelled before we finish, discard results
 
@@ -5390,8 +5402,17 @@ export default function ChaosChessPage() {
         }
 
         if (!bestUci) {
-          setIsThinking(false);
-          return;
+          // Last-resort: pick any legal move so the game doesn't freeze
+          const emergencyMoves = g.moves({ verbose: true });
+          if (emergencyMoves.length > 0) {
+            const em = emergencyMoves[Math.floor(Math.random() * emergencyMoves.length)];
+            bestUci = em.lan;
+            console.warn("[Chaos AI] No bestUci from Stockfish — using emergency fallback:", bestUci);
+          } else {
+            // Truly no moves (already confirmed chaos-escaped above) — skip
+            setIsThinking(false);
+            return;
+          }
         }
 
         const from = bestUci.slice(0, 2) as CbSquare;
@@ -5635,6 +5656,27 @@ export default function ChaosChessPage() {
           promotion: finalPromo,
         });
         if (!moveResult) {
+          // bestUci was filtered to an invalid move — try any legal move as last resort
+          console.warn("[Chaos AI] g.move() rejected bestUci:", bestUci, "— trying random fallback");
+          const fallbackMoves = g.moves({ verbose: true });
+          if (fallbackMoves.length > 0) {
+            const fb = fallbackMoves[Math.floor(Math.random() * fallbackMoves.length)];
+            const fbResult = g.move({ from: fb.from, to: fb.to, promotion: fb.promotion });
+            if (!fbResult) { setIsThinking(false); return; }
+            // minimal path: just commit the fallback move and resume
+            const fbGame = new Chess(g.fen());
+            let cs2fb = updateTrackedPieces(cs, fb.from, fb.to, !!fbResult.captured);
+            cs2fb = decrementAnomalyCounters(cs2fb, "ai");
+            if (thisToken.cancelled) { setIsThinking(false); return; }
+            setChaosState(cs2fb);
+            setGame(fbGame);
+            setSelectedSquare(null);
+            setLegalMoveSquares({});
+            setIsThinking(false);
+            if (!checkGameEnd(fbGame)) recomputeChaosMoves(fbGame, cs2fb);
+            onComplete?.(fbGame, cs2fb);
+            return;
+          }
           setIsThinking(false);
           return;
         }
@@ -5762,6 +5804,29 @@ export default function ChaosChessPage() {
         onComplete?.(activeGame2, cs2);
       } catch (err) {
         console.warn("[Chaos AI] Engine error:", err);
+        // Emergency fallback: play any legal move so the game doesn't freeze
+        try {
+          const legalMoves = g.moves({ verbose: true });
+          if (legalMoves.length > 0 && !g.isGameOver()) {
+            const em = legalMoves[Math.floor(Math.random() * legalMoves.length)];
+            const emResult = g.move({ from: em.from, to: em.to, promotion: em.promotion });
+            if (emResult) {
+              const emGame = new Chess(g.fen());
+              let emCs = updateTrackedPieces(cs, em.from, em.to, !!emResult.captured);
+              emCs = decrementAnomalyCounters(emCs, "ai");
+              if (!thisToken.cancelled) {
+                setChaosState(emCs);
+                setGame(emGame);
+                setSelectedSquare(null);
+                setLegalMoveSquares({});
+                if (!checkGameEnd(emGame)) recomputeChaosMoves(emGame, emCs);
+                onComplete?.(emGame, emCs);
+              }
+            }
+          }
+        } catch (fallbackErr) {
+          console.warn("[Chaos AI] Fallback move also failed:", fallbackErr);
+        }
       }
 
       setIsThinking(false);
@@ -7306,13 +7371,26 @@ export default function ChaosChessPage() {
         const playerC: Color = playerColor === "white" ? "w" : "b";
         // Only spawn if departure square is empty
         if (!finalGame.get(from as any)) {
-          const wakeGame = new Chess(finalGame.fen());
-          wakeGame.put({ type: "p", color: playerC }, from as any);
-          finalGame = wakeGame;
+          try {
+            const wakeGame = new Chess(finalGame.fen());
+            if (wakeGame.put({ type: "p", color: playerC }, from as any)) {
+              finalGame = wakeGame;
+            }
+          } catch {
+            /* could not spawn Wake pawn — skip the effect */
+          }
         }
       }
 
-      const newG = new Chess(finalGame.fen());
+      const newG = (() => {
+        try {
+          return new Chess(finalGame.fen());
+        } catch {
+          // Post-move effects produced an invalid FEN; fall back to plain post-move state
+          console.warn("[Chaos] Invalid FEN after post-move effects — using plain game FEN");
+          return new Chess(game.fen());
+        }
+      })();
 
       // Update tracked pieces
       let cs2 = updateTrackedPieces(
@@ -7606,7 +7684,14 @@ export default function ChaosChessPage() {
         if (afterEffects !== game) finalGame = afterEffects;
       }
 
-      const newG = new Chess(finalGame.fen());
+      const newG = (() => {
+        try {
+          return new Chess(finalGame.fen());
+        } catch {
+          console.warn("[Chaos] Invalid FEN in executeStdPromotion — using plain game FEN");
+          return new Chess(game.fen());
+        }
+      })();
       setGame(newG);
 
       if (newG.isCheckmate()) {
