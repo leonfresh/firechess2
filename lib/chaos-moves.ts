@@ -1153,7 +1153,7 @@ function genEnPassantEverywhere(game: Chess, color: Color): ChaosMove[] {
  * Only pawns on rank 4 or below (white) / rank 5 or above (black) can trigger. */
 function genEarlyPromotion(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
-  const promoRank = color === "w" ? 4 : 3; // 0-indexed: rank 5 = index 4, rank 4 = index 3
+  const promoRank = color === "w" ? 6 : 1; // 0-indexed: white promotes to rank 7 (index 6), black to rank 2 (index 1)
   const dir = color === "w" ? 1 : -1;
   const pawns = allSquaresOf(game, "p", color);
 

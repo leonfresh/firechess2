@@ -5,25 +5,33 @@
 
 /**
  * Modifier IDs available to all players without signing up.
- * 6 commons + 5 rares + 2 epics = 13 total.
+ * All 7 commons + 10 rares + 3 milder epics = 20 unlocked.
+ * Locked (~10): the high-power epics + all legendaries.
  */
 export const GUEST_UNLOCKED_IDS = new Set([
-  // Commons
+  // Commons (all 7)
   "pawn-charge",
   "pawn-capture-forward",
   "camel",
   "dragon-bishop",
   "kings-chains",
   "dragon-rook",
-  // Rares
+  "pawn-promotion-early",
+  // Rares (10 of 11 — amazon locked as premium)
   "night-rider",
   "phantom-rook",
   "sniper-bishop",
   "enpassant-everywhere",
   "knook",
-  // Epics
+  "archbishop",
+  "king-ascension",
+  "usurper",
+  "kamikaze-bishop",
+  "bishop-bounce",
+  // Epics (3 of 8 — milder ones)
   "queen-teleport",
   "bishop-cannon",
+  "pawn-fortress",
 ]);
 
 /** localStorage key for an earn-then-signup pending unlock */

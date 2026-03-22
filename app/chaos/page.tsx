@@ -521,15 +521,18 @@ const FAIRY_PIECE_SVGS: Record<string, Record<string, string>> = {
   /** Emperor king — standard king body with gold reach-ring and corner triangles */
   "emperor-king": { w: "/pieces/fairy/wEK.svg", b: "/pieces/fairy/bEK.svg" },
   /** Hierophant (Sacred Passage) bishop — ghostly violet phase-bishop */
-  "hierophant-bishop": { w: "/pieces/fairy/wHb.svg", b: "/pieces/fairy/bHb.svg" },
+  "hierophant-bishop": {
+    w: "/pieces/fairy/wHb.svg",
+    b: "/pieces/fairy/bHb.svg",
+  },
   /** Usurper — king with swap arrows */
-  "usurper": { w: "/pieces/fairy/wUsp.svg", b: "/pieces/fairy/bUsp.svg" },
+  usurper: { w: "/pieces/fairy/wUsp.svg", b: "/pieces/fairy/bUsp.svg" },
   /** Kamikaze Bishop — bishop with explosion flames */
   "kamikaze-bishop": { w: "/pieces/fairy/wKB.svg", b: "/pieces/fairy/bKB.svg" },
   /** Queen Cannon — queen with cannon barrel */
   "queen-cannon": { w: "/pieces/fairy/wQC.svg", b: "/pieces/fairy/bQC.svg" },
   /** Railgun — rook with electric bolt */
-  "railgun": { w: "/pieces/fairy/wRG.svg", b: "/pieces/fairy/bRG.svg" },
+  railgun: { w: "/pieces/fairy/wRG.svg", b: "/pieces/fairy/bRG.svg" },
 };
 
 /** War Pawn SVG — shown when both pawn-charge AND pawn-capture-forward are active */
@@ -824,7 +827,9 @@ function buildChaosCustomPieces(
             // Nuclear queen on cooldown: show remaining turns number badge and dim
             const nukeCdTurns =
               mod.id === "nuclear-queen"
-                ? (isPlayerPiece ? (playerNukeCdTurns ?? 0) : (aiNukeCdTurns ?? 0))
+                ? isPlayerPiece
+                  ? (playerNukeCdTurns ?? 0)
+                  : (aiNukeCdTurns ?? 0)
                 : 0;
             const nukeOnCooldown = nukeCdTurns > 0;
             const badgeGlow = nukeOnCooldown
@@ -1085,7 +1090,10 @@ type EventLogEntry = {
 
 /** Apply an anomaly choice to a ChaosState, injecting any built-in modifiers.
  * Safe to call anywhere — used for both AI and multiplayer game init. */
-function applyAnomalyToCs(cs: ChaosState, anomaly: AnomalyDefinition | null): ChaosState {
+function applyAnomalyToCs(
+  cs: ChaosState,
+  anomaly: AnomalyDefinition | null,
+): ChaosState {
   if (!anomaly) return cs;
   let result: ChaosState = { ...cs, playerAnomaly: anomaly.id as AnomalyId };
   if (anomaly.injectModifiers) {
@@ -1093,7 +1101,10 @@ function applyAnomalyToCs(cs: ChaosState, anomaly: AnomalyDefinition | null): Ch
       if (modId === "amazon") continue; // amazon is delayed to turn 10
       const mod = ALL_MODIFIERS.find((m) => m.id === modId);
       if (mod && !result.playerModifiers.some((m) => m.id === mod.id)) {
-        result = { ...result, playerModifiers: [...result.playerModifiers, mod] };
+        result = {
+          ...result,
+          playerModifiers: [...result.playerModifiers, mod],
+        };
       }
     }
   }
@@ -1412,15 +1423,16 @@ function AnomalyPickerScreen({
           // Use whatever the player had highlighted; fall back to random free card
           setSelected((currentSelected) => {
             const isLocked = (a: AnomalyDefinition) =>
-              !isPro &&
-              (choices.indexOf(a) === 0 || choices.indexOf(a) === 3);
+              !isPro && (choices.indexOf(a) === 0 || choices.indexOf(a) === 3);
             if (currentSelected && !isLocked(currentSelected)) {
               onPickRef.current(currentSelected);
             } else {
               const freePicks = isPro ? choices : [choices[1], choices[2]];
               const validPicks = freePicks.filter(Boolean);
               if (validPicks.length > 0) {
-                onPickRef.current(validPicks[Math.floor(Math.random() * validPicks.length)]);
+                onPickRef.current(
+                  validPicks[Math.floor(Math.random() * validPicks.length)],
+                );
               } else {
                 onSkipRef.current();
               }
@@ -1433,7 +1445,7 @@ function AnomalyPickerScreen({
       });
     }, 1000);
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPro, choices]);
 
   // Middle 2 (indices 1 & 2) are free; outer 2 (indices 0 & 3) are Pro-locked
@@ -1721,9 +1733,14 @@ function AnomalyPickerScreen({
             <div className="mt-5 flex flex-col items-center gap-3">
               <div className="flex items-center gap-2 rounded-xl border border-purple-500/30 bg-purple-500/10 px-5 py-3">
                 <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
-                <span className="text-sm font-semibold text-purple-300">Pick sent — waiting for opponent…</span>
+                <span className="text-sm font-semibold text-purple-300">
+                  Pick sent — waiting for opponent…
+                </span>
               </div>
-              <p className="text-xs text-slate-600">Game starts automatically if opponent doesn&apos;t respond in time.</p>
+              <p className="text-xs text-slate-600">
+                Game starts automatically if opponent doesn&apos;t respond in
+                time.
+              </p>
             </div>
           ) : (
             <div className="mt-5 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -2357,7 +2374,8 @@ function DraftModal({
             const isPicked = pickedId === mod.id;
             const isDismissed = dismissing && !isPicked;
             const glowColor = TIER_GLOW_COLORS[mod.tier];
-            const isLocked = unlockedIds !== undefined && !unlockedIds.has(mod.id);
+            const isLocked =
+              unlockedIds !== undefined && !unlockedIds.has(mod.id);
             const canPickLocked = isLocked && !lockedPickUsed;
 
             return (
@@ -2416,7 +2434,9 @@ function DraftModal({
                     }}
                     onMouseEnter={() => allRevealed && setHoveredId(mod.id)}
                     onMouseLeave={() => setHoveredId(null)}
-                    disabled={!allRevealed || !!pickedId || (isLocked && !canPickLocked)}
+                    disabled={
+                      !allRevealed || !!pickedId || (isLocked && !canPickLocked)
+                    }
                     className={`relative flex w-full flex-row items-center gap-3 rounded-xl border p-3 text-left sm:flex-col sm:gap-0 sm:p-5 sm:text-center ${tier.bg} ${tier.border} ${
                       allRevealed && !pickedId && (!isLocked || canPickLocked)
                         ? "cursor-pointer transition-all duration-200"
@@ -2447,10 +2467,15 @@ function DraftModal({
                               "card-hover-glow 1.5s ease-in-out infinite",
                             transform: "rotateY(180deg) translateY(-4px)",
                           } as React.CSSProperties)
-                        : {}),
-                    }}
-                  >
-                    {/* Tier shimmer overlay */}
+                        : {}), group/lock">
+                        <span className="text-2xl">🔒</span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Locked</span>
+                        <a href="/auth/signin" className="pointer-events-auto text-[9px] text-purple-400 underline">Sign in to unlock</a>
+                        {/* Tooltip on hover */}
+                        <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 w-48 rounded-lg border border-purple-500/40 bg-[#0d0920]/95 px-3 py-2 text-center text-[10px] text-slate-300 shadow-lg shadow-purple-900/40 opacity-0 group-hover/lock:opacity-100 transition-opacity duration-150 z-30">
+                          <p className="font-bold text-purple-300 mb-0.5">🔒 Premium modifier</p>
+                          <p>Create a free account and play games to unlock this ability permanently.</p>
+                        </div
                     {(mod.tier === "epic" || mod.tier === "legendary") && (
                       <div
                         className="pointer-events-none absolute inset-0 rounded-xl opacity-30"
@@ -2469,8 +2494,15 @@ function DraftModal({
                     {isLocked && !canPickLocked && (
                       <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center rounded-xl bg-black/60 gap-1">
                         <span className="text-2xl">🔒</span>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Locked</span>
-                        <a href="/auth/signin" className="pointer-events-auto text-[9px] text-purple-400 underline">Sign in to unlock</a>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">
+                          Locked
+                        </span>
+                        <a
+                          href="/auth/signin"
+                          className="pointer-events-auto text-[9px] text-purple-400 underline"
+                        >
+                          Sign in to unlock
+                        </a>
                       </div>
                     )}
                     {isLocked && canPickLocked && (
@@ -2606,24 +2638,37 @@ function GuestUnlockModal({
   return (
     <div
       className="fixed inset-0 z-[60] flex items-center justify-center"
-      style={{ backgroundColor: "rgba(0,0,0,0.82)", animation: "draft-bg-enter 0.4s ease-out both" }}
+      style={{
+        backgroundColor: "rgba(0,0,0,0.82)",
+        animation: "draft-bg-enter 0.4s ease-out both",
+      }}
     >
       <div
         className="relative w-full max-w-sm mx-4 rounded-2xl border border-amber-400/40 bg-[#0a0f1a]/95 p-6 text-center"
         style={{ animation: "draft-modal-enter 0.5s ease-out both" }}
       >
         <div className="mb-3 text-5xl">🎉</div>
-        <h2 className="text-xl font-black text-white mb-1">You Unlocked a Modifier!</h2>
-        <p className="text-xs text-slate-400 mb-4">Sign up to keep it in your collection permanently.</p>
+        <h2 className="text-xl font-black text-white mb-1">
+          You Unlocked a Modifier!
+        </h2>
+        <p className="text-xs text-slate-400 mb-4">
+          Sign up to keep it in your collection permanently.
+        </p>
 
         {/* Modifier card preview */}
-        <div className={`mx-auto max-w-[200px] rounded-xl border p-4 ${tier.bg} ${tier.border} mb-5`}>
+        <div
+          className={`mx-auto max-w-[200px] rounded-xl border p-4 ${tier.bg} ${tier.border} mb-5`}
+        >
           <Emoji emoji={mod.icon} className="w-12 h-12 mb-2" />
-          <span className={`text-[9px] font-bold uppercase tracking-wider rounded-full px-2 py-0.5 ${tier.text} ${tier.bg}`}>
+          <span
+            className={`text-[9px] font-bold uppercase tracking-wider rounded-full px-2 py-0.5 ${tier.text} ${tier.bg}`}
+          >
             {TIER_LABELS[mod.tier]}
           </span>
           <h3 className="text-sm font-bold text-white mt-1 mb-1">{mod.name}</h3>
-          <p className="text-[10px] text-slate-400 leading-relaxed">{mod.description}</p>
+          <p className="text-[10px] text-slate-400 leading-relaxed">
+            {mod.description}
+          </p>
         </div>
 
         <a
@@ -3561,8 +3606,14 @@ function PieceMovementGrid({
       [-2, 3],
       [2, -3],
       [2, 3],
-      [-4, -2], [-4, 2], [4, -2], [4, 2],
-      [-2, -4], [-2, 4], [2, -4], [2, 4],
+      [-4, -2],
+      [-4, 2],
+      [4, -2],
+      [4, 2],
+      [-2, -4],
+      [-2, 4],
+      [2, -4],
+      [2, 4],
     ] as [number, number][])
       tryMark(dr, dc, "chaos");
 
@@ -3982,6 +4033,8 @@ export default function ChaosChessPage() {
   );
   /** When true, queen-teleport moves are included in click/highlight logic */
   const [warpQueenActive, setWarpQueenActive] = useState(false);
+  /** When true, usurper (king-swap) moves are included in click/highlight logic */
+  const [usurperActive, setUsurperActive] = useState(false);
 
   /* ── Guest unlock system ── */
   /** True once the guest has used their one free locked-card pick this game */
@@ -3989,14 +4042,14 @@ export default function ChaosChessPage() {
   /** Modifier earnt by the guest after their first win — shown in unlock modal */
   const [pendingGuestUnlock, setPendingGuestUnlock] =
     useState<ChaosModifier | null>(null);
-  /** Chaos moves visible to the player — warp queen is hidden until its button is toggled on */
-  const activeChaosMoves = useMemo(
-    () =>
-      warpQueenActive
-        ? availableChaosMoves
-        : availableChaosMoves.filter((m) => m.modifierId !== "queen-teleport"),
-    [availableChaosMoves, warpQueenActive],
-  );
+  /** Chaos moves visible to the player — warp queen and usurper are hidden until their buttons are toggled on */
+  const activeChaosMoves = useMemo(() => {
+    let moves = availableChaosMoves;
+    if (!warpQueenActive)
+      moves = moves.filter((m) => m.modifierId !== "queen-teleport");
+    if (!usurperActive) moves = moves.filter((m) => m.modifierId !== "usurper");
+    return moves;
+  }, [availableChaosMoves, warpQueenActive, usurperActive]);
 
   /* ── Opening Anomaly state ── */
   /** The 4 random anomaly choices shown in the picker */
@@ -4021,7 +4074,9 @@ export default function ChaosChessPage() {
   const myAnomalyPickSentRef = useRef(false);
   const [myPickSent, setMyPickSent] = useState(false);
   /** setTimeout handle for "matched" → "picking-anomaly" transition — so it can be cancelled on disconnect */
-  const matchedTransitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const matchedTransitionTimeoutRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
   /**
    * Anomaly activation mode:
    * - null: no activation in progress
@@ -4048,7 +4103,12 @@ export default function ChaosChessPage() {
     string | null
   >(null);
   /** Duck Chess: pending game+state waiting for player to place duck before AI moves */
-  const pendingDuckRef = useRef<{ game: Chess; cs: ChaosState; from: string; to: string } | null>(null);
+  const pendingDuckRef = useRef<{
+    game: Chess;
+    cs: ChaosState;
+    from: string;
+    to: string;
+  } | null>(null);
   /** Sun: pawn surge already applied this game */
   const [sunSurgeUsed, setSunSurgeUsed] = useState(false);
   /** World: bonus turn is active (player can play an extra move before regular turn) */
@@ -4622,14 +4682,22 @@ export default function ChaosChessPage() {
           playSound("airhorn");
           spawnPepe(PEPE.gigachad);
           // Guest first-win unlock
-          if (!authenticated && typeof window !== "undefined" &&
-              !window.localStorage.getItem(LS_FIRST_WIN_DONE)) {
+          if (
+            !authenticated &&
+            typeof window !== "undefined" &&
+            !window.localStorage.getItem(LS_FIRST_WIN_DONE)
+          ) {
             window.localStorage.setItem(LS_FIRST_WIN_DONE, "1");
-            const locked = ALL_MODIFIERS.filter(m => !GUEST_UNLOCKED_IDS.has(m.id));
+            const locked = ALL_MODIFIERS.filter(
+              (m) => !GUEST_UNLOCKED_IDS.has(m.id),
+            );
             if (locked.length > 0) {
               const prize = locked[Math.floor(Math.random() * locked.length)];
               window.localStorage.setItem(LS_PENDING_UNLOCK, prize.id);
-              setTimeout(() => setPendingGuestUnlock(prize), KING_DEATH_POPUP_DELAY + 1200);
+              setTimeout(
+                () => setPendingGuestUnlock(prize),
+                KING_DEATH_POPUP_DELAY + 1200,
+              );
             }
           }
         } else {
@@ -4684,7 +4752,12 @@ export default function ChaosChessPage() {
             checkmatedColor,
             chaosStateRef.current.assignedSquares ?? undefined,
             attackerModsForCheckmate,
-            defAnomaly ? { playerAnomaly: defAnomaly, moonUnlocked: defMoonUnlocked ?? false } : undefined,
+            defAnomaly
+              ? {
+                  playerAnomaly: defAnomaly,
+                  moonUnlocked: defMoonUnlocked ?? false,
+                }
+              : undefined,
           );
           if (chaosEscapes.length > 0) return false;
         }
@@ -4707,10 +4780,15 @@ export default function ChaosChessPage() {
           spawnPepe(PEPE.gigachad);
           setTimeout(() => spawnPepe(PEPE.clap), 400);
           // Guest first-win unlock
-          if (!authenticated && typeof window !== "undefined" &&
-              !window.localStorage.getItem(LS_FIRST_WIN_DONE)) {
+          if (
+            !authenticated &&
+            typeof window !== "undefined" &&
+            !window.localStorage.getItem(LS_FIRST_WIN_DONE)
+          ) {
             window.localStorage.setItem(LS_FIRST_WIN_DONE, "1");
-            const locked = ALL_MODIFIERS.filter(m => !GUEST_UNLOCKED_IDS.has(m.id));
+            const locked = ALL_MODIFIERS.filter(
+              (m) => !GUEST_UNLOCKED_IDS.has(m.id),
+            );
             if (locked.length > 0) {
               const prize = locked[Math.floor(Math.random() * locked.length)];
               window.localStorage.setItem(LS_PENDING_UNLOCK, prize.id);
@@ -4756,7 +4834,12 @@ export default function ChaosChessPage() {
               stalematedColor,
               chaosStateRef.current.assignedSquares ?? undefined,
               attackerModsForStale,
-              stalemateAnomaly ? { playerAnomaly: stalemateAnomaly, moonUnlocked: stalemateMoonUnlocked ?? false } : undefined,
+              stalemateAnomaly
+                ? {
+                    playerAnomaly: stalemateAnomaly,
+                    moonUnlocked: stalemateMoonUnlocked ?? false,
+                  }
+                : undefined,
             );
             if (staleChaosMoves.length > 0) return false;
           }
@@ -4817,7 +4900,10 @@ export default function ChaosChessPage() {
             chaosStateRef.current.assignedSquares ?? undefined,
             defenderMods,
             defenderAnomaly
-              ? { playerAnomaly: defenderAnomaly, moonUnlocked: defenderMoonUnlocked ?? false }
+              ? {
+                  playerAnomaly: defenderAnomaly,
+                  moonUnlocked: defenderMoonUnlocked ?? false,
+                }
               : undefined,
           )
         ) {
@@ -5100,7 +5186,8 @@ export default function ChaosChessPage() {
           for (let df = -1; df <= 1; df++) {
             for (let dr = -1; dr <= 1; dr++) {
               if (df === 0 && dr === 0) continue;
-              const nf = bf + df, nr = br + dr;
+              const nf = bf + df,
+                nr = br + dr;
               if (nf >= 0 && nf <= 7 && nr >= 0 && nr <= 7)
                 blastSquares.push(`${String.fromCharCode(97 + nf)}${nr + 1}`);
             }
@@ -5389,10 +5476,16 @@ export default function ChaosChessPage() {
                     triggerEffect("flash", [chaosMove.from, chaosMove.to]);
                   } else if (mid === "queen-cannon") {
                     triggerEffect("cannon", [chaosMove.to]);
-                    setTimeout(() => triggerEffect("explosion", [chaosMove.to]), 350);
+                    setTimeout(
+                      () => triggerEffect("explosion", [chaosMove.to]),
+                      350,
+                    );
                   } else if (mid === "railgun") {
                     triggerEffect("cannon", [chaosMove.from]);
-                    const targets = [chaosMove.to, ...(chaosMove.sideEffects ?? [])];
+                    const targets = [
+                      chaosMove.to,
+                      ...(chaosMove.sideEffects ?? []),
+                    ];
                     setTimeout(() => triggerEffect("explosion", targets), 250);
                   } else if (mid === "usurper") {
                     triggerEffect("teleport", [chaosMove.from, chaosMove.to]);
@@ -5421,10 +5514,31 @@ export default function ChaosChessPage() {
                 );
                 // queen-teleport / railgun / usurper are once per game — remove modifier after AI uses it
                 if (chaosMove.modifierId === "queen-teleport") {
-                  cs2 = { ...cs2, aiModifiers: cs2.aiModifiers.filter((m) => m.id !== "queen-teleport"), spentAiModIds: [...(cs2.spentAiModIds ?? []), "queen-teleport"] };
+                  cs2 = {
+                    ...cs2,
+                    aiModifiers: cs2.aiModifiers.filter(
+                      (m) => m.id !== "queen-teleport",
+                    ),
+                    spentAiModIds: [
+                      ...(cs2.spentAiModIds ?? []),
+                      "queen-teleport",
+                    ],
+                  };
                 }
-                if (chaosMove.modifierId === "railgun" || chaosMove.modifierId === "usurper") {
-                  cs2 = { ...cs2, aiModifiers: cs2.aiModifiers.filter((m) => m.id !== chaosMove.modifierId), spentAiModIds: [...(cs2.spentAiModIds ?? []), chaosMove.modifierId] };
+                if (
+                  chaosMove.modifierId === "railgun" ||
+                  chaosMove.modifierId === "usurper"
+                ) {
+                  cs2 = {
+                    ...cs2,
+                    aiModifiers: cs2.aiModifiers.filter(
+                      (m) => m.id !== chaosMove.modifierId,
+                    ),
+                    spentAiModIds: [
+                      ...(cs2.spentAiModIds ?? []),
+                      chaosMove.modifierId,
+                    ],
+                  };
                 }
                 let activeGame = newGame;
 
@@ -5769,9 +5883,13 @@ export default function ChaosChessPage() {
           // Last-resort: pick any legal move so the game doesn't freeze
           const emergencyMoves = g.moves({ verbose: true });
           if (emergencyMoves.length > 0) {
-            const em = emergencyMoves[Math.floor(Math.random() * emergencyMoves.length)];
+            const em =
+              emergencyMoves[Math.floor(Math.random() * emergencyMoves.length)];
             bestUci = em.lan;
-            console.warn("[Chaos AI] No bestUci from Stockfish — using emergency fallback:", bestUci);
+            console.warn(
+              "[Chaos AI] No bestUci from Stockfish — using emergency fallback:",
+              bestUci,
+            );
           } else {
             // Truly no moves (already confirmed chaos-escaped above) — skip
             setIsThinking(false);
@@ -6021,17 +6139,37 @@ export default function ChaosChessPage() {
         });
         if (!moveResult) {
           // bestUci was filtered to an invalid move — try any legal move as last resort
-          console.warn("[Chaos AI] g.move() rejected bestUci:", bestUci, "— trying random fallback");
+          console.warn(
+            "[Chaos AI] g.move() rejected bestUci:",
+            bestUci,
+            "— trying random fallback",
+          );
           const fallbackMoves = g.moves({ verbose: true });
           if (fallbackMoves.length > 0) {
-            const fb = fallbackMoves[Math.floor(Math.random() * fallbackMoves.length)];
-            const fbResult = g.move({ from: fb.from, to: fb.to, promotion: fb.promotion });
-            if (!fbResult) { setIsThinking(false); return; }
+            const fb =
+              fallbackMoves[Math.floor(Math.random() * fallbackMoves.length)];
+            const fbResult = g.move({
+              from: fb.from,
+              to: fb.to,
+              promotion: fb.promotion,
+            });
+            if (!fbResult) {
+              setIsThinking(false);
+              return;
+            }
             // minimal path: just commit the fallback move and resume
             const fbGame = new Chess(g.fen());
-            let cs2fb = updateTrackedPieces(cs, fb.from, fb.to, !!fbResult.captured);
+            let cs2fb = updateTrackedPieces(
+              cs,
+              fb.from,
+              fb.to,
+              !!fbResult.captured,
+            );
             cs2fb = decrementAnomalyCounters(cs2fb, "ai", fb.from, fb.to);
-            if (thisToken.cancelled) { setIsThinking(false); return; }
+            if (thisToken.cancelled) {
+              setIsThinking(false);
+              return;
+            }
             setChaosState(cs2fb);
             setGame(fbGame);
             setSelectedSquare(null);
@@ -6182,11 +6320,21 @@ export default function ChaosChessPage() {
         try {
           const legalMoves = g.moves({ verbose: true });
           if (legalMoves.length > 0 && !g.isGameOver()) {
-            const em = legalMoves[Math.floor(Math.random() * legalMoves.length)];
-            const emResult = g.move({ from: em.from, to: em.to, promotion: em.promotion });
+            const em =
+              legalMoves[Math.floor(Math.random() * legalMoves.length)];
+            const emResult = g.move({
+              from: em.from,
+              to: em.to,
+              promotion: em.promotion,
+            });
             if (emResult) {
               const emGame = new Chess(g.fen());
-              let emCs = updateTrackedPieces(cs, em.from, em.to, !!emResult.captured);
+              let emCs = updateTrackedPieces(
+                cs,
+                em.from,
+                em.to,
+                !!emResult.captured,
+              );
               emCs = decrementAnomalyCounters(emCs, "ai", em.from, em.to);
               if (!thisToken.cancelled) {
                 setChaosState(emCs);
@@ -6343,7 +6491,9 @@ export default function ChaosChessPage() {
    */
   const startMpGameWithAnomalies = useCallback(
     (myAnomalyId: string | null, oppAnomalyId: string | null) => {
-      const myAnomaly = myAnomalyId ? getAnomalyById(myAnomalyId as AnomalyId) : null;
+      const myAnomaly = myAnomalyId
+        ? getAnomalyById(myAnomalyId as AnomalyId)
+        : null;
       // Always start multiplayer from a fresh chaos state
       let cs = createChaosState();
       if (myAnomaly) cs = applyAnomalyToCs(cs, myAnomaly);
@@ -6352,7 +6502,9 @@ export default function ChaosChessPage() {
       setSelectedAnomaly(myAnomaly ?? null);
       setChaosState(cs);
       setGameStatus("playing");
-      recomputeChaosMoves(gameRef.current, cs, { playerAnomaly: myAnomalyId as AnomalyId | null });
+      recomputeChaosMoves(gameRef.current, cs, {
+        playerAnomaly: myAnomalyId as AnomalyId | null,
+      });
       setEventLog((prev) => [
         ...prev,
         {
@@ -6502,17 +6654,21 @@ export default function ChaosChessPage() {
 
       // Show "matched" animation, then open anomaly picker for both players
       setGameStatus("matched");
-      setEventLog([{
-        type: "info",
-        message: `🎮 Joined room ${joinCode.toUpperCase()}! You are ${guestColor}. Preparing anomaly selection…`,
-        icon: "🎮",
-        pepe: PEPE.hyped,
-      }]);
+      setEventLog([
+        {
+          type: "info",
+          message: `🎮 Joined room ${joinCode.toUpperCase()}! You are ${guestColor}. Preparing anomaly selection…`,
+          icon: "🎮",
+          pepe: PEPE.hyped,
+        },
+      ]);
       playSound("reveal-stinger");
       if (matchedTransitionTimeoutRef.current)
         clearTimeout(matchedTransitionTimeoutRef.current);
       matchedTransitionTimeoutRef.current = setTimeout(() => {
-        setAnomalyPickerChoices(rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)));
+        setAnomalyPickerChoices(
+          rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)),
+        );
         setGameStatus("picking-anomaly");
       }, 2500);
     } catch {
@@ -6536,7 +6692,8 @@ export default function ChaosChessPage() {
                 ...p,
                 {
                   type: "info",
-                  message: "🎮 Opponent connected! Preparing anomaly selection…",
+                  message:
+                    "🎮 Opponent connected! Preparing anomaly selection…",
                   icon: "🎮",
                   pepe: PEPE.hyped,
                 },
@@ -6551,7 +6708,9 @@ export default function ChaosChessPage() {
               if (matchedTransitionTimeoutRef.current)
                 clearTimeout(matchedTransitionTimeoutRef.current);
               matchedTransitionTimeoutRef.current = setTimeout(() => {
-                setAnomalyPickerChoices(rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)));
+                setAnomalyPickerChoices(
+                  rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)),
+                );
                 setGameStatus("picking-anomaly");
               }, 2500);
               return "matched";
@@ -6619,7 +6778,9 @@ export default function ChaosChessPage() {
             if (matchedTransitionTimeoutRef.current)
               clearTimeout(matchedTransitionTimeoutRef.current);
             matchedTransitionTimeoutRef.current = setTimeout(() => {
-              setAnomalyPickerChoices(rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)));
+              setAnomalyPickerChoices(
+                rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)),
+              );
               setGameStatus("picking-anomaly");
             }, 2500);
             return "matched";
@@ -6701,7 +6862,10 @@ export default function ChaosChessPage() {
         setOpponentAnomalyPickedId(oppId);
         if (myAnomalyPickSentRef.current) {
           // Both have picked — start the game
-          startMpGameWithAnomalies(pendingMpAnomalyRef.current?.id ?? null, oppId);
+          startMpGameWithAnomalies(
+            pendingMpAnomalyRef.current?.id ?? null,
+            oppId,
+          );
         }
         return;
       }
@@ -7027,7 +7191,13 @@ export default function ChaosChessPage() {
         }
       }
     },
-    [playerColor, checkGameEnd, recomputeChaosMoves, spawnPepe, startMpGameWithAnomalies],
+    [
+      playerColor,
+      checkGameEnd,
+      recomputeChaosMoves,
+      spawnPepe,
+      startMpGameWithAnomalies,
+    ],
   );
 
   const { send: partySend, isConnected: partyConnected } = usePartyRoom(
@@ -7060,7 +7230,12 @@ export default function ChaosChessPage() {
    * after 10 s rather than leaving both players frozen on "waiting for opponent".
    */
   useEffect(() => {
-    if (!myPickSent || opponentAnomalyPickedId !== undefined || gameMode === "ai") return;
+    if (
+      !myPickSent ||
+      opponentAnomalyPickedId !== undefined ||
+      gameMode === "ai"
+    )
+      return;
     const timer = setTimeout(() => {
       if (gameStatusRef.current !== "picking-anomaly") return;
       startMpGameWithAnomalies(pendingMpAnomalyRef.current?.id ?? null, null);
@@ -7119,7 +7294,12 @@ export default function ChaosChessPage() {
                 if (matchedTransitionTimeoutRef.current)
                   clearTimeout(matchedTransitionTimeoutRef.current);
                 matchedTransitionTimeoutRef.current = setTimeout(() => {
-                  setAnomalyPickerChoices(rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)));
+                  setAnomalyPickerChoices(
+                    rollAnomalyChoices(
+                      4,
+                      Math.floor(Math.random() * 1_000_000),
+                    ),
+                  );
                   setGameStatus("picking-anomaly");
                 }, 2500);
                 return "matched";
@@ -7664,11 +7844,32 @@ export default function ChaosChessPage() {
         );
         // queen-teleport / railgun / usurper are once per game — remove modifier after use
         if (chaosMove.modifierId === "queen-teleport") {
-          cs = { ...cs, playerModifiers: cs.playerModifiers.filter((m) => m.id !== "queen-teleport"), spentPlayerModIds: [...(cs.spentPlayerModIds ?? []), "queen-teleport"] };
+          cs = {
+            ...cs,
+            playerModifiers: cs.playerModifiers.filter(
+              (m) => m.id !== "queen-teleport",
+            ),
+            spentPlayerModIds: [
+              ...(cs.spentPlayerModIds ?? []),
+              "queen-teleport",
+            ],
+          };
           setWarpQueenActive(false);
         }
-        if (chaosMove.modifierId === "railgun" || chaosMove.modifierId === "usurper") {
-          cs = { ...cs, playerModifiers: cs.playerModifiers.filter((m) => m.id !== chaosMove.modifierId), spentPlayerModIds: [...(cs.spentPlayerModIds ?? []), chaosMove.modifierId] };
+        if (
+          chaosMove.modifierId === "railgun" ||
+          chaosMove.modifierId === "usurper"
+        ) {
+          cs = {
+            ...cs,
+            playerModifiers: cs.playerModifiers.filter(
+              (m) => m.id !== chaosMove.modifierId,
+            ),
+            spentPlayerModIds: [
+              ...(cs.spentPlayerModIds ?? []),
+              chaosMove.modifierId,
+            ],
+          };
         }
         // Decrement Justice / Devil counters (player's half-move)
         cs = decrementAnomalyCounters(cs, "player", from, to);
@@ -7958,7 +8159,9 @@ export default function ChaosChessPage() {
           return new Chess(finalGame.fen());
         } catch {
           // Post-move effects produced an invalid FEN; fall back to plain post-move state
-          console.warn("[Chaos] Invalid FEN after post-move effects — using plain game FEN");
+          console.warn(
+            "[Chaos] Invalid FEN after post-move effects — using plain game FEN",
+          );
           return new Chess(game.fen());
         }
       })();
@@ -7984,7 +8187,10 @@ export default function ChaosChessPage() {
       ) {
         const amazonMod = ALL_MODIFIERS.find((m) => m.id === "amazon");
         if (amazonMod)
-          cs2 = { ...cs2, playerModifiers: [...cs2.playerModifiers, amazonMod] };
+          cs2 = {
+            ...cs2,
+            playerModifiers: [...cs2.playerModifiers, amazonMod],
+          };
       }
       let activeG = newG;
 
@@ -8273,7 +8479,9 @@ export default function ChaosChessPage() {
         try {
           return new Chess(finalGame.fen());
         } catch {
-          console.warn("[Chaos] Invalid FEN in executeStdPromotion — using plain game FEN");
+          console.warn(
+            "[Chaos] Invalid FEN in executeStdPromotion — using plain game FEN",
+          );
           return new Chess(game.fen());
         }
       })();
@@ -8439,8 +8647,10 @@ export default function ChaosChessPage() {
         return;
       }
 
-      // Not the player's turn (and not thinking) — do nothing
-      if (!isPlayerTurn) return;
+      // Not the player's turn (and not thinking) — do nothing.
+      // Exception: anomaly activation modes (duck-place, etc.) must still work
+      // even after the turn has flipped, because they are post-move actions.
+      if (!isPlayerTurn && !anomalyActivationMode) return;
 
       // ── Anomaly activation mode click handling ──
       if (anomalyActivationMode) {
@@ -8528,8 +8738,7 @@ export default function ChaosChessPage() {
             // Lovers swap counts as the player's turn — make AI move, or sync to server
             if (gameMode === "ai")
               setTimeout(() => makeAiMove(swapG, cs), AI_MOVE_DELAY);
-            else
-              sendMoveToServer(swapG, firstSq, square, cs, true);
+            else sendMoveToServer(swapG, firstSq, square, cs, true);
           }
           return;
         }
@@ -9732,9 +9941,10 @@ export default function ChaosChessPage() {
     playerColor,
   ]);
 
-  /* ── Reset warp-queen toggle after every move ── */
+  /* ── Reset warp-queen and usurper toggles after every move ── */
   useEffect(() => {
     setWarpQueenActive(false);
+    setUsurperActive(false);
   }, [game]);
 
   /* ── Active chaos moves count badge ── */
@@ -10079,8 +10289,8 @@ export default function ChaosChessPage() {
                 Find a random opponent to play Chaos Chess against
               </p>
               <ChaosLobby
-                  isSignedIn={true}
-                  onMatchFound={(data) => {
+                isSignedIn={true}
+                onMatchFound={(data) => {
                   setRoomId(data.roomId);
                   setRoomCode(data.roomCode);
                   setGameMode("matchmake");
@@ -10143,17 +10353,25 @@ export default function ChaosChessPage() {
                   }
                   // Show "matched" animation, then open anomaly picker for both
                   setGameStatus("matched");
-                  setEventLog([{
-                    type: "info",
-                    message: "⚔️ Opponent found! Preparing anomaly selection…",
-                    icon: "⚔️",
-                    pepe: PEPE.hyped,
-                  }]);
+                  setEventLog([
+                    {
+                      type: "info",
+                      message:
+                        "⚔️ Opponent found! Preparing anomaly selection…",
+                      icon: "⚔️",
+                      pepe: PEPE.hyped,
+                    },
+                  ]);
                   playSound("reveal-stinger");
                   if (matchedTransitionTimeoutRef.current)
                     clearTimeout(matchedTransitionTimeoutRef.current);
                   matchedTransitionTimeoutRef.current = setTimeout(() => {
-                    setAnomalyPickerChoices(rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)));
+                    setAnomalyPickerChoices(
+                      rollAnomalyChoices(
+                        4,
+                        Math.floor(Math.random() * 1_000_000),
+                      ),
+                    );
                     setGameStatus("picking-anomaly");
                   }, 2500);
                 }}
@@ -10472,7 +10690,10 @@ export default function ChaosChessPage() {
           />
           <h1
             className="mb-3 bg-gradient-to-r from-purple-300 via-fuchsia-300 to-amber-300 bg-clip-text text-3xl font-black tracking-wide text-transparent"
-            style={{ animation: "draft-title-enter 0.6s cubic-bezier(0.34,1.56,0.64,1) both" }}
+            style={{
+              animation:
+                "draft-title-enter 0.6s cubic-bezier(0.34,1.56,0.64,1) both",
+            }}
           >
             ⚔️ Opponent Found!
           </h1>
@@ -10481,7 +10702,9 @@ export default function ChaosChessPage() {
           </p>
           {/* Color indicators */}
           <div className="flex items-center gap-6">
-            <div className={`flex flex-col items-center gap-2 ${playerColor === "white" ? "opacity-100" : "opacity-50"}`}>
+            <div
+              className={`flex flex-col items-center gap-2 ${playerColor === "white" ? "opacity-100" : "opacity-50"}`}
+            >
               <span className="text-3xl">♔</span>
               <span className="text-xs font-bold text-white">You</span>
               <span className="text-[10px] text-slate-500">White</span>
@@ -10491,7 +10714,9 @@ export default function ChaosChessPage() {
               <span className="text-xs text-slate-600">vs</span>
               <div className="h-px w-12 bg-gradient-to-r from-transparent via-purple-500 to-transparent" />
             </div>
-            <div className={`flex flex-col items-center gap-2 ${playerColor === "black" ? "opacity-100" : "opacity-50"}`}>
+            <div
+              className={`flex flex-col items-center gap-2 ${playerColor === "black" ? "opacity-100" : "opacity-50"}`}
+            >
               <span className="text-3xl">♚</span>
               <span className="text-xs font-bold text-white">You</span>
               <span className="text-[10px] text-slate-500">Black</span>
@@ -10589,7 +10814,10 @@ export default function ChaosChessPage() {
               pendingMpAnomalyRef.current = anomaly;
               myAnomalyPickSentRef.current = true;
               setMyPickSent(true);
-              partySendRef.current?.({ type: "anomaly_pick", anomalyId: anomaly.id });
+              partySendRef.current?.({
+                type: "anomaly_pick",
+                anomalyId: anomaly.id,
+              });
               // If opponent already picked, start the game now
               if (opponentAnomalyPickedId !== undefined) {
                 startMpGameWithAnomalies(anomaly.id, opponentAnomalyPickedId);
@@ -11130,6 +11358,23 @@ export default function ChaosChessPage() {
                       </button>
                     )}
 
+                  {/* Usurper activation button */}
+                  {chaosState.playerModifiers.some((m) => m.id === "usurper") &&
+                    ((playerColor === "white" && game.turn() === "w") ||
+                      (playerColor === "black" && game.turn() === "b")) && (
+                      <button
+                        type="button"
+                        onClick={() => setUsurperActive((v) => !v)}
+                        className={`rounded-lg border px-4 py-2 text-xs font-bold transition-all ${
+                          usurperActive
+                            ? "border-amber-400/60 bg-amber-500/30 text-amber-200 shadow-[0_0_8px_rgba(245,158,11,0.5)]"
+                            : "border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20"
+                        }`}
+                      >
+                        👑 Usurper {usurperActive ? "— active" : ""}
+                      </button>
+                    )}
+
                   {/* Once-per-game anomaly activation button */}
                   {(() => {
                     const isPlayerTurn_ =
@@ -11204,7 +11449,13 @@ export default function ChaosChessPage() {
                               );
                             } else {
                               // Multiplayer: send the held move without duck placement
-                              sendMoveToServer(pending.game, pending.from, pending.to, pending.cs, true);
+                              sendMoveToServer(
+                                pending.game,
+                                pending.from,
+                                pending.to,
+                                pending.cs,
+                                true,
+                              );
                             }
                             return;
                           }
