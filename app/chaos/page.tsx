@@ -1039,17 +1039,43 @@ type EventLogEntry = {
  * Each client maps these to/from their local perspective based on
  * what color they are playing.
  */
+/** All paired player/ai fields that must be swapped when applying a Black-perspective state
+ * to the server (where "player" = White, "ai" = Black) and vice-versa. */
+function swapPlayerAiFields(s: ChaosState): ChaosState {
+  return {
+    ...s,
+    playerModifiers: s.aiModifiers,
+    aiModifiers: s.playerModifiers,
+    playerAnomaly: s.aiAnomaly,
+    aiAnomaly: s.playerAnomaly,
+    playerAnomalyUsed: s.aiAnomalyUsed,
+    aiAnomalyUsed: s.playerAnomalyUsed,
+    playerMoonUnlocked: s.aiMoonUnlocked,
+    aiMoonUnlocked: s.playerMoonUnlocked,
+    playerImmuneSquare: s.aiImmuneSquare,
+    aiImmuneSquare: s.playerImmuneSquare,
+    playerImmuneTurnsLeft: s.aiImmuneTurnsLeft,
+    aiImmuneTurnsLeft: s.playerImmuneTurnsLeft,
+    playerFrozenSquare: s.aiFrozenSquare,
+    aiFrozenSquare: s.playerFrozenSquare,
+    playerFrozenTurnsLeft: s.aiFrozenTurnsLeft,
+    aiFrozenTurnsLeft: s.playerFrozenTurnsLeft,
+    playerWorldReady: s.aiWorldReady,
+    aiWorldReady: s.playerWorldReady,
+    playerCapturedForJudgement: s.aiCapturedForJudgement,
+    aiCapturedForJudgement: s.playerCapturedForJudgement,
+    playerNuclearCooldownUntil: s.aiNuclearCooldownUntil,
+    aiNuclearCooldownUntil: s.playerNuclearCooldownUntil,
+  };
+}
+
 function toServerChaosState(
   localState: ChaosState,
   myColor: "white" | "black",
 ): ChaosState {
   if (myColor === "white") return localState; // already aligned
-  // Swap: my "player" mods = black's from server perspective → stored as aiModifiers
-  return {
-    ...localState,
-    playerModifiers: localState.aiModifiers,
-    aiModifiers: localState.playerModifiers,
-  };
+  // Black's local perspective → server canonical (player = White, ai = Black)
+  return swapPlayerAiFields(localState);
 }
 
 function fromServerChaosState(
@@ -1057,12 +1083,8 @@ function fromServerChaosState(
   myColor: "white" | "black",
 ): ChaosState {
   if (myColor === "white") return serverState; // already aligned
-  // Swap back: server playerModifiers = white's mods → my "ai" (opponent)
-  return {
-    ...serverState,
-    playerModifiers: serverState.aiModifiers,
-    aiModifiers: serverState.playerModifiers,
-  };
+  // Server canonical → Black's local perspective
+  return swapPlayerAiFields(serverState);
 }
 
 /* ────────────────────────── Pepe Emojis ────────────────────────── */
