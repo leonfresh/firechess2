@@ -1035,6 +1035,7 @@ type GameMode = "ai" | "friend" | "matchmake";
 type GameStatus =
   | "setup"
   | "waiting"
+  | "matched"
   | "picking-anomaly"
   | "playing"
   | "drafting"
@@ -3861,17 +3862,19 @@ export default function ChaosChessPage() {
   const [selectedAnomaly, setSelectedAnomaly] =
     useState<AnomalyDefinition | null>(null);
 
-  /** Pending multiplayer action: executed after anomaly picker completes */
-  const pendingMpActionRef = useRef<
-    | { type: "createRoom"; color: "white" | "black" }
-    | { type: "joinRoom" }
-    | { type: "matchmake" }
-    | null
-  >(null);
-  /** The anomaly chosen before a multiplayer game — applied when game initialises */
+  /**
+   * Multiplayer anomaly sync:
+   * - pendingMpAnomalyRef: our own pick, stored until the opponent's pick also arrives
+   * - opponentAnomalyPickedId: opponent's anomalyId received via PartyKit (undefined = not yet received)
+   * - myAnomalyPickSentRef: true once we've sent our anomaly_pick message
+   */
   const pendingMpAnomalyRef = useRef<AnomalyDefinition | null>(null);
-  /** Matchmake mode: has the player picked their anomaly yet (gates ChaosLobby)? */
-  const [matchmakeAnomalyPicked, setMatchmakeAnomalyPicked] = useState(false);
+  const [opponentAnomalyPickedId, setOpponentAnomalyPickedId] = useState<
+    string | null | undefined
+  >(undefined);
+  const myAnomalyPickSentRef = useRef(false);
+  /** setTimeout handle for "matched" → "picking-anomaly" transition — so it can be cancelled on disconnect */
+  const matchedTransitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /**
    * Anomaly activation mode:
    * - null: no activation in progress
@@ -6083,6 +6086,36 @@ export default function ChaosChessPage() {
     [],
   );
 
+  /**
+   * Called when BOTH players' anomaly picks are known in a multiplayer game.
+   * Applies both anomalies to a fresh chaos state and transitions to "playing".
+   */
+  const startMpGameWithAnomalies = useCallback(
+    (myAnomalyId: string | null, oppAnomalyId: string | null) => {
+      const myAnomaly = myAnomalyId ? getAnomalyById(myAnomalyId) : null;
+      // Always start multiplayer from a fresh chaos state
+      let cs = createChaosState();
+      if (myAnomaly) cs = applyAnomalyToCs(cs, myAnomaly);
+      if (oppAnomalyId) cs = { ...cs, aiAnomaly: oppAnomalyId as AnomalyId };
+
+      setSelectedAnomaly(myAnomaly ?? null);
+      setChaosState(cs);
+      setGameStatus("playing");
+      recomputeChaosMoves(gameRef.current, cs, { playerAnomaly: myAnomalyId });
+      setEventLog((prev) => [
+        ...prev,
+        {
+          type: "info" as const,
+          message: `⚡ Game on!${myAnomaly ? ` Your anomaly: ${myAnomaly.icon} ${myAnomaly.name}` : " No anomaly."}`,
+          icon: "⚡",
+          pepe: PEPE.hyped,
+        },
+      ]);
+      playSound("reveal-stinger");
+    },
+    [recomputeChaosMoves],
+  );
+
   /* ── Multiplayer: Create room ── */
   const createRoom = useCallback(async (color: "white" | "black") => {
     try {
@@ -6168,34 +6201,17 @@ export default function ChaosChessPage() {
       const guestColor = data.hostColor === "white" ? "black" : "white";
       setPlayerColor(guestColor as "white" | "black");
       setGameMode("friend");
-      setGameStatus("playing");
       setOpponentLabel("Friend");
       const rawCs = data.chaosState
         ? (data.chaosState as ChaosState)
         : createChaosState();
-      let cs = fromServerChaosState(rawCs, guestColor as "white" | "black");
-      // Apply the anomaly the joiner chose before typing the room code
-      const joinAnomaly = pendingMpAnomalyRef.current;
-      if (joinAnomaly) {
-        pendingMpAnomalyRef.current = null;
-        cs = applyAnomalyToCs(cs, joinAnomaly);
-        setSelectedAnomaly(joinAnomaly);
-      }
+      const cs = fromServerChaosState(rawCs, guestColor as "white" | "black");
       setChaosState(cs);
       const g = new Chess(data.fen);
       setGame(g);
       setMoveLog([]);
       setFloatingPepes([]);
       setCapturedPawns({ w: 0, b: 0 });
-      setEventLog([
-        {
-          type: "info",
-          message: `🎮 Joined room ${joinCode.toUpperCase()}! You are ${guestColor}. Game on!`,
-          icon: "🎮",
-          pepe: PEPE.hyped,
-        },
-      ]);
-      playSound("reveal-stinger");
       // No clock time controls — always untimed
       setTimeControl(null);
       setTimers({ w: 0, b: 0 });
@@ -6204,13 +6220,24 @@ export default function ChaosChessPage() {
       setAiEloSaved(false);
       setMyRating(null);
       setOpponentRating(null);
-      recomputeChaosMoves(g, cs);
       // Reset draft refs so a new game always starts with a clean slate
       justDraftedRef.current = false;
       triggeredDraftForPhaseRef.current = -1;
       pendingDraftAfterRevealRef.current = null;
       pendingMoveBeforeDraftRef.current = null;
+      pendingMpAnomalyRef.current = null;
+      myAnomalyPickSentRef.current = false;
+      setOpponentAnomalyPickedId(undefined);
       setWaitingForOpponentDraft(false);
+      setEndReason("");
+      setDrawOfferSent(false);
+      setDrawOfferReceived(false);
+      setRematchRequested(false);
+      setRematchReceived(false);
+      setSelectedSquare(null);
+      setLegalMoveSquares({});
+      setLastMoveHighlight({});
+      setAvailableChaosMoves([]);
 
       // Start slow fallback polling + notify host via WebSocket
       startPolling(data.roomId, guestColor);
@@ -6220,6 +6247,22 @@ export default function ChaosChessPage() {
           partySendRef.current({ type: "join", guestId: "" });
         }
       }, 500); // brief delay to let the socket connect
+
+      // Show "matched" animation, then open anomaly picker for both players
+      setGameStatus("matched");
+      setEventLog([{
+        type: "info",
+        message: `🎮 Joined room ${joinCode.toUpperCase()}! You are ${guestColor}. Preparing anomaly selection…`,
+        icon: "🎮",
+        pepe: PEPE.hyped,
+      }]);
+      playSound("reveal-stinger");
+      if (matchedTransitionTimeoutRef.current)
+        clearTimeout(matchedTransitionTimeoutRef.current);
+      matchedTransitionTimeoutRef.current = setTimeout(() => {
+        setAnomalyPickerChoices(rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)));
+        setGameStatus("picking-anomaly");
+      }, 2500);
     } catch {
       setEventLog((prev) => [
         ...prev,
@@ -6241,18 +6284,29 @@ export default function ChaosChessPage() {
                 ...p,
                 {
                   type: "info",
-                  message: "🎮 Opponent connected! Game on!",
+                  message: "🎮 Opponent connected! Preparing anomaly selection…",
                   icon: "🎮",
                   pepe: PEPE.hyped,
                 },
               ]);
               playSound("reveal-stinger");
-              return "playing";
+              // Reset sync state and init choices for the picker
+              pendingMpAnomalyRef.current = null;
+              myAnomalyPickSentRef.current = false;
+              setOpponentAnomalyPickedId(undefined);
+              // Transition to "matched" animation, then after 2.5s open anomaly picker
+              if (matchedTransitionTimeoutRef.current)
+                clearTimeout(matchedTransitionTimeoutRef.current);
+              matchedTransitionTimeoutRef.current = setTimeout(() => {
+                setAnomalyPickerChoices(rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)));
+                setGameStatus("picking-anomaly");
+              }, 2500);
+              return "matched";
             }
             return prev;
           });
         } else {
-          // count dropped to 1 — opponent disconnected during an active game
+          // count dropped to 1 — opponent disconnected
           setGameStatus((prev) => {
             if (prev === "playing" || prev === "drafting") {
               setGameResult(playerColor);
@@ -6269,6 +6323,21 @@ export default function ChaosChessPage() {
               playSound("reveal-stinger");
               return "game-over";
             }
+            if (prev === "matched" || prev === "picking-anomaly") {
+              // Opponent left before game started — cancel
+              if (matchedTransitionTimeoutRef.current)
+                clearTimeout(matchedTransitionTimeoutRef.current);
+              setEventLog((p) => [
+                ...p,
+                {
+                  type: "info",
+                  message: "💨 Opponent disconnected before the game started.",
+                  icon: "💨",
+                  pepe: PEPE.sweat,
+                },
+              ]);
+              return "setup";
+            }
             return prev;
           });
         }
@@ -6284,13 +6353,22 @@ export default function ChaosChessPage() {
               ...p,
               {
                 type: "info",
-                message: "🎮 Opponent joined! Game on!",
+                message: "🎮 Opponent joined! Preparing anomaly selection…",
                 icon: "🎮",
                 pepe: PEPE.hyped,
               },
             ]);
             playSound("reveal-stinger");
-            return "playing";
+            pendingMpAnomalyRef.current = null;
+            myAnomalyPickSentRef.current = false;
+            setOpponentAnomalyPickedId(undefined);
+            if (matchedTransitionTimeoutRef.current)
+              clearTimeout(matchedTransitionTimeoutRef.current);
+            matchedTransitionTimeoutRef.current = setTimeout(() => {
+              setAnomalyPickerChoices(rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)));
+              setGameStatus("picking-anomaly");
+            }, 2500);
+            return "matched";
           }
           return prev;
         });
@@ -6360,6 +6438,17 @@ export default function ChaosChessPage() {
             pepe: PEPE.sadge,
           },
         ]);
+        return;
+      }
+
+      if (msg.type === "anomaly_pick") {
+        // Opponent sent their anomaly choice — check if we've already sent ours
+        const oppId = msg.anomalyId;
+        setOpponentAnomalyPickedId(oppId);
+        if (myAnomalyPickSentRef.current) {
+          // Both have picked — start the game
+          startMpGameWithAnomalies(pendingMpAnomalyRef.current?.id ?? null, oppId);
+        }
         return;
       }
 
@@ -6659,7 +6748,7 @@ export default function ChaosChessPage() {
         }
       }
     },
-    [playerColor, checkGameEnd, recomputeChaosMoves, spawnPepe],
+    [playerColor, checkGameEnd, recomputeChaosMoves, spawnPepe, startMpGameWithAnomalies],
   );
 
   const { send: partySend, isConnected: partyConnected } = usePartyRoom(
@@ -9471,8 +9560,6 @@ export default function ChaosChessPage() {
                 type="button"
                 onClick={() => {
                   setGameMode(mode);
-                  // Reset matchmake anomaly pick when switching tabs
-                  if (mode !== "matchmake") setMatchmakeAnomalyPicked(false);
                 }}
                 className={`flex-1 rounded-lg py-3 text-xs font-semibold transition-all sm:py-3.5 sm:text-sm ${
                   gameMode === mode
@@ -9590,22 +9677,14 @@ export default function ChaosChessPage() {
                 <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => {
-                      pendingMpActionRef.current = { type: "createRoom", color: "white" };
-                      setAnomalyPickerChoices(rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)));
-                      setGameStatus("picking-anomaly");
-                    }}
+                    onClick={() => createRoom("white")}
                     className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.04] py-2.5 text-sm font-medium text-white transition-all hover:bg-white/[0.1]"
                   >
                     ♔ White
                   </button>
                   <button
                     type="button"
-                    onClick={() => {
-                      pendingMpActionRef.current = { type: "createRoom", color: "black" };
-                      setAnomalyPickerChoices(rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)));
-                      setGameStatus("picking-anomaly");
-                    }}
+                    onClick={() => createRoom("black")}
                     className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.04] py-2.5 text-sm font-medium text-white transition-all hover:bg-white/[0.1]"
                   >
                     ♚ Black
@@ -9629,12 +9708,7 @@ export default function ChaosChessPage() {
                   />
                   <button
                     type="button"
-                    onClick={() => {
-                      if (joinCode.length !== 6) return;
-                      pendingMpActionRef.current = { type: "joinRoom" };
-                      setAnomalyPickerChoices(rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)));
-                      setGameStatus("picking-anomaly");
-                    }}
+                    onClick={joinRoom}
                     disabled={joinCode.length !== 6}
                     className="rounded-lg bg-purple-500/20 px-5 py-2.5 text-sm font-medium text-purple-400 transition-all hover:bg-purple-500/30 disabled:opacity-40"
                   >
@@ -9651,29 +9725,7 @@ export default function ChaosChessPage() {
               <p className="text-sm text-slate-400">
                 Find a random opponent to play Chaos Chess against
               </p>
-              {!matchmakeAnomalyPicked ? (
-                /* Step 1: pick anomaly before searching */
-                <div className="flex flex-col items-center gap-3 rounded-xl border border-purple-500/20 bg-purple-500/5 p-5 w-full text-center">
-                  <p className="text-xs font-bold uppercase tracking-wider text-purple-400">
-                    ✦ Choose Your Anomaly First ✦
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    Pick your special power before entering the matchmaking queue.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      pendingMpActionRef.current = { type: "matchmake" };
-                      setAnomalyPickerChoices(rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)));
-                      setGameStatus("picking-anomaly");
-                    }}
-                    className="rounded-xl border border-purple-500/30 bg-purple-500/10 px-6 py-3 text-sm font-bold text-purple-400 transition-all hover:bg-purple-500/20 hover:scale-105"
-                  >
-                    🪄 Pick Anomaly
-                  </button>
-                </div>
-              ) : (
-                <ChaosLobby
+              <ChaosLobby
                   isSignedIn={true}
                   onMatchFound={(data) => {
                   setRoomId(data.roomId);
@@ -9690,15 +9742,10 @@ export default function ChaosChessPage() {
                       ? "white"
                       : "black";
                   setPlayerColor(myColor as "white" | "black");
-                  setGameStatus("playing");
                   setMatchmakeState("found");
-                  const anomalyForMatch = pendingMpAnomalyRef.current;
-                  pendingMpAnomalyRef.current = null;
-                  let cs = createChaosState();
-                  if (anomalyForMatch) {
-                    cs = applyAnomalyToCs(cs, anomalyForMatch);
-                    setSelectedAnomaly(anomalyForMatch);
-                  }
+
+                  // Initialize fresh game state (anomalies applied after both players pick)
+                  const cs = createChaosState();
                   setChaosState(cs);
                   const g = new Chess();
                   setGame(g);
@@ -9707,6 +9754,9 @@ export default function ChaosChessPage() {
                   triggeredDraftForPhaseRef.current = -1;
                   pendingDraftAfterRevealRef.current = null;
                   justDraftedRef.current = false;
+                  pendingMpAnomalyRef.current = null;
+                  myAnomalyPickSentRef.current = false;
+                  setOpponentAnomalyPickedId(undefined);
                   setEndReason("");
                   setDrawOfferSent(false);
                   setDrawOfferReceived(false);
@@ -9719,14 +9769,6 @@ export default function ChaosChessPage() {
                   setMoveLog([]);
                   setFloatingPepes([]);
                   setCapturedPawns({ w: 0, b: 0 });
-                  setEventLog([
-                    {
-                      type: "info",
-                      message: "🎯 Opponent found! Game on!",
-                      icon: "🎯",
-                      pepe: PEPE.hyped,
-                    },
-                  ]);
                   // Reset ELO and timer state (timers will be synced from first poll)
                   setEloChange(null);
                   setEloSaved(false);
@@ -9735,9 +9777,7 @@ export default function ChaosChessPage() {
                   setOpponentRating(null);
                   setTimers({ w: 0, b: 0 });
                   setTimeControl(null);
-                  playSound("reveal-stinger");
                   spawnPepe(PEPE.hyped);
-                  recomputeChaosMoves(g, cs);
                   startPolling(data.roomId, myColor);
                   // Notify via WebSocket
                   if (data.joined) {
@@ -9747,13 +9787,27 @@ export default function ChaosChessPage() {
                       }
                     }, 500);
                   }
+                  // Show "matched" animation, then open anomaly picker for both
+                  setGameStatus("matched");
+                  setEventLog([{
+                    type: "info",
+                    message: "⚔️ Opponent found! Preparing anomaly selection…",
+                    icon: "⚔️",
+                    pepe: PEPE.hyped,
+                  }]);
+                  playSound("reveal-stinger");
+                  if (matchedTransitionTimeoutRef.current)
+                    clearTimeout(matchedTransitionTimeoutRef.current);
+                  matchedTransitionTimeoutRef.current = setTimeout(() => {
+                    setAnomalyPickerChoices(rollAnomalyChoices(4, Math.floor(Math.random() * 1_000_000)));
+                    setGameStatus("picking-anomaly");
+                  }, 2500);
                 }}
                 onCancel={() => {
                   setMatchmakeState("idle");
                   if (pollRef.current) clearInterval(pollRef.current);
                 }}
               />
-              )}
             </div>
           )}
 
@@ -10050,6 +10104,53 @@ export default function ChaosChessPage() {
     );
   }
 
+  // Matched animation screen — both players connected, about to pick anomalies
+  if (gameStatus === "matched") {
+    return (
+      <div className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-gradient-to-b from-[#030712] via-[#0a0f1a] to-[#030712]">
+        <ChaosParticles />
+        <div className="relative z-10 mx-auto flex max-w-md flex-col items-center px-4 py-20 text-center">
+          <img
+            src={PEPE.hyped}
+            alt=""
+            className="mb-6 h-24 w-24 object-contain"
+            style={{ animation: "pepe-bounce 1s ease-in-out infinite" }}
+          />
+          <h1
+            className="mb-3 bg-gradient-to-r from-purple-300 via-fuchsia-300 to-amber-300 bg-clip-text text-3xl font-black tracking-wide text-transparent"
+            style={{ animation: "draft-title-enter 0.6s cubic-bezier(0.34,1.56,0.64,1) both" }}
+          >
+            ⚔️ Opponent Found!
+          </h1>
+          <p className="mb-8 text-sm text-slate-400">
+            Preparing anomaly selection…
+          </p>
+          {/* Color indicators */}
+          <div className="flex items-center gap-6">
+            <div className={`flex flex-col items-center gap-2 ${playerColor === "white" ? "opacity-100" : "opacity-50"}`}>
+              <span className="text-3xl">♔</span>
+              <span className="text-xs font-bold text-white">You</span>
+              <span className="text-[10px] text-slate-500">White</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+              <div className="h-px w-12 bg-gradient-to-r from-transparent via-purple-500 to-transparent" />
+              <span className="text-xs text-slate-600">vs</span>
+              <div className="h-px w-12 bg-gradient-to-r from-transparent via-purple-500 to-transparent" />
+            </div>
+            <div className={`flex flex-col items-center gap-2 ${playerColor === "black" ? "opacity-100" : "opacity-50"}`}>
+              <span className="text-3xl">♚</span>
+              <span className="text-xs font-bold text-white">You</span>
+              <span className="text-[10px] text-slate-500">Black</span>
+            </div>
+          </div>
+          <p className="mt-8 text-xs text-slate-600">
+            ✦ Choose Your Anomaly ✦ comes up in a moment…
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Game / Drafting / Game Over
   return (
     <>
@@ -10112,40 +10213,32 @@ export default function ChaosChessPage() {
             choices={anomalyPickerChoices}
             isPro={plan === "pro" || plan === "lifetime"}
             onPick={(anomaly) => {
-              const mpAction = pendingMpActionRef.current;
-              if (!mpAction) {
-                // AI mode (no pending mp action)
+              if (gameMode === "ai") {
+                // Solo AI game — launch immediately
                 launchGame(playerColor, gameMode, anomaly);
                 return;
               }
-              // Multiplayer: store anomaly, apply to chaosState, then execute action
-              pendingMpActionRef.current = null;
+              // Multiplayer: store pick, broadcast to opponent, wait for their pick
               pendingMpAnomalyRef.current = anomaly;
-              setSelectedAnomaly(anomaly);
-              setChaosState((prev) => applyAnomalyToCs(prev, anomaly));
-              if (mpAction.type === "createRoom") {
-                createRoom(mpAction.color);
-              } else if (mpAction.type === "joinRoom") {
-                joinRoom();
-              } else if (mpAction.type === "matchmake") {
-                setMatchmakeAnomalyPicked(true);
-                setGameStatus("setup");
+              myAnomalyPickSentRef.current = true;
+              partySendRef.current?.({ type: "anomaly_pick", anomalyId: anomaly.id });
+              // If opponent already picked, start the game now
+              if (opponentAnomalyPickedId !== undefined) {
+                startMpGameWithAnomalies(anomaly.id, opponentAnomalyPickedId);
               }
+              // else: wait — the anomaly_pick handler will call startMpGameWithAnomalies
             }}
             onSkip={() => {
-              const mpAction = pendingMpActionRef.current;
-              if (!mpAction) {
+              if (gameMode === "ai") {
                 launchGame(playerColor, gameMode, null);
                 return;
               }
-              pendingMpActionRef.current = null;
-              if (mpAction.type === "createRoom") {
-                createRoom(mpAction.color);
-              } else if (mpAction.type === "joinRoom") {
-                joinRoom();
-              } else if (mpAction.type === "matchmake") {
-                setMatchmakeAnomalyPicked(true);
-                setGameStatus("setup");
+              // Multiplayer: skip = no anomaly
+              pendingMpAnomalyRef.current = null;
+              myAnomalyPickSentRef.current = true;
+              partySendRef.current?.({ type: "anomaly_pick", anomalyId: null });
+              if (opponentAnomalyPickedId !== undefined) {
+                startMpGameWithAnomalies(null, opponentAnomalyPickedId);
               }
             }}
           />

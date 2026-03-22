@@ -18,6 +18,7 @@ export type PartyMessageType =
   | "draw-accept" // A player accepted the draw offer
   | "draw-decline" // A player declined the draw offer
   | "rematch" // A player requested a rematch
+  | "anomaly_pick" // A player picked (or skipped) their opening anomaly
   | "chat"; // In-game chat message (ephemeral, relayed by PartyKit, not saved to DB)
 
 export type PartyMoveMessage = {
@@ -102,6 +103,12 @@ export type PartyChatMessage = {
   senderName?: string;
 };
 
+export type PartyAnomalyPickMessage = {
+  type: "anomaly_pick";
+  /** The anomaly ID the player chose, or null if they skipped */
+  anomalyId: string | null;
+};
+
 export type PartyMessage =
   | PartyMoveMessage
   | PartyChaosMove
@@ -115,7 +122,8 @@ export type PartyMessage =
   | PartyDrawDeclineMessage
   | PartyRematchMessage
   | PartyRegisterMessage
-  | PartyChatMessage;
+  | PartyChatMessage
+  | PartyAnomalyPickMessage;
 
 /* ------------------------------------------------------------------ */
 /*  Hook                                                                */
