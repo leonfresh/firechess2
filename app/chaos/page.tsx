@@ -4109,6 +4109,13 @@ export default function ChaosChessPage() {
     from: string;
     to: string;
   } | null>(null);
+  /** Duck Chess: duck placement deferred until after a draft pick on the same turn */
+  const pendingDuckAfterDraftRef = useRef<{
+    game: Chess;
+    cs: ChaosState;
+    from: string;
+    to: string;
+  } | null>(null);
   /** Sun: pawn surge already applied this game */
   const [sunSurgeUsed, setSunSurgeUsed] = useState(false);
   /** World: bonus turn is active (player can play an extra move before regular turn) */
@@ -7013,8 +7020,12 @@ export default function ChaosChessPage() {
         // Process chaosState (perspective swap) — sequential draft handling
         if (data.chaosState) {
           const serverCs = data.chaosState as ChaosState;
-          const incoming = fromServerChaosState(serverCs, playerColor);
+          let incoming = fromServerChaosState(serverCs, playerColor);
           const draftStep = serverCs.draftStep ?? 0;
+          // Duck Chess: clear duck if the new FEN already has a piece on that square (defensive)
+          if (incoming.playerDuckSquare && g.get(incoming.playerDuckSquare as any)) {
+            incoming = { ...incoming, playerDuckSquare: null };
+          }
 
           // ── Sequential draft: White drafts first (step 1), then Black (step 2) ──
 
@@ -7122,6 +7133,20 @@ export default function ChaosChessPage() {
           }
 
           setChaosState(incoming);
+
+          // Duck Chess: notify this player when the opponent placed / moved the duck
+          const prevDuck = chaosStateRef.current.playerDuckSquare;
+          if (incoming.playerDuckSquare && incoming.playerDuckSquare !== prevDuck) {
+            setEventLog((prev) => [
+              ...prev,
+              {
+                type: "chaos" as const,
+                message: `🦆 Opponent placed duck on ${incoming.playerDuckSquare}!`,
+                icon: "🦆",
+                pepe: PEPE.think,
+              },
+            ]);
+          }
         }
 
         // Move highlight + tracked piece update
@@ -7486,10 +7511,27 @@ export default function ChaosChessPage() {
               const draftStep = serverCs.draftStep ?? 0;
               // Only apply as regular update if not a draft step we already handled above
               if (draftStep === 0) {
-                const incoming = fromServerChaosState(
+                let incoming = fromServerChaosState(
                   serverCs,
                   myColor as "white" | "black",
                 );
+                // Duck Chess: clear duck if the new FEN already has a piece on that square (defensive)
+                if (incoming.playerDuckSquare && g.get(incoming.playerDuckSquare as any)) {
+                  incoming = { ...incoming, playerDuckSquare: null };
+                }
+                // Duck Chess: notify when opponent placed / moved the duck
+                const prevDuck = chaosStateRef.current.playerDuckSquare;
+                if (incoming.playerDuckSquare && incoming.playerDuckSquare !== prevDuck) {
+                  setEventLog((prev) => [
+                    ...prev,
+                    {
+                      type: "chaos" as const,
+                      message: `🦆 Opponent placed duck on ${incoming.playerDuckSquare}!`,
+                      icon: "🦆",
+                      pepe: PEPE.think,
+                    },
+                  ]);
+                }
                 setChaosState(incoming);
               }
             }
@@ -7963,6 +8005,11 @@ export default function ChaosChessPage() {
 
         const drafted = checkDraft(activeGame, cs);
 
+        // Duck Chess: if a draft fires on this same move, defer duck placement until after the pick
+        if (drafted && selectedAnomaly?.id === "duck-chess") {
+          pendingDuckAfterDraftRef.current = { game: activeGame, cs, from, to };
+        }
+
         // Multiplayer: send to server (or hold for draft pick)
         // Only hold the move if THIS player is actually about to open the draft picker:
         //   - White triggered the draft (White drafts first in multiplayer)
@@ -8269,6 +8316,11 @@ export default function ChaosChessPage() {
       if (checkGameEnd(activeG)) return true;
 
       const drafted = checkDraft(activeG, cs2);
+
+      // Duck Chess: if a draft fires on this same move, defer duck placement until after the pick
+      if (drafted && selectedAnomaly?.id === "duck-chess") {
+        pendingDuckAfterDraftRef.current = { game: activeG, cs: cs2, from, to };
+      }
 
       // Multiplayer: send to server (or hold for draft pick)
       // Only hold the move if THIS player is actually about to open the draft picker,
@@ -9213,6 +9265,23 @@ export default function ChaosChessPage() {
       } else {
         setGameStatus("playing");
         setPendingPhase(0);
+      }
+
+      // Duck Chess: if a draft was triggered on the same move as a duck placement, fire duck-place now
+      if (pendingDuckAfterDraftRef.current) {
+        const deferredDuck = pendingDuckAfterDraftRef.current;
+        pendingDuckAfterDraftRef.current = null;
+        pendingDuckRef.current = deferredDuck;
+        setAnomalyActivationMode("duck-place");
+        setEventLog((prev) => [
+          ...prev,
+          {
+            type: "chaos" as const,
+            message: "🦆 Place your duck! Click any empty square.",
+            icon: "🦆",
+            pepe: PEPE.think,
+          },
+        ]);
       }
 
       // Track that WE just drafted (so WebSocket/polling doesn't show the reveal for our own draft)
