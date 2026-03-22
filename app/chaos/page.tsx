@@ -5934,6 +5934,7 @@ export default function ChaosChessPage() {
       setOpponentRating(null);
       aiMoveTokenRef.current.cancelled = true;
       aiMoveTokenRef.current = { cancelled: false };
+      setIsThinking(false); // reset in case AI was mid-think when restart was clicked
       setUndoStack([]);
       setUndoUsed(0);
       lastMoveRef.current = null;
