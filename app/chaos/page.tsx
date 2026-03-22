@@ -1316,14 +1316,24 @@ function AnomalyPickerScreen({
       setTimeLeft((t) => {
         if (t <= 1) {
           clearInterval(interval);
-          // Auto-pick a random free (middle) anomaly
-          const freePicks = isPro ? choices : [choices[1], choices[2]];
-          const validPicks = freePicks.filter(Boolean);
-          if (validPicks.length > 0) {
-            onPick(validPicks[Math.floor(Math.random() * validPicks.length)]);
-          } else {
-            onSkip();
-          }
+          // Use whatever the player had highlighted; fall back to random free card
+          setSelected((currentSelected) => {
+            const isLocked = (a: AnomalyDefinition) =>
+              !isPro &&
+              (choices.indexOf(a) === 0 || choices.indexOf(a) === 3);
+            if (currentSelected && !isLocked(currentSelected)) {
+              onPick(currentSelected);
+            } else {
+              const freePicks = isPro ? choices : [choices[1], choices[2]];
+              const validPicks = freePicks.filter(Boolean);
+              if (validPicks.length > 0) {
+                onPick(validPicks[Math.floor(Math.random() * validPicks.length)]);
+              } else {
+                onSkip();
+              }
+            }
+            return currentSelected;
+          });
           return 0;
         }
         return t - 1;
