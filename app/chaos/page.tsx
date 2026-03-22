@@ -5213,6 +5213,33 @@ export default function ChaosChessPage() {
   );
 
   /* ── AI move (with chaos modifiers) ── */
+
+  /**
+   * Returns a FEN with the duck square occupied by a placeholder piece so that
+   * Stockfish correctly treats it as an impassable blocker. We use a pawn of the
+   * *opponent* of the side-to-move so the engine won't want to "capture" it, but
+   * will still be unable to slide through it or land on it.
+   */
+  const duckFen = useCallback(
+    (fen: string, duckSquare: string | null | undefined): string => {
+      if (!duckSquare) return fen;
+      try {
+        const tmp = new Chess(fen);
+        // Only place duck if the square is actually empty (shouldn't be occupied in normal flow)
+        if (!tmp.get(duckSquare as any)) {
+          // Use a pawn of the color NOT to move — Stockfish will neither move it nor want to take it freely
+          const sideToMove = fen.split(" ")[1] as "w" | "b";
+          const blocker: "w" | "b" = sideToMove === "w" ? "b" : "w";
+          tmp.put({ type: "p", color: blocker }, duckSquare as any);
+        }
+        return tmp.fen();
+      } catch {
+        return fen;
+      }
+    },
+    [],
+  );
+
   const makeAiMove = useCallback(
     async (
       g: Chess,
@@ -5313,7 +5340,7 @@ export default function ChaosChessPage() {
           if (sample.length > 0) {
             // Get normal Stockfish eval as baseline
             const normalResult = await stockfishPool.evaluateFen(
-              g.fen(),
+              duckFen(g.fen(), cs.playerDuckSquare),
               aiDepth,
             );
             const normalEvalRaw = normalResult?.cp ?? 0; // from AI's (side-to-move) perspective
@@ -5359,7 +5386,7 @@ export default function ChaosChessPage() {
               if (!newGame) continue;
               // Eval the resulting position — cp is from the player's perspective (side to move after AI's chaos move)
               const er = await stockfishPool.evaluateFen(
-                newGame.fen(),
+                duckFen(newGame.fen(), cs.playerDuckSquare),
                 evalDepth,
               );
               if (er) {
@@ -5573,7 +5600,7 @@ export default function ChaosChessPage() {
         const hasAiChaosMods = cs.aiModifiers.length > 0;
         const needsTopMoves = hasPlayerChaosMods || hasAiChaosMods;
         const topMoves = needsTopMoves
-          ? await stockfishPool.getTopMoves(g.fen(), 5, aiDepth)
+          ? await stockfishPool.getTopMoves(duckFen(g.fen(), cs.playerDuckSquare), 5, aiDepth)
           : [];
 
         // Escape-move injection: Stockfish's top-5 are blind to chaos rules, so if the player
@@ -5624,7 +5651,7 @@ export default function ChaosChessPage() {
               }
               // cp after AI's escape is from the player's (side-to-move) perspective — negate for AI
               const er = await stockfishPool.evaluateFen(
-                tmpGame.fen(),
+                duckFen(tmpGame.fen(), cs.playerDuckSquare),
                 escapeDepth,
               );
               if (er)
@@ -5688,7 +5715,7 @@ export default function ChaosChessPage() {
                 continue;
               }
               const er = await stockfishPool.evaluateFen(
-                tmpEsc.fen(),
+                duckFen(tmpEsc.fen(), cs.playerDuckSquare),
                 escDepth2,
               );
               if (er)
@@ -5875,7 +5902,7 @@ export default function ChaosChessPage() {
 
         // Fallback to single best move if multi-PV didn't yield anything
         if (!bestUci) {
-          const result = await stockfishPool.evaluateFen(g.fen(), aiDepth);
+          const result = await stockfishPool.evaluateFen(duckFen(g.fen(), cs.playerDuckSquare), aiDepth);
           bestUci = result?.bestMove ?? null;
         }
 
@@ -6106,23 +6133,39 @@ export default function ChaosChessPage() {
           }
         }
 
-        // Duck Chess: AI cannot move to the player's duck square
-        if (
-          cs.playerDuckSquare &&
-          bestUci?.slice(2, 4) === cs.playerDuckSquare
-        ) {
-          const allLegal = g.moves({ verbose: true });
-          const notDuck = allLegal.filter(
-            (mv: { to: string }) => mv.to !== cs.playerDuckSquare,
-          );
-          if (notDuck.length > 0) {
-            const topUciOrder = topMoves
-              .map((t) => t.bestMove ?? t.pvMoves[0])
-              .filter(Boolean) as string[];
-            const topRanked = topUciOrder.find((u) =>
-              notDuck.some((m: { lan: string }) => m.lan === u),
-            );
-            bestUci = topRanked ?? (notDuck[0] as { lan: string }).lan;
+        // Duck Chess: AI cannot move to or slide through the player's duck square
+        if (cs.playerDuckSquare) {
+          const duck = cs.playerDuckSquare;
+          const pathBlocksDuck = (mv: { from: string; to: string; piece: string }) => {
+            if (mv.to === duck) return true;
+            if (mv.piece === "r" || mv.piece === "b" || mv.piece === "q") {
+              const ff = mv.from.charCodeAt(0) - 97, fr = parseInt(mv.from[1], 10) - 1;
+              const tf = mv.to.charCodeAt(0) - 97, tr = parseInt(mv.to[1], 10) - 1;
+              const df = Math.sign(tf - ff), dr = Math.sign(tr - fr);
+              let cf2 = ff + df, cr2 = fr + dr;
+              while (cf2 !== tf || cr2 !== tr) {
+                if (`${"abcdefgh"[cf2]}${cr2 + 1}` === duck) return true;
+                cf2 += df; cr2 += dr;
+              }
+            }
+            return false;
+          };
+          if (bestUci && (bestUci.slice(2, 4) === duck || (() => {
+            const allLegal = g.moves({ verbose: true });
+            const mv = allLegal.find((m: { lan: string }) => m.lan === bestUci);
+            return mv ? pathBlocksDuck(mv as any) : false;
+          })())) {
+            const allLegal = g.moves({ verbose: true });
+            const notDuck = allLegal.filter((mv: any) => !pathBlocksDuck(mv));
+            if (notDuck.length > 0) {
+              const topUciOrder = topMoves
+                .map((t) => t.bestMove ?? t.pvMoves[0])
+                .filter(Boolean) as string[];
+              const topRanked = topUciOrder.find((u) =>
+                notDuck.some((m: { lan: string }) => m.lan === u),
+              );
+              bestUci = topRanked ?? (notDuck[0] as { lan: string }).lan;
+            }
           }
         }
 
@@ -7682,8 +7725,30 @@ export default function ChaosChessPage() {
         return false;
 
       // Duck Chess: block moves to the duck's square (duck is impassable)
-      if (chaosState.playerDuckSquare && to === chaosState.playerDuckSquare)
-        return false;
+      // Also block sliding moves that would pass through the duck square
+      if (chaosState.playerDuckSquare) {
+        if (to === chaosState.playerDuckSquare) return false;
+        // Check if the piece's path passes through the duck
+        const duck = chaosState.playerDuckSquare;
+        const piece = game.get(from as any);
+        if (piece && (piece.type === "r" || piece.type === "b" || piece.type === "q")) {
+          const ff = from.charCodeAt(0) - 97;
+          const fr = parseInt(from[1], 10) - 1;
+          const tf = to.charCodeAt(0) - 97;
+          const tr = parseInt(to[1], 10) - 1;
+          const df = Math.sign(tf - ff);
+          const dr = Math.sign(tr - fr);
+          // Walk from just after `from` to just before `to`
+          let cf2 = ff + df;
+          let cr2 = fr + dr;
+          while (cf2 !== tf || cr2 !== tr) {
+            const sqOnPath = `${"abcdefgh"[cf2]}${cr2 + 1}`;
+            if (sqOnPath === duck) return false; // sliding through duck
+            cf2 += df;
+            cr2 += dr;
+          }
+        }
+      }
 
       // Forced En Passant: if AI has this modifier and standard EP is available, player must play it
       if (chaosState.aiModifiers.some((m) => m.id === "forced-en-passant")) {
@@ -8569,12 +8634,23 @@ export default function ChaosChessPage() {
         for (const m of moves) {
           if (m.piece === "k" && isKingMoveChaosUnsafe(game, m.from, m.to))
             continue;
-          // Duck Chess: can't move to duck's square
-          if (
-            chaosState.playerDuckSquare &&
-            m.to === chaosState.playerDuckSquare
-          )
-            continue;
+          // Duck Chess: can't move to duck's square or slide through it
+          if (chaosState.playerDuckSquare) {
+            if (m.to === chaosState.playerDuckSquare) continue;
+            if (m.piece === "r" || m.piece === "b" || m.piece === "q") {
+              const duck = chaosState.playerDuckSquare;
+              const ff = m.from.charCodeAt(0) - 97, fr = parseInt(m.from[1], 10) - 1;
+              const tf = m.to.charCodeAt(0) - 97, tr = parseInt(m.to[1], 10) - 1;
+              const df = Math.sign(tf - ff), dr = Math.sign(tr - fr);
+              let cf2 = ff + df, cr2 = fr + dr;
+              let blocked = false;
+              while (cf2 !== tf || cr2 !== tr) {
+                if (`${"abcdefgh"[cf2]}${cr2 + 1}` === duck) { blocked = true; break; }
+                cf2 += df; cr2 += dr;
+              }
+              if (blocked) continue;
+            }
+          }
           highlights[m.to] = {
             background: m.captured
               ? "radial-gradient(circle, transparent 68%, rgba(255,0,0,0.55) 69%)"
@@ -9990,6 +10066,12 @@ export default function ChaosChessPage() {
               rewires how your pieces move. Camel knights. Dragon bishops.
               Nuclear queens. Pure anarchy.
             </p>
+            <a
+              href="/chaos/collection"
+              className="mt-4 inline-flex items-center gap-2 rounded-xl border border-purple-500/25 bg-purple-500/[0.08] px-4 py-2 text-sm font-semibold text-purple-300/80 transition-all hover:bg-purple-500/15 hover:text-purple-200"
+            >
+              🃏 My Collection
+            </a>
           </div>
 
           {/* ── Example draft cards (flip on hover) ── */}
