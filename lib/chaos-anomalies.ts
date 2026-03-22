@@ -268,7 +268,7 @@ export const ALL_ANOMALIES: AnomalyDefinition[] = [
     tarotName: "Justice",
     name: "The Verdict",
     description:
-      "Once per game: mark one of your pieces Immune for 3 full turns. It cannot be captured by any means — standard or chaos.",
+      "Once per game: mark one of your pieces Immune for 3 full turns. It cannot be captured by any means, but it also cannot make captures while shielded.",
     icon: "⚖️",
     trigger: "once-per-game",
     bgGradient: "from-indigo-950/90 to-blue-900/50",

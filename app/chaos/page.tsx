@@ -1966,9 +1966,20 @@ function CardSparkles({ tier }: { tier: ModifierTier }) {
 function decrementAnomalyCounters(
   cs: ChaosState,
   mover: "player" | "ai",
+  movedFrom?: string,
+  movedTo?: string,
 ): ChaosState {
   let next = { ...cs };
   if (mover === "player") {
+    // Track immune piece movement — if the immune piece itself moved, follow it
+    if (
+      movedFrom &&
+      movedTo &&
+      movedFrom === next.playerImmuneSquare &&
+      (next.playerImmuneTurnsLeft ?? 0) > 0
+    ) {
+      next = { ...next, playerImmuneSquare: movedTo };
+    }
     if ((next.playerImmuneTurnsLeft ?? 0) > 0) {
       const left = next.playerImmuneTurnsLeft! - 1;
       next = {
@@ -1986,6 +1997,15 @@ function decrementAnomalyCounters(
       };
     }
   } else {
+    // Track AI immune piece movement
+    if (
+      movedFrom &&
+      movedTo &&
+      movedFrom === next.aiImmuneSquare &&
+      (next.aiImmuneTurnsLeft ?? 0) > 0
+    ) {
+      next = { ...next, aiImmuneSquare: movedTo };
+    }
     if ((next.aiImmuneTurnsLeft ?? 0) > 0) {
       const left = next.aiImmuneTurnsLeft! - 1;
       next = {
@@ -5670,7 +5690,7 @@ export default function ChaosChessPage() {
             // minimal path: just commit the fallback move and resume
             const fbGame = new Chess(g.fen());
             let cs2fb = updateTrackedPieces(cs, fb.from, fb.to, !!fbResult.captured);
-            cs2fb = decrementAnomalyCounters(cs2fb, "ai");
+            cs2fb = decrementAnomalyCounters(cs2fb, "ai", fb.from, fb.to);
             if (thisToken.cancelled) { setIsThinking(false); return; }
             setChaosState(cs2fb);
             setGame(fbGame);
@@ -5752,7 +5772,7 @@ export default function ChaosChessPage() {
           cs2 = { ...cs2, aiNuclearCooldownUntil: g.moveNumber() + 4 };
         }
         // Decrement Justice / Devil counters (AI's half-move)
-        cs2 = decrementAnomalyCounters(cs2, "ai");
+        cs2 = decrementAnomalyCounters(cs2, "ai", finalFrom, finalTo);
 
         // Judgement: track player pieces captured by AI
         if (
@@ -5817,7 +5837,7 @@ export default function ChaosChessPage() {
             if (emResult) {
               const emGame = new Chess(g.fen());
               let emCs = updateTrackedPieces(cs, em.from, em.to, !!emResult.captured);
-              emCs = decrementAnomalyCounters(emCs, "ai");
+              emCs = decrementAnomalyCounters(emCs, "ai", em.from, em.to);
               if (!thisToken.cancelled) {
                 setChaosState(emCs);
                 setGame(emGame);
@@ -6973,6 +6993,15 @@ export default function ChaosChessPage() {
       )
         return false;
 
+      // Justice: player's immune piece cannot make captures while immune
+      if (
+        chaosState.playerImmuneSquare &&
+        (chaosState.playerImmuneTurnsLeft ?? 0) > 0 &&
+        from === chaosState.playerImmuneSquare &&
+        game.get(to as any) // target square is occupied — this would be a capture
+      )
+        return false;
+
       // Duck Chess: block moves to the duck's square (duck is impassable)
       if (chaosState.playerDuckSquare && to === chaosState.playerDuckSquare)
         return false;
@@ -7005,6 +7034,15 @@ export default function ChaosChessPage() {
           setPendingPromotion(chaosMove);
           return true;
         }
+
+        // Justice: player's immune piece cannot make captures while immune
+        if (
+          chaosMove.type === "capture" &&
+          chaosState.playerImmuneSquare &&
+          (chaosState.playerImmuneTurnsLeft ?? 0) > 0 &&
+          from === chaosState.playerImmuneSquare
+        )
+          return false;
 
         // Block king chaos moves (e.g. King Ascension) into chaos-defended squares
         const pieceAtFromChaos = game.get(from as any);
@@ -7117,7 +7155,7 @@ export default function ChaosChessPage() {
           chaosMove.type === "capture",
         );
         // Decrement Justice / Devil counters (player's half-move)
-        cs = decrementAnomalyCounters(cs, "player");
+        cs = decrementAnomalyCounters(cs, "player", from, to);
         let activeGame = newGame;
 
         // Check game end first — checkmate wins immediately
@@ -7409,7 +7447,7 @@ export default function ChaosChessPage() {
         cs2 = { ...cs2, playerNuclearCooldownUntil: game.moveNumber() + 4 };
       }
       // Decrement Justice / Devil counters (player's half-move)
-      cs2 = decrementAnomalyCounters(cs2, "player");
+      cs2 = decrementAnomalyCounters(cs2, "player", from, to);
       let activeG = newG;
 
       // Check game end first — checkmate takes priority.
