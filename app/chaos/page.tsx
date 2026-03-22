@@ -1281,20 +1281,33 @@ function AnomalyPickerScreen({
 }) {
   const [selected, setSelected] = useState<AnomalyDefinition | null>(null);
   const [hoveredLocked, setHoveredLocked] = useState<number | null>(null);
-  // Timer: 20s to pick, then auto-pick random unlocked anomaly
-  const [timeLeft, setTimeLeft] = useState(20);
+  // Timer: 30s to pick, then auto-pick from free cards
+  const [timeLeft, setTimeLeft] = useState(30);
+  // Flip state: each card starts face-down (back visible), then flips to reveal
+  const [revealed, setRevealed] = useState([false, false, false, false]);
+
+  // Staggered card reveal on mount
+  useEffect(() => {
+    choices.forEach((_, i) => {
+      setTimeout(
+        () =>
+          setRevealed((prev) => prev.map((r, idx) => (idx === i ? true : r))),
+        350 + i * 320,
+      );
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
           clearInterval(interval);
-          // Auto-pick a random unlocked anomaly rather than skipping
-          const pickableCount = isPro ? 4 : 2;
-          const pickable = choices.slice(0, pickableCount);
-          if (pickable.length > 0) {
-            const randomPick =
-              pickable[Math.floor(Math.random() * pickable.length)];
-            onPick(randomPick);
+          // Auto-pick a random free (middle) anomaly
+          const freePicks = isPro ? choices : [choices[1], choices[2]];
+          const validPicks = freePicks.filter(Boolean);
+          if (validPicks.length > 0) {
+            onPick(validPicks[Math.floor(Math.random() * validPicks.length)]);
           } else {
             onSkip();
           }
@@ -1306,8 +1319,8 @@ function AnomalyPickerScreen({
     return () => clearInterval(interval);
   }, [onSkip, onPick, isPro, choices]);
 
-  // 4 cards shown always; Free can only pick first 2 (last 2 are locked)
-  const activeCount = isPro ? 4 : 2;
+  // Middle 2 (indices 1 & 2) are free; outer 2 (indices 0 & 3) are Pro-locked
+  const isLocked = (i: number) => !isPro && (i === 0 || i === 3);
 
   return (
     <div
@@ -1372,7 +1385,7 @@ function AnomalyPickerScreen({
               <div className="h-0.5 w-48 overflow-hidden rounded-full bg-white/[0.06]">
                 <div
                   className={`h-full rounded-full transition-[width] duration-1000 ease-linear ${timeLeft > 10 ? "bg-purple-500" : timeLeft > 5 ? "bg-amber-500" : "bg-red-500"}`}
-                  style={{ width: `${(timeLeft / 20) * 100}%` }}
+                  style={{ width: `${(timeLeft / 30) * 100}%` }}
                 />
               </div>
             </div>
@@ -1381,111 +1394,213 @@ function AnomalyPickerScreen({
           {/* Cards grid */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
             {choices.map((anomaly, i) => {
-              const isLocked = i >= activeCount;
+              const locked = isLocked(i);
               const isSelected = selected?.id === anomaly.id;
+              const isRevealed = revealed[i];
               return (
-                <div key={anomaly.id} className="relative">
-                  {/* Locked overlay */}
-                  {isLocked && (
-                    <div
-                      className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-black/70 cursor-not-allowed"
-                      onMouseEnter={() => setHoveredLocked(i)}
-                      onMouseLeave={() => setHoveredLocked(null)}
+                <div
+                  key={anomaly.id}
+                  className="relative"
+                  style={{ perspective: "900px" }}
+                >
+                  {/* 3-D flip wrapper — back=face-down initially */}
+                  <div
+                    style={{
+                      position: "relative",
+                      transformStyle: "preserve-3d",
+                      transition:
+                        "transform 0.7s cubic-bezier(0.25, 1, 0.5, 1)",
+                      transform: isRevealed
+                        ? "rotateY(0deg)"
+                        : "rotateY(180deg)",
+                    }}
+                  >
+                    {/* ── FRONT FACE ── */}
+                    <button
+                      type="button"
+                      disabled={locked}
+                      onClick={() => !locked && setSelected(anomaly)}
+                      style={{
+                        backfaceVisibility: "hidden",
+                        WebkitBackfaceVisibility: "hidden",
+                        ...(isSelected
+                          ? { boxShadow: `0 0 20px ${anomaly.glowColor}` }
+                          : {}),
+                      }}
+                      className={`group relative w-full rounded-xl border p-3 text-left transition-all duration-200 disabled:cursor-not-allowed
+                        ${
+                          isSelected
+                            ? `${anomaly.borderClass} bg-gradient-to-b ${anomaly.bgGradient} scale-[1.03] ring-2 ring-purple-500/50`
+                            : locked
+                              ? "border-white/[0.05] bg-white/[0.02] opacity-40"
+                              : `${anomaly.borderClass} bg-gradient-to-b ${anomaly.bgGradient} hover:scale-[1.02] hover:brightness-110`
+                        }`}
                     >
-                      <div className="rounded-full border border-amber-500/40 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 px-2 py-1 text-center">
-                        <p className="text-xs font-black text-amber-400">
-                          🔒 PRO
-                        </p>
-                      </div>
-                      {hoveredLocked === i && (
-                        <div className="absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-full rounded-xl border border-amber-500/30 bg-slate-900/95 px-3 py-2 text-center shadow-xl z-20 w-48">
-                          <p className="text-[11px] font-bold text-amber-300">
-                            Upgrade to Pro
-                          </p>
-                          <p className="text-[10px] text-slate-400 mt-0.5">
-                            Pro players choose from 4 anomalies instead of 2
-                          </p>
-                          <a
-                            href="/pricing"
-                            className="mt-1 inline-block text-[10px] text-amber-400 hover:underline"
-                          >
-                            See Pro →
-                          </a>
+                      {/* Locked overlay inside front face */}
+                      {locked && (
+                        <div
+                          className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-black/70 cursor-not-allowed"
+                          onMouseEnter={() => setHoveredLocked(i)}
+                          onMouseLeave={() => setHoveredLocked(null)}
+                        >
+                          <div className="rounded-full border border-amber-500/40 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 px-2 py-1 text-center">
+                            <p className="text-xs font-black text-amber-400">
+                              🔒 PRO
+                            </p>
+                          </div>
+                          {hoveredLocked === i && (
+                            <div className="absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-full rounded-xl border border-amber-500/30 bg-slate-900/95 px-3 py-2 text-center shadow-xl z-20 w-48">
+                              <p className="text-[11px] font-bold text-amber-300">
+                                Upgrade to Pro
+                              </p>
+                              <p className="text-[10px] text-slate-400 mt-0.5">
+                                Pro players choose from 4 anomalies instead of 2
+                              </p>
+                              <a
+                                href="/pricing"
+                                className="mt-1 inline-block text-[10px] text-amber-400 hover:underline"
+                              >
+                                See Pro →
+                              </a>
+                            </div>
+                          )}
                         </div>
                       )}
-                    </div>
-                  )}
-                  <button
-                    type="button"
-                    disabled={isLocked}
-                    onClick={() => !isLocked && setSelected(anomaly)}
-                    className={`group relative w-full rounded-xl border p-3 text-left transition-all duration-200 disabled:cursor-not-allowed
-                      ${
-                        isSelected
-                          ? `${anomaly.borderClass} bg-gradient-to-b ${anomaly.bgGradient} scale-[1.03] ring-2 ring-purple-500/50`
-                          : isLocked
-                            ? "border-white/[0.05] bg-white/[0.02] opacity-40"
-                            : `${anomaly.borderClass} bg-gradient-to-b ${anomaly.bgGradient} hover:scale-[1.02] hover:brightness-110`
-                      }`}
-                    style={
-                      isSelected
-                        ? { boxShadow: `0 0 20px ${anomaly.glowColor}` }
-                        : {}
-                    }
-                  >
-                    {/* Tarot number */}
-                    <div className="mb-2 flex items-center justify-between">
-                      <span
-                        className={`text-[9px] font-bold uppercase tracking-widest opacity-50 ${anomaly.accentColor}`}
-                      >
-                        {anomaly.tarotRoman}
-                      </span>
-                      {isSelected && (
-                        <span className="text-[9px] text-emerald-400 font-bold">
-                          ✓ Selected
+                      {/* Tarot number */}
+                      <div className="mb-2 flex items-center justify-between">
+                        <span
+                          className={`text-[9px] font-bold uppercase tracking-widest opacity-50 ${anomaly.accentColor}`}
+                        >
+                          {anomaly.tarotRoman}
                         </span>
-                      )}
-                    </div>
-                    {/* Icon */}
-                    <div className="mb-2 text-2xl sm:text-3xl">
-                      {anomaly.icon}
-                    </div>
-                    {/* Tarot name */}
-                    <p
-                      className={`text-[9px] font-bold uppercase tracking-wider opacity-60 ${anomaly.accentColor}`}
-                    >
-                      {anomaly.tarotName}
-                    </p>
-                    {/* Ability name */}
-                    <p className="mt-0.5 text-sm font-black text-white leading-tight">
-                      {anomaly.name}
-                    </p>
-                    {/* Description */}
-                    <p className="mt-1.5 text-[10px] leading-snug text-slate-400">
-                      {anomaly.description}
-                    </p>
-                    {/* Trigger badge */}
-                    <div className="mt-2">
-                      <span
-                        className={`inline-block rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider ${anomaly.accentColor} bg-white/[0.07]`}
+                        {isSelected && (
+                          <span className="text-[9px] text-emerald-400 font-bold">
+                            ✓ Selected
+                          </span>
+                        )}
+                      </div>
+                      {/* Icon */}
+                      <div className="mb-2 text-2xl sm:text-3xl">
+                        {anomaly.icon}
+                      </div>
+                      {/* Tarot name */}
+                      <p
+                        className={`text-[9px] font-bold uppercase tracking-wider opacity-60 ${anomaly.accentColor}`}
                       >
-                        {anomaly.trigger === "once-per-game"
-                          ? "⚡ Once"
-                          : anomaly.trigger === "draft-modifier"
-                            ? "📋 Draft"
-                            : anomaly.trigger === "fen-mod"
-                              ? "🎯 Setup"
-                              : "∞ Passive"}
-                      </span>
+                        {anomaly.tarotName}
+                      </p>
+                      {/* Ability name */}
+                      <p className="mt-0.5 text-sm font-black text-white leading-tight">
+                        {anomaly.name}
+                      </p>
+                      {/* Description */}
+                      <p className="mt-1.5 text-[10px] leading-snug text-slate-400">
+                        {anomaly.description}
+                      </p>
+                      {/* Trigger badge */}
+                      <div className="mt-2">
+                        <span
+                          className={`inline-block rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider ${anomaly.accentColor} bg-white/[0.07]`}
+                        >
+                          {anomaly.trigger === "once-per-game"
+                            ? "⚡ Once"
+                            : anomaly.trigger === "draft-modifier"
+                              ? "📋 Draft"
+                              : anomaly.trigger === "fen-mod"
+                                ? "🎯 Setup"
+                                : "∞ Passive"}
+                        </span>
+                      </div>
+                    </button>
+
+                    {/* ── BACK FACE (shown initially while face-down) ── */}
+                    <div
+                      className="absolute inset-0 rounded-xl flex flex-col items-center justify-center overflow-hidden border"
+                      style={{
+                        backfaceVisibility: "hidden",
+                        WebkitBackfaceVisibility: "hidden",
+                        transform: "rotateY(180deg)",
+                        background:
+                          "linear-gradient(160deg, #07091a 0%, #0e0a22 50%, #080c1c 100%)",
+                        borderColor: anomaly.glowColor,
+                        boxShadow: `inset 0 0 40px ${anomaly.glowColor}22`,
+                        pointerEvents: "none",
+                      }}
+                    >
+                      {/* Outer decorative border ring */}
+                      <div
+                        className="absolute inset-1.5 rounded-lg border opacity-30"
+                        style={{ borderColor: anomaly.glowColor }}
+                      />
+                      {/* Corner ornaments */}
+                      {[
+                        "top-2 left-2",
+                        "top-2 right-2",
+                        "bottom-2 left-2",
+                        "bottom-2 right-2",
+                      ].map((pos) => (
+                        <div
+                          key={pos}
+                          className={`absolute ${pos} text-[8px] leading-none`}
+                          style={{ color: anomaly.glowColor, opacity: 0.7 }}
+                        >
+                          ✦
+                        </div>
+                      ))}
+                      {/* Tarot roman numeral — large */}
+                      <p
+                        className="text-3xl font-black tracking-widest mb-1"
+                        style={{
+                          color: anomaly.glowColor,
+                          textShadow: `0 0 12px ${anomaly.glowColor}`,
+                        }}
+                      >
+                        {anomaly.tarotRoman || "0"}
+                      </p>
+                      {/* Decorative line */}
+                      <div
+                        className="w-10 h-px mb-2 opacity-40"
+                        style={{ background: anomaly.glowColor }}
+                      />
+                      {/* Tarot name */}
+                      <p
+                        className="text-[10px] font-black uppercase tracking-[0.18em] text-center px-2 leading-snug"
+                        style={{ color: anomaly.glowColor }}
+                      >
+                        {anomaly.tarotName}
+                      </p>
+                      {/* Bottom decorative line */}
+                      <div
+                        className="w-10 h-px mt-2 opacity-40"
+                        style={{ background: anomaly.glowColor }}
+                      />
+                      {/* Subtle "ANOMALY" watermark */}
+                      <p className="absolute bottom-3 text-[7px] font-bold uppercase tracking-[0.3em] text-white/10">
+                        ANOMALY
+                      </p>
                     </div>
-                  </button>
+                  </div>
                 </div>
               );
             })}
           </div>
 
+          {/* Free tier label */}
+          {!isPro && (
+            <div className="mt-3 flex items-center justify-center gap-2 text-[10px] text-slate-600">
+              <span>🔒 Outer cards are</span>
+              <a
+                href="/pricing"
+                className="text-amber-400/80 hover:text-amber-300 hover:underline font-semibold"
+              >
+                Pro only
+              </a>
+              <span>— middle 2 are free</span>
+            </div>
+          )}
+
           {/* Actions */}
-          <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+          <div className="mt-5 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <button
               type="button"
               disabled={!selected}
@@ -1504,18 +1619,6 @@ function AnomalyPickerScreen({
               Skip — play without anomaly
             </button>
           </div>
-          {!isPro && (
-            <p className="mt-4 text-center text-[10px] text-slate-600">
-              🔒{" "}
-              <a
-                href="/pricing"
-                className="text-amber-400/80 hover:text-amber-300 hover:underline"
-              >
-                Upgrade to Pro
-              </a>{" "}
-              for 4 anomaly choices
-            </p>
-          )}
         </div>
       </div>
     </div>
@@ -3486,6 +3589,8 @@ export default function ChaosChessPage() {
     chaosState: ChaosState;
     capturedPawns: { w: number; b: number };
     undeadRevived: { w: boolean; b: boolean };
+    sunSurgeUsed: boolean;
+    worldBonusTurnActive: boolean;
   };
   const [undoStack, setUndoStack] = useState<UndoSnapshot[]>([]);
   const [undoUsed, setUndoUsed] = useState(0);
@@ -3689,7 +3794,14 @@ export default function ChaosChessPage() {
   // Keep undoSnapshotRef current so handlePlayerMove can read pre-move state
   undoSnapshotRef.current =
     gameMode === "ai" && undoUsed < 3
-      ? { fen: game.fen(), chaosState, capturedPawns, undeadRevived }
+      ? {
+          fen: game.fen(),
+          chaosState,
+          capturedPawns,
+          undeadRevived,
+          sunSurgeUsed,
+          worldBonusTurnActive,
+        }
       : null;
 
   /* ── Chaos-aware piece rendering (overlays on pieces with modifiers) ── */
@@ -7703,6 +7815,11 @@ export default function ChaosChessPage() {
             fenParts[4] = String(parseInt(fenParts[4]) + 1); // halfmove clock
             if (!wasWhite) fenParts[5] = String(parseInt(fenParts[5]) + 1); // fullmove when black moved
             const swapG = new Chess(fenParts.join(" "));
+            // Push undo snapshot before consuming the ability
+            if (undoSnapshotRef.current) {
+              const snap = undoSnapshotRef.current;
+              setUndoStack((prev) => [...prev.slice(-2), snap]);
+            }
             const cs = { ...chaosState, playerAnomalyUsed: true };
             setChaosState(cs);
             setGame(swapG);
@@ -7767,6 +7884,11 @@ export default function ChaosChessPage() {
         if (anomalyActivationMode === "justice") {
           // Mark own piece immune for 3 turns
           if (clickedPiece && clickedPiece.color === playerC) {
+            // Push undo snapshot before consuming the ability
+            if (undoSnapshotRef.current) {
+              const snap = undoSnapshotRef.current;
+              setUndoStack((prev) => [...prev.slice(-2), snap]);
+            }
             const cs = {
               ...chaosState,
               playerAnomalyUsed: true,
@@ -7802,6 +7924,11 @@ export default function ChaosChessPage() {
             clickedPiece.color === oppC &&
             clickedPiece.type !== "k"
           ) {
+            // Push undo snapshot before consuming the ability
+            if (undoSnapshotRef.current) {
+              const snap = undoSnapshotRef.current;
+              setUndoStack((prev) => [...prev.slice(-2), snap]);
+            }
             const cs = {
               ...chaosState,
               playerAnomalyUsed: true,
@@ -7844,6 +7971,11 @@ export default function ChaosChessPage() {
             if (strengthMove) {
               const newG = new Chess(game.fen());
               newG.remove(square as any); // remove the captured piece
+              // Push undo snapshot before consuming the ability
+              if (undoSnapshotRef.current) {
+                const snap = undoSnapshotRef.current;
+                setUndoStack((prev) => [...prev.slice(-2), snap]);
+              }
               const cs = { ...chaosState, playerAnomalyUsed: true };
               setChaosState(cs);
               setGame(newG);
@@ -8416,6 +8548,11 @@ export default function ChaosChessPage() {
   /** Sun — First Light: surge all eligible pawns forward 1 square (free, no turn change) */
   const handleSunSurge = useCallback(() => {
     if (chaosState.playerAnomalyUsed || sunSurgeUsed) return;
+    // Push undo snapshot before consuming the ability
+    if (undoSnapshotRef.current) {
+      const snap = undoSnapshotRef.current;
+      setUndoStack((prev) => [...prev.slice(-2), snap]);
+    }
     const playerC: Color = playerColor === "white" ? "w" : "b";
     const dir = playerC === "w" ? 1 : -1;
     const newG = new Chess(game.fen());
@@ -8473,6 +8610,11 @@ export default function ChaosChessPage() {
   /** World — Final Act: activate bonus turn after opponent's next move */
   const handleWorldActivate = useCallback(() => {
     if (chaosState.playerAnomalyUsed) return;
+    // Push undo snapshot before consuming the ability
+    if (undoSnapshotRef.current) {
+      const snap = undoSnapshotRef.current;
+      setUndoStack((prev) => [...prev.slice(-2), snap]);
+    }
     const cs = {
       ...chaosState,
       playerAnomalyUsed: true,
@@ -8543,6 +8685,8 @@ export default function ChaosChessPage() {
     setChaosState(snapshot.chaosState);
     setCapturedPawns(snapshot.capturedPawns);
     setUndeadRevived(snapshot.undeadRevived);
+    setSunSurgeUsed(snapshot.sunSurgeUsed);
+    setWorldBonusTurnActive(snapshot.worldBonusTurnActive);
     recomputeChaosMoves(restoredGame, snapshot.chaosState);
     setLastMoveHighlight({});
     lastMoveRef.current = null;
