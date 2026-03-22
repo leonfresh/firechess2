@@ -174,12 +174,12 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
 
   // ── Phase 2-3 (Turn 10-15) — Utility & Disruption ──
   {
-    id: "pegasus",
-    name: "Pegasus",
+    id: "night-rider",
+    name: "Night Rider",
     description:
-      "One knight gains a quad double-jump — only forward/backward L-shapes for the first leap (no sideways), then a second forward-only knight jump from there.",
+      "One knight becomes the Night Rider — it can chain repeated L-jumps in the same direction, sliding until blocked or off the board. One hop is a normal knight move; two or more is where the magic happens.",
     tier: "rare",
-    icon: "🦄",
+    icon: "🌙",
     piece: "n",
     phases: [2, 3],
   },
@@ -253,8 +253,38 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     piece: "b",
     phases: [2, 3, 4],
   },
+  {
+    id: "usurper",
+    name: "Usurper",
+    description:
+      "Once per game, your King can swap positions with any friendly piece on the board. The ally takes the throne; the King slips away.",
+    tier: "rare",
+    icon: "🎭",
+    piece: "k",
+    phases: [2, 3],
+  },
+  {
+    id: "kamikaze-bishop",
+    name: "Kamikaze Bishop",
+    description:
+      "When a Bishop captures, it detonates — removing itself AND all adjacent enemy pieces around the capture square. A one-way ticket.",
+    tier: "rare",
+    icon: "🧨",
+    piece: "b",
+    phases: [2, 3],
+  },
 
   // ── Phase 3-4 (Turn 15-20) — Powerful disruption ──
+  {
+    id: "queen-cannon",
+    name: "Queen Cannon",
+    description:
+      "Your Queen gains Cannon movement — she can jump over exactly one piece in ANY direction (rank, file, or diagonal) to capture the piece behind it. Always active.",
+    tier: "epic",
+    icon: "🔫",
+    piece: "q",
+    phases: [3, 4],
+  },
   {
     id: "queen-teleport",
     name: "Warp Queen",
@@ -378,6 +408,16 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
       "Rooks can jump over exactly one piece (like a cannon in Xiangqi) to capture behind it.",
     tier: "legendary",
     icon: "💣",
+    piece: "r",
+    phases: [4, 5],
+  },
+  {
+    id: "railgun",
+    name: "Railgun",
+    description:
+      "Once per game: your Rook fires along all four ranks and files simultaneously, piercing through blockers to eliminate the first enemy in each direction. Devastating.",
+    tier: "legendary",
+    icon: "⚡",
     piece: "r",
     phases: [4, 5],
   },
@@ -530,9 +570,9 @@ export function getChaosPieceValCp(
   // Single-piece identity upgrades — only apply if this square is the assigned square
   const SINGLE_PIECE_VALS: Record<string, number> = {
     archbishop: 600, // bishop + knight ≈ 6 pawns
-    knook: 800,       // knight + rook ≈ 8 pawns
-    camel: 300,       // colorbound (3,1) leaper ≈ 3 pawns
-    pegasus: 390,     // quad double-jump knight ≈ 3.9 pawns (nerfed from octo)
+    knook: 800, // knight + rook ≈ 8 pawns
+    camel: 300, // colorbound (3,1) leaper ≈ 3 pawns
+    "night-rider": 420, // sliding knight can reach much of the board ≈ 4.2 pawns
   };
   if (assignedSquares) {
     for (const [modId, val] of Object.entries(SINGLE_PIECE_VALS)) {
@@ -552,10 +592,14 @@ export function getChaosPieceValCp(
     "bishop-cannon": 90, // bishop diagonal cannon capture
     "collateral-rook": 100, // rook captures destroy piece behind ≈ 6 pawns
     "rook-cannon": 100, // rook jumps to capture ≈ 6 pawns
+    railgun: 180, // rook fires all directions once — board-wide threat
     "nuclear-queen": 200, // queen captures clear 8 squares ≈ 11 pawns
+    "queen-cannon": 120, // queen jumps over one piece to capture in 8 directions
     amazon: 150, // queen + knight ≈ 10.5 pawns
     "queen-teleport": 50, // queen teleports once
     "king-ascension": 5000, // king captures like queen
+    usurper: 40, // king swaps with ally once
+    "kamikaze-bishop": 80, // bishop explodes on capture — one-way trade advantage
     "pawn-charge": 10,
     "pawn-capture-forward": 15,
   };

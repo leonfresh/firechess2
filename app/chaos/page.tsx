@@ -114,6 +114,11 @@ import {
   type PartyMessage,
 } from "@/lib/use-party-room";
 import { computeEloChange, DEFAULT_CHAOS_ELO } from "@/lib/chaos-elo";
+import {
+  GUEST_UNLOCKED_IDS,
+  LS_PENDING_UNLOCK,
+  LS_FIRST_WIN_DONE,
+} from "@/lib/chaos-collection";
 
 /* ────────────────────────── Chaos Piece Overlays ────────────────────────── */
 
@@ -151,7 +156,7 @@ type OverlayDef = {
 };
 
 const MODIFIER_OVERLAYS: Record<string, OverlayDef> = {
-  pegasus: {
+  "night-rider": {
     glow: "rgba(168,85,247,0.4)",
     render: (sw) => {
       const s = sw * 0.35;
@@ -495,7 +500,7 @@ const SINGLE_PIECE_MODIFIERS: Record<string, true> = {
   knook: true,
   archbishop: true,
   camel: true,
-  pegasus: true,
+  "night-rider": true,
 };
 
 /** Fairy piece SVG replacements — full piece image swap for transformative modifiers */
@@ -503,7 +508,7 @@ const FAIRY_PIECE_SVGS: Record<string, Record<string, string>> = {
   knook: { w: "/pieces/fairy/wC.svg", b: "/pieces/fairy/bC.svg" },
   archbishop: { w: "/pieces/fairy/wA.svg", b: "/pieces/fairy/bA.svg" },
   amazon: { w: "/pieces/fairy/wAm.svg", b: "/pieces/fairy/bAm.svg" },
-  pegasus: { w: "/pieces/fairy/wPg.svg", b: "/pieces/fairy/bPg.svg" },
+  "night-rider": { w: "/pieces/fairy/wNR.svg", b: "/pieces/fairy/bNR.svg" },
   camel: { w: "/pieces/fairy/wCa.svg", b: "/pieces/fairy/bCa.svg" },
   "dragon-bishop": { w: "/pieces/fairy/wDb.svg", b: "/pieces/fairy/bDb.svg" },
   "dragon-rook": { w: "/pieces/fairy/wDr.svg", b: "/pieces/fairy/bDr.svg" },
@@ -517,6 +522,14 @@ const FAIRY_PIECE_SVGS: Record<string, Record<string, string>> = {
   "emperor-king": { w: "/pieces/fairy/wEK.svg", b: "/pieces/fairy/bEK.svg" },
   /** Hierophant (Sacred Passage) bishop — ghostly violet phase-bishop */
   "hierophant-bishop": { w: "/pieces/fairy/wHb.svg", b: "/pieces/fairy/bHb.svg" },
+  /** Usurper — king with swap arrows */
+  "usurper": { w: "/pieces/fairy/wUsp.svg", b: "/pieces/fairy/bUsp.svg" },
+  /** Kamikaze Bishop — bishop with explosion flames */
+  "kamikaze-bishop": { w: "/pieces/fairy/wKB.svg", b: "/pieces/fairy/bKB.svg" },
+  /** Queen Cannon — queen with cannon barrel */
+  "queen-cannon": { w: "/pieces/fairy/wQC.svg", b: "/pieces/fairy/bQC.svg" },
+  /** Railgun — rook with electric bolt */
+  "railgun": { w: "/pieces/fairy/wRG.svg", b: "/pieces/fairy/bRG.svg" },
 };
 
 /** War Pawn SVG — shown when both pawn-charge AND pawn-capture-forward are active */
@@ -665,9 +678,13 @@ function buildChaosCustomPieces(
         "knook",
         "archbishop",
         "camel",
-        "pegasus",
+        "night-rider",
         "amazon",
         "king-ascension",
+        "usurper",
+        "kamikaze-bishop",
+        "queen-cannon",
+        "railgun",
       ];
       const MOVEMENT_MOD_IDS = ["dragon-bishop", "dragon-rook", "rook-cannon"];
       const fairyTiers = [IDENTITY_MOD_IDS, MOVEMENT_MOD_IDS];
@@ -2133,6 +2150,9 @@ function DraftModal({
   anomaly,
   temperanceUsed,
   onTemperanceReroll,
+  unlockedIds,
+  lockedPickUsed,
+  onLockedPick,
 }: {
   phase: number;
   choices: ChaosModifier[];
@@ -2147,6 +2167,12 @@ function DraftModal({
   temperanceUsed?: boolean;
   /** Called with the discarded card when Temperance reroll is triggered */
   onTemperanceReroll?: (discarded: ChaosModifier) => void;
+  /** Set of modifier IDs this player can freely pick (omit = all unlocked) */
+  unlockedIds?: Set<string>;
+  /** Whether the guest's one-time locked-card pick has already been used */
+  lockedPickUsed?: boolean;
+  /** Called when the guest picks a locked card (uses up their one free trial pick) */
+  onLockedPick?: (mod: ChaosModifier) => void;
 }) {
   const pieceCounts =
     fen && playerColor ? countPiecesFromFen(fen, playerColor) : null;
@@ -2216,15 +2242,19 @@ function DraftModal({
 
   // Handle card pick with a dismiss animation
   const handlePick = useCallback(
-    (mod: ChaosModifier) => {
+    (mod: ChaosModifier, isLockedPick = false) => {
       if (pickedId || !allRevealed) return; // prevent double-picks & picks before reveal
       setPickedId(mod.id);
       setDismissing(true);
       playSound("taco-bell-bong");
-      // Wait for dismiss animation, then call onPick
-      setTimeout(() => onPick(mod), 650);
+      // Wait for dismiss animation, then call appropriate callback
+      if (isLockedPick && onLockedPick) {
+        setTimeout(() => onLockedPick(mod), 650);
+      } else {
+        setTimeout(() => onPick(mod), 650);
+      }
     },
-    [pickedId, allRevealed, onPick],
+    [pickedId, allRevealed, onPick, onLockedPick],
   );
 
   // Floating "Back to Draft" button when peeking
@@ -2327,6 +2357,8 @@ function DraftModal({
             const isPicked = pickedId === mod.id;
             const isDismissed = dismissing && !isPicked;
             const glowColor = TIER_GLOW_COLORS[mod.tier];
+            const isLocked = unlockedIds !== undefined && !unlockedIds.has(mod.id);
+            const canPickLocked = isLocked && !lockedPickUsed;
 
             return (
               <div
@@ -2378,19 +2410,22 @@ function DraftModal({
                   {/* ─── Card Front (face-up) ─── */}
                   <button
                     type="button"
-                    onClick={() => handlePick(mod)}
+                    onClick={() => {
+                      if (isLocked && canPickLocked) handlePick(mod, true);
+                      else if (!isLocked) handlePick(mod);
+                    }}
                     onMouseEnter={() => allRevealed && setHoveredId(mod.id)}
                     onMouseLeave={() => setHoveredId(null)}
-                    disabled={!allRevealed || !!pickedId}
+                    disabled={!allRevealed || !!pickedId || (isLocked && !canPickLocked)}
                     className={`relative flex w-full flex-row items-center gap-3 rounded-xl border p-3 text-left sm:flex-col sm:gap-0 sm:p-5 sm:text-center ${tier.bg} ${tier.border} ${
-                      allRevealed && !pickedId
+                      allRevealed && !pickedId && (!isLocked || canPickLocked)
                         ? "cursor-pointer transition-all duration-200"
                         : ""
                     } ${
                       isHovered && !pickedId
                         ? "border-white/30 sm:scale-105"
                         : ""
-                    }`}
+                    } ${isLocked && !canPickLocked ? "opacity-50 cursor-not-allowed" : ""}`}
                     style={{
                       backfaceVisibility: "hidden",
                       transform: "rotateY(180deg)",
@@ -2429,6 +2464,20 @@ function DraftModal({
 
                     {/* Sparkles */}
                     <CardSparkles tier={mod.tier} />
+
+                    {/* Lock overlay for guest restricted cards */}
+                    {isLocked && !canPickLocked && (
+                      <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center rounded-xl bg-black/60 gap-1">
+                        <span className="text-2xl">🔒</span>
+                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Locked</span>
+                        <a href="/auth/signin" className="pointer-events-auto text-[9px] text-purple-400 underline">Sign in to unlock</a>
+                      </div>
+                    )}
+                    {isLocked && canPickLocked && (
+                      <div className="pointer-events-none absolute top-2 right-2 z-20 rounded-full bg-amber-500/20 border border-amber-400/40 px-1.5 py-0.5 text-[9px] font-bold text-amber-300">
+                        🎁 Free try
+                      </div>
+                    )}
 
                     {/* Icon */}
                     <div className="relative z-10 shrink-0 sm:mb-2">
@@ -2539,6 +2588,57 @@ function DraftModal({
             Revealing your fate…
           </p>
         )}
+      </div>
+    </div>
+  );
+}
+
+/* ────────────────────────── Guest Unlock Modal ────────────────────────── */
+
+function GuestUnlockModal({
+  mod,
+  onClose,
+}: {
+  mod: ChaosModifier;
+  onClose: () => void;
+}) {
+  const tier = TIER_COLORS[mod.tier];
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center"
+      style={{ backgroundColor: "rgba(0,0,0,0.82)", animation: "draft-bg-enter 0.4s ease-out both" }}
+    >
+      <div
+        className="relative w-full max-w-sm mx-4 rounded-2xl border border-amber-400/40 bg-[#0a0f1a]/95 p-6 text-center"
+        style={{ animation: "draft-modal-enter 0.5s ease-out both" }}
+      >
+        <div className="mb-3 text-5xl">🎉</div>
+        <h2 className="text-xl font-black text-white mb-1">You Unlocked a Modifier!</h2>
+        <p className="text-xs text-slate-400 mb-4">Sign up to keep it in your collection permanently.</p>
+
+        {/* Modifier card preview */}
+        <div className={`mx-auto max-w-[200px] rounded-xl border p-4 ${tier.bg} ${tier.border} mb-5`}>
+          <Emoji emoji={mod.icon} className="w-12 h-12 mb-2" />
+          <span className={`text-[9px] font-bold uppercase tracking-wider rounded-full px-2 py-0.5 ${tier.text} ${tier.bg}`}>
+            {TIER_LABELS[mod.tier]}
+          </span>
+          <h3 className="text-sm font-bold text-white mt-1 mb-1">{mod.name}</h3>
+          <p className="text-[10px] text-slate-400 leading-relaxed">{mod.description}</p>
+        </div>
+
+        <a
+          href={`/auth/signin?pending_unlock=${mod.id}`}
+          className="block w-full rounded-xl border border-purple-500/60 bg-purple-600/30 px-4 py-3 text-sm font-bold text-white hover:bg-purple-600/50 transition-all mb-3"
+        >
+          🔐 Sign Up &amp; Keep It Forever
+        </a>
+        <button
+          type="button"
+          onClick={onClose}
+          className="block w-full rounded-xl border border-slate-700 bg-slate-800/50 px-4 py-2 text-xs text-slate-400 hover:text-white transition-all"
+        >
+          Maybe later
+        </button>
       </div>
     </div>
   );
@@ -2986,6 +3086,20 @@ function BoardEffectsOverlay({
                   }}
                 />
               );
+            } else if (type === "night-rider") {
+              inner = (
+                <div
+                  style={{
+                    width: "84%",
+                    height: "84%",
+                    borderRadius: "50%",
+                    background:
+                      "radial-gradient(circle, #e879f9 0%, #a855f7 50%, transparent 100%)",
+                    boxShadow: "0 0 12px #a855f7",
+                    animation: "ce-burst 700ms ease-out forwards",
+                  }}
+                />
+              );
             } else if (type === "pegasus") {
               inner = (
                 <div
@@ -3225,7 +3339,7 @@ function getPieceDisplayName(
     knook: true,
     archbishop: true,
     camel: true,
-    pegasus: true,
+    "night-rider": true,
   };
 
   // Identity-changing mods take full priority over movement-adding mods.
@@ -3234,7 +3348,7 @@ function getPieceDisplayName(
     "knook",
     "archbishop",
     "camel",
-    "pegasus",
+    "night-rider",
     "amazon",
     "king-ascension",
   ];
@@ -3251,7 +3365,7 @@ function getPieceDisplayName(
       if (m.id === "knook" && pieceType === "n") return "The Knook";
       if (m.id === "archbishop" && pieceType === "b") return "The Archbishop";
       if (m.id === "camel" && pieceType === "n") return "Camel";
-      if (m.id === "pegasus" && pieceType === "n") return "Pegasus";
+      if (m.id === "night-rider" && pieceType === "n") return "Night Rider";
       if (m.id === "amazon" && pieceType === "q") return "The Amazon";
       if (m.id === "king-ascension" && pieceType === "k")
         return "Ascended King";
@@ -3437,7 +3551,7 @@ function PieceMovementGrid({
         [-d, -d],
       ] as [number, number][])
         tryMark(dr, dc, "chaos");
-  if (modIds.has("pegasus"))
+  if (modIds.has("night-rider"))
     for (const [dr, dc] of [
       [-3, -2],
       [-3, 2],
@@ -3447,6 +3561,8 @@ function PieceMovementGrid({
       [-2, 3],
       [2, -3],
       [2, 3],
+      [-4, -2], [-4, 2], [4, -2], [4, 2],
+      [-2, -4], [-2, 4], [2, -4], [2, 4],
     ] as [number, number][])
       tryMark(dr, dc, "chaos");
 
@@ -3512,8 +3628,8 @@ function getChaosMoveLabel(pieceType: string, mods: ChaosModifier[]): string {
   if (modIds.has("king-ascension") && pieceType === "k")
     extra.push("+ Full queen movement");
   if (modIds.has("camel") && pieceType === "n") extra.push("+ 3+1 camel jump");
-  if (modIds.has("pegasus") && pieceType === "n")
-    extra.push("+ 3+2 extended jump");
+  if (modIds.has("night-rider") && pieceType === "n")
+    extra.push("+ sliding L-ray jumps");
   if (modIds.has("pawn-charge") && pieceType === "p")
     extra.push("+ always 2-square push");
   if (modIds.has("pawn-capture-forward") && pieceType === "p")
@@ -3651,6 +3767,7 @@ const EFFECT_DURATIONS: Record<string, number> = {
   shield: 900,
   spawn: 800,
   pegasus: 750,
+  "night-rider": 750,
   flash: 550,
   "king-death": 1300,
 };
@@ -3865,6 +3982,13 @@ export default function ChaosChessPage() {
   );
   /** When true, queen-teleport moves are included in click/highlight logic */
   const [warpQueenActive, setWarpQueenActive] = useState(false);
+
+  /* ── Guest unlock system ── */
+  /** True once the guest has used their one free locked-card pick this game */
+  const [guestLockedPickUsed, setGuestLockedPickUsed] = useState(false);
+  /** Modifier earnt by the guest after their first win — shown in unlock modal */
+  const [pendingGuestUnlock, setPendingGuestUnlock] =
+    useState<ChaosModifier | null>(null);
   /** Chaos moves visible to the player — warp queen is hidden until its button is toggled on */
   const activeChaosMoves = useMemo(
     () =>
@@ -4497,6 +4621,17 @@ export default function ChaosChessPage() {
         if (youWin) {
           playSound("airhorn");
           spawnPepe(PEPE.gigachad);
+          // Guest first-win unlock
+          if (!authenticated && typeof window !== "undefined" &&
+              !window.localStorage.getItem(LS_FIRST_WIN_DONE)) {
+            window.localStorage.setItem(LS_FIRST_WIN_DONE, "1");
+            const locked = ALL_MODIFIERS.filter(m => !GUEST_UNLOCKED_IDS.has(m.id));
+            if (locked.length > 0) {
+              const prize = locked[Math.floor(Math.random() * locked.length)];
+              window.localStorage.setItem(LS_PENDING_UNLOCK, prize.id);
+              setTimeout(() => setPendingGuestUnlock(prize), KING_DEATH_POPUP_DELAY + 1200);
+            }
+          }
         } else {
           playSound("mario-death");
           spawnPepe(PEPE.gamercry);
@@ -4571,6 +4706,17 @@ export default function ChaosChessPage() {
           playSound("airhorn");
           spawnPepe(PEPE.gigachad);
           setTimeout(() => spawnPepe(PEPE.clap), 400);
+          // Guest first-win unlock
+          if (!authenticated && typeof window !== "undefined" &&
+              !window.localStorage.getItem(LS_FIRST_WIN_DONE)) {
+            window.localStorage.setItem(LS_FIRST_WIN_DONE, "1");
+            const locked = ALL_MODIFIERS.filter(m => !GUEST_UNLOCKED_IDS.has(m.id));
+            if (locked.length > 0) {
+              const prize = locked[Math.floor(Math.random() * locked.length)];
+              window.localStorage.setItem(LS_PENDING_UNLOCK, prize.id);
+              setTimeout(() => setPendingGuestUnlock(prize), 1200);
+            }
+          }
         } else {
           playSound("mario-death");
           spawnPepe(PEPE.gamercry);
@@ -4940,6 +5086,36 @@ export default function ChaosChessPage() {
           spawnPepe(PEPE.gigachad);
           playSound("crowd-ooh");
         }
+        if (
+          mods.some((m) => m.id === "kamikaze-bishop") &&
+          pieceType === "b" &&
+          captured
+        ) {
+          // Kamikaze: bishop and adjacent enemies all explode
+          const bf = to.charCodeAt(0) - 97;
+          const br = parseInt(to[1]) - 1;
+          const blastSquares: string[] = [to as string];
+          for (let df = -1; df <= 1; df++) {
+            for (let dr = -1; dr <= 1; dr++) {
+              if (df === 0 && dr === 0) continue;
+              const nf = bf + df, nr = br + dr;
+              if (nf >= 0 && nf <= 7 && nr >= 0 && nr <= 7)
+                blastSquares.push(`${String.fromCharCode(97 + nf)}${nr + 1}`);
+            }
+          }
+          triggerEffect("explosion", blastSquares);
+          setEventLog((prev) => [
+            ...prev,
+            {
+              type: "chaos",
+              message: "🧨 Kamikaze Bishop! The bishop exploded on capture!",
+              icon: "🧨",
+              pepe: PEPE.firesgun,
+            },
+          ]);
+          spawnPepe(PEPE.firesgun);
+          playSound("airhorn");
+        }
         return result;
       }
       return g;
@@ -5207,8 +5383,17 @@ export default function ChaosChessPage() {
                   const mid = chaosMove.modifierId;
                   if (mid === "queen-teleport") {
                     triggerEffect("teleport", [chaosMove.from, chaosMove.to]);
-                  } else if (mid === "pegasus") {
-                    triggerEffect("pegasus", [chaosMove.from, chaosMove.to]);
+                  } else if (mid === "night-rider") {
+                    triggerEffect("flash", [chaosMove.from, chaosMove.to]);
+                  } else if (mid === "queen-cannon") {
+                    triggerEffect("cannon", [chaosMove.to]);
+                    setTimeout(() => triggerEffect("explosion", [chaosMove.to]), 350);
+                  } else if (mid === "railgun") {
+                    triggerEffect("cannon", [chaosMove.from]);
+                    const targets = [chaosMove.to, ...(chaosMove.sideEffects ?? [])];
+                    setTimeout(() => triggerEffect("explosion", targets), 250);
+                  } else if (mid === "usurper") {
+                    triggerEffect("teleport", [chaosMove.from, chaosMove.to]);
                   } else if (mid === "bishop-bounce") {
                     triggerEffect("ricochet", [chaosMove.from, chaosMove.to]);
                     startRicochetAnim(chaosMove, aiColor as "w" | "b");
@@ -5232,9 +5417,12 @@ export default function ChaosChessPage() {
                   chaosMove.to,
                   chaosMove.type === "capture",
                 );
-                // queen-teleport is once per game — remove modifier after AI uses it
+                // queen-teleport / railgun / usurper are once per game — remove modifier after AI uses it
                 if (chaosMove.modifierId === "queen-teleport") {
                   cs2 = { ...cs2, aiModifiers: cs2.aiModifiers.filter((m) => m.id !== "queen-teleport") };
+                }
+                if (chaosMove.modifierId === "railgun" || chaosMove.modifierId === "usurper") {
+                  cs2 = { ...cs2, aiModifiers: cs2.aiModifiers.filter((m) => m.id !== chaosMove.modifierId) };
                 }
                 let activeGame = newGame;
 
@@ -5333,7 +5521,7 @@ export default function ChaosChessPage() {
           }
         }
 
-        // Enhanced-piece protection injection: if any AI extra-value piece (Knook, Pegasus, etc.)
+        // Enhanced-piece protection injection: if any AI extra-value piece (Knook, Night Rider, etc.)
         // is capturable by the player in the current position, Stockfish won't try to escape it
         // (it sees knight=knight, not Knook=800). Inject escape moves so the penalty loop can pick them.
         if (hasAiChaosMods) {
@@ -6121,6 +6309,7 @@ export default function ChaosChessPage() {
       aiMoveTokenRef.current.cancelled = true;
       aiMoveTokenRef.current = { cancelled: false };
       setIsThinking(false); // reset in case AI was mid-think when restart was clicked
+      setGuestLockedPickUsed(false);
       setUndoStack([]);
       setUndoUsed(0);
       lastMoveRef.current = null;
@@ -6735,7 +6924,7 @@ export default function ChaosChessPage() {
           // Only update tracked pieces if the server did NOT provide a chaosState.
           // When chaosState is present it already has the correct assignedSquares;
           // running updateTrackedPieces on top would treat the piece's NEW square as
-          // "captured" and null-out archbishop/knook/pegasus tracking.
+          // "captured" and null-out archbishop/knook/night-rider tracking.
           if (!data.chaosState && oldFen) {
             const oldBoard = new Chess(oldFen);
             const hadPiece = oldBoard.get(data.lastMoveTo as any);
@@ -7404,8 +7593,17 @@ export default function ChaosChessPage() {
           const mid = chaosMove.modifierId;
           if (mid === "queen-teleport") {
             triggerEffect("teleport", [from, to]);
-          } else if (mid === "pegasus") {
-            triggerEffect("pegasus", [from, to]);
+          } else if (mid === "night-rider") {
+            triggerEffect("flash", [from, to]);
+          } else if (mid === "queen-cannon") {
+            triggerEffect("cannon", [to]);
+            setTimeout(() => triggerEffect("explosion", [to]), 350);
+          } else if (mid === "railgun") {
+            triggerEffect("cannon", [from]);
+            const targets = [to, ...(chaosMove.sideEffects ?? [])];
+            setTimeout(() => triggerEffect("explosion", targets), 250);
+          } else if (mid === "usurper") {
+            triggerEffect("teleport", [from, to]);
           } else if (mid === "bishop-bounce") {
             triggerEffect("ricochet", [from, to]);
             startRicochetAnim(chaosMove, playerColor === "white" ? "w" : "b");
@@ -7460,10 +7658,13 @@ export default function ChaosChessPage() {
           to,
           chaosMove.type === "capture",
         );
-        // queen-teleport is once per game — remove modifier after use
+        // queen-teleport / railgun / usurper are once per game — remove modifier after use
         if (chaosMove.modifierId === "queen-teleport") {
           cs = { ...cs, playerModifiers: cs.playerModifiers.filter((m) => m.id !== "queen-teleport") };
           setWarpQueenActive(false);
+        }
+        if (chaosMove.modifierId === "railgun" || chaosMove.modifierId === "usurper") {
+          cs = { ...cs, playerModifiers: cs.playerModifiers.filter((m) => m.id !== chaosMove.modifierId) };
         }
         // Decrement Justice / Devil counters (player's half-move)
         cs = decrementAnomalyCounters(cs, "player", from, to);
@@ -8634,7 +8835,7 @@ export default function ChaosChessPage() {
       const SINGLE_PIECE_MODS: Record<string, string> = {
         archbishop: "b",
         knook: "n",
-        pegasus: "n",
+        "night-rider": "n",
         camel: "n",
       };
 
@@ -8834,7 +9035,7 @@ export default function ChaosChessPage() {
             const SINGLE_PIECE_MODS: Record<string, string> = {
               archbishop: "b",
               knook: "n",
-              pegasus: "n",
+              "night-rider": "n",
               camel: "n",
             };
             if (SINGLE_PIECE_MODS[aiPick.id]) {
@@ -10298,7 +10499,6 @@ export default function ChaosChessPage() {
     );
   }
 
-  // Game / Drafting / Game Over
   return (
     <>
       <div className="relative min-h-[calc(100vh-64px)] overflow-hidden bg-gradient-to-b from-[#030712] via-[#0a0f1a] to-[#030712]">
@@ -10326,6 +10526,12 @@ export default function ChaosChessPage() {
             anomaly={chaosState.playerAnomaly}
             temperanceUsed={chaosState.playerTemperanceUsedThisPhase}
             onTemperanceReroll={handleTemperanceReroll}
+            unlockedIds={!authenticated ? GUEST_UNLOCKED_IDS : undefined}
+            lockedPickUsed={guestLockedPickUsed}
+            onLockedPick={(mod) => {
+              setGuestLockedPickUsed(true);
+              handleDraftPick(mod);
+            }}
           />
         )}
         {/* Return to Draft — floating safety button if the modal was accidentally hidden */}
@@ -10342,6 +10548,14 @@ export default function ChaosChessPage() {
               </button>
             </div>
           )}
+
+        {/* Guest unlock modal — shown after first win for unauthenticated players */}
+        {pendingGuestUnlock && (
+          <GuestUnlockModal
+            mod={pendingGuestUnlock}
+            onClose={() => setPendingGuestUnlock(null)}
+          />
+        )}
 
         {/* Opponent draft reveal (multiplayer) — with post-reveal action */}
         {opponentDraftReveal && (

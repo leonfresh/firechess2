@@ -797,95 +797,64 @@ function genBishopBounce(game: Chess, color: Color): ChaosMove[] {
   return moves;
 }
 
-/** Pegasus: One knight can make a double L-jump (two knight moves in one turn, 2nd jump forward only).
- *  The first jump uses only the 4 "tall" L-shapes (±1 file, ±2 rank) — no sideways jumps.
- *  This makes it a quad-Pegasus rather than octo, giving it a forward/backward character. */
-function genPegasus(
+/** Night Rider: one tracked knight can chain repeated L-jumps in the same direction.
+ *  Step 1 in any direction is already a normal knight move (chess.js handles it) —
+ *  we only generate steps 2+ so there is no overlap with the standard move list. */
+function genNightRider(
   game: Chess,
   color: Color,
   trackedSquare?: string | null,
 ): ChaosMove[] {
   const moves: ChaosMove[] = [];
 
-  // Require explicit tracking — never fall back to knights[0].
-  // undefined means the key was never written (shouldn't happen after draft),
-  // null means the tracked knight was captured. Either way: no moves.
+  // Require explicit tracking — undefined = key never written, null = captured. Either way: no moves.
   if (trackedSquare === undefined || trackedSquare === null) return moves;
 
   const p = game.get(trackedSquare as any);
-  if (!p || p.type !== "n" || p.color !== color) return moves; // knight is gone
+  if (!p || p.type !== "n" || p.color !== color) return moves;
 
-  const pegasusSquare = trackedSquare as Square;
+  const nrSquare = trackedSquare as Square;
+  const [f, r] = sqToCoords(nrSquare);
 
-  // First jump: only the 4 "tall" offsets (±1 file, ±2 rank) — no sideways knight jumps
-  const firstJumpOffsets = [
-    [-1, -2],
-    [-1, 2],
-    [1, -2],
-    [1, 2],
+  const knightDirs: [number, number][] = [
+    [-2, -1], [-2, 1], [-1, -2], [-1, 2],
+    [1, -2],  [1, 2],  [2, -1],  [2, 1],
   ];
-  // Second jump: all 8 standard knight offsets (forward-only filter applied below)
-  const allKnightOffsets = [
-    [-2, -1],
-    [-2, 1],
-    [-1, -2],
-    [-1, 2],
-    [1, -2],
-    [1, 2],
-    [2, -1],
-    [2, 1],
-  ];
-  const seen = new Set<string>();
-  const [f, r] = sqToCoords(pegasusSquare);
 
-  // First jump: only forward/backward L-shapes (no sideways)
-  for (const [df1, dr1] of firstJumpOffsets) {
-    const midF = f + df1;
-    const midR = r + dr1;
-    if (midF < 0 || midF > 7 || midR < 0 || midR > 7) continue;
+  for (const [df, dr] of knightDirs) {
+    // Step 1 is a normal knight move — start from step 2 (the long-range extension)
+    let step = 2;
+    while (true) {
+      const cf = f + df * step;
+      const cr = r + dr * step;
+      if (cf < 0 || cf > 7 || cr < 0 || cr > 7) break;
+      const target = sq(cf, cr)!;
+      const piece = game.get(target);
 
-    // Second jump: forward only (rank must advance toward opponent's side)
-    for (const [df2, dr2] of allKnightOffsets) {
-      const isForward = color === "w" ? dr2 > 0 : dr2 < 0;
-      if (!isForward) continue;
+      if (piece) {
+        // Enemy: can capture here then stop
+        if (piece.color !== color && !wouldLeaveKingInCheck(game, nrSquare, target, color)) {
+          moves.push({
+            from: nrSquare,
+            to: target,
+            type: "capture",
+            modifierId: "night-rider",
+            label: "Night Rider (extended L-slide)",
+          });
+        }
+        break; // blocked — can't continue in this direction
+      }
 
-      const finalF = midF + df2;
-      const finalR = midR + dr2;
-      if (finalF < 0 || finalF > 7 || finalR < 0 || finalR > 7) continue;
-
-      const target = sq(finalF, finalR)!;
-
-      // Can't end on starting square
-      if (target === pegasusSquare) continue;
-      // Can't land on friendly piece
-      if (isFriendly(game, target, color)) continue;
-
-      // Deduplicate same from→to (multiple intermediate paths)
-      const key = `${pegasusSquare}-${target}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-
-      // Skip squares reachable by a normal single-knight jump (chess.js handles those)
-      const df = finalF - f;
-      const dr = finalR - r;
-      const isNormalKnight =
-        (Math.abs(df) === 2 && Math.abs(dr) === 1) ||
-        (Math.abs(df) === 1 && Math.abs(dr) === 2);
-      if (isNormalKnight) continue;
-
-      // Nerf: only allow long-range jumps (Chebyshev distance >= 3).
-      // Removes adjacent diagonal captures and other nearby squares.
-      if (Math.max(Math.abs(df), Math.abs(dr)) < 3) continue;
-
-      if (wouldLeaveKingInCheck(game, pegasusSquare, target, color)) continue;
-
-      moves.push({
-        from: pegasusSquare,
-        to: target,
-        type: isEnemy(game, target, color) ? "capture" : "move",
-        modifierId: "pegasus",
-        label: "Pegasus (quad L-jump forward)",
-      });
+      if (!wouldLeaveKingInCheck(game, nrSquare, target, color)) {
+        moves.push({
+          from: nrSquare,
+          to: target,
+          type: "move",
+          modifierId: "night-rider",
+          label: "Night Rider (extended L-slide)",
+        });
+      }
+      step++;
     }
   }
   return moves;
@@ -942,7 +911,143 @@ function genBishopCannon(game: Chess, color: Color): ChaosMove[] {
   return moves;
 }
 
-/** Rook Cannon: rooks can jump over exactly one piece to capture behind it (Xiangqi style) */
+/** Queen Cannon: queen jumps over exactly one piece in any of 8 directions to capture behind it */
+function genQueenCannon(game: Chess, color: Color): ChaosMove[] {
+  const moves: ChaosMove[] = [];
+  const queens = allSquaresOf(game, "q", color);
+  const dirs: [number, number][] = [
+    [-1, 0], [1, 0], [0, -1], [0, 1],
+    [-1, -1], [-1, 1], [1, -1], [1, 1],
+  ];
+
+  for (const qs of queens) {
+    const [f, r] = sqToCoords(qs);
+    for (const [df, dr] of dirs) {
+      let cf = f + df;
+      let cr = r + dr;
+      let jumped = false;
+
+      while (cf >= 0 && cf <= 7 && cr >= 0 && cr <= 7) {
+        const target = sq(cf, cr)!;
+        const piece = game.get(target);
+
+        if (piece) {
+          if (!jumped) {
+            jumped = true; // first piece: jump over it
+          } else {
+            // second piece: capture if enemy
+            if (piece.color !== color) {
+              if (!wouldLeaveKingInCheck(game, qs, target, color)) {
+                moves.push({
+                  from: qs,
+                  to: target,
+                  type: "capture",
+                  modifierId: "queen-cannon",
+                  label: "Queen Cannon (jump capture)",
+                });
+              }
+            }
+            break;
+          }
+        }
+        cf += df;
+        cr += dr;
+      }
+    }
+  }
+  return moves;
+}
+
+/** Railgun: once per game, rook fires along all 4 cardinal directions, piercing friendlies,
+ *  eliminating the first enemy it finds in each direction.
+ *  Generates a single "fire" move per rook: pieceStays=true, sideEffects = all targets. */
+function genRailgun(game: Chess, color: Color): ChaosMove[] {
+  const moves: ChaosMove[] = [];
+  const rooks = allSquaresOf(game, "r", color);
+  const dirs: [number, number][] = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+
+  for (const rs of rooks) {
+    const [f, r] = sqToCoords(rs);
+    const targets: Square[] = [];
+
+    for (const [df, dr] of dirs) {
+      let cf = f + df;
+      let cr = r + dr;
+      // Scan THROUGH friendly pieces — only stop at the first enemy
+      while (cf >= 0 && cf <= 7 && cr >= 0 && cr <= 7) {
+        const t = sq(cf, cr)!;
+        const p = game.get(t);
+        if (p) {
+          if (p.color !== color && p.type !== "k") {
+            targets.push(t); // first enemy found in this direction
+          }
+          break; // stop at first piece regardless
+        }
+        cf += df;
+        cr += dr;
+      }
+    }
+
+    if (targets.length === 0) continue;
+
+    // Primary target is the "to" field; the rest are side effects.
+    // pieceStays=true → rook doesn't move, executeChaosMove removes to + sideEffects.
+    const [primaryTarget, ...sideTargets] = targets;
+    if (!wouldLeaveKingInCheck(game, rs, primaryTarget, color, sideTargets, true)) {
+      moves.push({
+        from: rs,
+        to: primaryTarget,
+        type: "capture",
+        modifierId: "railgun",
+        label: "Railgun (pierce all directions)",
+        pieceStays: true,
+        sideEffects: sideTargets,
+      });
+    }
+  }
+  return moves;
+}
+
+/** Usurper: once per game, king swaps positions with any friendly piece. */
+function genUsurper(game: Chess, color: Color): ChaosMove[] {
+  const moves: ChaosMove[] = [];
+  const kings = allSquaresOf(game, "k", color);
+  if (kings.length === 0) return moves;
+  const ks = kings[0];
+
+  const friendlies = allSquaresOf(game, "p", color)
+    .concat(allSquaresOf(game, "n", color))
+    .concat(allSquaresOf(game, "b", color))
+    .concat(allSquaresOf(game, "r", color))
+    .concat(allSquaresOf(game, "q", color));
+
+  for (const target of friendlies) {
+    if (target === ks) continue;
+    const friendly = game.get(target);
+    if (!friendly) continue;
+
+    // Simulate the swap and check king safety at the new position
+    const tmpFen = game.fen();
+    const tmpChk = new Chess(tmpFen);
+    tmpChk.remove(ks);
+    tmpChk.remove(target);
+    tmpChk.put({ type: "k", color }, target);
+    tmpChk.put({ type: friendly.type, color: friendly.color }, ks);
+
+    const kingAfter = allSquaresOf(tmpChk, "k", color);
+    if (kingAfter.length === 0) continue;
+    if (tmpChk.isAttacked(kingAfter[0], color === "w" ? "b" : "w")) continue;
+
+    moves.push({
+      from: ks,
+      to: target,
+      type: "move",
+      modifierId: "usurper",
+      label: "Usurper (king swaps with ally)",
+    });
+  }
+  return moves;
+}
 function genRookCannon(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const rooks = allSquaresOf(game, "r", color);
@@ -1410,12 +1515,16 @@ const MODIFIER_GENERATORS: Record<
   "king-ascension": genKingAscension,
   "sniper-bishop": genSniperBishop,
   "pawn-promotion-early": genEarlyPromotion,
-  pegasus: genPegasus,
+  "night-rider": genNightRider,
   "rook-cannon": genRookCannon,
   "bishop-cannon": genBishopCannon,
+  "queen-cannon": genQueenCannon,
+  "railgun": genRailgun,
+  "usurper": genUsurper,
   "queen-teleport": genQueenTeleport,
   "bishop-bounce": genBishopBounce,
   "enpassant-everywhere": genEnPassantEverywhere,
+  // kamikaze-bishop has no extra move generation (it's a reactive effect on capture)
 };
 
 /**
@@ -1655,40 +1764,46 @@ export function getChaosAttackedSquares(
     }
   }
 
-  /* Pegasus: tracked/first knight attacks double-L squares (quad first jump, forward-only 2nd jump) */
-  if (modIds.has("pegasus")) {
-    const trackedPegasus = assignedSquares?.[`${attackerColor}_pegasus`];
-    let pegasusSq: Square | null = null;
-    if (trackedPegasus !== undefined && trackedPegasus !== null) {
-      const p = game.get(trackedPegasus as any);
-      if (p && p.type === "n" && p.color === attackerColor)
-        pegasusSq = trackedPegasus as Square;
+  /* Night Rider: tracked knight attacks along all 8 knight-direction rays (step 2+) */
+  if (modIds.has("night-rider")) {
+    const trackedNR = assignedSquares?.[`${attackerColor}_night-rider`];
+    let nrSq: Square | null = null;
+    if (trackedNR !== undefined && trackedNR !== null) {
+      const p = game.get(trackedNR as any);
+      if (p && p.type === "n" && p.color === attackerColor) nrSq = trackedNR as Square;
     }
-    // If trackedPegasus is undefined or null, no Pegasus attack squares exist.
-    if (pegasusSq) {
-      const [f, r] = sqToCoords(pegasusSq);
-      // First jump: only "tall" (±1, ±2) offsets — no sideways
-      const pegFirstJump = [[-1,-2],[-1,2],[1,-2],[1,2]];
-      for (const [df1, dr1] of pegFirstJump) {
-        const mf = f + df1;
-        const mr = r + dr1;
-        if (mf < 0 || mf > 7 || mr < 0 || mr > 7) continue;
-        for (const [df2, dr2] of knightOffsets) {
-          // Forward-only 2nd jump
-          const isForward = attackerColor === "w" ? dr2 > 0 : dr2 < 0;
-          if (!isForward) continue;
-          const ff = mf + df2;
-          const fr = mr + dr2;
-          if (ff < 0 || ff > 7 || fr < 0 || fr > 7) continue;
-          const t = sq(ff, fr);
-          if (!t || t === pegasusSq) continue;
-          const dff = ff - f;
-          const dfr = fr - r;
-          const isNormal =
-            (Math.abs(dff) === 2 && Math.abs(dfr) === 1) ||
-            (Math.abs(dff) === 1 && Math.abs(dfr) === 2);
-          if (!isNormal && Math.max(Math.abs(dff), Math.abs(dfr)) >= 3)
-            attacked.add(t);
+    if (nrSq) {
+      const [f, r] = sqToCoords(nrSq);
+      const knightDirs: [number,number][] = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+      for (const [df, dr] of knightDirs) {
+        let step = 2; // step 1 handled by chess.js
+        while (true) {
+          const cf = f + df * step, cr = r + dr * step;
+          if (cf < 0 || cf > 7 || cr < 0 || cr > 7) break;
+          const t = sq(cf, cr)!;
+          attacked.add(t);
+          if (game.get(t)) break; // blocked
+          step++;
+        }
+      }
+    }
+  }
+
+  /* Queen Cannon: all queens attack via jump-over (cannon-style) in all 8 directions */
+  if (modIds.has("queen-cannon")) {
+    const allDirs: [number,number][] = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
+    for (const qs of allSquaresOf(game, "q", attackerColor)) {
+      const [f, r] = sqToCoords(qs);
+      for (const [df, dr] of allDirs) {
+        let cf = f + df, cr = r + dr, jumped = false;
+        while (cf >= 0 && cf <= 7 && cr >= 0 && cr <= 7) {
+          const t = sq(cf, cr)!;
+          const p = game.get(t);
+          if (p) {
+            if (!jumped) { jumped = true; }
+            else { attacked.add(t); break; }
+          }
+          cf += df; cr += dr;
         }
       }
     }
@@ -2090,6 +2205,31 @@ export function executeChaosMove(
   const fen = game.fen();
   const tmp = new Chess(fen);
 
+  // ── Special: Usurper — swap king with friendly piece ──
+  if (move.modifierId === "usurper") {
+    const friendly = game.get(move.to);
+    if (!friendly) return null;
+    tmp.remove(move.from);
+    tmp.remove(move.to);
+    tmp.put({ type: "k", color: piece.color }, move.to);   // king to ally's square
+    tmp.put({ type: friendly.type, color: friendly.color }, move.from); // ally to king's square
+
+    const fenParts = tmp.fen().split(" ");
+    fenParts[1] = fenParts[1] === "w" ? "b" : "w";
+    fenParts[3] = "-"; // reset en passant
+    // King moved — revoke all castling rights for this side
+    const rawC = fenParts[2] || "-";
+    if (rawC !== "-") {
+      let c = rawC;
+      if (piece.color === "w") c = c.replace("K", "").replace("Q", "");
+      else c = c.replace("k", "").replace("q", "");
+      fenParts[2] = c || "-";
+    }
+    fenParts[4] = String(Math.max(0, parseInt(fenParts[4] || "0")));
+    if (fenParts[1] === "w") fenParts[5] = String(parseInt(fenParts[5] || "1") + 1);
+    try { return new Chess(fenParts.join(" ")); } catch { return null; }
+  }
+
   // Remove piece from source (unless it stays, e.g. sniper)
   if (!move.pieceStays) {
     tmp.remove(move.from);
@@ -2110,6 +2250,24 @@ export function executeChaosMove(
   if (move.sideEffects) {
     for (const s of move.sideEffects) {
       tmp.remove(s);
+    }
+  }
+
+  // ── Kamikaze Bishop: chaos-move capture (bishop-cannon, dragon-bishop, etc.) ──
+  // Standard move captures are handled by applyPostMoveEffects.
+  if (
+    move.type === "capture" &&
+    piece.type === "b" &&
+    !move.pieceStays &&
+    modifiers.some((m) => m.id === "kamikaze-bishop")
+  ) {
+    tmp.remove(move.to); // bishop self-destructs at the capture square
+    const [tf, tr] = sqToCoords(move.to);
+    for (const [df, dr] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]] as [number,number][]) {
+      const adj = sq(tf + df, tr + dr);
+      if (!adj) continue;
+      const adjP = tmp.get(adj);
+      if (adjP && adjP.color !== piece.color && adjP.type !== "k") tmp.remove(adj);
     }
   }
 
@@ -2308,6 +2466,23 @@ export function applyPostMoveEffects(
         modified = true;
       }
     }
+  }
+
+  // Kamikaze Bishop — on capture, bishop detonates: removes itself + adjacent enemies
+  if (
+    capturedPiece &&
+    movingPieceType === "b" &&
+    modifiers.some((m) => m.id === "kamikaze-bishop")
+  ) {
+    tmp.remove(to); // bishop self-destructs
+    const [tf, tr] = sqToCoords(to);
+    for (const [df, dr] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]] as [number,number][]) {
+      const adj = sq(tf + df, tr + dr);
+      if (!adj) continue;
+      const adjP = tmp.get(adj);
+      if (adjP && adjP.color !== color && adjP.type !== "k") tmp.remove(adj);
+    }
+    modified = true;
   }
 
   if (!modified) return null;

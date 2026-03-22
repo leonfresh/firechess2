@@ -5,7 +5,7 @@ camel,Camel,common,n,"1,2",🐫,"One of your Knights transforms into a Camel —
 dragon-bishop,Dragon Bishop,common,b,"1,2",🐉,"Your bishops ascend — each bishop can also step one square in any cardinal direction (orthogonal), mirroring the Shogi Dragon Horse (龍馬)."
 kings-chains,King's Chains,common,k,"1,2",⛓️,"Your king's presence paralyzes the highest-value adjacent enemy piece — it cannot move or capture. The chained piece still threatens squares."
 dragon-rook,Dragon Rook,common,r,"1,2",🐲,"Your rooks are promoted — each rook can also step one square diagonally, mirroring the Shogi Dragon King (龍王)."
-pegasus,Pegasus,rare,n,"2,3",🦄,"One knight gains a double L-jump — the second jump must advance toward the opponent (forward ranks only)."
+night-rider,Night Rider,rare,n,"2,3",🌙,"One of your knights becomes a Night Rider — it can make repeated L-jumps in the same direction in a single move, chaining leaps until blocked or off the board."
 phantom-rook,Phantom Rook,rare,r,"2,3",👻,"Rooks can move through friendly pieces (but not enemy pieces)."
 sniper-bishop,Sniper Bishop,rare,b,"2,3",🎯,"Bishops can 'shoot' and capture any enemy piece on the same diagonal up to 2 squares away, without moving."
 pawn-fortress,Pawn Fortress,rare,p,"2,3",🏰,"When one of your pawns is captured, there's a 50% chance it respawns on its starting square (if empty)."
@@ -23,5 +23,9 @@ nuclear-queen,Nuclear Queen,legendary,q,"4,5",☢️,"When the Queen captures, a
 amazon,The Amazon,legendary,q,"4,5",👸,"Your Queen transforms into an Amazon — she can also move like a Knight."
 knight-horde,Knight Horde,legendary,n,"4,5",🐎,Spawn 2 extra Knights on random empty squares on your side of the board.
 undead-army,Undead Army,legendary,p,"4,5",💀,"Spawns all your missing pawns on random empty squares on your 2nd and 3rd ranks. Any pawn not currently on the board will come back."
+usurper,Usurper,rare,k,"2,3",🎭,"Once per game, your King swaps positions with any friendly piece on the board. Reposition your king to safety or teleport a rook to the center in one move."
+kamikaze-bishop,Kamikaze Bishop,rare,b,"2,3",🧨,"When one of your Bishops is captured, it explodes — removing all adjacent enemy pieces from the board. Think twice before taking it."
+queen-cannon,Queen Cannon,epic,q,"3,4",🔫,"Your Queen can jump over exactly one piece on any line (rank, file, or diagonal) to capture the piece behind it — Xiangqi cannon movement for the most powerful piece."
 king-ascension,King Ascension,legendary,k,"4,5",🔱,"Your King can capture like a Queen — striking any range along diagonals and files. It still moves one square at a time."
 rook-cannon,Rook Cannon,legendary,r,"4,5",💣,"Rooks can jump over exactly one piece (like a cannon in Xiangqi) to capture behind it."
+railgun,Railgun,legendary,r,"4,5",⚡,"Once per game, a rook fires along its entire rank or file — removing the first enemy piece in that line regardless of blocking pieces. No movement needed."

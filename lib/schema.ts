@@ -567,6 +567,25 @@ export const chaosRatings = pgTable("chaos_rating", {
 });
 
 /* ------------------------------------------------------------------ */
+/*  Chaos Chess — modifier collection (unlocks per user)               */
+/* ------------------------------------------------------------------ */
+
+export const chaosUnlocks = pgTable(
+  "chaos_unlock",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    modifierId: text("modifierId").notNull(),
+    unlockedAt: timestamp("unlockedAt", { mode: "date" }).defaultNow(),
+  },
+  (t) => [unique().on(t.userId, t.modifierId)],
+);
+
+/* ------------------------------------------------------------------ */
 /*  Site-wide configuration (key-value store for admin settings)        */
 /* ------------------------------------------------------------------ */
 
