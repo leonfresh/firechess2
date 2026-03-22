@@ -11,6 +11,8 @@
  * or passive effects (shield, revive, collateral).
  */
 
+import type { AnomalyId } from "./chaos-anomalies";
+
 /* ================================================================== */
 /*  Types                                                               */
 /* ================================================================== */
@@ -62,6 +64,36 @@ export interface ChaosState {
    *   2 = both have drafted, phase complete
    */
   draftStep?: number;
+
+  /* ── Opening Anomalies ── */
+  /** Anomaly the local player (white / the human) has chosen */
+  playerAnomaly?: AnomalyId | null;
+  /** Anomaly the opponent (AI or remote player) has */
+  aiAnomaly?: AnomalyId | null;
+  /** Whether the player has already used their once-per-game ability */
+  playerAnomalyUsed?: boolean;
+  aiAnomalyUsed?: boolean;
+  /** Moon anomaly: becomes available after Phase 2 (turn 10) */
+  playerMoonUnlocked?: boolean;
+  aiMoonUnlocked?: boolean;
+  /** Justice anomaly: immune piece tracking */
+  playerImmuneSquare?: string | null;
+  playerImmuneTurnsLeft?: number;
+  aiImmuneSquare?: string | null;
+  aiImmuneTurnsLeft?: number;
+  /** Devil anomaly: frozen opponent piece tracking */
+  playerFrozenSquare?: string | null; // square the player froze (an opponent piece)
+  playerFrozenTurnsLeft?: number;
+  aiFrozenSquare?: string | null; // square the AI froze (a player piece)
+  aiFrozenTurnsLeft?: number;
+  /** World anomaly: player has a bonus turn ready (after opponent's move) */
+  playerWorldReady?: boolean;
+  aiWorldReady?: boolean;
+  /** Temperance: has the reroll been used this phase */
+  playerTemperanceUsedThisPhase?: boolean;
+  /** Captured pieces list for Judgement resurrection (stored as "{color}{type}" e.g. "wQ") */
+  playerCapturedForJudgement?: string[];
+  aiCapturedForJudgement?: string[];
 }
 
 /* ================================================================== */
@@ -400,6 +432,25 @@ export function createChaosState(): ChaosState {
     draftingSide: null,
     draftChoices: [],
     draftStep: 0,
+    playerAnomaly: null,
+    aiAnomaly: null,
+    playerAnomalyUsed: false,
+    aiAnomalyUsed: false,
+    playerMoonUnlocked: false,
+    aiMoonUnlocked: false,
+    playerImmuneSquare: null,
+    playerImmuneTurnsLeft: 0,
+    aiImmuneSquare: null,
+    aiImmuneTurnsLeft: 0,
+    playerFrozenSquare: null,
+    playerFrozenTurnsLeft: 0,
+    aiFrozenSquare: null,
+    aiFrozenTurnsLeft: 0,
+    playerWorldReady: false,
+    aiWorldReady: false,
+    playerTemperanceUsedThisPhase: false,
+    playerCapturedForJudgement: [],
+    aiCapturedForJudgement: [],
   };
 }
 

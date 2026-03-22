@@ -27,10 +27,10 @@ const plans = [
       "Opening Explorer on every card",
       "Move explanations (Best / Played / DB move)",
       "Save reports to dashboard & track progress",
-      "Lichess + Chess.com support"
+      "Lichess + Chess.com support",
     ],
     cta: "Get Started Free",
-    highlight: false
+    highlight: false,
   },
   {
     id: "pro" as const,
@@ -49,10 +49,12 @@ const plans = [
       "Time pressure detection on missed tactics",
       "Dedicated tactics & endgame drill modes",
       "Full Mental Game breakdown — archetype, color stats, momentum, streaks",
-      "Deep Analysis — full study plans & coaching tips per dimension"
+      "Deep Analysis — full study plans & coaching tips per dimension",
+      "⚡ Chaos Chess: 4 Opening Anomaly choices (vs 2 for Free)",
+      "⚡ Chaos Chess: all 22 Tarot anomalies unlocked",
     ],
     cta: "Upgrade with Stripe",
-    highlight: true
+    highlight: true,
   },
   {
     id: "lifetime" as const,
@@ -69,13 +71,15 @@ const plans = [
       "Support an indie dev building for chess players",
     ],
     cta: "Get Lifetime Access",
-    highlight: false
-  }
+    highlight: false,
+  },
 ];
 
 export default function PricingPage() {
   const { authenticated, plan } = useSession();
-  const [checkoutLoading, setCheckoutLoading] = useState<"pro" | "lifetime" | null>(null);
+  const [checkoutLoading, setCheckoutLoading] = useState<
+    "pro" | "lifetime" | null
+  >(null);
 
   const handleUpgrade = async (checkoutPlan: "pro" | "lifetime" = "pro") => {
     if (!authenticated) {
@@ -88,7 +92,9 @@ export default function PricingPage() {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(checkoutPlan === "lifetime" ? { plan: "lifetime" } : {}),
+        body: JSON.stringify(
+          checkoutPlan === "lifetime" ? { plan: "lifetime" } : {},
+        ),
       });
       const data = await res.json();
       if (data.url) {
@@ -114,7 +120,6 @@ export default function PricingPage() {
 
       <div className="relative z-10 px-6 py-16 md:px-10">
         <section className="mx-auto w-full max-w-5xl space-y-16">
-
           {/* Hero */}
           <header className="animate-fade-in-up space-y-5 text-center">
             <span className="tag-fuchsia mx-auto">
@@ -125,30 +130,49 @@ export default function PricingPage() {
               <span className="gradient-text">training tier</span>
             </h1>
             <p className="mx-auto max-w-2xl text-base text-slate-400 md:text-lg">
-              Start free, then unlock deeper analysis and bigger scan limits powered by Stockfish 18.
+              Start free, then unlock deeper analysis and bigger scan limits
+              powered by Stockfish 18.
             </p>
             <div className="mx-auto mt-6 max-w-2xl rounded-2xl border border-orange-500/20 bg-gradient-to-r from-orange-500/[0.08] to-amber-500/[0.06] p-5 text-left">
               <div className="flex items-start gap-4">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-orange-500/15 text-2xl">🔥</span>
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-orange-500/15 text-2xl">
+                  🔥
+                </span>
                 <div>
-                  <h3 className="text-base font-bold text-white">Launch Pricing — 37% off</h3>
+                  <h3 className="text-base font-bold text-white">
+                    Launch Pricing — 37% off
+                  </h3>
                   <p className="mt-1 text-sm text-slate-400">
-                    FireChess is brand new. Subscribe now at <span className="font-semibold text-orange-300">$5/mo instead of $8/mo</span> and
-                    keep that rate forever — even when the price goes up. Or grab <span className="font-semibold text-amber-300">Lifetime access for a one-time $59</span>.
+                    FireChess is brand new. Subscribe now at{" "}
+                    <span className="font-semibold text-orange-300">
+                      $5/mo instead of $8/mo
+                    </span>{" "}
+                    and keep that rate forever — even when the price goes up. Or
+                    grab{" "}
+                    <span className="font-semibold text-amber-300">
+                      Lifetime access for a one-time $59
+                    </span>
+                    .
                   </p>
-                  <p className="mt-2 text-xs font-medium text-orange-400/80">⏰ Launch pricing won&apos;t last forever — lock it in while you can.</p>
+                  <p className="mt-2 text-xs font-medium text-orange-400/80">
+                    ⏰ Launch pricing won&apos;t last forever — lock it in while
+                    you can.
+                  </p>
                 </div>
               </div>
             </div>
 
-              <div className="mx-auto mt-6 grid max-w-3xl gap-3 sm:grid-cols-2 md:grid-cols-4">
+            <div className="mx-auto mt-6 grid max-w-3xl gap-3 sm:grid-cols-2 md:grid-cols-4">
               {[
                 { icon: "📊", text: "Opening leak detection" },
                 { icon: "⚡", text: "Missed tactics scanner" },
                 { icon: "♟️", text: "Endgame mistake finder" },
                 { icon: "🧠", text: "Mental game analysis" },
               ].map((item) => (
-                <div key={item.text} className="glass-card flex items-center gap-3 px-4 py-3 text-sm text-slate-300">
+                <div
+                  key={item.text}
+                  className="glass-card flex items-center gap-3 px-4 py-3 text-sm text-slate-300"
+                >
                   <span className="text-lg">{item.icon}</span>
                   {item.text}
                 </div>
@@ -159,7 +183,11 @@ export default function PricingPage() {
           {/* Social proof */}
           <div className="mx-auto flex max-w-md items-center justify-center gap-2 rounded-full border border-emerald-500/15 bg-emerald-500/[0.06] px-5 py-2.5 text-sm text-slate-300">
             <span className="text-emerald-400">🔥</span>
-            <span>Trusted by <span className="font-semibold text-white">hundreds</span> of chess improvers</span>
+            <span>
+              Trusted by{" "}
+              <span className="font-semibold text-white">hundreds</span> of
+              chess improvers
+            </span>
           </div>
 
           {/* Plan Cards */}
@@ -168,7 +196,11 @@ export default function PricingPage() {
               <article
                 key={p.name}
                 className={`glass-card-hover relative p-6 md:p-8 ${
-                  p.highlight ? "border-emerald-500/20 shadow-glow" : p.id === "lifetime" ? "border-amber-500/20" : ""
+                  p.highlight
+                    ? "border-emerald-500/20 shadow-glow"
+                    : p.id === "lifetime"
+                      ? "border-amber-500/20"
+                      : ""
                 }`}
               >
                 {p.highlight && (
@@ -192,31 +224,52 @@ export default function PricingPage() {
                   </div>
                   <p className="mt-1 text-sm text-slate-400">{p.subtitle}</p>
                   {p.badge && (
-                    <div className={`mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${
-                      p.id === "lifetime"
-                        ? "border-amber-500/20 bg-amber-500/[0.08] text-amber-300"
-                        : "border-orange-500/20 bg-orange-500/[0.08] text-orange-300"
-                    }`}>
+                    <div
+                      className={`mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${
+                        p.id === "lifetime"
+                          ? "border-amber-500/20 bg-amber-500/[0.08] text-amber-300"
+                          : "border-orange-500/20 bg-orange-500/[0.08] text-orange-300"
+                      }`}
+                    >
                       {p.badge}
                     </div>
                   )}
                   <div className="mt-4 flex items-baseline gap-3">
                     {p.originalPrice && (
-                      <span className="text-2xl font-bold text-slate-500 line-through decoration-red-500/60 decoration-2">{p.originalPrice}</span>
+                      <span className="text-2xl font-bold text-slate-500 line-through decoration-red-500/60 decoration-2">
+                        {p.originalPrice}
+                      </span>
                     )}
-                    <p className="text-4xl font-black gradient-text-emerald">{p.price}</p>
+                    <p className="text-4xl font-black gradient-text-emerald">
+                      {p.price}
+                    </p>
                     {p.id === "lifetime" && (
                       <span className="text-sm text-slate-500">one-time</span>
                     )}
                   </div>
                   {p.originalPrice && (
-                    <p className="mt-2 text-sm font-medium text-orange-300/80">🔒 Early adopters keep this rate forever</p>
+                    <p className="mt-2 text-sm font-medium text-orange-300/80">
+                      🔒 Early adopters keep this rate forever
+                    </p>
                   )}
 
                   <ul className="mt-6 space-y-3">
                     {p.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-3 text-sm text-slate-300">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className={`mt-0.5 shrink-0 ${p.id === "lifetime" ? "text-amber-400" : "text-emerald-400"}`} strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                      <li
+                        key={feature}
+                        className="flex items-start gap-3 text-sm text-slate-300"
+                      >
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          className={`mt-0.5 shrink-0 ${p.id === "lifetime" ? "text-amber-400" : "text-emerald-400"}`}
+                          strokeWidth="2.5"
+                        >
+                          <polyline points="20 6 9 17 4 12" />
+                        </svg>
                         {feature}
                       </li>
                     ))}
@@ -226,9 +279,11 @@ export default function PricingPage() {
                     type="button"
                     disabled={!!checkoutLoading}
                     onClick={
-                      p.id === "pro" ? () => handleUpgrade("pro")
-                        : p.id === "lifetime" ? () => handleUpgrade("lifetime")
-                        : undefined
+                      p.id === "pro"
+                        ? () => handleUpgrade("pro")
+                        : p.id === "lifetime"
+                          ? () => handleUpgrade("lifetime")
+                          : undefined
                     }
                     className={`mt-8 w-full py-3 text-sm font-semibold transition-all duration-300 ${
                       p.id === "pro"
@@ -238,23 +293,40 @@ export default function PricingPage() {
                           : "btn-secondary h-auto"
                     } disabled:opacity-50`}
                   >
-                    {(p.id === "pro" || p.id === "lifetime") && isPro
-                      ? plan === "lifetime"
-                        ? "♾️ Lifetime member"
-                        : p.id === "lifetime"
-                          ? "Switch to Lifetime"
-                          : "✓ Current plan"
-                      : checkoutLoading === p.id
-                        ? (
-                          <span className="inline-flex items-center gap-2">
-                            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                            </svg>
-                            Redirecting to Stripe...
-                          </span>
-                        )
-                        : p.cta}
+                    {(p.id === "pro" || p.id === "lifetime") && isPro ? (
+                      plan === "lifetime" ? (
+                        "♾️ Lifetime member"
+                      ) : p.id === "lifetime" ? (
+                        "Switch to Lifetime"
+                      ) : (
+                        "✓ Current plan"
+                      )
+                    ) : checkoutLoading === p.id ? (
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          className="h-4 w-4 animate-spin"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                          />
+                        </svg>
+                        Redirecting to Stripe...
+                      </span>
+                    ) : (
+                      p.cta
+                    )}
                   </button>
                 </div>
               </article>
@@ -267,51 +339,80 @@ export default function PricingPage() {
               <span className="inline-flex items-center gap-2 rounded-full border border-red-500/20 bg-red-500/[0.07] px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-red-400">
                 🆚 vs. Aimchess
               </span>
-              <h3 className="text-2xl font-black text-white">Why not just use Aimchess?</h3>
+              <h3 className="text-2xl font-black text-white">
+                Why not just use Aimchess?
+              </h3>
               <p className="text-sm text-slate-400 max-w-2xl mx-auto">
-                Aimchess is one of the most well-known chess analysis tools. But take a close look at what their free tier actually gives you — and what&apos;s locked behind their paywall.
+                Aimchess is one of the most well-known chess analysis tools. But
+                take a close look at what their free tier actually gives you —
+                and what&apos;s locked behind their paywall.
               </p>
             </div>
 
             {/* Side-by-side mock UI cards */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-
               {/* Aimchess card */}
               <div className="rounded-2xl border border-red-500/15 bg-red-500/[0.04] overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-red-500/10 px-5 py-4 bg-red-500/[0.06]">
                   <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/15 text-base font-black text-red-400">A</div>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/15 text-base font-black text-red-400">
+                      A
+                    </div>
                     <div>
-                      <p className="text-sm font-bold text-slate-200">Aimchess Free</p>
+                      <p className="text-sm font-bold text-slate-200">
+                        Aimchess Free
+                      </p>
                       <p className="text-[11px] text-slate-500">aimchess.com</p>
                     </div>
                   </div>
-                  <span className="rounded-full bg-red-500/15 px-2.5 py-1 text-[11px] font-bold text-red-400">40 games only</span>
+                  <span className="rounded-full bg-red-500/15 px-2.5 py-1 text-[11px] font-bold text-red-400">
+                    40 games only
+                  </span>
                 </div>
 
                 {/* Performance categories (mimicking their UI) */}
                 <div className="px-5 py-4 space-y-2.5">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-3">Performance Rating by Category</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-3">
+                    Performance Rating by Category
+                  </p>
 
                   {/* Unlocked categories */}
                   {[
                     { label: "Opening", pct: 59, color: "bg-emerald-500" },
-                    { label: "Advantage Capitalization", pct: 69, color: "bg-blue-500" },
+                    {
+                      label: "Advantage Capitalization",
+                      pct: 69,
+                      color: "bg-blue-500",
+                    },
                   ].map((cat) => (
                     <div key={cat.label} className="flex items-center gap-3">
-                      <span className="w-36 text-xs text-slate-400 shrink-0">{cat.label}</span>
+                      <span className="w-36 text-xs text-slate-400 shrink-0">
+                        {cat.label}
+                      </span>
                       <div className="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
-                        <div className={`h-full rounded-full ${cat.color} opacity-60`} style={{ width: `${cat.pct}%` }} />
+                        <div
+                          className={`h-full rounded-full ${cat.color} opacity-60`}
+                          style={{ width: `${cat.pct}%` }}
+                        />
                       </div>
-                      <span className="text-xs text-slate-500 tabular-nums w-8 text-right">{cat.pct}%</span>
+                      <span className="text-xs text-slate-500 tabular-nums w-8 text-right">
+                        {cat.pct}%
+                      </span>
                     </div>
                   ))}
 
                   {/* Locked categories */}
-                  {["Tactics", "Resourcefulness", "Time Management", "Endgame"].map((cat) => (
+                  {[
+                    "Tactics",
+                    "Resourcefulness",
+                    "Time Management",
+                    "Endgame",
+                  ].map((cat) => (
                     <div key={cat} className="flex items-center gap-3">
-                      <span className="w-36 text-xs text-slate-600 shrink-0">{cat}</span>
+                      <span className="w-36 text-xs text-slate-600 shrink-0">
+                        {cat}
+                      </span>
                       <div className="flex-1 h-2 rounded-full bg-white/[0.04] overflow-hidden">
                         <div className="h-full w-full bg-slate-700/40 rounded-full" />
                       </div>
@@ -321,20 +422,36 @@ export default function PricingPage() {
 
                   {/* Locked section previews */}
                   <div className="mt-3 space-y-2 pt-2 border-t border-white/[0.04]">
-                    {["Tactics", "Resourcefulness", "Time Management", "Endgame"].map((section) => (
-                      <div key={section} className="flex items-center justify-between rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 opacity-50">
-                        <span className="text-xs font-medium text-slate-500">{section}</span>
+                    {[
+                      "Tactics",
+                      "Resourcefulness",
+                      "Time Management",
+                      "Endgame",
+                    ].map((section) => (
+                      <div
+                        key={section}
+                        className="flex items-center justify-between rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2.5 opacity-50"
+                      >
+                        <span className="text-xs font-medium text-slate-500">
+                          {section}
+                        </span>
                         <div className="flex items-center gap-1.5">
                           <span className="text-slate-600 text-sm">🔒</span>
-                          <span className="text-[10px] text-slate-600">Paid only</span>
+                          <span className="text-[10px] text-slate-600">
+                            Paid only
+                          </span>
                         </div>
                       </div>
                     ))}
                   </div>
 
                   <div className="mt-3 rounded-xl bg-red-500/[0.08] border border-red-500/15 px-4 py-3 text-center">
-                    <p className="text-xs font-semibold text-red-400">Register to get extended report for free</p>
-                    <p className="text-[10px] text-slate-600 mt-0.5">Still missing most features after signup</p>
+                    <p className="text-xs font-semibold text-red-400">
+                      Register to get extended report for free
+                    </p>
+                    <p className="text-[10px] text-slate-600 mt-0.5">
+                      Still missing most features after signup
+                    </p>
                   </div>
                 </div>
               </div>
@@ -344,18 +461,28 @@ export default function PricingPage() {
                 {/* Header */}
                 <div className="flex items-center justify-between border-b border-emerald-500/10 px-5 py-4 bg-emerald-500/[0.06]">
                   <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 text-base">🔥</div>
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15 text-base">
+                      🔥
+                    </div>
                     <div>
-                      <p className="text-sm font-bold text-slate-200">FireChess Free</p>
-                      <p className="text-[11px] text-slate-500">firechess.com</p>
+                      <p className="text-sm font-bold text-slate-200">
+                        FireChess Free
+                      </p>
+                      <p className="text-[11px] text-slate-500">
+                        firechess.com
+                      </p>
                     </div>
                   </div>
-                  <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-400">Up to 300 games</span>
+                  <span className="rounded-full bg-emerald-500/15 px-2.5 py-1 text-[11px] font-bold text-emerald-400">
+                    Up to 300 games
+                  </span>
                 </div>
 
                 {/* All categories unlocked */}
                 <div className="px-5 py-4 space-y-2.5">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-3">All Analysis Categories — Fully Unlocked</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-3">
+                    All Analysis Categories — Fully Unlocked
+                  </p>
 
                   {[
                     { label: "Opening Leaks", color: "bg-emerald-500" },
@@ -366,9 +493,14 @@ export default function PricingPage() {
                     { label: "Strengths Radar", color: "bg-cyan-500" },
                   ].map((cat, i) => (
                     <div key={cat.label} className="flex items-center gap-3">
-                      <span className="w-36 text-xs text-slate-300 shrink-0">{cat.label}</span>
+                      <span className="w-36 text-xs text-slate-300 shrink-0">
+                        {cat.label}
+                      </span>
                       <div className="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
-                        <div className={`h-full rounded-full ${cat.color}`} style={{ width: `${55 + i * 7}%` }} />
+                        <div
+                          className={`h-full rounded-full ${cat.color}`}
+                          style={{ width: `${55 + i * 7}%` }}
+                        />
                       </div>
                       <span className="text-emerald-400 text-sm">✓</span>
                     </div>
@@ -377,15 +509,31 @@ export default function PricingPage() {
                   {/* Unlocked sections */}
                   <div className="mt-3 space-y-2 pt-2 border-t border-white/[0.04]">
                     {[
-                      { label: "Tactics", sub: "Up to 10 missed tactics per scan" },
+                      {
+                        label: "Tactics",
+                        sub: "Up to 10 missed tactics per scan",
+                      },
                       { label: "Endgame", sub: "Up to 10 endgame mistakes" },
-                      { label: "Time Management", sub: "Full time pressure analysis" },
-                      { label: "Mental Game", sub: "Tilt, stability & form stats" },
+                      {
+                        label: "Time Management",
+                        sub: "Full time pressure analysis",
+                      },
+                      {
+                        label: "Mental Game",
+                        sub: "Tilt, stability & form stats",
+                      },
                     ].map((section) => (
-                      <div key={section.label} className="flex items-center justify-between rounded-lg border border-emerald-500/10 bg-emerald-500/[0.04] px-3 py-2.5">
+                      <div
+                        key={section.label}
+                        className="flex items-center justify-between rounded-lg border border-emerald-500/10 bg-emerald-500/[0.04] px-3 py-2.5"
+                      >
                         <div>
-                          <p className="text-xs font-semibold text-slate-200">{section.label}</p>
-                          <p className="text-[10px] text-slate-500">{section.sub}</p>
+                          <p className="text-xs font-semibold text-slate-200">
+                            {section.label}
+                          </p>
+                          <p className="text-[10px] text-slate-500">
+                            {section.sub}
+                          </p>
                         </div>
                         <span className="text-emerald-400 text-sm">✓ Free</span>
                       </div>
@@ -393,8 +541,12 @@ export default function PricingPage() {
                   </div>
 
                   <div className="mt-3 rounded-xl bg-emerald-500/[0.08] border border-emerald-500/20 px-4 py-3 text-center">
-                    <p className="text-xs font-semibold text-emerald-400">No account needed to start</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Everything above is free immediately</p>
+                    <p className="text-xs font-semibold text-emerald-400">
+                      No account needed to start
+                    </p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">
+                      Everything above is free immediately
+                    </p>
                   </div>
                 </div>
               </div>
@@ -403,21 +555,52 @@ export default function PricingPage() {
             {/* Quick stat callouts */}
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
-                { label: "Games scanned", aimchess: "40", firechess: "300", winner: "fc" },
-                { label: "Tactics section", aimchess: "🔒 Locked", firechess: "✓ Free", winner: "fc" },
-                { label: "Endgame section", aimchess: "🔒 Locked", firechess: "✓ Free", winner: "fc" },
-                { label: "Time Management", aimchess: "🔒 Locked", firechess: "✓ Free", winner: "fc" },
+                {
+                  label: "Games scanned",
+                  aimchess: "40",
+                  firechess: "300",
+                  winner: "fc",
+                },
+                {
+                  label: "Tactics section",
+                  aimchess: "🔒 Locked",
+                  firechess: "✓ Free",
+                  winner: "fc",
+                },
+                {
+                  label: "Endgame section",
+                  aimchess: "🔒 Locked",
+                  firechess: "✓ Free",
+                  winner: "fc",
+                },
+                {
+                  label: "Time Management",
+                  aimchess: "🔒 Locked",
+                  firechess: "✓ Free",
+                  winner: "fc",
+                },
               ].map((row) => (
-                <div key={row.label} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-center">
+                <div
+                  key={row.label}
+                  className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-center"
+                >
                   <p className="text-[11px] text-slate-500 mb-2">{row.label}</p>
                   <div className="space-y-1">
                     <div className="flex items-center justify-between gap-2 rounded-lg bg-red-500/[0.06] px-2 py-1">
-                      <span className="text-[10px] text-slate-600">Aimchess</span>
-                      <span className="text-xs font-semibold text-red-400">{row.aimchess}</span>
+                      <span className="text-[10px] text-slate-600">
+                        Aimchess
+                      </span>
+                      <span className="text-xs font-semibold text-red-400">
+                        {row.aimchess}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between gap-2 rounded-lg bg-emerald-500/[0.08] px-2 py-1">
-                      <span className="text-[10px] text-slate-500">FireChess</span>
-                      <span className="text-xs font-bold text-emerald-400">{row.firechess}</span>
+                      <span className="text-[10px] text-slate-500">
+                        FireChess
+                      </span>
+                      <span className="text-xs font-bold text-emerald-400">
+                        {row.firechess}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -430,54 +613,123 @@ export default function PricingPage() {
                 className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-400 transition-colors hover:text-emerald-300"
               >
                 Read the full comparison article
-                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                <svg
+                  className="h-3.5 w-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
               </Link>
               <p className="text-[11px] text-slate-600">
-                Comparison based on Aimchess free tier as of March 2026. Aimchess is a registered trademark of their respective owners.
+                Comparison based on Aimchess free tier as of March 2026.
+                Aimchess is a registered trademark of their respective owners.
               </p>
             </div>
           </div>
 
           {/* Comparison table */}
           <div className="glass-card overflow-hidden p-6">
-            <h3 className="mb-4 text-lg font-bold text-white">Plan comparison</h3>
+            <h3 className="mb-4 text-lg font-bold text-white">
+              Plan comparison
+            </h3>
             <div className="overflow-hidden rounded-xl border border-white/[0.06]">
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="bg-white/[0.02]">
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">Feature</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">Free</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-emerald-400">Pro</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-amber-400">Lifetime</th>
+                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">
+                      Feature
+                    </th>
+                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-slate-500">
+                      Free
+                    </th>
+                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-emerald-400">
+                      Pro
+                    </th>
+                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wider text-amber-400">
+                      Lifetime
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="text-slate-300">
                   {[
-                    ["Recent games per scan", "Up to 300", "Up to 5,000", "Up to 5,000"],
+                    [
+                      "Recent games per scan",
+                      "Up to 300",
+                      "Up to 5,000",
+                      "Up to 5,000",
+                    ],
                     ["Engine depth", "Up to 12", "Up to 24", "Up to 24"],
                     ["Opening leak detection", "✓", "✓", "✓"],
                     ["Opening drill mode", "✓", "✓", "✓"],
-                    ["Scan mode selector", "All modes", "All modes", "All modes"],
+                    [
+                      "Scan mode selector",
+                      "All modes",
+                      "All modes",
+                      "All modes",
+                    ],
                     ["Strengths & Weaknesses radar", "✓", "✓", "✓"],
-                    ["Deep Analysis insight scores", "✓ (scores only)", "✓ + study plans & coaching tips", "✓ + study plans & coaching tips"],
+                    [
+                      "Deep Analysis insight scores",
+                      "✓ (scores only)",
+                      "✓ + study plans & coaching tips",
+                      "✓ + study plans & coaching tips",
+                    ],
                     ["Opening Explorer (Lichess DB)", "✓", "✓", "✓"],
                     ["Move explanations", "✓", "✓", "✓"],
-                    ["Missed tactics", "Up to 10 per scan", "Unlimited", "Unlimited"],
-                    ["Endgame mistakes", "Up to 10 per scan", "Unlimited", "Unlimited"],
+                    [
+                      "Missed tactics",
+                      "Up to 10 per scan",
+                      "Unlimited",
+                      "Unlimited",
+                    ],
+                    [
+                      "Endgame mistakes",
+                      "Up to 10 per scan",
+                      "Unlimited",
+                      "Unlimited",
+                    ],
                     ["Motif pattern analysis", "—", "✓", "✓"],
                     ["Time pressure detection", "—", "✓", "✓"],
                     ["Tactics drill mode", "—", "✓", "✓"],
                     ["Endgame drill mode", "—", "✓", "✓"],
                     ["Mental game: basic stats", "✓", "✓", "✓"],
-                    ["Mental game: full breakdown", "—", "✓ (archetype, color, streaks, form)", "✓"],
+                    [
+                      "Mental game: full breakdown",
+                      "—",
+                      "✓ (archetype, color, streaks, form)",
+                      "✓",
+                    ],
                     ["Save reports to dashboard", "✓", "✓", "✓"],
+                    [
+                      "⚡ Chaos Chess anomaly choices",
+                      "2 choices",
+                      "4 choices",
+                      "4 choices",
+                    ],
+                    [
+                      "⚡ Chaos Chess anomaly pool",
+                      "2 of 22 unlocked",
+                      "All 22 unlocked",
+                      "All 22 unlocked",
+                    ],
                     ["Recurring cost", "—", "$5/month", "$59 one-time"],
                   ].map(([feature, free, pro, lifetime]) => (
                     <tr key={feature} className="border-t border-white/[0.04]">
                       <td className="px-4 py-3 text-slate-400">{feature}</td>
                       <td className="px-4 py-3">{free}</td>
-                      <td className="px-4 py-3 font-medium text-emerald-300">{pro}</td>
-                      <td className="px-4 py-3 font-medium text-amber-300">{lifetime}</td>
+                      <td className="px-4 py-3 font-medium text-emerald-300">
+                        {pro}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-amber-300">
+                        {lifetime}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -490,27 +742,44 @@ export default function PricingPage() {
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.06] via-amber-500/[0.04] to-emerald-500/[0.06]" />
             <div className="relative space-y-5">
               <div>
-                <h3 className="text-xl font-bold text-white">Built solo, with love for chess</h3>
+                <h3 className="text-xl font-bold text-white">
+                  Built solo, with love for chess
+                </h3>
                 <p className="mt-3 text-sm leading-relaxed text-slate-400">
                   FireChess is built and maintained by one person — a{" "}
-                  <a href="https://lichess.org/@/LeonFresh" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">
+                  <a
+                    href="https://lichess.org/@/LeonFresh"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-emerald-400 hover:underline"
+                  >
                     ~2200 rapid player on Lichess
                   </a>{" "}
-                  and developer who got frustrated with the lack of good multi-game analysis tools.
-                  There&apos;s no VC funding, no team of 20, no enterprise sales pipeline. Just me, Stockfish, and a lot of late nights.
+                  and developer who got frustrated with the lack of good
+                  multi-game analysis tools. There&apos;s no VC funding, no team
+                  of 20, no enterprise sales pipeline. Just me, Stockfish, and a
+                  lot of late nights.
                 </p>
                 <p className="mt-3 text-sm leading-relaxed text-slate-400">
-                  Your $5/month (or $59 lifetime) directly funds server costs, Stockfish engine improvements, and lets me keep
-                  building features like the ones you see here. Every Pro subscriber means I can spend more time
-                  making FireChess better instead of worrying about keeping the lights on.
+                  Your $5/month (or $59 lifetime) directly funds server costs,
+                  Stockfish engine improvements, and lets me keep building
+                  features like the ones you see here. Every Pro subscriber
+                  means I can spend more time making FireChess better instead of
+                  worrying about keeping the lights on.
                 </p>
                 <p className="mt-3 text-sm leading-relaxed text-slate-400">
                   I read every piece of feedback (shoutout to the{" "}
-                  <a href="https://www.reddit.com/r/chessbeginners/" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">
+                  <a
+                    href="https://www.reddit.com/r/chessbeginners/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-emerald-400 hover:underline"
+                  >
                     r/chessbeginners
                   </a>{" "}
-                  crowd). If something&apos;s broken or missing,
-                  I usually ship a fix within hours. That&apos;s the solo dev advantage — no tickets, no sprints, just results.
+                  crowd). If something&apos;s broken or missing, I usually ship
+                  a fix within hours. That&apos;s the solo dev advantage — no
+                  tickets, no sprints, just results.
                 </p>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-4">
@@ -520,7 +789,10 @@ export default function PricingPage() {
                   { icon: "💬", text: "Direct feedback loop" },
                   { icon: "♟️", text: "Made by a chess player" },
                 ].map((item) => (
-                  <div key={item.text} className="stat-card flex items-center gap-3 text-sm text-slate-300">
+                  <div
+                    key={item.text}
+                    className="stat-card flex items-center gap-3 text-sm text-slate-300"
+                  >
                     <span className="text-lg">{item.icon}</span>
                     {item.text}
                   </div>
@@ -533,10 +805,14 @@ export default function PricingPage() {
           <div className="glass-card overflow-hidden p-6 md:p-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fuchsia-500/15 text-xl">📋</span>
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-fuchsia-500/15 text-xl">
+                  📋
+                </span>
                 <div>
                   <h3 className="text-lg font-bold text-white">Dev Notes</h3>
-                  <p className="text-xs text-slate-500">What&apos;s new — actively maintained by one dev</p>
+                  <p className="text-xs text-slate-500">
+                    What&apos;s new — actively maintained by one dev
+                  </p>
                 </div>
               </div>
               <Link
@@ -544,7 +820,19 @@ export default function PricingPage() {
                 className="hidden items-center gap-1.5 rounded-full border border-fuchsia-500/20 bg-fuchsia-500/[0.08] px-3 py-1.5 text-xs font-medium text-fuchsia-300 transition-colors hover:bg-fuchsia-500/[0.15] sm:inline-flex"
               >
                 View all
-                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                <svg
+                  className="h-3 w-3"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
               </Link>
             </div>
 
@@ -560,25 +848,42 @@ export default function PricingPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <h4 className="truncate text-sm font-semibold text-white group-hover:text-fuchsia-300">{entry.title}</h4>
+                      <h4 className="truncate text-sm font-semibold text-white group-hover:text-fuchsia-300">
+                        {entry.title}
+                      </h4>
                       {i === 0 && (
                         <span className="shrink-0 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
                           Latest
                         </span>
                       )}
                     </div>
-                    <p className="mt-0.5 text-[11px] text-slate-500">{entry.date}</p>
+                    <p className="mt-0.5 text-[11px] text-slate-500">
+                      {entry.date}
+                    </p>
                     <ul className="mt-1.5 space-y-0.5">
                       {entry.changes.slice(0, 2).map((c) => (
-                        <li key={c.text} className="flex items-start gap-1.5 text-xs text-slate-400">
+                        <li
+                          key={c.text}
+                          className="flex items-start gap-1.5 text-xs text-slate-400"
+                        >
                           <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-fuchsia-500/40" />
                           {c.text}
                         </li>
                       ))}
                     </ul>
                   </div>
-                  <svg className="mt-1 h-4 w-4 shrink-0 text-slate-600 transition-colors group-hover:text-fuchsia-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  <svg
+                    className="mt-1 h-4 w-4 shrink-0 text-slate-600 transition-colors group-hover:text-fuchsia-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 5l7 7-7 7"
+                    />
                   </svg>
                 </Link>
               ))}
@@ -589,7 +894,19 @@ export default function PricingPage() {
               className="mt-4 flex items-center justify-center gap-1.5 text-sm font-medium text-fuchsia-400 transition-colors hover:text-fuchsia-300 sm:hidden"
             >
               View all updates
-              <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              <svg
+                className="h-3.5 w-3.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
             </Link>
           </div>
 
@@ -597,46 +914,51 @@ export default function PricingPage() {
           <div className="glass-card p-6 md:p-8">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-bold text-white">What&apos;s next</h3>
-              <span className="rounded-full border border-slate-500/20 bg-slate-500/[0.08] px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">Roadmap</span>
+              <span className="rounded-full border border-slate-500/20 bg-slate-500/[0.08] px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-slate-400">
+                Roadmap
+              </span>
             </div>
-            <p className="mt-2 text-sm text-slate-400">Realistic next milestones — what I&apos;m actively working on and what&apos;s coming soon.</p>
+            <p className="mt-2 text-sm text-slate-400">
+              Realistic next milestones — what I&apos;m actively working on and
+              what&apos;s coming soon.
+            </p>
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               {[
                 {
                   priority: true,
                   status: "In progress",
                   title: "Progress tracking over time",
-                  desc: "Compare your reports week-over-week. See if your leak count, accuracy, and radar scores are improving with trend charts on your dashboard."
+                  desc: "Compare your reports week-over-week. See if your leak count, accuracy, and radar scores are improving with trend charts on your dashboard.",
                 },
                 {
                   priority: true,
                   status: "In progress",
                   title: "Smarter move explanations",
-                  desc: "Better AI-generated explanations for why the engine's move is better — with plans, threats, and positional concepts instead of just engine lines."
+                  desc: "Better AI-generated explanations for why the engine's move is better — with plans, threats, and positional concepts instead of just engine lines.",
                 },
                 {
                   priority: false,
                   status: "Next up",
                   title: "PGN import & export",
-                  desc: "Upload PGN files directly instead of fetching from Lichess/Chess.com. Export your analysis as annotated PGN to study in other tools."
+                  desc: "Upload PGN files directly instead of fetching from Lichess/Chess.com. Export your analysis as annotated PGN to study in other tools.",
                 },
                 {
                   priority: false,
                   status: "Next up",
                   title: "Opening repertoire builder",
-                  desc: "Auto-generate a repertoire from your actual games. See which lines you play, where you deviate, and suggested improvements."
+                  desc: "Auto-generate a repertoire from your actual games. See which lines you play, where you deviate, and suggested improvements.",
                 },
                 {
                   priority: false,
                   status: "Planned",
                   title: "Study collections & spaced repetition",
-                  desc: "Save positions into study sets. Practice them with spaced repetition so you actually remember the correct moves."
+                  desc: "Save positions into study sets. Practice them with spaced repetition so you actually remember the correct moves.",
                 },
                 {
                   priority: false,
                   status: "Exploring",
                   title: "Coaching tools & team dashboards",
-                  desc: "Multi-student management for coaches. Share reports, assign homework positions, and track student progress."
+                  desc: "Multi-student management for coaches. Share reports, assign homework positions, and track student progress.",
                 },
               ].map((item, i) => (
                 <article
@@ -655,7 +977,9 @@ export default function PricingPage() {
                       </span>
                     )}
                   </div>
-                  <h4 className="text-base font-semibold text-white">{item.title}</h4>
+                  <h4 className="text-base font-semibold text-white">
+                    {item.title}
+                  </h4>
                   <p className="mt-1 text-sm text-slate-400">{item.desc}</p>
                 </article>
               ))}
@@ -663,8 +987,20 @@ export default function PricingPage() {
           </div>
 
           <div className="text-center">
-            <Link href="/" className="btn-secondary inline-flex items-center gap-2 px-6 py-2.5 text-sm">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+            <Link
+              href="/"
+              className="btn-secondary inline-flex items-center gap-2 px-6 py-2.5 text-sm"
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
               Back to scanner
             </Link>
           </div>

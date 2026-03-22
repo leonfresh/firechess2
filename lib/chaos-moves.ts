@@ -12,6 +12,7 @@
 
 import { Chess, type Color, type PieceSymbol, type Square } from "chess.js";
 import type { ChaosModifier } from "./chaos-chess";
+import type { AnomalyId } from "./chaos-anomalies";
 
 /* ================================================================== */
 /*  Types                                                               */
@@ -51,7 +52,10 @@ function sq(file: number, rank: number): Square | null {
 }
 
 function sqToCoords(s: Square): [number, number] {
-  return [FILES.indexOf(s[0] as typeof FILES[number]), RANKS.indexOf(s[1] as typeof RANKS[number])];
+  return [
+    FILES.indexOf(s[0] as (typeof FILES)[number]),
+    RANKS.indexOf(s[1] as (typeof RANKS)[number]),
+  ];
 }
 
 function isEnemy(game: Chess, square: Square, color: Color): boolean {
@@ -74,7 +78,11 @@ function isFriendly(game: Chess, square: Square, color: Color): boolean {
   return !!p && p.color === color;
 }
 
-function allSquaresOf(game: Chess, pieceType: PieceSymbol, color: Color): Square[] {
+function allSquaresOf(
+  game: Chess,
+  pieceType: PieceSymbol,
+  color: Color,
+): Square[] {
   const result: Square[] = [];
   for (const f of FILES) {
     for (const r of RANKS) {
@@ -160,7 +168,12 @@ function wouldLeaveKingToChaosAttack(
   if (kingSquares.length === 0) return true;
 
   const oppColor: Color = color === "w" ? "b" : "w";
-  const chaosAttacked = getChaosAttackedSquares(tmp, opponentModifiers, oppColor, assignedSquares);
+  const chaosAttacked = getChaosAttackedSquares(
+    tmp,
+    opponentModifiers,
+    oppColor,
+    assignedSquares,
+  );
   return chaosAttacked.has(kingSquares[0]);
 }
 
@@ -168,7 +181,11 @@ function wouldLeaveKingToChaosAttack(
 /*  Move generators per modifier                                        */
 /* ================================================================== */
 
-type MoveGen = (game: Chess, color: Color, modifiers: ChaosModifier[]) => ChaosMove[];
+type MoveGen = (
+  game: Chess,
+  color: Color,
+  modifiers: ChaosModifier[],
+) => ChaosMove[];
 
 /** Pawns can move 2 from any rank */
 function genPawnCharge(game: Chess, color: Color): ChaosMove[] {
@@ -193,9 +210,14 @@ function genPawnCharge(game: Chess, color: Color): ChaosMove[] {
     const isPromotion = twoAheadRank === lastRank;
 
     moves.push({
-      from: ps, to: twoAhead, type: "move",
-      modifierId: "pawn-charge", label: "Pawn Charge (2 forward)",
-      ...(isPromotion ? { spawnPiece: { type: "q" as const, color }, promotionChoice: true } : {}),
+      from: ps,
+      to: twoAhead,
+      type: "move",
+      modifierId: "pawn-charge",
+      label: "Pawn Charge (2 forward)",
+      ...(isPromotion
+        ? { spawnPiece: { type: "q" as const, color }, promotionChoice: true }
+        : {}),
     });
   }
   return moves;
@@ -215,15 +237,22 @@ function genPawnBayonet(game: Chess, color: Color): ChaosMove[] {
     if (wouldLeaveKingInCheck(game, ps, target, color)) continue;
 
     moves.push({
-      from: ps, to: target, type: "capture",
-      modifierId: "pawn-capture-forward", label: "Bayonet (forward capture)",
+      from: ps,
+      to: target,
+      type: "capture",
+      modifierId: "pawn-capture-forward",
+      label: "Bayonet (forward capture)",
     });
   }
   return moves;
 }
 
 /** Camel: first knight becomes a Camel — leaps (1,3) or (3,1) in any orientation */
-function genCamel(game: Chess, color: Color, trackedSquare?: string | null): ChaosMove[] {
+function genCamel(
+  game: Chess,
+  color: Color,
+  trackedSquare?: string | null,
+): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const knights = allSquaresOf(game, "n", color);
   if (knights.length === 0) return moves;
@@ -241,7 +270,16 @@ function genCamel(game: Chess, color: Color, trackedSquare?: string | null): Cha
 
   const [f, r] = sqToCoords(camelSquare);
   // Camel leaps: all (1,3) and (3,1) offsets (8 destinations)
-  const camelLeaps = [[-3,-1],[-3,1],[-1,-3],[-1,3],[1,-3],[1,3],[3,-1],[3,1]];
+  const camelLeaps = [
+    [-3, -1],
+    [-3, 1],
+    [-1, -3],
+    [-1, 3],
+    [1, -3],
+    [1, 3],
+    [3, -1],
+    [3, 1],
+  ];
 
   for (const [df, dr] of camelLeaps) {
     const target = sq(f + df, r + dr);
@@ -250,9 +288,11 @@ function genCamel(game: Chess, color: Color, trackedSquare?: string | null): Cha
     if (wouldLeaveKingInCheck(game, camelSquare, target, color)) continue;
 
     moves.push({
-      from: camelSquare, to: target,
+      from: camelSquare,
+      to: target,
       type: isEnemy(game, target, color) ? "capture" : "move",
-      modifierId: "camel", label: "Camel leap (1×3)",
+      modifierId: "camel",
+      label: "Camel leap (1×3)",
     });
   }
   return moves;
@@ -262,7 +302,12 @@ function genCamel(game: Chess, color: Color, trackedSquare?: string | null): Cha
 function genDragonBishop(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const bishops = allSquaresOf(game, "b", color);
-  const orthSteps: [number, number][] = [[-1,0],[1,0],[0,-1],[0,1]];
+  const orthSteps: [number, number][] = [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+  ];
 
   for (const bs of bishops) {
     const [f, r] = sqToCoords(bs);
@@ -273,8 +318,11 @@ function genDragonBishop(game: Chess, color: Color): ChaosMove[] {
       if (wouldLeaveKingInCheck(game, bs, target, color)) continue;
 
       moves.push({
-        from: bs, to: target, type: isEnemy(game, target, color) ? "capture" : "move",
-        modifierId: "dragon-bishop", label: "Dragon Bishop step (ortho)",
+        from: bs,
+        to: target,
+        type: isEnemy(game, target, color) ? "capture" : "move",
+        modifierId: "dragon-bishop",
+        label: "Dragon Bishop step (ortho)",
       });
     }
   }
@@ -285,7 +333,12 @@ function genDragonBishop(game: Chess, color: Color): ChaosMove[] {
 function genDragonRook(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const rooks = allSquaresOf(game, "r", color);
-  const diagSteps: [number, number][] = [[-1,-1],[-1,1],[1,-1],[1,1]];
+  const diagSteps: [number, number][] = [
+    [-1, -1],
+    [-1, 1],
+    [1, -1],
+    [1, 1],
+  ];
 
   for (const rs of rooks) {
     const [f, r] = sqToCoords(rs);
@@ -296,8 +349,11 @@ function genDragonRook(game: Chess, color: Color): ChaosMove[] {
       if (wouldLeaveKingInCheck(game, rs, target, color)) continue;
 
       moves.push({
-        from: rs, to: target, type: isEnemy(game, target, color) ? "capture" : "move",
-        modifierId: "dragon-rook", label: "Dragon Rook step (diag)",
+        from: rs,
+        to: target,
+        type: isEnemy(game, target, color) ? "capture" : "move",
+        modifierId: "dragon-rook",
+        label: "Dragon Rook step (diag)",
       });
     }
   }
@@ -308,7 +364,12 @@ function genDragonRook(game: Chess, color: Color): ChaosMove[] {
 function genPhantomRook(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const rooks = allSquaresOf(game, "r", color);
-  const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+  const dirs = [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+  ];
 
   for (const rs of rooks) {
     const [f, r] = sqToCoords(rs);
@@ -330,8 +391,11 @@ function genPhantomRook(game: Chess, color: Color): ChaosMove[] {
             if (passedFriendly) {
               if (!wouldLeaveKingInCheck(game, rs, target, color)) {
                 moves.push({
-                  from: rs, to: target, type: "capture",
-                  modifierId: "phantom-rook", label: "Phantom Rook (through allies)",
+                  from: rs,
+                  to: target,
+                  type: "capture",
+                  modifierId: "phantom-rook",
+                  label: "Phantom Rook (through allies)",
                 });
               }
             }
@@ -341,8 +405,11 @@ function genPhantomRook(game: Chess, color: Color): ChaosMove[] {
           // Empty square after passing through friendly
           if (!wouldLeaveKingInCheck(game, rs, target, color)) {
             moves.push({
-              from: rs, to: target, type: "move",
-              modifierId: "phantom-rook", label: "Phantom Rook (through allies)",
+              from: rs,
+              to: target,
+              type: "move",
+              modifierId: "phantom-rook",
+              label: "Phantom Rook (through allies)",
             });
           }
         }
@@ -356,7 +423,11 @@ function genPhantomRook(game: Chess, color: Color): ChaosMove[] {
 }
 
 /** Knook: first knight gains rook movement */
-function genKnook(game: Chess, color: Color, trackedSquare?: string | null): ChaosMove[] {
+function genKnook(
+  game: Chess,
+  color: Color,
+  trackedSquare?: string | null,
+): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const knights = allSquaresOf(game, "n", color);
   if (knights.length === 0) return moves;
@@ -373,7 +444,12 @@ function genKnook(game: Chess, color: Color, trackedSquare?: string | null): Cha
     }
   }
   const [f, r] = sqToCoords(knookSquare);
-  const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+  const dirs = [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+  ];
 
   for (const [df, dr] of dirs) {
     let cf = f + df;
@@ -386,8 +462,11 @@ function genKnook(game: Chess, color: Color, trackedSquare?: string | null): Cha
         if (piece.color !== color) {
           if (!wouldLeaveKingInCheck(game, knookSquare, target, color)) {
             moves.push({
-              from: knookSquare, to: target, type: "capture",
-              modifierId: "knook", label: "The Knook (rook move)",
+              from: knookSquare,
+              to: target,
+              type: "capture",
+              modifierId: "knook",
+              label: "The Knook (rook move)",
             });
           }
         }
@@ -396,8 +475,11 @@ function genKnook(game: Chess, color: Color, trackedSquare?: string | null): Cha
 
       if (!wouldLeaveKingInCheck(game, knookSquare, target, color)) {
         moves.push({
-          from: knookSquare, to: target, type: "move",
-          modifierId: "knook", label: "The Knook (rook move)",
+          from: knookSquare,
+          to: target,
+          type: "move",
+          modifierId: "knook",
+          label: "The Knook (rook move)",
         });
       }
       cf += df;
@@ -408,7 +490,11 @@ function genKnook(game: Chess, color: Color, trackedSquare?: string | null): Cha
 }
 
 /** Archbishop: first bishop gains knight movement */
-function genArchbishop(game: Chess, color: Color, trackedSquare?: string | null): ChaosMove[] {
+function genArchbishop(
+  game: Chess,
+  color: Color,
+  trackedSquare?: string | null,
+): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const bishops = allSquaresOf(game, "b", color);
   if (bishops.length === 0) return moves;
@@ -425,7 +511,16 @@ function genArchbishop(game: Chess, color: Color, trackedSquare?: string | null)
     }
   }
   const [f, r] = sqToCoords(archbishopSquare);
-  const knightOffsets = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
+  const knightOffsets = [
+    [-2, -1],
+    [-2, 1],
+    [-1, -2],
+    [-1, 2],
+    [1, -2],
+    [1, 2],
+    [2, -1],
+    [2, 1],
+  ];
 
   for (const [df, dr] of knightOffsets) {
     const target = sq(f + df, r + dr);
@@ -434,9 +529,11 @@ function genArchbishop(game: Chess, color: Color, trackedSquare?: string | null)
     if (wouldLeaveKingInCheck(game, archbishopSquare, target, color)) continue;
 
     moves.push({
-      from: archbishopSquare, to: target,
+      from: archbishopSquare,
+      to: target,
       type: isEnemy(game, target, color) ? "capture" : "move",
-      modifierId: "archbishop", label: "The Archbishop (knight-jump)",
+      modifierId: "archbishop",
+      label: "The Archbishop (knight-jump)",
     });
   }
   return moves;
@@ -446,7 +543,16 @@ function genArchbishop(game: Chess, color: Color, trackedSquare?: string | null)
 function genAmazon(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const queens = allSquaresOf(game, "q", color);
-  const knightOffsets = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
+  const knightOffsets = [
+    [-2, -1],
+    [-2, 1],
+    [-1, -2],
+    [-1, 2],
+    [1, -2],
+    [1, 2],
+    [2, -1],
+    [2, 1],
+  ];
 
   for (const qs of queens) {
     const [f, r] = sqToCoords(qs);
@@ -457,8 +563,11 @@ function genAmazon(game: Chess, color: Color): ChaosMove[] {
       if (wouldLeaveKingInCheck(game, qs, target, color)) continue;
 
       moves.push({
-        from: qs, to: target, type: isEnemy(game, target, color) ? "capture" : "move",
-        modifierId: "amazon", label: "The Amazon (knight-jump)",
+        from: qs,
+        to: target,
+        type: isEnemy(game, target, color) ? "capture" : "move",
+        modifierId: "amazon",
+        label: "The Amazon (knight-jump)",
       });
     }
   }
@@ -473,7 +582,16 @@ function genKingAscension(game: Chess, color: Color): ChaosMove[] {
 
   const kingSquare = kings[0];
   const [f, r] = sqToCoords(kingSquare);
-  const dirs = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]];
+  const dirs = [
+    [-1, -1],
+    [-1, 0],
+    [-1, 1],
+    [0, -1],
+    [0, 1],
+    [1, -1],
+    [1, 0],
+    [1, 1],
+  ];
 
   for (const [df, dr] of dirs) {
     let cf = f + df;
@@ -491,8 +609,11 @@ function genKingAscension(game: Chess, color: Color): ChaosMove[] {
         if (distance > 1 && piece.color !== color) {
           if (!wouldLeaveKingInCheck(game, kingSquare, target, color)) {
             moves.push({
-              from: kingSquare, to: target, type: "capture",
-              modifierId: "king-ascension", label: "King Ascension (queen capture)",
+              from: kingSquare,
+              to: target,
+              type: "capture",
+              modifierId: "king-ascension",
+              label: "King Ascension (queen capture)",
             });
           }
         }
@@ -510,7 +631,11 @@ function genKingAscension(game: Chess, color: Color): ChaosMove[] {
 /** Collateral Damage Rook: after rook capture, also destroy piece behind target.
  * Never targets a king — chess.js rejects kingless FENs and the king can't be
  * killed as a side effect anyway. */
-function getCollateralSquare(game: Chess, from: Square, to: Square): Square | null {
+function getCollateralSquare(
+  game: Chess,
+  from: Square,
+  to: Square,
+): Square | null {
   const [ff, fr] = sqToCoords(from);
   const [tf, tr] = sqToCoords(to);
   const df = Math.sign(tf - ff);
@@ -527,7 +652,16 @@ function getCollateralSquare(game: Chess, from: Square, to: Square): Square | nu
 function getNuclearSquares(game: Chess, to: Square, color: Color): Square[] {
   const [f, r] = sqToCoords(to);
   const result: Square[] = [];
-  for (const [df, dr] of [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]) {
+  for (const [df, dr] of [
+    [-1, -1],
+    [-1, 0],
+    [-1, 1],
+    [0, -1],
+    [0, 1],
+    [1, -1],
+    [1, 0],
+    [1, 1],
+  ]) {
     const s = sq(f + df, r + dr);
     if (s && game.get(s)) {
       // Don't destroy any king!
@@ -543,7 +677,12 @@ function getNuclearSquares(game: Chess, to: Square, color: Color): Square[] {
 function genSniperBishop(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const bishops = allSquaresOf(game, "b", color);
-  const diagDirs = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+  const diagDirs = [
+    [-1, -1],
+    [-1, 1],
+    [1, -1],
+    [1, 1],
+  ];
 
   for (const bs of bishops) {
     const [f, r] = sqToCoords(bs);
@@ -556,8 +695,11 @@ function genSniperBishop(game: Chess, color: Color): ChaosMove[] {
           if (piece.color !== color) {
             // Sniper: capture without moving
             moves.push({
-              from: bs, to: target, type: "capture",
-              modifierId: "sniper-bishop", label: "Sniper Bishop (ranged capture)",
+              from: bs,
+              to: target,
+              type: "capture",
+              modifierId: "sniper-bishop",
+              label: "Sniper Bishop (ranged capture)",
               pieceStays: true,
             });
           }
@@ -573,7 +715,12 @@ function genSniperBishop(game: Chess, color: Color): ChaosMove[] {
 function genBishopBounce(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const bishops = allSquaresOf(game, "b", color);
-  const diagDirs: [number, number][] = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+  const diagDirs: [number, number][] = [
+    [-1, -1],
+    [-1, 1],
+    [1, -1],
+    [1, 1],
+  ];
 
   for (const bs of bishops) {
     const [sf, sr] = sqToCoords(bs);
@@ -630,7 +777,8 @@ function genBishopBounce(game: Chess, color: Color): ChaosMove[] {
 
         if (!wouldLeaveKingInCheck(game, bs, target, color)) {
           moves.push({
-            from: bs, to: target,
+            from: bs,
+            to: target,
             type: isEnemy(game, target, color) ? "capture" : "move",
             modifierId: "bishop-bounce",
             label: "Ricochet Bishop (wall bounce)",
@@ -646,7 +794,11 @@ function genBishopBounce(game: Chess, color: Color): ChaosMove[] {
 }
 
 /** Pegasus: One knight can make a double L-jump (two knight moves in one turn, 2nd jump forward only) */
-function genPegasus(game: Chess, color: Color, trackedSquare?: string | null): ChaosMove[] {
+function genPegasus(
+  game: Chess,
+  color: Color,
+  trackedSquare?: string | null,
+): ChaosMove[] {
   const moves: ChaosMove[] = [];
 
   // Require explicit tracking — never fall back to knights[0].
@@ -659,7 +811,16 @@ function genPegasus(game: Chess, color: Color, trackedSquare?: string | null): C
 
   const pegasusSquare = trackedSquare as Square;
 
-  const knightOffsets = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
+  const knightOffsets = [
+    [-2, -1],
+    [-2, 1],
+    [-1, -2],
+    [-1, 2],
+    [1, -2],
+    [1, 2],
+    [2, -1],
+    [2, 1],
+  ];
   const seen = new Set<string>();
   const [f, r] = sqToCoords(pegasusSquare);
 
@@ -720,7 +881,12 @@ function genPegasus(game: Chess, color: Color, trackedSquare?: string | null): C
 function genBishopCannon(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const bishops = allSquaresOf(game, "b", color);
-  const dirs = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+  const dirs = [
+    [-1, -1],
+    [-1, 1],
+    [1, -1],
+    [1, 1],
+  ];
 
   for (const bs of bishops) {
     const [f, r] = sqToCoords(bs);
@@ -766,7 +932,12 @@ function genBishopCannon(game: Chess, color: Color): ChaosMove[] {
 function genRookCannon(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const rooks = allSquaresOf(game, "r", color);
-  const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+  const dirs = [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+  ];
 
   for (const rs of rooks) {
     const [f, r] = sqToCoords(rs);
@@ -840,7 +1011,12 @@ function genEnPassantEverywhere(game: Chess, color: Color): ChaosMove[] {
     // EP landing must be forward for our color (fromRank - toRank is opposite to pawnDir)
     if ((fromRank - toRank) * ourDir <= 0) continue;
 
-    if (wouldLeaveKingInCheck(game, ourPawnSq, epLanding, color, [last.to as Square])) continue;
+    if (
+      wouldLeaveKingInCheck(game, ourPawnSq, epLanding, color, [
+        last.to as Square,
+      ])
+    )
+      continue;
 
     moves.push({
       from: ourPawnSq,
@@ -869,9 +1045,15 @@ function genEarlyPromotion(game: Chess, color: Color): ChaosMove[] {
 
     // Forward move (empty target)
     const target = sq(f, promoRank);
-    if (target && isEmpty(game, target) && !wouldLeaveKingInCheck(game, ps, target, color)) {
+    if (
+      target &&
+      isEmpty(game, target) &&
+      !wouldLeaveKingInCheck(game, ps, target, color)
+    ) {
       moves.push({
-        from: ps, to: target, type: "move",
+        from: ps,
+        to: target,
+        type: "move",
         modifierId: "pawn-promotion-early",
         label: "Battlefield Promotion (early promo)",
         spawnPiece: { type: "q", color },
@@ -887,7 +1069,9 @@ function genEarlyPromotion(game: Chess, color: Color): ChaosMove[] {
       if (!capPiece || capPiece.color === color) continue; // must capture enemy
       if (wouldLeaveKingInCheck(game, ps, capTarget, color)) continue;
       moves.push({
-        from: ps, to: capTarget, type: "capture",
+        from: ps,
+        to: capTarget,
+        type: "capture",
         modifierId: "pawn-promotion-early",
         label: "Battlefield Promotion (capture & promo)",
         spawnPiece: { type: "q", color },
@@ -938,20 +1122,264 @@ function genQueenTeleport(game: Chess, color: Color): ChaosMove[] {
   return moves;
 }
 
-const MODIFIER_GENERATORS: Record<string, (game: Chess, color: Color, trackedSquare?: string | null) => ChaosMove[]> = {
+/* ================================================================== */
+/*  Anomaly Move Generators                                             */
+/* ================================================================== */
+
+export interface AnomalyMoveOptions {
+  /** Which anomaly the moving side has */
+  playerAnomaly?: AnomalyId | null;
+  /** Moon anomaly: only generate moves after turn 10 */
+  moonUnlocked?: boolean;
+  /** Strength anomaly: show king queen-range captures (activation mode) */
+  strengthMode?: boolean;
+}
+
+/** Fool — Wanderer: pawns move 1 sq diagonally forward (empty squares only, no promo rank) */
+function genAnomalyWanderer(game: Chess, color: Color): ChaosMove[] {
+  const moves: ChaosMove[] = [];
+  const dir = color === "w" ? 1 : -1;
+  const lastRank = color === "w" ? 7 : 0;
+  const pawns = allSquaresOf(game, "p", color);
+  for (const ps of pawns) {
+    const [f, r] = sqToCoords(ps);
+    for (const df of [-1, 1]) {
+      const target = sq(f + df, r + dir);
+      if (!target) continue;
+      if (!isEmpty(game, target)) continue;
+      const [, tr] = sqToCoords(target);
+      if (tr === lastRank) continue;
+      if (wouldLeaveKingInCheck(game, ps, target, color)) continue;
+      moves.push({
+        from: ps,
+        to: target,
+        type: "move",
+        modifierId: "anomaly-fool",
+        label: "Wanderer (diagonal pawn step)",
+      });
+    }
+  }
+  return moves;
+}
+
+/** Emperor — Dominion: king leaps up to 2 squares in any direction */
+function genAnomalyEmperor(game: Chess, color: Color): ChaosMove[] {
+  const moves: ChaosMove[] = [];
+  const kings = allSquaresOf(game, "k", color);
+  if (kings.length === 0) return moves;
+  const ks = kings[0];
+  const [kf, kr] = sqToCoords(ks);
+  const dirs: [number, number][] = [
+    [-1, -1],
+    [-1, 0],
+    [-1, 1],
+    [0, -1],
+    [0, 1],
+    [1, -1],
+    [1, 0],
+    [1, 1],
+  ];
+  for (const [df, dr] of dirs) {
+    const target = sq(kf + 2 * df, kr + 2 * dr);
+    if (!target) continue;
+    if (isFriendly(game, target, color)) continue;
+    if (wouldLeaveKingInCheck(game, ks, target, color)) continue;
+    moves.push({
+      from: ks,
+      to: target,
+      type: isEnemy(game, target, color) ? "capture" : "move",
+      modifierId: "anomaly-emperor",
+      label: "Dominion (king 2-sq leap)",
+    });
+  }
+  return moves;
+}
+
+/** Hierophant — Sacred Passage: bishops slide through own pieces diagonally */
+function genAnomalyHierophant(game: Chess, color: Color): ChaosMove[] {
+  const moves: ChaosMove[] = [];
+  const bishops = allSquaresOf(game, "b", color);
+  const diagDirs: [number, number][] = [
+    [-1, -1],
+    [-1, 1],
+    [1, -1],
+    [1, 1],
+  ];
+  for (const bs of bishops) {
+    const [bf, br] = sqToCoords(bs);
+    for (const [df, dr] of diagDirs) {
+      let cf = bf + df,
+        cr = br + dr;
+      let passedFriendly = false;
+      while (cf >= 0 && cf <= 7 && cr >= 0 && cr <= 7) {
+        const target = sq(cf, cr)!;
+        const piece = game.get(target);
+        if (piece) {
+          if (piece.color === color) {
+            passedFriendly = true;
+          } else {
+            if (
+              passedFriendly &&
+              !wouldLeaveKingInCheck(game, bs, target, color)
+            ) {
+              moves.push({
+                from: bs,
+                to: target,
+                type: "capture",
+                modifierId: "anomaly-hierophant",
+                label: "Sacred Passage (through allies)",
+              });
+            }
+            break;
+          }
+        } else if (passedFriendly) {
+          if (!wouldLeaveKingInCheck(game, bs, target, color)) {
+            moves.push({
+              from: bs,
+              to: target,
+              type: "move",
+              modifierId: "anomaly-hierophant",
+              label: "Sacred Passage (through allies)",
+            });
+          }
+        }
+        cf += df;
+        cr += dr;
+      }
+    }
+  }
+  return moves;
+}
+
+/** Star — Guiding Light: ALL knights gain Camel leaps (1,3) */
+function genAnomalyStar(game: Chess, color: Color): ChaosMove[] {
+  const moves: ChaosMove[] = [];
+  const knights = allSquaresOf(game, "n", color);
+  const camelLeaps: [number, number][] = [
+    [-3, -1],
+    [-3, 1],
+    [-1, -3],
+    [-1, 3],
+    [1, -3],
+    [1, 3],
+    [3, -1],
+    [3, 1],
+  ];
+  for (const ns of knights) {
+    const [nf, nr] = sqToCoords(ns);
+    for (const [df, dr] of camelLeaps) {
+      const target = sq(nf + df, nr + dr);
+      if (!target) continue;
+      if (isFriendly(game, target, color)) continue;
+      if (wouldLeaveKingInCheck(game, ns, target, color)) continue;
+      moves.push({
+        from: ns,
+        to: target,
+        type: isEnemy(game, target, color) ? "capture" : "move",
+        modifierId: "anomaly-star",
+        label: "Guiding Light (knight camel leap)",
+      });
+    }
+  }
+  return moves;
+}
+
+/** Moon — Nocturnal Hunt: queen captures adjacent diagonal enemy without moving (queen stays in place) */
+function genAnomalyMoon(game: Chess, color: Color): ChaosMove[] {
+  const moves: ChaosMove[] = [];
+  const queens = allSquaresOf(game, "q", color);
+  const diagDirs: [number, number][] = [
+    [-1, -1],
+    [-1, 1],
+    [1, -1],
+    [1, 1],
+  ];
+  for (const qs of queens) {
+    const [qf, qr] = sqToCoords(qs);
+    for (const [df, dr] of diagDirs) {
+      const target = sq(qf + df, qr + dr);
+      if (!target) continue;
+      if (!isEnemy(game, target, color)) continue;
+      if (wouldLeaveKingInCheck(game, qs, target, color, undefined, true))
+        continue;
+      moves.push({
+        from: qs,
+        to: target,
+        type: "capture",
+        modifierId: "anomaly-moon",
+        label: "Nocturnal Hunt (queen stays)",
+        pieceStays: true,
+      });
+    }
+  }
+  return moves;
+}
+
+/** Strength — Royal Strike: king makes queen-range CAPTURES (activation mode only) */
+function genAnomalyStrength(game: Chess, color: Color): ChaosMove[] {
+  const moves: ChaosMove[] = [];
+  const kings = allSquaresOf(game, "k", color);
+  if (kings.length === 0) return moves;
+  const ks = kings[0];
+  const [kf, kr] = sqToCoords(ks);
+  const dirs: [number, number][] = [
+    [-1, -1],
+    [-1, 0],
+    [-1, 1],
+    [0, -1],
+    [0, 1],
+    [1, -1],
+    [1, 0],
+    [1, 1],
+  ];
+  for (const [df, dr] of dirs) {
+    let cf = kf + df,
+      cr = kr + dr;
+    let dist = 0;
+    while (cf >= 0 && cf <= 7 && cr >= 0 && cr <= 7) {
+      dist++;
+      const target = sq(cf, cr)!;
+      const piece = game.get(target);
+      if (piece) {
+        if (
+          dist > 1 &&
+          piece.color !== color &&
+          !wouldLeaveKingInCheck(game, ks, target, color)
+        ) {
+          moves.push({
+            from: ks,
+            to: target,
+            type: "capture",
+            modifierId: "anomaly-strength",
+            label: "Royal Strike (king queen-capture)",
+          });
+        }
+        break;
+      }
+      cf += df;
+      cr += dr;
+    }
+  }
+  return moves;
+}
+
+const MODIFIER_GENERATORS: Record<
+  string,
+  (game: Chess, color: Color, trackedSquare?: string | null) => ChaosMove[]
+> = {
   "pawn-charge": genPawnCharge,
   "pawn-capture-forward": genPawnBayonet,
-  "camel": genCamel,
+  camel: genCamel,
   "dragon-bishop": genDragonBishop,
   "dragon-rook": genDragonRook,
   "phantom-rook": genPhantomRook,
-  "knook": genKnook,
-  "archbishop": genArchbishop,
-  "amazon": genAmazon,
+  knook: genKnook,
+  archbishop: genArchbishop,
+  amazon: genAmazon,
   "king-ascension": genKingAscension,
   "sniper-bishop": genSniperBishop,
   "pawn-promotion-early": genEarlyPromotion,
-  "pegasus": genPegasus,
+  pegasus: genPegasus,
   "rook-cannon": genRookCannon,
   "bishop-cannon": genBishopCannon,
   "queen-teleport": genQueenTeleport,
@@ -960,13 +1388,14 @@ const MODIFIER_GENERATORS: Record<string, (game: Chess, color: Color, trackedSqu
 };
 
 /**
- * Generate all extra legal moves enabled by the active modifiers.
+ * Generate all extra legal moves enabled by the active modifiers AND any anomaly.
  * These are moves BEYOND what chess.js considers legal.
  *
  * @param opponentModifiers - Pass opponent's modifiers to also filter out moves
  *   that would expose our king to an opponent chaos-modifier attack (e.g. Pegasus,
  *   Amazon). Without this the standard `wouldLeaveKingInCheck` check is used alone,
  *   which is blind to chaos-controlled squares.
+ * @param anomalyOpts - Optional anomaly configuration for anomaly-based move generation.
  */
 export function getChaosMoves(
   game: Chess,
@@ -974,6 +1403,7 @@ export function getChaosMoves(
   color: Color,
   assignedSquares?: Record<string, string | null>,
   opponentModifiers?: ChaosModifier[],
+  anomalyOpts?: AnomalyMoveOptions,
 ): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const seen = new Set<string>();
@@ -995,10 +1425,61 @@ export function getChaosMoves(
       if (
         opponentModifiers &&
         opponentModifiers.length > 0 &&
-        wouldLeaveKingToChaosAttack(game, m, color, opponentModifiers, assignedSquares)
+        wouldLeaveKingToChaosAttack(
+          game,
+          m,
+          color,
+          opponentModifiers,
+          assignedSquares,
+        )
       ) {
         continue;
       }
+      moves.push(m);
+    }
+  }
+
+  // ── Anomaly moves ──
+  if (anomalyOpts?.playerAnomaly) {
+    let anomalyMoves: ChaosMove[] = [];
+    switch (anomalyOpts.playerAnomaly) {
+      case "fool":
+        anomalyMoves = genAnomalyWanderer(game, color);
+        break;
+      case "emperor":
+        anomalyMoves = genAnomalyEmperor(game, color);
+        break;
+      case "hierophant":
+        anomalyMoves = genAnomalyHierophant(game, color);
+        break;
+      case "star":
+        anomalyMoves = genAnomalyStar(game, color);
+        break;
+      case "moon":
+        if (anomalyOpts.moonUnlocked)
+          anomalyMoves = genAnomalyMoon(game, color);
+        break;
+      case "strength":
+        if (anomalyOpts.strengthMode)
+          anomalyMoves = genAnomalyStrength(game, color);
+        break;
+    }
+    for (const m of anomalyMoves) {
+      const key = `${m.from}-${m.to}-${m.modifierId}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      if (
+        opponentModifiers &&
+        opponentModifiers.length > 0 &&
+        wouldLeaveKingToChaosAttack(
+          game,
+          m,
+          color,
+          opponentModifiers,
+          assignedSquares,
+        )
+      )
+        continue;
       moves.push(m);
     }
   }
@@ -1036,9 +1517,28 @@ export function getChaosAttackedSquares(
     }
   };
 
-  const knightOffsets: number[][] = [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]];
-  const cardinals: number[][] = [[-1, 0], [1, 0], [0, -1], [0, 1]];
-  const diagonals: number[][] = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+  const knightOffsets: number[][] = [
+    [-2, -1],
+    [-2, 1],
+    [-1, -2],
+    [-1, 2],
+    [1, -2],
+    [1, 2],
+    [2, -1],
+    [2, 1],
+  ];
+  const cardinals: number[][] = [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+  ];
+  const diagonals: number[][] = [
+    [-1, -1],
+    [-1, 1],
+    [1, -1],
+    [1, 1],
+  ];
   const allDirs: number[][] = [...cardinals, ...diagonals];
 
   /* Knook: first knight attacks along rook lines */
@@ -1048,7 +1548,8 @@ export function getChaosAttackedSquares(
     if (trackedKnook !== undefined) {
       if (trackedKnook !== null) {
         const p = game.get(trackedKnook as any);
-        if (p && p.type === "n" && p.color === attackerColor) knookSq = trackedKnook as Square;
+        if (p && p.type === "n" && p.color === attackerColor)
+          knookSq = trackedKnook as Square;
       }
     } else {
       const knights = allSquaresOf(game, "n", attackerColor);
@@ -1067,7 +1568,8 @@ export function getChaosAttackedSquares(
     if (trackedArch !== undefined) {
       if (trackedArch !== null) {
         const p = game.get(trackedArch as any);
-        if (p && p.type === "b" && p.color === attackerColor) archSq = trackedArch as Square;
+        if (p && p.type === "b" && p.color === attackerColor)
+          archSq = trackedArch as Square;
       }
     } else {
       const bishops = allSquaresOf(game, "b", attackerColor);
@@ -1112,7 +1614,8 @@ export function getChaosAttackedSquares(
             if (distance > 1 && p.color !== attackerColor) attacked.add(t);
             break;
           }
-          cf += df; cr += dr;
+          cf += df;
+          cr += dr;
         }
       }
     }
@@ -1124,7 +1627,8 @@ export function getChaosAttackedSquares(
     let pegasusSq: Square | null = null;
     if (trackedPegasus !== undefined && trackedPegasus !== null) {
       const p = game.get(trackedPegasus as any);
-      if (p && p.type === "n" && p.color === attackerColor) pegasusSq = trackedPegasus as Square;
+      if (p && p.type === "n" && p.color === attackerColor)
+        pegasusSq = trackedPegasus as Square;
     }
     // If trackedPegasus is undefined or null, no Pegasus attack squares exist.
     if (pegasusSq) {
@@ -1144,8 +1648,11 @@ export function getChaosAttackedSquares(
           if (!t || t === pegasusSq) continue;
           const dff = ff - f;
           const dfr = fr - r;
-          const isNormal = (Math.abs(dff) === 2 && Math.abs(dfr) === 1) || (Math.abs(dff) === 1 && Math.abs(dfr) === 2);
-          if (!isNormal && Math.max(Math.abs(dff), Math.abs(dfr)) >= 3) attacked.add(t);
+          const isNormal =
+            (Math.abs(dff) === 2 && Math.abs(dfr) === 1) ||
+            (Math.abs(dff) === 1 && Math.abs(dfr) === 2);
+          if (!isNormal && Math.max(Math.abs(dff), Math.abs(dfr)) >= 3)
+            attacked.add(t);
         }
       }
     }
@@ -1181,9 +1688,22 @@ export function getChaosAttackedSquares(
           const nr = cr + dr;
           const fOff = nf < 0 || nf > 7;
           const rOff = nr < 0 || nr > 7;
-          if (fOff && rOff) { if (bounced) break; bounced = true; df = -df; dr = -dr; continue; }
-          if (fOff || rOff) { if (bounced) break; bounced = true; if (fOff) df = -df; if (rOff) dr = -dr; continue; }
-          cf = nf; cr = nr;
+          if (fOff && rOff) {
+            if (bounced) break;
+            bounced = true;
+            df = -df;
+            dr = -dr;
+            continue;
+          }
+          if (fOff || rOff) {
+            if (bounced) break;
+            bounced = true;
+            if (fOff) df = -df;
+            if (rOff) dr = -dr;
+            continue;
+          }
+          cf = nf;
+          cr = nr;
           if (!bounced) {
             if (game.get(sq(cf, cr)! as any)) break; // blocked before reaching edge
             continue;
@@ -1206,12 +1726,24 @@ export function getChaosAttackedSquares(
         camelSquares = [];
       } else {
         const p = game.get(tracked as Square);
-        camelSquares = (p && p.type === "n" && p.color === attackerColor) ? [tracked as Square] : [];
+        camelSquares =
+          p && p.type === "n" && p.color === attackerColor
+            ? [tracked as Square]
+            : [];
       }
     } else {
       camelSquares = allSquaresOf(game, "n", attackerColor).slice(0, 1);
     }
-    const camelLeaps = [[-3,-1],[-3,1],[-1,-3],[-1,3],[1,-3],[1,3],[3,-1],[3,1]];
+    const camelLeaps = [
+      [-3, -1],
+      [-3, 1],
+      [-1, -3],
+      [-1, 3],
+      [1, -3],
+      [1, 3],
+      [3, -1],
+      [3, 1],
+    ];
     for (const ns of camelSquares) {
       const [f, r] = sqToCoords(ns);
       for (const [df, dr] of camelLeaps) {
@@ -1225,7 +1757,12 @@ export function getChaosAttackedSquares(
   if (modIds.has("dragon-rook")) {
     for (const rs of allSquaresOf(game, "r", attackerColor)) {
       const [f, r] = sqToCoords(rs);
-      for (const [df, dr] of [[-1,-1],[-1,1],[1,-1],[1,1]] as [number,number][]) {
+      for (const [df, dr] of [
+        [-1, -1],
+        [-1, 1],
+        [1, -1],
+        [1, 1],
+      ] as [number, number][]) {
         const t = sq(f + df, r + dr);
         if (t) attacked.add(t);
       }
@@ -1236,7 +1773,12 @@ export function getChaosAttackedSquares(
   if (modIds.has("dragon-bishop")) {
     for (const bs of allSquaresOf(game, "b", attackerColor)) {
       const [f, r] = sqToCoords(bs);
-      for (const [df, dr] of [[-1,0],[1,0],[0,-1],[0,1]] as [number,number][]) {
+      for (const [df, dr] of [
+        [-1, 0],
+        [1, 0],
+        [0, -1],
+        [0, 1],
+      ] as [number, number][]) {
         const t = sq(f + df, r + dr);
         if (t) attacked.add(t);
       }
@@ -1301,7 +1843,12 @@ export function getChaosAttackedSquares(
 
   /* Bishop Cannon: diagonal jump-capture squares */
   if (modIds.has("bishop-cannon")) {
-    const diags = [[-1, -1], [-1, 1], [1, -1], [1, 1]];
+    const diags = [
+      [-1, -1],
+      [-1, 1],
+      [1, -1],
+      [1, 1],
+    ];
     for (const bs of allSquaresOf(game, "b", attackerColor)) {
       const [f, r] = sqToCoords(bs);
       for (const [df, dr] of diags) {
@@ -1343,13 +1890,23 @@ export function isKingUnderChaosAttack(
   const defenderColor: Color = attackerColor === "w" ? "b" : "w";
   const kings = allSquaresOf(game, "k", defenderColor);
   if (kings.length === 0) return false;
-  const attacked = getChaosAttackedSquares(game, attackerModifiers, attackerColor, assignedSquares);
+  const attacked = getChaosAttackedSquares(
+    game,
+    attackerModifiers,
+    attackerColor,
+    assignedSquares,
+  );
   return attacked.has(kings[0]);
 }
 
 /** Piece values in centipawns for chaos threat evaluation */
 const PIECE_VALUE_CP: Record<string, number> = {
-  p: 100, n: 320, b: 330, r: 500, q: 900, k: 0,
+  p: 100,
+  n: 320,
+  b: 330,
+  r: 500,
+  q: 900,
+  k: 0,
 };
 
 /**
@@ -1375,9 +1932,15 @@ export function computeChaosThreatPenalty(
   assignedSquares?: Record<string, string | null>,
   getCustomVal?: (sq: string, type: string, color: "w" | "b") => number,
 ): number {
-  const chaosMoves = getChaosMoves(game, opponentModifiers, opponentColor, assignedSquares);
+  const chaosMoves = getChaosMoves(
+    game,
+    opponentModifiers,
+    opponentColor,
+    assignedSquares,
+  );
   if (chaosMoves.length === 0) return 0;
-  const valFn = getCustomVal ?? ((_sq: string, type: string) => PIECE_VALUE_CP[type] ?? 0);
+  const valFn =
+    getCustomVal ?? ((_sq: string, type: string) => PIECE_VALUE_CP[type] ?? 0);
 
   let maxThreat = 0;
 
@@ -1386,7 +1949,11 @@ export function computeChaosThreatPenalty(
     const targetPiece = game.get(cm.to as any);
     if (!targetPiece || targetPiece.color === opponentColor) continue;
 
-    const value = valFn(cm.to, targetPiece.type, targetPiece.color as "w" | "b");
+    const value = valFn(
+      cm.to,
+      targetPiece.type,
+      targetPiece.color as "w" | "b",
+    );
     if (value <= 0) continue;
 
     // For sniper bishop (pieceStays = true), the capture is "free" — full value
@@ -1399,7 +1966,9 @@ export function computeChaosThreatPenalty(
     } else {
       // Attacker moves to the square — might get recaptured
       const piece = game.get(cm.from as any);
-      const attackerValue = piece ? valFn(cm.from, piece.type, piece.color as "w" | "b") : 0;
+      const attackerValue = piece
+        ? valFn(cm.from, piece.type, piece.color as "w" | "b")
+        : 0;
       // If attacker is worth less than target, it's a good trade
       // If attacker is worth more, the opponent might not take it
       // Be conservative: assume the trade happens if target >= attacker
@@ -1461,13 +2030,21 @@ export function executeChaosMove(
   }
 
   // Check for collateral damage rook
-  if (move.type === "capture" && piece.type === "r" && modifiers.some((m) => m.id === "collateral-rook")) {
+  if (
+    move.type === "capture" &&
+    piece.type === "r" &&
+    modifiers.some((m) => m.id === "collateral-rook")
+  ) {
     const collateral = getCollateralSquare(game, move.from, move.to);
     if (collateral) tmp.remove(collateral);
   }
 
   // Check for nuclear queen
-  if (move.type === "capture" && piece.type === "q" && modifiers.some((m) => m.id === "nuclear-queen")) {
+  if (
+    move.type === "capture" &&
+    piece.type === "q" &&
+    modifiers.some((m) => m.id === "nuclear-queen")
+  ) {
     const nukes = getNuclearSquares(tmp, move.to, piece.color);
     for (const s of nukes) tmp.remove(s);
   }
@@ -1481,17 +2058,45 @@ export function executeChaosMove(
   // chess.js v4 throws if a castling right exists but its rook/king is gone.
   const rawCastling = fenParts[2] || "-";
   if (rawCastling !== "-") {
-    const wk  = tmp.get("e1" as Square);
-    const bk  = tmp.get("e8" as Square);
+    const wk = tmp.get("e1" as Square);
+    const bk = tmp.get("e8" as Square);
     const wKR = tmp.get("h1" as Square);
     const wQR = tmp.get("a1" as Square);
     const bKR = tmp.get("h8" as Square);
     const bQR = tmp.get("a8" as Square);
     let c = "";
-    if (rawCastling.includes("K") && wk?.type === "k" && wk.color === "w" && wKR?.type === "r" && wKR.color === "w") c += "K";
-    if (rawCastling.includes("Q") && wk?.type === "k" && wk.color === "w" && wQR?.type === "r" && wQR.color === "w") c += "Q";
-    if (rawCastling.includes("k") && bk?.type === "k" && bk.color === "b" && bKR?.type === "r" && bKR.color === "b") c += "k";
-    if (rawCastling.includes("q") && bk?.type === "k" && bk.color === "b" && bQR?.type === "r" && bQR.color === "b") c += "q";
+    if (
+      rawCastling.includes("K") &&
+      wk?.type === "k" &&
+      wk.color === "w" &&
+      wKR?.type === "r" &&
+      wKR.color === "w"
+    )
+      c += "K";
+    if (
+      rawCastling.includes("Q") &&
+      wk?.type === "k" &&
+      wk.color === "w" &&
+      wQR?.type === "r" &&
+      wQR.color === "w"
+    )
+      c += "Q";
+    if (
+      rawCastling.includes("k") &&
+      bk?.type === "k" &&
+      bk.color === "b" &&
+      bKR?.type === "r" &&
+      bKR.color === "b"
+    )
+      c += "k";
+    if (
+      rawCastling.includes("q") &&
+      bk?.type === "k" &&
+      bk.color === "b" &&
+      bQR?.type === "r" &&
+      bQR.color === "b"
+    )
+      c += "q";
     fenParts[2] = c || "-";
   }
 
@@ -1510,7 +2115,11 @@ export function executeChaosMove(
 }
 
 /** Returns the most valuable piece type missing from the board vs starting count */
-function getMostValuableCapturedPiece(game: Chess, color: Color, modifiers: ChaosModifier[]): PieceSymbol | null {
+function getMostValuableCapturedPiece(
+  game: Chess,
+  color: Color,
+  modifiers: ChaosModifier[],
+): PieceSymbol | null {
   const start: Record<string, number> = { q: 1, r: 2, b: 2, n: 2, p: 8 };
   // Knight-horde spawns 2 extra knights — count those as "expected"
   if (modifiers.some((m) => m.id === "knight-horde")) start.n += 2;
@@ -1553,7 +2162,11 @@ export function applyPostMoveEffects(
   const tmp = new Chess(fen);
 
   // Collateral Damage Rook
-  if (capturedPiece && movingPieceType === "r" && modifiers.some((m) => m.id === "collateral-rook")) {
+  if (
+    capturedPiece &&
+    movingPieceType === "r" &&
+    modifiers.some((m) => m.id === "collateral-rook")
+  ) {
     const collateral = getCollateralSquare(game, from, to);
     if (collateral) {
       tmp.remove(collateral);
@@ -1562,7 +2175,11 @@ export function applyPostMoveEffects(
   }
 
   // Nuclear Queen
-  if (capturedPiece && movingPieceType === "q" && modifiers.some((m) => m.id === "nuclear-queen")) {
+  if (
+    capturedPiece &&
+    movingPieceType === "q" &&
+    modifiers.some((m) => m.id === "nuclear-queen")
+  ) {
     const nukes = getNuclearSquares(tmp, to, color);
     for (const s of nukes) {
       tmp.remove(s);
@@ -1590,11 +2207,17 @@ export function applyPostMoveEffects(
   }
 
   // Regicide (king-wrath) — king capture revives the most valuable fallen piece on the back rank
-  if (capturedPiece && movingPieceType === "k" && modifiers.some((m) => m.id === "king-wrath")) {
+  if (
+    capturedPiece &&
+    movingPieceType === "k" &&
+    modifiers.some((m) => m.id === "king-wrath")
+  ) {
     const revivedType = getMostValuableCapturedPiece(tmp, color, modifiers);
     if (revivedType) {
       const backRank = color === "w" ? "1" : "8";
-      const empties = FILES.map((f) => `${f}${backRank}` as Square).filter((s) => !tmp.get(s));
+      const empties = FILES.map((f) => `${f}${backRank}` as Square).filter(
+        (s) => !tmp.get(s),
+      );
       if (empties.length > 0) {
         const chosen = empties[Math.floor(Math.random() * empties.length)];
         tmp.put({ type: revivedType, color }, chosen);
@@ -1677,7 +2300,10 @@ export function applyDraftEffect(
 /**
  * Find which enemy squares are currently giving check to the specified king.
  */
-export function findCheckingSquares(game: Chess, checkedColor: Color): Square[] {
+export function findCheckingSquares(
+  game: Chess,
+  checkedColor: Color,
+): Square[] {
   const kingSquare = allSquaresOf(game, "k", checkedColor)[0];
   if (!kingSquare) return [];
   const [kf, kr] = sqToCoords(kingSquare);
@@ -1685,36 +2311,64 @@ export function findCheckingSquares(game: Chess, checkedColor: Color): Square[] 
   const checkers: Square[] = [];
 
   // Knights
-  for (const [df, dr] of [[-2, -1], [-2, 1], [-1, -2], [-1, 2], [1, -2], [1, 2], [2, -1], [2, 1]]) {
+  for (const [df, dr] of [
+    [-2, -1],
+    [-2, 1],
+    [-1, -2],
+    [-1, 2],
+    [1, -2],
+    [1, 2],
+    [2, -1],
+    [2, 1],
+  ]) {
     const s = sq(kf + df, kr + dr);
-    if (s) { const p = game.get(s); if (p && p.type === "n" && p.color === attColor) checkers.push(s); }
+    if (s) {
+      const p = game.get(s);
+      if (p && p.type === "n" && p.color === attColor) checkers.push(s);
+    }
   }
 
   // Diagonals (bishops/queen)
-  for (const [df, dr] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
-    let cf = kf + df, cr = kr + dr;
+  for (const [df, dr] of [
+    [-1, -1],
+    [-1, 1],
+    [1, -1],
+    [1, 1],
+  ]) {
+    let cf = kf + df,
+      cr = kr + dr;
     while (cf >= 0 && cf <= 7 && cr >= 0 && cr <= 7) {
       const s = sq(cf, cr)!;
       const p = game.get(s);
       if (p) {
-        if (p.color === attColor && (p.type === "b" || p.type === "q")) checkers.push(s);
+        if (p.color === attColor && (p.type === "b" || p.type === "q"))
+          checkers.push(s);
         break;
       }
-      cf += df; cr += dr;
+      cf += df;
+      cr += dr;
     }
   }
 
   // Files/ranks (rooks/queen)
-  for (const [df, dr] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
-    let cf = kf + df, cr = kr + dr;
+  for (const [df, dr] of [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+  ]) {
+    let cf = kf + df,
+      cr = kr + dr;
     while (cf >= 0 && cf <= 7 && cr >= 0 && cr <= 7) {
       const s = sq(cf, cr)!;
       const p = game.get(s);
       if (p) {
-        if (p.color === attColor && (p.type === "r" || p.type === "q")) checkers.push(s);
+        if (p.color === attColor && (p.type === "r" || p.type === "q"))
+          checkers.push(s);
         break;
       }
-      cf += df; cr += dr;
+      cf += df;
+      cr += dr;
     }
   }
 
@@ -1722,7 +2376,10 @@ export function findCheckingSquares(game: Chess, checkedColor: Color): Square[] 
   const pawnDir = checkedColor === "w" ? 1 : -1;
   for (const df of [-1, 1]) {
     const s = sq(kf + df, kr + pawnDir);
-    if (s) { const p = game.get(s); if (p && p.type === "p" && p.color === attColor) checkers.push(s); }
+    if (s) {
+      const p = game.get(s);
+      if (p && p.type === "p" && p.color === attColor) checkers.push(s);
+    }
   }
 
   return checkers;
@@ -1745,7 +2402,16 @@ export function computeChainedSquare(
   let bestSq: string | null = null;
   let bestVal = 0;
 
-  for (const [df, dr] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]] as [number,number][]) {
+  for (const [df, dr] of [
+    [-1, -1],
+    [-1, 0],
+    [-1, 1],
+    [0, -1],
+    [0, 1],
+    [1, -1],
+    [1, 0],
+    [1, 1],
+  ] as [number, number][]) {
     const s = sq(kf + df, kr + dr);
     if (!s) continue;
     const piece = game.get(s as Square);
@@ -1764,7 +2430,10 @@ export function computeChainedSquare(
  * Returns a new Chess instance with the checking piece removed, or null if
  * the position isn't actually in check.
  */
-export function applyKingShield(game: Chess, checkedColor: Color): Chess | null {
+export function applyKingShield(
+  game: Chess,
+  checkedColor: Color,
+): Chess | null {
   if (!game.isCheck()) return null;
   const checkers = findCheckingSquares(game, checkedColor);
   if (checkers.length === 0) return null;
@@ -1860,7 +2529,13 @@ export function isChaosCheckmate(
   // If the defender has chaos moves available, those may also escape check.
   // getChaosMoves filters via wouldLeaveKingInCheck so only genuine escapes survive.
   if (defenderModifiers && defenderModifiers.length > 0) {
-    const defChaos = getChaosMoves(game, defenderModifiers, myColor, assignedSquares, oppModifiers);
+    const defChaos = getChaosMoves(
+      game,
+      defenderModifiers,
+      myColor,
+      assignedSquares,
+      oppModifiers,
+    );
     if (defChaos.length > 0) return false;
   }
 
@@ -1894,7 +2569,12 @@ export function isChaosCheckmate(
     if (occupant) tmp.remove(move.to as Square);
     tmp.put({ type: "k", color: myColor }, move.to as Square);
 
-    const chaosAttacked = getChaosAttackedSquares(tmp, oppModifiers, oppColor, assignedSquares);
+    const chaosAttacked = getChaosAttackedSquares(
+      tmp,
+      oppModifiers,
+      oppColor,
+      assignedSquares,
+    );
     if (!chaosAttacked.has(move.to as Square)) {
       return false; // A safe king escape exists — not chaos checkmate
     }

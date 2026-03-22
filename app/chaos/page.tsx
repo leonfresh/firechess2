@@ -82,6 +82,7 @@ import {
   getChaosPieceValCp,
   TIER_COLORS,
   TIER_LABELS,
+  ALL_MODIFIERS,
   type ChaosState,
   type ChaosModifier,
   type ModifierTier,
@@ -98,7 +99,15 @@ import {
   computeChainedSquare,
   isChaosCheckmate,
   type ChaosMove,
+  type AnomalyMoveOptions,
 } from "@/lib/chaos-moves";
+import {
+  type AnomalyId,
+  type AnomalyDefinition,
+  rollAnomalyChoices,
+  getAnomalyById,
+  PIECE_STARTING_SQUARES,
+} from "@/lib/chaos-anomalies";
 import {
   usePartyRoom,
   PARTYKIT_HOST,
@@ -884,7 +893,13 @@ const AI_MOVE_DELAY = 600;
 const POLL_INTERVAL = 1_500; // fallback polling — primary sync is via WebSocket
 
 type GameMode = "ai" | "friend" | "matchmake";
-type GameStatus = "setup" | "waiting" | "playing" | "drafting" | "game-over";
+type GameStatus =
+  | "setup"
+  | "waiting"
+  | "picking-anomaly"
+  | "playing"
+  | "drafting"
+  | "game-over";
 type GameResult = "white" | "black" | "draw" | null;
 
 type MoveLogEntry = {
@@ -1146,6 +1161,331 @@ function ChaosParticles() {
           50% { box-shadow: 0 0 30px var(--glow-color, rgba(168,85,247,0.6)), 0 0 60px var(--glow-color, rgba(168,85,247,0.2)); }
         }
       `}</style>
+    </div>
+  );
+}
+
+/* ────────────────────────── Anomaly Picker Screen ────────────────────────── */
+
+function AnomalyPickerScreen({
+  choices,
+  isPro,
+  onPick,
+  onSkip,
+}: {
+  choices: AnomalyDefinition[];
+  isPro: boolean;
+  onPick: (anomaly: AnomalyDefinition) => void;
+  onSkip: () => void;
+}) {
+  const [selected, setSelected] = useState<AnomalyDefinition | null>(null);
+  const [hoveredLocked, setHoveredLocked] = useState<number | null>(null);
+  // Timer: 20s to pick, then auto-skip
+  const [timeLeft, setTimeLeft] = useState(20);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimeLeft((t) => {
+        if (t <= 1) {
+          clearInterval(interval);
+          onSkip();
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [onSkip]);
+
+  // 4 cards shown always; Free can only pick first 2 (last 2 are locked)
+  const activeCount = isPro ? 4 : 2;
+
+  return (
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-md"
+      style={{ animation: "draft-bg-enter 0.4s ease-out both" }}
+    >
+      <div
+        className="relative mx-4 w-full max-w-3xl rounded-2xl border border-purple-500/20 bg-[#080d1a]/95 p-5 sm:p-8"
+        style={{
+          animation:
+            "draft-modal-enter 0.5s cubic-bezier(0.34,1.56,0.64,1) both",
+        }}
+      >
+        {/* Stars background */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
+          {[...Array(20)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute rounded-full bg-white/30"
+              style={{
+                width: `${1 + (i % 3)}px`,
+                height: `${1 + (i % 3)}px`,
+                left: `${(i * 17 + 3) % 97}%`,
+                top: `${(i * 13 + 7) % 90}%`,
+                opacity: 0.2 + (i % 5) * 0.1,
+                animation: `rune-spin ${8 + i * 1.5}s linear infinite`,
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="relative">
+          {/* Header */}
+          <div className="mb-6 text-center">
+            <p className="mb-1 text-xs font-bold uppercase tracking-widest text-purple-400/70">
+              Before the game begins
+            </p>
+            <h2
+              className="bg-gradient-to-r from-purple-300 via-fuchsia-300 to-amber-300 bg-clip-text text-2xl font-black tracking-wide text-transparent sm:text-3xl"
+              style={{
+                animation:
+                  "draft-title-enter 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.1s both",
+              }}
+            >
+              ✦ Choose Your Anomaly ✦
+            </h2>
+            <p className="mt-1.5 text-xs text-slate-500">
+              A permanent power that shapes your game — yours alone, all match
+              long.
+            </p>
+            {/* Timer bar */}
+            <div className="mx-auto mt-3 h-1 max-w-48 overflow-hidden rounded-full bg-white/[0.06]">
+              <div
+                className={`h-full rounded-full transition-[width] duration-1000 ease-linear ${timeLeft > 10 ? "bg-purple-500" : timeLeft > 5 ? "bg-amber-500" : "bg-red-500"}`}
+                style={{ width: `${(timeLeft / 20) * 100}%` }}
+              />
+            </div>
+            <p className="mt-1 text-[10px] text-slate-600">
+              {timeLeft}s remaining
+            </p>
+          </div>
+
+          {/* Cards grid */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+            {choices.map((anomaly, i) => {
+              const isLocked = i >= activeCount;
+              const isSelected = selected?.id === anomaly.id;
+              return (
+                <div key={anomaly.id} className="relative">
+                  {/* Locked overlay */}
+                  {isLocked && (
+                    <div
+                      className="absolute inset-0 z-10 flex flex-col items-center justify-center rounded-xl bg-black/70 cursor-not-allowed"
+                      onMouseEnter={() => setHoveredLocked(i)}
+                      onMouseLeave={() => setHoveredLocked(null)}
+                    >
+                      <div className="rounded-full border border-amber-500/40 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 px-2 py-1 text-center">
+                        <p className="text-xs font-black text-amber-400">
+                          🔒 PRO
+                        </p>
+                      </div>
+                      {hoveredLocked === i && (
+                        <div className="absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-full rounded-xl border border-amber-500/30 bg-slate-900/95 px-3 py-2 text-center shadow-xl z-20 w-48">
+                          <p className="text-[11px] font-bold text-amber-300">
+                            Upgrade to Pro
+                          </p>
+                          <p className="text-[10px] text-slate-400 mt-0.5">
+                            Pro players choose from 4 anomalies instead of 2
+                          </p>
+                          <a
+                            href="/pricing"
+                            className="mt-1 inline-block text-[10px] text-amber-400 hover:underline"
+                          >
+                            See Pro →
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    disabled={isLocked}
+                    onClick={() => !isLocked && setSelected(anomaly)}
+                    className={`group relative w-full rounded-xl border p-3 text-left transition-all duration-200 disabled:cursor-not-allowed
+                      ${
+                        isSelected
+                          ? `${anomaly.borderClass} bg-gradient-to-b ${anomaly.bgGradient} scale-[1.03] ring-2 ring-purple-500/50`
+                          : isLocked
+                            ? "border-white/[0.05] bg-white/[0.02] opacity-40"
+                            : `${anomaly.borderClass} bg-gradient-to-b ${anomaly.bgGradient} hover:scale-[1.02] hover:brightness-110`
+                      }`}
+                    style={
+                      isSelected
+                        ? { boxShadow: `0 0 20px ${anomaly.glowColor}` }
+                        : {}
+                    }
+                  >
+                    {/* Tarot number */}
+                    <div className="mb-2 flex items-center justify-between">
+                      <span
+                        className={`text-[9px] font-bold uppercase tracking-widest opacity-50 ${anomaly.accentColor}`}
+                      >
+                        {anomaly.tarotRoman}
+                      </span>
+                      {isSelected && (
+                        <span className="text-[9px] text-emerald-400 font-bold">
+                          ✓ Selected
+                        </span>
+                      )}
+                    </div>
+                    {/* Icon */}
+                    <div className="mb-2 text-2xl sm:text-3xl">
+                      {anomaly.icon}
+                    </div>
+                    {/* Tarot name */}
+                    <p
+                      className={`text-[9px] font-bold uppercase tracking-wider opacity-60 ${anomaly.accentColor}`}
+                    >
+                      {anomaly.tarotName}
+                    </p>
+                    {/* Ability name */}
+                    <p className="mt-0.5 text-sm font-black text-white leading-tight">
+                      {anomaly.name}
+                    </p>
+                    {/* Description */}
+                    <p className="mt-1.5 text-[10px] leading-snug text-slate-400 line-clamp-4">
+                      {anomaly.description}
+                    </p>
+                    {/* Trigger badge */}
+                    <div className="mt-2">
+                      <span
+                        className={`inline-block rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider ${anomaly.accentColor} bg-white/[0.07]`}
+                      >
+                        {anomaly.trigger === "once-per-game"
+                          ? "⚡ Once"
+                          : anomaly.trigger === "draft-modifier"
+                            ? "📋 Draft"
+                            : anomaly.trigger === "fen-mod"
+                              ? "🎯 Setup"
+                              : "∞ Passive"}
+                      </span>
+                    </div>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Actions */}
+          <div className="mt-6 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+            <button
+              type="button"
+              disabled={!selected}
+              onClick={() => selected && onPick(selected)}
+              className="btn-primary w-full px-8 py-3 text-sm font-bold disabled:opacity-40 sm:w-auto"
+            >
+              {selected
+                ? `Confirm — ${selected.icon} ${selected.name}`
+                : "Pick an anomaly to confirm"}
+            </button>
+            <button
+              type="button"
+              onClick={onSkip}
+              className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
+            >
+              Skip — play without anomaly
+            </button>
+          </div>
+          {!isPro && (
+            <p className="mt-4 text-center text-[10px] text-slate-600">
+              🔒{" "}
+              <a
+                href="/pricing"
+                className="text-amber-400/80 hover:text-amber-300 hover:underline"
+              >
+                Upgrade to Pro
+              </a>{" "}
+              for 4 anomaly choices
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ────────────────────────── Anomaly Activated Popup ────────────────────────── */
+
+function AnomalyActivatedPopup({
+  data,
+  onDismiss,
+}: {
+  data: {
+    anomalyId: AnomalyId;
+    anomalyName: string;
+    description: string;
+    icon: string;
+  };
+  onDismiss: () => void;
+}) {
+  const [stage, setStage] = useState<"enter" | "reveal" | "done">("enter");
+  const anomaly = getAnomalyById(data.anomalyId);
+
+  useEffect(() => {
+    playSound("record-scratch");
+    const t1 = setTimeout(() => {
+      setStage("reveal");
+      playSound("bell-double");
+    }, 600);
+    const t2 = setTimeout(() => setStage("done"), 1200);
+    const t3 = setTimeout(onDismiss, 4000);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [onDismiss]);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{
+        animation: "draft-bg-enter 0.3s ease-out both",
+        backgroundColor: "rgba(0,0,0,0.7)",
+      }}
+      onClick={onDismiss}
+    >
+      <div
+        className={`mx-4 w-full max-w-xs rounded-2xl border bg-gradient-to-b ${anomaly?.bgGradient ?? "from-red-950/90 to-rose-900/50"} ${anomaly?.borderClass ?? "border-red-500/40"} p-6 text-center shadow-2xl`}
+        style={{
+          animation:
+            "draft-modal-enter 0.5s cubic-bezier(0.34,1.56,0.64,1) both",
+          ...(stage === "reveal"
+            ? {
+                boxShadow: `0 0 40px ${anomaly?.glowColor ?? "rgba(239,68,68,0.4)"}`,
+              }
+            : {}),
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <p className="mb-1 text-xs font-bold uppercase tracking-widest text-red-400/80">
+          ⚔️ Opponent used
+        </p>
+        <div
+          className="my-3 text-5xl"
+          style={{
+            animation:
+              stage !== "enter"
+                ? "draft-modal-enter 0.5s cubic-bezier(0.34,1.56,0.64,1) both"
+                : "none",
+          }}
+        >
+          {data.icon}
+        </div>
+        <p
+          className={`text-xl font-black text-white ${anomaly?.accentColor ?? ""}`}
+        >
+          {data.anomalyName}
+        </p>
+        <p className="mt-2 text-xs leading-snug text-slate-400">
+          {data.description}
+        </p>
+        {stage === "done" && (
+          <p className="mt-3 text-[10px] text-slate-500 animate-pulse">
+            Click to dismiss
+          </p>
+        )}
+      </div>
     </div>
   );
 }
@@ -2745,7 +3085,7 @@ const KING_DEATH_POPUP_DELAY = 950;
 
 export default function ChaosChessPage() {
   /* ── Auth ── */
-  const { authenticated } = useSession();
+  const { authenticated, plan } = useSession();
 
   /** Build headers for chaos API calls — adds X-Guest-Id for unauthenticated players */
   const chaosHeaders = useCallback(
@@ -2760,6 +3100,22 @@ export default function ChaosChessPage() {
 
   /* ── Board / theme hooks ── */
   const [boardSize, setBoardSize] = useState(0);
+  /** Board size offset: each step = 40px. Range -3 to 4. 0 = default. Persisted in localStorage. */
+  const [boardSizeOffset, setBoardSizeOffset] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    const v = parseInt(
+      window.localStorage.getItem("chaos_board_size_offset") ?? "0",
+      10,
+    );
+    return isNaN(v) ? 0 : Math.max(-3, Math.min(4, v));
+  });
+  const changeBoardSizeOffset = useCallback((delta: number) => {
+    setBoardSizeOffset((prev) => {
+      const next = Math.max(-3, Math.min(4, prev + delta));
+      localStorage.setItem("chaos_board_size_offset", String(next));
+      return next;
+    });
+  }, []);
   const [soundVolume, setSoundVolumeState] = useState(() => getSoundVolume());
   const handleVolumeChange = useCallback((v: number) => {
     setSoundVolume(v);
@@ -2941,6 +3297,53 @@ export default function ChaosChessPage() {
     [availableChaosMoves, warpQueenActive],
   );
 
+  /* ── Opening Anomaly state ── */
+  /** The 4 random anomaly choices shown in the picker */
+  const [anomalyPickerChoices, setAnomalyPickerChoices] = useState<
+    AnomalyDefinition[]
+  >([]);
+  /** The pre-game anomaly picked by the local player */
+  const [selectedAnomaly, setSelectedAnomaly] =
+    useState<AnomalyDefinition | null>(null);
+  /**
+   * Anomaly activation mode:
+   * - null: no activation in progress
+   * - "lovers-first": waiting for player to click first piece to swap
+   * - "lovers-second": waiting for player to click second piece
+   * - "strength": king queen-range captures highlighted
+   * - "justice": waiting for player to mark a piece immune
+   * - "hanged-man": waiting for player to click piece to transform
+   * - "devil": waiting for player to click opponent piece to freeze
+   * - "judgement": resurrection picker modal shown
+   */
+  const [anomalyActivationMode, setAnomalyActivationMode] = useState<
+    | "lovers-first"
+    | "lovers-second"
+    | "strength"
+    | "justice"
+    | "hanged-man"
+    | "devil"
+    | "judgement"
+    | null
+  >(null);
+  /** First piece selected during a two-click activation (Lovers, Hanged Man) */
+  const [anomalyActivationPiece, setAnomalyActivationPiece] = useState<
+    string | null
+  >(null);
+  /** Hanged Man: transform type picker open */
+  const [showTransformPicker, setShowTransformPicker] = useState(false);
+  /** Sun: pawn surge already applied this game */
+  const [sunSurgeUsed, setSunSurgeUsed] = useState(false);
+  /** World: bonus turn is active (player can play an extra move before regular turn) */
+  const [worldBonusTurnActive, setWorldBonusTurnActive] = useState(false);
+  /** Anomaly notification to show to the opponent (their ability was activated) */
+  const [opponentAnomalyActivated, setOpponentAnomalyActivated] = useState<{
+    anomalyId: AnomalyId;
+    anomalyName: string;
+    description: string;
+    icon: string;
+  } | null>(null);
+
   // Keep undoSnapshotRef current so handlePlayerMove can read pre-move state
   undoSnapshotRef.current =
     gameMode === "ai" && undoUsed < 3
@@ -3019,7 +3422,10 @@ export default function ChaosChessPage() {
   >(() => {
     if (typeof window === "undefined") return "easy";
     const stored = window.localStorage.getItem("chaos_ai_level");
-    return (stored === "beginner" || stored === "easy" || stored === "medium" || stored === "hard")
+    return stored === "beginner" ||
+      stored === "easy" ||
+      stored === "medium" ||
+      stored === "hard"
       ? stored
       : "easy";
   });
@@ -3360,17 +3766,26 @@ export default function ChaosChessPage() {
 
   /* ── Recompute chaos moves when board/modifiers change ── */
   const recomputeChaosMoves = useCallback(
-    (g: Chess, cs: ChaosState) => {
+    (g: Chess, cs: ChaosState, anomalyOpts?: AnomalyMoveOptions) => {
       const isPlayerTurn =
         (playerColor === "white" && g.turn() === "w") ||
         (playerColor === "black" && g.turn() === "b");
       if (isPlayerTurn) {
+        // Auto-derive anomaly options from chaos state when not explicitly passed
+        const moonUnlocked =
+          cs.playerMoonUnlocked || (cs.currentPhase ?? 0) >= 2;
+        const effectiveOpts: AnomalyMoveOptions | undefined = anomalyOpts
+          ? { moonUnlocked, ...anomalyOpts }
+          : cs.playerAnomaly
+            ? { playerAnomaly: cs.playerAnomaly, moonUnlocked }
+            : undefined;
         const chaosMvs = getChaosMoves(
           g,
           cs.playerModifiers,
           g.turn() as Color,
           cs.assignedSquares,
           cs.aiModifiers,
+          effectiveOpts,
         );
         setAvailableChaosMoves(chaosMvs);
       } else {
@@ -4349,7 +4764,10 @@ export default function ChaosChessPage() {
                 const capturedAtTarget = g.get(ct as any);
                 if (capturedAtTarget && capturedAtTarget.color !== aiCol3) {
                   // Collateral rook: piece one step beyond target in direction of movement
-                  if (movedPiece.type === "r" && cs.aiModifiers.some((m) => m.id === "collateral-rook")) {
+                  if (
+                    movedPiece.type === "r" &&
+                    cs.aiModifiers.some((m) => m.id === "collateral-rook")
+                  ) {
                     const ff2 = cf.charCodeAt(0) - 97;
                     const fr2 = parseInt(cf[1], 10) - 1;
                     const tf2 = ct.charCodeAt(0) - 97;
@@ -4358,31 +4776,62 @@ export default function ChaosChessPage() {
                     const dfr = Math.sign(tr2 - fr2);
                     const colFile = String.fromCharCode(97 + tf2 + dff);
                     const colRank = String(tr2 + dfr + 1);
-                    if (colFile >= "a" && colFile <= "h" && colRank >= "1" && colRank <= "8") {
+                    if (
+                      colFile >= "a" &&
+                      colFile <= "h" &&
+                      colRank >= "1" &&
+                      colRank <= "8"
+                    ) {
                       const colSq = `${colFile}${colRank}`;
                       const colPiece = g.get(colSq as any);
-                      if (colPiece && colPiece.color !== aiCol3 && colPiece.type !== "k") {
+                      if (
+                        colPiece &&
+                        colPiece.color !== aiCol3 &&
+                        colPiece.type !== "k"
+                      ) {
                         postEffectBonus += getChaosPieceValCp(
-                          colSq, colPiece.type, colPiece.color as "w" | "b",
-                          cs.playerModifiers, cs.assignedSquares ?? undefined,
+                          colSq,
+                          colPiece.type,
+                          colPiece.color as "w" | "b",
+                          cs.playerModifiers,
+                          cs.assignedSquares ?? undefined,
                         );
                       }
                     }
                   }
                   // Nuclear queen: destroy all 8 surrounding squares
-                  if (movedPiece.type === "q" && cs.aiModifiers.some((m) => m.id === "nuclear-queen")) {
+                  if (
+                    movedPiece.type === "q" &&
+                    cs.aiModifiers.some((m) => m.id === "nuclear-queen")
+                  ) {
                     const qtf = ct.charCodeAt(0) - 97;
                     const qtr = parseInt(ct[1], 10) - 1;
-                    for (const [dff, dfr] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]] as [number,number][]) {
+                    for (const [dff, dfr] of [
+                      [-1, -1],
+                      [-1, 0],
+                      [-1, 1],
+                      [0, -1],
+                      [0, 1],
+                      [1, -1],
+                      [1, 0],
+                      [1, 1],
+                    ] as [number, number][]) {
                       const nf = qtf + dff;
                       const nr = qtr + dfr;
                       if (nf < 0 || nf > 7 || nr < 0 || nr > 7) continue;
                       const nSq = `${String.fromCharCode(97 + nf)}${nr + 1}`;
                       const nPiece = g.get(nSq as any);
-                      if (nPiece && nPiece.color !== aiCol3 && nPiece.type !== "k") {
+                      if (
+                        nPiece &&
+                        nPiece.color !== aiCol3 &&
+                        nPiece.type !== "k"
+                      ) {
                         postEffectBonus += getChaosPieceValCp(
-                          nSq, nPiece.type, nPiece.color as "w" | "b",
-                          cs.playerModifiers, cs.assignedSquares ?? undefined,
+                          nSq,
+                          nPiece.type,
+                          nPiece.color as "w" | "b",
+                          cs.playerModifiers,
+                          cs.assignedSquares ?? undefined,
                         );
                       }
                     }
@@ -4422,7 +4871,8 @@ export default function ChaosChessPage() {
                 }
               }
             }
-            const adjusted = candidate.cp - penalty - enhancedPenalty + postEffectBonus;
+            const adjusted =
+              candidate.cp - penalty - enhancedPenalty + postEffectBonus;
             if (adjusted > bestAdjusted) {
               bestAdjusted = adjusted;
               bestUci = uci;
@@ -4673,6 +5123,31 @@ export default function ChaosChessPage() {
           finalTo,
           !!moveResult.captured,
         );
+
+        // Judgement: track player pieces captured by AI
+        if (
+          moveResult.captured &&
+          cs.playerAnomaly === "judgement" &&
+          !cs.playerAnomalyUsed
+        ) {
+          const playerC = playerColor === "white" ? "w" : "b";
+          // moveResult.color is the AI's color; captured piece belongs to player
+          const aiColor = moveResult.color as Color;
+          if (aiColor !== playerC) {
+            const capturedType = moveResult.captured.toUpperCase();
+            if (capturedType !== "K" && capturedType !== "P") {
+              const pieceKey = `${playerC === "w" ? "w" : "b"}${capturedType}`;
+              cs2 = {
+                ...cs2,
+                playerCapturedForJudgement: [
+                  ...(cs2.playerCapturedForJudgement ?? []),
+                  pieceKey,
+                ],
+              };
+            }
+          }
+        }
+
         let activeGame2 = new Chess(finalGame.fen());
 
         if (thisToken.cancelled) {
@@ -4721,25 +5196,70 @@ export default function ChaosChessPage() {
     ],
   );
 
-  /* ── Start game ── */
-  const startGame = useCallback(
-    (color: "white" | "black", mode: GameMode = "ai") => {
-      const g = new Chess();
+  /* ── Start game (after anomaly pick) ── */
+  /**
+   * Actually begins the game after anomaly selection.
+   * Accepts the picked anomaly (or null to skip), applies FEN mods and injects modifiers.
+   */
+  const launchGame = useCallback(
+    (
+      color: "white" | "black",
+      mode: GameMode,
+      pickedAnomaly: AnomalyDefinition | null,
+    ) => {
+      const playerC: Color = color === "white" ? "w" : "b";
+
+      // Build starting position with Empress extra pawns if applicable
+      let startFen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+      if (pickedAnomaly?.id === "empress") {
+        // Add 2 extra pawns to starting FEN
+        if (playerC === "w") {
+          // c3 and f3 (rank 3 = index 2) — replace empty squares
+          // FEN rank 3 from white's perspective = rank index 2 in the FEN rows
+          // Starting FEN rows: [8, pppppppp, 8, 8, 8, 8, PPPPPPPP, RNBQKBNR]
+          // Row index 2 (from rank 8 down) = rank 6 (empty row for white 3rd rank)
+          // Actually white's c3/f3 are in rank 3 = row index 5 in FEN (counting from top)
+          startFen =
+            "rnbqkbnr/pppppppp/8/8/8/2P2P2/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        } else {
+          startFen =
+            "rnbqkbnr/pppppppp/2p2p2/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+        }
+      }
+
+      const g = new Chess(startFen);
+      let cs = createChaosState();
+      cs = { ...cs, playerAnomaly: pickedAnomaly?.id ?? null };
+
+      // Inject modifiers for anomalies that have built-in modifiers
+      if (pickedAnomaly?.injectModifiers) {
+        for (const modId of pickedAnomaly.injectModifiers) {
+          const mod = ALL_MODIFIERS.find((m) => m.id === modId);
+          if (mod) {
+            cs = { ...cs, playerModifiers: [...cs.playerModifiers, mod] };
+          }
+        }
+      }
+
       setGame(g);
       setPlayerColor(color);
       setGameMode(mode);
       setGameStatus("playing");
       setGameResult(null);
-      const cs = createChaosState();
       setChaosState(cs);
+      setSelectedAnomaly(pickedAnomaly);
       setMoveLog([]);
       setFloatingPepes([]);
       setCapturedPawns({ w: 0, b: 0 });
       setAvailableChaosMoves([]);
+      setSunSurgeUsed(false);
+      setWorldBonusTurnActive(false);
+      setAnomalyActivationMode(null);
+      setAnomalyActivationPiece(null);
       setEventLog([
         {
           type: "info",
-          message: `⚡ Chaos Chess begins! ${mode === "ai" ? "vs Stockfish" : "vs Player"}. Modifiers appear at turns 5, 10, 15, 20, 25.`,
+          message: `⚡ Chaos Chess begins! ${mode === "ai" ? "vs Stockfish" : "vs Player"}. Modifiers appear at turns 5, 10, 15, 20, 25.${pickedAnomaly ? ` Your anomaly: ${pickedAnomaly.icon} ${pickedAnomaly.name}` : ""}`,
           icon: "⚡",
           pepe: PEPE.hyped,
         },
@@ -4763,19 +5283,31 @@ export default function ChaosChessPage() {
       setAiEloSaved(false);
       setMyRating(null);
       setOpponentRating(null);
-      // Cancel any in-flight AI computation and reset undo state
       aiMoveTokenRef.current.cancelled = true;
       aiMoveTokenRef.current = { cancelled: false };
       setUndoStack([]);
       setUndoUsed(0);
       lastMoveRef.current = null;
-      recomputeChaosMoves(g, cs);
+      recomputeChaosMoves(g, cs, { playerAnomaly: pickedAnomaly?.id ?? null });
 
       if (mode === "ai" && color === "black") {
         setTimeout(() => makeAiMove(g, cs), AI_MOVE_DELAY);
       }
     },
     [makeAiMove, recomputeChaosMoves],
+  );
+
+  /* ── Start game — show anomaly picker first (AI mode) ── */
+  const startGame = useCallback(
+    (color: "white" | "black", mode: GameMode = "ai") => {
+      setPlayerColor(color);
+      setGameMode(mode);
+      // Show anomaly picker before game starts
+      const seed = Math.floor(Math.random() * 1_000_000);
+      setAnomalyPickerChoices(rollAnomalyChoices(4, seed));
+      setGameStatus("picking-anomaly");
+    },
+    [],
   );
 
   /* ── Multiplayer: Create room ── */
@@ -6101,6 +6633,29 @@ export default function ChaosChessPage() {
         }
       }
 
+      // Death passive (The Wake): spawn pawn on departure square after valuable capture
+      const PIECE_BASE_VAL: Record<string, number> = {
+        p: 100,
+        n: 325,
+        b: 325,
+        r: 500,
+        q: 900,
+      };
+      if (
+        chaosState.playerAnomaly === "death" &&
+        moveResult.captured &&
+        pieceAtFrom &&
+        (PIECE_BASE_VAL[moveResult.captured] ?? 0) >= 300
+      ) {
+        const playerC: Color = playerColor === "white" ? "w" : "b";
+        // Only spawn if departure square is empty
+        if (!finalGame.get(from as any)) {
+          const wakeGame = new Chess(finalGame.fen());
+          wakeGame.put({ type: "p", color: playerC }, from as any);
+          finalGame = wakeGame;
+        }
+      }
+
       const newG = new Chess(finalGame.fen());
 
       // Update tracked pieces
@@ -6507,6 +7062,209 @@ export default function ChaosChessPage() {
       // Not the player's turn (and not thinking) — do nothing
       if (!isPlayerTurn) return;
 
+      // ── Anomaly activation mode click handling ──
+      if (anomalyActivationMode) {
+        const playerC: Color = playerColor === "white" ? "w" : "b";
+        const oppC: Color = playerC === "w" ? "b" : "w";
+        const clickedPiece = game.get(square as any);
+
+        if (anomalyActivationMode === "lovers-first") {
+          // Must click own piece
+          if (
+            clickedPiece &&
+            clickedPiece.color === playerC &&
+            clickedPiece.type !== "k"
+          ) {
+            setAnomalyActivationPiece(square);
+            setAnomalyActivationMode("lovers-second");
+            setLegalMoveSquares({
+              [square]: { backgroundColor: "rgba(236,72,153,0.35)" },
+            });
+            playSound("select");
+          }
+          return;
+        }
+
+        if (anomalyActivationMode === "lovers-second") {
+          const firstSq = anomalyActivationPiece;
+          if (!firstSq || square === firstSq) {
+            // Cancel or same square
+            setAnomalyActivationMode("lovers-first");
+            setAnomalyActivationPiece(null);
+            setLegalMoveSquares({});
+            return;
+          }
+          const secondPiece = game.get(square as any);
+          if (
+            secondPiece &&
+            secondPiece.color === playerC &&
+            secondPiece.type !== "k"
+          ) {
+            // Swap the two pieces
+            const firstPiece = game.get(firstSq as any)!;
+            const newG = new Chess(game.fen());
+            newG.remove(firstSq as any);
+            newG.remove(square as any);
+            newG.put({ type: firstPiece.type, color: playerC }, square as any);
+            newG.put(
+              { type: secondPiece.type, color: playerC },
+              firstSq as any,
+            );
+            const cs = { ...chaosState, playerAnomalyUsed: true };
+            setChaosState(cs);
+            setGame(newG);
+            setAnomalyActivationMode(null);
+            setAnomalyActivationPiece(null);
+            setLegalMoveSquares({
+              [firstSq]: { backgroundColor: "rgba(236,72,153,0.4)" },
+              [square]: { backgroundColor: "rgba(236,72,153,0.4)" },
+            });
+            recomputeChaosMoves(newG, cs, {
+              playerAnomaly: selectedAnomaly?.id as AnomalyId | null,
+            });
+            setEventLog((prev) => [
+              ...prev,
+              {
+                type: "chaos" as const,
+                message: `💞 Pact: swapped ${firstSq}↔${square}`,
+                icon: "💞",
+                pepe: PEPE.hyped,
+              },
+            ]);
+            playSound("move");
+            // Lovers swap counts as the player's turn — make AI move
+            if (gameMode === "ai")
+              setTimeout(() => makeAiMove(newG, cs), AI_MOVE_DELAY);
+          }
+          return;
+        }
+
+        if (anomalyActivationMode === "justice") {
+          // Mark own piece immune for 3 turns
+          if (clickedPiece && clickedPiece.color === playerC) {
+            const cs = {
+              ...chaosState,
+              playerAnomalyUsed: true,
+              playerImmuneSquare: square,
+              playerImmuneTurnsLeft: 3,
+            };
+            setChaosState(cs);
+            setAnomalyActivationMode(null);
+            setLegalMoveSquares({
+              [square]: { backgroundColor: "rgba(99,102,241,0.45)" },
+            });
+            recomputeChaosMoves(game, cs, {
+              playerAnomaly: selectedAnomaly?.id as AnomalyId | null,
+            });
+            setEventLog((prev) => [
+              ...prev,
+              {
+                type: "chaos" as const,
+                message: `⚖️ Verdict: ${square} is immune for 3 turns!`,
+                icon: "⚖️",
+                pepe: PEPE.hyped,
+              },
+            ]);
+            playSound("crowd-ooh");
+          }
+          return;
+        }
+
+        if (anomalyActivationMode === "hanged-man") {
+          // Transform own piece
+          if (
+            clickedPiece &&
+            clickedPiece.color === playerC &&
+            clickedPiece.type !== "k"
+          ) {
+            setAnomalyActivationPiece(square);
+            setShowTransformPicker(true);
+            setLegalMoveSquares({
+              [square]: { backgroundColor: "rgba(20,184,166,0.4)" },
+            });
+          }
+          return;
+        }
+
+        if (anomalyActivationMode === "devil") {
+          // Freeze enemy piece for 2 turns
+          if (
+            clickedPiece &&
+            clickedPiece.color === oppC &&
+            clickedPiece.type !== "k"
+          ) {
+            const cs = {
+              ...chaosState,
+              playerAnomalyUsed: true,
+              aiFrozenSquare: square,
+              aiFrozenTurnsLeft: 2,
+            };
+            setChaosState(cs);
+            setAnomalyActivationMode(null);
+            setLegalMoveSquares({
+              [square]: { backgroundColor: "rgba(225,29,72,0.45)" },
+            });
+            recomputeChaosMoves(game, cs, {
+              playerAnomaly: selectedAnomaly?.id as AnomalyId | null,
+            });
+            setEventLog((prev) => [
+              ...prev,
+              {
+                type: "chaos" as const,
+                message: `😈 Bargain: ${square} is frozen for 2 turns!`,
+                icon: "😈",
+                pepe: PEPE.hyped,
+              },
+            ]);
+            playSound("crowd-ooh");
+          }
+          return;
+        }
+
+        if (anomalyActivationMode === "strength") {
+          // King queen-range capture
+          const kingSquare = game
+            .board()
+            .flat()
+            .find((c) => c && c.type === "k" && c.color === playerC)?.square;
+          if (kingSquare && clickedPiece && clickedPiece.color === oppC) {
+            // Verify this is a valid strength move (is in activeChaosMoves)
+            const strengthMove = activeChaosMoves.find(
+              (m) => m.modifierId === "anomaly-strength" && m.to === square,
+            );
+            if (strengthMove) {
+              const newG = new Chess(game.fen());
+              newG.remove(square as any); // remove the captured piece
+              const cs = { ...chaosState, playerAnomalyUsed: true };
+              setChaosState(cs);
+              setGame(newG);
+              setAnomalyActivationMode(null);
+              setLegalMoveSquares({
+                [kingSquare]: { backgroundColor: "rgba(239,68,68,0.35)" },
+                [square]: { backgroundColor: "rgba(239,68,68,0.5)" },
+              });
+              recomputeChaosMoves(newG, cs, {
+                playerAnomaly: selectedAnomaly?.id as AnomalyId | null,
+              });
+              setEventLog((prev) => [
+                ...prev,
+                {
+                  type: "chaos" as const,
+                  message: `⚡ Royal Strike! King captured ${square} from afar!`,
+                  icon: "⚡",
+                  pepe: PEPE.gigachad,
+                },
+              ]);
+              playSound("capture");
+              triggerEffect("explosion", [square as any]);
+              if (gameMode === "ai")
+                setTimeout(() => makeAiMove(newG, cs), AI_MOVE_DELAY);
+            }
+          }
+          return;
+        }
+      }
+
       // Player's turn, AI idle
       if (selectedSquare) {
         const success = handlePlayerMove(selectedSquare, square);
@@ -6539,6 +7297,14 @@ export default function ChaosChessPage() {
       handlePlayerMove,
       activeChaosMoves,
       isKingMoveChaosUnsafe,
+      anomalyActivationMode,
+      anomalyActivationPiece,
+      chaosState,
+      selectedAnomaly,
+      recomputeChaosMoves,
+      gameMode,
+      makeAiMove,
+      triggerEffect,
     ],
   );
 
@@ -6992,6 +7758,87 @@ export default function ChaosChessPage() {
 
   /* Keep resign ref current so the per-move timer interval can call it without stale closure */
   handleResignRef.current = handleResign;
+
+  /* ── Anomaly activation callbacks ── */
+
+  /** Sun — First Light: surge all eligible pawns forward 1 square (free, no turn change) */
+  const handleSunSurge = useCallback(() => {
+    if (chaosState.playerAnomalyUsed || sunSurgeUsed) return;
+    const playerC: Color = playerColor === "white" ? "w" : "b";
+    const dir = playerC === "w" ? 1 : -1;
+    const newG = new Chess(game.fen());
+    const board = newG.board();
+    const toMove: { from: string; to: string }[] = [];
+    for (const row of board) {
+      for (const cell of row) {
+        if (!cell || cell.type !== "p" || cell.color !== playerC) continue;
+        const rank = parseInt(cell.square[1]);
+        const toRank = rank + dir;
+        if (toRank < 1 || toRank > 8) continue;
+        if (toRank === (playerC === "w" ? 8 : 1)) continue; // skip promotions
+        const toSq = cell.square[0] + toRank;
+        if (newG.get(toSq as any)) continue; // blocked
+        toMove.push({ from: cell.square, to: toSq });
+      }
+    }
+    if (toMove.length > 0) {
+      for (const { from, to } of toMove) {
+        newG.remove(from as any);
+        newG.put({ type: "p", color: playerC }, to as any);
+      }
+    }
+    const cs = { ...chaosState, playerAnomalyUsed: true };
+    setSunSurgeUsed(true);
+    setChaosState(cs);
+    setGame(newG);
+    recomputeChaosMoves(newG, cs, {
+      playerAnomaly: selectedAnomaly?.id as AnomalyId | null,
+    });
+    setEventLog((prev) => [
+      ...prev,
+      {
+        type: "chaos" as const,
+        message: `☀️ Sun Surge! ${toMove.length} pawn(s) surged forward. Now make your move.`,
+        icon: "☀️",
+        pepe: PEPE.hyped,
+      },
+    ]);
+    playSound("crowd-ooh");
+    triggerEffect(
+      "flash",
+      toMove.map((m) => m.to as any),
+    );
+  }, [
+    chaosState,
+    sunSurgeUsed,
+    playerColor,
+    game,
+    selectedAnomaly,
+    recomputeChaosMoves,
+    triggerEffect,
+  ]);
+
+  /** World — Final Act: activate bonus turn after opponent's next move */
+  const handleWorldActivate = useCallback(() => {
+    if (chaosState.playerAnomalyUsed) return;
+    const cs = {
+      ...chaosState,
+      playerAnomalyUsed: true,
+      playerWorldReady: true,
+    };
+    setChaosState(cs);
+    setWorldBonusTurnActive(true);
+    setEventLog((prev) => [
+      ...prev,
+      {
+        type: "chaos" as const,
+        message: `🌍 World activated! After opponent moves, you get a bonus turn.`,
+        icon: "🌍",
+        pepe: PEPE.hyped,
+      },
+    ]);
+    playSound("crowd-ooh");
+  }, [chaosState]);
 
   const handleOpponentTimeout = useCallback(() => {
     setGameResult(playerColor);
@@ -8053,6 +8900,212 @@ export default function ChaosChessPage() {
           />
         )}
 
+        {/* Anomaly picker screen — shown before game starts */}
+        {gameStatus === "picking-anomaly" && (
+          <AnomalyPickerScreen
+            choices={anomalyPickerChoices}
+            isPro={plan === "pro" || plan === "lifetime"}
+            onPick={(anomaly) => {
+              launchGame(playerColor, gameMode, anomaly);
+            }}
+            onSkip={() => {
+              launchGame(playerColor, gameMode, null);
+            }}
+          />
+        )}
+
+        {/* Opponent anomaly activated popup */}
+        {opponentAnomalyActivated && (
+          <AnomalyActivatedPopup
+            data={opponentAnomalyActivated}
+            onDismiss={() => setOpponentAnomalyActivated(null)}
+          />
+        )}
+
+        {/* Hanged Man — Transmutation: pick piece type to transform into */}
+        {showTransformPicker && anomalyActivationPiece && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="rounded-2xl border border-teal-500/40 bg-gray-950 p-6 text-center shadow-2xl">
+              <p className="mb-1 text-xs font-bold uppercase tracking-widest text-teal-400">
+                🔄 Transmutation
+              </p>
+              <p className="mb-4 text-sm text-slate-300">
+                Transform piece on{" "}
+                <span className="font-mono text-teal-300">
+                  {anomalyActivationPiece}
+                </span>{" "}
+                into:
+              </p>
+              <div className="flex gap-3 justify-center">
+                {(["q", "r", "b", "n"] as const).map((t) => {
+                  const labels: Record<string, string> = {
+                    q: "♛ Queen",
+                    r: "♜ Rook",
+                    b: "♝ Bishop",
+                    n: "♞ Knight",
+                  };
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => {
+                        const playerC: Color =
+                          playerColor === "white" ? "w" : "b";
+                        const newG = new Chess(game.fen());
+                        newG.remove(anomalyActivationPiece as any);
+                        newG.put(
+                          { type: t, color: playerC },
+                          anomalyActivationPiece as any,
+                        );
+                        const cs = { ...chaosState, playerAnomalyUsed: true };
+                        setChaosState(cs);
+                        setGame(newG);
+                        setShowTransformPicker(false);
+                        setAnomalyActivationMode(null);
+                        setAnomalyActivationPiece(null);
+                        setLegalMoveSquares({
+                          [anomalyActivationPiece]: {
+                            backgroundColor: "rgba(20,184,166,0.45)",
+                          },
+                        });
+                        recomputeChaosMoves(newG, cs, {
+                          playerAnomaly:
+                            selectedAnomaly?.id as AnomalyId | null,
+                        });
+                        setEventLog((prev) => [
+                          ...prev,
+                          {
+                            type: "chaos" as const,
+                            message: `🔄 Transmutation: piece on ${anomalyActivationPiece} became a ${labels[t]}!`,
+                            icon: "🔄",
+                            pepe: PEPE.hyped,
+                          },
+                        ]);
+                        playSound("crowd-ooh");
+                      }}
+                      className="rounded-lg border border-teal-500/30 bg-teal-500/10 px-4 py-3 text-lg text-teal-300 hover:bg-teal-500/20 transition-all"
+                    >
+                      {labels[t]}
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowTransformPicker(false);
+                  setAnomalyActivationMode(null);
+                  setAnomalyActivationPiece(null);
+                }}
+                className="mt-4 text-xs text-slate-500 hover:text-slate-300"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Judgement — Resurrection: pick a captured piece to revive */}
+        {anomalyActivationMode === "judgement" && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+            <div className="rounded-2xl border border-orange-400/40 bg-gray-950 p-6 text-center shadow-2xl max-w-sm w-full">
+              <p className="mb-1 text-xs font-bold uppercase tracking-widest text-orange-400">
+                🎺 Resurrection
+              </p>
+              <p className="mb-4 text-sm text-slate-300">
+                Choose a captured piece to revive on its original square:
+              </p>
+              {(chaosState.playerCapturedForJudgement ?? []).length === 0 ? (
+                <p className="text-xs text-slate-500 mb-4">
+                  No captured pieces to revive yet.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-2 justify-center mb-4">
+                  {(chaosState.playerCapturedForJudgement ?? []).map(
+                    (pieceCode, i) => {
+                      const startSquares =
+                        PIECE_STARTING_SQUARES[pieceCode] ?? [];
+                      const availableSquare = startSquares.find(
+                        (sq) => !game.get(sq as any),
+                      );
+                      const isEmpty_ = !!availableSquare;
+                      const pieceLabel: Record<string, string> = {
+                        Q: "♛ Queen",
+                        R: "♜ Rook",
+                        B: "♝ Bishop",
+                        N: "♞ Knight",
+                        P: "♟ Pawn",
+                      };
+                      const displayName = pieceLabel[pieceCode[1]] ?? pieceCode;
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          disabled={!isEmpty_}
+                          onClick={() => {
+                            if (!availableSquare) return;
+                            const playerC: Color =
+                              playerColor === "white" ? "w" : "b";
+                            const pieceType =
+                              pieceCode[1].toLowerCase() as PieceType;
+                            const newG = new Chess(game.fen());
+                            newG.put(
+                              { type: pieceType, color: playerC },
+                              availableSquare as any,
+                            );
+                            const newCaptured = [
+                              ...(chaosState.playerCapturedForJudgement ?? []),
+                            ];
+                            newCaptured.splice(i, 1);
+                            const cs = {
+                              ...chaosState,
+                              playerAnomalyUsed: true,
+                              playerCapturedForJudgement: newCaptured,
+                            };
+                            setChaosState(cs);
+                            setGame(newG);
+                            setAnomalyActivationMode(null);
+                            recomputeChaosMoves(newG, cs, {
+                              playerAnomaly:
+                                selectedAnomaly?.id as AnomalyId | null,
+                            });
+                            setEventLog((prev) => [
+                              ...prev,
+                              {
+                                type: "chaos" as const,
+                                message: `🎺 Resurrection! ${displayName} returned to ${availableSquare}!`,
+                                icon: "🎺",
+                                pepe: PEPE.hyped,
+                              },
+                            ]);
+                            playSound("crowd-ooh");
+                            triggerEffect("flash", [availableSquare as any]);
+                          }}
+                          className={`rounded-lg border px-3 py-2 text-sm transition-all ${isEmpty_ ? "border-orange-400/40 bg-orange-500/10 text-orange-300 hover:bg-orange-500/20" : "border-slate-700/40 bg-slate-800/30 text-slate-600 cursor-not-allowed"}`}
+                          title={
+                            isEmpty_
+                              ? `Revive to ${availableSquare}`
+                              : "No starting square available"
+                          }
+                        >
+                          {displayName} {!isEmpty_ ? "✗" : ""}
+                        </button>
+                      );
+                    },
+                  )}
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() => setAnomalyActivationMode(null)}
+                className="text-xs text-slate-500 hover:text-slate-300"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="relative z-10 mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 px-3 py-3 sm:px-4 sm:py-4 lg:grid-cols-[1fr_280px] lg:gap-6 lg:px-8 lg:py-6">
           {/* ── Center: Board + Modifiers below ── */}
           <div className="flex flex-col items-center gap-2 sm:gap-3 min-w-0">
@@ -8194,13 +9247,39 @@ export default function ChaosChessPage() {
                 );
               })()}
 
-            {/* Board — auto-sizes to fill container, capped at 640px wide and by viewport height */}
+            {/* Board size controls (±) */}
+            <div className="flex w-full max-w-[760px] justify-end pr-1">
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => changeBoardSizeOffset(-1)}
+                  disabled={boardSizeOffset <= -3}
+                  className="flex h-6 w-6 items-center justify-center rounded border border-white/10 bg-white/[0.04] text-sm text-slate-500 transition-colors hover:bg-white/10 hover:text-slate-300 disabled:opacity-30"
+                  title="Smaller board"
+                >
+                  −
+                </button>
+                <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-600">
+                  Board
+                </span>
+                <button
+                  type="button"
+                  onClick={() => changeBoardSizeOffset(1)}
+                  disabled={boardSizeOffset >= 4}
+                  className="flex h-6 w-6 items-center justify-center rounded border border-white/10 bg-white/[0.04] text-sm text-slate-500 transition-colors hover:bg-white/10 hover:text-slate-300 disabled:opacity-30"
+                  title="Larger board"
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            {/* Board — auto-sizes to fill container, capped by viewport width and height */}
             <div
               ref={boardContainerRef}
-              className="max-w-[640px]"
               style={{
-                width:
-                  "min(100%, min(640px, max(200px, calc(100dvh - 460px))))",
+                width: `min(100%, min(${640 + boardSizeOffset * 40}px, max(200px, calc(100dvh - ${Math.max(200, 380 - boardSizeOffset * 40)}px))))`,
+                maxWidth: `${640 + boardSizeOffset * 40}px`,
               }}
             >
               <div className="relative w-full">
@@ -8375,13 +9454,28 @@ export default function ChaosChessPage() {
               </div>
             )}
 
-            {/* Player label */}
-            <div className="flex w-full max-w-[640px] items-center gap-2 rounded-lg bg-white/[0.02] px-2 py-1 sm:px-3 sm:py-1.5">
+            {/* Player label + anomaly badge */}
+            <div
+              className="flex w-full max-w-[760px] items-center gap-2 rounded-lg bg-white/[0.02] px-2 py-1 sm:px-3 sm:py-1.5"
+              style={{ maxWidth: `${640 + boardSizeOffset * 40}px` }}
+            >
               <span className="text-xs sm:text-sm">👤</span>
               <span className="text-[11px] sm:text-xs font-medium text-slate-400">
                 You ({playerColor})
               </span>
               <InlineModifierIcons modifiers={chaosState.playerModifiers} />
+              {/* Anomaly badge */}
+              {selectedAnomaly && (
+                <div
+                  className={`ml-1 flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold ${selectedAnomaly.borderClass} bg-white/[0.04]`}
+                  title={`${selectedAnomaly.tarotName} — ${selectedAnomaly.name}: ${selectedAnomaly.description}`}
+                >
+                  <span>{selectedAnomaly.icon}</span>
+                  <span className={selectedAnomaly.accentColor}>
+                    {selectedAnomaly.name}
+                  </span>
+                </div>
+              )}
               {timeControl && gameMode !== "ai" && (
                 <span
                   className={`ml-auto font-mono text-sm font-bold tabular-nums ${
@@ -8417,6 +9511,96 @@ export default function ChaosChessPage() {
                         🌀 Warp Queen {warpQueenActive ? "— active" : ""}
                       </button>
                     )}
+
+                  {/* Once-per-game anomaly activation button */}
+                  {(() => {
+                    const isPlayerTurn_ =
+                      (playerColor === "white" && game.turn() === "w") ||
+                      (playerColor === "black" && game.turn() === "b");
+                    if (
+                      !selectedAnomaly ||
+                      selectedAnomaly.trigger !== "once-per-game" ||
+                      chaosState.playerAnomalyUsed ||
+                      !isPlayerTurn_ ||
+                      anomalyActivationMode !== null
+                    )
+                      return null;
+                    const anomId = selectedAnomaly.id;
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (anomId === "sun") {
+                            handleSunSurge();
+                          } else if (anomId === "world") {
+                            handleWorldActivate();
+                          } else if (anomId === "strength") {
+                            setAnomalyActivationMode("strength");
+                            recomputeChaosMoves(game, chaosState, {
+                              playerAnomaly: "strength",
+                              strengthMode: true,
+                            });
+                          } else if (anomId === "lovers") {
+                            setAnomalyActivationMode("lovers-first");
+                            setLegalMoveSquares({});
+                            setSelectedSquare(null);
+                          } else if (anomId === "justice") {
+                            setAnomalyActivationMode("justice");
+                            setSelectedSquare(null);
+                          } else if (anomId === "hanged-man") {
+                            setAnomalyActivationMode("hanged-man");
+                            setSelectedSquare(null);
+                          } else if (anomId === "devil") {
+                            setAnomalyActivationMode("devil");
+                            setSelectedSquare(null);
+                          } else if (anomId === "judgement") {
+                            setAnomalyActivationMode("judgement");
+                          }
+                        }}
+                        className={`rounded-lg border px-3 py-2 text-xs font-bold transition-all ${selectedAnomaly.borderClass} bg-white/[0.05] ${selectedAnomaly.accentColor} hover:brightness-125`}
+                        style={{
+                          boxShadow: `0 0 8px ${selectedAnomaly.glowColor}`,
+                        }}
+                        title={selectedAnomaly.description}
+                      >
+                        {selectedAnomaly.icon} Activate
+                      </button>
+                    );
+                  })()}
+
+                  {/* Cancel anomaly activation mode */}
+                  {anomalyActivationMode !== null &&
+                    anomalyActivationMode !== "judgement" && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAnomalyActivationMode(null);
+                          setAnomalyActivationPiece(null);
+                          setShowTransformPicker(false);
+                          recomputeChaosMoves(game, chaosState, {
+                            playerAnomaly:
+                              selectedAnomaly?.id as AnomalyId | null,
+                          });
+                        }}
+                        className="rounded-lg border border-slate-500/30 bg-slate-500/10 px-3 py-2 text-xs font-medium text-slate-400 hover:bg-slate-500/20"
+                      >
+                        ✕ Cancel{" "}
+                        {anomalyActivationMode === "lovers-first"
+                          ? "(pick 1st piece)"
+                          : anomalyActivationMode === "lovers-second"
+                            ? "(pick 2nd piece)"
+                            : anomalyActivationMode === "strength"
+                              ? "(pick target)"
+                              : anomalyActivationMode === "justice"
+                                ? "(mark immune)"
+                                : anomalyActivationMode === "hanged-man"
+                                  ? "(pick to transform)"
+                                  : anomalyActivationMode === "devil"
+                                    ? "(pick to freeze)"
+                                    : ""}
+                      </button>
+                    )}
+
                   <button
                     type="button"
                     onClick={handleResign}
