@@ -177,7 +177,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     id: "pegasus",
     name: "Pegasus",
     description:
-      "One knight gains a double L-jump — the second jump must advance toward the opponent (forward ranks only).",
+      "One knight gains a quad double-jump — only forward/backward L-shapes for the first leap (no sideways), then a second forward-only knight jump from there.",
     tier: "rare",
     icon: "🦄",
     piece: "n",
@@ -529,10 +529,10 @@ export function getChaosPieceValCp(
 
   // Single-piece identity upgrades — only apply if this square is the assigned square
   const SINGLE_PIECE_VALS: Record<string, number> = {
-    archbishop: 600, // bishop + knight ≈ 6 pawns (user-specified)
-    knook: 800, // knight + rook ≈ 8 pawns (user-specified)
-    camel: 300, // colorbound leaper ≈ 3 pawns
-    pegasus: 450, // enhanced knight ≈ 4.5 pawns
+    archbishop: 600, // bishop + knight ≈ 6 pawns
+    knook: 800,       // knight + rook ≈ 8 pawns
+    camel: 300,       // colorbound (3,1) leaper ≈ 3 pawns
+    pegasus: 390,     // quad double-jump knight ≈ 3.9 pawns (nerfed from octo)
   };
   if (assignedSquares) {
     for (const [modId, val] of Object.entries(SINGLE_PIECE_VALS)) {

@@ -515,6 +515,8 @@ const FAIRY_PIECE_SVGS: Record<string, Record<string, string>> = {
   },
   /** Emperor king — standard king body with gold reach-ring and corner triangles */
   "emperor-king": { w: "/pieces/fairy/wEK.svg", b: "/pieces/fairy/bEK.svg" },
+  /** Hierophant (Sacred Passage) bishop — ghostly violet phase-bishop */
+  "hierophant-bishop": { w: "/pieces/fairy/wHb.svg", b: "/pieces/fairy/bHb.svg" },
 };
 
 /** War Pawn SVG — shown when both pawn-charge AND pawn-capture-forward are active */
@@ -722,6 +724,17 @@ function buildChaosCustomPieces(
       ) {
         pieceUrl = FAIRY_PIECE_SVGS["emperor-king"][pieceColor];
         if (!glowColor) glowColor = "rgba(245,158,11,0.45)";
+      }
+
+      // Hierophant anomaly: all bishops become ghostly phase-bishops
+      if (
+        pieceType === "b" &&
+        ((isPlayerPiece && playerAnomalyId === "hierophant") ||
+          (!isPlayerPiece && aiAnomalyId === "hierophant")) &&
+        FAIRY_PIECE_SVGS["hierophant-bishop"]
+      ) {
+        pieceUrl = FAIRY_PIECE_SVGS["hierophant-bishop"][pieceColor];
+        if (!glowColor) glowColor = "rgba(167,139,250,0.45)";
       }
 
       // Now iterate all active mods for overlays, glows, and filters

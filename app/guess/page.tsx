@@ -819,7 +819,6 @@ export default function GuessTheMovePage() {
                   arePiecesDraggable={!gameComplete && shouldGuess(currentMoveIdx)}
                   onPieceDrop={onPieceDrop}
                   onSquareClick={onSquareClick}
-                  onPieceClick={(_piece, square) => onSquareClick(square as CbSquare)}
                   animationDuration={300}
                   customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
                   customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}

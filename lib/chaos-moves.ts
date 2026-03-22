@@ -793,7 +793,9 @@ function genBishopBounce(game: Chess, color: Color): ChaosMove[] {
   return moves;
 }
 
-/** Pegasus: One knight can make a double L-jump (two knight moves in one turn, 2nd jump forward only) */
+/** Pegasus: One knight can make a double L-jump (two knight moves in one turn, 2nd jump forward only).
+ *  The first jump uses only the 4 "tall" L-shapes (±1 file, ±2 rank) — no sideways jumps.
+ *  This makes it a quad-Pegasus rather than octo, giving it a forward/backward character. */
 function genPegasus(
   game: Chess,
   color: Color,
@@ -811,7 +813,15 @@ function genPegasus(
 
   const pegasusSquare = trackedSquare as Square;
 
-  const knightOffsets = [
+  // First jump: only the 4 "tall" offsets (±1 file, ±2 rank) — no sideways knight jumps
+  const firstJumpOffsets = [
+    [-1, -2],
+    [-1, 2],
+    [1, -2],
+    [1, 2],
+  ];
+  // Second jump: all 8 standard knight offsets (forward-only filter applied below)
+  const allKnightOffsets = [
     [-2, -1],
     [-2, 1],
     [-1, -2],
@@ -824,14 +834,14 @@ function genPegasus(
   const seen = new Set<string>();
   const [f, r] = sqToCoords(pegasusSquare);
 
-  // First jump: all 8 possible intermediate squares (Pegasus flies over everything)
-  for (const [df1, dr1] of knightOffsets) {
+  // First jump: only forward/backward L-shapes (no sideways)
+  for (const [df1, dr1] of firstJumpOffsets) {
     const midF = f + df1;
     const midR = r + dr1;
     if (midF < 0 || midF > 7 || midR < 0 || midR > 7) continue;
 
     // Second jump: forward only (rank must advance toward opponent's side)
-    for (const [df2, dr2] of knightOffsets) {
+    for (const [df2, dr2] of allKnightOffsets) {
       const isForward = color === "w" ? dr2 > 0 : dr2 < 0;
       if (!isForward) continue;
 
@@ -870,7 +880,7 @@ function genPegasus(
         to: target,
         type: isEnemy(game, target, color) ? "capture" : "move",
         modifierId: "pegasus",
-        label: "Pegasus (double L-jump)",
+        label: "Pegasus (quad L-jump forward)",
       });
     }
   }
@@ -1641,7 +1651,7 @@ export function getChaosAttackedSquares(
     }
   }
 
-  /* Pegasus: tracked/first knight attacks double-L squares (forward-only 2nd jump) */
+  /* Pegasus: tracked/first knight attacks double-L squares (quad first jump, forward-only 2nd jump) */
   if (modIds.has("pegasus")) {
     const trackedPegasus = assignedSquares?.[`${attackerColor}_pegasus`];
     let pegasusSq: Square | null = null;
@@ -1653,7 +1663,9 @@ export function getChaosAttackedSquares(
     // If trackedPegasus is undefined or null, no Pegasus attack squares exist.
     if (pegasusSq) {
       const [f, r] = sqToCoords(pegasusSq);
-      for (const [df1, dr1] of knightOffsets) {
+      // First jump: only "tall" (±1, ±2) offsets — no sideways
+      const pegFirstJump = [[-1,-2],[-1,2],[1,-2],[1,2]];
+      for (const [df1, dr1] of pegFirstJump) {
         const mf = f + df1;
         const mr = r + dr1;
         if (mf < 0 || mf > 7 || mr < 0 || mr > 7) continue;
