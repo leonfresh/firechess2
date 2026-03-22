@@ -4874,6 +4874,7 @@ export default function ChaosChessPage() {
               undefined,
               playerPieceCounts,
               state.playerAnomaly,
+              state.spentPlayerModIds,
             );
             setChaosState((prev) => ({
               ...prev,
@@ -4918,6 +4919,7 @@ export default function ChaosChessPage() {
             undefined,
             playerPieceCounts,
             state.playerAnomaly,
+            state.spentPlayerModIds,
           );
           setChaosState((prev) => ({
             ...prev,
@@ -5419,10 +5421,10 @@ export default function ChaosChessPage() {
                 );
                 // queen-teleport / railgun / usurper are once per game — remove modifier after AI uses it
                 if (chaosMove.modifierId === "queen-teleport") {
-                  cs2 = { ...cs2, aiModifiers: cs2.aiModifiers.filter((m) => m.id !== "queen-teleport") };
+                  cs2 = { ...cs2, aiModifiers: cs2.aiModifiers.filter((m) => m.id !== "queen-teleport"), spentAiModIds: [...(cs2.spentAiModIds ?? []), "queen-teleport"] };
                 }
                 if (chaosMove.modifierId === "railgun" || chaosMove.modifierId === "usurper") {
-                  cs2 = { ...cs2, aiModifiers: cs2.aiModifiers.filter((m) => m.id !== chaosMove.modifierId) };
+                  cs2 = { ...cs2, aiModifiers: cs2.aiModifiers.filter((m) => m.id !== chaosMove.modifierId), spentAiModIds: [...(cs2.spentAiModIds ?? []), chaosMove.modifierId] };
                 }
                 let activeGame = newGame;
 
@@ -6830,6 +6832,7 @@ export default function ChaosChessPage() {
                 undefined,
                 countPiecesFromFen(gameRef.current.fen(), "b"),
                 incoming.playerAnomaly,
+                incoming.spentPlayerModIds,
               );
               pendingDraftAfterRevealRef.current = {
                 phase: phaseForDraft,
@@ -7154,6 +7157,7 @@ export default function ChaosChessPage() {
                     undefined,
                     countPiecesFromFen(gameRef.current.fen(), myColor_),
                     incoming.playerAnomaly,
+                    incoming.spentPlayerModIds,
                   );
                   pendingDraftAfterRevealRef.current = {
                     phase: phaseForDraft,
@@ -7660,11 +7664,11 @@ export default function ChaosChessPage() {
         );
         // queen-teleport / railgun / usurper are once per game — remove modifier after use
         if (chaosMove.modifierId === "queen-teleport") {
-          cs = { ...cs, playerModifiers: cs.playerModifiers.filter((m) => m.id !== "queen-teleport") };
+          cs = { ...cs, playerModifiers: cs.playerModifiers.filter((m) => m.id !== "queen-teleport"), spentPlayerModIds: [...(cs.spentPlayerModIds ?? []), "queen-teleport"] };
           setWarpQueenActive(false);
         }
         if (chaosMove.modifierId === "railgun" || chaosMove.modifierId === "usurper") {
-          cs = { ...cs, playerModifiers: cs.playerModifiers.filter((m) => m.id !== chaosMove.modifierId) };
+          cs = { ...cs, playerModifiers: cs.playerModifiers.filter((m) => m.id !== chaosMove.modifierId), spentPlayerModIds: [...(cs.spentPlayerModIds ?? []), chaosMove.modifierId] };
         }
         // Decrement Justice / Devil counters (player's half-move)
         cs = decrementAnomalyCounters(cs, "player", from, to);
@@ -8775,6 +8779,7 @@ export default function ChaosChessPage() {
         Date.now(),
         countPiecesFromFen(game.fen(), pCode),
         chaosState.playerAnomaly,
+        chaosState.spentPlayerModIds,
       );
       const remaining = chaosState.draftChoices.filter(
         (m) => m.id !== discarded.id,
@@ -9014,6 +9019,7 @@ export default function ChaosChessPage() {
           Date.now(),
           countPiecesFromFen(currentGame.fen(), aiColor_),
           stateWithTracking.aiAnomaly,
+          stateWithTracking.spentAiModIds,
         );
         const tierRank: Record<string, number> = {
           common: 1,
