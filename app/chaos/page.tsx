@@ -3929,6 +3929,9 @@ export default function ChaosChessPage() {
   const [sunSurgeUsed, setSunSurgeUsed] = useState(false);
   /** World: bonus turn is active (player can play an extra move before regular turn) */
   const [worldBonusTurnActive, setWorldBonusTurnActive] = useState(false);
+  /** Ref mirror of worldBonusTurnActive — readable from stale callbacks (WebSocket handlers) */
+  const worldBonusTurnActiveRef = useRef(worldBonusTurnActive);
+  worldBonusTurnActiveRef.current = worldBonusTurnActive;
   /** Anomaly notification to show to the opponent (their ability was activated) */
   const [opponentAnomalyActivated, setOpponentAnomalyActivated] = useState<{
     anomalyId: AnomalyId;
@@ -6769,6 +6772,30 @@ export default function ChaosChessPage() {
           recomputeChaosMoves(activeGame, cs2);
         }
 
+        // World anomaly: flip turn back for the player's bonus turn
+        if (worldBonusTurnActiveRef.current && !activeGame.isGameOver()) {
+          setWorldBonusTurnActive(false);
+          const fenParts = activeGame.fen().split(" ");
+          fenParts[1] = playerColor === "white" ? "w" : "b";
+          fenParts[3] = "-";
+          const bonusGame = new Chess(fenParts.join(" "));
+          setGame(bonusGame);
+          const worldCs = data.chaosState
+            ? fromServerChaosState(data.chaosState as ChaosState, playerColor)
+            : chaosStateRef.current;
+          recomputeChaosMoves(bonusGame, worldCs);
+          setEventLog((prev) => [
+            ...prev,
+            {
+              type: "chaos" as const,
+              message: "🌍 World bonus turn! Make your extra move.",
+              icon: "🌍",
+              pepe: PEPE.hyped,
+            },
+          ]);
+          playSound("crowd-ooh");
+        }
+
         if (data.status === "finished") {
           if (pollRef.current) clearInterval(pollRef.current);
         }
@@ -8254,9 +8281,11 @@ export default function ChaosChessPage() {
               },
             ]);
             playSound("move");
-            // Lovers swap counts as the player's turn — make AI move
+            // Lovers swap counts as the player's turn — make AI move, or sync to server
             if (gameMode === "ai")
               setTimeout(() => makeAiMove(swapG, cs), AI_MOVE_DELAY);
+            else
+              sendMoveToServer(swapG, firstSq, square, cs, true);
           }
           return;
         }
@@ -8413,8 +8442,23 @@ export default function ChaosChessPage() {
               ]);
               playSound("capture");
               triggerEffect("explosion", [square as any]);
-              if (gameMode === "ai")
+              if (gameMode === "ai") {
                 setTimeout(() => makeAiMove(newG, cs), AI_MOVE_DELAY);
+              } else {
+                // Multiplayer: flip turn (strength capture counts as the player's move)
+                const fenParts = newG.fen().split(" ");
+                const wasW = fenParts[1] === "w";
+                fenParts[1] = wasW ? "b" : "w";
+                fenParts[3] = "-";
+                fenParts[4] = String(parseInt(fenParts[4]) + 1);
+                if (!wasW) fenParts[5] = String(parseInt(fenParts[5]) + 1);
+                const sentG = new Chess(fenParts.join(" "));
+                setGame(sentG);
+                recomputeChaosMoves(sentG, cs, {
+                  playerAnomaly: selectedAnomaly?.id as AnomalyId | null,
+                });
+                sendMoveToServer(sentG, kingSquare, square, cs, true);
+              }
             }
           }
           return;
@@ -8461,6 +8505,7 @@ export default function ChaosChessPage() {
       gameMode,
       makeAiMove,
       triggerEffect,
+      sendMoveToServer,
     ],
   );
 
@@ -10886,7 +10931,7 @@ export default function ChaosChessPage() {
                             anomalyActivationMode === "duck-place" &&
                             pendingDuckRef.current
                           ) {
-                            // Duck placement cancelled — still trigger AI so game doesn't freeze
+                            // Duck placement cancelled — still advance the game
                             const pending = pendingDuckRef.current;
                             pendingDuckRef.current = null;
                             setAnomalyActivationMode(null);
@@ -10895,6 +10940,9 @@ export default function ChaosChessPage() {
                                 () => makeAiMove(pending.game, pending.cs),
                                 AI_MOVE_DELAY,
                               );
+                            } else {
+                              // Multiplayer: send the held move without duck placement
+                              sendMoveToServer(pending.game, pending.from, pending.to, pending.cs, true);
                             }
                             return;
                           }
