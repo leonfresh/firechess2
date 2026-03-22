@@ -246,12 +246,12 @@ function getSideToMoveAtFen(fen: string): PlayerColor {
 
 /* ── Visual Tree Layout ─────────────────────────────────────────────── */
 
-const VT_NODE_W = 148;
-const VT_NODE_H = 72;
-const VT_COL_W  = 224;  // column stride (left-edge to left-edge)
-const VT_ROW_SZ = 86;   // vertical pixels per leaf slot
-const VT_MX     = 20;   // horizontal margin
-const VT_MY     = 34;   // top margin (room for depth labels)
+const VT_NODE_W = 80;
+const VT_NODE_H = 40;
+const VT_COL_W  = 120;  // column stride (left-edge to left-edge)
+const VT_ROW_SZ = 48;   // vertical pixels per leaf slot
+const VT_MX     = 14;   // horizontal margin
+const VT_MY     = 28;   // top margin (room for depth labels)
 const VT_MAX_CH = 3;    // max children shown per node
 const VT_MAX_D  = 8;  // default visible depth — deeper nodes expand on click
 
@@ -537,21 +537,21 @@ const VisualTree = React.memo(function VisualTree({
             const isWhite = d % 2 === 0;
             const mNum = Math.floor(d / 2) + 1;
             const label = isWhite ? `${mNum}. White` : `${mNum}… Black`;
-            const badgeW = 60;
+            const badgeW = 48;
             return (
               <g key={d}>
                 <rect
-                  x={x - badgeW / 2} y={4}
-                  width={badgeW} height={16}
-                  rx={8}
+                  x={x - badgeW / 2} y={3}
+                  width={badgeW} height={13}
+                  rx={6}
                   fill={isWhite ? "rgba(248,250,252,0.06)" : "rgba(30,41,59,0.5)"}
                 />
                 <text
                   x={x}
-                  y={15}
+                  y={13}
                   textAnchor="middle"
                   fill={isWhite ? "#94a3b8" : "#64748b"}
-                  fontSize={9}
+                  fontSize={7}
                   fontWeight="600"
                   fontFamily="ui-sans-serif, system-ui, sans-serif"
                   letterSpacing={0.4}
@@ -605,7 +605,7 @@ const VisualTree = React.memo(function VisualTree({
           const wp  = Math.round(wr * 100);
 
           // Bottom WDL bar widths (pixels)
-          const barInner = VT_NODE_W - 12;
+          const barInner = VT_NODE_W - 8;
           const winW  = tot ? Math.round((vn.node.wins  / tot) * barInner) : 0;
           const drawW = tot ? Math.round((vn.node.draws / tot) * barInner) : 0;
           const lossW = Math.max(0, barInner - winW - drawW);
@@ -680,9 +680,9 @@ const VisualTree = React.memo(function VisualTree({
               {/* Outer glow for selected */}
               {isSelected && (
                 <rect
-                  x={nx - 4} y={ny - 4}
-                  width={VT_NODE_W + 8} height={VT_NODE_H + 8}
-                  rx={13}
+                  x={nx - 3} y={ny - 3}
+                  width={VT_NODE_W + 6} height={VT_NODE_H + 6}
+                  rx={8}
                   fill="none"
                   stroke="#10b981"
                   strokeWidth={1.5}
@@ -695,45 +695,47 @@ const VisualTree = React.memo(function VisualTree({
               <rect
                 x={nx} y={ny}
                 width={VT_NODE_W} height={VT_NODE_H}
-                rx={10}
+                rx={6}
                 fill={bgFill}
                 stroke={borderColor}
                 strokeWidth={isSelected || isAncestor ? 1.5 : 0.8}
                 filter={isSelected ? "url(#vtShadow)" : undefined}
               />
 
-              {/* Move number prefix (top-left, faint) */}
+              {/* SAN — main label */}
               <text
-                x={nx + 8} y={ny + 15}
-                fill={isSelected ? "#34d399" : "#3d5068"}
-                fontSize={9}
-                fontFamily="ui-monospace, monospace"
-              >
-                {prefix}
-              </text>
-
-              {/* SAN — main label, big and bold */}
-              <text
-                x={nx + 8} y={ny + 40}
+                x={nx + 5} y={ny + 16}
                 fill={textFill}
-                fontSize={18}
+                fontSize={11}
                 fontWeight="700"
                 fontFamily="ui-monospace, monospace"
               >
                 {vn.node.san}
               </text>
 
-              {/* Count pill badge (top-right) */}
+              {/* Win% (top-right) */}
+              <text
+                x={nx + VT_NODE_W - 4} y={ny + 16}
+                fill={wr > 0.55 ? "#6ee7b7" : wr < 0.40 ? "#f87171" : "#64748b"}
+                fontSize={9}
+                fontWeight="600"
+                textAnchor="end"
+                fontFamily="ui-sans-serif, sans-serif"
+              >
+                {wp}%
+              </text>
+
+              {/* Count badge (small, bottom-right) */}
               {(() => {
-                const bw = countStr.length * 6.5 + 12;
-                const bx = nx + VT_NODE_W - bw - 6;
-                const by = ny + 6;
+                const bw = countStr.length * 5 + 8;
+                const bx = nx + VT_NODE_W - bw - 3;
+                const by = ny + VT_NODE_H - 18;
                 return (
                   <>
-                    <rect x={bx} y={by} width={bw} height={16} rx={8}
-                      fill={badgeFill} stroke={badgeStroke} strokeWidth={0.8} />
-                    <text x={bx + bw / 2} y={by + 11}
-                      fill={badgeText} fontSize={9} fontWeight="700"
+                    <rect x={bx} y={by} width={bw} height={12} rx={6}
+                      fill={badgeFill} stroke={badgeStroke} strokeWidth={0.7} />
+                    <text x={bx + bw / 2} y={by + 9}
+                      fill={badgeText} fontSize={7} fontWeight="700"
                       textAnchor="middle"
                       fontFamily="ui-sans-serif, sans-serif">
                       {countStr}×
@@ -742,76 +744,52 @@ const VisualTree = React.memo(function VisualTree({
                 );
               })()}
 
-              {/* Win% (bottom-right of move text area) */}
-              <text
-                x={nx + VT_NODE_W - 8} y={ny + 40}
-                fill={wr > 0.55 ? "#6ee7b7" : wr < 0.40 ? "#f87171" : "#64748b"}
-                fontSize={12}
-                fontWeight="600"
-                textAnchor="end"
-                fontFamily="ui-sans-serif, sans-serif"
-              >
-                {wp}%
-              </text>
-
               {/* WDL bar strip at bottom of node */}
               <rect
-                x={nx + 6} y={ny + VT_NODE_H - 10}
-                width={barInner} height={5}
-                rx={2.5}
+                x={nx + 4} y={ny + VT_NODE_H - 5}
+                width={barInner} height={4}
+                rx={2}
                 fill="rgba(255,255,255,0.04)"
               />
               {winW > 0 && (
                 <rect
-                  x={nx + 6} y={ny + VT_NODE_H - 10}
-                  width={winW} height={5}
-                  rx={2.5}
+                  x={nx + 4} y={ny + VT_NODE_H - 5}
+                  width={winW} height={4}
+                  rx={2}
                   fill="#10b981"
                   opacity={0.7}
                 />
               )}
               {drawW > 0 && (
                 <rect
-                  x={nx + 6 + winW} y={ny + VT_NODE_H - 10}
-                  width={drawW} height={5}
+                  x={nx + 4 + winW} y={ny + VT_NODE_H - 5}
+                  width={drawW} height={4}
                   fill="#64748b"
                   opacity={0.55}
                 />
               )}
               {lossW > 0 && (
                 <rect
-                  x={nx + 6 + winW + drawW} y={ny + VT_NODE_H - 10}
-                  width={lossW} height={5}
-                  rx={2.5}
+                  x={nx + 4 + winW + drawW} y={ny + VT_NODE_H - 5}
+                  width={lossW} height={4}
+                  rx={2}
                   fill="#ef4444"
                   opacity={0.4}
                 />
               )}
 
-              {/* Tag indicator — left edge stripe + label */}
+              {/* Tag indicator — left edge stripe only (no label, too small) */}
               {(() => {
                 const tag = getNodeTag(vn.node);
                 if (!tag) return null;
                 return (
-                  <>
-                    <rect
-                      x={nx} y={ny + 8}
-                      width={3} height={VT_NODE_H - 16}
-                      rx={1.5}
-                      fill={tag.color}
-                      opacity={0.85}
-                    />
-                    <text
-                      x={nx + 8} y={ny + VT_NODE_H - 14}
-                      fill={tag.color}
-                      fontSize={8}
-                      fontWeight="700"
-                      fontFamily="ui-sans-serif, sans-serif"
-                      opacity={0.9}
-                    >
-                      {tag.label}
-                    </text>
-                  </>
+                  <rect
+                    x={nx} y={ny + 5}
+                    width={3} height={VT_NODE_H - 10}
+                    rx={1.5}
+                    fill={tag.color}
+                    opacity={0.85}
+                  />
                 );
               })()}
 
@@ -819,18 +797,18 @@ const VisualTree = React.memo(function VisualTree({
               {hasHiddenChildren && (
                 <>
                   <rect
-                    x={nx + VT_NODE_W / 2 - 11} y={ny + VT_NODE_H + 3}
-                    width={22} height={12}
-                    rx={6}
+                    x={nx + VT_NODE_W / 2 - 8} y={ny + VT_NODE_H + 2}
+                    width={16} height={10}
+                    rx={5}
                     fill={isExpanded ? "rgba(16,185,129,0.25)" : "rgba(71,85,105,0.4)"}
                     stroke={isExpanded ? "#34d399" : "#64748b"}
                     strokeWidth={0.8}
                   />
                   <text
-                    x={nx + VT_NODE_W / 2} y={ny + VT_NODE_H + 12}
+                    x={nx + VT_NODE_W / 2} y={ny + VT_NODE_H + 10}
                     textAnchor="middle"
                     fill={isExpanded ? "#34d399" : "#94a3b8"}
-                    fontSize={10}
+                    fontSize={8}
                     fontWeight="700"
                     fontFamily="ui-sans-serif, sans-serif"
                   >
