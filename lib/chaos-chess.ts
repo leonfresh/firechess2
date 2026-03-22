@@ -94,6 +94,14 @@ export interface ChaosState {
   /** Captured pieces list for Judgement resurrection (stored as "{color}{type}" e.g. "wQ") */
   playerCapturedForJudgement?: string[];
   aiCapturedForJudgement?: string[];
+  /**
+   * Nuclear Queen cooldown: the blast is suppressed while fullMoveNumber < this.
+   * 0 = no cooldown (always available at game start).
+   * Set to `currentFullMove + 4` after each blast — meaning 3 full turns must
+   * pass before the queen can detonate again.
+   */
+  playerNuclearCooldownUntil?: number;
+  aiNuclearCooldownUntil?: number;
 }
 
 /* ================================================================== */
@@ -451,6 +459,8 @@ export function createChaosState(): ChaosState {
     playerTemperanceUsedThisPhase: false,
     playerCapturedForJudgement: [],
     aiCapturedForJudgement: [],
+    playerNuclearCooldownUntil: 0,
+    aiNuclearCooldownUntil: 0,
   };
 }
 

@@ -527,6 +527,10 @@ function buildChaosCustomPieces(
   assignedSquares?: Record<string, string | null>,
   undeadRevived?: { w: boolean; b: boolean },
   lastMoveRef?: React.MutableRefObject<{ from: string; to: string } | null>,
+  /** Whether the player's nuclear queen blast is currently on cooldown */
+  playerNukeOnCooldown?: boolean,
+  /** Whether the AI's nuclear queen blast is currently on cooldown */
+  aiNukeOnCooldown?: boolean,
 ): Record<
   string,
   ({
@@ -748,6 +752,14 @@ function buildChaosCustomPieces(
             cornerIdx++;
             const s = squareWidth * 0.24;
             const style = CORNER_STYLES[corner];
+            // Nuclear queen on cooldown: swap icon to ⏳ and dim the glow
+            const nukeOnCooldown =
+              mod.id === "nuclear-queen" &&
+              (isPlayerPiece ? playerNukeOnCooldown : aiNukeOnCooldown);
+            const badgeIcon = nukeOnCooldown ? "⏳" : def.icon;
+            const badgeGlow = nukeOnCooldown
+              ? "rgba(100,100,100,0.5)"
+              : (def.iconGlow ?? "rgba(255,255,255,0.6)");
             overlays.push(
               <div
                 key={mod.id}
@@ -755,10 +767,11 @@ function buildChaosCustomPieces(
                   position: "absolute",
                   ...style,
                   lineHeight: 1,
-                  filter: `drop-shadow(0 0 3px ${def.iconGlow ?? "rgba(255,255,255,0.6)"})`,
+                  opacity: nukeOnCooldown ? 0.6 : 1,
+                  filter: `drop-shadow(0 0 3px ${badgeGlow})`,
                 }}
               >
-                <Emoji emoji={def.icon} style={{ width: s, height: s }} />
+                <Emoji emoji={badgeIcon} style={{ width: s, height: s }} />
               </div>,
             );
           } else if (def.render) {
@@ -1180,8 +1193,8 @@ function AnomalyPickerScreen({
 }) {
   const [selected, setSelected] = useState<AnomalyDefinition | null>(null);
   const [hoveredLocked, setHoveredLocked] = useState<number | null>(null);
-  // Timer: 15s to pick, then auto-pick random unlocked anomaly
-  const [timeLeft, setTimeLeft] = useState(15);
+  // Timer: 20s to pick, then auto-pick random unlocked anomaly
+  const [timeLeft, setTimeLeft] = useState(20);
   useEffect(() => {
     const interval = setInterval(() => {
       setTimeLeft((t) => {
@@ -1191,7 +1204,8 @@ function AnomalyPickerScreen({
           const pickableCount = isPro ? 4 : 2;
           const pickable = choices.slice(0, pickableCount);
           if (pickable.length > 0) {
-            const randomPick = pickable[Math.floor(Math.random() * pickable.length)];
+            const randomPick =
+              pickable[Math.floor(Math.random() * pickable.length)];
             onPick(randomPick);
           } else {
             onSkip();
@@ -1260,7 +1274,7 @@ function AnomalyPickerScreen({
             <div className="mt-3 flex flex-col items-center gap-1.5">
               <div
                 className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold tabular-nums ${
-                  timeLeft > 7
+                  timeLeft > 10
                     ? "border border-purple-500/30 bg-purple-500/10 text-purple-400"
                     : "animate-pulse border border-red-500/40 bg-red-500/15 text-red-400"
                 }`}
@@ -1269,8 +1283,8 @@ function AnomalyPickerScreen({
               </div>
               <div className="h-0.5 w-48 overflow-hidden rounded-full bg-white/[0.06]">
                 <div
-                  className={`h-full rounded-full transition-[width] duration-1000 ease-linear ${timeLeft > 7 ? "bg-purple-500" : timeLeft > 4 ? "bg-amber-500" : "bg-red-500"}`}
-                  style={{ width: `${(timeLeft / 15) * 100}%` }}
+                  className={`h-full rounded-full transition-[width] duration-1000 ease-linear ${timeLeft > 10 ? "bg-purple-500" : timeLeft > 5 ? "bg-amber-500" : "bg-red-500"}`}
+                  style={{ width: `${(timeLeft / 20) * 100}%` }}
                 />
               </div>
             </div>
@@ -3370,6 +3384,7 @@ export default function ChaosChessPage() {
   const chaosCustomPieces = useMemo(() => {
     const allMods = [...chaosState.playerModifiers, ...chaosState.aiModifiers];
     if (allMods.length === 0) return baseCustomPieces;
+    const currentMove = game.moveNumber();
     return buildChaosCustomPieces(
       pieceTheme.setName,
       chaosState.playerModifiers,
@@ -3379,6 +3394,8 @@ export default function ChaosChessPage() {
       chaosState.assignedSquares ?? undefined,
       undeadRevived,
       lastMoveRef,
+      currentMove < (chaosState.playerNuclearCooldownUntil ?? 0),
+      currentMove < (chaosState.aiNuclearCooldownUntil ?? 0),
     );
   }, [
     pieceTheme.setName,
@@ -3388,6 +3405,8 @@ export default function ChaosChessPage() {
     baseCustomPieces,
     game,
     chaosState.assignedSquares,
+    chaosState.playerNuclearCooldownUntil,
+    chaosState.aiNuclearCooldownUntil,
     undeadRevived,
   ]);
 
@@ -4254,7 +4273,7 @@ export default function ChaosChessPage() {
             ...prev,
             {
               type: "chaos",
-              message: "☢️ NUCLEAR QUEEN! All surrounding pieces destroyed!",
+              message: "☢️ NUCLEAR QUEEN! All surrounding pieces destroyed! (3-turn cooldown)",
               icon: "☢️",
               pepe: PEPE.madpuke,
             },
@@ -5130,8 +5149,13 @@ export default function ChaosChessPage() {
         addMoveToLog(g, moveResult.san, moveResult.color);
 
         // Apply post-move chaos effects
-        const aiMods = cs.aiModifiers;
+        // Nuclear queen: suppress blast if still on cooldown
+        const aiNukeReady = g.moveNumber() >= (cs.aiNuclearCooldownUntil ?? 0);
+        const aiEffectiveMods = aiNukeReady
+          ? cs.aiModifiers
+          : cs.aiModifiers.filter((m) => m.id !== "nuclear-queen");
         let finalGame: Chess = g;
+        let nukeJustFiredAi = false;
         if (moveResult.captured && finalPieceAtFrom) {
           const afterEffects = applyPostMove(
             g,
@@ -5140,12 +5164,19 @@ export default function ChaosChessPage() {
             true,
             finalPieceAtFrom.type,
             finalPieceAtFrom.color as Color,
-            aiMods,
+            aiEffectiveMods,
             cs.playerModifiers,
             moveResult.captured || undefined,
           );
           if (afterEffects !== g) {
             finalGame = afterEffects;
+            if (
+              aiNukeReady &&
+              finalPieceAtFrom.type === "q" &&
+              cs.aiModifiers.some((m) => m.id === "nuclear-queen")
+            ) {
+              nukeJustFiredAi = true;
+            }
           }
         }
 
@@ -5156,6 +5187,10 @@ export default function ChaosChessPage() {
           finalTo,
           !!moveResult.captured,
         );
+        // Apply AI nuclear queen cooldown
+        if (nukeJustFiredAi) {
+          cs2 = { ...cs2, aiNuclearCooldownUntil: g.moveNumber() + 4 };
+        }
 
         // Judgement: track player pieces captured by AI
         if (
@@ -6648,7 +6683,14 @@ export default function ChaosChessPage() {
       addMoveToLog(game, moveResult.san, moveResult.color);
 
       // Apply post-move chaos effects (collateral rook, nuclear queen, pawn fortress)
+      // Nuclear queen: suppress blast if still on cooldown (fired within the last 3 full turns)
+      const playerNukeReady =
+        game.moveNumber() >= (chaosState.playerNuclearCooldownUntil ?? 0);
+      const playerEffectiveMods = playerNukeReady
+        ? chaosState.playerModifiers
+        : chaosState.playerModifiers.filter((m) => m.id !== "nuclear-queen");
       let finalGame: Chess = game;
+      let nukeJustFiredPlayer = false;
       if (moveResult.captured && pieceAtFrom) {
         const afterEffects = applyPostMove(
           game,
@@ -6657,12 +6699,19 @@ export default function ChaosChessPage() {
           true,
           pieceAtFrom.type,
           pieceAtFrom.color as Color,
-          chaosState.playerModifiers,
+          playerEffectiveMods,
           chaosState.aiModifiers,
           moveResult.captured || undefined,
         );
         if (afterEffects !== game) {
           finalGame = afterEffects;
+          if (
+            playerNukeReady &&
+            pieceAtFrom.type === "q" &&
+            chaosState.playerModifiers.some((m) => m.id === "nuclear-queen")
+          ) {
+            nukeJustFiredPlayer = true;
+          }
         }
       }
 
@@ -6698,6 +6747,10 @@ export default function ChaosChessPage() {
         to,
         !!moveResult.captured,
       );
+      // Apply nuclear queen cooldown — 3 full turns before next blast
+      if (nukeJustFiredPlayer) {
+        cs2 = { ...cs2, playerNuclearCooldownUntil: game.moveNumber() + 4 };
+      }
       let activeG = newG;
 
       // Check game end first — checkmate takes priority.

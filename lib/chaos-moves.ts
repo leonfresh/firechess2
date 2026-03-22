@@ -2015,7 +2015,11 @@ export function computeChaosThreatPenalty(
           capturedPiece.color as "w" | "b",
         );
         // Add blast value — 8 surrounding squares, skip opponent's own and kings
-        const blastSqs = getNuclearSquares(game, mv.to as Square, opponentColor);
+        const blastSqs = getNuclearSquares(
+          game,
+          mv.to as Square,
+          opponentColor,
+        );
         for (const bsq of blastSqs) {
           const bp = game.get(bsq as any);
           if (bp && bp.color !== opponentColor) {

@@ -119,7 +119,7 @@ Modifiers come in four tiers, just like card rarities in Clash Royale:
 
 ## Opening Anomalies: The Pre-Game Layer
 
-The modifier draft starts at move 5. But we wanted to add a strategic layer that began *before* move one.
+The modifier draft starts at move 5. But we wanted to add a strategic layer that began _before_ move one.
 
 **Opening Anomalies** are a set of 22 Tarot-themed pre-game powers. Before the game starts, each player secretly picks one anomaly from a revealed set of four choices (free players choose from two; Pro unlocks all four). The choice is permanent for the entire match — your opponent never sees what you picked until you use it.
 
@@ -143,11 +143,9 @@ The strategic tension is the same as the modifier draft — you're reading your 
 
 One honest engineering note: Stockfish doesn't know about anomaly powers. It evaluates positions using standard chess rules. A queen with Moon anomaly can move through pieces after turn 10, but Stockfish doesn't know that — it only sees the resulting position after each move, not the ghost movement that created it.
 
-We've addressed this with a custom threat-scoring layer: after each Stockfish evaluation, we run a secondary pass that scores the anomaly-powered threats the engine can't see. Fool diagonal pawn captures, Emperor king leaps, Star camel captures, nuclear queen blast radii — these all feed into a penalty/bonus system that adjusts Stockfish's raw evaluations. It's not perfect, but it means the AI at least *responds* to the presence of these powers when choosing its moves, rather than being completely blind to them.
+We've addressed this with a custom threat-scoring layer: after each Stockfish evaluation, we run a secondary pass that scores the anomaly-powered threats the engine can't see. Fool diagonal pawn captures, Emperor king leaps, Star camel captures, nuclear queen blast radii — these all feed into a penalty/bonus system that adjusts Stockfish's raw evaluations. It's not perfect, but it means the AI at least _responds_ to the presence of these powers when choosing its moves, rather than being completely blind to them.
 
 It's a more interesting opponent because of it. You can still surprise it. But you can't just steamroll it with a Moon queen after turn 10 and have it do nothing.
-
-
 
 When a transformative modifier turns your knight into an Archbishop or your rook into a Knook, the piece image actually changes on the board. We commissioned custom SVG fairy piece sets that show up the moment you draft the modifier.
 
