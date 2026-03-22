@@ -4823,8 +4823,9 @@ export default function ChaosChessPage() {
             .some((m: { flags: string }) => m.flags.includes("e"));
 
         // Anomaly move options for the human player — passed to computeChaosThreatPenalty
-        // so Stockfish is aware of anomaly-powered moves (Fool diagonal pawns, Emperor king
-        // leaps, Star camel leaps, Moon ghost captures, etc.) when evaluating positions.
+        // so Stockfish is aware of anomaly-powered moves (Emperor king leaps, Star camel
+        // leaps, Moon ghost captures, Strength king queen-range capture, etc.) when
+        // evaluating positions.
         const playerMoonUnlocked =
           cs.playerMoonUnlocked || (cs.currentPhase ?? 0) >= 2;
         const playerAnomalyOpts: AnomalyMoveOptions | undefined =
@@ -4832,6 +4833,9 @@ export default function ChaosChessPage() {
             ? {
                 playerAnomaly: cs.playerAnomaly,
                 moonUnlocked: playerMoonUnlocked,
+                // Strength: king queen-range capture is available until the player uses it
+                strengthMode:
+                  cs.playerAnomaly === "strength" && !cs.playerAnomalyUsed,
               }
             : undefined;
 
