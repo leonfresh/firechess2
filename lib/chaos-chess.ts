@@ -323,7 +323,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     id: "nuclear-queen",
     name: "Nuclear Queen",
     description:
-      "When the Queen captures, all 8 surrounding squares are cleared of ALL pieces (friend AND foe).",
+      "When the Queen captures, all 8 surrounding squares are cleared of ALL pieces (friend AND foe). 3-turn cooldown between blasts.",
     warning:
       "The explosion does not kill the King — only a direct capture wins the game.",
     tier: "legendary",

@@ -94,7 +94,7 @@ export const ALL_ANOMALIES: AnomalyDefinition[] = [
     tarotName: "The Magician",
     name: "Manifestation",
     description:
-      "Your Queen leaps like a knight from move 1. The Amazon modifier is built-in and won't appear in your draft pool.",
+      "Your Queen transforms into an Amazon (Queen + Knight) at turn 10. The Amazon modifier is built-in and won't appear in your draft pool.",
     icon: "🪄",
     trigger: "passive",
     injectModifiers: ["amazon"],

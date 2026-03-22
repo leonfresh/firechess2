@@ -538,10 +538,10 @@ function buildChaosCustomPieces(
   assignedSquares?: Record<string, string | null>,
   undeadRevived?: { w: boolean; b: boolean },
   lastMoveRef?: React.MutableRefObject<{ from: string; to: string } | null>,
-  /** Whether the player's nuclear queen blast is currently on cooldown */
-  playerNukeOnCooldown?: boolean,
-  /** Whether the AI's nuclear queen blast is currently on cooldown */
-  aiNukeOnCooldown?: boolean,
+  /** Turns remaining on player's nuclear queen cooldown (0 = ready) */
+  playerNukeCdTurns?: number,
+  /** Turns remaining on AI's nuclear queen cooldown (0 = ready) */
+  aiNukeCdTurns?: number,
   /** Player's active anomaly ID — used for per-anomaly piece visuals */
   playerAnomalyId?: string | null,
   /** AI's active anomaly ID — used for per-anomaly piece visuals */
@@ -804,27 +804,52 @@ function buildChaosCustomPieces(
             cornerIdx++;
             const s = squareWidth * 0.24;
             const style = CORNER_STYLES[corner];
-            // Nuclear queen on cooldown: swap icon to ⏳ and dim the glow
-            const nukeOnCooldown =
-              mod.id === "nuclear-queen" &&
-              (isPlayerPiece ? playerNukeOnCooldown : aiNukeOnCooldown);
-            const badgeIcon = nukeOnCooldown ? "⏳" : def.icon;
+            // Nuclear queen on cooldown: show remaining turns number badge and dim
+            const nukeCdTurns =
+              mod.id === "nuclear-queen"
+                ? (isPlayerPiece ? (playerNukeCdTurns ?? 0) : (aiNukeCdTurns ?? 0))
+                : 0;
+            const nukeOnCooldown = nukeCdTurns > 0;
             const badgeGlow = nukeOnCooldown
               ? "rgba(100,100,100,0.5)"
               : (def.iconGlow ?? "rgba(255,255,255,0.6)");
             overlays.push(
-              <div
-                key={mod.id}
-                style={{
-                  position: "absolute",
-                  ...style,
-                  lineHeight: 1,
-                  opacity: nukeOnCooldown ? 0.6 : 1,
-                  filter: `drop-shadow(0 0 3px ${badgeGlow})`,
-                }}
-              >
-                <Emoji emoji={badgeIcon} style={{ width: s, height: s }} />
-              </div>,
+              nukeOnCooldown ? (
+                <div
+                  key={mod.id}
+                  style={{
+                    position: "absolute",
+                    ...style,
+                    width: s,
+                    height: s,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "rgba(0,0,0,0.55)",
+                    borderRadius: "3px",
+                    opacity: 0.85,
+                    color: "#ccc",
+                    fontSize: s * 0.68,
+                    fontWeight: "bold",
+                    lineHeight: 1,
+                    filter: `drop-shadow(0 0 3px ${badgeGlow})`,
+                  }}
+                >
+                  {nukeCdTurns}
+                </div>
+              ) : (
+                <div
+                  key={mod.id}
+                  style={{
+                    position: "absolute",
+                    ...style,
+                    lineHeight: 1,
+                    filter: `drop-shadow(0 0 3px ${badgeGlow})`,
+                  }}
+                >
+                  <Emoji emoji={def.icon} style={{ width: s, height: s }} />
+                </div>
+              ),
             );
           }
           if (def.render) {
@@ -3884,8 +3909,8 @@ export default function ChaosChessPage() {
       chaosState.assignedSquares ?? undefined,
       undeadRevived,
       lastMoveRef,
-      currentMove < (chaosState.playerNuclearCooldownUntil ?? 0),
-      currentMove < (chaosState.aiNuclearCooldownUntil ?? 0),
+      Math.max(0, (chaosState.playerNuclearCooldownUntil ?? 0) - currentMove),
+      Math.max(0, (chaosState.aiNuclearCooldownUntil ?? 0) - currentMove),
       chaosState.playerAnomaly ?? null,
       chaosState.aiAnomaly ?? null,
       chaosState.playerMoonUnlocked ?? false,
@@ -5805,6 +5830,16 @@ export default function ChaosChessPage() {
         }
         // Decrement Justice / Devil counters (AI's half-move)
         cs2 = decrementAnomalyCounters(cs2, "ai", finalFrom, finalTo);
+        // Magician: inject amazon modifier at turn 10+ (for PvP where aiAnomaly is set)
+        if (
+          cs2.aiAnomaly === "magician" &&
+          g.moveNumber() >= 10 &&
+          !cs2.aiModifiers.some((m) => m.id === "amazon")
+        ) {
+          const amazonMod = ALL_MODIFIERS.find((m) => m.id === "amazon");
+          if (amazonMod)
+            cs2 = { ...cs2, aiModifiers: [...cs2.aiModifiers, amazonMod] };
+        }
 
         // Judgement: track player pieces captured by AI
         if (
@@ -5937,8 +5972,10 @@ export default function ChaosChessPage() {
       cs = { ...cs, playerAnomaly: pickedAnomaly?.id ?? null };
 
       // Inject modifiers for anomalies that have built-in modifiers
+      // Note: "amazon" from Magician is delayed to turn 10 — skip it here
       if (pickedAnomaly?.injectModifiers) {
         for (const modId of pickedAnomaly.injectModifiers) {
+          if (modId === "amazon") continue; // injected at turn 10 via post-move logic
           const mod = ALL_MODIFIERS.find((m) => m.id === modId);
           if (mod) {
             cs = { ...cs, playerModifiers: [...cs.playerModifiers, mod] };
@@ -7188,6 +7225,16 @@ export default function ChaosChessPage() {
         );
         // Decrement Justice / Devil counters (player's half-move)
         cs = decrementAnomalyCounters(cs, "player", from, to);
+        // Magician: inject amazon modifier at turn 10+
+        if (
+          cs.playerAnomaly === "magician" &&
+          newGame.moveNumber() >= 10 &&
+          !cs.playerModifiers.some((m) => m.id === "amazon")
+        ) {
+          const amazonMod = ALL_MODIFIERS.find((m) => m.id === "amazon");
+          if (amazonMod)
+            cs = { ...cs, playerModifiers: [...cs.playerModifiers, amazonMod] };
+        }
         let activeGame = newGame;
 
         // Check game end first — checkmate wins immediately
@@ -7480,6 +7527,16 @@ export default function ChaosChessPage() {
       }
       // Decrement Justice / Devil counters (player's half-move)
       cs2 = decrementAnomalyCounters(cs2, "player", from, to);
+      // Magician: inject amazon modifier at turn 10+
+      if (
+        cs2.playerAnomaly === "magician" &&
+        game.moveNumber() >= 10 &&
+        !cs2.playerModifiers.some((m) => m.id === "amazon")
+      ) {
+        const amazonMod = ALL_MODIFIERS.find((m) => m.id === "amazon");
+        if (amazonMod)
+          cs2 = { ...cs2, playerModifiers: [...cs2.playerModifiers, amazonMod] };
+      }
       let activeG = newG;
 
       // Check game end first — checkmate takes priority.
