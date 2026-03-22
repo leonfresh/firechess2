@@ -2409,18 +2409,123 @@ function ModifierTooltip({
   );
 }
 
+/* ────────────────────────── Anomaly tooltip ────────────────────────── */
+
+const ANOMALY_TRIGGER_LABELS: Record<string, string> = {
+  passive: "Always Active",
+  "once-per-game": "Once Per Game",
+  "draft-modifier": "Draft Power",
+  "fen-mod": "Starting Bonus",
+};
+
+function AnomalyTooltip({
+  anomaly,
+  children,
+}: {
+  anomaly: AnomalyDefinition;
+  children: React.ReactNode;
+}) {
+  const [show, setShow] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  useEffect(() => {
+    if (!show || !triggerRef.current) {
+      setPos(null);
+      return;
+    }
+    const rect = triggerRef.current.getBoundingClientRect();
+    setPos({ top: rect.top - 8, left: rect.left + rect.width / 2 });
+  }, [show]);
+
+  return (
+    <div
+      ref={triggerRef}
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+    >
+      {children}
+      {show &&
+        pos &&
+        createPortal(
+          <div
+            className="fixed w-64 rounded-xl bg-[#0d1117] p-3 shadow-2xl"
+            style={{
+              top: pos.top,
+              left: pos.left,
+              transform: "translate(-50%, -100%)",
+              zIndex: 9999,
+              animation: "tooltip-pop 0.15s ease-out both",
+              pointerEvents: "none",
+              border: `1px solid ${anomaly.glowColor}`,
+              boxShadow: `0 0 20px ${anomaly.glowColor}, 0 8px 32px rgba(0,0,0,0.6)`,
+            }}
+          >
+            {/* Tarot header */}
+            <div className="flex items-start gap-2.5 mb-2">
+              <Emoji emoji={anomaly.icon} className="w-8 h-8 shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-white leading-tight">
+                  {anomaly.name}
+                </p>
+                <p className="text-[10px] text-slate-500 mt-0.5">
+                  <span className="font-semibold text-slate-400">
+                    {anomaly.tarotRoman}
+                  </span>{" "}
+                  — {anomaly.tarotName}
+                </p>
+              </div>
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider border ${anomaly.accentColor}`}
+                style={{ borderColor: anomaly.glowColor }}
+              >
+                {ANOMALY_TRIGGER_LABELS[anomaly.trigger] ?? anomaly.trigger}
+              </span>
+            </div>
+            {/* Description */}
+            <p className="text-[11px] leading-relaxed text-slate-400">
+              {anomaly.description}
+            </p>
+            {/* Injected modifiers */}
+            {anomaly.injectModifiers && anomaly.injectModifiers.length > 0 && (
+              <p className="mt-1.5 text-[10px] text-slate-500">
+                ✨ Includes:{" "}
+                <span className="text-slate-300">
+                  {anomaly.injectModifiers.join(", ")}
+                </span>
+              </p>
+            )}
+            {/* Removed from draft */}
+            {anomaly.removesFromDraft &&
+              anomaly.removesFromDraft.length > 0 && (
+                <p className="mt-1 text-[10px] text-amber-400/80">
+                  ⛔ Removes from draft:{" "}
+                  <span>{anomaly.removesFromDraft.join(", ")}</span>
+                </p>
+              )}
+            {/* Caret */}
+            <div className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-[#0d1117]" />
+          </div>,
+          document.body,
+        )}
+    </div>
+  );
+}
+
 /* ────────────────────────── Modifier sidebar ────────────────────────── */
 
 function ModifierList({
   title,
   modifiers,
   color,
+  anomaly,
 }: {
   title: string;
   modifiers: ChaosModifier[];
   color: string;
+  anomaly?: AnomalyDefinition | null;
 }) {
-  if (modifiers.length === 0) return null;
+  if (modifiers.length === 0 && !anomaly) return null;
 
   return (
     <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2 sm:p-2.5">
@@ -2430,6 +2535,33 @@ function ModifierList({
         {title}
       </h3>
       <div className="space-y-1.5">
+        {/* Anomaly card at top of list */}
+        {anomaly && (
+          <AnomalyTooltip anomaly={anomaly}>
+            <div
+              className="rounded-lg px-2.5 py-1.5 transition-colors hover:bg-white/[0.04] cursor-default border"
+              style={{
+                borderColor: anomaly.glowColor,
+                boxShadow: `inset 0 0 14px ${anomaly.glowColor}18`,
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <Emoji emoji={anomaly.icon} className="w-5 h-5" />
+                <span className="text-xs font-semibold text-white">
+                  {anomaly.name}
+                </span>
+                <span
+                  className={`ml-auto text-[9px] font-bold uppercase tracking-wider ${anomaly.accentColor}`}
+                >
+                  Anomaly
+                </span>
+              </div>
+              <p className="mt-0.5 text-[10px] leading-snug text-slate-500 italic">
+                {anomaly.tarotRoman} — {anomaly.tarotName}
+              </p>
+            </div>
+          </AnomalyTooltip>
+        )}
         {modifiers.map((mod) => (
           <div
             key={mod.id}
@@ -10006,15 +10138,16 @@ export default function ChaosChessPage() {
               <InlineModifierIcons modifiers={chaosState.playerModifiers} />
               {/* Anomaly badge */}
               {selectedAnomaly && (
-                <div
-                  className={`ml-1 flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold ${selectedAnomaly.borderClass} bg-white/[0.04]`}
-                  title={`${selectedAnomaly.tarotName} — ${selectedAnomaly.name}: ${selectedAnomaly.description}`}
-                >
-                  <span>{selectedAnomaly.icon}</span>
-                  <span className={selectedAnomaly.accentColor}>
-                    {selectedAnomaly.name}
-                  </span>
-                </div>
+                <AnomalyTooltip anomaly={selectedAnomaly}>
+                  <div
+                    className={`ml-1 flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold cursor-default ${selectedAnomaly.borderClass} bg-white/[0.04]`}
+                  >
+                    <span>{selectedAnomaly.icon}</span>
+                    <span className={selectedAnomaly.accentColor}>
+                      {selectedAnomaly.name}
+                    </span>
+                  </div>
+                </AnomalyTooltip>
               )}
               {timeControl && gameMode !== "ai" && (
                 <span
@@ -10791,25 +10924,39 @@ export default function ChaosChessPage() {
               <h3 className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-purple-400 sm:mb-2 sm:text-xs">
                 ⚡ Power-ups
               </h3>
-              {chaosState.playerModifiers.length === 0 &&
-              chaosState.aiModifiers.length === 0 ? (
-                <p className="text-center text-[11px] text-slate-600 py-1">
-                  Draft starts at turn 5
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  <ModifierList
-                    title="Yours"
-                    modifiers={chaosState.playerModifiers}
-                    color="text-purple-400"
-                  />
-                  <ModifierList
-                    title={gameMode === "ai" ? "AI" : "Opponent"}
-                    modifiers={chaosState.aiModifiers}
-                    color="text-red-400"
-                  />
-                </div>
-              )}
+              {(() => {
+                const aiAnomalyDef = chaosState.aiAnomaly
+                  ? getAnomalyById(chaosState.aiAnomaly)
+                  : null;
+                const hasContent =
+                  !!selectedAnomaly ||
+                  !!aiAnomalyDef ||
+                  chaosState.playerModifiers.length > 0 ||
+                  chaosState.aiModifiers.length > 0;
+                if (!hasContent) {
+                  return (
+                    <p className="text-center text-[11px] text-slate-600 py-1">
+                      Draft starts at turn 5
+                    </p>
+                  );
+                }
+                return (
+                  <div className="space-y-2">
+                    <ModifierList
+                      title="Yours"
+                      modifiers={chaosState.playerModifiers}
+                      color="text-purple-400"
+                      anomaly={selectedAnomaly}
+                    />
+                    <ModifierList
+                      title={gameMode === "ai" ? "AI" : "Opponent"}
+                      modifiers={chaosState.aiModifiers}
+                      color="text-red-400"
+                      anomaly={aiAnomalyDef ?? null}
+                    />
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Quick info */}
