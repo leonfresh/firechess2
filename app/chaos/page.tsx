@@ -2467,15 +2467,10 @@ function DraftModal({
                               "card-hover-glow 1.5s ease-in-out infinite",
                             transform: "rotateY(180deg) translateY(-4px)",
                           } as React.CSSProperties)
-                        : {}), group/lock">
-                        <span className="text-2xl">🔒</span>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">Locked</span>
-                        <a href="/auth/signin" className="pointer-events-auto text-[9px] text-purple-400 underline">Sign in to unlock</a>
-                        {/* Tooltip on hover */}
-                        <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 w-48 rounded-lg border border-purple-500/40 bg-[#0d0920]/95 px-3 py-2 text-center text-[10px] text-slate-300 shadow-lg shadow-purple-900/40 opacity-0 group-hover/lock:opacity-100 transition-opacity duration-150 z-30">
-                          <p className="font-bold text-purple-300 mb-0.5">🔒 Premium modifier</p>
-                          <p>Create a free account and play games to unlock this ability permanently.</p>
-                        </div
+                        : {}),
+                    }}
+                  >
+                    {/* Tier shimmer overlay */}
                     {(mod.tier === "epic" || mod.tier === "legendary") && (
                       <div
                         className="pointer-events-none absolute inset-0 rounded-xl opacity-30"
@@ -2492,7 +2487,7 @@ function DraftModal({
 
                     {/* Lock overlay for guest restricted cards */}
                     {isLocked && !canPickLocked && (
-                      <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center rounded-xl bg-black/60 gap-1">
+                      <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center rounded-xl bg-black/60 gap-1 group/lock">
                         <span className="text-2xl">🔒</span>
                         <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">
                           Locked
@@ -2503,6 +2498,11 @@ function DraftModal({
                         >
                           Sign in to unlock
                         </a>
+                        {/* Tooltip on hover */}
+                        <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 w-48 rounded-lg border border-purple-500/40 bg-[#0d0920]/95 px-3 py-2 text-center text-[10px] text-slate-300 shadow-lg shadow-purple-900/40 opacity-0 group-hover/lock:opacity-100 transition-opacity duration-150 z-30">
+                          <p className="font-bold text-purple-300 mb-0.5">🔒 Premium modifier</p>
+                          <p>Create a free account and play games to unlock this ability permanently.</p>
+                        </div>
                       </div>
                     )}
                     {isLocked && canPickLocked && (
