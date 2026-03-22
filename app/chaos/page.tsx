@@ -6101,7 +6101,7 @@ export default function ChaosChessPage() {
       setSelectedAnomaly(myAnomaly ?? null);
       setChaosState(cs);
       setGameStatus("playing");
-      recomputeChaosMoves(gameRef.current, cs, { playerAnomaly: myAnomalyId });
+      recomputeChaosMoves(gameRef.current, cs, { playerAnomaly: myAnomalyId as AnomalyId | null });
       setEventLog((prev) => [
         ...prev,
         {
@@ -6333,7 +6333,7 @@ export default function ChaosChessPage() {
                   type: "info",
                   message: "💨 Opponent disconnected before the game started.",
                   icon: "💨",
-                  pepe: PEPE.sweat,
+                  pepe: PEPE.sadge,
                 },
               ]);
               return "setup";
