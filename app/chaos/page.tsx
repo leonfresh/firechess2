@@ -1706,6 +1706,7 @@ function AnomalyPickerScreen({
                 <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
                 <span className="text-sm font-semibold text-purple-300">Pick sent — waiting for opponent…</span>
               </div>
+              <p className="text-xs text-slate-600">Game starts automatically if opponent doesn&apos;t respond in time.</p>
             </div>
           ) : (
             <div className="mt-5 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -6799,6 +6800,20 @@ export default function ChaosChessPage() {
   // Keep chaosState in a ref so stale closures (e.g. checkGameEnd, polling) can access the latest value
   const chaosStateRef = useRef(chaosState);
   chaosStateRef.current = chaosState;
+
+  /**
+   * Anomaly-pick fallback: if we've sent our pick but the opponent's message
+   * never arrives (WebSocket drop, connection not yet open, etc.), auto-start
+   * after 10 s rather than leaving both players frozen on "waiting for opponent".
+   */
+  useEffect(() => {
+    if (!myPickSent || opponentAnomalyPickedId !== undefined || gameMode === "ai") return;
+    const timer = setTimeout(() => {
+      if (gameStatusRef.current !== "picking-anomaly") return;
+      startMpGameWithAnomalies(pendingMpAnomalyRef.current?.id ?? null, null);
+    }, 10_000);
+    return () => clearTimeout(timer);
+  }, [myPickSent, opponentAnomalyPickedId, gameMode, startMpGameWithAnomalies]);
 
   /* ── Polling for multiplayer state (slow fallback) ── */
   const startPolling = useCallback(
