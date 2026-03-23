@@ -952,8 +952,8 @@ function buildChaosCustomPieces(
                 bottom: "0%",
                 left: "50%",
                 transform: "translateX(-50%)",
-                opacity: 0.93,
-                filter: "drop-shadow(0 0 4px rgba(200,160,40,0.9))",
+                opacity: 0.97,
+                filter: "drop-shadow(0 0 6px rgba(239,68,68,0.95)) drop-shadow(0 0 2px rgba(0,0,0,0.8))",
                 zIndex: 3,
               }}
             >
@@ -963,7 +963,7 @@ function buildChaosCustomPieces(
                 rx="13"
                 ry="8"
                 fill="none"
-                stroke="#C8A030"
+                stroke="#EF4444"
                 strokeWidth="5.5"
                 transform="rotate(-38 28 72)"
               />
@@ -973,7 +973,7 @@ function buildChaosCustomPieces(
                 rx="13"
                 ry="8"
                 fill="none"
-                stroke="#C8A030"
+                stroke="#EF4444"
                 strokeWidth="5.5"
               />
               <ellipse
@@ -982,14 +982,14 @@ function buildChaosCustomPieces(
                 rx="13"
                 ry="8"
                 fill="none"
-                stroke="#C8A030"
+                stroke="#EF4444"
                 strokeWidth="5.5"
                 transform="rotate(38 72 72)"
               />
             </svg>
           </React.Fragment>,
         );
-        if (!glowColor) glowColor = "rgba(200,160,40,0.35)";
+        if (!glowColor) glowColor = "rgba(239,68,68,0.5)";
       }
 
       return (
@@ -8067,28 +8067,28 @@ export default function ChaosChessPage() {
               },
             ]);
           } else if (gameMode === "ai") {
-            if (worldBonusTurnActive) {
-              // World: grant a free bonus move — flip FEN turn back to player
-              setWorldBonusTurnActive(false);
-              const fenParts = activeGame.fen().split(" ");
-              fenParts[1] = playerColor === "white" ? "w" : "b";
-              fenParts[3] = "-"; // clear en passant after flip
-              const bonusGame = new Chess(fenParts.join(" "));
-              setGame(bonusGame);
-              recomputeChaosMoves(bonusGame, cs);
-              setEventLog((prev) => [
-                ...prev,
-                {
-                  type: "chaos" as const,
-                  message: "🌍 World: Bonus move! Play your extra move now.",
-                  icon: "🌍",
-                  pepe: PEPE.hyped,
-                },
-              ]);
-              playSound("crowd-ooh");
-            } else {
-              setTimeout(() => makeAiMove(activeGame, cs), AI_MOVE_DELAY);
-            }
+            setTimeout(() => makeAiMove(activeGame, cs, (fg, fcs) => {
+              // World anomaly: bonus move fires AFTER the AI's move, not before
+              if (worldBonusTurnActiveRef.current) {
+                setWorldBonusTurnActive(false);
+                const fenParts = fg.fen().split(" ");
+                fenParts[1] = playerColor === "white" ? "w" : "b";
+                fenParts[3] = "-";
+                const bonusGame = new Chess(fenParts.join(" "));
+                setGame(bonusGame);
+                recomputeChaosMoves(bonusGame, fcs);
+                setEventLog((prev) => [
+                  ...prev,
+                  {
+                    type: "chaos" as const,
+                    message: "🌍 World: Bonus move! Play your extra move now.",
+                    icon: "🌍",
+                    pepe: PEPE.hyped,
+                  },
+                ]);
+                playSound("crowd-ooh");
+              }
+            }), AI_MOVE_DELAY);
           }
         }
         recomputeChaosMoves(activeGame, cs);
@@ -8378,28 +8378,28 @@ export default function ChaosChessPage() {
             },
           ]);
         } else if (gameMode === "ai") {
-          if (worldBonusTurnActive) {
-            // World: grant a free bonus move — flip FEN turn back to player
-            setWorldBonusTurnActive(false);
-            const fenParts = activeG.fen().split(" ");
-            fenParts[1] = playerColor === "white" ? "w" : "b";
-            fenParts[3] = "-"; // clear en passant after flip
-            const bonusGame = new Chess(fenParts.join(" "));
-            setGame(bonusGame);
-            recomputeChaosMoves(bonusGame, cs2);
-            setEventLog((prev) => [
-              ...prev,
-              {
-                type: "chaos" as const,
-                message: "🌍 World: Bonus move! Play your extra move now.",
-                icon: "🌍",
-                pepe: PEPE.hyped,
-              },
-            ]);
-            playSound("crowd-ooh");
-          } else {
-            setTimeout(() => makeAiMove(activeG, cs2), AI_MOVE_DELAY);
-          }
+          setTimeout(() => makeAiMove(activeG, cs2, (fg, fcs) => {
+            // World anomaly: bonus move fires AFTER the AI's move, not before
+            if (worldBonusTurnActiveRef.current) {
+              setWorldBonusTurnActive(false);
+              const fenParts = fg.fen().split(" ");
+              fenParts[1] = playerColor === "white" ? "w" : "b";
+              fenParts[3] = "-";
+              const bonusGame = new Chess(fenParts.join(" "));
+              setGame(bonusGame);
+              recomputeChaosMoves(bonusGame, fcs);
+              setEventLog((prev) => [
+                ...prev,
+                {
+                  type: "chaos" as const,
+                  message: "🌍 World: Bonus move! Play your extra move now.",
+                  icon: "🌍",
+                  pepe: PEPE.hyped,
+                },
+              ]);
+              playSound("crowd-ooh");
+            }
+          }), AI_MOVE_DELAY);
         }
       }
       recomputeChaosMoves(activeG, cs2);
@@ -8425,7 +8425,6 @@ export default function ChaosChessPage() {
       recomputeChaosMoves,
       isKingMoveChaosUnsafe,
       triggerEffect,
-      worldBonusTurnActive,
       selectedAnomaly,
     ],
   );
