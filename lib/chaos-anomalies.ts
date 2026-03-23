@@ -12,7 +12,7 @@
 /* ================================================================== */
 
 export type AnomalyId =
-  | "duck-chess"
+  | "fools-king"
   | "magician"
   | "high-priestess"
   | "empress"
@@ -71,14 +71,14 @@ export interface AnomalyDefinition {
 export const ALL_ANOMALIES: AnomalyDefinition[] = [
   /* 0 — The Fool */
   {
-    id: "duck-chess",
+    id: "fools-king",
     tarotNumber: 0,
     tarotRoman: "0",
     tarotName: "The Fool",
-    name: "Duck Chess",
+    name: "Fool's King",
     description:
-      "After each of your moves, place your rubber duck on any empty square. The duck blocks all movement — no piece (yours or your opponent's) can enter that square. Reposition it each turn.",
-    icon: "🦆",
+      "Your King can leap like a Knight — jumping in an L-shape to any of 8 destinations. This wild movement is only available when your King is NOT in check; once checked, it reverts to normal one-square escapes.",
+    icon: "🃏",
     trigger: "passive",
     bgGradient: "from-yellow-950/90 to-amber-900/50",
     borderClass: "border-yellow-500/40",

@@ -696,7 +696,9 @@ function genSniperBishop(game: Chess, color: Color): ChaosMove[] {
         if (piece) {
           if (piece.color !== color) {
             // Sniper: capture without moving — only if the king isn't left in check
-            if (!wouldLeaveKingInCheck(game, bs, target, color, undefined, true)) {
+            if (
+              !wouldLeaveKingInCheck(game, bs, target, color, undefined, true)
+            ) {
               moves.push({
                 from: bs,
                 to: target,
@@ -817,8 +819,14 @@ function genNightRider(
   const [f, r] = sqToCoords(nrSquare);
 
   const knightDirs: [number, number][] = [
-    [-2, -1], [-2, 1], [-1, -2], [-1, 2],
-    [1, -2],  [1, 2],  [2, -1],  [2, 1],
+    [-2, -1],
+    [-2, 1],
+    [-1, -2],
+    [-1, 2],
+    [1, -2],
+    [1, 2],
+    [2, -1],
+    [2, 1],
   ];
 
   for (const [df, dr] of knightDirs) {
@@ -833,7 +841,10 @@ function genNightRider(
 
       if (piece) {
         // Enemy: can capture here then stop
-        if (piece.color !== color && !wouldLeaveKingInCheck(game, nrSquare, target, color)) {
+        if (
+          piece.color !== color &&
+          !wouldLeaveKingInCheck(game, nrSquare, target, color)
+        ) {
           moves.push({
             from: nrSquare,
             to: target,
@@ -916,8 +927,14 @@ function genQueenCannon(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const queens = allSquaresOf(game, "q", color);
   const dirs: [number, number][] = [
-    [-1, 0], [1, 0], [0, -1], [0, 1],
-    [-1, -1], [-1, 1], [1, -1], [1, 1],
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+    [-1, -1],
+    [-1, 1],
+    [1, -1],
+    [1, 1],
   ];
 
   for (const qs of queens) {
@@ -964,7 +981,12 @@ function genQueenCannon(game: Chess, color: Color): ChaosMove[] {
 function genRailgun(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const rooks = allSquaresOf(game, "r", color);
-  const dirs: [number, number][] = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+  const dirs: [number, number][] = [
+    [-1, 0],
+    [1, 0],
+    [0, -1],
+    [0, 1],
+  ];
 
   for (const rs of rooks) {
     const [f, r] = sqToCoords(rs);
@@ -993,7 +1015,9 @@ function genRailgun(game: Chess, color: Color): ChaosMove[] {
     // Primary target is the "to" field; the rest are side effects.
     // pieceStays=true → rook doesn't move, executeChaosMove removes to + sideEffects.
     const [primaryTarget, ...sideTargets] = targets;
-    if (!wouldLeaveKingInCheck(game, rs, primaryTarget, color, sideTargets, true)) {
+    if (
+      !wouldLeaveKingInCheck(game, rs, primaryTarget, color, sideTargets, true)
+    ) {
       moves.push({
         from: rs,
         to: primaryTarget,
@@ -1254,9 +1278,42 @@ export interface AnomalyMoveOptions {
   strengthMode?: boolean;
 }
 
-/** Duck Chess — placement is handled in the UI; no extra move gen needed */
-function genAnomalyDuckChess(_game: Chess, _color: Color): ChaosMove[] {
-  return [];
+/** Fool's King — king can leap like a knight when not in check */
+function genAnomalyFoolsKing(game: Chess, color: Color): ChaosMove[] {
+  if (game.inCheck()) return []; // knight jumps only available when free of check
+  const moves: ChaosMove[] = [];
+  const kings = allSquaresOf(game, "k", color);
+  if (kings.length === 0) return moves;
+  const kingSq = kings[0];
+  const [kf, kr] = sqToCoords(kingSq);
+  const knightOffsets = [
+    [2, 1],
+    [2, -1],
+    [-2, 1],
+    [-2, -1],
+    [1, 2],
+    [1, -2],
+    [-1, 2],
+    [-1, -2],
+  ] as const;
+  for (const [df, dr] of knightOffsets) {
+    const tf = kf + df;
+    const tr = kr + dr;
+    if (tf < 0 || tf > 7 || tr < 0 || tr > 7) continue;
+    const toSq = sq(tf, tr);
+    if (!toSq) continue;
+    const target = game.get(toSq as any);
+    if (target && target.color === color) continue; // can't land on own piece
+    if (wouldLeaveKingInCheck(game, kingSq as Square, toSq, color)) continue;
+    moves.push({
+      from: kingSq as Square,
+      to: toSq,
+      type: target ? "capture" : "move",
+      modifierId: "fools-king",
+      label: "Fool's King (knight leap)",
+    });
+  }
+  return moves;
 }
 
 /** Hanged Man — Inversion: pawns can move/capture 1 square backwards */
@@ -1519,8 +1576,8 @@ const MODIFIER_GENERATORS: Record<
   "rook-cannon": genRookCannon,
   "bishop-cannon": genBishopCannon,
   "queen-cannon": genQueenCannon,
-  "railgun": genRailgun,
-  "usurper": genUsurper,
+  railgun: genRailgun,
+  usurper: genUsurper,
   "queen-teleport": genQueenTeleport,
   "bishop-bounce": genBishopBounce,
   "enpassant-everywhere": genEnPassantEverywhere,
@@ -1583,8 +1640,8 @@ export function getChaosMoves(
   if (anomalyOpts?.playerAnomaly) {
     let anomalyMoves: ChaosMove[] = [];
     switch (anomalyOpts.playerAnomaly) {
-      case "duck-chess":
-        anomalyMoves = genAnomalyDuckChess(game, color);
+      case "fools-king":
+        anomalyMoves = genAnomalyFoolsKing(game, color);
         break;
       case "hanged-man":
         anomalyMoves = genAnomalyHangedMan(game, color);
@@ -1770,15 +1827,26 @@ export function getChaosAttackedSquares(
     let nrSq: Square | null = null;
     if (trackedNR !== undefined && trackedNR !== null) {
       const p = game.get(trackedNR as any);
-      if (p && p.type === "n" && p.color === attackerColor) nrSq = trackedNR as Square;
+      if (p && p.type === "n" && p.color === attackerColor)
+        nrSq = trackedNR as Square;
     }
     if (nrSq) {
       const [f, r] = sqToCoords(nrSq);
-      const knightDirs: [number,number][] = [[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]];
+      const knightDirs: [number, number][] = [
+        [-2, -1],
+        [-2, 1],
+        [-1, -2],
+        [-1, 2],
+        [1, -2],
+        [1, 2],
+        [2, -1],
+        [2, 1],
+      ];
       for (const [df, dr] of knightDirs) {
         let step = 2; // step 1 handled by chess.js
         while (true) {
-          const cf = f + df * step, cr = r + dr * step;
+          const cf = f + df * step,
+            cr = r + dr * step;
           if (cf < 0 || cf > 7 || cr < 0 || cr > 7) break;
           const t = sq(cf, cr)!;
           attacked.add(t);
@@ -1791,19 +1859,35 @@ export function getChaosAttackedSquares(
 
   /* Queen Cannon: all queens attack via jump-over (cannon-style) in all 8 directions */
   if (modIds.has("queen-cannon")) {
-    const allDirs: [number,number][] = [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[-1,1],[1,-1],[1,1]];
+    const allDirs: [number, number][] = [
+      [-1, 0],
+      [1, 0],
+      [0, -1],
+      [0, 1],
+      [-1, -1],
+      [-1, 1],
+      [1, -1],
+      [1, 1],
+    ];
     for (const qs of allSquaresOf(game, "q", attackerColor)) {
       const [f, r] = sqToCoords(qs);
       for (const [df, dr] of allDirs) {
-        let cf = f + df, cr = r + dr, jumped = false;
+        let cf = f + df,
+          cr = r + dr,
+          jumped = false;
         while (cf >= 0 && cf <= 7 && cr >= 0 && cr <= 7) {
           const t = sq(cf, cr)!;
           const p = game.get(t);
           if (p) {
-            if (!jumped) { jumped = true; }
-            else { attacked.add(t); break; }
+            if (!jumped) {
+              jumped = true;
+            } else {
+              attacked.add(t);
+              break;
+            }
           }
-          cf += df; cr += dr;
+          cf += df;
+          cr += dr;
         }
       }
     }
@@ -2212,7 +2296,7 @@ export function executeChaosMove(
     if (!friendly) return null;
     tmp.remove(move.from);
     tmp.remove(move.to);
-    tmp.put({ type: "k", color: piece.color }, move.to);   // king to ally's square
+    tmp.put({ type: "k", color: piece.color }, move.to); // king to ally's square
     tmp.put({ type: friendly.type, color: friendly.color }, move.from); // ally to king's square
 
     const fenParts = tmp.fen().split(" ");
@@ -2227,8 +2311,13 @@ export function executeChaosMove(
       fenParts[2] = c || "-";
     }
     fenParts[4] = String(Math.max(0, parseInt(fenParts[4] || "0")));
-    if (fenParts[1] === "w") fenParts[5] = String(parseInt(fenParts[5] || "1") + 1);
-    try { return new Chess(fenParts.join(" ")); } catch { return null; }
+    if (fenParts[1] === "w")
+      fenParts[5] = String(parseInt(fenParts[5] || "1") + 1);
+    try {
+      return new Chess(fenParts.join(" "));
+    } catch {
+      return null;
+    }
   }
 
   // Remove piece from source (unless it stays, e.g. sniper)
@@ -2261,16 +2350,29 @@ export function executeChaosMove(
     opponentModifiers?.some((m) => m.id === "kamikaze-bishop")
   ) {
     const capturedWasBishop = game.get(move.to);
-    if (capturedWasBishop?.type === "b" && capturedWasBishop.color !== piece.color) {
+    if (
+      capturedWasBishop?.type === "b" &&
+      capturedWasBishop.color !== piece.color
+    ) {
       // Attacker that landed on the bishop's square dies too
       tmp.remove(move.to);
       const [tf, tr] = sqToCoords(move.to);
-      for (const [df, dr] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]] as [number,number][]) {
+      for (const [df, dr] of [
+        [-1, -1],
+        [-1, 0],
+        [-1, 1],
+        [0, -1],
+        [0, 1],
+        [1, -1],
+        [1, 0],
+        [1, 1],
+      ] as [number, number][]) {
         const adj = sq(tf + df, tr + dr);
         if (!adj) continue;
         const adjP = tmp.get(adj);
         // Remove attacker-side pieces (piece.color) except kings
-        if (adjP && adjP.color === piece.color && adjP.type !== "k") tmp.remove(adj);
+        if (adjP && adjP.color === piece.color && adjP.type !== "k")
+          tmp.remove(adj);
       }
     }
   }
@@ -2481,7 +2583,16 @@ export function applyPostMoveEffects(
     // Attacker (now at `to`) also dies in the explosion
     tmp.remove(to);
     const [tf, tr] = sqToCoords(to);
-    for (const [df, dr] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]] as [number,number][]) {
+    for (const [df, dr] of [
+      [-1, -1],
+      [-1, 0],
+      [-1, 1],
+      [0, -1],
+      [0, 1],
+      [1, -1],
+      [1, 0],
+      [1, 1],
+    ] as [number, number][]) {
       const adj = sq(tf + df, tr + dr);
       if (!adj) continue;
       const adjP = tmp.get(adj);
@@ -2830,7 +2941,12 @@ export function isChaosCheckmate(
       // since chess.js only knows about standard check — a blocking move may not cover chaos control.
       const tmp = new Chess(game.fen());
       tmp.move(move);
-      const stillChaosAttacked = getChaosAttackedSquares(tmp, oppModifiers, oppColor, assignedSquares);
+      const stillChaosAttacked = getChaosAttackedSquares(
+        tmp,
+        oppModifiers,
+        oppColor,
+        assignedSquares,
+      );
       const kingsAfter = allSquaresOf(tmp, "k", myColor);
       if (kingsAfter.length === 0 || !stillChaosAttacked.has(kingsAfter[0])) {
         return false; // This move resolves both standard check and chaos attack

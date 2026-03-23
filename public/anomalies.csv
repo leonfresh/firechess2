@@ -1,5 +1,5 @@
 id,tarotNumber,tarotRoman,tarotName,name,trigger,icon,description
-duck-chess,0,0,The Fool,Duck Chess,passive,🦆,"After each of your moves, place your rubber duck on any empty square. The duck blocks all movement — no piece (yours or your opponent's) can enter that square. Reposition it each turn."
+fools-king,0,0,The Fool,Fool's King,passive,🃏,"Your King can leap like a Knight — jumping in an L-shape to any of 8 destinations. This wild movement is only available when your King is NOT in check; once checked, it reverts to normal one-square escapes."
 magician,1,I,The Magician,Manifestation,passive,🪄,"Your Queen leaps like a knight from move 1. The Amazon modifier is built-in and won't appear in your draft pool."
 high-priestess,2,II,The High Priestess,Inner Vision,draft-modifier,🔮,"Each draft phase you see 1 extra modifier choice that your opponent cannot see. Your drafts stay one step ahead."
 empress,3,III,The Empress,Abundance,fen-mod,🌿,"Start with 2 extra pawns on c3 and f3 (c6 and f6 for Black). A generous opening presence."

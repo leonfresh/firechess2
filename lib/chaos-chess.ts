@@ -102,8 +102,6 @@ export interface ChaosState {
    */
   playerNuclearCooldownUntil?: number;
   aiNuclearCooldownUntil?: number;
-  /** Duck Chess anomaly: current duck square (blocks all movement to this square) */
-  playerDuckSquare?: string | null;
   /**
    * IDs of once-per-game modifiers that have been consumed (removed from
    * playerModifiers / aiModifiers after use). Kept so they are never
@@ -510,7 +508,6 @@ export function createChaosState(): ChaosState {
     aiCapturedForJudgement: [],
     playerNuclearCooldownUntil: 0,
     aiNuclearCooldownUntil: 0,
-    playerDuckSquare: null,
     spentPlayerModIds: [],
     spentAiModIds: [],
   };
@@ -736,7 +733,14 @@ export function applyDraft(
 
   if (!options?.skipOpponentRoll) {
     // AI picks the highest-tier remaining option it hasn't drafted
-    const aiChoices = rollDraftChoices(phase, state.aiModifiers, Date.now(), undefined, undefined, state.spentAiModIds);
+    const aiChoices = rollDraftChoices(
+      phase,
+      state.aiModifiers,
+      Date.now(),
+      undefined,
+      undefined,
+      state.spentAiModIds,
+    );
     const aiPick =
       aiChoices.sort((a, b) => tierValue(b.tier) - tierValue(a.tier))[0] ??
       aiChoices[0];

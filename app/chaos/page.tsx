@@ -957,7 +957,8 @@ function buildChaosCustomPieces(
                 left: "50%",
                 transform: "translateX(-50%)",
                 opacity: 0.97,
-                filter: "drop-shadow(0 0 6px rgba(239,68,68,0.95)) drop-shadow(0 0 2px rgba(0,0,0,0.8))",
+                filter:
+                  "drop-shadow(0 0 6px rgba(239,68,68,0.95)) drop-shadow(0 0 2px rgba(0,0,0,0.8))",
                 zIndex: 3,
               }}
             >
@@ -2207,7 +2208,8 @@ function DraftModal({
   const [peeking, setPeeking] = useState(false);
 
   // Preview confirmation popup
-  const [pendingPreviewMod, setPendingPreviewMod] = useState<ChaosModifier | null>(null);
+  const [pendingPreviewMod, setPendingPreviewMod] =
+    useState<ChaosModifier | null>(null);
   const [previewDontAsk, setPreviewDontAsk] = useState(false);
 
   // Auto-pick countdown (PvP only — counts down after all cards reveal)
@@ -2317,7 +2319,9 @@ function DraftModal({
                 Preview: {pendingPreviewMod.name}
               </h2>
               <p className="mt-0.5 text-xs text-slate-400">
-                {pendingPreviewMod.tier.charAt(0).toUpperCase() + pendingPreviewMod.tier.slice(1)} modifier
+                {pendingPreviewMod.tier.charAt(0).toUpperCase() +
+                  pendingPreviewMod.tier.slice(1)}{" "}
+                modifier
               </p>
             </div>
           </div>
@@ -2342,9 +2346,7 @@ function DraftModal({
               onChange={(e) => setPreviewDontAsk(e.target.checked)}
               className="h-4 w-4 rounded accent-purple-500 cursor-pointer"
             />
-            <span className="text-xs text-slate-400">
-              Don&apos;t ask again
-            </span>
+            <span className="text-xs text-slate-400">Don&apos;t ask again</span>
           </label>
 
           {/* Buttons */}
@@ -4127,7 +4129,9 @@ export default function ChaosChessPage() {
     },
   );
   /** Track IDs previewed specifically during this game — for end-screen CTA */
-  const [previewedThisGame, setPreviewedThisGame] = useState<Set<string>>(new Set());
+  const [previewedThisGame, setPreviewedThisGame] = useState<Set<string>>(
+    new Set(),
+  );
 
   /**
    * For signed-in users: modifier IDs not yet earned via games-played progression.
@@ -4185,7 +4189,6 @@ export default function ChaosChessPage() {
    * - "lovers-second": waiting for player to click second piece
    * - "strength": king queen-range captures highlighted
    * - "justice": waiting for player to mark a piece immune
-   * - "duck-place": waiting for player to click empty square to place duck
    * - "devil": waiting for player to click opponent piece to freeze
    * - "judgement": resurrection picker modal shown
    */
@@ -4194,7 +4197,6 @@ export default function ChaosChessPage() {
     | "lovers-second"
     | "strength"
     | "justice"
-    | "duck-place"
     | "devil"
     | "judgement"
     | null
@@ -4203,20 +4205,6 @@ export default function ChaosChessPage() {
   const [anomalyActivationPiece, setAnomalyActivationPiece] = useState<
     string | null
   >(null);
-  /** Duck Chess: pending game+state waiting for player to place duck before AI moves */
-  const pendingDuckRef = useRef<{
-    game: Chess;
-    cs: ChaosState;
-    from: string;
-    to: string;
-  } | null>(null);
-  /** Duck Chess: duck placement deferred until after a draft pick on the same turn */
-  const pendingDuckAfterDraftRef = useRef<{
-    game: Chess;
-    cs: ChaosState;
-    from: string;
-    to: string;
-  } | null>(null);
   /** Sun: pawn surge already applied this game */
   const [sunSurgeUsed, setSunSurgeUsed] = useState(false);
   /** World: bonus turn is active (player can play an extra move before regular turn) */
@@ -4264,8 +4252,8 @@ export default function ChaosChessPage() {
       Math.max(0, (chaosState.aiNuclearCooldownUntil ?? 0) - currentMove),
       chaosState.playerAnomaly ?? null,
       chaosState.aiAnomaly ?? null,
-      (chaosState.playerMoonUnlocked || (chaosState.currentPhase ?? 0) >= 2),
-      (chaosState.aiMoonUnlocked || (chaosState.currentPhase ?? 0) >= 2),
+      chaosState.playerMoonUnlocked || (chaosState.currentPhase ?? 0) >= 2,
+      chaosState.aiMoonUnlocked || (chaosState.currentPhase ?? 0) >= 2,
     );
   }, [
     pieceTheme.setName,
@@ -5079,7 +5067,10 @@ export default function ChaosChessPage() {
           for (const mv of g.moves({ verbose: true })) {
             const testGame = new Chess(g.fen());
             testGame.move(mv);
-            if (escapesCheck(testGame)) { hasEscape = true; break; }
+            if (escapesCheck(testGame)) {
+              hasEscape = true;
+              break;
+            }
           }
           // Defender's own chaos moves (e.g. chaos piece captures the attacker)
           if (!hasEscape) {
@@ -5102,7 +5093,10 @@ export default function ChaosChessPage() {
                 chaosStateRef.current.assignedSquares ?? undefined,
                 chaosAttackerMods,
                 defenderAnomaly
-                  ? { playerAnomaly: defenderAnomaly, moonUnlocked: defenderMoonUnlocked ?? false }
+                  ? {
+                      playerAnomaly: defenderAnomaly,
+                      moonUnlocked: defenderMoonUnlocked ?? false,
+                    }
                   : undefined,
               );
               // getChaosMoves already filters out moves leaving king in standard check;
@@ -5113,8 +5107,15 @@ export default function ChaosChessPage() {
                 const testGame = new Chess(g.fen());
                 if (!cm.pieceStays) testGame.remove(cm.from as Square);
                 testGame.remove(cm.to as Square); // clears any capture target
-                if (!cm.pieceStays) testGame.put({ type: piece.type, color: chaosCheckedColor }, cm.to as Square);
-                if (escapesCheck(testGame)) { hasEscape = true; break; }
+                if (!cm.pieceStays)
+                  testGame.put(
+                    { type: piece.type, color: chaosCheckedColor },
+                    cm.to as Square,
+                  );
+                if (escapesCheck(testGame)) {
+                  hasEscape = true;
+                  break;
+                }
               }
             }
           }
@@ -5173,7 +5174,12 @@ export default function ChaosChessPage() {
               undefined,
               playerPieceCounts,
               state.playerAnomaly,
-              [...(state.spentPlayerModIds ?? []), ...(!authenticated ? [...guestPreviewedMods] : lockedForAuthUser)],
+              [
+                ...(state.spentPlayerModIds ?? []),
+                ...(!authenticated
+                  ? [...guestPreviewedMods]
+                  : lockedForAuthUser),
+              ],
             );
             setChaosState((prev) => ({
               ...prev,
@@ -5218,7 +5224,10 @@ export default function ChaosChessPage() {
             undefined,
             playerPieceCounts,
             state.playerAnomaly,
-            [...(state.spentPlayerModIds ?? []), ...(!authenticated ? [...guestPreviewedMods] : lockedForAuthUser)],
+            [
+              ...(state.spentPlayerModIds ?? []),
+              ...(!authenticated ? [...guestPreviewedMods] : lockedForAuthUser),
+            ],
           );
           setChaosState((prev) => ({
             ...prev,
@@ -5410,7 +5419,8 @@ export default function ChaosChessPage() {
             ...prev,
             {
               type: "chaos",
-              message: "🧨 Kamikaze Bishop! It exploded and took the attacker with it!",
+              message:
+                "🧨 Kamikaze Bishop! It exploded and took the attacker with it!",
               icon: "🧨",
               pepe: PEPE.firesgun,
             },
@@ -5426,32 +5436,6 @@ export default function ChaosChessPage() {
   );
 
   /* ── AI move (with chaos modifiers) ── */
-
-  /**
-   * Returns a FEN with the duck square occupied by a placeholder piece so that
-   * Stockfish correctly treats it as an impassable blocker. We use a pawn of the
-   * *opponent* of the side-to-move so the engine won't want to "capture" it, but
-   * will still be unable to slide through it or land on it.
-   */
-  const duckFen = useCallback(
-    (fen: string, duckSquare: string | null | undefined): string => {
-      if (!duckSquare) return fen;
-      try {
-        const tmp = new Chess(fen);
-        // Only place duck if the square is actually empty (shouldn't be occupied in normal flow)
-        if (!tmp.get(duckSquare as any)) {
-          // Use a pawn of the color NOT to move — Stockfish will neither move it nor want to take it freely
-          const sideToMove = fen.split(" ")[1] as "w" | "b";
-          const blocker: "w" | "b" = sideToMove === "w" ? "b" : "w";
-          tmp.put({ type: "p", color: blocker }, duckSquare as any);
-        }
-        return tmp.fen();
-      } catch {
-        return fen;
-      }
-    },
-    [],
-  );
 
   const makeAiMove = useCallback(
     async (
@@ -5553,7 +5537,7 @@ export default function ChaosChessPage() {
           if (sample.length > 0) {
             // Get normal Stockfish eval as baseline
             const normalResult = await stockfishPool.evaluateFen(
-              duckFen(g.fen(), cs.playerDuckSquare),
+              g.fen(),
               aiDepth,
             );
             const normalEvalRaw = normalResult?.cp ?? 0; // from AI's (side-to-move) perspective
@@ -5595,11 +5579,16 @@ export default function ChaosChessPage() {
                 scored.push({ move: cm, eval: 1_000_000, game: g });
                 continue;
               }
-              const newGame = executeChaosMove(g, cm, cs.aiModifiers, cs.playerModifiers);
+              const newGame = executeChaosMove(
+                g,
+                cm,
+                cs.aiModifiers,
+                cs.playerModifiers,
+              );
               if (!newGame) continue;
               // Eval the resulting position — cp is from the player's perspective (side to move after AI's chaos move)
               const er = await stockfishPool.evaluateFen(
-                duckFen(newGame.fen(), cs.playerDuckSquare),
+                newGame.fen(),
                 evalDepth,
               );
               if (er) {
@@ -5813,7 +5802,7 @@ export default function ChaosChessPage() {
         const hasAiChaosMods = cs.aiModifiers.length > 0;
         const needsTopMoves = hasPlayerChaosMods || hasAiChaosMods;
         const topMoves = needsTopMoves
-          ? await stockfishPool.getTopMoves(duckFen(g.fen(), cs.playerDuckSquare), 5, aiDepth)
+          ? await stockfishPool.getTopMoves(g.fen(), 5, aiDepth)
           : [];
 
         // Escape-move injection: Stockfish's top-5 are blind to chaos rules, so if the player
@@ -5864,7 +5853,7 @@ export default function ChaosChessPage() {
               }
               // cp after AI's escape is from the player's (side-to-move) perspective — negate for AI
               const er = await stockfishPool.evaluateFen(
-                duckFen(tmpGame.fen(), cs.playerDuckSquare),
+                tmpGame.fen(),
                 escapeDepth,
               );
               if (er)
@@ -5928,7 +5917,7 @@ export default function ChaosChessPage() {
                 continue;
               }
               const er = await stockfishPool.evaluateFen(
-                duckFen(tmpEsc.fen(), cs.playerDuckSquare),
+                tmpEsc.fen(),
                 escDepth2,
               );
               if (er)
@@ -6115,7 +6104,7 @@ export default function ChaosChessPage() {
 
         // Fallback to single best move if multi-PV didn't yield anything
         if (!bestUci) {
-          const result = await stockfishPool.evaluateFen(duckFen(g.fen(), cs.playerDuckSquare), aiDepth);
+          const result = await stockfishPool.evaluateFen(g.fen(), aiDepth);
           bestUci = result?.bestMove ?? null;
         }
 
@@ -6343,42 +6332,6 @@ export default function ChaosChessPage() {
             );
             bestUci =
               topRanked ?? (notCapturingImmune[0] as { lan: string }).lan;
-          }
-        }
-
-        // Duck Chess: AI cannot move to or slide through the player's duck square
-        if (cs.playerDuckSquare) {
-          const duck = cs.playerDuckSquare;
-          const pathBlocksDuck = (mv: { from: string; to: string; piece: string }) => {
-            if (mv.to === duck) return true;
-            if (mv.piece === "r" || mv.piece === "b" || mv.piece === "q") {
-              const ff = mv.from.charCodeAt(0) - 97, fr = parseInt(mv.from[1], 10) - 1;
-              const tf = mv.to.charCodeAt(0) - 97, tr = parseInt(mv.to[1], 10) - 1;
-              const df = Math.sign(tf - ff), dr = Math.sign(tr - fr);
-              let cf2 = ff + df, cr2 = fr + dr;
-              while (cf2 !== tf || cr2 !== tr) {
-                if (`${"abcdefgh"[cf2]}${cr2 + 1}` === duck) return true;
-                cf2 += df; cr2 += dr;
-              }
-            }
-            return false;
-          };
-          if (bestUci && (bestUci.slice(2, 4) === duck || (() => {
-            const allLegal = g.moves({ verbose: true });
-            const mv = allLegal.find((m: { lan: string }) => m.lan === bestUci);
-            return mv ? pathBlocksDuck(mv as any) : false;
-          })())) {
-            const allLegal = g.moves({ verbose: true });
-            const notDuck = allLegal.filter((mv: any) => !pathBlocksDuck(mv));
-            if (notDuck.length > 0) {
-              const topUciOrder = topMoves
-                .map((t) => t.bestMove ?? t.pvMoves[0])
-                .filter(Boolean) as string[];
-              const topRanked = topUciOrder.find((u) =>
-                notDuck.some((m: { lan: string }) => m.lan === u),
-              );
-              bestUci = topRanked ?? (notDuck[0] as { lan: string }).lan;
-            }
           }
         }
 
@@ -7228,10 +7181,6 @@ export default function ChaosChessPage() {
           const serverCs = data.chaosState as ChaosState;
           let incoming = fromServerChaosState(serverCs, playerColor);
           const draftStep = serverCs.draftStep ?? 0;
-          // Duck Chess: clear duck if the new FEN already has a piece on that square (defensive)
-          if (incoming.playerDuckSquare && g.get(incoming.playerDuckSquare as any)) {
-            incoming = { ...incoming, playerDuckSquare: null };
-          }
 
           // ── Sequential draft: White drafts first (step 1), then Black (step 2) ──
 
@@ -7256,7 +7205,12 @@ export default function ChaosChessPage() {
                 undefined,
                 countPiecesFromFen(gameRef.current.fen(), "b"),
                 incoming.playerAnomaly,
-                [...(incoming.spentPlayerModIds ?? []), ...(!authenticated ? [...guestPreviewedMods] : lockedForAuthUser)],
+                [
+                  ...(incoming.spentPlayerModIds ?? []),
+                  ...(!authenticated
+                    ? [...guestPreviewedMods]
+                    : lockedForAuthUser),
+                ],
               );
               pendingDraftAfterRevealRef.current = {
                 phase: phaseForDraft,
@@ -7339,20 +7293,6 @@ export default function ChaosChessPage() {
           }
 
           setChaosState(incoming);
-
-          // Duck Chess: notify this player when the opponent placed / moved the duck
-          const prevDuck = chaosStateRef.current.playerDuckSquare;
-          if (incoming.playerDuckSquare && incoming.playerDuckSquare !== prevDuck) {
-            setEventLog((prev) => [
-              ...prev,
-              {
-                type: "chaos" as const,
-                message: `🦆 Opponent placed duck on ${incoming.playerDuckSquare}!`,
-                icon: "🦆",
-                pepe: PEPE.think,
-              },
-            ]);
-          }
         }
 
         // Move highlight + tracked piece update
@@ -7611,7 +7551,12 @@ export default function ChaosChessPage() {
                     undefined,
                     countPiecesFromFen(gameRef.current.fen(), myColor_),
                     incoming.playerAnomaly,
-                    [...(incoming.spentPlayerModIds ?? []), ...(!authenticated ? [...guestPreviewedMods] : lockedForAuthUser)],
+                    [
+                      ...(incoming.spentPlayerModIds ?? []),
+                      ...(!authenticated
+                        ? [...guestPreviewedMods]
+                        : lockedForAuthUser),
+                    ],
                   );
                   pendingDraftAfterRevealRef.current = {
                     phase: phaseForDraft,
@@ -7721,23 +7666,6 @@ export default function ChaosChessPage() {
                   serverCs,
                   myColor as "white" | "black",
                 );
-                // Duck Chess: clear duck if the new FEN already has a piece on that square (defensive)
-                if (incoming.playerDuckSquare && g.get(incoming.playerDuckSquare as any)) {
-                  incoming = { ...incoming, playerDuckSquare: null };
-                }
-                // Duck Chess: notify when opponent placed / moved the duck
-                const prevDuck = chaosStateRef.current.playerDuckSquare;
-                if (incoming.playerDuckSquare && incoming.playerDuckSquare !== prevDuck) {
-                  setEventLog((prev) => [
-                    ...prev,
-                    {
-                      type: "chaos" as const,
-                      message: `🦆 Opponent placed duck on ${incoming.playerDuckSquare}!`,
-                      icon: "🦆",
-                      pepe: PEPE.think,
-                    },
-                  ]);
-                }
                 setChaosState(incoming);
               }
             }
@@ -7972,32 +7900,6 @@ export default function ChaosChessPage() {
       )
         return false;
 
-      // Duck Chess: block moves to the duck's square (duck is impassable)
-      // Also block sliding moves that would pass through the duck square
-      if (chaosState.playerDuckSquare) {
-        if (to === chaosState.playerDuckSquare) return false;
-        // Check if the piece's path passes through the duck
-        const duck = chaosState.playerDuckSquare;
-        const piece = game.get(from as any);
-        if (piece && (piece.type === "r" || piece.type === "b" || piece.type === "q")) {
-          const ff = from.charCodeAt(0) - 97;
-          const fr = parseInt(from[1], 10) - 1;
-          const tf = to.charCodeAt(0) - 97;
-          const tr = parseInt(to[1], 10) - 1;
-          const df = Math.sign(tf - ff);
-          const dr = Math.sign(tr - fr);
-          // Walk from just after `from` to just before `to`
-          let cf2 = ff + df;
-          let cr2 = fr + dr;
-          while (cf2 !== tf || cr2 !== tr) {
-            const sqOnPath = `${"abcdefgh"[cf2]}${cr2 + 1}`;
-            if (sqOnPath === duck) return false; // sliding through duck
-            cf2 += df;
-            cr2 += dr;
-          }
-        }
-      }
-
       // Forced En Passant: if AI has this modifier and standard EP is available, player must play it
       if (chaosState.aiModifiers.some((m) => m.id === "forced-en-passant")) {
         const epMoves = game
@@ -8117,20 +8019,34 @@ export default function ChaosChessPage() {
           }
 
           // Kamikaze Bishop: if opponent's captured piece was a bishop with kamikaze, blast nearby
-          if (chaosMove.type === "capture" && chaosState.aiModifiers.some((m) => m.id === "kamikaze-bishop")) {
+          if (
+            chaosMove.type === "capture" &&
+            chaosState.aiModifiers.some((m) => m.id === "kamikaze-bishop")
+          ) {
             const capturedWasBishop = game.get(to as any);
             if (capturedWasBishop?.type === "b") {
-              const bf = to.charCodeAt(0) - 97, br = parseInt(to[1]) - 1;
+              const bf = to.charCodeAt(0) - 97,
+                br = parseInt(to[1]) - 1;
               const blastSqs: string[] = [to as string];
               for (let df = -1; df <= 1; df++)
                 for (let dr = -1; dr <= 1; dr++) {
                   if (df === 0 && dr === 0) continue;
-                  const nf = bf + df, nr = br + dr;
+                  const nf = bf + df,
+                    nr = br + dr;
                   if (nf >= 0 && nf <= 7 && nr >= 0 && nr <= 7)
                     blastSqs.push(`${String.fromCharCode(97 + nf)}${nr + 1}`);
                 }
               setTimeout(() => triggerEffect("explosion", blastSqs), 200);
-              setEventLog((prev) => [...prev, { type: "chaos", message: "🧨 Kamikaze Bishop! It exploded and took the attacker with it!", icon: "🧨", pepe: PEPE.firesgun }]);
+              setEventLog((prev) => [
+                ...prev,
+                {
+                  type: "chaos",
+                  message:
+                    "🧨 Kamikaze Bishop! It exploded and took the attacker with it!",
+                  icon: "🧨",
+                  pepe: PEPE.firesgun,
+                },
+              ]);
               spawnPepe(PEPE.firesgun);
               playSound("airhorn");
             }
@@ -8232,11 +8148,6 @@ export default function ChaosChessPage() {
 
         const drafted = checkDraft(activeGame, cs);
 
-        // Duck Chess: if a draft fires on this same move, defer duck placement until after the pick
-        if (drafted && selectedAnomaly?.id === "duck-chess") {
-          pendingDuckAfterDraftRef.current = { game: activeGame, cs, from, to };
-        }
-
         // Multiplayer: send to server (or hold for draft pick)
         // Only hold the move if THIS player is actually about to open the draft picker:
         //   - White triggered the draft (White drafts first in multiplayer)
@@ -8280,42 +8191,34 @@ export default function ChaosChessPage() {
         }
 
         if (!drafted) {
-          if (selectedAnomaly?.id === "duck-chess") {
-            // Duck Chess: player must place duck before turn passes
-            pendingDuckRef.current = { game: activeGame, cs, from, to };
-            setAnomalyActivationMode("duck-place");
-            setEventLog((prev) => [
-              ...prev,
-              {
-                type: "chaos" as const,
-                message: "🦆 Place your duck! Click any empty square.",
-                icon: "🦆",
-                pepe: PEPE.think,
-              },
-            ]);
-          } else if (gameMode === "ai") {
-            setTimeout(() => makeAiMove(activeGame, cs, (fg, fcs) => {
-              // World anomaly: bonus move fires AFTER the AI's move, not before
-              if (worldBonusTurnActiveRef.current) {
-                setWorldBonusTurnActive(false);
-                const fenParts = fg.fen().split(" ");
-                fenParts[1] = playerColor === "white" ? "w" : "b";
-                fenParts[3] = "-";
-                const bonusGame = new Chess(fenParts.join(" "));
-                setGame(bonusGame);
-                recomputeChaosMoves(bonusGame, fcs);
-                setEventLog((prev) => [
-                  ...prev,
-                  {
-                    type: "chaos" as const,
-                    message: "🌍 World: Bonus move! Play your extra move now.",
-                    icon: "🌍",
-                    pepe: PEPE.hyped,
-                  },
-                ]);
-                playSound("crowd-ooh");
-              }
-            }), AI_MOVE_DELAY);
+          if (gameMode === "ai") {
+            setTimeout(
+              () =>
+                makeAiMove(activeGame, cs, (fg, fcs) => {
+                  // World anomaly: bonus move fires AFTER the AI's move, not before
+                  if (worldBonusTurnActiveRef.current) {
+                    setWorldBonusTurnActive(false);
+                    const fenParts = fg.fen().split(" ");
+                    fenParts[1] = playerColor === "white" ? "w" : "b";
+                    fenParts[3] = "-";
+                    const bonusGame = new Chess(fenParts.join(" "));
+                    setGame(bonusGame);
+                    recomputeChaosMoves(bonusGame, fcs);
+                    setEventLog((prev) => [
+                      ...prev,
+                      {
+                        type: "chaos" as const,
+                        message:
+                          "🌍 World: Bonus move! Play your extra move now.",
+                        icon: "🌍",
+                        pepe: PEPE.hyped,
+                      },
+                    ]);
+                    playSound("crowd-ooh");
+                  }
+                }),
+              AI_MOVE_DELAY,
+            );
           }
         }
         recomputeChaosMoves(activeGame, cs);
@@ -8544,20 +8447,13 @@ export default function ChaosChessPage() {
 
       const drafted = checkDraft(activeG, cs2);
 
-      // Duck Chess: if a draft fires on this same move, defer duck placement until after the pick
-      if (drafted && selectedAnomaly?.id === "duck-chess") {
-        pendingDuckAfterDraftRef.current = { game: activeG, cs: cs2, from, to };
-      }
-
       // Multiplayer: send to server (or hold for draft pick)
-      // Only hold the move if THIS player is actually about to open the draft picker,
-      // or if duck-chess anomaly requires placing the duck first.
+      // Only hold the move if THIS player is actually about to open the draft picker:
       if (gameMode !== "ai") {
         const holdForDraft =
           (drafted && playerColor === "white") ||
           !!pendingDraftAfterRevealRef.current;
-        const holdForDuck = !drafted && selectedAnomaly?.id === "duck-chess";
-        if (!holdForDraft && !holdForDuck) {
+        if (!holdForDraft) {
           sendMoveToServer(activeG, from, to, cs2);
         } else if (holdForDraft) {
           // Draft about to open — hold the move and send it bundled with the pick
@@ -8591,42 +8487,34 @@ export default function ChaosChessPage() {
       }
 
       if (!drafted) {
-        if (selectedAnomaly?.id === "duck-chess") {
-          // Duck Chess: player must place duck before turn passes
-          pendingDuckRef.current = { game: activeG, cs: cs2, from, to };
-          setAnomalyActivationMode("duck-place");
-          setEventLog((prev) => [
-            ...prev,
-            {
-              type: "chaos" as const,
-              message: "🦆 Place your duck! Click any empty square.",
-              icon: "🦆",
-              pepe: PEPE.think,
-            },
-          ]);
-        } else if (gameMode === "ai") {
-          setTimeout(() => makeAiMove(activeG, cs2, (fg, fcs) => {
-            // World anomaly: bonus move fires AFTER the AI's move, not before
-            if (worldBonusTurnActiveRef.current) {
-              setWorldBonusTurnActive(false);
-              const fenParts = fg.fen().split(" ");
-              fenParts[1] = playerColor === "white" ? "w" : "b";
-              fenParts[3] = "-";
-              const bonusGame = new Chess(fenParts.join(" "));
-              setGame(bonusGame);
-              recomputeChaosMoves(bonusGame, fcs);
-              setEventLog((prev) => [
-                ...prev,
-                {
-                  type: "chaos" as const,
-                  message: "🌍 World: Bonus move! Play your extra move now.",
-                  icon: "🌍",
-                  pepe: PEPE.hyped,
-                },
-              ]);
-              playSound("crowd-ooh");
-            }
-          }), AI_MOVE_DELAY);
+        if (gameMode === "ai") {
+          setTimeout(
+            () =>
+              makeAiMove(activeG, cs2, (fg, fcs) => {
+                // World anomaly: bonus move fires AFTER the AI's move, not before
+                if (worldBonusTurnActiveRef.current) {
+                  setWorldBonusTurnActive(false);
+                  const fenParts = fg.fen().split(" ");
+                  fenParts[1] = playerColor === "white" ? "w" : "b";
+                  fenParts[3] = "-";
+                  const bonusGame = new Chess(fenParts.join(" "));
+                  setGame(bonusGame);
+                  recomputeChaosMoves(bonusGame, fcs);
+                  setEventLog((prev) => [
+                    ...prev,
+                    {
+                      type: "chaos" as const,
+                      message:
+                        "🌍 World: Bonus move! Play your extra move now.",
+                      icon: "🌍",
+                      pepe: PEPE.hyped,
+                    },
+                  ]);
+                  playSound("crowd-ooh");
+                }
+              }),
+            AI_MOVE_DELAY,
+          );
         }
       }
       recomputeChaosMoves(activeG, cs2);
@@ -8669,7 +8557,12 @@ export default function ChaosChessPage() {
       };
       setPendingPromotion(null);
 
-      const newGame = executeChaosMove(game, move, chaosState.playerModifiers, chaosState.aiModifiers);
+      const newGame = executeChaosMove(
+        game,
+        move,
+        chaosState.playerModifiers,
+        chaosState.aiModifiers,
+      );
       if (!newGame) return;
 
       const pieceName =
@@ -8912,23 +8805,6 @@ export default function ChaosChessPage() {
         for (const m of moves) {
           if (m.piece === "k" && isKingMoveChaosUnsafe(game, m.from, m.to))
             continue;
-          // Duck Chess: can't move to duck's square or slide through it
-          if (chaosState.playerDuckSquare) {
-            if (m.to === chaosState.playerDuckSquare) continue;
-            if (m.piece === "r" || m.piece === "b" || m.piece === "q") {
-              const duck = chaosState.playerDuckSquare;
-              const ff = m.from.charCodeAt(0) - 97, fr = parseInt(m.from[1], 10) - 1;
-              const tf = m.to.charCodeAt(0) - 97, tr = parseInt(m.to[1], 10) - 1;
-              const df = Math.sign(tf - ff), dr = Math.sign(tr - fr);
-              let cf2 = ff + df, cr2 = fr + dr;
-              let blocked = false;
-              while (cf2 !== tf || cr2 !== tr) {
-                if (`${"abcdefgh"[cf2]}${cr2 + 1}` === duck) { blocked = true; break; }
-                cf2 += df; cr2 += dr;
-              }
-              if (blocked) continue;
-            }
-          }
           highlights[m.to] = {
             background: m.captured
               ? "radial-gradient(circle, transparent 68%, rgba(255,0,0,0.55) 69%)"
@@ -8937,12 +8813,6 @@ export default function ChaosChessPage() {
         }
         for (const cm of activeChaosMoves.filter((m) => m.from === sq)) {
           if (p?.type === "k" && isKingMoveChaosUnsafe(game, cm.from, cm.to))
-            continue;
-          // Duck Chess: can't move to duck's square
-          if (
-            chaosState.playerDuckSquare &&
-            cm.to === chaosState.playerDuckSquare
-          )
             continue;
           highlights[cm.to] = {
             background:
@@ -9002,7 +8872,7 @@ export default function ChaosChessPage() {
       }
 
       // Not the player's turn (and not thinking) — do nothing.
-      // Exception: anomaly activation modes (duck-place, etc.) must still work
+      // Exception: anomaly activation modes must still work
       // even after the turn has flipped, because they are post-move actions.
       if (!isPlayerTurn && !anomalyActivationMode) return;
 
@@ -9093,41 +8963,6 @@ export default function ChaosChessPage() {
             if (gameMode === "ai")
               setTimeout(() => makeAiMove(swapG, cs), AI_MOVE_DELAY);
             else sendMoveToServer(swapG, firstSq, square, cs, true);
-          }
-          return;
-        }
-
-        if (anomalyActivationMode === "duck-place") {
-          // Place duck on any empty square (not occupied by a piece)
-          if (clickedPiece) return; // can't place on occupied square
-          // Must move duck to a different square than it's already on
-          if (
-            chaosState.playerDuckSquare &&
-            square === chaosState.playerDuckSquare
-          )
-            return;
-          const pending = pendingDuckRef.current;
-          if (!pending) return;
-          pendingDuckRef.current = null;
-          const newCs = { ...pending.cs, playerDuckSquare: square };
-          setChaosState(newCs);
-          setAnomalyActivationMode(null);
-          setLegalMoveSquares({});
-          playSound("select");
-          setEventLog((prev) => [
-            ...prev,
-            {
-              type: "chaos" as const,
-              message: `🦆 Duck placed on ${square}!`,
-              icon: "🦆",
-              pepe: PEPE.think,
-            },
-          ]);
-          if (gameMode === "ai") {
-            setTimeout(() => makeAiMove(pending.game, newCs), AI_MOVE_DELAY);
-          } else {
-            // Multiplayer: now that duck is placed, send the move+duck state to server
-            sendMoveToServer(pending.game, pending.from, pending.to, newCs);
           }
           return;
         }
@@ -9342,7 +9177,10 @@ export default function ChaosChessPage() {
         Date.now(),
         countPiecesFromFen(game.fen(), pCode),
         chaosState.playerAnomaly,
-        [...(chaosState.spentPlayerModIds ?? []), ...(!authenticated ? [...guestPreviewedMods] : lockedForAuthUser)],
+        [
+          ...(chaosState.spentPlayerModIds ?? []),
+          ...(!authenticated ? [...guestPreviewedMods] : lockedForAuthUser),
+        ],
       );
       const remaining = chaosState.draftChoices.filter(
         (m) => m.id !== discarded.id,
@@ -9491,23 +9329,6 @@ export default function ChaosChessPage() {
       } else {
         setGameStatus("playing");
         setPendingPhase(0);
-      }
-
-      // Duck Chess: if a draft was triggered on the same move as a duck placement, fire duck-place now
-      if (pendingDuckAfterDraftRef.current) {
-        const deferredDuck = pendingDuckAfterDraftRef.current;
-        pendingDuckAfterDraftRef.current = null;
-        pendingDuckRef.current = deferredDuck;
-        setAnomalyActivationMode("duck-place");
-        setEventLog((prev) => [
-          ...prev,
-          {
-            type: "chaos" as const,
-            message: "🦆 Place your duck! Click any empty square.",
-            icon: "🦆",
-            pepe: PEPE.think,
-          },
-        ]);
       }
 
       // Track that WE just drafted (so WebSocket/polling doesn't show the reveal for our own draft)
@@ -10275,16 +10096,6 @@ export default function ChaosChessPage() {
       }
     }
 
-    // Duck Chess: show duck image on its current square
-    if (chaosState.playerDuckSquare) {
-      immuneFrozenHighlights[chaosState.playerDuckSquare] = {
-        backgroundImage: "url(/pieces/duck.svg)",
-        backgroundSize: "78%",
-        backgroundPosition: "center",
-        backgroundRepeat: "no-repeat",
-      };
-    }
-
     return {
       ...immuneFrozenHighlights,
       ...lastMoveHighlight,
@@ -10307,7 +10118,6 @@ export default function ChaosChessPage() {
     chaosState.playerFrozenTurnsLeft,
     chaosState.playerModifiers,
     chaosState.aiModifiers,
-    chaosState.playerDuckSquare,
     game,
     playerColor,
   ]);
@@ -10568,8 +10378,15 @@ export default function ChaosChessPage() {
                         {selected && (
                           <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-purple-400" />
                         )}
-                        <Emoji emoji={emoji} className="h-5 w-5 pointer-events-none" />
-                        <span className={`font-bold ${selected ? "text-purple-200" : ""}`}>{label}</span>
+                        <Emoji
+                          emoji={emoji}
+                          className="h-5 w-5 pointer-events-none"
+                        />
+                        <span
+                          className={`font-bold ${selected ? "text-purple-200" : ""}`}
+                        >
+                          {label}
+                        </span>
                         <span className="text-[10px] font-normal opacity-60">
                           {desc}
                         </span>
@@ -11147,8 +10964,13 @@ export default function ChaosChessPage() {
                 const next = new Set(prev);
                 next.add(mod.id);
                 try {
-                  window.localStorage.setItem(LS_PREVIEWED_MODS, JSON.stringify([...next]));
-                } catch { /* ignore */ }
+                  window.localStorage.setItem(
+                    LS_PREVIEWED_MODS,
+                    JSON.stringify([...next]),
+                  );
+                } catch {
+                  /* ignore */
+                }
                 return next;
               });
               setPreviewedThisGame((prev) => new Set([...prev, mod.id]));
@@ -11825,31 +11647,6 @@ export default function ChaosChessPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          if (
-                            anomalyActivationMode === "duck-place" &&
-                            pendingDuckRef.current
-                          ) {
-                            // Duck placement cancelled — still advance the game
-                            const pending = pendingDuckRef.current;
-                            pendingDuckRef.current = null;
-                            setAnomalyActivationMode(null);
-                            if (gameMode === "ai") {
-                              setTimeout(
-                                () => makeAiMove(pending.game, pending.cs),
-                                AI_MOVE_DELAY,
-                              );
-                            } else {
-                              // Multiplayer: send the held move without duck placement
-                              sendMoveToServer(
-                                pending.game,
-                                pending.from,
-                                pending.to,
-                                pending.cs,
-                                true,
-                              );
-                            }
-                            return;
-                          }
                           setAnomalyActivationMode(null);
                           setAnomalyActivationPiece(null);
                           recomputeChaosMoves(game, chaosState, {
@@ -11868,11 +11665,9 @@ export default function ChaosChessPage() {
                               ? "(pick target)"
                               : anomalyActivationMode === "justice"
                                 ? "(mark immune)"
-                                : anomalyActivationMode === "duck-place"
-                                  ? "(place duck 🦆)"
-                                  : anomalyActivationMode === "devil"
-                                    ? "(pick to freeze)"
-                                    : ""}
+                                : anomalyActivationMode === "devil"
+                                  ? "(pick to freeze)"
+                                  : ""}
                       </button>
                     )}
 
@@ -12002,373 +11797,389 @@ export default function ChaosChessPage() {
               <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/70 backdrop-blur-sm p-3">
                 <div className="rounded-2xl border border-white/10 bg-slate-900/95 p-5 shadow-2xl max-w-2xl w-full overflow-y-auto max-h-[92vh]">
                   <div className="grid grid-cols-1 min-[480px]:grid-cols-[200px_1fr] gap-5 min-[480px]:gap-6 min-[480px]:items-start">
-                  {/* Left column: pepe + result + ELO */}
-                  <div className="flex flex-col items-center gap-3 min-[480px]:sticky min-[480px]:top-0">
-                  {/* Result pepe */}
-                  <img
-                    src={
-                      gameResult === playerColor
-                        ? PEPE.king
-                        : gameResult === "draw"
-                          ? PEPE.copium
-                          : PEPE.sadge
-                    }
-                    alt=""
-                    className="h-20 w-20 object-contain"
-                    style={{
-                      animation: "pepe-bounce 1.5s ease-in-out infinite",
-                    }}
-                  />
+                    {/* Left column: pepe + result + ELO */}
+                    <div className="flex flex-col items-center gap-3 min-[480px]:sticky min-[480px]:top-0">
+                      {/* Result pepe */}
+                      <img
+                        src={
+                          gameResult === playerColor
+                            ? PEPE.king
+                            : gameResult === "draw"
+                              ? PEPE.copium
+                              : PEPE.sadge
+                        }
+                        alt=""
+                        className="h-20 w-20 object-contain"
+                        style={{
+                          animation: "pepe-bounce 1.5s ease-in-out infinite",
+                        }}
+                      />
 
-                  {/* Result text */}
-                  <div className="text-center">
-                    <h2
-                      className={`text-2xl font-black ${
-                        gameResult === playerColor
-                          ? "text-emerald-400"
-                          : gameResult === "draw"
-                            ? "text-amber-400"
-                            : "text-red-400"
-                      }`}
-                    >
-                      {gameResult === playerColor
-                        ? "You Win!"
-                        : gameResult === "draw"
-                          ? "Draw"
-                          : "You Lose"}
-                    </h2>
-                    {endReason && (
-                      <p className="mt-1 text-sm text-slate-400">{endReason}</p>
-                    )}
-                    <p className="mt-2 text-xs text-slate-500">
-                      {gameResult === playerColor
-                        ? "They never stood a chance. GG EZ."
-                        : gameResult === "draw"
-                          ? "Copium levels critical."
-                          : "Skill issue. Maybe draft better next time."}
-                    </p>
-                  </div>
+                      {/* Result text */}
+                      <div className="text-center">
+                        <h2
+                          className={`text-2xl font-black ${
+                            gameResult === playerColor
+                              ? "text-emerald-400"
+                              : gameResult === "draw"
+                                ? "text-amber-400"
+                                : "text-red-400"
+                          }`}
+                        >
+                          {gameResult === playerColor
+                            ? "You Win!"
+                            : gameResult === "draw"
+                              ? "Draw"
+                              : "You Lose"}
+                        </h2>
+                        {endReason && (
+                          <p className="mt-1 text-sm text-slate-400">
+                            {endReason}
+                          </p>
+                        )}
+                        <p className="mt-2 text-xs text-slate-500">
+                          {gameResult === playerColor
+                            ? "They never stood a chance. GG EZ."
+                            : gameResult === "draw"
+                              ? "Copium levels critical."
+                              : "Skill issue. Maybe draft better next time."}
+                        </p>
+                      </div>
 
-                  {/* ── ELO section (multiplayer only) ── */}
-                  {gameMode !== "ai" && (
-                    <div className="w-full rounded-xl border border-purple-500/20 bg-purple-500/5 px-4 py-3 text-center">
-                      {eloChange !== null ? (
-                        <>
-                          <div
-                            className={`text-lg font-black ${eloChange >= 0 ? "text-emerald-400" : "text-red-400"}`}
+                      {/* ── ELO section (multiplayer only) ── */}
+                      {gameMode !== "ai" && (
+                        <div className="w-full rounded-xl border border-purple-500/20 bg-purple-500/5 px-4 py-3 text-center">
+                          {eloChange !== null ? (
+                            <>
+                              <div
+                                className={`text-lg font-black ${eloChange >= 0 ? "text-emerald-400" : "text-red-400"}`}
+                              >
+                                {eloChange >= 0 ? "+" : ""}
+                                {eloChange} ELO
+                              </div>
+                              <div className="mt-0.5 text-xs text-slate-500">
+                                {myRating !== null
+                                  ? `Rating: ${myRating} → ${myRating + (eloSaved ? 0 : eloChange)} `
+                                  : `Base: ${DEFAULT_CHAOS_ELO}`}
+                              </div>
+                            </>
+                          ) : (
+                            <div className="text-xs text-slate-500">
+                              ⚡ Chaos ELO — sign in to track your rating
+                            </div>
+                          )}
+
+                          {/* Save / Auth CTA */}
+                          {eloChange !== null && !authenticated && (
+                            <a
+                              href="/auth/signin"
+                              className="mt-2 block w-full rounded-lg border border-purple-500/40 bg-purple-500/20 px-4 py-2 text-xs font-bold text-purple-300 transition-all hover:bg-purple-500/30"
+                            >
+                              🔐 Sign in to save your Chaos ELO
+                            </a>
+                          )}
+                          {eloChange !== null && authenticated && !eloSaved && (
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const result =
+                                  gameResult === playerColor
+                                    ? "win"
+                                    : gameResult === "draw"
+                                      ? "draw"
+                                      : "loss";
+                                try {
+                                  await fetch("/api/chaos/rating", {
+                                    method: "POST",
+                                    headers: chaosHeaders(true),
+                                    body: JSON.stringify({ roomId, result }),
+                                  });
+                                  setEloSaved(true);
+                                  setMyRating(
+                                    (prev) =>
+                                      (prev ?? DEFAULT_CHAOS_ELO) + eloChange,
+                                  );
+                                } catch {
+                                  /* ignore */
+                                }
+                              }}
+                              className="mt-2 w-full rounded-lg border border-purple-500/40 bg-purple-600/20 px-4 py-2 text-xs font-bold text-purple-300 transition-all hover:bg-purple-600/30"
+                            >
+                              💾 Save Rating
+                            </button>
+                          )}
+                          {eloSaved && (
+                            <div className="mt-2 text-xs font-bold text-emerald-400">
+                              ✅ Rating saved! New rating:{" "}
+                              {myRating ?? DEFAULT_CHAOS_ELO}
+                            </div>
+                          )}
+
+                          {/* Leaderboard link */}
+                          <a
+                            href="/leaderboard/chaos"
+                            className="mt-2 block text-[10px] text-slate-500 hover:text-purple-400 transition-colors"
                           >
-                            {eloChange >= 0 ? "+" : ""}
-                            {eloChange} ELO
-                          </div>
-                          <div className="mt-0.5 text-xs text-slate-500">
-                            {myRating !== null
-                              ? `Rating: ${myRating} → ${myRating + (eloSaved ? 0 : eloChange)} `
-                              : `Base: ${DEFAULT_CHAOS_ELO}`}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-xs text-slate-500">
-                          ⚡ Chaos ELO — sign in to track your rating
+                            🏆 View Chaos Leaderboard
+                          </a>
                         </div>
                       )}
 
-                      {/* Save / Auth CTA */}
-                      {eloChange !== null && !authenticated && (
-                        <a
-                          href="/auth/signin"
-                          className="mt-2 block w-full rounded-lg border border-purple-500/40 bg-purple-500/20 px-4 py-2 text-xs font-bold text-purple-300 transition-all hover:bg-purple-500/30"
-                        >
-                          🔐 Sign in to save your Chaos ELO
-                        </a>
+                      {/* ── ELO section (AI games) ── */}
+                      {gameMode === "ai" && (
+                        <div className="w-full rounded-xl border border-purple-500/20 bg-purple-500/5 px-4 py-3 text-center">
+                          {eloChange !== null ? (
+                            <>
+                              <div
+                                className={`text-lg font-black ${eloChange >= 0 ? "text-emerald-400" : "text-red-400"}`}
+                              >
+                                {eloChange >= 0 ? "+" : ""}
+                                {eloChange} ELO
+                              </div>
+                              <div className="mt-0.5 text-xs text-slate-500">
+                                {`vs ${aiLevel === "hard" ? "Hard AI (1600)" : aiLevel === "medium" ? "Medium AI (1200)" : aiLevel === "easy" ? "Easy AI (800)" : "Beginner AI (400)"}`}
+                              </div>
+                              <div className="mt-0.5 text-xs text-slate-500">
+                                {`Rating: ${myRating ?? DEFAULT_CHAOS_ELO} → ${(myRating ?? DEFAULT_CHAOS_ELO) + (aiEloSaved ? 0 : eloChange)}`}
+                              </div>
+                            </>
+                          ) : (
+                            <div className="text-xs text-slate-500">
+                              ⚡ Chaos ELO — sign in to track your rating
+                            </div>
+                          )}
+
+                          {eloChange !== null && !authenticated && (
+                            <a
+                              href="/auth/signin"
+                              className="mt-2 block w-full rounded-lg border border-purple-500/40 bg-purple-500/20 px-4 py-2 text-xs font-bold text-purple-300 transition-all hover:bg-purple-500/30"
+                            >
+                              🔐 Sign in to save your Chaos ELO
+                            </a>
+                          )}
+                          {eloChange !== null &&
+                            authenticated &&
+                            !aiEloSaved && (
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const result =
+                                    gameResult === playerColor
+                                      ? "win"
+                                      : gameResult === "draw"
+                                        ? "draw"
+                                        : "loss";
+                                  try {
+                                    const res = await fetch(
+                                      "/api/chaos/rating",
+                                      {
+                                        method: "POST",
+                                        headers: {
+                                          "Content-Type": "application/json",
+                                        },
+                                        body: JSON.stringify({
+                                          mode: "ai",
+                                          difficulty: aiLevel,
+                                          result,
+                                        }),
+                                      },
+                                    );
+                                    const data = await res.json();
+                                    if (data.ok) {
+                                      setAiEloSaved(true);
+                                      setMyRating(data.newRating);
+                                    }
+                                  } catch {
+                                    /* ignore */
+                                  }
+                                }}
+                                className="mt-2 w-full rounded-lg border border-purple-500/40 bg-purple-600/20 px-4 py-2 text-xs font-bold text-purple-300 transition-all hover:bg-purple-600/30"
+                              >
+                                🏆 Save to Leaderboard
+                              </button>
+                            )}
+                          {aiEloSaved && (
+                            <div className="mt-2 text-xs font-bold text-emerald-400">
+                              ✅ Saved! New rating:{" "}
+                              {myRating ?? DEFAULT_CHAOS_ELO}
+                            </div>
+                          )}
+                          <a
+                            href="/leaderboard/chaos"
+                            className="mt-2 block text-[10px] text-slate-500 hover:text-purple-400 transition-colors"
+                          >
+                            🏆 View Chaos Leaderboard
+                          </a>
+                        </div>
                       )}
-                      {eloChange !== null && authenticated && !eloSaved && (
+                    </div>
+                    {/* /left column */}
+                    {/* Right column: buttons + links */}
+                    <div className="flex flex-col gap-2 w-full">
+                      {/* Rematch (multiplayer) */}
+                      {gameMode !== "ai" &&
+                        !rematchRequested &&
+                        !rematchReceived && (
+                          <button
+                            type="button"
+                            onClick={handleRematch}
+                            className="w-full rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-2.5 text-sm font-bold text-blue-400 transition-all hover:bg-blue-500/20"
+                          >
+                            🔄 Rematch
+                          </button>
+                        )}
+                      {rematchRequested && !rematchReceived && (
+                        <span className="flex items-center gap-1.5 rounded-lg border border-blue-500/20 bg-blue-500/5 px-4 py-2.5 text-xs text-blue-400/70">
+                          <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-blue-400" />
+                          Waiting for opponent…
+                        </span>
+                      )}
+                      {rematchReceived && (
                         <button
                           type="button"
-                          onClick={async () => {
-                            const result =
-                              gameResult === playerColor
-                                ? "win"
-                                : gameResult === "draw"
-                                  ? "draw"
-                                  : "loss";
-                            try {
-                              await fetch("/api/chaos/rating", {
-                                method: "POST",
-                                headers: chaosHeaders(true),
-                                body: JSON.stringify({ roomId, result }),
-                              });
-                              setEloSaved(true);
-                              setMyRating(
-                                (prev) =>
-                                  (prev ?? DEFAULT_CHAOS_ELO) + eloChange,
-                              );
-                            } catch {
-                              /* ignore */
-                            }
-                          }}
-                          className="mt-2 w-full rounded-lg border border-purple-500/40 bg-purple-600/20 px-4 py-2 text-xs font-bold text-purple-300 transition-all hover:bg-purple-600/30"
+                          onClick={handleAcceptRematch}
+                          className="w-full rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-sm font-bold text-emerald-400 transition-all hover:bg-emerald-500/20 animate-pulse"
                         >
-                          💾 Save Rating
+                          ✅ Accept Rematch
                         </button>
                       )}
-                      {eloSaved && (
-                        <div className="mt-2 text-xs font-bold text-emerald-400">
-                          ✅ Rating saved! New rating:{" "}
-                          {myRating ?? DEFAULT_CHAOS_ELO}
-                        </div>
-                      )}
 
-                      {/* Leaderboard link */}
-                      <a
-                        href="/leaderboard/chaos"
-                        className="mt-2 block text-[10px] text-slate-500 hover:text-purple-400 transition-colors"
-                      >
-                        🏆 View Chaos Leaderboard
-                      </a>
-                    </div>
-                  )}
-
-                  {/* ── ELO section (AI games) ── */}
-                  {gameMode === "ai" && (
-                    <div className="w-full rounded-xl border border-purple-500/20 bg-purple-500/5 px-4 py-3 text-center">
-                      {eloChange !== null ? (
-                        <>
-                          <div
-                            className={`text-lg font-black ${eloChange >= 0 ? "text-emerald-400" : "text-red-400"}`}
-                          >
-                            {eloChange >= 0 ? "+" : ""}
-                            {eloChange} ELO
-                          </div>
-                          <div className="mt-0.5 text-xs text-slate-500">
-                            {`vs ${aiLevel === "hard" ? "Hard AI (1600)" : aiLevel === "medium" ? "Medium AI (1200)" : aiLevel === "easy" ? "Easy AI (800)" : "Beginner AI (400)"}`}
-                          </div>
-                          <div className="mt-0.5 text-xs text-slate-500">
-                            {`Rating: ${myRating ?? DEFAULT_CHAOS_ELO} → ${(myRating ?? DEFAULT_CHAOS_ELO) + (aiEloSaved ? 0 : eloChange)}`}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-xs text-slate-500">
-                          ⚡ Chaos ELO — sign in to track your rating
-                        </div>
-                      )}
-
-                      {eloChange !== null && !authenticated && (
-                        <a
-                          href="/auth/signin"
-                          className="mt-2 block w-full rounded-lg border border-purple-500/40 bg-purple-500/20 px-4 py-2 text-xs font-bold text-purple-300 transition-all hover:bg-purple-500/30"
-                        >
-                          🔐 Sign in to save your Chaos ELO
-                        </a>
-                      )}
-                      {eloChange !== null && authenticated && !aiEloSaved && (
+                      {/* AI rematch */}
+                      {gameMode === "ai" && (
                         <button
                           type="button"
-                          onClick={async () => {
-                            const result =
-                              gameResult === playerColor
-                                ? "win"
-                                : gameResult === "draw"
-                                  ? "draw"
-                                  : "loss";
-                            try {
-                              const res = await fetch("/api/chaos/rating", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({
-                                  mode: "ai",
-                                  difficulty: aiLevel,
-                                  result,
-                                }),
-                              });
-                              const data = await res.json();
-                              if (data.ok) {
-                                setAiEloSaved(true);
-                                setMyRating(data.newRating);
-                              }
-                            } catch {
-                              /* ignore */
-                            }
-                          }}
-                          className="mt-2 w-full rounded-lg border border-purple-500/40 bg-purple-600/20 px-4 py-2 text-xs font-bold text-purple-300 transition-all hover:bg-purple-600/30"
-                        >
-                          🏆 Save to Leaderboard
-                        </button>
-                      )}
-                      {aiEloSaved && (
-                        <div className="mt-2 text-xs font-bold text-emerald-400">
-                          ✅ Saved! New rating: {myRating ?? DEFAULT_CHAOS_ELO}
-                        </div>
-                      )}
-                      <a
-                        href="/leaderboard/chaos"
-                        className="mt-2 block text-[10px] text-slate-500 hover:text-purple-400 transition-colors"
-                      >
-                        🏆 View Chaos Leaderboard
-                      </a>
-                    </div>
-                  )}
-
-                  </div>{/* /left column */}
-                  {/* Right column: buttons + links */}
-                  <div className="flex flex-col gap-2 w-full">
-                    {/* Rematch (multiplayer) */}
-                    {gameMode !== "ai" &&
-                      !rematchRequested &&
-                      !rematchReceived && (
-                        <button
-                          type="button"
-                          onClick={handleRematch}
+                          onClick={() => startGame(playerColor, "ai")}
                           className="w-full rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-2.5 text-sm font-bold text-blue-400 transition-all hover:bg-blue-500/20"
                         >
-                          🔄 Rematch
+                          🔄 Play Again
                         </button>
                       )}
-                    {rematchRequested && !rematchReceived && (
-                      <span className="flex items-center gap-1.5 rounded-lg border border-blue-500/20 bg-blue-500/5 px-4 py-2.5 text-xs text-blue-400/70">
-                        <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-blue-400" />
-                        Waiting for opponent…
-                      </span>
-                    )}
-                    {rematchReceived && (
+
+                      {/* New game */}
                       <button
                         type="button"
-                        onClick={handleAcceptRematch}
-                        className="w-full rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-sm font-bold text-emerald-400 transition-all hover:bg-emerald-500/20 animate-pulse"
+                        onClick={() => {
+                          setGameStatus("setup");
+                          setGameResult(null);
+                          setEndReason("");
+                          setRoomId(null);
+                          setRoomCode("");
+                          setMatchmakeState("idle");
+                          setDrawOfferSent(false);
+                          setDrawOfferReceived(false);
+                          setRematchRequested(false);
+                          setRematchReceived(false);
+                          if (pollRef.current) clearInterval(pollRef.current);
+                        }}
+                        className="w-full rounded-lg border border-purple-500/30 bg-purple-500/10 px-4 py-2.5 text-sm font-bold text-purple-400 transition-all hover:bg-purple-500/20"
                       >
-                        ✅ Accept Rematch
+                        ⚡ New Game
                       </button>
-                    )}
 
-                    {/* AI rematch */}
-                    {gameMode === "ai" && (
+                      {/* Share button */}
                       <button
                         type="button"
-                        onClick={() => startGame(playerColor, "ai")}
-                        className="w-full rounded-lg border border-blue-500/30 bg-blue-500/10 px-4 py-2.5 text-sm font-bold text-blue-400 transition-all hover:bg-blue-500/20"
+                        onClick={() => {
+                          const mods = chaosState.playerModifiers
+                            .map((m) => m.name)
+                            .join(", ");
+                          const resultText =
+                            gameResult === playerColor
+                              ? "won"
+                              : gameResult === "draw"
+                                ? "drew"
+                                : "lost";
+                          const opponent =
+                            gameMode === "ai"
+                              ? `Stockfish (${aiLevel})`
+                              : "a friend";
+                          const modsText = mods ? ` with ${mods}` : "";
+                          const text = `Just ${resultText} a Chaos Chess game against ${opponent}${modsText} 🔥\n\nFree to play → firechess.com/chaos`;
+                          window.open(
+                            `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`,
+                            "_blank",
+                            "noopener,noreferrer",
+                          );
+                        }}
+                        className="w-full rounded-lg border border-sky-500/25 bg-sky-500/8 px-4 py-2.5 text-xs font-semibold text-sky-400/80 transition-all hover:bg-sky-500/15 flex items-center justify-center gap-2"
                       >
-                        🔄 Play Again
+                        <svg
+                          width="13"
+                          height="13"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                        >
+                          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622Zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                        </svg>
+                        Share result
                       </button>
-                    )}
 
-                    {/* New game */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setGameStatus("setup");
-                        setGameResult(null);
-                        setEndReason("");
-                        setRoomId(null);
-                        setRoomCode("");
-                        setMatchmakeState("idle");
-                        setDrawOfferSent(false);
-                        setDrawOfferReceived(false);
-                        setRematchRequested(false);
-                        setRematchReceived(false);
-                        if (pollRef.current) clearInterval(pollRef.current);
-                      }}
-                      className="w-full rounded-lg border border-purple-500/30 bg-purple-500/10 px-4 py-2.5 text-sm font-bold text-purple-400 transition-all hover:bg-purple-500/20"
-                    >
-                      ⚡ New Game
-                    </button>
+                      {/* Guest upsell — context-aware based on whether they previewed anything */}
+                      {!authenticated && previewedThisGame.size > 0 && (
+                        <a
+                          href="/auth/signin"
+                          className="mt-1 flex items-center justify-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-medium text-amber-300 transition-all hover:bg-amber-500/20 w-full"
+                        >
+                          🔓 Sign in to unlock{" "}
+                          {previewedThisGame.size === 1
+                            ? [...previewedThisGame][0]
+                            : `${previewedThisGame.size} modifiers`}{" "}
+                          permanently
+                        </a>
+                      )}
+                      {!authenticated && previewedThisGame.size === 0 && (
+                        <a
+                          href="/auth/signin"
+                          className="mt-1 flex items-center justify-center gap-2 rounded-lg border border-amber-500/25 bg-amber-500/8 px-4 py-2.5 text-xs font-medium text-amber-300/80 transition-all hover:bg-amber-500/15 w-full"
+                        >
+                          🎨 Sign in for custom pieces &amp; board themes
+                        </a>
+                      )}
 
-                    {/* Share button */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const mods = chaosState.playerModifiers
-                          .map((m) => m.name)
-                          .join(", ");
-                        const resultText =
-                          gameResult === playerColor
-                            ? "won"
-                            : gameResult === "draw"
-                              ? "drew"
-                              : "lost";
-                        const opponent =
-                          gameMode === "ai"
-                            ? `Stockfish (${aiLevel})`
-                            : "a friend";
-                        const modsText = mods ? ` with ${mods}` : "";
-                        const text = `Just ${resultText} a Chaos Chess game against ${opponent}${modsText} 🔥\n\nFree to play → firechess.com/chaos`;
-                        window.open(
-                          `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`,
-                          "_blank",
-                          "noopener,noreferrer",
-                        );
-                      }}
-                      className="w-full rounded-lg border border-sky-500/25 bg-sky-500/8 px-4 py-2.5 text-xs font-semibold text-sky-400/80 transition-all hover:bg-sky-500/15 flex items-center justify-center gap-2"
-                    >
-                      <svg
-                        width="13"
-                        height="13"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622 5.91-5.622Zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                      </svg>
-                      Share result
-                    </button>
-
-                    {/* Guest upsell — context-aware based on whether they previewed anything */}
-                    {!authenticated && previewedThisGame.size > 0 && (
+                      {/* Discord CTA */}
                       <a
-                        href="/auth/signin"
-                        className="mt-1 flex items-center justify-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-medium text-amber-300 transition-all hover:bg-amber-500/20 w-full"
+                        href="https://discord.gg/YS8fc4FtEk"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl border border-indigo-500/25 bg-indigo-500/[0.08] px-4 py-2.5 text-xs font-semibold text-indigo-300/80 transition-all hover:bg-indigo-500/15"
                       >
-                        🔓 Sign in to unlock {previewedThisGame.size === 1 ? [...previewedThisGame][0] : `${previewedThisGame.size} modifiers`} permanently
+                        <svg
+                          className="h-3.5 w-3.5"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.033.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
+                        </svg>
+                        Join our Discord
                       </a>
-                    )}
-                    {!authenticated && previewedThisGame.size === 0 && (
+
+                      {/* Scan your real games CTA */}
                       <a
-                        href="/auth/signin"
-                        className="mt-1 flex items-center justify-center gap-2 rounded-lg border border-amber-500/25 bg-amber-500/8 px-4 py-2.5 text-xs font-medium text-amber-300/80 transition-all hover:bg-amber-500/15 w-full"
+                        href="/"
+                        className="mt-1 flex w-full items-center justify-between gap-3 rounded-xl border border-orange-500/20 bg-orange-500/5 px-4 py-3 transition-all hover:border-orange-500/35 hover:bg-orange-500/10 group"
                       >
-                        🎨 Sign in for custom pieces &amp; board themes
+                        <div className="text-left">
+                          <p className="text-xs font-bold text-orange-300">
+                            🔥 Losing games on chess.com too?
+                          </p>
+                          <p className="mt-0.5 text-[11px] text-slate-500">
+                            Scan your real games for patterns &amp; mistakes
+                          </p>
+                        </div>
+                        <svg
+                          className="h-4 w-4 shrink-0 text-orange-400/60 transition-transform group-hover:translate-x-0.5"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                        >
+                          <path d="M5 12h14M12 5l7 7-7 7" />
+                        </svg>
                       </a>
-                    )}
-
-                  {/* Discord CTA */}
-                  <a
-                    href="https://discord.gg/YS8fc4FtEk"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-1 flex w-full items-center justify-center gap-2 rounded-xl border border-indigo-500/25 bg-indigo-500/[0.08] px-4 py-2.5 text-xs font-semibold text-indigo-300/80 transition-all hover:bg-indigo-500/15"
-                  >
-                    <svg
-                      className="h-3.5 w-3.5"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.033.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z" />
-                    </svg>
-                    Join our Discord
-                  </a>
-
-                  {/* Scan your real games CTA */}
-                  <a
-                    href="/"
-                    className="mt-1 flex w-full items-center justify-between gap-3 rounded-xl border border-orange-500/20 bg-orange-500/5 px-4 py-3 transition-all hover:border-orange-500/35 hover:bg-orange-500/10 group"
-                  >
-                    <div className="text-left">
-                      <p className="text-xs font-bold text-orange-300">
-                        🔥 Losing games on chess.com too?
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-slate-500">
-                        Scan your real games for patterns &amp; mistakes
-                      </p>
                     </div>
-                    <svg
-                      className="h-4 w-4 shrink-0 text-orange-400/60 transition-transform group-hover:translate-x-0.5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                    >
-                      <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
-                  </a>
-                  </div>{/* /right column */}
-                  </div>{/* /grid */}
+                    {/* /right column */}
+                  </div>
+                  {/* /grid */}
                 </div>
               </div>
             )}
