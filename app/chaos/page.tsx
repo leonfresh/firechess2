@@ -113,11 +113,7 @@ import {
   PARTYKIT_HOST,
   type PartyMessage,
 } from "@/lib/use-party-room";
-import {
-  computeEloChange,
-  DEFAULT_CHAOS_ELO,
-  TIME_CONTROLS,
-} from "@/lib/chaos-elo";
+import { computeEloChange, DEFAULT_CHAOS_ELO } from "@/lib/chaos-elo";
 import {
   GUEST_UNLOCKED_IDS,
   LS_PENDING_UNLOCK,
@@ -4047,13 +4043,6 @@ export default function ChaosChessPage() {
 
   /* ── Time controls ── */
 
-  /** PvP time control picker selection — defaults to Unlimited. Drives createRoom + matchmake. */
-  const [pvpPreset, setPvpPreset] = useState<(typeof TIME_CONTROLS)[number]>(
-    TIME_CONTROLS[0],
-  );
-  const pvpPresetRef = useRef<(typeof TIME_CONTROLS)[number]>(TIME_CONTROLS[0]);
-  pvpPresetRef.current = pvpPreset;
-
   const [timeControl, setTimeControl] = useState<{
     label: string;
     base: number;
@@ -4473,8 +4462,7 @@ export default function ChaosChessPage() {
       clearInterval(timerIntervalRef.current);
       timerIntervalRef.current = null;
     }
-    if (gameStatus !== "playing" || !timeControl || timeControl.base === 0)
-      return;
+    if (gameStatus !== "playing" || !timeControl) return;
     timerIntervalRef.current = setInterval(() => {
       const turn = gameRef.current.turn() as "w" | "b";
       setTimers((prev) => ({ ...prev, [turn]: Math.max(0, prev[turn] - 100) }));
@@ -4490,8 +4478,7 @@ export default function ChaosChessPage() {
 
   /* ── Timer timeout check ── */
   useEffect(() => {
-    if (!timeControl || timeControl.base === 0 || gameStatus !== "playing")
-      return;
+    if (!timeControl || gameStatus !== "playing") return;
     if (timers.w === 0 && timers.b > 0) {
       setGameResult("black");
       setGameStatus("game-over");
@@ -4504,12 +4491,11 @@ export default function ChaosChessPage() {
   }, [timers.w, timers.b, gameStatus, timeControl]);
 
   /* ── Per-move countdown timer (PvP only, 30s per turn — auto-resign at 0) ── */
-  // Disabled when timeControl is set (Unlimited or chess clock was explicitly chosen).
-  // Only runs as a legacy fallback when timeControl === null (room with no TC config).
+  // Ref so the setInterval callback can check turn without a stale closure
   const isMyTurnRef = useRef(false);
   useEffect(() => {
-    // Only relevant for PvP games in progress — skip when TC is explicitly configured
-    if (gameMode === "ai" || gameStatus !== "playing" || timeControl !== null) {
+    // Only relevant for PvP games in progress
+    if (gameMode === "ai" || gameStatus !== "playing") {
       if (perMoveTimerRef.current) {
         clearInterval(perMoveTimerRef.current);
         perMoveTimerRef.current = null;
@@ -6750,8 +6736,8 @@ export default function ChaosChessPage() {
         headers: chaosHeaders(true),
         body: JSON.stringify({
           hostColor: color,
-          timeControlSeconds: pvpPresetRef.current.base,
-          incrementSeconds: pvpPresetRef.current.inc,
+          timeControlSeconds: timeControlRef.current?.base ?? 0,
+          incrementSeconds: timeControlRef.current?.inc ?? 0,
         }),
       });
       const data = await res.json();
@@ -6776,10 +6762,9 @@ export default function ChaosChessPage() {
           pepe: PEPE.detective,
         },
       ]);
-      // Apply selected time control and init timers
-      const preset = pvpPresetRef.current;
-      setTimeControl(preset);
-      setTimers({ w: preset.base * 1000, b: preset.base * 1000 });
+      // Init timers so UI shows correct values when game starts
+      const tc = timeControlRef.current;
+      setTimers({ w: (tc?.base ?? 0) * 1000, b: (tc?.base ?? 0) * 1000 });
       setEloChange(null);
       setEloSaved(false);
       setAiEloSaved(false);
@@ -6839,31 +6824,9 @@ export default function ChaosChessPage() {
       setMoveLog([]);
       setFloatingPepes([]);
       setCapturedPawns({ w: 0, b: 0 });
-      // Sync time control from the room (host's choice)
-      {
-        const serverTc = (data.timeControlSeconds as number | null) ?? null;
-        const serverInc = (data.incrementSeconds as number) ?? 0;
-        if (serverTc !== null) {
-          const found = TIME_CONTROLS.find(
-            (t) => t.base === serverTc && t.inc === serverInc,
-          );
-          setTimeControl(
-            found ?? {
-              label:
-                serverTc === 0
-                  ? "∞  Unlimited"
-                  : `${serverTc / 60}+${serverInc}`,
-              base: serverTc,
-              inc: serverInc,
-            },
-          );
-          setTimers({ w: serverTc * 1000, b: serverTc * 1000 });
-        } else {
-          // Legacy room — no TC config, per-move 30s timer will run
-          setTimeControl(null);
-          setTimers({ w: 0, b: 0 });
-        }
-      }
+      // No clock time controls — always untimed
+      setTimeControl(null);
+      setTimers({ w: 0, b: 0 });
       setEloChange(null);
       setEloSaved(false);
       setAiEloSaved(false);
@@ -10467,38 +10430,6 @@ export default function ChaosChessPage() {
           {/* ── Friend Mode ── */}
           {gameMode === "friend" && (
             <div className="flex w-full max-w-sm flex-col gap-4">
-              {/* Time Control picker */}
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                  Time Control
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {TIME_CONTROLS.map((tc) => {
-                    const selected =
-                      pvpPreset.base === tc.base && pvpPreset.inc === tc.inc;
-                    return (
-                      <button
-                        key={tc.label}
-                        type="button"
-                        onClick={() => setPvpPreset(tc)}
-                        className={`rounded-lg border px-3 py-1.5 text-[11px] font-medium transition-all ${
-                          selected
-                            ? "border-purple-400/70 bg-purple-500/25 text-purple-200"
-                            : "border-white/[0.08] bg-white/[0.03] text-slate-400 hover:border-white/20 hover:text-slate-200"
-                        }`}
-                      >
-                        {tc.label}
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="mt-2 text-[10px] text-slate-600">
-                  {pvpPreset.base === 0
-                    ? "No clock — play at your own pace"
-                    : `${Math.floor(pvpPreset.base / 60)} min per player${pvpPreset.inc > 0 ? `, +${pvpPreset.inc}s per move` : ""}`}
-                </p>
-              </div>
-
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
                 <p className="mb-1 text-sm font-bold text-white">
                   Create a Room
@@ -10557,41 +10488,8 @@ export default function ChaosChessPage() {
               <p className="text-sm text-slate-400">
                 Find a random opponent to play Chaos Chess against
               </p>
-              {/* Time Control picker */}
-              <div className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-                <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                  Time Control
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {TIME_CONTROLS.map((tc) => {
-                    const selected =
-                      pvpPreset.base === tc.base && pvpPreset.inc === tc.inc;
-                    return (
-                      <button
-                        key={tc.label}
-                        type="button"
-                        onClick={() => setPvpPreset(tc)}
-                        className={`rounded-lg border px-3 py-1.5 text-[11px] font-medium transition-all ${
-                          selected
-                            ? "border-purple-400/70 bg-purple-500/25 text-purple-200"
-                            : "border-white/[0.08] bg-white/[0.03] text-slate-400 hover:border-white/20 hover:text-slate-200"
-                        }`}
-                      >
-                        {tc.label}
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="mt-2 text-[10px] text-slate-600">
-                  {pvpPreset.base === 0
-                    ? "No clock — play at your own pace"
-                    : `${Math.floor(pvpPreset.base / 60)} min per player${pvpPreset.inc > 0 ? `, +${pvpPreset.inc}s per move` : ""}`}
-                </p>
-              </div>
               <ChaosLobby
                 isSignedIn={true}
-                timeControlSeconds={pvpPreset.base}
-                incrementSeconds={pvpPreset.inc}
                 onMatchFound={(data) => {
                   setRoomId(data.roomId);
                   setRoomCode(data.roomCode);
@@ -10642,36 +10540,7 @@ export default function ChaosChessPage() {
                   setMyRating(null);
                   setOpponentRating(null);
                   setTimers({ w: 0, b: 0 });
-                  // Sync time control: use host's own preset when we created the room,
-                  // or read from the matched room when we joined someone else's.
-                  if (data.joined) {
-                    const serverTc =
-                      (data as { timeControlSeconds?: number | null })
-                        .timeControlSeconds ?? null;
-                    const serverInc =
-                      (data as { incrementSeconds?: number })
-                        .incrementSeconds ?? 0;
-                    if (serverTc !== null) {
-                      const found = TIME_CONTROLS.find(
-                        (t) => t.base === serverTc && t.inc === serverInc,
-                      );
-                      setTimeControl(
-                        found ?? {
-                          label:
-                            serverTc === 0
-                              ? "∞  Unlimited"
-                              : `${serverTc / 60}+${serverInc}`,
-                          base: serverTc,
-                          inc: serverInc,
-                        },
-                      );
-                    } else {
-                      setTimeControl(null);
-                    }
-                  } else {
-                    // We're the host — use our locally selected preset
-                    setTimeControl(pvpPreset);
-                  }
+                  setTimeControl(null);
                   spawnPepe(PEPE.hyped);
                   startPolling(data.roomId, myColor);
                   // Notify via WebSocket
@@ -11360,7 +11229,6 @@ export default function ChaosChessPage() {
               <InlineModifierIcons modifiers={chaosState.aiModifiers} />
               {gameMode !== "ai" &&
                 gameStatus === "playing" &&
-                timeControl === null &&
                 (() => {
                   const isOppTurn =
                     (playerColor === "white" && game.turn() === "b") ||
@@ -11382,10 +11250,9 @@ export default function ChaosChessPage() {
                 })()}
             </div>
 
-            {/* Per-move countdown (PvP only — 30s per turn, legacy no-TC mode) */}
+            {/* Per-move countdown (PvP only — 30s per turn) */}
             {gameMode !== "ai" &&
               gameStatus === "playing" &&
-              timeControl === null &&
               (() => {
                 const isMyTurn =
                   (playerColor === "white" && game.turn() === "w") ||
@@ -11668,7 +11535,7 @@ export default function ChaosChessPage() {
                   </div>
                 </AnomalyTooltip>
               )}
-              {timeControl && timeControl.base > 0 && gameMode !== "ai" && (
+              {timeControl && gameMode !== "ai" && (
                 <span
                   className={`ml-auto font-mono text-sm font-bold tabular-nums ${
                     (playerColor === "white" ? timers.w : timers.b) < 10000

@@ -27,31 +27,20 @@ export async function POST(req: NextRequest) {
   const rooms = await db
     .select()
     .from(chaosRooms)
-    .where(
-      and(eq(chaosRooms.roomCode, code), eq(chaosRooms.status, "waiting")),
-    );
+    .where(and(eq(chaosRooms.roomCode, code), eq(chaosRooms.status, "waiting")));
 
   if (rooms.length === 0) {
-    return NextResponse.json(
-      { error: "Room not found or already full" },
-      { status: 404 },
-    );
+    return NextResponse.json({ error: "Room not found or already full" }, { status: 404 });
   }
 
   const room = rooms[0];
 
   if (room.hostId === userId) {
-    return NextResponse.json(
-      { error: "You can't join your own room" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "You can't join your own room" }, { status: 400 });
   }
 
   if (room.guestId && room.guestId !== userId) {
-    return NextResponse.json(
-      { error: "Room is already full" },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: "Room is already full" }, { status: 400 });
   }
 
   // Join the room
@@ -69,7 +58,5 @@ export async function POST(req: NextRequest) {
     hostColor: room.hostColor,
     fen: room.fen,
     chaosState: room.chaosState,
-    timeControlSeconds: room.timeControlSeconds,
-    incrementSeconds: room.incrementSeconds,
   });
 }

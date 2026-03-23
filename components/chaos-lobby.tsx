@@ -42,27 +42,21 @@ type LobbyProps = {
     roomCode: string;
     hostColor: string;
     joined: boolean; // true = joined existing room, false = opponent joined ours
-    /** Time control from the matched room (only present when joined=true) */
-    timeControlSeconds?: number | null;
-    incrementSeconds?: number;
   }) => void;
   onCancel: () => void;
   /** Whether the user is currently signed in */
   isSignedIn: boolean;
   /** When true, only show online count + chat (no search UI) */
   chatOnly?: boolean;
-  /** Time control preference sent to the server when creating a matchmake room */
-  timeControlSeconds?: number;
-  incrementSeconds?: number;
 };
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                           */
 /* ------------------------------------------------------------------ */
 
-const PRESENCE_INTERVAL = 10_000; // heartbeat every 10s
-const CHAT_POLL_INTERVAL = 2_000; // poll chat every 2s
-const MAX_SEARCH_TIME = 60; // 60 seconds max search
+const PRESENCE_INTERVAL = 10_000;   // heartbeat every 10s
+const CHAT_POLL_INTERVAL = 2_000;   // poll chat every 2s
+const MAX_SEARCH_TIME = 60;         // 60 seconds max search
 
 const PEPE_GIFS = [
   "/pepe-emojis/animated/88627-pepehype.gif",
@@ -75,22 +69,13 @@ const PEPE_GIFS = [
 /*  Component                                                           */
 /* ------------------------------------------------------------------ */
 
-export function ChaosLobby({
-  onMatchFound,
-  onCancel,
-  isSignedIn,
-  chatOnly,
-  timeControlSeconds,
-  incrementSeconds,
-}: LobbyProps) {
+export function ChaosLobby({ onMatchFound, onCancel, isSignedIn, chatOnly }: LobbyProps) {
   /* ── State ── */
   const [onlineCount, setOnlineCount] = useState(0);
   const [messages, setMessages] = useState<LobbyMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [searchState, setSearchState] = useState<
-    "idle" | "searching" | "found"
-  >("idle");
+  const [searchState, setSearchState] = useState<"idle" | "searching" | "found">("idle");
   const [elapsed, setElapsed] = useState(0);
 
   /* ── Refs ── */
@@ -101,11 +86,7 @@ export function ChaosLobby({
   const chatEndRef = useRef<HTMLDivElement>(null);
   const lastMsgCountRef = useRef(0);
   /** Room we created while host-waiting (so we can cancel it) */
-  const ownRoomRef = useRef<{
-    roomId: string;
-    roomCode: string;
-    hostColor: string;
-  } | null>(null);
+  const ownRoomRef = useRef<{ roomId: string; roomCode: string; hostColor: string } | null>(null);
 
   /* ── Cleanup all intervals ── */
   const clearAllIntervals = useCallback(() => {
@@ -201,10 +182,7 @@ export function ChaosLobby({
 
     // Try to find an existing room first
     try {
-      const res = await fetch("/api/chaos/matchmake", {
-        headers: chaosHeaders(),
-        credentials: "include",
-      });
+      const res = await fetch("/api/chaos/matchmake", { headers: chaosHeaders(), credentials: "include" });
       const data = await res.json();
       if (data.roomId) {
         setSearchState("found");
@@ -214,8 +192,6 @@ export function ChaosLobby({
           roomCode: data.roomCode,
           hostColor: data.hostColor,
           joined: true,
-          timeControlSeconds: data.timeControlSeconds ?? null,
-          incrementSeconds: data.incrementSeconds ?? 0,
         });
         return;
       }
@@ -225,15 +201,9 @@ export function ChaosLobby({
 
     // No open room — create one
     try {
-      const tcBody: Record<string, number | null> = {};
-      if (timeControlSeconds !== undefined)
-        tcBody.timeControlSeconds = timeControlSeconds;
-      if (incrementSeconds !== undefined)
-        tcBody.incrementSeconds = incrementSeconds;
       const createRes = await fetch("/api/chaos/matchmake", {
         method: "POST",
-        headers: chaosHeaders(true),
-        body: JSON.stringify(tcBody),
+        headers: chaosHeaders(),
         credentials: "include",
       });
       const createData = await createRes.json();
@@ -281,10 +251,7 @@ export function ChaosLobby({
           // Every 3rd cycle, also try to find a different room to join
           // This fixes the simultaneous-creation deadlock
           if (pollCycle % 3 === 0 && ownRoomRef.current) {
-            const retryRes = await fetch("/api/chaos/matchmake", {
-              headers: chaosHeaders(),
-              credentials: "include",
-            });
+            const retryRes = await fetch("/api/chaos/matchmake", { headers: chaosHeaders(), credentials: "include" });
             const retryData = await retryRes.json();
             if (retryData.roomId) {
               // Found another room! Cancel ours and join theirs
@@ -307,8 +274,6 @@ export function ChaosLobby({
                 roomCode: retryData.roomCode,
                 hostColor: retryData.hostColor,
                 joined: true,
-                timeControlSeconds: retryData.timeControlSeconds ?? null,
-                incrementSeconds: retryData.incrementSeconds ?? 0,
               });
               return;
             }
@@ -344,15 +309,7 @@ export function ChaosLobby({
     } catch {
       setSearchState("idle");
     }
-  }, [
-    isSignedIn,
-    chatOnly,
-    onMatchFound,
-    onCancel,
-    clearAllIntervals,
-    timeControlSeconds,
-    incrementSeconds,
-  ]);
+  }, [isSignedIn, chatOnly, onMatchFound, onCancel, clearAllIntervals]);
 
   /* ── Cancel search ── */
   const cancelSearch = useCallback(() => {
@@ -397,98 +354,81 @@ export function ChaosLobby({
 
       {/* ── Search button / timer ── */}
       {!chatOnly && (
-        <div className="flex flex-col items-center gap-3">
-          {searchState === "idle" && (
+      <div className="flex flex-col items-center gap-3">
+        {searchState === "idle" && (
+          <button
+            type="button"
+            onClick={startSearch}
+            disabled={!isSignedIn}
+            className="rounded-xl border border-purple-500/30 bg-purple-500/10 px-8 py-4 text-lg font-bold text-purple-400 transition-all hover:bg-purple-500/20 hover:scale-105 disabled:opacity-50"
+          >
+            🎲 Find Opponent
+          </button>
+        )}
+
+        {searchState === "searching" && (
+          <div className="flex w-full max-w-xs flex-col items-center gap-3">
+            {/* Timer ring */}
+            <div className="relative flex h-24 w-24 items-center justify-center">
+              <svg className="absolute h-full w-full -rotate-90" viewBox="0 0 100 100">
+                <circle
+                  cx="50" cy="50" r="44"
+                  fill="none"
+                  stroke="rgba(168,85,247,0.15)"
+                  strokeWidth="6"
+                />
+                <circle
+                  cx="50" cy="50" r="44"
+                  fill="none"
+                  stroke="rgba(168,85,247,0.8)"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 44}`}
+                  strokeDashoffset={`${2 * Math.PI * 44 * (progressPct / 100)}`}
+                  className="transition-all duration-1000"
+                />
+              </svg>
+              <div className="flex flex-col items-center">
+                <span className="text-xl font-bold text-purple-400">{timerLabel}</span>
+                <span className="text-[9px] uppercase tracking-wider text-slate-500">remaining</span>
+              </div>
+            </div>
+
+            {/* Searching label */}
+            <div className="flex items-center gap-2 text-sm text-slate-400">
+              <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
+              Searching for opponent…
+            </div>
+
+            {/* Progress bar */}
+            <div className="h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-1000"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+
             <button
               type="button"
-              onClick={startSearch}
-              disabled={!isSignedIn}
-              className="rounded-xl border border-purple-500/30 bg-purple-500/10 px-8 py-4 text-lg font-bold text-purple-400 transition-all hover:bg-purple-500/20 hover:scale-105 disabled:opacity-50"
+              onClick={cancelSearch}
+              className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs font-medium text-red-400 transition-all hover:bg-red-500/20"
             >
-              🎲 Find Opponent
+              Cancel
             </button>
-          )}
+          </div>
+        )}
 
-          {searchState === "searching" && (
-            <div className="flex w-full max-w-xs flex-col items-center gap-3">
-              {/* Timer ring */}
-              <div className="relative flex h-24 w-24 items-center justify-center">
-                <svg
-                  className="absolute h-full w-full -rotate-90"
-                  viewBox="0 0 100 100"
-                >
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="44"
-                    fill="none"
-                    stroke="rgba(168,85,247,0.15)"
-                    strokeWidth="6"
-                  />
-                  <circle
-                    cx="50"
-                    cy="50"
-                    r="44"
-                    fill="none"
-                    stroke="rgba(168,85,247,0.8)"
-                    strokeWidth="6"
-                    strokeLinecap="round"
-                    strokeDasharray={`${2 * Math.PI * 44}`}
-                    strokeDashoffset={`${2 * Math.PI * 44 * (progressPct / 100)}`}
-                    className="transition-all duration-1000"
-                  />
-                </svg>
-                <div className="flex flex-col items-center">
-                  <span className="text-xl font-bold text-purple-400">
-                    {timerLabel}
-                  </span>
-                  <span className="text-[9px] uppercase tracking-wider text-slate-500">
-                    remaining
-                  </span>
-                </div>
-              </div>
+        {searchState === "found" && (
+          <div className="flex items-center gap-2 text-lg font-bold text-emerald-400">
+            <img src={PEPE_GIFS[0]} alt="" className="h-8 w-8 object-contain" />
+            Opponent found!
+          </div>
+        )}
 
-              {/* Searching label */}
-              <div className="flex items-center gap-2 text-sm text-slate-400">
-                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
-                Searching for opponent…
-              </div>
-
-              {/* Progress bar */}
-              <div className="h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-1000"
-                  style={{ width: `${progressPct}%` }}
-                />
-              </div>
-
-              <button
-                type="button"
-                onClick={cancelSearch}
-                className="rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-xs font-medium text-red-400 transition-all hover:bg-red-500/20"
-              >
-                Cancel
-              </button>
-            </div>
-          )}
-
-          {searchState === "found" && (
-            <div className="flex items-center gap-2 text-lg font-bold text-emerald-400">
-              <img
-                src={PEPE_GIFS[0]}
-                alt=""
-                className="h-8 w-8 object-contain"
-              />
-              Opponent found!
-            </div>
-          )}
-
-          {!isSignedIn && searchState === "idle" && (
-            <p className="text-xs text-slate-600">
-              (Sign in required to matchmake)
-            </p>
-          )}
-        </div>
+        {!isSignedIn && searchState === "idle" && (
+          <p className="text-xs text-slate-600">(Sign in required to matchmake)</p>
+        )}
+      </div>
       )}
 
       {/* ── Lobby Chat ── */}
@@ -519,10 +459,7 @@ export function ChaosLobby({
             </div>
           )}
           {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className="group flex items-start gap-2 rounded-lg px-2 py-1 hover:bg-white/[0.03]"
-            >
+            <div key={msg.id} className="group flex items-start gap-2 rounded-lg px-2 py-1 hover:bg-white/[0.03]">
               {msg.userImage ? (
                 <img
                   src={msg.userImage}
