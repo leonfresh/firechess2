@@ -1386,12 +1386,14 @@ function AnomalyPickerScreen({
   onPick,
   onSkip,
   waitingForOpponent = false,
+  unlimitedTime = false,
 }: {
   choices: AnomalyDefinition[];
   isPro: boolean;
   onPick: (anomaly: AnomalyDefinition) => void;
   onSkip: () => void;
   waitingForOpponent?: boolean;
+  unlimitedTime?: boolean;
 }) {
   const [selected, setSelected] = useState<AnomalyDefinition | null>(null);
   const [hoveredLocked, setHoveredLocked] = useState<number | null>(null);
@@ -1421,6 +1423,7 @@ function AnomalyPickerScreen({
 
   // Timer — depends only on isPro/choices (stable after mount), never onPick/onSkip
   useEffect(() => {
+    if (unlimitedTime) return; // no countdown in unlimited mode
     const interval = setInterval(() => {
       setTimeLeft((t) => {
         if (t <= 1) {
@@ -1507,21 +1510,29 @@ function AnomalyPickerScreen({
             </p>
             {/* Timer bar + countdown pill */}
             <div className="mt-3 flex flex-col items-center gap-1.5">
-              <div
-                className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold tabular-nums ${
-                  timeLeft > 10
-                    ? "border border-purple-500/30 bg-purple-500/10 text-purple-400"
-                    : "animate-pulse border border-red-500/40 bg-red-500/15 text-red-400"
-                }`}
-              >
-                ⏱ {timeLeft}s to choose
-              </div>
-              <div className="h-0.5 w-48 overflow-hidden rounded-full bg-white/[0.06]">
-                <div
-                  className={`h-full rounded-full transition-[width] duration-1000 ease-linear ${timeLeft > 10 ? "bg-purple-500" : timeLeft > 5 ? "bg-amber-500" : "bg-red-500"}`}
-                  style={{ width: `${(timeLeft / 30) * 100}%` }}
-                />
-              </div>
+              {unlimitedTime ? (
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-slate-500/30 bg-slate-500/10 px-3 py-1 text-xs font-bold text-slate-400">
+                  ∞ Take your time
+                </div>
+              ) : (
+                <>
+                  <div
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold tabular-nums ${
+                      timeLeft > 10
+                        ? "border border-purple-500/30 bg-purple-500/10 text-purple-400"
+                        : "animate-pulse border border-red-500/40 bg-red-500/15 text-red-400"
+                    }`}
+                  >
+                    ⏱ {timeLeft}s to choose
+                  </div>
+                  <div className="h-0.5 w-48 overflow-hidden rounded-full bg-white/[0.06]">
+                    <div
+                      className={`h-full rounded-full transition-[width] duration-1000 ease-linear ${timeLeft > 10 ? "bg-purple-500" : timeLeft > 5 ? "bg-amber-500" : "bg-red-500"}`}
+                      style={{ width: `${(timeLeft / 30) * 100}%` }}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -4065,6 +4076,21 @@ export default function ChaosChessPage() {
   /* ── Per-move timer (PvP only, 30s per turn) ── */
   const [perMoveSecs, setPerMoveSecs] = useState(30);
   const perMoveTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  /* ── Unlimited time mode (no per-move or draft countdown) ── */
+  const [unlimitedTime, setUnlimitedTime] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem("chaos_unlimited_time") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const unlimitedTimeRef = useRef(false);
+  unlimitedTimeRef.current = unlimitedTime;
+  useEffect(() => {
+    localStorage.setItem("chaos_unlimited_time", unlimitedTime ? "1" : "0");
+  }, [unlimitedTime]);
   /** Always points to the latest handleResign — safe to call from inside timer interval */
   const handleResignRef = useRef<(() => void) | null>(null);
   /** Called from per-move timer when OPPONENT's turn runs out — grants victory to local player */
@@ -4494,8 +4520,8 @@ export default function ChaosChessPage() {
   // Ref so the setInterval callback can check turn without a stale closure
   const isMyTurnRef = useRef(false);
   useEffect(() => {
-    // Only relevant for PvP games in progress
-    if (gameMode === "ai" || gameStatus !== "playing") {
+    // Only relevant for PvP games in progress (and only when time-limited)
+    if (gameMode === "ai" || gameStatus !== "playing" || unlimitedTime) {
       if (perMoveTimerRef.current) {
         clearInterval(perMoveTimerRef.current);
         perMoveTimerRef.current = null;
@@ -6736,7 +6762,7 @@ export default function ChaosChessPage() {
         headers: chaosHeaders(true),
         body: JSON.stringify({
           hostColor: color,
-          timeControlSeconds: timeControlRef.current?.base ?? 0,
+          timeControlSeconds: unlimitedTimeRef.current ? -1 : (timeControlRef.current?.base ?? 0),
           incrementSeconds: timeControlRef.current?.inc ?? 0,
         }),
       });
@@ -6825,6 +6851,7 @@ export default function ChaosChessPage() {
       setFloatingPepes([]);
       setCapturedPawns({ w: 0, b: 0 });
       // No clock time controls — always untimed
+      setUnlimitedTime((data.timeControlSeconds ?? 0) === -1);
       setTimeControl(null);
       setTimers({ w: 0, b: 0 });
       setEloChange(null);
@@ -10430,6 +10457,28 @@ export default function ChaosChessPage() {
           {/* ── Friend Mode ── */}
           {gameMode === "friend" && (
             <div className="flex w-full max-w-sm flex-col gap-4">
+              {/* Time control toggle */}
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Time Control
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setUnlimitedTime(false)}
+                    className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2 text-sm font-medium transition-all ${!unlimitedTime ? "border-purple-500/40 bg-purple-500/15 text-purple-300" : "border-white/[0.08] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08]"}`}
+                  >
+                    ⏱ 30s / move
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUnlimitedTime(true)}
+                    className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2 text-sm font-medium transition-all ${unlimitedTime ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300" : "border-white/[0.08] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08]"}`}
+                  >
+                    ∞ Unlimited
+                  </button>
+                </div>
+              </div>
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
                 <p className="mb-1 text-sm font-bold text-white">
                   Create a Room
@@ -10488,8 +10537,31 @@ export default function ChaosChessPage() {
               <p className="text-sm text-slate-400">
                 Find a random opponent to play Chaos Chess against
               </p>
+              {/* Time control toggle */}
+              <div className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Time Control
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setUnlimitedTime(false)}
+                    className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2 text-sm font-medium transition-all ${!unlimitedTime ? "border-purple-500/40 bg-purple-500/15 text-purple-300" : "border-white/[0.08] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08]"}`}
+                  >
+                    ⏱ 30s / move
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUnlimitedTime(true)}
+                    className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2 text-sm font-medium transition-all ${unlimitedTime ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300" : "border-white/[0.08] bg-white/[0.04] text-slate-400 hover:bg-white/[0.08]"}`}
+                  >
+                    ∞ Unlimited
+                  </button>
+                </div>
+              </div>
               <ChaosLobby
                 isSignedIn={true}
+                unlimitedTime={unlimitedTime}
                 onMatchFound={(data) => {
                   setRoomId(data.roomId);
                   setRoomCode(data.roomCode);
@@ -10540,6 +10612,7 @@ export default function ChaosChessPage() {
                   setMyRating(null);
                   setOpponentRating(null);
                   setTimers({ w: 0, b: 0 });
+                  setUnlimitedTime(data.unlimitedTime ?? false);
                   setTimeControl(null);
                   spawnPepe(PEPE.hyped);
                   startPolling(data.roomId, myColor);
@@ -10953,7 +11026,7 @@ export default function ChaosChessPage() {
             onPick={handleDraftPick}
             fen={game.fen()}
             playerColor={playerColor === "white" ? "w" : "b"}
-            timeLimit={gameMode !== "ai" ? 15 : undefined}
+            timeLimit={gameMode !== "ai" && !unlimitedTime ? 15 : undefined}
             anomaly={chaosState.playerAnomaly}
             temperanceUsed={chaosState.playerTemperanceUsedThisPhase}
             onTemperanceReroll={handleTemperanceReroll}
@@ -11052,6 +11125,7 @@ export default function ChaosChessPage() {
               }
             }}
             waitingForOpponent={myPickSent && gameMode !== "ai"}
+            unlimitedTime={unlimitedTime}
           />
         )}
 
@@ -11228,6 +11302,7 @@ export default function ChaosChessPage() {
               </span>
               <InlineModifierIcons modifiers={chaosState.aiModifiers} />
               {gameMode !== "ai" &&
+                !unlimitedTime &&
                 gameStatus === "playing" &&
                 (() => {
                   const isOppTurn =
@@ -11252,6 +11327,7 @@ export default function ChaosChessPage() {
 
             {/* Per-move countdown (PvP only — 30s per turn) */}
             {gameMode !== "ai" &&
+              !unlimitedTime &&
               gameStatus === "playing" &&
               (() => {
                 const isMyTurn =

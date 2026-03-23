@@ -79,6 +79,7 @@ export async function GET(req: NextRequest) {
       roomId: room.id,
       roomCode: room.roomCode,
       hostColor: room.hostColor,
+      timeControlSeconds: room.timeControlSeconds,
     });
   }
 
@@ -90,6 +91,9 @@ export async function POST(req: NextRequest) {
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const body = await req.json().catch(() => ({}));
+  const unlimitedTime = !!body.unlimitedTime;
 
   // Auto-cancel any existing matchmaking rooms from this user
   await db
@@ -116,10 +120,15 @@ export async function POST(req: NextRequest) {
       chaosState,
       status: "waiting",
       isMatchmaking: true,
+      timeControlSeconds: unlimitedTime ? -1 : 0,
     })
     .returning({ id: chaosRooms.id, roomCode: chaosRooms.roomCode });
 
-  return NextResponse.json({ roomId: room.id, roomCode: room.roomCode, hostColor });
+  return NextResponse.json({
+    roomId: room.id,
+    roomCode: room.roomCode,
+    hostColor,
+  });
 }
 
 /** Cancel a matchmaking room (on timeout, manual cancel, or switching rooms) */
@@ -141,10 +150,7 @@ export async function DELETE(req: NextRequest) {
       .update(chaosRooms)
       .set({ isMatchmaking: false, status: "cancelled", updatedAt: new Date() })
       .where(
-        and(
-          eq(chaosRooms.id, body.roomId),
-          eq(chaosRooms.hostId, userId),
-        ),
+        and(eq(chaosRooms.id, body.roomId), eq(chaosRooms.hostId, userId)),
       );
   } else {
     await db
