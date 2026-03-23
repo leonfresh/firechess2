@@ -4163,8 +4163,8 @@ export default function ChaosChessPage() {
       Math.max(0, (chaosState.aiNuclearCooldownUntil ?? 0) - currentMove),
       chaosState.playerAnomaly ?? null,
       chaosState.aiAnomaly ?? null,
-      chaosState.playerMoonUnlocked ?? false,
-      chaosState.aiMoonUnlocked ?? false,
+      (chaosState.playerMoonUnlocked || (chaosState.currentPhase ?? 0) >= 2),
+      (chaosState.aiMoonUnlocked || (chaosState.currentPhase ?? 0) >= 2),
     );
   }, [
     pieceTheme.setName,
@@ -4180,6 +4180,7 @@ export default function ChaosChessPage() {
     chaosState.aiAnomaly,
     chaosState.playerMoonUnlocked,
     chaosState.aiMoonUnlocked,
+    chaosState.currentPhase,
     undeadRevived,
   ]);
 
@@ -4583,7 +4584,7 @@ export default function ChaosChessPage() {
         const moonUnlocked =
           cs.playerMoonUnlocked || (cs.currentPhase ?? 0) >= 2;
         const effectiveOpts: AnomalyMoveOptions | undefined = anomalyOpts
-          ? { moonUnlocked, ...anomalyOpts }
+          ? { ...anomalyOpts, moonUnlocked }
           : cs.playerAnomaly
             ? { playerAnomaly: cs.playerAnomaly, moonUnlocked }
             : undefined;
@@ -4752,7 +4753,8 @@ export default function ChaosChessPage() {
           const defMoonUnlocked = isPlayerCheckmated
             ? chaosStateRef.current.playerMoonUnlocked ||
               (chaosStateRef.current.currentPhase ?? 0) >= 2
-            : false;
+            : chaosStateRef.current.aiMoonUnlocked ||
+              (chaosStateRef.current.currentPhase ?? 0) >= 2;
           const chaosEscapes = getChaosMoves(
             g,
             checkmatedMods,
@@ -4831,7 +4833,8 @@ export default function ChaosChessPage() {
             const stalemateMoonUnlocked = isPlayerStalemated
               ? chaosStateRef.current.playerMoonUnlocked ||
                 (chaosStateRef.current.currentPhase ?? 0) >= 2
-              : false;
+              : chaosStateRef.current.aiMoonUnlocked ||
+                (chaosStateRef.current.currentPhase ?? 0) >= 2;
             const attackerModsForStale = isPlayerStalemated
               ? chaosStateRef.current.aiModifiers
               : chaosStateRef.current.playerModifiers;
@@ -4898,7 +4901,8 @@ export default function ChaosChessPage() {
         const defenderMoonUnlocked = isPlayerChecked
           ? chaosStateRef.current.playerMoonUnlocked ||
             (chaosStateRef.current.currentPhase ?? 0) >= 2
-          : false;
+          : chaosStateRef.current.aiMoonUnlocked ||
+            (chaosStateRef.current.currentPhase ?? 0) >= 2;
         if (
           isChaosCheckmate(
             g,
