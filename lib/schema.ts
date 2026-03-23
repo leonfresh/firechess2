@@ -90,7 +90,10 @@ export const subscriptions = pgTable("subscription", {
     .references(() => users.id, { onDelete: "cascade" }),
   stripeCustomerId: text("stripeCustomerId"),
   stripeSubscriptionId: text("stripeSubscriptionId"),
-  plan: text("plan").$type<"free" | "pro" | "lifetime">().notNull().default("free"),
+  plan: text("plan")
+    .$type<"free" | "pro" | "lifetime">()
+    .notNull()
+    .default("free"),
   status: text("status")
     .$type<"active" | "canceled" | "past_due" | "incomplete" | "trialing">()
     .notNull()
@@ -211,7 +214,9 @@ export const studyPlans = pgTable("study_plan", {
   userId: text("userId")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  reportId: text("reportId").references(() => reports.id, { onDelete: "set null" }),
+  reportId: text("reportId").references(() => reports.id, {
+    onDelete: "set null",
+  }),
 
   /** Chess username + source this plan is for */
   chessUsername: text("chessUsername"),
@@ -382,7 +387,9 @@ export const chaosRooms = pgTable("chaos_room", {
   /** Host's chosen color */
   hostColor: text("hostColor").notNull().default("white"),
   /** Current FEN */
-  fen: text("fen").notNull().default("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"),
+  fen: text("fen")
+    .notNull()
+    .default("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"),
   /** Full chaos state as JSON */
   chaosState: jsonb("chaosState"),
   /** Move history: array of { from, to, promotion?, chaosMove? } */
@@ -484,7 +491,10 @@ export const affiliateReferrals = pgTable("affiliate_referral", {
   /** Stripe Checkout Session ID for audit trail */
   stripeSessionId: text("stripeSessionId"),
   /** "pro" (monthly) or "lifetime" */
-  planType: text("planType").$type<"pro" | "lifetime">().notNull().default("pro"),
+  planType: text("planType")
+    .$type<"pro" | "lifetime">()
+    .notNull()
+    .default("pro"),
   /** Amount paid in cents after discount, e.g. 900 = $9.00 */
   amountCents: integer("amountCents").notNull().default(0),
   /** Commission owed in cents */
@@ -516,7 +526,10 @@ export const giftLinks = pgTable("gift_link", {
   /** How many times it has been redeemed so far */
   usedCount: integer("usedCount").notNull().default(0),
   /** Plan type granted on redemption */
-  planType: text("planType").$type<"pro" | "lifetime">().notNull().default("pro"),
+  planType: text("planType")
+    .$type<"pro" | "lifetime">()
+    .notNull()
+    .default("pro"),
   /** Days of Pro access granted (null = permanent) */
   durationDays: integer("durationDays"),
   /** Optional hard expiry — link stops working after this date */
@@ -593,4 +606,43 @@ export const siteConfig = pgTable("site_config", {
   key: text("key").primaryKey(),
   value: jsonb("value").notNull(),
   updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow(),
+});
+
+// ── Recruit Chess ─────────────────────────────────────────────────────────
+
+/** One completed (or abandoned) Recruit Chess run per player */
+export const recruitGames = pgTable("recruit_game", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("userId").references(() => users.id, { onDelete: "set null" }),
+  guestToken: text("guestToken"),
+  commander: text("commander").notNull(),
+  /** Full army snapshot — array of {pieceType, modifierId, tier} */
+  armySnapshot: jsonb("armySnapshot"),
+  roundsCompleted: integer("roundsCompleted").notNull().default(0),
+  won: boolean("won").notNull().default(false),
+  finalHp: integer("finalHp").notNull().default(0),
+  rating: integer("rating"),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+});
+
+/**
+ * Pool of ghost builds used as opponents in Recruit Chess.
+ * Populated by real players' losing/winning builds and pre-seeded AI builds.
+ */
+export const recruitGhostBuilds = pgTable("recruit_ghost_build", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("userId"),
+  guestToken: text("guestToken"),
+  displayName: text("displayName").notNull().default("Ghost Player"),
+  commander: text("commander").notNull(),
+  /** Array of {pieceType, modifierId, tier} */
+  armySnapshot: jsonb("armySnapshot").notNull(),
+  round: integer("round").notNull(),
+  rating: integer("rating").notNull().default(1000),
+  isAI: boolean("isAI").notNull().default(false),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
 });

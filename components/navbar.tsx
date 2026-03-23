@@ -16,6 +16,7 @@ const NAV_LINKS = [
   { href: "/sparring", label: "⚔️ Sparring" },
   { href: "/guess", label: "Guess the Move" },
   { href: "/chaos", label: "⚡ Chaos Chess" },
+  { href: "/recruit", label: "⚔️ Recruit Chess" },
   { href: "/escape", label: "🎮 Escape Chess" },
   { href: "/roast", label: "🔥 Roast the Elo" },
   { href: "/about", label: "About" },
