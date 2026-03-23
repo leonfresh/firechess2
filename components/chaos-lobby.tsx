@@ -334,7 +334,14 @@ export function ChaosLobby({
     } catch {
       setSearchState("idle");
     }
-  }, [isSignedIn, chatOnly, unlimitedTime, onMatchFound, onCancel, clearAllIntervals]);
+  }, [
+    isSignedIn,
+    chatOnly,
+    unlimitedTime,
+    onMatchFound,
+    onCancel,
+    clearAllIntervals,
+  ]);
 
   /* ── Cancel search ── */
   const cancelSearch = useCallback(() => {

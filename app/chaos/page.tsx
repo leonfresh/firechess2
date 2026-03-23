@@ -6762,7 +6762,9 @@ export default function ChaosChessPage() {
         headers: chaosHeaders(true),
         body: JSON.stringify({
           hostColor: color,
-          timeControlSeconds: unlimitedTimeRef.current ? -1 : (timeControlRef.current?.base ?? 0),
+          timeControlSeconds: unlimitedTimeRef.current
+            ? -1
+            : (timeControlRef.current?.base ?? 0),
           incrementSeconds: timeControlRef.current?.inc ?? 0,
         }),
       });
