@@ -46,3 +46,9 @@ export const LS_FIRST_WIN_DONE = "firechess_chaos_first_win_done";
  * so guests gradually see weaker cards until they sign in to unlock permanently.
  */
 export const LS_PREVIEWED_MODS = "firechess_chaos_previewed_mods";
+
+/**
+ * localStorage key — when "1", skip the "are you sure?" confirmation before
+ * using a preview card. Set when user checks "don't ask again".
+ */
+export const LS_PREVIEW_NO_CONFIRM = "firechess_chaos_preview_no_confirm";

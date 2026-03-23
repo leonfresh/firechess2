@@ -119,6 +119,7 @@ import {
   LS_PENDING_UNLOCK,
   LS_FIRST_WIN_DONE,
   LS_PREVIEWED_MODS,
+  LS_PREVIEW_NO_CONFIRM,
 } from "@/lib/chaos-collection";
 
 /* ────────────────────────── Chaos Piece Overlays ────────────────────────── */
@@ -2203,6 +2204,10 @@ function DraftModal({
   // Peek board state
   const [peeking, setPeeking] = useState(false);
 
+  // Preview confirmation popup
+  const [pendingPreviewMod, setPendingPreviewMod] = useState<ChaosModifier | null>(null);
+  const [previewDontAsk, setPreviewDontAsk] = useState(false);
+
   // Auto-pick countdown (PvP only — counts down after all cards reveal)
   const [countdown, setCountdown] = useState<number | null>(null);
   const handlePickRef = useRef<(mod: ChaosModifier) => void>(() => {});
@@ -2259,10 +2264,19 @@ function DraftModal({
   const handlePick = useCallback(
     (mod: ChaosModifier, isLockedPick = false) => {
       if (pickedId || !allRevealed) return; // prevent double-picks & picks before reveal
+      if (isLockedPick && onLockedPick) {
+        // Check if confirmation should be skipped
+        const skipConfirm =
+          typeof window !== "undefined" &&
+          window.localStorage.getItem(LS_PREVIEW_NO_CONFIRM) === "1";
+        if (!skipConfirm) {
+          setPendingPreviewMod(mod);
+          return; // show confirmation popup instead of picking immediately
+        }
+      }
       setPickedId(mod.id);
       setDismissing(true);
       playSound("taco-bell-bong");
-      // Wait for dismiss animation, then call appropriate callback
       if (isLockedPick && onLockedPick) {
         setTimeout(() => onLockedPick(mod), 650);
       } else {
@@ -2271,6 +2285,87 @@ function DraftModal({
     },
     [pickedId, allRevealed, onPick, onLockedPick],
   );
+
+  const confirmPreviewPick = useCallback(() => {
+    if (!pendingPreviewMod || !onLockedPick) return;
+    if (previewDontAsk && typeof window !== "undefined") {
+      window.localStorage.setItem(LS_PREVIEW_NO_CONFIRM, "1");
+    }
+    const mod = pendingPreviewMod;
+    setPendingPreviewMod(null);
+    setPickedId(mod.id);
+    setDismissing(true);
+    playSound("taco-bell-bong");
+    setTimeout(() => onLockedPick(mod), 650);
+  }, [pendingPreviewMod, previewDontAsk, onLockedPick]);
+
+  // Preview confirmation popup
+  if (pendingPreviewMod) {
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div
+          className="mx-4 w-full max-w-sm rounded-2xl border border-amber-500/30 bg-slate-900/98 p-6 shadow-2xl shadow-amber-900/20"
+          style={{ animation: "draft-modal-enter 0.25s ease-out both" }}
+        >
+          {/* Header */}
+          <div className="mb-4 flex items-start gap-3">
+            <span className="text-3xl">🎁</span>
+            <div>
+              <h2 className="text-base font-black text-white">
+                Preview: {pendingPreviewMod.name}
+              </h2>
+              <p className="mt-0.5 text-xs text-slate-400">
+                {pendingPreviewMod.tier.charAt(0).toUpperCase() + pendingPreviewMod.tier.slice(1)} modifier
+              </p>
+            </div>
+          </div>
+
+          {/* Warning */}
+          <div className="mb-5 rounded-xl border border-amber-500/20 bg-amber-500/[0.07] px-4 py-3">
+            <p className="text-sm font-semibold text-amber-300">
+              ⚠️ One-time preview
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-slate-400">
+              As a guest, you can try this modifier once for free — but it will
+              be removed from your future draft pools. Sign in to unlock it
+              permanently.
+            </p>
+          </div>
+
+          {/* Don't ask again */}
+          <label className="mb-5 flex cursor-pointer items-center gap-2.5 select-none">
+            <input
+              type="checkbox"
+              checked={previewDontAsk}
+              onChange={(e) => setPreviewDontAsk(e.target.checked)}
+              className="h-4 w-4 rounded accent-purple-500 cursor-pointer"
+            />
+            <span className="text-xs text-slate-400">
+              Don&apos;t ask again
+            </span>
+          </label>
+
+          {/* Buttons */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setPendingPreviewMod(null)}
+              className="flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-4 py-2.5 text-sm font-semibold text-slate-300 transition-all hover:bg-white/[0.08]"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={confirmPreviewPick}
+              className="flex-1 rounded-lg border border-amber-500/40 bg-amber-500/20 px-4 py-2.5 text-sm font-bold text-amber-300 transition-all hover:bg-amber-500/30"
+            >
+              🎁 Use Preview
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Floating "Back to Draft" button when peeking
   if (peeking) {
@@ -10415,7 +10510,7 @@ export default function ChaosChessPage() {
                 <p className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
                   AI Difficulty
                 </p>
-                <div className="flex gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {(
                     [
                       {
@@ -10443,24 +10538,30 @@ export default function ChaosChessPage() {
                         desc: "Good luck",
                       },
                     ] as const
-                  ).map(({ id, label, emoji, desc }) => (
-                    <button
-                      key={id}
-                      type="button"
-                      onClick={() => setAiLevel(id)}
-                      className={`flex flex-1 flex-col items-center gap-1 rounded-lg border py-2.5 text-xs font-medium transition-all ${
-                        aiLevel === id
-                          ? "border-purple-500/40 bg-purple-500/15 text-purple-300"
-                          : "border-white/[0.06] bg-white/[0.02] text-slate-400 hover:bg-white/[0.06]"
-                      }`}
-                    >
-                      <Emoji emoji={emoji} className="h-4 w-4" />
-                      <span className="font-bold">{label}</span>
-                      <span className="text-[10px] font-normal opacity-60">
-                        {desc}
-                      </span>
-                    </button>
-                  ))}
+                  ).map(({ id, label, emoji, desc }) => {
+                    const selected = aiLevel === id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => setAiLevel(id)}
+                        className={`relative flex flex-col items-center gap-1 rounded-xl border py-3 text-xs font-medium transition-all select-none ${
+                          selected
+                            ? "border-purple-400/70 bg-purple-500/25 text-white ring-1 ring-purple-500/50 shadow-md shadow-purple-900/40"
+                            : "border-white/[0.08] bg-white/[0.03] text-slate-400 hover:bg-white/[0.08] hover:text-slate-200"
+                        }`}
+                      >
+                        {selected && (
+                          <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-purple-400" />
+                        )}
+                        <Emoji emoji={emoji} className="h-5 w-5 pointer-events-none" />
+                        <span className={`font-bold ${selected ? "text-purple-200" : ""}`}>{label}</span>
+                        <span className="text-[10px] font-normal opacity-60">
+                          {desc}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -11884,11 +11985,11 @@ export default function ChaosChessPage() {
 
             {/* ── Game Over Overlay ── */}
             {gameStatus === "game-over" && (
-              <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-                <div className="rounded-2xl border border-white/10 bg-slate-900/95 p-5 sm:p-8 shadow-2xl max-w-xl w-full mx-4">
-                  <div className="flex flex-col gap-5 sm:grid sm:grid-cols-[auto_1fr] sm:gap-6 sm:items-start">
-                  {/* Left column: result + ELO */}
-                  <div className="flex flex-col items-center gap-4 sm:min-w-[180px]">
+              <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/70 backdrop-blur-sm p-3">
+                <div className="rounded-2xl border border-white/10 bg-slate-900/95 p-5 shadow-2xl max-w-2xl w-full overflow-y-auto max-h-[92vh]">
+                  <div className="grid grid-cols-1 min-[480px]:grid-cols-[200px_1fr] gap-5 min-[480px]:gap-6 min-[480px]:items-start">
+                  {/* Left column: pepe + result + ELO */}
+                  <div className="flex flex-col items-center gap-3 min-[480px]:sticky min-[480px]:top-0">
                   {/* Result pepe */}
                   <img
                     src={
