@@ -23,7 +23,10 @@ export async function GET(request: NextRequest) {
   const sideToMove = searchParams.get("sideToMove") ?? "white";
 
   if (!fen) {
-    return NextResponse.json({ error: "Missing fen parameter" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing fen parameter" },
+      { status: 400 },
+    );
   }
 
   const cacheKey = `${fen}|${sideToMove}`;
@@ -42,9 +45,15 @@ export async function GET(request: NextRequest) {
   url.searchParams.set("topGames", "0");
   url.searchParams.set("recentGames", "0");
 
+  const headers: Record<string, string> = { Accept: "application/json" };
+  const lichessToken = process.env.LICHESS_API_TOKEN;
+  if (lichessToken) {
+    headers["Authorization"] = `Bearer ${lichessToken}`;
+  }
+
   try {
     const res = await fetch(url.toString(), {
-      headers: { Accept: "application/json" },
+      headers,
       signal: AbortSignal.timeout(10_000),
       // next: { revalidate: 300 } // optional ISR cache
     });
@@ -52,7 +61,7 @@ export async function GET(request: NextRequest) {
     if (!res.ok) {
       return NextResponse.json(
         { error: "Lichess explorer error", status: res.status },
-        { status: res.status === 429 ? 429 : 502 }
+        { status: res.status === 429 ? 429 : 502 },
       );
     }
 
@@ -66,7 +75,7 @@ export async function GET(request: NextRequest) {
     const isTimeout = err instanceof Error && err.name === "TimeoutError";
     return NextResponse.json(
       { error: isTimeout ? "Upstream timeout" : "Network error" },
-      { status: 504 }
+      { status: 504 },
     );
   }
 }
