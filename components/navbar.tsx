@@ -235,7 +235,8 @@ export function Navbar() {
                   isActive("/guess") ||
                   isActive("/dungeon") ||
                   isActive("/roast") ||
-                  isActive("/chaos")
+                  isActive("/chaos") ||
+                  isActive("/sparring")
                     ? "text-white bg-white/[0.06]"
                     : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
                 }`}
@@ -253,6 +254,16 @@ export function Navbar() {
               </button>
               <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
                 <div className="min-w-[180px] rounded-xl border border-white/[0.08] bg-[#0a0f1a] p-1.5 shadow-xl shadow-black/40">
+                  <Link
+                    href="/sparring"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                      isActive("/sparring")
+                        ? "text-sky-400 bg-sky-500/[0.08]"
+                        : "text-slate-400 hover:text-sky-400 hover:bg-sky-500/[0.06]"
+                    }`}
+                  >
+                    ⚔️ Opening Sparring
+                  </Link>
                   <Link
                     href="/train"
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${

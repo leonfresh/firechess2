@@ -19,6 +19,7 @@ import { EvalBar } from "@/components/eval-bar";
 import { playSound } from "@/lib/sounds";
 import { stockfishPool } from "@/lib/stockfish-client";
 import { useBoardSize } from "@/lib/use-board-size";
+import { explainMoves } from "@/lib/position-explainer";
 import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
 
 /* ------------------------------------------------------------------ */
@@ -50,11 +51,14 @@ type SparringMoveResponse =
 type MoveRecord = {
   san: string;
   uci: string;
-  fen: string; // FEN after the move
+  fenBefore: string; // FEN before the move
+  fen: string;       // FEN after the move
   byUser: boolean;
-  /** Eval loss in centipawns vs best engine move (only set for user moves in Stockfish phase) */
   cpLoss?: number;
-  /** Which book candidate was played (null for Stockfish phase) */
+  /** White-relative Stockfish eval before/after the move (for coaching) */
+  evalBefore?: number;
+  evalAfter?: number;
+  bestMoveUci?: string | null;
   bookCandidate?: MoveCandidate | null;
 };
 
@@ -124,16 +128,102 @@ async function evalPosition(fen: string, depth: number): Promise<number | null> 
 }
 
 /* ------------------------------------------------------------------ */
-/*  Move quality label for the session summary                          */
+/*  Move quality system (matches Guess the Move page)                  */
 /* ------------------------------------------------------------------ */
 
-function classifyLoss(cpLoss: number): { label: string; color: string } {
-  if (cpLoss <= 10) return { label: "Best", color: "text-emerald-400" };
-  if (cpLoss <= 30) return { label: "Excellent", color: "text-green-400" };
-  if (cpLoss <= 60) return { label: "Good", color: "text-lime-400" };
-  if (cpLoss <= 100) return { label: "Inaccuracy", color: "text-yellow-400" };
-  if (cpLoss <= 200) return { label: "Mistake", color: "text-orange-400" };
-  return { label: "Blunder", color: "text-red-400" };
+type MoveQuality = "best" | "excellent" | "good" | "inaccuracy" | "mistake" | "blunder";
+
+function classifyByCpLoss(cpLoss: number): MoveQuality {
+  if (cpLoss <= 5) return "best";
+  if (cpLoss <= 15) return "excellent";
+  if (cpLoss <= 40) return "good";
+  if (cpLoss <= 90) return "inaccuracy";
+  if (cpLoss <= 200) return "mistake";
+  return "blunder";
+}
+
+const QUALITY_EMOJI: Record<MoveQuality, string> = {
+  best: "✅", excellent: "💎", good: "👍",
+  inaccuracy: "⚠️", mistake: "❌", blunder: "💀",
+};
+
+const QUALITY_COLOR: Record<MoveQuality, string> = {
+  best: "text-emerald-400", excellent: "text-cyan-400", good: "text-green-400",
+  inaccuracy: "text-amber-400", mistake: "text-orange-400", blunder: "text-red-400",
+};
+
+const QUALITY_BG: Record<MoveQuality, string> = {
+  best: "bg-emerald-500/[0.08] border-emerald-500/20",
+  excellent: "bg-cyan-500/[0.08] border-cyan-500/20",
+  good: "bg-green-500/[0.08] border-green-500/20",
+  inaccuracy: "bg-amber-500/[0.08] border-amber-500/20",
+  mistake: "bg-orange-500/[0.08] border-orange-500/20",
+  blunder: "bg-red-500/[0.08] border-red-500/20",
+};
+
+const QUALITY_LABEL: Record<MoveQuality, string> = {
+  best: "Best", excellent: "Excellent", good: "Good",
+  inaccuracy: "Inaccuracy", mistake: "Mistake", blunder: "Blunder",
+};
+
+/** Themes that are genuinely instructive for the player (excludes metadata like phase, check, etc.) */
+const COACHING_THEMES = new Set([
+  "Hanging Piece", "Hangs Material", "Trapped Piece", "Weakening Move",
+  "Walks Into Fork", "Walks Into Pin", "Back-Rank Mate Threat",
+  "Exposed King", "Losing Exchange", "Back Rank",
+  "Knight Fork", "Skewer", "Passive Retreat", "King Exposure",
+  "Pin", "Discovered Attack", "X-Ray Attack",
+]);
+
+const COACHING_THEME_ICONS: Record<string, string> = {
+  "Hanging Piece": "💀", "Hangs Material": "💀",
+  "Trapped Piece": "🪤", "Weakening Move": "🏚️",
+  "Walks Into Fork": "🍴", "Walks Into Pin": "📌",
+  "Back-Rank Mate Threat": "🏰", "Back Rank": "🏰",
+  "Exposed King": "🔓", "King Exposure": "👑",
+  "Losing Exchange": "📉", "Passive Retreat": "🐢",
+  "Knight Fork": "♞", "Skewer": "🎯",
+  "Pin": "📌", "Discovered Attack": "⚡", "X-Ray Attack": "🔭",
+};
+
+/**
+ * Cluster positional themes across all user moves to surface recurring patterns.
+ * Uses `explainMoves` (pure chess.js, no Stockfish) — fast enough for ~30 moves.
+ */
+function computeSessionMotifs(
+  moves: MoveRecord[],
+): Array<{ name: string; count: number; avgCpLoss: number }> {
+  const themeCounts = new Map<string, { count: number; totalLoss: number }>();
+
+  for (const m of moves) {
+    if (!m.byUser || (m.cpLoss ?? 0) < 30) continue;
+    if (m.evalBefore === undefined || m.evalAfter === undefined) continue;
+    try {
+      const insight = explainMoves(
+        m.fenBefore,
+        m.uci,
+        m.bestMoveUci ?? null,
+        m.cpLoss ?? 0,
+        m.evalBefore,
+        m.evalAfter,
+      );
+      for (const theme of insight.played.themes) {
+        if (!COACHING_THEMES.has(theme)) continue;
+        const existing = themeCounts.get(theme);
+        if (existing) {
+          existing.count++;
+          existing.totalLoss += m.cpLoss ?? 0;
+        } else {
+          themeCounts.set(theme, { count: 1, totalLoss: m.cpLoss ?? 0 });
+        }
+      }
+    } catch { /* best-effort */ }
+  }
+
+  return [...themeCounts.entries()]
+    .map(([name, v]) => ({ name, count: v.count, avgCpLoss: v.totalLoss / v.count }))
+    .sort((a, b) => b.count - a.count || b.avgCpLoss - a.avgCpLoss)
+    .slice(0, 6);
 }
 
 /* ------------------------------------------------------------------ */
@@ -160,6 +250,16 @@ export default function OpeningSparring() {
   const [promotionPending, setPromotionPending] = useState<{
     from: string;
     to: string;
+  } | null>(null);
+
+  /** Coaching insight for the most recent user move */
+  const [lastMoveInsight, setLastMoveInsight] = useState<{
+    quality: MoveQuality;
+    cpLoss: number;
+    headline: string;
+    coaching: string;
+    themes: string[];
+    bestMoveSan: string | null;
   } | null>(null);
 
   // board cosmetics
@@ -265,6 +365,7 @@ export default function OpeningSparring() {
             {
               san: move.san,
               uci: chosen.uci,
+              fenBefore: currentFen,
               fen: newFen,
               byUser: false,
               bookCandidate: chosen,
@@ -325,6 +426,7 @@ export default function OpeningSparring() {
           {
             san: move.san,
             uci: result.bestMove!,
+            fenBefore: currentFen,
             fen: newFen,
             byUser: false,
             bookCandidate: null,
@@ -374,6 +476,8 @@ export default function OpeningSparring() {
       // Capture FEN before the move for eval comparison
       const prevFen = chess.fen();
 
+      const uci = `${from}${to}${promotion ?? ""}`;
+
       // Try the move
       let move;
       try {
@@ -392,16 +496,53 @@ export default function OpeningSparring() {
       playSound(move.captured ? "capture" : "move");
       if (chess.inCheck()) playSound("check");
 
-      // Async eval for session summary — doesn't block the UI
+      // Async: eval + coaching insight (non-blocking)
       let cpLoss: number | undefined;
+      let evalBefore: number | undefined;
+      let evalAfter: number | undefined;
+      let bestMoveUci: string | null = null;
+
       try {
-        // Both evals are white-relative cp
-        const evalBefore = await evalPosition(prevFen, 10);
-        const evalAfterMove = await evalPosition(newFen, 10);
-        if (evalBefore !== null && evalAfterMove !== null) {
-          // From user's perspective: positive = user played worse
+        const [beforeResult, afterResult] = await Promise.all([
+          stockfishPool.evaluateFen(prevFen, 10),
+          stockfishPool.evaluateFen(newFen, 10),
+        ]);
+
+        if (beforeResult && afterResult) {
+          evalBefore = beforeResult.cp;   // white-relative
+          evalAfter = afterResult.cp;     // white-relative
+          bestMoveUci = beforeResult.bestMove ?? null;
           const sign = userColor === "white" ? 1 : -1;
-          cpLoss = Math.max(0, sign * (evalBefore - evalAfterMove));
+          cpLoss = Math.max(0, sign * (evalBefore - evalAfter));
+
+          // Synchronous coaching insight (pure chess.js — no extra Stockfish calls)
+          try {
+            const insight = explainMoves(
+              prevFen, uci, bestMoveUci, cpLoss, evalBefore, evalAfter,
+            );
+            const quality = classifyByCpLoss(cpLoss);
+            const coachingThemes = insight.played.themes.filter(t => COACHING_THEMES.has(t));
+
+            let bestMoveSan: string | null = null;
+            if (bestMoveUci && cpLoss >= 40) {
+              try {
+                const tmp = new Chess(prevFen);
+                const r = tmp.move(bestMoveUci, { strict: false });
+                bestMoveSan = r?.san ?? null;
+              } catch { /* ignore */ }
+            }
+
+            setLastMoveInsight({
+              quality,
+              cpLoss,
+              headline: insight.played.headline,
+              coaching: cpLoss >= 50
+                ? (insight.played.takeaway ?? insight.played.coaching.split(". ")[0] + ".")
+                : "",
+              themes: coachingThemes,
+              bestMoveSan,
+            });
+          } catch { /* not critical */ }
         }
       } catch {
         // Not critical
@@ -409,7 +550,17 @@ export default function OpeningSparring() {
 
       setMoveHistory((prev) => [
         ...prev,
-        { san: move.san, uci: `${from}${to}${promotion ?? ""}`, fen: newFen, byUser: true, cpLoss },
+        {
+          san: move.san,
+          uci,
+          fenBefore: prevFen,
+          fen: newFen,
+          byUser: true,
+          cpLoss,
+          evalBefore,
+          evalAfter,
+          bestMoveUci,
+        },
       ]);
 
       if (chess.isGameOver()) {
@@ -517,6 +668,7 @@ export default function OpeningSparring() {
     setBookMoveCount(0);
     setSelectedSquare(null);
     setLegalMoves([]);
+    setLastMoveInsight(null);
     setStatusMessage("Game started — your move!");
     setPhase("playing");
 
@@ -736,12 +888,55 @@ export default function OpeningSparring() {
             </div>
           </div>
 
+          {/* Move quality distribution */}
+          {(() => {
+            const counts = { best: 0, excellent: 0, good: 0, inaccuracy: 0, mistake: 0, blunder: 0 } as Record<MoveQuality, number>;
+            const evaled = userMoves.filter(m => m.cpLoss !== undefined);
+            for (const m of evaled) counts[classifyByCpLoss(m.cpLoss!)]++;
+            if (evaled.length === 0) return null;
+            const entries = (["best", "excellent", "good", "inaccuracy", "mistake", "blunder"] as MoveQuality[]).filter(k => counts[k] > 0);
+            return (
+              <div className="mt-3">
+                <div className="text-xs text-zinc-500 mb-2">Move quality</div>
+                <div className="flex gap-1">
+                  {entries.map(k => (
+                    <div key={k} className={`flex-1 rounded-lg px-1 py-2 text-center border ${QUALITY_BG[k]}`}>
+                      <div className={`text-base font-bold leading-none ${QUALITY_COLOR[k]}`}>{counts[k]}</div>
+                      <div className="text-zinc-500 text-[9px] mt-1 leading-none truncate">{QUALITY_LABEL[k]}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* Positional motifs detected during the session */}
+          {(() => {
+            const motifs = computeSessionMotifs(moveHistory);
+            if (motifs.length === 0) return null;
+            return (
+              <div className="mt-4">
+                <div className="text-xs text-zinc-400 font-medium mb-2">Recurring patterns in your play</div>
+                <div className="flex flex-col gap-1.5">
+                  {motifs.map(m => (
+                    <div key={m.name} className="flex items-center gap-2 bg-zinc-800/60 rounded-lg px-3 py-2">
+                      <span className="text-base">{COACHING_THEME_ICONS[m.name] ?? "🔍"}</span>
+                      <span className="text-sm text-zinc-300 flex-1">{m.name}</span>
+                      <span className="text-xs text-zinc-500">{m.count}×</span>
+                      <span className="text-xs text-orange-400 ml-1">&minus;{fmtCp(m.avgCpLoss)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Move list */}
           <div className="max-h-48 overflow-y-auto space-y-1">
             {moveHistory.map((m, i) => {
               const moveNum = Math.floor(i / 2) + 1;
               const isWhiteMove = i % 2 === 0;
-              const quality = m.cpLoss !== undefined ? classifyLoss(m.cpLoss) : null;
+              const quality = m.cpLoss !== undefined ? classifyByCpLoss(m.cpLoss) : null;
               return (
                 <div
                   key={i}
@@ -754,8 +949,8 @@ export default function OpeningSparring() {
                     {m.san}
                   </span>
                   {m.byUser && quality && (
-                    <span className={`text-xs ml-auto ${quality.color}`}>
-                      {quality.label}
+                    <span className={`text-xs ml-auto ${QUALITY_COLOR[quality]}`}>
+                      {QUALITY_EMOJI[quality]} {QUALITY_LABEL[quality]}
                       {m.cpLoss !== undefined && ` −${fmtCp(m.cpLoss)}`}
                     </span>
                   )}
@@ -865,6 +1060,50 @@ export default function OpeningSparring() {
         )}
       </div>
 
+      {/* Last-move coaching insight */}
+      {lastMoveInsight && (
+        <div className={`w-full max-w-[540px] border rounded-xl p-3 ${QUALITY_BG[lastMoveInsight.quality]}`}>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-base">{QUALITY_EMOJI[lastMoveInsight.quality]}</span>
+            <span className={`text-sm font-semibold ${QUALITY_COLOR[lastMoveInsight.quality]}`}>
+              {QUALITY_LABEL[lastMoveInsight.quality]}
+            </span>
+            {lastMoveInsight.cpLoss > 0 && (
+              <span className="text-xs text-zinc-500">
+                &minus;{fmtCp(lastMoveInsight.cpLoss)}
+              </span>
+            )}
+            {lastMoveInsight.bestMoveSan && (
+              <span className="text-xs text-zinc-500 ml-auto">
+                Best: <span className="text-zinc-300 font-mono">{lastMoveInsight.bestMoveSan}</span>
+              </span>
+            )}
+          </div>
+          {lastMoveInsight.headline && (
+            <p className="text-xs text-zinc-400 mt-1.5 leading-relaxed">
+              {lastMoveInsight.headline}
+            </p>
+          )}
+          {lastMoveInsight.coaching && (
+            <p className="text-xs text-zinc-500 mt-1 italic leading-relaxed">
+              {lastMoveInsight.coaching}
+            </p>
+          )}
+          {lastMoveInsight.themes.length > 0 && (
+            <div className="flex gap-1 flex-wrap mt-2">
+              {lastMoveInsight.themes.slice(0, 3).map(t => (
+                <span
+                  key={t}
+                  className="text-[10px] bg-zinc-800/80 text-zinc-400 rounded-full px-2 py-0.5"
+                >
+                  {COACHING_THEME_ICONS[t] ? `${COACHING_THEME_ICONS[t]} ` : ""}{t}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Status bar */}
       {statusMessage && (
         <div className="w-full max-w-[540px] text-xs text-zinc-500 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2">
@@ -881,13 +1120,18 @@ export default function OpeningSparring() {
               const moveNum = Math.floor(absIdx / 2) + 1;
               const isWhite = absIdx % 2 === 0;
               return (
-                <span key={absIdx} className="text-xs font-mono">
+                <span key={absIdx} className="inline-flex items-baseline gap-0.5 text-xs font-mono">
                   {isWhite && (
                     <span className="text-zinc-600 mr-0.5">{moveNum}.</span>
                   )}
                   <span className={m.byUser ? "text-white" : "text-zinc-400"}>
                     {m.san}
-                  </span>{" "}
+                  </span>
+                  {m.byUser && m.cpLoss !== undefined && (
+                    <span className={`text-[9px] ${QUALITY_COLOR[classifyByCpLoss(m.cpLoss)]}`}>
+                      {QUALITY_EMOJI[classifyByCpLoss(m.cpLoss)]}
+                    </span>
+                  )}{" "}
                 </span>
               );
             })}
