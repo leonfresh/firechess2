@@ -12,7 +12,7 @@
  *  4. After the session, show a motif summary of what happened.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "@/components/chessboard-compat";
 import { EvalBar } from "@/components/eval-bar";
@@ -166,6 +166,15 @@ const QUALITY_LABEL: Record<MoveQuality, string> = {
   inaccuracy: "Inaccuracy", mistake: "Mistake", blunder: "Blunder",
 };
 
+const QUALITY_BG_SOLID: Record<MoveQuality, string> = {
+  best:       "rgba(16,185,129,0.90)",
+  excellent:  "rgba(6,182,212,0.90)",
+  good:       "rgba(34,197,94,0.90)",
+  inaccuracy: "rgba(245,158,11,0.90)",
+  mistake:    "rgba(249,115,22,0.90)",
+  blunder:    "rgba(239,68,68,0.90)",
+};
+
 /** Themes that are genuinely instructive for the player (excludes metadata like phase, check, etc.) */
 const COACHING_THEMES = new Set([
   "Hanging Piece", "Hangs Material", "Trapped Piece", "Weakening Move",
@@ -252,6 +261,9 @@ export default function OpeningSparring() {
     to: string;
   } | null>(null);
 
+  /** Quality badge for the piece on the last user move's destination square */
+  const [pieceBadge, setPieceBadge] = useState<{ square: string; quality: MoveQuality } | null>(null);
+
   /** Coaching insight for the most recent user move */
   const [lastMoveInsight, setLastMoveInsight] = useState<{
     quality: MoveQuality;
@@ -275,6 +287,7 @@ export default function OpeningSparring() {
   const playOpponentMove = useCallback(
     async (currentFen: string, chess: Chess) => {
       setIsOpponentThinking(true);
+      setPieceBadge(null);
       const sideToMove: Color = chess.turn() === "w" ? "white" : "black";
 
       try {
@@ -402,6 +415,7 @@ export default function OpeningSparring() {
   const playStockfishMove = useCallback(
     async (currentFen: string, chess: Chess) => {
       setIsOpponentThinking(true);
+      setPieceBadge(null);
       const depth = ratingToDepth(targetRating);
 
       try {
@@ -542,6 +556,7 @@ export default function OpeningSparring() {
               themes: coachingThemes,
               bestMoveSan,
             });
+            setPieceBadge({ square: move.to, quality });
           } catch { /* not critical */ }
         }
       } catch {
@@ -669,6 +684,7 @@ export default function OpeningSparring() {
     setSelectedSquare(null);
     setLegalMoves([]);
     setLastMoveInsight(null);
+    setPieceBadge(null);
     setStatusMessage("Game started — your move!");
     setPhase("playing");
 
@@ -699,6 +715,26 @@ export default function OpeningSparring() {
   /* ------------------------------------------------------------------ */
   /*  Square highlights                                                  */
   /* ------------------------------------------------------------------ */
+
+  const customSquare = useMemo(() => {
+    return ((props: any) => {
+      const sq = props?.square as string | undefined;
+      const showBadge = sq && pieceBadge && sq === pieceBadge.square;
+      return (
+        <div style={props?.style} className="relative h-full w-full">
+          {props?.children}
+          {showBadge && (
+            <span
+              className="pointer-events-none absolute -right-0.5 -top-0.5 z-[40] flex h-5 w-5 items-center justify-center rounded-full text-[11px] shadow-lg"
+              style={{ backgroundColor: QUALITY_BG_SOLID[pieceBadge!.quality] }}
+            >
+              {QUALITY_EMOJI[pieceBadge!.quality]}
+            </span>
+          )}
+        </div>
+      );
+    }) as any;
+  }, [pieceBadge]);
 
   const customSquareStyles: Record<string, React.CSSProperties> = {};
 
@@ -1008,7 +1044,7 @@ export default function OpeningSparring() {
           </p>
         </div>
         <button
-          onClick={() => setPhase("setup")}
+          onClick={() => setPhase("gameover")}
           className="text-xs text-zinc-500 hover:text-zinc-300 border border-zinc-700 rounded-lg px-3 py-1.5 transition-colors"
         >
           ✕ End
@@ -1042,6 +1078,7 @@ export default function OpeningSparring() {
           onPieceDrop={handlePieceDrop}
           onSquareClick={handleSquareClick}
           customSquareStyles={customSquareStyles}
+          customSquare={customSquare}
           customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
           customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
           customPieces={customPieces}
