@@ -120,6 +120,8 @@ import {
   LS_FIRST_WIN_DONE,
   LS_PREVIEWED_MODS,
   LS_PREVIEW_NO_CONFIRM,
+  PROGRESSION_UNLOCK_ORDER,
+  GAMES_PER_UNLOCK,
 } from "@/lib/chaos-collection";
 
 /* ────────────────────────── Chaos Piece Overlays ────────────────────────── */
@@ -2304,7 +2306,7 @@ function DraftModal({
     return (
       <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm">
         <div
-          className="mx-4 w-full max-w-sm rounded-2xl border border-amber-500/30 bg-slate-900/98 p-6 shadow-2xl shadow-amber-900/20"
+          className="mx-4 w-full max-w-sm rounded-2xl border border-amber-500/30 bg-slate-900 p-6 shadow-2xl shadow-amber-900/20"
           style={{ animation: "draft-modal-enter 0.25s ease-out both" }}
         >
           {/* Header */}
@@ -4126,6 +4128,18 @@ export default function ChaosChessPage() {
   );
   /** Track IDs previewed specifically during this game — for end-screen CTA */
   const [previewedThisGame, setPreviewedThisGame] = useState<Set<string>>(new Set());
+
+  /**
+   * For signed-in users: modifier IDs not yet earned via games-played progression.
+   * Sliced from PROGRESSION_UNLOCK_ORDER — mods before the earned count are available;
+   * the rest are excluded from draft pools until the player crosses the next milestone.
+   */
+  const lockedForAuthUser = useMemo<string[]>(() => {
+    if (!authenticated) return [];
+    const earnedCount = Math.floor(myGamesPlayed / GAMES_PER_UNLOCK);
+    return [...PROGRESSION_UNLOCK_ORDER.slice(earnedCount)];
+  }, [authenticated, myGamesPlayed]);
+
   /** Modifier earnt by the guest after their first win — shown in unlock modal */
   const [pendingGuestUnlock, setPendingGuestUnlock] =
     useState<ChaosModifier | null>(null);
@@ -5159,7 +5173,7 @@ export default function ChaosChessPage() {
               undefined,
               playerPieceCounts,
               state.playerAnomaly,
-              [...(state.spentPlayerModIds ?? []), ...(!authenticated ? [...guestPreviewedMods] : [])],
+              [...(state.spentPlayerModIds ?? []), ...(!authenticated ? [...guestPreviewedMods] : lockedForAuthUser)],
             );
             setChaosState((prev) => ({
               ...prev,
@@ -5204,7 +5218,7 @@ export default function ChaosChessPage() {
             undefined,
             playerPieceCounts,
             state.playerAnomaly,
-            [...(state.spentPlayerModIds ?? []), ...(!authenticated ? [...guestPreviewedMods] : [])],
+            [...(state.spentPlayerModIds ?? []), ...(!authenticated ? [...guestPreviewedMods] : lockedForAuthUser)],
           );
           setChaosState((prev) => ({
             ...prev,
@@ -7242,7 +7256,7 @@ export default function ChaosChessPage() {
                 undefined,
                 countPiecesFromFen(gameRef.current.fen(), "b"),
                 incoming.playerAnomaly,
-                [...(incoming.spentPlayerModIds ?? []), ...(!authenticated ? [...guestPreviewedMods] : [])],
+                [...(incoming.spentPlayerModIds ?? []), ...(!authenticated ? [...guestPreviewedMods] : lockedForAuthUser)],
               );
               pendingDraftAfterRevealRef.current = {
                 phase: phaseForDraft,
@@ -7597,7 +7611,7 @@ export default function ChaosChessPage() {
                     undefined,
                     countPiecesFromFen(gameRef.current.fen(), myColor_),
                     incoming.playerAnomaly,
-                    [...(incoming.spentPlayerModIds ?? []), ...(!authenticated ? [...guestPreviewedMods] : [])],
+                    [...(incoming.spentPlayerModIds ?? []), ...(!authenticated ? [...guestPreviewedMods] : lockedForAuthUser)],
                   );
                   pendingDraftAfterRevealRef.current = {
                     phase: phaseForDraft,
@@ -9328,7 +9342,7 @@ export default function ChaosChessPage() {
         Date.now(),
         countPiecesFromFen(game.fen(), pCode),
         chaosState.playerAnomaly,
-        [...(chaosState.spentPlayerModIds ?? []), ...(!authenticated ? [...guestPreviewedMods] : [])],
+        [...(chaosState.spentPlayerModIds ?? []), ...(!authenticated ? [...guestPreviewedMods] : lockedForAuthUser)],
       );
       const remaining = chaosState.draftChoices.filter(
         (m) => m.id !== discarded.id,

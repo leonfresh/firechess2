@@ -52,3 +52,25 @@ export const LS_PREVIEWED_MODS = "firechess_chaos_previewed_mods";
  * using a preview card. Set when user checks "don't ask again".
  */
 export const LS_PREVIEW_NO_CONFIRM = "firechess_chaos_preview_no_confirm";
+
+/**
+ * Ordered list of modifier IDs that unlock progressively for signed-in users.
+ * One modifier unlocks every GAMES_PER_UNLOCK games (starting at game 5).
+ * All 10 locked mods unlock by game 50.
+ * Ordered weakest → strongest so casual players earn mild upgrades first.
+ */
+export const PROGRESSION_UNLOCK_ORDER: readonly string[] = [
+  "king-wrath",         // game  5 — Regicide (rare)
+  "forced-en-passant",  // game 10 — Forced En Passant (rare)
+  "queen-cannon",       // game 15 — Queen Cannon (epic)
+  "collateral-rook",    // game 20 — Collateral Damage (epic)
+  "nuclear-queen",      // game 25 — Nuclear Queen (legendary)
+  "rook-cannon",        // game 30 — Rook Cannon (legendary)
+  "knight-horde",       // game 35 — Knight Horde (legendary)
+  "undead-army",        // game 40 — Undead Army (legendary)
+  "railgun",            // game 45 — Railgun (legendary)
+  "amazon",             // game 50 — The Amazon (legendary)
+];
+
+/** Games required between each progression unlock step. */
+export const GAMES_PER_UNLOCK = 5;
