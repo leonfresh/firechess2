@@ -13,6 +13,7 @@ import { useAvatarFrame } from "@/lib/use-coins";
 const NAV_LINKS = [
   { href: "/analyze", label: "Analyze" },
   { href: "/train", label: "Training" },
+  { href: "/sparring", label: "⚔️ Sparring" },
   { href: "/guess", label: "Guess the Move" },
   { href: "/chaos", label: "⚡ Chaos Chess" },
   { href: "/escape", label: "🎮 Escape Chess" },
