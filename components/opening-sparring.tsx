@@ -556,8 +556,9 @@ export default function OpeningSparring() {
               themes: coachingThemes,
               bestMoveSan,
             });
-            setPieceBadge({ square: move.to, quality });
           } catch { /* not critical */ }
+          // Set quality badge regardless of whether coaching insight succeeded
+          setPieceBadge({ square: move.to, quality: classifyByCpLoss(cpLoss) });
         }
       } catch {
         // Not critical
@@ -716,26 +717,6 @@ export default function OpeningSparring() {
   /*  Square highlights                                                  */
   /* ------------------------------------------------------------------ */
 
-  const customSquare = useMemo(() => {
-    return ((props: any) => {
-      const sq = props?.square as string | undefined;
-      const showBadge = sq && pieceBadge && sq === pieceBadge.square;
-      return (
-        <div style={props?.style} className="relative h-full w-full">
-          {props?.children}
-          {showBadge && (
-            <span
-              className="pointer-events-none absolute -right-0.5 -top-0.5 z-[40] flex h-5 w-5 items-center justify-center rounded-full text-[11px] shadow-lg"
-              style={{ backgroundColor: QUALITY_BG_SOLID[pieceBadge!.quality] }}
-            >
-              {QUALITY_EMOJI[pieceBadge!.quality]}
-            </span>
-          )}
-        </div>
-      );
-    }) as any;
-  }, [pieceBadge]);
-
   const customSquareStyles: Record<string, React.CSSProperties> = {};
 
   if (lastMove) {
@@ -764,6 +745,25 @@ export default function OpeningSparring() {
     const turn = chessRef.current.turn();
     return turn === "w" ? evalCp : -evalCp;
   })();
+
+  // Pixel position of the quality badge overlay (top-right corner of dest square)
+  const badgeOverlayStyle = useMemo((): React.CSSProperties | null => {
+    if (!pieceBadge) return null;
+    const sq = pieceBadge.square;
+    const file = sq.charCodeAt(0) - 97; // 0 = a-file, 7 = h-file
+    const rank = parseInt(sq[1]) - 1;   // 0 = rank 1, 7 = rank 8
+    const squarePx = boardSize / 8;
+    const col = userColor === "white" ? file : 7 - file;
+    const row = userColor === "white" ? 7 - rank : rank;
+    return {
+      position: "absolute",
+      left: (col + 1) * squarePx - 10,
+      top: row * squarePx - 10,
+      backgroundColor: QUALITY_BG_SOLID[pieceBadge.quality],
+      zIndex: 50,
+      pointerEvents: "none",
+    };
+  }, [pieceBadge, boardSize, userColor]);
 
   /* ------------------------------------------------------------------ */
   /*  Session summary                                                    */
@@ -1071,19 +1071,28 @@ export default function OpeningSparring() {
           evalCp={evalBarCp}
           height={boardSize}
         />
-        <Chessboard
-          position={fen}
-          boardOrientation={userColor}
-          boardWidth={boardSize}
-          onPieceDrop={handlePieceDrop}
-          onSquareClick={handleSquareClick}
-          customSquareStyles={customSquareStyles}
-          customSquare={customSquare}
-          customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-          customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
-          customPieces={customPieces}
-          showBoardNotation={showCoords}
-        />
+        <div className="relative shrink-0" style={{ width: boardSize, height: boardSize }}>
+          <Chessboard
+            position={fen}
+            boardOrientation={userColor}
+            boardWidth={boardSize}
+            onPieceDrop={handlePieceDrop}
+            onSquareClick={handleSquareClick}
+            customSquareStyles={customSquareStyles}
+            customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+            customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+            customPieces={customPieces}
+            showBoardNotation={showCoords}
+          />
+          {pieceBadge && badgeOverlayStyle && (
+            <span
+              className="flex h-5 w-5 items-center justify-center rounded-full text-[11px] shadow-lg"
+              style={badgeOverlayStyle}
+            >
+              {QUALITY_EMOJI[pieceBadge.quality]}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* User indicator */}
