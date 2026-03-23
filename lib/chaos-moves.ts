@@ -2198,6 +2198,7 @@ export function executeChaosMove(
   game: Chess,
   move: ChaosMove,
   modifiers: ChaosModifier[],
+  opponentModifiers?: ChaosModifier[],
 ): Chess | null {
   const piece = game.get(move.from);
   if (!piece) return null;
@@ -2253,21 +2254,24 @@ export function executeChaosMove(
     }
   }
 
-  // ── Kamikaze Bishop: chaos-move capture (bishop-cannon, dragon-bishop, etc.) ──
-  // Standard move captures are handled by applyPostMoveEffects.
+  // ── Kamikaze Bishop: reactive — fires when opponent's bishop is captured via chaos move ──
   if (
     move.type === "capture" &&
-    piece.type === "b" &&
     !move.pieceStays &&
-    modifiers.some((m) => m.id === "kamikaze-bishop")
+    opponentModifiers?.some((m) => m.id === "kamikaze-bishop")
   ) {
-    tmp.remove(move.to); // bishop self-destructs at the capture square
-    const [tf, tr] = sqToCoords(move.to);
-    for (const [df, dr] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]] as [number,number][]) {
-      const adj = sq(tf + df, tr + dr);
-      if (!adj) continue;
-      const adjP = tmp.get(adj);
-      if (adjP && adjP.color !== piece.color && adjP.type !== "k") tmp.remove(adj);
+    const capturedWasBishop = game.get(move.to);
+    if (capturedWasBishop?.type === "b" && capturedWasBishop.color !== piece.color) {
+      // Attacker that landed on the bishop's square dies too
+      tmp.remove(move.to);
+      const [tf, tr] = sqToCoords(move.to);
+      for (const [df, dr] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]] as [number,number][]) {
+        const adj = sq(tf + df, tr + dr);
+        if (!adj) continue;
+        const adjP = tmp.get(adj);
+        // Remove attacker-side pieces (piece.color) except kings
+        if (adjP && adjP.color === piece.color && adjP.type !== "k") tmp.remove(adj);
+      }
     }
   }
 
@@ -2468,19 +2472,21 @@ export function applyPostMoveEffects(
     }
   }
 
-  // Kamikaze Bishop — on capture, bishop detonates: removes itself + adjacent enemies
+  // Kamikaze Bishop — reactive: fires when the captured piece was the opponent's bishop
   if (
     capturedPiece &&
-    movingPieceType === "b" &&
-    modifiers.some((m) => m.id === "kamikaze-bishop")
+    capturedType === "b" &&
+    opponentModifiers?.some((m) => m.id === "kamikaze-bishop")
   ) {
-    tmp.remove(to); // bishop self-destructs
+    // Attacker (now at `to`) also dies in the explosion
+    tmp.remove(to);
     const [tf, tr] = sqToCoords(to);
     for (const [df, dr] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]] as [number,number][]) {
       const adj = sq(tf + df, tr + dr);
       if (!adj) continue;
       const adjP = tmp.get(adj);
-      if (adjP && adjP.color !== color && adjP.type !== "k") tmp.remove(adj);
+      // Remove attacker-side pieces (color = attacker) except kings
+      if (adjP && adjP.color === color && adjP.type !== "k") tmp.remove(adj);
     }
     modified = true;
   }

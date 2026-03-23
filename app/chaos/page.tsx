@@ -5182,11 +5182,11 @@ export default function ChaosChessPage() {
           playSound("crowd-ooh");
         }
         if (
-          mods.some((m) => m.id === "kamikaze-bishop") &&
-          pieceType === "b" &&
+          opponentMods?.some((m) => m.id === "kamikaze-bishop") &&
+          capturedType === "b" &&
           captured
         ) {
-          // Kamikaze: bishop and adjacent enemies all explode
+          // Kamikaze: captured bishop explodes — attacker and adjacent attacker pieces all die
           const bf = to.charCodeAt(0) - 97;
           const br = parseInt(to[1]) - 1;
           const blastSquares: string[] = [to as string];
@@ -5204,7 +5204,7 @@ export default function ChaosChessPage() {
             ...prev,
             {
               type: "chaos",
-              message: "🧨 Kamikaze Bishop! The bishop exploded on capture!",
+              message: "🧨 Kamikaze Bishop! It exploded and took the attacker with it!",
               icon: "🧨",
               pepe: PEPE.firesgun,
             },
@@ -5389,7 +5389,7 @@ export default function ChaosChessPage() {
                 scored.push({ move: cm, eval: 1_000_000, game: g });
                 continue;
               }
-              const newGame = executeChaosMove(g, cm, cs.aiModifiers);
+              const newGame = executeChaosMove(g, cm, cs.aiModifiers, cs.playerModifiers);
               if (!newGame) continue;
               // Eval the resulting position — cp is from the player's perspective (side to move after AI's chaos move)
               const er = await stockfishPool.evaluateFen(
@@ -7876,6 +7876,7 @@ export default function ChaosChessPage() {
           game,
           chaosMove,
           chaosState.playerModifiers,
+          chaosState.aiModifiers,
         );
         if (!newGame) return false;
 
@@ -7907,6 +7908,26 @@ export default function ChaosChessPage() {
             triggerEffect("explosion", [to]);
           } else {
             triggerEffect("flash", [to]);
+          }
+
+          // Kamikaze Bishop: if opponent's captured piece was a bishop with kamikaze, blast nearby
+          if (chaosMove.type === "capture" && chaosState.aiModifiers.some((m) => m.id === "kamikaze-bishop")) {
+            const capturedWasBishop = game.get(to as any);
+            if (capturedWasBishop?.type === "b") {
+              const bf = to.charCodeAt(0) - 97, br = parseInt(to[1]) - 1;
+              const blastSqs: string[] = [to as string];
+              for (let df = -1; df <= 1; df++)
+                for (let dr = -1; dr <= 1; dr++) {
+                  if (df === 0 && dr === 0) continue;
+                  const nf = bf + df, nr = br + dr;
+                  if (nf >= 0 && nf <= 7 && nr >= 0 && nr <= 7)
+                    blastSqs.push(`${String.fromCharCode(97 + nf)}${nr + 1}`);
+                }
+              setTimeout(() => triggerEffect("explosion", blastSqs), 200);
+              setEventLog((prev) => [...prev, { type: "chaos", message: "🧨 Kamikaze Bishop! It exploded and took the attacker with it!", icon: "🧨", pepe: PEPE.firesgun }]);
+              spawnPepe(PEPE.firesgun);
+              playSound("airhorn");
+            }
           }
         }
 
@@ -8442,7 +8463,7 @@ export default function ChaosChessPage() {
       };
       setPendingPromotion(null);
 
-      const newGame = executeChaosMove(game, move, chaosState.playerModifiers);
+      const newGame = executeChaosMove(game, move, chaosState.playerModifiers, chaosState.aiModifiers);
       if (!newGame) return;
 
       const pieceName =
