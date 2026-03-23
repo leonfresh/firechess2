@@ -1355,13 +1355,23 @@ function genAnomalyHangedMan(game: Chess, color: Color): ChaosMove[] {
   return moves;
 }
 
-/** Emperor — Dominion: king leaps up to 2 squares in any direction */
+/** Emperor — Dominion: king slides up to 2 squares in any direction (path must be clear) */
 function genAnomalyEmperor(game: Chess, color: Color): ChaosMove[] {
   const moves: ChaosMove[] = [];
   const kings = allSquaresOf(game, "k", color);
   if (kings.length === 0) return moves;
   const ks = kings[0];
   const [kf, kr] = sqToCoords(ks);
+
+  // Collect castling destinations from chess.js so we never duplicate them as chaos moves.
+  // If we generated e.g. e1→g1 as a Dominion move, handlePlayerMove would apply it as a
+  // regular king move (no rook), breaking castling.
+  const castlingDests = new Set<string>(
+    (game.moves({ verbose: true }) as any[])
+      .filter((m) => (m.flags as string).includes("k") || (m.flags as string).includes("q"))
+      .map((m) => m.to as string),
+  );
+
   const dirs: [number, number][] = [
     [-1, -1],
     [-1, 0],
@@ -1373,16 +1383,22 @@ function genAnomalyEmperor(game: Chess, color: Color): ChaosMove[] {
     [1, 1],
   ];
   for (const [df, dr] of dirs) {
+    // Intermediate square must be clear — king cannot slide through pieces
+    const midSq = sq(kf + df, kr + dr);
+    if (!midSq) continue;
+    if (game.get(midSq)) continue; // blocked by any piece
+
     const target = sq(kf + 2 * df, kr + 2 * dr);
     if (!target) continue;
     if (isFriendly(game, target, color)) continue;
+    if (castlingDests.has(target)) continue; // let chess.js handle castling
     if (wouldLeaveKingInCheck(game, ks, target, color)) continue;
     moves.push({
       from: ks,
       to: target,
       type: isEnemy(game, target, color) ? "capture" : "move",
       modifierId: "anomaly-emperor",
-      label: "Dominion (king 2-sq leap)",
+      label: "Dominion (king 2-sq)",
     });
   }
   return moves;

@@ -147,7 +147,7 @@ export const ALL_ANOMALIES: AnomalyDefinition[] = [
     tarotName: "The Emperor",
     name: "Dominion",
     description:
-      "Your King can move up to 2 squares in any direction (a leap — intermediate squares don't block). Authority knows no bounds.",
+      "Your King can move up to 2 squares in any direction, as long as the path is clear. Authority knows no bounds.",
     icon: "👑",
     trigger: "passive",
     bgGradient: "from-amber-950/90 to-yellow-900/50",
