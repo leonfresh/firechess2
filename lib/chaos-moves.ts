@@ -1368,7 +1368,11 @@ function genAnomalyEmperor(game: Chess, color: Color): ChaosMove[] {
   // regular king move (no rook), breaking castling.
   const castlingDests = new Set<string>(
     (game.moves({ verbose: true }) as any[])
-      .filter((m) => (m.flags as string).includes("k") || (m.flags as string).includes("q"))
+      .filter(
+        (m) =>
+          (m.flags as string).includes("k") ||
+          (m.flags as string).includes("q"),
+      )
       .map((m) => m.to as string),
   );
 

@@ -237,6 +237,7 @@ export function Navbar() {
                   isActive("/dungeon") ||
                   isActive("/roast") ||
                   isActive("/chaos") ||
+                  isActive("/recruit") ||
                   isActive("/sparring")
                     ? "text-white bg-white/[0.06]"
                     : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
@@ -304,6 +305,16 @@ export function Navbar() {
                     }`}
                   >
                     ⚡ Chaos Chess
+                  </Link>
+                  <Link
+                    href="/recruit"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                      isActive("/recruit")
+                        ? "text-amber-400 bg-amber-500/[0.08]"
+                        : "text-slate-400 hover:text-amber-400 hover:bg-amber-500/[0.06]"
+                    }`}
+                  >
+                    🎲 Recruit Chess
                   </Link>
                   <Link
                     href="/roast"
@@ -935,6 +946,7 @@ export function Navbar() {
                 { href: "/my-openings", label: "🌲 My Opening Tree" },
                 { href: "/blog", label: "Blog" },
                 { href: "/chaos", label: "⚡ Chaos Chess" },
+                { href: "/recruit", label: "🎲 Recruit Chess" },
                 { href: "/dungeon", label: "⚔️ Dungeon Tactics" },
                 { href: "/openings", label: "📖 Openings" },
                 { href: "/leaderboard", label: "🏆 Leaderboard" },

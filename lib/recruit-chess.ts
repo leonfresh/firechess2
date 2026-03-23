@@ -69,12 +69,29 @@ export interface Commander {
   glowColor: string;
 }
 
+export type EncounterType = "docks" | "blacksmith" | "tavern" | "shrine";
+
+export interface EncounterChoice {
+  id: string;
+  type: EncounterType;
+  title: string;
+  description: string;
+  icon: string;
+  /** +N gold for docks */
+  goldGain?: number;
+  /** Free piece for tavern */
+  freePiece?: { pieceType: PieceType; modifierId: string; tier: UpgradeTier };
+  /** Modifier id to imbue for shrine */
+  shrineModifierId?: string;
+}
+
 export interface RecruitGameState {
   phase:
     | "commander-select"
     | "shop"
     | "arrange"
     | "fight"
+    | "encounter"
     | "round-result"
     | "game-over";
   round: number;
@@ -91,6 +108,8 @@ export interface RecruitGameState {
   roundResults: RoundResult[];
   fightResult: FightResult | null;
   ghostOpponent: GhostBuild | null;
+  /** Present when phase === "encounter" */
+  pendingEncounterChoices?: EncounterChoice[];
 }
 
 export interface FightResult {
@@ -854,6 +873,161 @@ export function getShopTierLabel(round: number): {
   };
   return { tier, ...(labels[tier] ?? labels[1]) };
 }
+
+/* ================================================================== */
+/*  Between-battle encounter generation                                 */
+/* ================================================================== */
+
+const MERCENARY_PIECES: Array<{
+  type: EncounterType;
+  round: number;
+  pieceType: PieceType;
+  modifierId: string;
+  tier: UpgradeTier;
+}> = [
+  {
+    type: "tavern",
+    round: 1,
+    pieceType: "n",
+    modifierId: "night-rider",
+    tier: "bronze",
+  },
+  {
+    type: "tavern",
+    round: 1,
+    pieceType: "b",
+    modifierId: "bishop-bounce",
+    tier: "bronze",
+  },
+  {
+    type: "tavern",
+    round: 3,
+    pieceType: "r",
+    modifierId: "phantom-rook",
+    tier: "bronze",
+  },
+  {
+    type: "tavern",
+    round: 3,
+    pieceType: "b",
+    modifierId: "dragon-bishop",
+    tier: "silver",
+  },
+  {
+    type: "tavern",
+    round: 5,
+    pieceType: "r",
+    modifierId: "railgun",
+    tier: "silver",
+  },
+  {
+    type: "tavern",
+    round: 5,
+    pieceType: "q",
+    modifierId: "amazon",
+    tier: "silver",
+  },
+  {
+    type: "tavern",
+    round: 7,
+    pieceType: "q",
+    modifierId: "nuclear-queen",
+    tier: "gold",
+  },
+];
+
+const SHRINE_MODIFIERS_BY_ROUND: Record<number, string[]> = {
+  1: ["pawn-charge", "pawn-capture-forward", "camel"],
+  3: ["dragon-bishop", "night-rider", "bishop-bounce", "phantom-rook"],
+  5: ["dragon-rook", "bishop-cannon", "amazon", "collateral-rook"],
+  7: ["nuclear-queen", "railgun", "king-ascension", "kings-chains"],
+};
+
+function getShrineModifier(round: number): string {
+  const tier = round >= 7 ? 7 : round >= 5 ? 5 : round >= 3 ? 3 : 1;
+  const pool = SHRINE_MODIFIERS_BY_ROUND[tier] ?? SHRINE_MODIFIERS_BY_ROUND[1];
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function getMercenaryPiece(round: number): {
+  pieceType: PieceType;
+  modifierId: string;
+  tier: UpgradeTier;
+} {
+  const eligible = MERCENARY_PIECES.filter((m) => m.round <= round);
+  const pool = eligible.length > 0 ? eligible : MERCENARY_PIECES.slice(0, 2);
+  const picked = pool[Math.floor(Math.random() * pool.length)];
+  return {
+    pieceType: picked.pieceType,
+    modifierId: picked.modifierId,
+    tier: picked.tier,
+  };
+}
+
+/**
+ * Generate 3 random encounter choices for a between-battle event.
+ * Always includes Docks (safe gold option). The other two are randomised.
+ */
+export function generateEncounterChoices(
+  round: number,
+  _commanderId: CommanderId,
+): EncounterChoice[] {
+  const goldAmount = 3 + Math.floor(round / 3);
+  const mercenar = getMercenaryPiece(round);
+  const shrineModId = getShrineModifier(round);
+  const shrineMod = ALL_MODIFIERS.find((m) => m.id === shrineModId);
+
+  const all: EncounterChoice[] = [
+    {
+      id: "docks",
+      type: "docks",
+      title: "The Docks",
+      description: `Work the loading docks to earn ${goldAmount} gold. Skip the normal shop refresh.`,
+      icon: "🚢",
+      goldGain: goldAmount,
+    },
+    {
+      id: "blacksmith",
+      type: "blacksmith",
+      title: "The Blacksmith",
+      description: "Expand your roster — gain +1 army slot for free.",
+      icon: "⚒️",
+    },
+    {
+      id: "tavern",
+      type: "tavern",
+      title: "The Tavern",
+      description: `Hire a mercenary ${PIECE_LABELS_STATIC[mercenar.pieceType]} with ${ALL_MODIFIERS.find((m) => m.id === mercenar.modifierId)?.name ?? mercenar.modifierId} for free.`,
+      icon: "🍺",
+      freePiece: mercenar,
+    },
+    {
+      id: "shrine",
+      type: "shrine",
+      title: "The Shrine",
+      description: `Imbue one of your army pieces with ${shrineMod?.name ?? shrineModId}. Choose which piece to empower.`,
+      icon: "⛩️",
+      shrineModifierId: shrineModId,
+    },
+  ];
+
+  // Always include docks + shuffle two more from the rest
+  const rest = all
+    .filter((c) => c.type !== "docks")
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 2);
+  return [all[0], ...rest];
+}
+
+// Static piece label map (mirrors the one in the component)
+const PIECE_LABELS_STATIC: Record<string, string> = {
+  p: "Pawn",
+  n: "Knight",
+  b: "Bishop",
+  r: "Rook",
+  q: "Queen",
+  k: "King",
+};
 
 /* ================================================================== */
 /*  Re-exports for convenience                                          */

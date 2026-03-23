@@ -33,6 +33,7 @@ import {
   type GhostBuild,
   type CommanderId,
   type UpgradeTier,
+  type EncounterChoice,
   COMMANDERS,
   getCommander,
   createInitialGameState,
@@ -46,10 +47,13 @@ import {
   calcHpDamage,
   calcGoldIncome,
   generateGhostBuild,
+  generateEncounterChoices,
   getShopTierLabel,
   UPGRADE_TIER_STYLES,
   ALL_MODIFIERS,
 } from "@/lib/recruit-chess";
+
+import { playSound } from "@/lib/sounds";
 
 import {
   getChaosMoves,
@@ -100,6 +104,188 @@ const PIECE_ICONS: Record<string, string> = {
   q: "♛",
   k: "♚",
 };
+
+const LS_KEY = "recruit_chess_state_v1";
+
+/* ================================================================== */
+/*  Fairy piece SVGs + overlay icons (from chaos chess assets)         */
+/* ================================================================== */
+
+const RECRUIT_FAIRY_SVGS: Record<string, { w: string; b: string }> = {
+  camel: { w: "/pieces/fairy/wCa.svg", b: "/pieces/fairy/bCa.svg" },
+  "night-rider": { w: "/pieces/fairy/wNR.svg", b: "/pieces/fairy/bNR.svg" },
+  amazon: { w: "/pieces/fairy/wAm.svg", b: "/pieces/fairy/bAm.svg" },
+  "dragon-bishop": { w: "/pieces/fairy/wDb.svg", b: "/pieces/fairy/bDb.svg" },
+  "dragon-rook": { w: "/pieces/fairy/wDr.svg", b: "/pieces/fairy/bDr.svg" },
+  "pawn-charge": { w: "/pieces/fairy/wPC.svg", b: "/pieces/fairy/bPC.svg" },
+  "pawn-capture-forward": {
+    w: "/pieces/fairy/wPB.svg",
+    b: "/pieces/fairy/bPB.svg",
+  },
+  railgun: { w: "/pieces/fairy/wRG.svg", b: "/pieces/fairy/bRG.svg" },
+  "rook-cannon": { w: "/pieces/fairy/wRC.svg", b: "/pieces/fairy/bRC.svg" },
+  "collateral-rook": { w: "/pieces/fairy/wC.svg", b: "/pieces/fairy/bC.svg" },
+  "king-ascension": { w: "/pieces/fairy/wEK.svg", b: "/pieces/fairy/bEK.svg" },
+  "kings-chains": { w: "/pieces/fairy/wKB.svg", b: "/pieces/fairy/bKB.svg" },
+};
+
+const RECRUIT_MOD_ICONS: Record<string, string> = {
+  "pawn-charge": "🚀",
+  "pawn-capture-forward": "🗡️",
+  "dragon-bishop": "🐉",
+  "dragon-rook": "🔥",
+  "nuclear-queen": "☢️",
+  "phantom-rook": "👻",
+  "bishop-bounce": "🏓",
+  railgun: "💣",
+  "night-rider": "🌙",
+  camel: "🐪",
+  amazon: "⚡",
+  "king-ascension": "👑",
+  "kings-chains": "⛓️",
+  "bishop-cannon": "💥",
+  "collateral-rook": "💢",
+  "rook-cannon": "🪃",
+  "pawn-promotion-early": "⭐",
+};
+
+/** Meme sounds per modifier tier (mirrors chaos chess TIER_SOUNDS) */
+const TIER_SOUNDS: Record<string, string[]> = {
+  common: ["bruh", "roblox-oof"],
+  rare: ["crowd-ooh", "record-scratch", "honk"],
+  epic: ["airhorn", "emotional-damage", "bro-serious"],
+  legendary: ["airhorn", "yeet"],
+};
+
+function pickSound(tier: string): Parameters<typeof playSound>[0] {
+  const pool = TIER_SOUNDS[tier] ?? TIER_SOUNDS.common;
+  return pool[Math.floor(Math.random() * pool.length)] as Parameters<
+    typeof playSound
+  >[0];
+}
+
+/* ================================================================== */
+/*  Custom piece renderer for fight board                              */
+/* ================================================================== */
+
+const PIECE_CHARS: Record<string, string> = {
+  p: "P",
+  n: "N",
+  b: "B",
+  r: "R",
+  q: "Q",
+  k: "K",
+};
+const TIER_ORDER: UpgradeTier[] = ["bronze", "silver", "gold"];
+
+function buildRecruitCustomPieces(
+  playerArmy: Array<Pick<RecruitedPiece, "pieceType" | "modifierId" | "tier">>,
+  opponentArmy: Array<
+    Pick<RecruitedPiece, "pieceType" | "modifierId" | "tier">
+  >,
+): Record<
+  string,
+  (props: { squareWidth: number; square?: string }) => React.ReactElement
+> {
+  type PieceFn = (props: {
+    squareWidth: number;
+    square?: string;
+  }) => React.ReactElement;
+  function getBestMods(
+    army: typeof playerArmy,
+  ): Map<string, { modifierId: string; tier: UpgradeTier }> {
+    const map = new Map<string, { modifierId: string; tier: UpgradeTier }>();
+    for (const piece of army) {
+      const existing = map.get(piece.pieceType);
+      if (
+        !existing ||
+        TIER_ORDER.indexOf(piece.tier) > TIER_ORDER.indexOf(existing.tier)
+      ) {
+        map.set(piece.pieceType, {
+          modifierId: piece.modifierId,
+          tier: piece.tier,
+        });
+      }
+    }
+    return map;
+  }
+
+  const custom: Record<string, PieceFn> = {};
+
+  function addCustomPiece(
+    pieceCode: string,
+    colorChar: "w" | "b",
+    modifierId: string,
+    tier: UpgradeTier,
+  ) {
+    const svgPaths = RECRUIT_FAIRY_SVGS[modifierId];
+    // Modifiers without a fairy SVG still get an overlay via customSquareStyles
+    if (!svgPaths) return;
+
+    const icon = RECRUIT_MOD_ICONS[modifierId];
+    const isPhantom = modifierId === "phantom-rook";
+    const glowFilter =
+      tier === "gold"
+        ? "drop-shadow(0 0 5px gold) drop-shadow(0 0 2px orange)"
+        : tier === "silver"
+          ? "drop-shadow(0 0 4px #94a3b8)"
+          : undefined;
+    const svgSrc = svgPaths[colorChar];
+
+    const Component: PieceFn = ({ squareWidth }) => (
+      <div
+        style={{
+          width: squareWidth,
+          height: squareWidth,
+          position: "relative",
+        }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={svgSrc}
+          style={{
+            width: "100%",
+            height: "100%",
+            filter:
+              [isPhantom ? "opacity(0.65)" : "", glowFilter ?? ""]
+                .filter(Boolean)
+                .join(" ") || undefined,
+          }}
+          alt=""
+          draggable={false}
+        />
+        {icon && (
+          <span
+            style={{
+              position: "absolute",
+              bottom: 1,
+              right: 1,
+              fontSize: Math.max(8, Math.floor(squareWidth * 0.22)),
+              lineHeight: 1,
+              pointerEvents: "none",
+              filter: "drop-shadow(0 1px 2px rgba(0,0,0,0.8))",
+            }}
+          >
+            {icon}
+          </span>
+        )}
+      </div>
+    );
+    custom[pieceCode] = Component;
+  }
+
+  const playerMods = getBestMods(playerArmy);
+  const opponentMods = getBestMods(opponentArmy);
+
+  for (const [pieceType, { modifierId, tier }] of playerMods) {
+    addCustomPiece("w" + PIECE_CHARS[pieceType], "w", modifierId, tier);
+  }
+  for (const [pieceType, { modifierId, tier }] of opponentMods) {
+    addCustomPiece("b" + PIECE_CHARS[pieceType], "b", modifierId, tier);
+  }
+
+  return custom;
+}
 
 /* ================================================================== */
 /*  Fight simulation                                                    */
@@ -193,16 +379,62 @@ async function simulateFight(
       })
       .sort((a, b) => b.score - a.score);
 
-    const bestChaosCapture = scoredChaos[0] ?? null;
-
+    // SF-aware chaos selection:
+    // Evaluate the position after each top chaos capture at lower depth.
+    // If it's at least as good as the current position eval, prefer chaos.
     let useChaos = false;
     let chosenChaosMove: ChaosMove | null = null;
 
-    if (bestChaosCapture && bestChaosCapture.score >= 3) {
-      // Use the chaos capture if it yields at least a bishop value
-      useChaos = true;
-      chosenChaosMove = bestChaosCapture.move;
+    const sfCpForUs = sfResult?.cp ?? 0; // current position eval from our side's POV
+
+    for (const { move: cm, score: naiveScore } of scoredChaos.slice(0, 4)) {
+      if (naiveScore < 1) break;
+
+      // King capture is always the right move
+      const captured = game.get(cm.to as Square);
+      if (captured?.type === "k") {
+        useChaos = true;
+        chosenChaosMove = cm;
+        break;
+      }
+
+      const testGame = executeChaosMove(
+        new Chess(game.fen()),
+        cm,
+        mySideMods,
+        oppMods,
+      );
+      if (!testGame) continue;
+
+      // Check if opponent's king was captured by a sideEffect
+      const oppKingAlive = testGame
+        .board()
+        .flat()
+        .some((p) => p && p.type === "k" && p.color !== side);
+      if (!oppKingAlive) {
+        useChaos = true;
+        chosenChaosMove = cm;
+        break;
+      }
+
+      const chaosEval = await stockfishPool.evaluateFen(
+        testGame.fen(),
+        Math.max(4, STOCKFISH_DEPTH - 3),
+      );
+      if (cancelRef.current) break;
+
+      // chaosEval.cp is from the new side-to-move (opponent) POV.
+      // Our advantage after chaos move = -(opponent's cp).
+      const chaosCpForUs = -(chaosEval?.cp ?? 0);
+
+      // Prefer chaos if it's within 100cp of SF's best OR a high-value grab
+      if (chaosCpForUs > sfCpForUs - 100 || naiveScore >= 6) {
+        useChaos = true;
+        chosenChaosMove = cm;
+        break;
+      }
     }
+    if (cancelRef.current) break;
 
     if (useChaos && chosenChaosMove) {
       const prevFen = game.fen();
@@ -341,8 +573,31 @@ export function RecruitChess() {
   const cancelFightRef = useRef(false);
   const replayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // ── localStorage persistence ──────────────────────────────────────
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LS_KEY);
+      if (saved) setGameState(JSON.parse(saved));
+    } catch {
+      // Corrupted state — start fresh
+    }
+  }, []);
+
+  useEffect(() => {
+    if (gameState) {
+      try {
+        localStorage.setItem(LS_KEY, JSON.stringify(gameState));
+      } catch {
+        // Storage full or unavailable — silently skip
+      }
+    } else {
+      localStorage.removeItem(LS_KEY);
+    }
+  }, [gameState]);
+
   // ── Commander selection ────────────────────────────────────────────
   const handleSelectCommander = useCallback((id: CommanderId) => {
+    playSound("intro-jingle");
     setGameState(createInitialGameState(id));
   }, []);
 
@@ -366,6 +621,7 @@ export function RecruitChess() {
       let newBench = [...prev.bench];
 
       if (upgradeInfo?.shouldUpgrade) {
+        playSound("bell-double");
         // Remove matched cards and add an upgraded one
         const toRemoveIds = new Set(upgradeInfo.matchingIds);
         const allPieces = [...newArmy, ...newBench].filter(
@@ -396,6 +652,7 @@ export function RecruitChess() {
           newBench = [...newBenchPieces, upgradedPiece].slice(0, 2);
         }
       } else {
+        playSound("bell");
         // Just add piece
         const newPiece: RecruitedPiece = {
           id: `p-${slotId}-${Date.now()}`,
@@ -424,6 +681,7 @@ export function RecruitChess() {
   }, []);
 
   const handleSellPiece = useCallback((pieceId: string) => {
+    playSound("bruh");
     setGameState((prev) => {
       if (!prev || prev.phase !== "shop") return prev;
       const piece =
@@ -442,6 +700,7 @@ export function RecruitChess() {
   }, []);
 
   const handleReroll = useCallback(() => {
+    playSound("record-scratch");
     setGameState((prev) => {
       if (!prev || prev.phase !== "shop" || prev.gold < 1) return prev;
       return {
@@ -465,6 +724,7 @@ export function RecruitChess() {
   }, []);
 
   const handleLevelUp = useCallback(() => {
+    playSound("taco-bell-bong");
     setGameState((prev) => {
       if (!prev || prev.phase !== "shop" || prev.gold < 4) return prev;
       if (prev.maxArmySlots >= 10) return prev;
@@ -478,6 +738,7 @@ export function RecruitChess() {
 
   // ── Start fight ────────────────────────────────────────────────────
   const handleStartFight = useCallback(() => {
+    playSound("drumroll");
     setGameState((prev) => {
       if (!prev || prev.phase !== "shop") return prev;
       const ghost = generateGhostBuild(prev.round, prev.commander!);
@@ -535,6 +796,27 @@ export function RecruitChess() {
     }
 
     replayTimerRef.current = setTimeout(() => {
+      // Play sound for current move before advancing
+      const currentMove = fight.moves[fight.replayIndex];
+      if (currentMove) {
+        if (currentMove.isChaosMove) {
+          const modDef = ALL_MODIFIERS.find(
+            (m) => m.name === currentMove.chaosLabel,
+          );
+          const tier = modDef?.tier ?? "common";
+          try {
+            playSound(pickSound(tier));
+          } catch {}
+        } else if (currentMove.isCapture) {
+          try {
+            playSound("capture");
+          } catch {}
+        } else {
+          try {
+            playSound("move");
+          } catch {}
+        }
+      }
       setFight((f) => ({ ...f, replayIndex: f.replayIndex + 1 }));
     }, FIGHT_REPLAY_SPEED_MS);
 
@@ -547,6 +829,11 @@ export function RecruitChess() {
   const handleContinueAfterFight = useCallback(() => {
     const result = fight.result;
     if (!result) return;
+
+    // Play win/lose sound
+    try {
+      playSound(result.won ? "airhorn" : "sad-trombone");
+    } catch {}
 
     setGameState((prev) => {
       if (!prev) return prev;
@@ -578,18 +865,22 @@ export function RecruitChess() {
         };
       }
 
+      // Go to encounter phase before next shop
       return {
         ...prev,
-        phase: "shop",
+        phase: "encounter",
         round: newRound,
         hp: newHp,
         gold: income,
         winStreak: result.won ? prev.winStreak + 1 : 0,
         loseStreak: result.won ? 0 : prev.loseStreak + 1,
-        shop: generateShop(newRound, prev.commander!, prev.shop),
         roundResults: [...prev.roundResults, newResult],
         fightResult: result,
         ghostOpponent: null,
+        pendingEncounterChoices: generateEncounterChoices(
+          newRound,
+          prev.commander!,
+        ),
       };
     });
 
@@ -602,6 +893,80 @@ export function RecruitChess() {
       result: null,
     });
   }, [fight.result]);
+
+  // ── Apply encounter choice ─────────────────────────────────────────
+  const handleEncounterChoice = useCallback((choice: EncounterChoice) => {
+    playSound("select");
+    setGameState((prev) => {
+      if (!prev || prev.phase !== "encounter") return prev;
+
+      let newState = { ...prev };
+
+      switch (choice.type) {
+        case "docks":
+          newState.gold = prev.gold + (choice.goldGain ?? 4);
+          playSound("bell-double");
+          break;
+
+        case "blacksmith":
+          newState.maxArmySlots = Math.min(10, prev.maxArmySlots + 1);
+          playSound("taco-bell-bong");
+          break;
+
+        case "tavern":
+          if (choice.freePiece) {
+            const freePiece: RecruitedPiece = {
+              id: `merc-${Date.now()}`,
+              pieceType: choice.freePiece.pieceType,
+              modifierId: choice.freePiece.modifierId,
+              tier: choice.freePiece.tier,
+              slot:
+                prev.army.length < prev.maxArmySlots ? prev.army.length : null,
+            };
+            if (prev.army.length < prev.maxArmySlots) {
+              newState.army = [...prev.army, freePiece];
+            } else if (prev.bench.length < 2) {
+              newState.bench = [...prev.bench, freePiece];
+            }
+            playSound("bell");
+          }
+          break;
+
+        case "shrine":
+          // Shrine is handled via UI piece-picker — state will be updated
+          // by a separate handleShrineApply callback. For now just return.
+          // (The EncounterScreen shows a piece picker for shrine choices.)
+          break;
+      }
+
+      // Transition to shop
+      newState.phase = "shop";
+      newState.shop = generateShop(prev.round, prev.commander!, prev.shop);
+      newState.pendingEncounterChoices = undefined;
+      return newState;
+    });
+  }, []);
+
+  // ── Apply shrine imbue ─────────────────────────────────────────────
+  const handleShrineApply = useCallback(
+    (targetPieceId: string, modifierId: string) => {
+      playSound("reveal-stinger");
+      setGameState((prev) => {
+        if (!prev || prev.phase !== "encounter") return prev;
+        const updatePiece = (p: RecruitedPiece): RecruitedPiece =>
+          p.id === targetPieceId ? { ...p, modifierId } : p;
+        return {
+          ...prev,
+          phase: "shop",
+          shop: generateShop(prev.round, prev.commander!, prev.shop),
+          pendingEncounterChoices: undefined,
+          army: prev.army.map(updatePiece),
+          bench: prev.bench.map(updatePiece),
+        };
+      });
+    },
+    [],
+  );
 
   // ── Derived fight board position ──────────────────────────────────
   // Each FightMove records the FEN *before* it was applied.
@@ -650,7 +1015,23 @@ export function RecruitChess() {
 
   if (gameState.phase === "game-over") {
     return (
-      <GameOverScreen state={gameState} onRestart={() => setGameState(null)} />
+      <GameOverScreen
+        state={gameState}
+        onRestart={() => {
+          localStorage.removeItem(LS_KEY);
+          setGameState(null);
+        }}
+      />
+    );
+  }
+
+  if (gameState.phase === "encounter") {
+    return (
+      <EncounterScreen
+        gameState={gameState}
+        onChoose={handleEncounterChoice}
+        onShrineApply={handleShrineApply}
+      />
     );
   }
 
@@ -998,6 +1379,13 @@ function FightScreen({
       ? Math.round((fight.replayIndex / fight.moves.length) * 100)
       : 0;
 
+  // Build custom fairy piece renderers based on both armies
+  const customPieces = useMemo(
+    () => (ghost ? buildRecruitCustomPieces(gameState.army, ghost.army) : {}),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [gameState.army, ghost?.army],
+  );
+
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col items-center p-4">
       <div className="max-w-2xl w-full">
@@ -1051,6 +1439,7 @@ function FightScreen({
             customSquareStyles={lastMoveHighlight}
             customDarkSquareStyle={{ backgroundColor: "#2d2937" }}
             customLightSquareStyle={{ backgroundColor: "#403a50" }}
+            customPieces={customPieces}
           />
         </div>
 
@@ -1409,6 +1798,181 @@ function ShopCard({
           >
             Buy
           </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================== */
+/*  Encounter Screen                                                    */
+/* ================================================================== */
+
+function EncounterScreen({
+  gameState,
+  onChoose,
+  onShrineApply,
+}: {
+  gameState: RecruitGameState;
+  onChoose: (choice: EncounterChoice) => void;
+  onShrineApply: (targetPieceId: string, modifierId: string) => void;
+}) {
+  const choices = gameState.pendingEncounterChoices ?? [];
+  const [shrineChoice, setShrineChoice] = useState<EncounterChoice | null>(
+    null,
+  );
+  const [selectedPieceId, setSelectedPieceId] = useState<string | null>(null);
+
+  if (shrineChoice) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col items-center justify-center p-6">
+        <div className="max-w-md w-full">
+          <div className="text-center mb-6">
+            <div className="text-4xl mb-2">⛩️</div>
+            <h2 className="text-2xl font-bold text-purple-300">The Shrine</h2>
+            <p className="text-gray-400 text-sm mt-1">
+              Choose a piece to imbue with{" "}
+              <span className="text-purple-300 font-semibold">
+                {ALL_MODIFIERS.find(
+                  (m) => m.id === shrineChoice.shrineModifierId,
+                )?.name ?? shrineChoice.shrineModifierId}
+              </span>
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mb-4">
+            {gameState.army.map((piece) => {
+              const modDef = ALL_MODIFIERS.find(
+                (m) => m.id === piece.modifierId,
+              );
+              const styles = UPGRADE_TIER_STYLES[piece.tier];
+              const isSelected = selectedPieceId === piece.id;
+              return (
+                <button
+                  key={piece.id}
+                  onClick={() => setSelectedPieceId(piece.id)}
+                  className={`
+                    rounded-lg border p-2 text-left transition-all
+                    ${styles.bg} ${isSelected ? "border-purple-400 ring-2 ring-purple-500/40" : styles.border}
+                  `}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">
+                      {PIECE_ICONS[piece.pieceType] ?? "?"}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="text-xs font-semibold text-gray-200">
+                        {PIECE_LABELS[piece.pieceType]}
+                      </div>
+                      <div className={`text-xs truncate ${styles.text}`}>
+                        {modDef?.name ?? piece.modifierId}
+                      </div>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              onClick={() => setShrineChoice(null)}
+              className="flex-1 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-sm transition-colors"
+            >
+              ← Back
+            </button>
+            <button
+              disabled={!selectedPieceId}
+              onClick={() => {
+                if (selectedPieceId && shrineChoice.shrineModifierId) {
+                  onShrineApply(selectedPieceId, shrineChoice.shrineModifierId);
+                }
+              }}
+              className="flex-1 py-2 rounded-lg bg-purple-700 hover:bg-purple-600 disabled:opacity-40 font-semibold transition-colors"
+            >
+              Imbue ✨
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col items-center justify-center p-6">
+      <div className="max-w-xl w-full">
+        <div className="text-center mb-8">
+          <div className="text-4xl mb-2">🗺️</div>
+          <h2 className="text-2xl font-bold mb-1">Before the next battle…</h2>
+          <p className="text-gray-400 text-sm">
+            Round {gameState.round} — Choose where to go
+          </p>
+          {gameState.roundResults.length > 0 && (
+            <div
+              className={`inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full text-xs font-medium ${
+                gameState.roundResults.at(-1)?.won
+                  ? "bg-green-900/50 text-green-400 border border-green-800"
+                  : "bg-red-900/50 text-red-400 border border-red-800"
+              }`}
+            >
+              {gameState.roundResults.at(-1)?.won ? "⚔️ Victory!" : "💀 Defeat"}
+            </div>
+          )}
+        </div>
+
+        <div className="grid gap-4">
+          {choices.map((choice) => {
+            const colorMap: Record<string, string> = {
+              docks:
+                "from-blue-950/80 to-cyan-900/40 border-blue-500/30 hover:border-blue-400/60",
+              blacksmith:
+                "from-stone-950/80 to-gray-900/40 border-stone-500/30 hover:border-stone-400/60",
+              tavern:
+                "from-amber-950/80 to-yellow-900/40 border-amber-500/30 hover:border-amber-400/60",
+              shrine:
+                "from-purple-950/80 to-violet-900/40 border-purple-500/30 hover:border-purple-400/60",
+            };
+            const classes = colorMap[choice.type] ?? colorMap.docks;
+
+            return (
+              <button
+                key={choice.id}
+                onClick={() => {
+                  if (choice.type === "shrine") {
+                    setShrineChoice(choice);
+                  } else {
+                    onChoose(choice);
+                  }
+                }}
+                className={`
+                  w-full text-left rounded-xl border p-4
+                  bg-gradient-to-br ${classes}
+                  transition-all hover:scale-[1.01] hover:brightness-110
+                `}
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-3xl">{choice.icon}</span>
+                  <div>
+                    <div className="font-bold text-base text-white mb-0.5">
+                      {choice.title}
+                    </div>
+                    <div className="text-sm text-gray-300 leading-snug">
+                      {choice.description}
+                    </div>
+                    {choice.freePiece && (
+                      <div className="mt-2">
+                        <PieceChip
+                          pieceType={choice.freePiece.pieceType}
+                          modifierId={choice.freePiece.modifierId}
+                          tier={choice.freePiece.tier}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
