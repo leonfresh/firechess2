@@ -46,7 +46,7 @@ import React, {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { Chess, type Color, type PieceSymbol } from "chess.js";
+import { Chess, type Color, type PieceSymbol, type Square } from "chess.js";
 import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { stockfishPool } from "@/lib/stockfish-client";
 import { ChaosLobby } from "@/components/chaos-lobby";
@@ -118,6 +118,7 @@ import {
   GUEST_UNLOCKED_IDS,
   LS_PENDING_UNLOCK,
   LS_FIRST_WIN_DONE,
+  LS_PREVIEWED_MODS,
 } from "@/lib/chaos-collection";
 
 /* ────────────────────────── Chaos Piece Overlays ────────────────────────── */
@@ -2168,7 +2169,6 @@ function DraftModal({
   temperanceUsed,
   onTemperanceReroll,
   unlockedIds,
-  lockedPickUsed,
   onLockedPick,
 }: {
   phase: number;
@@ -2186,9 +2186,7 @@ function DraftModal({
   onTemperanceReroll?: (discarded: ChaosModifier) => void;
   /** Set of modifier IDs this player can freely pick (omit = all unlocked) */
   unlockedIds?: Set<string>;
-  /** Whether the guest's one-time locked-card pick has already been used */
-  lockedPickUsed?: boolean;
-  /** Called when the guest picks a locked card (uses up their one free trial pick) */
+  /** Called when the guest picks a locked (preview) card — parent saves to localStorage */
   onLockedPick?: (mod: ChaosModifier) => void;
 }) {
   const pieceCounts =
@@ -2376,7 +2374,6 @@ function DraftModal({
             const glowColor = TIER_GLOW_COLORS[mod.tier];
             const isLocked =
               unlockedIds !== undefined && !unlockedIds.has(mod.id);
-            const canPickLocked = isLocked && !lockedPickUsed;
 
             return (
               <div
@@ -2429,23 +2426,21 @@ function DraftModal({
                   <button
                     type="button"
                     onClick={() => {
-                      if (isLocked && canPickLocked) handlePick(mod, true);
-                      else if (!isLocked) handlePick(mod);
+                      if (isLocked) handlePick(mod, true);
+                      else handlePick(mod);
                     }}
                     onMouseEnter={() => allRevealed && setHoveredId(mod.id)}
                     onMouseLeave={() => setHoveredId(null)}
-                    disabled={
-                      !allRevealed || !!pickedId || (isLocked && !canPickLocked)
-                    }
+                    disabled={!allRevealed || !!pickedId}
                     className={`relative flex w-full flex-row items-center gap-3 rounded-xl border p-3 text-left sm:flex-col sm:gap-0 sm:p-5 sm:text-center ${tier.bg} ${tier.border} ${
-                      allRevealed && !pickedId && (!isLocked || canPickLocked)
+                      allRevealed && !pickedId
                         ? "cursor-pointer transition-all duration-200"
                         : ""
                     } ${
                       isHovered && !pickedId
                         ? "border-white/30 sm:scale-105"
                         : ""
-                    } ${isLocked && !canPickLocked ? "opacity-50 cursor-not-allowed" : ""}`}
+                    }`}
                     style={{
                       backfaceVisibility: "hidden",
                       transform: "rotateY(180deg)",
@@ -2485,29 +2480,10 @@ function DraftModal({
                     {/* Sparkles */}
                     <CardSparkles tier={mod.tier} />
 
-                    {/* Lock overlay for guest restricted cards */}
-                    {isLocked && !canPickLocked && (
-                      <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center rounded-xl bg-black/60 gap-1 group/lock">
-                        <span className="text-2xl">🔒</span>
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">
-                          Locked
-                        </span>
-                        <a
-                          href="/auth/signin"
-                          className="pointer-events-auto text-[9px] text-purple-400 underline"
-                        >
-                          Sign in to unlock
-                        </a>
-                        {/* Tooltip on hover */}
-                        <div className="pointer-events-none absolute bottom-full left-1/2 mb-2 -translate-x-1/2 w-48 rounded-lg border border-purple-500/40 bg-[#0d0920]/95 px-3 py-2 text-center text-[10px] text-slate-300 shadow-lg shadow-purple-900/40 opacity-0 group-hover/lock:opacity-100 transition-opacity duration-150 z-30">
-                          <p className="font-bold text-purple-300 mb-0.5">🔒 Premium modifier</p>
-                          <p>Create a free account and play games to unlock this ability permanently.</p>
-                        </div>
-                      </div>
-                    )}
-                    {isLocked && canPickLocked && (
+                    {/* Preview badge for locked cards — fully pickable, saved to localStorage after use */}
+                    {isLocked && (
                       <div className="pointer-events-none absolute top-2 right-2 z-20 rounded-full bg-amber-500/20 border border-amber-400/40 px-1.5 py-0.5 text-[9px] font-bold text-amber-300">
-                        🎁 Free try
+                        🎁 Preview
                       </div>
                     )}
 
@@ -4036,9 +4012,25 @@ export default function ChaosChessPage() {
   /** When true, usurper (king-swap) moves are included in click/highlight logic */
   const [usurperActive, setUsurperActive] = useState(false);
 
-  /* ── Guest unlock system ── */
-  /** True once the guest has used their one free locked-card pick this game */
-  const [guestLockedPickUsed, setGuestLockedPickUsed] = useState(false);
+  /* ── Guest preview system ── */
+  /**
+   * Set of modifier IDs this guest has already previewed (persisted in localStorage).
+   * Previewed cards are filtered out of future draft pools — so guests see
+   * progressively weaker cards until they sign in to unlock permanently.
+   */
+  const [guestPreviewedMods, setGuestPreviewedMods] = useState<Set<string>>(
+    () => {
+      if (typeof window === "undefined") return new Set();
+      try {
+        const raw = window.localStorage.getItem(LS_PREVIEWED_MODS);
+        return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
+      } catch {
+        return new Set();
+      }
+    },
+  );
+  /** Track IDs previewed specifically during this game — for end-screen CTA */
+  const [previewedThisGame, setPreviewedThisGame] = useState<Set<string>>(new Set());
   /** Modifier earnt by the guest after their first win — shown in unlock modal */
   const [pendingGuestUnlock, setPendingGuestUnlock] =
     useState<ChaosModifier | null>(null);
@@ -4944,6 +4936,107 @@ export default function ChaosChessPage() {
         }
       }
 
+      // Chaos-only check: king is under chaos attack but chess.js sees no check
+      // e.g. AI king walks into dragon bishop's orthogonal control, or player
+      // moves a chaos piece to create check that chess.js doesn't detect.
+      if (!g.inCheck()) {
+        const chaosCheckedColor = g.turn() as Color;
+        const chaosAttackerColor: Color = chaosCheckedColor === "w" ? "b" : "w";
+        const isChaosPlayerChecked =
+          (playerColor === "white" && chaosCheckedColor === "w") ||
+          (playerColor === "black" && chaosCheckedColor === "b");
+        const chaosAttackerMods = isChaosPlayerChecked
+          ? chaosStateRef.current.aiModifiers
+          : chaosStateRef.current.playerModifiers;
+        if (
+          chaosAttackerMods.length > 0 &&
+          isKingUnderChaosAttack(
+            g,
+            chaosAttackerMods,
+            chaosAttackerColor,
+            chaosStateRef.current.assignedSquares ?? undefined,
+          )
+        ) {
+          // King is in chaos-only check. See if any legal OR chaos move escapes.
+          const escapesCheck = (testGame: Chess) =>
+            !isKingUnderChaosAttack(
+              testGame,
+              chaosAttackerMods,
+              chaosAttackerColor,
+              chaosStateRef.current.assignedSquares ?? undefined,
+            );
+          let hasEscape = false;
+          // Standard legal moves
+          for (const mv of g.moves({ verbose: true })) {
+            const testGame = new Chess(g.fen());
+            testGame.move(mv);
+            if (escapesCheck(testGame)) { hasEscape = true; break; }
+          }
+          // Defender's own chaos moves (e.g. chaos piece captures the attacker)
+          if (!hasEscape) {
+            const defenderMods = isChaosPlayerChecked
+              ? chaosStateRef.current.playerModifiers
+              : chaosStateRef.current.aiModifiers;
+            const defenderAnomaly = isChaosPlayerChecked
+              ? chaosStateRef.current.playerAnomaly
+              : chaosStateRef.current.aiAnomaly;
+            const defenderMoonUnlocked = isChaosPlayerChecked
+              ? chaosStateRef.current.playerMoonUnlocked ||
+                (chaosStateRef.current.currentPhase ?? 0) >= 2
+              : chaosStateRef.current.aiMoonUnlocked ||
+                (chaosStateRef.current.currentPhase ?? 0) >= 2;
+            if (defenderMods.length > 0) {
+              const defenderChaosMoves = getChaosMoves(
+                g,
+                defenderMods,
+                chaosCheckedColor,
+                chaosStateRef.current.assignedSquares ?? undefined,
+                chaosAttackerMods,
+                defenderAnomaly
+                  ? { playerAnomaly: defenderAnomaly, moonUnlocked: defenderMoonUnlocked ?? false }
+                  : undefined,
+              );
+              // getChaosMoves already filters out moves leaving king in standard check;
+              // additionally verify each chaos move also escapes the chaos attack.
+              for (const cm of defenderChaosMoves) {
+                const piece = g.get(cm.from as Square);
+                if (!piece) continue;
+                const testGame = new Chess(g.fen());
+                if (!cm.pieceStays) testGame.remove(cm.from as Square);
+                testGame.remove(cm.to as Square); // clears any capture target
+                if (!cm.pieceStays) testGame.put({ type: piece.type, color: chaosCheckedColor }, cm.to as Square);
+                if (escapesCheck(testGame)) { hasEscape = true; break; }
+              }
+            }
+          }
+          if (!hasEscape) {
+            const winner = chaosCheckedColor === "w" ? "black" : "white";
+            setGameResult(winner);
+            setGameStatus("game-over");
+            setEndReason("Checkmate");
+            const youWin = winner === playerColor;
+            setEventLog((prev) => [
+              ...prev,
+              {
+                type: "chaos",
+                message: `♟️ Chaos Checkmate! ${winner === "white" ? "White" : "Black"} wins — the king stepped into chaos!`,
+                icon: "♟️",
+                pepe: youWin ? PEPE.gigachad : PEPE.gamercry,
+              },
+            ]);
+            if (youWin) {
+              playSound("airhorn");
+              spawnPepe(PEPE.gigachad);
+              setTimeout(() => spawnPepe(PEPE.clap), 400);
+            } else {
+              playSound("mario-death");
+              spawnPepe(PEPE.gamercry);
+            }
+            return true;
+          }
+        }
+      }
+
       return false;
     },
     [playerColor, spawnPepe, triggerEffect, startKingCaptureAnim],
@@ -4971,7 +5064,7 @@ export default function ChaosChessPage() {
               undefined,
               playerPieceCounts,
               state.playerAnomaly,
-              state.spentPlayerModIds,
+              [...(state.spentPlayerModIds ?? []), ...(!authenticated ? [...guestPreviewedMods] : [])],
             );
             setChaosState((prev) => ({
               ...prev,
@@ -5016,7 +5109,7 @@ export default function ChaosChessPage() {
             undefined,
             playerPieceCounts,
             state.playerAnomaly,
-            state.spentPlayerModIds,
+            [...(state.spentPlayerModIds ?? []), ...(!authenticated ? [...guestPreviewedMods] : [])],
           );
           setChaosState((prev) => ({
             ...prev,
@@ -6513,7 +6606,7 @@ export default function ChaosChessPage() {
       aiMoveTokenRef.current.cancelled = true;
       aiMoveTokenRef.current = { cancelled: false };
       setIsThinking(false); // reset in case AI was mid-think when restart was clicked
-      setGuestLockedPickUsed(false);
+      setPreviewedThisGame(new Set());
       setUndoStack([]);
       setUndoUsed(0);
       lastMoveRef.current = null;
@@ -7054,7 +7147,7 @@ export default function ChaosChessPage() {
                 undefined,
                 countPiecesFromFen(gameRef.current.fen(), "b"),
                 incoming.playerAnomaly,
-                incoming.spentPlayerModIds,
+                [...(incoming.spentPlayerModIds ?? []), ...(!authenticated ? [...guestPreviewedMods] : [])],
               );
               pendingDraftAfterRevealRef.current = {
                 phase: phaseForDraft,
@@ -7409,7 +7502,7 @@ export default function ChaosChessPage() {
                     undefined,
                     countPiecesFromFen(gameRef.current.fen(), myColor_),
                     incoming.playerAnomaly,
-                    incoming.spentPlayerModIds,
+                    [...(incoming.spentPlayerModIds ?? []), ...(!authenticated ? [...guestPreviewedMods] : [])],
                   );
                   pendingDraftAfterRevealRef.current = {
                     phase: phaseForDraft,
@@ -9140,7 +9233,7 @@ export default function ChaosChessPage() {
         Date.now(),
         countPiecesFromFen(game.fen(), pCode),
         chaosState.playerAnomaly,
-        chaosState.spentPlayerModIds,
+        [...(chaosState.spentPlayerModIds ?? []), ...(!authenticated ? [...guestPreviewedMods] : [])],
       );
       const remaining = chaosState.draftChoices.filter(
         (m) => m.id !== discarded.id,
@@ -10933,9 +11026,17 @@ export default function ChaosChessPage() {
             temperanceUsed={chaosState.playerTemperanceUsedThisPhase}
             onTemperanceReroll={handleTemperanceReroll}
             unlockedIds={!authenticated ? GUEST_UNLOCKED_IDS : undefined}
-            lockedPickUsed={guestLockedPickUsed}
             onLockedPick={(mod) => {
-              setGuestLockedPickUsed(true);
+              // Save previewed mod to localStorage so it's excluded from future draft pools
+              setGuestPreviewedMods((prev) => {
+                const next = new Set(prev);
+                next.add(mod.id);
+                try {
+                  window.localStorage.setItem(LS_PREVIEWED_MODS, JSON.stringify([...next]));
+                } catch { /* ignore */ }
+                return next;
+              });
+              setPreviewedThisGame((prev) => new Set([...prev, mod.id]));
               handleDraftPick(mod);
             }}
           />
@@ -11784,7 +11885,10 @@ export default function ChaosChessPage() {
             {/* ── Game Over Overlay ── */}
             {gameStatus === "game-over" && (
               <div className="fixed inset-0 z-[9998] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-                <div className="flex flex-col items-center gap-4 rounded-2xl border border-white/10 bg-slate-900/95 p-6 sm:p-8 shadow-2xl max-w-sm w-full mx-4">
+                <div className="rounded-2xl border border-white/10 bg-slate-900/95 p-5 sm:p-8 shadow-2xl max-w-xl w-full mx-4">
+                  <div className="flex flex-col gap-5 sm:grid sm:grid-cols-[auto_1fr] sm:gap-6 sm:items-start">
+                  {/* Left column: result + ELO */}
+                  <div className="flex flex-col items-center gap-4 sm:min-w-[180px]">
                   {/* Result pepe */}
                   <img
                     src={
@@ -11989,8 +12093,9 @@ export default function ChaosChessPage() {
                     </div>
                   )}
 
-                  {/* Action buttons */}
-                  <div className="flex flex-col items-center gap-2 w-full">
+                  </div>{/* /left column */}
+                  {/* Right column: buttons + links */}
+                  <div className="flex flex-col gap-2 w-full">
                     {/* Rematch (multiplayer) */}
                     {gameMode !== "ai" &&
                       !rematchRequested &&
@@ -12089,8 +12194,16 @@ export default function ChaosChessPage() {
                       Share result
                     </button>
 
-                    {/* Guest upsell */}
-                    {!authenticated && (
+                    {/* Guest upsell — context-aware based on whether they previewed anything */}
+                    {!authenticated && previewedThisGame.size > 0 && (
+                      <a
+                        href="/auth/signin"
+                        className="mt-1 flex items-center justify-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2.5 text-xs font-medium text-amber-300 transition-all hover:bg-amber-500/20 w-full"
+                      >
+                        🔓 Sign in to unlock {previewedThisGame.size === 1 ? [...previewedThisGame][0] : `${previewedThisGame.size} modifiers`} permanently
+                      </a>
+                    )}
+                    {!authenticated && previewedThisGame.size === 0 && (
                       <a
                         href="/auth/signin"
                         className="mt-1 flex items-center justify-center gap-2 rounded-lg border border-amber-500/25 bg-amber-500/8 px-4 py-2.5 text-xs font-medium text-amber-300/80 transition-all hover:bg-amber-500/15 w-full"
@@ -12098,7 +12211,6 @@ export default function ChaosChessPage() {
                         🎨 Sign in for custom pieces &amp; board themes
                       </a>
                     )}
-                  </div>
 
                   {/* Discord CTA */}
                   <a
@@ -12140,6 +12252,8 @@ export default function ChaosChessPage() {
                       <path d="M5 12h14M12 5l7 7-7 7" />
                     </svg>
                   </a>
+                  </div>{/* /right column */}
+                  </div>{/* /grid */}
                 </div>
               </div>
             )}

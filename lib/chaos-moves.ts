@@ -2826,8 +2826,17 @@ export function isChaosCheckmate(
     if (chainedSquares.has(move.from)) continue;
 
     if (piece.type !== "k") {
-      // A non-king blocking/interposing move exists — not chaos checkmate
-      return false;
+      // A non-king move (block/capture/interpose). Verify it actually escapes the chaos attack too,
+      // since chess.js only knows about standard check — a blocking move may not cover chaos control.
+      const tmp = new Chess(game.fen());
+      tmp.move(move);
+      const stillChaosAttacked = getChaosAttackedSquares(tmp, oppModifiers, oppColor, assignedSquares);
+      const kingsAfter = allSquaresOf(tmp, "k", myColor);
+      if (kingsAfter.length === 0 || !stillChaosAttacked.has(kingsAfter[0])) {
+        return false; // This move resolves both standard check and chaos attack
+      }
+      // Move doesn't resolve chaos attack — continue checking other moves
+      continue;
     }
 
     // King move: check if the destination is safe from chaos attacks
