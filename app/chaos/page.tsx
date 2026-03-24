@@ -4158,6 +4158,13 @@ export default function ChaosChessPage() {
   const [previewedThisGame, setPreviewedThisGame] = useState<Set<string>>(
     new Set(),
   );
+  /**
+   * For signed-in users: tracks progression-locked cards tried this game (game-local,
+   * no localStorage). Tried cards are excluded from future pools within the same game.
+   */
+  const [triedLockedModsThisGame, setTriedLockedModsThisGame] = useState<
+    Set<string>
+  >(new Set());
 
   /**
    * For signed-in users: modifier IDs not yet earned via games-played progression.
@@ -4169,6 +4176,17 @@ export default function ChaosChessPage() {
     const earnedCount = Math.floor(myGamesPlayed / GAMES_PER_UNLOCK);
     return [...PROGRESSION_UNLOCK_ORDER.slice(earnedCount)];
   }, [authenticated, myGamesPlayed]);
+
+  /** Set of modifier IDs the authenticated user has earned — passed to DraftModal so locked cards render with the lock/try badge */
+  const authUnlockedIds = useMemo<Set<string>>(
+    () =>
+      new Set(
+        ALL_MODIFIERS.filter((m) => !lockedForAuthUser.includes(m.id)).map(
+          (m) => m.id,
+        ),
+      ),
+    [lockedForAuthUser],
+  );
 
   /** Modifier earnt by the guest after their first win — shown in unlock modal */
   const [pendingGuestUnlock, setPendingGuestUnlock] =
@@ -5202,9 +5220,9 @@ export default function ChaosChessPage() {
               state.playerAnomaly,
               [
                 ...(state.spentPlayerModIds ?? []),
-                ...(!authenticated
-                  ? [...guestPreviewedMods]
-                  : lockedForAuthUser),
+                ...(authenticated
+                  ? [...triedLockedModsThisGame]
+                  : [...guestPreviewedMods]),
               ],
             );
             setChaosState((prev) => ({
@@ -5252,7 +5270,9 @@ export default function ChaosChessPage() {
             state.playerAnomaly,
             [
               ...(state.spentPlayerModIds ?? []),
-              ...(!authenticated ? [...guestPreviewedMods] : lockedForAuthUser),
+              ...(authenticated
+                ? [...triedLockedModsThisGame]
+                : [...guestPreviewedMods]),
             ],
           );
           setChaosState((prev) => ({
@@ -6695,6 +6715,7 @@ export default function ChaosChessPage() {
       aiMoveTokenRef.current = { cancelled: false };
       setIsThinking(false); // reset in case AI was mid-think when restart was clicked
       setPreviewedThisGame(new Set());
+      setTriedLockedModsThisGame(new Set());
       setUndoStack([]);
       setUndoUsed(0);
       lastMoveRef.current = null;
@@ -7236,9 +7257,9 @@ export default function ChaosChessPage() {
                 incoming.playerAnomaly,
                 [
                   ...(incoming.spentPlayerModIds ?? []),
-                  ...(!authenticated
-                    ? [...guestPreviewedMods]
-                    : lockedForAuthUser),
+                  ...(authenticated
+                    ? [...triedLockedModsThisGame]
+                    : [...guestPreviewedMods]),
                 ],
               );
               pendingDraftAfterRevealRef.current = {
@@ -7582,9 +7603,9 @@ export default function ChaosChessPage() {
                     incoming.playerAnomaly,
                     [
                       ...(incoming.spentPlayerModIds ?? []),
-                      ...(!authenticated
-                        ? [...guestPreviewedMods]
-                        : lockedForAuthUser),
+                      ...(authenticated
+                        ? [...triedLockedModsThisGame]
+                        : [...guestPreviewedMods]),
                     ],
                   );
                   pendingDraftAfterRevealRef.current = {
@@ -9208,7 +9229,9 @@ export default function ChaosChessPage() {
         chaosState.playerAnomaly,
         [
           ...(chaosState.spentPlayerModIds ?? []),
-          ...(!authenticated ? [...guestPreviewedMods] : lockedForAuthUser),
+          ...(authenticated
+            ? [...triedLockedModsThisGame]
+            : [...guestPreviewedMods]),
         ],
       );
       const remaining = chaosState.draftChoices.filter(
@@ -11032,22 +11055,29 @@ export default function ChaosChessPage() {
             anomaly={chaosState.playerAnomaly}
             temperanceUsed={chaosState.playerTemperanceUsedThisPhase}
             onTemperanceReroll={handleTemperanceReroll}
-            unlockedIds={!authenticated ? GUEST_UNLOCKED_IDS : undefined}
+            unlockedIds={authenticated ? authUnlockedIds : GUEST_UNLOCKED_IDS}
             onLockedPick={(mod) => {
-              // Save previewed mod to localStorage so it's excluded from future draft pools
-              setGuestPreviewedMods((prev) => {
-                const next = new Set(prev);
-                next.add(mod.id);
-                try {
-                  window.localStorage.setItem(
-                    LS_PREVIEWED_MODS,
-                    JSON.stringify([...next]),
-                  );
-                } catch {
-                  /* ignore */
-                }
-                return next;
-              });
+              if (!authenticated) {
+                // Guest: persist to localStorage so the card doesn't reappear
+                setGuestPreviewedMods((prev) => {
+                  const next = new Set(prev);
+                  next.add(mod.id);
+                  try {
+                    window.localStorage.setItem(
+                      LS_PREVIEWED_MODS,
+                      JSON.stringify([...next]),
+                    );
+                  } catch {
+                    /* ignore */
+                  }
+                  return next;
+                });
+              } else {
+                // Auth user: game-local only — no localStorage
+                setTriedLockedModsThisGame(
+                  (prev) => new Set([...prev, mod.id]),
+                );
+              }
               setPreviewedThisGame((prev) => new Set([...prev, mod.id]));
               handleDraftPick(mod);
             }}
