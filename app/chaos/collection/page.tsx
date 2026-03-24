@@ -23,7 +23,11 @@ import {
   type ChaosModifier,
   type ModifierTier,
 } from "@/lib/chaos-chess";
-import { GUEST_UNLOCKED_IDS, PROGRESSION_UNLOCK_ORDER, GAMES_PER_UNLOCK } from "@/lib/chaos-collection";
+import {
+  GUEST_UNLOCKED_IDS,
+  PROGRESSION_UNLOCK_ORDER,
+  GAMES_PER_UNLOCK,
+} from "@/lib/chaos-collection";
 
 /* ── Twemoji helper (same as chaos page) ── */
 function _twemojiUrl(emoji: string): string {
@@ -74,11 +78,15 @@ function ChaosCollectionInner() {
           : "/api/chaos/collection";
         const res = await fetch(url);
         if (res.ok) {
-          const data: { unlockedIds: string[]; username?: string; gamesPlayed?: number } =
-            await res.json();
+          const data: {
+            unlockedIds: string[];
+            username?: string;
+            gamesPlayed?: number;
+          } = await res.json();
           setUnlockedIds(new Set(data.unlockedIds));
           if (data.username) setProfileName(data.username);
-          if (typeof data.gamesPlayed === "number") setGamesPlayed(data.gamesPlayed);
+          if (typeof data.gamesPlayed === "number")
+            setGamesPlayed(data.gamesPlayed);
         }
       } finally {
         setLoading(false);
@@ -185,81 +193,108 @@ function ChaosCollectionInner() {
         </div>
 
         {/* Next Unlock infographic — only for authenticated own-collection */}
-        {authenticated && viewingOwn && !loading && (() => {
-          const gp = gamesPlayed ?? 0;
-          // How many progression unlocks have been earned so far
-          const earnedCount = Math.min(
-            Math.floor(gp / GAMES_PER_UNLOCK),
-            PROGRESSION_UNLOCK_ORDER.length,
-          );
-          const nextIdx = earnedCount;
-          const allDone = nextIdx >= PROGRESSION_UNLOCK_ORDER.length;
+        {authenticated &&
+          viewingOwn &&
+          !loading &&
+          (() => {
+            const gp = gamesPlayed ?? 0;
+            // How many progression unlocks have been earned so far
+            const earnedCount = Math.min(
+              Math.floor(gp / GAMES_PER_UNLOCK),
+              PROGRESSION_UNLOCK_ORDER.length,
+            );
+            const nextIdx = earnedCount;
+            const allDone = nextIdx >= PROGRESSION_UNLOCK_ORDER.length;
 
-          if (allDone) {
+            if (allDone) {
+              return (
+                <div className="mb-6 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.06] p-4 flex items-center gap-3">
+                  <span className="text-2xl">🏆</span>
+                  <div>
+                    <p className="text-sm font-bold text-emerald-300">
+                      All progression powerups unlocked!
+                    </p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      You&apos;ve earned every modifier through gameplay.
+                    </p>
+                  </div>
+                </div>
+              );
+            }
+
+            const nextModId = PROGRESSION_UNLOCK_ORDER[nextIdx];
+            const nextMod = ALL_MODIFIERS.find((m) => m.id === nextModId);
+            if (!nextMod) return null;
+
+            const gamesNeeded = (nextIdx + 1) * GAMES_PER_UNLOCK;
+            const gamesInWindow = gp % GAMES_PER_UNLOCK;
+            const pct = Math.round((gamesInWindow / GAMES_PER_UNLOCK) * 100);
+            const remaining = gamesNeeded - gp;
+            const tc = TIER_COLORS[nextMod.tier];
+
             return (
-              <div className="mb-6 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.06] p-4 flex items-center gap-3">
-                <span className="text-2xl">🏆</span>
-                <div>
-                  <p className="text-sm font-bold text-emerald-300">All progression powerups unlocked!</p>
-                  <p className="text-xs text-slate-500 mt-0.5">You&apos;ve earned every modifier through gameplay.</p>
+              <div className="mb-6 rounded-2xl border border-purple-500/20 bg-gradient-to-r from-purple-950/40 to-slate-900/40 p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">
+                      Next Unlock
+                    </span>
+                    <span className="text-[10px] text-slate-600">
+                      {nextIdx + 1}/{PROGRESSION_UNLOCK_ORDER.length}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-slate-500">
+                    {remaining} game{remaining !== 1 ? "s" : ""} to go
+                  </span>
+                </div>
+                <div className="flex items-center gap-4">
+                  {/* Modifier preview card */}
+                  <div
+                    className={`relative flex-shrink-0 w-14 h-14 rounded-xl border flex items-center justify-center ${tc.border} ${tc.bg}`}
+                  >
+                    <Emoji emoji={nextMod.icon} className="w-8 h-8" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-sm font-bold text-white truncate">
+                        {nextMod.name}
+                      </span>
+                      <span
+                        className={`text-[8px] font-bold uppercase tracking-wider rounded-full px-1.5 py-0.5 flex-shrink-0 ${tc.text} ${tc.bg}`}
+                      >
+                        {TIER_LABELS[nextMod.tier]}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-slate-500 leading-relaxed line-clamp-2 mb-2">
+                      {nextMod.description}
+                    </p>
+                    {/* Progress bar */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-700"
+                          style={{
+                            width: `${pct}%`,
+                            background: {
+                              common:
+                                "linear-gradient(to right, #6b7280, #9ca3af)",
+                              rare: "linear-gradient(to right, #3b82f6, #60a5fa)",
+                              epic: "linear-gradient(to right, #a855f7, #c084fc)",
+                              legendary:
+                                "linear-gradient(to right, #f59e0b, #fcd34d)",
+                            }[nextMod.tier],
+                          }}
+                        />
+                      </div>
+                      <span className="text-[10px] font-bold tabular-nums text-slate-400">
+                        {gamesInWindow}/{GAMES_PER_UNLOCK}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             );
-          }
-
-          const nextModId = PROGRESSION_UNLOCK_ORDER[nextIdx];
-          const nextMod = ALL_MODIFIERS.find((m) => m.id === nextModId);
-          if (!nextMod) return null;
-
-          const gamesNeeded = (nextIdx + 1) * GAMES_PER_UNLOCK;
-          const gamesInWindow = gp % GAMES_PER_UNLOCK;
-          const pct = Math.round((gamesInWindow / GAMES_PER_UNLOCK) * 100);
-          const remaining = gamesNeeded - gp;
-          const tc = TIER_COLORS[nextMod.tier];
-
-          return (
-            <div className="mb-6 rounded-2xl border border-purple-500/20 bg-gradient-to-r from-purple-950/40 to-slate-900/40 p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">Next Unlock</span>
-                  <span className="text-[10px] text-slate-600">{nextIdx + 1}/{PROGRESSION_UNLOCK_ORDER.length}</span>
-                </div>
-                <span className="text-[10px] text-slate-500">{remaining} game{remaining !== 1 ? "s" : ""} to go</span>
-              </div>
-              <div className="flex items-center gap-4">
-                {/* Modifier preview card */}
-                <div className={`relative flex-shrink-0 w-14 h-14 rounded-xl border flex items-center justify-center ${tc.border} ${tc.bg}`}>
-                  <Emoji emoji={nextMod.icon} className="w-8 h-8" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-bold text-white truncate">{nextMod.name}</span>
-                    <span className={`text-[8px] font-bold uppercase tracking-wider rounded-full px-1.5 py-0.5 flex-shrink-0 ${tc.text} ${tc.bg}`}>{TIER_LABELS[nextMod.tier]}</span>
-                  </div>
-                  <p className="text-[10px] text-slate-500 leading-relaxed line-clamp-2 mb-2">{nextMod.description}</p>
-                  {/* Progress bar */}
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
-                      <div
-                        className="h-full rounded-full transition-all duration-700"
-                        style={{
-                          width: `${pct}%`,
-                          background: {
-                            common: "linear-gradient(to right, #6b7280, #9ca3af)",
-                            rare: "linear-gradient(to right, #3b82f6, #60a5fa)",
-                            epic: "linear-gradient(to right, #a855f7, #c084fc)",
-                            legendary: "linear-gradient(to right, #f59e0b, #fcd34d)",
-                          }[nextMod.tier],
-                        }}
-                      />
-                    </div>
-                    <span className="text-[10px] font-bold tabular-nums text-slate-400">{gamesInWindow}/{GAMES_PER_UNLOCK}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
+          })()}
 
         {/* Tier filter tabs */}
         <div className="mb-6 flex gap-2 flex-wrap">
