@@ -26,7 +26,7 @@ import {
 import {
   GUEST_UNLOCKED_IDS,
   PROGRESSION_UNLOCK_ORDER,
-  GAMES_PER_UNLOCK,
+  UNLOCK_AT_GAMES,
 } from "@/lib/chaos-collection";
 
 /* ── Twemoji helper (same as chaos page) ── */
@@ -200,7 +200,7 @@ function ChaosCollectionInner() {
             const gp = gamesPlayed ?? 0;
             // How many progression unlocks have been earned so far
             const earnedCount = Math.min(
-              Math.floor(gp / GAMES_PER_UNLOCK),
+              UNLOCK_AT_GAMES.filter((t) => gp >= t).length,
               PROGRESSION_UNLOCK_ORDER.length,
             );
             const nextIdx = earnedCount;
@@ -226,9 +226,11 @@ function ChaosCollectionInner() {
             const nextMod = ALL_MODIFIERS.find((m) => m.id === nextModId);
             if (!nextMod) return null;
 
-            const gamesNeeded = (nextIdx + 1) * GAMES_PER_UNLOCK;
-            const gamesInWindow = gp % GAMES_PER_UNLOCK;
-            const pct = Math.round((gamesInWindow / GAMES_PER_UNLOCK) * 100);
+            const gamesNeeded = UNLOCK_AT_GAMES[nextIdx];
+            const prevThreshold = nextIdx === 0 ? 0 : UNLOCK_AT_GAMES[nextIdx - 1];
+            const windowSize = gamesNeeded - prevThreshold;
+            const gamesInWindow = gp - prevThreshold;
+            const pct = Math.round((gamesInWindow / windowSize) * 100);
             const remaining = gamesNeeded - gp;
             const tc = TIER_COLORS[nextMod.tier];
 
@@ -287,7 +289,7 @@ function ChaosCollectionInner() {
                         />
                       </div>
                       <span className="text-[10px] font-bold tabular-nums text-slate-400">
-                        {gamesInWindow}/{GAMES_PER_UNLOCK}
+                        {gamesInWindow}/{windowSize}
                       </span>
                     </div>
                   </div>

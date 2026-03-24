@@ -121,7 +121,7 @@ import {
   LS_PREVIEWED_MODS,
   LS_PREVIEW_NO_CONFIRM,
   PROGRESSION_UNLOCK_ORDER,
-  GAMES_PER_UNLOCK,
+  UNLOCK_AT_GAMES,
 } from "@/lib/chaos-collection";
 
 /* ────────────────────────── Chaos Piece Overlays ────────────────────────── */
@@ -4173,7 +4173,9 @@ export default function ChaosChessPage() {
    */
   const lockedForAuthUser = useMemo<string[]>(() => {
     if (!authenticated) return [];
-    const earnedCount = Math.floor(myGamesPlayed / GAMES_PER_UNLOCK);
+    const earnedCount = UNLOCK_AT_GAMES.filter(
+      (t) => myGamesPlayed >= t,
+    ).length;
     return [...PROGRESSION_UNLOCK_ORDER.slice(earnedCount)];
   }, [authenticated, myGamesPlayed]);
 

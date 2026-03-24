@@ -55,22 +55,39 @@ export const LS_PREVIEW_NO_CONFIRM = "firechess_chaos_preview_no_confirm";
 
 /**
  * Ordered list of modifier IDs that unlock progressively for signed-in users.
- * One modifier unlocks every GAMES_PER_UNLOCK games (starting at game 5).
- * All 10 locked mods unlock by game 50.
+ * Unlock thresholds are front-loaded so new players earn early mods quickly.
  * Ordered weakest → strongest so casual players earn mild upgrades first.
  */
 export const PROGRESSION_UNLOCK_ORDER: readonly string[] = [
-  "king-wrath",         // game  5 — Regicide (rare)
-  "forced-en-passant",  // game 10 — Forced En Passant (rare)
-  "queen-cannon",       // game 15 — Queen Cannon (epic)
-  "collateral-rook",    // game 20 — Collateral Damage (epic)
-  "nuclear-queen",      // game 25 — Nuclear Queen (legendary)
-  "rook-cannon",        // game 30 — Rook Cannon (legendary)
-  "knight-horde",       // game 35 — Knight Horde (legendary)
-  "undead-army",        // game 40 — Undead Army (legendary)
-  "railgun",            // game 45 — Railgun (legendary)
-  "amazon",             // game 50 — The Amazon (legendary)
+  "king-wrath", // game  2 — Regicide (rare)
+  "forced-en-passant", // game  5 — Forced En Passant (rare)
+  "queen-cannon", // game  9 — Queen Cannon (epic)
+  "collateral-rook", // game 14 — Collateral Damage (epic)
+  "nuclear-queen", // game 20 — Nuclear Queen (legendary)
+  "rook-cannon", // game 27 — Rook Cannon (legendary)
+  "knight-horde", // game 35 — Knight Horde (legendary)
+  "undead-army", // game 44 — Undead Army (legendary)
+  "railgun", // game 54 — Railgun (legendary)
+  "amazon", // game 65 — The Amazon (legendary)
 ];
 
-/** Games required between each progression unlock step. */
+/**
+ * Cumulative games-played threshold for each unlock in PROGRESSION_UNLOCK_ORDER.
+ * Gaps increase arithmetically (2, 3, 4, 5 …) so early mods arrive fast
+ * while later legendaries still require meaningful investment.
+ */
+export const UNLOCK_AT_GAMES: readonly number[] = [
+  2, // king-wrath
+  5, // forced-en-passant
+  9, // queen-cannon
+  14, // collateral-rook
+  20, // nuclear-queen
+  27, // rook-cannon
+  35, // knight-horde
+  44, // undead-army
+  54, // railgun
+  65, // amazon
+];
+
+/** @deprecated Use UNLOCK_AT_GAMES for per-step thresholds instead. */
 export const GAMES_PER_UNLOCK = 5;
