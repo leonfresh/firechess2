@@ -69,7 +69,16 @@ export interface Commander {
   glowColor: string;
 }
 
-export type EncounterType = "docks" | "blacksmith" | "tavern" | "shrine";
+export type EncounterType =
+  | "docks"
+  | "blacksmith"
+  | "tavern"
+  | "shrine"
+  | "library"
+  | "forge"
+  | "arena"
+  | "treasure-vault"
+  | "cursed-altar";
 
 export interface EncounterChoice {
   id: string;
@@ -77,12 +86,20 @@ export interface EncounterChoice {
   title: string;
   description: string;
   icon: string;
-  /** +N gold for docks */
+  /** +N gold for docks / arena / treasure-vault */
   goldGain?: number;
-  /** Free piece for tavern */
+  /** Free piece for tavern / treasure-vault / cursed-altar */
   freePiece?: { pieceType: PieceType; modifierId: string; tier: UpgradeTier };
   /** Modifier id to imbue for shrine */
   shrineModifierId?: string;
+  /** Library: gold cost to upgrade one piece (bronze → silver) */
+  upgradeGoldCost?: number;
+  /** Arena: gold earned per surviving piece from last battle */
+  arenaGoldPerSurvivor?: number;
+  /** Cursed-altar: HP sacrifice cost */
+  hpCost?: number;
+  /** Cursed-altar: extra gold from the pact */
+  boonGold?: number;
 }
 
 export interface RecruitGameState {
@@ -150,6 +167,12 @@ export interface GhostBuild {
   round: number;
   rating: number;
   isAI: boolean;
+  /** True for special boss fights (rounds 3, 6, 8) */
+  isBoss?: boolean;
+  /** Boss display title */
+  bossTitle?: string;
+  /** Flavour text shown before the boss fight */
+  bossTagline?: string;
 }
 
 export interface RoundResult {
@@ -249,8 +272,8 @@ export const COMMANDERS: Commander[] = [
       "Start with 2 less HP but Epic+ modifier cards appear 40% more often in your shop.",
     passiveIcon: "💀",
     startingPieces: [
-      { pieceType: "q", modifierId: "amazon", tier: "bronze" },
-      { pieceType: "b", modifierId: "bishop-bounce", tier: "bronze" },
+      { pieceType: "b", modifierId: "bishop-cannon", tier: "silver" },
+      { pieceType: "n", modifierId: "night-rider", tier: "bronze" },
     ],
     icon: "👑",
     bgGradient: "from-red-950/90 to-rose-900/50",
@@ -336,8 +359,8 @@ const PIECE_MOD_POOL: Record<
     { modifierId: "railgun", weight: 2 },
   ],
   q: [
-    { modifierId: "amazon", weight: 4 },
-    { modifierId: "nuclear-queen", weight: 3 },
+    { modifierId: "amazon", weight: 2 },
+    { modifierId: "nuclear-queen", weight: 2 },
   ],
   k: [
     { modifierId: "kings-chains", weight: 3 },
@@ -367,9 +390,23 @@ const MODIFIER_TIER_PREMIUM: Record<string, number> = {
 const SHOP_TIER_PIECE_POOL: Record<number, PieceType[]> = {
   1: ["p", "p", "p", "n", "b"],
   2: ["p", "n", "b", "b", "r"],
-  3: ["n", "b", "r", "r", "q"],
-  4: ["b", "r", "r", "q", "k"],
+  3: ["n", "b", "r", "r", "r"],
+  4: ["r", "r", "q", "b", "k"],
   5: ["r", "q", "q", "k", "k"],
+};
+
+/**
+ * Minimum shop tier required for a modifier to appear.
+ * Legendary modifiers are gated behind late-game tiers so they feel earned.
+ */
+const MODIFIER_MIN_SHOP_TIER: Record<string, number> = {
+  amazon: 4,
+  "nuclear-queen": 4,
+  railgun: 3,
+  "king-ascension": 4,
+  "kings-chains": 4,
+  "rook-cannon": 3,
+  "night-rider": 2,
 };
 
 function weightedPick<T extends { weight: number }>(items: T[]): T {
@@ -410,10 +447,16 @@ export function generateShop(
       Math.floor(Math.random() * piecePool.length)
     ] as PieceType;
 
-    // Pick a compatible modifier
-    const modPool = PIECE_MOD_POOL[pieceType] ?? [
+    // Pick a compatible modifier (filter by shop tier restrictions)
+    const currentShopTier = Math.min(5, Math.ceil(round / 2));
+    const rawModPool = PIECE_MOD_POOL[pieceType] ?? [
       { modifierId: "pawn-charge", weight: 1 },
     ];
+    const filteredModPool = rawModPool.filter(
+      (entry) =>
+        (MODIFIER_MIN_SHOP_TIER[entry.modifierId] ?? 1) <= currentShopTier,
+    );
+    const modPool = filteredModPool.length > 0 ? filteredModPool : rawModPool;
     const picked = weightedPick(modPool);
     const modDef = ALL_MODIFIERS.find((m) => m.id === picked.modifierId);
     const tierPremium = MODIFIER_TIER_PREMIUM[modDef?.tier ?? "common"] ?? 0;
@@ -765,7 +808,87 @@ export function calcHpDamage(game: Chess, winnerColor: "w" | "b"): number {
 /*  Ghost opponent generation                                           */
 /* ================================================================== */
 
-/** Names for AI ghost opponents */
+/* ================================================================== */
+/*  Boss builds                                                         */
+/* ================================================================== */
+
+export function isBossRound(round: number): boolean {
+  return round === 3 || round === 6 || round === 8;
+}
+
+interface BossConfig {
+  displayName: string;
+  bossTitle: string;
+  bossTagline: string;
+  commander: CommanderId;
+  army: GhostBuild["army"];
+  rating: number;
+}
+
+const BOSS_CONFIGS: Record<number, BossConfig> = {
+  3: {
+    displayName: "The Iron Phalanx",
+    bossTitle: "⚔️ BOSS ENCOUNTER",
+    bossTagline:
+      "An impenetrable wall of steel advances. Nothing gets through.",
+    commander: "fortress",
+    army: [
+      { pieceType: "r", modifierId: "dragon-rook", tier: "silver" },
+      { pieceType: "r", modifierId: "phantom-rook", tier: "silver" },
+      { pieceType: "r", modifierId: "collateral-rook", tier: "silver" },
+      { pieceType: "p", modifierId: "pawn-charge", tier: "silver" },
+      { pieceType: "p", modifierId: "pawn-capture-forward", tier: "silver" },
+      { pieceType: "p", modifierId: "pawn-charge", tier: "silver" },
+      { pieceType: "p", modifierId: "pawn-capture-forward", tier: "silver" },
+      { pieceType: "n", modifierId: "camel", tier: "silver" },
+    ],
+    rating: 1400,
+  },
+  6: {
+    displayName: "The Dark Archmage",
+    bossTitle: "💀 BOSS ENCOUNTER",
+    bossTagline:
+      "Ancient sorcery channels through every piece. Long-range devastation.",
+    commander: "endgame-wizard",
+    army: [
+      { pieceType: "b", modifierId: "dragon-bishop", tier: "gold" },
+      { pieceType: "b", modifierId: "bishop-cannon", tier: "gold" },
+      { pieceType: "b", modifierId: "bishop-bounce", tier: "silver" },
+      { pieceType: "n", modifierId: "night-rider", tier: "gold" },
+      { pieceType: "n", modifierId: "night-rider", tier: "silver" },
+      { pieceType: "r", modifierId: "railgun", tier: "silver" },
+      { pieceType: "q", modifierId: "nuclear-queen", tier: "silver" },
+      { pieceType: "p", modifierId: "pawn-promotion-early", tier: "silver" },
+      { pieceType: "p", modifierId: "pawn-charge", tier: "silver" },
+    ],
+    rating: 1800,
+  },
+  8: {
+    displayName: "The Void Champion",
+    bossTitle: "👁 FINAL BOSS",
+    bossTagline: "The ultimate test. Maximum chaos. No survivors expected.",
+    commander: "gambit-king",
+    army: [
+      { pieceType: "q", modifierId: "nuclear-queen", tier: "gold" },
+      { pieceType: "q", modifierId: "amazon", tier: "gold" },
+      { pieceType: "r", modifierId: "railgun", tier: "gold" },
+      { pieceType: "r", modifierId: "rook-cannon", tier: "gold" },
+      { pieceType: "b", modifierId: "dragon-bishop", tier: "gold" },
+      { pieceType: "b", modifierId: "bishop-cannon", tier: "gold" },
+      { pieceType: "n", modifierId: "night-rider", tier: "gold" },
+      { pieceType: "k", modifierId: "king-ascension", tier: "gold" },
+      { pieceType: "p", modifierId: "pawn-promotion-early", tier: "gold" },
+      { pieceType: "p", modifierId: "pawn-charge", tier: "gold" },
+    ],
+    rating: 2400,
+  },
+};
+
+/* ================================================================== */
+/*  Ghost opponent generation                                           */
+/* ================================================================== */
+
+/** Named ghost opponents for regular fights */
 const GHOST_NAMES = [
   "Phantom Kasparov",
   "Ghost Fischer",
@@ -779,81 +902,200 @@ const GHOST_NAMES = [
   "Echo Carlsen",
   "The Pale Rook",
   "Void Queen Nimzo",
+  "Cursed Anand",
+  "The Hollow Knight",
+  "Rift Dragadorf",
+];
+
+/** Army archetypes: different strategic identities for ghost opponents */
+type GhostArchetype =
+  | "pawn-storm"
+  | "knight-web"
+  | "bishop-battery"
+  | "rook-fortress"
+  | "queen-rush"
+  | "balanced-chaos"
+  | "swarm-blitz"
+  | "siege-engine";
+
+function buildArchetypeArmy(
+  archetype: GhostArchetype,
+  round: number,
+): GhostBuild["army"] {
+  type ArmyPiece = {
+    pieceType: PieceType;
+    modifierId: string;
+    tier: UpgradeTier;
+  };
+  const tier: UpgradeTier =
+    round >= 7 ? "gold" : round >= 4 ? "silver" : "bronze";
+  const earlyTier: UpgradeTier = "bronze";
+  const lateTier: UpgradeTier = round >= 6 ? "gold" : "silver";
+
+  const armies: Record<GhostArchetype, ArmyPiece[]> = {
+    "pawn-storm": [
+      { pieceType: "p", modifierId: "pawn-charge", tier },
+      { pieceType: "p", modifierId: "pawn-capture-forward", tier },
+      { pieceType: "p", modifierId: "pawn-charge", tier },
+      { pieceType: "p", modifierId: "pawn-capture-forward", tier },
+      { pieceType: "p", modifierId: "pawn-promotion-early", tier },
+      { pieceType: "r", modifierId: "dragon-rook", tier },
+      { pieceType: "n", modifierId: "camel", tier },
+    ],
+    "knight-web": [
+      { pieceType: "n", modifierId: "camel", tier },
+      { pieceType: "n", modifierId: "night-rider", tier },
+      { pieceType: "n", modifierId: "camel", tier },
+      { pieceType: "b", modifierId: "bishop-bounce", tier },
+      { pieceType: "p", modifierId: "pawn-charge", tier },
+      { pieceType: "r", modifierId: "phantom-rook", tier },
+      { pieceType: "p", modifierId: "pawn-capture-forward", tier },
+    ],
+    "bishop-battery": [
+      { pieceType: "b", modifierId: "dragon-bishop", tier },
+      { pieceType: "b", modifierId: "bishop-bounce", tier },
+      {
+        pieceType: "b",
+        modifierId: "bishop-cannon",
+        tier: round >= 3 ? tier : earlyTier,
+      },
+      { pieceType: "n", modifierId: "night-rider", tier },
+      { pieceType: "p", modifierId: "pawn-charge", tier },
+      { pieceType: "r", modifierId: "phantom-rook", tier },
+      { pieceType: "p", modifierId: "pawn-capture-forward", tier },
+    ],
+    "rook-fortress": [
+      { pieceType: "r", modifierId: "dragon-rook", tier },
+      { pieceType: "r", modifierId: "phantom-rook", tier },
+      {
+        pieceType: "r",
+        modifierId: "collateral-rook",
+        tier: round >= 3 ? tier : earlyTier,
+      },
+      { pieceType: "p", modifierId: "pawn-charge", tier },
+      { pieceType: "p", modifierId: "pawn-capture-forward", tier },
+      { pieceType: "n", modifierId: "camel", tier },
+      { pieceType: "p", modifierId: "pawn-charge", tier },
+    ],
+    "queen-rush":
+      round <= 2
+        ? [
+            { pieceType: "p", modifierId: "pawn-charge", tier },
+            { pieceType: "n", modifierId: "camel", tier },
+            { pieceType: "b", modifierId: "dragon-bishop", tier },
+          ]
+        : [
+            {
+              pieceType: "q",
+              modifierId: round >= 5 ? "nuclear-queen" : "amazon",
+              tier,
+            },
+            { pieceType: "b", modifierId: "dragon-bishop", tier },
+            { pieceType: "n", modifierId: "night-rider", tier },
+            { pieceType: "r", modifierId: "phantom-rook", tier },
+            { pieceType: "p", modifierId: "pawn-charge", tier },
+            { pieceType: "p", modifierId: "pawn-capture-forward", tier },
+          ],
+    "balanced-chaos": [
+      { pieceType: "n", modifierId: "night-rider", tier },
+      { pieceType: "b", modifierId: "dragon-bishop", tier },
+      { pieceType: "r", modifierId: "phantom-rook", tier },
+      { pieceType: "p", modifierId: "pawn-capture-forward", tier },
+      { pieceType: "p", modifierId: "pawn-charge", tier },
+      { pieceType: "r", modifierId: "dragon-rook", tier },
+      {
+        pieceType: "q",
+        modifierId: "amazon",
+        tier: round >= 5 ? tier : earlyTier,
+      },
+    ],
+    "swarm-blitz": [
+      { pieceType: "p", modifierId: "pawn-charge", tier },
+      { pieceType: "p", modifierId: "pawn-charge", tier },
+      { pieceType: "p", modifierId: "pawn-capture-forward", tier },
+      { pieceType: "p", modifierId: "pawn-capture-forward", tier },
+      { pieceType: "p", modifierId: "pawn-promotion-early", tier },
+      { pieceType: "n", modifierId: "camel", tier },
+      { pieceType: "n", modifierId: "camel", tier },
+      { pieceType: "b", modifierId: "bishop-bounce", tier },
+    ],
+    "siege-engine": [
+      {
+        pieceType: "r",
+        modifierId: "rook-cannon",
+        tier: round >= 3 ? tier : earlyTier,
+      },
+      {
+        pieceType: "r",
+        modifierId: "railgun",
+        tier: round >= 4 ? tier : earlyTier,
+      },
+      { pieceType: "b", modifierId: "bishop-cannon", tier },
+      { pieceType: "n", modifierId: "night-rider", tier },
+      { pieceType: "p", modifierId: "pawn-charge", tier },
+      {
+        pieceType: "q",
+        modifierId: "nuclear-queen",
+        tier: round >= 5 ? lateTier : earlyTier,
+      },
+      { pieceType: "p", modifierId: "pawn-capture-forward", tier },
+    ],
+  };
+
+  return (armies[archetype] ?? armies["balanced-chaos"]).slice(0, 3 + round);
+}
+
+const GHOST_ARCHETYPES: GhostArchetype[] = [
+  "pawn-storm",
+  "knight-web",
+  "bishop-battery",
+  "rook-fortress",
+  "queen-rush",
+  "balanced-chaos",
+  "swarm-blitz",
+  "siege-engine",
 ];
 
 /**
  * Generate an AI ghost build for a given round.
- * The ghost army scales in strength and modifier quality each round.
+ * Boss rounds (3, 6, 8) use the special BOSS_CONFIGS.
  */
 export function generateGhostBuild(
   round: number,
-  commanderId: CommanderId,
+  _commanderId: CommanderId,
 ): GhostBuild {
-  const name = GHOST_NAMES[Math.floor(Math.random() * GHOST_NAMES.length)];
-
-  // Scale ghost's army size and piece quality with round
-  const armySize = Math.min(10, 3 + round);
-  const army: GhostBuild["army"] = [];
-
-  // Always start ghost with a basic army based on round
-  const ghostArmy = buildGhostArmy(round, armySize);
-
-  for (const piece of ghostArmy) {
-    army.push(piece);
+  // Boss rounds
+  if (isBossRound(round)) {
+    const boss = BOSS_CONFIGS[round];
+    return {
+      displayName: boss.displayName,
+      commander: boss.commander,
+      army: boss.army,
+      round,
+      rating: boss.rating,
+      isAI: true,
+      isBoss: true,
+      bossTitle: boss.bossTitle,
+      bossTagline: boss.bossTagline,
+    };
   }
+
+  // Regular ghost: pick a random name and archetype
+  const name = GHOST_NAMES[Math.floor(Math.random() * GHOST_NAMES.length)];
+  const archetype =
+    GHOST_ARCHETYPES[Math.floor(Math.random() * GHOST_ARCHETYPES.length)];
+  const army = buildArchetypeArmy(archetype, round);
 
   return {
     displayName: name,
     commander: COMMANDERS[Math.floor(Math.random() * COMMANDERS.length)].id,
-    army,
+    army: army.slice(0, Math.min(10, 3 + round)),
     round,
     rating: 800 + round * 120 + Math.floor(Math.random() * 100),
     isAI: true,
+    isBoss: false,
   };
 }
-
-function buildGhostArmy(round: number, size: number): GhostBuild["army"] {
-  const army: GhostBuild["army"] = [];
-  const tier: UpgradeTier =
-    round >= 7 ? "gold" : round >= 4 ? "silver" : "bronze";
-
-  // Add pieces scaling with round
-  if (round <= 2) {
-    // Early: mostly pawns + 1 minor piece
-    for (let i = 0; i < Math.min(size - 1, 4); i++) {
-      army.push({ pieceType: "p", modifierId: "pawn-charge", tier });
-    }
-    army.push({ pieceType: "n", modifierId: "camel", tier });
-  } else if (round <= 4) {
-    // Mid: bishops + knights + some pawns
-    army.push({ pieceType: "n", modifierId: "night-rider", tier });
-    army.push({ pieceType: "b", modifierId: "dragon-bishop", tier });
-    army.push({ pieceType: "p", modifierId: "pawn-capture-forward", tier });
-    army.push({ pieceType: "p", modifierId: "pawn-charge", tier });
-    army.push({ pieceType: "r", modifierId: "phantom-rook", tier });
-  } else if (round <= 6) {
-    // Late mid: rooks + queens
-    army.push({ pieceType: "r", modifierId: "phantom-rook", tier });
-    army.push({ pieceType: "r", modifierId: "dragon-rook", tier });
-    army.push({ pieceType: "b", modifierId: "bishop-cannon", tier });
-    army.push({ pieceType: "n", modifierId: "night-rider", tier });
-    army.push({ pieceType: "q", modifierId: "amazon", tier });
-    army.push({ pieceType: "p", modifierId: "pawn-capture-forward", tier });
-  } else {
-    // Endgame: legendary setup
-    army.push({ pieceType: "q", modifierId: "nuclear-queen", tier: "gold" });
-    army.push({ pieceType: "r", modifierId: "rook-cannon", tier: "gold" });
-    army.push({ pieceType: "r", modifierId: "railgun", tier: "gold" });
-    army.push({ pieceType: "b", modifierId: "bishop-cannon", tier });
-    army.push({ pieceType: "n", modifierId: "night-rider", tier });
-    army.push({ pieceType: "k", modifierId: "king-ascension", tier });
-    army.push({ pieceType: "p", modifierId: "pawn-charge", tier });
-    army.push({ pieceType: "p", modifierId: "pawn-capture-forward", tier });
-  }
-
-  return army.slice(0, size);
-}
-
 /* ================================================================== */
 /*  Leaderboard / rating helpers                                        */
 /* ================================================================== */
@@ -976,61 +1218,6 @@ function getMercenaryPiece(round: number): {
   };
 }
 
-/**
- * Generate 3 random encounter choices for a between-battle event.
- * Always includes Docks (safe gold option). The other two are randomised.
- */
-export function generateEncounterChoices(
-  round: number,
-  _commanderId: CommanderId,
-): EncounterChoice[] {
-  const goldAmount = 3 + Math.floor(round / 3);
-  const mercenar = getMercenaryPiece(round);
-  const shrineModId = getShrineModifier(round);
-  const shrineMod = ALL_MODIFIERS.find((m) => m.id === shrineModId);
-
-  const all: EncounterChoice[] = [
-    {
-      id: "docks",
-      type: "docks",
-      title: "The Docks",
-      description: `Work the loading docks to earn ${goldAmount} gold. Skip the normal shop refresh.`,
-      icon: "🚢",
-      goldGain: goldAmount,
-    },
-    {
-      id: "blacksmith",
-      type: "blacksmith",
-      title: "The Blacksmith",
-      description: "Expand your roster — gain +1 army slot for free.",
-      icon: "⚒️",
-    },
-    {
-      id: "tavern",
-      type: "tavern",
-      title: "The Tavern",
-      description: `Hire a mercenary ${PIECE_LABELS_STATIC[mercenar.pieceType]} with ${ALL_MODIFIERS.find((m) => m.id === mercenar.modifierId)?.name ?? mercenar.modifierId} for free.`,
-      icon: "🍺",
-      freePiece: mercenar,
-    },
-    {
-      id: "shrine",
-      type: "shrine",
-      title: "The Shrine",
-      description: `Imbue one of your army pieces with ${shrineMod?.name ?? shrineModId}. Choose which piece to empower.`,
-      icon: "⛩️",
-      shrineModifierId: shrineModId,
-    },
-  ];
-
-  // Always include docks + shuffle two more from the rest
-  const rest = all
-    .filter((c) => c.type !== "docks")
-    .sort(() => Math.random() - 0.5)
-    .slice(0, 2);
-  return [all[0], ...rest];
-}
-
 // Static piece label map (mirrors the one in the component)
 const PIECE_LABELS_STATIC: Record<string, string> = {
   p: "Pawn",
@@ -1040,6 +1227,124 @@ const PIECE_LABELS_STATIC: Record<string, string> = {
   q: "Queen",
   k: "King",
 };
+
+/**
+ * Generate 3 varied encounter choices between battles.
+ * The pool expands in later rounds; bosses are always raw fights (no encounter).
+ */
+export function generateEncounterChoices(
+  round: number,
+  _commanderId: CommanderId,
+  lastFightSurvivors = 0,
+): EncounterChoice[] {
+  const goldAmount = 3 + Math.floor(round / 3);
+  const mercenar = getMercenaryPiece(round);
+  const shrineModId = getShrineModifier(round);
+  const shrineMod = ALL_MODIFIERS.find((m) => m.id === shrineModId);
+
+  // Build the full pool for this round
+  const pool: EncounterChoice[] = [
+    {
+      id: "docks",
+      type: "docks",
+      title: "The Docks",
+      description: `Work the loading docks. Earn ${goldAmount} gold outright.`,
+      icon: "🚢",
+      goldGain: goldAmount,
+    },
+    {
+      id: "blacksmith",
+      type: "blacksmith",
+      title: "The Blacksmith",
+      description: "Forge a new slot — gain +1 army capacity for free.",
+      icon: "⚒️",
+    },
+    {
+      id: "tavern",
+      type: "tavern",
+      title: "The Tavern",
+      description: `Hire a ${PIECE_LABELS_STATIC[mercenar.pieceType]} mercenary with ${ALL_MODIFIERS.find((m) => m.id === mercenar.modifierId)?.name ?? mercenar.modifierId} for free.`,
+      icon: "🍺",
+      freePiece: mercenar,
+    },
+    {
+      id: "shrine",
+      type: "shrine",
+      title: "The Shrine",
+      description: `Imbue one piece with ${shrineMod?.name ?? shrineModId}. Ancient power rewrites its modifier.`,
+      icon: "⛩️",
+      shrineModifierId: shrineModId,
+    },
+    {
+      id: "library",
+      type: "library",
+      title: "The Library",
+      description:
+        "Study tomes of strategy. Pay 3 gold to promote one Bronze piece to Silver.",
+      icon: "📚",
+      upgradeGoldCost: 3,
+    },
+    {
+      id: "forge",
+      type: "forge",
+      title: "The Forge",
+      description:
+        "Melt down two identical Bronze pieces into one Silver. Sacrifice two to become one.",
+      icon: "🔥",
+    },
+  ];
+
+  // Arena — available only if there was a previous fight with survivors
+  if (lastFightSurvivors > 0) {
+    const arenaGold = lastFightSurvivors * 2;
+    pool.push({
+      id: "arena",
+      type: "arena",
+      title: "The Arena",
+      description: `Your ${lastFightSurvivors} survivors are celebrated. Earn ${arenaGold} gold from the crowd.`,
+      icon: "🏟️",
+      goldGain: arenaGold,
+      arenaGoldPerSurvivor: 2,
+    });
+  }
+
+  // Treasure vault — mid-game onwards
+  if (round >= 3) {
+    const vaultMercenar = getMercenaryPiece(round);
+    pool.push({
+      id: "treasure-vault",
+      type: "treasure-vault",
+      title: "The Treasure Vault",
+      description: `A sealed vault. Open it for a mystery reward — a ${PIECE_LABELS_STATIC[vaultMercenar.pieceType]} and 2 gold.`,
+      icon: "💎",
+      freePiece: vaultMercenar,
+      goldGain: 2,
+    });
+  }
+
+  // Cursed altar — late game only
+  if (round >= 5) {
+    const cursedPiece = getMercenaryPiece(round);
+    pool.push({
+      id: "cursed-altar",
+      type: "cursed-altar",
+      title: "The Cursed Altar",
+      description: `Dark pact: lose 1 HP but receive a ${PIECE_LABELS_STATIC[cursedPiece.pieceType]} and 4 gold. Power has a price.`,
+      icon: "💀",
+      hpCost: 1,
+      boonGold: 4,
+      freePiece: cursedPiece,
+    });
+  }
+
+  // Always include docks (economic anchor). Shuffle the rest and pick 2.
+  const docsChoice = pool.find((c) => c.type === "docks")!;
+  const rest = pool
+    .filter((c) => c.type !== "docks")
+    .sort(() => Math.random() - 0.5)
+    .slice(0, 2);
+  return [docsChoice, ...rest];
+}
 
 /* ================================================================== */
 /*  Re-exports for convenience                                          */

@@ -34,6 +34,7 @@ import {
   type CommanderId,
   type UpgradeTier,
   type EncounterChoice,
+  type EncounterType,
   COMMANDERS,
   getCommander,
   createInitialGameState,
@@ -51,6 +52,7 @@ import {
   getShopTierLabel,
   UPGRADE_TIER_STYLES,
   ALL_MODIFIERS,
+  isBossRound,
 } from "@/lib/recruit-chess";
 
 import { playSound } from "@/lib/sounds";
@@ -58,6 +60,7 @@ import { playSound } from "@/lib/sounds";
 import {
   getChaosMoves,
   executeChaosMove,
+  getChaosAttackedSquares,
   type ChaosMove,
 } from "@/lib/chaos-moves";
 
@@ -105,7 +108,7 @@ const PIECE_ICONS: Record<string, string> = {
   k: "♚",
 };
 
-const LS_KEY = "recruit_chess_state_v2";
+const LS_KEY = "recruit_chess_state_v3";
 
 /* ================================================================== */
 /*  Fairy piece SVGs + overlay icons (from chaos chess assets)         */
@@ -285,6 +288,54 @@ function buildRecruitCustomPieces(
   }
 
   return custom;
+}
+
+/* ================================================================== */
+/*  Chaos check detection                                               */
+/* ================================================================== */
+
+/**
+ * Returns true if the king of `kingColor` is currently attacked by any of
+ * the opponent's chaos moves. This supplements chess.js's standard check
+ * detection so the simulation respects chaos-range attacks.
+ */
+function isKingInChaosCheck(
+  game: Chess,
+  kingColor: Color,
+  chaosState: ReturnType<typeof extractChaosStateFromArmy>,
+): boolean {
+  const attackerColor: Color = kingColor === "w" ? "b" : "w";
+  const attackerMods =
+    attackerColor === "w" ? chaosState.playerModifiers : chaosState.aiModifiers;
+  if (attackerMods.length === 0) return false;
+
+  // Find king square
+  let kingSquare: Square | null = null;
+  for (const row of game.board()) {
+    for (const sq of row) {
+      if (sq && sq.type === "k" && sq.color === kingColor) {
+        kingSquare = sq.square as Square;
+        break;
+      }
+    }
+    if (kingSquare) break;
+  }
+  if (!kingSquare) return false;
+
+  try {
+    const defenderMods =
+      kingColor === "w" ? chaosState.playerModifiers : chaosState.aiModifiers;
+    const attacked = getChaosAttackedSquares(
+      game,
+      attackerMods,
+      attackerColor,
+      undefined,
+    );
+    void defenderMods;
+    return attacked.has(kingSquare);
+  } catch {
+    return false;
+  }
 }
 
 /* ================================================================== */
@@ -491,23 +542,66 @@ async function simulateFight(
     const to = bestStdMove.slice(2, 4) as Square;
     const promotion = bestStdMove.length === 5 ? bestStdMove[4] : undefined;
 
+    // Check: would this standard move leave our king exposed to a chaos attack?
+    // If yes, Stockfish "blunders" into chaos-check — pick a random safe legal move.
+    let actualFrom = from;
+    let actualTo = to;
+    let actualPromotion = promotion;
+    try {
+      const testGame = new Chess(game.fen());
+      testGame.move({
+        from,
+        to,
+        promotion: promotion as "q" | "r" | "b" | "n" | undefined,
+      });
+      if (isKingInChaosCheck(testGame, side, chaosState)) {
+        // Try to find a legal move that doesn't leave us in chaos-check
+        const legalMoves = game.moves({ verbose: true });
+        const safeMoves = legalMoves.filter((m) => {
+          try {
+            const t = new Chess(game.fen());
+            t.move(m.san);
+            return !isKingInChaosCheck(t, side, chaosState);
+          } catch {
+            return false;
+          }
+        });
+        const fallback =
+          safeMoves.length > 0
+            ? safeMoves[Math.floor(Math.random() * safeMoves.length)]
+            : legalMoves[0];
+        if (fallback) {
+          actualFrom = fallback.from as Square;
+          actualTo = fallback.to as Square;
+          actualPromotion = fallback.promotion;
+        }
+      }
+    } catch {
+      // Safety: leave original move intact
+    }
+
     const prevFen = game.fen();
-    const capturedPiece = game.get(to);
+    const capturedPiece = game.get(actualTo);
     const moveResult = game.move({
-      from,
-      to,
-      promotion: promotion as "q" | "r" | "b" | "n" | undefined,
+      from: actualFrom,
+      to: actualTo,
+      promotion: actualPromotion as "q" | "r" | "b" | "n" | undefined,
     });
 
     if (!moveResult) break;
 
+    // Detect chaos check on the opponent king after this move
+    const oppColor: Color = side === "w" ? "b" : "w";
+    const inChaosCheck = isKingInChaosCheck(game, oppColor, chaosState);
+
     recorded.push({
       fen: prevFen,
-      from,
-      to,
+      from: actualFrom,
+      to: actualTo,
       isCapture: !!capturedPiece,
       isChaosMove: false,
       side: side === "w" ? "player" : "opponent",
+      annotation: inChaosCheck ? "⚡ Chaos Check!" : undefined,
     });
 
     plyCount++;
@@ -797,7 +891,7 @@ export function RecruitChess() {
   const handleArrangePiece = useCallback(
     (from: string, to: string): boolean => {
       const toRank = parseInt(to[1]);
-      if (toRank > 4) return false; // restrict to player's zone
+      if (toRank > 4) return false; // restrict to player's 4 rows
       setGameState((prev) => {
         if (!prev || prev.phase !== "arrange" || !prev.arrangeFen) return prev;
         try {
@@ -934,7 +1028,33 @@ export function RecruitChess() {
         result.won ? prev.winStreak + 1 : 0,
         result.won ? 0 : prev.loseStreak + 1,
       );
-      const newHp = Math.max(0, prev.hp - result.hpDamageTaken);
+      const isBoss = prev.ghostOpponent?.isBoss ?? false;
+      // Boss victory bonus: heal HP + extra gold
+      const bossHpBonus =
+        isBoss && result.won
+          ? prev.round === 8
+            ? 0
+            : prev.round === 6
+              ? 3
+              : 2
+          : 0;
+      const bossGoldBonus =
+        isBoss && result.won
+          ? prev.round === 8
+            ? 0
+            : prev.round === 6
+              ? 5
+              : 3
+          : 0;
+      // Boss defeat is more punishing: +1 extra HP damage
+      const bossDamagePenalty = isBoss && !result.won ? 1 : 0;
+      const newHp = Math.min(
+        10,
+        Math.max(
+          0,
+          prev.hp - result.hpDamageTaken - bossDamagePenalty + bossHpBonus,
+        ),
+      );
       const newRound = prev.round + 1;
       const isGameOver = newHp <= 0 || newRound > MAX_ROUNDS;
 
@@ -963,7 +1083,7 @@ export function RecruitChess() {
         phase: "encounter",
         round: newRound,
         hp: newHp,
-        gold: income,
+        gold: income + bossGoldBonus,
         winStreak: result.won ? prev.winStreak + 1 : 0,
         loseStreak: result.won ? 0 : prev.loseStreak + 1,
         roundResults: [...prev.roundResults, newResult],
@@ -972,6 +1092,7 @@ export function RecruitChess() {
         pendingEncounterChoices: generateEncounterChoices(
           newRound,
           prev.commander!,
+          result.playerSurvivingPieces,
         ),
       };
     });
@@ -1025,10 +1146,72 @@ export function RecruitChess() {
           break;
 
         case "shrine":
-          // Shrine is handled via UI piece-picker — state will be updated
-          // by a separate handleShrineApply callback. For now just return.
-          // (The EncounterScreen shows a piece picker for shrine choices.)
+          // Shrine is handled via UI piece-picker — falls through to a separate sub-screen
           break;
+
+        case "library":
+          // Library shows a piece-picker sub-screen — handled by handleLibraryApply
+          break;
+
+        case "forge":
+          // Forge shows a pair-selector sub-screen — handled by handleForgeApply
+          break;
+
+        case "arena":
+          newState.gold = prev.gold + (choice.goldGain ?? 0);
+          playSound("airhorn");
+          break;
+
+        case "treasure-vault":
+          // Give gold + free piece
+          newState.gold = prev.gold + (choice.goldGain ?? 2);
+          if (choice.freePiece) {
+            const vaultPiece: RecruitedPiece = {
+              id: `vault-${Date.now()}`,
+              pieceType: choice.freePiece.pieceType,
+              modifierId: choice.freePiece.modifierId,
+              tier: choice.freePiece.tier,
+              slot:
+                prev.army.length < prev.maxArmySlots ? prev.army.length : null,
+            };
+            if (prev.army.length < prev.maxArmySlots) {
+              newState.army = [...prev.army, vaultPiece];
+            } else if (prev.bench.length < 2) {
+              newState.bench = [...prev.bench, vaultPiece];
+            }
+          }
+          playSound("bell-double");
+          break;
+
+        case "cursed-altar":
+          newState.hp = Math.max(1, prev.hp - (choice.hpCost ?? 1));
+          newState.gold = prev.gold + (choice.boonGold ?? 4);
+          if (choice.freePiece) {
+            const cursedPiece: RecruitedPiece = {
+              id: `cursed-${Date.now()}`,
+              pieceType: choice.freePiece.pieceType,
+              modifierId: choice.freePiece.modifierId,
+              tier: choice.freePiece.tier,
+              slot:
+                prev.army.length < prev.maxArmySlots ? prev.army.length : null,
+            };
+            if (prev.army.length < prev.maxArmySlots) {
+              newState.army = [...prev.army, cursedPiece];
+            } else if (prev.bench.length < 2) {
+              newState.bench = [...prev.bench, cursedPiece];
+            }
+          }
+          playSound("emotional-damage");
+          break;
+      }
+
+      // For shrine, library, forge: don't advance to shop yet — the sub-screens do it
+      if (
+        choice.type === "shrine" ||
+        choice.type === "library" ||
+        choice.type === "forge"
+      ) {
+        return newState;
       }
 
       // Transition to shop
@@ -1059,6 +1242,70 @@ export function RecruitChess() {
     },
     [],
   );
+
+  // ── Apply library upgrade ──────────────────────────────────────────
+  const handleLibraryApply = useCallback(
+    (targetPieceId: string, goldCost: number) => {
+      playSound("taco-bell-bong");
+      setGameState((prev) => {
+        if (!prev || prev.phase !== "encounter" || prev.gold < goldCost)
+          return prev;
+        const upgradePiece = (p: RecruitedPiece): RecruitedPiece =>
+          p.id === targetPieceId && p.tier === "bronze"
+            ? { ...p, tier: "silver" }
+            : p;
+        return {
+          ...prev,
+          phase: "shop",
+          gold: prev.gold - goldCost,
+          shop: generateShop(prev.round, prev.commander!, prev.shop),
+          pendingEncounterChoices: undefined,
+          army: prev.army.map(upgradePiece),
+          bench: prev.bench.map(upgradePiece),
+        };
+      });
+    },
+    [],
+  );
+
+  // ── Apply forge (fuse 2 bronze → 1 silver) ────────────────────────
+  const handleForgeApply = useCallback((pieceId1: string, pieceId2: string) => {
+    playSound("bell-double");
+    setGameState((prev) => {
+      if (!prev || prev.phase !== "encounter") return prev;
+      const all = [...prev.army, ...prev.bench];
+      const p1 = all.find((p) => p.id === pieceId1);
+      const p2 = all.find((p) => p.id === pieceId2);
+      if (!p1 || !p2 || p1.pieceType !== p2.pieceType) return prev;
+      if (p1.tier !== "bronze" || p2.tier !== "bronze") return prev;
+
+      const forgedPiece: RecruitedPiece = {
+        id: `forge-${Date.now()}`,
+        pieceType: p1.pieceType,
+        modifierId: p1.modifierId,
+        tier: "silver",
+        slot: null,
+      };
+      const removeIds = new Set([pieceId1, pieceId2]);
+      const newAll = all
+        .filter((p) => !removeIds.has(p.id))
+        .concat(forgedPiece);
+      const newArmy = newAll.slice(
+        0,
+        Math.min(prev.maxArmySlots, newAll.length),
+      );
+      const newBench = newAll.slice(newArmy.length).slice(0, 2);
+
+      return {
+        ...prev,
+        phase: "shop",
+        shop: generateShop(prev.round, prev.commander!, prev.shop),
+        pendingEncounterChoices: undefined,
+        army: newArmy,
+        bench: newBench,
+      };
+    });
+  }, []);
 
   // ── Derived fight board position ──────────────────────────────────
   // Each FightMove records the FEN *before* it was applied.
@@ -1123,6 +1370,8 @@ export function RecruitChess() {
         gameState={gameState}
         onChoose={handleEncounterChoice}
         onShrineApply={handleShrineApply}
+        onLibraryApply={handleLibraryApply}
+        onForgeApply={handleForgeApply}
       />
     );
   }
@@ -1374,10 +1623,21 @@ function ShopScreen({
               <button
                 onClick={onFight}
                 disabled={!canFight}
-                className="w-full py-3 rounded-xl font-bold text-lg bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 disabled:opacity-40 transition-all hover:scale-[1.01] shadow-lg shadow-red-900/30"
+                className={`w-full py-3 rounded-xl font-bold text-lg disabled:opacity-40 transition-all hover:scale-[1.01] shadow-lg ${
+                  isBossRound(gameState.round)
+                    ? "bg-gradient-to-r from-red-700 to-rose-600 hover:from-red-600 hover:to-rose-500 shadow-red-900/40"
+                    : "bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 shadow-red-900/30"
+                }`}
               >
-                ⚔️ Prepare Round {gameState.round}
+                {isBossRound(gameState.round)
+                  ? `💀 Boss Fight — Round ${gameState.round}`
+                  : `⚔️ Prepare Round ${gameState.round}`}
               </button>
+              {isBossRound(gameState.round) && (
+                <div className="mt-1.5 text-center text-xs text-red-400 animate-pulse">
+                  ⚠️ Boss encounter ahead — prepare carefully!
+                </div>
+              )}
             </div>
 
             {/* Round history */}
@@ -1504,23 +1764,53 @@ function FightScreen({
     <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col items-center p-4">
       <div className="max-w-2xl w-full">
         {/* Fight header */}
-        <div className="flex items-center justify-between mb-4 bg-gray-900/60 rounded-xl px-4 py-3 border border-gray-800">
+        <div
+          className={`flex items-center justify-between mb-4 rounded-xl px-4 py-3 border ${
+            ghost?.isBoss
+              ? "bg-red-950/70 border-red-600/50"
+              : "bg-gray-900/60 border-gray-800"
+          }`}
+        >
           <div className="text-sm">
             <div className="text-white font-bold">You</div>
             <div className="text-red-400 text-xs">{gameState.hp} HP ❤️</div>
           </div>
-          <div className="text-gray-400 font-bold">
-            ⚔️ Round {gameState.round}
+          <div className="text-center">
+            {ghost?.isBoss && (
+              <div className="text-red-400 font-bold text-xs tracking-widest mb-0.5 animate-pulse">
+                {ghost.bossTitle}
+              </div>
+            )}
+            <div
+              className={`font-bold ${ghost?.isBoss ? "text-red-300" : "text-gray-400"}`}
+            >
+              ⚔️ Round {gameState.round}
+            </div>
           </div>
           <div className="text-sm text-right">
-            <div className="text-gray-300 font-bold">
+            <div
+              className={`font-bold ${ghost?.isBoss ? "text-red-300" : "text-gray-300"}`}
+            >
               {ghost?.displayName ?? "Ghost"}
             </div>
-            <div className="text-purple-400 text-xs">
-              {ghost?.isAI ? "AI Ghost" : "Player Ghost"}
+            <div
+              className={`text-xs ${ghost?.isBoss ? "text-red-400" : "text-purple-400"}`}
+            >
+              {ghost?.isBoss
+                ? "⚠️ BOSS"
+                : ghost?.isAI
+                  ? "AI Ghost"
+                  : "Player Ghost"}
             </div>
           </div>
         </div>
+
+        {/* Boss tagline banner */}
+        {ghost?.isBoss && ghost.bossTagline && fight.status !== "done" && (
+          <div className="mb-3 px-4 py-2 rounded-lg bg-red-950/60 border border-red-700/50 text-red-300 text-xs text-center italic">
+            {ghost.bossTagline}
+          </div>
+        )}
 
         {/* Board */}
         <div className="relative rounded-xl overflow-hidden border border-gray-800 mb-4">
@@ -1701,8 +1991,8 @@ function ArrangeScreen({
   const boardWidth =
     typeof window !== "undefined" ? Math.min(480, window.innerWidth - 32) : 480;
   const squareSize = boardWidth / 8;
-  // Show 3 rows (ranks 1-3) to cover main pieces + pawns + overflow
-  const visibleRows = 3;
+  // Show 4 rows (ranks 1-4) — two full rows of pieces for flexible formation
+  const visibleRows = 4;
   const clipHeight = squareSize * visibleRows;
 
   const customPieces = useMemo(
@@ -2030,6 +2320,779 @@ function ShopCard({
 }
 
 /* ================================================================== */
+/*  Encounter SVG Icons                                                 */
+/* ================================================================== */
+
+function SvgDocks({ size = 40 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* water */}
+      <rect x="0" y="26" width="40" height="14" rx="2" fill="#0e3a5c" />
+      <path
+        d="M0 28 Q5 25 10 28 Q15 31 20 28 Q25 25 30 28 Q35 31 40 28 L40 30 Q35 33 30 30 Q25 27 20 30 Q15 33 10 30 Q5 27 0 30Z"
+        fill="#1d6fa4"
+        opacity="0.7"
+      />
+      {/* ship hull */}
+      <path
+        d="M8 22 L32 22 L29 28 L11 28Z"
+        fill="#6b7280"
+        stroke="#9ca3af"
+        strokeWidth="0.8"
+      />
+      {/* deck */}
+      <rect
+        x="10"
+        y="18"
+        width="20"
+        height="4"
+        rx="1"
+        fill="#4b5563"
+        stroke="#6b7280"
+        strokeWidth="0.5"
+      />
+      {/* mast */}
+      <line
+        x1="20"
+        y1="6"
+        x2="20"
+        y2="18"
+        stroke="#9ca3af"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      {/* sail */}
+      <path d="M20 7 L30 13 L20 17Z" fill="#e5e7eb" opacity="0.9" />
+      {/* dock planks */}
+      <rect x="2" y="24" width="5" height="2" rx="0.5" fill="#92400e" />
+      <rect x="33" y="24" width="5" height="2" rx="0.5" fill="#92400e" />
+      <line
+        x1="4.5"
+        y1="22"
+        x2="4.5"
+        y2="26"
+        stroke="#78350f"
+        strokeWidth="1.2"
+      />
+      <line
+        x1="35.5"
+        y1="22"
+        x2="35.5"
+        y2="26"
+        stroke="#78350f"
+        strokeWidth="1.2"
+      />
+    </svg>
+  );
+}
+
+function SvgBlacksmith({ size = 40 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* anvil base */}
+      <path
+        d="M8 30 L32 30 L30 36 L10 36Z"
+        fill="#374151"
+        stroke="#6b7280"
+        strokeWidth="0.8"
+      />
+      {/* anvil body */}
+      <path
+        d="M6 24 L34 24 L32 30 L8 30Z"
+        fill="#4b5563"
+        stroke="#6b7280"
+        strokeWidth="0.8"
+      />
+      {/* anvil horn */}
+      <path
+        d="M6 22 C6 22 2 23 2 26 L8 26 L8 22Z"
+        fill="#374151"
+        stroke="#6b7280"
+        strokeWidth="0.8"
+      />
+      {/* anvil top */}
+      <rect
+        x="8"
+        y="20"
+        width="24"
+        height="4"
+        rx="1"
+        fill="#6b7280"
+        stroke="#9ca3af"
+        strokeWidth="0.8"
+      />
+      {/* hammer handle */}
+      <line
+        x1="28"
+        y1="6"
+        x2="20"
+        y2="20"
+        stroke="#92400e"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+      {/* hammer head */}
+      <rect
+        x="24"
+        y="3"
+        width="10"
+        height="6"
+        rx="1.5"
+        fill="#9ca3af"
+        stroke="#d1d5db"
+        strokeWidth="0.8"
+        transform="rotate(-30 28 6)"
+      />
+      {/* sparks */}
+      <circle cx="22" cy="17" r="1" fill="#fbbf24" opacity="0.9" />
+      <circle cx="25" cy="14" r="0.8" fill="#f97316" opacity="0.8" />
+      <circle cx="19" cy="15" r="0.6" fill="#fef08a" opacity="0.7" />
+      <line
+        x1="21"
+        y1="16"
+        x2="18"
+        y2="12"
+        stroke="#fbbf24"
+        strokeWidth="0.8"
+        opacity="0.6"
+      />
+      <line
+        x1="24"
+        y1="15"
+        x2="27"
+        y2="11"
+        stroke="#f97316"
+        strokeWidth="0.8"
+        opacity="0.6"
+      />
+    </svg>
+  );
+}
+
+function SvgTavern({ size = 40 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* building */}
+      <rect
+        x="4"
+        y="16"
+        width="32"
+        height="22"
+        rx="1"
+        fill="#292524"
+        stroke="#57534e"
+        strokeWidth="0.8"
+      />
+      {/* roof */}
+      <path
+        d="M2 18 L20 6 L38 18Z"
+        fill="#7c2d12"
+        stroke="#9a3412"
+        strokeWidth="0.8"
+      />
+      {/* door */}
+      <path
+        d="M16 38 L16 27 Q20 24 24 27 L24 38Z"
+        fill="#78350f"
+        stroke="#92400e"
+        strokeWidth="0.5"
+      />
+      {/* windows */}
+      <rect
+        x="6"
+        y="20"
+        width="7"
+        height="7"
+        rx="1"
+        fill="#fbbf24"
+        opacity="0.6"
+        stroke="#d97706"
+        strokeWidth="0.5"
+      />
+      <rect
+        x="27"
+        y="20"
+        width="7"
+        height="7"
+        rx="1"
+        fill="#fbbf24"
+        opacity="0.6"
+        stroke="#d97706"
+        strokeWidth="0.5"
+      />
+      {/* sign */}
+      <rect
+        x="13"
+        y="8"
+        width="14"
+        height="5"
+        rx="1"
+        fill="#92400e"
+        stroke="#b45309"
+        strokeWidth="0.5"
+      />
+      <line x1="16" y1="8" x2="16" y2="6" stroke="#b45309" strokeWidth="1" />
+      <line x1="24" y1="8" x2="24" y2="6" stroke="#b45309" strokeWidth="1" />
+      {/* mug */}
+      <rect
+        x="17.5"
+        y="9"
+        width="5"
+        height="3"
+        rx="0.5"
+        fill="#fbbf24"
+        opacity="0.8"
+      />
+    </svg>
+  );
+}
+
+function SvgShrine({ size = 40 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* base platform */}
+      <rect
+        x="4"
+        y="34"
+        width="32"
+        height="4"
+        rx="1"
+        fill="#3b0764"
+        stroke="#7e22ce"
+        strokeWidth="0.5"
+      />
+      {/* pillars */}
+      <rect
+        x="8"
+        y="16"
+        width="4"
+        height="18"
+        rx="1"
+        fill="#4c1d95"
+        stroke="#7c3aed"
+        strokeWidth="0.5"
+      />
+      <rect
+        x="28"
+        y="16"
+        width="4"
+        height="18"
+        rx="1"
+        fill="#4c1d95"
+        stroke="#7c3aed"
+        strokeWidth="0.5"
+      />
+      {/* roof */}
+      <path
+        d="M3 18 L20 8 L37 18 L37 20 L3 20Z"
+        fill="#6d28d9"
+        stroke="#8b5cf6"
+        strokeWidth="0.8"
+      />
+      <path d="M3 18 L20 8 L37 18Z" fill="#7c3aed" />
+      {/* orb/crystal */}
+      <circle cx="20" cy="27" r="5" fill="#a855f7" opacity="0.3" />
+      <circle cx="20" cy="27" r="3.5" fill="#c084fc" opacity="0.6" />
+      <circle cx="20" cy="27" r="2" fill="#e9d5ff" opacity="0.9" />
+      {/* glow rays */}
+      <line
+        x1="20"
+        y1="20"
+        x2="20"
+        y2="16"
+        stroke="#c084fc"
+        strokeWidth="0.8"
+        opacity="0.5"
+      />
+      <line
+        x1="25"
+        y1="22"
+        x2="28"
+        y2="19"
+        stroke="#c084fc"
+        strokeWidth="0.8"
+        opacity="0.5"
+      />
+      <line
+        x1="15"
+        y1="22"
+        x2="12"
+        y2="19"
+        stroke="#c084fc"
+        strokeWidth="0.8"
+        opacity="0.5"
+      />
+      <line
+        x1="25.5"
+        y1="27"
+        x2="29"
+        y2="27"
+        stroke="#c084fc"
+        strokeWidth="0.8"
+        opacity="0.4"
+      />
+      <line
+        x1="14.5"
+        y1="27"
+        x2="11"
+        y2="27"
+        stroke="#c084fc"
+        strokeWidth="0.8"
+        opacity="0.4"
+      />
+    </svg>
+  );
+}
+
+function SvgLibrary({ size = 40 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* bookshelf back */}
+      <rect
+        x="3"
+        y="6"
+        width="34"
+        height="30"
+        rx="1.5"
+        fill="#1c1917"
+        stroke="#44403c"
+        strokeWidth="0.8"
+      />
+      {/* shelf dividers */}
+      <line x1="3" y1="18" x2="37" y2="18" stroke="#44403c" strokeWidth="1.2" />
+      <line x1="3" y1="30" x2="37" y2="30" stroke="#44403c" strokeWidth="1.2" />
+      {/* top shelf books */}
+      <rect x="5" y="8" width="4" height="9" rx="0.5" fill="#b91c1c" />
+      <rect x="10" y="9" width="3" height="8" rx="0.5" fill="#1d4ed8" />
+      <rect x="14" y="8" width="5" height="9" rx="0.5" fill="#15803d" />
+      <rect x="20" y="9" width="3" height="8" rx="0.5" fill="#b45309" />
+      <rect x="24" y="8" width="4" height="9" rx="0.5" fill="#7c3aed" />
+      <rect x="29" y="9" width="3" height="8" rx="0.5" fill="#0f766e" />
+      <rect x="33" y="8" width="3" height="9" rx="0.5" fill="#9f1239" />
+      {/* middle shelf books */}
+      <rect x="5" y="20" width="5" height="9" rx="0.5" fill="#0e7490" />
+      <rect x="11" y="21" width="3" height="8" rx="0.5" fill="#7e22ce" />
+      <rect x="15" y="20" width="4" height="9" rx="0.5" fill="#b45309" />
+      <rect x="20" y="21" width="3" height="8" rx="0.5" fill="#166534" />
+      <rect x="24" y="20" width="5" height="9" rx="0.5" fill="#9f1239" />
+      <rect x="30" y="21" width="3" height="8" rx="0.5" fill="#1e40af" />
+      <rect x="34" y="20" width="3" height="9" rx="0.5" fill="#a16207" />
+      {/* bottom row (partial) */}
+      <rect x="5" y="32" width="6" height="3" rx="0.5" fill="#374151" />
+      <rect x="12" y="32" width="4" height="3" rx="0.5" fill="#374151" />
+      {/* glowing open book */}
+      <ellipse cx="28" cy="33" rx="8" ry="3" fill="#fef9c3" opacity="0.15" />
+      <path
+        d="M22 33 Q28 30 34 33"
+        stroke="#fde68a"
+        strokeWidth="1.2"
+        fill="none"
+        opacity="0.7"
+      />
+      <path
+        d="M22 33 Q28 36 34 33"
+        stroke="#fde68a"
+        strokeWidth="1.2"
+        fill="none"
+        opacity="0.7"
+      />
+      <line
+        x1="28"
+        y1="30.5"
+        x2="28"
+        y2="35.5"
+        stroke="#fde68a"
+        strokeWidth="0.8"
+        opacity="0.7"
+      />
+    </svg>
+  );
+}
+
+function SvgForge({ size = 40 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* furnace body */}
+      <rect
+        x="6"
+        y="14"
+        width="28"
+        height="22"
+        rx="2"
+        fill="#1c1917"
+        stroke="#57534e"
+        strokeWidth="0.8"
+      />
+      {/* furnace mouth */}
+      <path d="M12 36 L12 24 Q20 20 28 24 L28 36Z" fill="#7c2d12" />
+      <ellipse cx="20" cy="24" rx="8" ry="3" fill="#dc2626" opacity="0.6" />
+      {/* fire */}
+      <path
+        d="M18 30 Q20 22 22 28 Q24 20 26 26 Q24 30 20 32 Q16 30 18 30Z"
+        fill="#f97316"
+        opacity="0.85"
+      />
+      <path
+        d="M19 30 Q20 24 21 29 Q22 25 23 28 Q22 31 20 32 Q18 31 19 30Z"
+        fill="#fde68a"
+        opacity="0.9"
+      />
+      {/* chimney */}
+      <rect
+        x="15"
+        y="6"
+        width="10"
+        height="8"
+        rx="1"
+        fill="#292524"
+        stroke="#44403c"
+        strokeWidth="0.7"
+      />
+      {/* smoke puffs */}
+      <circle cx="20" cy="4" r="3" fill="#44403c" opacity="0.5" />
+      <circle cx="23" cy="2" r="2" fill="#57534e" opacity="0.4" />
+      <circle cx="17" cy="2.5" r="2.5" fill="#3b3229" opacity="0.45" />
+      {/* tongs */}
+      <line
+        x1="5"
+        y1="12"
+        x2="14"
+        y2="22"
+        stroke="#9ca3af"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="7"
+        y1="10"
+        x2="16"
+        y2="20"
+        stroke="#9ca3af"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <circle cx="13" cy="21" r="2" fill="#f97316" opacity="0.8" />
+    </svg>
+  );
+}
+
+function SvgArena({ size = 40 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* arena floor */}
+      <ellipse
+        cx="20"
+        cy="30"
+        rx="17"
+        ry="6"
+        fill="#1c1917"
+        stroke="#57534e"
+        strokeWidth="0.8"
+      />
+      {/* sand */}
+      <ellipse cx="20" cy="29" rx="14" ry="5" fill="#92400e" opacity="0.5" />
+      {/* walls */}
+      <path
+        d="M3 30 Q3 14 20 14 Q37 14 37 30"
+        fill="none"
+        stroke="#57534e"
+        strokeWidth="1.5"
+      />
+      {/* arch segments */}
+      {[0, 1, 2, 3, 4, 5].map((i) => {
+        const angle = -Math.PI + (i / 5) * Math.PI;
+        const x = 20 + 17 * Math.cos(angle);
+        const y = 30 + 16 * Math.sin(angle);
+        return (
+          <line
+            key={i}
+            x1={x}
+            y1={y}
+            x2={x}
+            y2={y - 3}
+            stroke="#6b7280"
+            strokeWidth="1"
+          />
+        );
+      })}
+      {/* crossed swords */}
+      <line
+        x1="14"
+        y1="22"
+        x2="26"
+        y2="34"
+        stroke="#d1d5db"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="26"
+        y1="22"
+        x2="14"
+        y2="34"
+        stroke="#d1d5db"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      {/* sword guards */}
+      <line
+        x1="16"
+        y1="20"
+        x2="13"
+        y2="23"
+        stroke="#9ca3af"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+      <line
+        x1="24"
+        y1="20"
+        x2="27"
+        y2="23"
+        stroke="#9ca3af"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function SvgTreasureVault({ size = 40 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* chest body */}
+      <rect
+        x="4"
+        y="20"
+        width="32"
+        height="18"
+        rx="2"
+        fill="#92400e"
+        stroke="#b45309"
+        strokeWidth="0.8"
+      />
+      {/* chest lid */}
+      <path
+        d="M4 20 Q4 12 20 12 Q36 12 36 20Z"
+        fill="#a16207"
+        stroke="#ca8a04"
+        strokeWidth="0.8"
+      />
+      {/* metal band */}
+      <rect
+        x="16"
+        y="17"
+        width="8"
+        height="4"
+        rx="1"
+        fill="#ca8a04"
+        stroke="#fbbf24"
+        strokeWidth="0.5"
+      />
+      {/* lock */}
+      <rect
+        x="17.5"
+        y="26"
+        width="5"
+        height="4"
+        rx="0.5"
+        fill="#78716c"
+        stroke="#a8a29e"
+        strokeWidth="0.5"
+      />
+      <path
+        d="M18.5 26 Q18.5 23 20 23 Q21.5 23 21.5 26"
+        fill="none"
+        stroke="#a8a29e"
+        strokeWidth="1"
+      />
+      {/* coins spilling */}
+      <ellipse cx="8" cy="22" rx="2.5" ry="1.2" fill="#fbbf24" />
+      <ellipse cx="32" cy="22" rx="2.5" ry="1.2" fill="#fbbf24" />
+      <ellipse cx="5" cy="24" rx="2" ry="1" fill="#f59e0b" opacity="0.8" />
+      <ellipse cx="35" cy="24" rx="2" ry="1" fill="#f59e0b" opacity="0.8" />
+      {/* gems on chest */}
+      <polygon points="12,30 14,27 16,30 14,33" fill="#3b82f6" opacity="0.9" />
+      <polygon points="24,30 26,27 28,30 26,33" fill="#ef4444" opacity="0.9" />
+      {/* shimmer */}
+      <line
+        x1="20"
+        y1="36"
+        x2="20"
+        y2="38"
+        stroke="#fbbf24"
+        strokeWidth="0.8"
+        opacity="0.4"
+      />
+    </svg>
+  );
+}
+
+function SvgCursedAltar({ size = 40 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* stone base */}
+      <rect
+        x="5"
+        y="30"
+        width="30"
+        height="8"
+        rx="1.5"
+        fill="#1c1917"
+        stroke="#44403c"
+        strokeWidth="0.8"
+      />
+      {/* altar top slab */}
+      <rect
+        x="3"
+        y="24"
+        width="34"
+        height="6"
+        rx="1"
+        fill="#292524"
+        stroke="#57534e"
+        strokeWidth="0.8"
+      />
+      {/* runes on altar */}
+      <text
+        x="9"
+        y="30"
+        fontSize="5"
+        fill="#7f1d1d"
+        opacity="0.9"
+        fontFamily="serif"
+      >
+        ᚱ ᚷ ᚾ
+      </text>
+      {/* skull */}
+      <circle
+        cx="20"
+        cy="18"
+        r="5"
+        fill="#374151"
+        stroke="#6b7280"
+        strokeWidth="0.7"
+      />
+      {/* eye sockets */}
+      <ellipse cx="18" cy="17" rx="1.5" ry="2" fill="#111827" />
+      <ellipse cx="22" cy="17" rx="1.5" ry="2" fill="#111827" />
+      {/* glowing eyes */}
+      <ellipse cx="18" cy="17" rx="0.8" ry="1.2" fill="#dc2626" opacity="0.8" />
+      <ellipse cx="22" cy="17" rx="0.8" ry="1.2" fill="#dc2626" opacity="0.8" />
+      {/* nose cavity */}
+      <path d="M19.5 19 L20 20.5 L20.5 19Z" fill="#111827" />
+      {/* teeth */}
+      <line
+        x1="17"
+        y1="22"
+        x2="17"
+        y2="24"
+        stroke="#6b7280"
+        strokeWidth="1.2"
+      />
+      <line
+        x1="19"
+        y1="22"
+        x2="19"
+        y2="24"
+        stroke="#6b7280"
+        strokeWidth="1.2"
+      />
+      <line
+        x1="21"
+        y1="22"
+        x2="21"
+        y2="24"
+        stroke="#6b7280"
+        strokeWidth="1.2"
+      />
+      <line
+        x1="23"
+        y1="22"
+        x2="23"
+        y2="24"
+        stroke="#6b7280"
+        strokeWidth="1.2"
+      />
+      {/* smoke/curse aura */}
+      <path
+        d="M14 16 Q12 10 15 7 Q13 11 16 12 Q14 8 18 6 Q16 10 19 11 Q17 7 21 5 Q19 9 22 10 Q20 7 24 8 Q21 12 26 16"
+        fill="none"
+        stroke="#7f1d1d"
+        strokeWidth="0.8"
+        opacity="0.6"
+      />
+    </svg>
+  );
+}
+
+const ENCOUNTER_SVG: Record<string, React.ReactNode> = {
+  docks: <SvgDocks />,
+  blacksmith: <SvgBlacksmith />,
+  tavern: <SvgTavern />,
+  shrine: <SvgShrine />,
+  library: <SvgLibrary />,
+  forge: <SvgForge />,
+  arena: <SvgArena />,
+  "treasure-vault": <SvgTreasureVault />,
+  "cursed-altar": <SvgCursedAltar />,
+};
+
+/* ================================================================== */
 /*  Encounter Screen                                                    */
 /* ================================================================== */
 
@@ -2037,23 +3100,34 @@ function EncounterScreen({
   gameState,
   onChoose,
   onShrineApply,
+  onLibraryApply,
+  onForgeApply,
 }: {
   gameState: RecruitGameState;
   onChoose: (choice: EncounterChoice) => void;
   onShrineApply: (targetPieceId: string, modifierId: string) => void;
+  onLibraryApply: (targetPieceId: string, goldCost: number) => void;
+  onForgeApply: (pieceId1: string, pieceId2: string) => void;
 }) {
   const choices = gameState.pendingEncounterChoices ?? [];
   const [shrineChoice, setShrineChoice] = useState<EncounterChoice | null>(
     null,
   );
+  const [libraryChoice, setLibraryChoice] = useState<EncounterChoice | null>(
+    null,
+  );
+  const [forgeChoice, setForgeChoice] = useState<EncounterChoice | null>(null);
   const [selectedPieceId, setSelectedPieceId] = useState<string | null>(null);
+  const [forgePieceIds, setForgePieceIds] = useState<string[]>([]);
 
   if (shrineChoice) {
     return (
       <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col items-center justify-center p-6">
         <div className="max-w-md w-full">
           <div className="text-center mb-6">
-            <div className="text-4xl mb-2">⛩️</div>
+            <div className="flex justify-center mb-2">
+              {ENCOUNTER_SVG.shrine}
+            </div>
             <h2 className="text-2xl font-bold text-purple-300">The Shrine</h2>
             <p className="text-gray-400 text-sm mt-1">
               Choose a piece to imbue with{" "}
@@ -2064,7 +3138,6 @@ function EncounterScreen({
               </span>
             </p>
           </div>
-
           <div className="grid grid-cols-2 gap-2 mb-4">
             {gameState.army.map((piece) => {
               const modDef = ALL_MODIFIERS.find(
@@ -2076,10 +3149,7 @@ function EncounterScreen({
                 <button
                   key={piece.id}
                   onClick={() => setSelectedPieceId(piece.id)}
-                  className={`
-                    rounded-lg border p-2 text-left transition-all
-                    ${styles.bg} ${isSelected ? "border-purple-400 ring-2 ring-purple-500/40" : styles.border}
-                  `}
+                  className={`rounded-lg border p-2 text-left transition-all ${styles.bg} ${isSelected ? "border-purple-400 ring-2 ring-purple-500/40" : styles.border}`}
                 >
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">
@@ -2098,10 +3168,12 @@ function EncounterScreen({
               );
             })}
           </div>
-
           <div className="flex gap-3">
             <button
-              onClick={() => setShrineChoice(null)}
+              onClick={() => {
+                setShrineChoice(null);
+                setSelectedPieceId(null);
+              }}
               className="flex-1 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-sm transition-colors"
             >
               ← Back
@@ -2109,13 +3181,194 @@ function EncounterScreen({
             <button
               disabled={!selectedPieceId}
               onClick={() => {
-                if (selectedPieceId && shrineChoice.shrineModifierId) {
+                if (selectedPieceId && shrineChoice.shrineModifierId)
                   onShrineApply(selectedPieceId, shrineChoice.shrineModifierId);
-                }
               }}
               className="flex-1 py-2 rounded-lg bg-purple-700 hover:bg-purple-600 disabled:opacity-40 font-semibold transition-colors"
             >
               Imbue ✨
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (libraryChoice) {
+    const goldCost = libraryChoice.upgradeGoldCost ?? 3;
+    const canAfford = gameState.gold >= goldCost;
+    const upgradablePieces = gameState.army.filter((p) => p.tier === "bronze");
+    return (
+      <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col items-center justify-center p-6">
+        <div className="max-w-md w-full">
+          <div className="text-center mb-6">
+            <div className="flex justify-center mb-2">
+              {ENCOUNTER_SVG.library}
+            </div>
+            <h2 className="text-2xl font-bold text-yellow-300">The Library</h2>
+            <p className="text-gray-400 text-sm mt-1">
+              Pay <span className="text-yellow-400 font-bold">{goldCost}g</span>{" "}
+              to promote a Bronze piece to{" "}
+              <span className="text-slate-300 font-semibold">Silver</span>. You
+              have {gameState.gold}g.
+            </p>
+          </div>
+          {upgradablePieces.length === 0 ? (
+            <p className="text-center text-gray-500 text-sm mb-4">
+              No Bronze pieces to upgrade.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {upgradablePieces.map((piece) => {
+                const modDef = ALL_MODIFIERS.find(
+                  (m) => m.id === piece.modifierId,
+                );
+                const styles = UPGRADE_TIER_STYLES[piece.tier];
+                const isSelected = selectedPieceId === piece.id;
+                return (
+                  <button
+                    key={piece.id}
+                    onClick={() => setSelectedPieceId(piece.id)}
+                    className={`rounded-lg border p-2 text-left transition-all ${styles.bg} ${isSelected ? "border-yellow-400 ring-2 ring-yellow-500/40" : styles.border}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">
+                        {PIECE_ICONS[piece.pieceType] ?? "?"}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-gray-200">
+                          {PIECE_LABELS[piece.pieceType]}
+                        </div>
+                        <div className={`text-xs truncate ${styles.text}`}>
+                          {modDef?.name ?? piece.modifierId}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                setLibraryChoice(null);
+                setSelectedPieceId(null);
+              }}
+              className="flex-1 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-sm transition-colors"
+            >
+              ← Back
+            </button>
+            <button
+              disabled={
+                !selectedPieceId || !canAfford || upgradablePieces.length === 0
+              }
+              onClick={() => {
+                if (selectedPieceId) onLibraryApply(selectedPieceId, goldCost);
+              }}
+              className="flex-1 py-2 rounded-lg bg-yellow-700 hover:bg-yellow-600 disabled:opacity-40 font-semibold transition-colors"
+            >
+              Study ({goldCost}g) 📜
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (forgeChoice) {
+    const bronzePieces = gameState.army
+      .concat(gameState.bench)
+      .filter((p) => p.tier === "bronze");
+    const hasEnough = bronzePieces.length >= 2;
+    const canFuse =
+      forgePieceIds.length === 2 &&
+      (() => {
+        const [a, b] = forgePieceIds.map((id) =>
+          bronzePieces.find((p) => p.id === id),
+        );
+        return a && b && a.pieceType === b.pieceType;
+      })();
+    return (
+      <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col items-center justify-center p-6">
+        <div className="max-w-md w-full">
+          <div className="text-center mb-6">
+            <div className="flex justify-center mb-2">
+              {ENCOUNTER_SVG.forge}
+            </div>
+            <h2 className="text-2xl font-bold text-orange-300">The Forge</h2>
+            <p className="text-gray-400 text-sm mt-1">
+              Select two identical Bronze pieces to fuse into one Silver.
+            </p>
+            {forgePieceIds.length > 0 && (
+              <p className="text-orange-400 text-xs mt-1">
+                {forgePieceIds.length}/2 selected
+              </p>
+            )}
+          </div>
+          {!hasEnough ? (
+            <p className="text-center text-gray-500 text-sm mb-4">
+              Need at least 2 Bronze pieces.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {bronzePieces.map((piece) => {
+                const modDef = ALL_MODIFIERS.find(
+                  (m) => m.id === piece.modifierId,
+                );
+                const styles = UPGRADE_TIER_STYLES[piece.tier];
+                const isSelected = forgePieceIds.includes(piece.id);
+                return (
+                  <button
+                    key={piece.id}
+                    onClick={() => {
+                      setForgePieceIds((prev) =>
+                        prev.includes(piece.id)
+                          ? prev.filter((id) => id !== piece.id)
+                          : prev.length < 2
+                            ? [...prev, piece.id]
+                            : prev,
+                      );
+                    }}
+                    className={`rounded-lg border p-2 text-left transition-all ${styles.bg} ${isSelected ? "border-orange-400 ring-2 ring-orange-500/40" : styles.border}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">
+                        {PIECE_ICONS[piece.pieceType] ?? "?"}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-gray-200">
+                          {PIECE_LABELS[piece.pieceType]}
+                        </div>
+                        <div className={`text-xs truncate ${styles.text}`}>
+                          {modDef?.name ?? piece.modifierId}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <div className="flex gap-3">
+            <button
+              onClick={() => {
+                setForgeChoice(null);
+                setForgePieceIds([]);
+              }}
+              className="flex-1 py-2 rounded-lg bg-gray-800 hover:bg-gray-700 border border-gray-700 text-sm transition-colors"
+            >
+              ← Back
+            </button>
+            <button
+              disabled={!canFuse}
+              onClick={() => {
+                if (forgePieceIds.length === 2)
+                  onForgeApply(forgePieceIds[0], forgePieceIds[1]);
+              }}
+              className="flex-1 py-2 rounded-lg bg-orange-700 hover:bg-orange-600 disabled:opacity-40 font-semibold transition-colors"
+            >
+              Smelt 🔥
             </button>
           </div>
         </div>
@@ -2156,27 +3409,41 @@ function EncounterScreen({
                 "from-amber-950/80 to-yellow-900/40 border-amber-500/30 hover:border-amber-400/60",
               shrine:
                 "from-purple-950/80 to-violet-900/40 border-purple-500/30 hover:border-purple-400/60",
+              library:
+                "from-yellow-950/80 to-amber-900/40 border-yellow-500/30 hover:border-yellow-400/60",
+              forge:
+                "from-orange-950/80 to-red-900/40 border-orange-500/30 hover:border-orange-400/60",
+              arena:
+                "from-green-950/80 to-emerald-900/40 border-green-500/30 hover:border-green-400/60",
+              "treasure-vault":
+                "from-indigo-950/80 to-blue-900/40 border-indigo-500/30 hover:border-indigo-400/60",
+              "cursed-altar":
+                "from-red-950/80 to-rose-900/40 border-red-600/40 hover:border-red-500/60",
             };
             const classes = colorMap[choice.type] ?? colorMap.docks;
+
+            const handleChoiceClick = () => {
+              if (choice.type === "shrine") {
+                setShrineChoice(choice);
+              } else if (choice.type === "library") {
+                setLibraryChoice(choice);
+              } else if (choice.type === "forge") {
+                setForgeChoice(choice);
+              } else {
+                onChoose(choice);
+              }
+            };
 
             return (
               <button
                 key={choice.id}
-                onClick={() => {
-                  if (choice.type === "shrine") {
-                    setShrineChoice(choice);
-                  } else {
-                    onChoose(choice);
-                  }
-                }}
-                className={`
-                  w-full text-left rounded-xl border p-4
-                  bg-gradient-to-br ${classes}
-                  transition-all hover:scale-[1.01] hover:brightness-110
-                `}
+                onClick={handleChoiceClick}
+                className={`w-full text-left rounded-xl border p-4 bg-gradient-to-br ${classes} transition-all hover:scale-[1.01] hover:brightness-110`}
               >
                 <div className="flex items-start gap-3">
-                  <span className="text-3xl">{choice.icon}</span>
+                  <span className="text-3xl flex-shrink-0">
+                    {ENCOUNTER_SVG[choice.type] ?? choice.icon}
+                  </span>
                   <div>
                     <div className="font-bold text-base text-white mb-0.5">
                       {choice.title}
@@ -2191,6 +3458,11 @@ function EncounterScreen({
                           modifierId={choice.freePiece.modifierId}
                           tier={choice.freePiece.tier}
                         />
+                      </div>
+                    )}
+                    {choice.type === "cursed-altar" && (
+                      <div className="mt-1 text-xs text-red-400">
+                        ⚠️ Sacrifice {choice.hpCost} HP
                       </div>
                     )}
                   </div>
