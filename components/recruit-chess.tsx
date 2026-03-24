@@ -317,7 +317,15 @@ async function simulateFight(
   startFen: string;
   endFen: string;
 }> {
-  const startFen = providedStartFen ?? buildFightFen(playerArmy, opponentArmy);
+  const rawFen = providedStartFen ?? buildFightFen(playerArmy, opponentArmy);
+  // Validate the FEN — chess.js throws on invalid FENs; fall back to a safe one.
+  let startFen: string;
+  try {
+    new Chess(rawFen); // validation check only
+    startFen = rawFen;
+  } catch {
+    startFen = buildFightFen(playerArmy, opponentArmy);
+  }
   const chaosState = extractChaosStateFromArmy(playerArmy, opponentArmy);
 
   let game = new Chess(startFen);
@@ -832,8 +840,8 @@ export function RecruitChess() {
     cancelFightRef.current = false;
     setFight((f) => ({ ...f, status: "simulating" }));
 
-    simulateFight(army, ghost.army, cancelFightRef, gameState.arrangeFen).then(
-      ({ startFen, endFen, moves, result }) => {
+    simulateFight(army, ghost.army, cancelFightRef, gameState.arrangeFen)
+      .then(({ startFen, endFen, moves, result }) => {
         if (cancelFightRef.current) return;
         setFight({
           status: "replaying",
@@ -843,8 +851,18 @@ export function RecruitChess() {
           replayIndex: 0,
           result,
         });
-      },
-    );
+      })
+      .catch((err) => {
+        if (cancelFightRef.current) return;
+        // Simulation failed (bad FEN, Stockfish unavailable, etc.)
+        // Fall back to a timeout-result so the game can continue.
+        console.error("Fight simulation error:", err);
+        setFight((f) => ({ ...f, status: "idle" }));
+        setGameState((prev) => {
+          if (!prev || prev.phase !== "fight") return prev;
+          return { ...prev, phase: "shop" };
+        });
+      });
 
     return () => {
       cancelFightRef.current = true;
