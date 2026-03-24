@@ -227,7 +227,8 @@ function ChaosCollectionInner() {
             if (!nextMod) return null;
 
             const gamesNeeded = UNLOCK_AT_GAMES[nextIdx];
-            const prevThreshold = nextIdx === 0 ? 0 : UNLOCK_AT_GAMES[nextIdx - 1];
+            const prevThreshold =
+              nextIdx === 0 ? 0 : UNLOCK_AT_GAMES[nextIdx - 1];
             const windowSize = gamesNeeded - prevThreshold;
             const gamesInWindow = gp - prevThreshold;
             const pct = Math.round((gamesInWindow / windowSize) * 100);

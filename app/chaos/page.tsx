@@ -10233,6 +10233,87 @@ export default function ChaosChessPage() {
             </a>
           </div>
 
+          {/* ── Next Progression Unlock (authenticated only) ── */}
+          {authenticated &&
+            (() => {
+              const gp = myGamesPlayed ?? 0;
+              const earnedCount = Math.min(
+                UNLOCK_AT_GAMES.filter((t) => gp >= t).length,
+                PROGRESSION_UNLOCK_ORDER.length,
+              );
+              const nextIdx = earnedCount;
+              if (nextIdx >= PROGRESSION_UNLOCK_ORDER.length) return null;
+              const nextMod = ALL_MODIFIERS.find(
+                (m) => m.id === PROGRESSION_UNLOCK_ORDER[nextIdx],
+              );
+              if (!nextMod) return null;
+              const gamesNeeded = UNLOCK_AT_GAMES[nextIdx];
+              const prevThreshold =
+                nextIdx === 0 ? 0 : UNLOCK_AT_GAMES[nextIdx - 1];
+              const windowSize = gamesNeeded - prevThreshold;
+              const gamesInWindow = gp - prevThreshold;
+              const pct = Math.round((gamesInWindow / windowSize) * 100);
+              const remaining = gamesNeeded - gp;
+              const tc = TIER_COLORS[nextMod.tier];
+              return (
+                <div className="mb-6 w-full max-w-sm rounded-2xl border border-purple-500/20 bg-gradient-to-r from-purple-950/40 to-slate-900/40 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">
+                        Next Unlock
+                      </span>
+                      <span className="text-[10px] text-slate-600">
+                        {nextIdx + 1}/{PROGRESSION_UNLOCK_ORDER.length}
+                      </span>
+                    </div>
+                    <span className="text-[10px] text-slate-500">
+                      {remaining} game{remaining !== 1 ? "s" : ""} to go
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`relative flex-shrink-0 w-12 h-12 rounded-xl border flex items-center justify-center ${tc.border} ${tc.bg}`}
+                    >
+                      <Emoji emoji={nextMod.icon} className="w-7 h-7" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-sm font-bold text-white truncate">
+                          {nextMod.name}
+                        </span>
+                        <span
+                          className={`text-[8px] font-bold uppercase tracking-wider rounded-full px-1.5 py-0.5 flex-shrink-0 ${tc.text} ${tc.bg}`}
+                        >
+                          {TIER_LABELS[nextMod.tier]}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-700"
+                            style={{
+                              width: `${pct}%`,
+                              background: {
+                                common:
+                                  "linear-gradient(to right, #6b7280, #9ca3af)",
+                                rare: "linear-gradient(to right, #3b82f6, #60a5fa)",
+                                epic: "linear-gradient(to right, #a855f7, #c084fc)",
+                                legendary:
+                                  "linear-gradient(to right, #f59e0b, #fcd34d)",
+                              }[nextMod.tier],
+                            }}
+                          />
+                        </div>
+                        <span className="text-[10px] font-bold tabular-nums text-slate-400">
+                          {gamesInWindow}/{windowSize}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
           {/* ── Example draft cards (flip on hover) ── */}
           <div className="mb-8 flex w-full max-w-2xl flex-wrap justify-center gap-3 sm:mb-10">
             <p className="w-full text-[11px] font-semibold uppercase tracking-wider text-slate-600 mb-1">
