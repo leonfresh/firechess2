@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { chaosUnlocks, users } from "@/lib/schema";
+import { chaosUnlocks, users, chaosRatings } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { GUEST_UNLOCKED_IDS } from "@/lib/chaos-collection";
@@ -57,6 +57,13 @@ export async function GET(req: NextRequest) {
     .from(chaosUnlocks)
     .where(eq(chaosUnlocks.userId, session.user.id));
 
+  const ratingRows = await db
+    .select({ gamesPlayed: chaosRatings.gamesPlayed })
+    .from(chaosRatings)
+    .where(eq(chaosRatings.userId, session.user.id))
+    .limit(1);
+  const gamesPlayed = ratingRows[0]?.gamesPlayed ?? 0;
+
   const unlocked = new Set([
     ...GUEST_UNLOCKED_IDS,
     ...rows.map((r) => r.modifierId),
@@ -65,6 +72,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     unlockedIds: [...unlocked],
     total: ALL_MODIFIERS.length,
+    gamesPlayed,
   });
 }
 
