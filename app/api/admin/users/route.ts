@@ -7,7 +7,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { isAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
-import { users, accounts, subscriptions, reports, sessions, studyPlans, userCoins } from "@/lib/schema";
+import {
+  users,
+  accounts,
+  subscriptions,
+  reports,
+  sessions,
+  studyPlans,
+  userCoins,
+} from "@/lib/schema";
 import { eq, or, ilike, sql, desc, count, max, sum } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
@@ -17,11 +25,23 @@ export async function GET(req: NextRequest) {
   }
 
   const q = req.nextUrl.searchParams.get("q")?.trim() ?? "";
+  const PAGE_SIZE = 100;
+  const offset = Math.max(
+    0,
+    parseInt(req.nextUrl.searchParams.get("offset") ?? "0", 10) || 0,
+  );
 
   // Build base query — all users or filtered
-  const whereClause = q.length >= 2
-    ? or(ilike(users.name, `%${q}%`), ilike(users.email, `%${q}%`))
-    : undefined;
+  const whereClause =
+    q.length >= 2
+      ? or(ilike(users.name, `%${q}%`), ilike(users.email, `%${q}%`))
+      : undefined;
+
+  // Get real total count
+  const [{ total }] = await db
+    .select({ total: count(users.id) })
+    .from(users)
+    .where(whereClause);
 
   // Main user data + subscription
   const rows = await db
@@ -41,78 +61,111 @@ export async function GET(req: NextRequest) {
     .leftJoin(subscriptions, eq(users.id, subscriptions.userId))
     .where(whereClause)
     .orderBy(desc(users.id))
-    .limit(100);
+    .limit(PAGE_SIZE)
+    .offset(offset);
 
   // Get login providers for each user
   const userIds = rows.map((r) => r.id);
 
   // Batch fetch: accounts (providers), report counts, latest session, study stats
-  const [accountRows, reportRows, sessionRows, studyRows, coinRows] = await Promise.all([
-    userIds.length > 0
-      ? db
-          .select({
-            userId: accounts.userId,
-            provider: accounts.provider,
-            providerAccountId: accounts.providerAccountId,
-          })
-          .from(accounts)
-          .where(sql`${accounts.userId} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`)
-      : [],
-    userIds.length > 0
-      ? db
-          .select({
-            userId: reports.userId,
-            reportCount: count(reports.id),
-            lastReport: max(reports.createdAt),
-            totalGames: sum(reports.gamesAnalyzed),
-          })
-          .from(reports)
-          .where(sql`${reports.userId} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`)
-          .groupBy(reports.userId)
-      : [],
-    userIds.length > 0
-      ? db
-          .select({
-            userId: sessions.userId,
-            latestExpiry: max(sessions.expires),
-          })
-          .from(sessions)
-          .where(sql`${sessions.userId} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`)
-          .groupBy(sessions.userId)
-      : [],
-    userIds.length > 0
-      ? db
-          .select({
-            userId: studyPlans.userId,
-            planCount: count(studyPlans.id),
-            currentStreak: max(studyPlans.currentStreak),
-            longestStreak: max(studyPlans.longestStreak),
-            totalProgress: sum(studyPlans.progress),
-          })
-          .from(studyPlans)
-          .where(sql`${studyPlans.userId} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`)
-          .groupBy(studyPlans.userId)
-      : [],
-    userIds.length > 0
-      ? db
-          .select({
-            userId: userCoins.userId,
-            balance: userCoins.balance,
-          })
-          .from(userCoins)
-          .where(sql`${userCoins.userId} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`)
-      : [],
-  ]);
+  const [accountRows, reportRows, sessionRows, studyRows, coinRows] =
+    await Promise.all([
+      userIds.length > 0
+        ? db
+            .select({
+              userId: accounts.userId,
+              provider: accounts.provider,
+              providerAccountId: accounts.providerAccountId,
+            })
+            .from(accounts)
+            .where(
+              sql`${accounts.userId} IN (${sql.join(
+                userIds.map((id) => sql`${id}`),
+                sql`, `,
+              )})`,
+            )
+        : [],
+      userIds.length > 0
+        ? db
+            .select({
+              userId: reports.userId,
+              reportCount: count(reports.id),
+              lastReport: max(reports.createdAt),
+              totalGames: sum(reports.gamesAnalyzed),
+            })
+            .from(reports)
+            .where(
+              sql`${reports.userId} IN (${sql.join(
+                userIds.map((id) => sql`${id}`),
+                sql`, `,
+              )})`,
+            )
+            .groupBy(reports.userId)
+        : [],
+      userIds.length > 0
+        ? db
+            .select({
+              userId: sessions.userId,
+              latestExpiry: max(sessions.expires),
+            })
+            .from(sessions)
+            .where(
+              sql`${sessions.userId} IN (${sql.join(
+                userIds.map((id) => sql`${id}`),
+                sql`, `,
+              )})`,
+            )
+            .groupBy(sessions.userId)
+        : [],
+      userIds.length > 0
+        ? db
+            .select({
+              userId: studyPlans.userId,
+              planCount: count(studyPlans.id),
+              currentStreak: max(studyPlans.currentStreak),
+              longestStreak: max(studyPlans.longestStreak),
+              totalProgress: sum(studyPlans.progress),
+            })
+            .from(studyPlans)
+            .where(
+              sql`${studyPlans.userId} IN (${sql.join(
+                userIds.map((id) => sql`${id}`),
+                sql`, `,
+              )})`,
+            )
+            .groupBy(studyPlans.userId)
+        : [],
+      userIds.length > 0
+        ? db
+            .select({
+              userId: userCoins.userId,
+              balance: userCoins.balance,
+            })
+            .from(userCoins)
+            .where(
+              sql`${userCoins.userId} IN (${sql.join(
+                userIds.map((id) => sql`${id}`),
+                sql`, `,
+              )})`,
+            )
+        : [],
+    ]);
 
   // Build lookup maps
-  const providersByUser = new Map<string, { provider: string; providerAccountId: string }[]>();
+  const providersByUser = new Map<
+    string,
+    { provider: string; providerAccountId: string }[]
+  >();
   for (const a of accountRows) {
     const list = providersByUser.get(a.userId) ?? [];
     list.push({ provider: a.provider, providerAccountId: a.providerAccountId });
     providersByUser.set(a.userId, list);
   }
 
-  const reportsByUser = new Map<string, { count: number; lastReport: string | null; totalGames: number }>();
+  const reportsByUser = new Map<
+    string,
+    { count: number; lastReport: string | null; totalGames: number }
+  >();
   for (const r of reportRows) {
     reportsByUser.set(r.userId, {
       count: Number(r.reportCount),
@@ -123,7 +176,10 @@ export async function GET(req: NextRequest) {
 
   const sessionByUser = new Map<string, string | null>();
   for (const s of sessionRows) {
-    sessionByUser.set(s.userId, s.latestExpiry ? new Date(s.latestExpiry).toISOString() : null);
+    sessionByUser.set(
+      s.userId,
+      s.latestExpiry ? new Date(s.latestExpiry).toISOString() : null,
+    );
   }
 
   const coinsByUser = new Map<string, number>();
@@ -131,14 +187,22 @@ export async function GET(req: NextRequest) {
     coinsByUser.set(c.userId, Number(c.balance ?? 0));
   }
 
-  const studyByUser = new Map<string, { planCount: number; currentStreak: number; longestStreak: number; avgProgress: number }>();
+  const studyByUser = new Map<
+    string,
+    {
+      planCount: number;
+      currentStreak: number;
+      longestStreak: number;
+      avgProgress: number;
+    }
+  >();
   for (const s of studyRows) {
     const pc = Number(s.planCount) || 1;
     studyByUser.set(s.userId, {
       planCount: pc,
       currentStreak: Number(s.currentStreak ?? 0),
       longestStreak: Number(s.longestStreak ?? 0),
-      avgProgress: Math.round((Number(s.totalProgress ?? 0)) / pc),
+      avgProgress: Math.round(Number(s.totalProgress ?? 0) / pc),
     });
   }
 
@@ -149,8 +213,12 @@ export async function GET(req: NextRequest) {
     image: r.image,
     plan: r.plan ?? "free",
     subStatus: r.subStatus ?? "active",
-    subCreatedAt: r.subCreatedAt ? new Date(r.subCreatedAt).toISOString() : null,
-    currentPeriodEnd: r.currentPeriodEnd ? new Date(r.currentPeriodEnd).toISOString() : null,
+    subCreatedAt: r.subCreatedAt
+      ? new Date(r.subCreatedAt).toISOString()
+      : null,
+    currentPeriodEnd: r.currentPeriodEnd
+      ? new Date(r.currentPeriodEnd).toISOString()
+      : null,
     stripeCustomerId: r.stripeCustomerId,
     weeklyDigest: r.weeklyDigest ?? true,
     providers: providersByUser.get(r.id) ?? [],
@@ -165,7 +233,7 @@ export async function GET(req: NextRequest) {
     coins: coinsByUser.get(r.id) ?? 0,
   }));
 
-  return NextResponse.json({ users: result, total: result.length });
+  return NextResponse.json({ users: result, total: Number(total) });
 }
 
 export async function PATCH(req: NextRequest) {
@@ -180,7 +248,7 @@ export async function PATCH(req: NextRequest) {
   if (!userId || !plan || !["free", "pro", "lifetime"].includes(plan)) {
     return NextResponse.json(
       { error: "userId and plan (free | pro | lifetime) are required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -219,7 +287,7 @@ export async function PUT(req: NextRequest) {
   if (!userId || typeof coins !== "number" || coins < 1 || coins > 10000) {
     return NextResponse.json(
       { error: "userId and coins (1–10000) are required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 

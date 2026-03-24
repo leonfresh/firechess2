@@ -34,7 +34,10 @@ type UserRow = {
   coins: number;
 };
 
-const PROVIDER_LABELS: Record<string, { label: string; icon: string; color: string }> = {
+const PROVIDER_LABELS: Record<
+  string,
+  { label: string; icon: string; color: string }
+> = {
   google: { label: "Google", icon: "🔵", color: "text-blue-400" },
   lichess: { label: "Lichess", icon: "♟️", color: "text-white" },
   resend: { label: "Email", icon: "✉️", color: "text-purple-400" },
@@ -81,7 +84,9 @@ export default function AdminUsersPage() {
   const { loading, isAdmin } = useSession();
   const router = useRouter();
 
+  const PAGE_SIZE = 100;
   const [query, setQuery] = useState("");
+  const [page, setPage] = useState(0);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [total, setTotal] = useState(0);
   const [fetching, setFetching] = useState(true);
@@ -95,47 +100,61 @@ export default function AdminUsersPage() {
     if (!loading && !isAdmin) router.replace("/");
   }, [loading, isAdmin, router]);
 
+  // Reset to page 0 when search query changes
+  useEffect(() => {
+    setPage(0);
+  }, [query]);
+
   // Fetch users (all on mount, filtered on search)
   useEffect(() => {
     if (loading || !isAdmin) return;
-    const timer = setTimeout(async () => {
-      setFetching(true);
-      try {
-        const url = query.trim().length >= 2
-          ? `/api/admin/users?q=${encodeURIComponent(query.trim())}`
-          : "/api/admin/users";
-        const res = await fetch(url);
-        const data = await res.json();
-        setUsers(data.users ?? []);
-        setTotal(data.total ?? 0);
-      } catch {
-        setUsers([]);
-      } finally {
-        setFetching(false);
-      }
-    }, query ? 400 : 0);
+    const timer = setTimeout(
+      async () => {
+        setFetching(true);
+        try {
+          const params = new URLSearchParams();
+          if (query.trim().length >= 2) params.set("q", query.trim());
+          if (page > 0) params.set("offset", String(page * PAGE_SIZE));
+          const url = `/api/admin/users${params.toString() ? `?${params}` : ""}`;
+          const res = await fetch(url);
+          const data = await res.json();
+          setUsers(data.users ?? []);
+          setTotal(data.total ?? 0);
+        } catch {
+          setUsers([]);
+        } finally {
+          setFetching(false);
+        }
+      },
+      query ? 400 : 0,
+    );
     return () => clearTimeout(timer);
-  }, [query, loading, isAdmin]);
+  }, [query, page, loading, isAdmin]);
 
-  const setPlan = useCallback(async (userId: string, plan: "free" | "pro" | "lifetime") => {
-    setUpdating(userId);
-    try {
-      const res = await fetch("/api/admin/users", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, plan }),
-      });
-      if (res.ok) {
-        setUsers((prev) =>
-          prev.map((u) => (u.id === userId ? { ...u, plan, subStatus: "active" } : u))
-        );
+  const setPlan = useCallback(
+    async (userId: string, plan: "free" | "pro" | "lifetime") => {
+      setUpdating(userId);
+      try {
+        const res = await fetch("/api/admin/users", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, plan }),
+        });
+        if (res.ok) {
+          setUsers((prev) =>
+            prev.map((u) =>
+              u.id === userId ? { ...u, plan, subStatus: "active" } : u,
+            ),
+          );
+        }
+      } catch {
+        // silent
+      } finally {
+        setUpdating(null);
       }
-    } catch {
-      // silent
-    } finally {
-      setUpdating(null);
-    }
-  }, []);
+    },
+    [],
+  );
 
   const giveCoins = useCallback(
     async (userId: string) => {
@@ -155,7 +174,9 @@ export default function AdminUsersPage() {
         if (res.ok) {
           const data = await res.json();
           setUsers((prev) =>
-            prev.map((u) => (u.id === userId ? { ...u, coins: data.newBalance } : u))
+            prev.map((u) =>
+              u.id === userId ? { ...u, coins: data.newBalance } : u,
+            ),
           );
           setCoinAmount((prev) => ({ ...prev, [userId]: "" }));
         } else {
@@ -167,7 +188,7 @@ export default function AdminUsersPage() {
         setGrantingCoins(null);
       }
     },
-    [coinAmount]
+    [coinAmount],
   );
 
   if (loading || !isAdmin) {
@@ -178,7 +199,9 @@ export default function AdminUsersPage() {
     );
   }
 
-  const proCount = users.filter((u) => u.plan === "pro" || u.plan === "lifetime").length;
+  const proCount = users.filter(
+    (u) => u.plan === "pro" || u.plan === "lifetime",
+  ).length;
   const freeCount = users.filter((u) => u.plan === "free").length;
 
   return (
@@ -192,7 +215,10 @@ export default function AdminUsersPage() {
             <span className="text-slate-400">{freeCount} Free</span>
           </p>
         </div>
-        <Link href="/admin/feedback" className="text-xs text-emerald-400 hover:underline">
+        <Link
+          href="/admin/feedback"
+          className="text-xs text-emerald-400 hover:underline"
+        >
           Feedback Panel &rarr;
         </Link>
       </div>
@@ -206,9 +232,7 @@ export default function AdminUsersPage() {
         className="mb-6 w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder:text-slate-500 focus:border-emerald-500/40 focus:outline-none"
       />
 
-      {fetching && (
-        <p className="mb-4 text-xs text-slate-500">Loading...</p>
-      )}
+      {fetching && <p className="mb-4 text-xs text-slate-500">Loading...</p>}
 
       {/* User table */}
       {!fetching && users.length > 0 && (
@@ -216,12 +240,24 @@ export default function AdminUsersPage() {
           {/* Column headings */}
           <div className="hidden items-center gap-3 px-4 py-1 sm:flex">
             <div className="w-8" /> {/* avatar spacer */}
-            <div className="min-w-0 flex-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">User</div>
-            <div className="w-28 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Login</div>
-            <div className="w-16 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-500">Reports</div>
-            <div className="w-20 text-right text-[10px] font-semibold uppercase tracking-wider text-slate-500">Last Seen</div>
-            <div className="w-16 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-500">Plan</div>
-            <div className="w-20 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-500">Action</div>
+            <div className="min-w-0 flex-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              User
+            </div>
+            <div className="w-28 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              Login
+            </div>
+            <div className="w-16 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              Reports
+            </div>
+            <div className="w-20 text-right text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              Last Seen
+            </div>
+            <div className="w-16 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              Plan
+            </div>
+            <div className="w-20 text-center text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              Action
+            </div>
             <div className="w-4" /> {/* chevron spacer */}
           </div>
 
@@ -271,13 +307,27 @@ export default function AdminUsersPage() {
                   </div>
 
                   {/* Reports count */}
-                  <div className="hidden w-16 text-center sm:block" title="Reports saved">
-                    <p className="text-xs font-semibold text-white">{user.reportCount}</p>
+                  <div
+                    className="hidden w-16 text-center sm:block"
+                    title="Reports saved"
+                  >
+                    <p className="text-xs font-semibold text-white">
+                      {user.reportCount}
+                    </p>
                   </div>
 
                   {/* Last active */}
-                  <div className="hidden w-20 text-right sm:block" title={user.lastSession ? `Session: ${formatDate(user.lastSession)}` : "No session"}>
-                    <p className="text-[11px] text-slate-400">{timeAgo(user.lastSession)}</p>
+                  <div
+                    className="hidden w-20 text-right sm:block"
+                    title={
+                      user.lastSession
+                        ? `Session: ${formatDate(user.lastSession)}`
+                        : "No session"
+                    }
+                  >
+                    <p className="text-[11px] text-slate-400">
+                      {timeAgo(user.lastSession)}
+                    </p>
                   </div>
 
                   {/* Plan badge */}
@@ -293,7 +343,10 @@ export default function AdminUsersPage() {
                   <div className="flex w-20 justify-center gap-1">
                     {user.plan === "free" ? (
                       <button
-                        onClick={(e) => { e.stopPropagation(); setPlan(user.id, "pro"); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPlan(user.id, "pro");
+                        }}
                         disabled={updating === user.id}
                         className="rounded-md bg-emerald-500/20 px-2.5 py-1 text-[11px] font-medium text-emerald-400 transition hover:bg-emerald-500/30 disabled:opacity-50"
                       >
@@ -303,7 +356,12 @@ export default function AdminUsersPage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (!window.confirm(`Revoke Pro from ${user.name || user.email}? This will set them back to the free plan.`)) return;
+                          if (
+                            !window.confirm(
+                              `Revoke Pro from ${user.name || user.email}? This will set them back to the free plan.`,
+                            )
+                          )
+                            return;
                           setPlan(user.id, "free");
                         }}
                         disabled={updating === user.id}
@@ -322,7 +380,11 @@ export default function AdminUsersPage() {
                     stroke="currentColor"
                     strokeWidth={2}
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19 9l-7 7-7-7"
+                    />
                   </svg>
                 </div>
 
@@ -331,54 +393,129 @@ export default function AdminUsersPage() {
                   <div className="border-t border-white/[0.06] px-4 py-3">
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                       <Detail label="User ID" value={user.id} mono />
-                      <Detail label="Subscription Status" value={
-                        <span className={STATUS_STYLES[user.subStatus] ?? "text-slate-400"}>
-                          {user.subStatus}
-                        </span>
-                      } />
-                      <Detail label="Sub Created" value={formatDate(user.subCreatedAt)} />
-                      <Detail label="Period End" value={formatDate(user.currentPeriodEnd)} />
-                      <Detail label="Stripe Customer" value={user.stripeCustomerId || "None"} mono />
-                      <Detail label="Weekly Digest" value={user.weeklyDigest ? "✅ On" : "❌ Off"} />
-                      <Detail label="Reports Saved" value={String(user.reportCount)} />
-                      <Detail label="Last Report" value={user.lastReport ? timeAgo(user.lastReport) : "Never"} />
-                      <Detail label="Last Session" value={user.lastSession ? timeAgo(user.lastSession) : "Never"} />
-                      <Detail label="Login Methods" value={
-                        user.providers.length > 0
-                          ? user.providers.map(p => {
-                              const meta = PROVIDER_LABELS[p.provider] ?? { label: p.provider, icon: "🔗" };
-                              return `${meta.icon} ${meta.label} (${p.providerAccountId})`;
-                            }).join(", ")
-                          : "None"
-                      } />
+                      <Detail
+                        label="Subscription Status"
+                        value={
+                          <span
+                            className={
+                              STATUS_STYLES[user.subStatus] ?? "text-slate-400"
+                            }
+                          >
+                            {user.subStatus}
+                          </span>
+                        }
+                      />
+                      <Detail
+                        label="Sub Created"
+                        value={formatDate(user.subCreatedAt)}
+                      />
+                      <Detail
+                        label="Period End"
+                        value={formatDate(user.currentPeriodEnd)}
+                      />
+                      <Detail
+                        label="Stripe Customer"
+                        value={user.stripeCustomerId || "None"}
+                        mono
+                      />
+                      <Detail
+                        label="Weekly Digest"
+                        value={user.weeklyDigest ? "✅ On" : "❌ Off"}
+                      />
+                      <Detail
+                        label="Reports Saved"
+                        value={String(user.reportCount)}
+                      />
+                      <Detail
+                        label="Last Report"
+                        value={
+                          user.lastReport ? timeAgo(user.lastReport) : "Never"
+                        }
+                      />
+                      <Detail
+                        label="Last Session"
+                        value={
+                          user.lastSession ? timeAgo(user.lastSession) : "Never"
+                        }
+                      />
+                      <Detail
+                        label="Login Methods"
+                        value={
+                          user.providers.length > 0
+                            ? user.providers
+                                .map((p) => {
+                                  const meta = PROVIDER_LABELS[p.provider] ?? {
+                                    label: p.provider,
+                                    icon: "🔗",
+                                  };
+                                  return `${meta.icon} ${meta.label} (${p.providerAccountId})`;
+                                })
+                                .join(", ")
+                            : "None"
+                        }
+                      />
                     </div>
 
                     {/* Training & Activity Stats */}
                     <div className="mt-3 border-t border-white/[0.06] pt-3">
-                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">🏋️ Training &amp; Activity</p>
+                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                        🏋️ Training &amp; Activity
+                      </p>
                       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                        <Detail label="Total Games Analyzed" value={String(user.totalGamesAnalyzed)} />
-                        <Detail label="Study Plans" value={String(user.studyPlans)} />
-                        <Detail label="Avg Study Progress" value={`${user.avgStudyProgress}%`} />
-                        <Detail label="Current Streak" value={
-                          user.currentStreak > 0
-                            ? <span className="text-emerald-400">🔥 {user.currentStreak} day{user.currentStreak !== 1 ? "s" : ""}</span>
-                            : "0"
-                        } />
-                        <Detail label="Longest Streak" value={
-                          user.longestStreak > 0
-                            ? <span className="text-amber-400">🏆 {user.longestStreak} day{user.longestStreak !== 1 ? "s" : ""}</span>
-                            : "0"
-                        } />
-                        <Detail label="Coins" value={
-                          <span className="text-amber-400 font-bold">🪙 {user.coins.toLocaleString()}</span>
-                        } />
+                        <Detail
+                          label="Total Games Analyzed"
+                          value={String(user.totalGamesAnalyzed)}
+                        />
+                        <Detail
+                          label="Study Plans"
+                          value={String(user.studyPlans)}
+                        />
+                        <Detail
+                          label="Avg Study Progress"
+                          value={`${user.avgStudyProgress}%`}
+                        />
+                        <Detail
+                          label="Current Streak"
+                          value={
+                            user.currentStreak > 0 ? (
+                              <span className="text-emerald-400">
+                                🔥 {user.currentStreak} day
+                                {user.currentStreak !== 1 ? "s" : ""}
+                              </span>
+                            ) : (
+                              "0"
+                            )
+                          }
+                        />
+                        <Detail
+                          label="Longest Streak"
+                          value={
+                            user.longestStreak > 0 ? (
+                              <span className="text-amber-400">
+                                🏆 {user.longestStreak} day
+                                {user.longestStreak !== 1 ? "s" : ""}
+                              </span>
+                            ) : (
+                              "0"
+                            )
+                          }
+                        />
+                        <Detail
+                          label="Coins"
+                          value={
+                            <span className="text-amber-400 font-bold">
+                              🪙 {user.coins.toLocaleString()}
+                            </span>
+                          }
+                        />
                       </div>
                     </div>
 
                     {/* Give Coins */}
                     <div className="mt-3 border-t border-white/[0.06] pt-3">
-                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">🪙 Grant Coins</p>
+                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                        🪙 Grant Coins
+                      </p>
                       <div className="flex items-center gap-2">
                         <input
                           type="number"
@@ -386,18 +523,30 @@ export default function AdminUsersPage() {
                           max={10000}
                           placeholder="Amount"
                           value={coinAmount[user.id] ?? ""}
-                          onChange={(e) => setCoinAmount((prev) => ({ ...prev, [user.id]: e.target.value }))}
+                          onChange={(e) =>
+                            setCoinAmount((prev) => ({
+                              ...prev,
+                              [user.id]: e.target.value,
+                            }))
+                          }
                           onClick={(e) => e.stopPropagation()}
                           className="w-24 rounded-md border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-white placeholder:text-slate-600 focus:border-amber-500/40 focus:outline-none"
                         />
                         <button
-                          onClick={(e) => { e.stopPropagation(); giveCoins(user.id); }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            giveCoins(user.id);
+                          }}
                           disabled={grantingCoins === user.id}
                           className="rounded-md bg-amber-500/20 px-3 py-1 text-[11px] font-medium text-amber-400 transition hover:bg-amber-500/30 disabled:opacity-50"
                         >
-                          {grantingCoins === user.id ? "Granting..." : "Give Coins"}
+                          {grantingCoins === user.id
+                            ? "Granting..."
+                            : "Give Coins"}
                         </button>
-                        <span className="text-[10px] text-slate-600">Current: 🪙 {user.coins.toLocaleString()}</span>
+                        <span className="text-[10px] text-slate-600">
+                          Current: 🪙 {user.coins.toLocaleString()}
+                        </span>
                       </div>
                     </div>
 
@@ -414,7 +563,9 @@ export default function AdminUsersPage() {
                               : "border-white/10 bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white"
                           }`}
                         >
-                          {p === user.plan ? `✓ ${p.toUpperCase()}` : p.toUpperCase()}
+                          {p === user.plan
+                            ? `✓ ${p.toUpperCase()}`
+                            : p.toUpperCase()}
                         </button>
                       ))}
                     </div>
@@ -423,6 +574,30 @@ export default function AdminUsersPage() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {!fetching && total > PAGE_SIZE && (
+        <div className="mt-6 flex items-center justify-between">
+          <button
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="rounded-md border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-slate-300 hover:bg-white/10 disabled:opacity-30"
+          >
+            &larr; Prev
+          </button>
+          <span className="text-xs text-slate-500">
+            {page * PAGE_SIZE + 1}–{Math.min((page + 1) * PAGE_SIZE, total)} of{" "}
+            {total}
+          </span>
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={(page + 1) * PAGE_SIZE >= total}
+            className="rounded-md border border-white/10 bg-white/5 px-4 py-1.5 text-xs text-slate-300 hover:bg-white/10 disabled:opacity-30"
+          >
+            Next &rarr;
+          </button>
         </div>
       )}
 
@@ -435,11 +610,23 @@ export default function AdminUsersPage() {
   );
 }
 
-function Detail({ label, value, mono }: { label: string; value: React.ReactNode; mono?: boolean }) {
+function Detail({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: React.ReactNode;
+  mono?: boolean;
+}) {
   return (
     <div>
-      <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">{label}</p>
-      <p className={`mt-0.5 text-xs text-slate-300 ${mono ? "font-mono text-[10px] break-all" : ""}`}>
+      <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+        {label}
+      </p>
+      <p
+        className={`mt-0.5 text-xs text-slate-300 ${mono ? "font-mono text-[10px] break-all" : ""}`}
+      >
         {value}
       </p>
     </div>
