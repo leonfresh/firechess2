@@ -776,15 +776,20 @@ export function RecruitChess() {
     playSound("drumroll");
     setGameState((prev) => {
       if (!prev || prev.phase !== "shop") return prev;
-      const ghost = generateGhostBuild(prev.round, prev.commander!);
-      const arrangeFen = buildFightFen(prev.army, ghost.army);
-      return {
-        ...prev,
-        phase: "arrange",
-        ghostOpponent: ghost,
-        arrangeFen,
-        fightResult: null,
-      };
+      try {
+        const ghost = generateGhostBuild(prev.round, prev.commander!);
+        const arrangeFen = buildFightFen(prev.army, ghost.army);
+        return {
+          ...prev,
+          phase: "arrange",
+          ghostOpponent: ghost,
+          arrangeFen,
+          fightResult: null,
+        };
+      } catch (err) {
+        console.error("handleStartFight error:", err);
+        return prev; // stay in shop on error
+      }
     });
   }, []);
 
