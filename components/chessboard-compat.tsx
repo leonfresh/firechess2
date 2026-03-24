@@ -8,10 +8,8 @@
  */
 
 import React, { useEffect, useRef, useState } from "react";
-import { Chessboard as ChessboardV5 } from "react-chessboard";
-import type {
-  ChessboardOptions,
-} from "react-chessboard";
+import { Chessboard as ChessboardV5, defaultPieces } from "react-chessboard";
+import type { ChessboardOptions } from "react-chessboard";
 import type {
   Arrow,
   PieceDropHandlerArgs,
@@ -50,7 +48,11 @@ export interface ChessboardCompatProps {
   >;
 
   // Callbacks — v4 signatures
-  onPieceDrop?: (sourceSquare: string, targetSquare: string, piece?: string) => boolean;
+  onPieceDrop?: (
+    sourceSquare: string,
+    targetSquare: string,
+    piece?: string,
+  ) => boolean;
   onSquareClick?: (square: string) => void;
   onMouseOverSquare?: (square: string) => void;
   onMouseOutSquare?: (square: string) => void;
@@ -90,7 +92,10 @@ function convertCustomPieces(
   >,
   squareWidth: number,
 ): PieceRenderObject {
-  const result: PieceRenderObject = {};
+  // Start with all 12 default piece renderers so any piece type not in our
+  // custom set falls back to the standard SVG instead of being `undefined`
+  // (which would cause React error #130 inside react-chessboard).
+  const result: PieceRenderObject = { ...defaultPieces };
   for (const [code, renderer] of Object.entries(v4Pieces)) {
     result[code] = (props?: { fill?: string; square?: string }) => {
       return renderer({ squareWidth, square: props?.square });
@@ -119,7 +124,9 @@ export function Chessboard(props: ChessboardCompatProps) {
 
   // Dedup ref: prevent double-fire when both onPieceClick and onSquareClick
   // trigger for the same square within a single event cycle.
-  const lastPieceClickRef = useRef<{ square: string; time: number } | null>(null);
+  const lastPieceClickRef = useRef<{ square: string; time: number } | null>(
+    null,
+  );
 
   // Measure board width for customPieces squareWidth calculation
   useEffect(() => {
@@ -148,7 +155,8 @@ export function Chessboard(props: ChessboardCompatProps) {
 
   // v4 accepted "start" as a special keyword for the initial position; v5 only accepts FEN strings.
   // Also guard against empty strings which produce garbage boards.
-  const STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+  const STARTING_FEN =
+    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
   const position =
     !props.position || props.position === "start"
       ? STARTING_FEN
@@ -170,7 +178,9 @@ export function Chessboard(props: ChessboardCompatProps) {
     // Styles
     boardStyle: {
       ...(props.customBoardStyle ?? {}),
-      ...(props.boardWidth ? { width: props.boardWidth, height: props.boardWidth } : {}),
+      ...(props.boardWidth
+        ? { width: props.boardWidth, height: props.boardWidth }
+        : {}),
     },
     darkSquareStyle: props.customDarkSquareStyle,
     lightSquareStyle: props.customLightSquareStyle,
@@ -193,7 +203,11 @@ export function Chessboard(props: ChessboardCompatProps) {
     // Callbacks — adapt v4 signatures to v5
     onPieceDrop: props.onPieceDrop
       ? ({ piece, sourceSquare, targetSquare }: PieceDropHandlerArgs) => {
-          return props.onPieceDrop!(sourceSquare ?? "", targetSquare ?? "", piece?.pieceType);
+          return props.onPieceDrop!(
+            sourceSquare ?? "",
+            targetSquare ?? "",
+            piece?.pieceType,
+          );
         }
       : undefined,
 
@@ -201,7 +215,8 @@ export function Chessboard(props: ChessboardCompatProps) {
       ? ({ square }: SquareHandlerArgs) => {
           // Skip if onPieceClick already handled this square in the same event cycle
           const last = lastPieceClickRef.current;
-          if (last && last.square === square && Date.now() - last.time < 50) return;
+          if (last && last.square === square && Date.now() - last.time < 50)
+            return;
           props.onSquareClick!(square);
         }
       : undefined,
@@ -211,7 +226,10 @@ export function Chessboard(props: ChessboardCompatProps) {
     // we need onPieceClick as the primary click path for occupied squares.
     onPieceClick: props.onSquareClick
       ? ({ square }: PieceHandlerArgs) => {
-          lastPieceClickRef.current = { square: square ?? "", time: Date.now() };
+          lastPieceClickRef.current = {
+            square: square ?? "",
+            time: Date.now(),
+          };
           props.onSquareClick!(square ?? "");
         }
       : undefined,
@@ -248,79 +266,94 @@ export function Chessboard(props: ChessboardCompatProps) {
   };
 
   // --- Promotion dialog overlay (v5 removed the built-in one) ---
-  const promoOverlay = props.showPromotionDialog && props.promotionToSquare ? (() => {
-    const sq = props.promotionToSquare!;
-    const rank = parseInt(sq[1]);
-    const colorPrefix = rank === 8 ? "w" : "b";
-    const pieces = ["Q", "R", "B", "N"];
-    const file = sq.charCodeAt(0) - 97; // 0-7
+  const promoOverlay =
+    props.showPromotionDialog && props.promotionToSquare
+      ? (() => {
+          const sq = props.promotionToSquare!;
+          const rank = parseInt(sq[1]);
+          const colorPrefix = rank === 8 ? "w" : "b";
+          const pieces = ["Q", "R", "B", "N"];
+          const file = sq.charCodeAt(0) - 97; // 0-7
 
-    // Board might be flipped
-    const isFlipped = props.boardOrientation === "black";
-    const leftPct = isFlipped ? ((7 - file) / 8) * 100 : (file / 8) * 100;
-    const topPct = isFlipped
-      ? (rank === 8 ? (7 / 8) * 100 : 0)
-      : (rank === 8 ? 0 : (4 / 8) * 100);
+          // Board might be flipped
+          const isFlipped = props.boardOrientation === "black";
+          const leftPct = isFlipped ? ((7 - file) / 8) * 100 : (file / 8) * 100;
+          const topPct = isFlipped
+            ? rank === 8
+              ? (7 / 8) * 100
+              : 0
+            : rank === 8
+              ? 0
+              : (4 / 8) * 100;
 
-    return (
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 100,
-          background: "rgba(0,0,0,0.45)",
-        }}
-        onClick={() => props.onPromotionPieceSelect?.(undefined)}
-      >
-        <div
-          style={{
-            position: "absolute",
-            left: `${leftPct}%`,
-            top: `${topPct}%`,
-            width: `${100 / 8}%`,
-            display: "flex",
-            flexDirection: "column",
-            background: "#fff",
-            borderRadius: 4,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
-            overflow: "hidden",
-          }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {pieces.map((p) => {
-            const pieceCode = `${colorPrefix}${p}`;
-            return (
-              <button
-                key={p}
+          return (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                zIndex: 100,
+                background: "rgba(0,0,0,0.45)",
+              }}
+              onClick={() => props.onPromotionPieceSelect?.(undefined)}
+            >
+              <div
                 style={{
-                  aspectRatio: "1",
-                  width: "100%",
-                  border: "none",
-                  background: "transparent",
-                  cursor: "pointer",
+                  position: "absolute",
+                  left: `${leftPct}%`,
+                  top: `${topPct}%`,
+                  width: `${100 / 8}%`,
                   display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: squareWidth * 0.7,
+                  flexDirection: "column",
+                  background: "#fff",
+                  borderRadius: 4,
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+                  overflow: "hidden",
                 }}
-                onMouseOver={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,0,0,0.1)";
-                }}
-                onMouseOut={(e) => {
-                  (e.currentTarget as HTMLButtonElement).style.background = "transparent";
-                }}
-                onClick={() => {
-                  props.onPromotionPieceSelect?.(pieceCode, undefined, sq);
-                }}
+                onClick={(e) => e.stopPropagation()}
               >
-                {promoUnicode(pieceCode)}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  })() : null;
+                {pieces.map((p) => {
+                  const pieceCode = `${colorPrefix}${p}`;
+                  return (
+                    <button
+                      key={p}
+                      style={{
+                        aspectRatio: "1",
+                        width: "100%",
+                        border: "none",
+                        background: "transparent",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: squareWidth * 0.7,
+                      }}
+                      onMouseOver={(e) => {
+                        (
+                          e.currentTarget as HTMLButtonElement
+                        ).style.background = "rgba(0,0,0,0.1)";
+                      }}
+                      onMouseOut={(e) => {
+                        (
+                          e.currentTarget as HTMLButtonElement
+                        ).style.background = "transparent";
+                      }}
+                      onClick={() => {
+                        props.onPromotionPieceSelect?.(
+                          pieceCode,
+                          undefined,
+                          sq,
+                        );
+                      }}
+                    >
+                      {promoUnicode(pieceCode)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })()
+      : null;
 
   const board = <ChessboardV5 options={options} />;
 
@@ -345,8 +378,14 @@ export function Chessboard(props: ChessboardCompatProps) {
 /** Map piece codes like "wQ" to unicode chess symbols */
 function promoUnicode(code: string): string {
   const map: Record<string, string> = {
-    wQ: "\u2655", wR: "\u2656", wB: "\u2657", wN: "\u2658",
-    bQ: "\u265B", bR: "\u265C", bB: "\u265D", bN: "\u265E",
+    wQ: "\u2655",
+    wR: "\u2656",
+    wB: "\u2657",
+    wN: "\u2658",
+    bQ: "\u265B",
+    bR: "\u265C",
+    bB: "\u265D",
+    bN: "\u265E",
   };
   return map[code] ?? code;
 }
