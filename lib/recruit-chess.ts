@@ -108,6 +108,8 @@ export interface RecruitGameState {
   roundResults: RoundResult[];
   fightResult: FightResult | null;
   ghostOpponent: GhostBuild | null;
+  /** FEN for the arrange phase (player can drag pieces before fighting) */
+  arrangeFen?: string;
   /** Present when phase === "encounter" */
   pendingEncounterChoices?: EncounterChoice[];
 }
@@ -346,11 +348,19 @@ const PIECE_MOD_POOL: Record<
 /** Piece costs by type */
 export const PIECE_COSTS: Record<PieceType, number> = {
   p: 1,
-  n: 2,
-  b: 2,
-  r: 3,
-  q: 4,
-  k: 5,
+  n: 3,
+  b: 3,
+  r: 4,
+  q: 5,
+  k: 6,
+};
+
+/** Extra gold cost based on modifier tier */
+const MODIFIER_TIER_PREMIUM: Record<string, number> = {
+  common: 0,
+  rare: 1,
+  epic: 1,
+  legendary: 2,
 };
 
 /** Which piece types appear in the shop at each shop tier */
@@ -406,8 +416,10 @@ export function generateShop(
     ];
     const picked = weightedPick(modPool);
     const modDef = ALL_MODIFIERS.find((m) => m.id === picked.modifierId);
+    const tierPremium = MODIFIER_TIER_PREMIUM[modDef?.tier ?? "common"] ?? 0;
     const cost =
       PIECE_COSTS[pieceType] +
+      tierPremium +
       (commanderId === "tactician" && pieceType === "n" ? -1 : 0);
 
     slots.push({

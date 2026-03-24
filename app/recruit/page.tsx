@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
-import { RecruitChess } from "@/components/recruit-chess";
+import dynamic from "next/dynamic";
+
+// Skip SSR entirely — component depends on localStorage, window, and Stockfish WASM
+const RecruitChess = dynamic(
+  () => import("@/components/recruit-chess").then((m) => m.RecruitChess),
+  { ssr: false, loading: () => null },
+);
 
 export const metadata: Metadata = {
   title: "Recruit Chess — Build Your Army | FireChess",

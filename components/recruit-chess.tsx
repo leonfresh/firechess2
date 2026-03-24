@@ -105,7 +105,7 @@ const PIECE_ICONS: Record<string, string> = {
   k: "♚",
 };
 
-const LS_KEY = "recruit_chess_state_v1";
+const LS_KEY = "recruit_chess_state_v2";
 
 /* ================================================================== */
 /*  Fairy piece SVGs + overlay icons (from chaos chess assets)         */
@@ -310,13 +310,14 @@ async function simulateFight(
   playerArmy: Pick<RecruitedPiece, "pieceType" | "modifierId" | "tier">[],
   opponentArmy: Pick<RecruitedPiece, "pieceType" | "modifierId" | "tier">[],
   cancelRef: React.MutableRefObject<boolean>,
+  providedStartFen?: string,
 ): Promise<{
   moves: FightMove[];
   result: FightResult;
   startFen: string;
   endFen: string;
 }> {
-  const startFen = buildFightFen(playerArmy, opponentArmy);
+  const startFen = providedStartFen ?? buildFightFen(playerArmy, opponentArmy);
   const chaosState = extractChaosStateFromArmy(playerArmy, opponentArmy);
 
   let game = new Chess(startFen);
@@ -390,48 +391,53 @@ async function simulateFight(
     for (const { move: cm, score: naiveScore } of scoredChaos.slice(0, 4)) {
       if (naiveScore < 1) break;
 
-      // King capture is always the right move
-      const captured = game.get(cm.to as Square);
-      if (captured?.type === "k") {
-        useChaos = true;
-        chosenChaosMove = cm;
-        break;
-      }
+      try {
+        // King capture is always the right move
+        const captured = game.get(cm.to as Square);
+        if (captured?.type === "k") {
+          useChaos = true;
+          chosenChaosMove = cm;
+          break;
+        }
 
-      const testGame = executeChaosMove(
-        new Chess(game.fen()),
-        cm,
-        mySideMods,
-        oppMods,
-      );
-      if (!testGame) continue;
+        const testGame = executeChaosMove(
+          new Chess(game.fen()),
+          cm,
+          mySideMods,
+          oppMods,
+        );
+        if (!testGame) continue;
 
-      // Check if opponent's king was captured by a sideEffect
-      const oppKingAlive = testGame
-        .board()
-        .flat()
-        .some((p) => p && p.type === "k" && p.color !== side);
-      if (!oppKingAlive) {
-        useChaos = true;
-        chosenChaosMove = cm;
-        break;
-      }
+        // Check if opponent's king was captured by a sideEffect
+        const oppKingAlive = testGame
+          .board()
+          .flat()
+          .some((p) => p && p.type === "k" && p.color !== side);
+        if (!oppKingAlive) {
+          useChaos = true;
+          chosenChaosMove = cm;
+          break;
+        }
 
-      const chaosEval = await stockfishPool.evaluateFen(
-        testGame.fen(),
-        Math.max(4, STOCKFISH_DEPTH - 3),
-      );
-      if (cancelRef.current) break;
+        const chaosEval = await stockfishPool.evaluateFen(
+          testGame.fen(),
+          Math.max(4, STOCKFISH_DEPTH - 3),
+        );
+        if (cancelRef.current) break;
 
-      // chaosEval.cp is from the new side-to-move (opponent) POV.
-      // Our advantage after chaos move = -(opponent's cp).
-      const chaosCpForUs = -(chaosEval?.cp ?? 0);
+        // chaosEval.cp is from the new side-to-move (opponent) POV.
+        // Our advantage after chaos move = -(opponent's cp).
+        const chaosCpForUs = -(chaosEval?.cp ?? 0);
 
-      // Prefer chaos if it's within 100cp of SF's best OR a high-value grab
-      if (chaosCpForUs > sfCpForUs - 100 || naiveScore >= 6) {
-        useChaos = true;
-        chosenChaosMove = cm;
-        break;
+        // Prefer chaos if it's within 100cp of SF's best OR a high-value grab
+        if (chaosCpForUs > sfCpForUs - 100 || naiveScore >= 6) {
+          useChaos = true;
+          chosenChaosMove = cm;
+          break;
+        }
+      } catch {
+        // executeChaosMove or Stockfish eval failed — skip this candidate
+        continue;
       }
     }
     if (cancelRef.current) break;
@@ -577,9 +583,30 @@ export function RecruitChess() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem(LS_KEY);
-      if (saved) setGameState(JSON.parse(saved));
+      if (saved) {
+        const parsed = JSON.parse(saved) as RecruitGameState;
+        // Reset mid-fight / arrange phases — simulation can't be resumed from storage
+        if (parsed.phase === "fight" || parsed.phase === "arrange") {
+          parsed.phase = "shop";
+          parsed.ghostOpponent = null;
+          parsed.arrangeFen = undefined;
+        }
+        // Validate required fields exist before restoring state
+        const isValid =
+          parsed.round !== undefined &&
+          parsed.phase &&
+          Array.isArray(parsed.army) &&
+          Array.isArray(parsed.bench) &&
+          Array.isArray(parsed.shop) &&
+          Array.isArray(parsed.roundResults);
+        if (isValid) {
+          setGameState(parsed);
+        } else {
+          localStorage.removeItem(LS_KEY);
+        }
+      }
     } catch {
-      // Corrupted state — start fresh
+      localStorage.removeItem(LS_KEY);
     }
   }, []);
 
@@ -742,12 +769,54 @@ export function RecruitChess() {
     setGameState((prev) => {
       if (!prev || prev.phase !== "shop") return prev;
       const ghost = generateGhostBuild(prev.round, prev.commander!);
+      const arrangeFen = buildFightFen(prev.army, ghost.army);
       return {
         ...prev,
-        phase: "fight",
+        phase: "arrange",
         ghostOpponent: ghost,
+        arrangeFen,
         fightResult: null,
       };
+    });
+  }, []);
+
+  // ── Arrange pieces ─────────────────────────────────────────────────
+  const handleArrangePiece = useCallback(
+    (from: string, to: string): boolean => {
+      const toRank = parseInt(to[1]);
+      if (toRank > 4) return false; // restrict to player's zone
+      setGameState((prev) => {
+        if (!prev || prev.phase !== "arrange" || !prev.arrangeFen) return prev;
+        try {
+          const g = new Chess(prev.arrangeFen);
+          const piece = g.get(from as Square);
+          if (!piece || piece.color !== "w") return prev;
+          const occupant = g.get(to as Square);
+          g.remove(from as Square);
+          if (occupant && occupant.color === "w") {
+            g.remove(to as Square);
+            g.put(occupant, from as Square);
+          } else if (occupant) {
+            // Don't displace opponent pieces
+            g.put(piece, from as Square);
+            return prev;
+          }
+          g.put(piece, to as Square);
+          return { ...prev, arrangeFen: g.fen() };
+        } catch {
+          return prev;
+        }
+      });
+      return true;
+    },
+    [],
+  );
+
+  // ── Proceed to fight from arrange ──────────────────────────────────
+  const handleProceedToFight = useCallback(() => {
+    setGameState((prev) => {
+      if (!prev || prev.phase !== "arrange") return prev;
+      return { ...prev, phase: "fight" };
     });
   }, []);
 
@@ -763,7 +832,7 @@ export function RecruitChess() {
     cancelFightRef.current = false;
     setFight((f) => ({ ...f, status: "simulating" }));
 
-    simulateFight(army, ghost.army, cancelFightRef).then(
+    simulateFight(army, ghost.army, cancelFightRef, gameState.arrangeFen).then(
       ({ startFen, endFen, moves, result }) => {
         if (cancelFightRef.current) return;
         setFight({
@@ -1035,6 +1104,28 @@ export function RecruitChess() {
     );
   }
 
+  if (gameState.phase === "arrange") {
+    return (
+      <ArrangeScreen
+        gameState={gameState}
+        onArrangePiece={handleArrangePiece}
+        onProceed={handleProceedToFight}
+        onBack={() =>
+          setGameState((p) =>
+            p
+              ? {
+                  ...p,
+                  phase: "shop",
+                  ghostOpponent: null,
+                  arrangeFen: undefined,
+                }
+              : p,
+          )
+        }
+      />
+    );
+  }
+
   if (gameState.phase === "fight") {
     return (
       <FightScreen
@@ -1262,7 +1353,7 @@ function ShopScreen({
                 disabled={!canFight}
                 className="w-full py-3 rounded-xl font-bold text-lg bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 disabled:opacity-40 transition-all hover:scale-[1.01] shadow-lg shadow-red-900/30"
               >
-                ⚔️ Fight Round {gameState.round}
+                ⚔️ Prepare Round {gameState.round}
               </button>
             </div>
 
@@ -1562,6 +1653,117 @@ function FightResultCard({
       >
         Continue →
       </button>
+    </div>
+  );
+}
+
+/* ================================================================== */
+/*  Arrange Screen                                                      */
+/* ================================================================== */
+
+function ArrangeScreen({
+  gameState,
+  onArrangePiece,
+  onProceed,
+  onBack,
+}: {
+  gameState: RecruitGameState;
+  onArrangePiece: (from: string, to: string) => boolean;
+  onProceed: () => void;
+  onBack: () => void;
+}) {
+  const ghost = gameState.ghostOpponent;
+  const arrangeFen = gameState.arrangeFen ?? "";
+
+  const boardWidth =
+    typeof window !== "undefined" ? Math.min(480, window.innerWidth - 32) : 480;
+  const squareSize = boardWidth / 8;
+  // Show 3 rows (ranks 1-3) to cover main pieces + pawns + overflow
+  const visibleRows = 3;
+  const clipHeight = squareSize * visibleRows;
+
+  const customPieces = useMemo(
+    () => (ghost ? buildRecruitCustomPieces(gameState.army, ghost.army) : {}),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [gameState.army, ghost?.army],
+  );
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0f] text-white flex flex-col items-center justify-center p-4">
+      <div className="max-w-xl w-full">
+        <div className="text-center mb-4">
+          <div className="text-3xl mb-1">🗡️</div>
+          <h2 className="text-xl font-bold mb-0.5">Arrange Your Formation</h2>
+          <p className="text-gray-400 text-sm">
+            Drag your pieces to the best positions before battle.
+          </p>
+        </div>
+
+        {/* Board clipped to show only 3 bottom rows (player's zone) */}
+        <div
+          className="rounded-xl overflow-hidden border border-gray-700 mx-auto"
+          style={{
+            width: boardWidth,
+            height: clipHeight,
+            position: "relative",
+          }}
+        >
+          <div style={{ position: "absolute", bottom: 0, left: 0 }}>
+            <ChessboardCompat
+              position={arrangeFen}
+              boardWidth={boardWidth}
+              arePiecesDraggable={true}
+              isDraggablePiece={({ piece }) => piece[0] === "w"}
+              onPieceDrop={(from, to) => {
+                const rank = parseInt(to[1]);
+                if (rank > visibleRows) return false;
+                return onArrangePiece(from, to);
+              }}
+              customDarkSquareStyle={{ backgroundColor: "#2d2937" }}
+              customLightSquareStyle={{ backgroundColor: "#403a50" }}
+              customPieces={customPieces}
+            />
+          </div>
+          {/* Label overlay */}
+          <div className="absolute top-0 left-0 right-0 flex items-center justify-center pointer-events-none">
+            <span className="text-xs text-gray-500 bg-black/60 px-2 py-0.5 rounded-b-md">
+              Your starting zone — drag to rearrange
+            </span>
+          </div>
+        </div>
+
+        {/* Legend */}
+        <div className="mt-3 flex flex-wrap gap-2 justify-center text-xs text-gray-500">
+          {gameState.army.map((p) => {
+            const modDef = ALL_MODIFIERS.find((m) => m.id === p.modifierId);
+            const icon = RECRUIT_MOD_ICONS[p.modifierId] ?? "";
+            return (
+              <span
+                key={p.id}
+                className={`px-2 py-0.5 rounded-full border ${UPGRADE_TIER_STYLES[p.tier].border} ${UPGRADE_TIER_STYLES[p.tier].bg}`}
+              >
+                {PIECE_ICONS[p.pieceType]}
+                {icon} {modDef?.name ?? p.modifierId}
+              </span>
+            );
+          })}
+        </div>
+
+        <div className="mt-4 flex gap-3">
+          <button
+            onClick={onBack}
+            className="flex-1 py-2.5 rounded-xl bg-gray-800 hover:bg-gray-700 border border-gray-700 transition-colors text-sm"
+          >
+            ← Back to Shop
+          </button>
+          <button
+            onClick={onProceed}
+            className="flex-[2] py-2.5 rounded-xl font-bold bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 transition-all hover:scale-[1.01] shadow-lg shadow-red-900/30"
+          >
+            ⚔️ Launch Attack
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
