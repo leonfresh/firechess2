@@ -19,13 +19,15 @@ class StockfishClient {
   private _pendingTasks = 0;
 
   /** Number of evaluation tasks currently queued or in-flight on this worker. */
-  get pendingTasks(): number { return this._pendingTasks; }
+  get pendingTasks(): number {
+    return this._pendingTasks;
+  }
 
   private enqueue<T>(task: () => Promise<T>): Promise<T> {
     const run = this.queue.then(task, task);
     this.queue = run.then(
       () => undefined,
-      () => undefined
+      () => undefined,
     );
     return run;
   }
@@ -37,7 +39,7 @@ class StockfishClient {
       this.worker = new Worker("/stockfish-18-lite.js", { type: "classic" });
     } catch (err) {
       throw new Error(
-        "Failed to start the analysis engine. Your browser may not support WebAssembly workers."
+        "Failed to start the analysis engine. Your browser may not support WebAssembly workers.",
       );
     }
 
@@ -51,10 +53,14 @@ class StockfishClient {
 
       const msg = err instanceof Error ? err.message : String(err);
 
-      if (msg.includes("doesn't parse") || msg.includes("CompileError") || msg.includes("Aborted")) {
+      if (
+        msg.includes("doesn't parse") ||
+        msg.includes("CompileError") ||
+        msg.includes("Aborted")
+      ) {
         throw new Error(
           "The analysis engine failed to load (WASM error). " +
-          "Please try reloading the page. If the issue persists your browser may not fully support WebAssembly threads."
+            "Please try reloading the page. If the issue persists your browser may not fully support WebAssembly threads.",
         );
       }
       throw err;
@@ -63,7 +69,10 @@ class StockfishClient {
     this.initialized = true;
   }
 
-  private async sendAndWaitFor(command: string, doneWhen: (line: string) => boolean): Promise<string[]> {
+  private async sendAndWaitFor(
+    command: string,
+    doneWhen: (line: string) => boolean,
+  ): Promise<string[]> {
     if (!this.worker) {
       throw new Error("Stockfish worker is not initialized");
     }
@@ -79,7 +88,10 @@ class StockfishClient {
       }, 20000);
 
       const onMessage = (event: MessageEvent) => {
-        const text = typeof event.data === "string" ? event.data : String(event.data ?? "");
+        const text =
+          typeof event.data === "string"
+            ? event.data
+            : String(event.data ?? "");
         lines.push(text);
 
         if (doneWhen(text)) {
@@ -97,7 +109,9 @@ class StockfishClient {
 
       const onError = (event: ErrorEvent) => {
         cleanup();
-        reject(new Error(`Stockfish worker error: ${event.message || "unknown"}`));
+        reject(
+          new Error(`Stockfish worker error: ${event.message || "unknown"}`),
+        );
       };
 
       const onMessageError = () => {
@@ -126,7 +140,8 @@ class StockfishClient {
         if (scoreMateMatch) {
           const mateValue = Number(scoreMateMatch[1]);
           const sign = mateValue > 0 ? 1 : -1;
-          latestScoreCp = sign * (MATE_CP - Math.min(Math.abs(mateValue), 1000));
+          latestScoreCp =
+            sign * (MATE_CP - Math.min(Math.abs(mateValue), 1000));
         } else if (scoreCpMatch) {
           latestScoreCp = Number(scoreCpMatch[1]);
         }
@@ -148,7 +163,7 @@ class StockfishClient {
     return {
       cp: latestScoreCp,
       bestMove: latestBestMove,
-      pvMoves: latestPvMoves
+      pvMoves: latestPvMoves,
     };
   }
 
@@ -176,7 +191,9 @@ class StockfishClient {
         if (cp === null) continue;
 
         const pvMatch = line.match(/\bpv\s+(.+)$/);
-        const pv = pvMatch ? pvMatch[1].trim().split(/\s+/).filter(Boolean) : [];
+        const pv = pvMatch
+          ? pvMatch[1].trim().split(/\s+/).filter(Boolean)
+          : [];
 
         pvMap.set(pvIdx, { cp, pv });
       }
@@ -200,49 +217,86 @@ class StockfishClient {
     return results;
   }
 
-  private async analyzeFenInternal(fen: string, depth: number, maxPvPlies: number): Promise<LocalEngineLine | null> {
+  private async analyzeFenInternal(
+    fen: string,
+    depth: number,
+    maxPvPlies: number,
+    skillLevel?: number,
+  ): Promise<LocalEngineLine | null> {
     await this.ensureReady();
 
     if (!this.worker) {
       return null;
     }
 
+    if (skillLevel !== undefined) {
+      this.worker.postMessage(`setoption name Skill Level value ${skillLevel}`);
+      await this.sendAndWaitFor("isready", (line) => line.trim() === "readyok");
+    }
     this.worker.postMessage(`position fen ${fen}`);
-    const searchLines = await this.sendAndWaitFor(`go depth ${depth}`, (line) => line.startsWith("bestmove "));
+    const searchLines = await this.sendAndWaitFor(`go depth ${depth}`, (line) =>
+      line.startsWith("bestmove "),
+    );
+    if (skillLevel !== undefined) {
+      // Reset to full strength for any non-AI usage (analysis etc.)
+      this.worker.postMessage("setoption name Skill Level value 20");
+    }
     return this.parseInfo(searchLines, maxPvPlies);
   }
 
   /** Run multi-PV analysis and return the top N lines */
-  private async analyzeMultiPvInternal(fen: string, depth: number, numPv: number): Promise<LocalEngineLine[]> {
+  private async analyzeMultiPvInternal(
+    fen: string,
+    depth: number,
+    numPv: number,
+    skillLevel?: number,
+  ): Promise<LocalEngineLine[]> {
     await this.ensureReady();
     if (!this.worker) return [];
 
     // Set multi-PV — setoption produces no output, so just postMessage then confirm with isready
     this.worker.postMessage(`setoption name MultiPV value ${numPv}`);
+    if (skillLevel !== undefined) {
+      this.worker.postMessage(`setoption name Skill Level value ${skillLevel}`);
+    }
     await this.sendAndWaitFor("isready", (line) => line.trim() === "readyok");
     this.worker.postMessage(`position fen ${fen}`);
-    const searchLines = await this.sendAndWaitFor(`go depth ${depth}`, (line) => line.startsWith("bestmove "));
-    // Reset multi-PV back to 1
+    const searchLines = await this.sendAndWaitFor(`go depth ${depth}`, (line) =>
+      line.startsWith("bestmove "),
+    );
+    // Reset multi-PV and skill level back to defaults
     this.worker.postMessage("setoption name MultiPV value 1");
+    if (skillLevel !== undefined) {
+      this.worker.postMessage("setoption name Skill Level value 20");
+    }
     await this.sendAndWaitFor("isready", (line) => line.trim() === "readyok");
     return this.parseMultiPv(searchLines);
   }
 
-  async evaluateFen(fen: string, depth = 10): Promise<LocalEngineEval | null> {
-    const cacheKey = `${fen}|d${depth}`;
+  async evaluateFen(
+    fen: string,
+    depth = 10,
+    skillLevel?: number,
+  ): Promise<LocalEngineEval | null> {
+    const cacheKey =
+      skillLevel !== undefined
+        ? `${fen}|d${depth}|sk${skillLevel}`
+        : `${fen}|d${depth}`;
 
     if (this.evalCache.has(cacheKey)) {
       return this.evalCache.get(cacheKey)!;
     }
 
-    // Reuse a higher-depth cached result if available (higher depth ⊇ lower depth accuracy)
-    const maxCached = this.maxDepthPerFen.get(fen) ?? 0;
-    if (maxCached > depth) {
-      const higherKey = `${fen}|d${maxCached}`;
-      const val = this.evalCache.get(higherKey);
-      if (val) {
-        this.evalCache.set(cacheKey, val);
-        return val;
+    // Reuse a higher-depth cached result if available (only for full-strength, no skill override)
+    if (skillLevel === undefined) {
+      const maxCached = this.maxDepthPerFen.get(fen) ?? 0;
+      if (maxCached > depth) {
+        const higherKey = `${fen}|d${maxCached}`;
+        const val = this.evalCache.get(higherKey);
+        if (val) {
+          this.evalCache.set(cacheKey, val);
+          return val;
+        }
       }
     }
 
@@ -253,12 +307,14 @@ class StockfishClient {
           return this.evalCache.get(cacheKey)!;
         }
 
-        const line = await this.analyzeFenInternal(fen, depth, 0);
+        const line = await this.analyzeFenInternal(fen, depth, 0, skillLevel);
         const parsed = line ? { cp: line.cp, bestMove: line.bestMove } : null;
         this.evalCache.set(cacheKey, parsed);
-        // Track max depth for fast higher-depth lookups
-        const prevMax = this.maxDepthPerFen.get(fen) ?? 0;
-        if (depth > prevMax) this.maxDepthPerFen.set(fen, depth);
+        // Track max depth for fast higher-depth lookups (full-strength only)
+        if (skillLevel === undefined) {
+          const prevMax = this.maxDepthPerFen.get(fen) ?? 0;
+          if (depth > prevMax) this.maxDepthPerFen.set(fen, depth);
+        }
         return parsed;
       });
     } finally {
@@ -266,7 +322,11 @@ class StockfishClient {
     }
   }
 
-  async getPrincipalVariation(fen: string, maxPlies = 10, depth = 12): Promise<LocalEngineLine | null> {
+  async getPrincipalVariation(
+    fen: string,
+    maxPlies = 10,
+    depth = 12,
+  ): Promise<LocalEngineLine | null> {
     this._pendingTasks++;
     try {
       return await this.enqueue(async () => {
@@ -278,11 +338,16 @@ class StockfishClient {
   }
 
   /** Get the top N moves with evaluations (multi-PV) */
-  async getTopMoves(fen: string, numMoves = 5, depth = 10): Promise<LocalEngineLine[]> {
+  async getTopMoves(
+    fen: string,
+    numMoves = 5,
+    depth = 10,
+    skillLevel?: number,
+  ): Promise<LocalEngineLine[]> {
     this._pendingTasks++;
     try {
       return await this.enqueue(async () => {
-        return this.analyzeMultiPvInternal(fen, depth, numMoves);
+        return this.analyzeMultiPvInternal(fen, depth, numMoves, skillLevel);
       });
     } finally {
       this._pendingTasks--;
@@ -345,42 +410,61 @@ export class StockfishPool {
     return best;
   }
 
-  async evaluateFen(fen: string, depth = 10): Promise<LocalEngineEval | null> {
-    const cacheKey = `${fen}|d${depth}`;
+  async evaluateFen(
+    fen: string,
+    depth = 10,
+    skillLevel?: number,
+  ): Promise<LocalEngineEval | null> {
+    const cacheKey =
+      skillLevel !== undefined
+        ? `${fen}|d${depth}|sk${skillLevel}`
+        : `${fen}|d${depth}`;
 
     if (this.evalCache.has(cacheKey)) {
       return this.evalCache.get(cacheKey)!;
     }
 
-    // Reuse a higher-depth cached result if available
-    const maxCached = this.maxDepthPerFen.get(fen) ?? 0;
-    if (maxCached > depth) {
-      const higherKey = `${fen}|d${maxCached}`;
-      const val = this.evalCache.get(higherKey);
-      if (val) {
-        this.evalCache.set(cacheKey, val);
-        return val;
+    // Reuse a higher-depth cached result if available (full-strength only)
+    if (skillLevel === undefined) {
+      const maxCached = this.maxDepthPerFen.get(fen) ?? 0;
+      if (maxCached > depth) {
+        const higherKey = `${fen}|d${maxCached}`;
+        const val = this.evalCache.get(higherKey);
+        if (val) {
+          this.evalCache.set(cacheKey, val);
+          return val;
+        }
       }
     }
 
     const worker = this.pickWorker();
-    const result = await worker.evaluateFen(fen, depth);
+    const result = await worker.evaluateFen(fen, depth, skillLevel);
     this.evalCache.set(cacheKey, result);
-    // Track max depth for fast higher-depth lookups
-    const prevMax = this.maxDepthPerFen.get(fen) ?? 0;
-    if (depth > prevMax) this.maxDepthPerFen.set(fen, depth);
+    if (skillLevel === undefined) {
+      const prevMax = this.maxDepthPerFen.get(fen) ?? 0;
+      if (depth > prevMax) this.maxDepthPerFen.set(fen, depth);
+    }
     return result;
   }
 
-  async getPrincipalVariation(fen: string, maxPlies = 10, depth = 12): Promise<LocalEngineLine | null> {
+  async getPrincipalVariation(
+    fen: string,
+    maxPlies = 10,
+    depth = 12,
+  ): Promise<LocalEngineLine | null> {
     const worker = this.pickWorker();
     return worker.getPrincipalVariation(fen, maxPlies, depth);
   }
 
   /** Get the top N moves with evaluations (multi-PV) */
-  async getTopMoves(fen: string, numMoves = 5, depth = 10): Promise<LocalEngineLine[]> {
+  async getTopMoves(
+    fen: string,
+    numMoves = 5,
+    depth = 10,
+    skillLevel?: number,
+  ): Promise<LocalEngineLine[]> {
     const worker = this.pickWorker();
-    return worker.getTopMoves(fen, numMoves, depth);
+    return worker.getTopMoves(fen, numMoves, depth, skillLevel);
   }
 
   /** Terminate all workers and free resources. */

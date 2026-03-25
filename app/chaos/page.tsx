@@ -2185,6 +2185,7 @@ function DraftModal({
   onTemperanceReroll,
   unlockedIds,
   onLockedPick,
+  isAuthenticated = false,
 }: {
   phase: number;
   choices: ChaosModifier[];
@@ -2203,6 +2204,8 @@ function DraftModal({
   unlockedIds?: Set<string>;
   /** Called when the guest picks a locked (preview) card — parent saves to localStorage */
   onLockedPick?: (mod: ChaosModifier) => void;
+  /** Whether the current user is authenticated (controls preview warning text) */
+  isAuthenticated?: boolean;
 }) {
   const pieceCounts =
     fen && playerColor ? countPiecesFromFen(fen, playerColor) : null;
@@ -2343,7 +2346,7 @@ function DraftModal({
               ⚠️ One-time preview
             </p>
             <p className="mt-1 text-xs leading-relaxed text-slate-400">
-              {authenticated
+              {isAuthenticated
                 ? "You can try this locked modifier once this game — it won't appear again in your draft pools until you earn it through progression."
                 : "As a guest, you can try this modifier once for free — but it will be removed from your future draft pools. Sign in to unlock it permanently."}
             </p>
@@ -4385,6 +4388,19 @@ export default function ChaosChessPage() {
         : aiLevel === "medium"
           ? 10
           : 14;
+  /**
+   * Stockfish Skill Level (0–20) — mirrors Lichess's approach.
+   * Lower values make Stockfish play human-like mistakes rather than random blunders.
+   * beginner=2, easy=6, medium=14, hard=20 (full strength)
+   */
+  const aiSkillLevel =
+    aiLevel === "beginner"
+      ? 2
+      : aiLevel === "easy"
+        ? 6
+        : aiLevel === "medium"
+          ? 14
+          : 20;
 
   /* ── Floating pepe reactions ── */
   const [floatingPepes, setFloatingPepes] = useState<
@@ -5614,6 +5630,7 @@ export default function ChaosChessPage() {
             const normalResult = await stockfishPool.evaluateFen(
               g.fen(),
               aiDepth,
+              aiSkillLevel,
             );
             const normalEvalRaw = normalResult?.cp ?? 0; // from AI's (side-to-move) perspective
             // Adjust the baseline by the phantom/chaos threat already present in the current position
@@ -5665,6 +5682,7 @@ export default function ChaosChessPage() {
               const er = await stockfishPool.evaluateFen(
                 newGame.fen(),
                 evalDepth,
+                aiSkillLevel,
               );
               if (er) {
                 let chaosEval = -(er.cp ?? 0);
@@ -5877,7 +5895,7 @@ export default function ChaosChessPage() {
         const hasAiChaosMods = cs.aiModifiers.length > 0;
         const needsTopMoves = hasPlayerChaosMods || hasAiChaosMods;
         const topMoves = needsTopMoves
-          ? await stockfishPool.getTopMoves(g.fen(), 5, aiDepth)
+          ? await stockfishPool.getTopMoves(g.fen(), 5, aiDepth, aiSkillLevel)
           : [];
 
         // Escape-move injection: Stockfish's top-5 are blind to chaos rules, so if the player
@@ -5930,6 +5948,7 @@ export default function ChaosChessPage() {
               const er = await stockfishPool.evaluateFen(
                 tmpGame.fen(),
                 escapeDepth,
+                aiSkillLevel,
               );
               if (er)
                 topMoves.push({
@@ -5994,6 +6013,7 @@ export default function ChaosChessPage() {
               const er = await stockfishPool.evaluateFen(
                 tmpEsc.fen(),
                 escDepth2,
+                aiSkillLevel,
               );
               if (er)
                 topMoves.push({
@@ -6179,20 +6199,12 @@ export default function ChaosChessPage() {
 
         // Fallback to single best move if multi-PV didn't yield anything
         if (!bestUci) {
-          const result = await stockfishPool.evaluateFen(g.fen(), aiDepth);
+          const result = await stockfishPool.evaluateFen(
+            g.fen(),
+            aiDepth,
+            aiSkillLevel,
+          );
           bestUci = result?.bestMove ?? null;
-        }
-
-        // Blunder injection — beginner blunders ~60% of moves; easy ~20%
-        const blunderRate =
-          aiLevel === "beginner" ? 0.6 : aiLevel === "easy" ? 0.2 : 0;
-        if (blunderRate > 0 && bestUci && Math.random() < blunderRate) {
-          const legalMoves = g.moves({ verbose: true });
-          if (legalMoves.length > 0) {
-            const random =
-              legalMoves[Math.floor(Math.random() * legalMoves.length)];
-            bestUci = random.lan;
-          }
         }
 
         if (!bestUci) {
@@ -11178,6 +11190,7 @@ export default function ChaosChessPage() {
             temperanceUsed={chaosState.playerTemperanceUsedThisPhase}
             onTemperanceReroll={handleTemperanceReroll}
             unlockedIds={authenticated ? authUnlockedIds : GUEST_UNLOCKED_IDS}
+            isAuthenticated={authenticated}
             onLockedPick={(mod) => {
               if (!authenticated) {
                 // Guest: persist to localStorage so the card doesn't reappear
