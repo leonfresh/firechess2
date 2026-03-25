@@ -273,7 +273,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     name: "Kamikaze Bishop",
     description:
       "When a Bishop captures, it detonates — removing itself AND all adjacent enemy pieces around the capture square. A one-way ticket.",
-    tier: "rare",
+    tier: "legendary",
     icon: "🧨",
     piece: "b",
     phases: [2, 3],
@@ -605,7 +605,7 @@ export function getChaosPieceValCp(
     "queen-teleport": 50, // queen teleports once
     "king-ascension": 5000, // king captures like queen
     usurper: 40, // king swaps with ally once
-    "kamikaze-bishop": 80, // bishop explodes on capture — one-way trade advantage
+    "kamikaze-bishop": 140, // bishop detonates on capture — wipes up to 8 adjacent enemies
     "pawn-charge": 10,
     "pawn-capture-forward": 15,
   };

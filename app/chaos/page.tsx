@@ -2714,6 +2714,65 @@ function DraftModal({
   );
 }
 
+/* ─────────────────── Authenticated Progression Unlock Modal ─────────────────── */
+
+function AuthUnlockModal({
+  mods,
+  onClose,
+}: {
+  mods: ChaosModifier[];
+  onClose: () => void;
+}) {
+  const mod = mods[0];
+  const tier = TIER_COLORS[mod.tier];
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center"
+      style={{
+        backgroundColor: "rgba(0,0,0,0.82)",
+        animation: "draft-bg-enter 0.4s ease-out both",
+      }}
+    >
+      <div
+        className="relative w-full max-w-sm mx-4 rounded-2xl border border-purple-400/40 bg-[#0a0f1a]/95 p-6 text-center"
+        style={{ animation: "draft-modal-enter 0.5s ease-out both" }}
+      >
+        <div className="mb-3 text-5xl">🔓</div>
+        <h2 className="text-xl font-black text-white mb-1">
+          New Modifier Unlocked!
+        </h2>
+        <p className="text-xs text-slate-400 mb-4">
+          It&apos;s now available in your draft pools.
+        </p>
+
+        {/* Modifier card preview */}
+        <div
+          className={`mx-auto max-w-[200px] rounded-xl border p-4 ${tier.bg} ${tier.border} mb-5`}
+        >
+          <Emoji emoji={mod.icon} className="w-12 h-12 mb-2" />
+          <span
+            className={`text-[9px] font-bold uppercase tracking-wider rounded-full px-2 py-0.5 ${tier.text} ${tier.bg}`}
+          >
+            {TIER_LABELS[mod.tier]}
+          </span>
+          <h3 className="text-sm font-bold text-white mt-1 mb-1">{mod.name}</h3>
+          <p className="text-[10px] text-slate-400 leading-relaxed">
+            {mod.description}
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={onClose}
+          className="block w-full rounded-xl border border-purple-500/60 bg-purple-600/30 px-4 py-3 text-sm font-bold text-white hover:bg-purple-600/50 transition-all"
+        >
+          🎮 Keep Playing
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ────────────────────────── Guest Unlock Modal ────────────────────────── */
 
 function GuestUnlockModal({
@@ -4196,6 +4255,10 @@ export default function ChaosChessPage() {
   /** Modifier earnt by the guest after their first win — shown in unlock modal */
   const [pendingGuestUnlock, setPendingGuestUnlock] =
     useState<ChaosModifier | null>(null);
+  /** Modifier(s) earnt by authenticated user crossing a progression milestone — shown in unlock modal */
+  const [pendingAuthUnlocks, setPendingAuthUnlocks] = useState<ChaosModifier[]>(
+    [],
+  );
   /** Chaos moves visible to the player — warp queen and usurper are hidden until their buttons are toggled on */
   const activeChaosMoves = useMemo(() => {
     let moves = availableChaosMoves;
@@ -4714,8 +4777,23 @@ export default function ChaosChessPage() {
       .then((data) => {
         if (data.ok) {
           setAiEloSaved(true);
-          if (data.gamesPlayed !== undefined)
-            setMyGamesPlayed(data.gamesPlayed);
+          if (data.gamesPlayed !== undefined) {
+            const prevGames = myGamesPlayedRef.current;
+            const newGames = data.gamesPlayed;
+            setMyGamesPlayed(newGames);
+            // Detect newly crossed progression milestones
+            const newUnlocks: ChaosModifier[] = [];
+            UNLOCK_AT_GAMES.forEach((threshold, idx) => {
+              if (prevGames < threshold && newGames >= threshold) {
+                const modId = PROGRESSION_UNLOCK_ORDER[idx];
+                const mod = ALL_MODIFIERS.find((m) => m.id === modId);
+                if (mod) newUnlocks.push(mod);
+              }
+            });
+            if (newUnlocks.length > 0) {
+              setTimeout(() => setPendingAuthUnlocks(newUnlocks), 1400);
+            }
+          }
         }
       })
       .catch(() => {});
@@ -11245,6 +11323,14 @@ export default function ChaosChessPage() {
               </button>
             </div>
           )}
+
+        {/* Progression unlock modal — shown when authenticated user crosses a milestone */}
+        {pendingAuthUnlocks.length > 0 && (
+          <AuthUnlockModal
+            mods={pendingAuthUnlocks}
+            onClose={() => setPendingAuthUnlocks([])}
+          />
+        )}
 
         {/* Guest unlock modal — shown after first win for unauthenticated players */}
         {pendingGuestUnlock && (

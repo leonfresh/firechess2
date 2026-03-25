@@ -26,7 +26,6 @@ export const GUEST_UNLOCKED_IDS = new Set([
   "archbishop",
   "king-ascension",
   "usurper",
-  "kamikaze-bishop",
   "bishop-bounce",
   // Epics (3 of 8 — milder ones)
   "queen-teleport",
@@ -68,6 +67,7 @@ export const PROGRESSION_UNLOCK_ORDER: readonly string[] = [
   "knight-horde", // game 35 — Knight Horde (legendary)
   "undead-army", // game 44 — Undead Army (legendary)
   "railgun", // game 54 — Railgun (legendary)
+  "kamikaze-bishop", // game 60 — Kamikaze Bishop (legendary)
   "amazon", // game 65 — The Amazon (legendary)
 ];
 
@@ -86,6 +86,7 @@ export const UNLOCK_AT_GAMES: readonly number[] = [
   35, // knight-horde
   44, // undead-army
   54, // railgun
+  60, // kamikaze-bishop
   65, // amazon
 ];
 

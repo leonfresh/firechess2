@@ -24,7 +24,7 @@ amazon,The Amazon,legendary,q,"4,5",👸,"Your Queen transforms into an Amazon �
 knight-horde,Knight Horde,legendary,n,"4,5",🐎,Spawn 2 extra Knights on random empty squares on your side of the board.
 undead-army,Undead Army,legendary,p,"4,5",💀,"Spawns all your missing pawns on random empty squares on your 2nd and 3rd ranks. Any pawn not currently on the board will come back."
 usurper,Usurper,rare,k,"2,3",🎭,"Once per game, your King swaps positions with any friendly piece on the board. Reposition your king to safety or teleport a rook to the center in one move."
-kamikaze-bishop,Kamikaze Bishop,rare,b,"2,3",🧨,"When one of your Bishops is captured, it explodes — removing all adjacent enemy pieces from the board. Think twice before taking it."
+kamikaze-bishop,Kamikaze Bishop,legendary,b,"2,3",🧨,"When one of your Bishops is captured, it explodes — removing all adjacent enemy pieces from the board. Think twice before taking it."
 queen-cannon,Queen Cannon,epic,q,"3,4",🔫,"Your Queen can jump over exactly one piece on any line (rank, file, or diagonal) to capture the piece behind it — Xiangqi cannon movement for the most powerful piece."
 king-ascension,King Ascension,legendary,k,"4,5",🔱,"Your King can capture like a Queen — striking any range along diagonals and files. It still moves one square at a time."
 rook-cannon,Rook Cannon,legendary,r,"4,5",💣,"Rooks can jump over exactly one piece (like a cannon in Xiangqi) to capture behind it."
