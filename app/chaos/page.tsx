@@ -2343,9 +2343,9 @@ function DraftModal({
               ⚠️ One-time preview
             </p>
             <p className="mt-1 text-xs leading-relaxed text-slate-400">
-              As a guest, you can try this modifier once for free — but it will
-              be removed from your future draft pools. Sign in to unlock it
-              permanently.
+              {authenticated
+                ? "You can try this locked modifier once this game — it won't appear again in your draft pools until you earn it through progression."
+                : "As a guest, you can try this modifier once for free — but it will be removed from your future draft pools. Sign in to unlock it permanently."}
             </p>
           </div>
 
@@ -4647,7 +4647,7 @@ export default function ChaosChessPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameStatus, gameMode, authenticated]);
 
-  /* ── Compute ELO change when an AI game ends ── */
+  /* ── Compute ELO change + auto-save when an AI game ends ── */
   useEffect(() => {
     if (gameStatus !== "game-over" || gameMode !== "ai") return;
     const aiRating =
@@ -4658,11 +4658,38 @@ export default function ChaosChessPage() {
           : aiLevel === "easy"
             ? 800
             : 400;
-    const result: 1 | 0.5 | 0 =
+    const score: 1 | 0.5 | 0 =
       gameResult === playerColor ? 1 : gameResult === "draw" ? 0.5 : 0;
+    const resultStr =
+      gameResult === playerColor
+        ? "win"
+        : gameResult === "draw"
+          ? "draw"
+          : "loss";
     const baseline = myRatingRef.current ?? DEFAULT_CHAOS_ELO;
     const games = myGamesPlayedRef.current;
-    setEloChange(computeEloChange(baseline, aiRating, result, games));
+    setEloChange(computeEloChange(baseline, aiRating, score, games));
+    // Auto-save for authenticated users — no button click required
+    if (authenticated) {
+      fetch("/api/chaos/rating", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "ai",
+          difficulty: aiLevel,
+          result: resultStr,
+        }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.ok) {
+            setAiEloSaved(true);
+            if (data.gamesPlayed !== undefined)
+              setMyGamesPlayed(data.gamesPlayed);
+          }
+        })
+        .catch(() => {});
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameStatus, gameMode, gameResult, playerColor, aiLevel]);
 
@@ -12143,7 +12170,7 @@ export default function ChaosChessPage() {
                                 {`vs ${aiLevel === "hard" ? "Hard AI (1600)" : aiLevel === "medium" ? "Medium AI (1200)" : aiLevel === "easy" ? "Easy AI (800)" : "Beginner AI (400)"}`}
                               </div>
                               <div className="mt-0.5 text-xs text-slate-500">
-                                {`Rating: ${myRating ?? DEFAULT_CHAOS_ELO} → ${(myRating ?? DEFAULT_CHAOS_ELO) + (aiEloSaved ? 0 : eloChange)}`}
+                                {`Rating: ${myRating ?? DEFAULT_CHAOS_ELO} → ${(myRating ?? DEFAULT_CHAOS_ELO) + (eloChange ?? 0)}`}
                               </div>
                             </>
                           ) : (
@@ -12160,53 +12187,15 @@ export default function ChaosChessPage() {
                               🔐 Sign in to save your Chaos ELO
                             </a>
                           )}
-                          {eloChange !== null &&
-                            authenticated &&
-                            !aiEloSaved && (
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  const result =
-                                    gameResult === playerColor
-                                      ? "win"
-                                      : gameResult === "draw"
-                                        ? "draw"
-                                        : "loss";
-                                  try {
-                                    const res = await fetch(
-                                      "/api/chaos/rating",
-                                      {
-                                        method: "POST",
-                                        headers: {
-                                          "Content-Type": "application/json",
-                                        },
-                                        body: JSON.stringify({
-                                          mode: "ai",
-                                          difficulty: aiLevel,
-                                          result,
-                                        }),
-                                      },
-                                    );
-                                    const data = await res.json();
-                                    if (data.ok) {
-                                      setAiEloSaved(true);
-                                      setMyRating(data.newRating);
-                                      if (data.gamesPlayed !== undefined)
-                                        setMyGamesPlayed(data.gamesPlayed);
-                                    }
-                                  } catch {
-                                    /* ignore */
-                                  }
-                                }}
-                                className="mt-2 w-full rounded-lg border border-purple-500/40 bg-purple-600/20 px-4 py-2 text-xs font-bold text-purple-300 transition-all hover:bg-purple-600/30"
-                              >
-                                🏆 Save to Leaderboard
-                              </button>
-                            )}
+                          {authenticated && !aiEloSaved && (
+                            <div className="mt-2 flex items-center justify-center gap-1.5 text-xs text-slate-500">
+                              <span className="inline-block h-2.5 w-2.5 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
+                              Saving…
+                            </div>
+                          )}
                           {aiEloSaved && (
                             <div className="mt-2 text-xs font-bold text-emerald-400">
-                              ✅ Saved! New rating:{" "}
-                              {myRating ?? DEFAULT_CHAOS_ELO}
+                              ✅ Game saved!
                             </div>
                           )}
                           <a
@@ -12217,6 +12206,99 @@ export default function ChaosChessPage() {
                           </a>
                         </div>
                       )}
+
+                      {/* ── Next Unlock progress (AI game-over, authenticated) ── */}
+                      {gameMode === "ai" &&
+                        authenticated &&
+                        aiEloSaved &&
+                        (() => {
+                          const gp = myGamesPlayed ?? 0;
+                          const earnedCount = Math.min(
+                            UNLOCK_AT_GAMES.filter((t) => gp >= t).length,
+                            PROGRESSION_UNLOCK_ORDER.length,
+                          );
+                          const nextIdx = earnedCount;
+                          if (nextIdx >= PROGRESSION_UNLOCK_ORDER.length) {
+                            return (
+                              <div className="w-full rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] p-3 flex items-center gap-2">
+                                <span className="text-lg">🏆</span>
+                                <p className="text-xs font-bold text-emerald-300">
+                                  All progression powerups unlocked!
+                                </p>
+                              </div>
+                            );
+                          }
+                          const nextMod = ALL_MODIFIERS.find(
+                            (m) => m.id === PROGRESSION_UNLOCK_ORDER[nextIdx],
+                          );
+                          if (!nextMod) return null;
+                          const gamesNeeded = UNLOCK_AT_GAMES[nextIdx];
+                          const prevThreshold =
+                            nextIdx === 0 ? 0 : UNLOCK_AT_GAMES[nextIdx - 1];
+                          const windowSize = gamesNeeded - prevThreshold;
+                          const gamesInWindow = gp - prevThreshold;
+                          const pct = Math.round(
+                            (gamesInWindow / windowSize) * 100,
+                          );
+                          const remaining = gamesNeeded - gp;
+                          const tc = TIER_COLORS[nextMod.tier];
+                          return (
+                            <div className="w-full rounded-xl border border-purple-500/20 bg-gradient-to-r from-purple-950/40 to-slate-900/40 p-3">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-[10px] font-bold uppercase tracking-widest text-purple-400">
+                                  Next Unlock
+                                </span>
+                                <span className="text-[10px] text-slate-500">
+                                  {remaining} game{remaining !== 1 ? "s" : ""}{" "}
+                                  to go
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`flex-shrink-0 w-10 h-10 rounded-xl border flex items-center justify-center ${tc.border} ${tc.bg}`}
+                                >
+                                  <Emoji
+                                    emoji={nextMod.icon}
+                                    className="w-6 h-6"
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-1.5 mb-1">
+                                    <span className="text-xs font-bold text-white truncate">
+                                      {nextMod.name}
+                                    </span>
+                                    <span
+                                      className={`text-[8px] font-bold uppercase tracking-wider rounded-full px-1.5 py-0.5 flex-shrink-0 ${tc.text} ${tc.bg}`}
+                                    >
+                                      {TIER_LABELS[nextMod.tier]}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex-1 h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
+                                      <div
+                                        className="h-full rounded-full transition-all duration-700"
+                                        style={{
+                                          width: `${pct}%`,
+                                          background: {
+                                            common:
+                                              "linear-gradient(to right, #6b7280, #9ca3af)",
+                                            rare: "linear-gradient(to right, #3b82f6, #60a5fa)",
+                                            epic: "linear-gradient(to right, #a855f7, #c084fc)",
+                                            legendary:
+                                              "linear-gradient(to right, #f59e0b, #fcd34d)",
+                                          }[nextMod.tier],
+                                        }}
+                                      />
+                                    </div>
+                                    <span className="text-[10px] font-bold tabular-nums text-slate-400">
+                                      {gamesInWindow}/{windowSize}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
                     </div>
                     {/* /left column */}
                     {/* Right column: buttons + links */}
