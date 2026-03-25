@@ -5123,6 +5123,48 @@ export default function ChaosChessPage() {
             );
             if (staleChaosMoves.length > 0) return false;
           }
+          // Check if the "stalemated" king is actually under chaos attack.
+          // e.g. a Knook's rook-range threat makes it checkmate, not stalemate.
+          const chaosAttackerColor: Color =
+            (g.turn() as Color) === "w" ? "b" : "w";
+          const chaosAttackerMods = isPlayerStalemated
+            ? chaosStateRef.current.aiModifiers
+            : chaosStateRef.current.playerModifiers;
+          if (
+            chaosAttackerMods.length > 0 &&
+            isKingUnderChaosAttack(
+              g,
+              chaosAttackerMods,
+              chaosAttackerColor,
+              chaosStateRef.current.assignedSquares ?? undefined,
+            )
+          ) {
+            const winner = (g.turn() as Color) === "w" ? "black" : "white";
+            setGameResult(winner);
+            setGameStatus("game-over");
+            setEndReason("Checkmate");
+            const youWin = winner === playerColor;
+            setEventLog((prev) => [
+              ...prev,
+              {
+                type: "chaos",
+                message: `♟️ Chaos Checkmate! ${
+                  winner === "white" ? "White" : "Black"
+                } wins — the king was trapped by a chaos piece!`,
+                icon: "♟️",
+                pepe: youWin ? PEPE.gigachad : PEPE.gamercry,
+              },
+            ]);
+            if (youWin) {
+              playSound("airhorn");
+              spawnPepe(PEPE.gigachad);
+              setTimeout(() => spawnPepe(PEPE.clap), 400);
+            } else {
+              playSound("mario-death");
+              spawnPepe(PEPE.gamercry);
+            }
+            return true;
+          }
         }
         setGameResult("draw");
         setGameStatus("game-over");
@@ -5584,26 +5626,14 @@ export default function ChaosChessPage() {
           capturedType === "b" &&
           captured
         ) {
-          // Kamikaze: captured bishop explodes — attacker and adjacent attacker pieces all die
-          const bf = to.charCodeAt(0) - 97;
-          const br = parseInt(to[1]) - 1;
-          const blastSquares: string[] = [to as string];
-          for (let df = -1; df <= 1; df++) {
-            for (let dr = -1; dr <= 1; dr++) {
-              if (df === 0 && dr === 0) continue;
-              const nf = bf + df,
-                nr = br + dr;
-              if (nf >= 0 && nf <= 7 && nr >= 0 && nr <= 7)
-                blastSquares.push(`${String.fromCharCode(97 + nf)}${nr + 1}`);
-            }
-          }
-          triggerEffect("explosion", blastSquares);
+          // Kamikaze: captured bishop detonates — mutual kill (attacker dies, no area blast)
+          triggerEffect("explosion", [to as string]);
           setEventLog((prev) => [
             ...prev,
             {
               type: "chaos",
               message:
-                "🧨 Kamikaze Bishop! It exploded and took the attacker with it!",
+                "🧨 Kamikaze Bishop! Mutual kill — both pieces destroyed!",
               icon: "🧨",
               pepe: PEPE.firesgun,
             },
@@ -8220,24 +8250,13 @@ export default function ChaosChessPage() {
           ) {
             const capturedWasBishop = game.get(to as any);
             if (capturedWasBishop?.type === "b") {
-              const bf = to.charCodeAt(0) - 97,
-                br = parseInt(to[1]) - 1;
-              const blastSqs: string[] = [to as string];
-              for (let df = -1; df <= 1; df++)
-                for (let dr = -1; dr <= 1; dr++) {
-                  if (df === 0 && dr === 0) continue;
-                  const nf = bf + df,
-                    nr = br + dr;
-                  if (nf >= 0 && nf <= 7 && nr >= 0 && nr <= 7)
-                    blastSqs.push(`${String.fromCharCode(97 + nf)}${nr + 1}`);
-                }
-              setTimeout(() => triggerEffect("explosion", blastSqs), 200);
+              setTimeout(() => triggerEffect("explosion", [to as string]), 200);
               setEventLog((prev) => [
                 ...prev,
                 {
                   type: "chaos",
                   message:
-                    "🧨 Kamikaze Bishop! It exploded and took the attacker with it!",
+                    "🧨 Kamikaze Bishop! Mutual kill — both pieces destroyed!",
                   icon: "🧨",
                   pepe: PEPE.firesgun,
                 },

@@ -272,7 +272,7 @@ export const ALL_MODIFIERS: ChaosModifier[] = [
     id: "kamikaze-bishop",
     name: "Kamikaze Bishop",
     description:
-      "When a Bishop captures, it detonates — removing itself AND all adjacent enemy pieces around the capture square. A one-way ticket.",
+      "When your Bishop is captured, it takes the attacker down with it — both pieces are destroyed. A guaranteed trade.",
     tier: "legendary",
     icon: "🧨",
     piece: "b",

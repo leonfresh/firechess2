@@ -2368,7 +2368,7 @@ export function executeChaosMove(
     }
   }
 
-  // ── Kamikaze Bishop: reactive — fires when opponent's bishop is captured via chaos move ──
+  // ── Kamikaze Bishop: reactive — mutual kill when opponent captures a bishop ──
   if (
     move.type === "capture" &&
     !move.pieceStays &&
@@ -2379,26 +2379,8 @@ export function executeChaosMove(
       capturedWasBishop?.type === "b" &&
       capturedWasBishop.color !== piece.color
     ) {
-      // Attacker that landed on the bishop's square dies too
+      // Attacker that landed on the bishop's square dies too (mutual kill, no area blast)
       tmp.remove(move.to);
-      const [tf, tr] = sqToCoords(move.to);
-      for (const [df, dr] of [
-        [-1, -1],
-        [-1, 0],
-        [-1, 1],
-        [0, -1],
-        [0, 1],
-        [1, -1],
-        [1, 0],
-        [1, 1],
-      ] as [number, number][]) {
-        const adj = sq(tf + df, tr + dr);
-        if (!adj) continue;
-        const adjP = tmp.get(adj);
-        // Remove attacker-side pieces (piece.color) except kings
-        if (adjP && adjP.color === piece.color && adjP.type !== "k")
-          tmp.remove(adj);
-      }
     }
   }
 
@@ -2599,31 +2581,14 @@ export function applyPostMoveEffects(
     }
   }
 
-  // Kamikaze Bishop — reactive: fires when the captured piece was the opponent's bishop
+  // Kamikaze Bishop — mutual kill: both the bishop and its attacker die, no area blast
   if (
     capturedPiece &&
     capturedType === "b" &&
     opponentModifiers?.some((m) => m.id === "kamikaze-bishop")
   ) {
-    // Attacker (now at `to`) also dies in the explosion
+    // Attacker (now at `to`) also dies
     tmp.remove(to);
-    const [tf, tr] = sqToCoords(to);
-    for (const [df, dr] of [
-      [-1, -1],
-      [-1, 0],
-      [-1, 1],
-      [0, -1],
-      [0, 1],
-      [1, -1],
-      [1, 0],
-      [1, 1],
-    ] as [number, number][]) {
-      const adj = sq(tf + df, tr + dr);
-      if (!adj) continue;
-      const adjP = tmp.get(adj);
-      // Remove attacker-side pieces (color = attacker) except kings
-      if (adjP && adjP.color === color && adjP.type !== "k") tmp.remove(adj);
-    }
     modified = true;
   }
 
