@@ -23,11 +23,7 @@ import {
   type ChaosModifier,
   type ModifierTier,
 } from "@/lib/chaos-chess";
-import {
-  GUEST_UNLOCKED_IDS,
-  PROGRESSION_UNLOCK_ORDER,
-  UNLOCK_AT_GAMES,
-} from "@/lib/chaos-collection";
+import { GUEST_UNLOCKED_IDS, getProgressionInfo } from "@/lib/chaos-collection";
 
 /* ── Twemoji helper (same as chaos page) ── */
 function _twemojiUrl(emoji: string): string {
@@ -197,16 +193,9 @@ function ChaosCollectionInner() {
           viewingOwn &&
           !loading &&
           (() => {
-            const gp = gamesPlayed ?? 0;
-            // How many progression unlocks have been earned so far
-            const earnedCount = Math.min(
-              UNLOCK_AT_GAMES.filter((t) => gp >= t).length,
-              PROGRESSION_UNLOCK_ORDER.length,
-            );
-            const nextIdx = earnedCount;
-            const allDone = nextIdx >= PROGRESSION_UNLOCK_ORDER.length;
+            const info = getProgressionInfo(gamesPlayed ?? 0);
 
-            if (allDone) {
+            if (!info) {
               return (
                 <div className="mb-6 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.06] p-4 flex items-center gap-3">
                   <span className="text-2xl">🏆</span>
@@ -222,17 +211,17 @@ function ChaosCollectionInner() {
               );
             }
 
-            const nextModId = PROGRESSION_UNLOCK_ORDER[nextIdx];
-            const nextMod = ALL_MODIFIERS.find((m) => m.id === nextModId);
+            const nextMod = ALL_MODIFIERS.find((m) => m.id === info.nextModId);
             if (!nextMod) return null;
 
-            const gamesNeeded = UNLOCK_AT_GAMES[nextIdx];
-            const prevThreshold =
-              nextIdx === 0 ? 0 : UNLOCK_AT_GAMES[nextIdx - 1];
-            const windowSize = gamesNeeded - prevThreshold;
-            const gamesInWindow = gp - prevThreshold;
-            const pct = Math.round((gamesInWindow / windowSize) * 100);
-            const remaining = gamesNeeded - gp;
+            const {
+              remaining,
+              gamesInWindow,
+              windowSize,
+              pct,
+              nextIdx,
+              total,
+            } = info;
             const tc = TIER_COLORS[nextMod.tier];
 
             return (
@@ -243,7 +232,7 @@ function ChaosCollectionInner() {
                       Next Unlock
                     </span>
                     <span className="text-[10px] text-slate-600">
-                      {nextIdx + 1}/{PROGRESSION_UNLOCK_ORDER.length}
+                      {nextIdx + 1}/{total}
                     </span>
                   </div>
                   <span className="text-[10px] text-slate-500">

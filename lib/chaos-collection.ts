@@ -92,3 +92,63 @@ export const UNLOCK_AT_GAMES: readonly number[] = [
 
 /** @deprecated Use UNLOCK_AT_GAMES for per-step thresholds instead. */
 export const GAMES_PER_UNLOCK = 5;
+
+/**
+ * All data needed to render the "Next Unlock" progression widget.
+ * Returns null when the player has earned every progression mod.
+ */
+export interface ProgressionInfo {
+  /** Index into PROGRESSION_UNLOCK_ORDER of the next mod to earn */
+  nextIdx: number;
+  /** Total number of progression steps */
+  total: number;
+  /** Modifier ID of the next unlock */
+  nextModId: string;
+  /** Absolute games-played threshold to earn it */
+  gamesNeeded: number;
+  /** Start of the current unlock window (previous threshold, or 0) */
+  prevThreshold: number;
+  /** Size of the window: gamesNeeded − prevThreshold */
+  windowSize: number;
+  /** Games played inside the current window: gamesPlayed − prevThreshold */
+  gamesInWindow: number;
+  /** Percentage through the window, 0–100 */
+  pct: number;
+  /** Games still needed: gamesNeeded − gamesPlayed */
+  remaining: number;
+}
+
+/**
+ * Compute progression state from a raw gamesPlayed count.
+ * Returns null when all progression mods have been earned.
+ */
+export function getProgressionInfo(
+  gamesPlayed: number,
+): ProgressionInfo | null {
+  const earnedCount = Math.min(
+    UNLOCK_AT_GAMES.filter((t) => gamesPlayed >= t).length,
+    PROGRESSION_UNLOCK_ORDER.length,
+  );
+  const nextIdx = earnedCount;
+  if (nextIdx >= PROGRESSION_UNLOCK_ORDER.length) return null;
+
+  const nextModId = PROGRESSION_UNLOCK_ORDER[nextIdx];
+  const gamesNeeded = UNLOCK_AT_GAMES[nextIdx];
+  const prevThreshold = nextIdx === 0 ? 0 : UNLOCK_AT_GAMES[nextIdx - 1];
+  const windowSize = gamesNeeded - prevThreshold;
+  const gamesInWindow = Math.max(0, gamesPlayed - prevThreshold);
+  const pct = Math.round((gamesInWindow / windowSize) * 100);
+  const remaining = Math.max(0, gamesNeeded - gamesPlayed);
+
+  return {
+    nextIdx,
+    total: PROGRESSION_UNLOCK_ORDER.length,
+    nextModId,
+    gamesNeeded,
+    prevThreshold,
+    windowSize,
+    gamesInWindow,
+    pct,
+    remaining,
+  };
+}

@@ -122,6 +122,7 @@ import {
   LS_PREVIEW_NO_CONFIRM,
   PROGRESSION_UNLOCK_ORDER,
   UNLOCK_AT_GAMES,
+  getProgressionInfo,
 } from "@/lib/chaos-collection";
 
 /* ────────────────────────── Chaos Piece Overlays ────────────────────────── */
@@ -10378,24 +10379,20 @@ export default function ChaosChessPage() {
           {/* ── Next Progression Unlock (authenticated only) ── */}
           {authenticated &&
             (() => {
-              const gp = myGamesPlayed ?? 0;
-              const earnedCount = Math.min(
-                UNLOCK_AT_GAMES.filter((t) => gp >= t).length,
-                PROGRESSION_UNLOCK_ORDER.length,
-              );
-              const nextIdx = earnedCount;
-              if (nextIdx >= PROGRESSION_UNLOCK_ORDER.length) return null;
+              const info = getProgressionInfo(myGamesPlayed ?? 0);
+              if (!info) return null;
               const nextMod = ALL_MODIFIERS.find(
-                (m) => m.id === PROGRESSION_UNLOCK_ORDER[nextIdx],
+                (m) => m.id === info.nextModId,
               );
               if (!nextMod) return null;
-              const gamesNeeded = UNLOCK_AT_GAMES[nextIdx];
-              const prevThreshold =
-                nextIdx === 0 ? 0 : UNLOCK_AT_GAMES[nextIdx - 1];
-              const windowSize = gamesNeeded - prevThreshold;
-              const gamesInWindow = gp - prevThreshold;
-              const pct = Math.round((gamesInWindow / windowSize) * 100);
-              const remaining = gamesNeeded - gp;
+              const {
+                remaining,
+                gamesInWindow,
+                windowSize,
+                pct,
+                nextIdx,
+                total,
+              } = info;
               const tc = TIER_COLORS[nextMod.tier];
               return (
                 <div className="mb-6 w-full max-w-sm rounded-2xl border border-purple-500/20 bg-gradient-to-r from-purple-950/40 to-slate-900/40 p-4">
@@ -10405,7 +10402,7 @@ export default function ChaosChessPage() {
                         Next Unlock
                       </span>
                       <span className="text-[10px] text-slate-600">
-                        {nextIdx + 1}/{PROGRESSION_UNLOCK_ORDER.length}
+                        {nextIdx + 1}/{total}
                       </span>
                     </div>
                     <span className="text-[10px] text-slate-500">
@@ -12324,13 +12321,8 @@ export default function ChaosChessPage() {
                         authenticated &&
                         aiEloSaved &&
                         (() => {
-                          const gp = myGamesPlayed ?? 0;
-                          const earnedCount = Math.min(
-                            UNLOCK_AT_GAMES.filter((t) => gp >= t).length,
-                            PROGRESSION_UNLOCK_ORDER.length,
-                          );
-                          const nextIdx = earnedCount;
-                          if (nextIdx >= PROGRESSION_UNLOCK_ORDER.length) {
+                          const info = getProgressionInfo(myGamesPlayed ?? 0);
+                          if (!info) {
                             return (
                               <div className="w-full rounded-xl border border-emerald-500/25 bg-emerald-500/[0.06] p-3 flex items-center gap-2">
                                 <span className="text-lg">🏆</span>
@@ -12341,18 +12333,11 @@ export default function ChaosChessPage() {
                             );
                           }
                           const nextMod = ALL_MODIFIERS.find(
-                            (m) => m.id === PROGRESSION_UNLOCK_ORDER[nextIdx],
+                            (m) => m.id === info.nextModId,
                           );
                           if (!nextMod) return null;
-                          const gamesNeeded = UNLOCK_AT_GAMES[nextIdx];
-                          const prevThreshold =
-                            nextIdx === 0 ? 0 : UNLOCK_AT_GAMES[nextIdx - 1];
-                          const windowSize = gamesNeeded - prevThreshold;
-                          const gamesInWindow = gp - prevThreshold;
-                          const pct = Math.round(
-                            (gamesInWindow / windowSize) * 100,
-                          );
-                          const remaining = gamesNeeded - gp;
+                          const { remaining, gamesInWindow, windowSize, pct } =
+                            info;
                           const tc = TIER_COLORS[nextMod.tier];
                           return (
                             <div className="w-full rounded-xl border border-purple-500/20 bg-gradient-to-r from-purple-950/40 to-slate-900/40 p-3">
