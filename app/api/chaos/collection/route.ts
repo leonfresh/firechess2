@@ -9,7 +9,11 @@ import { db } from "@/lib/db";
 import { chaosUnlocks, users, chaosRatings } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { GUEST_UNLOCKED_IDS } from "@/lib/chaos-collection";
+import {
+  GUEST_UNLOCKED_IDS,
+  PROGRESSION_UNLOCK_ORDER,
+  UNLOCK_AT_GAMES,
+} from "@/lib/chaos-collection";
 import { ALL_MODIFIERS } from "@/lib/chaos-chess";
 
 /* ── GET ─────────────────────────────────────────────────────────── */
@@ -64,8 +68,18 @@ export async function GET(req: NextRequest) {
     .limit(1);
   const gamesPlayed = ratingRows[0]?.gamesPlayed ?? 0;
 
+  // Include mods earned via games-played progression
+  const progressionEarned = UNLOCK_AT_GAMES.filter(
+    (t) => gamesPlayed >= t,
+  ).length;
+  const progressionUnlocked = PROGRESSION_UNLOCK_ORDER.slice(
+    0,
+    progressionEarned,
+  );
+
   const unlocked = new Set([
     ...GUEST_UNLOCKED_IDS,
+    ...progressionUnlocked,
     ...rows.map((r) => r.modifierId),
   ]);
 

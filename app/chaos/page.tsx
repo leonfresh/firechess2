@@ -4663,6 +4663,19 @@ export default function ChaosChessPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gameStatus, gameMode, authenticated]);
 
+  /* ── Fetch own rating on mount so setup/welcome screen progression is correct ── */
+  useEffect(() => {
+    if (!authenticated) return;
+    fetch("/api/chaos/rating", { headers: chaosHeaders() })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.rating !== undefined) setMyRating(d.rating);
+        if (d.gamesPlayed !== undefined) setMyGamesPlayed(d.gamesPlayed);
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authenticated]);
+
   /* ── Compute ELO change + auto-save when an AI game ends ── */
   useEffect(() => {
     if (gameStatus !== "game-over" || gameMode !== "ai") return;
@@ -4685,29 +4698,29 @@ export default function ChaosChessPage() {
     const baseline = myRatingRef.current ?? DEFAULT_CHAOS_ELO;
     const games = myGamesPlayedRef.current;
     setEloChange(computeEloChange(baseline, aiRating, score, games));
-    // Auto-save for authenticated users — no button click required
-    if (authenticated) {
-      fetch("/api/chaos/rating", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          mode: "ai",
-          difficulty: aiLevel,
-          result: resultStr,
-        }),
+    // Auto-save for authenticated users — no button click required.
+    // Guard aiEloSaved to prevent a double-save if authenticated resolves late.
+    if (!authenticated || aiEloSaved) return;
+    fetch("/api/chaos/rating", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        mode: "ai",
+        difficulty: aiLevel,
+        result: resultStr,
+      }),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.ok) {
+          setAiEloSaved(true);
+          if (data.gamesPlayed !== undefined)
+            setMyGamesPlayed(data.gamesPlayed);
+        }
       })
-        .then((r) => r.json())
-        .then((data) => {
-          if (data.ok) {
-            setAiEloSaved(true);
-            if (data.gamesPlayed !== undefined)
-              setMyGamesPlayed(data.gamesPlayed);
-          }
-        })
-        .catch(() => {});
-    }
+      .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameStatus, gameMode, gameResult, playerColor, aiLevel]);
+  }, [gameStatus, gameMode, gameResult, playerColor, aiLevel, authenticated]);
 
   /* ── Fetch top 5 leaderboard entries for the setup screen ── */
   useEffect(() => {
