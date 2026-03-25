@@ -2224,6 +2224,11 @@ export function computeChaosThreatPenalty(
     if (cm.pieceStays) {
       // Free capture — attacker doesn't move (sniper, phantom)
       netThreat = value;
+    } else if (cm.modifierId === "king-ascension") {
+      // King captures long-range: don't discount by king value (it's astronomically
+      // high and would always zero out the penalty). Treat as full threat so the AI
+      // correctly avoids placing undefended pieces in queen-ray range of an ascended king.
+      netThreat = value;
     } else {
       // Attacker moves to the square — might get recaptured
       const piece = game.get(cm.from as any);

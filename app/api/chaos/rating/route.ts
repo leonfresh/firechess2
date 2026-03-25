@@ -16,7 +16,10 @@ import { computeEloChange, DEFAULT_CHAOS_ELO } from "@/lib/chaos-elo";
 
 /* ── helper: fetch or create a rating row ─────────────────────────── */
 async function getRating(userId: string) {
-  const rows = await db.select().from(chaosRatings).where(eq(chaosRatings.userId, userId));
+  const rows = await db
+    .select()
+    .from(chaosRatings)
+    .where(eq(chaosRatings.userId, userId));
   if (rows.length > 0) return rows[0];
   // Default for new players — not inserted yet (lazy insert on first save)
   return {
@@ -37,17 +40,30 @@ export async function GET(req: NextRequest) {
 
   if (!roomId) {
     // Just return caller's own rating
-    if (!session?.user?.id) return NextResponse.json({ rating: DEFAULT_CHAOS_ELO, gamesPlayed: 0 });
+    if (!session?.user?.id)
+      return NextResponse.json({ rating: DEFAULT_CHAOS_ELO, gamesPlayed: 0 });
     const row = await getRating(session.user.id);
-    return NextResponse.json({ rating: row.rating, gamesPlayed: row.gamesPlayed, wins: row.wins, losses: row.losses, draws: row.draws, peakRating: row.peakRating });
+    return NextResponse.json({
+      rating: row.rating,
+      gamesPlayed: row.gamesPlayed,
+      wins: row.wins,
+      losses: row.losses,
+      draws: row.draws,
+      peakRating: row.peakRating,
+    });
   }
 
   // Return both players' ratings for the room
   const userId = await getChaosUserId(req);
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!userId)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const rooms = await db.select().from(chaosRooms).where(eq(chaosRooms.id, roomId));
-  if (rooms.length === 0) return NextResponse.json({ error: "Room not found" }, { status: 404 });
+  const rooms = await db
+    .select()
+    .from(chaosRooms)
+    .where(eq(chaosRooms.id, roomId));
+  if (rooms.length === 0)
+    return NextResponse.json({ error: "Room not found" }, { status: 404 });
 
   const room = rooms[0];
   if (room.hostId !== userId && room.guestId !== userId) {
@@ -57,7 +73,9 @@ export async function GET(req: NextRequest) {
   const opponentId = room.hostId === userId ? room.guestId : room.hostId;
   const [myRow, oppRow] = await Promise.all([
     getRating(userId),
-    opponentId ? getRating(opponentId) : Promise.resolve({ rating: DEFAULT_CHAOS_ELO, gamesPlayed: 0 }),
+    opponentId
+      ? getRating(opponentId)
+      : Promise.resolve({ rating: DEFAULT_CHAOS_ELO, gamesPlayed: 0 }),
   ]);
 
   return NextResponse.json({
@@ -70,7 +88,8 @@ export async function GET(req: NextRequest) {
 /* ── POST ─────────────────────────────────────────────────────────── */
 export async function POST(req: NextRequest) {
   const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+  if (!session?.user?.id)
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
 
   const userId = session.user.id;
   const body = await req.json();
@@ -81,14 +100,22 @@ export async function POST(req: NextRequest) {
     difficulty?: string;
   };
 
-  if (!result) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  if (!result)
+    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
   /* ── AI game: no room required, use fixed AI rating by difficulty ── */
   if (mode === "ai") {
-    const aiRating = difficulty === "hard" ? 1600 : difficulty === "medium" ? 1200 : 800;
+    const aiRating =
+      difficulty === "hard" ? 1600 : difficulty === "medium" ? 1200 : 800;
     const myRow = await getRating(userId);
-    const score: 1 | 0.5 | 0 = result === "win" ? 1 : result === "draw" ? 0.5 : 0;
-    const delta = computeEloChange(myRow.rating, aiRating, score, myRow.gamesPlayed);
+    const score: 1 | 0.5 | 0 =
+      result === "win" ? 1 : result === "draw" ? 0.5 : 0;
+    const delta = computeEloChange(
+      myRow.rating,
+      aiRating,
+      score,
+      myRow.gamesPlayed,
+    );
     const newRating = Math.max(100, myRow.rating + delta);
     const myUpdate = {
       rating: newRating,
@@ -99,20 +126,36 @@ export async function POST(req: NextRequest) {
       peakRating: Math.max(myRow.peakRating, newRating),
       updatedAt: new Date(),
     };
-    const existing = await db.select().from(chaosRatings).where(eq(chaosRatings.userId, userId));
+    const existing = await db
+      .select()
+      .from(chaosRatings)
+      .where(eq(chaosRatings.userId, userId));
     if (existing.length > 0) {
-      await db.update(chaosRatings).set(myUpdate).where(eq(chaosRatings.userId, userId));
+      await db
+        .update(chaosRatings)
+        .set(myUpdate)
+        .where(eq(chaosRatings.userId, userId));
     } else {
       await db.insert(chaosRatings).values({ userId, ...myUpdate });
     }
-    return NextResponse.json({ ok: true, newRating, delta });
+    return NextResponse.json({
+      ok: true,
+      newRating,
+      delta,
+      gamesPlayed: myRow.gamesPlayed + 1,
+    });
   }
 
   /* ── Multiplayer game: needs roomId ── */
-  if (!roomId) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  if (!roomId)
+    return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
-  const rooms = await db.select().from(chaosRooms).where(eq(chaosRooms.id, roomId));
-  if (rooms.length === 0) return NextResponse.json({ error: "Room not found" }, { status: 404 });
+  const rooms = await db
+    .select()
+    .from(chaosRooms)
+    .where(eq(chaosRooms.id, roomId));
+  if (rooms.length === 0)
+    return NextResponse.json({ error: "Room not found" }, { status: 404 });
 
   const room = rooms[0];
   if (room.hostId !== userId && room.guestId !== userId) {
@@ -145,17 +188,29 @@ export async function POST(req: NextRequest) {
     updatedAt: new Date(),
   };
 
-  const existingMine = await db.select().from(chaosRatings).where(eq(chaosRatings.userId, userId));
+  const existingMine = await db
+    .select()
+    .from(chaosRatings)
+    .where(eq(chaosRatings.userId, userId));
   if (existingMine.length > 0) {
-    await db.update(chaosRatings).set(myUpdate).where(eq(chaosRatings.userId, userId));
+    await db
+      .update(chaosRatings)
+      .set(myUpdate)
+      .where(eq(chaosRatings.userId, userId));
   } else {
     await db.insert(chaosRatings).values({ userId, ...myUpdate });
   }
 
   // Also save opponent's rating if they're a real (non-guest) user
   if (opponentId && !opponentId.startsWith("guest_") && oppRow) {
-    const oppScore: 1 | 0.5 | 0 = result === "win" ? 0 : result === "draw" ? 0.5 : 1;
-    const oppDelta = computeEloChange(oppRating, myRating, oppScore, (oppRow as any).gamesPlayed ?? 0);
+    const oppScore: 1 | 0.5 | 0 =
+      result === "win" ? 0 : result === "draw" ? 0.5 : 1;
+    const oppDelta = computeEloChange(
+      oppRating,
+      myRating,
+      oppScore,
+      (oppRow as any).gamesPlayed ?? 0,
+    );
     const newOppRating = Math.max(100, oppRating + oppDelta);
     const oppUpdate = {
       rating: newOppRating,
@@ -163,14 +218,25 @@ export async function POST(req: NextRequest) {
       losses: (oppRow as any).losses + (oppScore === 0 ? 1 : 0),
       draws: (oppRow as any).draws + (oppScore === 0.5 ? 1 : 0),
       gamesPlayed: ((oppRow as any).gamesPlayed ?? 0) + 1,
-      peakRating: Math.max((oppRow as any).peakRating ?? DEFAULT_CHAOS_ELO, newOppRating),
+      peakRating: Math.max(
+        (oppRow as any).peakRating ?? DEFAULT_CHAOS_ELO,
+        newOppRating,
+      ),
       updatedAt: new Date(),
     };
-    const existingOpp = await db.select().from(chaosRatings).where(eq(chaosRatings.userId, opponentId));
+    const existingOpp = await db
+      .select()
+      .from(chaosRatings)
+      .where(eq(chaosRatings.userId, opponentId));
     if (existingOpp.length > 0) {
-      await db.update(chaosRatings).set(oppUpdate).where(eq(chaosRatings.userId, opponentId));
+      await db
+        .update(chaosRatings)
+        .set(oppUpdate)
+        .where(eq(chaosRatings.userId, opponentId));
     } else {
-      await db.insert(chaosRatings).values({ userId: opponentId, ...oppUpdate });
+      await db
+        .insert(chaosRatings)
+        .values({ userId: opponentId, ...oppUpdate });
     }
   }
 

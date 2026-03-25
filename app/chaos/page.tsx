@@ -4379,9 +4379,9 @@ export default function ChaosChessPage() {
   }, [aiLevel]);
   const aiDepth =
     aiLevel === "beginner"
-      ? 3
+      ? 1
       : aiLevel === "easy"
-        ? 6
+        ? 5
         : aiLevel === "medium"
           ? 10
           : 14;
@@ -6154,6 +6154,18 @@ export default function ChaosChessPage() {
         if (!bestUci) {
           const result = await stockfishPool.evaluateFen(g.fen(), aiDepth);
           bestUci = result?.bestMove ?? null;
+        }
+
+        // Blunder injection — beginner blunders ~60% of moves; easy ~20%
+        const blunderRate =
+          aiLevel === "beginner" ? 0.6 : aiLevel === "easy" ? 0.2 : 0;
+        if (blunderRate > 0 && bestUci && Math.random() < blunderRate) {
+          const legalMoves = g.moves({ verbose: true });
+          if (legalMoves.length > 0) {
+            const random =
+              legalMoves[Math.floor(Math.random() * legalMoves.length)];
+            bestUci = random.lan;
+          }
         }
 
         if (!bestUci) {
@@ -12179,6 +12191,8 @@ export default function ChaosChessPage() {
                                     if (data.ok) {
                                       setAiEloSaved(true);
                                       setMyRating(data.newRating);
+                                      if (data.gamesPlayed !== undefined)
+                                        setMyGamesPlayed(data.gamesPlayed);
                                     }
                                   } catch {
                                     /* ignore */
