@@ -8,7 +8,12 @@ import "next-auth/jwt";
 declare module "next-auth" {
   interface Session {
     plan: "free" | "pro" | "lifetime";
-    subscriptionStatus: "active" | "canceled" | "past_due" | "incomplete" | "trialing";
+    subscriptionStatus:
+      | "active"
+      | "canceled"
+      | "past_due"
+      | "incomplete"
+      | "trialing";
     isAdmin: boolean;
     user: {
       id: string;
@@ -22,7 +27,12 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     plan?: "free" | "pro" | "lifetime";
-    subscriptionStatus?: "active" | "canceled" | "past_due" | "incomplete" | "trialing";
+    subscriptionStatus?:
+      | "active"
+      | "canceled"
+      | "past_due"
+      | "incomplete"
+      | "trialing";
     isAdmin?: boolean;
   }
 }
