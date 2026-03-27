@@ -101,7 +101,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         "/escape",
         "/coaches",
         "/youtubers",
-        "/api/debug-db",
       ];
       const isPublic =
         publicPaths.some((p) => path === p || path.startsWith(p + "/")) ||
