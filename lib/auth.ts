@@ -74,7 +74,35 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const path = nextUrl.pathname;
 
       // Public routes — always allowed
-      const publicPaths = ["/", "/pricing", "/auth", "/dashboard", "/account", "/blog", "/about", "/changelog", "/feedback", "/admin", "/terms", "/privacy", "/support", "/train", "/roast", "/analyze", "/openings", "/my-openings", "/dungeon", "/guess", "/leaderboard", "/shop", "/chaos", "/escape", "/coaches", "/youtubers", "/api/debug-db"];
+      const publicPaths = [
+        "/",
+        "/pricing",
+        "/auth",
+        "/dashboard",
+        "/account",
+        "/blog",
+        "/about",
+        "/changelog",
+        "/feedback",
+        "/admin",
+        "/terms",
+        "/privacy",
+        "/support",
+        "/train",
+        "/roast",
+        "/analyze",
+        "/openings",
+        "/my-openings",
+        "/dungeon",
+        "/guess",
+        "/leaderboard",
+        "/shop",
+        "/chaos",
+        "/escape",
+        "/coaches",
+        "/youtubers",
+        "/api/debug-db",
+      ];
       const isPublic =
         publicPaths.some((p) => path === p || path.startsWith(p + "/")) ||
         path.startsWith("/api/auth") ||
@@ -118,11 +146,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async createUser({ user }) {
       // Seed a free subscription row for every new user
       if (user.id) {
-        await db.insert(subscriptions).values({
-          userId: user.id,
-          plan: "free",
-          status: "active",
-        }).onConflictDoNothing();
+        await db
+          .insert(subscriptions)
+          .values({
+            userId: user.id,
+            plan: "free",
+            status: "active",
+          })
+          .onConflictDoNothing();
       }
     },
   },
