@@ -67,7 +67,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: {
     signIn: "/auth/signin",
   },
-  session: { strategy: "database" },
+  session: { strategy: "jwt" },
   callbacks: {
     authorized({ auth: session, request: { nextUrl } }) {
       const isLoggedIn = !!session?.user;
@@ -119,25 +119,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // Protected routes require login
       return isLoggedIn;
     },
-    async session({ session, user }) {
-      // Attach userId + plan to the client session
-      session.user.id = user.id;
+    async jwt({ token, user, trigger }) {
+      // On sign-in (user is populated) or explicit refresh, load plan + admin from DB
+      if (user?.id || trigger === "update") {
+        const userId = (user?.id ?? token.sub) as string;
 
-      const [sub] = await db
-        .select()
-        .from(subscriptions)
-        .where(eq(subscriptions.userId, user.id))
-        .limit(1);
+        const [sub] = await db
+          .select()
+          .from(subscriptions)
+          .where(eq(subscriptions.userId, userId))
+          .limit(1);
 
-      const admin = await checkIsAdmin(user.id);
+        const admin = await checkIsAdmin(userId);
 
-      // Admin always gets lifetime
-      const plan = admin ? "lifetime" : (sub?.plan ?? "free");
-
-      (session as any).plan = plan;
-      (session as any).subscriptionStatus = sub?.status ?? "active";
-      (session as any).isAdmin = admin;
-
+        token.sub = userId;
+        token.plan = admin ? "lifetime" : (sub?.plan ?? "free");
+        token.subscriptionStatus = sub?.status ?? "active";
+        token.isAdmin = admin;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      // Read everything from the JWT cookie — zero DB queries
+      session.user.id = token.sub as string;
+      (session as any).plan = token.plan;
+      (session as any).subscriptionStatus = token.subscriptionStatus;
+      (session as any).isAdmin = token.isAdmin;
       return session;
     },
   },
