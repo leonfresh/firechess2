@@ -667,12 +667,30 @@ export function rollDraftChoices(
   // ── Anomaly: number of choices ──
   const maxChoices = playerAnomaly === "high-priestess" ? 4 : 3;
 
-  const pool = ALL_MODIFIERS.filter(
+  let pool = ALL_MODIFIERS.filter(
     (m) =>
       m.phases.includes(effectivePhase) &&
       !draftedIds.has(m.id) &&
       !removedIds.has(m.id),
   );
+
+  // If the primary pool is smaller than maxChoices (can happen at phase 5
+  // for guests who have previewed many locked mods), pad it with previously-
+  // previewed mods that haven't been permanently drafted this game. They will
+  // still render as locked/try-able in the UI — this just guarantees players
+  // always see at least maxChoices cards.
+  if (pool.length < maxChoices) {
+    const permanentIds = new Set(alreadyDrafted.map((m) => m.id));
+    const spentSet = new Set(spentIds ?? []);
+    const fallback = ALL_MODIFIERS.filter(
+      (m) =>
+        m.phases.includes(effectivePhase) &&
+        !permanentIds.has(m.id) &&
+        spentSet.has(m.id) &&
+        !removedIds.has(m.id),
+    );
+    pool = [...pool, ...fallback];
+  }
 
   // Seeded shuffle (Fisher-Yates)
   const rng = seed != null ? seededRandom(seed + phase * 1000) : Math.random;

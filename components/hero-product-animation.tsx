@@ -14,6 +14,7 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { Chessboard } from "@/components/chessboard-compat";
 
 // ─── Phase config ───────────────────────────────────────────────────
 const PHASES = ["input", "scanning", "leaks", "insights"] as const;
@@ -144,7 +145,7 @@ const KEYFRAMES = `
 }
 @keyframes hpa-type {
   from { max-width: 0; }
-  to   { max-width: 110px; }
+  to   { max-width: 160px; }
 }
 @keyframes hpa-cursor {
   50% { opacity: 0; }
@@ -202,9 +203,9 @@ function InputPhase() {
         <div className="flex items-center gap-0 py-2 pl-2">
           <span
             className="overflow-hidden whitespace-nowrap text-xs font-medium text-white"
-            style={{ animation: "hpa-type 1.8s steps(8,end) 0.4s both" }}
+            style={{ animation: "hpa-type 2.4s steps(13,end) 0.4s both" }}
           >
-            MagnusCar
+            MagnusCarlsen
           </span>
           <span
             className="ml-0.5 inline-block h-3 w-px bg-emerald-400"
@@ -397,74 +398,29 @@ function LeaksPhase() {
           </p>
         </div>
         <div className="text-right">
-          <p className="text-[9px] text-slate-500">247 games · MagnusCar</p>
+          <p className="text-[9px] text-slate-500">247 games · MagnusCarlsen</p>
           <p className="text-[11px] font-bold text-amber-400">Accuracy: 74%</p>
         </div>
       </div>
 
       {/* Mini chessboard */}
       <div className="mb-3 flex gap-3">
-        <svg
-          viewBox={`0 0 ${BOARD_W} ${BOARD_W}`}
+        <div
           className="h-[80px] w-[80px] shrink-0 overflow-hidden rounded-lg border border-white/[0.08]"
           style={{ animation: "hpa-fade-in 0.4s ease 0.3s both" }}
         >
-          {BOARD_SQUARES.map(({ x, y, light }, n) => (
-            <rect
-              key={n}
-              x={x}
-              y={y}
-              width={14}
-              height={14}
-              fill={light ? "#4a5e7a" : "#2d3a4d"}
-            />
-          ))}
-          {/* Green arrow e2→e4 */}
-          <defs>
-            <marker
-              id="hpa-green"
-              markerWidth="4"
-              markerHeight="4"
-              refX="2"
-              refY="2"
-              orient="auto"
-            >
-              <path d="M0,0 L0,4 L4,2 z" fill="rgba(34,197,94,0.9)" />
-            </marker>
-            <marker
-              id="hpa-red"
-              markerWidth="4"
-              markerHeight="4"
-              refX="2"
-              refY="2"
-              orient="auto"
-            >
-              <path d="M0,0 L0,4 L4,2 z" fill="rgba(239,68,68,0.9)" />
-            </marker>
-          </defs>
-          {/* e2→e4 best move */}
-          <line
-            x1="63"
-            y1="91"
-            x2="63"
-            y2="67"
-            stroke="rgba(34,197,94,0.9)"
-            strokeWidth="2.5"
-            markerEnd="url(#hpa-green)"
-            style={{ animation: "hpa-fade-in 0.3s ease 0.6s both" }}
+          <Chessboard
+            position="rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2"
+            boardWidth={80}
+            arePiecesDraggable={false}
+            customDarkSquareStyle={{ backgroundColor: "#2d3a4d" }}
+            customLightSquareStyle={{ backgroundColor: "#4a5e7a" }}
+            customArrows={[
+              ["g1", "f3", "rgba(34,197,94,0.9)"],
+              ["d1", "h5", "rgba(239,68,68,0.9)"],
+            ]}
           />
-          {/* e2→g4 played move */}
-          <line
-            x1="63"
-            y1="91"
-            x2="91"
-            y2="63"
-            stroke="rgba(239,68,68,0.9)"
-            strokeWidth="2.5"
-            markerEnd="url(#hpa-red)"
-            style={{ animation: "hpa-fade-in 0.3s ease 0.8s both" }}
-          />
-        </svg>
+        </div>
 
         {/* Legend */}
         <div className="flex flex-col justify-center gap-1.5">
