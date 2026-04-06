@@ -4,10 +4,10 @@
 
 :root {
   color-scheme: dark;
-  --bg-primary: #030712;
-  --accent-emerald: #10b981;
-  --accent-cyan: #06b6d4;
-  --accent-fuchsia: #d946ef;
+  --bg-primary: #0d0905;
+  --accent-fire: #f97316;
+  --accent-gold: #d4a657;
+  --accent-crimson: #dc2626;
 }
 
 * {
@@ -36,12 +36,12 @@
 }
 
 body {
-  @apply text-slate-100 antialiased;
+  @apply text-stone-100 antialiased;
   background: var(--bg-primary);
   overflow-x: hidden;
 }
 
-/* Animated mesh background */
+/* Fire ambiance background */
 body::before {
   content: "";
   position: fixed;
@@ -49,35 +49,36 @@ body::before {
   z-index: -2;
   background:
     radial-gradient(
-      ellipse 80% 50% at 20% 20%,
-      rgba(16, 185, 129, 0.08),
+      ellipse 90% 60% at 50% 110%,
+      rgba(249, 115, 22, 0.1),
       transparent
     ),
     radial-gradient(
-      ellipse 60% 40% at 80% 15%,
-      rgba(6, 182, 212, 0.06),
+      ellipse 60% 40% at 15% 80%,
+      rgba(220, 38, 38, 0.07),
       transparent
     ),
     radial-gradient(
-      ellipse 70% 50% at 50% 90%,
-      rgba(217, 70, 239, 0.05),
+      ellipse 50% 35% at 85% 75%,
+      rgba(251, 146, 60, 0.06),
       transparent
     ),
     radial-gradient(
-      ellipse 50% 30% at 70% 60%,
-      rgba(16, 185, 129, 0.04),
+      ellipse 40% 25% at 50% 30%,
+      rgba(212, 166, 87, 0.04),
       transparent
     );
 }
 
-/* Subtle noise texture */
+/* Fine grain texture — works with glassmorphism unlike hard patterns */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -1;
-  opacity: 0.015;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
   pointer-events: none;
 }
 
@@ -92,12 +93,14 @@ button {
     @apply relative rounded-2xl border border-white/[0.08];
     background: linear-gradient(
       135deg,
-      rgba(255, 255, 255, 0.04) 0%,
-      rgba(255, 255, 255, 0.01) 100%
+      rgba(30, 20, 12, 0.82) 0%,
+      rgba(20, 13, 8, 0.88) 100%
     );
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.03) inset,
-      0 20px 60px -12px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+      0 20px 60px -12px rgba(0, 0, 0, 0.6),
       0 0 1px 0 rgba(255, 255, 255, 0.05) inset;
   }
 
@@ -109,11 +112,16 @@ button {
   }
 
   .glass-card-hover:hover {
-    border-color: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.11);
     box-shadow:
       0 0 0 1px rgba(255, 255, 255, 0.05) inset,
-      0 25px 70px -12px rgba(0, 0, 0, 0.6),
+      0 25px 70px -12px rgba(0, 0, 0, 0.7),
       0 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+    background: linear-gradient(
+      135deg,
+      rgba(35, 23, 14, 0.88) 0%,
+      rgba(22, 15, 9, 0.92) 100%
+    );
   }
 
   .glass-input {
@@ -121,8 +129,8 @@ button {
   }
 
   .glass-input:focus {
-    border-color: rgba(16, 185, 129, 0.4);
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    border-color: rgba(249, 115, 22, 0.45);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
     background: rgba(255, 255, 255, 0.05);
   }
 
@@ -132,13 +140,13 @@ button {
   }
 
   .btn-primary {
-    @apply relative h-12 overflow-hidden rounded-xl px-6 font-semibold text-slate-950 transition-all duration-300;
-    background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
-    box-shadow: 0 4px 15px -3px rgba(16, 185, 129, 0.4);
+    @apply relative h-12 overflow-hidden rounded-xl px-6 font-semibold text-white transition-all duration-300;
+    background: linear-gradient(135deg, #f97316 0%, #dc2626 100%);
+    box-shadow: 0 4px 15px -3px rgba(249, 115, 22, 0.45);
   }
 
   .btn-primary:hover {
-    box-shadow: 0 8px 25px -5px rgba(16, 185, 129, 0.5);
+    box-shadow: 0 8px 25px -5px rgba(249, 115, 22, 0.6);
     transform: translateY(-1px);
   }
 
@@ -184,14 +192,20 @@ button {
 
   .gradient-text {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #10b981, #06b6d4, #d946ef);
+    background-image: linear-gradient(135deg, #fbbf24, #f97316, #dc2626);
     background-size: 200% auto;
     animation: gradient-x 8s ease infinite;
   }
 
+  .gradient-text-fire {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, #fbbf24, #f97316, #dc2626);
+  }
+
+  /* Keep emerald for positive/success states */
   .gradient-text-emerald {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, #6ee7b7, #10b981, #06b6d4);
+    background-image: linear-gradient(135deg, #6ee7b7, #10b981, #059669);
   }
 
   .stat-card {
@@ -217,7 +231,7 @@ button {
     pointer-events: none;
     background: radial-gradient(
       circle at 50% 0%,
-      rgba(16, 185, 129, 0.08),
+      rgba(249, 115, 22, 0.08),
       transparent 70%
     );
   }
@@ -240,20 +254,30 @@ button {
     @apply inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200;
   }
 
+  /* tag-fire is the new primary tag style */
+  .tag-fire {
+    @apply tag-pill border-orange-500/25 bg-orange-500/[0.08] text-orange-300;
+  }
+
+  .tag-fire:hover {
+    @apply border-orange-500/40 bg-orange-500/[0.14];
+  }
+
+  .tag-gold {
+    @apply tag-pill border-yellow-600/30 bg-yellow-600/[0.08] text-yellow-300;
+  }
+
+  .tag-crimson {
+    @apply tag-pill border-red-600/25 bg-red-600/[0.08] text-red-300;
+  }
+
+  /* keep emerald for correctness/positive feedback */
   .tag-emerald {
     @apply tag-pill border-emerald-500/20 bg-emerald-500/[0.08] text-emerald-300;
   }
 
   .tag-emerald:hover {
     @apply border-emerald-500/30 bg-emerald-500/[0.12];
-  }
-
-  .tag-fuchsia {
-    @apply tag-pill border-fuchsia-500/20 bg-fuchsia-500/[0.08] text-fuchsia-300;
-  }
-
-  .tag-cyan {
-    @apply tag-pill border-cyan-500/20 bg-cyan-500/[0.08] text-cyan-300;
   }
 
   .tag-amber {
@@ -349,6 +373,10 @@ button {
   @apply bg-clip-text text-transparent;
   background-image: linear-gradient(135deg, #c4b5fd, #8b5cf6, #7c3aed);
 }
+.gradient-text-gold {
+  @apply bg-clip-text text-transparent;
+  background-image: linear-gradient(135deg, #fde68a, #d4a657, #b8860b);
+}
 .gradient-text-amber {
   @apply bg-clip-text text-transparent;
   background-image: linear-gradient(135deg, #fcd34d, #f59e0b, #f97316);
@@ -383,8 +411,8 @@ button {
     filter: blur(0px);
     transform: translateY(-2px) scale(1.02);
     text-shadow:
-      0 0 80px rgba(16, 185, 129, 0.6),
-      0 0 160px rgba(16, 185, 129, 0.25);
+      0 0 80px rgba(249, 115, 22, 0.55),
+      0 0 160px rgba(220, 38, 38, 0.2);
   }
   100% {
     opacity: 1;
@@ -516,7 +544,7 @@ button {
   @apply mb-4 text-[15px];
 }
 .prose-firechess a {
-  @apply text-emerald-400 underline underline-offset-2 decoration-emerald-500/30 hover:decoration-emerald-400 transition-colors;
+  @apply text-orange-400 underline underline-offset-2 decoration-orange-500/30 hover:decoration-orange-400 transition-colors;
 }
 .prose-firechess strong {
   @apply font-semibold text-white;
@@ -534,10 +562,10 @@ button {
   @apply pl-1;
 }
 .prose-firechess blockquote {
-  @apply my-4 border-l-2 border-emerald-500/40 bg-white/[0.02] rounded-r-lg pl-4 pr-3 py-3 text-slate-400 italic;
+  @apply my-4 border-l-2 border-orange-500/40 bg-white/[0.02] rounded-r-lg pl-4 pr-3 py-3 text-stone-400 italic;
 }
 .prose-firechess code {
-  @apply rounded bg-white/[0.06] px-1.5 py-0.5 text-sm font-mono text-emerald-300;
+  @apply rounded bg-white/[0.06] px-1.5 py-0.5 text-sm font-mono text-amber-300;
 }
 .prose-firechess pre {
   @apply my-4 overflow-x-auto rounded-xl border border-white/[0.06] bg-white/[0.03] p-4;

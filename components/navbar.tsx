@@ -12,6 +12,7 @@ import { useAvatarFrame } from "@/lib/use-coins";
 
 const NAV_LINKS = [
   { href: "/analyze", label: "Analyze" },
+  { href: "/coach", label: "♟ Coach" },
   { href: "/train", label: "Training" },
   { href: "/sparring", label: "⚔️ Sparring" },
   { href: "/guess", label: "Guess the Move" },
@@ -135,7 +136,7 @@ export function Navbar() {
             {/* Pro link */}
             <Link
               href="/pricing"
-              className={`inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-cyan-500 px-3.5 py-1.5 text-sm font-semibold text-slate-950 transition-all duration-200 hover:shadow-glow-sm ${
+              className={`inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 px-3.5 py-1.5 text-sm font-semibold text-white transition-all duration-200 hover:shadow-glow-sm ${
                 isActive("/pricing") ? "shadow-glow-sm" : ""
               }`}
             >
@@ -190,7 +191,7 @@ export function Navbar() {
                 </svg>
               </button>
               <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
-                <div className="min-w-[190px] rounded-xl border border-white/[0.08] bg-[#0a0f1a] p-1.5 shadow-xl shadow-black/40">
+                <div className="min-w-[190px] rounded-xl border border-white/[0.08] bg-[#110c08] p-1.5 shadow-xl shadow-black/40">
                   <Link
                     href="/"
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
@@ -215,8 +216,8 @@ export function Navbar() {
                     href="/my-openings"
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                       isActive("/my-openings")
-                        ? "text-emerald-300 bg-emerald-500/[0.08]"
-                        : "text-slate-400 hover:text-emerald-300 hover:bg-emerald-500/[0.06]"
+                        ? "text-orange-300 bg-orange-500/[0.08]"
+                        : "text-stone-400 hover:text-orange-300 hover:bg-orange-500/[0.06]"
                     }`}
                   >
                     🌲 My Opening Tree
@@ -253,7 +254,7 @@ export function Navbar() {
                 </svg>
               </button>
               <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
-                <div className="min-w-[180px] rounded-xl border border-white/[0.08] bg-[#0a0f1a] p-1.5 shadow-xl shadow-black/40">
+                <div className="min-w-[180px] rounded-xl border border-white/[0.08] bg-[#110c08] p-1.5 shadow-xl shadow-black/40">
                   <Link
                     href="/sparring"
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
@@ -337,6 +338,8 @@ export function Navbar() {
                   isActive("/leaderboard") ||
                   isActive("/shop") ||
                   isActive("/openings") ||
+                  isActive("/tactics") ||
+                  isActive("/endgames") ||
                   isActive("/coaches") ||
                   isActive("/youtubers")
                     ? "text-white bg-white/[0.06]"
@@ -355,7 +358,7 @@ export function Navbar() {
                 </svg>
               </button>
               <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
-                <div className="min-w-[160px] rounded-xl border border-white/[0.08] bg-[#0a0f1a] p-1.5 shadow-xl shadow-black/40">
+                <div className="min-w-[160px] rounded-xl border border-white/[0.08] bg-[#110c08] p-1.5 shadow-xl shadow-black/40">
                   <Link
                     href="/about"
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
@@ -413,6 +416,26 @@ export function Navbar() {
                     📖 Openings
                   </Link>
                   <Link
+                    href="/tactics"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                      isActive("/tactics")
+                        ? "text-sky-400 bg-sky-500/[0.08]"
+                        : "text-slate-400 hover:text-sky-400 hover:bg-sky-500/[0.06]"
+                    }`}
+                  >
+                    ⚡ Tactics
+                  </Link>
+                  <Link
+                    href="/endgames"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                      isActive("/endgames")
+                        ? "text-emerald-400 bg-emerald-500/[0.08]"
+                        : "text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/[0.06]"
+                    }`}
+                  >
+                    ♟ Endgames
+                  </Link>
+                  <Link
                     href="/shop"
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                       isActive("/shop")
@@ -427,8 +450,8 @@ export function Navbar() {
                     href="/coaches"
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                       isActive("/coaches")
-                        ? "text-emerald-400 bg-emerald-500/[0.08]"
-                        : "text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/[0.06]"
+                        ? "text-orange-400 bg-orange-500/[0.08]"
+                        : "text-stone-400 hover:text-orange-400 hover:bg-orange-500/[0.06]"
                     }`}
                   >
                     🎓 For Coaches
@@ -437,8 +460,8 @@ export function Navbar() {
                     href="/youtubers"
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                       isActive("/youtubers")
-                        ? "text-fuchsia-400 bg-fuchsia-500/[0.08]"
-                        : "text-slate-400 hover:text-fuchsia-400 hover:bg-fuchsia-500/[0.06]"
+                        ? "text-amber-400 bg-amber-500/[0.08]"
+                        : "text-stone-400 hover:text-amber-400 hover:bg-amber-500/[0.06]"
                     }`}
                   >
                     🎬 For Creators
@@ -516,7 +539,7 @@ export function Navbar() {
                       />
                     ) : null}
                     <div
-                      className={`${user?.image ? "hidden" : "flex"} h-6 w-6 items-center justify-center rounded-full bg-emerald-500/20 text-xs font-bold text-emerald-400 ${avatarFrame.frameClass}`}
+                      className={`${user?.image ? "hidden" : "flex"} h-6 w-6 items-center justify-center rounded-full bg-orange-500/20 text-xs font-bold text-orange-400 ${avatarFrame.frameClass}`}
                       style={avatarFrame.frameStyle}
                     >
                       {(
@@ -529,7 +552,7 @@ export function Navbar() {
                       {user?.name ?? user?.email ?? "Account"}
                     </span>
                     {(plan === "pro" || plan === "lifetime") && (
-                      <span className="rounded bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                      <span className="rounded bg-gradient-to-r from-orange-500/20 to-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-400">
                         {plan === "lifetime" ? "∞" : "Pro"}
                       </span>
                     )}
@@ -549,7 +572,7 @@ export function Navbar() {
                   </button>
 
                   {profileOpen && (
-                    <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0d1117] shadow-2xl animate-in fade-in slide-in-from-top-2">
+                    <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-white/[0.08] bg-[#140f0a] shadow-2xl animate-in fade-in slide-in-from-top-2">
                       <div className="border-b border-white/[0.06] px-4 py-3">
                         <p className="truncate text-sm font-medium text-white">
                           {user?.name ?? "User"}
@@ -565,7 +588,7 @@ export function Navbar() {
                           <span
                             className={
                               plan === "pro" || plan === "lifetime"
-                                ? "font-semibold text-emerald-400"
+                                ? "font-semibold text-amber-400"
                                 : "text-slate-500"
                             }
                           >
@@ -860,7 +883,7 @@ export function Navbar() {
           />
 
           {/* Panel */}
-          <div className="fixed inset-y-0 right-0 z-50 w-72 overflow-y-auto border-l border-white/[0.06] bg-[#0a0f1a] px-5 py-5 lg:hidden">
+          <div className="fixed inset-y-0 right-0 z-50 w-72 overflow-y-auto border-l border-white/[0.06] bg-[#110c08] px-5 py-5 lg:hidden">
             {/* Close button */}
             <div className="flex justify-end">
               <button
@@ -905,7 +928,7 @@ export function Navbar() {
                   />
                 ) : null}
                 <div
-                  className={`${user.image ? "hidden" : "flex"} h-10 w-10 items-center justify-center rounded-full bg-emerald-500/20 text-sm font-bold text-emerald-400 ${avatarFrame.frameClass}`}
+                  className={`${user.image ? "hidden" : "flex"} h-10 w-10 items-center justify-center rounded-full bg-orange-500/20 text-sm font-bold text-orange-400 ${avatarFrame.frameClass}`}
                   style={avatarFrame.frameStyle}
                 >
                   {(user.name?.[0] ?? user.email?.[0] ?? "?").toUpperCase()}
@@ -936,6 +959,8 @@ export function Navbar() {
                 { href: "/chaos", label: "⚡ Chaos Chess" },
                 { href: "/dungeon", label: "⚔️ Dungeon Tactics" },
                 { href: "/openings", label: "📖 Openings" },
+                { href: "/tactics", label: "⚡ Tactics" },
+                { href: "/endgames", label: "♟ Endgames" },
                 { href: "/leaderboard", label: "🏆 Leaderboard" },
                 { href: "/shop", label: "🪙 Coin Shop" },
                 { href: "/coaches", label: "🎓 For Coaches" },

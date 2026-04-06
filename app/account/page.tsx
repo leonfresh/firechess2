@@ -12,10 +12,23 @@ import { useState } from "react";
 import Link from "next/link";
 
 export default function AccountPage() {
-  const { loading, authenticated, user, plan, subscriptionStatus } = useSession();
+  const { loading, authenticated, user, plan, subscriptionStatus, refresh } =
+    useSession();
   const router = useRouter();
   const [portalLoading, setPortalLoading] = useState(false);
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncDone, setSyncDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const syncPlan = async () => {
+    setSyncLoading(true);
+    setSyncDone(false);
+    await new Promise((r) => setTimeout(r, 400)); // tiny delay for UX
+    refresh();
+    setSyncLoading(false);
+    setSyncDone(true);
+    setTimeout(() => setSyncDone(false), 4000);
+  };
 
   /* ── Redirect unauthenticated users ── */
   if (!loading && !authenticated) {
@@ -44,13 +57,16 @@ export default function AccountPage() {
 
   const isPro = plan === "pro" || plan === "lifetime";
   const isLifetime = plan === "lifetime";
-  const isActive = subscriptionStatus === "active" || subscriptionStatus === "trialing";
+  const isActive =
+    subscriptionStatus === "active" || subscriptionStatus === "trialing";
 
   return (
     <div className="min-h-[80vh] px-4 py-12 sm:px-6">
       <div className="mx-auto max-w-2xl">
         {/* ── Header ── */}
-        <h1 className="text-3xl font-bold tracking-tight text-white">Account</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-white">
+          Account
+        </h1>
         <p className="mt-1.5 text-sm text-slate-400">
           Manage your profile and subscription.
         </p>
@@ -58,7 +74,10 @@ export default function AccountPage() {
         {loading ? (
           <div className="mt-10 space-y-4">
             {[1, 2].map((i) => (
-              <div key={i} className="h-40 animate-pulse rounded-2xl bg-white/[0.04]" />
+              <div
+                key={i}
+                className="h-40 animate-pulse rounded-2xl bg-white/[0.04]"
+              />
             ))}
           </div>
         ) : (
@@ -84,7 +103,9 @@ export default function AccountPage() {
                     }}
                   />
                 ) : null}
-                <div className={`${user?.image ? "hidden" : "flex"} h-14 w-14 items-center justify-center rounded-full bg-emerald-500/20 text-2xl font-bold text-emerald-400`}>
+                <div
+                  className={`${user?.image ? "hidden" : "flex"} h-14 w-14 items-center justify-center rounded-full bg-emerald-500/20 text-2xl font-bold text-emerald-400`}
+                >
                   {(user?.name?.[0] ?? user?.email?.[0] ?? "?").toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
@@ -92,7 +113,9 @@ export default function AccountPage() {
                     {user?.name ?? "Unknown"}
                   </p>
                   {user?.email && (
-                    <p className="truncate text-sm text-slate-400">{user.email}</p>
+                    <p className="truncate text-sm text-slate-400">
+                      {user.email}
+                    </p>
                   )}
                 </div>
               </div>
@@ -116,7 +139,11 @@ export default function AccountPage() {
                   }`}
                 >
                   {isPro && (
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                    <svg
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
                       <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm0 2h14v2H5v-2z" />
                     </svg>
                   )}
@@ -142,7 +169,7 @@ export default function AccountPage() {
                           ? "Canceled"
                           : subscriptionStatus === "past_due"
                             ? "Past Due"
-                            : subscriptionStatus ?? "Unknown"}
+                            : (subscriptionStatus ?? "Unknown")}
                   </span>
                 )}
               </div>
@@ -153,7 +180,9 @@ export default function AccountPage() {
                   <div className="space-y-2 text-sm text-slate-300">
                     <div className="flex justify-between">
                       <span className="text-slate-500">Plan</span>
-                      <span className="text-amber-400">Lifetime — Founding Member</span>
+                      <span className="text-amber-400">
+                        Lifetime — Founding Member
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-500">Status</span>
@@ -168,7 +197,11 @@ export default function AccountPage() {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-500">Status</span>
-                      <span className={isActive ? "text-emerald-400" : "text-amber-400"}>
+                      <span
+                        className={
+                          isActive ? "text-emerald-400" : "text-amber-400"
+                        }
+                      >
                         {isActive ? "Active" : subscriptionStatus}
                       </span>
                     </div>
@@ -176,7 +209,8 @@ export default function AccountPage() {
                 ) : (
                   <div className="space-y-2 text-sm text-slate-300">
                     <p>
-                      You&apos;re on the <span className="font-medium text-white">Free</span> plan.
+                      You&apos;re on the{" "}
+                      <span className="font-medium text-white">Free</span> plan.
                     </p>
                     <ul className="mt-2 space-y-1 text-xs text-slate-500">
                       <li>• Up to 300 games per scan</li>
@@ -202,31 +236,120 @@ export default function AccountPage() {
                   >
                     {portalLoading ? (
                       <>
-                        <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        <svg
+                          className="h-4 w-4 animate-spin"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                          />
                         </svg>
                         Opening…
                       </>
                     ) : (
                       <>
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                          />
                         </svg>
                         Manage Billing
                       </>
                     )}
                   </button>
                 ) : (
-                  <Link
-                    href="/pricing"
-                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-5 py-2.5 text-sm font-semibold text-slate-950 transition-all duration-300 hover:shadow-glow-sm"
-                  >
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm0 2h14v2H5v-2z" />
-                    </svg>
-                    Upgrade to Pro
-                  </Link>
+                  <>
+                    <Link
+                      href="/pricing"
+                      className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-5 py-2.5 text-sm font-semibold text-slate-950 transition-all duration-300 hover:shadow-glow-sm"
+                    >
+                      <svg
+                        className="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm0 2h14v2H5v-2z" />
+                      </svg>
+                      Upgrade to Pro
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={syncPlan}
+                      disabled={syncLoading}
+                      title="Already paid? Click to sync your plan from the server"
+                      className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2.5 text-sm font-medium text-slate-400 transition-all hover:border-white/[0.15] hover:text-white disabled:opacity-50"
+                    >
+                      {syncLoading ? (
+                        <svg
+                          className="h-4 w-4 animate-spin"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                          />
+                        </svg>
+                      ) : syncDone ? (
+                        <svg
+                          className="h-4 w-4 text-emerald-400"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2.5}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                          />
+                        </svg>
+                      )}
+                      {syncDone ? "Plan synced!" : "Sync plan"}
+                    </button>
+                  </>
                 )}
 
                 <Link
@@ -237,9 +360,7 @@ export default function AccountPage() {
                 </Link>
               </div>
 
-              {error && (
-                <p className="mt-3 text-sm text-red-400">{error}</p>
-              )}
+              {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
             </section>
 
             {/* ── Pro Features (for free users) ── */}
@@ -258,8 +379,18 @@ export default function AccountPage() {
                     "Early access to new features",
                   ].map((f) => (
                     <li key={f} className="flex items-start gap-2">
-                      <svg className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      <svg
+                        className="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                       {f}
                     </li>

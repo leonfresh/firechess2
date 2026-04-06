@@ -71,8 +71,18 @@ export default async function BlogPostPage({ params }: Props) {
           href="/blog"
           className="inline-flex items-center gap-1.5 text-sm text-slate-500 transition-colors hover:text-slate-300"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
           All posts
         </Link>
@@ -117,16 +127,17 @@ export default async function BlogPostPage({ params }: Props) {
         </article>
 
         {/* CTA */}
-        <div className="mt-12 rounded-2xl border border-emerald-500/10 bg-gradient-to-b from-emerald-500/[0.04] to-transparent p-6 text-center">
+        <div className="mt-12 rounded-2xl border border-orange-500/10 bg-gradient-to-b from-orange-500/[0.04] to-transparent p-6 text-center">
           <p className="text-lg font-semibold text-white">
             Ready to find your chess weaknesses?
           </p>
           <p className="mt-1 text-sm text-slate-400">
-            Scan your games with FireChess — powered by Stockfish 18, free to use.
+            Scan your games with FireChess — powered by Stockfish 18, free to
+            use.
           </p>
           <Link
             href="/"
-            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-5 py-2.5 text-sm font-semibold text-slate-950 transition-all duration-300 hover:shadow-glow-sm"
+            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 px-5 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:shadow-glow-sm"
           >
             Analyze My Games
           </Link>

@@ -1,5 +1,8 @@
 import type { MetadataRoute } from "next";
 import { getAllPosts } from "@/lib/blog";
+import { OPENING_GUIDES } from "@/lib/opening-guides";
+import { TACTIC_MOTIFS } from "@/lib/tactics-motifs";
+import { ENDGAME_GUIDES } from "@/lib/endgame-guides";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = "https://firechess.com";
@@ -9,6 +12,27 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(post.date),
     changeFrequency: "monthly" as const,
     priority: 0.6,
+  }));
+
+  const openingPages = OPENING_GUIDES.map((guide) => ({
+    url: `${base}/openings/${guide.id}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.75,
+  }));
+
+  const tacticPages = TACTIC_MOTIFS.map((t) => ({
+    url: `${base}/tactics/${t.id}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.75,
+  }));
+
+  const endgamePages = ENDGAME_GUIDES.map((g) => ({
+    url: `${base}/endgames/${g.id}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.75,
   }));
 
   return [
@@ -45,6 +69,39 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.8,
     },
+    {
+      url: `${base}/openings/beginner`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${base}/openings/intermediate`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${base}/openings/advanced`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    ...openingPages,
+    {
+      url: `${base}/tactics`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    ...tacticPages,
+    {
+      url: `${base}/endgames`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    ...endgamePages,
     {
       url: `${base}/chaos`,
       lastModified: new Date(),

@@ -38,8 +38,8 @@ function DifficultyBadge({ level }: { level: string }) {
 /** Parse a move string like "1.e4 e5 2.Nf3 Nc6 3.Bc4" → ["e4","e5","Nf3","Nc6","Bc4"] */
 function parseSanMoves(raw: string): string[] {
   return raw
-    .replace(/\d+\./g, "")       // strip move numbers
-    .replace(/\.\.\./g, "")       // strip ellipses
+    .replace(/\d+\./g, "") // strip move numbers
+    .replace(/\.\.\./g, "") // strip ellipses
     .trim()
     .split(/\s+/)
     .filter(Boolean);
@@ -95,10 +95,22 @@ function LinePlayer({ moves: rawMoves }: { moves: string }) {
     };
   }, [playing, maxIndex]);
 
-  const goBack = useCallback(() => { setPlaying(false); setIndex((p) => Math.max(0, p - 1)); }, []);
-  const goForward = useCallback(() => { setPlaying(false); setIndex((p) => Math.min(maxIndex, p)); }, [maxIndex]);
-  const goForwardStep = useCallback(() => { setPlaying(false); setIndex((p) => Math.min(maxIndex, p + 1)); }, [maxIndex]);
-  const reset = useCallback(() => { setPlaying(false); setIndex(0); }, []);
+  const goBack = useCallback(() => {
+    setPlaying(false);
+    setIndex((p) => Math.max(0, p - 1));
+  }, []);
+  const goForward = useCallback(() => {
+    setPlaying(false);
+    setIndex((p) => Math.min(maxIndex, p));
+  }, [maxIndex]);
+  const goForwardStep = useCallback(() => {
+    setPlaying(false);
+    setIndex((p) => Math.min(maxIndex, p + 1));
+  }, [maxIndex]);
+  const reset = useCallback(() => {
+    setPlaying(false);
+    setIndex(0);
+  }, []);
   const togglePlay = useCallback(() => {
     setPlaying((p) => {
       // if at end, restart
@@ -143,7 +155,13 @@ function LinePlayer({ moves: rawMoves }: { moves: string }) {
           className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400"
           title="Reset"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
             <path d="M11 19l-7-7 7-7M18 19l-7-7 7-7" />
           </svg>
         </button>
@@ -155,7 +173,13 @@ function LinePlayer({ moves: rawMoves }: { moves: string }) {
           className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400"
           title="Back"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
             <path d="M15 19l-7-7 7-7" />
           </svg>
         </button>
@@ -185,19 +209,34 @@ function LinePlayer({ moves: rawMoves }: { moves: string }) {
           className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400"
           title="Forward"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
             <path d="M9 5l7 7-7 7" />
           </svg>
         </button>
         {/* End */}
         <button
           type="button"
-          onClick={() => { setPlaying(false); setIndex(maxIndex); }}
+          onClick={() => {
+            setPlaying(false);
+            setIndex(maxIndex);
+          }}
           disabled={index >= maxIndex}
           className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-slate-400"
           title="Go to end"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
             <path d="M13 5l7 7-7 7M6 5l7 7-7 7" />
           </svg>
         </button>
@@ -209,7 +248,10 @@ function LinePlayer({ moves: rawMoves }: { moves: string }) {
           <button
             key={i}
             type="button"
-            onClick={() => { setPlaying(false); setIndex(i); }}
+            onClick={() => {
+              setPlaying(false);
+              setIndex(i);
+            }}
             className={`h-1.5 rounded-full transition-all ${
               i === index
                 ? "w-4 bg-emerald-400"
@@ -228,7 +270,15 @@ function LinePlayer({ moves: rawMoves }: { moves: string }) {
 /*  Position Card (mini board with label)                               */
 /* ------------------------------------------------------------------ */
 
-function PositionCard({ fen, label, note }: { fen: string; label: string; note: string }) {
+function PositionCard({
+  fen,
+  label,
+  note,
+}: {
+  fen: string;
+  label: string;
+  note: string;
+}) {
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
 
@@ -276,7 +326,9 @@ function GuideCard({ guide }: { guide: OpeningGuide }) {
             <DifficultyBadge level={guide.difficulty} />
           </div>
           <p className="mt-1 text-sm text-slate-400">{guide.tagline}</p>
-          <p className="mt-2 font-mono text-xs text-emerald-400/80">{guide.moves}</p>
+          <p className="mt-2 font-mono text-xs text-emerald-400/80">
+            {guide.moves}
+          </p>
         </div>
         <svg
           className={`mt-1.5 h-5 w-5 shrink-0 text-slate-500 transition-transform ${open ? "rotate-180" : ""}`}
@@ -301,7 +353,10 @@ function GuideCard({ guide }: { guide: OpeningGuide }) {
           <Section title="💡 Key Ideas">
             <ul className="space-y-1">
               {guide.keyIdeas.map((idea, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
+                <li
+                  key={i}
+                  className="flex items-start gap-2 text-sm text-slate-300"
+                >
                   <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400" />
                   {idea}
                 </li>
@@ -314,7 +369,10 @@ function GuideCard({ guide }: { guide: OpeningGuide }) {
             <Section title="⬜ Plans for White">
               <ul className="space-y-1">
                 {guide.whitePlans.map((p, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-slate-400">
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-sm text-slate-400"
+                  >
                     <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-white/40" />
                     {p}
                   </li>
@@ -324,7 +382,10 @@ function GuideCard({ guide }: { guide: OpeningGuide }) {
             <Section title="⬛ Plans for Black">
               <ul className="space-y-1">
                 {guide.blackPlans.map((p, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-slate-400">
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-sm text-slate-400"
+                  >
                     <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-600" />
                     {p}
                   </li>
@@ -338,9 +399,16 @@ function GuideCard({ guide }: { guide: OpeningGuide }) {
             <Section title="⚠️ Common Traps">
               <div className="space-y-2">
                 {guide.traps.map((t, i) => (
-                  <div key={i} className="rounded-xl border border-red-500/10 bg-red-500/[0.04] p-3">
-                    <p className="text-sm font-semibold text-red-400">{t.name}</p>
-                    <p className="mt-1 text-xs text-slate-400">{t.description}</p>
+                  <div
+                    key={i}
+                    className="rounded-xl border border-red-500/10 bg-red-500/[0.04] p-3"
+                  >
+                    <p className="text-sm font-semibold text-red-400">
+                      {t.name}
+                    </p>
+                    <p className="mt-1 text-xs text-slate-400">
+                      {t.description}
+                    </p>
                   </div>
                 ))}
               </div>
@@ -376,13 +444,42 @@ function GuideCard({ guide }: { guide: OpeningGuide }) {
               </div>
             </div>
           )}
+
+          {/* Link to full SEO guide page */}
+          <div className="pt-1">
+            <Link
+              href={`/openings/${guide.id}`}
+              className="inline-flex items-center gap-1.5 text-xs text-orange-400 hover:text-orange-300 transition-colors"
+            >
+              View full {guide.name} guide
+              <svg
+                className="h-3 w-3"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </Link>
+          </div>
         </div>
       )}
     </div>
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">
@@ -417,7 +514,7 @@ export default function OpeningsPage() {
           g.name.toLowerCase().includes(q) ||
           g.eco.toLowerCase().includes(q) ||
           g.tagline.toLowerCase().includes(q) ||
-          g.moves.toLowerCase().includes(q)
+          g.moves.toLowerCase().includes(q),
       );
     }
     return guides;
@@ -431,8 +528,8 @@ export default function OpeningsPage() {
           Opening Cheat Sheets
         </h1>
         <p className="mt-2 text-sm text-slate-400">
-          {OPENING_GUIDES.length} curated guides covering key ideas, plans for both sides, common
-          traps, and critical positions.
+          {OPENING_GUIDES.length} curated guides covering key ideas, plans for
+          both sides, common traps, and critical positions.
         </p>
       </div>
 
@@ -452,12 +549,16 @@ export default function OpeningsPage() {
             All ({OPENING_GUIDES.length})
           </button>
           {OPENING_CATEGORIES.map((cat) => {
-            const count = OPENING_GUIDES.filter((g) => g.category === cat.id).length;
+            const count = OPENING_GUIDES.filter(
+              (g) => g.category === cat.id,
+            ).length;
             return (
               <button
                 key={cat.id}
                 type="button"
-                onClick={() => setActiveCategory(activeCategory === cat.id ? null : cat.id)}
+                onClick={() =>
+                  setActiveCategory(activeCategory === cat.id ? null : cat.id)
+                }
                 className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                   activeCategory === cat.id
                     ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-400"
@@ -484,7 +585,9 @@ export default function OpeningsPage() {
               <button
                 key={d}
                 type="button"
-                onClick={() => setDifficultyFilter(difficultyFilter === d ? null : d)}
+                onClick={() =>
+                  setDifficultyFilter(difficultyFilter === d ? null : d)
+                }
                 className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition-colors ${
                   difficultyFilter === d
                     ? DIFFICULTY_COLORS[d]
@@ -502,7 +605,9 @@ export default function OpeningsPage() {
       <div className="space-y-3">
         {filtered.length === 0 && (
           <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-10 text-center">
-            <p className="text-sm text-slate-500">No openings match your filters.</p>
+            <p className="text-sm text-slate-500">
+              No openings match your filters.
+            </p>
           </div>
         )}
         {filtered.map((guide) => (
@@ -512,7 +617,8 @@ export default function OpeningsPage() {
 
       {/* Footer note */}
       <p className="mt-8 text-center text-xs text-slate-500">
-        These guides give you a quick overview — for deeper study, analyze your own games on the{" "}
+        These guides give you a quick overview — for deeper study, analyze your
+        own games on the{" "}
         <Link href="/analyze" className="text-emerald-400 hover:underline">
           Analyze
         </Link>{" "}

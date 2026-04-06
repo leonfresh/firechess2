@@ -13,7 +13,7 @@ const FAQ_ITEMS = [
     a: "No. All analysis runs in your browser via Stockfish 18 WASM. We only store reports you explicitly choose to save to your Dashboard.",
   },
   {
-    q: "What is an \"opening leak\"?",
+    q: 'What is an "opening leak"?',
     a: "A position you've reached multiple times and consistently played a suboptimal move. FireChess detects these patterns across your game history so you can fix them.",
   },
   {
@@ -71,7 +71,9 @@ export default function AboutPage() {
           className="h-14 w-14 rounded-2xl"
         />
         <div>
-          <h1 className="text-3xl font-extrabold text-white">About FireChess</h1>
+          <h1 className="text-3xl font-extrabold text-white">
+            About FireChess
+          </h1>
           <p className="mt-1 text-sm text-slate-400">
             The all-in-one chess improvement platform
           </p>
@@ -81,20 +83,34 @@ export default function AboutPage() {
       <div className="mt-10 space-y-10 text-sm leading-relaxed text-slate-300">
         {/* What is FireChess */}
         <section>
-          <h2 className="mb-3 text-lg font-bold text-white">What is FireChess?</h2>
+          <h2 className="mb-3 text-lg font-bold text-white">
+            What is FireChess?
+          </h2>
           <p>
-            FireChess is a free chess analysis and training platform that connects to your{" "}
-            <a href="https://lichess.org" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">
+            FireChess is a free chess analysis and training platform that
+            connects to your{" "}
+            <a
+              href="https://lichess.org"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-emerald-400 hover:underline"
+            >
               Lichess
             </a>{" "}
             or{" "}
-            <a href="https://chess.com" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:underline">
+            <a
+              href="https://chess.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-emerald-400 hover:underline"
+            >
               Chess.com
             </a>{" "}
-            account and scans hundreds of your games to find patterns in your play. Instead of
-            reviewing one game at a time, FireChess aggregates data across your entire game
-            history to surface the mistakes you keep repeating — then helps you fix them with
-            targeted training, puzzles, and interactive drills.
+            account and scans hundreds of your games to find patterns in your
+            play. Instead of reviewing one game at a time, FireChess aggregates
+            data across your entire game history to surface the mistakes you
+            keep repeating — then helps you fix them with targeted training,
+            puzzles, and interactive drills.
           </p>
         </section>
 
@@ -103,20 +119,24 @@ export default function AboutPage() {
           <h2 className="mb-3 text-lg font-bold text-white">How It Works</h2>
           <ol className="list-inside list-decimal space-y-3 text-slate-400">
             <li>
-              <span className="text-slate-300">Enter your chess username</span> — we fetch your
-              publicly available games from the Lichess or Chess.com API.
+              <span className="text-slate-300">Enter your chess username</span>{" "}
+              — we fetch your publicly available games from the Lichess or
+              Chess.com API.
             </li>
             <li>
-              <span className="text-slate-300">Browser-side analysis</span> — Stockfish 18 runs
-              entirely in your browser via WebAssembly (WASM). Your games never leave your device.
+              <span className="text-slate-300">Browser-side analysis</span> —
+              Stockfish 18 runs entirely in your browser via WebAssembly (WASM).
+              Your games never leave your device.
             </li>
             <li>
-              <span className="text-slate-300">Pattern detection</span> — we group positions
-              you&apos;ve reached multiple times and flag where you consistently play suboptimal moves.
+              <span className="text-slate-300">Pattern detection</span> — we
+              group positions you&apos;ve reached multiple times and flag where
+              you consistently play suboptimal moves.
             </li>
             <li>
-              <span className="text-slate-300">Train your weaknesses</span> — drill your opening
-              leaks, solve personalized puzzles, play through GM games, or dive into the Puzzle Dungeon.
+              <span className="text-slate-300">Train your weaknesses</span> —
+              drill your opening leaks, solve personalized puzzles, play through
+              GM games, or dive into the Puzzle Dungeon.
             </li>
           </ol>
         </section>
@@ -175,9 +195,15 @@ export default function AboutPage() {
                 link: "/leaderboard",
               },
             ].map((item) => (
-              <Link key={item.title} href={item.link} className="glass-card group space-y-2 p-4 transition-all hover:border-white/[0.08]">
+              <Link
+                key={item.title}
+                href={item.link}
+                className="glass-card group space-y-2 p-4 transition-all hover:border-white/[0.08]"
+              >
                 <span className="text-2xl">{item.icon}</span>
-                <h3 className="font-semibold text-white group-hover:text-emerald-400 transition-colors">{item.title}</h3>
+                <h3 className="font-semibold text-white group-hover:text-emerald-400 transition-colors">
+                  {item.title}
+                </h3>
                 <p className="text-xs text-slate-400">{item.desc}</p>
               </Link>
             ))}
@@ -186,7 +212,9 @@ export default function AboutPage() {
 
         {/* What we scan */}
         <section>
-          <h2 className="mb-3 text-lg font-bold text-white">What the Scanner Detects</h2>
+          <h2 className="mb-3 text-lg font-bold text-white">
+            What the Scanner Detects
+          </h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {[
               {
@@ -221,26 +249,58 @@ export default function AboutPage() {
 
         {/* Dashboard & Progress */}
         <section>
-          <h2 className="mb-3 text-lg font-bold text-white">Dashboard & Progress Tracking</h2>
+          <h2 className="mb-3 text-lg font-bold text-white">
+            Dashboard & Progress Tracking
+          </h2>
           <p className="mb-4">
             Your personal{" "}
-            <Link href="/dashboard" className="text-emerald-400 hover:underline">
+            <Link
+              href="/dashboard"
+              className="text-emerald-400 hover:underline"
+            >
               Dashboard
             </Link>{" "}
             tracks your improvement over time with:
           </p>
           <div className="grid gap-3 sm:grid-cols-2">
             {[
-              { label: "📊 Report History", desc: "All your saved scans with mini radar charts" },
-              { label: "📈 Progress Charts", desc: "Track accuracy and rating trends over time" },
-              { label: "🎯 Study Plans", desc: "Personalized daily plans with streak tracking" },
-              { label: "🏅 Achievements", desc: "Unlock badges based on your analysis stats" },
-              { label: "🎲 Daily Challenge", desc: "One puzzle per day from your missed tactics" },
-              { label: "📋 Opening Repertoire", desc: "Save and review correct moves from your leaks" },
-              { label: "📐 Percentile Rank", desc: "See where you rank among all FireChess users" },
-              { label: "🎁 Daily Login Rewards", desc: "7-day streak calendar with coin rewards" },
+              {
+                label: "📊 Report History",
+                desc: "All your saved scans with mini radar charts",
+              },
+              {
+                label: "📈 Progress Charts",
+                desc: "Track accuracy and rating trends over time",
+              },
+              {
+                label: "🎯 Study Plans",
+                desc: "Personalized daily plans with streak tracking",
+              },
+              {
+                label: "🏅 Achievements",
+                desc: "Unlock badges based on your analysis stats",
+              },
+              {
+                label: "🎲 Daily Challenge",
+                desc: "One puzzle per day from your missed tactics",
+              },
+              {
+                label: "📋 Opening Repertoire",
+                desc: "Save and review correct moves from your leaks",
+              },
+              {
+                label: "📐 Percentile Rank",
+                desc: "See where you rank among all FireChess users",
+              },
+              {
+                label: "🎁 Daily Login Rewards",
+                desc: "7-day streak calendar with coin rewards",
+              },
             ].map((item) => (
-              <div key={item.label} className="flex items-start gap-2 rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2">
+              <div
+                key={item.label}
+                className="flex items-start gap-2 rounded-lg border border-white/[0.04] bg-white/[0.02] px-3 py-2"
+              >
                 <span className="text-sm">{item.label}</span>
                 <span className="text-xs text-slate-500">— {item.desc}</span>
               </div>
@@ -250,15 +310,17 @@ export default function AboutPage() {
 
         {/* Coin Shop */}
         <section>
-          <h2 className="mb-3 text-lg font-bold text-white">Cosmetics & Coin Shop</h2>
+          <h2 className="mb-3 text-lg font-bold text-white">
+            Cosmetics & Coin Shop
+          </h2>
           <p>
-            Earn coins by completing analyses, training sessions, daily challenges, and login streaks.
-            Spend them in the{" "}
+            Earn coins by completing analyses, training sessions, daily
+            challenges, and login streaks. Spend them in the{" "}
             <Link href="/shop" className="text-emerald-400 hover:underline">
               Coin Shop
             </Link>{" "}
-            on custom board themes, piece sets, eval bar skins, profile titles, and avatar frames.
-            All cosmetic — no pay-to-win.
+            on custom board themes, piece sets, eval bar skins, profile titles,
+            and avatar frames. All cosmetic — no pay-to-win.
           </p>
         </section>
 
@@ -266,10 +328,11 @@ export default function AboutPage() {
         <section>
           <h2 className="mb-3 text-lg font-bold text-white">Privacy First</h2>
           <p>
-            Your games are analyzed <strong className="text-white">entirely in your browser</strong>.
-            Stockfish 18 runs as a WebAssembly module — no game data is sent to our servers. The
-            only data we store is analysis reports you explicitly choose to save to your Dashboard.
-            Read our full{" "}
+            Your games are analyzed{" "}
+            <strong className="text-white">entirely in your browser</strong>.
+            Stockfish 18 runs as a WebAssembly module — no game data is sent to
+            our servers. The only data we store is analysis reports you
+            explicitly choose to save to your Dashboard. Read our full{" "}
             <Link href="/privacy" className="text-emerald-400 hover:underline">
               Privacy Policy
             </Link>
@@ -288,7 +351,9 @@ export default function AboutPage() {
               { label: "Chess.com API", desc: "Game data" },
             ].map((tech) => (
               <div key={tech.label} className="stat-card text-center">
-                <p className="text-xs font-semibold text-emerald-400">{tech.label}</p>
+                <p className="text-xs font-semibold text-emerald-400">
+                  {tech.label}
+                </p>
                 <p className="mt-0.5 text-[10px] text-slate-500">{tech.desc}</p>
               </div>
             ))}
@@ -302,26 +367,32 @@ export default function AboutPage() {
             <div className="glass-card space-y-2 p-4">
               <h3 className="font-semibold text-white">Free</h3>
               <p className="text-xs text-slate-400">
-                300 games/scan, depth 12, 10 tactics & endgames per scan, all scan modes, strengths radar,
-                opening explorer, Guess the Move, Puzzle Dungeon, Guess the Elo, save reports.
+                300 games/scan, depth 12, 10 tactics & endgames per scan, all
+                scan modes, strengths radar, opening explorer, Guess the Move,
+                Puzzle Dungeon, Guess the Elo, save reports.
               </p>
             </div>
             <div className="glass-card space-y-2 border-emerald-500/20 p-4">
               <h3 className="font-semibold text-emerald-400">Pro — $5/mo</h3>
               <p className="text-xs text-slate-400">
-                5,000 games/scan, depth up to 24, unlimited tactics & endgames, motif pattern analysis,
-                time pressure detection, all 6 drill modes, deep study plans, and full mental game breakdown.
+                5,000 games/scan, depth up to 24, unlimited tactics & endgames,
+                motif pattern analysis, time pressure detection, all 6 drill
+                modes, deep study plans, and full mental game breakdown.
               </p>
             </div>
             <div className="glass-card space-y-2 border-cyan-500/20 p-4">
               <h3 className="font-semibold text-cyan-400">Lifetime — $59</h3>
               <p className="text-xs text-slate-400">
-                Everything in Pro, forever. One-time founding member price — no recurring fees.
+                Everything in Pro, forever. One-time founding member price — no
+                recurring fees.
               </p>
             </div>
           </div>
           <p className="mt-3 text-center">
-            <Link href="/pricing" className="text-emerald-400 hover:underline text-sm">
+            <Link
+              href="/pricing"
+              className="text-emerald-400 hover:underline text-sm"
+            >
               See full plan comparison →
             </Link>
           </p>
@@ -329,7 +400,9 @@ export default function AboutPage() {
 
         {/* FAQ */}
         <section>
-          <h2 className="mb-3 text-lg font-bold text-white">Frequently Asked Questions</h2>
+          <h2 className="mb-3 text-lg font-bold text-white">
+            Frequently Asked Questions
+          </h2>
           <div className="space-y-4">
             {FAQ_ITEMS.map((faq) => (
               <div key={faq.q} className="glass-card p-4">
@@ -342,11 +415,13 @@ export default function AboutPage() {
 
         {/* CTA */}
         <section className="text-center">
-          <p className="text-base font-semibold text-white">Ready to find your chess weaknesses?</p>
+          <p className="text-base font-semibold text-white">
+            Ready to find your chess weaknesses?
+          </p>
           <div className="mt-4 flex flex-wrap justify-center gap-3">
             <Link
               href="/"
-              className="inline-block rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-8 py-3 text-sm font-bold text-slate-950 transition-shadow hover:shadow-glow-sm"
+              className="inline-block rounded-xl bg-gradient-to-r from-orange-500 to-red-600 px-8 py-3 text-sm font-bold text-white transition-shadow hover:shadow-glow-sm"
             >
               Start Scanning — It&apos;s Free
             </Link>
