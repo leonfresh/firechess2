@@ -10,25 +10,17 @@ import { LATEST_VERSION } from "@/lib/constants";
 import { useCoinBalance } from "@/lib/use-coins";
 import { useAvatarFrame } from "@/lib/use-coins";
 
-const NAV_LINKS = [
-  { href: "/analyze", label: "Analyze" },
-  { href: "/coach", label: "♟ Coach" },
-  { href: "/train", label: "Training" },
-  { href: "/sparring", label: "⚔️ Sparring" },
-  { href: "/guess", label: "Guess the Move" },
-  { href: "/chaos", label: "⚡ Chaos Chess" },
-  { href: "/escape", label: "🎮 Escape Chess" },
-  { href: "/roast", label: "🔥 Roast the Elo" },
-  { href: "/about", label: "About" },
-];
-
 export function Navbar() {
   const pathname = usePathname();
   const { loading, authenticated, user, plan, isAdmin } = useSession();
   const coinBalance = useCoinBalance();
   const avatarFrame = useAvatarFrame();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [profileOpen, setProfileOpen] = useState(false);
+
+  const toggleSection = (key: string) =>
+    setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
   const profileRef = useRef<HTMLDivElement>(null);
   const [hasUnseenChanges, setHasUnseenChanges] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
@@ -115,7 +107,7 @@ export function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#030712]/80 backdrop-blur-2xl">
-        <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-3.5 md:px-10">
+        <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-3 md:px-10">
           {/* ── Logo ── */}
           <Link
             href="/"
@@ -131,52 +123,20 @@ export function Navbar() {
             <span className="tracking-tight">FireChess</span>
           </Link>
 
-          {/* ── Desktop nav links ── */}
-          <div className="hidden items-center gap-1 lg:flex">
-            {/* Pro link */}
-            <Link
-              href="/pricing"
-              className={`inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 px-3.5 py-1.5 text-sm font-semibold text-white transition-all duration-200 hover:shadow-glow-sm ${
-                isActive("/pricing") ? "shadow-glow-sm" : ""
-              }`}
-            >
-              <svg
-                className="h-3.5 w-3.5"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm0 2h14v2H5v-2z" />
-              </svg>
-              Pro
-            </Link>
-
-            {/* Dev Notes link */}
-            <Link
-              href="/changelog"
-              className={`relative rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                isActive("/changelog")
-                  ? "text-white bg-white/[0.06]"
-                  : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
-              }`}
-            >
-              Dev Notes
-              {authenticated && hasUnseenChanges && (
-                <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-red-500" />
-                </span>
-              )}
-            </Link>
-
-            {/* Analyze dropdown */}
+          {/* ── Desktop nav — 4 grouped dropdowns ── */}
+          <div className="hidden items-center gap-0.5 lg:flex">
+            {/* Analyze */}
             <div className="group relative">
               <button
                 type="button"
                 aria-haspopup="true"
                 className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  isActive("/analyze") || isActive("/my-openings")
-                    ? "text-white bg-white/[0.06]"
-                    : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+                  pathname === "/" ||
+                  isActive("/analyze") ||
+                  isActive("/my-openings") ||
+                  isActive("/roast")
+                    ? "bg-white/[0.06] text-white"
+                    : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
                 }`}
               >
                 Analyze
@@ -191,134 +151,34 @@ export function Navbar() {
                 </svg>
               </button>
               <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
-                <div className="min-w-[190px] rounded-xl border border-white/[0.08] bg-[#110c08] p-1.5 shadow-xl shadow-black/40">
+                <div className="min-w-[200px] rounded-xl border border-white/[0.08] bg-[#0d0a06] p-1.5 shadow-xl shadow-black/50">
                   <Link
                     href="/"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      pathname === "/"
-                        ? "text-white bg-white/[0.06]"
-                        : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
-                    }`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${pathname === "/" ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
                   >
                     🔍 Analyze Games
                   </Link>
                   <Link
                     href="/analyze"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive("/analyze")
-                        ? "text-white bg-white/[0.06]"
-                        : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
-                    }`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/analyze") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
                   >
                     ♟️ PGN Analyzer
                   </Link>
                   <Link
                     href="/my-openings"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive("/my-openings")
-                        ? "text-orange-300 bg-orange-500/[0.08]"
-                        : "text-stone-400 hover:text-orange-300 hover:bg-orange-500/[0.06]"
-                    }`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/my-openings") ? "bg-orange-500/[0.08] text-orange-300" : "text-slate-400 hover:bg-orange-500/[0.06] hover:text-orange-300"}`}
                   >
                     🌲 My Opening Tree
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            {/* Games dropdown */}
-            <div className="group relative">
-              <button
-                type="button"
-                aria-haspopup="true"
-                className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  isActive("/train") ||
-                  isActive("/guess") ||
-                  isActive("/dungeon") ||
-                  isActive("/roast") ||
-                  isActive("/chaos") ||
-                  isActive("/sparring")
-                    ? "text-white bg-white/[0.06]"
-                    : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
-                }`}
-              >
-                Games
-                <svg
-                  className="h-3 w-3 text-slate-500 transition-transform group-hover:rotate-180"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-              <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
-                <div className="min-w-[180px] rounded-xl border border-white/[0.08] bg-[#110c08] p-1.5 shadow-xl shadow-black/40">
-                  <Link
-                    href="/sparring"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive("/sparring")
-                        ? "text-sky-400 bg-sky-500/[0.08]"
-                        : "text-slate-400 hover:text-sky-400 hover:bg-sky-500/[0.06]"
-                    }`}
-                  >
-                    ⚔️ Opening Sparring
-                  </Link>
-                  <Link
-                    href="/train"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive("/train")
-                        ? "text-white bg-white/[0.06]"
-                        : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
-                    }`}
-                  >
-                    🎯 Puzzles & Drills
-                  </Link>
-                  <Link
-                    href="/guess"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive("/guess")
-                        ? "text-white bg-white/[0.06]"
-                        : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
-                    }`}
-                  >
-                    🧩 Guess the Move
-                  </Link>
-                  <Link
-                    href="/dungeon"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive("/dungeon")
-                        ? "text-red-400 bg-red-500/[0.08]"
-                        : "text-slate-400 hover:text-red-400 hover:bg-red-500/[0.06]"
-                    }`}
-                  >
-                    ⚔️ Dungeon Tactics
-                  </Link>
-                  <Link
-                    href="/chaos"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive("/chaos")
-                        ? "text-purple-400 bg-purple-500/[0.08]"
-                        : "text-slate-400 hover:text-purple-400 hover:bg-purple-500/[0.06]"
-                    }`}
-                  >
-                    ⚡ Chaos Chess
                   </Link>
                   <Link
                     href="/roast"
                     onClick={() => {
-                      if (pathname.startsWith("/roast")) {
+                      if (pathname.startsWith("/roast"))
                         window.dispatchEvent(
                           new CustomEvent("firechess:new-roast"),
                         );
-                      }
                     }}
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive("/roast")
-                        ? "text-orange-400 bg-orange-500/[0.08]"
-                        : "text-slate-400 hover:text-orange-400 hover:bg-orange-500/[0.06]"
-                    }`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/roast") ? "bg-orange-500/[0.08] text-orange-400" : "text-slate-400 hover:bg-orange-500/[0.06] hover:text-orange-400"}`}
                   >
                     🔥 Roast the Elo
                   </Link>
@@ -326,27 +186,25 @@ export function Navbar() {
               </div>
             </div>
 
-            {/* More dropdown (About, Blog, Feedback, Leaderboard) */}
+            {/* Train */}
             <div className="group relative">
               <button
                 type="button"
                 aria-haspopup="true"
                 className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  isActive("/about") ||
-                  isActive("/blog") ||
-                  isActive("/feedback") ||
-                  isActive("/leaderboard") ||
-                  isActive("/shop") ||
+                  isActive("/train") ||
+                  isActive("/sparring") ||
+                  isActive("/guess") ||
+                  isActive("/dungeon") ||
+                  isActive("/coach") ||
                   isActive("/openings") ||
                   isActive("/tactics") ||
-                  isActive("/endgames") ||
-                  isActive("/coaches") ||
-                  isActive("/youtubers")
-                    ? "text-white bg-white/[0.06]"
-                    : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
+                  isActive("/endgames")
+                    ? "bg-white/[0.06] text-white"
+                    : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
                 }`}
               >
-                More
+                Train
                 <svg
                   className="h-3 w-3 text-slate-500 transition-transform group-hover:rotate-180"
                   fill="none"
@@ -358,134 +216,233 @@ export function Navbar() {
                 </svg>
               </button>
               <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
-                <div className="min-w-[160px] rounded-xl border border-white/[0.08] bg-[#110c08] p-1.5 shadow-xl shadow-black/40">
+                <div className="min-w-[210px] rounded-xl border border-white/[0.08] bg-[#0d0a06] p-1.5 shadow-xl shadow-black/50">
                   <Link
-                    href="/about"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive("/about")
-                        ? "text-white bg-white/[0.06]"
-                        : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
-                    }`}
+                    href="/train"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/train") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
                   >
-                    About
+                    🎯 Puzzles & Drills
                   </Link>
                   <Link
-                    href="/blog"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive("/blog")
-                        ? "text-white bg-white/[0.06]"
-                        : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
-                    }`}
+                    href="/sparring"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/sparring") ? "bg-sky-500/[0.08] text-sky-400" : "text-slate-400 hover:bg-sky-500/[0.06] hover:text-sky-400"}`}
                   >
-                    Blog
+                    ⚔️ Opening Sparring
                   </Link>
                   <Link
-                    href="/feedback"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive("/feedback")
-                        ? "text-white bg-white/[0.06]"
-                        : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
-                    }`}
+                    href="/guess"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/guess") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
                   >
-                    Feedback
-                    {unreadMessages > 0 && (
-                      <span className="flex h-2 w-2">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75" />
-                        <span className="relative inline-flex h-2 w-2 rounded-full bg-orange-500" />
-                      </span>
-                    )}
+                    🧩 Guess the Move
                   </Link>
                   <Link
-                    href="/leaderboard"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive("/leaderboard")
-                        ? "text-amber-400 bg-amber-500/[0.08]"
-                        : "text-slate-400 hover:text-amber-400 hover:bg-amber-500/[0.06]"
-                    }`}
+                    href="/coach"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/coach") ? "bg-amber-500/[0.08] text-amber-400" : "text-slate-400 hover:bg-amber-500/[0.06] hover:text-amber-400"}`}
                   >
-                    🏆 Leaderboard
+                    ♟ AI Coach
                   </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Guides */}
+            <div className="group relative">
+              <button
+                type="button"
+                aria-haspopup="true"
+                className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                  isActive("/openings") ||
+                  isActive("/tactics") ||
+                  isActive("/endgames")
+                    ? "bg-white/[0.06] text-white"
+                    : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
+                }`}
+              >
+                Guides
+                <svg
+                  className="h-3 w-3 text-slate-500 transition-transform group-hover:rotate-180"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+              <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
+                <div className="min-w-[180px] rounded-xl border border-white/[0.08] bg-[#0d0a06] p-1.5 shadow-xl shadow-black/50">
                   <Link
                     href="/openings"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive("/openings")
-                        ? "text-white bg-white/[0.06]"
-                        : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
-                    }`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/openings") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
                   >
                     📖 Openings
                   </Link>
                   <Link
                     href="/tactics"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive("/tactics")
-                        ? "text-sky-400 bg-sky-500/[0.08]"
-                        : "text-slate-400 hover:text-sky-400 hover:bg-sky-500/[0.06]"
-                    }`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/tactics") ? "bg-sky-500/[0.08] text-sky-400" : "text-slate-400 hover:bg-sky-500/[0.06] hover:text-sky-400"}`}
                   >
                     ⚡ Tactics
                   </Link>
                   <Link
                     href="/endgames"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive("/endgames")
-                        ? "text-emerald-400 bg-emerald-500/[0.08]"
-                        : "text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/[0.06]"
-                    }`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/endgames") ? "bg-emerald-500/[0.08] text-emerald-400" : "text-slate-400 hover:bg-emerald-500/[0.06] hover:text-emerald-400"}`}
                   >
                     ♟ Endgames
                   </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Play */}
+            <div className="group relative">
+              <button
+                type="button"
+                aria-haspopup="true"
+                className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                  isActive("/chaos") || isActive("/dungeon")
+                    ? "bg-white/[0.06] text-white"
+                    : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
+                }`}
+              >
+                Play
+                <svg
+                  className="h-3 w-3 text-slate-500 transition-transform group-hover:rotate-180"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+              <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
+                <div className="min-w-[200px] rounded-xl border border-white/[0.08] bg-[#0d0a06] p-1.5 shadow-xl shadow-black/50">
                   <Link
-                    href="/shop"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive("/shop")
-                        ? "text-amber-400 bg-amber-500/[0.08]"
-                        : "text-slate-400 hover:text-amber-400 hover:bg-amber-500/[0.06]"
-                    }`}
+                    href="/chaos"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/chaos") ? "bg-purple-500/[0.08] text-purple-400" : "text-slate-400 hover:bg-purple-500/[0.06] hover:text-purple-400"}`}
                   >
-                    🪙 Coin Shop
+                    ⚡ Chaos Chess
                   </Link>
-                  <div className="my-1 h-px bg-white/[0.06]" />
+                  <Link
+                    href="/dungeon"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/dungeon") ? "bg-red-500/[0.08] text-red-400" : "text-slate-400 hover:bg-red-500/[0.06] hover:text-red-400"}`}
+                  >
+                    🗡️ Dungeon Tactics
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Community */}
+            <div className="group relative">
+              <button
+                type="button"
+                aria-haspopup="true"
+                className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                  isActive("/blog") ||
+                  isActive("/leaderboard") ||
+                  isActive("/shop") ||
+                  isActive("/coaches") ||
+                  isActive("/youtubers") ||
+                  isActive("/about") ||
+                  isActive("/changelog")
+                    ? "bg-white/[0.06] text-white"
+                    : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
+                }`}
+              >
+                Community
+                <svg
+                  className="h-3 w-3 text-slate-500 transition-transform group-hover:rotate-180"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+              <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
+                <div className="min-w-[180px] rounded-xl border border-white/[0.08] bg-[#0d0a06] p-1.5 shadow-xl shadow-black/50">
+                  <Link
+                    href="/blog"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/blog") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
+                  >
+                    📝 Blog
+                  </Link>
+                  <Link
+                    href="/leaderboard"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/leaderboard") ? "bg-amber-500/[0.08] text-amber-400" : "text-slate-400 hover:bg-amber-500/[0.06] hover:text-amber-400"}`}
+                  >
+                    🏆 Leaderboard
+                  </Link>
                   <Link
                     href="/coaches"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive("/coaches")
-                        ? "text-orange-400 bg-orange-500/[0.08]"
-                        : "text-stone-400 hover:text-orange-400 hover:bg-orange-500/[0.06]"
-                    }`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/coaches") ? "bg-orange-500/[0.08] text-orange-400" : "text-slate-400 hover:bg-orange-500/[0.06] hover:text-orange-400"}`}
                   >
                     🎓 For Coaches
                   </Link>
                   <Link
                     href="/youtubers"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      isActive("/youtubers")
-                        ? "text-amber-400 bg-amber-500/[0.08]"
-                        : "text-stone-400 hover:text-amber-400 hover:bg-amber-500/[0.06]"
-                    }`}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/youtubers") ? "bg-amber-500/[0.08] text-amber-400" : "text-stone-400 hover:bg-amber-500/[0.06] hover:text-amber-400"}`}
                   >
                     🎬 For Creators
+                  </Link>
+                  <Link
+                    href="/about"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/about") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
+                  >
+                    About
+                  </Link>
+                  <div className="my-1 h-px bg-white/[0.06]" />
+                  <Link
+                    href="/shop"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/shop") ? "bg-amber-500/[0.08] text-amber-400" : "text-slate-400 hover:bg-amber-500/[0.06] hover:text-amber-400"}`}
+                  >
+                    🪙 Coin Shop
+                  </Link>
+                  <Link
+                    href="/changelog"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/changelog") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
+                  >
+                    Dev Notes
+                    {authenticated && hasUnseenChanges && (
+                      <span className="ml-auto h-2 w-2 rounded-full bg-red-500" />
+                    )}
                   </Link>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* ── Desktop right side (auth) ── */}
-          <div className="hidden items-center gap-2.5 lg:flex">
+          {/* ── Desktop right side ── */}
+          <div className="hidden items-center gap-2 lg:flex">
+            {/* Pro CTA */}
+            <Link
+              href="/pricing"
+              className={`inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 px-3.5 py-1.5 text-sm font-semibold text-white transition-all duration-200 hover:shadow-glow-sm ${isActive("/pricing") ? "shadow-glow-sm" : ""}`}
+            >
+              <svg
+                className="h-3.5 w-3.5"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm0 2h14v2H5v-2z" />
+              </svg>
+              Pro
+            </Link>
+
             {loading ? (
               <div className="h-9 w-20 animate-pulse rounded-lg bg-white/[0.06]" />
             ) : !authenticated ? (
               <button
                 type="button"
                 onClick={() => signIn(undefined, { callbackUrl: "/" })}
-                className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-slate-400 transition-colors hover:text-white hover:bg-white/[0.04]"
+                className="rounded-lg px-3.5 py-1.5 text-sm font-medium text-slate-400 transition-colors hover:bg-white/[0.04] hover:text-white"
               >
                 Sign in
               </button>
             ) : (
               <>
-                {/* Coin balance */}
                 {coinBalance > 0 && (
                   <Link
                     href="/dashboard"
@@ -496,14 +453,9 @@ export function Navbar() {
                     {coinBalance.toLocaleString()}
                   </Link>
                 )}
-
                 <Link
                   href="/dashboard"
-                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                    isActive("/dashboard")
-                      ? "text-white bg-white/[0.06]"
-                      : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
-                  }`}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${isActive("/dashboard") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
                 >
                   Dashboard
                 </Link>
@@ -581,7 +533,6 @@ export function Navbar() {
                           {user?.email}
                         </p>
                       </div>
-
                       <div className="p-1.5">
                         <div className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-slate-400">
                           <span>Plan</span>
@@ -599,7 +550,31 @@ export function Navbar() {
                                 : "Free"}
                           </span>
                         </div>
-
+                        <Link
+                          href="/account"
+                          onClick={() => setProfileOpen(false)}
+                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                        >
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                            />
+                          </svg>
+                          Account &amp; Billing
+                        </Link>
                         <Link
                           href="/changelog"
                           onClick={() => setProfileOpen(false)}
@@ -628,28 +603,6 @@ export function Navbar() {
                           </span>
                           Dev Notes{hasUnseenChanges ? " — New!" : ""}
                         </Link>
-
-                        <Link
-                          href="/feedback"
-                          onClick={() => setProfileOpen(false)}
-                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
-                        >
-                          <svg
-                            className="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                            />
-                          </svg>
-                          Feedback
-                        </Link>
-
                         <Link
                           href="/support"
                           onClick={() => setProfileOpen(false)}
@@ -681,9 +634,8 @@ export function Navbar() {
                             ? ` (${unreadMessages})`
                             : ""}
                         </Link>
-
                         <Link
-                          href="/account"
+                          href="/feedback"
                           onClick={() => setProfileOpen(false)}
                           className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
                         >
@@ -697,19 +649,14 @@ export function Navbar() {
                             <path
                               strokeLinecap="round"
                               strokeLinejoin="round"
-                              d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
                             />
                           </svg>
-                          Account &amp; Billing
+                          Feedback
                         </Link>
-
                         {isAdmin && (
                           <>
+                            <div className="my-1 h-px bg-white/[0.06]" />
                             <Link
                               href="/admin/feedback"
                               onClick={() => setProfileOpen(false)}
@@ -801,7 +748,7 @@ export function Navbar() {
                             </Link>
                           </>
                         )}
-
+                        <div className="my-1 h-px bg-white/[0.06]" />
                         <button
                           type="button"
                           onClick={() => {
@@ -833,7 +780,7 @@ export function Navbar() {
             )}
           </div>
 
-          {/* ── Mobile hamburger button ── */}
+          {/* ── Mobile hamburger ── */}
           <button
             type="button"
             onClick={() => setMobileOpen((p) => !p)}
@@ -873,27 +820,62 @@ export function Navbar() {
         </nav>
       </header>
 
-      {/* ── Mobile slide-out menu (outside header to avoid backdrop-blur stacking context) ── */}
+      {/* ── Mobile slide-out ── */}
       {mobileOpen && (
         <>
-          {/* Backdrop */}
           <div
             className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
             onClick={() => setMobileOpen(false)}
           />
-
-          {/* Panel */}
-          <div className="fixed inset-y-0 right-0 z-50 w-72 overflow-y-auto border-l border-white/[0.06] bg-[#110c08] px-5 py-5 lg:hidden">
-            {/* Close button */}
-            <div className="flex justify-end">
+          <div className="fixed inset-y-0 right-0 z-50 w-72 overflow-y-auto border-l border-white/[0.06] bg-[#110c08] px-4 pb-8 pt-4 lg:hidden">
+            {/* Header row: user info + close */}
+            <div className="mb-5 flex items-center justify-between">
+              {authenticated && user ? (
+                <div className="flex items-center gap-2.5">
+                  {user.image ? (
+                    <img
+                      src={user.image}
+                      alt=""
+                      className={`h-8 w-8 rounded-full object-cover ${avatarFrame.frameClass}`}
+                      style={avatarFrame.frameStyle}
+                      crossOrigin="anonymous"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        const el = e.currentTarget;
+                        el.style.display = "none";
+                        const fb = el.nextElementSibling as HTMLElement | null;
+                        if (fb) fb.style.display = "flex";
+                      }}
+                    />
+                  ) : null}
+                  <div
+                    className={`${user.image ? "hidden" : "flex"} h-8 w-8 items-center justify-center rounded-full bg-orange-500/20 text-sm font-bold text-orange-400 ${avatarFrame.frameClass}`}
+                    style={avatarFrame.frameStyle}
+                  >
+                    {(user.name?.[0] ?? user.email?.[0] ?? "?").toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-semibold text-white">
+                      {user.name ?? "User"}
+                    </p>
+                    {(plan === "pro" || plan === "lifetime") && (
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-amber-400">
+                        {plan === "lifetime" ? "Lifetime" : "Pro"}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <span className="text-sm font-semibold text-white">Menu</span>
+              )}
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
-                className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-white/[0.06] hover:text-white"
                 aria-label="Close menu"
               >
                 <svg
-                  className="h-5 w-5"
+                  className="h-4 w-4"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -908,187 +890,231 @@ export function Navbar() {
               </button>
             </div>
 
-            {/* User info (if signed in) */}
-            {authenticated && user && (
-              <div className="mb-5 mt-2 flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                {user.image ? (
-                  <img
-                    src={user.image}
-                    alt=""
-                    className={`h-10 w-10 rounded-full object-cover ${avatarFrame.frameClass}`}
-                    style={avatarFrame.frameStyle}
-                    crossOrigin="anonymous"
-                    referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      const el = e.currentTarget;
-                      el.style.display = "none";
-                      const fb = el.nextElementSibling as HTMLElement | null;
-                      if (fb) fb.style.display = "flex";
-                    }}
-                  />
-                ) : null}
+            {/* ── Accordion sections ── */}
+            {(
+              [
+                {
+                  key: "analyze",
+                  label: "Analyze",
+                  links: [
+                    { href: "/", label: "🔍 Analyze Games" },
+                    { href: "/analyze", label: "♟️ PGN Analyzer" },
+                    { href: "/my-openings", label: "🌲 My Opening Tree" },
+                    { href: "/roast", label: "🔥 Roast the Elo" },
+                  ],
+                },
+                {
+                  key: "train",
+                  label: "Train",
+                  links: [
+                    { href: "/train", label: "🎯 Puzzles & Drills" },
+                    { href: "/sparring", label: "⚔️ Opening Sparring" },
+                    { href: "/guess", label: "🧩 Guess the Move" },
+                    { href: "/coach", label: "♟ AI Coach" },
+                  ],
+                },
+                {
+                  key: "guides",
+                  label: "Guides",
+                  links: [
+                    { href: "/openings", label: "📖 Openings" },
+                    { href: "/tactics", label: "⚡ Tactics" },
+                    { href: "/endgames", label: "♟ Endgames" },
+                  ],
+                },
+                {
+                  key: "play",
+                  label: "Play",
+                  links: [
+                    { href: "/chaos", label: "⚡ Chaos Chess" },
+                    { href: "/dungeon", label: "🗡️ Dungeon Tactics" },
+                  ],
+                },
+                {
+                  key: "community",
+                  label: "Community",
+                  links: [
+                    { href: "/blog", label: "📝 Blog" },
+                    { href: "/leaderboard", label: "🏆 Leaderboard" },
+                    { href: "/coaches", label: "🎓 For Coaches" },
+                    { href: "/youtubers", label: "🎬 For Creators" },
+                    { href: "/about", label: "About" },
+                    { href: "/shop", label: "🪙 Coin Shop" },
+                    { href: "/changelog", label: "Dev Notes" },
+                  ],
+                },
+              ] as const
+            ).map((section) => {
+              const isExpanded = !!openSections[section.key];
+              const hasActive = section.links.some((l) =>
+                l.href === "/" ? pathname === "/" : isActive(l.href),
+              );
+              return (
                 <div
-                  className={`${user.image ? "hidden" : "flex"} h-10 w-10 items-center justify-center rounded-full bg-orange-500/20 text-sm font-bold text-orange-400 ${avatarFrame.frameClass}`}
-                  style={avatarFrame.frameStyle}
+                  key={section.key}
+                  className="mb-1 overflow-hidden rounded-xl border border-white/[0.05] bg-white/[0.02]"
                 >
-                  {(user.name?.[0] ?? user.email?.[0] ?? "?").toUpperCase()}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-white">
-                    {user.name ?? "User"}
-                  </p>
-                  <p className="truncate text-xs text-slate-500">
-                    {user.email}
-                  </p>
-                  {(plan === "pro" || plan === "lifetime") && (
-                    <span className="mt-0.5 inline-block rounded bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
-                      {plan === "lifetime" ? "Lifetime" : "Pro"}
-                    </span>
+                  <button
+                    type="button"
+                    onClick={() => toggleSection(section.key)}
+                    className={`flex w-full items-center justify-between px-3.5 py-2.5 text-left text-sm font-semibold transition-colors ${hasActive ? "text-white" : "text-slate-400 hover:text-white"}`}
+                  >
+                    {section.label}
+                    <svg
+                      className={`h-3.5 w-3.5 text-slate-500 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <polyline points="6 9 12 15 18 9" />
+                    </svg>
+                  </button>
+                  {isExpanded && (
+                    <div className="border-t border-white/[0.05] px-2 pb-2 pt-1 space-y-0.5">
+                      {section.links.map((l) => {
+                        const active =
+                          l.href === "/" ? pathname === "/" : isActive(l.href);
+                        return (
+                          <Link
+                            key={l.href}
+                            href={l.href}
+                            className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${active ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
+                          >
+                            {l.label}
+                            {l.href === "/changelog" && hasUnseenChanges && (
+                              <span className="ml-auto h-2 w-2 rounded-full bg-red-500" />
+                            )}
+                          </Link>
+                        );
+                      })}
+                    </div>
                   )}
                 </div>
-              </div>
-            )}
+              );
+            })}
 
-            {/* Nav links */}
-            <div className="space-y-1">
-              {[
-                { href: "/", label: "Home" },
-                ...NAV_LINKS,
-                { href: "/my-openings", label: "🌲 My Opening Tree" },
-                { href: "/blog", label: "Blog" },
-                { href: "/chaos", label: "⚡ Chaos Chess" },
-                { href: "/dungeon", label: "⚔️ Dungeon Tactics" },
-                { href: "/openings", label: "📖 Openings" },
-                { href: "/tactics", label: "⚡ Tactics" },
-                { href: "/endgames", label: "♟ Endgames" },
-                { href: "/leaderboard", label: "🏆 Leaderboard" },
-                { href: "/shop", label: "🪙 Coin Shop" },
-                { href: "/coaches", label: "🎓 For Coaches" },
-                { href: "/youtubers", label: "🎬 For Creators" },
-                { href: "/feedback", label: "Feedback" },
-                ...(authenticated
-                  ? [
-                      { href: "/dashboard", label: "Dashboard" },
-                      { href: "/changelog", label: "Dev Notes" },
-                      { href: "/support", label: "My Tickets" },
-                      { href: "/account", label: "Account & Billing" },
-                      ...(isAdmin
-                        ? [
+            {/* Account section (auth only) */}
+            {authenticated && (
+              <div className="mb-1 overflow-hidden rounded-xl border border-white/[0.05] bg-white/[0.02]">
+                <button
+                  type="button"
+                  onClick={() => toggleSection("account")}
+                  className={`flex w-full items-center justify-between px-3.5 py-2.5 text-left text-sm font-semibold transition-colors ${isActive("/dashboard") || isActive("/account") || isActive("/support") || isActive("/feedback") ? "text-white" : "text-slate-400 hover:text-white"}`}
+                >
+                  Account
+                  <svg
+                    className={`h-3.5 w-3.5 text-slate-500 transition-transform duration-200 ${openSections["account"] ? "rotate-180" : ""}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+                {openSections["account"] && (
+                  <div className="border-t border-white/[0.05] px-2 pb-2 pt-1 space-y-0.5">
+                    <Link
+                      href="/dashboard"
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/dashboard") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
+                    >
+                      Dashboard
+                    </Link>
+                    <Link
+                      href="/account"
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/account") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
+                    >
+                      Account & Billing
+                    </Link>
+                    <Link
+                      href="/support"
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/support") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
+                    >
+                      My Tickets
+                      {!isAdmin && unreadMessages > 0
+                        ? ` (${unreadMessages})`
+                        : ""}
+                      {!isAdmin && unreadMessages > 0 && (
+                        <span className="ml-1 inline-flex h-2 w-2 rounded-full bg-orange-500" />
+                      )}
+                    </Link>
+                    <Link
+                      href="/feedback"
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/feedback") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
+                    >
+                      Feedback
+                    </Link>
+                    {isAdmin && (
+                      <>
+                        <div className="my-1 h-px bg-white/[0.06]" />
+                        {(
+                          [
                             { href: "/admin/feedback", label: "Admin Panel" },
                             { href: "/admin/users", label: "Manage Users" },
                             { href: "/admin/affiliates", label: "Affiliates" },
                             { href: "/admin/gift", label: "Gift Links" },
-                          ]
-                        : []),
-                    ]
-                  : [{ href: "/changelog", label: "Dev Notes" }]),
-                { href: "/pricing", label: "Pro" },
-              ].map((link) => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={
-                    link.href === "/roast" && pathname.startsWith("/roast")
-                      ? () => {
-                          window.dispatchEvent(
-                            new CustomEvent("firechess:new-roast"),
-                          );
-                        }
-                      : undefined
-                  }
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                    isActive(link.href)
-                      ? "text-white bg-white/[0.06]"
-                      : "text-slate-400 hover:text-white hover:bg-white/[0.04]"
-                  }`}
+                          ] as const
+                        ).map((l) => (
+                          <Link
+                            key={l.href}
+                            href={l.href}
+                            className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-orange-400 transition-colors hover:bg-orange-500/10 hover:text-orange-300"
+                          >
+                            {l.label}
+                            {l.href === "/admin/feedback" &&
+                              unreadMessages > 0 && (
+                                <span className="ml-auto inline-flex h-2 w-2 rounded-full bg-orange-500" />
+                              )}
+                          </Link>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Bottom actions */}
+            <div className="mt-4 space-y-2">
+              <Link
+                href="/pricing"
+                className={`flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:shadow-glow-sm ${isActive("/pricing") ? "shadow-glow-sm" : ""}`}
+              >
+                <svg
+                  className="h-3.5 w-3.5"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
                 >
-                  {link.label === "Pro" && (
-                    <svg
-                      className="h-4 w-4 text-emerald-400"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm0 2h14v2H5v-2z" />
-                    </svg>
-                  )}
-                  <span className="relative">
-                    {link.label}
-                    {link.label === "Dev Notes" &&
-                      authenticated &&
-                      hasUnseenChanges && (
-                        <span className="absolute -right-3 top-0 flex h-2 w-2">
-                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75" />
-                          <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
-                        </span>
-                      )}
-                    {(link.label === "My Tickets" ||
-                      link.label === "Admin Panel" ||
-                      link.label === "Feedback") &&
-                      unreadMessages > 0 && (
-                        <span className="absolute -right-3 top-0 flex h-2 w-2">
-                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-400 opacity-75" />
-                          <span className="relative inline-flex h-2 w-2 rounded-full bg-orange-500" />
-                        </span>
-                      )}
-                  </span>
-                </Link>
-              ))}
+                  <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm0 2h14v2H5v-2z" />
+                </svg>
+                Go Pro
+              </Link>
+              {!loading &&
+                (authenticated ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileOpen(false);
+                      signOut({ callbackUrl: "/" });
+                    }}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/[0.08] px-4 py-2 text-sm font-medium text-slate-400 transition-colors hover:border-white/[0.15] hover:text-white"
+                  >
+                    Sign out
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setMobileOpen(false);
+                      signIn(undefined, { callbackUrl: "/" });
+                    }}
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-white/[0.12] bg-white/[0.04] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-white/[0.08]"
+                  >
+                    Sign in
+                  </button>
+                ))}
             </div>
-
-            {/* Divider */}
-            <div className="my-4 border-t border-white/[0.06]" />
-
-            {/* Auth action */}
-            {!loading &&
-              (authenticated ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileOpen(false);
-                    signOut({ callbackUrl: "/" });
-                  }}
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-400 transition-colors hover:bg-white/[0.04] hover:text-white"
-                >
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                    />
-                  </svg>
-                  Sign out
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setMobileOpen(false);
-                    signIn(undefined, { callbackUrl: "/" });
-                  }}
-                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-white/[0.04]"
-                >
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
-                    />
-                  </svg>
-                  Sign in
-                </button>
-              ))}
           </div>
         </>
       )}

@@ -94,6 +94,7 @@ export default function AdminUsersPage() {
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
   const [coinAmount, setCoinAmount] = useState<Record<string, string>>({});
   const [grantingCoins, setGrantingCoins] = useState<string | null>(null);
+  const [grantingMonth, setGrantingMonth] = useState<string | null>(null);
 
   // Redirect non-admin
   useEffect(() => {
@@ -155,6 +156,38 @@ export default function AdminUsersPage() {
     },
     [],
   );
+
+  const grantOneMonth = useCallback(async (userId: string) => {
+    setGrantingMonth(userId);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === userId
+              ? {
+                  ...u,
+                  plan: "pro",
+                  subStatus: "active",
+                  currentPeriodEnd: data.currentPeriodEnd,
+                }
+              : u,
+          ),
+        );
+      } else {
+        alert("Failed to grant Pro month");
+      }
+    } catch {
+      alert("Network error");
+    } finally {
+      setGrantingMonth(null);
+    }
+  }, []);
 
   const giveCoins = useCallback(
     async (userId: string) => {
@@ -508,6 +541,41 @@ export default function AdminUsersPage() {
                             </span>
                           }
                         />
+                      </div>
+                    </div>
+
+                    {/* Grant 1 Month Pro */}
+                    <div className="mt-3 border-t border-white/[0.06] pt-3">
+                      <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                        ⭐ Grant Pro Access
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (
+                              !window.confirm(
+                                `Grant 1 month of Pro to ${user.name || user.email}?`,
+                              )
+                            )
+                              return;
+                            grantOneMonth(user.id);
+                          }}
+                          disabled={grantingMonth === user.id}
+                          className="rounded-md bg-emerald-500/20 px-3 py-1.5 text-[11px] font-medium text-emerald-400 transition hover:bg-emerald-500/30 disabled:opacity-50"
+                        >
+                          {grantingMonth === user.id
+                            ? "Granting..."
+                            : "+ 1 Month Pro"}
+                        </button>
+                        {user.currentPeriodEnd && user.plan !== "free" && (
+                          <span className="text-[10px] text-slate-500">
+                            Expires: {formatDate(user.currentPeriodEnd)}
+                          </span>
+                        )}
+                        <span className="text-[10px] text-slate-600">
+                          (Stacks if already Pro)
+                        </span>
                       </div>
                     </div>
 

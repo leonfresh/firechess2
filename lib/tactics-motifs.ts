@@ -9,6 +9,16 @@
  *  - SEO-oriented FAQ
  */
 
+export type PuzzleExample = {
+  fen: string;
+  orientation: "white" | "black";
+  /** Winning move in SAN — used to validate the user's drag/click */
+  puzzle: string;
+  /** Comma-separated SAN moves to auto-play after the puzzle is solved */
+  continuation: string;
+  caption: string;
+};
+
 export type TacticMotif = {
   id: string;
   name: string;
@@ -29,6 +39,8 @@ export type TacticMotif = {
   exampleFen: string;
   /** Prose explaining the example */
   exampleDescription: string;
+  /** Interactive puzzle examples (2–3 per motif) */
+  examples: PuzzleExample[];
   /** Related tactic IDs */
   related: string[];
   faqs: { q: string; a: string }[];
@@ -67,6 +79,31 @@ export const TACTIC_MOTIFS: TacticMotif[] = [
       "r1bqk2r/pppp1ppp/2n2n2/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
     exampleDescription:
       "White's bishop on c4 pins Black's knight on c6 against the queen on d8. If Black plays ...Nd4, the queen on d8 is exposed. White should avoid ...Nxe4 tricks and capitalize on the pin with d3 planning to attack c6 with Nc3 or Bg5.",
+    examples: [
+      {
+        fen: "r1bqkb1r/ppp2ppp/2n2n2/4p3/3PP3/2N2N2/PPP2PPP/R1BQKB1R w KQkq - 0 6",
+        orientation: "white",
+        puzzle: "Bg5",
+        continuation: "h6,Bxf6,Qxf6,Nd5",
+        caption: "Pin Black's knight to the queen — it cannot safely move!",
+      },
+      {
+        fen: "r1b1k2r/ppp2ppp/2np4/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1",
+        orientation: "white",
+        puzzle: "Bb5",
+        continuation: "a6,Bxc6+,dxc6",
+        caption:
+          "Absolute pin in the Ruy Lopez — the knight cannot legally move!",
+      },
+      {
+        fen: "3k4/3r4/8/8/8/8/8/R3K3 w - - 0 1",
+        orientation: "white",
+        puzzle: "Rd1",
+        continuation: "Ke8,Rxd7,Kxd7",
+        caption:
+          "Move the rook to pin the enemy rook to its king on the d-file",
+      },
+    ],
     related: ["skewers", "discovered-attack"],
     faqs: [
       {
@@ -125,6 +162,30 @@ export const TACTIC_MOTIFS: TacticMotif[] = [
       "r1bqkb1r/pppp1ppp/8/4p3/2BnP3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 5",
     exampleDescription:
       "Black's knight on d4 forks White's bishop on c2 and knight on f3. This is the classic 'Noah's Ark Trap' setup in the Ruy López where a central fork wins material for Black. White must lose at least the bishop or the knight.",
+    examples: [
+      {
+        fen: "r3k3/8/8/3N4/8/8/8/4K3 w - - 0 1",
+        orientation: "white",
+        puzzle: "Nc7+",
+        continuation: "Kd8,Nxa8",
+        caption: "Knight fork — attack two pieces at once and win the rook",
+      },
+      {
+        fen: "8/k7/2q1b3/8/8/5N2/8/4K3 w - - 0 1",
+        orientation: "white",
+        puzzle: "Nd4",
+        continuation: "Qb5,Nxe6",
+        caption:
+          "Find the square where the knight attacks both the queen and bishop",
+      },
+      {
+        fen: "8/k7/8/3n1n2/8/8/4P3/4K3 w - - 0 1",
+        orientation: "white",
+        puzzle: "e4",
+        continuation: "Nfe3,exd5",
+        caption: "A single pawn push can fork two knights — can you spot it?",
+      },
+    ],
     related: ["pins", "discovered-attack"],
     faqs: [
       {
@@ -177,6 +238,24 @@ export const TACTIC_MOTIFS: TacticMotif[] = [
     exampleFen: "8/8/8/8/3k4/8/3R4/3K4 w - - 0 1",
     exampleDescription:
       "White's rook on d2 can skewer the black king on d4 with Rd2-d8+ (rook check). The king must move off the d-file, and the rook can then follow up. In endgames, skewers with rooks are one of the most common winning techniques.",
+    examples: [
+      {
+        fen: "8/8/8/8/rk6/8/8/2Q4K w - - 0 1",
+        orientation: "white",
+        puzzle: "Qc4+",
+        continuation: "Ka3,Qxa4",
+        caption:
+          "Queen skewer: check the king and win the rook sitting behind it",
+      },
+      {
+        fen: "6r1/8/8/3k4/8/8/8/5B1K w - - 0 1",
+        orientation: "white",
+        puzzle: "Bc4+",
+        continuation: "Ke4,Bxg8",
+        caption:
+          "Bishop skewer — force the king aside to capture the rook on g8",
+      },
+    ],
     related: ["pins", "discovered-attack"],
     faqs: [
       {
@@ -230,6 +309,24 @@ export const TACTIC_MOTIFS: TacticMotif[] = [
       "r2qkb1r/ppp2ppp/2n1bn2/3pp3/2B1P3/2NP1N2/PPP2PPP/R1BQK2R w KQkq - 2 7",
     exampleDescription:
       "White has a potential discovered attack: if the knight on f3 moves with a threat (e.g. Ne5 attacking the queen on d8 and f7), it also reveals the bishop on c4's line toward the king. This pattern of knight-moving to attack while the bishop battery fires is a classic Italian Game resource.",
+    examples: [
+      {
+        fen: "r5k1/8/8/8/2N5/1B6/8/7K w - - 0 1",
+        orientation: "white",
+        puzzle: "Nb6+",
+        continuation: "Kf8,Nxa8",
+        caption:
+          "Move the knight to unleash the bishop — and fork the rook at the same time!",
+      },
+      {
+        fen: "3k4/8/8/8/8/8/3N4/3R3K w - - 0 1",
+        orientation: "white",
+        puzzle: "Ne4+",
+        continuation: "Kc7,Rd7+",
+        caption:
+          "Shuffle the knight off the d-file to reveal the rook's discovered check",
+      },
+    ],
     related: ["pins", "forks"],
     faqs: [
       {
@@ -282,6 +379,22 @@ export const TACTIC_MOTIFS: TacticMotif[] = [
     exampleFen: "6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1",
     exampleDescription:
       "White can play Rd8+ and if Black blocks with a back-rank piece, Rxd8 is checkmate. If Black's pawns were on f7-g7-h7 with no escape, Rd8# would be immediate. This is the purest illustration of back-rank vulnerability — Black needs luft (h6 or g6) urgently.",
+    examples: [
+      {
+        fen: "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1",
+        orientation: "white",
+        puzzle: "Ra8+",
+        continuation: "Rf8,Rxf8#",
+        caption: "Black's back rank is vulnerable — deliver the killing blow!",
+      },
+      {
+        fen: "3r2k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1",
+        orientation: "white",
+        puzzle: "Rd8+",
+        continuation: "Rxd8,Rxd8#",
+        caption: "Offer the rook exchange to force a back-rank checkmate",
+      },
+    ],
     related: ["deflection", "interference"],
     faqs: [
       {
@@ -334,6 +447,24 @@ export const TACTIC_MOTIFS: TacticMotif[] = [
     exampleFen: "6rk/6pp/8/8/8/8/6PP/6NK w - - 0 1",
     exampleDescription:
       "White has a smothered mate in two: Nf7+ Rxf7?? Nh6#. Black's king on h8 is surrounded — g8 is occupied by its own rook (after Nf7+ forces Rxf7), g7 and h7 are blocked by pawns. The knight delivers checkmate on h6 to the trapped king. This is the essence of smothered mate.",
+    examples: [
+      {
+        fen: "6rk/6pp/8/8/8/8/6PP/6NK w - - 0 1",
+        orientation: "white",
+        puzzle: "Nf7+",
+        continuation: "Rxf7,Nh6#",
+        caption:
+          "Begin the smothered mate — the king is trapped by its own pieces!",
+      },
+      {
+        fen: "5rkr/6pp/8/8/8/8/6PP/5QNK w - - 0 1",
+        orientation: "white",
+        puzzle: "Nf3+",
+        continuation: "Kg8,Nh4+,Kh8,Ng6+,hxg6,Qxf8#",
+        caption:
+          "Weave the knight toward f7 to smother the king — find the first move",
+      },
+    ],
     related: ["back-rank-mate", "deflection"],
     faqs: [
       {
@@ -387,6 +518,24 @@ export const TACTIC_MOTIFS: TacticMotif[] = [
       "r1bqk2r/pp2ppbp/2np1np1/2pP4/4P3/2N2N2/PP2BPPP/R1BQK2R b KQkq - 0 7",
     exampleDescription:
       "This position from the Grünfeld Defense illustrates zwischenzug concepts: rather than simply recapturing the d5 pawn, Black can first play ...Nb4 attacking the bishop on e2 before recapturing. The in-between move forces White to move the bishop, changing the recapture dynamics completely.",
+    examples: [
+      {
+        fen: "r1bq1rk1/ppp2ppp/2n5/3p4/2PP4/2N1BN2/PP3PPP/R2QK2R b KQkq - 0 1",
+        orientation: "black",
+        puzzle: "dxc4",
+        continuation: "Bxc4,Qb6+",
+        caption:
+          "Black plays an in-between move instead of recapturing — find the zwischenzug!",
+      },
+      {
+        fen: "r3k2r/ppp2ppp/2n5/3q4/3P4/2N2N2/PPP2PPP/R2QK2R b KQkq - 0 1",
+        orientation: "black",
+        puzzle: "Qxd4",
+        continuation: "Nxd4,Qd1+,Ke2,Nxd4+",
+        caption:
+          "Instead of retreating, find the zwischenzug that wins material",
+      },
+    ],
     related: ["discovered-attack", "deflection"],
     faqs: [
       {
@@ -438,6 +587,24 @@ export const TACTIC_MOTIFS: TacticMotif[] = [
     exampleFen: "r5k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1",
     exampleDescription:
       "White can deflect Black's back-rank defender with Rd8+! If Rxd8, the rook is gone and White has won decisive material. Black's rook was overloaded — defending the back rank AND possibly other duties. Forcing it to capture defects the defensive structure.",
+    examples: [
+      {
+        fen: "6k1/5ppp/8/8/2r5/8/5PPP/5RK1 w - - 0 1",
+        orientation: "white",
+        puzzle: "Rxc4",
+        continuation: "Rxc4,Rf8#",
+        caption:
+          "Deflect the defender away from the back rank to force checkmate",
+      },
+      {
+        fen: "3r2k1/5ppp/3q4/8/8/8/5PPP/3Q1RK1 w - - 0 1",
+        orientation: "white",
+        puzzle: "Qd6",
+        continuation: "Qxd6,Rf8#",
+        caption:
+          "Force the enemy queen away from its defensive duty — then deliver mate",
+      },
+    ],
     related: ["back-rank-mate", "interference", "zwischenzug"],
     faqs: [
       {
@@ -490,6 +657,24 @@ export const TACTIC_MOTIFS: TacticMotif[] = [
     exampleFen: "2r3k1/5pp1/7p/8/8/8/1R6/4R1K1 w - - 0 1",
     exampleDescription:
       "A conceptual interference example: if White could place a piece on c8 interrupting Black's rook's defense of the back rank while Black's king is cornered, the back rank would become vulnerable. Interference patterns are typically identified by tracing how opponent pieces coordinate and finding where a sacrifice disrupts that cooperation.",
+    examples: [
+      {
+        fen: "2r3k1/5pp1/7p/8/8/8/1R6/4R1K1 w - - 0 1",
+        orientation: "white",
+        puzzle: "Re8+",
+        continuation: "Rxe8,Rb8,Re5,Rxe5,Rxe8#",
+        caption:
+          "Interfere with the defensive coordination — sacrifice to disrupt both rooks",
+      },
+      {
+        fen: "2r1r1k1/5pp1/7p/8/3R4/8/5PPP/6K1 w - - 0 1",
+        orientation: "white",
+        puzzle: "Rd8",
+        continuation: "Rxd8,Rxd8,Rxd8#",
+        caption:
+          "Place a piece to cut the line between the two defending rooks",
+      },
+    ],
     related: ["deflection", "back-rank-mate"],
     faqs: [
       {

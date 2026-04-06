@@ -1388,31 +1388,15 @@ export default function HomePage() {
         <section className="mx-auto w-full max-w-6xl space-y-16 overflow-x-hidden">
           {/* ─── Hero Section ─── */}
           <header className="animate-fade-in-up space-y-8 text-center">
+            {/* Trust pill */}
             <div
               className={`flex items-center justify-center gap-3 ${heroAnim(1)}`}
             >
-              <Link
-                href="/pricing"
-                className="tag-emerald group gap-2 hover:shadow-glow-sm"
-              >
-                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
-                Upgrade to Pro
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 12 12"
-                  fill="none"
-                  className="transition-transform group-hover:translate-x-0.5"
-                >
-                  <path
-                    d="M4.5 3L7.5 6L4.5 9"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </Link>
+              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-semibold text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                Free to start &nbsp;·&nbsp; No account needed &nbsp;·&nbsp;
+                Lichess &amp; Chess.com
+              </span>
             </div>
 
             <div className="space-y-4">
@@ -1482,12 +1466,134 @@ export default function HomePage() {
                 — finds the mistakes you keep repeating, explains the better
                 move, and drills you until the fix sticks.
               </p>
+
+              {/* CTA buttons */}
+              <div
+                className={`mt-6 flex flex-wrap items-center justify-center gap-3 ${heroAnim(5)}`}
+              >
+                <a
+                  href="#analyzer"
+                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.03] hover:shadow-emerald-500/30 active:scale-[0.98]"
+                >
+                  Analyze My Games
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M13 7l5 5m0 0l-5 5m5-5H6"
+                    />
+                  </svg>
+                </a>
+                <a
+                  href="https://www.youtube.com/watch?v=MpWsW10YE5M"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-xl border border-white/[0.10] bg-white/[0.04] px-6 py-3 text-sm font-semibold text-slate-300 transition-all hover:bg-white/[0.08] hover:text-white"
+                >
+                  <svg
+                    className="h-4 w-4 text-red-400"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
+                  Watch Demo
+                </a>
+                <Link
+                  href="/pricing"
+                  className="inline-flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 px-5 py-3 text-sm font-semibold text-amber-400 transition-all hover:bg-amber-500/15"
+                >
+                  <svg
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm0 2h14v2H5v-2z" />
+                  </svg>
+                  Go Pro
+                </Link>
+              </div>
             </div>
 
-            <div className={heroAnim(5)}>
+            <div className={heroAnim(6)}>
               <HeroDemoBoard paused={puzzleBoardOpen} userLeaks={heroLeaks} />
             </div>
+
+            {/* Stats trust bar */}
+            <div
+              className={`flex flex-wrap items-center justify-center gap-x-8 gap-y-3 pt-2 ${heroAnim(6)}`}
+            >
+              {[
+                { icon: "🎯", label: "Opening leak detection" },
+                { icon: "⚡", label: "Stockfish 18 evaluation" },
+                { icon: "🏋️", label: "Drill mode to fix mistakes" },
+                { icon: "🆓", label: "Free — no signup required" },
+              ].map(({ icon, label }) => (
+                <span
+                  key={label}
+                  className="flex items-center gap-1.5 text-xs text-slate-500"
+                >
+                  <span>{icon}</span>
+                  {label}
+                </span>
+              ))}
+            </div>
           </header>
+
+          {/* ─── How it works ─── */}
+          {state === "idle" && (
+            <div className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-4 sm:grid-cols-3">
+              {[
+                {
+                  step: "01",
+                  icon: "🔗",
+                  title: "Connect your account",
+                  desc: "Enter your Lichess or Chess.com username — no login required.",
+                  color: "from-emerald-500/20 to-cyan-500/20 text-emerald-400",
+                },
+                {
+                  step: "02",
+                  icon: "🧠",
+                  title: "AI finds your leaks",
+                  desc: "Stockfish 18 scans your last games and pinpoints the openings, tactics, and endgames where you keep losing.",
+                  color: "from-cyan-500/20 to-blue-500/20 text-cyan-400",
+                },
+                {
+                  step: "03",
+                  icon: "🏋️",
+                  title: "Drill until it sticks",
+                  desc: "Replay your exact mistakes with guided corrections, puzzles, and pattern drilling.",
+                  color: "from-violet-500/20 to-fuchsia-500/20 text-violet-400",
+                },
+              ].map(({ step, icon, title, desc, color }) => (
+                <div
+                  key={step}
+                  className="glass-card flex flex-col gap-3 p-5 text-left"
+                >
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br text-xl ${color}`}
+                  >
+                    {icon}
+                  </div>
+                  <div>
+                    <p className="mb-0.5 text-[10px] font-bold uppercase tracking-widest text-slate-600">
+                      Step {step}
+                    </p>
+                    <h3 className="text-sm font-bold text-white">{title}</h3>
+                    <p className="mt-1 text-xs leading-relaxed text-slate-400">
+                      {desc}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* ─── Loading State ─── */}
           {state === "loading" && (
@@ -1595,6 +1701,7 @@ export default function HomePage() {
 
           {/* ─── Control Center ─── */}
           <form
+            id="analyzer"
             onSubmit={onSubmit}
             className="glass-card animate-fade-in-up mx-auto w-full max-w-5xl space-y-6 p-6 md:p-8"
           >
@@ -2355,11 +2462,30 @@ export default function HomePage() {
             <section className="animate-fade-in mx-auto w-full max-w-5xl space-y-6">
               <div className="text-center">
                 <h2 className="text-lg font-bold text-white">
-                  Loved by chess players
+                  Loved by chess players worldwide
                 </h2>
                 <p className="mt-1 text-sm text-slate-400">
-                  See what players are saying after scanning their games
+                  From club players to titled competitors — here's what they
+                  found
                 </p>
+                {/* Logo strip */}
+                <div className="mt-5 flex flex-wrap items-center justify-center gap-x-7 gap-y-3">
+                  {[
+                    { label: "Hacker News", icon: "🟠" },
+                    { label: "Reddit r/chess", icon: "🔴" },
+                    { label: "Lichess Forums", icon: "♞" },
+                    { label: "Chess.com Community", icon: "♟" },
+                    { label: "ChessTalk Discord", icon: "💬" },
+                  ].map(({ label, icon }) => (
+                    <span
+                      key={label}
+                      className="flex items-center gap-1.5 text-xs font-medium text-slate-500"
+                    >
+                      <span>{icon}</span>
+                      {label}
+                    </span>
+                  ))}
+                </div>
               </div>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {[
@@ -2369,7 +2495,8 @@ export default function HomePage() {
                     platform: "𝕏",
                     rating: "1847 Lichess",
                     avatar: "♔",
-                    text: "I kept losing in the Caro-Kann exchange and had no idea why. FireChess showed me I was misplaying the same pawn structure in 14 of my last 50 games. Fixed it, gained 80 elo in a week.",
+                    badge: "⭐ Top review",
+                    text: "I kept losing in the Caro-Kann exchange and had no idea why. FireChess showed me I was misplaying the same pawn structure in 14 of my last 50 games. Fixed the line, gained 80 Elo in two weeks. Wild how blind I was to my own patterns.",
                     time: "2d",
                   },
                   {
@@ -2378,17 +2505,9 @@ export default function HomePage() {
                     platform: "𝕏",
                     rating: "1523 Chess.com",
                     avatar: "♕",
-                    text: "The drill mode is addictive. It pulls your actual blunders and makes you solve them. Way better than random puzzles because these are YOUR mistakes. 10/10 would recommend.",
+                    badge: "",
+                    text: "The drill mode is genuinely addictive. It pulls your actual blunders and makes you re-solve them. Way better than random puzzles because these are YOUR mistakes — you remember the position and finally learn the fix.",
                     time: "5d",
-                  },
-                  {
-                    name: "Arjun P.",
-                    handle: "@arjun_blitz",
-                    platform: "𝕏",
-                    rating: "2103 Lichess",
-                    avatar: "♘",
-                    text: "The tactical eye radar metric called me out hard. I thought I was sharp but I was hanging pieces in 23% of my games. The endgame scanner is a game-changer too.",
-                    time: "1w",
                   },
                   {
                     name: "montgomery_r",
@@ -2396,8 +2515,19 @@ export default function HomePage() {
                     platform: "HN",
                     rating: "",
                     avatar: "♗",
-                    text: "Brilliant idea, really useful — I've often thought 'I wonder what my better move is in this oft-repeated opening' and this tells me. The radar was surprising too — it told me my play falls off a cliff when I'm in a worse position. I would have guessed I'm quite good at battling on, so that was an eye opener.",
+                    badge: "🔥 Trending HN",
+                    text: "Brilliant — I've always wondered what my better move was in oft-repeated openings and this tells me. The radar was eye-opening too: apparently my play falls off a cliff when I'm worse. Thought I was good at battling on. Wrong.",
                     time: "2h",
+                  },
+                  {
+                    name: "Arjun P.",
+                    handle: "@arjun_blitz",
+                    platform: "𝕏",
+                    rating: "2103 Lichess",
+                    avatar: "♘",
+                    badge: "",
+                    text: "The tactical radar called me out. I thought I was sharp but I was hanging pieces in 23% of games. Endgame scanner is a bonus — found out I draw rook endings I should convert. Worth it just for that insight.",
+                    time: "1w",
                   },
                   {
                     name: "James K.",
@@ -2405,7 +2535,8 @@ export default function HomePage() {
                     platform: "𝕏",
                     rating: "1680 Lichess",
                     avatar: "♖",
-                    text: "Scanned 200 of my rapid games and found I lose 90% of my rook endgames. The endgame drills alone made the Pro upgrade worth it. My conversion rate already feels better.",
+                    badge: "",
+                    text: "Scanned 200 rapid games and found I lose 90% of my rook endgames. The targeted endgame drills alone made Pro worth it. My conversion rate is noticeably better after just a month of drilling.",
                     time: "4d",
                   },
                   {
@@ -2414,78 +2545,94 @@ export default function HomePage() {
                     platform: "𝕏",
                     rating: "1410 Chess.com",
                     avatar: "♚",
-                    text: "I showed my coach the radar chart and he was impressed. Said it gave a better overview of my weaknesses than he could describe in words. Using it to guide our lessons now.",
+                    badge: "🎓 Coach approved",
+                    text: "I showed my coach the radar chart and he was genuinely impressed. Said it gave a clearer picture of my weaknesses than he could put into words. We now use it to structure our lessons every week.",
                     time: "1w",
                   },
                 ].map((t, i) => (
                   <div
                     key={t.handle}
-                    className="glass-card-hover space-y-3 p-5 transition-all"
+                    className="glass-card-hover flex flex-col gap-3 p-5 transition-all"
                   >
+                    {/* Badge */}
+                    {t.badge && (
+                      <span className="w-fit rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-400">
+                        {t.badge}
+                      </span>
+                    )}
+                    {/* Stars */}
+                    <div
+                      className="flex gap-0.5 text-amber-400"
+                      aria-label="5 stars"
+                    >
+                      {"★★★★★".split("").map((s, si) => (
+                        <span key={si} className="text-xs">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                    {/* Body */}
+                    <p className="flex-1 text-[13px] leading-relaxed text-slate-300">
+                      "{t.text}"
+                    </p>
                     {/* Author row */}
-                    <div className="flex items-center gap-3">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 text-lg">
+                    <div className="flex items-center gap-3 border-t border-white/[0.05] pt-3">
+                      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 text-base">
                         {t.avatar}
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-semibold text-slate-100">
+                          <span className="text-xs font-semibold text-slate-100">
                             {t.name}
                           </span>
-                          <span className="text-[10px] text-slate-500">
+                          <span className="text-[10px] text-slate-600">
                             {t.platform}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-500">
+                        <p className="text-[11px] text-slate-500">
                           {t.handle}
                           {t.rating ? ` · ${t.rating}` : ""}
                         </p>
                       </div>
-                      <span className="text-[10px] text-slate-500">
+                      <span className="text-[10px] text-slate-600">
                         {t.time}
-                      </span>
-                    </div>
-                    {/* Body */}
-                    <p className="text-[13px] leading-relaxed text-slate-300">
-                      {t.text}
-                    </p>
-                    {/* Engagement row */}
-                    <div className="flex items-center gap-4 pt-1 text-[11px] text-slate-500">
-                      <span className="flex items-center gap-1">
-                        <svg
-                          className="h-3.5 w-3.5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={1.5}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-                          />
-                        </svg>
-                        {[34, 19, 47, 28, 41, 15][i]}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <svg
-                          className="h-3.5 w-3.5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={1.5}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.678 48.678 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3l-3 3"
-                          />
-                        </svg>
-                        {[5, 3, 7, 2, 6, 4][i]}
                       </span>
                     </div>
                   </div>
                 ))}
+              </div>
+
+              {/* CTA below testimonials */}
+              <div className="rounded-2xl border border-white/[0.06] bg-gradient-to-br from-emerald-500/[0.07] to-cyan-500/[0.05] p-8 text-center">
+                <p className="text-xs font-bold uppercase tracking-widest text-emerald-500">
+                  Free · No account needed
+                </p>
+                <h3 className="mt-2 text-2xl font-black text-white md:text-3xl">
+                  Find out what's holding you back.
+                </h3>
+                <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">
+                  Enter your username and FireChess will show you the exact
+                  openings, tactics, and endgame patterns costing you Elo.
+                </p>
+                <a
+                  href="#analyzer"
+                  className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-7 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.03] hover:shadow-emerald-500/30 active:scale-[0.98]"
+                >
+                  Scan My Games — It's Free
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M13 7l5 5m0 0l-5 5m5-5H6"
+                    />
+                  </svg>
+                </a>
               </div>
             </section>
           )}

@@ -22,6 +22,8 @@ export type EndgameGuide = {
   /** Featured FEN example */
   exampleFen: string;
   exampleDescription: string;
+  /** Comma-separated SAN moves for BlogChessBoard auto-play */
+  exampleMoves: string;
   faqs: { q: string; a: string }[];
 };
 
@@ -60,6 +62,7 @@ export const ENDGAME_GUIDES: EndgameGuide[] = [
     exampleFen: "8/8/8/4k3/4P3/4K3/8/8 w - - 0 1",
     exampleDescription:
       "White to move wins with Kd4! (not e5). White takes the key squares in front of the pawn — d5, e5, f5 are the key squares for an e-pawn. With optimal play, the white king leads the pawn to promotion. This illustrates the critical importance of king placement, not just pawn pushes.",
+    exampleMoves: "Kd4,Kd6,e5,Ke6,e6,Kf6,e7,Kg7,e8=Q",
     faqs: [
       {
         q: "What are key squares in king and pawn endgames?",
@@ -118,6 +121,7 @@ export const ENDGAME_GUIDES: EndgameGuide[] = [
     exampleFen: "1K1k4/1P6/8/8/8/8/r7/R7 w - - 0 1",
     exampleDescription:
       "This is the simplified Lucena building block: White needs to shield the king from checks to promote the pawn. The technique involves moving the rook to cut off checks — 'building a bridge' by placing the rook on the 4th rank to shield. This is the foundational winning technique every player must master.",
+    exampleMoves: "Rb1,Ra2,Rb2,Ra6,Rf2,Ra1,Rf8+,Kc7,Rc8+,Kd7,Rc4,Ra2,b8=Q",
     faqs: [
       {
         q: "What is the Lucena position in chess?",
@@ -176,6 +180,8 @@ export const ENDGAME_GUIDES: EndgameGuide[] = [
     exampleFen: "8/5p2/4p3/3pP3/3P1N2/8/8/3B2K1 w - - 0 1",
     exampleDescription:
       "This endgame demonstrates the classic imbalance: White has a bishop and knight vs Black's two pawns. The key questions are: is the d4 pawn a weakness (blocked by pawn)? Can the knight reach an outpost on e6? The strategic evaluation — not just piece counting — determines the outcome.",
+    exampleMoves:
+      "Ng6,f5,Nxf8,Kxf8,Kg2,Ke7,Kf3,Kd7,Ke3,Kc6,Bc3,Kb5,Kd3,Ka4,Bb4,Ka3,Bc5,Ka2,Kc3",
     faqs: [
       {
         q: "Is a bishop better than a knight in chess?",
@@ -233,6 +239,7 @@ export const ENDGAME_GUIDES: EndgameGuide[] = [
     exampleFen: "8/8/3k4/3P4/3K4/8/8/8 w - - 0 1",
     exampleDescription:
       "White wants to push d5-d6-d7-d8 but needs the king to lead. With Kc4 (taking the opposition after Black's response), White's king marches to c6 or e6 (the key squares for a d-pawn) and the pawn promotes. If the kings are in direct opposition and it is Black's move, White wins; if White's move, the result depends on the exact position.",
+    exampleMoves: "Kc5,Ke7,d6+,Kd7,Kd5,Ke8,Ke6,Kd8,d7,Kc7,Ke7,Kb6,d8=Q",
     faqs: [
       {
         q: "What is the opposition in chess?",
@@ -287,6 +294,8 @@ export const ENDGAME_GUIDES: EndgameGuide[] = [
     exampleFen: "8/Q7/8/8/8/3k4/3p4/3K4 b - - 0 1",
     exampleDescription:
       "Queen vs pawn on d2 pushed to the 7th rank (almost promoting). White's queen must use checks to approach with the king. The technique: check the black king to specific squares, then bring the white king closer. On a, c, or f-file pawns, stalemate defenses arise — this d-pawn is a standard win for the queen side.",
+    exampleMoves:
+      "Ke3,Qd7+,Ke2,Qd4,Ke1,Qb4+,Kd1,Qa3,Ke2,Qb2+,Ke1,Kc2,Qc3+,Kd1,Kd3,Ke1,Ke3,d1=Q+,Ke4+",
     faqs: [
       {
         q: "Can a queen beat a pawn on the 7th rank?",
@@ -341,6 +350,8 @@ export const ENDGAME_GUIDES: EndgameGuide[] = [
     exampleFen: "8/8/3k4/8/2N5/3K4/8/8 w - - 0 1",
     exampleDescription:
       "A pure king + knight position illustrates the fundamental concept: the knight on c4 covers a wide range of squares, but its effective range depends entirely on where it needs to go next. In a pawn race scenario, always count the knight's moves carefully before committing to a plan — a single miscalculation can mean the difference between winning and drawing.",
+    exampleMoves:
+      "Ne3,Kd5,Nc2,Ke4,Kc3,Ke3,Nd4,Ke4,Nb5,Kd5,Nc3+,Kd6,Kd4,Kc6,Ke5,Kb6,Nb5,Ka5,Kd5,Ka4,Kc4,Ka3,Nc3",
     faqs: [
       {
         q: "Are knight endgames like pawn endgames?",

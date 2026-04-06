@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ENDGAME_GUIDES, type EndgameGuide } from "@/lib/endgame-guides";
 import { EndgameIllustration } from "@/components/endgame-illustrations";
+import { BlogChessBoard } from "@/components/blog-chess-board";
 
 export function generateStaticParams() {
   return ENDGAME_GUIDES.map((g) => ({ type: g.id }));
@@ -234,22 +235,11 @@ export default async function EndgameGuidePage({
           >
             Example Position
           </h2>
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
-            <div className="mb-3 rounded-lg bg-white/[0.03] p-3">
-              <p className="font-mono text-xs text-stone-400 break-all">
-                {guide.exampleFen}
-              </p>
-            </div>
-            <p className="text-sm leading-relaxed text-stone-300">
-              {guide.exampleDescription}
-            </p>
-            <Link
-              href="/analyze"
-              className="mt-4 inline-block rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-xs font-semibold text-emerald-400 hover:bg-emerald-500/20 transition-colors"
-            >
-              Analyze this position →
-            </Link>
-          </div>
+          <BlogChessBoard
+            fen={guide.exampleFen}
+            moves={guide.exampleMoves}
+            caption={guide.exampleDescription}
+          />
         </section>
 
         {/* FAQ */}

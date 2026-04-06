@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { TACTIC_MOTIFS, type TacticMotif } from "@/lib/tactics-motifs";
 import { TacticIllustration } from "@/components/tactics-illustrations";
+import { TacticPuzzleBoard } from "@/components/tactic-puzzle-board";
 
 export function generateStaticParams() {
   return TACTIC_MOTIFS.map((t) => ({ motif: t.id }));
@@ -225,31 +226,24 @@ export default async function TacticMotifPage({
           </section>
         </div>
 
-        {/* Example Position */}
-        <section className="mt-10" aria-labelledby="example-heading">
-          <h2
-            id="example-heading"
-            className="mb-4 text-xl font-bold text-white"
-          >
-            Example Position
-          </h2>
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
-            <div className="mb-3 rounded-lg bg-white/[0.03] p-3">
-              <p className="font-mono text-xs text-stone-400 break-all">
-                {tactic.exampleFen}
-              </p>
-            </div>
-            <p className="text-sm leading-relaxed text-stone-300">
-              {tactic.exampleDescription}
-            </p>
-            <Link
-              href="/train"
-              className="mt-4 inline-block rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-400 hover:bg-amber-500/20 transition-colors"
+        {/* Interactive Puzzles */}
+        {tactic.examples.length > 0 && (
+          <section className="mt-10" aria-labelledby="puzzles-heading">
+            <h2
+              id="puzzles-heading"
+              className="mb-2 text-xl font-bold text-white"
             >
-              Practice this pattern →
-            </Link>
-          </div>
-        </section>
+              Interactive Puzzles
+            </h2>
+            <p className="mb-4 text-sm text-stone-400">
+              Find the best move — drag or click a piece to play it out.
+            </p>
+            <TacticPuzzleBoard
+              examples={tactic.examples}
+              tacticName={tactic.name}
+            />
+          </section>
+        )}
 
         {/* FAQ */}
         <section className="mt-12" aria-labelledby="faq-heading">

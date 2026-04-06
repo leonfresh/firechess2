@@ -273,6 +273,64 @@ export async function PATCH(req: NextRequest) {
 }
 
 /**
+ * POST /api/admin/users — Grant 1 month of Pro to a user (admin only).
+ * Sets plan=pro, status=active, currentPeriodEnd = now + 30 days.
+ * If already pro, extends from the later of now or the current period end.
+ */
+export async function POST(req: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id || !(await isAdmin(session.user.id))) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const body = await req.json();
+  const { userId } = body as { userId?: string };
+
+  if (!userId) {
+    return NextResponse.json({ error: "userId is required" }, { status: 400 });
+  }
+
+  // Fetch current sub to know if we should extend from current period end
+  const [existing] = await db
+    .select({ currentPeriodEnd: subscriptions.currentPeriodEnd })
+    .from(subscriptions)
+    .where(eq(subscriptions.userId, userId))
+    .limit(1);
+
+  const base =
+    existing?.currentPeriodEnd && existing.currentPeriodEnd > new Date()
+      ? existing.currentPeriodEnd
+      : new Date();
+
+  const newPeriodEnd = new Date(base.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+  await db
+    .insert(subscriptions)
+    .values({
+      userId,
+      plan: "pro",
+      status: "active",
+      currentPeriodEnd: newPeriodEnd,
+    })
+    .onConflictDoUpdate({
+      target: subscriptions.userId,
+      set: {
+        plan: "pro",
+        status: "active",
+        currentPeriodEnd: newPeriodEnd,
+        updatedAt: new Date(),
+      },
+    });
+
+  return NextResponse.json({
+    ok: true,
+    userId,
+    plan: "pro",
+    currentPeriodEnd: newPeriodEnd.toISOString(),
+  });
+}
+
+/**
  * PUT /api/admin/users — Grant coins to a user (admin only).
  */
 export async function PUT(req: NextRequest) {
