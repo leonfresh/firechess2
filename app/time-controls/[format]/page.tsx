@@ -308,7 +308,7 @@ export default async function TimeControlPage({
             exactly where you're losing Elo.
           </p>
           <Link
-            href="/"
+            href="/#analyzer"
             className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.03]"
           >
             Analyze My Games — Free

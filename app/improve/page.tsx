@@ -207,7 +207,7 @@ export default function ImproveIndexPage() {
             improve — tactics, openings, endgames, or time management.
           </p>
           <Link
-            href="/"
+            href="/#analyzer"
             className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.03]"
           >
             Analyze My Games — Free

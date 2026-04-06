@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { BlogChessBoard } from "@/components/blog-chess-board";
 import { CHESS_MISTAKES, type ChessMistake } from "@/lib/chess-mistakes";
 
 export function generateStaticParams() {
@@ -211,11 +212,13 @@ export default async function ChessMistakePage({
           <h2 id="example" className="mb-4 text-xl font-bold text-white">
             Example Position
           </h2>
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-5">
-            <p className="mb-3 text-sm font-mono text-stone-500 break-all">
-              FEN: {m.exampleFen}
-            </p>
-            <p className="text-base leading-relaxed text-stone-300">
+          <div className="overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.03]">
+            <div className="flex justify-center p-4 pb-0">
+              <div className="w-full max-w-[360px]">
+                <BlogChessBoard fen={m.exampleFen} orientation="white" />
+              </div>
+            </div>
+            <p className="p-5 text-sm leading-relaxed text-stone-300">
               {m.exampleDescription}
             </p>
           </div>
@@ -274,7 +277,7 @@ export default async function ChessMistakePage({
             errors are costing you the most Elo.
           </p>
           <Link
-            href="/"
+            href="/#analyzer"
             className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.03]"
           >
             Scan My Games — Free

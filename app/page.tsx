@@ -11,11 +11,14 @@ import {
 import Link from "next/link";
 import { DrillMode } from "@/components/drill-mode";
 import { HeroDemoBoard } from "@/components/hero-demo-board";
+import { HeroProductAnimation } from "@/components/hero-product-animation";
 import { MistakeCard } from "@/components/mistake-card";
 import { TacticCard } from "@/components/tactic-card";
 import { EndgameCard } from "@/components/endgame-card";
 import { TimeCard } from "@/components/time-card";
 import { DailyLoginPopup } from "@/components/daily-login-rewards";
+import { SetupWizard } from "@/components/setup-wizard";
+import { AdminDebug } from "@/components/admin-debug";
 import { CardCarousel, ViewModeToggle } from "@/components/card-carousel";
 import type { CardViewMode } from "@/components/card-carousel";
 import { useSession } from "@/components/session-provider";
@@ -1387,162 +1390,171 @@ export default function HomePage() {
       <div className="relative z-10 px-4 py-12 sm:px-6 md:px-10">
         <section className="mx-auto w-full max-w-6xl space-y-16 overflow-x-hidden">
           {/* ─── Hero Section ─── */}
-          <header className="animate-fade-in-up space-y-8 text-center">
-            {/* Trust pill */}
-            <div
-              className={`flex items-center justify-center gap-3 ${heroAnim(1)}`}
-            >
-              <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-semibold text-emerald-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                Free to start &nbsp;·&nbsp; No account needed &nbsp;·&nbsp;
-                Lichess &amp; Chess.com
-              </span>
-            </div>
-
-            <div className="space-y-4">
-              <div
-                className={`flex flex-wrap items-center justify-center gap-3 ${heroAnim(1)}`}
-              >
-                <span className="tag-fuchsia">
-                  <span className="text-sm">🔥</span> FireChess
-                </span>
-                <span className="tag-emerald">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-                  </svg>
-                  Powered by Stockfish 18
-                </span>
-                <a
-                  href="https://www.youtube.com/watch?v=MpWsW10YE5M"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="tag-emerald cursor-pointer gap-1.5 transition-all hover:shadow-glow-sm active:scale-95 no-underline"
+          <header className="animate-fade-in-up">
+            <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
+              {/* ── Left col: text + CTAs ── */}
+              <div className="space-y-7 text-center lg:text-left">
+                {/* Trust pill */}
+                <div
+                  className={`flex items-center justify-center gap-3 lg:justify-start ${heroAnim(1)}`}
                 >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
+                  <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-semibold text-emerald-400">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                    Free to start &nbsp;·&nbsp; No account needed &nbsp;·&nbsp;
+                    Lichess &amp; Chess.com
+                  </span>
+                </div>
+
+                <div className="space-y-5">
+                  {/* Tag pills */}
+                  <div
+                    className={`flex flex-wrap items-center justify-center gap-3 lg:justify-start ${heroAnim(1)}`}
                   >
-                    <polygon points="5 3 19 12 5 21 5 3" />
-                  </svg>
-                  Watch Trailer
-                </a>
+                    <span className="tag-fuchsia">
+                      <span className="text-sm">🔥</span> FireChess
+                    </span>
+                    <span className="tag-emerald">
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
+                      </svg>
+                      Powered by Stockfish 18
+                    </span>
+                    <a
+                      href="https://www.youtube.com/watch?v=MpWsW10YE5M"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="tag-emerald cursor-pointer gap-1.5 transition-all hover:shadow-glow-sm active:scale-95 no-underline"
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                      </svg>
+                      Watch Trailer
+                    </a>
+                  </div>
+
+                  {/* Headline */}
+                  <h1
+                    className={`text-4xl font-black leading-[1.1] tracking-tight md:text-5xl lg:text-6xl ${heroAnim(2)}`}
+                  >
+                    <span className="block text-white">Stop making the </span>
+                    <span className={`block gradient-text ${heroAnim(3)}`}>
+                      same mistakes.
+                    </span>
+                  </h1>
+
+                  {/* Description */}
+                  <p
+                    className={`text-base text-slate-400 md:text-lg lg:max-w-lg ${heroAnim(4)}`}
+                  >
+                    FireChess scans your{" "}
+                    <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text font-semibold text-transparent">
+                      openings
+                    </span>
+                    ,{" "}
+                    <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text font-semibold text-transparent">
+                      tactics
+                    </span>
+                    , and{" "}
+                    <span className="bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text font-semibold text-transparent">
+                      endgames
+                    </span>{" "}
+                    — finds the mistakes you keep repeating, explains the better
+                    move, and drills you until the fix sticks.
+                  </p>
+
+                  {/* CTA buttons */}
+                  <div
+                    className={`flex flex-wrap items-center justify-center gap-3 lg:justify-start ${heroAnim(5)}`}
+                  >
+                    <a
+                      href="#analyzer"
+                      className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.03] hover:shadow-emerald-500/30 active:scale-[0.98]"
+                    >
+                      Analyze My Games
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M13 7l5 5m0 0l-5 5m5-5H6"
+                        />
+                      </svg>
+                    </a>
+                    <a
+                      href="https://www.youtube.com/watch?v=MpWsW10YE5M"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-xl border border-white/[0.10] bg-white/[0.04] px-6 py-3 text-sm font-semibold text-slate-300 transition-all hover:bg-white/[0.08] hover:text-white"
+                    >
+                      <svg
+                        className="h-4 w-4 text-red-400"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                      </svg>
+                      Watch Demo
+                    </a>
+                    <Link
+                      href="/pricing"
+                      className="inline-flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 px-5 py-3 text-sm font-semibold text-amber-400 transition-all hover:bg-amber-500/15"
+                    >
+                      <svg
+                        className="h-4 w-4"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                      >
+                        <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm0 2h14v2H5v-2z" />
+                      </svg>
+                      Go Pro
+                    </Link>
+                  </div>
+                </div>
+
+                {/* Stats trust bar */}
+                <div
+                  className={`flex flex-wrap items-center justify-center gap-x-7 gap-y-2 lg:justify-start ${heroAnim(6)}`}
+                >
+                  {[
+                    { icon: "🎯", label: "Opening leak detection" },
+                    { icon: "⚡", label: "Stockfish 18 evaluation" },
+                    { icon: "🏋️", label: "Drill mode" },
+                    { icon: "🆓", label: "Free to start" },
+                  ].map(({ icon, label }) => (
+                    <span
+                      key={label}
+                      className="flex items-center gap-1.5 text-xs text-slate-500"
+                    >
+                      <span>{icon}</span>
+                      {label}
+                    </span>
+                  ))}
+                </div>
               </div>
 
-              <h1 className="mx-auto max-w-4xl text-4xl font-black leading-[1.1] tracking-tight md:text-6xl lg:text-7xl">
-                <span className={`block text-white ${heroAnim(2)}`}>
-                  Stop making the{" "}
-                </span>
-                <span className={`block gradient-text ${heroAnim(3)}`}>
-                  same mistakes.
-                </span>
-              </h1>
-
-              <p
-                className={`mx-auto max-w-2xl text-base text-slate-400 md:text-lg ${heroAnim(4)}`}
-              >
-                FireChess scans your{" "}
-                <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text font-semibold text-transparent">
-                  openings
-                </span>
-                ,{" "}
-                <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text font-semibold text-transparent">
-                  tactics
-                </span>
-                , and{" "}
-                <span className="bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text font-semibold text-transparent">
-                  endgames
-                </span>{" "}
-                — finds the mistakes you keep repeating, explains the better
-                move, and drills you until the fix sticks.
-              </p>
-
-              {/* CTA buttons */}
-              <div
-                className={`mt-6 flex flex-wrap items-center justify-center gap-3 ${heroAnim(5)}`}
-              >
-                <a
-                  href="#analyzer"
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.03] hover:shadow-emerald-500/30 active:scale-[0.98]"
-                >
-                  Analyze My Games
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M13 7l5 5m0 0l-5 5m5-5H6"
-                    />
-                  </svg>
-                </a>
-                <a
-                  href="https://www.youtube.com/watch?v=MpWsW10YE5M"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/[0.10] bg-white/[0.04] px-6 py-3 text-sm font-semibold text-slate-300 transition-all hover:bg-white/[0.08] hover:text-white"
-                >
-                  <svg
-                    className="h-4 w-4 text-red-400"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <polygon points="5 3 19 12 5 21 5 3" />
-                  </svg>
-                  Watch Demo
-                </a>
-                <Link
-                  href="/pricing"
-                  className="inline-flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 px-5 py-3 text-sm font-semibold text-amber-400 transition-all hover:bg-amber-500/15"
-                >
-                  <svg
-                    className="h-4 w-4"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm0 2h14v2H5v-2z" />
-                  </svg>
-                  Go Pro
-                </Link>
+              {/* ── Right col: animated product demo ── */}
+              <div className={`w-full ${heroAnim(6)}`}>
+                <HeroProductAnimation paused={puzzleBoardOpen} />
               </div>
-            </div>
-
-            <div className={heroAnim(6)}>
-              <HeroDemoBoard paused={puzzleBoardOpen} userLeaks={heroLeaks} />
-            </div>
-
-            {/* Stats trust bar */}
-            <div
-              className={`flex flex-wrap items-center justify-center gap-x-8 gap-y-3 pt-2 ${heroAnim(6)}`}
-            >
-              {[
-                { icon: "🎯", label: "Opening leak detection" },
-                { icon: "⚡", label: "Stockfish 18 evaluation" },
-                { icon: "🏋️", label: "Drill mode to fix mistakes" },
-                { icon: "🆓", label: "Free — no signup required" },
-              ].map(({ icon, label }) => (
-                <span
-                  key={label}
-                  className="flex items-center gap-1.5 text-xs text-slate-500"
-                >
-                  <span>{icon}</span>
-                  {label}
-                </span>
-              ))}
             </div>
           </header>
 
@@ -2692,6 +2704,12 @@ export default function HomePage() {
 
           {/* ─── Daily Login Popup ─── */}
           {state !== "loading" && authenticated && <DailyLoginPopup />}
+
+          {/* ─── First-run Setup Wizard ─── */}
+          <SetupWizard show={authenticated && state !== "loading"} />
+
+          {/* ─── Admin Debug Widget ─── */}
+          <AdminDebug />
 
           {/* ─── Results ─── */}
           {result !== null && (state === "done" || state === "loading") && (
