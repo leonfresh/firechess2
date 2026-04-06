@@ -3,6 +3,10 @@ import { getAllPosts } from "@/lib/blog";
 import { OPENING_GUIDES } from "@/lib/opening-guides";
 import { TACTIC_MOTIFS } from "@/lib/tactics-motifs";
 import { ENDGAME_GUIDES } from "@/lib/endgame-guides";
+import { POSITIONAL_MOTIFS } from "@/lib/positional-motifs";
+import { TIME_CONTROLS } from "@/lib/time-controls";
+import { CHESS_MISTAKES } from "@/lib/chess-mistakes";
+import { RATING_GUIDES } from "@/lib/rating-guides";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = "https://firechess.com";
@@ -33,6 +37,34 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.75,
+  }));
+
+  const positionPages = POSITIONAL_MOTIFS.map((m) => ({
+    url: `${base}/positions/${m.id}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.75,
+  }));
+
+  const timeControlPages = TIME_CONTROLS.map((tc) => ({
+    url: `${base}/time-controls/${tc.id}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.75,
+  }));
+
+  const mistakePages = CHESS_MISTAKES.map((m) => ({
+    url: `${base}/mistakes/${m.id}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.75,
+  }));
+
+  const ratingPages = RATING_GUIDES.map((g) => ({
+    url: `${base}/improve/${g.id}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.8,
   }));
 
   return [
@@ -102,6 +134,34 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     ...endgamePages,
+    {
+      url: `${base}/positions`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    ...positionPages,
+    {
+      url: `${base}/time-controls`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    ...timeControlPages,
+    {
+      url: `${base}/mistakes`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    ...mistakePages,
+    {
+      url: `${base}/improve`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.85,
+    },
+    ...ratingPages,
     {
       url: `${base}/chaos`,
       lastModified: new Date(),

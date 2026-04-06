@@ -15,6 +15,47 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: 26,
+    date: "Apr 6, 2026",
+    title: "4 New pSEO Guide Categories",
+    description:
+      "Four new educational guide sections are now live: Positional Motifs, Time Controls, Common Mistakes, and Improve by Rating. All pages are public, indexed in the sitemap, and linked from the nav.",
+    changes: [
+      {
+        type: "feature",
+        text: "Positional Motifs (/positions) — 8 in-depth guides covering isolated pawns, passed pawns, outposts, open files, bishop pair, weak squares, pawn majority, and king activity, each with GM quotes from Nimzowitsch, Kasparov, Capablanca, and others",
+      },
+      {
+        type: "feature",
+        text: "Time Controls (/time-controls) — guides for bullet, blitz, rapid, and classical chess: unique challenges, opening strategy, time management tips, common mistakes, and an improvement plan per format",
+      },
+      {
+        type: "feature",
+        text: "Common Mistakes (/mistakes) — 8 articles on the most frequent chess errors (hanging pieces, back-rank blunders, slow development, king safety neglect, passive pieces, endgame conversion, premature attacks, ignoring threats), each with a pre-move checklist callout",
+      },
+      {
+        type: "feature",
+        text: "Improve by Rating (/improve) — 6 rating-range guides from 400–2000 Elo: core challenge, weekly practice plan table, highest-ROI study list, realistic timeframe, and a FireChess-specific tip per bracket",
+      },
+      {
+        type: "improvement",
+        text: "Guides nav dropdown expanded — Positions, Time Controls, Common Mistakes, and Improve by Rating added alongside Openings, Tactics, and Endgames (desktop + mobile)",
+      },
+      {
+        type: "improvement",
+        text: "AI Coach removed from the Train nav — the feature is still accessible but hidden while experimental",
+      },
+      {
+        type: "improvement",
+        text: "Sitemap updated — all 4 new index pages and their 26 dynamic slugs are now included with appropriate priorities",
+      },
+      {
+        type: "fix",
+        text: "New guide pages added to the public routes list — /positions, /time-controls, /mistakes, and /improve no longer require login",
+      },
+    ],
+  },
+  {
     version: 25,
     date: "Mar 14, 2026",
     title: "Chaos Chess — Opening Anomalies",

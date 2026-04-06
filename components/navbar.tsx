@@ -196,7 +196,6 @@ export function Navbar() {
                   isActive("/sparring") ||
                   isActive("/guess") ||
                   isActive("/dungeon") ||
-                  isActive("/coach") ||
                   isActive("/openings") ||
                   isActive("/tactics") ||
                   isActive("/endgames")
@@ -235,12 +234,6 @@ export function Navbar() {
                   >
                     🧩 Guess the Move
                   </Link>
-                  <Link
-                    href="/coach"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/coach") ? "bg-amber-500/[0.08] text-amber-400" : "text-slate-400 hover:bg-amber-500/[0.06] hover:text-amber-400"}`}
-                  >
-                    ♟ AI Coach
-                  </Link>
                 </div>
               </div>
             </div>
@@ -253,7 +246,11 @@ export function Navbar() {
                 className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   isActive("/openings") ||
                   isActive("/tactics") ||
-                  isActive("/endgames")
+                  isActive("/endgames") ||
+                  isActive("/positions") ||
+                  isActive("/time-controls") ||
+                  isActive("/mistakes") ||
+                  isActive("/improve")
                     ? "bg-white/[0.06] text-white"
                     : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
                 }`}
@@ -270,7 +267,7 @@ export function Navbar() {
                 </svg>
               </button>
               <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
-                <div className="min-w-[180px] rounded-xl border border-white/[0.08] bg-[#0d0a06] p-1.5 shadow-xl shadow-black/50">
+                <div className="min-w-[200px] rounded-xl border border-white/[0.08] bg-[#0d0a06] p-1.5 shadow-xl shadow-black/50">
                   <Link
                     href="/openings"
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/openings") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
@@ -288,6 +285,31 @@ export function Navbar() {
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/endgames") ? "bg-emerald-500/[0.08] text-emerald-400" : "text-slate-400 hover:bg-emerald-500/[0.06] hover:text-emerald-400"}`}
                   >
                     ♟ Endgames
+                  </Link>
+                  <div className="my-1 h-px bg-white/[0.06]" />
+                  <Link
+                    href="/positions"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/positions") ? "bg-cyan-500/[0.08] text-cyan-400" : "text-slate-400 hover:bg-cyan-500/[0.06] hover:text-cyan-400"}`}
+                  >
+                    🧠 Positions
+                  </Link>
+                  <Link
+                    href="/time-controls"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/time-controls") ? "bg-amber-500/[0.08] text-amber-400" : "text-slate-400 hover:bg-amber-500/[0.06] hover:text-amber-400"}`}
+                  >
+                    ⏱ Time Controls
+                  </Link>
+                  <Link
+                    href="/mistakes"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/mistakes") ? "bg-red-500/[0.08] text-red-400" : "text-slate-400 hover:bg-red-500/[0.06] hover:text-red-400"}`}
+                  >
+                    ❌ Common Mistakes
+                  </Link>
+                  <Link
+                    href="/improve"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/improve") ? "bg-emerald-500/[0.08] text-emerald-400" : "text-slate-400 hover:bg-emerald-500/[0.06] hover:text-emerald-400"}`}
+                  >
+                    📈 Improve by Rating
                   </Link>
                 </div>
               </div>
@@ -910,7 +932,6 @@ export function Navbar() {
                     { href: "/train", label: "🎯 Puzzles & Drills" },
                     { href: "/sparring", label: "⚔️ Opening Sparring" },
                     { href: "/guess", label: "🧩 Guess the Move" },
-                    { href: "/coach", label: "♟ AI Coach" },
                   ],
                 },
                 {
@@ -920,6 +941,10 @@ export function Navbar() {
                     { href: "/openings", label: "📖 Openings" },
                     { href: "/tactics", label: "⚡ Tactics" },
                     { href: "/endgames", label: "♟ Endgames" },
+                    { href: "/positions", label: "🧠 Positions" },
+                    { href: "/time-controls", label: "⏱ Time Controls" },
+                    { href: "/mistakes", label: "❌ Common Mistakes" },
+                    { href: "/improve", label: "📈 Improve by Rating" },
                   ],
                 },
                 {

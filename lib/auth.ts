@@ -104,6 +104,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         "/coach",
         "/tactics",
         "/endgames",
+        "/positions",
+        "/time-controls",
+        "/mistakes",
+        "/improve",
       ];
       const isPublic =
         publicPaths.some((p) => path === p || path.startsWith(p + "/")) ||
