@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { OPENING_GUIDES, type OpeningGuide } from "@/lib/opening-guides";
-import { OpeningSlugClient } from "./client";
+import { OpeningSlugClient, OpeningEmbedButton } from "./client";
 import { BlogChessBoard } from "@/components/blog-chess-board";
 
 /* ── Static params: one page per opening ── */
@@ -356,6 +356,7 @@ export default async function OpeningSlugPage({
             >
               Browse All Openings
             </Link>
+            <OpeningEmbedButton slug={guide.id} name={guide.name} />
           </div>
         </section>
 

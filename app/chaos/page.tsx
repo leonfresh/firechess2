@@ -12479,6 +12479,18 @@ export default function ChaosChessPage() {
                         ⚡ New Game
                       </button>
 
+                      {/* Watch replay (multiplayer only — AI games don't persist) */}
+                      {gameMode !== "ai" && roomId && (
+                        <a
+                          href={`/chaos/replay/${roomId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full rounded-lg border border-emerald-500/25 bg-emerald-500/8 px-4 py-2.5 text-xs font-semibold text-emerald-400/80 transition-all hover:bg-emerald-500/15 flex items-center justify-center gap-2"
+                        >
+                          📺 Watch Replay
+                        </a>
+                      )}
+
                       {/* Share button */}
                       <button
                         type="button"

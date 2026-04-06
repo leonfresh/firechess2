@@ -127,3 +127,81 @@ export function OpeningSlugClient({ moves: rawMoves }: { moves: string }) {
     </div>
   );
 }
+
+export function OpeningEmbedButton({
+  slug,
+  name,
+}: {
+  slug: string;
+  name: string;
+}) {
+  const [copied, setCopied] = useState(false);
+  const [open, setOpen] = useState(false);
+
+  const iframeCode = `<iframe
+  src="https://firechess.com/embed/opening/${slug}"
+  width="400"
+  height="500"
+  frameborder="0"
+  loading="lazy"
+  title="${name} Opening Guide"
+></iframe>`;
+
+  function copy() {
+    navigator.clipboard.writeText(iframeCode).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="inline-flex items-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.04] px-4 py-2 text-xs font-medium text-stone-400 transition-colors hover:border-white/[0.15] hover:text-white"
+      >
+        {"</>"} Embed
+      </button>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="mb-1 text-base font-bold text-white">
+              Embed {name} Widget
+            </h3>
+            <p className="mb-4 text-xs text-slate-400">
+              Paste this snippet into your blog or website to embed a live
+              opening guide card.
+            </p>
+            <pre className="mb-4 overflow-x-auto rounded-xl bg-black/40 p-3 text-[11px] font-mono text-slate-300 whitespace-pre-wrap break-all">
+              {iframeCode}
+            </pre>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={copy}
+                className="flex-1 rounded-xl bg-orange-500 px-4 py-2 text-sm font-bold text-white hover:bg-orange-400 transition-colors"
+              >
+                {copied ? "✅ Copied!" : "Copy Code"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="rounded-xl border border-white/10 px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}

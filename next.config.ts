@@ -14,6 +14,20 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // Embed widget pages — must be iframeable from any origin
+        source: "/embed/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+          // Allow cross-origin embedding (explicitly no X-Frame-Options so any site can iframe)
+          { key: "Content-Security-Policy", value: "frame-ancestors *;" },
+        ],
+      },
+      {
         source: "/:path*",
         headers: [
           { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
@@ -21,9 +35,15 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
-          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
-        ]
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+          {
+            key: "Strict-Transport-Security",
+            value: "max-age=63072000; includeSubDomains; preload",
+          },
+        ],
       },
       {
         source: "/stockfish-18-lite.wasm",
@@ -32,8 +52,8 @@ const nextConfig: NextConfig = {
           { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
           { key: "Cross-Origin-Resource-Policy", value: "cross-origin" },
-          { key: "Content-Type", value: "application/wasm" }
-        ]
+          { key: "Content-Type", value: "application/wasm" },
+        ],
       },
       {
         source: "/stockfish-18-lite.js",
@@ -41,8 +61,8 @@ const nextConfig: NextConfig = {
           { key: "Access-Control-Allow-Origin", value: "*" },
           { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-          { key: "Cross-Origin-Resource-Policy", value: "cross-origin" }
-        ]
+          { key: "Cross-Origin-Resource-Policy", value: "cross-origin" },
+        ],
       },
       {
         source: "/stockfish.wasm",
@@ -51,8 +71,8 @@ const nextConfig: NextConfig = {
           { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
           { key: "Cross-Origin-Resource-Policy", value: "cross-origin" },
-          { key: "Content-Type", value: "application/wasm" }
-        ]
+          { key: "Content-Type", value: "application/wasm" },
+        ],
       },
       {
         source: "/stockfish.worker.js",
@@ -60,11 +80,11 @@ const nextConfig: NextConfig = {
           { key: "Access-Control-Allow-Origin", value: "*" },
           { key: "Cross-Origin-Embedder-Policy", value: "require-corp" },
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-          { key: "Cross-Origin-Resource-Policy", value: "cross-origin" }
-        ]
-      }
+          { key: "Cross-Origin-Resource-Policy", value: "cross-origin" },
+        ],
+      },
     ];
-  }
+  },
 };
 
 export default nextConfig;
