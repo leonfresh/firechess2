@@ -10,7 +10,10 @@ import { desc, sql, gte } from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   const limit = Math.min(
-    Math.max(parseInt(req.nextUrl.searchParams.get("limit") ?? "50", 10) || 50, 1),
+    Math.max(
+      parseInt(req.nextUrl.searchParams.get("limit") ?? "50", 10) || 50,
+      1,
+    ),
     100,
   );
 
@@ -25,6 +28,7 @@ export async function GET(req: NextRequest) {
       peakRating: chaosRatings.peakRating,
       updatedAt: chaosRatings.updatedAt,
       userName: users.name,
+      chaosUsername: users.chaosUsername,
       userImage: users.image,
     })
     .from(chaosRatings)

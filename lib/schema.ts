@@ -32,6 +32,8 @@ export const users = pgTable("user", {
   image: text("image"),
   /** Custom iPad launcher layout — stored as { grid: string[], dock: string[] } */
   launcherConfig: jsonb("launcher_config"),
+  /** Optional Chaos Chess display name (unique, 3–20 chars) */
+  chaosUsername: text("chaos_username").unique(),
 });
 
 export const accounts = pgTable(

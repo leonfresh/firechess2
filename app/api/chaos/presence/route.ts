@@ -10,8 +10,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { chaosPresence } from "@/lib/schema";
-import { gte } from "drizzle-orm";
+import { chaosPresence, users } from "@/lib/schema";
+import { gte, eq } from "drizzle-orm";
 
 const ONLINE_THRESHOLD_MS = 30_000; // 30 seconds
 
@@ -23,20 +23,35 @@ export async function POST() {
 
   const now = new Date();
 
+  // Look up the user's chaos username
+  const [userRow] = await db
+    .select({
+      chaosUsername: users.chaosUsername,
+      name: users.name,
+      image: users.image,
+    })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1);
+
+  const displayName =
+    userRow?.chaosUsername ?? userRow?.name ?? session.user.name ?? "Anonymous";
+  const displayImage = userRow?.image ?? session.user.image ?? null;
+
   // Upsert our presence
   await db
     .insert(chaosPresence)
     .values({
       userId: session.user.id,
-      userName: session.user.name ?? "Anonymous",
-      userImage: session.user.image ?? null,
+      userName: displayName,
+      userImage: displayImage,
       lastSeen: now,
     })
     .onConflictDoUpdate({
       target: chaosPresence.userId,
       set: {
-        userName: session.user.name ?? "Anonymous",
-        userImage: session.user.image ?? null,
+        userName: displayName,
+        userImage: displayImage,
         lastSeen: now,
       },
     });

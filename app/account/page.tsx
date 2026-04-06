@@ -8,7 +8,7 @@
 
 import { useSession } from "@/components/session-provider";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 export default function AccountPage() {
@@ -19,6 +19,49 @@ export default function AccountPage() {
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncDone, setSyncDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Chaos username
+  const [chaosUsername, setChaosUsername] = useState("");
+  const [chaosUsernameSaving, setChaosUsernameSaving] = useState(false);
+  const [chaosUsernameError, setChaosUsernameError] = useState<string | null>(
+    null,
+  );
+  const [chaosUsernameSaved, setChaosUsernameSaved] = useState(false);
+
+  // Load current chaos username from the server once authenticated
+  useEffect(() => {
+    if (!authenticated) return;
+    fetch("/api/account/chaos-username")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.chaosUsername) setChaosUsername(d.chaosUsername);
+      })
+      .catch(() => {});
+  }, [authenticated]);
+
+  const saveChaosUsername = async () => {
+    setChaosUsernameSaving(true);
+    setChaosUsernameError(null);
+    setChaosUsernameSaved(false);
+    try {
+      const res = await fetch("/api/account/chaos-username", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: chaosUsername }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setChaosUsernameError(data.error ?? "Failed to save username.");
+      } else {
+        setChaosUsernameSaved(true);
+        setTimeout(() => setChaosUsernameSaved(false), 3000);
+      }
+    } catch {
+      setChaosUsernameError("Something went wrong. Please try again.");
+    } finally {
+      setChaosUsernameSaving(false);
+    }
+  };
 
   const syncPlan = async () => {
     setSyncLoading(true);
@@ -119,6 +162,82 @@ export default function AccountPage() {
                   )}
                 </div>
               </div>
+            </section>
+
+            {/* ── Chaos Chess Username ── */}
+            <section className="rounded-2xl border border-purple-500/10 bg-white/[0.02] p-6">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-purple-500">
+                ⚡ Chaos Chess Username
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Your public display name on the Chaos Chess leaderboard and in
+                multiplayer games. 3–20 characters, letters / numbers / hyphens
+                / underscores only.
+              </p>
+              <div className="mt-4 flex items-center gap-2">
+                <input
+                  type="text"
+                  value={chaosUsername}
+                  onChange={(e) => {
+                    setChaosUsername(e.target.value);
+                    setChaosUsernameError(null);
+                    setChaosUsernameSaved(false);
+                  }}
+                  placeholder="e.g. ChaosKnight"
+                  maxLength={20}
+                  className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white placeholder-slate-600 outline-none focus:border-purple-500/50 focus:ring-1 focus:ring-purple-500/20"
+                />
+                <button
+                  type="button"
+                  onClick={saveChaosUsername}
+                  disabled={
+                    chaosUsernameSaving || chaosUsername.trim().length < 3
+                  }
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-purple-500/20 border border-purple-500/30 px-4 py-2 text-sm font-semibold text-purple-300 transition-all hover:bg-purple-500/30 disabled:opacity-40"
+                >
+                  {chaosUsernameSaving ? (
+                    <svg
+                      className="h-4 w-4 animate-spin"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                    >
+                      <circle
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                        className="opacity-25"
+                      />
+                      <path
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                        className="opacity-75"
+                      />
+                    </svg>
+                  ) : chaosUsernameSaved ? (
+                    <svg
+                      className="h-4 w-4 text-emerald-400"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={2.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  ) : null}
+                  {chaosUsernameSaved ? "Saved!" : "Save"}
+                </button>
+              </div>
+              {chaosUsernameError && (
+                <p className="mt-2 text-xs text-red-400">
+                  {chaosUsernameError}
+                </p>
+              )}
             </section>
 
             {/* ── Subscription Card ── */}

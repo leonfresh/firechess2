@@ -1,11 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { Chess } from "chess.js";
 import type { PieceSymbol } from "chess.js";
 import { Chessboard } from "@/components/chessboard-compat";
 import { EvalBar } from "@/components/eval-bar";
-import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
+import {
+  useBoardTheme,
+  useShowCoordinates,
+  useCustomPieces,
+} from "@/lib/use-coins";
 import { stockfishClient } from "@/lib/stockfish-client";
 import type { PositionExplanation, ThemeCard } from "@/lib/position-explainer";
 
@@ -13,13 +18,13 @@ import type { PositionExplanation, ThemeCard } from "@/lib/position-explainer";
 
 /** Tactic / Endgame structured explanation */
 export type SimpleExplanation = {
-  type: string;       // "winning" | "punishment" | "best" | "consequence"
+  type: string; // "winning" | "punishment" | "best" | "consequence"
   move: string;
   impact: string;
   evalAfter?: string;
   line?: string;
   bestMove?: string;
-  context?: string;   // e.g. "Failed Conversion"
+  context?: string; // e.g. "Failed Conversion"
 };
 
 export type ExplanationModalProps = {
@@ -55,31 +60,93 @@ export type ExplanationModalProps = {
 
 /* ─── Helpers ─── */
 
-function isUci(m: string): boolean { return /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(m); }
-
-function variantColors(variant: "opening" | "tactic" | "endgame", activeTab?: "played" | "best" | "db" | null) {
-  if (variant === "opening") {
-    if (activeTab === "best") return { accent: "emerald", border: "border-emerald-500/20", bg: "bg-emerald-500/[0.04]", text: "text-emerald-400", pill: "bg-emerald-500/15 text-emerald-400", grad: "from-emerald-500/[0.06] to-transparent" };
-    if (activeTab === "db") return { accent: "blue", border: "border-blue-500/20", bg: "bg-blue-500/[0.04]", text: "text-blue-400", pill: "bg-blue-500/15 text-blue-400", grad: "from-blue-500/[0.06] to-transparent" };
-    return { accent: "red", border: "border-red-500/20", bg: "bg-red-500/[0.04]", text: "text-red-400", pill: "bg-red-500/15 text-red-400", grad: "from-red-500/[0.06] to-transparent" };
-  }
-  if (variant === "tactic") return { accent: "amber", border: "border-amber-500/20", bg: "bg-amber-500/[0.04]", text: "text-amber-400", pill: "bg-amber-500/15 text-amber-400", grad: "from-amber-500/[0.06] to-transparent" };
-  return { accent: "sky", border: "border-sky-500/20", bg: "bg-sky-500/[0.04]", text: "text-sky-400", pill: "bg-sky-500/15 text-sky-400", grad: "from-sky-500/[0.06] to-transparent" };
+function isUci(m: string): boolean {
+  return /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(m);
 }
 
-function severityClasses(severity: ThemeCard["severity"], variant: "opening" | "tactic" | "endgame") {
-  if (severity === "critical") return { border: "border-red-500/20", bg: "bg-red-500/[0.04]", text: "text-red-400" };
-  if (severity === "warning") return { border: "border-amber-500/20", bg: "bg-amber-500/[0.04]", text: "text-amber-400" };
+function variantColors(
+  variant: "opening" | "tactic" | "endgame",
+  activeTab?: "played" | "best" | "db" | null,
+) {
+  if (variant === "opening") {
+    if (activeTab === "best")
+      return {
+        accent: "emerald",
+        border: "border-emerald-500/20",
+        bg: "bg-emerald-500/[0.04]",
+        text: "text-emerald-400",
+        pill: "bg-emerald-500/15 text-emerald-400",
+        grad: "from-emerald-500/[0.06] to-transparent",
+      };
+    if (activeTab === "db")
+      return {
+        accent: "blue",
+        border: "border-blue-500/20",
+        bg: "bg-blue-500/[0.04]",
+        text: "text-blue-400",
+        pill: "bg-blue-500/15 text-blue-400",
+        grad: "from-blue-500/[0.06] to-transparent",
+      };
+    return {
+      accent: "red",
+      border: "border-red-500/20",
+      bg: "bg-red-500/[0.04]",
+      text: "text-red-400",
+      pill: "bg-red-500/15 text-red-400",
+      grad: "from-red-500/[0.06] to-transparent",
+    };
+  }
+  if (variant === "tactic")
+    return {
+      accent: "amber",
+      border: "border-amber-500/20",
+      bg: "bg-amber-500/[0.04]",
+      text: "text-amber-400",
+      pill: "bg-amber-500/15 text-amber-400",
+      grad: "from-amber-500/[0.06] to-transparent",
+    };
+  return {
+    accent: "sky",
+    border: "border-sky-500/20",
+    bg: "bg-sky-500/[0.04]",
+    text: "text-sky-400",
+    pill: "bg-sky-500/15 text-sky-400",
+    grad: "from-sky-500/[0.06] to-transparent",
+  };
+}
+
+function severityClasses(
+  severity: ThemeCard["severity"],
+  variant: "opening" | "tactic" | "endgame",
+) {
+  if (severity === "critical")
+    return {
+      border: "border-red-500/20",
+      bg: "bg-red-500/[0.04]",
+      text: "text-red-400",
+    };
+  if (severity === "warning")
+    return {
+      border: "border-amber-500/20",
+      bg: "bg-amber-500/[0.04]",
+      text: "text-amber-400",
+    };
   const c = variantColors(variant);
   return { border: c.border, bg: c.bg, text: c.text };
 }
 
 function md(text: string): string {
-  return text.replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>');
+  return text.replace(
+    /\*\*(.+?)\*\*/g,
+    '<strong class="text-white">$1</strong>',
+  );
 }
 
 /** Pre-compute animation steps from a starting FEN + UCI moves */
-function buildSteps(startFen: string, uciMoves: string[]): { uci: string; san: string; fen: string }[] {
+function buildSteps(
+  startFen: string,
+  uciMoves: string[],
+): { uci: string; san: string; fen: string }[] {
   const steps: { uci: string; san: string; fen: string }[] = [];
   try {
     const chess = new Chess(startFen);
@@ -88,11 +155,17 @@ function buildSteps(startFen: string, uciMoves: string[]): { uci: string; san: s
       const from = uci.slice(0, 2);
       const to = uci.slice(2, 4);
       const promotion = uci.slice(4, 5) || undefined;
-      const r = chess.move({ from, to, promotion: promotion as PieceSymbol | undefined });
+      const r = chess.move({
+        from,
+        to,
+        promotion: promotion as PieceSymbol | undefined,
+      });
       if (!r) break;
       steps.push({ uci, san: r.san, fen: chess.fen() });
     }
-  } catch { /* ignore */ }
+  } catch {
+    /* ignore */
+  }
   return steps;
 }
 
@@ -128,12 +201,13 @@ export function ExplanationModal({
     [startFen, uciMoves],
   );
   const altSteps = useMemo(
-    () => (startFen && altUciMoves?.length ? buildSteps(startFen, altUciMoves) : []),
+    () =>
+      startFen && altUciMoves?.length ? buildSteps(startFen, altUciMoves) : [],
     [startFen, altUciMoves],
   );
   const [activeLine, setActiveLine] = useState<0 | 1>(0);
   const activeSteps = useMemo(
-    () => activeLine === 1 && altSteps.length > 0 ? altSteps : steps,
+    () => (activeLine === 1 && altSteps.length > 0 ? altSteps : steps),
     [activeLine, steps, altSteps],
   );
   const [stepIdx, setStepIdx] = useState(-1); // -1 = starting position
@@ -143,7 +217,10 @@ export function ExplanationModal({
   const boardContainerRef = useRef<HTMLDivElement>(null);
   const [boardSize, setBoardSize] = useState(320);
 
-  const currentFen = stepIdx < 0 ? (startFen ?? "start") : (activeSteps[stepIdx]?.fen ?? startFen ?? "start");
+  const currentFen =
+    stepIdx < 0
+      ? (startFen ?? "start")
+      : (activeSteps[stepIdx]?.fen ?? startFen ?? "start");
   const hasBoard = !!startFen;
 
   /* ── Board sizing ── */
@@ -179,15 +256,18 @@ export function ExplanationModal({
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, startFen, uciMoves]);
 
   /* ── Auto-play timer ── */
   useEffect(() => {
-    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
     if (!playing || activeSteps.length === 0) return;
     const id = setInterval(() => {
-      setStepIdx(prev => {
+      setStepIdx((prev) => {
         if (prev >= activeSteps.length - 1) {
           setPlaying(false);
           return prev;
@@ -203,19 +283,27 @@ export function ExplanationModal({
   useEffect(() => {
     if (!open || !currentFen || currentFen === "start") return;
     let cancelled = false;
-    stockfishClient.evaluateFen(currentFen, 8).then(r => {
-      if (!cancelled && r) {
-        const turn = new Chess(currentFen).turn();
-        setEvalCp(turn === "w" ? r.cp : -r.cp);
-      }
-    }).catch(() => {});
-    return () => { cancelled = true; };
+    stockfishClient
+      .evaluateFen(currentFen, 8)
+      .then((r) => {
+        if (!cancelled && r) {
+          const turn = new Chess(currentFen).turn();
+          setEvalCp(turn === "w" ? r.cp : -r.cp);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, [open, currentFen]);
 
   /* ── Close on Escape ── */
-  const handleEscape = useCallback((e: KeyboardEvent) => {
-    if (e.key === "Escape") onClose();
-  }, [onClose]);
+  const handleEscape = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    },
+    [onClose],
+  );
 
   useEffect(() => {
     if (open) {
@@ -229,13 +317,27 @@ export function ExplanationModal({
   }, [open, handleEscape]);
 
   /* ── Playback controls ── */
-  const goFirst = () => { setPlaying(false); setStepIdx(-1); };
-  const goPrev = () => { setPlaying(false); setStepIdx(p => Math.max(-1, p - 1)); };
-  const goNext = () => { setPlaying(false); setStepIdx(p => Math.min(activeSteps.length - 1, p + 1)); };
-  const goLast = () => { setPlaying(false); setStepIdx(activeSteps.length - 1); };
+  const goFirst = () => {
+    setPlaying(false);
+    setStepIdx(-1);
+  };
+  const goPrev = () => {
+    setPlaying(false);
+    setStepIdx((p) => Math.max(-1, p - 1));
+  };
+  const goNext = () => {
+    setPlaying(false);
+    setStepIdx((p) => Math.min(activeSteps.length - 1, p + 1));
+  };
+  const goLast = () => {
+    setPlaying(false);
+    setStepIdx(activeSteps.length - 1);
+  };
   const togglePlay = () => {
-    if (stepIdx >= activeSteps.length - 1) { setStepIdx(-1); setPlaying(true); }
-    else setPlaying(p => !p);
+    if (stepIdx >= activeSteps.length - 1) {
+      setStepIdx(-1);
+      setPlaying(true);
+    } else setPlaying((p) => !p);
   };
   const handleSwitchLine = (line: 0 | 1) => {
     setActiveLine(line);
@@ -244,16 +346,27 @@ export function ExplanationModal({
   };
 
   if (!open) return null;
+  if (typeof document === "undefined") return null;
 
   const colors = variantColors(variant, activeTab);
   const hasRich = !!richExplanation;
   const hasSimple = !!simpleExplanation;
-  const headerIcon = variant === "opening"
-    ? (activeTab === "best" ? "✓" : activeTab === "db" ? "📊" : "✗")
-    : variant === "tactic" ? "⚔️" : "♟️";
+  const headerIcon =
+    variant === "opening"
+      ? activeTab === "best"
+        ? "✓"
+        : activeTab === "db"
+          ? "📊"
+          : "✗"
+      : variant === "tactic"
+        ? "⚔️"
+        : "♟️";
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4" onClick={onClose}>
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4"
+      onClick={onClose}
+    >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
 
@@ -268,35 +381,55 @@ export function ExplanationModal({
           onClick={onClose}
           className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
         </button>
 
         {/* ── Header ── */}
-        <div className={`border-b border-white/[0.06] bg-gradient-to-r ${colors.grad} p-5 sm:p-6`}>
+        <div
+          className={`border-b border-white/[0.06] bg-gradient-to-r ${colors.grad} p-5 sm:p-6`}
+        >
           <div className="flex items-center gap-4">
-            <span className={`flex h-12 w-12 items-center justify-center rounded-2xl ${colors.pill} text-xl`}>
+            <span
+              className={`flex h-12 w-12 items-center justify-center rounded-2xl ${colors.pill} text-xl`}
+            >
               {headerIcon}
             </span>
             <div className="flex-1 min-w-0">
               <h2 className="text-lg font-extrabold text-white sm:text-xl">
                 {title ?? "Move Explanation"}
               </h2>
-              {subtitle && <p className="mt-0.5 text-sm text-slate-400">{subtitle}</p>}
+              {subtitle && (
+                <p className="mt-0.5 text-sm text-slate-400">{subtitle}</p>
+              )}
             </div>
             {hasRich && richExplanation.evalShift && (
               <div className="text-right hidden sm:block">
-                <div className={`text-2xl font-black font-mono tabular-nums ${colors.text}`}>
+                <div
+                  className={`text-2xl font-black font-mono tabular-nums ${colors.text}`}
+                >
                   {richExplanation.evalShift}
                 </div>
-                <p className={`text-xs font-bold ${colors.text} opacity-60`}>eval shift</p>
+                <p className={`text-xs font-bold ${colors.text} opacity-60`}>
+                  eval shift
+                </p>
               </div>
             )}
           </div>
         </div>
 
         {/* ── Body: Board + Explanations ── */}
-        <div className={`${hasBoard ? "grid grid-cols-1 lg:grid-cols-[auto_1fr]" : ""}`}>
-
+        <div
+          className={`${hasBoard ? "grid grid-cols-1 lg:grid-cols-[auto_1fr]" : ""}`}
+        >
           {/* ─── Board Column ─── */}
           {hasBoard && (
             <div className="border-b border-white/[0.06] lg:border-b-0 lg:border-r p-4 sm:p-5 flex flex-col items-center gap-3">
@@ -311,8 +444,12 @@ export function ExplanationModal({
                       boardOrientation={boardOrientation}
                       boardWidth={boardSize}
                       animationDuration={300}
-                      customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-                      customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                      customDarkSquareStyle={{
+                        backgroundColor: boardTheme.darkSquare,
+                      }}
+                      customLightSquareStyle={{
+                        backgroundColor: boardTheme.lightSquare,
+                      }}
                       showBoardNotation={showCoords}
                       customPieces={customPieces}
                     />
@@ -327,7 +464,9 @@ export function ExplanationModal({
                     type="button"
                     onClick={() => handleSwitchLine(0)}
                     className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-                      activeLine === 0 ? `${colors.pill}` : "text-slate-400 hover:text-white"
+                      activeLine === 0
+                        ? `${colors.pill}`
+                        : "text-slate-400 hover:text-white"
                     }`}
                   >
                     ✓ Best Line
@@ -336,7 +475,9 @@ export function ExplanationModal({
                     type="button"
                     onClick={() => handleSwitchLine(1)}
                     className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-                      activeLine === 1 ? "bg-rose-500/15 text-rose-400" : "text-slate-400 hover:text-white"
+                      activeLine === 1
+                        ? "bg-rose-500/15 text-rose-400"
+                        : "text-slate-400 hover:text-white"
                     }`}
                   >
                     ⚔️ {altUciLabel ?? "If they take?"}
@@ -351,24 +492,41 @@ export function ExplanationModal({
                     {activeSteps.map((s, i) => {
                       const moveNum = (() => {
                         try {
-                          const prevFen = i === 0 ? startFen! : activeSteps[i - 1].fen;
+                          const prevFen =
+                            i === 0 ? startFen! : activeSteps[i - 1].fen;
                           const turn = new Chess(prevFen).turn();
-                          const fullMove = parseInt(prevFen!.split(" ")[5] ?? "1");
-                          return turn === "w" ? `${fullMove}.` : (i === 0 || new Chess(steps[i - 1].fen).turn() === "w" ? `${fullMove}...` : null);
-                        } catch { return null; }
+                          const fullMove = parseInt(
+                            prevFen!.split(" ")[5] ?? "1",
+                          );
+                          return turn === "w"
+                            ? `${fullMove}.`
+                            : i === 0 ||
+                                new Chess(steps[i - 1].fen).turn() === "w"
+                              ? `${fullMove}...`
+                              : null;
+                        } catch {
+                          return null;
+                        }
                       })();
                       return (
                         <button
                           key={i}
                           type="button"
-                          onClick={() => { setPlaying(false); setStepIdx(i); }}
+                          onClick={() => {
+                            setPlaying(false);
+                            setStepIdx(i);
+                          }}
                           className={`inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs font-mono transition-colors ${
                             i === stepIdx
                               ? `${colors.pill} font-bold`
                               : "text-slate-400 hover:text-white hover:bg-white/[0.06]"
                           }`}
                         >
-                          {moveNum && <span className="text-slate-500 text-[10px]">{moveNum}</span>}
+                          {moveNum && (
+                            <span className="text-slate-500 text-[10px]">
+                              {moveNum}
+                            </span>
+                          )}
                           {s.san}
                         </button>
                       );
@@ -380,31 +538,109 @@ export function ExplanationModal({
               {/* Playback controls */}
               {activeSteps.length > 0 && (
                 <div className="flex items-center gap-1.5">
-                  <button type="button" onClick={goFirst} disabled={stepIdx <= -1}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="11 19 2 12 11 5"/><line x1="22" y1="5" x2="22" y2="19"/></svg>
+                  <button
+                    type="button"
+                    onClick={goFirst}
+                    disabled={stepIdx <= -1}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <polyline points="11 19 2 12 11 5" />
+                      <line x1="22" y1="5" x2="22" y2="19" />
+                    </svg>
                   </button>
-                  <button type="button" onClick={goPrev} disabled={stepIdx <= -1}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>
+                  <button
+                    type="button"
+                    onClick={goPrev}
+                    disabled={stepIdx <= -1}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <polyline points="15 18 9 12 15 6" />
+                    </svg>
                   </button>
-                  <button type="button" onClick={togglePlay}
+                  <button
+                    type="button"
+                    onClick={togglePlay}
                     className={`flex h-9 w-9 items-center justify-center rounded-lg transition-colors ${
-                      playing ? `${colors.pill}` : "bg-white/[0.06] text-slate-400 hover:bg-white/[0.12] hover:text-white"
-                    }`}>
+                      playing
+                        ? `${colors.pill}`
+                        : "bg-white/[0.06] text-slate-400 hover:bg-white/[0.12] hover:text-white"
+                    }`}
+                  >
                     {playing ? (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="9" y1="6" x2="9" y2="18"/><line x1="15" y1="6" x2="15" y2="18"/></svg>
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <line x1="9" y1="6" x2="9" y2="18" />
+                        <line x1="15" y1="6" x2="15" y2="18" />
+                      </svg>
                     ) : (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <polygon points="5 3 19 12 5 21 5 3" />
+                      </svg>
                     )}
                   </button>
-                  <button type="button" onClick={goNext} disabled={stepIdx >= activeSteps.length - 1}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                  <button
+                    type="button"
+                    onClick={goNext}
+                    disabled={stepIdx >= activeSteps.length - 1}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
                   </button>
-                  <button type="button" onClick={goLast} disabled={stepIdx >= activeSteps.length - 1}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="13 19 22 12 13 5"/><line x1="2" y1="5" x2="2" y2="19"/></svg>
+                  <button
+                    type="button"
+                    onClick={goLast}
+                    disabled={stepIdx >= activeSteps.length - 1}
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <polyline points="13 19 22 12 13 5" />
+                      <line x1="2" y1="5" x2="2" y2="19" />
+                    </svg>
                   </button>
                   <span className="ml-2 text-[11px] font-mono text-slate-500 tabular-nums">
                     {stepIdx + 1 < 0 ? 0 : stepIdx + 1}/{activeSteps.length}
@@ -416,66 +652,88 @@ export function ExplanationModal({
 
           {/* ─── Explanation Column ─── */}
           <div className="p-5 sm:p-6 space-y-5 overflow-y-auto max-h-[60vh] lg:max-h-[80vh]">
-
             {/* ─── Rich Explanation (Opening Leaks) ─── */}
             {hasRich && (
               <>
                 {richExplanation.moveDescription && (
-                  <div className={`rounded-xl border ${colors.border} ${colors.bg} p-4`}>
+                  <div
+                    className={`rounded-xl border ${colors.border} ${colors.bg} p-4`}
+                  >
                     <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                       🎬 What Happened
                     </p>
-                    <p className="text-sm font-medium leading-relaxed text-slate-200" dangerouslySetInnerHTML={{
-                      __html: md(richExplanation.moveDescription)
-                    }} />
-                    <p className={`mt-1.5 text-sm font-semibold ${colors.text}`}>
+                    <p
+                      className="text-sm font-medium leading-relaxed text-slate-200"
+                      dangerouslySetInnerHTML={{
+                        __html: md(richExplanation.moveDescription),
+                      }}
+                    />
+                    <p
+                      className={`mt-1.5 text-sm font-semibold ${colors.text}`}
+                    >
                       {richExplanation.headline}
                     </p>
                   </div>
                 )}
 
-                {richExplanation.themeCards && richExplanation.themeCards.length > 0 && (
-                  <div>
-                    <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                      🏷️ Themes Detected
-                    </p>
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      {richExplanation.themeCards.map((card, i) => {
-                        const sc = severityClasses(card.severity, variant);
-                        return (
-                          <div
-                            key={i}
-                            className={`flex items-start gap-2.5 rounded-xl border ${sc.border} ${sc.bg} p-3`}
-                          >
-                            <span className="mt-0.5 text-lg leading-none">{card.icon}</span>
-                            <div className="min-w-0 flex-1">
-                              <p className={`text-sm font-bold ${sc.text}`}>{card.label}</p>
-                              {card.description && (
-                                <p className="mt-0.5 text-[12px] leading-relaxed text-slate-400">{card.description}</p>
-                              )}
+                {richExplanation.themeCards &&
+                  richExplanation.themeCards.length > 0 && (
+                    <div>
+                      <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        🏷️ Themes Detected
+                      </p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {richExplanation.themeCards.map((card, i) => {
+                          const sc = severityClasses(card.severity, variant);
+                          return (
+                            <div
+                              key={i}
+                              className={`flex items-start gap-2.5 rounded-xl border ${sc.border} ${sc.bg} p-3`}
+                            >
+                              <span className="mt-0.5 text-lg leading-none">
+                                {card.icon}
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <p className={`text-sm font-bold ${sc.text}`}>
+                                  {card.label}
+                                </p>
+                                {card.description && (
+                                  <p className="mt-0.5 text-[12px] leading-relaxed text-slate-400">
+                                    {card.description}
+                                  </p>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
                 <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
                   <div className="mb-2 flex items-center gap-2">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-500/10 text-sm">💡</span>
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-white/60">Coaching</h3>
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-500/10 text-sm">
+                      💡
+                    </span>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-white/60">
+                      Coaching
+                    </h3>
                   </div>
-                  <p className="text-sm leading-relaxed text-slate-300" dangerouslySetInnerHTML={{
-                    __html: md(richExplanation.coaching)
-                  }} />
+                  <p
+                    className="text-sm leading-relaxed text-slate-300"
+                    dangerouslySetInnerHTML={{
+                      __html: md(richExplanation.coaching),
+                    }}
+                  />
                 </div>
 
                 {richExplanation.takeaway && (
                   <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-4">
                     <div className="mb-1.5 flex items-center gap-2">
                       <span className="text-base">🎯</span>
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400/70">Takeaway</h3>
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400/70">
+                        Takeaway
+                      </h3>
                     </div>
                     <p className="text-sm font-medium leading-relaxed text-amber-300">
                       {richExplanation.takeaway.replace(/\*\*/g, "")}
@@ -499,7 +757,9 @@ export function ExplanationModal({
                 {richExplanation.observations.length > 0 && (
                   <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
                     <div className="mb-2 flex items-center gap-2">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-500/10 text-sm">🔍</span>
+                      <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-500/10 text-sm">
+                        🔍
+                      </span>
                       <h3 className="text-xs font-bold uppercase tracking-wider text-white/60">
                         Detailed Observations
                       </h3>
@@ -511,9 +771,12 @@ export function ExplanationModal({
                           className="flex items-start gap-2.5 rounded-lg border border-white/[0.04] bg-white/[0.01] p-2.5"
                         >
                           <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full bg-slate-600" />
-                          <p className="text-[12px] leading-relaxed text-slate-400" dangerouslySetInnerHTML={{
-                            __html: md(obs)
-                          }} />
+                          <p
+                            className="text-[12px] leading-relaxed text-slate-400"
+                            dangerouslySetInnerHTML={{
+                              __html: md(obs),
+                            }}
+                          />
                         </div>
                       ))}
                     </div>
@@ -525,21 +788,33 @@ export function ExplanationModal({
             {/* ─── Simple Explanation (Tactics / Endgames) ─── */}
             {hasSimple && !hasRich && (
               <>
-                <div className={`rounded-xl border ${
-                  simpleExplanation.type === "winning" || simpleExplanation.type === "best"
-                    ? "border-emerald-500/20 bg-emerald-500/[0.04]"
-                    : "border-red-500/20 bg-red-500/[0.04]"
-                } p-4`}>
+                <div
+                  className={`rounded-xl border ${
+                    simpleExplanation.type === "winning" ||
+                    simpleExplanation.type === "best"
+                      ? "border-emerald-500/20 bg-emerald-500/[0.04]"
+                      : "border-red-500/20 bg-red-500/[0.04]"
+                  } p-4`}
+                >
                   <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">
                     🎬 What Happened
                   </p>
                   <div className="flex items-center justify-between gap-3">
-                    <p className={`text-base font-bold ${
-                      simpleExplanation.type === "winning" || simpleExplanation.type === "best"
-                        ? "text-emerald-300" : "text-red-300"
-                    }`}>
-                      {simpleExplanation.type === "winning" || simpleExplanation.type === "best" ? "✓ " : "✗ "}
-                      <strong className="text-white">{simpleExplanation.move}</strong>
+                    <p
+                      className={`text-base font-bold ${
+                        simpleExplanation.type === "winning" ||
+                        simpleExplanation.type === "best"
+                          ? "text-emerald-300"
+                          : "text-red-300"
+                      }`}
+                    >
+                      {simpleExplanation.type === "winning" ||
+                      simpleExplanation.type === "best"
+                        ? "✓ "
+                        : "✗ "}
+                      <strong className="text-white">
+                        {simpleExplanation.move}
+                      </strong>
                     </p>
                     {simpleExplanation.evalAfter && (
                       <span className="shrink-0 rounded-lg bg-emerald-500/15 px-2.5 py-0.5 text-sm font-mono font-bold tabular-nums text-emerald-400">
@@ -547,10 +822,14 @@ export function ExplanationModal({
                       </span>
                     )}
                   </div>
-                  <p className={`mt-1.5 text-sm ${
-                    simpleExplanation.type === "winning" || simpleExplanation.type === "best"
-                      ? "text-emerald-400/80" : "text-red-400/80"
-                  }`}>
+                  <p
+                    className={`mt-1.5 text-sm ${
+                      simpleExplanation.type === "winning" ||
+                      simpleExplanation.type === "best"
+                        ? "text-emerald-400/80"
+                        : "text-red-400/80"
+                    }`}
+                  >
                     {simpleExplanation.impact}
                   </p>
                 </div>
@@ -559,10 +838,13 @@ export function ExplanationModal({
                   <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-4">
                     <div className="mb-1.5 flex items-center gap-2">
                       <span className="text-base">⚠️</span>
-                      <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400/70">{simpleExplanation.context}</h3>
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400/70">
+                        {simpleExplanation.context}
+                      </h3>
                     </div>
                     <p className="text-sm text-amber-300">
-                      You had a winning position but failed to convert the advantage.
+                      You had a winning position but failed to convert the
+                      advantage.
                     </p>
                   </div>
                 )}
@@ -572,7 +854,9 @@ export function ExplanationModal({
                     <div className="mb-1.5 flex items-center gap-2">
                       <span className="text-base">🎯</span>
                       <h3 className="text-xs font-bold uppercase tracking-wider text-emerald-400/70">
-                        {simpleExplanation.type === "punishment" ? "Winning Move" : "Better Move"}
+                        {simpleExplanation.type === "punishment"
+                          ? "Winning Move"
+                          : "Better Move"}
                       </h3>
                     </div>
                     <p className="text-base font-bold text-emerald-300">
@@ -584,9 +868,14 @@ export function ExplanationModal({
                 {simpleExplanation.line && (
                   <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
                     <div className="mb-2 flex items-center gap-2">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-500/10 text-sm">📋</span>
+                      <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-slate-500/10 text-sm">
+                        📋
+                      </span>
                       <h3 className="text-xs font-bold uppercase tracking-wider text-white/60">
-                        {simpleExplanation.type === "winning" || simpleExplanation.type === "best" ? "Best Line" : "After Your Move"}
+                        {simpleExplanation.type === "winning" ||
+                        simpleExplanation.type === "best"
+                          ? "Best Line"
+                          : "After Your Move"}
                       </h3>
                     </div>
                     <p className="text-sm font-mono leading-loose text-slate-300 break-words">
@@ -599,13 +888,18 @@ export function ExplanationModal({
 
             {/* ─── Plain text fallback ─── */}
             {!hasRich && !hasSimple && plainExplanation && (
-              <div className={`rounded-xl border ${colors.border} ${colors.bg} p-4`}>
-                <p className="text-sm leading-relaxed text-slate-300">{plainExplanation}</p>
+              <div
+                className={`rounded-xl border ${colors.border} ${colors.bg} p-4`}
+              >
+                <p className="text-sm leading-relaxed text-slate-300">
+                  {plainExplanation}
+                </p>
               </div>
             )}
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
