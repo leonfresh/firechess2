@@ -20,7 +20,11 @@ import { playSound } from "@/lib/sounds";
 import { stockfishPool } from "@/lib/stockfish-client";
 import { useBoardSize } from "@/lib/use-board-size";
 import { explainMoves } from "@/lib/position-explainer";
-import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
+import {
+  useBoardTheme,
+  useShowCoordinates,
+  useCustomPieces,
+} from "@/lib/use-coins";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
@@ -52,7 +56,7 @@ type MoveRecord = {
   san: string;
   uci: string;
   fenBefore: string; // FEN before the move
-  fen: string;       // FEN after the move
+  fen: string; // FEN after the move
   byUser: boolean;
   cpLoss?: number;
   /** White-relative Stockfish eval before/after the move (for coaching) */
@@ -62,7 +66,12 @@ type MoveRecord = {
   bookCandidate?: MoveCandidate | null;
 };
 
-type Phase = "setup" | "playing" | "out-of-book-prompt" | "stockfish" | "gameover";
+type Phase =
+  | "setup"
+  | "playing"
+  | "out-of-book-prompt"
+  | "stockfish"
+  | "gameover";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                             */
@@ -117,7 +126,10 @@ function fmtCp(cp: number): string {
 }
 
 /** Evaluate a position and return cp from sideToMove's perspective */
-async function evalPosition(fen: string, depth: number): Promise<number | null> {
+async function evalPosition(
+  fen: string,
+  depth: number,
+): Promise<number | null> {
   const result = await stockfishPool.evaluateFen(fen, depth);
   if (!result) return null;
   // chess.js FEN encodes side to move; cp is always from white's perspective in SF
@@ -131,7 +143,13 @@ async function evalPosition(fen: string, depth: number): Promise<number | null> 
 /*  Move quality system (matches Guess the Move page)                  */
 /* ------------------------------------------------------------------ */
 
-type MoveQuality = "best" | "excellent" | "good" | "inaccuracy" | "mistake" | "blunder";
+type MoveQuality =
+  | "best"
+  | "excellent"
+  | "good"
+  | "inaccuracy"
+  | "mistake"
+  | "blunder";
 
 function classifyByCpLoss(cpLoss: number): MoveQuality {
   if (cpLoss <= 5) return "best";
@@ -143,13 +161,21 @@ function classifyByCpLoss(cpLoss: number): MoveQuality {
 }
 
 const QUALITY_EMOJI: Record<MoveQuality, string> = {
-  best: "✅", excellent: "💎", good: "👍",
-  inaccuracy: "⚠️", mistake: "❌", blunder: "💀",
+  best: "✅",
+  excellent: "💎",
+  good: "👍",
+  inaccuracy: "⚠️",
+  mistake: "❌",
+  blunder: "💀",
 };
 
 const QUALITY_COLOR: Record<MoveQuality, string> = {
-  best: "text-emerald-400", excellent: "text-cyan-400", good: "text-green-400",
-  inaccuracy: "text-amber-400", mistake: "text-orange-400", blunder: "text-red-400",
+  best: "text-emerald-400",
+  excellent: "text-cyan-400",
+  good: "text-green-400",
+  inaccuracy: "text-amber-400",
+  mistake: "text-orange-400",
+  blunder: "text-red-400",
 };
 
 const QUALITY_BG: Record<MoveQuality, string> = {
@@ -162,37 +188,62 @@ const QUALITY_BG: Record<MoveQuality, string> = {
 };
 
 const QUALITY_LABEL: Record<MoveQuality, string> = {
-  best: "Best", excellent: "Excellent", good: "Good",
-  inaccuracy: "Inaccuracy", mistake: "Mistake", blunder: "Blunder",
+  best: "Best",
+  excellent: "Excellent",
+  good: "Good",
+  inaccuracy: "Inaccuracy",
+  mistake: "Mistake",
+  blunder: "Blunder",
 };
 
 const QUALITY_BG_SOLID: Record<MoveQuality, string> = {
-  best:       "rgba(16,185,129,0.90)",
-  excellent:  "rgba(6,182,212,0.90)",
-  good:       "rgba(34,197,94,0.90)",
+  best: "rgba(16,185,129,0.90)",
+  excellent: "rgba(6,182,212,0.90)",
+  good: "rgba(34,197,94,0.90)",
   inaccuracy: "rgba(245,158,11,0.90)",
-  mistake:    "rgba(249,115,22,0.90)",
-  blunder:    "rgba(239,68,68,0.90)",
+  mistake: "rgba(249,115,22,0.90)",
+  blunder: "rgba(239,68,68,0.90)",
 };
 
 /** Themes that are genuinely instructive for the player (excludes metadata like phase, check, etc.) */
 const COACHING_THEMES = new Set([
-  "Hanging Piece", "Hangs Material", "Trapped Piece", "Weakening Move",
-  "Walks Into Fork", "Walks Into Pin", "Back-Rank Mate Threat",
-  "Exposed King", "Losing Exchange", "Back Rank",
-  "Knight Fork", "Skewer", "Passive Retreat", "King Exposure",
-  "Pin", "Discovered Attack", "X-Ray Attack",
+  "Hanging Piece",
+  "Hangs Material",
+  "Trapped Piece",
+  "Weakening Move",
+  "Walks Into Fork",
+  "Walks Into Pin",
+  "Back-Rank Mate Threat",
+  "Exposed King",
+  "Losing Exchange",
+  "Back Rank",
+  "Knight Fork",
+  "Skewer",
+  "Passive Retreat",
+  "King Exposure",
+  "Pin",
+  "Discovered Attack",
+  "X-Ray Attack",
 ]);
 
 const COACHING_THEME_ICONS: Record<string, string> = {
-  "Hanging Piece": "💀", "Hangs Material": "💀",
-  "Trapped Piece": "🪤", "Weakening Move": "🏚️",
-  "Walks Into Fork": "🍴", "Walks Into Pin": "📌",
-  "Back-Rank Mate Threat": "🏰", "Back Rank": "🏰",
-  "Exposed King": "🔓", "King Exposure": "👑",
-  "Losing Exchange": "📉", "Passive Retreat": "🐢",
-  "Knight Fork": "♞", "Skewer": "🎯",
-  "Pin": "📌", "Discovered Attack": "⚡", "X-Ray Attack": "🔭",
+  "Hanging Piece": "💀",
+  "Hangs Material": "💀",
+  "Trapped Piece": "🪤",
+  "Weakening Move": "🏚️",
+  "Walks Into Fork": "🍴",
+  "Walks Into Pin": "📌",
+  "Back-Rank Mate Threat": "🏰",
+  "Back Rank": "🏰",
+  "Exposed King": "🔓",
+  "King Exposure": "👑",
+  "Losing Exchange": "📉",
+  "Passive Retreat": "🐢",
+  "Knight Fork": "♞",
+  Skewer: "🎯",
+  Pin: "📌",
+  "Discovered Attack": "⚡",
+  "X-Ray Attack": "🔭",
 };
 
 /**
@@ -226,11 +277,17 @@ function computeSessionMotifs(
           themeCounts.set(theme, { count: 1, totalLoss: m.cpLoss ?? 0 });
         }
       }
-    } catch { /* best-effort */ }
+    } catch {
+      /* best-effort */
+    }
   }
 
   return [...themeCounts.entries()]
-    .map(([name, v]) => ({ name, count: v.count, avgCpLoss: v.totalLoss / v.count }))
+    .map(([name, v]) => ({
+      name,
+      count: v.count,
+      avgCpLoss: v.totalLoss / v.count,
+    }))
     .sort((a, b) => b.count - a.count || b.avgCpLoss - a.avgCpLoss)
     .slice(0, 6);
 }
@@ -251,7 +308,9 @@ export default function OpeningSparring() {
   const [moveHistory, setMoveHistory] = useState<MoveRecord[]>([]);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [legalMoves, setLegalMoves] = useState<string[]>([]);
-  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
+  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(
+    null,
+  );
   const [isOpponentThinking, setIsOpponentThinking] = useState(false);
   const [evalCp, setEvalCp] = useState<number | null>(null);
   const [bookMoveCount, setBookMoveCount] = useState(0);
@@ -262,7 +321,10 @@ export default function OpeningSparring() {
   } | null>(null);
 
   /** Quality badge for the piece on the last user move's destination square */
-  const [pieceBadge, setPieceBadge] = useState<{ square: string; quality: MoveQuality } | null>(null);
+  const [pieceBadge, setPieceBadge] = useState<{
+    square: string;
+    quality: MoveQuality;
+  } | null>(null);
 
   /** Coaching insight for the most recent user move */
   const [lastMoveInsight, setLastMoveInsight] = useState<{
@@ -523,19 +585,26 @@ export default function OpeningSparring() {
         ]);
 
         if (beforeResult && afterResult) {
-          evalBefore = beforeResult.cp;   // white-relative
-          evalAfter = afterResult.cp;     // white-relative
+          evalBefore = beforeResult.cp; // from mover's perspective
+          evalAfter = afterResult.cp; // from opponent's perspective (after the move)
           bestMoveUci = beforeResult.bestMove ?? null;
-          const sign = userColor === "white" ? 1 : -1;
-          cpLoss = Math.max(0, sign * (evalBefore - evalAfter));
+          // Negate evalAfter because after the move it's opponent's turn — cp flips perspective
+          cpLoss = Math.max(0, evalBefore - -evalAfter);
 
           // Synchronous coaching insight (pure chess.js — no extra Stockfish calls)
           try {
             const insight = explainMoves(
-              prevFen, uci, bestMoveUci, cpLoss, evalBefore, evalAfter,
+              prevFen,
+              uci,
+              bestMoveUci,
+              cpLoss,
+              evalBefore,
+              evalAfter,
             );
             const quality = classifyByCpLoss(cpLoss);
-            const coachingThemes = insight.played.themes.filter(t => COACHING_THEMES.has(t));
+            const coachingThemes = insight.played.themes.filter((t) =>
+              COACHING_THEMES.has(t),
+            );
 
             let bestMoveSan: string | null = null;
             if (bestMoveUci && cpLoss >= 40) {
@@ -543,20 +612,26 @@ export default function OpeningSparring() {
                 const tmp = new Chess(prevFen);
                 const r = tmp.move(bestMoveUci, { strict: false });
                 bestMoveSan = r?.san ?? null;
-              } catch { /* ignore */ }
+              } catch {
+                /* ignore */
+              }
             }
 
             setLastMoveInsight({
               quality,
               cpLoss,
               headline: insight.played.headline,
-              coaching: cpLoss >= 50
-                ? (insight.played.takeaway ?? insight.played.coaching.split(". ")[0] + ".")
-                : "",
+              coaching:
+                cpLoss >= 50
+                  ? (insight.played.takeaway ??
+                    insight.played.coaching.split(". ")[0] + ".")
+                  : "",
               themes: coachingThemes,
               bestMoveSan,
             });
-          } catch { /* not critical */ }
+          } catch {
+            /* not critical */
+          }
           // Set quality badge regardless of whether coaching insight succeeded
           setPieceBadge({ square: move.to, quality: classifyByCpLoss(cpLoss) });
         }
@@ -641,7 +716,14 @@ export default function OpeningSparring() {
         }
       }
     },
-    [selectedSquare, legalMoves, phase, userColor, isOpponentThinking, handleUserMove],
+    [
+      selectedSquare,
+      legalMoves,
+      phase,
+      userColor,
+      isOpponentThinking,
+      handleUserMove,
+    ],
   );
 
   const handlePieceDrop = useCallback(
@@ -704,7 +786,9 @@ export default function OpeningSparring() {
 
   const continueWithStockfish = useCallback(() => {
     setPhase("stockfish");
-    setStatusMessage(`Continuing with Stockfish (depth ${ratingToDepth(targetRating)})…`);
+    setStatusMessage(
+      `Continuing with Stockfish (depth ${ratingToDepth(targetRating)})…`,
+    );
     const chess = chessRef.current;
     // If it's the opponent's turn, trigger immediately
     const opponentTurn = chess.turn() !== (userColor === "white" ? "w" : "b");
@@ -720,18 +804,21 @@ export default function OpeningSparring() {
   const customSquareStyles: Record<string, React.CSSProperties> = {};
 
   if (lastMove) {
-    customSquareStyles[lastMove.from] = { background: "rgba(255, 197, 0, 0.25)" };
+    customSquareStyles[lastMove.from] = {
+      background: "rgba(255, 197, 0, 0.25)",
+    };
     customSquareStyles[lastMove.to] = { background: "rgba(255, 197, 0, 0.45)" };
   }
   if (selectedSquare) {
-    customSquareStyles[selectedSquare] = { background: "rgba(97, 170, 240, 0.55)" };
+    customSquareStyles[selectedSquare] = {
+      background: "rgba(97, 170, 240, 0.55)",
+    };
   }
   for (const sq of legalMoves) {
     customSquareStyles[sq] = {
-      background:
-        chessRef.current.get(sq as any)
-          ? "radial-gradient(circle, rgba(255,0,0,0.35) 60%, transparent 65%)"
-          : "radial-gradient(circle, rgba(0,0,0,0.2) 30%, transparent 35%)",
+      background: chessRef.current.get(sq as any)
+        ? "radial-gradient(circle, rgba(255,0,0,0.35) 60%, transparent 65%)"
+        : "radial-gradient(circle, rgba(0,0,0,0.2) 30%, transparent 35%)",
     };
   }
 
@@ -746,24 +833,27 @@ export default function OpeningSparring() {
     return turn === "w" ? evalCp : -evalCp;
   })();
 
-  // Pixel position of the quality badge overlay (top-right corner of dest square)
-  const badgeOverlayStyle = useMemo((): React.CSSProperties | null => {
-    if (!pieceBadge) return null;
-    const sq = pieceBadge.square;
-    const file = sq.charCodeAt(0) - 97; // 0 = a-file, 7 = h-file
-    const rank = parseInt(sq[1]) - 1;   // 0 = rank 1, 7 = rank 8
-    const squarePx = boardSize / 8;
-    const col = userColor === "white" ? file : 7 - file;
-    const row = userColor === "white" ? 7 - rank : rank;
-    return {
-      position: "absolute",
-      left: (col + 1) * squarePx - 10,
-      top: row * squarePx - 10,
-      backgroundColor: QUALITY_BG_SOLID[pieceBadge.quality],
-      zIndex: 50,
-      pointerEvents: "none",
-    };
-  }, [pieceBadge, boardSize, userColor]);
+  // Chess.com-style round badge on the destination square via customSquareRenderer
+  const customSquareRenderer = useMemo(() => {
+    return ((props: any) => {
+      const sq = props?.square as string | undefined;
+      const showBadge = sq && pieceBadge && sq === pieceBadge.square;
+      return (
+        <div style={props?.style} className="relative h-full w-full">
+          {props?.children}
+          {showBadge && pieceBadge && (
+            <span
+              className="pointer-events-none absolute -right-0.5 -top-0.5 z-[40] flex h-5 w-5 items-center justify-center rounded-full text-[11px] shadow-lg"
+              style={{ backgroundColor: QUALITY_BG_SOLID[pieceBadge.quality] }}
+              title={QUALITY_LABEL[pieceBadge.quality]}
+            >
+              {QUALITY_EMOJI[pieceBadge.quality]}
+            </span>
+          )}
+        </div>
+      );
+    }) as any;
+  }, [pieceBadge]);
 
   /* ------------------------------------------------------------------ */
   /*  Session summary                                                    */
@@ -786,7 +876,9 @@ export default function OpeningSparring() {
     return (
       <div className="flex flex-col items-center gap-8 py-10 px-4">
         <div className="text-center max-w-lg">
-          <h1 className="text-3xl font-bold text-white mb-2">Opening Sparring</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Opening Sparring
+          </h1>
           <p className="text-zinc-400 text-sm">
             Play against real moves from millions of Lichess games. The opponent
             picks moves weighted by how often they&apos;re played at your target
@@ -821,7 +913,8 @@ export default function OpeningSparring() {
           {/* Rating */}
           <div>
             <label className="text-zinc-300 text-sm font-medium mb-1 block">
-              Opponent rating: <span className="text-white font-bold">{targetRating}</span>
+              Opponent rating:{" "}
+              <span className="text-white font-bold">{targetRating}</span>
             </label>
             <input
               type="range"
@@ -840,8 +933,8 @@ export default function OpeningSparring() {
               <span>2800</span>
             </div>
             <p className="text-zinc-500 text-xs mt-2">
-              Book phase uses Lichess games near this rating. Stockfish phase uses
-              depth {ratingToDepth(targetRating)}.
+              Book phase uses Lichess games near this rating. Stockfish phase
+              uses depth {ratingToDepth(targetRating)}.
             </p>
           </div>
 
@@ -864,11 +957,14 @@ export default function OpeningSparring() {
     return (
       <div className="flex flex-col items-center justify-center gap-6 py-16 px-4 text-center">
         <div className="text-4xl">📖</div>
-        <h2 className="text-2xl font-bold text-white">Opening book exhausted</h2>
+        <h2 className="text-2xl font-bold text-white">
+          Opening book exhausted
+        </h2>
         <p className="text-zinc-400 max-w-sm text-sm">
-          After {bookMoveCount} book moves, this position has too few Lichess games
-          at the {targetRating} level to sample reliably. Continue with Stockfish
-          at equivalent strength (depth {ratingToDepth(targetRating)})?
+          After {bookMoveCount} book moves, this position has too few Lichess
+          games at the {targetRating} level to sample reliably. Continue with
+          Stockfish at equivalent strength (depth {ratingToDepth(targetRating)}
+          )?
         </p>
         <div className="flex gap-3">
           <button
@@ -896,7 +992,10 @@ export default function OpeningSparring() {
     const chess = chessRef.current;
     let result = "Game over";
     if (chess.isCheckmate()) {
-      result = chess.turn() === (userColor === "white" ? "w" : "b") ? "You lost on time / checkmate" : "You won by checkmate!";
+      result =
+        chess.turn() === (userColor === "white" ? "w" : "b")
+          ? "You lost on time / checkmate"
+          : "You won by checkmate!";
     } else if (chess.isDraw()) {
       result = "Draw";
     }
@@ -909,11 +1008,15 @@ export default function OpeningSparring() {
           <h3 className="text-zinc-300 font-semibold mb-3">Session Summary</h3>
           <div className="grid grid-cols-3 gap-3 mb-4">
             <div className="bg-zinc-800 rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-white">{moveHistory.length}</div>
+              <div className="text-2xl font-bold text-white">
+                {moveHistory.length}
+              </div>
               <div className="text-xs text-zinc-500 mt-1">Total moves</div>
             </div>
             <div className="bg-zinc-800 rounded-xl p-3 text-center">
-              <div className="text-2xl font-bold text-blue-400">{bookMoveCount}</div>
+              <div className="text-2xl font-bold text-blue-400">
+                {bookMoveCount}
+              </div>
               <div className="text-xs text-zinc-500 mt-1">Book moves</div>
             </div>
             <div className="bg-zinc-800 rounded-xl p-3 text-center">
@@ -926,19 +1029,44 @@ export default function OpeningSparring() {
 
           {/* Move quality distribution */}
           {(() => {
-            const counts = { best: 0, excellent: 0, good: 0, inaccuracy: 0, mistake: 0, blunder: 0 } as Record<MoveQuality, number>;
-            const evaled = userMoves.filter(m => m.cpLoss !== undefined);
+            const counts = {
+              best: 0,
+              excellent: 0,
+              good: 0,
+              inaccuracy: 0,
+              mistake: 0,
+              blunder: 0,
+            } as Record<MoveQuality, number>;
+            const evaled = userMoves.filter((m) => m.cpLoss !== undefined);
             for (const m of evaled) counts[classifyByCpLoss(m.cpLoss!)]++;
             if (evaled.length === 0) return null;
-            const entries = (["best", "excellent", "good", "inaccuracy", "mistake", "blunder"] as MoveQuality[]).filter(k => counts[k] > 0);
+            const entries = (
+              [
+                "best",
+                "excellent",
+                "good",
+                "inaccuracy",
+                "mistake",
+                "blunder",
+              ] as MoveQuality[]
+            ).filter((k) => counts[k] > 0);
             return (
               <div className="mt-3">
                 <div className="text-xs text-zinc-500 mb-2">Move quality</div>
                 <div className="flex gap-1">
-                  {entries.map(k => (
-                    <div key={k} className={`flex-1 rounded-lg px-1 py-2 text-center border ${QUALITY_BG[k]}`}>
-                      <div className={`text-base font-bold leading-none ${QUALITY_COLOR[k]}`}>{counts[k]}</div>
-                      <div className="text-zinc-500 text-[9px] mt-1 leading-none truncate">{QUALITY_LABEL[k]}</div>
+                  {entries.map((k) => (
+                    <div
+                      key={k}
+                      className={`flex-1 rounded-lg px-1 py-2 text-center border ${QUALITY_BG[k]}`}
+                    >
+                      <div
+                        className={`text-base font-bold leading-none ${QUALITY_COLOR[k]}`}
+                      >
+                        {counts[k]}
+                      </div>
+                      <div className="text-zinc-500 text-[9px] mt-1 leading-none truncate">
+                        {QUALITY_LABEL[k]}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -952,14 +1080,25 @@ export default function OpeningSparring() {
             if (motifs.length === 0) return null;
             return (
               <div className="mt-4">
-                <div className="text-xs text-zinc-400 font-medium mb-2">Recurring patterns in your play</div>
+                <div className="text-xs text-zinc-400 font-medium mb-2">
+                  Recurring patterns in your play
+                </div>
                 <div className="flex flex-col gap-1.5">
-                  {motifs.map(m => (
-                    <div key={m.name} className="flex items-center gap-2 bg-zinc-800/60 rounded-lg px-3 py-2">
-                      <span className="text-base">{COACHING_THEME_ICONS[m.name] ?? "🔍"}</span>
-                      <span className="text-sm text-zinc-300 flex-1">{m.name}</span>
+                  {motifs.map((m) => (
+                    <div
+                      key={m.name}
+                      className="flex items-center gap-2 bg-zinc-800/60 rounded-lg px-3 py-2"
+                    >
+                      <span className="text-base">
+                        {COACHING_THEME_ICONS[m.name] ?? "🔍"}
+                      </span>
+                      <span className="text-sm text-zinc-300 flex-1">
+                        {m.name}
+                      </span>
                       <span className="text-xs text-zinc-500">{m.count}×</span>
-                      <span className="text-xs text-orange-400 ml-1">&minus;{fmtCp(m.avgCpLoss)}</span>
+                      <span className="text-xs text-orange-400 ml-1">
+                        &minus;{fmtCp(m.avgCpLoss)}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -972,20 +1111,27 @@ export default function OpeningSparring() {
             {moveHistory.map((m, i) => {
               const moveNum = Math.floor(i / 2) + 1;
               const isWhiteMove = i % 2 === 0;
-              const quality = m.cpLoss !== undefined ? classifyByCpLoss(m.cpLoss) : null;
+              const quality =
+                m.cpLoss !== undefined ? classifyByCpLoss(m.cpLoss) : null;
               return (
                 <div
                   key={i}
                   className="flex items-center gap-2 px-2 py-1 rounded text-sm"
                 >
                   {isWhiteMove && (
-                    <span className="text-zinc-500 w-6 text-right shrink-0">{moveNum}.</span>
+                    <span className="text-zinc-500 w-6 text-right shrink-0">
+                      {moveNum}.
+                    </span>
                   )}
-                  <span className={`font-mono ${m.byUser ? "text-white" : "text-zinc-400"}`}>
+                  <span
+                    className={`font-mono ${m.byUser ? "text-white" : "text-zinc-400"}`}
+                  >
                     {m.san}
                   </span>
                   {m.byUser && quality && (
-                    <span className={`text-xs ml-auto ${QUALITY_COLOR[quality]}`}>
+                    <span
+                      className={`text-xs ml-auto ${QUALITY_COLOR[quality]}`}
+                    >
                       {QUALITY_EMOJI[quality]} {QUALITY_LABEL[quality]}
                       {m.cpLoss !== undefined && ` −${fmtCp(m.cpLoss)}`}
                     </span>
@@ -1037,9 +1183,13 @@ export default function OpeningSparring() {
           <p className="text-xs text-zinc-500">
             vs {targetRating} •{" "}
             {phase === "stockfish" ? (
-              <span className="text-amber-400">Stockfish depth {ratingToDepth(targetRating)}</span>
+              <span className="text-amber-400">
+                Stockfish depth {ratingToDepth(targetRating)}
+              </span>
             ) : (
-              <span className="text-blue-400">Lichess Book ({bookMoveCount} moves)</span>
+              <span className="text-blue-400">
+                Lichess Book ({bookMoveCount} moves)
+              </span>
             )}
           </p>
         </div>
@@ -1061,17 +1211,22 @@ export default function OpeningSparring() {
           {phase === "stockfish" ? " · SF" : " · Lichess DB"})
         </span>
         {isOpponentThinking && (
-          <span className="text-xs text-blue-400 animate-pulse ml-1">thinking…</span>
+          <span className="text-xs text-blue-400 animate-pulse ml-1">
+            thinking…
+          </span>
         )}
       </div>
 
       {/* Board + eval bar — ref here so useBoardSize measures this container */}
-      <div ref={containerRef} className="relative mx-auto flex w-full max-w-[540px] shrink-0 items-start gap-2 sm:gap-3">
-        <EvalBar
-          evalCp={evalBarCp}
-          height={boardSize}
-        />
-        <div className="relative shrink-0" style={{ width: boardSize, height: boardSize }}>
+      <div
+        ref={containerRef}
+        className="relative mx-auto flex w-full max-w-[540px] shrink-0 items-start gap-2 sm:gap-3"
+      >
+        <EvalBar evalCp={evalBarCp} height={boardSize} />
+        <div
+          className="relative shrink-0"
+          style={{ width: boardSize, height: boardSize }}
+        >
           <Chessboard
             position={fen}
             boardOrientation={userColor}
@@ -1083,15 +1238,8 @@ export default function OpeningSparring() {
             customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
             customPieces={customPieces}
             showBoardNotation={showCoords}
+            customSquare={customSquareRenderer}
           />
-          {pieceBadge && badgeOverlayStyle && (
-            <span
-              className="flex h-5 w-5 items-center justify-center rounded-full text-[11px] shadow-lg"
-              style={badgeOverlayStyle}
-            >
-              {QUALITY_EMOJI[pieceBadge.quality]}
-            </span>
-          )}
         </div>
       </div>
 
@@ -1108,10 +1256,16 @@ export default function OpeningSparring() {
 
       {/* Last-move coaching insight */}
       {lastMoveInsight && (
-        <div className={`w-full max-w-[540px] border rounded-xl p-3 ${QUALITY_BG[lastMoveInsight.quality]}`}>
+        <div
+          className={`w-full max-w-[540px] border rounded-xl p-3 ${QUALITY_BG[lastMoveInsight.quality]}`}
+        >
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-base">{QUALITY_EMOJI[lastMoveInsight.quality]}</span>
-            <span className={`text-sm font-semibold ${QUALITY_COLOR[lastMoveInsight.quality]}`}>
+            <span className="text-base">
+              {QUALITY_EMOJI[lastMoveInsight.quality]}
+            </span>
+            <span
+              className={`text-sm font-semibold ${QUALITY_COLOR[lastMoveInsight.quality]}`}
+            >
               {QUALITY_LABEL[lastMoveInsight.quality]}
             </span>
             {lastMoveInsight.cpLoss > 0 && (
@@ -1121,7 +1275,10 @@ export default function OpeningSparring() {
             )}
             {lastMoveInsight.bestMoveSan && (
               <span className="text-xs text-zinc-500 ml-auto">
-                Best: <span className="text-zinc-300 font-mono">{lastMoveInsight.bestMoveSan}</span>
+                Best:{" "}
+                <span className="text-zinc-300 font-mono">
+                  {lastMoveInsight.bestMoveSan}
+                </span>
               </span>
             )}
           </div>
@@ -1137,12 +1294,13 @@ export default function OpeningSparring() {
           )}
           {lastMoveInsight.themes.length > 0 && (
             <div className="flex gap-1 flex-wrap mt-2">
-              {lastMoveInsight.themes.slice(0, 3).map(t => (
+              {lastMoveInsight.themes.slice(0, 3).map((t) => (
                 <span
                   key={t}
                   className="text-[10px] bg-zinc-800/80 text-zinc-400 rounded-full px-2 py-0.5"
                 >
-                  {COACHING_THEME_ICONS[t] ? `${COACHING_THEME_ICONS[t]} ` : ""}{t}
+                  {COACHING_THEME_ICONS[t] ? `${COACHING_THEME_ICONS[t]} ` : ""}
+                  {t}
                 </span>
               ))}
             </div>
@@ -1162,11 +1320,15 @@ export default function OpeningSparring() {
         <div className="w-full max-w-[540px] bg-zinc-900 border border-zinc-800 rounded-xl p-3">
           <div className="flex gap-1 flex-wrap">
             {moveHistory.slice(-12).map((m, i) => {
-              const absIdx = moveHistory.length - Math.min(12, moveHistory.length) + i;
+              const absIdx =
+                moveHistory.length - Math.min(12, moveHistory.length) + i;
               const moveNum = Math.floor(absIdx / 2) + 1;
               const isWhite = absIdx % 2 === 0;
               return (
-                <span key={absIdx} className="inline-flex items-baseline gap-0.5 text-xs font-mono">
+                <span
+                  key={absIdx}
+                  className="inline-flex items-baseline gap-0.5 text-xs font-mono"
+                >
                   {isWhite && (
                     <span className="text-zinc-600 mr-0.5">{moveNum}.</span>
                   )}
@@ -1174,7 +1336,9 @@ export default function OpeningSparring() {
                     {m.san}
                   </span>
                   {m.byUser && m.cpLoss !== undefined && (
-                    <span className={`text-[9px] ${QUALITY_COLOR[classifyByCpLoss(m.cpLoss)]}`}>
+                    <span
+                      className={`text-[9px] ${QUALITY_COLOR[classifyByCpLoss(m.cpLoss)]}`}
+                    >
                       {QUALITY_EMOJI[classifyByCpLoss(m.cpLoss)]}
                     </span>
                   )}{" "}
