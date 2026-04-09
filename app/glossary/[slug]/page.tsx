@@ -70,7 +70,12 @@ function TermJsonLd({ term }: { term: GlossaryTerm }) {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "FireChess", item: base },
-      { "@type": "ListItem", position: 2, name: "Chess Glossary", item: `${base}/glossary` },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Chess Glossary",
+        item: `${base}/glossary`,
+      },
       { "@type": "ListItem", position: 3, name: term.term, item: url },
     ],
   };
@@ -124,10 +129,10 @@ export default async function GlossaryTermPage({
 
   const color = CATEGORY_COLORS[term.category];
   const relatedTerms = GLOSSARY_TERMS.filter((t) =>
-    term.related.includes(t.id)
+    term.related.includes(t.id),
   );
   const sameCategory = GLOSSARY_TERMS.filter(
-    (t) => t.id !== term.id && t.category === term.category
+    (t) => t.id !== term.id && t.category === term.category,
   ).slice(0, 4);
 
   return (
@@ -137,9 +142,13 @@ export default async function GlossaryTermPage({
         <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
           {/* Breadcrumb */}
           <nav className="mb-8 flex items-center gap-2 text-sm text-slate-500">
-            <Link href="/" className="hover:text-slate-300">Home</Link>
+            <Link href="/" className="hover:text-slate-300">
+              Home
+            </Link>
             <span>/</span>
-            <Link href="/glossary" className="hover:text-slate-300">Chess Glossary</Link>
+            <Link href="/glossary" className="hover:text-slate-300">
+              Chess Glossary
+            </Link>
             <span>/</span>
             <span className="text-slate-300">{term.term}</span>
           </nav>
@@ -154,7 +163,9 @@ export default async function GlossaryTermPage({
             <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl">
               What Is {term.term} in Chess?
             </h1>
-            <p className="text-xl leading-relaxed text-slate-300">{term.tagline}</p>
+            <p className="text-xl leading-relaxed text-slate-300">
+              {term.tagline}
+            </p>
           </header>
 
           {/* Definition */}
@@ -174,17 +185,23 @@ export default async function GlossaryTermPage({
             <h2 className="mb-3 text-lg font-bold text-orange-300">
               Why It Matters for Your Chess
             </h2>
-            <p className="leading-relaxed text-slate-300">{term.whyItMatters}</p>
+            <p className="leading-relaxed text-slate-300">
+              {term.whyItMatters}
+            </p>
           </section>
 
           {/* FAQ */}
           <section className="mb-10">
-            <h2 className="mb-6 text-2xl font-bold">Frequently Asked Questions</h2>
+            <h2 className="mb-6 text-2xl font-bold">
+              Frequently Asked Questions
+            </h2>
             <div className="space-y-4">
               {term.faqs.map((faq) => (
                 <div key={faq.q} className="rounded-lg bg-slate-800/50 p-5">
                   <h3 className="mb-2 font-semibold text-white">{faq.q}</h3>
-                  <p className="text-sm leading-relaxed text-slate-400">{faq.a}</p>
+                  <p className="text-sm leading-relaxed text-slate-400">
+                    {faq.a}
+                  </p>
                 </div>
               ))}
             </div>
@@ -196,7 +213,9 @@ export default async function GlossaryTermPage({
               Practice {term.term} in Your Games
             </h2>
             <p className="mb-6 text-slate-400">
-              FireChess detects tactical patterns like {term.term.toLowerCase()} in your games and shows you exactly what you missed — and how to find them next time.
+              FireChess detects tactical patterns like {term.term.toLowerCase()}{" "}
+              in your games and shows you exactly what you missed — and how to
+              find them next time.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
               <Link
@@ -234,7 +253,9 @@ export default async function GlossaryTermPage({
                       <p className="font-semibold text-white group-hover:text-orange-300 transition-colors">
                         {rel.term}
                       </p>
-                      <p className="mt-0.5 text-xs text-slate-500 line-clamp-1">{rel.tagline}</p>
+                      <p className="mt-0.5 text-xs text-slate-500 line-clamp-1">
+                        {rel.tagline}
+                      </p>
                     </div>
                   </Link>
                 ))}
