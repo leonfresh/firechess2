@@ -286,6 +286,12 @@ export function Navbar() {
                   >
                     ♟ Endgames
                   </Link>
+                  <Link
+                    href="/games"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/games") ? "bg-amber-500/[0.08] text-amber-400" : "text-slate-400 hover:bg-amber-500/[0.06] hover:text-amber-400"}`}
+                  >
+                    ♛ Famous Games
+                  </Link>
                   <div className="my-1 h-px bg-white/[0.06]" />
                   <Link
                     href="/positions"

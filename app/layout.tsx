@@ -261,7 +261,14 @@ export default function RootLayout({
                           Opening Explorer
                         </Link>
                       </li>
-                    </ul>
+                      <li>
+                        <Link
+                          href="/games"
+                          className="hover:text-slate-300 transition-colors"
+                        >
+                          Famous Games
+                        </Link>
+                      </li>
                   </div>
 
                   {/* Community */}

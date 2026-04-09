@@ -7,6 +7,7 @@ import { POSITIONAL_MOTIFS } from "@/lib/positional-motifs";
 import { TIME_CONTROLS } from "@/lib/time-controls";
 import { CHESS_MISTAKES } from "@/lib/chess-mistakes";
 import { RATING_GUIDES } from "@/lib/rating-guides";
+import { FAMOUS_GAMES } from "@/lib/famous-games";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = "https://firechess.com";
@@ -58,6 +59,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.75,
+  }));
+
+  const gamePages = FAMOUS_GAMES.map((g) => ({
+    url: `${base}/games/${g.id}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.8,
   }));
 
   const ratingPages = RATING_GUIDES.map((g) => ({
@@ -162,6 +170,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.85,
     },
     ...ratingPages,
+    {
+      url: `${base}/games`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    ...gamePages,
     {
       url: `${base}/chaos`,
       lastModified: new Date(),
