@@ -97,20 +97,17 @@ export function ProWelcomeModal() {
   const isLifetime = planType === "lifetime";
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-fade-in"
-        onClick={dismiss}
-      />
+      <div className="absolute inset-0 bg-black/80" onClick={dismiss} />
 
       {/* Modal */}
-      <div className="relative z-10 w-full max-w-lg animate-fade-in-up rounded-2xl bg-slate-900/98 shadow-2xl ring-1 ring-white/10 overflow-hidden">
+      <div className="relative z-10 w-full max-w-lg overflow-y-auto max-h-[calc(100dvh-2rem)] rounded-2xl bg-[#0f172a] shadow-2xl ring-1 ring-white/10">
         {/* Ambient glow */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
           <div
             className={`absolute -top-20 left-1/2 -translate-x-1/2 h-48 w-80 rounded-full blur-[80px] ${
-              isLifetime ? "bg-amber-500/[0.12]" : "bg-emerald-500/[0.12]"
+              isLifetime ? "bg-amber-500/[0.15]" : "bg-emerald-500/[0.15]"
             }`}
           />
         </div>
@@ -125,11 +122,11 @@ export function ProWelcomeModal() {
           ✕
         </button>
 
-        <div className="relative px-6 pb-6 pt-8">
+        <div className="relative px-6 pb-6 pt-7">
           {/* Header */}
-          <div className="mb-6 text-center">
+          <div className="mb-4 text-center">
             <div
-              className={`mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-2xl text-4xl ring-1 ${
+              className={`mx-auto mb-2.5 flex h-12 w-12 items-center justify-center rounded-xl text-3xl ring-1 ${
                 isLifetime
                   ? "bg-amber-500/15 ring-amber-500/25"
                   : "bg-emerald-500/15 ring-emerald-500/25"
@@ -137,10 +134,10 @@ export function ProWelcomeModal() {
             >
               {isLifetime ? "♾️" : "🚀"}
             </div>
-            <h2 className="text-2xl font-black text-white">
+            <h2 className="text-xl font-black text-white">
               {isLifetime ? "You're in — forever." : "Welcome to Pro."}
             </h2>
-            <p className="mt-1.5 text-sm text-slate-400">
+            <p className="mt-1 text-sm text-slate-400">
               {isLifetime ? (
                 <>
                   Welcome to{" "}
@@ -162,13 +159,13 @@ export function ProWelcomeModal() {
           </div>
 
           {/* Feature grid */}
-          <div className="mb-6 grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
             {FEATURES.map((f) => (
               <div
                 key={f.title}
-                className="flex gap-3 rounded-xl border border-white/[0.06] bg-white/[0.03] p-3"
+                className="flex gap-3 rounded-xl border border-white/[0.07] bg-white/[0.04] p-3"
               >
-                <span className="mt-0.5 text-xl leading-none">{f.icon}</span>
+                <span className="mt-0.5 text-lg leading-none">{f.icon}</span>
                 <div>
                   <p className="text-sm font-semibold text-white">{f.title}</p>
                   <p className="mt-0.5 text-xs text-slate-400">{f.body}</p>
@@ -178,7 +175,7 @@ export function ProWelcomeModal() {
           </div>
 
           {/* Footer note */}
-          <p className="mb-5 text-center text-xs text-slate-500">
+          <p className="mb-4 text-center text-xs text-slate-500">
             {isLifetime
               ? "No recurring fees. No feature downgrades. You're locked in as a founding member."
               : "Your Pro features are active right now — start a scan to see the difference."}

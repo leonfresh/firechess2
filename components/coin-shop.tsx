@@ -11,6 +11,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { spendCoins, hasPurchased } from "@/lib/coins";
+import { useSession } from "@/components/session-provider";
 import {
   BOARD_THEMES,
   PROFILE_TITLES,
@@ -45,10 +46,13 @@ import { useCoinBalance, useCoinLog } from "@/lib/use-coins";
 export function CoinShop() {
   const balance = useCoinBalance();
   const log = useCoinLog();
+  const { plan } = useSession();
+  const isLifetime = plan === "lifetime";
   const [activeTheme, setActiveThemeState] = useState("classic");
   const [activeTitle, setActiveTitleState] = useState<string | null>(null);
   const [activeEvalSkin, setActiveEvalSkinState] = useState("eval-default");
-  const [activePieceTheme, setActivePieceThemeState] = useState("piece-default");
+  const [activePieceTheme, setActivePieceThemeState] =
+    useState("piece-default");
   const [activeFrame, setActiveFrameState] = useState("frame-none");
   const [purchased, setPurchased] = useState<string[]>([]);
   const [showHistory, setShowHistory] = useState(false);
@@ -112,12 +116,17 @@ export function CoinShop() {
       setActiveThemeState(theme.id);
       showToast(`Purchased & equipped: ${theme.name}`);
     },
-    [showToast]
+    [showToast],
   );
 
   const handleBuyTitle = useCallback(
     (title: ProfileTitle) => {
-      if (hasPurchased(title.id)) {
+      // Lifetime-exclusive items: only lifetime members can equip
+      if (title.requiresPlan === "lifetime" && !isLifetime) {
+        showToast("♾️ Lifetime members only");
+        return;
+      }
+      if (hasPurchased(title.id) || title.requiresPlan === "lifetime") {
         // Toggle equip/unequip
         if (activeTitle === title.id) {
           setActiveTitle(null);
@@ -138,7 +147,7 @@ export function CoinShop() {
       setActiveTitleState(title.id);
       showToast(`Purchased: ${title.name}`);
     },
-    [activeTitle, showToast]
+    [activeTitle, showToast],
   );
 
   const handleBuyEvalSkin = useCallback(
@@ -164,7 +173,7 @@ export function CoinShop() {
       setActiveEvalSkinState(skin.id);
       showToast(`Purchased & equipped: ${skin.name}`);
     },
-    [showToast]
+    [showToast],
   );
 
   const handleBuyPieceTheme = useCallback(
@@ -190,11 +199,16 @@ export function CoinShop() {
       setActivePieceThemeState(pt.id);
       showToast(`Purchased & equipped: ${pt.name}`);
     },
-    [showToast]
+    [showToast],
   );
 
   const handleBuyFrame = useCallback(
     (frame: AvatarFrame) => {
+      // Lifetime-exclusive items
+      if (frame.requiresPlan === "lifetime" && !isLifetime) {
+        showToast("♾️ Lifetime members only");
+        return;
+      }
       if (frame.price === 0) {
         setActiveFrame(frame.id);
         setActiveFrameState(frame.id);
@@ -216,7 +230,7 @@ export function CoinShop() {
       setActiveFrameState(frame.id);
       showToast(`Purchased & equipped: ${frame.name}`);
     },
-    [showToast]
+    [showToast],
   );
 
   return (
@@ -292,26 +306,60 @@ export function CoinShop() {
 
       {/* ─── Live Preview ─── */}
       {(() => {
-        const bt = BOARD_THEMES.find((t) => t.id === activeTheme) ?? BOARD_THEMES[0];
-        const es = EVAL_BAR_SKINS.find((s) => s.id === activeEvalSkin) ?? EVAL_BAR_SKINS[0];
-        const pt = PIECE_THEMES.find((t) => t.id === activePieceTheme) ?? PIECE_THEMES[0];
+        const bt =
+          BOARD_THEMES.find((t) => t.id === activeTheme) ?? BOARD_THEMES[0];
+        const es =
+          EVAL_BAR_SKINS.find((s) => s.id === activeEvalSkin) ??
+          EVAL_BAR_SKINS[0];
+        const pt =
+          PIECE_THEMES.find((t) => t.id === activePieceTheme) ??
+          PIECE_THEMES[0];
         const previewPieces = pt.setName
-          ? ["wK", "wQ", "wB", "wN", "wR", "wP", "bK", "bQ", "bB", "bN", "bR", "bP"]
+          ? [
+              "wK",
+              "wQ",
+              "wB",
+              "wN",
+              "wR",
+              "wP",
+              "bK",
+              "bQ",
+              "bB",
+              "bN",
+              "bR",
+              "bP",
+            ]
           : null;
         return (
           <div className="space-y-2">
             <h3 className="text-sm font-semibold text-white">Preview</h3>
             <div className="flex items-stretch gap-3 rounded-xl border border-white/5 bg-white/[0.02] p-4">
               {/* Eval Bar preview */}
-              <div className="flex w-5 shrink-0 overflow-hidden rounded-md" title={`Eval: ${es.name}`}>
+              <div
+                className="flex w-5 shrink-0 overflow-hidden rounded-md"
+                title={`Eval: ${es.name}`}
+              >
                 <div className="flex w-full flex-col">
-                  <div className="flex-1" style={{ background: `linear-gradient(to bottom, ${es.whiteGradient[0]}, ${es.whiteGradient[1]})` }} />
-                  <div className="flex-1" style={{ background: `linear-gradient(to bottom, ${es.blackGradient[0]}, ${es.blackGradient[1]})` }} />
+                  <div
+                    className="flex-1"
+                    style={{
+                      background: `linear-gradient(to bottom, ${es.whiteGradient[0]}, ${es.whiteGradient[1]})`,
+                    }}
+                  />
+                  <div
+                    className="flex-1"
+                    style={{
+                      background: `linear-gradient(to bottom, ${es.blackGradient[0]}, ${es.blackGradient[1]})`,
+                    }}
+                  />
                 </div>
               </div>
 
               {/* Mini board preview */}
-              <div className="grid grid-cols-4 grid-rows-4 overflow-hidden rounded-lg" style={{ width: 120, height: 120 }}>
+              <div
+                className="grid grid-cols-4 grid-rows-4 overflow-hidden rounded-lg"
+                style={{ width: 120, height: 120 }}
+              >
                 {Array.from({ length: 16 }).map((_, i) => {
                   const row = Math.floor(i / 4);
                   const col = i % 4;
@@ -339,7 +387,9 @@ export function CoinShop() {
                       style={{
                         width: 30,
                         height: 30,
-                        backgroundColor: isLight ? bt.lightSquare : bt.darkSquare,
+                        backgroundColor: isLight
+                          ? bt.lightSquare
+                          : bt.darkSquare,
                       }}
                     >
                       {piece && previewPieces && (
@@ -351,11 +401,33 @@ export function CoinShop() {
                         />
                       )}
                       {piece && !previewPieces && (
-                        <span className="text-lg leading-none" style={{ filter: piece.startsWith("b") ? "invert(0)" : "invert(0)", opacity: 0.85 }}>
-                          {({
-                            wK: "♔", wQ: "♕", wR: "♖", wB: "♗", wN: "♘", wP: "♙",
-                            bK: "♚", bQ: "♛", bR: "♜", bB: "♝", bN: "♞", bP: "♟",
-                          } as Record<string, string>)[piece]}
+                        <span
+                          className="text-lg leading-none"
+                          style={{
+                            filter: piece.startsWith("b")
+                              ? "invert(0)"
+                              : "invert(0)",
+                            opacity: 0.85,
+                          }}
+                        >
+                          {
+                            (
+                              {
+                                wK: "♔",
+                                wQ: "♕",
+                                wR: "♖",
+                                wB: "♗",
+                                wN: "♘",
+                                wP: "♙",
+                                bK: "♚",
+                                bQ: "♛",
+                                bR: "♜",
+                                bB: "♝",
+                                bN: "♞",
+                                bP: "♟",
+                              } as Record<string, string>
+                            )[piece]
+                          }
                         </span>
                       )}
                     </div>
@@ -366,15 +438,21 @@ export function CoinShop() {
               {/* Labels */}
               <div className="flex flex-col justify-center gap-1.5">
                 <div>
-                  <p className="text-[10px] font-medium uppercase tracking-wider text-white/30">Board</p>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-white/30">
+                    Board
+                  </p>
                   <p className="text-xs text-white">{bt.name}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-medium uppercase tracking-wider text-white/30">Pieces</p>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-white/30">
+                    Pieces
+                  </p>
                   <p className="text-xs text-white">{pt.name}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-medium uppercase tracking-wider text-white/30">Eval Bar</p>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-white/30">
+                    Eval Bar
+                  </p>
                   <p className="text-xs text-white">{es.name}</p>
                 </div>
               </div>
@@ -390,13 +468,27 @@ export function CoinShop() {
           {BOARD_THEMES.map((theme) => {
             const owned = theme.price === 0 || purchased.includes(theme.id);
             const active = activeTheme === theme.id;
-            const pt = PIECE_THEMES.find((t) => t.id === activePieceTheme) ?? PIECE_THEMES[0];
+            const pt =
+              PIECE_THEMES.find((t) => t.id === activePieceTheme) ??
+              PIECE_THEMES[0];
             // Mini 4×4 board layout with a handful of pieces
             const miniPieces: (string | null)[] = [
-              "bR", "bN", "bB", "bQ",
-              "bP", null, "bP", null,
-              null, "wN", null, "wP",
-              "wR", "wB", "wQ", "wK",
+              "bR",
+              "bN",
+              "bB",
+              "bQ",
+              "bP",
+              null,
+              "bP",
+              null,
+              null,
+              "wN",
+              null,
+              "wP",
+              "wR",
+              "wB",
+              "wQ",
+              "wK",
             ];
             return (
               <button
@@ -409,7 +501,10 @@ export function CoinShop() {
                 }`}
               >
                 {/* Mini board preview with pieces */}
-                <div className="mb-2 grid grid-cols-4 grid-rows-4 overflow-hidden rounded-lg" style={{ aspectRatio: "1" }}>
+                <div
+                  className="mb-2 grid grid-cols-4 grid-rows-4 overflow-hidden rounded-lg"
+                  style={{ aspectRatio: "1" }}
+                >
                   {miniPieces.map((piece, i) => {
                     const row = Math.floor(i / 4);
                     const col = i % 4;
@@ -418,7 +513,11 @@ export function CoinShop() {
                       <div
                         key={i}
                         className="relative flex items-center justify-center"
-                        style={{ backgroundColor: isLight ? theme.lightSquare : theme.darkSquare }}
+                        style={{
+                          backgroundColor: isLight
+                            ? theme.lightSquare
+                            : theme.darkSquare,
+                        }}
                       >
                         {piece && pt.setName && (
                           <img
@@ -429,8 +528,28 @@ export function CoinShop() {
                           />
                         )}
                         {piece && !pt.setName && (
-                          <span className="text-[clamp(10px,2.5vw,16px)] leading-none" style={{ opacity: 0.85 }}>
-                            {({ wK: "♔", wQ: "♕", wR: "♖", wB: "♗", wN: "♘", wP: "♙", bK: "♚", bQ: "♛", bR: "♜", bB: "♝", bN: "♞", bP: "♟" } as Record<string, string>)[piece]}
+                          <span
+                            className="text-[clamp(10px,2.5vw,16px)] leading-none"
+                            style={{ opacity: 0.85 }}
+                          >
+                            {
+                              (
+                                {
+                                  wK: "♔",
+                                  wQ: "♕",
+                                  wR: "♖",
+                                  wB: "♗",
+                                  wN: "♘",
+                                  wP: "♙",
+                                  bK: "♚",
+                                  bQ: "♛",
+                                  bR: "♜",
+                                  bB: "♝",
+                                  bN: "♞",
+                                  bP: "♟",
+                                } as Record<string, string>
+                              )[piece]
+                            }
                           </span>
                         )}
                       </div>
@@ -518,7 +637,9 @@ export function CoinShop() {
 
                 <div className="mt-1">
                   {active ? (
-                    <span className="text-[10px] font-bold text-emerald-400">Active</span>
+                    <span className="text-[10px] font-bold text-emerald-400">
+                      Active
+                    </span>
                   ) : owned ? (
                     <span className="text-[10px] text-white/30">Owned</span>
                   ) : (
@@ -530,8 +651,16 @@ export function CoinShop() {
 
                 {!owned && (
                   <div className="absolute right-1.5 top-1.5 rounded-full bg-black/30 p-1">
-                    <svg className="h-3 w-3 text-white/30" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
+                    <svg
+                      className="h-3 w-3 text-white/30"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                   </div>
                 )}
@@ -563,20 +692,28 @@ export function CoinShop() {
                   <div className="flex w-full flex-col">
                     <div
                       className="flex-1"
-                      style={{ background: `linear-gradient(to bottom, ${skin.whiteGradient[0]}, ${skin.whiteGradient[1]})` }}
+                      style={{
+                        background: `linear-gradient(to bottom, ${skin.whiteGradient[0]}, ${skin.whiteGradient[1]})`,
+                      }}
                     />
                     <div
                       className="flex-1"
-                      style={{ background: `linear-gradient(to bottom, ${skin.blackGradient[0]}, ${skin.blackGradient[1]})` }}
+                      style={{
+                        background: `linear-gradient(to bottom, ${skin.blackGradient[0]}, ${skin.blackGradient[1]})`,
+                      }}
                     />
                   </div>
                 </div>
 
-                <p className="text-center text-xs font-medium text-white">{skin.name}</p>
+                <p className="text-center text-xs font-medium text-white">
+                  {skin.name}
+                </p>
 
                 <div className="mt-1 text-center">
                   {active ? (
-                    <span className="text-[10px] font-bold text-emerald-400">Active</span>
+                    <span className="text-[10px] font-bold text-emerald-400">
+                      Active
+                    </span>
                   ) : owned ? (
                     <span className="text-[10px] text-white/30">Owned</span>
                   ) : (
@@ -586,55 +723,6 @@ export function CoinShop() {
                   )}
                 </div>
 
-                {!owned && (
-                  <div className="absolute right-1.5 top-1.5 rounded-full bg-black/30 p-1">
-                    <svg className="h-3 w-3 text-white/30" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ─── Profile Titles ─── */}
-      <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-white">Profile Titles</h3>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {PROFILE_TITLES.map((title) => {
-            const owned = purchased.includes(title.id);
-            const active = activeTitle === title.id;
-            return (
-              <button
-                key={title.id}
-                onClick={() => handleBuyTitle(title)}
-                className={`relative overflow-hidden rounded-xl border p-3 text-left transition-all ${
-                  active
-                    ? "border-emerald-500/40 bg-emerald-500/[0.06]"
-                    : "border-white/5 bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.04]"
-                }`}
-              >
-                <span className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold ${title.badgeClass}`}>
-                  {title.name}
-                </span>
-
-                <div className="mt-2">
-                  {active ? (
-                    <span className="text-[10px] font-bold text-emerald-400">
-                      Equipped
-                    </span>
-                  ) : owned ? (
-                    <span className="text-[10px] text-white/30">Owned — tap to equip</span>
-                  ) : (
-                    <span className="flex items-center gap-1 text-[10px] text-amber-400">
-                      <span>🪙</span> {title.price}
-                    </span>
-                  )}
-                </div>
-
-                {/* Lock icon */}
                 {!owned && (
                   <div className="absolute right-1.5 top-1.5 rounded-full bg-black/30 p-1">
                     <svg
@@ -656,13 +744,94 @@ export function CoinShop() {
         </div>
       </div>
 
+      {/* ─── Profile Titles ─── */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-white">Profile Titles</h3>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {PROFILE_TITLES.map((title) => {
+            const isFounderExclusive = title.requiresPlan === "lifetime";
+            const owned = isFounderExclusive
+              ? isLifetime
+              : purchased.includes(title.id);
+            const active = activeTitle === title.id;
+            return (
+              <button
+                key={title.id}
+                onClick={() => handleBuyTitle(title)}
+                className={`relative overflow-hidden rounded-xl border p-3 text-left transition-all ${
+                  active
+                    ? "border-emerald-500/40 bg-emerald-500/[0.06]"
+                    : isFounderExclusive && !isLifetime
+                      ? "border-amber-500/10 bg-amber-500/[0.02] opacity-60"
+                      : "border-white/5 bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.04]"
+                }`}
+              >
+                <span
+                  className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold ${title.badgeClass}`}
+                >
+                  {title.name}
+                </span>
+
+                <div className="mt-2">
+                  {active ? (
+                    <span className="text-[10px] font-bold text-emerald-400">
+                      Equipped
+                    </span>
+                  ) : owned ? (
+                    <span className="text-[10px] text-white/30">
+                      {isFounderExclusive
+                        ? "Founder exclusive — tap to equip"
+                        : "Owned — tap to equip"}
+                    </span>
+                  ) : isFounderExclusive ? (
+                    <span className="text-[10px] font-semibold text-amber-500/70">
+                      ♾️ Lifetime only
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-[10px] text-amber-400">
+                      <span>🪙</span> {title.price}
+                    </span>
+                  )}
+                </div>
+
+                {/* Lock / exclusive icon */}
+                {!owned && (
+                  <div className="absolute right-1.5 top-1.5 rounded-full bg-black/30 p-1">
+                    {isFounderExclusive ? (
+                      <span className="text-[10px] leading-none">♾️</span>
+                    ) : (
+                      <svg
+                        className="h-3 w-3 text-white/30"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    )}
+                  </div>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* ─── Avatar Frames ─── */}
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-white">Avatar Frames</h3>
-        <p className="text-[11px] text-white/40">Glowing borders and effects for your profile avatar</p>
+        <p className="text-[11px] text-white/40">
+          Glowing borders and effects for your profile avatar
+        </p>
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 lg:grid-cols-6">
           {AVATAR_FRAMES.map((frame) => {
-            const owned = purchased.includes(frame.id);
+            const isFounderExclusive = frame.requiresPlan === "lifetime";
+            const owned = isFounderExclusive
+              ? isLifetime
+              : frame.price === 0 || purchased.includes(frame.id);
             const equipped = activeFrame === frame.id;
             return (
               <button
@@ -672,27 +841,51 @@ export function CoinShop() {
                 className={`group relative flex flex-col items-center gap-2 rounded-xl border p-3 text-center transition-all ${
                   equipped
                     ? "border-emerald-500/40 bg-emerald-500/10"
-                    : "border-white/5 bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.04]"
+                    : isFounderExclusive && !isLifetime
+                      ? "border-amber-500/10 bg-amber-500/[0.02] opacity-60"
+                      : "border-white/5 bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.04]"
                 }`}
               >
                 {/* Preview circle */}
                 <div
-                  className={`relative flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-lg ${frame.frameClass}`}
-                  style={frame.frameStyle}
+                  className={`relative flex h-10 w-10 items-center justify-center rounded-full bg-slate-700 text-lg ${owned ? frame.frameClass : ""}`}
+                  style={owned ? frame.frameStyle : {}}
                 >
                   👤
                 </div>
-                <span className="text-[11px] font-medium text-white/70 leading-tight">{frame.name}</span>
-                {frame.price === 0 ? (
+                <span className="text-[11px] font-medium text-white/70 leading-tight">
+                  {frame.name}
+                </span>
+                {isFounderExclusive ? (
+                  owned ? (
+                    equipped ? (
+                      <span className="text-[10px] font-bold text-amber-400">
+                        Equipped ✓
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-amber-500/60">
+                        Founder exclusive
+                      </span>
+                    )
+                  ) : (
+                    <span className="text-[10px] font-semibold text-amber-500/60">
+                      ♾️ Lifetime only
+                    </span>
+                  )
+                ) : frame.price === 0 ? (
                   <span className="text-[10px] text-emerald-400">Free</span>
                 ) : owned ? (
                   equipped ? (
-                    <span className="text-[10px] font-bold text-emerald-400">Equipped ✓</span>
+                    <span className="text-[10px] font-bold text-emerald-400">
+                      Equipped ✓
+                    </span>
                   ) : (
                     <span className="text-[10px] text-white/30">Owned</span>
                   )
                 ) : (
-                  <span className="text-[10px] font-bold text-amber-400">🪙 {frame.price}</span>
+                  <span className="text-[10px] font-bold text-amber-400">
+                    🪙 {frame.price}
+                  </span>
                 )}
               </button>
             );
@@ -705,10 +898,16 @@ export function CoinShop() {
         <h3 className="text-sm font-semibold text-white">Board Settings</h3>
         <div className="flex items-center justify-between rounded-xl border border-white/5 bg-white/[0.02] p-4">
           <div className="flex items-center gap-3">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/10 text-sm">🔢</span>
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/10 text-sm">
+              🔢
+            </span>
             <div>
-              <p className="text-sm font-medium text-white">Board Coordinates</p>
-              <p className="text-[11px] text-white/40">Show rank &amp; file labels (a–h, 1–8) on all boards</p>
+              <p className="text-sm font-medium text-white">
+                Board Coordinates
+              </p>
+              <p className="text-[11px] text-white/40">
+                Show rank &amp; file labels (a–h, 1–8) on all boards
+              </p>
             </div>
           </div>
           <button
