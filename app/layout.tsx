@@ -269,6 +269,14 @@ export default function RootLayout({
                           Famous Games
                         </Link>
                       </li>
+                      <li>
+                        <Link
+                          href="/players"
+                          className="hover:text-slate-300 transition-colors"
+                        >
+                          Grandmasters
+                        </Link>
+                      </li>
                   </div>
 
                   {/* Community */}

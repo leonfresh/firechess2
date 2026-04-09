@@ -292,6 +292,12 @@ export function Navbar() {
                   >
                     ♛ Famous Games
                   </Link>
+                  <Link
+                    href="/players"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/players") ? "bg-yellow-500/[0.08] text-yellow-400" : "text-slate-400 hover:bg-yellow-500/[0.06] hover:text-yellow-400"}`}
+                  >
+                    👑 Grandmasters
+                  </Link>
                   <div className="my-1 h-px bg-white/[0.06]" />
                   <Link
                     href="/positions"
