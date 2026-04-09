@@ -185,7 +185,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
       "In October 1956, thirteen-year-old Bobby Fischer was unknown outside New York chess circles. Playing Black in a Grünfeld Defense, he made the startling queen sacrifice 17...Be6! — giving up his queen for a bishop while his knight forked White's queen and rook. The resulting attack was so precise that Byrne, having collected the queen, could do nothing as Fischer's pieces dismantled his position move by move. Chess Review's Hans Kmoch immediately dubbed it 'The Game of the Century'.",
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     moves:
-      "Nf3,Nf6,c4,g6,Nc3,Bg7,d4,O-O,Bf4,d5,Qb3,dxc4,Qxc4,c6,e4,Nbd7,Rd1,Nb6,Qc5,Bg4,Bg5,Na4,Qa3,Nxc3,bxc3,Nxe4,Bxe7,Qb6,Bc4,Nxc3,Bc5,Rfe8+,Kf1,Be6,Bxb6,Bxc4+,Kg1,Ne2+,Kf1,Nxd4+,Kg1,Ne2+,Kf1,Nc3+,Kg1,axb6",
+      "Nf3,Nf6,c4,g6,Nc3,Bg7,d4,O-O,Bf4,d5,Qb3,dxc4,Qxc4,c6,e4,Nbd7,Rd1,Nb6,Qc5,Bg4,Bg5,Na4,Qa3,Nxc3,bxc3,Nxe4,Bxe7,Qb6,Bc4,Nxc3,Bc5,Rfe8+,Kf1,Be6,Bxb6,Bxc4+,Kg1,Ne2+,Kf1,Nxd4+,Kg1,Ne2+,Kf1,Nc3+,Kg1,axb6,Qb4,Ra4,Qxb6,Nxd1,h3,Rxa2,Kh2,Nxf2,Re1,Rxe1,Qd8+,Bf8,Nxe1,Bd5,Nf3,Ne4,Qb8,b5,h4,h5,Ne5,Kg7,Kg1,Bc5+,Kf1,Ng3+,Ke1,Bb4+,Kd1,Bb3+,Kc1,Ne2+,Kb1,Nc3+,Kc1,Rc2#",
     orientation: "black",
     caption:
       "Fischer at 13 — the queen sacrifice on move 17 shocked the chess world. Play through the winning combination.",
@@ -388,7 +388,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     moves:
       "e4,c5,Nf3,e6,d3,Nc6,g3,Nf6,Bg2,Be7,O-O,O-O,Re1,d6,c3,d5,e5,Nd7,d4,cxd4,cxd4,f6,exf6,Nxf6,Nc3",
-    orientation: "white",
+    orientation: "black",
     caption:
       "Deep Blue vs Kasparov, Game 6 (1997) — the game that changed chess and AI history. Kasparov resigned after 19 moves.",
     tacticalThemes: [
@@ -438,7 +438,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
       "By Game 6 of the 1972 World Championship, Fischer had already caused an international sensation. When he chose the Tartakower-Makogonov-Bondarevsky System — a line Spassky had prepared deeply — it seemed like a mistake. Instead, Fischer's play was flawless: he sealed the queenside, created a passed pawn, and executed a textbook knight vs bishop endgame. As Fischer moved in for the final blow, Spassky stood and began applauding. The audience followed. Spassky applauded his own loss — a unique moment in World Championship history.",
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     moves:
-      "c4,e6,Nf3,d5,d4,Nf6,Nc3,Be7,Bg5,O-O,e3,h6,Bh4,b6,cxd5,Nxd5,Bxe7,Qxe7,Nxd5,exd5,Rc1,Be6,Qa4,c5,Qa3,Rc8,Bb5,a6,dxc5,bxc5,O-O,Ra7,Be2,Nd7,Nd4,Nf8,Nxe6,fxe6,e4,Ng6,Bf3,Re8,Qb3,Qf7,g3,a5,exd5,exd5,Rfe1",
+      "c4,e6,Nf3,d5,d4,Nf6,Nc3,Be7,Bg5,O-O,e3,h6,Bh4,b6,cxd5,Nxd5,Bxe7,Qxe7,Nxd5,exd5,Rc1,Be6,Qa4,c5,Qa3,Rc8,Bb5,a6,dxc5,bxc5,O-O,Ra7,Be2,Nd7,Nd4,Qf8,Nxe6,fxe6,e4,d4,f4,Qe7,e5,Rb8,Bc4,Kh8,Qh3,Nf8,b3,a5,f5,exf5,Rxf5,Nh7,Rcf1,Qd8,Qg3,Re7,h4,Rbb7,e6,Rbc7,Qe5,Qe8,a4,Qd8,R1f2,Qe8,R2f3,Qd8,Bd3,Qe8,Qe4,Nf6,Rxf6,gxf6,Rxf6,Kg8,Bc4,Kh8,Qf4",
     orientation: "white",
     caption:
       "Game 6 of the 1972 World Championship — Fischer's masterpiece. Spassky applauded his own defeat before resigning.",
@@ -628,12 +628,12 @@ export const FAMOUS_GAMES: FamousGame[] = [
   {
     id: "morphy-paulsen-1857",
     starPlayerSlug: "paul-morphy",
-    name: "Morphy vs Paulsen — Queen Sacrifice",
-    white: "Paul Morphy",
-    black: "Louis Paulsen",
+    name: "Paulsen vs Morphy — Queen Sacrifice",
+    white: "Louis Paulsen",
+    black: "Paul Morphy",
     year: 1857,
     event: "First American Chess Congress, New York",
-    result: "1-0",
+    result: "0-1",
     era: "romantic",
     tagline:
       "Morphy sacrifices his queen on move 17 for a bishop and pawn, then delivers checkmate with rooks and bishop in one of the most shocking combinations of the 19th century.",
@@ -641,10 +641,10 @@ export const FAMOUS_GAMES: FamousGame[] = [
       "At the 1857 First American Chess Congress, Morphy — just 20 years old — played Paulsen in a Four Knights Game. On move 17, he played Qxf3!!, sacrificing his queen for a bishop and pawn. Paulsen accepted (what else could he do?) and Morphy launched a rook and bishop mating attack that couldn't be stopped. The game demonstrated that Morphy had mastered not just tactics, but the art of transforming a queen sacrifice into a devastating material-coordinating attack.",
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     moves:
-      "e4,e5,Nf3,Nc6,Nc3,Nf6,Bb5,Bc5,O-O,O-O,Nxe5,Re8,Nxc6,dxc6,Bc4,b5,Be2,Nxe4,Nxe4,Rxe4,Bf3,Re6,c3,Qd3,b4,Bb6,a4,bxa4,Qxa4,Bd7,Ra2,Rae8,Qa6,Qxf3,gxf3,Rg6+,Kh1",
-    orientation: "white",
+      "e4,e5,Nf3,Nc6,Nc3,Nf6,Bb5,Bc5,O-O,O-O,Nxe5,Re8,Nxc6,dxc6,Bc4,b5,Be2,Nxe4,Nxe4,Rxe4,Bf3,Re6,c3,Qd3,b4,Bb6,a4,bxa4,Qxa4,Bd7,Ra2,Rae8,Qa6,Qxf3,gxf3,Rg6+,Kh1,Bh3,Rd1,Bg2+,Kg1,Bxf3+,Kf1,Bg2+,Kg1,Bh3+,Kh1,Bxf2,Qf1,Bxf1,Rxf1,Re2,Ra1,Rh6,d4,Be3",
+    orientation: "black",
     caption:
-      "Morphy vs Paulsen 1857 — the queen sacrifice on move 17 announced Morphy as the greatest player of his era.",
+      "Paulsen vs Morphy 1857 — Morphy's queen sacrifice on move 17 (17...Qxf3!!) announced him as the greatest player of his era.",
     tacticalThemes: [
       "queen sacrifice",
       "rook battery",
@@ -655,7 +655,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
     keyMoment: {
       moveNumber: 17,
       description:
-        "17.Qxf3!! sacrifices the queen for bishop and pawn. Paulsen accepts and Morphy's rooks and bishop create a mating attack that cannot be defended.",
+        "17...Qxf3!! sacrifices the queen for bishop and pawn. Paulsen accepts and Morphy's rooks and bishop create a mating attack that cannot be defended.",
     },
     faqs: [
       {

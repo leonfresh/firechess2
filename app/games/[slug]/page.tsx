@@ -198,9 +198,17 @@ export default async function FamousGamePage({
           </h1>
 
           <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-stone-400">
-            <span className="text-white font-medium">{game.white}</span>
+            <span
+              className={`font-medium ${starGm && game.orientation === "white" ? "text-amber-300" : "text-white"}`}
+            >
+              {game.white}
+            </span>
             <span className="text-stone-600">vs</span>
-            <span className="text-white font-medium">{game.black}</span>
+            <span
+              className={`font-medium ${starGm && game.orientation === "black" ? "text-amber-300" : "text-white"}`}
+            >
+              {game.black}
+            </span>
           </div>
 
           <p className="mt-1 text-xs text-stone-500">{game.event}</p>
