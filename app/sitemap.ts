@@ -208,7 +208,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     ...glossaryPages,
     {
-      url: `${base}/chaos`,`
+      url: `${base}/chaos`,
       lastModified: new Date(),
       changeFrequency: "monthly",
       priority: 0.8,

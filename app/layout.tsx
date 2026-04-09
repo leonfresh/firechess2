@@ -285,6 +285,7 @@ export default function RootLayout({
                           Chess Glossary
                         </Link>
                       </li>
+                    </ul>
                   </div>
 
                   {/* Community */}
