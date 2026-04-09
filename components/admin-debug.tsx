@@ -13,6 +13,7 @@ import { useSession } from "@/components/session-provider";
 const PREFS_KEY = "firechess-user-prefs";
 const KEY_SETUP_DONE = "fc-setup-done";
 const REPORT_KEY_PREFIX = "fc-last-report";
+const KEY_PRO_WELCOMED = "fc-pro-welcomed";
 
 const SCAN_MODES = [
   "openings",
@@ -59,12 +60,26 @@ export function AdminDebug() {
     notify("All first-run flags cleared ✓");
   }
 
+  function showProWelcome() {
+    localStorage.removeItem(KEY_PRO_WELCOMED);
+    // Trigger by setting the URL param and reloading
+    const url = new URL(window.location.href);
+    url.searchParams.set("upgraded", "lifetime");
+    window.location.href = url.toString();
+  }
+
   const BUTTONS: {
     label: string;
     icon: string;
     action: () => void;
     color: string;
   }[] = [
+    {
+      label: "Show Pro/Founder Welcome",
+      icon: "♾️",
+      action: showProWelcome,
+      color: "hover:bg-amber-500/20 hover:text-amber-300",
+    },
     {
       label: "Open Welcome Onboarding",
       icon: "🧙",
@@ -92,7 +107,7 @@ export function AdminDebug() {
   ];
 
   return (
-    <div className="fixed bottom-4 right-4 z-[9990] flex select-none flex-col items-end gap-2">
+    <div className="fixed bottom-4 left-4 z-[9990] flex select-none flex-col items-start gap-2">
       {/* Toast */}
       {toast && (
         <div className="animate-fade-in rounded-xl border border-white/[0.10] bg-slate-900/95 px-4 py-2 text-xs font-medium text-slate-200 shadow-xl backdrop-blur-sm">
