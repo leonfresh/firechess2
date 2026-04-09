@@ -28,7 +28,10 @@ export function BlogChessBoard({
   caption,
 }: BlogChessBoardProps) {
   const moveList = moves
-    ? moves.split(",").map((m) => m.trim()).filter(Boolean)
+    ? moves
+        .split(",")
+        .map((m) => m.trim())
+        .filter(Boolean)
     : [];
   const hasSequence = moveList.length > 0;
 
@@ -62,14 +65,11 @@ export function BlogChessBoard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fen, moves]);
 
-  const goTo = useCallback(
-    (idx: number) => {
-      const clamped = Math.max(-1, Math.min(idx, fensRef.current.length - 2));
-      setCurrentIdx(clamped);
-      setDisplayFen(fensRef.current[clamped + 1]);
-    },
-    [],
-  );
+  const goTo = useCallback((idx: number) => {
+    const clamped = Math.max(-1, Math.min(idx, fensRef.current.length - 2));
+    setCurrentIdx(clamped);
+    setDisplayFen(fensRef.current[clamped + 1]);
+  }, []);
 
   const play = useCallback(() => {
     if (!hasSequence) return;
@@ -152,7 +152,10 @@ export function BlogChessBoard({
           </button>
           {/* Back */}
           <button
-            onClick={() => { pause(); goTo(currentIdx - 1); }}
+            onClick={() => {
+              pause();
+              goTo(currentIdx - 1);
+            }}
             disabled={currentIdx <= -1}
             className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-2.5 py-1.5 text-xs text-slate-400 transition-colors hover:bg-white/[0.08] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
             title="Previous move"
@@ -168,7 +171,10 @@ export function BlogChessBoard({
           </button>
           {/* Forward */}
           <button
-            onClick={() => { pause(); goTo(currentIdx + 1); }}
+            onClick={() => {
+              pause();
+              goTo(currentIdx + 1);
+            }}
             disabled={currentIdx >= fensRef.current.length - 2}
             className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-2.5 py-1.5 text-xs text-slate-400 transition-colors hover:bg-white/[0.08] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed"
             title="Next move"

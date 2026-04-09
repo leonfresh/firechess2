@@ -173,7 +173,9 @@ export default async function FamousGamePage({
                     sizes="80px"
                   />
                 </div>
-                <p className="mt-1.5 text-center text-[10px] text-stone-500 group-hover:text-stone-300">{starGm.name}</p>
+                <p className="mt-1.5 text-center text-[10px] text-stone-500 group-hover:text-stone-300">
+                  {starGm.name}
+                </p>
               </Link>
             </div>
           )}
