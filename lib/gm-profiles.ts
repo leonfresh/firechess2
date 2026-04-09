@@ -5,6 +5,8 @@
 
 export type GmProfile = {
   id: string;
+  /** Wikimedia Commons thumbnail URL for the player photo */
+  imageUrl?: string;
   name: string;
   fullName: string;
   born: number;
@@ -37,6 +39,8 @@ export type GmProfile = {
 export const GM_PROFILES: GmProfile[] = [
   {
     id: "magnus-carlsen",
+    imageUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Magnus_Carlsen_in_2025.jpg/330px-Magnus_Carlsen_in_2025.jpg",
     name: "Magnus Carlsen",
     fullName: "Sven Magnus Øen Carlsen",
     born: 1990,
@@ -132,6 +136,8 @@ export const GM_PROFILES: GmProfile[] = [
   },
   {
     id: "garry-kasparov",
+    imageUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Garri_Kasparow_%2818776605665%29_%28cropped%29_2.jpg/330px-Garri_Kasparow_%2818776605665%29_%28cropped%29_2.jpg",
     name: "Garry Kasparov",
     fullName: "Garri Kimovich Kasparov",
     born: 1963,
@@ -226,6 +232,8 @@ export const GM_PROFILES: GmProfile[] = [
   },
   {
     id: "bobby-fischer",
+    imageUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/4/42/Bobby_Fischer_in_1962_portrait.jpg/330px-Bobby_Fischer_in_1962_portrait.jpg",
     name: "Bobby Fischer",
     fullName: "Robert James Fischer",
     born: 1943,
@@ -317,6 +325,8 @@ export const GM_PROFILES: GmProfile[] = [
   },
   {
     id: "mikhail-tal",
+    imageUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Mikhail_Tal_1962.jpg/330px-Mikhail_Tal_1962.jpg",
     name: "Mikhail Tal",
     fullName: "Mikhail Nekhemyevich Tal",
     born: 1936,
@@ -397,6 +407,8 @@ export const GM_PROFILES: GmProfile[] = [
   },
   {
     id: "anatoly-karpov",
+    imageUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Anatoly_Karpov_2017_april.jpg/330px-Anatoly_Karpov_2017_april.jpg",
     name: "Anatoly Karpov",
     fullName: "Anatoly Yevgenyevich Karpov",
     born: 1951,
@@ -476,6 +488,8 @@ export const GM_PROFILES: GmProfile[] = [
   },
   {
     id: "jose-capablanca",
+    imageUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Jos%C3%A9_Ra%C3%BAl_Capablanca_1931.jpg/330px-Jos%C3%A9_Ra%C3%BAl_Capablanca_1931.jpg",
     name: "José Raúl Capablanca",
     fullName: "José Raúl Capablanca y Graupera",
     born: 1888,
@@ -550,6 +564,8 @@ export const GM_PROFILES: GmProfile[] = [
   },
   {
     id: "viswanathan-anand",
+    imageUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Viswanathan_Anand_%282016%29_%28cropped%29.jpeg/330px-Viswanathan_Anand_%282016%29_%28cropped%29.jpeg",
     name: "Viswanathan Anand",
     fullName: "Viswanathan Anand",
     born: 1969,
@@ -630,6 +646,8 @@ export const GM_PROFILES: GmProfile[] = [
   },
   {
     id: "paul-morphy",
+    imageUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/PaulCharlesMorphy.jpg/330px-PaulCharlesMorphy.jpg",
     name: "Paul Morphy",
     fullName: "Paul Charles Morphy",
     born: 1837,
@@ -704,6 +722,8 @@ export const GM_PROFILES: GmProfile[] = [
   },
   {
     id: "judit-polgar",
+    imageUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/Judit_Polg%C3%A1r_2013.jpg/330px-Judit_Polg%C3%A1r_2013.jpg",
     name: "Judit Polgár",
     fullName: "Judit Polgár",
     born: 1976,
@@ -782,6 +802,8 @@ export const GM_PROFILES: GmProfile[] = [
   },
   {
     id: "vladimir-kramnik",
+    imageUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/c/c6/Vladimir_Kramnik_2%2C_Candidates_Tournament_2018.jpg",
     name: "Vladimir Kramnik",
     fullName: "Vladimir Borisovich Kramnik",
     born: 1975,
@@ -861,6 +883,8 @@ export const GM_PROFILES: GmProfile[] = [
   },
   {
     id: "hikaru-nakamura",
+    imageUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Nakamura_Hikaru_%2829290269410%29_%28cropped%29_%28cropped%29.jpg/330px-Nakamura_Hikaru_%2829290269410%29_%28cropped%29_%28cropped%29.jpg",
     name: "Hikaru Nakamura",
     fullName: "Hikaru Nakamura",
     born: 1987,
@@ -934,6 +958,411 @@ export const GM_PROFILES: GmProfile[] = [
       {
         q: "What is Nakamura's best classical rating?",
         a: "Nakamura's peak classical rating was 2816, achieved in January 2015 — the second-highest rating ever achieved by an American player, behind only Bobby Fischer.",
+      },
+    ],
+  },
+  {
+    id: "fabiano-caruana",
+    imageUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Fabiano_Caruana_in_2025.jpg/330px-Fabiano_Caruana_in_2025.jpg",
+    name: "Fabiano Caruana",
+    fullName: "Fabiano Luigi Caruana",
+    born: 1992,
+    nationality: "Italian-American",
+    title: "Grandmaster",
+    peakRating: 2844,
+    worldChampion: false,
+    era: "contemporary",
+    tagline:
+      "Fabiano Caruana — the third-highest-rated player in chess history — pushed Magnus Carlsen to the brink in 2018, drawing all 12 classical World Championship games before losing in rapid tiebreaks.",
+    bio: "Fabiano Caruana is an Italian-American grandmaster who became the highest-rated Western player in history with a peak of 2844. Trained in Europe, he burst onto the world stage in 2014 by winning the Sinquefield Cup with a dominant performance against the world's top players — a result considered one of the strongest tournament runs in chess history. In 2018 he challenged Magnus Carlsen for the World Championship, drawing all 12 classical games — an unprecedented result — before losing in rapid tiebreaks. A five-time US Chess Champion, Caruana is universally regarded as the second-best player in the world at his peak.",
+    style: [
+      "Universal mastery",
+      "Deep theoretical preparation",
+      "Positional precision",
+      "Endgame technique",
+      "Classical opening repertoire",
+      "Tactical accuracy",
+    ],
+    openingsWhite: [
+      {
+        eco: "C60–C99",
+        name: "Ruy Lopez",
+        notes:
+          "Caruana's Ruy Lopez is deeply prepared — he introduced several theoretical novelties in the Marshall Attack and Spanish Torture lines. His positional play in the opening is considered model technique.",
+      },
+      {
+        eco: "B20–B99",
+        name: "Sicilian (various systems)",
+        notes:
+          "Caruana adapts to his opponent's Sicilian — prepared in the Open Sicilian, English Attack, and various Anti-Sicilian systems, making him unpredictable.",
+      },
+    ],
+    openingsBlack: [
+      {
+        eco: "C65",
+        name: "Berlin Defense",
+        notes:
+          "Like Carlsen, Caruana relies heavily on the Berlin Defense. His Berlin endgame technique is among the best in the world.",
+      },
+      {
+        eco: "E60–E99",
+        name: "King's Indian Defense",
+        notes:
+          "Caruana plays the King's Indian for dynamic counterplay in positions where he wants to fight for a win as Black rather than draw.",
+      },
+    ],
+    lessonsToLearn: [
+      "Perfect preparation: Caruana's openings are studied to a depth most players never reach",
+      "Drawing isn't failure — 12 draws against the world champion requires elite accuracy over the board",
+      "Study Caruana's 2014 Sinquefield Cup games as a masterclass in tournament domination",
+      "Universal players demonstrate that you must be strong in all phases, not just tactics",
+    ],
+    highlights: [
+      "Five-time United States Chess Champion",
+      "2018 World Championship challenger — drew all 12 classical games vs Carlsen",
+      "Peak rating 2844 — third-highest in chess history behind Kasparov and Carlsen",
+      "2014 Sinquefield Cup: 8.5/10 against the world's top players (+7 =3 −0)",
+      "Consistent top-3 world ranking for over a decade",
+    ],
+    famousGameIds: [],
+    faqs: [
+      {
+        q: "Why didn't Caruana win the 2018 World Chess Championship?",
+        a: "Caruana drew all 12 classical games against Carlsen — an unprecedented result. In the rapid tiebreaks, Carlsen's superior speed-chess skills proved decisive, winning 3–0. The match showed that Caruana matched Carlsen over the board in classical chess.",
+      },
+      {
+        q: "What is Fabiano Caruana's peak chess rating?",
+        a: "Caruana's peak FIDE rating was 2844, achieved in October 2014 — the third-highest classical rating in chess history, behind only Kasparov (2851) and Carlsen (2882).",
+      },
+      {
+        q: "Where is Fabiano Caruana from?",
+        a: "Caruana was born in Miami, Florida, grew up in Brooklyn, then trained in Europe (primarily Italy and Spain) before returning to represent the United States internationally.",
+      },
+    ],
+  },
+  {
+    id: "ding-liren",
+    imageUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/DingLiren24a.jpg/330px-DingLiren24a.jpg",
+    name: "Ding Liren",
+    fullName: "Ding Liren",
+    born: 1992,
+    nationality: "Chinese",
+    title: "Grandmaster",
+    peakRating: 2816,
+    worldChampion: true,
+    championYears: "2023–2024",
+    era: "contemporary",
+    tagline:
+      "Ding Liren — the first Chinese World Chess Champion — overcame psychological adversity and COVID-disrupted preparation to claim the 2023 world title, inspiring a generation of Asian players.",
+    bio: "Ding Liren is a Chinese grandmaster who became the 17th World Chess Champion in 2023, defeating Ian Nepomniachtchi in rapid tiebreaks after the classical games ended tied. He is the first Chinese player to compete in a Candidates Tournament, the first to pass 2800 Elo, and the only Chinese World Champion. Ding's path to the title was unconventional — he entered after significant playing time lost during COVID lockdowns — yet produced brilliant and creative chess throughout the match. He lost the title to Gukesh Dommaraju in 2024, who became the youngest World Champion in history.",
+    style: [
+      "Creative dynamism",
+      "Endgame precision",
+      "Universal player",
+      "Tactical vision",
+      "Deep opening preparation",
+      "Mental resilience",
+    ],
+    openingsWhite: [
+      {
+        eco: "D10–D29",
+        name: "Queen's Gambit / Catalan",
+        notes:
+          "Ding favors the Catalan and Queen's Gambit for their strategic depth. His understanding of the resulting pawn structures is sophisticated and theoretically grounded.",
+      },
+      {
+        eco: "C60–C99",
+        name: "Ruy Lopez",
+        notes:
+          "Ding deploys the Ruy Lopez with deep preparation, often choosing the Berlin or Anti-Marshall lines for positional battles.",
+      },
+    ],
+    openingsBlack: [
+      {
+        eco: "E00–E09",
+        name: "Nimzo-Indian / Queen's Indian",
+        notes:
+          "Ding's Nimzo-Indian is a solid, well-prepared weapon. He often steers games into asymmetrical structures where his endgame technique gives him winning chances.",
+      },
+      {
+        eco: "B80–B99",
+        name: "Sicilian Defense",
+        notes:
+          "Against 1.e4, Ding is comfortable in Sicilian positions, adapting his approach based on the opponent's system.",
+      },
+    ],
+    lessonsToLearn: [
+      "Mental resilience under pressure: Ding won the world title despite difficult personal circumstances",
+      "Creativity can overcome preparation: several of Ding's 2023 World Championship games featured original ideas",
+      "Chinese players today are among the world's best — study their games for fresh, modern approaches",
+      "Don't underestimate yourself: Ding was considered the underdog in the 2023 match and won",
+    ],
+    highlights: [
+      "17th World Chess Champion 2023–2024",
+      "First Chinese player to pass 2800 Elo",
+      "First Chinese player to compete in a Candidates Tournament",
+      "Three-time Chinese Chess Champion",
+      "Chess Olympiad gold with China (2014, 2018)",
+      "Peak Rapid rating of 2830 — World No. 1 in July 2023",
+    ],
+    famousGameIds: [],
+    faqs: [
+      {
+        q: "How did Ding Liren win the 2023 World Chess Championship?",
+        a: "Ding defeated Ian Nepomniachtchi in a 14-game classical match that ended 3.5–3.5. In the rapid tiebreaks, Ding won decisively to claim the title. The match was noted for its dramatic swings and psychological intensity.",
+      },
+      {
+        q: "Who defeated Ding Liren for the world title?",
+        a: "Ding Liren lost the World Championship to D Gukesh in 2024. Gukesh, aged 18, became the youngest World Chess Champion in history.",
+      },
+      {
+        q: "Why is Ding Liren historically significant?",
+        a: "Ding was the first Chinese player to win the World Chess Championship, marking a seismic shift in global chess. Chinese chess has since produced multiple elite players, and Gukesh's subsequent title continued the trend away from Western/Russian dominance.",
+      },
+    ],
+  },
+  {
+    id: "ian-nepomniachtchi",
+    imageUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Ian_Nepomniachtchi_in_2024_%28cropped_v2%29.jpg/330px-Ian_Nepomniachtchi_in_2024_%28cropped_v2%29.jpg",
+    name: "Ian Nepomniachtchi",
+    fullName: "Ian Alexandrovich Nepomniachtchi",
+    born: 1990,
+    nationality: "Russian",
+    title: "Grandmaster",
+    peakRating: 2795,
+    worldChampion: false,
+    era: "contemporary",
+    tagline:
+      "Ian Nepomniachtchi — 'Nepo' — is one of the sharpest tactical players in modern chess, a two-time World Championship challenger, and one of the very few players to win consecutive Candidates Tournaments.",
+    bio: "Ian Nepomniachtchi is a Russian grandmaster known for extraordinarily sharp, creative play and exceptional speed chess ability. He won the 2020–21 Candidates Tournament to challenge Magnus Carlsen in 2021, losing a memorable match after a record-length game 6. His resilience earned him a second consecutive Candidates win in 2022, leading to a 2023 World Championship match against Ding Liren, which he lost in tiebreaks. Nepomniachtchi has held a top-5 world ranking for years and remains Russia's highest-rated active player.",
+    style: [
+      "Sharp tactical play",
+      "Aggressive preparation",
+      "Speed chess mastery",
+      "Combinational creativity",
+      "Dynamic imbalances",
+      "Resourceful counterplay",
+    ],
+    openingsWhite: [
+      {
+        eco: "C80–C99",
+        name: "Ruy Lopez / Italian Game",
+        notes:
+          "Nepo plays aggressive variations with White, often introducing sharp theoretical novelties to unbalance the position early and test opponents' preparation.",
+      },
+      {
+        eco: "B20–B99",
+        name: "Open Sicilian",
+        notes:
+          "Against the Sicilian, Nepomniachtchi favors the most aggressive lines — the English Attack and sharper Najdorf systems — seeking early complications.",
+      },
+    ],
+    openingsBlack: [
+      {
+        eco: "C65–C67",
+        name: "Berlin Defense",
+        notes:
+          "Nepo adapted the Berlin to his style, finding ways to create imbalances rather than just drawing — his Berlin games are notably more combative than Kramnik's classical approach.",
+      },
+      {
+        eco: "A80–A99",
+        name: "Dutch Defense",
+        notes:
+          "The Dutch is a sharp, unusual weapon Nepo employs to steer games away from ultra-theoretical lines into dynamic, creative positions.",
+      },
+    ],
+    lessonsToLearn: [
+      "Bounce back from losses: Nepo lost a World Championship match then immediately won the next Candidates to play again",
+      "Speed chess training complements classical play: Nepo's rapid/blitz skills and classical preparation reinforce each other",
+      "Sharp opening preparation matters — study Nepo's novelties to understand how preparation wins games",
+      "Tactical creativity can overwhelm positional solidity when the complications become too deep to calculate",
+    ],
+    highlights: [
+      "Two-time World Championship challenger (2021 vs Carlsen, 2023 vs Ding Liren)",
+      "Won two consecutive Candidates Tournaments (2020–21 and 2022)",
+      "2024 World Blitz Co-champion alongside Magnus Carlsen",
+      "Russia's highest-rated active classical player",
+      "Peak rating 2795",
+      "Five-time Russian Chess Champion",
+    ],
+    famousGameIds: [],
+    faqs: [
+      {
+        q: "What does 'Nepo' stand for?",
+        a: "Nepo is a universal nickname for Ian Nepomniachtchi — a shortening of his lengthy surname that the chess world has adopted. Even official commentary and FIDE materials often use it.",
+      },
+      {
+        q: "Why is game 6 of the 2021 World Championship so famous?",
+        a: "Game 6 became the longest World Championship game in history (136 moves, over 7.5 hours). Nepomniachtchi had built a solid position but cracked under pressure in a complex endgame, giving Carlsen the decisive advantage. The loss appeared to unsettle Nepo psychologically for the rest of the match.",
+      },
+      {
+        q: "Has Nepomniachtchi won a World Championship?",
+        a: "No. Nepomniachtchi lost the 2021 World Championship to Magnus Carlsen (7.5–3.5) and the 2023 Championship to Ding Liren in rapid tiebreaks. He remains one of the elite contenders in modern chess.",
+      },
+    ],
+  },
+  {
+    id: "eric-hansen",
+    imageUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Eric_Hansen_2014_Iceland_-_Reykjavik_Tournament_%28cropped%29.jpg/330px-Eric_Hansen_2014_Iceland_-_Reykjavik_Tournament_%28cropped%29.jpg",
+    name: "Eric Hansen",
+    fullName: "Eric Hansen",
+    born: 1992,
+    nationality: "Canadian",
+    title: "Grandmaster",
+    peakRating: 2634,
+    worldChampion: false,
+    era: "contemporary",
+    tagline:
+      "Eric Hansen — 'Chessbrah' — is a Canadian GM who brought chess to millions of new fans through Twitch streaming and YouTube, pioneering an unfiltered, entertaining format that helped spark the global chess boom.",
+    bio: "Eric Hansen is a Canadian grandmaster who earned his GM title in 2013 and went on to become one of the most influential chess content creators in the world. As one of the founders of the ChessBrah brand alongside IM Aman Hambleton, Hansen pioneered chess streaming on Twitch, creating an irreverent, entertaining format that attracted a new generation of chess fans. His aggressive, tactical style translates naturally to fast time controls where he excels. Hansen has represented Canada at multiple Chess Olympiads and remains one of the most recognizable personalities in online chess.",
+    style: [
+      "Aggressive and tactical",
+      "Sharp opening play",
+      "Blitz and bullet specialist",
+      "Creative and unorthodox",
+      "Initiative-seeking",
+      "Entertaining over-the-board style",
+    ],
+    openingsWhite: [
+      {
+        eco: "B20–B99",
+        name: "Open Sicilian / English Attack",
+        notes:
+          "Hansen favors aggressive Anti-Sicilian systems and the English Attack, seeking sharp, tactical battles from the very first moves.",
+      },
+      {
+        eco: "C20–C29",
+        name: "King's Gambit",
+        notes:
+          "A Hansen favorite in bullet and blitz — the King's Gambit creates immediate tactical complexity that suits his attacking style perfectly.",
+      },
+    ],
+    openingsBlack: [
+      {
+        eco: "B09",
+        name: "Pirc Defense",
+        notes:
+          "Hansen enjoys the Pirc Defense for its dynamic counterplay potential — inviting White to advance, then counterattacking sharply.",
+      },
+      {
+        eco: "B20–B49",
+        name: "Sicilian Defense (various)",
+        notes:
+          "As Black against 1.e4, Hansen is comfortable in many Sicilian lines, adapting to the opponent's system and creating imbalances early.",
+      },
+    ],
+    lessonsToLearn: [
+      "Chess streaming can help you improve — watching GM decision-making in real time builds intuition fast",
+      "Aggressive, entertaining play is still strong play — Hansen's games prove that tactical chess wins at high levels",
+      "Chess is fun: the ChessBrah content reminded the community that enjoyment and excellence can coexist",
+      "Bullet and blitz training builds pattern recognition that transfers to longer time controls",
+    ],
+    highlights: [
+      "Grandmaster title awarded 2013",
+      "Co-founder of ChessBrah, one of the most popular chess YouTube and Twitch channels",
+      "Represented Canada at Chess Olympiad (2012, 2014, 2016)",
+      "Multiple Canadian Chess Championship competitor",
+      "Pioneer of chess streaming on Twitch before the global chess boom",
+    ],
+    famousGameIds: [],
+    faqs: [
+      {
+        q: "What is ChessBrah?",
+        a: "ChessBrah is a chess brand created by Eric Hansen (GM) and Aman Hambleton (IM). They pioneered chess streaming on Twitch with an unfiltered, entertaining format. Their 'Can't Stop, Won't Stop' bullet series and blitz streams attracted millions of viewers and helped popularize online chess before the global boom.",
+      },
+      {
+        q: "What is Eric Hansen's chess rating?",
+        a: "Eric Hansen's peak FIDE classical rating is around 2634. He performs significantly stronger at faster time controls, consistently competing at GM level in blitz and bullet tournaments.",
+      },
+      {
+        q: "Where is Eric Hansen from?",
+        a: "Eric Hansen was born in the United States but represents Canada in international chess competition. He has played at multiple Chess Olympiads for Canada.",
+      },
+    ],
+  },
+  {
+    id: "daniel-naroditsky",
+    imageUrl:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/DanielNaroditsky16_%28cropped%29.jpg/330px-DanielNaroditsky16_%28cropped%29.jpg",
+    name: "Daniel Naroditsky",
+    fullName: "Daniel Aaron Naroditsky",
+    born: 1995,
+    died: 2025,
+    nationality: "American",
+    title: "Grandmaster",
+    peakRating: 2629,
+    worldChampion: false,
+    era: "contemporary",
+    tagline:
+      "Daniel Naroditsky — 'Danya' — was a brilliant American GM and beloved chess educator whose legendary Speed Run series taught millions of players how grandmasters really think at every rating level.",
+    bio: "Daniel Naroditsky earned his grandmaster title at 17 and became one of chess's most beloved educators through his legendary 'Speed Run' series on Chess.com, playing through every rating bracket while explaining his thinking in real time. Known as 'Danya', he was also one of the world's best speed chess players, consistently placing at the top of elite online events. His gift was making grandmaster-level thinking genuinely accessible to players of all levels without dumbing it down. He passed away in 2025, leaving a legacy that continues to teach and inspire chess players worldwide.",
+    style: [
+      "Educational clarity",
+      "Tactical precision",
+      "Speed chess mastery",
+      "Universal player",
+      "Endgame technique",
+      "Opening flexibility",
+    ],
+    openingsWhite: [
+      {
+        eco: "D10–D29",
+        name: "Queen's Gambit / London System",
+        notes:
+          "Naroditsky was comfortable in a wide range of openings as White. He favored solid, instructive systems that let him demonstrate positional concepts clearly in his educational content.",
+      },
+      {
+        eco: "C80–C99",
+        name: "Ruy Lopez",
+        notes:
+          "Danya's Ruy Lopez was deeply theoretical and served double duty — a great competitive weapon and endless teaching material for his Speed Run episodes.",
+      },
+    ],
+    openingsBlack: [
+      {
+        eco: "B80–B89",
+        name: "Sicilian Najdorf",
+        notes:
+          "Naroditsky was a Najdorf devotee — his Speed Run games in the Najdorf provided millions of players with detailed explanations of this sharp, theoretical opening.",
+      },
+      {
+        eco: "E60–E99",
+        name: "King's Indian Defense",
+        notes:
+          "The KID gave Naroditsky rich, complex positions ideal for demonstrating dynamic thinking and counterattacking ideas.",
+      },
+    ],
+    lessonsToLearn: [
+      "Verbalize your thinking: Danya's greatest lesson was making explicit the calculation and evaluation that GMs do automatically",
+      "Every rating level has its patterns — his Speed Run showed that the same principles apply from 100 to 2700",
+      "Speed chess at a high level trains real chess: Danya's bullet games were deeply instructive, not just fast",
+      "Teaching chess makes you better: Danya's ability to explain helped crystallize his own understanding",
+    ],
+    highlights: [
+      "Grandmaster at 17 years old",
+      "2007 World Youth Chess Champion (Under-12)",
+      "2013 US Junior Chess Championship winner",
+      "Speed Run series on Chess.com: millions of views, the most instructive GM series ever created",
+      "2025 US Blitz Championship winner",
+      "One of the youngest published chess authors in history (age 14)",
+    ],
+    famousGameIds: [],
+    faqs: [
+      {
+        q: "What is the Danya Speed Run?",
+        a: "The Speed Run is Daniel Naroditsky's legendary series on Chess.com where he played through every rating bracket on the platform — from ~100 to 3000+ — while explaining his thinking out loud in real time. It became the most-viewed chess educational series ever, showing exactly how a grandmaster thinks at every level.",
+      },
+      {
+        q: "What was Daniel Naroditsky's peak chess rating?",
+        a: "Naroditsky's peak classical FIDE rating was 2629. In online and speed chess events he consistently performed at higher levels.",
+      },
+      {
+        q: "Did Daniel Naroditsky write any chess books?",
+        a: "Yes — Naroditsky became one of the youngest published chess authors in history, writing 'Mastering Complex Endgames' at age 14. He later produced extensive written and video content for Chess.com that has educated millions of players.",
       },
     ],
   },

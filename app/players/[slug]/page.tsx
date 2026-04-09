@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { GM_PROFILES, type GmProfile } from "@/lib/gm-profiles";
 import { FAMOUS_GAMES } from "@/lib/famous-games";
@@ -160,33 +161,50 @@ export default async function PlayerPage({
 
           {/* Header */}
           <header className="mb-10">
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              <span
-                className={`rounded-full bg-${color}-500/10 px-3 py-1 text-xs font-medium text-${color}-400 ring-1 ring-${color}-500/20`}
-              >
-                {ERA_LABELS[gm.era]}
-              </span>
-              {gm.worldChampion && (
-                <span className="rounded-full bg-yellow-500/10 px-3 py-1 text-xs font-medium text-yellow-400 ring-1 ring-yellow-500/20">
-                  ♛ World Champion {gm.championYears}
-                </span>
-              )}
-              {gm.peakRating && (
-                <span className="rounded-full bg-slate-700 px-3 py-1 text-xs font-medium text-slate-300">
-                  Peak: {gm.peakRating}
-                </span>
+            <div className="flex items-start gap-6">
+              <div className="flex-1 min-w-0">
+                <div className="mb-4 flex flex-wrap items-center gap-2">
+                  <span
+                    className={`rounded-full bg-${color}-500/10 px-3 py-1 text-xs font-medium text-${color}-400 ring-1 ring-${color}-500/20`}
+                  >
+                    {ERA_LABELS[gm.era]}
+                  </span>
+                  {gm.worldChampion && (
+                    <span className="rounded-full bg-yellow-500/10 px-3 py-1 text-xs font-medium text-yellow-400 ring-1 ring-yellow-500/20">
+                      ♛ World Champion {gm.championYears}
+                    </span>
+                  )}
+                  {gm.peakRating && (
+                    <span className="rounded-full bg-slate-700 px-3 py-1 text-xs font-medium text-slate-300">
+                      Peak: {gm.peakRating}
+                    </span>
+                  )}
+                </div>
+
+                <h1 className="mb-2 text-4xl font-bold tracking-tight sm:text-5xl">
+                  {gm.name}
+                </h1>
+                <p className="mb-1 text-lg text-slate-400">
+                  {gm.nationality} · {gm.born}–{gm.died ?? "present"} ·{" "}
+                  {gm.title}
+                </p>
+                <p className="mt-4 text-xl leading-relaxed text-slate-300">
+                  {gm.tagline}
+                </p>
+              </div>
+              {gm.imageUrl && (
+                <div className="relative hidden sm:block h-52 w-40 shrink-0 overflow-hidden rounded-xl ring-2 ring-slate-700">
+                  <Image
+                    src={gm.imageUrl}
+                    alt={`${gm.name} portrait`}
+                    fill
+                    className="object-cover object-top"
+                    sizes="160px"
+                    priority
+                  />
+                </div>
               )}
             </div>
-
-            <h1 className="mb-2 text-4xl font-bold tracking-tight sm:text-5xl">
-              {gm.name}
-            </h1>
-            <p className="mb-1 text-lg text-slate-400">
-              {gm.nationality} · {gm.born}–{gm.died ?? "present"} · {gm.title}
-            </p>
-            <p className="mt-4 text-xl leading-relaxed text-slate-300">
-              {gm.tagline}
-            </p>
           </header>
 
           {/* Bio */}

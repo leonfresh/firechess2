@@ -4,6 +4,15 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizeCss: true,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "upload.wikimedia.org",
+        pathname: "/wikipedia/**",
+      },
+    ],
+  },
   async rewrites() {
     return [
       // Stockfish JS hardcodes "stockfish.wasm" — redirect to our actual file

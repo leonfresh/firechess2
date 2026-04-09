@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { GM_PROFILES, type GmProfile } from "@/lib/gm-profiles";
 
@@ -155,20 +156,39 @@ export default function PlayersIndexPage() {
                       href={`/players/${gm.id}`}
                       className="group rounded-xl border border-slate-700 bg-slate-800/50 p-5 transition-colors hover:border-slate-500 hover:bg-slate-800"
                     >
-                      <div className="mb-2 flex items-start justify-between gap-2">
-                        <h3 className="font-bold text-white text-lg group-hover:text-orange-300 transition-colors">
-                          {gm.name}
-                        </h3>
-                        {gm.worldChampion && (
-                          <span className="shrink-0 rounded-full bg-yellow-500/10 px-2 py-0.5 text-xs font-medium text-yellow-400 ring-1 ring-yellow-500/20">
-                            ♛
-                          </span>
+                      <div className="mb-3 flex items-start gap-3">
+                        {gm.imageUrl ? (
+                          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full ring-2 ring-slate-600 group-hover:ring-slate-400 transition-all">
+                            <Image
+                              src={gm.imageUrl}
+                              alt={gm.name}
+                              fill
+                              className="object-cover object-top"
+                              sizes="56px"
+                            />
+                          </div>
+                        ) : (
+                          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-slate-700 text-2xl ring-2 ring-slate-600">
+                            ♟
+                          </div>
                         )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <h3 className="font-bold text-white text-lg group-hover:text-orange-300 transition-colors">
+                              {gm.name}
+                            </h3>
+                            {gm.worldChampion && (
+                              <span className="shrink-0 rounded-full bg-yellow-500/10 px-2 py-0.5 text-xs font-medium text-yellow-400 ring-1 ring-yellow-500/20">
+                                ♛
+                              </span>
+                            )}
+                          </div>
+                          <p className="mt-0.5 text-xs text-slate-500">
+                            {gm.nationality} · {gm.born}–{gm.died ?? "present"}
+                            {gm.peakRating && ` · Peak: ${gm.peakRating}`}
+                          </p>
+                        </div>
                       </div>
-                      <p className="mb-1 text-xs text-slate-500">
-                        {gm.nationality} · {gm.born}–{gm.died ?? "present"}
-                        {gm.peakRating && ` · Peak: ${gm.peakRating}`}
-                      </p>
                       <p className="mb-3 text-sm text-slate-400 line-clamp-2">
                         {gm.tagline}
                       </p>
