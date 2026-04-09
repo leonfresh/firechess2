@@ -16,7 +16,10 @@ import { useSession } from "@/components/session-provider";
 import { MistakeCard } from "@/components/mistake-card";
 import { TacticCard } from "@/components/tactic-card";
 import { StudyPlanWidget } from "@/components/study-plan";
-import { AchievementsPanel, type AchievementCtx } from "@/components/achievements";
+import {
+  AchievementsPanel,
+  type AchievementCtx,
+} from "@/components/achievements";
 import { GoalWidget } from "@/components/goal-widget";
 import { DailyChallenge } from "@/components/daily-challenge";
 import { ProgressHighlights } from "@/components/progress-highlights";
@@ -26,6 +29,7 @@ import { CoinShop } from "@/components/coin-shop";
 import { DailyLoginRewards } from "@/components/daily-login-rewards";
 import { DailyTipWidget } from "@/components/daily-tip";
 import { OnboardingTour } from "@/components/onboarding-tour";
+import { ProWelcomeModal } from "@/components/lifetime-welcome";
 import { useCoinBalance } from "@/lib/use-coins";
 import { useProfileTitle } from "@/lib/use-coins";
 import { earnCoins } from "@/lib/coins";
@@ -185,7 +189,8 @@ export default function DashboardPage() {
     const seen = new Map<string, { username: string; source: string }>();
     for (const r of reports) {
       const key = `${r.chessUsername}__${r.source}`;
-      if (!seen.has(key)) seen.set(key, { username: r.chessUsername, source: r.source });
+      if (!seen.has(key))
+        seen.set(key, { username: r.chessUsername, source: r.source });
     }
     return Array.from(seen.values());
   }, [reports]);
@@ -200,17 +205,26 @@ export default function DashboardPage() {
   // Auto-select: prefer user's session name → localStorage → first user if only one
   useEffect(() => {
     if (userOptions.length === 0) return;
-    const saved = typeof window !== "undefined" ? localStorage.getItem("fc-dashboard-player") : null;
+    const saved =
+      typeof window !== "undefined"
+        ? localStorage.getItem("fc-dashboard-player")
+        : null;
 
     // If the saved value is a valid option, keep it
-    if (saved && saved !== "__all__" && userOptions.some((u) => `${u.username}__${u.source}` === saved)) {
+    if (
+      saved &&
+      saved !== "__all__" &&
+      userOptions.some((u) => `${u.username}__${u.source}` === saved)
+    ) {
       if (selectedUser !== saved) setSelectedUser(saved);
       return;
     }
 
     // Try to match the signed-in user's name to a chess username
     if (user?.name && selectedUser === "__all__") {
-      const match = userOptions.find((u) => u.username.toLowerCase() === user.name!.toLowerCase());
+      const match = userOptions.find(
+        (u) => u.username.toLowerCase() === user.name!.toLowerCase(),
+      );
       if (match) {
         setSelectedUser(`${match.username}__${match.source}`);
         return;
@@ -228,7 +242,7 @@ export default function DashboardPage() {
   const filtered = useMemo(() => {
     if (selectedUser === "__all__") return reports;
     return reports.filter(
-      (r) => `${r.chessUsername}__${r.source}` === selectedUser
+      (r) => `${r.chessUsername}__${r.source}` === selectedUser,
     );
   }, [reports, selectedUser]);
 
@@ -238,7 +252,9 @@ export default function DashboardPage() {
 
   // Only include openings / both scans for progress/radar (tactics & time-management don't produce accuracy)
   const filteredForProgress = useMemo(() => {
-    return filtered.filter((r) => r.scanMode === "openings" || r.scanMode === "both");
+    return filtered.filter(
+      (r) => r.scanMode === "openings" || r.scanMode === "both",
+    );
   }, [filtered]);
 
   // Latest openings-based report for radar / accuracy metrics
@@ -248,15 +264,13 @@ export default function DashboardPage() {
   // Progress data for line chart (oldest → newest, with timestamps for date axis)
   // Only include reports that have accuracy/cpLoss (openings / both scans)
   const progressData = useMemo(() => {
-    return [...filteredForProgress]
-      .reverse()
-      .map((r) => ({
-        timestamp: new Date(r.createdAt).getTime(),
-        date: formatShortDate(r.createdAt),
-        accuracy: r.estimatedAccuracy ?? 0,
-        rating: r.estimatedRating ?? 0,
-        cpLoss: r.weightedCpLoss ?? 0,
-      }));
+    return [...filteredForProgress].reverse().map((r) => ({
+      timestamp: new Date(r.createdAt).getTime(),
+      date: formatShortDate(r.createdAt),
+      accuracy: r.estimatedAccuracy ?? 0,
+      rating: r.estimatedRating ?? 0,
+      cpLoss: r.weightedCpLoss ?? 0,
+    }));
   }, [filteredForProgress]);
 
   // Aggregate stats
@@ -278,15 +292,22 @@ export default function DashboardPage() {
 
   // Achievement context
   const achievementCtx: AchievementCtx = useMemo(() => {
-    const allAccuracies = reports.map((r) => r.estimatedAccuracy).filter((a): a is number => a != null);
-    const allRatings = reports.map((r) => r.estimatedRating).filter((r): r is number => r != null);
-    const uniqueUsernames = new Set(reports.map((r) => `${r.chessUsername}__${r.source}`)).size;
+    const allAccuracies = reports
+      .map((r) => r.estimatedAccuracy)
+      .filter((a): a is number => a != null);
+    const allRatings = reports
+      .map((r) => r.estimatedRating)
+      .filter((r): r is number => r != null);
+    const uniqueUsernames = new Set(
+      reports.map((r) => `${r.chessUsername}__${r.source}`),
+    ).size;
     return {
       totalReports: reports.length,
       totalGames: reports.reduce((s, r) => s + r.gamesAnalyzed, 0),
       totalLeaks: reports.reduce((s, r) => s + (r.leakCount ?? 0), 0),
       totalTactics: reports.reduce((s, r) => s + (r.tacticsCount ?? 0), 0),
-      bestAccuracy: allAccuracies.length > 0 ? Math.max(...allAccuracies) : null,
+      bestAccuracy:
+        allAccuracies.length > 0 ? Math.max(...allAccuracies) : null,
       bestRating: allRatings.length > 0 ? Math.max(...allRatings) : null,
       longestStudyStreak: 0, // will be filled by study plan widget later
       studyPlanProgress: 0,
@@ -303,8 +324,20 @@ export default function DashboardPage() {
       <div className="flex min-h-screen items-center justify-center">
         <div className="flex items-center gap-3 text-white/50">
           <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" className="opacity-20" />
-            <path d="M12 2a10 10 0 019.95 9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+            <circle
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="3"
+              className="opacity-20"
+            />
+            <path
+              d="M12 2a10 10 0 019.95 9"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
           </svg>
           Loading dashboard…
         </div>
@@ -317,10 +350,12 @@ export default function DashboardPage() {
       <div className="flex min-h-screen flex-col items-center justify-center gap-6 px-6">
         <div className="glass-card max-w-md space-y-4 p-8 text-center">
           <div className="text-4xl">📊</div>
-          <h2 className="text-xl font-bold text-white">Sign in to view your dashboard</h2>
+          <h2 className="text-xl font-bold text-white">
+            Sign in to view your dashboard
+          </h2>
           <p className="text-sm text-white/50">
-            Your analysis reports are saved to your account. Sign in to track your
-            progress over time.
+            Your analysis reports are saved to your account. Sign in to track
+            your progress over time.
           </p>
           <Link
             href="/auth/signin"
@@ -365,7 +400,6 @@ export default function DashboardPage() {
 
       <div className="relative z-10 px-6 py-12 md:px-10">
         <div className="mx-auto max-w-6xl space-y-10">
-
           {/* ─── Header ─── */}
           <header className="animate-fade-in-up space-y-2">
             <div className="flex flex-wrap items-center gap-3">
@@ -373,10 +407,16 @@ export default function DashboardPage() {
                 Dashboard
               </h1>
               {(plan === "pro" || plan === "lifetime") && (
-                <span className={`text-xs ${plan === "lifetime" ? "tag-amber" : "tag-emerald"}`}>{plan === "lifetime" ? "LIFETIME" : "PRO"}</span>
+                <span
+                  className={`text-xs ${plan === "lifetime" ? "tag-amber" : "tag-emerald"}`}
+                >
+                  {plan === "lifetime" ? "LIFETIME" : "PRO"}
+                </span>
               )}
               {profileTitle && (
-                <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${profileTitle.badgeClass}`}>
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${profileTitle.badgeClass}`}
+                >
                   {profileTitle.name}
                 </span>
               )}
@@ -393,14 +433,21 @@ export default function DashboardPage() {
 
           {/* ─── User Filter ─── */}
           {userOptions.length > 1 && (
-            <div className="animate-fade-in-up flex items-center gap-3" style={{ animationDelay: "0.05s" }}>
-              <label className="text-xs font-medium text-white/40">Player</label>
+            <div
+              className="animate-fade-in-up flex items-center gap-3"
+              style={{ animationDelay: "0.05s" }}
+            >
+              <label className="text-xs font-medium text-white/40">
+                Player
+              </label>
               <select
                 value={selectedUser}
                 onChange={(e) => setSelectedUser(e.target.value)}
                 className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm text-white backdrop-blur transition-colors hover:border-white/20 focus:border-emerald-500/50 focus:outline-none"
               >
-                <option value="__all__" className="bg-slate-900">All players</option>
+                <option value="__all__" className="bg-slate-900">
+                  All players
+                </option>
                 {userOptions.map((u) => (
                   <option
                     key={`${u.username}__${u.source}`}
@@ -415,12 +462,12 @@ export default function DashboardPage() {
           )}
 
           {/* ─── Stat Cards ─── */}
-          <div data-tour="stats" className="animate-fade-in-up grid grid-cols-2 gap-4 md:grid-cols-4" style={{ animationDelay: "0.1s" }}>
-            <StatCard
-              label="Reports"
-              value={filtered.length}
-              icon="📋"
-            />
+          <div
+            data-tour="stats"
+            className="animate-fade-in-up grid grid-cols-2 gap-4 md:grid-cols-4"
+            style={{ animationDelay: "0.1s" }}
+          >
+            <StatCard label="Reports" value={filtered.length} icon="📋" />
             <StatCard
               label="Games Analyzed"
               value={totalGames.toLocaleString()}
@@ -440,14 +487,23 @@ export default function DashboardPage() {
 
           {/* ─── Rescan Reminder ─── */}
           {daysSinceLastScan != null && daysSinceLastScan >= 3 && (
-            <div className="animate-fade-in-up rounded-2xl border border-amber-500/20 bg-gradient-to-r from-amber-500/[0.06] via-amber-500/[0.03] to-transparent p-4" style={{ animationDelay: "0.12s" }}>
+            <div
+              className="animate-fade-in-up rounded-2xl border border-amber-500/20 bg-gradient-to-r from-amber-500/[0.06] via-amber-500/[0.03] to-transparent p-4"
+              style={{ animationDelay: "0.12s" }}
+            >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-xl">⏰</span>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-xl">
+                    ⏰
+                  </span>
                   <div>
-                    <p className="text-sm font-bold text-white">Time for a new scan!</p>
+                    <p className="text-sm font-bold text-white">
+                      Time for a new scan!
+                    </p>
                     <p className="text-xs text-slate-400">
-                      It&apos;s been {daysSinceLastScan} day{daysSinceLastScan !== 1 ? "s" : ""} since your last analysis. Run a fresh scan to track improvement.
+                      It&apos;s been {daysSinceLastScan} day
+                      {daysSinceLastScan !== 1 ? "s" : ""} since your last
+                      analysis. Run a fresh scan to track improvement.
                     </p>
                   </div>
                 </div>
@@ -455,7 +511,17 @@ export default function DashboardPage() {
                   href="/"
                   className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-amber-500/15 transition-all hover:brightness-110"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  </svg>
                   New Scan
                 </Link>
               </div>
@@ -463,33 +529,64 @@ export default function DashboardPage() {
           )}
 
           {/* ─── Progress Highlights (rescan improvement) ─── */}
-          {latestNonTimeMgmt && previousNonTimeMgmt && filteredForProgress.length >= 2 && (
-            <div className="animate-fade-in-up" style={{ animationDelay: "0.13s" }}>
-              <ProgressHighlights latest={latestNonTimeMgmt} previous={previousNonTimeMgmt} />
-            </div>
-          )}
+          {latestNonTimeMgmt &&
+            previousNonTimeMgmt &&
+            filteredForProgress.length >= 2 && (
+              <div
+                className="animate-fade-in-up"
+                style={{ animationDelay: "0.13s" }}
+              >
+                <ProgressHighlights
+                  latest={latestNonTimeMgmt}
+                  previous={previousNonTimeMgmt}
+                />
+              </div>
+            )}
 
           {/* ─── Study Plan ─── */}
-          <div data-tour="study-plan" className="animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
+          <div
+            data-tour="study-plan"
+            className="animate-fade-in-up"
+            style={{ animationDelay: "0.15s" }}
+          >
             <StudyPlanWidget
-              chessUsername={selectedUser !== "__all__" ? selectedUser.split("__")[0] : undefined}
-              source={selectedUser !== "__all__" ? selectedUser.split("__")[1] : undefined}
+              chessUsername={
+                selectedUser !== "__all__"
+                  ? selectedUser.split("__")[0]
+                  : undefined
+              }
+              source={
+                selectedUser !== "__all__"
+                  ? selectedUser.split("__")[1]
+                  : undefined
+              }
             />
           </div>
 
           {/* ─── Daily Login Rewards ─── */}
-          <div data-tour="daily-login" className="animate-fade-in-up" style={{ animationDelay: "0.155s" }}>
+          <div
+            data-tour="daily-login"
+            className="animate-fade-in-up"
+            style={{ animationDelay: "0.155s" }}
+          >
             <DailyLoginRewards />
           </div>
 
           {/* ─── Daily Chess Tip ─── */}
-          <div className="animate-fade-in-up" style={{ animationDelay: "0.157s" }}>
+          <div
+            className="animate-fade-in-up"
+            style={{ animationDelay: "0.157s" }}
+          >
             <DailyTipWidget />
           </div>
 
           {/* ─── Daily Challenge ─── */}
           {allTactics.length > 0 && (
-            <div data-tour="daily-challenge" className="animate-fade-in-up" style={{ animationDelay: "0.16s" }}>
+            <div
+              data-tour="daily-challenge"
+              className="animate-fade-in-up"
+              style={{ animationDelay: "0.16s" }}
+            >
               <DailyChallenge allTactics={allTactics} />
             </div>
           )}
@@ -509,62 +606,99 @@ export default function DashboardPage() {
                   Training Center
                 </h3>
                 <p className="mt-0.5 text-xs text-slate-400">
-                  Practice puzzles targeting your weaknesses. Speed drills, opening trainer, endgame gym, and more.
+                  Practice puzzles targeting your weaknesses. Speed drills,
+                  opening trainer, endgame gym, and more.
                 </p>
               </div>
-              <svg className="h-5 w-5 shrink-0 text-slate-600 transition-all group-hover:translate-x-0.5 group-hover:text-fuchsia-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              <svg
+                className="h-5 w-5 shrink-0 text-slate-600 transition-all group-hover:translate-x-0.5 group-hover:text-fuchsia-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </div>
           </Link>
 
           {/* ─── Goal + Achievements row ─── */}
           <div data-tour="goals" className="grid gap-6 lg:grid-cols-2">
-            <div className="animate-fade-in-up" style={{ animationDelay: "0.17s" }}>
+            <div
+              className="animate-fade-in-up"
+              style={{ animationDelay: "0.17s" }}
+            >
               <GoalWidget
                 currentAccuracy={latestNonTimeMgmt?.estimatedAccuracy ?? null}
                 currentRating={latestNonTimeMgmt?.estimatedRating ?? null}
               />
             </div>
-            <div className="glass-card animate-fade-in-up p-6" style={{ animationDelay: "0.18s" }}>
+            <div
+              className="glass-card animate-fade-in-up p-6"
+              style={{ animationDelay: "0.18s" }}
+            >
               <AchievementsPanel ctx={achievementCtx} />
             </div>
           </div>
 
           {/* ─── Percentile + Repertoire row ─── */}
           <div className="grid gap-6 lg:grid-cols-2">
-            <div className="animate-fade-in-up" style={{ animationDelay: "0.19s" }}>
+            <div
+              className="animate-fade-in-up"
+              style={{ animationDelay: "0.19s" }}
+            >
               <PercentileWidget
                 accuracy={latestNonTimeMgmt?.estimatedAccuracy ?? null}
                 rating={latestNonTimeMgmt?.estimatedRating ?? null}
               />
             </div>
-            <div className="animate-fade-in-up" style={{ animationDelay: "0.20s" }}>
+            <div
+              className="animate-fade-in-up"
+              style={{ animationDelay: "0.20s" }}
+            >
               <RepertoirePanel />
             </div>
           </div>
 
           {/* ─── Main Grid: Radar + Progress ─── */}
           <div className="grid gap-6 lg:grid-cols-2">
-
             {/* Radar */}
-            <div data-tour="radar" className="glass-card animate-fade-in-up space-y-4 p-6" style={{ animationDelay: "0.2s" }}>
+            <div
+              data-tour="radar"
+              className="glass-card animate-fade-in-up space-y-4 p-6"
+              style={{ animationDelay: "0.2s" }}
+            >
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">Strengths & Weaknesses</h2>
+                <h2 className="text-lg font-semibold text-white">
+                  Strengths & Weaknesses
+                </h2>
                 <span className="text-xs text-white/30">Latest report</span>
               </div>
 
               {latestNonTimeMgmt && (
                 <>
                   <StrengthsRadar {...radarPropsFrom(latestNonTimeMgmt)} />
-                  <RadarLegend data={computeRadarData(radarPropsFrom(latestNonTimeMgmt))} props={radarPropsFrom(latestNonTimeMgmt)} />
+                  <RadarLegend
+                    data={computeRadarData(radarPropsFrom(latestNonTimeMgmt))}
+                    props={radarPropsFrom(latestNonTimeMgmt)}
+                  />
                 </>
               )}
             </div>
 
             {/* Progress Chart */}
-            <div data-tour="progress" className="glass-card animate-fade-in-up space-y-4 p-6" style={{ animationDelay: "0.3s" }}>
-              <h2 className="text-lg font-semibold text-white">Progress Over Time</h2>
+            <div
+              data-tour="progress"
+              className="glass-card animate-fade-in-up space-y-4 p-6"
+              style={{ animationDelay: "0.3s" }}
+            >
+              <h2 className="text-lg font-semibold text-white">
+                Progress Over Time
+              </h2>
 
               {progressData.length < 2 ? (
                 <div className="flex h-64 items-center justify-center">
@@ -578,27 +712,54 @@ export default function DashboardPage() {
                   <div>
                     <div className="mb-2 flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                      <span className="text-xs font-medium text-white/50">Accuracy</span>
+                      <span className="text-xs font-medium text-white/50">
+                        Accuracy
+                      </span>
                       {latestNonTimeMgmt && previousNonTimeMgmt && (
-                        <DeltaBadge value={delta(latestNonTimeMgmt.estimatedAccuracy, previousNonTimeMgmt.estimatedAccuracy)} />
+                        <DeltaBadge
+                          value={delta(
+                            latestNonTimeMgmt.estimatedAccuracy,
+                            previousNonTimeMgmt.estimatedAccuracy,
+                          )}
+                        />
                       )}
                     </div>
                     <ResponsiveContainer width="100%" height={120}>
                       <AreaChart data={progressData}>
                         <defs>
-                          <linearGradient id="gradAccuracy" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="rgb(16,185,129)" stopOpacity={0.3} />
-                            <stop offset="100%" stopColor="rgb(16,185,129)" stopOpacity={0} />
+                          <linearGradient
+                            id="gradAccuracy"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="0%"
+                              stopColor="rgb(16,185,129)"
+                              stopOpacity={0.3}
+                            />
+                            <stop
+                              offset="100%"
+                              stopColor="rgb(16,185,129)"
+                              stopOpacity={0}
+                            />
                           </linearGradient>
                         </defs>
-                        <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
+                        <CartesianGrid
+                          stroke="rgba(255,255,255,0.04)"
+                          strokeDasharray="3 3"
+                        />
                         <XAxis
                           dataKey="timestamp"
                           type="number"
                           scale="time"
                           domain={["dataMin", "dataMax"]}
                           tickFormatter={(ts: number) =>
-                            new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                            new Date(ts).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                            })
                           }
                           tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10 }}
                           axisLine={false}
@@ -613,10 +774,16 @@ export default function DashboardPage() {
                         />
                         <Tooltip
                           labelFormatter={(label) =>
-                            new Date(Number(label)).toLocaleDateString("en-US", {
-                              month: "short", day: "numeric", year: "numeric",
-                              hour: "2-digit", minute: "2-digit",
-                            })
+                            new Date(Number(label)).toLocaleDateString(
+                              "en-US",
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              },
+                            )
                           }
                           contentStyle={{
                             background: "rgba(15,23,42,0.95)",
@@ -643,27 +810,55 @@ export default function DashboardPage() {
                   <div>
                     <div className="mb-2 flex items-center gap-2">
                       <span className="h-2 w-2 rounded-full bg-cyan-400" />
-                      <span className="text-xs font-medium text-white/50">Avg CP Loss</span>
+                      <span className="text-xs font-medium text-white/50">
+                        Avg CP Loss
+                      </span>
                       {latestNonTimeMgmt && previousNonTimeMgmt && (
-                        <DeltaBadge value={delta(latestNonTimeMgmt.weightedCpLoss, previousNonTimeMgmt.weightedCpLoss)} invert />
+                        <DeltaBadge
+                          value={delta(
+                            latestNonTimeMgmt.weightedCpLoss,
+                            previousNonTimeMgmt.weightedCpLoss,
+                          )}
+                          invert
+                        />
                       )}
                     </div>
                     <ResponsiveContainer width="100%" height={120}>
                       <AreaChart data={progressData}>
                         <defs>
-                          <linearGradient id="gradCp" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="0%" stopColor="rgb(6,182,212)" stopOpacity={0.3} />
-                            <stop offset="100%" stopColor="rgb(6,182,212)" stopOpacity={0} />
+                          <linearGradient
+                            id="gradCp"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="0%"
+                              stopColor="rgb(6,182,212)"
+                              stopOpacity={0.3}
+                            />
+                            <stop
+                              offset="100%"
+                              stopColor="rgb(6,182,212)"
+                              stopOpacity={0}
+                            />
                           </linearGradient>
                         </defs>
-                        <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
+                        <CartesianGrid
+                          stroke="rgba(255,255,255,0.04)"
+                          strokeDasharray="3 3"
+                        />
                         <XAxis
                           dataKey="timestamp"
                           type="number"
                           scale="time"
                           domain={["dataMin", "dataMax"]}
                           tickFormatter={(ts: number) =>
-                            new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                            new Date(ts).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                            })
                           }
                           tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10 }}
                           axisLine={false}
@@ -677,10 +872,16 @@ export default function DashboardPage() {
                         />
                         <Tooltip
                           labelFormatter={(label) =>
-                            new Date(Number(label)).toLocaleDateString("en-US", {
-                              month: "short", day: "numeric", year: "numeric",
-                              hour: "2-digit", minute: "2-digit",
-                            })
+                            new Date(Number(label)).toLocaleDateString(
+                              "en-US",
+                              {
+                                month: "short",
+                                day: "numeric",
+                                year: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              },
+                            )
                           }
                           contentStyle={{
                             background: "rgba(15,23,42,0.95)",
@@ -708,14 +909,23 @@ export default function DashboardPage() {
           </div>
 
           {/* ─── Coin Shop ─── */}
-          <div data-tour="coin-shop" className="animate-fade-in-up" style={{ animationDelay: "0.38s" }}>
+          <div
+            data-tour="coin-shop"
+            className="animate-fade-in-up"
+            style={{ animationDelay: "0.38s" }}
+          >
             <CoinShop />
           </div>
 
           {/* ─── Key Metrics Comparison (latest vs previous) ─── */}
           {latest && previous && filtered.length >= 2 && (
-            <div className="glass-card animate-fade-in-up space-y-4 p-6" style={{ animationDelay: "0.4s" }}>
-              <h2 className="text-lg font-semibold text-white">Latest vs. Previous</h2>
+            <div
+              className="glass-card animate-fade-in-up space-y-4 p-6"
+              style={{ animationDelay: "0.4s" }}
+            >
+              <h2 className="text-lg font-semibold text-white">
+                Latest vs. Previous
+              </h2>
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <CompareMetric
                   label="Accuracy"
@@ -736,8 +946,16 @@ export default function DashboardPage() {
                 />
                 <CompareMetric
                   label="Severe Leak Rate"
-                  current={latest.severeLeakRate != null ? latest.severeLeakRate * 100 : null}
-                  prev={previous.severeLeakRate != null ? previous.severeLeakRate * 100 : null}
+                  current={
+                    latest.severeLeakRate != null
+                      ? latest.severeLeakRate * 100
+                      : null
+                  }
+                  prev={
+                    previous.severeLeakRate != null
+                      ? previous.severeLeakRate * 100
+                      : null
+                  }
                   suffix="%"
                   invert
                 />
@@ -746,7 +964,11 @@ export default function DashboardPage() {
           )}
 
           {/* ─── Report History ─── */}
-          <div data-tour="reports" className="animate-fade-in-up space-y-4" style={{ animationDelay: "0.5s" }}>
+          <div
+            data-tour="reports"
+            className="animate-fade-in-up space-y-4"
+            style={{ animationDelay: "0.5s" }}
+          >
             <h2 className="text-lg font-semibold text-white">Report History</h2>
             <div className="space-y-3">
               {reports.map((r, i) => (
@@ -767,6 +989,8 @@ export default function DashboardPage() {
           {/* ─── Onboarding Tour ─── */}
           <OnboardingTour />
 
+          {/* ─── Pro/Lifetime welcome modal ─── */}
+          <ProWelcomeModal />
         </div>
       </div>
     </div>
@@ -777,7 +1001,15 @@ export default function DashboardPage() {
 /*  Sub-components                                                      */
 /* ------------------------------------------------------------------ */
 
-function StatCard({ label, value, icon }: { label: string; value: string | number; icon: string }) {
+function StatCard({
+  label,
+  value,
+  icon,
+}: {
+  label: string;
+  value: string | number;
+  icon: string;
+}) {
   return (
     <div className="glass-card flex items-center gap-4 p-4">
       <span className="text-2xl">{icon}</span>
@@ -789,7 +1021,13 @@ function StatCard({ label, value, icon }: { label: string; value: string | numbe
   );
 }
 
-function DeltaBadge({ value, invert = false }: { value: string; invert?: boolean }) {
+function DeltaBadge({
+  value,
+  invert = false,
+}: {
+  value: string;
+  invert?: boolean;
+}) {
   if (!value) return null;
   const num = parseFloat(value);
   const isGood = invert ? num < 0 : num > 0;
@@ -826,7 +1064,8 @@ function CompareMetric({
       <div className="mb-1 text-xs text-white/40">{label}</div>
       <div className="flex items-end gap-2">
         <span className="text-xl font-bold text-white">
-          {current != null ? current.toFixed(1) : "—"}{suffix}
+          {current != null ? current.toFixed(1) : "—"}
+          {suffix}
         </span>
         {diff != null && (
           <span
@@ -840,7 +1079,8 @@ function CompareMetric({
         )}
       </div>
       <div className="mt-1 text-[10px] text-white/25">
-        prev: {prev != null ? prev.toFixed(1) : "—"}{suffix}
+        prev: {prev != null ? prev.toFixed(1) : "—"}
+        {suffix}
       </div>
     </div>
   );
@@ -863,7 +1103,9 @@ function ReportRow({
   const isTimeMgmt = r.scanMode === "time-management";
   const rProps = radarPropsFrom(r);
   const radarData = computeRadarData(rProps);
-  const radarAvg = Math.round(radarData.reduce((s, d) => s + d.value, 0) / radarData.length);
+  const radarAvg = Math.round(
+    radarData.reduce((s, d) => s + d.value, 0) / radarData.length,
+  );
   // For time management, show the time management score; for others, the radar average
   const avg = isTimeMgmt ? (r.timeManagement?.score ?? 0) : radarAvg;
   const avgColor =
@@ -917,7 +1159,9 @@ function ReportRow({
               {r.chessUsername}
             </span>
             <span className="text-xs text-white/30">{sourceIcon}</span>
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${modeTagColor}`}>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${modeTagColor}`}
+            >
               {modeLabel}
             </span>
           </div>
@@ -945,7 +1189,9 @@ function ReportRow({
           <div className="text-xs text-white/30">{formatDate(r.createdAt)}</div>
           <div className="mt-1 text-xs text-white/20">
             {r.scanMode === "time-management"
-              ? r.timeManagement ? `${r.timeManagement.score}/100 score` : ""
+              ? r.timeManagement
+                ? `${r.timeManagement.score}/100 score`
+                : ""
               : r.estimatedAccuracy != null
                 ? `${r.estimatedAccuracy.toFixed(1)}% acc`
                 : ""}
@@ -991,33 +1237,57 @@ function ReportRow({
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.08] via-purple-500/[0.05] to-cyan-500/[0.08]" />
               <div className="relative space-y-5">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h3 className="text-lg font-bold text-white">⏱️ Time Management Report</h3>
-                  <span className="rounded-full bg-violet-500/10 px-2.5 py-0.5 text-[10px] font-bold text-violet-400">Time Mgmt</span>
+                  <h3 className="text-lg font-bold text-white">
+                    ⏱️ Time Management Report
+                  </h3>
+                  <span className="rounded-full bg-violet-500/10 px-2.5 py-0.5 text-[10px] font-bold text-violet-400">
+                    Time Mgmt
+                  </span>
                 </div>
 
                 {/* Score + overview stats */}
                 <div className="grid gap-3 sm:grid-cols-5">
                   <div className="stat-card py-3">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Score</p>
-                    <p className={`mt-0.5 text-2xl font-bold ${r.timeManagement.score >= 70 ? "text-emerald-400" : r.timeManagement.score >= 45 ? "text-amber-400" : "text-red-400"}`}>
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                      Score
+                    </p>
+                    <p
+                      className={`mt-0.5 text-2xl font-bold ${r.timeManagement.score >= 70 ? "text-emerald-400" : r.timeManagement.score >= 45 ? "text-amber-400" : "text-red-400"}`}
+                    >
                       {r.timeManagement.score}/100
                     </p>
                   </div>
                   <div className="stat-card py-3">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Avg / Move</p>
-                    <p className="mt-0.5 text-2xl font-bold text-slate-200">{r.timeManagement.avgTimePerMove.toFixed(1)}s</p>
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                      Avg / Move
+                    </p>
+                    <p className="mt-0.5 text-2xl font-bold text-slate-200">
+                      {r.timeManagement.avgTimePerMove.toFixed(1)}s
+                    </p>
                   </div>
                   <div className="stat-card py-3">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Justified Thinks</p>
-                    <p className="mt-0.5 text-2xl font-bold text-emerald-400">{r.timeManagement.justifiedThinks}</p>
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                      Justified Thinks
+                    </p>
+                    <p className="mt-0.5 text-2xl font-bold text-emerald-400">
+                      {r.timeManagement.justifiedThinks}
+                    </p>
                   </div>
                   <div className="stat-card py-3">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Time Wasted</p>
-                    <p className="mt-0.5 text-2xl font-bold text-red-400">{r.timeManagement.wastedThinks}</p>
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                      Time Wasted
+                    </p>
+                    <p className="mt-0.5 text-2xl font-bold text-red-400">
+                      {r.timeManagement.wastedThinks}
+                    </p>
                   </div>
                   <div className="stat-card py-3">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Rushed</p>
-                    <p className="mt-0.5 text-2xl font-bold text-amber-400">{r.timeManagement.rushedMoves}</p>
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                      Rushed
+                    </p>
+                    <p className="mt-0.5 text-2xl font-bold text-amber-400">
+                      {r.timeManagement.rushedMoves}
+                    </p>
                   </div>
                 </div>
 
@@ -1026,7 +1296,11 @@ function ReportRow({
                   <div className="flex items-center gap-2 rounded-lg border border-red-500/15 bg-red-500/[0.05] px-3 py-2">
                     <span className="text-base">🚨</span>
                     <p className="text-xs text-red-400">
-                      <span className="font-semibold">{r.timeManagement.timeScrambleCount}</span> of {r.timeManagement.gamesWithClockData} games had time scrambles
+                      <span className="font-semibold">
+                        {r.timeManagement.timeScrambleCount}
+                      </span>{" "}
+                      of {r.timeManagement.gamesWithClockData} games had time
+                      scrambles
                     </p>
                   </div>
                 )}
@@ -1035,7 +1309,9 @@ function ReportRow({
                 <div className="flex flex-wrap items-center gap-3 text-xs text-white/30">
                   <span>{r.gamesAnalyzed} games</span>
                   <span>·</span>
-                  <span>{r.timeManagement.gamesWithClockData} with clock data</span>
+                  <span>
+                    {r.timeManagement.gamesWithClockData} with clock data
+                  </span>
                   <span>·</span>
                   <span>{r.timeManagement.moments.length} notable moments</span>
                   <span>·</span>
@@ -1048,7 +1324,9 @@ function ReportRow({
           {/* Time Management — no-data fallback */}
           {r.scanMode === "time-management" && !r.timeManagement && (
             <div className="flex items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.02] p-8">
-              <p className="text-sm text-white/40">No time management data was saved for this report.</p>
+              <p className="text-sm text-white/40">
+                No time management data was saved for this report.
+              </p>
             </div>
           )}
 
@@ -1058,26 +1336,86 @@ function ReportRow({
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-fuchsia-500/[0.08] via-emerald-500/[0.05] to-cyan-500/[0.08]" />
               <div className="relative">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h3 className="text-lg font-bold text-white">Analysis Report</h3>
+                  <h3 className="text-lg font-bold text-white">
+                    Analysis Report
+                  </h3>
                   <div className="flex flex-wrap gap-2">
                     {r.reportMeta?.vibeTitle && (
-                      <span className="tag-fuchsia">{r.reportMeta.vibeTitle}</span>
+                      <span className="tag-fuchsia">
+                        {r.reportMeta.vibeTitle}
+                      </span>
                     )}
                     <span className="tag-emerald">Stockfish 18</span>
                   </div>
                 </div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-4">
-                  <div className="stat-card"><p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Accuracy</p><p className="mt-1 text-2xl font-bold text-emerald-400">{r.estimatedAccuracy?.toFixed(1)}%</p></div>
-                  <div className="stat-card"><p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Est. Rating</p><p className="mt-1 text-2xl font-bold text-emerald-400">{r.estimatedRating?.toFixed(0)}</p></div>
-                  <div className="stat-card"><p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Avg Eval Loss</p><p className="mt-1 text-2xl font-bold text-emerald-400">{((r.weightedCpLoss ?? 0) / 100).toFixed(2)}</p></div>
-                  <div className="stat-card"><p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Leak Rate</p><p className="mt-1 text-2xl font-bold text-red-400">{((r.severeLeakRate ?? 0) * 100).toFixed(0)}%</p></div>
+                  <div className="stat-card">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                      Accuracy
+                    </p>
+                    <p className="mt-1 text-2xl font-bold text-emerald-400">
+                      {r.estimatedAccuracy?.toFixed(1)}%
+                    </p>
+                  </div>
+                  <div className="stat-card">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                      Est. Rating
+                    </p>
+                    <p className="mt-1 text-2xl font-bold text-emerald-400">
+                      {r.estimatedRating?.toFixed(0)}
+                    </p>
+                  </div>
+                  <div className="stat-card">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                      Avg Eval Loss
+                    </p>
+                    <p className="mt-1 text-2xl font-bold text-emerald-400">
+                      {((r.weightedCpLoss ?? 0) / 100).toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="stat-card">
+                    <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                      Leak Rate
+                    </p>
+                    <p className="mt-1 text-2xl font-bold text-red-400">
+                      {((r.severeLeakRate ?? 0) * 100).toFixed(0)}%
+                    </p>
+                  </div>
                 </div>
                 {r.reportMeta && (
                   <div className="mt-3 grid gap-3 sm:grid-cols-4">
-                    <div className="stat-card"><p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Consistency</p><p className="mt-1 text-2xl font-bold text-cyan-400">{r.reportMeta.consistencyScore ?? "—"}/100</p></div>
-                    <div className="stat-card"><p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Peak Throw</p><p className="mt-1 text-2xl font-bold text-cyan-400">{((r.reportMeta.p75CpLoss ?? 0) / 100).toFixed(2)}</p></div>
-                    <div className="stat-card"><p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Confidence</p><p className="mt-1 text-2xl font-bold text-cyan-400">{r.reportMeta.confidence ?? "—"}%</p></div>
-                    <div className="stat-card"><p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Main Pattern</p><p className="mt-1 text-sm font-bold text-fuchsia-400">{r.reportMeta.topTag ?? "—"}</p></div>
+                    <div className="stat-card">
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                        Consistency
+                      </p>
+                      <p className="mt-1 text-2xl font-bold text-cyan-400">
+                        {r.reportMeta.consistencyScore ?? "—"}/100
+                      </p>
+                    </div>
+                    <div className="stat-card">
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                        Peak Throw
+                      </p>
+                      <p className="mt-1 text-2xl font-bold text-cyan-400">
+                        {((r.reportMeta.p75CpLoss ?? 0) / 100).toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="stat-card">
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                        Confidence
+                      </p>
+                      <p className="mt-1 text-2xl font-bold text-cyan-400">
+                        {r.reportMeta.confidence ?? "—"}%
+                      </p>
+                    </div>
+                    <div className="stat-card">
+                      <p className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                        Main Pattern
+                      </p>
+                      <p className="mt-1 text-sm font-bold text-fuchsia-400">
+                        {r.reportMeta.topTag ?? "—"}
+                      </p>
+                    </div>
                   </div>
                 )}
                 <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-white/30">
@@ -1089,7 +1427,10 @@ function ReportRow({
                   <span>·</span>
                   <span>{r.scanMode}</span>
                   {r.reportMeta?.sampleSize && (
-                    <><span>·</span><span>{r.reportMeta.sampleSize} positions</span></>
+                    <>
+                      <span>·</span>
+                      <span>{r.reportMeta.sampleSize} positions</span>
+                    </>
                   )}
                 </div>
               </div>
@@ -1097,36 +1438,59 @@ function ReportRow({
           )}
 
           {r.scanMode !== "time-management" && (
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Radar */}
-            <div>
-              <StrengthsRadar {...rProps} />
-              <div className="mt-4">
-                <RadarLegend data={radarData} props={rProps} />
+            <div className="grid gap-6 md:grid-cols-2">
+              {/* Radar */}
+              <div>
+                <StrengthsRadar {...rProps} />
+                <div className="mt-4">
+                  <RadarLegend data={radarData} props={rProps} />
+                </div>
               </div>
-            </div>
 
-            {/* Stats grid */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-white">Summary</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <MiniStat label="Accuracy" value={`${r.estimatedAccuracy?.toFixed(1) ?? "—"}%`} />
-                <MiniStat label="Est. Rating" value={`${r.estimatedRating?.toFixed(0) ?? "—"}`} />
-                <MiniStat label="Avg CP Loss" value={`${r.weightedCpLoss?.toFixed(1) ?? "—"}`} />
-                <MiniStat label="Severe Leak Rate" value={`${((r.severeLeakRate ?? 0) * 100).toFixed(1)}%`} />
-                <MiniStat label="Opening Leaks" value={`${r.leakCount ?? 0}`} />
-                <MiniStat label="Missed Tactics" value={`${r.tacticsCount ?? 0}`} />
-                <MiniStat label="Games" value={`${r.gamesAnalyzed}`} />
-                <MiniStat label="Engine Depth" value={`${r.engineDepth ?? "—"}`} />
+              {/* Stats grid */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-white">Summary</h3>
+                <div className="grid grid-cols-2 gap-3">
+                  <MiniStat
+                    label="Accuracy"
+                    value={`${r.estimatedAccuracy?.toFixed(1) ?? "—"}%`}
+                  />
+                  <MiniStat
+                    label="Est. Rating"
+                    value={`${r.estimatedRating?.toFixed(0) ?? "—"}`}
+                  />
+                  <MiniStat
+                    label="Avg CP Loss"
+                    value={`${r.weightedCpLoss?.toFixed(1) ?? "—"}`}
+                  />
+                  <MiniStat
+                    label="Severe Leak Rate"
+                    value={`${((r.severeLeakRate ?? 0) * 100).toFixed(1)}%`}
+                  />
+                  <MiniStat
+                    label="Opening Leaks"
+                    value={`${r.leakCount ?? 0}`}
+                  />
+                  <MiniStat
+                    label="Missed Tactics"
+                    value={`${r.tacticsCount ?? 0}`}
+                  />
+                  <MiniStat label="Games" value={`${r.gamesAnalyzed}`} />
+                  <MiniStat
+                    label="Engine Depth"
+                    value={`${r.engineDepth ?? "—"}`}
+                  />
+                </div>
               </div>
             </div>
-          </div>
           )}
 
           {/* Opening Leaks */}
           {r.leaks && r.leaks.length > 0 && (
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-white">Opening Leaks ({r.leaks.length})</h3>
+              <h3 className="text-sm font-semibold text-white">
+                Opening Leaks ({r.leaks.length})
+              </h3>
               <div className="space-y-4">
                 {r.leaks.slice(0, 10).map((leak: any, i: number) => (
                   <MistakeCard
@@ -1147,7 +1511,9 @@ function ReportRow({
           {/* Missed Tactics */}
           {r.missedTactics && r.missedTactics.length > 0 && (
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-white">Missed Tactics ({r.missedTactics.length})</h3>
+              <h3 className="text-sm font-semibold text-white">
+                Missed Tactics ({r.missedTactics.length})
+              </h3>
               <div className="space-y-4">
                 {r.missedTactics.slice(0, 10).map((tactic: any, i: number) => (
                   <TacticCard

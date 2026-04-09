@@ -18,6 +18,7 @@ import { EndgameCard } from "@/components/endgame-card";
 import { TimeCard } from "@/components/time-card";
 import { DailyLoginPopup } from "@/components/daily-login-rewards";
 import { SetupWizard } from "@/components/setup-wizard";
+import { ProWelcomeModal } from "@/components/lifetime-welcome";
 import { AdminDebug } from "@/components/admin-debug";
 import { CardCarousel, ViewModeToggle } from "@/components/card-carousel";
 import type { CardViewMode } from "@/components/card-carousel";
@@ -2707,6 +2708,9 @@ export default function HomePage() {
 
           {/* ─── First-run Setup Wizard ─── */}
           <SetupWizard show={authenticated && state !== "loading"} />
+
+          {/* ─── Pro/Lifetime welcome modal (shown once after upgrade or for existing members) ─── */}
+          <ProWelcomeModal />
 
           {/* ─── Admin Debug Widget ─── */}
           <AdminDebug />

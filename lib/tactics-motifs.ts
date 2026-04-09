@@ -654,25 +654,25 @@ export const TACTIC_MOTIFS: TacticMotif[] = [
       "If you sense interference is possible, find ways to defend the critical square with multiple pieces from different directions",
       "Counter-attack as a response — interference sacrifices often give you material that can fuel a counter-offense",
     ],
-    exampleFen: "2r3k1/5pp1/7p/8/8/8/1R6/4R1K1 w - - 0 1",
+    exampleFen: "r5k1/5ppp/8/2r5/3R4/3R4/5PPP/6K1 w - - 0 1",
     exampleDescription:
-      "A conceptual interference example: if White could place a piece on c8 interrupting Black's rook's defense of the back rank while Black's king is cornered, the back rank would become vulnerable. Interference patterns are typically identified by tracing how opponent pieces coordinate and finding where a sacrifice disrupts that cooperation.",
+      "White has two rooks aimed at the back rank. Black's rook on a8 is the only defender, but the rook on c5 creates an illusion of safety. White places the first rook on d8 — directly between Black's back-rank defender and its escape squares — forcing it to capture, then the second rook delivers checkmate.",
     examples: [
       {
-        fen: "2r3k1/5pp1/7p/8/8/8/1R6/4R1K1 w - - 0 1",
+        fen: "r5k1/5ppp/8/2r5/3R4/3R4/5PPP/6K1 w - - 0 1",
         orientation: "white",
-        puzzle: "Re8+",
-        continuation: "Rxe8,Rb8,Re5,Rxe5,Rxe8#",
+        puzzle: "Rd8+",
+        continuation: "Rxd8,Rxd8#",
         caption:
-          "Interfere with the defensive coordination — sacrifice to disrupt both rooks",
+          "Sacrifice the first rook to draw out Black's sole back-rank defender — the second rook delivers checkmate",
       },
       {
-        fen: "2r1r1k1/5pp1/7p/8/3R4/8/5PPP/6K1 w - - 0 1",
+        fen: "1r4k1/5ppp/8/r7/3R4/3R4/5PPP/6K1 w - - 0 1",
         orientation: "white",
-        puzzle: "Rd8",
-        continuation: "Rxd8,Rxd8,Rxd8#",
+        puzzle: "Rd8+",
+        continuation: "Rxd8,Rxd8#",
         caption:
-          "Place a piece to cut the line between the two defending rooks",
+          "The interference rook falls between the two Black rooks — Rb8 must abandon the back rank, and the follow-up is unstoppable",
       },
     ],
     related: ["deflection", "back-rank-mate"],

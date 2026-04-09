@@ -84,7 +84,8 @@ export async function POST(req: NextRequest) {
             currency: "usd",
             product_data: {
               name: "FireChess Pro — Lifetime Access",
-              description: "One-time payment. Full Pro features forever — no recurring fees.",
+              description:
+                "One-time payment. Full Pro features forever — no recurring fees.",
             },
             unit_amount: 5900, // $59.00
           },
@@ -95,7 +96,7 @@ export async function POST(req: NextRequest) {
         description: "FireChess Lifetime Pro — one-time payment, never expires",
       },
       metadata: { userId: session.user.id, plan: "lifetime" },
-      success_url: `${appUrl}/?upgraded=true`,
+      success_url: `${appUrl}/?upgraded=lifetime`,
       cancel_url: `${appUrl}/pricing`,
     });
     return NextResponse.json({ url: checkoutSession.url });
@@ -113,7 +114,7 @@ export async function POST(req: NextRequest) {
       },
     ],
     metadata: { userId: session.user.id },
-    success_url: `${appUrl}/?upgraded=true`,
+    success_url: `${appUrl}/?upgraded=pro`,
     cancel_url: `${appUrl}/pricing`,
   });
 
