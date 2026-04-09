@@ -193,6 +193,7 @@ export function Navbar() {
                 aria-haspopup="true"
                 className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   isActive("/train") ||
+                  isActive("/daily") ||
                   isActive("/sparring") ||
                   isActive("/guess") ||
                   isActive("/dungeon") ||
@@ -216,6 +217,12 @@ export function Navbar() {
               </button>
               <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
                 <div className="min-w-[210px] rounded-xl border border-white/[0.08] bg-[#0d0a06] p-1.5 shadow-xl shadow-black/50">
+                  <Link
+                    href="/daily"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/daily") ? "bg-amber-500/[0.12] text-amber-400" : "text-slate-400 hover:bg-amber-500/[0.06] hover:text-amber-400"}`}
+                  >
+                    📅 Daily Routine
+                  </Link>
                   <Link
                     href="/train"
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/train") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}

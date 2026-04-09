@@ -15,6 +15,43 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: 27,
+    date: "Apr 10, 2026",
+    title: "Daily Training Routine",
+    description:
+      "A personalized daily training session — 5 targeted Lichess puzzles matched to your weakest tactical themes, plus up to 3 blunder drills drawn from your own games. Builds a streak, resets each day, and works for everyone regardless of plan.",
+    changes: [
+      {
+        type: "feature",
+        text: "Daily Training page (/daily) — a short daily session built from your scan data: puzzles matched to your worst tactical patterns interleaved with blunder drills from your own games",
+      },
+      {
+        type: "feature",
+        text: "Streak tracking — completing a daily session increments your streak; missing a day resets it. Streak is shown in the session header and on the completion card",
+      },
+      {
+        type: "feature",
+        text: "Session completion screen — shows correct/total score, streak count, a per-task dot grid (green/red), and links to more training",
+      },
+      {
+        type: "feature",
+        text: "Blunder drills — up to 3 positions from your own missed tactics (cpLoss > 50), day-seeded so you get different positions each day without repeating",
+      },
+      {
+        type: "feature",
+        text: "Smart fallback for openings-only scans — if no tactics scan has been run, the session shows 5 puzzles only and displays an in-session notice explaining that blunder drills unlock after a tactics scan",
+      },
+      {
+        type: "improvement",
+        text: "Daily Training added to the Train dropdown in the navbar (first item, amber highlight) and as a card on the dashboard (above the Training CTA)",
+      },
+      {
+        type: "improvement",
+        text: 'Separate error states for first-time users (no reports → scan prompt) vs Lichess outage (try again button) — no more misleading "scan your games" message when Lichess is temporarily down',
+      },
+    ],
+  },
+  {
     version: 26,
     date: "Apr 6, 2026",
     title: "4 New pSEO Guide Categories",
