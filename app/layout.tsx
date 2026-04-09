@@ -277,6 +277,14 @@ export default function RootLayout({
                           Grandmasters
                         </Link>
                       </li>
+                      <li>
+                        <Link
+                          href="/glossary"
+                          className="hover:text-slate-300 transition-colors"
+                        >
+                          Chess Glossary
+                        </Link>
+                      </li>
                   </div>
 
                   {/* Community */}

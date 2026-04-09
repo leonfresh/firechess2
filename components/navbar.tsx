@@ -298,6 +298,12 @@ export function Navbar() {
                   >
                     👑 Grandmasters
                   </Link>
+                  <Link
+                    href="/glossary"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/glossary") ? "bg-cyan-500/[0.08] text-cyan-400" : "text-slate-400 hover:bg-cyan-500/[0.06] hover:text-cyan-400"}`}
+                  >
+                    📚 Glossary
+                  </Link>
                   <div className="my-1 h-px bg-white/[0.06]" />
                   <Link
                     href="/positions"
@@ -959,6 +965,7 @@ export function Navbar() {
                     { href: "/improve", label: "📈 Improve by Rating" },
                     { href: "/games", label: "♛ Famous Games" },
                     { href: "/players", label: "👑 Grandmasters" },
+                    { href: "/glossary", label: "📚 Glossary" },
                   ],
                 },
                 {

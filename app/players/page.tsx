@@ -24,7 +24,12 @@ function IndexJsonLd() {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "FireChess", item: base },
-      { "@type": "ListItem", position: 2, name: "Chess Grandmasters", item: `${base}/players` },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Chess Grandmasters",
+        item: `${base}/players`,
+      },
     ],
   };
 
@@ -32,7 +37,8 @@ function IndexJsonLd() {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name: "Chess Grandmaster Profiles",
-    description: "In-depth chess grandmaster profiles with style analysis, openings, and lessons",
+    description:
+      "In-depth chess grandmaster profiles with style analysis, openings, and lessons",
     numberOfItems: GM_PROFILES.length,
     itemListElement: GM_PROFILES.map((gm, i) => ({
       "@type": "ListItem",
@@ -56,7 +62,12 @@ function IndexJsonLd() {
   );
 }
 
-const ERA_ORDER: GmProfile["era"][] = ["romantic", "classical", "modern", "contemporary"];
+const ERA_ORDER: GmProfile["era"][] = [
+  "romantic",
+  "classical",
+  "modern",
+  "contemporary",
+];
 
 const ERA_LABELS: Record<GmProfile["era"], string> = {
   romantic: "Romantic Era",
@@ -73,10 +84,14 @@ const ERA_COLORS: Record<GmProfile["era"], string> = {
 };
 
 const ERA_DESCRIPTIONS: Record<GmProfile["era"], string> = {
-  romantic: "1800s–1880s: The age of brilliant sacrifices, king hunts, and unapologetic aggression.",
-  classical: "1880s–1920s: Lasker and Capablanca refined principles of positional chess and endgame mastery.",
-  modern: "1920s–1980s: Opening theory exploded; players like Fischer and Tal pushed preparation and creativity to new heights.",
-  contemporary: "1990s–present: Computer-era preparation, universal players, and the Carlsen generation dominate.",
+  romantic:
+    "1800s–1880s: The age of brilliant sacrifices, king hunts, and unapologetic aggression.",
+  classical:
+    "1880s–1920s: Lasker and Capablanca refined principles of positional chess and endgame mastery.",
+  modern:
+    "1920s–1980s: Opening theory exploded; players like Fischer and Tal pushed preparation and creativity to new heights.",
+  contemporary:
+    "1990s–present: Computer-era preparation, universal players, and the Carlsen generation dominate.",
 };
 
 export default function PlayersIndexPage() {
@@ -85,7 +100,7 @@ export default function PlayersIndexPage() {
       acc[era] = GM_PROFILES.filter((g) => g.era === era);
       return acc;
     },
-    { romantic: [], classical: [], modern: [], contemporary: [] }
+    { romantic: [], classical: [], modern: [], contemporary: [] },
   );
 
   const totalGms = GM_PROFILES.length;
@@ -97,7 +112,9 @@ export default function PlayersIndexPage() {
         <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
           {/* Breadcrumb */}
           <nav className="mb-8 flex items-center gap-2 text-sm text-slate-500">
-            <Link href="/" className="hover:text-slate-300">Home</Link>
+            <Link href="/" className="hover:text-slate-300">
+              Home
+            </Link>
             <span>/</span>
             <span className="text-slate-300">Grandmasters</span>
           </nav>
@@ -108,9 +125,9 @@ export default function PlayersIndexPage() {
               Chess Grandmasters
             </h1>
             <p className="mx-auto max-w-2xl text-xl text-slate-400">
-              In-depth profiles of the {totalGms} greatest players in chess history — their opening
-              repertoires, playing styles, career highlights, and the lessons you can steal for your
-              own game.
+              In-depth profiles of the {totalGms} greatest players in chess
+              history — their opening repertoires, playing styles, career
+              highlights, and the lessons you can steal for your own game.
             </p>
           </header>
 
@@ -126,7 +143,9 @@ export default function PlayersIndexPage() {
                   <h2 className={`mb-1 text-2xl font-bold text-${color}-400`}>
                     {ERA_LABELS[era]}
                   </h2>
-                  <p className="text-sm text-slate-500">{ERA_DESCRIPTIONS[era]}</p>
+                  <p className="text-sm text-slate-500">
+                    {ERA_DESCRIPTIONS[era]}
+                  </p>
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -150,7 +169,9 @@ export default function PlayersIndexPage() {
                         {gm.nationality} · {gm.born}–{gm.died ?? "present"}
                         {gm.peakRating && ` · Peak: ${gm.peakRating}`}
                       </p>
-                      <p className="mb-3 text-sm text-slate-400 line-clamp-2">{gm.tagline}</p>
+                      <p className="mb-3 text-sm text-slate-400 line-clamp-2">
+                        {gm.tagline}
+                      </p>
                       <div className="flex flex-wrap gap-1.5">
                         {gm.style.slice(0, 3).map((s) => (
                           <span
@@ -170,10 +191,13 @@ export default function PlayersIndexPage() {
 
           {/* CTA */}
           <section className="mt-4 rounded-xl border border-orange-500/30 bg-gradient-to-r from-orange-500/10 to-red-500/10 p-8 text-center">
-            <h2 className="mb-3 text-2xl font-bold">Train with Their Openings</h2>
+            <h2 className="mb-3 text-2xl font-bold">
+              Train with Their Openings
+            </h2>
             <p className="mb-6 text-slate-400">
-              FireChess analyzes your games and compares your opening choices to the world's best.
-              Find the gaps and get a personalized improvement plan.
+              FireChess analyzes your games and compares your opening choices to
+              the world's best. Find the gaps and get a personalized improvement
+              plan.
             </p>
             <Link
               href="/analyze"

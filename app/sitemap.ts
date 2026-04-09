@@ -9,6 +9,7 @@ import { CHESS_MISTAKES } from "@/lib/chess-mistakes";
 import { RATING_GUIDES } from "@/lib/rating-guides";
 import { FAMOUS_GAMES } from "@/lib/famous-games";
 import { GM_PROFILES } from "@/lib/gm-profiles";
+import { GLOSSARY_TERMS } from "@/lib/chess-glossary";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = "https://firechess.com";
@@ -71,6 +72,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const playerPages = GM_PROFILES.map((gm) => ({
     url: `${base}/players/${gm.id}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority: 0.75,
+  }));
+
+  const glossaryPages = GLOSSARY_TERMS.map((t) => ({
+    url: `${base}/glossary/${t.id}`,
     lastModified: new Date(),
     changeFrequency: "monthly" as const,
     priority: 0.75,
@@ -192,6 +200,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     ...playerPages,
+    {
+      url: `${base}/glossary`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    ...glossaryPages,
     {
       url: `${base}/chaos`,`
       lastModified: new Date(),

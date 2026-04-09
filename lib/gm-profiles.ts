@@ -200,7 +200,11 @@ export const GM_PROFILES: GmProfile[] = [
       "First player to lose a match to a computer (Deep Blue, 1997)",
       "Retired from professional chess in 2005 to focus on politics and democracy activism",
     ],
-    famousGameIds: ["kasparov-immortal-1999", "kasparov-karpov-1985-g16", "deep-blue-kasparov-1997"],
+    famousGameIds: [
+      "kasparov-immortal-1999",
+      "kasparov-karpov-1985-g16",
+      "deep-blue-kasparov-1997",
+    ],
     faqs: [
       {
         q: "Is Garry Kasparov the greatest chess player of all time?",
@@ -291,7 +295,11 @@ export const GM_PROFILES: GmProfile[] = [
       "'The Game of the Century' at age 13 (vs Byrne, 1956)",
       "Beat Bent Larsen in a 21-move brilliancy (1971, Candidates)",
     ],
-    famousGameIds: ["game-of-the-century", "byrne-fischer-1963", "fischer-spassky-g6-1972"],
+    famousGameIds: [
+      "game-of-the-century",
+      "byrne-fischer-1963",
+      "fischer-spassky-g6-1972",
+    ],
     faqs: [
       {
         q: "Why is Bobby Fischer considered the greatest chess player of his era?",

@@ -69,7 +69,12 @@ function PlayerJsonLd({ gm }: { gm: GmProfile }) {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "FireChess", item: base },
-      { "@type": "ListItem", position: 2, name: "Chess Grandmasters", item: `${base}/players` },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Chess Grandmasters",
+        item: `${base}/players`,
+      },
       { "@type": "ListItem", position: 3, name: gm.name, item: url },
     ],
   };
@@ -127,9 +132,13 @@ export default async function PlayerPage({
 
   const color = ERA_COLORS[gm.era];
   const relatedGms = GM_PROFILES.filter(
-    (g) => g.id !== gm.id && (g.era === gm.era || g.worldChampion === gm.worldChampion)
+    (g) =>
+      g.id !== gm.id &&
+      (g.era === gm.era || g.worldChampion === gm.worldChampion),
   ).slice(0, 3);
-  const linkedGames = FAMOUS_GAMES.filter((g) => gm.famousGameIds.includes(g.id));
+  const linkedGames = FAMOUS_GAMES.filter((g) =>
+    gm.famousGameIds.includes(g.id),
+  );
 
   return (
     <>
@@ -138,9 +147,13 @@ export default async function PlayerPage({
         <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
           {/* Breadcrumb */}
           <nav className="mb-8 flex items-center gap-2 text-sm text-slate-500">
-            <Link href="/" className="hover:text-slate-300">Home</Link>
+            <Link href="/" className="hover:text-slate-300">
+              Home
+            </Link>
             <span>/</span>
-            <Link href="/players" className="hover:text-slate-300">Grandmasters</Link>
+            <Link href="/players" className="hover:text-slate-300">
+              Grandmasters
+            </Link>
             <span>/</span>
             <span className="text-slate-300">{gm.name}</span>
           </nav>
@@ -165,11 +178,15 @@ export default async function PlayerPage({
               )}
             </div>
 
-            <h1 className="mb-2 text-4xl font-bold tracking-tight sm:text-5xl">{gm.name}</h1>
+            <h1 className="mb-2 text-4xl font-bold tracking-tight sm:text-5xl">
+              {gm.name}
+            </h1>
             <p className="mb-1 text-lg text-slate-400">
               {gm.nationality} · {gm.born}–{gm.died ?? "present"} · {gm.title}
             </p>
-            <p className="mt-4 text-xl leading-relaxed text-slate-300">{gm.tagline}</p>
+            <p className="mt-4 text-xl leading-relaxed text-slate-300">
+              {gm.tagline}
+            </p>
           </header>
 
           {/* Bio */}
@@ -195,15 +212,23 @@ export default async function PlayerPage({
 
           {/* Openings as White */}
           <section className="mb-10">
-            <h2 className="mb-4 text-2xl font-bold">Favourite Openings as White</h2>
+            <h2 className="mb-4 text-2xl font-bold">
+              Favourite Openings as White
+            </h2>
             <ul className="space-y-4">
               {gm.openingsWhite.map((op) => (
                 <li key={op.name} className="rounded-lg bg-slate-800/60 p-4">
                   <p className="mb-1 font-semibold text-white">
-                    {op.eco && <span className="mr-2 text-slate-400 text-sm">{op.eco}</span>}
+                    {op.eco && (
+                      <span className="mr-2 text-slate-400 text-sm">
+                        {op.eco}
+                      </span>
+                    )}
                     {op.name}
                   </p>
-                  <p className="text-sm leading-relaxed text-slate-400">{op.notes}</p>
+                  <p className="text-sm leading-relaxed text-slate-400">
+                    {op.notes}
+                  </p>
                 </li>
               ))}
             </ul>
@@ -211,15 +236,23 @@ export default async function PlayerPage({
 
           {/* Openings as Black */}
           <section className="mb-10">
-            <h2 className="mb-4 text-2xl font-bold">Favourite Openings as Black</h2>
+            <h2 className="mb-4 text-2xl font-bold">
+              Favourite Openings as Black
+            </h2>
             <ul className="space-y-4">
               {gm.openingsBlack.map((op) => (
                 <li key={op.name} className="rounded-lg bg-slate-800/60 p-4">
                   <p className="mb-1 font-semibold text-white">
-                    {op.eco && <span className="mr-2 text-slate-400 text-sm">{op.eco}</span>}
+                    {op.eco && (
+                      <span className="mr-2 text-slate-400 text-sm">
+                        {op.eco}
+                      </span>
+                    )}
                     {op.name}
                   </p>
-                  <p className="text-sm leading-relaxed text-slate-400">{op.notes}</p>
+                  <p className="text-sm leading-relaxed text-slate-400">
+                    {op.notes}
+                  </p>
                 </li>
               ))}
             </ul>
@@ -270,7 +303,9 @@ export default async function PlayerPage({
                     <p className="text-sm text-slate-400">
                       {game.white} vs {game.black} · {game.year}
                     </p>
-                    <p className="mt-2 text-sm text-slate-500 line-clamp-2">{game.tagline}</p>
+                    <p className="mt-2 text-sm text-slate-500 line-clamp-2">
+                      {game.tagline}
+                    </p>
                   </Link>
                 ))}
               </div>
@@ -279,12 +314,16 @@ export default async function PlayerPage({
 
           {/* FAQ */}
           <section className="mb-10">
-            <h2 className="mb-6 text-2xl font-bold">Frequently Asked Questions</h2>
+            <h2 className="mb-6 text-2xl font-bold">
+              Frequently Asked Questions
+            </h2>
             <div className="space-y-4">
               {gm.faqs.map((faq) => (
                 <div key={faq.q} className="rounded-lg bg-slate-800/50 p-5">
                   <h3 className="mb-2 font-semibold text-white">{faq.q}</h3>
-                  <p className="text-sm leading-relaxed text-slate-400">{faq.a}</p>
+                  <p className="text-sm leading-relaxed text-slate-400">
+                    {faq.a}
+                  </p>
                 </div>
               ))}
             </div>
@@ -296,7 +335,9 @@ export default async function PlayerPage({
               Train Like {gm.name.split(" ")[gm.name.split(" ").length - 1]}
             </h2>
             <p className="mb-6 text-slate-400">
-              FireChess analyzes your games with the same opening repertoire and style principles used by the world's best — find your weaknesses and fix them.
+              FireChess analyzes your games with the same opening repertoire and
+              style principles used by the world's best — find your weaknesses
+              and fix them.
             </p>
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
               <Link
