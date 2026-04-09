@@ -674,58 +674,6 @@ export const FAMOUS_GAMES: FamousGame[] = [
     related: ["opera-game", "immortal-game", "evergreen-game"],
   },
   {
-    id: "polgar-karpov-1994",
-    starPlayerSlug: "judit-polgar",
-    name: "Polgar's Brilliancy vs Karpov",
-    white: "Judit Polgar",
-    black: "Anatoly Karpov",
-    year: 1994,
-    event: "Dos Hermanas Tournament",
-    result: "1-0",
-    era: "contemporary",
-    tagline:
-      "Judit Polgar defeats former world champion Anatoly Karpov with a stunning queen sacrifice on move 22, proving herself among the world's elite at just 17 years old.",
-    story:
-      "At the 1994 Dos Hermanas tournament, 17-year-old Judit Polgar faced former world champion Anatoly Karpov — a player famous for his near-perfect positional technique and grinding wins. Polgar sacrificed her queen on move 22 in a position Karpov may not have seen coming. The sacrifice exposed Karpov's king and created a devastating attack that the former champion could not defend. The game is celebrated as proof that Polgar belonged among the world's very best players.",
-    fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-    moves:
-      "e4,c5,Nf3,e6,d4,cxd4,Nxd4,Nc6,Nc3,d6,Be3,Nf6,f3,Be7,Qd2,O-O,g4,a6,O-O-O,Nxd4,Bxd4,b5,g5,Nd7,h4,b4,Ne2,e5,Be3,Rb8,h5,Nb6,g6,fxg6,hxg6,h6,Rxh6",
-    orientation: "white",
-    caption:
-      "Polgar vs Karpov, Dos Hermanas 1994 — a 17-year-old Judit Polgar defeats the former world champion with a queen sacrifice.",
-    tacticalThemes: [
-      "queen sacrifice",
-      "king attack",
-      "sicilian defense",
-      "piece sacrifice",
-      "attack",
-    ],
-    keyMoment: {
-      moveNumber: 22,
-      description:
-        "Polgar sacrifices her queen for rook and pawn, exposing Karpov's king to a decisive attack. The former world champion, known for flawless defense, has no good answer.",
-    },
-    faqs: [
-      {
-        q: "Who is Judit Polgar?",
-        a: "Judit Polgar is the strongest female chess player in history. She achieved the grandmaster title at 15, breaking Bobby Fischer's record, and at her peak was ranked number 8 in the world.",
-      },
-      {
-        q: "When did Polgar beat Karpov?",
-        a: "Judit Polgar defeated Anatoly Karpov at the 1994 Dos Hermanas tournament in Spain, when she was just 17 years old.",
-      },
-      {
-        q: "What is Anatoly Karpov's record against Polgar?",
-        a: "Karpov and Polgar had a competitive rivalry. Polgar defeated Karpov multiple times in her career, which was unusual — Karpov rarely lost to players outside the absolute world elite.",
-      },
-    ],
-    related: [
-      "game-of-the-century",
-      "kasparov-immortal-1999",
-      "fischer-spassky-g6-1972",
-    ],
-  },
-  {
     id: "kasparov-karpov-1985-g16",
     starPlayerSlug: "garry-kasparov",
     name: "Kasparov's Championship Clincher",
@@ -1020,11 +968,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
         a: "Yes. Viswanathan Anand was the reigning World Chess Champion in 2013, having held the title since 2007. He lost his title to Magnus Carlsen later that same year.",
       },
     ],
-    related: [
-      "kasparov-immortal-1999",
-      "game-of-the-century",
-      "polgar-karpov-1994",
-    ],
+    related: ["kasparov-immortal-1999", "game-of-the-century"],
   },
   {
     id: "carlsen-karjakin-2016",

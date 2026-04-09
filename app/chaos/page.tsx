@@ -7294,7 +7294,12 @@ export default function ChaosChessPage() {
         // Opponent sent their anomaly choice — check if we've already sent ours
         const oppId = msg.anomalyId;
         setOpponentAnomalyPickedId(oppId);
-        if (myAnomalyPickSentRef.current) {
+        // Only start the game if we're still in the picking phase — a late-arriving
+        // anomaly_pick after the 10s fallback fired must not reset an already-running game
+        if (
+          myAnomalyPickSentRef.current &&
+          gameStatusRef.current === "picking-anomaly"
+        ) {
           // Both have picked — start the game
           startMpGameWithAnomalies(
             pendingMpAnomalyRef.current?.id ?? null,
@@ -7579,9 +7584,21 @@ export default function ChaosChessPage() {
         } else if (activeGame.inCheck()) {
           // Chaos-checkmate: king is in check but chess.js doesn't see checkmate
           // because escape squares are all chaos-controlled
-          const cs2 = data.chaosState
+          let cs2 = data.chaosState
             ? fromServerChaosState(data.chaosState as ChaosState, playerColor)
             : undefined;
+          // If the opponent's state is missing our anomaly (e.g. their anomaly_pick WS was lost),
+          // preserve it from local state so anomaly moves stay available
+          if (
+            cs2 &&
+            !cs2.playerAnomaly &&
+            chaosStateRef.current.playerAnomaly
+          ) {
+            cs2 = {
+              ...cs2,
+              playerAnomaly: chaosStateRef.current.playerAnomaly,
+            };
+          }
           if (cs2) {
             // Update ref synchronously so checkGameEnd sees fresh modifiers
             chaosStateRef.current = cs2;
@@ -7594,10 +7611,17 @@ export default function ChaosChessPage() {
           }
         } else if (data.chaosState) {
           // Only recompute moves — checkDraft fires from handlePlayerMove (your own move) only
-          const cs2 = fromServerChaosState(
+          let cs2 = fromServerChaosState(
             data.chaosState as ChaosState,
             playerColor,
           );
+          // Preserve local player anomaly if opponent's state has none (anomaly_pick WS may have been lost)
+          if (!cs2.playerAnomaly && chaosStateRef.current.playerAnomaly) {
+            cs2 = {
+              ...cs2,
+              playerAnomaly: chaosStateRef.current.playerAnomaly,
+            };
+          }
           recomputeChaosMoves(activeGame, cs2);
         }
 
@@ -7952,10 +7976,17 @@ export default function ChaosChessPage() {
               const rawCs2 = data.chaosState
                 ? (data.chaosState as ChaosState)
                 : createChaosState();
-              const cs2 = fromServerChaosState(
+              let cs2 = fromServerChaosState(
                 rawCs2,
                 myColor as "white" | "black",
               );
+              // Preserve local player anomaly if opponent's state has none (anomaly_pick WS may have been lost)
+              if (!cs2.playerAnomaly && chaosStateRef.current.playerAnomaly) {
+                cs2 = {
+                  ...cs2,
+                  playerAnomaly: chaosStateRef.current.playerAnomaly,
+                };
+              }
               // Update ref synchronously so checkGameEnd sees fresh modifiers
               chaosStateRef.current = cs2;
               setChaosState(cs2);
@@ -7969,15 +8000,57 @@ export default function ChaosChessPage() {
               const rawCs2 = data.chaosState
                 ? (data.chaosState as ChaosState)
                 : createChaosState();
-              const cs2 = fromServerChaosState(
+              let cs2 = fromServerChaosState(
                 rawCs2,
                 myColor as "white" | "black",
               );
+              // Preserve local player anomaly if opponent's state has none (anomaly_pick WS may have been lost)
+              if (!cs2.playerAnomaly && chaosStateRef.current.playerAnomaly) {
+                cs2 = {
+                  ...cs2,
+                  playerAnomaly: chaosStateRef.current.playerAnomaly,
+                };
+              }
               recomputeChaosMovesCbRef.current(activeGame, cs2);
             }
           }
 
-          if (data.status === "finished") {
+          // Detect opponent resign via polling fallback (in case WS message was lost)
+          if (
+            data.status &&
+            (data.status === "finished" ||
+              (data.status as string).startsWith("resigned-"))
+          ) {
+            if ((data.status as string).startsWith("resigned-")) {
+              const resignedColor = (data.status as string).replace(
+                "resigned-",
+                "",
+              ) as "white" | "black";
+              // Only act if the OPPONENT resigned (not us) and we haven't already ended the game
+              if (
+                resignedColor !== myColor &&
+                gameStatusRef.current !== "game-over"
+              ) {
+                const resignWinner =
+                  resignedColor === "white" ? "black" : "white";
+                setGameResult(resignWinner);
+                setGameStatus("game-over");
+                setEndReason("Opponent Resigned");
+                setEventLog((prev) => [
+                  ...prev,
+                  {
+                    type: "info" as const,
+                    message: `🏳️ Opponent resigned! ${
+                      resignWinner === "white" ? "White" : "Black"
+                    } wins.`,
+                    icon: "🏳️",
+                    pepe: PEPE.gigachad,
+                  },
+                ]);
+                playSound("airhorn");
+                spawnPepe(PEPE.gigachad);
+              }
+            }
             if (pollRef.current) clearInterval(pollRef.current);
           }
         } catch {
@@ -9844,7 +9917,7 @@ export default function ChaosChessPage() {
     spawnPepe(PEPE.sadge);
     if (pollRef.current) clearInterval(pollRef.current);
     if (gameMode !== "ai" && roomId) {
-      // Mark room as finished
+      // Mark room as resigned (includes which side resigned so polling fallback can inform opponent)
       fetch("/api/chaos/move", {
         method: "POST",
         headers: chaosHeaders(true),
@@ -9853,7 +9926,7 @@ export default function ChaosChessPage() {
           from: "",
           to: "",
           newFen: game.fen(),
-          status: "finished",
+          status: `resigned-${playerColor}`,
         }),
       });
       // Notify opponent via WebSocket

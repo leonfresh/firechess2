@@ -470,7 +470,7 @@ export const GM_PROFILES: GmProfile[] = [
       "Over 160 first-place tournament finishes in his career",
       "Held the highest rating in the world for most of the late 1970s and early 1980s",
     ],
-    famousGameIds: ["kasparov-karpov-1985-g16", "polgar-karpov-1994"],
+    famousGameIds: ["kasparov-karpov-1985-g16"],
     faqs: [
       {
         q: "Did Karpov legitimately earn the World Championship title?",
@@ -784,7 +784,7 @@ export const GM_PROFILES: GmProfile[] = [
       "Represented Hungary at 10 Chess Olympiads with a gold medal performance",
       "Won the 1994 Dos Hermanas brilliancy prize with her queen sacrifice against Karpov",
     ],
-    famousGameIds: ["polgar-karpov-1994"],
+    famousGameIds: [],
     faqs: [
       {
         q: "Is Judit Polgar better than any current female chess player?",
