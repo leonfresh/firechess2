@@ -5,6 +5,8 @@
 
 export type FamousGame = {
   id: string;
+  /** Slug of the GM profile (/players/[slug]) to show a photo on the game page */
+  starPlayerSlug?: string;
   name: string;
   white: string;
   black: string;
@@ -27,6 +29,7 @@ export type FamousGame = {
 export const FAMOUS_GAMES: FamousGame[] = [
   {
     id: "opera-game",
+    starPlayerSlug: "paul-morphy",
     name: "The Opera Game",
     white: "Paul Morphy",
     black: "Duke of Brunswick & Count Isouard",
@@ -168,6 +171,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
   },
   {
     id: "game-of-the-century",
+    starPlayerSlug: "bobby-fischer",
     name: "The Game of the Century",
     white: "Donald Byrne",
     black: "Robert James Fischer",
@@ -219,6 +223,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
   },
   {
     id: "kasparov-immortal-1999",
+    starPlayerSlug: "garry-kasparov",
     name: "Kasparov's Immortal",
     white: "Garry Kasparov",
     black: "Veselin Topalov",
@@ -334,7 +339,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
       "In Copenhagen 1923, hypermodern pioneer Aron Nimzowitsch demonstrated his theory of blockade in its purest form. Maneuvering patiently with Black, he created a structure so restrictive that White's army had no useful moves left. The famous moment comes when Nimzowitsch exclaimed 'Jetzt müssen Sie ziehen!' (Now you must move!) — every option makes the position worse. Sämisch resigned without a single piece being captured, purely because movement itself became fatal. The game validated Nimzowitsch's theories from 'My System'.",
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     moves:
-      "d4,Nf6,c4,e5,dxe5,Ne4,a3,d6,Qc2,Bf5,Qb3,Nc6,exd6,Bxd6,Nf3,Nf2,Qxb7,Nxh1,Qxa8,Qd7,Nbd2,Nf2,g3",
+      "d4,Nf6,c4,e5,dxe5,Ne4,a3,d6,Qc2,Bf5,Qb3,Nc6,exd6,Bxd6,Nf3,Nf2,Qxb7,Nxh1,Qxa8",
     orientation: "black",
     caption:
       "The Immortal Zugzwang (1923) — Nimzowitsch so restricts White that every move worsens his position. White resigns without losing a single piece.",
@@ -368,6 +373,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
   },
   {
     id: "deep-blue-kasparov-1997",
+    starPlayerSlug: "garry-kasparov",
     name: "Deep Blue Defeats Kasparov",
     white: "Deep Blue (IBM)",
     black: "Garry Kasparov",
@@ -418,6 +424,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
   },
   {
     id: "fischer-spassky-g6-1972",
+    starPlayerSlug: "bobby-fischer",
     name: "Fischer vs Spassky — Game 6",
     white: "Robert James Fischer",
     black: "Boris Spassky",
@@ -469,6 +476,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
   },
   {
     id: "tal-smyslov-1959",
+    starPlayerSlug: "mikhail-tal",
     name: "Tal's Knight Sacrifice",
     white: "Mikhail Tal",
     black: "Vasily Smyslov",
@@ -482,7 +490,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
       "Mikhail Tal, the Latvian genius nicknamed 'The Magician from Riga', built his career on sacrifices that could not be definitively refuted over the board. In the 1959 Candidates Tournament, he faced former world champion Vasily Smyslov and played 9.Nd5!? — sacrificing a knight for positional and psychological pressure. Smyslov, a deep positional player, had no way to navigate the resulting chaos. Tal won on move 30 and went on to win the 1959 Candidates, becoming world champion in 1960 at age 23.",
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     moves:
-      "e4,c6,d4,d5,Nc3,dxe4,Nxe4,Nd7,Bc4,Ngf6,Ng5,e6,Qe2,Nb6,Bb3,a5,a3,a4,Ba2,h6,N5f3,c5,dxc5,Bxc5,Nc3,Nc4,Bxc4,axc4",
+      "e4,c6,d4,d5,Nc3,dxe4,Nxe4,Nd7,Bc4,Ngf6,Ng5,e6,Qe2,Nb6,Bb3,a5,a3,a4,Ba2,h6,N5f3,c5,dxc5,Bxc5",
     orientation: "white",
     caption:
       "Tal vs Smyslov, 1959 Candidates — the knight sacrifice on move 9 epitomizes Tal's attacking genius against a former world champion.",
@@ -529,7 +537,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
       "In the 1991 Tilburg tournament, Short produced a game that commentators still call 'the king march'. With queens and rooks on the board, he began moving his king forward: Kh2, Kg3, Kf4, Ke5, Kd6 — directly toward the enemy position. Each king step was precisely calculated: Short had determined Timman's pieces could not organize a counterattack. When the king reached d6, the threats were completely decisive. The game became an instant classic and Short qualified for the World Championship match against Kasparov shortly after.",
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     moves:
-      "e4,Nf6,Nc3,d5,e5,Ne4,Nce2,e6,Nf3,b6,d3,Nxf2,Kxf2,c5,g3,Nc6,Kg2,Qc7,c3,a5,d4,Ba6,Bh3,b5,dxc5,Bxc5,Bg5,Be7,Bxe7,Qxe7,Qd3,Nb8,Ne4,Ba6,Qb1,Nd7,Kh2,Bxe2,Nxe2,Nc5,Nxc5,Qxc5,Kg3,Rd8,Rxd8+,Qxd8,Kf4,Qd4+,Kxe5,Qxf2",
+      "e4,Nf6,Nc3,d5,e5,Ne4,Nce2,e6,Nf3,b6,d3,Nxf2,Kxf2,c5,g3,Nc6,Kg2,Qc7,c3,a5,d4,Ba6",
     orientation: "white",
     caption:
       "Short's King March (1991) — Kg1-h2-g3-f4-e5-d6. The king walks into the enemy position as the decisive attacking piece.",
@@ -567,6 +575,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
   },
   {
     id: "byrne-fischer-1963",
+    starPlayerSlug: "bobby-fischer",
     name: "Fischer's Exchange Sacrifice",
     white: "Robert Byrne",
     black: "Robert James Fischer",
@@ -618,6 +627,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
   },
   {
     id: "morphy-paulsen-1857",
+    starPlayerSlug: "paul-morphy",
     name: "Morphy vs Paulsen — Queen Sacrifice",
     white: "Paul Morphy",
     black: "Louis Paulsen",
@@ -631,7 +641,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
       "At the 1857 First American Chess Congress, Morphy — just 20 years old — played Paulsen in a Four Knights Game. On move 17, he played Qxf3!!, sacrificing his queen for a bishop and pawn. Paulsen accepted (what else could he do?) and Morphy launched a rook and bishop mating attack that couldn't be stopped. The game demonstrated that Morphy had mastered not just tactics, but the art of transforming a queen sacrifice into a devastating material-coordinating attack.",
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     moves:
-      "e4,e5,Nf3,Nc6,Nc3,Nf6,Bb5,Bc5,O-O,O-O,Nxe5,Re8,Nxc6,dxc6,Bc4,b5,Be2,Nxe4,Nxe4,Rxe4,Bf3,Re6,c3,Qd3,b4,Bb6,a4,bxa4,Qxa4,Bd7,Ra2,Rae8,Qa6,Qxf3,gxf3,Rg6+,Kh1,Ch2,Qf1,Rg2,Qg1,Rxg1+,Raxg1",
+      "e4,e5,Nf3,Nc6,Nc3,Nf6,Bb5,Bc5,O-O,O-O,Nxe5,Re8,Nxc6,dxc6,Bc4,b5,Be2,Nxe4,Nxe4,Rxe4,Bf3,Re6,c3,Qd3,b4,Bb6,a4,bxa4,Qxa4,Bd7,Ra2,Rae8,Qa6,Qxf3,gxf3,Rg6+,Kh1",
     orientation: "white",
     caption:
       "Morphy vs Paulsen 1857 — the queen sacrifice on move 17 announced Morphy as the greatest player of his era.",
@@ -665,6 +675,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
   },
   {
     id: "polgar-karpov-1994",
+    starPlayerSlug: "judit-polgar",
     name: "Polgar's Brilliancy vs Karpov",
     white: "Judit Polgar",
     black: "Anatoly Karpov",
@@ -678,7 +689,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
       "At the 1994 Dos Hermanas tournament, 17-year-old Judit Polgar faced former world champion Anatoly Karpov — a player famous for his near-perfect positional technique and grinding wins. Polgar sacrificed her queen on move 22 in a position Karpov may not have seen coming. The sacrifice exposed Karpov's king and created a devastating attack that the former champion could not defend. The game is celebrated as proof that Polgar belonged among the world's very best players.",
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     moves:
-      "e4,c5,Nf3,e6,d4,cxd4,Nxd4,Nc6,Nc3,d6,Be3,Nf6,f3,Be7,Qd2,O-O,g4,a6,O-O-O,Nxd4,Bxd4,b5,g5,Nd7,h4,b4,Ne2,e5,Be3,Rb8,h5,Nb6,g6,fxg6,hxg6,h6,Rxh6,Rxh6,Qxh6",
+      "e4,c5,Nf3,e6,d4,cxd4,Nxd4,Nc6,Nc3,d6,Be3,Nf6,f3,Be7,Qd2,O-O,g4,a6,O-O-O,Nxd4,Bxd4,b5,g5,Nd7,h4,b4,Ne2,e5,Be3,Rb8,h5,Nb6,g6,fxg6,hxg6,h6,Rxh6",
     orientation: "white",
     caption:
       "Polgar vs Karpov, Dos Hermanas 1994 — a 17-year-old Judit Polgar defeats the former world champion with a queen sacrifice.",
@@ -716,6 +727,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
   },
   {
     id: "kasparov-karpov-1985-g16",
+    starPlayerSlug: "garry-kasparov",
     name: "Kasparov's Championship Clincher",
     white: "Garry Kasparov",
     black: "Anatoly Karpov",
@@ -729,7 +741,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
       "Game 16 of the 1985 World Championship was the game where 22-year-old Garry Kasparov became world champion. Karpov had held the title for 10 years. Playing a Sicilian Defense, Kasparov launched a powerful kingside attack with a knight sacrifice on d4 that shattered Karpov's structure. Karpov's position collapsed rapidly. When Kasparov won, he became the youngest world champion in history and began what would become a decade-long clash with Karpov across five world championship matches — the greatest rivalry chess has ever seen.",
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     moves:
-      "e4,c5,Nf3,e6,d4,cxd4,Nxd4,Nc6,Nb5,d6,c4,Nf6,N1c3,a6,Na3,d5,cxd5,exd5,exd5,Nb4,Be2,Bc5,O-O,O-O,Bf3,Bf5,Bg5,Re8,Qd2,b5,Rad1,Nd3,Nab1,h6,Bxf6,Qxf6,Nxd5,Qxd2,Nxe7+,Rxe7,Rxd2,Nf4,Re1,Rxe1+,Rxe1,Ra7,g3,Nd3,Re8+,Kh7,Be4+",
+      "e4,c5,Nf3,e6,d4,cxd4,Nxd4,Nc6,Nb5,d6,c4,Nf6,N1c3,a6,Na3,d5,cxd5,exd5,exd5,Nb4,Be2,Bc5,O-O,O-O,Bf3,Bf5,Bg5,Re8,Qd2,b5,Rad1,Nd3,Nab1,h6,Bxf6,Qxf6",
     orientation: "white",
     caption:
       "Kasparov clinches his first World Championship title in Game 16 (1985), ending Karpov's 10-year reign.",
@@ -780,7 +792,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
       "At the 1925 Baden-Baden tournament, Alekhine faced Richard Réti — one of the founders of the hypermodern school of chess — and produced a game of exceptional beauty. A queen sacrifice on move 26 exposed Réti's king to a coordinated bishop and rook attack. The end came quickly and elegantly. Kasparov later selected this game as one of the greatest of the pre-WWII era, calling Alekhine's calculation and foresight unparalleled for its time.",
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     moves:
-      "e4,Nf6,e5,Nd5,d4,d6,Nf3,g6,Bc4,Nb6,Bb3,Bg7,Qe2,Nc6,O-O,O-O,h3,a5,a4,dxe5,dxe5,Na7,Nc3,Nb4,Bg5,Nbxc2,Bxc2,c6,Rac1,h6,Be3,Nxc2,Rxc2,Qd3,Rd2,Qxe2,Rxe2,Be6,Nd4,Bxd4,Bxd4,Rfd8,Bb6,Rd7,e6,fxe6,Bxe6+,Kf8,Bxd7,Bxd7,Rxe7",
+      "e4,Nf6,e5,Nd5,d4,d6,Nf3,g6,Bc4,Nb6,Bb3,Bg7,Qe2,Nc6,O-O,O-O,h3,a5,a4,dxe5,dxe5,Na7,Nc3",
     orientation: "white",
     caption:
       "Alekhine vs Réti, Baden-Baden 1925 — queen sacrifice leading to a bishop and rook mating attack. Kasparov called it the best game of its era.",
@@ -827,7 +839,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
       "In a 1991 Candidates Match in Brussels, Vassily Ivanchuk needed a win to advance. Playing a Grünfeld Defense, he built up pressure over many moves before unleashing Qg4!! on move 33 — a queen sacrifice that most analysts couldn't fully explain at first. The combination required calculating 10+ moves deep and the resulting position, with bishop and knight coordinating against the Black king, was a thing of beauty. Yusupov resigned shortly after. Ivanchuk later admitted he had seen the combination 15 moves earlier.",
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     moves:
-      "d4,Nf6,c4,g6,Nc3,d5,cxd5,Nxd5,e4,Nxc3,bxc3,Bg7,Be3,c5,Qd2,Qa5,Rc1,Nc6,Nf3,cxd4,cxd4,Qxd2+,Kxd2,O-O,d5,Na5,Bd3,b6,Ke2,e6,dxe6,Bxe6,Nd4,Bf7,f4,Rfe8,Rc7,Nc6,Nxc6,Bxc6,Rhc1,Rab8,Rxf7,Kxf7,Bc4+,Ke7,Bxg7",
+      "d4,Nf6,c4,g6,Nc3,d5,cxd5,Nxd5,e4,Nxc3,bxc3,Bg7,Be3,c5,Qd2,Qa5,Rc1,Nc6,Nf3,cxd4,cxd4,Qxd2+,Kxd2,O-O,d5,Na5,Bd3,b6,Ke2,e6,dxe6,Bxe6,Nd4",
     orientation: "white",
     caption:
       "Ivanchuk vs Yusupov, Brussels 1991 — queen sacrifice Qg4!! in a must-win Candidates match game. Ivanchuk said he calculated it 15 moves before playing it.",
@@ -878,7 +890,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
       "At the legendary 1953 Zürich Candidates Tournament — regarded by many as the greatest chess tournament ever held — Geller played the former world champion Max Euwe and produced a double piece sacrifice. The combination involved sacrificing a knight and then a bishop to open lines to Euwe's king. The attack was both aesthetically spectacular and objectively winning. The tournament was immortalized in David Bronstein's book 'Zürich International Chess Tournament 1953', which analyzed every game in depth.",
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     moves:
-      "d4,Nf6,c4,e6,Nc3,Bb4,e3,c5,Bd3,Nc6,Nf3,Bxc3+,bxc3,d6,O-O,e5,Nd2,O-O,f3,Ne7,e4,Ng6,Nf1,b6,Ne3,Ba6,Qe2,Qe7,g4,exd4,cxd4,c4,Bc2,Nf4,Qf2,d5,g5,Nd7,exd5,Nxd5,Nxd5,Qxd5,g6,hxg6,Qh4",
+      "d4,Nf6,c4,e6,Nc3,Bb4,e3,c5,Bd3,Nc6,Nf3,Bxc3+,bxc3,d6,O-O,e5,Nd2,O-O,f3,Ne7,e4,Ng6",
     orientation: "white",
     caption:
       "Geller vs Euwe, Zürich 1953 — double piece sacrifice against the former world champion at chess's most storied Candidates Tournament.",
@@ -916,6 +928,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
   },
   {
     id: "tal-botvinnik-1960",
+    starPlayerSlug: "mikhail-tal",
     name: "Tal's World Championship Attack",
     white: "Mikhail Tal",
     black: "Mikhail Botvinnik",
@@ -929,7 +942,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
       "In Game 6 of the 1960 World Championship, 23-year-old Tal played the legendary Nd5!? sacrifice against Botvinnik — a move with no clear compensation. Botvinnik, one of the greatest defensive players in history, struggled to find the refutation over the board. Tal's pieces created a maze of complications that Botvinnik navigated incorrectly, and Tal won a crucial game in the match. He went on to win the championship 12.5–8.5, becoming the youngest world champion at the time. Even today, computers struggle to determine if the sacrifice was objectively correct.",
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     moves:
-      "d4,Nf6,c4,g6,Nc3,Bg7,e4,d6,Be2,O-O,Nf3,e5,d5,Nbd7,Bg5,h6,Bh4,g5,Bg3,Nh5,Nd2,Nxg3,hxg3,c5,dxc6,bxc6,O-O,Ne5,Qb1,f5,Ndb3,Nxc4,Bxc4,fxe4,Bg5,hxg5,Qxh8+,Kf7,Qxg7+,Ke8,Nd5,Qb8,Nbc1",
+      "d4,Nf6,c4,g6,Nc3,Bg7,e4,d6,Be2,O-O,Nf3,e5,d5,Nbd7,Bg5,h6,Bh4,g5,Bg3,Nh5,Nd2,Nxg3,hxg3,c5,dxc6,bxc6,O-O",
     orientation: "white",
     caption:
       "Tal vs Botvinnik, World Championship 1960 Game 6 — the Nd5!? sacrifice that helped Tal become the youngest world champion ever.",
@@ -963,6 +976,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
   },
   {
     id: "aronian-anand-2013",
+    starPlayerSlug: "viswanathan-anand",
     name: "Aronian's Queen Sacrifice vs Anand",
     white: "Levon Aronian",
     black: "Viswanathan Anand",
@@ -976,7 +990,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
       "At the 2013 Tata Steel tournament — the strongest event in the world that year — Levon Aronian played then-World Champion Viswanathan Anand and produced a game of extraordinary beauty. A Grünfeld Defense became a tactical storm, culminating in 23.Rxd7!! and subsequent queen sacrifice moves that Anand could not have anticipated. The game won the tournament's brilliancy prize and was ranked among the best games of the year by every major chess publication.",
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     moves:
-      "d4,Nf6,c4,g6,Nc3,d5,Bf4,Bg7,e3,c5,dxc5,Qa5,Rc1,dxc4,Bxc4,O-O,Nf3,Na6,Bxa6,bxa6,O-O,Bg4,h3,Bxf3,Qxf3,Nd7,Rfd1,Nxc5,b4,Ne6,Be5,Bxe5,Rxd8+,Rfxd8,Nxe5,Nd4,Qd5,e6,Qxd4",
+      "d4,Nf6,c4,g6,Nc3,d5,Bf4,Bg7,e3,c5,dxc5,Qa5,Rc1,dxc4,Bxc4,O-O,Nf3,Na6,Bxa6,bxa6,O-O,Bg4,h3,Bxf3,Qxf3,Nd7,Rfd1,Nxc5,b4,Ne6,Be5,Bxe5",
     orientation: "white",
     caption:
       "Aronian vs Anand, Tata Steel 2013 — queen sacrifice against the World Champion that won the 2013 brilliancy prize.",
@@ -1014,6 +1028,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
   },
   {
     id: "carlsen-karjakin-2016",
+    starPlayerSlug: "magnus-carlsen",
     name: "Carlsen Clutches the Crown",
     white: "Magnus Carlsen",
     black: "Sergey Karjakin",
@@ -1027,7 +1042,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
       "The 2016 World Championship between Magnus Carlsen and Sergey Karjakin produced a shocking result: all 12 classical games were drawn, forcing a rapid tiebreak. In Game 2 of the tiebreak, Carlsen demonstrated his endgame mastery — converting a tiny advantage with the precision and patience that defines his chess. The win secured his second World Championship title. Karjakin, who had stunned the world with his tenacious defensive play throughout the match, had no answer for Carlsen's technique in the tiebreak.",
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     moves:
-      "e4,e5,Nf3,Nc6,Bb5,Nf6,O-O,Nxe4,d4,Nd6,dxe5,Nxb5,a4,Nd4,Nxd4,exd4,Re1+,Be7,Qxd4,Nc6,Qd5,O-O,Nc3,Ne7,Qd3,d5,exd6,Nf5,Re4,Bxd6,Bg5,Qd7,Rae1,Rae8,Qd2,Rxe4,Rxe4,h6,Be3,c6,g3,Nxe3,Rxe3,Bf4,Re4,Bxd2,Rxe8+,Kh7,Rxf8,Bxc3,bxc3",
+      "e4,e5,Nf3,Nc6,Bb5,Nf6,O-O,Nxe4,d4,Nd6,dxe5,Nxb5,a4",
     orientation: "white",
     caption:
       "Carlsen vs Karjakin, 2016 World Championship rapid tiebreak — precision endgame play to retain the world title after 12 draws.",

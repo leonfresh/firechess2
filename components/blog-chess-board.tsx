@@ -46,9 +46,13 @@ export function BlogChessBoard({
       const chess = new Chess(fen);
       const positions = [fen];
       for (const m of moveList) {
-        const result = chess.move(m);
-        if (!result) break;
-        positions.push(chess.fen());
+        try {
+          const result = chess.move(m);
+          if (!result) break;
+          positions.push(chess.fen());
+        } catch {
+          break; // stop at first invalid move — keep valid positions so far
+        }
       }
       fensRef.current = positions;
       chessRef.current = chess;

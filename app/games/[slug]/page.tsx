@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { FAMOUS_GAMES, type FamousGame } from "@/lib/famous-games";
 import { BlogChessBoard } from "@/components/blog-chess-board";
+import { GM_PROFILES } from "@/lib/gm-profiles";
 
 export function generateStaticParams() {
   return FAMOUS_GAMES.map((g) => ({ slug: g.id }));
@@ -132,6 +134,10 @@ export default async function FamousGamePage({
     (g) => game.related.includes(g.id) && g.id !== game.id,
   ).slice(0, 3);
 
+  const starGm = game.starPlayerSlug
+    ? GM_PROFILES.find((gm) => gm.id === game.starPlayerSlug)
+    : undefined;
+
   return (
     <>
       <GameJsonLd game={game} />
@@ -155,6 +161,22 @@ export default async function FamousGamePage({
 
         {/* Header */}
         <header className="mb-8">
+          {starGm?.imageUrl && (
+            <div className="float-right ml-4 mb-2 hidden sm:block">
+              <Link href={`/players/${starGm.id}`} className="group block">
+                <div className="relative h-20 w-20 overflow-hidden rounded-full ring-2 ring-white/10 transition-all group-hover:ring-white/30">
+                  <Image
+                    src={starGm.imageUrl}
+                    alt={starGm.name}
+                    fill
+                    className="object-cover object-top"
+                    sizes="80px"
+                  />
+                </div>
+                <p className="mt-1.5 text-center text-[10px] text-stone-500 group-hover:text-stone-300">{starGm.name}</p>
+              </Link>
+            </div>
+          )}
           <div className="mb-3 flex flex-wrap items-center gap-2">
             <span
               className={`inline-block rounded-full border px-2.5 py-0.5 text-[9px] font-bold uppercase tracking-wider ${ERA_COLORS[game.era] ?? "border-white/10 bg-white/[0.05] text-stone-400"}`}

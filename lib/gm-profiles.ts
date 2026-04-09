@@ -546,7 +546,7 @@ export const GM_PROFILES: GmProfile[] = [
       "Won the 1914 St. Petersburg tournament ahead of Lasker and Alekhine",
       "His endgame technique remains the benchmark studied by all serious players",
     ],
-    famousGameIds: ["capablanca-lasker-1914"],
+    famousGameIds: [],
     faqs: [
       {
         q: "Was Capablanca's talent truly natural?",
