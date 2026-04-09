@@ -957,6 +957,8 @@ export function Navbar() {
                     { href: "/time-controls", label: "⏱ Time Controls" },
                     { href: "/mistakes", label: "❌ Common Mistakes" },
                     { href: "/improve", label: "📈 Improve by Rating" },
+                    { href: "/games", label: "♛ Famous Games" },
+                    { href: "/players", label: "👑 Grandmasters" },
                   ],
                 },
                 {
