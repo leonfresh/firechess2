@@ -930,22 +930,22 @@ export const FAMOUS_GAMES: FamousGame[] = [
     id: "tal-botvinnik-1960",
     starPlayerSlug: "mikhail-tal",
     name: "Tal's World Championship Attack",
-    white: "Mikhail Tal",
-    black: "Mikhail Botvinnik",
+    white: "Mikhail Botvinnik",
+    black: "Mikhail Tal",
     year: 1960,
     event: "World Chess Championship, Moscow (Game 6)",
-    result: "1-0",
+    result: "0-1",
     era: "modern",
     tagline:
-      "Tal sacrifices a knight on move 22 with no obvious compensation, creating a whirlwind of complications that cost Botvinnik the World Championship — chaos was Tal's greatest weapon.",
+      "Playing as Black, Tal sacrifices a knight on move 21 with no obvious compensation, creating a whirlwind of complications that cost Botvinnik the World Championship — chaos was Tal's greatest weapon.",
     story:
-      "In Game 6 of the 1960 World Championship, 23-year-old Tal played the legendary Nd5!? sacrifice against Botvinnik — a move with no clear compensation. Botvinnik, one of the greatest defensive players in history, struggled to find the refutation over the board. Tal's pieces created a maze of complications that Botvinnik navigated incorrectly, and Tal won a crucial game in the match. He went on to win the championship 12.5–8.5, becoming the youngest world champion at the time. Even today, computers struggle to determine if the sacrifice was objectively correct.",
+      "In Game 6 of the 1960 World Championship, 23-year-old Tal — playing Black — unleashed the legendary 21...Nf4!! sacrifice against Botvinnik with no clear compensation. Botvinnik, one of the greatest defensive players in history, struggled to find the refutation over the board. The audience became so excited the game was moved to a back room due to the noise. Tal's pieces created an avalanche of complications that Botvinnik navigated incorrectly, and Tal won a crucial game in the match. He went on to win the championship 12½–8½, becoming the youngest world champion at the time. Even today, computers struggle to determine if the sacrifice was objectively correct.",
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
     moves:
-      "d4,Nf6,c4,g6,Nc3,Bg7,e4,d6,Be2,O-O,Nf3,e5,d5,Nbd7,Bg5,h6,Bh4,g5,Bg3,Nh5,Nd2,Nxg3,hxg3,c5,dxc6,bxc6,O-O",
-    orientation: "white",
+      "c4,Nf6,Nf3,g6,g3,Bg7,Bg2,O-O,d4,d6,Nc3,Nbd7,O-O,e5,e4,c6,h3,Qb6,d5,cxd5,cxd5,Nc5,Ne1,Bd7,Nd3,Nxd3,Qxd3,Rfc8,Rb1,Nh5,Be3,Qb4,Qe2,Rc4,Rfc1,Rac8,Kh2,f5,exf5,Bxf5,Ra1,Nf4,gxf4,exf4,Bd2,Qxb2,Rab1,f3,Rxb2,fxe2,Rb3,Rd4,Be1,Be5+,Kg1,Bf4,Nxe2,Rxc1,Nxd4,Rxe1+,Bf1,Be4,Ne2,Be5,f4,Bf6,Rxb7,Bxd5,Rc7,Bxa2,Rxa7,Bc4,Ra8+,Kf7,Ra7+,Ke6,Ra3,d5,Kf2,Bh4+,Kg2,Kd6,Ng3,Bxg3,Bxc4,dxc4,Kxg3,Kd5,Ra7,c3,Rc7,Kd4,Rd7+",
+    orientation: "black",
     caption:
-      "Tal vs Botvinnik, World Championship 1960 Game 6 — the Nd5!? sacrifice that helped Tal become the youngest world champion ever.",
+      "Botvinnik vs Tal, World Championship 1960 Game 6 — Tal's Nf4!! sacrifice as Black that helped him become the youngest world champion ever.",
     tacticalThemes: [
       "knight sacrifice",
       "complications",
@@ -954,22 +954,22 @@ export const FAMOUS_GAMES: FamousGame[] = [
       "world championship",
     ],
     keyMoment: {
-      moveNumber: 22,
+      moveNumber: 21,
       description:
-        "Nd5!? has no clear justification — Tal admitted he could not calculate the full consequences. But the resulting chaos was Tal's greatest weapon, and Botvinnik navigated it incorrectly.",
+        "21...Nf4!! has no clear justification — Tal admitted he could not fully calculate the consequences. He gambled on chaos, and Botvinnik's 25th move was the critical error that sealed his fate.",
     },
     faqs: [
       {
-        q: "Did Tal actually calculate the Nd5 sacrifice?",
-        a: "Tal famously admitted he could not fully calculate the consequences of Nd5!?. He played it because he knew the complications would be extremely difficult for both sides — and Tal thrived in chaos.",
+        q: "Did Tal actually calculate the Nf4 sacrifice?",
+        a: "Tal famously admitted he could not fully calculate the consequences of 21...Nf4!!. He played it because he knew the complications would be extremely difficult for both sides — and Tal thrived in chaos while the methodical Botvinnik did not.",
       },
       {
         q: "How old was Tal when he became World Champion?",
-        a: "Mikhail Tal was 23 years old when he defeated Botvinnik in the 1960 World Championship match, making him the youngest world champion in history at the time.",
+        a: "Mikhail Tal was 23 years old when he defeated Botvinnik in the 1960 World Championship match, making him the youngest world champion in history at the time (a record later broken by Kasparov at 22, then Gukesh at 18).",
       },
       {
         q: "Did Botvinnik get a rematch against Tal?",
-        a: "Yes. At the time, the reigning champion had the right to demand a rematch. Botvinnik defeated Tal in the 1961 rematch 13–8 to reclaim his title.",
+        a: "Yes. At the time, the reigning champion had the right to demand a rematch. Botvinnik thoroughly analysed Tal's style, avoided complications in the 1961 rematch, and defeated Tal 13–8 to reclaim his title.",
       },
     ],
     related: ["tal-smyslov-1959", "kasparov-karpov-1985-g16", "immortal-game"],
@@ -1041,8 +1041,7 @@ export const FAMOUS_GAMES: FamousGame[] = [
     story:
       "The 2016 World Championship between Magnus Carlsen and Sergey Karjakin produced a shocking result: all 12 classical games were drawn, forcing a rapid tiebreak. In Game 2 of the tiebreak, Carlsen demonstrated his endgame mastery — converting a tiny advantage with the precision and patience that defines his chess. The win secured his second World Championship title. Karjakin, who had stunned the world with his tenacious defensive play throughout the match, had no answer for Carlsen's technique in the tiebreak.",
     fen: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
-    moves:
-      "e4,e5,Nf3,Nc6,Bb5,Nf6,O-O,Nxe4,d4,Nd6,dxe5,Nxb5,a4",
+    moves: "e4,e5,Nf3,Nc6,Bb5,Nf6,O-O,Nxe4,d4,Nd6,dxe5,Nxb5,a4",
     orientation: "white",
     caption:
       "Carlsen vs Karjakin, 2016 World Championship rapid tiebreak — precision endgame play to retain the world title after 12 draws.",
