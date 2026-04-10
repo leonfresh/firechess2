@@ -22,12 +22,30 @@ import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
 import { EvalBar } from "@/components/eval-bar";
 import { earnCoins } from "@/lib/coins";
+import {
+  ChessQuiz,
+  getDailyQuizQuestions,
+  type QuizQuestion,
+} from "@/components/chess-quiz";
+import {
+  PieceMemory,
+  getDailyMemoryPositions,
+  type MemoryPosition,
+} from "@/components/piece-memory";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
 /* ------------------------------------------------------------------ */
 
-type Mode = "weakness" | "speed" | "blunder" | "opening" | "endgame" | "time";
+type Mode =
+  | "weakness"
+  | "speed"
+  | "blunder"
+  | "opening"
+  | "endgame"
+  | "time"
+  | "quiz"
+  | "memory";
 
 type SavedReport = {
   id: string;
@@ -137,7 +155,12 @@ function parseUci(move: string) {
   return {
     from: move.slice(0, 2) as CbSquare,
     to: move.slice(2, 4) as CbSquare,
-    promotion: (move.slice(4, 5) || undefined) as "q" | "r" | "b" | "n" | undefined,
+    promotion: (move.slice(4, 5) || undefined) as
+      | "q"
+      | "r"
+      | "b"
+      | "n"
+      | undefined,
   };
 }
 
@@ -146,7 +169,9 @@ function squareToUci(from: string, to: string, promo?: string) {
 }
 
 /** Get worst tactic motifs from saved reports, sorted by frequency */
-function getWeakMotifs(reports: SavedReport[]): { motif: string; count: number; theme: string }[] {
+function getWeakMotifs(
+  reports: SavedReport[],
+): { motif: string; count: number; theme: string }[] {
   const counts = new Map<string, number>();
   for (const r of reports) {
     for (const t of r.missedTactics ?? []) {
@@ -164,7 +189,9 @@ function getWeakMotifs(reports: SavedReport[]): { motif: string; count: number; 
 }
 
 /** Get worst endgame types from reports */
-function getWeakEndgames(reports: SavedReport[]): { type: string; avgCpLoss: number; theme: string }[] {
+function getWeakEndgames(
+  reports: SavedReport[],
+): { type: string; avgCpLoss: number; theme: string }[] {
   const statsMap = new Map<string, { total: number; count: number }>();
   for (const r of reports) {
     const endgameStats = r.diagnostics?.endgameStats;
@@ -306,8 +333,10 @@ function buildTimePositions(reports: SavedReport[]): TimePressurePosition[] {
   }
   // Sort by worst first: rushed with high cpLoss, wasted with most time
   positions.sort((a, b) => {
-    const aScore = (a.cpLoss ?? 0) + (a.verdict === "wasted" ? a.timeSpentSec * 10 : 0);
-    const bScore = (b.cpLoss ?? 0) + (b.verdict === "wasted" ? b.timeSpentSec * 10 : 0);
+    const aScore =
+      (a.cpLoss ?? 0) + (a.verdict === "wasted" ? a.timeSpentSec * 10 : 0);
+    const bScore =
+      (b.cpLoss ?? 0) + (b.verdict === "wasted" ? b.timeSpentSec * 10 : 0);
     return bScore - aScore;
   });
   return positions;
@@ -374,10 +403,28 @@ const MODES: {
   {
     id: "time",
     title: "Time Pressure",
-    description: "Revisit moments where you rushed or overthought — with a timer",
+    description:
+      "Revisit moments where you rushed or overthought — with a timer",
     icon: "⏱️",
     gradient: "from-violet-500/20 to-purple-500/20",
     needsReport: true,
+  },
+  {
+    id: "quiz",
+    title: "Chess Quiz",
+    description:
+      "Test your chess knowledge: rules, tactics, endgames, and strategy",
+    icon: "🧠",
+    gradient: "from-violet-500/20 to-indigo-500/20",
+    needsReport: false,
+  },
+  {
+    id: "memory",
+    title: "Piece Memory",
+    description: "Study a position for 5 seconds, then answer from memory",
+    icon: "👁️",
+    gradient: "from-amber-500/20 to-orange-500/20",
+    needsReport: false,
   },
 ];
 
@@ -437,21 +484,39 @@ type PuzzleBoardProps = {
   showHint?: boolean;
 };
 
-function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, onFailed, showHint }: PuzzleBoardProps) {
+function PuzzleBoard({
+  fen,
+  triggerMove,
+  solutionMoves,
+  orientation,
+  onSolved,
+  onFailed,
+  showHint,
+}: PuzzleBoardProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { ref: boardRef, size: boardSize } = useBoardSize(720, { evalBar: false });
+  const { ref: boardRef, size: boardSize } = useBoardSize(720, {
+    evalBar: false,
+  });
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const [game, setGame] = useState(() => new Chess(fen));
   const [moveIndex, setMoveIndex] = useState(-1); // -1 = waiting for trigger move
-  const [status, setStatus] = useState<"playing" | "correct" | "wrong">("playing");
+  const [status, setStatus] = useState<"playing" | "correct" | "wrong">(
+    "playing",
+  );
   const [hintSquare, setHintSquare] = useState<string | null>(null);
   const [attempts, setAttempts] = useState(0);
   const MAX_ATTEMPTS = 3;
   const [shaking, setShaking] = useState(false);
-  const [moveIndicator, setMoveIndicator] = useState<{ square: string; type: "correct" | "wrong" } | null>(null);
+  const [moveIndicator, setMoveIndicator] = useState<{
+    square: string;
+    type: "correct" | "wrong";
+  } | null>(null);
   // Track opponent's last move for highlighting
-  const [opponentLastMove, setOpponentLastMove] = useState<{ from: string; to: string } | null>(null);
+  const [opponentLastMove, setOpponentLastMove] = useState<{
+    from: string;
+    to: string;
+  } | null>(null);
 
   // Apply initial "trigger" move (opponent's last move from the PGN, before puzzle starts)
   useEffect(() => {
@@ -466,7 +531,11 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
     const newGame = new Chess(fen);
     const timer = setTimeout(() => {
       try {
-        newGame.move({ from: parsed.from, to: parsed.to, promotion: parsed.promotion });
+        newGame.move({
+          from: parsed.from,
+          to: parsed.to,
+          promotion: parsed.promotion,
+        });
         playSound("move");
         setGame(new Chess(newGame.fen()));
         setOpponentLastMove({ from: parsed.from, to: parsed.to });
@@ -480,7 +549,12 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
 
   // Show hint
   useEffect(() => {
-    if (showHint && status === "playing" && moveIndex >= 0 && moveIndex < solutionMoves.length) {
+    if (
+      showHint &&
+      status === "playing" &&
+      moveIndex >= 0 &&
+      moveIndex < solutionMoves.length
+    ) {
       const expected = solutionMoves[moveIndex];
       setHintSquare(expected.slice(0, 2));
     } else {
@@ -496,7 +570,8 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
       if (!expected) return false;
 
       const expectedParsed = parseUci(expected);
-      const matchesBase = from === expectedParsed.from && to === expectedParsed.to;
+      const matchesBase =
+        from === expectedParsed.from && to === expectedParsed.to;
 
       if (matchesBase) {
         const promotion = expectedParsed.promotion ?? "q";
@@ -524,7 +599,11 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
           setMoveIndicator(null);
           const g = new Chess(newGame.fen());
           try {
-            g.move({ from: opParsed.from, to: opParsed.to, promotion: opParsed.promotion });
+            g.move({
+              from: opParsed.from,
+              to: opParsed.to,
+              promotion: opParsed.promotion,
+            });
             playSound(g.isCheck() ? "check" : "move");
             setGame(new Chess(g.fen()));
             setMoveIndex(nextIndex + 1);
@@ -570,7 +649,7 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
 
       return false;
     },
-    [game, moveIndex, solutionMoves, status, onSolved, onFailed, attempts]
+    [game, moveIndex, solutionMoves, status, onSolved, onFailed, attempts],
   );
 
   const customSquareStyles: Record<string, React.CSSProperties> = {};
@@ -613,7 +692,9 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
     <div className="flex flex-col items-center gap-3">
       {/* Turn indicator */}
       <div className="flex items-center gap-2 text-xs">
-        <div className={`h-3 w-3 rounded-full ${orientation === "white" ? "bg-white border border-slate-400" : "bg-slate-800 border border-slate-500"}`} />
+        <div
+          className={`h-3 w-3 rounded-full ${orientation === "white" ? "bg-white border border-slate-400" : "bg-slate-800 border border-slate-500"}`}
+        />
         <span className="text-slate-400">Your turn as {orientation}</span>
       </div>
       <div
@@ -654,7 +735,8 @@ function PuzzleBoard({ fen, triggerMove, solutionMoves, orientation, onSolved, o
           ))}
           {attempts > 0 && (
             <span className="ml-2 text-xs text-red-400/80">
-              {MAX_ATTEMPTS - attempts} {MAX_ATTEMPTS - attempts === 1 ? "try" : "tries"} left
+              {MAX_ATTEMPTS - attempts}{" "}
+              {MAX_ATTEMPTS - attempts === 1 ? "try" : "tries"} left
             </span>
           )}
         </div>
@@ -682,15 +764,22 @@ type SimpleBoardProps = {
 };
 
 function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
-  const { ref: boardRef, size: boardSize } = useBoardSize(720, { evalBar: false });
+  const { ref: boardRef, size: boardSize } = useBoardSize(720, {
+    evalBar: false,
+  });
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const [game, setGame] = useState(() => new Chess(position.fen));
-  const [status, setStatus] = useState<"playing" | "correct" | "wrong">("playing");
+  const [status, setStatus] = useState<"playing" | "correct" | "wrong">(
+    "playing",
+  );
   const [attempts, setAttempts] = useState(0);
   const MAX_ATTEMPTS = 3;
   const [shaking, setShaking] = useState(false);
-  const [moveIndicator, setMoveIndicator] = useState<{ square: string; type: "correct" | "wrong" } | null>(null);
+  const [moveIndicator, setMoveIndicator] = useState<{
+    square: string;
+    type: "correct" | "wrong";
+  } | null>(null);
   // Lock orientation at mount — don't recalculate after correct moves
   const [orientation] = useState<"white" | "black">(() => {
     const chess = new Chess(position.fen);
@@ -736,7 +825,11 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
         setTimeout(() => {
           const g = new Chess(game.fen());
           try {
-            g.move({ from: expected.from, to: expected.to, promotion: expected.promotion });
+            g.move({
+              from: expected.from,
+              to: expected.to,
+              promotion: expected.promotion,
+            });
             setGame(new Chess(g.fen()));
           } catch {}
         }, 600);
@@ -746,7 +839,7 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
 
       return false;
     },
-    [game, expected, status, onResult, attempts]
+    [game, expected, status, onResult, attempts],
   );
 
   const customSquareStyles: Record<string, React.CSSProperties> = {};
@@ -769,7 +862,9 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
     <div className="flex flex-col items-center gap-3">
       {/* Turn indicator */}
       <div className="flex items-center gap-2 text-xs">
-        <div className={`h-3 w-3 rounded-full ${orientation === "white" ? "bg-white border border-slate-400" : "bg-slate-800 border border-slate-500"}`} />
+        <div
+          className={`h-3 w-3 rounded-full ${orientation === "white" ? "bg-white border border-slate-400" : "bg-slate-800 border border-slate-500"}`}
+        />
         <span className="text-slate-400">Your turn as {orientation}</span>
       </div>
       <div
@@ -810,7 +905,8 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
           ))}
           {attempts > 0 && (
             <span className="ml-2 text-xs text-red-400/80">
-              {MAX_ATTEMPTS - attempts} {MAX_ATTEMPTS - attempts === 1 ? "try" : "tries"} left
+              {MAX_ATTEMPTS - attempts}{" "}
+              {MAX_ATTEMPTS - attempts === 1 ? "try" : "tries"} left
             </span>
           )}
         </div>
@@ -837,16 +933,27 @@ type TimePressureBoardProps = {
   showHint?: boolean;
 };
 
-function TimePressureBoard({ position, onResult, showHint }: TimePressureBoardProps) {
-  const { ref: boardRef, size: boardSize } = useBoardSize(720, { evalBar: false });
+function TimePressureBoard({
+  position,
+  onResult,
+  showHint,
+}: TimePressureBoardProps) {
+  const { ref: boardRef, size: boardSize } = useBoardSize(720, {
+    evalBar: false,
+  });
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const [game, setGame] = useState(() => new Chess(position.fen));
-  const [status, setStatus] = useState<"playing" | "correct" | "wrong">("playing");
+  const [status, setStatus] = useState<"playing" | "correct" | "wrong">(
+    "playing",
+  );
   const [attempts, setAttempts] = useState(0);
   const MAX_ATTEMPTS = 3;
   const [shaking, setShaking] = useState(false);
-  const [moveIndicator, setMoveIndicator] = useState<{ square: string; type: "correct" | "wrong" } | null>(null);
+  const [moveIndicator, setMoveIndicator] = useState<{
+    square: string;
+    type: "correct" | "wrong";
+  } | null>(null);
   const orientation = position.userColor;
 
   // Timer
@@ -910,7 +1017,11 @@ function TimePressureBoard({ position, onResult, showHint }: TimePressureBoardPr
         setTimeout(() => {
           const g = new Chess(game.fen());
           try {
-            g.move({ from: expected.from, to: expected.to, promotion: expected.promotion });
+            g.move({
+              from: expected.from,
+              to: expected.to,
+              promotion: expected.promotion,
+            });
             setGame(new Chess(g.fen()));
           } catch {}
         }, 600);
@@ -919,7 +1030,7 @@ function TimePressureBoard({ position, onResult, showHint }: TimePressureBoardPr
 
       return false;
     },
-    [game, expected, status, onResult, attempts, stopTimer]
+    [game, expected, status, onResult, attempts, stopTimer],
   );
 
   const customSquareStyles: Record<string, React.CSSProperties> = {};
@@ -940,32 +1051,52 @@ function TimePressureBoard({ position, onResult, showHint }: TimePressureBoardPr
 
   // Compute time comparison
   const originalTimeSec = position.timeSpentSec;
-  const verdictLabel = position.verdict === "rushed" ? "You rushed this" : "You overthought this";
-  const verdictColor = position.verdict === "rushed" ? "text-red-400" : "text-amber-400";
+  const verdictLabel =
+    position.verdict === "rushed" ? "You rushed this" : "You overthought this";
+  const verdictColor =
+    position.verdict === "rushed" ? "text-red-400" : "text-amber-400";
 
   return (
     <div className="flex flex-col items-center gap-3">
       {/* Timer + Context */}
       <div className="flex items-center gap-4 text-sm">
         <div className="flex items-center gap-2 rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-1.5">
-          <svg className="h-4 w-4 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <svg
+            className="h-4 w-4 text-violet-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
-          <span className={`font-mono font-bold ${thinkTime > originalTimeSec * 2 ? "text-red-400" : "text-violet-300"}`}>
+          <span
+            className={`font-mono font-bold ${thinkTime > originalTimeSec * 2 ? "text-red-400" : "text-violet-300"}`}
+          >
             {formatTime(thinkTime)}
           </span>
         </div>
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <span>Original:</span>
-          <span className="font-mono font-medium text-slate-400">{formatTime(originalTimeSec)}</span>
+          <span className="font-mono font-medium text-slate-400">
+            {formatTime(originalTimeSec)}
+          </span>
         </div>
       </div>
 
       {/* Turn indicator */}
       <div className="flex items-center gap-2 text-xs">
-        <div className={`h-3 w-3 rounded-full ${orientation === "white" ? "bg-white border border-slate-400" : "bg-slate-800 border border-slate-500"}`} />
+        <div
+          className={`h-3 w-3 rounded-full ${orientation === "white" ? "bg-white border border-slate-400" : "bg-slate-800 border border-slate-500"}`}
+        />
         <span className="text-slate-400">Your turn as {orientation}</span>
-        <span className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-bold ${position.verdict === "rushed" ? "bg-red-500/15 text-red-400" : "bg-amber-500/15 text-amber-400"}`}>
+        <span
+          className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-bold ${position.verdict === "rushed" ? "bg-red-500/15 text-red-400" : "bg-amber-500/15 text-amber-400"}`}
+        >
           {verdictLabel}
         </span>
       </div>
@@ -1009,7 +1140,8 @@ function TimePressureBoard({ position, onResult, showHint }: TimePressureBoardPr
           ))}
           {attempts > 0 && (
             <span className="ml-2 text-xs text-red-400/80">
-              {MAX_ATTEMPTS - attempts} {MAX_ATTEMPTS - attempts === 1 ? "try" : "tries"} left
+              {MAX_ATTEMPTS - attempts}{" "}
+              {MAX_ATTEMPTS - attempts === 1 ? "try" : "tries"} left
             </span>
           )}
         </div>
@@ -1021,24 +1153,34 @@ function TimePressureBoard({ position, onResult, showHint }: TimePressureBoardPr
           {status === "correct" ? (
             <p className="text-sm font-medium text-emerald-400">✓ Correct!</p>
           ) : (
-            <p className="text-sm font-medium text-red-400">Out of tries — the correct move is shown above</p>
+            <p className="text-sm font-medium text-red-400">
+              Out of tries — the correct move is shown above
+            </p>
           )}
           <div className="flex items-center gap-4 text-xs">
             <div>
               <span className="text-slate-500">Your time: </span>
-              <span className="font-mono font-bold text-white">{formatTime(thinkTime)}</span>
+              <span className="font-mono font-bold text-white">
+                {formatTime(thinkTime)}
+              </span>
             </div>
             <div>
               <span className="text-slate-500">Original: </span>
-              <span className={`font-mono font-bold ${verdictColor}`}>{formatTime(originalTimeSec)}</span>
-            </div>
-            {thinkTime < originalTimeSec && position.verdict === "wasted" && status === "correct" && (
-              <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
-                ⚡ {originalTimeSec - thinkTime}s faster!
+              <span className={`font-mono font-bold ${verdictColor}`}>
+                {formatTime(originalTimeSec)}
               </span>
-            )}
+            </div>
+            {thinkTime < originalTimeSec &&
+              position.verdict === "wasted" &&
+              status === "correct" && (
+                <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+                  ⚡ {originalTimeSec - thinkTime}s faster!
+                </span>
+              )}
           </div>
-          <p className="text-xs leading-relaxed text-slate-400">{position.reason}</p>
+          <p className="text-xs leading-relaxed text-slate-400">
+            {position.reason}
+          </p>
           {position.cpLoss != null && position.cpLoss > 0 && (
             <p className="text-xs text-red-400/70">
               Original move lost −{(position.cpLoss / 100).toFixed(1)} pawns
@@ -1084,6 +1226,14 @@ export default function TrainPage() {
   // Session complete
   const [sessionDone, setSessionDone] = useState(false);
 
+  // Quiz mode
+  const [quizQs, setQuizQs] = useState<QuizQuestion[]>([]);
+  const [quizIdx, setQuizIdx] = useState(0);
+
+  // Memory mode
+  const [memoryPs, setMemoryPs] = useState<MemoryPosition[]>([]);
+  const [memoryIdx, setMemoryIdx] = useState(0);
+
   // Load reports
   useEffect(() => {
     if (sessionLoading) return;
@@ -1115,24 +1265,47 @@ export default function TrainPage() {
   // Filter reports to selected user
   const reports = useMemo(() => {
     if (!selectedUser) return allReports;
-    return allReports.filter(r => r.chessUsername === selectedUser);
+    return allReports.filter((r) => r.chessUsername === selectedUser);
   }, [allReports, selectedUser]);
 
   const weakMotifs = useMemo(() => getWeakMotifs(reports), [reports]);
   const weakEndgames = useMemo(() => getWeakEndgames(reports), [reports]);
-  const blunderPositions = useMemo(() => buildBlunderPositions(reports), [reports]);
-  const openingPositions = useMemo(() => buildOpeningPositions(reports), [reports]);
+  const blunderPositions = useMemo(
+    () => buildBlunderPositions(reports),
+    [reports],
+  );
+  const openingPositions = useMemo(
+    () => buildOpeningPositions(reports),
+    [reports],
+  );
   const timePositions = useMemo(() => buildTimePositions(reports), [reports]);
 
   // Which scan types has the user saved for this username?
-  const hasTacticsScan = useMemo(() =>
-    reports.some(r => r.scanMode === "tactics" || r.scanMode === "both"), [reports]);
-  const hasEndgameScan = useMemo(() =>
-    reports.some(r => r.scanMode === "endgames" || r.scanMode === "both"), [reports]);
-  const hasOpeningScan = useMemo(() =>
-    reports.some(r => r.scanMode === "openings" || r.scanMode === "both" || !r.scanMode), [reports]);
-  const hasTimeScan = useMemo(() =>
-    reports.some(r => r.scanMode === "time-management" || r.scanMode === "both"), [reports]);
+  const hasTacticsScan = useMemo(
+    () =>
+      reports.some((r) => r.scanMode === "tactics" || r.scanMode === "both"),
+    [reports],
+  );
+  const hasEndgameScan = useMemo(
+    () =>
+      reports.some((r) => r.scanMode === "endgames" || r.scanMode === "both"),
+    [reports],
+  );
+  const hasOpeningScan = useMemo(
+    () =>
+      reports.some(
+        (r) =>
+          r.scanMode === "openings" || r.scanMode === "both" || !r.scanMode,
+      ),
+    [reports],
+  );
+  const hasTimeScan = useMemo(
+    () =>
+      reports.some(
+        (r) => r.scanMode === "time-management" || r.scanMode === "both",
+      ),
+    [reports],
+  );
 
   // Fetch puzzles for a set of themes
   const fetchPuzzles = useCallback(async (themes: string[], count = 5) => {
@@ -1145,7 +1318,7 @@ export default function TrainPage() {
     setSessionDone(false);
     try {
       const res = await fetch(
-        `/api/puzzles?themes=${themes.join(",")}&count=${count}`
+        `/api/puzzles?themes=${themes.join(",")}&count=${count}`,
       );
       const data = await res.json();
       setPuzzles(data.puzzles ?? []);
@@ -1167,14 +1340,18 @@ export default function TrainPage() {
         const themes = uniqueThemes(weakMotifs, 5);
         if (themes.length === 0) {
           // Fallback to general tactics
-          await fetchPuzzles(["fork", "pin", "skewer", "sacrifice", "hangingPiece"], 5);
+          await fetchPuzzles(
+            ["fork", "pin", "skewer", "sacrifice", "hangingPiece"],
+            5,
+          );
         } else {
           await fetchPuzzles(themes, 5);
         }
       } else if (mode === "speed") {
-        const themes = weakMotifs.length > 0
-          ? uniqueThemes(weakMotifs, 4)
-          : ["fork", "pin", "sacrifice", "hangingPiece"];
+        const themes =
+          weakMotifs.length > 0
+            ? uniqueThemes(weakMotifs, 4)
+            : ["fork", "pin", "sacrifice", "hangingPiece"];
         await fetchPuzzles(themes, 6);
         setTimeLeft(speedTime * 60);
       } else if (mode === "blunder") {
@@ -1184,17 +1361,32 @@ export default function TrainPage() {
         setDrillPositions(openingPositions.slice(0, 10));
         setCurrentDrill(0);
       } else if (mode === "endgame") {
-        const themes = weakEndgames.length > 0
-          ? uniqueThemes(weakEndgames, 4)
-          : ["pawnEndgame", "rookEndgame", "bishopEndgame", "knightEndgame"];
+        const themes =
+          weakEndgames.length > 0
+            ? uniqueThemes(weakEndgames, 4)
+            : ["pawnEndgame", "rookEndgame", "bishopEndgame", "knightEndgame"];
         await fetchPuzzles(themes, 5);
       } else if (mode === "time") {
         setDrillPositions([]); // clear generic drills
         setCurrentDrill(0);
         setCurrentTimeDrill(0);
+      } else if (mode === "quiz") {
+        setQuizQs(getDailyQuizQuestions(10, Date.now()));
+        setQuizIdx(0);
+      } else if (mode === "memory") {
+        setMemoryPs(getDailyMemoryPositions(5, Date.now()));
+        setMemoryIdx(0);
       }
     },
-    [weakMotifs, weakEndgames, blunderPositions, openingPositions, timePositions, fetchPuzzles, speedTime]
+    [
+      weakMotifs,
+      weakEndgames,
+      blunderPositions,
+      openingPositions,
+      timePositions,
+      fetchPuzzles,
+      speedTime,
+    ],
   );
 
   // Speed drill timer
@@ -1226,9 +1418,10 @@ export default function TrainPage() {
     setTimeout(() => {
       if (activeMode === "speed" && speedActive) {
         // Fetch more puzzles for speed mode
-        const themes = weakMotifs.length > 0
-          ? uniqueThemes(weakMotifs, 4)
-          : ["fork", "pin", "sacrifice", "hangingPiece"];
+        const themes =
+          weakMotifs.length > 0
+            ? uniqueThemes(weakMotifs, 4)
+            : ["fork", "pin", "sacrifice", "hangingPiece"];
         fetchPuzzles(themes, 6);
       } else {
         setCurrentPuzzle((p) => {
@@ -1248,9 +1441,10 @@ export default function TrainPage() {
     setFailed((f) => f + 1);
     // Board already waited 2.5s to show the answer before calling this
     if (activeMode === "speed" && speedActive) {
-      const themes = weakMotifs.length > 0
-        ? uniqueThemes(weakMotifs, 4)
-        : ["fork", "pin", "sacrifice", "hangingPiece"];
+      const themes =
+        weakMotifs.length > 0
+          ? uniqueThemes(weakMotifs, 4)
+          : ["fork", "pin", "sacrifice", "hangingPiece"];
       fetchPuzzles(themes, 6);
     } else {
       setCurrentPuzzle((p) => {
@@ -1287,7 +1481,7 @@ export default function TrainPage() {
         setShowHint(false);
       }, 1500);
     },
-    [drillPositions.length]
+    [drillPositions.length],
   );
 
   // Handle time drill result
@@ -1300,19 +1494,22 @@ export default function TrainPage() {
       } else {
         setFailed((f) => f + 1);
       }
-      setTimeout(() => {
-        setCurrentTimeDrill((d) => {
-          const max = Math.min(timePositions.length, 10);
-          if (d + 1 >= max) {
-            setSessionDone(true);
-            return d;
-          }
-          return d + 1;
-        });
-        setShowHint(false);
-      }, correct ? 2500 : 500); // longer delay to read feedback
+      setTimeout(
+        () => {
+          setCurrentTimeDrill((d) => {
+            const max = Math.min(timePositions.length, 10);
+            if (d + 1 >= max) {
+              setSessionDone(true);
+              return d;
+            }
+            return d + 1;
+          });
+          setShowHint(false);
+        },
+        correct ? 2500 : 500,
+      ); // longer delay to read feedback
     },
-    [timePositions.length]
+    [timePositions.length],
   );
 
   // Back to mode select
@@ -1323,6 +1520,8 @@ export default function TrainPage() {
     setSessionDone(false);
     setSpeedActive(false);
     setCurrentTimeDrill(0);
+    setQuizIdx(0);
+    setMemoryIdx(0);
     if (timerRef.current) clearInterval(timerRef.current);
   };
 
@@ -1360,7 +1559,8 @@ export default function TrainPage() {
       }
 
       // Solver color = whoever moves AFTER the trigger
-      const solverColor: "white" | "black" = new Chess(postTriggerFen).turn() === "w" ? "white" : "black";
+      const solverColor: "white" | "black" =
+        new Chess(postTriggerFen).turn() === "w" ? "white" : "black";
 
       return { preTriggerFen, postTriggerFen, triggerMove, solverColor };
     } catch {
@@ -1389,13 +1589,17 @@ export default function TrainPage() {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
-                {activeMode ? MODES.find((m) => m.id === activeMode)?.title : "Training"}
+                {activeMode
+                  ? MODES.find((m) => m.id === activeMode)?.title
+                  : "Training"}
               </h1>
               <span className="rounded-md bg-fuchsia-500/20 border border-fuchsia-500/30 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-fuchsia-300">
                 Beta
               </span>
               {activeMode && (
-                <span className="text-2xl">{MODES.find((m) => m.id === activeMode)?.icon}</span>
+                <span className="text-2xl">
+                  {MODES.find((m) => m.id === activeMode)?.icon}
+                </span>
               )}
             </div>
             <p className="mt-1 text-sm text-slate-400">
@@ -1409,8 +1613,18 @@ export default function TrainPage() {
               onClick={goBack}
               className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-400 transition-colors hover:bg-white/[0.08] hover:text-white"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
               Back
             </button>
@@ -1420,8 +1634,18 @@ export default function TrainPage() {
               href="/dashboard"
               className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-400 transition-colors hover:bg-white/[0.08] hover:text-white"
             >
-              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
               Dashboard
             </Link>
@@ -1440,10 +1664,17 @@ export default function TrainPage() {
           <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-8 sm:p-12">
             <div className="mx-auto max-w-lg text-center">
               <div className="mb-4 text-4xl">🔒</div>
-              <p className="text-xl font-bold text-white">Sign in to unlock training</p>
+              <p className="text-xl font-bold text-white">
+                Sign in to unlock training
+              </p>
               <p className="mt-3 text-sm leading-relaxed text-slate-400">
-                Training modes are built from <span className="text-white font-medium">your actual games</span>. We analyze your scan reports to find the tactics you miss,
-                openings you leak, and endgames you struggle with — then generate drills that target those exact weaknesses.
+                Training modes are built from{" "}
+                <span className="text-white font-medium">
+                  your actual games
+                </span>
+                . We analyze your scan reports to find the tactics you miss,
+                openings you leak, and endgames you struggle with — then
+                generate drills that target those exact weaknesses.
               </p>
               <div className="mt-5 grid grid-cols-2 gap-3 text-left sm:grid-cols-3">
                 {[
@@ -1454,7 +1685,10 @@ export default function TrainPage() {
                   { icon: "⚡", label: "Timed puzzle rush" },
                   { icon: "⏱️", label: "Time pressure drill" },
                 ].map((f) => (
-                  <div key={f.label} className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                  <div
+                    key={f.label}
+                    className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2"
+                  >
                     <span className="text-base">{f.icon}</span>
                     <span className="text-xs text-slate-300">{f.label}</span>
                   </div>
@@ -1467,7 +1701,9 @@ export default function TrainPage() {
                 >
                   Sign in to start
                 </Link>
-                <span className="text-xs text-slate-500">Free accounts can use Speed Drill</span>
+                <span className="text-xs text-slate-500">
+                  Free accounts can use Speed Drill
+                </span>
               </div>
             </div>
           </div>
@@ -1479,14 +1715,20 @@ export default function TrainPage() {
             {/* User selector — shown when reports span multiple chess usernames */}
             {usernames.length > 1 && (
               <div className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-                <span className="text-sm text-slate-400">Training data for:</span>
+                <span className="text-sm text-slate-400">
+                  Training data for:
+                </span>
                 <select
                   value={selectedUser ?? ""}
                   onChange={(e) => setSelectedUser(e.target.value)}
                   className="rounded-lg border border-white/10 bg-white/[0.06] px-3 py-1.5 text-sm font-medium text-white outline-none transition-colors hover:border-white/20 focus:border-fuchsia-500/50"
                 >
                   {usernames.map((u) => (
-                    <option key={u} value={u} className="bg-slate-900 text-white">
+                    <option
+                      key={u}
+                      value={u}
+                      className="bg-slate-900 text-white"
+                    >
                       {u}
                     </option>
                   ))}
@@ -1500,7 +1742,9 @@ export default function TrainPage() {
             {/* Weakness summary */}
             {reports.length > 0 && weakMotifs.length > 0 && (
               <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-                <p className="text-xs font-medium uppercase tracking-wider text-slate-500">Your weakest areas</p>
+                <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                  Your weakest areas
+                </p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {weakMotifs.slice(0, 6).map((m) => (
                     <span
@@ -1525,24 +1769,31 @@ export default function TrainPage() {
             {reports.length === 0 && (
               <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.05] p-4">
                 <p className="text-sm text-amber-300">
-                  <strong>No scan reports yet.</strong> Run a scan first to unlock personalized training.
-                  Speed Drill is available without reports.
+                  <strong>No scan reports yet.</strong> Run a scan first to
+                  unlock personalized training. Speed Drill is available without
+                  reports.
                 </p>
               </div>
             )}
 
-            {reports.length > 0 && (!hasTacticsScan || !hasEndgameScan || !hasTimeScan) && (
-              <div className="rounded-xl border border-blue-500/20 bg-blue-500/[0.05] p-4">
-                <p className="text-sm text-blue-300">
-                  <strong>Unlock more training modes</strong> — {[
-                    !hasTacticsScan && "run a tactics scan for Weakness Trainer & Blunder Spotter",
-                    !hasEndgameScan && "run an endgame scan for Endgame Gym",
-                    !hasTimeScan && "run a time management scan for Time Pressure drills",
-                  ].filter(Boolean).join("; ")}.
-                  Reports auto-save after each scan.
-                </p>
-              </div>
-            )}
+            {reports.length > 0 &&
+              (!hasTacticsScan || !hasEndgameScan || !hasTimeScan) && (
+                <div className="rounded-xl border border-blue-500/20 bg-blue-500/[0.05] p-4">
+                  <p className="text-sm text-blue-300">
+                    <strong>Unlock more training modes</strong> —{" "}
+                    {[
+                      !hasTacticsScan &&
+                        "run a tactics scan for Weakness Trainer & Blunder Spotter",
+                      !hasEndgameScan && "run an endgame scan for Endgame Gym",
+                      !hasTimeScan &&
+                        "run a time management scan for Time Pressure drills",
+                    ]
+                      .filter(Boolean)
+                      .join("; ")}
+                    . Reports auto-save after each scan.
+                  </p>
+                </div>
+              )}
 
             {/* Mode cards */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -1551,29 +1802,36 @@ export default function TrainPage() {
 
                 // Each mode requires a specific scan type to have meaningful data
                 const missingScanType =
-                  mode.id === "weakness" ? !hasTacticsScan :
-                  mode.id === "blunder" ? !hasTacticsScan && blunderPositions.length === 0 :
-                  mode.id === "opening" ? !hasOpeningScan :
-                  mode.id === "endgame" ? !hasEndgameScan :
-                  mode.id === "time" ? !hasTimeScan && timePositions.length === 0 :
-                  false;
+                  mode.id === "weakness"
+                    ? !hasTacticsScan
+                    : mode.id === "blunder"
+                      ? !hasTacticsScan && blunderPositions.length === 0
+                      : mode.id === "opening"
+                        ? !hasOpeningScan
+                        : mode.id === "endgame"
+                          ? !hasEndgameScan
+                          : mode.id === "time"
+                            ? !hasTimeScan && timePositions.length === 0
+                            : false;
 
-                const actuallyDisabled = noReports || (mode.needsReport && missingScanType && mode.id !== "speed");
+                const actuallyDisabled =
+                  noReports ||
+                  (mode.needsReport && missingScanType && mode.id !== "speed");
 
                 // Build a helpful disabled message
                 const disabledMessage = noReports
                   ? "Requires a scan report"
                   : mode.id === "weakness"
-                  ? "Run a tactics scan to unlock personalized motifs"
-                  : mode.id === "blunder"
-                  ? "Run a tactics scan to unlock — need missed tactic positions"
-                  : mode.id === "opening"
-                  ? "Run an opening scan to unlock"
-                  : mode.id === "endgame"
-                  ? "Run an endgame scan to unlock personalized endgame types"
-                  : mode.id === "time"
-                  ? "Run a time management scan to unlock"
-                  : "No data available";
+                    ? "Run a tactics scan to unlock personalized motifs"
+                    : mode.id === "blunder"
+                      ? "Run a tactics scan to unlock — need missed tactic positions"
+                      : mode.id === "opening"
+                        ? "Run an opening scan to unlock"
+                        : mode.id === "endgame"
+                          ? "Run an endgame scan to unlock personalized endgame types"
+                          : mode.id === "time"
+                            ? "Run a time management scan to unlock"
+                            : "No data available";
 
                 return (
                   <button
@@ -1587,30 +1845,69 @@ export default function TrainPage() {
                     }`}
                   >
                     <div className="mb-3 text-3xl">{mode.icon}</div>
-                    <h3 className="text-lg font-bold text-white">{mode.title}</h3>
-                    <p className="mt-1 text-xs text-slate-400">{mode.description}</p>
+                    <h3 className="text-lg font-bold text-white">
+                      {mode.title}
+                    </h3>
+                    <p className="mt-1 text-xs text-slate-400">
+                      {mode.description}
+                    </p>
                     {mode.id === "blunder" && blunderPositions.length > 0 && (
-                      <p className="mt-2 text-[11px] text-slate-500">{blunderPositions.length} positions available</p>
+                      <p className="mt-2 text-[11px] text-slate-500">
+                        {blunderPositions.length} positions available
+                      </p>
                     )}
                     {mode.id === "opening" && openingPositions.length > 0 && (
-                      <p className="mt-2 text-[11px] text-slate-500">{openingPositions.length} leaks to practice</p>
+                      <p className="mt-2 text-[11px] text-slate-500">
+                        {openingPositions.length} leaks to practice
+                      </p>
                     )}
                     {mode.id === "weakness" && weakMotifs.length > 0 && (
-                      <p className="mt-2 text-[11px] text-slate-500">Targeting: {weakMotifs.slice(0, 3).map(m => m.motif).join(", ")}</p>
+                      <p className="mt-2 text-[11px] text-slate-500">
+                        Targeting:{" "}
+                        {weakMotifs
+                          .slice(0, 3)
+                          .map((m) => m.motif)
+                          .join(", ")}
+                      </p>
                     )}
                     {mode.id === "endgame" && weakEndgames.length > 0 && (
-                      <p className="mt-2 text-[11px] text-slate-500">Focus: {weakEndgames.slice(0, 2).map(e => e.type).join(", ")}</p>
+                      <p className="mt-2 text-[11px] text-slate-500">
+                        Focus:{" "}
+                        {weakEndgames
+                          .slice(0, 2)
+                          .map((e) => e.type)
+                          .join(", ")}
+                      </p>
                     )}
                     {mode.id === "time" && timePositions.length > 0 && (
                       <p className="mt-2 text-[11px] text-slate-500">
-                        {timePositions.filter(p => p.verdict === "rushed").length} rushed, {timePositions.filter(p => p.verdict === "wasted").length} overthought
+                        {
+                          timePositions.filter((p) => p.verdict === "rushed")
+                            .length
+                        }{" "}
+                        rushed,{" "}
+                        {
+                          timePositions.filter((p) => p.verdict === "wasted")
+                            .length
+                        }{" "}
+                        overthought
                       </p>
                     )}
                     {!actuallyDisabled && (
                       <div className="mt-4 flex items-center gap-1 text-xs font-medium text-white/60 transition-colors group-hover:text-white">
                         Start training
-                        <svg className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                        <svg
+                          className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9 5l7 7-7 7"
+                          />
                         </svg>
                       </div>
                     )}
@@ -1647,17 +1944,33 @@ export default function TrainPage() {
               {coinsEarned > 0 && (
                 <div className="flex items-center gap-1.5">
                   <span>🪙</span>
-                  <span className="text-sm font-medium text-amber-400">+{coinsEarned}</span>
+                  <span className="text-sm font-medium text-amber-400">
+                    +{coinsEarned}
+                  </span>
                 </div>
               )}
               {activeMode === "speed" && (
-                <div className={`ml-auto flex items-center gap-2 rounded-lg px-3 py-1 text-sm font-bold ${
-                  timeLeft <= 30 ? "bg-red-500/20 text-red-400" :
-                  timeLeft <= 60 ? "bg-amber-500/20 text-amber-400" :
-                  "bg-white/[0.04] text-white"
-                }`}>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <div
+                  className={`ml-auto flex items-center gap-2 rounded-lg px-3 py-1 text-sm font-bold ${
+                    timeLeft <= 30
+                      ? "bg-red-500/20 text-red-400"
+                      : timeLeft <= 60
+                        ? "bg-amber-500/20 text-amber-400"
+                        : "bg-white/[0.04] text-white"
+                  }`}
+                >
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
                   {formatTime(timeLeft)}
                 </div>
@@ -1683,7 +1996,10 @@ export default function TrainPage() {
                 </p>
                 <div className="mt-4 flex justify-center gap-3">
                   <button
-                    onClick={() => { setSpeedTime(3); setTimeLeft(180); }}
+                    onClick={() => {
+                      setSpeedTime(3);
+                      setTimeLeft(180);
+                    }}
                     className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
                       speedTime === 3
                         ? "border-amber-500/40 bg-amber-500/15 text-amber-400"
@@ -1693,7 +2009,10 @@ export default function TrainPage() {
                     3 min
                   </button>
                   <button
-                    onClick={() => { setSpeedTime(5); setTimeLeft(300); }}
+                    onClick={() => {
+                      setSpeedTime(5);
+                      setTimeLeft(300);
+                    }}
                     className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
                       speedTime === 5
                         ? "border-amber-500/40 bg-amber-500/15 text-amber-400"
@@ -1713,12 +2032,16 @@ export default function TrainPage() {
             )}
 
             {/* Puzzle board (weakness, speed, endgame modes) */}
-            {(activeMode === "weakness" || (activeMode === "speed" && speedActive) || activeMode === "endgame") && (
+            {(activeMode === "weakness" ||
+              (activeMode === "speed" && speedActive) ||
+              activeMode === "endgame") && (
               <>
                 {loadingPuzzles && (
                   <div className="flex items-center justify-center py-20">
                     <div className="h-8 w-8 animate-spin rounded-full border-2 border-fuchsia-500 border-t-transparent" />
-                    <span className="ml-3 text-sm text-slate-400">Loading puzzles...</span>
+                    <span className="ml-3 text-sm text-slate-400">
+                      Loading puzzles...
+                    </span>
                   </div>
                 )}
                 {!loadingPuzzles && puzzleFen && currentPuzzleData && (
@@ -1728,7 +2051,9 @@ export default function TrainPage() {
                         🎯 {currentPuzzleData.matchedTheme}
                       </span>
                       {activeMode !== "speed" && (
-                        <span>Puzzle {currentPuzzle + 1} of {puzzles.length}</span>
+                        <span>
+                          Puzzle {currentPuzzle + 1} of {puzzles.length}
+                        </span>
                       )}
                     </div>
                     <PuzzleBoard
@@ -1746,7 +2071,8 @@ export default function TrainPage() {
                 {!loadingPuzzles && puzzles.length === 0 && (
                   <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-8 text-center">
                     <p className="text-sm text-slate-400">
-                      No puzzles found for your weakness themes. Try running a scan first.
+                      No puzzles found for your weakness themes. Try running a
+                      scan first.
                     </p>
                   </div>
                 )}
@@ -1759,31 +2085,96 @@ export default function TrainPage() {
                 {drillPositions.length === 0 && (
                   <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-8 text-center">
                     <p className="text-sm text-slate-400">
-                      No {activeMode === "blunder" ? "blunder" : "opening"} positions found. Run a scan first.
+                      No {activeMode === "blunder" ? "blunder" : "opening"}{" "}
+                      positions found. Run a scan first.
                     </p>
                   </div>
                 )}
-                {drillPositions.length > 0 && currentDrill < drillPositions.length && (
+                {drillPositions.length > 0 &&
+                  currentDrill < drillPositions.length && (
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">
+                          {activeMode === "blunder" ? "🔍" : "📖"}{" "}
+                          {drillPositions[currentDrill].label}
+                        </span>
+                        <span>
+                          Position {currentDrill + 1} of {drillPositions.length}
+                        </span>
+                        {drillPositions[currentDrill].cpLoss != null && (
+                          <span className="text-red-400">
+                            -{drillPositions[currentDrill].cpLoss} cp
+                          </span>
+                        )}
+                      </div>
+                      <SimplePuzzleBoard
+                        key={`drill-${currentDrill}`}
+                        position={drillPositions[currentDrill]}
+                        onResult={handleDrillResult}
+                        showHint={showHint}
+                      />
+                    </div>
+                  )}
+              </>
+            )}
+
+            {/* Quiz mode */}
+            {activeMode === "quiz" && (
+              <>
+                {quizQs.length > 0 && quizIdx < quizQs.length ? (
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="flex items-center gap-2 text-xs text-slate-500">
+                      <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-semibold text-violet-300">
+                        🧠 Question {quizIdx + 1} of {quizQs.length}
+                      </span>
+                    </div>
+                    <div className="w-full max-w-lg">
+                      <ChessQuiz
+                        key={quizIdx}
+                        question={quizQs[quizIdx]}
+                        onComplete={(correct) => {
+                          if (correct) setSolved((s) => s + 1);
+                          else setFailed((f) => f + 1);
+                          if (quizIdx + 1 >= quizQs.length) {
+                            setSessionDone(true);
+                          } else {
+                            setQuizIdx((i) => i + 1);
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                ) : null}
+              </>
+            )}
+
+            {/* Piece memory mode */}
+            {activeMode === "memory" && (
+              <>
+                {memoryPs.length > 0 && memoryIdx < memoryPs.length ? (
                   <div className="flex flex-col items-center gap-4">
                     <div className="flex items-center gap-2 text-xs text-slate-500">
                       <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">
-                        {activeMode === "blunder" ? "🔍" : "📖"} {drillPositions[currentDrill].label}
+                        👁️ Position {memoryIdx + 1} of {memoryPs.length}
                       </span>
-                      <span>Position {currentDrill + 1} of {drillPositions.length}</span>
-                      {drillPositions[currentDrill].cpLoss != null && (
-                        <span className="text-red-400">
-                          -{drillPositions[currentDrill].cpLoss} cp
-                        </span>
-                      )}
                     </div>
-                    <SimplePuzzleBoard
-                      key={`drill-${currentDrill}`}
-                      position={drillPositions[currentDrill]}
-                      onResult={handleDrillResult}
-                      showHint={showHint}
-                    />
+                    <div className="w-full max-w-lg">
+                      <PieceMemory
+                        key={memoryIdx}
+                        position={memoryPs[memoryIdx]}
+                        onComplete={(correct) => {
+                          if (correct) setSolved((s) => s + 1);
+                          else setFailed((f) => f + 1);
+                          if (memoryIdx + 1 >= memoryPs.length) {
+                            setSessionDone(true);
+                          } else {
+                            setMemoryIdx((i) => i + 1);
+                          }
+                        }}
+                      />
+                    </div>
                   </div>
-                )}
+                ) : null}
               </>
             )}
 
@@ -1793,31 +2184,43 @@ export default function TrainPage() {
                 {timePositions.length === 0 && (
                   <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-8 text-center">
                     <p className="text-sm text-slate-400">
-                      No time management moments found. Run a scan with games that have clock data.
+                      No time management moments found. Run a scan with games
+                      that have clock data.
                     </p>
                   </div>
                 )}
-                {timePositions.length > 0 && currentTimeDrill < Math.min(timePositions.length, 10) && (
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="flex items-center gap-2 text-xs text-slate-500">
-                      <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${
-                        timePositions[currentTimeDrill].verdict === "rushed"
-                          ? "border-red-500/30 bg-red-500/10 text-red-300"
-                          : "border-amber-500/30 bg-amber-500/10 text-amber-300"
-                      }`}>
-                        ⏱️ {timePositions[currentTimeDrill].verdict === "rushed" ? "Rushed Move" : "Time Wasted"}
-                      </span>
-                      <span>Position {currentTimeDrill + 1} of {Math.min(timePositions.length, 10)}</span>
-                      <span className="text-slate-600">Move {timePositions[currentTimeDrill].moveNumber}</span>
+                {timePositions.length > 0 &&
+                  currentTimeDrill < Math.min(timePositions.length, 10) && (
+                    <div className="flex flex-col items-center gap-4">
+                      <div className="flex items-center gap-2 text-xs text-slate-500">
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${
+                            timePositions[currentTimeDrill].verdict === "rushed"
+                              ? "border-red-500/30 bg-red-500/10 text-red-300"
+                              : "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                          }`}
+                        >
+                          ⏱️{" "}
+                          {timePositions[currentTimeDrill].verdict === "rushed"
+                            ? "Rushed Move"
+                            : "Time Wasted"}
+                        </span>
+                        <span>
+                          Position {currentTimeDrill + 1} of{" "}
+                          {Math.min(timePositions.length, 10)}
+                        </span>
+                        <span className="text-slate-600">
+                          Move {timePositions[currentTimeDrill].moveNumber}
+                        </span>
+                      </div>
+                      <TimePressureBoard
+                        key={`time-${currentTimeDrill}`}
+                        position={timePositions[currentTimeDrill]}
+                        onResult={handleTimeDrillResult}
+                        showHint={showHint}
+                      />
                     </div>
-                    <TimePressureBoard
-                      key={`time-${currentTimeDrill}`}
-                      position={timePositions[currentTimeDrill]}
-                      onResult={handleTimeDrillResult}
-                      showHint={showHint}
-                    />
-                  </div>
-                )}
+                  )}
               </>
             )}
           </div>
@@ -1852,7 +2255,9 @@ export default function TrainPage() {
               </div>
               {coinsEarned > 0 && (
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-amber-400">+{coinsEarned}</p>
+                  <p className="text-2xl font-bold text-amber-400">
+                    +{coinsEarned}
+                  </p>
                   <p className="text-xs text-slate-500">Coins</p>
                 </div>
               )}
@@ -1879,10 +2284,16 @@ export default function TrainPage() {
         {!activeMode && (
           <div className="mt-12 rounded-xl border border-white/[0.06] bg-white/[0.02] p-6 text-center">
             <p className="text-sm text-slate-400">
-              🧪 Training is in <span className="font-semibold text-fuchsia-300">Beta</span> — if you caught a bug or something feels off,{" "}
-              <a href="/feedback" className="font-medium text-fuchsia-400 underline decoration-fuchsia-400/30 underline-offset-2 transition-colors hover:text-fuchsia-300">
+              🧪 Training is in{" "}
+              <span className="font-semibold text-fuchsia-300">Beta</span> — if
+              you caught a bug or something feels off,{" "}
+              <a
+                href="/feedback"
+                className="font-medium text-fuchsia-400 underline decoration-fuchsia-400/30 underline-offset-2 transition-colors hover:text-fuchsia-300"
+              >
                 please leave feedback
-              </a>.
+              </a>
+              .
             </p>
           </div>
         )}

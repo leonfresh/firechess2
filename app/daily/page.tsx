@@ -1,15 +1,24 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Chess } from "chess.js";
 import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { useSession } from "@/components/session-provider";
-import { useBoardSize } from "@/lib/use-board-size";
 import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
 import { earnCoins } from "@/lib/coins";
 import type { MissedTactic } from "@/lib/types";
+import {
+  ChessQuiz,
+  getDailyQuizQuestions,
+  type QuizQuestion,
+} from "@/components/chess-quiz";
+import {
+  PieceMemory,
+  getDailyMemoryPositions,
+  type MemoryPosition,
+} from "@/components/piece-memory";
 
 /* ─────────────────────────────── Types ─────────────────────────────── */
 
@@ -35,9 +44,17 @@ type SavedReport = {
   diagnostics: any;
 };
 
+type TaskIntro = {
+  icon: string;
+  headline: string;
+  body: string;
+};
+
 type DailyTask =
-  | { type: "puzzle"; puzzle: LichessPuzzle }
-  | { type: "blunder"; tactic: MissedTactic };
+  | { type: "puzzle"; puzzle: LichessPuzzle; intro: TaskIntro }
+  | { type: "blunder"; tactic: MissedTactic; intro: TaskIntro }
+  | { type: "quiz"; question: QuizQuestion; intro: TaskIntro }
+  | { type: "memory"; position: MemoryPosition; intro: TaskIntro };
 
 type TaskResult = "pending" | "correct" | "wrong";
 
@@ -81,6 +98,45 @@ const FALLBACK_THEMES = [
   "backRankMate",
 ];
 const ROUTINE_KEY = "fc-daily-routine";
+
+const THEME_DISPLAY: Record<string, string> = {
+  fork: "fork",
+  pin: "pin",
+  skewer: "skewer",
+  discoveredAttack: "discovered attack",
+  doubleCheck: "double check",
+  backRankMate: "back-rank checkmate",
+  sacrifice: "sacrifice",
+  deflection: "deflection",
+  intermezzo: "in-between move",
+  trappedPiece: "trapped piece",
+  hangingPiece: "hanging piece",
+  mate: "mating pattern",
+  crushing: "forcing sequence",
+};
+
+function buildPuzzleIntro(puzzle: LichessPuzzle): TaskIntro {
+  const raw = puzzle.matchedTheme;
+  const display = raw ? (THEME_DISPLAY[raw] ?? raw) : "tactical pattern";
+  return {
+    icon: "🧩",
+    headline: `Train your ${display} vision`,
+    body: `This puzzle was selected because you've struggled with ${display} patterns in your games. Solving it sharpens your pattern recognition when it counts most.`,
+  };
+}
+
+function buildBlunderIntro(tactic: MissedTactic): TaskIntro {
+  const motifRaw = tactic.tags?.[0];
+  const motifTheme = motifRaw ? MOTIF_TO_THEME[motifRaw] : undefined;
+  const motifDisplay = motifTheme
+    ? (THEME_DISPLAY[motifTheme] ?? "tactical")
+    : "tactical";
+  return {
+    icon: "⚠️",
+    headline: `Fix your move ${tactic.moveNumber} blunder`,
+    body: `On move ${tactic.moveNumber} you missed a ${motifDisplay} opportunity. This position is taken directly from your own game — let's drill until it becomes automatic.`,
+  };
+}
 
 /* ─────────────────────────────── Helpers ────────────────────────────── */
 
@@ -277,7 +333,8 @@ function BlunderBoard({
   tactic: MissedTactic;
   onComplete: (correct: boolean) => void;
 }) {
-  const { ref: boardRef, size: boardSize } = useBoardSize(600);
+  const boardContainerRef = useRef<HTMLDivElement>(null);
+  const [boardSize, setBoardSize] = useState(400);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const [game, setGame] = useState(() => new Chess(tactic.fenBefore));
@@ -290,6 +347,10 @@ function BlunderBoard({
     sq: string;
     type: "correct" | "wrong";
   } | null>(null);
+  const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
+  const [legalMoveSquares, setLegalMoveSquares] = useState<
+    Record<string, React.CSSProperties>
+  >({});
   const MAX_TRIES = 3;
 
   const orientation = useMemo<"white" | "black">(
@@ -298,6 +359,17 @@ function BlunderBoard({
   );
   const expected = useMemo(() => parseUci(tactic.bestMove), [tactic.bestMove]);
 
+  // Board autoscale
+  useEffect(() => {
+    const el = boardContainerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      if (entry.contentRect.width > 0) setBoardSize(entry.contentRect.width);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   useEffect(() => {
     preloadSounds();
   }, []);
@@ -305,6 +377,8 @@ function BlunderBoard({
   const handleDrop = useCallback(
     (from: CbSquare, to: CbSquare) => {
       if (status !== "playing") return false;
+      setSelectedSquare(null);
+      setLegalMoveSquares({});
 
       if (from === expected.from && to === expected.to) {
         const g = new Chess(game.fen());
@@ -350,7 +424,61 @@ function BlunderBoard({
     [game, expected, status, attempts, onComplete],
   );
 
-  const customSquareStyles: Record<string, React.CSSProperties> = {};
+  const handleSquareClick = useCallback(
+    (square: CbSquare) => {
+      if (status !== "playing") return;
+
+      // Clicking a highlighted legal-move square → execute move
+      if (selectedSquare && legalMoveSquares[square]) {
+        const from = selectedSquare as CbSquare;
+        setSelectedSquare(null);
+        setLegalMoveSquares({});
+        handleDrop(from, square);
+        return;
+      }
+
+      // Select a piece and show its legal move dots
+      const piece = game.get(square as any);
+      const isOwnPiece =
+        piece &&
+        (orientation === "white" ? piece.color === "w" : piece.color === "b");
+      if (!isOwnPiece) {
+        setSelectedSquare(null);
+        setLegalMoveSquares({});
+        return;
+      }
+
+      const moves = game.moves({ square: square as any, verbose: true });
+      if (moves.length === 0) {
+        setSelectedSquare(null);
+        setLegalMoveSquares({});
+        return;
+      }
+
+      setSelectedSquare(square);
+      const styles: Record<string, React.CSSProperties> = {
+        [square]: { backgroundColor: "rgba(255, 255, 0, 0.25)" },
+      };
+      for (const move of moves) {
+        const isCapture = !!game.get(move.to as any);
+        styles[move.to] = isCapture
+          ? {
+              background:
+                "radial-gradient(circle, transparent 68%, rgba(255,0,0,0.55) 69%)",
+            }
+          : {
+              background:
+                "radial-gradient(circle, rgba(0,180,0,0.75) 14%, transparent 15%)",
+            };
+      }
+      setLegalMoveSquares(styles);
+    },
+    [game, selectedSquare, legalMoveSquares, status, orientation, handleDrop],
+  );
+
+  const customSquareStyles: Record<string, React.CSSProperties> = {
+    ...legalMoveSquares,
+  };
   if (status === "wrong") {
     customSquareStyles[expected.from] = {
       boxShadow: "inset 0 0 16px 4px rgba(239,68,68,0.5)",
@@ -374,8 +502,8 @@ function BlunderBoard({
       </div>
 
       <div
-        ref={boardRef}
-        className={`relative w-full max-w-[600px] overflow-hidden rounded-xl shadow-2xl transition-transform ${
+        ref={boardContainerRef}
+        className={`relative w-full max-w-[520px] overflow-hidden rounded-xl shadow-2xl transition-transform ${
           shaking ? "animate-[shake_0.3s_ease-in-out]" : ""
         }`}
       >
@@ -383,7 +511,9 @@ function BlunderBoard({
           id="daily-blunder"
           position={game.fen()}
           onPieceDrop={handleDrop}
+          onSquareClick={handleSquareClick}
           boardOrientation={orientation}
+          boardWidth={boardSize}
           animationDuration={200}
           arePiecesDraggable={status === "playing"}
           customSquareStyles={customSquareStyles}
@@ -439,7 +569,8 @@ function LichessPuzzleBoard({
     () => setupPuzzlePosition(puzzle.game.pgn, puzzle.puzzle.initialPly),
     [puzzle],
   );
-  const { ref: boardRef, size: boardSize } = useBoardSize(600);
+  const boardContainerRef = useRef<HTMLDivElement>(null);
+  const [boardSize, setBoardSize] = useState(400);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
 
@@ -458,10 +589,25 @@ function LichessPuzzleBoard({
     from: string;
     to: string;
   } | null>(null);
+  const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
+  const [legalMoveSquares, setLegalMoveSquares] = useState<
+    Record<string, React.CSSProperties>
+  >({});
 
   const MAX_TRIES = 3;
   const orientation = setup.solverColor;
   const solution = puzzle.puzzle.solution;
+
+  // Board autoscale
+  useEffect(() => {
+    const el = boardContainerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([entry]) => {
+      if (entry.contentRect.width > 0) setBoardSize(entry.contentRect.width);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   useEffect(() => {
     preloadSounds();
@@ -488,6 +634,9 @@ function LichessPuzzleBoard({
   const handleDrop = useCallback(
     (from: CbSquare, to: CbSquare) => {
       if (status !== "playing" || moveIndex < 0) return false;
+      setSelectedSquare(null);
+      setLegalMoveSquares({});
+
       const expected = solution[moveIndex];
       if (!expected) return false;
       const exp = parseUci(expected);
@@ -568,6 +717,58 @@ function LichessPuzzleBoard({
     [game, moveIndex, solution, status, attempts, onComplete],
   );
 
+  const handleSquareClick = useCallback(
+    (square: CbSquare) => {
+      if (status !== "playing") return;
+
+      // Clicking a highlighted legal-move square → execute move
+      if (selectedSquare && legalMoveSquares[square]) {
+        const from = selectedSquare as CbSquare;
+        setSelectedSquare(null);
+        setLegalMoveSquares({});
+        handleDrop(from, square);
+        return;
+      }
+
+      // Select a piece and show its legal move dots
+      const piece = game.get(square as any);
+      const isOwnPiece =
+        piece &&
+        (orientation === "white" ? piece.color === "w" : piece.color === "b");
+      if (!isOwnPiece) {
+        setSelectedSquare(null);
+        setLegalMoveSquares({});
+        return;
+      }
+
+      const moves = game.moves({ square: square as any, verbose: true });
+      if (moves.length === 0) {
+        setSelectedSquare(null);
+        setLegalMoveSquares({});
+        return;
+      }
+
+      setSelectedSquare(square);
+      const styles: Record<string, React.CSSProperties> = {
+        [square]: { backgroundColor: "rgba(255, 255, 0, 0.25)" },
+      };
+      for (const move of moves) {
+        const isCapture = !!game.get(move.to as any);
+        styles[move.to] = isCapture
+          ? {
+              background:
+                "radial-gradient(circle, transparent 68%, rgba(255,0,0,0.55) 69%)",
+            }
+          : {
+              background:
+                "radial-gradient(circle, rgba(0,180,0,0.75) 14%, transparent 15%)",
+            };
+      }
+      setLegalMoveSquares(styles);
+    },
+    [game, selectedSquare, legalMoveSquares, status, orientation, handleDrop],
+  );
+
   const customSquareStyles: Record<string, React.CSSProperties> = {};
   if (lastOppMove && status === "playing") {
     customSquareStyles[lastOppMove.from] = {
@@ -577,6 +778,8 @@ function LichessPuzzleBoard({
       backgroundColor: "rgba(255,170,0,0.45)",
     };
   }
+  // Overlay legal move dots (after opp-move highlights)
+  Object.assign(customSquareStyles, legalMoveSquares);
   if (status === "wrong") {
     const exp = solution[moveIndex];
     if (exp) {
@@ -603,8 +806,8 @@ function LichessPuzzleBoard({
       </div>
 
       <div
-        ref={boardRef}
-        className={`relative w-full max-w-[600px] overflow-hidden rounded-xl shadow-2xl ${
+        ref={boardContainerRef}
+        className={`relative w-full max-w-[520px] overflow-hidden rounded-xl shadow-2xl ${
           shaking ? "animate-[shake_0.3s_ease-in-out]" : ""
         }`}
       >
@@ -612,7 +815,9 @@ function LichessPuzzleBoard({
           id="daily-puzzle"
           position={game.fen()}
           onPieceDrop={handleDrop}
+          onSquareClick={handleSquareClick}
           boardOrientation={orientation}
+          boardWidth={boardSize}
           animationDuration={200}
           arePiecesDraggable={status === "playing"}
           customSquareStyles={customSquareStyles}
@@ -662,6 +867,37 @@ function LichessPuzzleBoard({
   );
 }
 
+/* ─────────────────────────────── TaskIntroCard ─────────────────────── */
+
+function TaskIntroCard({
+  intro,
+  onStart,
+}: {
+  intro: TaskIntro;
+  onStart: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-6 py-10 text-center">
+      <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.04] text-4xl">
+        {intro.icon}
+      </div>
+      <div className="space-y-2">
+        <h2 className="text-xl font-bold text-white">{intro.headline}</h2>
+        <p className="mx-auto max-w-xs text-sm leading-relaxed text-slate-400">
+          {intro.body}
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={onStart}
+        className="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-8 py-3 text-sm font-bold text-black transition-colors hover:bg-amber-400"
+      >
+        Start →
+      </button>
+    </div>
+  );
+}
+
 /* ─────────────────────────────── DailyPage ─────────────────────────── */
 
 export default function DailyPage() {
@@ -678,6 +914,7 @@ export default function DailyPage() {
   const [completedCorrect, setCompletedCorrect] = useState(0);
   const [completedTotal, setCompletedTotal] = useState(0);
   const [hasTacticsScan, setHasTacticsScan] = useState(true);
+  const [taskPhase, setTaskPhase] = useState<"intro" | "playing">("intro");
 
   const today = useMemo(
     () =>
@@ -747,20 +984,69 @@ export default function DailyPage() {
         } catch {}
 
         // Build task list — interleave puzzles and blunders
-        // Pattern: puzzle, puzzle, blunder, puzzle, blunder, puzzle, blunder, puzzle
         const taskList: DailyTask[] = [];
         let pi = 0;
         let bi = 0;
         while (pi < lichessPuzzles.length || bi < blunders.length) {
-          if (pi < lichessPuzzles.length)
-            taskList.push({ type: "puzzle", puzzle: lichessPuzzles[pi++] });
-          if (pi < lichessPuzzles.length)
-            taskList.push({ type: "puzzle", puzzle: lichessPuzzles[pi++] });
-          if (bi < blunders.length)
-            taskList.push({ type: "blunder", tactic: blunders[bi++] });
+          if (pi < lichessPuzzles.length) {
+            const p = lichessPuzzles[pi++];
+            taskList.push({
+              type: "puzzle",
+              puzzle: p,
+              intro: buildPuzzleIntro(p),
+            });
+          }
+          if (pi < lichessPuzzles.length) {
+            const p = lichessPuzzles[pi++];
+            taskList.push({
+              type: "puzzle",
+              puzzle: p,
+              intro: buildPuzzleIntro(p),
+            });
+          }
+          if (bi < blunders.length) {
+            const t = blunders[bi++];
+            taskList.push({
+              type: "blunder",
+              tactic: t,
+              intro: buildBlunderIntro(t),
+            });
+          }
         }
-        while (pi < lichessPuzzles.length)
-          taskList.push({ type: "puzzle", puzzle: lichessPuzzles[pi++] });
+        while (pi < lichessPuzzles.length) {
+          const p = lichessPuzzles[pi++];
+          taskList.push({
+            type: "puzzle",
+            puzzle: p,
+            intro: buildPuzzleIntro(p),
+          });
+        }
+
+        // Add quiz and memory tasks at natural break points
+        const quizQs = getDailyQuizQuestions(1, dayOfYear());
+        const memoryPs = getDailyMemoryPositions(1, dayOfYear());
+        if (quizQs.length > 0) {
+          taskList.splice(Math.min(2, taskList.length), 0, {
+            type: "quiz",
+            question: quizQs[0],
+            intro: {
+              icon: "🧠",
+              headline: "Chess Knowledge Check",
+              body: "A quick question to test your understanding of chess principles — no board needed. Gets you thinking before the next puzzle.",
+            },
+          });
+        }
+        if (memoryPs.length > 0) {
+          taskList.splice(Math.min(5, taskList.length), 0, {
+            type: "memory",
+            position: memoryPs[0],
+            intro: {
+              icon: "👁️",
+              headline: "Visualization Training",
+              body: "Strong players can picture positions with their eyes closed. You have 5 seconds to memorize this position — then answer from memory.",
+            },
+          });
+        }
 
         // If we still have nothing (Lichess down + no blunders) show fetch error
         if (taskList.length === 0) {
@@ -805,8 +1091,8 @@ export default function DailyPage() {
       setPageState("complete");
     } else {
       setCurrentIdx(nextIdx);
-      setTaskKey((k) => k + 1);
       setLastResult(null);
+      setTaskPhase("intro");
     }
   }, [currentIdx, tasks.length, results, lastResult, streak]);
 
@@ -1071,38 +1357,70 @@ export default function DailyPage() {
                 <span className="rounded-full border border-sky-500/20 bg-sky-500/[0.08] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-sky-400">
                   Puzzle
                 </span>
-              ) : (
+              ) : currentTask.type === "blunder" ? (
                 <span className="rounded-full border border-orange-500/20 bg-orange-500/[0.08] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-orange-400">
                   Blunder Drill
+                </span>
+              ) : currentTask.type === "quiz" ? (
+                <span className="rounded-full border border-violet-500/20 bg-violet-500/[0.08] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-violet-400">
+                  Quiz
+                </span>
+              ) : (
+                <span className="rounded-full border border-amber-500/20 bg-amber-500/[0.08] px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide text-amber-400">
+                  Memory
                 </span>
               )}
               <p className="text-sm text-slate-400">
                 {currentTask.type === "puzzle"
                   ? "Find the best move sequence"
-                  : "Fix your mistake — find the best move"}
+                  : currentTask.type === "blunder"
+                    ? "Fix your mistake — find the best move"
+                    : currentTask.type === "quiz"
+                      ? "Answer the question"
+                      : "Study the position, then recall from memory"}
               </p>
               <span className="ml-auto text-xs text-slate-600">
                 {currentIdx + 1}/{tasks.length}
               </span>
             </div>
 
-            {/* Board */}
-            <div key={taskKey}>
-              {currentTask.type === "puzzle" ? (
-                <LichessPuzzleBoard
-                  puzzle={currentTask.puzzle}
-                  onComplete={handleTaskComplete}
-                />
-              ) : (
-                <BlunderBoard
-                  tactic={currentTask.tactic}
-                  onComplete={handleTaskComplete}
-                />
-              )}
-            </div>
+            {/* Intro slide or active task */}
+            {taskPhase === "intro" ? (
+              <TaskIntroCard
+                intro={currentTask.intro}
+                onStart={() => {
+                  setTaskPhase("playing");
+                  setTaskKey((k) => k + 1);
+                }}
+              />
+            ) : (
+              <div key={taskKey}>
+                {currentTask.type === "puzzle" ? (
+                  <LichessPuzzleBoard
+                    puzzle={currentTask.puzzle}
+                    onComplete={handleTaskComplete}
+                  />
+                ) : currentTask.type === "blunder" ? (
+                  <BlunderBoard
+                    tactic={currentTask.tactic}
+                    onComplete={handleTaskComplete}
+                  />
+                ) : currentTask.type === "quiz" ? (
+                  <ChessQuiz
+                    question={currentTask.question}
+                    onComplete={handleTaskComplete}
+                  />
+                ) : (
+                  <PieceMemory
+                    position={currentTask.position}
+                    onComplete={handleTaskComplete}
+                  />
+                )}
+              </div>
+            )}
 
             {/* Next / Complete button — shown after task finishes */}
-            {lastResult !== null && (
+            {lastResult !== null && taskPhase === "playing" && (
               <div className="mt-5 flex flex-col items-center gap-2">
                 <div
                   className={`flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium ${
