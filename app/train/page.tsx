@@ -1942,6 +1942,14 @@ export default function TrainPage() {
                           </svg>
                           Scan &amp; save to unlock
                         </Link>
+                        <p className="mt-1.5 text-[10px] leading-relaxed text-slate-600">
+                          Go to the homepage, enter your Chess.com or Lichess
+                          username, run a scan, then hit{" "}
+                          <strong className="text-slate-500">
+                            Save to profile
+                          </strong>{" "}
+                          — this mode will unlock automatically.
+                        </p>
                       </div>
                     )}
                   </button>

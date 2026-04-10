@@ -10876,6 +10876,57 @@ export default function ChaosChessPage() {
               <p className="text-sm text-slate-400">
                 Find a random opponent to play Chaos Chess against
               </p>
+              {/* Low-traffic heads-up */}
+              <div className="w-full rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-4 py-3 text-xs text-amber-300/80">
+                <p className="font-semibold text-amber-300">
+                  ⚠️ Matchmaking may take a while
+                </p>
+                <p className="mt-1 leading-relaxed text-amber-300/70">
+                  This site is early-stage so there aren&apos;t always opponents
+                  online. If no one appears within 60 s, try one of these:
+                </p>
+                <ul className="mt-2 space-y-1 text-amber-300/70">
+                  <li>
+                    • You and a friend can both hit{" "}
+                    <strong className="text-amber-300">Matchmake</strong> at the
+                    same time — you&apos;ll be paired instantly
+                  </li>
+                  <li>
+                    • Or use{" "}
+                    <button
+                      type="button"
+                      className="font-semibold text-amber-300 underline underline-offset-2"
+                      onClick={() => setGameMode("friend")}
+                    >
+                      Play a Friend
+                    </button>{" "}
+                    to share a private room code
+                  </li>
+                  <li>
+                    •{" "}
+                    <a
+                      href="https://discord.gg/YS8fc4FtEk"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-amber-300 underline underline-offset-2"
+                    >
+                      Join our Discord
+                    </a>{" "}
+                    to find opponents anytime
+                  </li>
+                  <li>
+                    • Or just play{" "}
+                    <button
+                      type="button"
+                      className="font-semibold text-amber-300 underline underline-offset-2"
+                      onClick={() => setGameMode("ai")}
+                    >
+                      vs the AI
+                    </button>{" "}
+                    while you wait
+                  </li>
+                </ul>
+              </div>
               {/* Time control toggle */}
               <div className="w-full rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
                 <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
