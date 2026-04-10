@@ -967,8 +967,12 @@ export default function LearnPage() {
   const [loadingReports, setLoadingReports] = useState(true);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
 
-  const [quizQs] = useState<QuizQuestion[]>(() => getDailyQuizQuestions());
-  const [memPs] = useState<MemoryPosition[]>(() => getDailyMemoryPositions());
+  const [quizQs] = useState<QuizQuestion[]>(() =>
+    getDailyQuizQuestions(10, Math.floor(Date.now() / 86_400_000)),
+  );
+  const [memPs] = useState<MemoryPosition[]>(() =>
+    getDailyMemoryPositions(5, Math.floor(Date.now() / 86_400_000)),
+  );
 
   // Path state
   const [pathSeed, setPathSeed] = useState(() =>
