@@ -380,7 +380,20 @@ function BlunderBoard({
       setSelectedSquare(null);
       setLegalMoveSquares({});
 
-      if (from === expected.from && to === expected.to) {
+      // Reject illegal moves silently — no life penalty
+      const isLegal = game
+        .moves({ verbose: true })
+        .some((m: any) => m.from === from && m.to === to);
+      if (!isLegal) return false;
+
+      // Accept expected move OR any move that delivers checkmate
+      const testG = new Chess(game.fen());
+      try {
+        testG.move({ from, to, promotion: "q" });
+      } catch {}
+      const deliversMate = testG.isCheckmate();
+
+      if ((from === expected.from && to === expected.to) || deliversMate) {
         const g = new Chess(game.fen());
         try {
           g.move({ from, to, promotion: expected.promotion ?? "q" });
@@ -503,7 +516,7 @@ function BlunderBoard({
 
       <div
         ref={boardContainerRef}
-        className={`relative w-full max-w-[520px] overflow-hidden rounded-xl shadow-2xl transition-transform ${
+        className={`relative w-full max-w-[440px] overflow-hidden rounded-xl shadow-2xl transition-transform ${
           shaking ? "animate-[shake_0.3s_ease-in-out]" : ""
         }`}
       >
@@ -637,11 +650,24 @@ function LichessPuzzleBoard({
       setSelectedSquare(null);
       setLegalMoveSquares({});
 
-      const expected = solution[moveIndex];
-      if (!expected) return false;
-      const exp = parseUci(expected);
+      const expectedUci = solution[moveIndex];
+      if (!expectedUci) return false;
+      const exp = parseUci(expectedUci);
 
-      if (from === exp.from && to === exp.to) {
+      // Reject illegal moves silently — no life penalty
+      const isLegal = game
+        .moves({ verbose: true })
+        .some((m: any) => m.from === from && m.to === to);
+      if (!isLegal) return false;
+
+      // Accept expected move OR any move that delivers checkmate
+      const testG = new Chess(game.fen());
+      try {
+        testG.move({ from, to, promotion: "q" });
+      } catch {}
+      const deliversMate = testG.isCheckmate();
+
+      if ((from === exp.from && to === exp.to) || deliversMate) {
         const g = new Chess(game.fen());
         try {
           g.move({ from, to, promotion: exp.promotion ?? "q" });
@@ -653,7 +679,7 @@ function LichessPuzzleBoard({
         setIndicator({ sq: to, type: "correct" });
 
         const next = moveIndex + 1;
-        if (next >= solution.length) {
+        if (deliversMate || next >= solution.length) {
           setStatus("correct");
           earnCoins("study_task");
           setTimeout(() => onComplete(true), 900);
@@ -698,14 +724,13 @@ function LichessPuzzleBoard({
 
       if (na >= MAX_TRIES) {
         setStatus("wrong");
-        const cp = parseUci(expected);
         setTimeout(() => {
           const g = new Chess(game.fen());
           try {
             g.move({
-              from: cp.from,
-              to: cp.to,
-              promotion: cp.promotion ?? "q",
+              from: exp.from,
+              to: exp.to,
+              promotion: exp.promotion ?? "q",
             });
             setGame(new Chess(g.fen()));
           } catch {}
@@ -807,7 +832,7 @@ function LichessPuzzleBoard({
 
       <div
         ref={boardContainerRef}
-        className={`relative w-full max-w-[520px] overflow-hidden rounded-xl shadow-2xl ${
+        className={`relative w-full max-w-[440px] overflow-hidden rounded-xl shadow-2xl ${
           shaking ? "animate-[shake_0.3s_ease-in-out]" : ""
         }`}
       >

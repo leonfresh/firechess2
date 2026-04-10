@@ -117,6 +117,7 @@ export function PieceMemory({ position, onComplete, viewSeconds = 5 }: Props) {
   const [timeLeft, setTimeLeft] = useState(viewSeconds);
   const [answer, setAnswer] = useState("");
   const [correct, setCorrect] = useState<boolean | null>(null);
+  const [showHint, setShowHint] = useState(false);
 
   // Board container autoscale
   useEffect(() => {
@@ -171,7 +172,7 @@ export function PieceMemory({ position, onComplete, viewSeconds = 5 }: Props) {
               {timeLeft}s
             </span>
           </div>
-          <div ref={containerRef} className="w-full max-w-[480px]">
+          <div ref={containerRef} className="w-full max-w-[440px]">
             <Chessboard
               id="memory-board"
               position={position.fen}
@@ -196,7 +197,7 @@ export function PieceMemory({ position, onComplete, viewSeconds = 5 }: Props) {
 
       {/* Hidden board overlay during recall */}
       {(phase === "recall" || phase === "result") && (
-        <div className="relative w-full max-w-[480px]">
+        <div className="relative w-full max-w-[440px]">
           <div
             ref={containerRef}
             className="opacity-0 pointer-events-none w-full"
@@ -225,7 +226,6 @@ export function PieceMemory({ position, onComplete, viewSeconds = 5 }: Props) {
           <p className="text-base font-semibold text-white">
             {position.question}
           </p>
-          <p className="text-xs text-slate-500">💡 {position.hint}</p>
 
           {phase === "recall" && (
             <div className="flex gap-2">
@@ -249,6 +249,24 @@ export function PieceMemory({ position, onComplete, viewSeconds = 5 }: Props) {
               </button>
             </div>
           )}
+
+          {phase === "recall" &&
+            (showHint ? (
+              <p className="text-xs text-amber-400/80">
+                💡 Starts with:{" "}
+                <span className="font-mono font-bold">
+                  {position.answer[0].toUpperCase()}
+                </span>
+              </p>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowHint(true)}
+                className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
+              >
+                Show hint
+              </button>
+            ))}
 
           {phase === "result" && (
             <div
