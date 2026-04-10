@@ -1838,79 +1838,85 @@ export default function TrainPage() {
                     key={mode.id}
                     onClick={() => !actuallyDisabled && startMode(mode.id)}
                     disabled={actuallyDisabled}
-                    className={`group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-gradient-to-br ${mode.gradient} p-6 text-left transition-all ${
+                    className={`group relative overflow-hidden rounded-2xl border bg-gradient-to-br ${mode.gradient} p-6 text-left transition-all ${
                       actuallyDisabled
-                        ? "cursor-not-allowed opacity-40"
-                        : "hover:border-white/[0.15] hover:shadow-lg hover:shadow-white/[0.02] active:scale-[0.98]"
+                        ? "cursor-not-allowed border-white/[0.06]"
+                        : "border-white/[0.06] hover:border-white/[0.15] hover:shadow-lg hover:shadow-white/[0.02] active:scale-[0.98]"
                     }`}
                   >
-                    <div className="mb-3 text-3xl">{mode.icon}</div>
-                    <h3 className="text-lg font-bold text-white">
-                      {mode.title}
-                    </h3>
-                    <p className="mt-1 text-xs text-slate-400">
-                      {mode.description}
-                    </p>
-                    {mode.id === "blunder" && blunderPositions.length > 0 && (
-                      <p className="mt-2 text-[11px] text-slate-500">
-                        {blunderPositions.length} positions available
+                    {/* Faded content wrapper when disabled */}
+                    <div
+                      className={actuallyDisabled ? "opacity-35" : undefined}
+                    >
+                      <div className="mb-3 text-3xl">{mode.icon}</div>
+                      <h3 className="text-lg font-bold text-white">
+                        {mode.title}
+                      </h3>
+                      <p className="mt-1 text-xs text-slate-400">
+                        {mode.description}
                       </p>
-                    )}
-                    {mode.id === "opening" && openingPositions.length > 0 && (
-                      <p className="mt-2 text-[11px] text-slate-500">
-                        {openingPositions.length} leaks to practice
-                      </p>
-                    )}
-                    {mode.id === "weakness" && weakMotifs.length > 0 && (
-                      <p className="mt-2 text-[11px] text-slate-500">
-                        Targeting:{" "}
-                        {weakMotifs
-                          .slice(0, 3)
-                          .map((m) => m.motif)
-                          .join(", ")}
-                      </p>
-                    )}
-                    {mode.id === "endgame" && weakEndgames.length > 0 && (
-                      <p className="mt-2 text-[11px] text-slate-500">
-                        Focus:{" "}
-                        {weakEndgames
-                          .slice(0, 2)
-                          .map((e) => e.type)
-                          .join(", ")}
-                      </p>
-                    )}
-                    {mode.id === "time" && timePositions.length > 0 && (
-                      <p className="mt-2 text-[11px] text-slate-500">
-                        {
-                          timePositions.filter((p) => p.verdict === "rushed")
-                            .length
-                        }{" "}
-                        rushed,{" "}
-                        {
-                          timePositions.filter((p) => p.verdict === "wasted")
-                            .length
-                        }{" "}
-                        overthought
-                      </p>
-                    )}
-                    {!actuallyDisabled && (
-                      <div className="mt-4 flex items-center gap-1 text-xs font-medium text-white/60 transition-colors group-hover:text-white">
-                        Start training
-                        <svg
-                          className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M9 5l7 7-7 7"
-                          />
-                        </svg>
-                      </div>
-                    )}
+                      {mode.id === "blunder" && blunderPositions.length > 0 && (
+                        <p className="mt-2 text-[11px] text-slate-500">
+                          {blunderPositions.length} positions available
+                        </p>
+                      )}
+                      {mode.id === "opening" && openingPositions.length > 0 && (
+                        <p className="mt-2 text-[11px] text-slate-500">
+                          {openingPositions.length} leaks to practice
+                        </p>
+                      )}
+                      {mode.id === "weakness" && weakMotifs.length > 0 && (
+                        <p className="mt-2 text-[11px] text-slate-500">
+                          Targeting:{" "}
+                          {weakMotifs
+                            .slice(0, 3)
+                            .map((m) => m.motif)
+                            .join(", ")}
+                        </p>
+                      )}
+                      {mode.id === "endgame" && weakEndgames.length > 0 && (
+                        <p className="mt-2 text-[11px] text-slate-500">
+                          Focus:{" "}
+                          {weakEndgames
+                            .slice(0, 2)
+                            .map((e) => e.type)
+                            .join(", ")}
+                        </p>
+                      )}
+                      {mode.id === "time" && timePositions.length > 0 && (
+                        <p className="mt-2 text-[11px] text-slate-500">
+                          {
+                            timePositions.filter((p) => p.verdict === "rushed")
+                              .length
+                          }{" "}
+                          rushed,{" "}
+                          {
+                            timePositions.filter((p) => p.verdict === "wasted")
+                              .length
+                          }{" "}
+                          overthought
+                        </p>
+                      )}
+                      {!actuallyDisabled && (
+                        <div className="mt-4 flex items-center gap-1 text-xs font-medium text-white/60 transition-colors group-hover:text-white">
+                          Start training
+                          <svg
+                            className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    {/* end faded wrapper */}
                     {actuallyDisabled && (
                       <div className="mt-3">
                         <p className="text-[11px] text-slate-500">
@@ -1919,14 +1925,14 @@ export default function TrainPage() {
                         <Link
                           href="/#analyzer"
                           onClick={(e) => e.stopPropagation()}
-                          className="mt-2 inline-flex items-center gap-1 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1 text-[11px] font-semibold text-cyan-400 transition-colors hover:border-cyan-500/50 hover:bg-cyan-500/20 hover:text-cyan-300"
+                          className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-cyan-500 to-emerald-500 px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-cyan-500/30 transition-all hover:brightness-110 hover:shadow-cyan-500/50"
                         >
                           <svg
                             className="h-3 w-3"
                             fill="none"
                             viewBox="0 0 24 24"
                             stroke="currentColor"
-                            strokeWidth={2}
+                            strokeWidth={2.5}
                           >
                             <path
                               strokeLinecap="round"
