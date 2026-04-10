@@ -80,7 +80,8 @@ type LessonStep = {
 
 type ConceptBody = {
   headline: string;
-  explanation: string;
+  intro: string;
+  steps: { label: string; text: string }[];
   tip: string;
   tipIcon: string;
 };
@@ -99,100 +100,282 @@ type DrillPosition = {
 const CONCEPT_CARDS: Record<string, ConceptBody> = {
   fork: {
     headline: "The Fork",
-    explanation:
-      "A fork attacks two (or more) pieces simultaneously with a single move. The most powerful forks are knight forks — because the knight's L-shape lets it threaten squares that no other piece covers at that moment. The key is finding an outpost square the knight can reach safely.",
+    intro: "One piece, two threats — that's the essence of a fork.",
+    steps: [
+      {
+        label: "The core idea",
+        text: "A fork attacks two pieces at the same time with a single move. Your opponent can only move one piece per turn, so they'll almost always lose material. Even a 'bad' piece can fork if it attacks two valuable enough targets.",
+      },
+      {
+        label: "Why knights fork best",
+        text: "Knights reach squares no other piece can cover in the same move — their L-shape is unique. A centralised knight can fork almost any two pieces. Royal forks (attacking the king + anything else) are especially powerful because the king must move.",
+      },
+      {
+        label: "How to find forks",
+        text: "Scan for squares your piece can reach safely. Ask: does landing here attack two valuable targets at once? Look especially for the king or queen as one of the targets — the opponent has no choice but to deal with those.",
+      },
+    ],
     tip: "Before every knight move, ask: does this square attack two valuable targets at once?",
     tipIcon: "♞",
   },
   pin: {
     headline: "The Pin",
-    explanation:
-      "A pin immobilises a piece because moving it would expose a more valuable piece behind it (absolute pin = exposes the king; relative pin = exposes a less valuable piece). Bishops and rooks are the primary pinning pieces. A pinned piece can often be attacked again to win material.",
+    intro: "A pin keeps an enemy piece frozen — because moving it reveals something worse.",
+    steps: [
+      {
+        label: "Absolute vs. relative pin",
+        text: "In an absolute pin the piece behind is the king — the pinned piece literally cannot move by the rules. In a relative pin the piece behind is just more valuable, so moving the front piece is a losing trade. Both are equally exploitable.",
+      },
+      {
+        label: "How to create a pin",
+        text: "Bishops pin along diagonals; rooks and queens pin along ranks and files. Align your long-range piece so an enemy piece stands between it and a more valuable target. Batteries (two rooks or queen + rook) make pins devastating.",
+      },
+      {
+        label: "Exploit the pinned piece",
+        text: "Once pinned, a piece is paralysed. Attack it with pawns or pieces — a pinned pawn can almost never be defended enough. Piling on extra attackers forces material gain. Also look for ways to discover a second attack while the pin holds.",
+      },
+    ],
     tip: "Look for pieces that are on the same rank, file, or diagonal as your opponent's king or queen.",
     tipIcon: "♗",
   },
   skewer: {
     headline: "The Skewer",
-    explanation:
-      "A skewer is the reverse of a pin — you attack a valuable piece, it moves, and you win the piece behind it. Rooks and bishops skewer along lines. Common skewer targets: king skewered off the back rank revealing a rook, or queen skewered to expose a rook.",
+    intro: "A skewer is a pin in reverse — attack the valuable piece first, win what's hiding behind it.",
+    steps: [
+      {
+        label: "How a skewer works",
+        text: "You attack a high-value piece (king or queen) along a rank, file, or diagonal. It's forced to move out of the way — and the piece hiding behind it is then exposed and free to take. The attacker gains material almost for free.",
+      },
+      {
+        label: "Most common patterns",
+        text: "A rook skewers a king off the back rank to capture a rook behind it. A bishop skewers a queen to win a rook on the same diagonal. Always check when your opponent's pieces line up — if a valuable piece is 'shielding' a weaker one, a skewer may exist.",
+      },
+      {
+        label: "Skewering checks win fastest",
+        text: "A skewer that is also a check is almost always winning — the king must move first (no choice), and whatever was sheltering behind it is yours for free. Seek positions where your rook or bishop lands with check AND a piece stands behind the king.",
+      },
+    ],
     tip: "After forcing a king or queen to move, always check whether a piece was left behind.",
     tipIcon: "♜",
   },
   discoveredAttack: {
     headline: "Discovered Attack",
-    explanation:
-      "A discovered attack happens when one piece moves out of the way to unleash an attack by a piece behind it. The moving piece can also make a threat of its own — when both threats are simultaneous this is a double attack. Discovered checks are especially powerful because the opponent must deal with check first.",
-    tip: "Look for pieces that are 'blocking' one of your long-range pieces (bishop, rook, queen) from attacking.",
+    intro: "Move one piece — and the piece behind it suddenly attacks. Two threats, one move.",
+    steps: [
+      {
+        label: "The trigger and the gun",
+        text: "A discovered attack has two actors: the 'trigger' piece you actually move, and the 'gun' — the long-range piece that fires once the trigger clears its path. The crucial detail: the trigger piece can make its OWN threat while the gun fires. That creates two simultaneous attacks.",
+      },
+      {
+        label: "Discovered check is the best",
+        text: "When the revealed attack hits the king (discovered check), the opponent MUST address the check first — they can do nothing about the trigger piece's threat. This is why discovered checks almost always win material. Look for your pieces hiding behind your bishops, rooks, and queen.",
+      },
+      {
+        label: "How to find them",
+        text: "Ask: which of my pieces stands in front of another long-range piece? If I moved that front piece somewhere powerful, what does the back piece suddenly attack? The trigger move should be a threat itself — ideally a check, capture, or fork — so the opponent can't deal with both.",
+      },
+    ],
+    tip: "Look for pieces blocking one of your long-range pieces — moving them could fire two threats at once.",
     tipIcon: "💥",
   },
   backRankMate: {
     headline: "Back Rank Weakness",
-    explanation:
-      "When a king is trapped behind its own pawns on the back rank, a rook or queen can deliver checkmate simply by landing on that rank. The pawns that were meant to shelter the king become its prison. Creating a luft (escape square with h3/g3) eliminates this weakness.",
-    tip: "At any point you have a rook on an open file near the opponent's king, look for back-rank targets.",
+    intro: "The pawns sheltering your king can become its prison.",
+    steps: [
+      {
+        label: "Why it happens",
+        text: "After castling, the king typically sits on the back rank behind three pawns. Those pawns provide safety — but if the king ever needs to escape forward, the pawns block it. A rook or queen landing on the back rank delivers checkmate because there's nowhere to run.",
+      },
+      {
+        label: "The cure: create a 'luft'",
+        text: "Push one kingside pawn one square (h3 or g3 for White, h6/g6 for Black) to give the king an escape square. This takes one tempo but eliminates the back-rank weakness permanently. It's almost always worth doing once the endgame nears.",
+      },
+      {
+        label: "Look for it in your opponent's camp",
+        text: "If your opponent has never moved their kingside pawns, the back-rank mate threat is live. Centralise your rook on an open file pointing at their back rank. Even the threat of Rxe8# can force your opponent into a losing defence, winning material elsewhere.",
+      },
+    ],
+    tip: "Any rook on an open file near the opponent's king — immediately look for back-rank mate.",
     tipIcon: "🏚️",
   },
   deflection: {
     headline: "Deflection",
-    explanation:
-      "Deflection forces a defending piece away from its important duty (guarding a square, protecting another piece, stopping checkmate). You sacrifice or attack a piece to lure the defender off, then exploit the gap. Different from a decoy — deflection pushes away, decoy lures toward a target.",
+    intro: "Force the one piece holding everything together to abandon its post.",
+    steps: [
+      {
+        label: "What deflection does",
+        text: "Deflection sacrifices or attacks a piece specifically to drag it away from a critical square — one it's guarding a mate threat on, protecting another piece, or using to block a check. The moment that defender abandons its duty, you strike the square it was protecting.",
+      },
+      {
+        label: "Find the overloaded defender",
+        text: "Look for a single piece doing two jobs at once (guarding two squares, or guarding AND blocking a check). Overloaded pieces are prime deflection targets — they can't abandon one duty without surrendering the other. Ask: what does this piece defend? What if it were gone?",
+      },
+      {
+        label: "The classic pattern",
+        text: "A queen sacrifice to deflect a key defender is the engine of many mating attacks. If the opponent takes, they give up the mate defence. If they don't, you win material instead. Deflection sacrifices don't need to be recoverable — the positional gain is often worth two pawns.",
+      },
+    ],
     tip: "Identify what one piece is doing for your opponent — then ask how you can force it away.",
     tipIcon: "🔀",
   },
   hangingPiece: {
     headline: "Hanging Pieces",
-    explanation:
-      "A hanging piece is completely undefended and can be taken for free. Many games are decided by one player repeatedly leaving pieces en prise. The discipline is: before every move, scan all your pieces — is every one defended or safe? This 'blunder check' habit is the single fastest way to gain Elo.",
-    tip: "After every move, ask: did I just leave anything hanging? Did my opponent?",
+    intro: "The fastest way to gain — and lose — material: pieces left undefended.",
+    steps: [
+      {
+        label: "What 'hanging' means",
+        text: "A piece is hanging if it can be captured and the opponent gains material from the trade. Completely undefended pieces can simply be taken for free. Many games at every level are decided by a single hanging piece — the player who notices it first wins.",
+      },
+      {
+        label: "The blunder check habit",
+        text: "Before you move, run this 5-second check: (1) What is my opponent threatening — any captures, forks, checks? (2) After choosing your move, ask: does THIS move leave any of my pieces unprotected? If yes, reconsider. This one habit eliminates most blunders.",
+      },
+      {
+        label: "Hanging in disguise",
+        text: "A piece can be 'effectively hanging' even if defended — if the defender is itself attacked, or if the exchange trades a rook for a bishop. Always count the number of attackers vs. defenders on a contested piece. If attackers outnumber defenders, the piece is effectively hanging.",
+      },
+    ],
+    tip: "After every move, ask: did I leave anything hanging? Did my opponent?",
     tipIcon: "🎣",
   },
   rookEndgame: {
     headline: "Rook Endgames",
-    explanation:
-      "Rook endgames are the most common endgame type and the most difficult to convert. Two key principles: keep your rook active (rooks belong behind passed pawns — yours or theirs) and centralise your king. The Philidor position (drawing technique) and the Lucena position (winning technique) are essential knowledge.",
+    intro: "The most common endgame type — and the most technical. Activity wins, not material.",
+    steps: [
+      {
+        label: "Rooks belong behind passed pawns",
+        text: "Whether the passed pawn is yours or your opponent's, your rook belongs behind it. Your rook gains power as the pawn advances; the enemy rook is pinned in front of it, entirely passive. This single principle decides more rook endings than anything else.",
+      },
+      {
+        label: "Centralise your king",
+        text: "In the endgame, the king is a fighting piece. The moment queens come off the board, rush your king toward the center (and toward the passed pawns). A passive king on the corner loses most rook endings. A centralised king supporting your pawn is often decisive.",
+      },
+      {
+        label: "Lucena and Philidor",
+        text: "Learn two positions by name. The Lucena position is the key winning technique — rook on the 1st rank sheltering your king, then 'build a bridge' to block checks. The Philidor position is the key drawing method — rook on the 6th cutting off the enemy king, switching to the back rank only when forced.",
+      },
+    ],
     tip: "Rooks are most powerful from behind — place your rook behind the passed pawn, not in front of it.",
     tipIcon: "♜",
   },
   pawnEndgame: {
     headline: "Pawn Endgames",
-    explanation:
-      "Pawn endgames are decided by king activity and the opposition. The side with the active king almost always wins. Key concepts: opposition (directly facing the opponent king one square apart), the key squares (squares where a king wins regardless), and zugzwang (being forced to move is losing).",
-    tip: "In a pawn endgame, race your king to the center immediately — a passive king loses almost every time.",
+    intro: "Every tempo is life-or-death. The active king always wins.",
+    steps: [
+      {
+        label: "Activate your king immediately",
+        text: "The moment pawns are trading and pieces come off, sprint your king toward the center. A centralised king attacks pawns on both sides of the board and shepherds your own pawns forward. A passive king on the back rank almost always loses, even in seemingly balanced positions.",
+      },
+      {
+        label: "The Opposition",
+        text: "When two kings face each other one square apart with the opponent to move, the side NOT to move has 'the opposition' and the opponent's king must yield. Grabbing the opposition forces the enemy king backward — often deciding whether a pawn promotes or whether the game draws.",
+      },
+      {
+        label: "Key squares",
+        text: "Every pawn has three 'key squares' two ranks ahead of it. If your king reaches any key square, the pawn promotes regardless of where the enemy king stands. Knowing the key squares tells you exactly which squares your king must target — and whether the endgame is won or drawn from any given position.",
+      },
+    ],
+    tip: "In a pawn endgame, race your king to the centre immediately — a passive king loses almost every time.",
     tipIcon: "♟",
   },
   queenEndgame: {
     headline: "Queen Endgames",
-    explanation:
-      "Queen endgames are notoriously drawish due to perpetual check threats. The winning side must combine king activity with accurate queen placement, avoiding any stalemate tricks. Always check if your opponent can force repetition before entering a queen endgame.",
-    tip: "Watch for stalemate tricks — the defending side will try to sacrifice the queen to reach stalemate.",
+    intro: "Looks won — but perpetual check can steal the draw in seconds.",
+    steps: [
+      {
+        label: "The perpetual check trap",
+        text: "Queen + pawn vs. queen is among the most drawn endings in chess. The defending queen gives perpetual check — the winning king gets chased endlessly. You must shield your king from checks, typically by placing it near the queening pawn or behind another pawn as a shield.",
+      },
+      {
+        label: "Stalemate tricks",
+        text: "With an extra queen, it's surprisingly easy to stalemate the defender. If the enemy king has no legal moves and you give check carelessly, it's a draw. Always verify your king has escape squares before every queen check — especially when the enemy king is trapped in a corner.",
+      },
+      {
+        label: "King centralisation",
+        text: "The winning king must march to the center and use pawns as shields against checks. Getting your king to the center stops most perpetual check attempts. Once checks are exhausted, bring both queen and king to support the queening pawn — triangulate if needed to reach a basic winning position.",
+      },
+    ],
+    tip: "Watch for stalemate tricks — always check the enemy king has a legal move before playing any queen check.",
     tipIcon: "♛",
   },
   bishopEndgame: {
     headline: "Bishop Endgames",
-    explanation:
-      "Same-coloured bishop endgames are often drawn even with an extra pawn if the pawns can be blockaded on the bishop's colour. Opposite-coloured bishop endgames are famously drawish — the defending bishop can never be chased off the blockading square.",
-    tip: "Place your pawns on the opposite colour to your bishop so they can't be permanently blocked.",
+    intro: "Opposite-coloured bishops almost always draw. Same-coloured bishops almost always decide.",
+    steps: [
+      {
+        label: "Same-colour bishops",
+        text: "When both bishops travel on the same colour, normal endgame rules apply. Extra pawns are significant. Focus on king activity (centralise fast), pawn breaks (advance on both flanks), and avoiding pawn exchanges that reduce your advantage.",
+      },
+      {
+        label: "Opposite-colour bishops",
+        text: "When your bishop is dark-squared and theirs is light-squared, draws are common — even two extra pawns often don't win. The defending bishop blockades on its colour and cannot be chased away. Winning requires an unstoppable passed pawn or a direct king attack, not material alone.",
+      },
+      {
+        label: "Pawn colour placement",
+        text: "Keep your pawns on the OPPOSITE colour to your bishop — they control different squares together, and the enemy bishop can never block them. Pawns on the same colour as your own bishop get permanently blockaded by the opponent's same-coloured bishop. This single rule determines endgame accessibility.",
+      },
+    ],
+    tip: "Place your pawns on the opposite colour to your bishop — they control more squares together.",
     tipIcon: "♗",
   },
   knightEndgame: {
     headline: "Knight Endgames",
-    explanation:
-      "Knight endgames are similar to pawn endgames in speed — knights are slow and need centralisation. Extra pawns are more decisive than in bishop endgames because there are no drawn 'wrong colour bishop' tricks. Knight vs pawns: a single pawn can often draw against a knight.",
+    intro: "Treat them like pawn endgames — king activity and extra pawns are decisive.",
+    steps: [
+      {
+        label: "Centralise the knight",
+        text: "Unlike bishops, a knight has no long-range power — it needs to be close to the action. A centralised knight (d4/e4/d5/e5) covers up to 8 squares. A knight on the rim covers only 2–4. Repositioning takes multiple moves, so get central early and keep it there.",
+      },
+      {
+        label: "Extra pawns matter more than in bishop endings",
+        text: "There's no 'wrong-colour' draw trick in knight endings. Every extra pawn is a genuine winning attempt. An extra passed pawn with knight support is usually decisive — push it while the knight covers key blocking squares. Trade your worst pawn for your opponent's best to simplify.",
+      },
+      {
+        label: "Knight vs. lone pawn (draw territory)",
+        text: "A lone knight usually draws against a single connected pawn pair — it can sacrifice itself to force stalemate or permanently circle the pawn. Don't assume a single pawn advantage wins automatically. Winning requires the king in front of the pawn AND the knight actively cutting off the enemy king.",
+      },
+    ],
     tip: "Centralise the knight immediately — a knight on the rim is dim, especially in endgames.",
     tipIcon: "♞",
   },
   kingsideAttack: {
     headline: "King Safety",
-    explanation:
-      "An exposed king is a liability in every phase of the game. Common mistakes: delaying castling too long, moving king-side pawns unnecessarily, and trading the bishop that protects the castled king. When your opponent's king is exposed, open files and diagonals toward it with tempo.",
-    tip: "Count the attackers vs defenders near the enemy king before launching an attack.",
+    intro: "An exposed king is a target — in the middlegame, in the endgame, always.",
+    steps: [
+      {
+        label: "How king safety breaks down",
+        text: "Three main causes: (1) delaying castling too long, allowing a central attack before you've castled; (2) pushing kingside pawns without a concrete reason — each pawn move creates a permanent weakness in your king's shelter; (3) trading the bishop that guards your castled king's colour without compensation.",
+      },
+      {
+        label: "Launching a kingside attack",
+        text: "Open files and diagonals toward the king (pawn sacrifices, exchanges). Bring at least three pieces toward the king — queen + two others is a minimum. A queen + rook battery on the same file is often immediately decisive. Act with tempo: check, threat, check. Never let the opponent consolidate.",
+      },
+      {
+        label: "Count attackers vs. defenders",
+        text: "Before sacrificing material to open the king, count: how many of your pieces are attacking the king's zone, and how many pieces are defending it? If you outnumber the defenders by 2 or more, there's usually a breakthrough. If it's equal, look for deflection or a forcing sequence to tip the balance.",
+      },
+    ],
+    tip: "Count the attackers vs defenders near the king before committing to any sacrifice.",
     tipIcon: "🔥",
   },
   default: {
     headline: "Chess Fundamentals",
-    explanation:
-      "Strong chess is built on consistent fundamentals: develop pieces quickly, control the centre, castle early, connect your rooks, and always check for tactics before moving. These principles apply at every level and every phase of the game.",
-    tip: "Before every move: check for opponent threats, check your pieces are safe, then make your move.",
+    intro: "Great chess comes from great habits, applied consistently on every single move.",
+    steps: [
+      {
+        label: "Check for threats first",
+        text: "Before deciding your own move, always ask: what is my opponent threatening? Hanging pieces, forks, checks, and incoming attacks must be identified before planning your own. Most tactical disasters happen because this question was skipped entirely.",
+      },
+      {
+        label: "The three opening principles",
+        text: "Develop a piece every move (get pieces off the back rank), control the center (e4/d4/e5/d5 are the key squares), and castle early for king safety. These three principles apply from move 1 through move 15 and eliminate most opening mistakes at every level.",
+      },
+      {
+        label: "The blunder check",
+        text: "After finding your move but BEFORE playing it, run a 5-second safety check: Does this move leave any of my pieces hanging? Does it walk into a fork, pin, or discovered attack? Does my opponent have a forcing response? This single habit eliminates most blunders and is the fastest path to rating improvement.",
+      },
+    ],
+    tip: "Before every move: check for opponent threats, verify your pieces are safe, then play.",
     tipIcon: "♟",
   },
 };
@@ -370,7 +553,7 @@ function buildLessonPath(
     title: `${THEME_DISPLAY[conceptKey] ?? "Tactics"} Drill`,
     subtitle: "Solve 3 puzzles on your weakness",
     icon: "🎯",
-    tacticsTheme: conceptKey,
+    tacticsTheme: conceptKey === "default" ? "hangingPiece" : conceptKey,
   });
 
   // ── STEP 3: Own-game blunder OR endgame drill ──
@@ -467,41 +650,88 @@ function ConceptCard({
   body: ConceptBody;
   onComplete: () => void;
 }) {
+  const [page, setPage] = useState(0);
+  const totalPages = body.steps.length;
+  const isLast = page === totalPages - 1;
+  const step = body.steps[page];
+
   return (
-    <div className="mx-auto flex max-w-lg flex-col gap-6">
-      {/* Icon + headline */}
-      <div className="text-center">
-        <div className="mb-4 inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-white/[0.05] text-5xl ring-1 ring-white/[0.08]">
-          {body.tipIcon}
+    <div className="mx-auto flex max-w-lg flex-col gap-5">
+      {/* Icon + intro — only on first page */}
+      {page === 0 && (
+        <div className="text-center">
+          <div className="mb-4 inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-white/[0.05] text-5xl ring-1 ring-white/[0.08]">
+            {body.tipIcon}
+          </div>
+          <h2 className="text-2xl font-black tracking-tight text-white">
+            {body.headline}
+          </h2>
+          <p className="mt-2 text-sm text-slate-400">{body.intro}</p>
         </div>
-        <h2 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
-          {body.headline}
-        </h2>
+      )}
+
+      {/* Step dots */}
+      <div className="flex items-center justify-center gap-1.5">
+        {body.steps.map((_, i) => (
+          <div
+            key={i}
+            className={`h-1.5 rounded-full transition-all duration-300 ${
+              i <= page ? "w-5 bg-violet-500" : "w-1.5 bg-white/[0.12]"
+            }`}
+          />
+        ))}
       </div>
 
-      {/* Explanation */}
-      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] px-6 py-5">
-        <p className="text-[15px] leading-7 text-slate-300">{body.explanation}</p>
-      </div>
-
-      {/* Key tip */}
-      <div className="flex gap-3 rounded-2xl border border-amber-400/20 bg-amber-400/[0.04] px-5 py-4">
-        <span className="mt-0.5 text-xl">💡</span>
-        <div>
-          <p className="mb-1 text-[11px] font-bold uppercase tracking-widest text-amber-400">
-            Key Principle
+      {/* Current step card */}
+      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] px-6 py-6">
+        <div className="mb-3 flex items-center gap-2.5">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-600/80 text-xs font-black text-white">
+            {page + 1}
+          </div>
+          <p className="text-xs font-black uppercase tracking-widest text-violet-400">
+            {step.label}
           </p>
-          <p className="text-sm leading-relaxed text-amber-100/70">{body.tip}</p>
         </div>
+        <p className="text-[15px] leading-7 text-slate-200">{step.text}</p>
       </div>
 
-      <button
-        type="button"
-        onClick={onComplete}
-        className="w-full rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-4 text-base font-bold text-white shadow-xl shadow-purple-500/20 transition-all hover:brightness-110 active:scale-[0.98]"
-      >
-        Got it →
-      </button>
+      {/* Key principle — only on last page */}
+      {isLast && (
+        <div className="flex gap-3 rounded-2xl border border-amber-400/20 bg-amber-400/[0.04] px-5 py-4">
+          <span className="mt-0.5 shrink-0 text-xl">💡</span>
+          <div>
+            <p className="mb-1 text-[11px] font-black uppercase tracking-widest text-amber-400">
+              Key Principle
+            </p>
+            <p className="text-sm leading-relaxed text-amber-100/70">{body.tip}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Navigation */}
+      <div className="flex gap-3">
+        {page > 0 && (
+          <button
+            type="button"
+            onClick={() => setPage((p) => p - 1)}
+            className="flex-1 rounded-2xl border border-white/[0.08] bg-white/[0.03] py-3.5 text-sm font-semibold text-slate-400 hover:bg-white/[0.07] transition-colors"
+          >
+            ← Back
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={() => {
+            if (isLast) onComplete();
+            else setPage((p) => p + 1);
+          }}
+          className="flex-1 rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-3.5 text-base font-bold text-white shadow-xl shadow-purple-500/20 transition-all hover:brightness-110 active:scale-[0.98]"
+        >
+          {isLast
+            ? "Got it →"
+            : `Next: ${body.steps[page + 1]?.label} →`}
+        </button>
+      </div>
     </div>
   );
 }
@@ -589,7 +819,9 @@ function PositionDrillStep({
         <p className="text-[13px] font-semibold uppercase tracking-widest text-slate-500">
           {toMove} to move
         </p>
-        <p className="mt-0.5 text-base font-bold text-white">Find the best move</p>
+        <p className="mt-0.5 text-base font-bold text-white">
+          Find the best move
+        </p>
       </div>
 
       {/* Progress dots */}
@@ -640,7 +872,7 @@ function PositionDrillStep({
           ? "✓ Correct!"
           : status === "wrong"
             ? "✗ Not the best move — try again"
-            : pos.label ?? "Drag a piece to make your move"}
+            : (pos.label ?? "Drag a piece to make your move")}
       </div>
 
       {/* Skip */}
@@ -799,7 +1031,9 @@ function StepHeader({
         >
           {STEP_TYPE_LABELS[step.type]}
         </span>
-        <h2 className="text-lg font-bold text-white leading-tight">{step.title}</h2>
+        <h2 className="text-lg font-bold text-white leading-tight">
+          {step.title}
+        </h2>
       </div>
       {step.subtitle && (
         <p className="mt-1.5 ml-0 text-sm text-slate-500">{step.subtitle}</p>
@@ -861,12 +1095,18 @@ function PathOverview({
             key={step.id}
             className="flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.025] px-4 py-3.5"
           >
-            <div className={`h-8 w-8 shrink-0 rounded-full ${TYPE_DOT[step.type]} flex items-center justify-center text-xs font-black text-white`}>
+            <div
+              className={`h-8 w-8 shrink-0 rounded-full ${TYPE_DOT[step.type]} flex items-center justify-center text-xs font-black text-white`}
+            >
               {i + 1}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="truncate text-sm font-semibold text-white">{step.title}</p>
-              <p className="truncate text-[11px] text-slate-600">{step.subtitle}</p>
+              <p className="truncate text-sm font-semibold text-white">
+                {step.title}
+              </p>
+              <p className="truncate text-[11px] text-slate-600">
+                {step.subtitle}
+              </p>
             </div>
             <span className="shrink-0 text-[10px] font-black uppercase tracking-wider text-slate-600">
               {STEP_TYPE_LABELS[step.type]}
@@ -1022,6 +1262,7 @@ export default function LearnPage() {
       setLoadingReports(false);
       return;
     }
+    setLoadingReports(true); // ensure spinner shows while fetching
     fetch("/api/reports")
       .then((r) => r.json())
       .then((data) => {
@@ -1081,8 +1322,18 @@ export default function LearnPage() {
           href="/train"
           className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"
         >
-          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          <svg
+            className="h-3.5 w-3.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2.5}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
           Exit
         </Link>
@@ -1101,7 +1352,9 @@ export default function LearnPage() {
                 className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-xs text-slate-300 focus:outline-none"
               >
                 {[...new Set(reports.map((r) => r.chessUsername))].map((u) => (
-                  <option key={u} value={u}>{u}</option>
+                  <option key={u} value={u}>
+                    {u}
+                  </option>
                 ))}
               </select>
             ) : (
@@ -1129,67 +1382,71 @@ export default function LearnPage() {
           </div>
         )}
 
-      {/* Content */}
-      {authenticated && reports.length === 0 ? (
-        <NoScanState />
-      ) : phase === "overview" ? (
-        <PathOverview
-          steps={steps}
-          username={selectedUser}
-          onStart={() => setPhase("active")}
-        />
-      ) : phase === "done" ? (
-        <CompletionScreen stepsCompleted={totalSteps} onRestart={restart} />
-      ) : currentStep ? (
-        <div>
-          <StepHeader
-            step={currentStep}
-            totalSteps={totalSteps}
-            stepIndex={stepIndex + 1}
+        {/* Content */}
+        {authenticated && reports.length === 0 ? (
+          <NoScanState />
+        ) : phase === "overview" ? (
+          <PathOverview
+            steps={steps}
+            username={selectedUser}
+            onStart={() => setPhase("active")}
           />
-
-          {currentStep.type === "concept" && currentStep.conceptBody && (
-            <ConceptCard body={currentStep.conceptBody} onComplete={advance} />
-          )}
-
-          {currentStep.type === "tactics" && (
-            <TacticsStep
-              theme={currentStep.tacticsTheme ?? "fork"}
-              onComplete={advance}
+        ) : phase === "done" ? (
+          <CompletionScreen stepsCompleted={totalSteps} onRestart={restart} />
+        ) : currentStep ? (
+          <div>
+            <StepHeader
+              step={currentStep}
+              totalSteps={totalSteps}
+              stepIndex={stepIndex + 1}
             />
-          )}
 
-          {(currentStep.type === "blunder" || currentStep.type === "endgame") &&
-            currentStep.drillPositions && (
-              <PositionDrillStep
-                positions={currentStep.drillPositions}
+            {currentStep.type === "concept" && currentStep.conceptBody && (
+              <ConceptCard
+                body={currentStep.conceptBody}
                 onComplete={advance}
               />
             )}
 
-          {currentStep.type === "quiz" && currentStep.quizQuestion && (
-            <div className="mx-auto max-w-lg space-y-4">
-              <ChessQuiz
-                question={currentStep.quizQuestion}
-                onComplete={(_correct) => {
-                  // ChessQuiz plays sound internally — don't double-play
-                  setTimeout(advance, 800);
-                }}
-              />
-            </div>
-          )}
-
-          {currentStep.type === "memory" && currentStep.memoryPosition && (
-            <div className="mx-auto max-w-lg">
-              <PieceMemory
-                position={currentStep.memoryPosition}
+            {currentStep.type === "tactics" && (
+              <TacticsStep
+                theme={currentStep.tacticsTheme ?? "fork"}
                 onComplete={advance}
-                viewSeconds={5}
               />
-            </div>
-          )}
-        </div>
-      ) : null}
+            )}
+
+            {(currentStep.type === "blunder" ||
+              currentStep.type === "endgame") &&
+              currentStep.drillPositions && (
+                <PositionDrillStep
+                  positions={currentStep.drillPositions}
+                  onComplete={advance}
+                />
+              )}
+
+            {currentStep.type === "quiz" && currentStep.quizQuestion && (
+              <div className="mx-auto max-w-lg space-y-4">
+                <ChessQuiz
+                  question={currentStep.quizQuestion}
+                  onComplete={(_correct) => {
+                    // ChessQuiz plays sound internally — don't double-play
+                    setTimeout(advance, 800);
+                  }}
+                />
+              </div>
+            )}
+
+            {currentStep.type === "memory" && currentStep.memoryPosition && (
+              <div className="mx-auto max-w-lg">
+                <PieceMemory
+                  position={currentStep.memoryPosition}
+                  onComplete={advance}
+                  viewSeconds={5}
+                />
+              </div>
+            )}
+          </div>
+        ) : null}
       </div>
     </div>
   );
