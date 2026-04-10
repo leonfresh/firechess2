@@ -467,55 +467,41 @@ function ConceptCard({
   body: ConceptBody;
   onComplete: () => void;
 }) {
-  const [read, setRead] = useState(false);
-
-  // "mark as read" after 8 seconds automatically, but button available immediately
-  useEffect(() => {
-    const t = setTimeout(() => setRead(true), 8000);
-    return () => clearTimeout(t);
-  }, []);
-
   return (
-    <div className="mx-auto max-w-xl space-y-5">
-      {/* Main card */}
-      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-6 sm:p-8">
-        <div className="mb-4 flex items-center gap-3">
-          <span className="text-3xl">{body.tipIcon}</span>
-          <div>
-            <h2 className="text-xl font-bold text-white">{body.headline}</h2>
-            <p className="text-xs text-slate-500 uppercase tracking-wider mt-0.5">
-              Concept
-            </p>
-          </div>
+    <div className="mx-auto flex max-w-lg flex-col gap-6">
+      {/* Icon + headline */}
+      <div className="text-center">
+        <div className="mb-4 inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-white/[0.05] text-5xl ring-1 ring-white/[0.08]">
+          {body.tipIcon}
         </div>
-        <p className="text-sm leading-relaxed text-slate-300">
-          {body.explanation}
-        </p>
-        {/* Tip block */}
-        <div className="mt-5 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.06] px-4 py-3">
-          <p className="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-1">
-            💡 Key tip
+        <h2 className="text-2xl font-black tracking-tight text-white sm:text-3xl">
+          {body.headline}
+        </h2>
+      </div>
+
+      {/* Explanation */}
+      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.03] px-6 py-5">
+        <p className="text-[15px] leading-7 text-slate-300">{body.explanation}</p>
+      </div>
+
+      {/* Key tip */}
+      <div className="flex gap-3 rounded-2xl border border-amber-400/20 bg-amber-400/[0.04] px-5 py-4">
+        <span className="mt-0.5 text-xl">💡</span>
+        <div>
+          <p className="mb-1 text-[11px] font-bold uppercase tracking-widest text-amber-400">
+            Key Principle
           </p>
-          <p className="text-sm text-cyan-200/80">{body.tip}</p>
+          <p className="text-sm leading-relaxed text-amber-100/70">{body.tip}</p>
         </div>
       </div>
 
       <button
         type="button"
-        onClick={() => {
-          setRead(true);
-          onComplete();
-        }}
-        className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 py-3 text-sm font-bold text-white shadow-lg shadow-purple-500/20 transition-all hover:brightness-110 active:scale-[0.98]"
+        onClick={onComplete}
+        className="w-full rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-4 text-base font-bold text-white shadow-xl shadow-purple-500/20 transition-all hover:brightness-110 active:scale-[0.98]"
       >
-        Got it — next step →
+        Got it →
       </button>
-
-      {!read && (
-        <p className="text-center text-[11px] text-slate-600">
-          Take a moment to read before continuing
-        </p>
-      )}
     </div>
   );
 }
@@ -565,6 +551,8 @@ function PositionDrillStep({
 
       setFen(chess.fen());
       setStatus(correct ? "correct" : "wrong");
+      if (correct) playSound("correct");
+      else playSound("wrong");
 
       setTimeout(() => {
         if (correct) {
@@ -583,7 +571,7 @@ function PositionDrillStep({
           setFen(pos.fen);
           setStatus("idle");
         }
-      }, 1200);
+      }, 1400);
 
       return true;
     },
@@ -592,26 +580,44 @@ function PositionDrillStep({
 
   if (!pos) return null;
 
+  const toMove = pos.fen.split(" ")[1] === "b" ? "Black" : "White";
+
   return (
-    <div className="mx-auto max-w-sm space-y-4">
+    <div className="mx-auto flex max-w-sm flex-col gap-4">
+      {/* Instruction */}
+      <div className="text-center">
+        <p className="text-[13px] font-semibold uppercase tracking-widest text-slate-500">
+          {toMove} to move
+        </p>
+        <p className="mt-0.5 text-base font-bold text-white">Find the best move</p>
+      </div>
+
       {/* Progress dots */}
-      <div className="flex items-center justify-center gap-1.5">
+      <div className="flex items-center justify-center gap-2">
         {positions.map((_, i) => (
           <div
             key={i}
-            className={`h-2 w-2 rounded-full transition-colors ${
+            className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
               i < idx
-                ? "bg-emerald-500"
+                ? "bg-emerald-500 scale-100"
                 : i === idx
-                  ? "bg-purple-400"
-                  : "bg-white/[0.1]"
+                  ? "bg-purple-400 scale-110"
+                  : "bg-white/[0.12]"
             }`}
           />
         ))}
       </div>
 
       {/* Board */}
-      <div className="overflow-hidden rounded-xl">
+      <div
+        className={`overflow-hidden rounded-2xl ring-2 transition-all duration-300 ${
+          status === "correct"
+            ? "ring-emerald-500/60"
+            : status === "wrong"
+              ? "ring-red-500/50"
+              : "ring-white/[0.06]"
+        }`}
+      >
         <Chessboard
           position={fen}
           boardOrientation={orientation}
@@ -622,28 +628,26 @@ function PositionDrillStep({
 
       {/* Feedback */}
       <div
-        className={`rounded-xl px-4 py-3 text-center text-sm font-semibold transition-colors ${
+        className={`rounded-2xl px-5 py-3.5 text-center text-sm font-semibold transition-all duration-300 ${
           status === "correct"
             ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
             : status === "wrong"
               ? "border border-red-500/30 bg-red-500/10 text-red-300"
-              : "border border-white/[0.06] bg-white/[0.03] text-slate-400"
+              : "border border-white/[0.06] bg-white/[0.03] text-slate-500"
         }`}
       >
         {status === "correct"
-          ? `✓ Correct!${pos.label ? ` — ${pos.label}` : ""}`
+          ? "✓ Correct!"
           : status === "wrong"
-            ? "✗ Not quite — try again"
-            : pos.label
-              ? pos.label
-              : "Find the best move"}
+            ? "✗ Not the best move — try again"
+            : pos.label ?? "Drag a piece to make your move"}
       </div>
 
       {/* Skip */}
       <button
         type="button"
         onClick={onComplete}
-        className="w-full rounded-lg py-1 text-xs text-slate-600 hover:text-slate-500"
+        className="mx-auto text-xs text-slate-700 underline-offset-2 hover:text-slate-500"
       >
         Skip →
       </button>
@@ -673,18 +677,42 @@ function TacticsStep({
   useEffect(() => {
     if (fetched.current) return;
     fetched.current = true;
-    fetch(`/api/puzzles?themes=${theme}&limit=3`)
+    fetch(`/api/puzzles?themes=${theme}&count=3`)
       .then((r) => r.json())
       .then((data) => {
         const puzzles = data.puzzles ?? [];
-        // Convert lichess format to DrillPosition
-        const drills = puzzles
-          .map((p: any) => ({
-            fen: p.fen ?? p.puzzle?.fen,
-            bestMove: p.puzzle?.solution?.[0] ?? p.bestMove,
-            label: `${THEME_DISPLAY[theme] ?? theme} puzzle`,
-          }))
-          .filter((d: any) => d.fen && d.bestMove);
+        // Lichess returns { game: { pgn }, puzzle: { initialPly, solution } }
+        // Derive FEN by replaying the PGN up to initialPly half-moves.
+        const drills: DrillPosition[] = [];
+        for (const p of puzzles) {
+          try {
+            const pgn: string = p.game?.pgn ?? "";
+            const initialPly: number = p.puzzle?.initialPly ?? 0;
+            const solution: string[] = p.puzzle?.solution ?? [];
+            if (!pgn || !solution.length) continue;
+
+            const game = new Chess();
+            game.loadPgn(pgn);
+            const sanMoves = game.history();
+
+            const board = new Chess();
+            for (let i = 0; i < initialPly && i < sanMoves.length; i++) {
+              board.move(sanMoves[i]);
+            }
+            const fen = board.fen();
+            const bestMove = solution[0]; // UCI like "e2e4"
+
+            if (fen && bestMove) {
+              drills.push({
+                fen,
+                bestMove,
+                label: `${THEME_DISPLAY[theme] ?? theme} puzzle`,
+              });
+            }
+          } catch {
+            // skip malformed puzzle
+          }
+        }
         setPositions(drills);
       })
       .catch(() => setPositions([]))
@@ -738,32 +766,44 @@ function StepHeader({
   totalSteps: number;
   stepIndex: number;
 }) {
-  const pct = (stepIndex / totalSteps) * 100;
+  const TYPE_COLOR: Record<StepType, string> = {
+    concept: "bg-violet-500",
+    tactics: "bg-red-500",
+    blunder: "bg-amber-500",
+    endgame: "bg-cyan-500",
+    quiz: "bg-emerald-500",
+    memory: "bg-indigo-400",
+  };
 
   return (
-    <div className="mb-6">
-      {/* Progress bar */}
-      <div className="mb-4 flex items-center gap-3">
-        <div className="flex-1 h-2 rounded-full bg-white/[0.06] overflow-hidden">
+    <div className="mb-8">
+      {/* Segment progress bar */}
+      <div className="flex gap-1.5 mb-5">
+        {Array.from({ length: totalSteps }).map((_, i) => (
           <div
-            className="h-full rounded-full bg-gradient-to-r from-purple-500 to-violet-400 transition-[width] duration-700 ease-out"
-            style={{ width: `${pct}%` }}
+            key={i}
+            className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
+              i < stepIndex
+                ? TYPE_COLOR[step.type]
+                : i === stepIndex - 1
+                  ? TYPE_COLOR[step.type] + " opacity-90"
+                  : "bg-white/[0.08]"
+            }`}
           />
-        </div>
-        <span className="text-xs tabular-nums text-slate-500 shrink-0">
-          {stepIndex}/{totalSteps}
+        ))}
+      </div>
+      {/* Step type badge + title */}
+      <div className="flex items-center gap-3">
+        <span
+          className={`shrink-0 rounded-lg px-2.5 py-1 text-[10px] font-black uppercase tracking-widest text-white ${TYPE_COLOR[step.type]}`}
+        >
+          {STEP_TYPE_LABELS[step.type]}
         </span>
+        <h2 className="text-lg font-bold text-white leading-tight">{step.title}</h2>
       </div>
-      {/* Step label */}
-      <div className="flex items-center gap-2.5">
-        <span className="text-2xl">{step.icon}</span>
-        <div>
-          <h2 className="text-lg font-bold text-white leading-tight">
-            {step.title}
-          </h2>
-          <p className="text-xs text-slate-500">{step.subtitle}</p>
-        </div>
-      </div>
+      {step.subtitle && (
+        <p className="mt-1.5 ml-0 text-sm text-slate-500">{step.subtitle}</p>
+      )}
     </div>
   );
 }
@@ -771,15 +811,6 @@ function StepHeader({
 /* ─────────────────────────────────────────────────────────────── */
 /*  Path Overview Screen                                            */
 /* ─────────────────────────────────────────────────────────────── */
-
-const STEP_TYPE_COLORS: Record<StepType, string> = {
-  concept: "from-violet-900/60 to-purple-900/40 border-violet-500/25",
-  tactics: "from-red-900/50 to-rose-900/30 border-red-500/20",
-  blunder: "from-orange-900/50 to-amber-900/30 border-amber-500/20",
-  endgame: "from-cyan-900/50 to-sky-900/30 border-cyan-500/20",
-  quiz: "from-emerald-900/50 to-green-900/30 border-emerald-500/20",
-  memory: "from-indigo-900/50 to-blue-900/30 border-indigo-500/20",
-};
 
 const STEP_TYPE_LABELS: Record<StepType, string> = {
   concept: "Learn",
@@ -799,69 +830,69 @@ function PathOverview({
   username: string | null;
   onStart: () => void;
 }) {
+  const TYPE_DOT: Record<StepType, string> = {
+    concept: "bg-violet-500",
+    tactics: "bg-red-500",
+    blunder: "bg-amber-500",
+    endgame: "bg-cyan-500",
+    quiz: "bg-emerald-500",
+    memory: "bg-indigo-400",
+  };
+
   return (
-    <div className="mx-auto max-w-lg space-y-6">
+    <div className="mx-auto max-w-md space-y-7">
       {/* Hero */}
-      <div className="text-center space-y-2 pt-2">
-        <div className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-purple-400">
-          ✦ Personalized Path
-        </div>
-        <h1 className="text-2xl font-black text-white sm:text-3xl">
-          Your Lesson for Today
+      <div className="space-y-2 pt-2 text-center">
+        <p className="text-[11px] font-black uppercase tracking--widest text-purple-400">
+          ✦ Your lesson for today
+        </p>
+        <h1 className="text-3xl font-black tracking-tight text-white">
+          {username ? `${username}'s Path` : "Daily Path"}
         </h1>
-        <p className="text-sm text-slate-400">
-          {username ? `Built from ${username}'s scan data · ` : ""}5 steps · ~10
-          min
+        <p className="text-sm text-slate-500">
+          {steps.length} steps · ~10 min · personalised
         </p>
       </div>
 
-      {/* Steps list */}
-      <div className="space-y-2.5">
+      {/* Steps */}
+      <div className="space-y-2">
         {steps.map((step, i) => (
           <div
             key={step.id}
-            className={`flex items-center gap-4 rounded-xl border bg-gradient-to-r p-4 ${STEP_TYPE_COLORS[step.type]}`}
+            className="flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.025] px-4 py-3.5"
           >
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-lg font-black text-white">
+            <div className={`h-8 w-8 shrink-0 rounded-full ${TYPE_DOT[step.type]} flex items-center justify-center text-xs font-black text-white`}>
               {i + 1}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-base">{step.icon}</span>
-                <p className="font-semibold text-sm text-white truncate">
-                  {step.title}
-                </p>
-              </div>
-              <p className="text-[11px] text-slate-500 mt-0.5 truncate">
-                {step.subtitle}
-              </p>
+              <p className="truncate text-sm font-semibold text-white">{step.title}</p>
+              <p className="truncate text-[11px] text-slate-600">{step.subtitle}</p>
             </div>
-            <span className="shrink-0 text-[10px] font-bold uppercase tracking-wider text-slate-600 border border-white/[0.06] rounded px-1.5 py-0.5">
+            <span className="shrink-0 text-[10px] font-black uppercase tracking-wider text-slate-600">
               {STEP_TYPE_LABELS[step.type]}
             </span>
           </div>
         ))}
       </div>
 
-      {/* Start */}
+      {/* CTA */}
       <button
         type="button"
         onClick={onStart}
-        className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 py-3.5 text-sm font-bold text-white shadow-lg shadow-purple-500/25 transition-all hover:brightness-110 active:scale-[0.98]"
+        className="w-full rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-4 text-base font-bold text-white shadow-2xl shadow-purple-500/25 transition-all hover:brightness-110 active:scale-[0.98]"
       >
-        Begin Lesson →
+        Start Lesson →
       </button>
 
-      {/* Disclaimer */}
-      <p className="text-center text-[11px] text-slate-600">
-        🧪 Early preview — give us feedback in{" "}
+      <p className="text-center text-[11px] text-slate-700">
+        🧪 Early preview ·{" "}
         <a
           href="https://discord.gg/YS8fc4FtEk"
           target="_blank"
           rel="noopener noreferrer"
-          className="text-slate-500 hover:text-slate-400 underline"
+          className="text-slate-600 hover:text-slate-400 underline"
         >
-          Discord
+          give feedback in Discord
         </a>
       </p>
     </div>
@@ -885,34 +916,35 @@ function CompletionScreen({
   }, []);
 
   return (
-    <div className="mx-auto max-w-sm space-y-6 py-8 text-center">
-      <div className="text-6xl">🏆</div>
+    <div className="mx-auto flex max-w-sm flex-col items-center gap-6 py-8 text-center">
+      <div className="flex h-28 w-28 items-center justify-center rounded-3xl bg-gradient-to-br from-amber-400 to-orange-500 text-6xl shadow-2xl shadow-amber-500/30">
+        🏆
+      </div>
       <div>
-        <h2 className="text-2xl font-black text-white">Lesson Complete!</h2>
+        <h2 className="text-3xl font-black tracking-tight text-white">
+          Lesson Complete!
+        </h2>
         <p className="mt-2 text-sm text-slate-400">
-          You finished all {total} steps. Keep it up every day to see real
-          improvement.
+          You finished {total} steps. Come back tomorrow for a new path.
         </p>
       </div>
-      <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-4 py-3">
-        <p className="text-xs font-bold text-emerald-400 uppercase tracking-wider">
-          +10 coins earned
-        </p>
-        <p className="mt-0.5 text-[11px] text-emerald-300/60">
-          Come back tomorrow for a new path
+      <div className="w-full rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] px-5 py-4">
+        <p className="text-sm font-black text-emerald-400">+10 coins earned</p>
+        <p className="mt-0.5 text-[11px] text-emerald-300/50">
+          Keep the streak going — practice daily
         </p>
       </div>
-      <div className="flex flex-col gap-2.5">
+      <div className="flex w-full flex-col gap-2.5">
         <button
           type="button"
           onClick={onRestart}
-          className="w-full rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 py-3 text-sm font-bold text-white hover:brightness-110"
+          className="w-full rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-4 text-sm font-bold text-white hover:brightness-110"
         >
-          Do Another Path
+          Do Another Path →
         </button>
         <Link
           href="/train"
-          className="block w-full rounded-xl border border-white/[0.08] bg-white/[0.03] py-3 text-sm font-semibold text-slate-300 hover:bg-white/[0.06] transition-colors"
+          className="block w-full rounded-2xl border border-white/[0.08] bg-white/[0.02] py-3.5 text-sm font-semibold text-slate-400 hover:bg-white/[0.05] transition-colors"
         >
           Back to Training Hub
         </Link>
@@ -1042,30 +1074,24 @@ export default function LearnPage() {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-2xl px-4 py-10 sm:px-6 sm:py-14">
-      {/* Header */}
-      <div className="mb-8 flex items-center justify-between">
+    <div className="min-h-screen bg-[#0a0a0a]">
+      {/* Top chrome — back + username */}
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/[0.05] bg-[#0a0a0a]/90 px-4 py-3 backdrop-blur sm:px-6">
         <Link
           href="/train"
           className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"
         >
-          <svg
-            className="h-3.5 w-3.5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15 19l-7-7 7-7"
-            />
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
-          Training Hub
+          Exit
         </Link>
 
-        {/* Username selector (if multiple) */}
+        <span className="text-xs font-bold tracking-widest text-slate-600 uppercase">
+          Learn
+        </span>
+
+        {/* Username selector */}
         {reports.length > 0 && (
           <div className="flex items-center gap-2 text-xs text-slate-500">
             {[...new Set(reports.map((r) => r.chessUsername))].length > 1 ? (
@@ -1075,34 +1101,33 @@ export default function LearnPage() {
                 className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-xs text-slate-300 focus:outline-none"
               >
                 {[...new Set(reports.map((r) => r.chessUsername))].map((u) => (
-                  <option key={u} value={u}>
-                    {u}
-                  </option>
+                  <option key={u} value={u}>{u}</option>
                 ))}
               </select>
             ) : (
-              <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-slate-400">
-                {selectedUser}
-              </span>
+              <span className="text-slate-600">{selectedUser}</span>
             )}
           </div>
         )}
+        {reports.length === 0 && <div className="w-16" />}
       </div>
 
-      {/* Guest nudge */}
-      {!authenticated && (
-        <div className="mb-6 flex items-center justify-between gap-3 rounded-xl border border-purple-500/20 bg-purple-500/[0.06] px-4 py-3">
-          <p className="text-xs text-purple-300/70">
-            Showing a universal path — sign in & save a scan to personalise it.
-          </p>
-          <Link
-            href="/auth/signin"
-            className="shrink-0 rounded-lg bg-purple-600 px-3 py-1.5 text-xs font-bold text-white hover:brightness-110"
-          >
-            Sign in
-          </Link>
-        </div>
-      )}
+      {/* Main content */}
+      <div className="mx-auto max-w-lg px-4 py-10 sm:px-6 sm:py-14">
+        {/* Guest nudge */}
+        {!authenticated && (
+          <div className="mb-8 flex items-center justify-between gap-3 rounded-2xl border border-purple-500/20 bg-purple-500/[0.05] px-4 py-3">
+            <p className="text-xs text-purple-300/60">
+              Sign in & save a scan to personalise your path.
+            </p>
+            <Link
+              href="/auth/signin"
+              className="shrink-0 rounded-xl bg-purple-600 px-3 py-1.5 text-xs font-bold text-white hover:brightness-110"
+            >
+              Sign in
+            </Link>
+          </div>
+        )}
 
       {/* Content */}
       {authenticated && reports.length === 0 ? (
@@ -1146,8 +1171,8 @@ export default function LearnPage() {
             <div className="mx-auto max-w-lg space-y-4">
               <ChessQuiz
                 question={currentStep.quizQuestion}
-                onComplete={(correct) => {
-                  if (correct) playSound("correct");
+                onComplete={(_correct) => {
+                  // ChessQuiz plays sound internally — don't double-play
                   setTimeout(advance, 800);
                 }}
               />
@@ -1165,6 +1190,7 @@ export default function LearnPage() {
           )}
         </div>
       ) : null}
+      </div>
     </div>
   );
 }
