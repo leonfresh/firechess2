@@ -32,9 +32,9 @@ import {
   type QuizQuestion,
 } from "@/components/chess-quiz";
 import { PieceMemory, type MemoryPosition } from "@/components/piece-memory";
-import { Chessboard } from "@/components/chessboard-compat";
+import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { Chess } from "chess.js";
-import { playSound } from "@/lib/sounds";
+import { playSound, preloadSounds } from "@/lib/sounds";
 import { earnCoins } from "@/lib/coins";
 
 /* ─────────────────────────────────────────────────────────────── */
@@ -398,6 +398,23 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
 };
 
 /* ─────────────────────────────────────────────────────────────── */
+/*  Helpers                                                         */
+/* ─────────────────────────────────────────────────────────────── */
+
+function parseUci(move: string) {
+  return {
+    from: move.slice(0, 2) as CbSquare,
+    to: move.slice(2, 4) as CbSquare,
+    promotion: (move.slice(4, 5) || undefined) as
+      | "q"
+      | "r"
+      | "b"
+      | "n"
+      | undefined,
+  };
+}
+
+/* ─────────────────────────────────────────────────────────────── */
 /*  Motif → display label mapping                                   */
 /* ─────────────────────────────────────────────────────────────── */
 
@@ -495,6 +512,53 @@ const UNIVERSAL_TOPICS: WeaknessTopic[] = [
   conceptKey: key,
   ownPositions: [],
 }));
+
+/**
+ * Themes structurally related to each other —
+ * used to surface universal topics likely to help based on the user's weaknesses.
+ */
+const RELATED_THEMES: Record<string, string[]> = {
+  fork: ["discoveredAttack", "deflection", "pin"],
+  pin: ["skewer", "fork", "hangingPiece"],
+  skewer: ["pin", "fork"],
+  discoveredAttack: ["fork", "deflection", "backRankMate"],
+  hangingPiece: ["deflection", "fork", "pin"],
+  backRankMate: ["kingsideAttack", "deflection"],
+  deflection: ["fork", "discoveredAttack", "backRankMate"],
+  kingsideAttack: ["backRankMate", "deflection"],
+  rookEndgame: ["pawnEndgame", "queenEndgame"],
+  pawnEndgame: ["rookEndgame", "bishopEndgame"],
+  queenEndgame: ["rookEndgame", "queenEndgame"],
+  bishopEndgame: ["pawnEndgame", "knightEndgame"],
+  knightEndgame: ["bishopEndgame", "pawnEndgame"],
+};
+
+/**
+ * Build the full topic list for a user:
+ * - Personalised topics from scan data (sorted by severity: high → medium → low)
+ * - Universal topics that aren't already covered by personalised ones,
+ *   sorted by how related they are to the user's detected weaknesses.
+ */
+function buildTopics(userReports: SavedReport[]): WeaknessTopic[] {
+  const personalised = analyzeWeaknesses(userReports);
+  const personalisedKeys = new Set(personalised.map((t) => t.lichessTheme));
+
+  // Score each universal topic by how related it is to the user's weak themes
+  const filtered = UNIVERSAL_TOPICS.filter(
+    (t) => !personalisedKeys.has(t.lichessTheme),
+  );
+
+  const scored = filtered.map((t) => {
+    let score = 0;
+    for (const weakKey of personalisedKeys) {
+      if (RELATED_THEMES[weakKey]?.includes(t.lichessTheme)) score++;
+    }
+    return { topic: t, score };
+  });
+  scored.sort((a, b) => b.score - a.score);
+
+  return [...personalised, ...scored.map((s) => s.topic)];
+}
 
 function analyzeWeaknesses(reports: SavedReport[]): WeaknessTopic[] {
   const motifCounts = new Map<string, number>();
@@ -978,6 +1042,275 @@ function PositionDrillStep({
 /*  Tactics Step (fetches Lichess puzzles)                          */
 /* ─────────────────────────────────────────────────────────────── */
 
+/* ─────────────────────────────────────────────────────────────── */
+/*  LivePuzzleBoard — plays trigger move, supports multi-move       */
+/* ─────────────────────────────────────────────────────────────── */
+
+type LivePuzzleBoardProps = {
+  fen: string; // preTriggerFen
+  triggerMove: string | null; // UCI move played by opponent before puzzle
+  solutionMoves: string[]; // full UCI solution array
+  orientation: "white" | "black";
+  onSolved: () => void;
+  onFailed: () => void;
+};
+
+function LivePuzzleBoard({
+  fen,
+  triggerMove,
+  solutionMoves,
+  orientation,
+  onSolved,
+  onFailed,
+}: LivePuzzleBoardProps) {
+  const [game, setGame] = useState(() => new Chess(fen));
+  const [moveIndex, setMoveIndex] = useState(-1); // -1 = waiting for trigger
+  const [status, setStatus] = useState<"playing" | "correct" | "wrong">(
+    "playing",
+  );
+  const [attempts, setAttempts] = useState(0);
+  const [shaking, setShaking] = useState(false);
+  const [opponentLastMove, setOpponentLastMove] = useState<{
+    from: string;
+    to: string;
+  } | null>(null);
+  const [showHint, setShowHint] = useState(false);
+  const MAX_ATTEMPTS = 3;
+
+  useEffect(() => {
+    preloadSounds();
+    if (!triggerMove) {
+      setMoveIndex(0);
+      return;
+    }
+    const parsed = parseUci(triggerMove);
+    const timer = setTimeout(() => {
+      const newGame = new Chess(fen);
+      try {
+        newGame.move({
+          from: parsed.from,
+          to: parsed.to,
+          promotion: parsed.promotion,
+        });
+        playSound("move");
+        setGame(new Chess(newGame.fen()));
+        setOpponentLastMove({ from: parsed.from, to: parsed.to });
+      } catch {
+        /* skip bad trigger */
+      }
+      setMoveIndex(0);
+    }, 700);
+    return () => clearTimeout(timer);
+  }, [fen, triggerMove]);
+
+  const hintSquare =
+    showHint && moveIndex >= 0 && moveIndex < solutionMoves.length
+      ? solutionMoves[moveIndex].slice(0, 2)
+      : null;
+
+  const handleDrop = useCallback(
+    (from: CbSquare, to: CbSquare): boolean => {
+      if (status !== "playing" || moveIndex < 0) return false;
+      const expected = solutionMoves[moveIndex];
+      if (!expected) return false;
+
+      const exp = parseUci(expected);
+      if (from === exp.from && to === exp.to) {
+        const promotion = exp.promotion ?? "q";
+        const newGame = new Chess(game.fen());
+        try {
+          newGame.move({ from, to, promotion });
+        } catch {
+          return false;
+        }
+        playSound("correct");
+        setGame(new Chess(newGame.fen()));
+        setAttempts(0);
+        setShowHint(false);
+
+        const nextIndex = moveIndex + 1;
+        if (nextIndex >= solutionMoves.length) {
+          setStatus("correct");
+          setTimeout(onSolved, 800);
+          return true;
+        }
+
+        // Auto-play opponent's response
+        const oppMove = solutionMoves[nextIndex];
+        const oppParsed = parseUci(oppMove);
+        setTimeout(() => {
+          const g = new Chess(newGame.fen());
+          try {
+            g.move({
+              from: oppParsed.from,
+              to: oppParsed.to,
+              promotion: oppParsed.promotion,
+            });
+            playSound(g.isCheck() ? "check" : "move");
+            setGame(new Chess(g.fen()));
+            setOpponentLastMove({ from: oppParsed.from, to: oppParsed.to });
+            setMoveIndex(nextIndex + 1);
+          } catch {
+            setStatus("correct");
+            onSolved();
+          }
+        }, 500);
+        setMoveIndex(nextIndex);
+        return true;
+      }
+
+      // Wrong
+      playSound("wrong");
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
+      setShaking(true);
+      if (newAttempts >= 2) setShowHint(true);
+      setTimeout(() => setShaking(false), 400);
+
+      if (newAttempts >= MAX_ATTEMPTS) {
+        setStatus("wrong");
+        // Show the correct move
+        const cp = parseUci(expected);
+        setTimeout(() => {
+          const g = new Chess(game.fen());
+          try {
+            g.move({
+              from: cp.from,
+              to: cp.to,
+              promotion: cp.promotion ?? "q",
+            });
+            setGame(new Chess(g.fen()));
+          } catch {}
+        }, 400);
+        setTimeout(() => onFailed(), 2500);
+      }
+      return false;
+    },
+    [game, moveIndex, solutionMoves, status, attempts, onSolved, onFailed],
+  );
+
+  const squareStyles: Record<string, React.CSSProperties> = {};
+  if (opponentLastMove && status === "playing") {
+    squareStyles[opponentLastMove.from] = {
+      backgroundColor: "rgba(255,170,0,0.3)",
+    };
+    squareStyles[opponentLastMove.to] = {
+      backgroundColor: "rgba(255,170,0,0.45)",
+    };
+  }
+  if (hintSquare) {
+    squareStyles[hintSquare] = {
+      boxShadow: "inset 0 0 18px 5px rgba(34,197,94,0.5)",
+      borderRadius: "4px",
+    };
+  }
+  if (status === "correct") {
+    const last = solutionMoves[solutionMoves.length - 1];
+    if (last)
+      squareStyles[last.slice(2, 4)] = {
+        boxShadow: "inset 0 0 18px 5px rgba(34,197,94,0.6)",
+      };
+  }
+  if (status === "wrong") {
+    const exp = solutionMoves[moveIndex];
+    if (exp) {
+      squareStyles[exp.slice(0, 2)] = {
+        boxShadow: "inset 0 0 14px 4px rgba(239,68,68,0.5)",
+      };
+      squareStyles[exp.slice(2, 4)] = {
+        boxShadow: "inset 0 0 14px 4px rgba(34,197,94,0.5)",
+      };
+    }
+  }
+
+  const toMove = orientation === "white" ? "White" : "Black";
+  const statusText =
+    status === "correct"
+      ? "✓ Correct!"
+      : status === "wrong"
+        ? "Answer shown — watch the move"
+        : moveIndex < 0
+          ? "Waiting for opponent…"
+          : showHint
+            ? "💡 Move the highlighted piece"
+            : `${toMove} to move — find the best continuation`;
+
+  return (
+    <div className="mx-auto flex max-w-sm flex-col gap-3">
+      <p
+        className={`text-center text-sm font-semibold ${
+          status === "correct"
+            ? "text-emerald-400"
+            : status === "wrong"
+              ? "text-red-400"
+              : showHint
+                ? "text-amber-400"
+                : "text-slate-400"
+        }`}
+      >
+        {statusText}
+      </p>
+
+      <div
+        className={`overflow-hidden rounded-2xl ring-2 transition-all duration-300 ${
+          status === "correct"
+            ? "ring-emerald-500/50"
+            : status === "wrong"
+              ? "ring-red-500/40"
+              : "ring-white/[0.06]"
+        } ${shaking ? "animate-[shake_0.3s_ease-in-out]" : ""}`}
+      >
+        <Chessboard
+          position={game.fen()}
+          boardOrientation={orientation}
+          onPieceDrop={handleDrop}
+          arePiecesDraggable={status === "playing" && moveIndex >= 0}
+          animationDuration={200}
+          customSquareStyles={squareStyles}
+        />
+      </div>
+
+      {/* Attempts dots */}
+      {status === "playing" && moveIndex >= 0 && (
+        <div className="flex items-center justify-center gap-2">
+          {Array.from({ length: MAX_ATTEMPTS }).map((_, i) => (
+            <div
+              key={i}
+              className={`h-2 w-2 rounded-full transition-colors ${
+                i < attempts ? "bg-red-500" : "bg-white/[0.12]"
+              }`}
+            />
+          ))}
+          <span className="ml-1 text-[11px] text-slate-600">
+            {MAX_ATTEMPTS - attempts} attempt
+            {MAX_ATTEMPTS - attempts !== 1 ? "s" : ""} left
+          </span>
+        </div>
+      )}
+
+      {status === "playing" &&
+        moveIndex >= 0 &&
+        attempts >= MAX_ATTEMPTS - 1 && (
+          <p className="text-center text-[11px] text-amber-500/70">
+            Last try — hint: move from the highlighted square
+          </p>
+        )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────── */
+/*  Tactics Step — fetches Lichess puzzles & runs LivePuzzleBoard   */
+/* ─────────────────────────────────────────────────────────────── */
+
+type PuzzleSetup = {
+  preTriggerFen: string;
+  triggerMove: string | null;
+  solutionMoves: string[];
+  orientation: "white" | "black";
+  theme: string;
+};
+
 function TacticsStep({
   theme,
   onComplete,
@@ -985,12 +1318,10 @@ function TacticsStep({
   theme: string;
   onComplete: (score: number) => void;
 }) {
-  const [positions, setPositions] = useState<any[]>([]);
+  const [puzzles, setPuzzles] = useState<PuzzleSetup[]>([]);
   const [loading, setLoading] = useState(true);
   const [current, setCurrent] = useState(0);
   const [solved, setSolved] = useState(0);
-  const [failed, setFailed] = useState(0);
-  const [done, setDone] = useState(false);
   const fetched = useRef(false);
 
   useEffect(() => {
@@ -999,44 +1330,70 @@ function TacticsStep({
     fetch(`/api/puzzles?themes=${theme}&count=3`)
       .then((r) => r.json())
       .then((data) => {
-        const puzzles = data.puzzles ?? [];
-        // Lichess returns { game: { pgn }, puzzle: { initialPly, solution } }
-        // Derive FEN by replaying the PGN up to initialPly half-moves.
-        const drills: DrillPosition[] = [];
-        for (const p of puzzles) {
+        const raw = data.puzzles ?? [];
+        const setups: PuzzleSetup[] = [];
+        for (const p of raw) {
           try {
             const pgn: string = p.game?.pgn ?? "";
             const initialPly: number = p.puzzle?.initialPly ?? 0;
             const solution: string[] = p.puzzle?.solution ?? [];
-            if (!pgn || !solution.length) continue;
+            if (!pgn || solution.length === 0) continue;
 
-            const game = new Chess();
-            game.loadPgn(pgn);
-            const sanMoves = game.history();
+            const fullGame = new Chess();
+            fullGame.loadPgn(pgn);
+            const history = fullGame.history({ verbose: true });
 
+            // Replay up to initialPly to get preTriggerFen
             const board = new Chess();
-            for (let i = 0; i < initialPly && i < sanMoves.length; i++) {
-              board.move(sanMoves[i]);
+            for (let i = 0; i < Math.min(initialPly, history.length); i++) {
+              board.move(history[i].san);
             }
-            const fen = board.fen();
-            const bestMove = solution[0]; // UCI like "e2e4"
+            const preTriggerFen = board.fen();
 
-            if (fen && bestMove) {
-              drills.push({
-                fen,
-                bestMove,
-                label: `${THEME_DISPLAY[theme] ?? theme} puzzle`,
-              });
+            // triggerMove = move AT initialPly (opponent's last move)
+            let triggerMove: string | null = null;
+            let postTriggerFen = preTriggerFen;
+            if (initialPly < history.length) {
+              const m = history[initialPly];
+              triggerMove = m.from + m.to + (m.promotion ?? "");
+              board.move(m.san);
+              postTriggerFen = board.fen();
             }
+
+            const orientation: "white" | "black" =
+              new Chess(postTriggerFen).turn() === "w" ? "white" : "black";
+
+            setups.push({
+              preTriggerFen,
+              triggerMove,
+              solutionMoves: solution,
+              orientation,
+              theme: p.matchedTheme ?? theme,
+            });
           } catch {
-            // skip malformed puzzle
+            /* skip malformed */
           }
         }
-        setPositions(drills);
+        setPuzzles(setups);
       })
-      .catch(() => setPositions([]))
+      .catch(() => setPuzzles([]))
       .finally(() => setLoading(false));
   }, [theme]);
+
+  const advance = useCallback(
+    (wasSolved: boolean) => {
+      if (wasSolved) setSolved((s) => s + 1);
+      setCurrent((c) => {
+        if (c + 1 >= puzzles.length) {
+          // done — defer to avoid state update during render
+          setTimeout(() => onComplete(wasSolved ? solved + 1 : solved), 400);
+          return c;
+        }
+        return c + 1;
+      });
+    },
+    [puzzles.length, solved, onComplete],
+  );
 
   if (loading) {
     return (
@@ -1047,11 +1404,11 @@ function TacticsStep({
     );
   }
 
-  if (positions.length === 0) {
+  if (puzzles.length === 0) {
     return (
       <div className="flex flex-col items-center gap-4 py-12 text-center">
         <p className="text-slate-400 text-sm">
-          No puzzles available for this theme right now.
+          No puzzles found for this theme right now.
         </p>
         <button
           type="button"
@@ -1064,11 +1421,53 @@ function TacticsStep({
     );
   }
 
+  const puzzle = puzzles[current];
+
   return (
-    <PositionDrillStep
-      positions={positions}
-      onComplete={() => onComplete(solved)}
-    />
+    <div className="flex flex-col gap-4">
+      {/* Progress dots */}
+      <div className="flex items-center justify-center gap-2">
+        {puzzles.map((_, i) => (
+          <div
+            key={i}
+            className={`h-2.5 w-2.5 rounded-full transition-all duration-300 ${
+              i < current
+                ? "bg-emerald-500"
+                : i === current
+                  ? "bg-purple-400 scale-110"
+                  : "bg-white/[0.12]"
+            }`}
+          />
+        ))}
+      </div>
+
+      <div className="flex items-center justify-center gap-2">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-fuchsia-500/30 bg-fuchsia-500/10 px-3 py-1 text-xs font-semibold text-fuchsia-300">
+          🎯 {THEME_DISPLAY[puzzle.theme] ?? puzzle.theme}
+        </span>
+        <span className="text-xs text-slate-600">
+          {current + 1} / {puzzles.length}
+        </span>
+      </div>
+
+      <LivePuzzleBoard
+        key={`${current}-${puzzle.preTriggerFen.slice(0, 20)}`}
+        fen={puzzle.preTriggerFen}
+        triggerMove={puzzle.triggerMove}
+        solutionMoves={puzzle.solutionMoves}
+        orientation={puzzle.orientation}
+        onSolved={() => advance(true)}
+        onFailed={() => advance(false)}
+      />
+
+      <button
+        type="button"
+        onClick={() => advance(false)}
+        className="mx-auto text-xs text-slate-700 underline-offset-2 hover:text-slate-500"
+      >
+        Skip →
+      </button>
+    </div>
   );
 }
 
@@ -1166,6 +1565,9 @@ function TopicPicker({
 
   const scanTopics = topics.filter((t) => t.severity !== "universal");
   const universalTopics = topics.filter((t) => t.severity === "universal");
+  // The first few universal topics were sorted to the top because they're
+  // related to the user's weak areas — mark the top 3 as "Suggested"
+  const suggestedThreshold = scanTopics.length > 0 ? 3 : 0;
 
   return (
     <div className="mx-auto max-w-md space-y-6">
@@ -1214,40 +1616,54 @@ function TopicPicker({
 
       <div className="space-y-2">
         <p className="px-1 text-[10px] font-black uppercase tracking-widest text-slate-600">
-          {scanTopics.length > 0 ? "Universal lessons" : "Available lessons"}
+          {scanTopics.length > 0 ? "Also practice" : "All lessons"}
         </p>
-        {universalTopics.map((topic) => (
-          <button
-            key={topic.key}
-            type="button"
-            onClick={() => onSelect(topic)}
-            className="w-full flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3.5 text-left transition-all hover:border-purple-500/30 hover:bg-purple-500/[0.05] active:scale-[0.99]"
-          >
-            <div className="text-2xl">{topic.icon}</div>
-            <div className="flex-1 min-w-0">
-              <p className="font-bold text-white text-sm">{topic.label}</p>
-              <p className="mt-0.5 text-[11px] text-slate-500">
-                {(CONCEPT_CARDS[topic.conceptKey]?.intro
-                  ?.split(" ")
-                  .slice(0, 9)
-                  .join(" ") ?? "") + "…"}
-              </p>
-            </div>
-            <svg
-              className="h-4 w-4 shrink-0 text-slate-600"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
+        {universalTopics.map((topic, i) => {
+          const isSuggested = i < suggestedThreshold;
+          return (
+            <button
+              key={topic.key}
+              type="button"
+              onClick={() => onSelect(topic)}
+              className={`w-full flex items-center gap-4 rounded-2xl border px-4 py-3.5 text-left transition-all hover:border-purple-500/30 hover:bg-purple-500/[0.05] active:scale-[0.99] ${
+                isSuggested
+                  ? "border-purple-500/20 bg-purple-500/[0.04]"
+                  : "border-white/[0.06] bg-white/[0.02]"
+              }`}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-          </button>
-        ))}
+              <div className="text-2xl">{topic.icon}</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="font-bold text-white text-sm">{topic.label}</p>
+                  {isSuggested && (
+                    <span className="rounded-md border border-purple-500/30 bg-purple-500/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-purple-400">
+                      Suggested
+                    </span>
+                  )}
+                </div>
+                <p className="mt-0.5 text-[11px] text-slate-500">
+                  {(CONCEPT_CARDS[topic.conceptKey]?.intro
+                    ?.split(" ")
+                    .slice(0, 9)
+                    .join(" ") ?? "") + "…"}
+                </p>
+              </div>
+              <svg
+                className="h-4 w-4 shrink-0 text-slate-600"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </button>
+          );
+        })}
       </div>
 
       <p className="text-center text-[11px] text-slate-700">
@@ -1407,10 +1823,7 @@ export default function LearnPage() {
     [reports, selectedUser],
   );
 
-  const topics = useMemo(
-    () => [...analyzeWeaknesses(userReports), ...UNIVERSAL_TOPICS],
-    [userReports],
-  );
+  const topics = useMemo(() => buildTopics(userReports), [userReports]);
 
   const steps = useMemo(
     () =>
