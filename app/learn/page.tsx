@@ -489,7 +489,7 @@ const UNIVERSAL_TOPICS: WeaknessTopic[] = [
   label: THEME_DISPLAY[key] ?? key,
   icon: CONCEPT_CARDS[key]?.tipIcon ?? "♟",
   description:
-    CONCEPT_CARDS[key]?.intro?.split(" ").slice(0, 7).join(" ") + "…" ?? "",
+    (CONCEPT_CARDS[key]?.intro?.split(" ").slice(0, 7).join(" ") ?? "") + "…",
   severity: "universal" as const,
   lichessTheme: key,
   conceptKey: key,
@@ -1076,6 +1076,15 @@ function TacticsStep({
 /*  Step Wrapper — progress + header                               */
 /* ─────────────────────────────────────────────────────────────── */
 
+const STEP_TYPE_LABELS: Record<StepType, string> = {
+  concept: "Learn",
+  tactics: "Practice",
+  blunder: "Review",
+  endgame: "Drill",
+  quiz: "Quiz",
+  memory: "Memory",
+};
+
 function StepHeader({
   step,
   totalSteps,
@@ -1218,10 +1227,10 @@ function TopicPicker({
             <div className="flex-1 min-w-0">
               <p className="font-bold text-white text-sm">{topic.label}</p>
               <p className="mt-0.5 text-[11px] text-slate-500">
-                {CONCEPT_CARDS[topic.conceptKey]?.intro
-                  .split(" ")
+                {(CONCEPT_CARDS[topic.conceptKey]?.intro
+                  ?.split(" ")
                   .slice(0, 9)
-                  .join(" ") + "…"}
+                  .join(" ") ?? "") + "…"}
               </p>
             </div>
             <svg
