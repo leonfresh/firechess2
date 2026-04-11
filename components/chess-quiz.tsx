@@ -14,6 +14,8 @@ export type QuizQuestion = {
   answer: number; // index into options
   explanation: string;
   category: "rules" | "tactics" | "endgame" | "openings" | "strategy";
+  /** Concept key this question specifically tests (e.g. "fork", "pin", "rookEndgame") */
+  motif?: string;
 };
 
 export const QUIZ_BANK: QuizQuestion[] = [
@@ -24,6 +26,7 @@ export const QUIZ_BANK: QuizQuestion[] = [
     explanation:
       "A fork is a move where a single piece attacks two or more opponent pieces simultaneously, forcing them to lose material.",
     category: "tactics",
+    motif: "fork",
   },
   {
     question: "Which piece can jump over other pieces?",
@@ -54,6 +57,7 @@ export const QUIZ_BANK: QuizQuestion[] = [
     explanation:
       "A pin is when a piece cannot move without exposing a more valuable piece (often the king) behind it to attack.",
     category: "tactics",
+    motif: "pin",
   },
   {
     question: "Can a king castle if it would pass through check?",
@@ -80,6 +84,7 @@ export const QUIZ_BANK: QuizQuestion[] = [
     explanation:
       "A skewer is like a reversed pin — the valuable piece is in front and must move, leaving the piece behind it to be captured.",
     category: "tactics",
+    motif: "skewer",
   },
   {
     question: "K+R vs K: can you force checkmate?",
@@ -93,6 +98,7 @@ export const QUIZ_BANK: QuizQuestion[] = [
     explanation:
       "King and rook vs lone king is a basic forced checkmate — you use the rook to cut off the king and force it to a corner or edge.",
     category: "endgame",
+    motif: "rookEndgame",
   },
   {
     question: "What does 'en passant' mean in French?",
@@ -146,6 +152,7 @@ export const QUIZ_BANK: QuizQuestion[] = [
     explanation:
       "A discovered check occurs when moving one piece reveals an attack on the enemy king by another piece that was previously blocked.",
     category: "tactics",
+    motif: "discoveredAttack",
   },
   {
     question:
@@ -160,6 +167,7 @@ export const QUIZ_BANK: QuizQuestion[] = [
     explanation:
       "Opposition (direct or distant) means placing your king two squares from the enemy king so that when it's the opponent's turn to move, their king must step aside.",
     category: "endgame",
+    motif: "pawnEndgame",
   },
   {
     question: "The 'rule of the square' in pawn endgames tells you what?",
@@ -173,6 +181,7 @@ export const QUIZ_BANK: QuizQuestion[] = [
     explanation:
       "Draw the diagonal from the pawn to the promotion square — if the opposing king can step inside that square on its move, it can catch the pawn.",
     category: "endgame",
+    motif: "pawnEndgame",
   },
   {
     question: "What is the Sicilian Defense's first move for Black?",
@@ -207,6 +216,7 @@ export const QUIZ_BANK: QuizQuestion[] = [
     explanation:
       "Two bishops on opposite colours can force checkmate with precise play, typically driving the king to a corner. Two bishops on the same colour cannot cover all squares.",
     category: "endgame",
+    motif: "bishopEndgame",
   },
   {
     question: "What is '5-fold repetition' in chess?",
@@ -255,6 +265,224 @@ export const QUIZ_BANK: QuizQuestion[] = [
     explanation:
       "Stalemate occurs when the player to move has no legal moves and is NOT in check — it's an immediate draw, regardless of material imbalance.",
     category: "rules",
+    motif: "queenEndgame",
+  },
+  // ── Motif-specific questions ──────────────────────────────────────────
+  {
+    question:
+      "Which piece executes a fork most naturally due to its unique movement pattern?",
+    options: ["Bishop", "Rook", "Knight", "Queen"],
+    answer: 2,
+    explanation:
+      "Knights jump over pieces and reach squares no other piece can reach in one move — their L-shape lets them attack two distant targets simultaneously. Even modest knights can fork kings and queens.",
+    category: "tactics",
+    motif: "fork",
+  },
+  {
+    question: "A 'royal fork' is especially powerful because:",
+    options: [
+      "It wins the opponent's queen instantly",
+      "The king must move out of check, guaranteeing the other target is captured",
+      "It only works in endgames",
+      "It requires two knights",
+    ],
+    answer: 1,
+    explanation:
+      "When a piece attacks the king (check) alongside another target, the opponent MUST deal with the check first — they cannot save the other piece. A fork with check is almost always winning.",
+    category: "tactics",
+    motif: "fork",
+  },
+  {
+    question:
+      "What is the difference between an absolute pin and a relative pin?",
+    options: [
+      "An absolute pin uses a rook; a relative pin uses a bishop",
+      "An absolute pin is on the king — the piece literally cannot move; a relative pin is on a more valuable piece — moving is legal but losing",
+      "Absolute pins are always decisive; relative pins are only useful in endgames",
+      "Absolute pins point along files; relative pins point along diagonals",
+    ],
+    answer: 1,
+    explanation:
+      "In an absolute pin, the pinned piece cannot legally move because it would expose the king to check. In a relative pin, moving the piece is legal but loses material — the piece 'behind' is simply more valuable.",
+    category: "tactics",
+    motif: "pin",
+  },
+  {
+    question: "What makes a discovered attack especially dangerous?",
+    options: [
+      "The attacking piece gains additional squares",
+      "The trigger piece makes its own independent threat while the piece behind it fires on a new target — two simultaneous threats",
+      "It always results in checkmate",
+      "Only the revealed piece attacks; the trigger piece does nothing",
+    ],
+    answer: 1,
+    explanation:
+      "A discovered attack creates TWO threats at once: the trigger piece's own move (a check, fork, or capture) AND the long-range piece now firing behind it. The opponent can only address one, so material is gained.",
+    category: "tactics",
+    motif: "discoveredAttack",
+  },
+  {
+    question:
+      "After you threaten a back-rank mate, what is the best preventive move for the opponent?",
+    options: [
+      "Trade off the rook immediately",
+      "Bring a queen to the back rank",
+      "Create a 'luft' — advance one kingside pawn to give the king an escape square",
+      "Castle queenside",
+    ],
+    answer: 2,
+    explanation:
+      "A 'luft' (German for 'air') is a one-square kingside pawn advance (h3/g3 or h6/g6) that creates an escape square. It permanently removes the back-rank mate threat at the cost of a single tempo.",
+    category: "tactics",
+    motif: "backRankMate",
+  },
+  {
+    question: "What is the tactical goal of a deflection sacrifice?",
+    options: [
+      "Winning a pawn to simplify to an endgame",
+      "Forcing a key defending piece to abandon the square or piece it is protecting",
+      "Opening the g-file for a kingside attack",
+      "Exchanging your worst piece for the opponent's best",
+    ],
+    answer: 1,
+    explanation:
+      "Deflection forces a defender away from a critical post. Once it leaves, you access the square or piece it was guarding. A deflection sacrifice doesn't need to be materially sound — the positional gain is the point.",
+    category: "tactics",
+    motif: "deflection",
+  },
+  {
+    question: "A piece is 'hanging' when:",
+    options: [
+      "It is pinned to the king",
+      "It has advanced past the 5th rank",
+      "It can be captured for material gain — either undefended or inadequately defended",
+      "It is blocking one of your own pieces",
+    ],
+    answer: 2,
+    explanation:
+      "A hanging piece can be taken profitably. This means either completely undefended, or defended by fewer pieces than are attacking it (making the exchange winning for the attacker). Checking for hanging pieces every move is the fastest way to reduce blunders.",
+    category: "tactics",
+    motif: "hangingPiece",
+  },
+  {
+    question:
+      "Before sacrificing material to crack open the king, what should you count first?",
+    options: [
+      "How many total pawns each side has",
+      "The number of pieces each side has in total",
+      "The attackers vs. defenders in the enemy king's zone",
+      "How many open files exist on the board",
+    ],
+    answer: 2,
+    explanation:
+      "Counting attackers vs. defenders near the king tells you whether you have enough firepower. If your attackers outnumber their defenders by 2+, there is usually a forced breakthrough. If equal, look for a deflection or forcing sequence to tip the balance first.",
+    category: "tactics",
+    motif: "kingsideAttack",
+  },
+  {
+    question:
+      "Where should your rook be placed relative to a passed pawn in a rook endgame?",
+    options: [
+      "In front of the pawn to slow it temporarily",
+      "On an adjacent file for sideways control",
+      "Behind the passed pawn — yours or the opponent's",
+      "On the 7th rank regardless of pawn position",
+    ],
+    answer: 2,
+    explanation:
+      "The rook belongs BEHIND the passed pawn. If it's your pawn, the rook gains power as the pawn advances. If it's the opponent's pawn, placing your rook behind it contains the passer. A rook in front of a passed pawn is passive; behind it is active.",
+    category: "endgame",
+    motif: "rookEndgame",
+  },
+  {
+    question:
+      "The Lucena position is important in rook endgames because it shows how to:",
+    options: [
+      "Draw against a stronger opponent",
+      "Win with rook + pawn vs. lone rook using the 'bridge' technique",
+      "Force stalemate from a losing position",
+      "Force opposition in king-and-pawn endings",
+    ],
+    answer: 1,
+    explanation:
+      "The Lucena position is the key winning blueprint: shelter your king behind the pawn, then 'build a bridge' with your rook to block perpetual checks. Knowing it lets you convert many rook endings that look unclear.",
+    category: "endgame",
+    motif: "rookEndgame",
+  },
+  {
+    question:
+      "In queen + pawn vs. lone queen, why is the winning side's job so difficult?",
+    options: [
+      "The pawn cannot promote while queens are on the board",
+      "The defending queen can give perpetual check, chasing the winning king endlessly",
+      "Queens always stalemate in the endgame",
+      "The attacking queen loses too much mobility escorting the pawn",
+    ],
+    answer: 1,
+    explanation:
+      "In queen + pawn vs. queen, the defending side typically gives perpetual check — chasing the winning king around the board. You must shelter the king (behind a pawn or toward the center) to escape checks and finally promote.",
+    category: "endgame",
+    motif: "queenEndgame",
+  },
+  {
+    question:
+      "In an opposite-coloured bishop endgame, an extra pawn usually means:",
+    options: [
+      "An easy win — the extra pawn always promotes",
+      "A likely draw — the defender's bishop blockades on its own colour and cannot be driven away",
+      "The game is decided by king activity alone",
+      "You should immediately trade the bishop for the opponent's",
+    ],
+    answer: 1,
+    explanation:
+      "Opposite-coloured bishop endgames are famously drawish — even with two extra pawns the defending bishop can blockade on the squares the attacker's bishop cannot reach. Winning requires an unstoppable passed pawn or a direct king-side attack, not just material.",
+    category: "endgame",
+    motif: "bishopEndgame",
+  },
+  {
+    question:
+      "In a same-coloured bishop endgame, where should you place your pawns?",
+    options: [
+      "On the same colour as your bishop so it defends them",
+      "On the opposite colour to your bishop — so they control squares your bishop cannot",
+      "As far advanced as possible regardless of colour",
+      "Only on central squares (d4/e4/d5/e5)",
+    ],
+    answer: 1,
+    explanation:
+      "Pawns on the OPPOSITE colour to your bishop control squares your bishop cannot reach — together they dominate the board. Pawns on the same colour as your bishop are vulnerable to being blockaded by the enemy bishop on the same colour complex.",
+    category: "endgame",
+    motif: "bishopEndgame",
+  },
+  {
+    question:
+      "Why is a knight on the edge of the board considered weak in endgames?",
+    options: [
+      "It can be captured by pawns more easily on the edge",
+      "It controls only 2–4 squares instead of up to 8 from a central position",
+      "It cannot reach the opponent's back rank from the rim",
+      "It always gets pinned by the enemy rook on the edge",
+    ],
+    answer: 1,
+    explanation:
+      "A centralised knight on d4/e5 controls up to 8 squares and dominates both halves of the board. A knight on a1, h1, a8, or h8 controls only 2 squares. In an endgame, where every tempo and square matters, that loss of mobility is often decisive.",
+    category: "endgame",
+    motif: "knightEndgame",
+  },
+  {
+    question:
+      "In a pawn endgame, which squares must your king reach to guarantee the pawn promotes?",
+    options: [
+      "Any square on the same file as the pawn",
+      "The square directly in front of the pawn",
+      "The key squares — the three squares two ranks directly ahead of the pawn",
+      "Any square in the opponent's half of the board",
+    ],
+    answer: 2,
+    explanation:
+      "Every pawn has three 'key squares' two ranks ahead of it. If your king reaches any key square, the pawn promotes regardless of where the enemy king stands. Knowing the key squares tells you precisely what your king must target.",
+    category: "endgame",
+    motif: "pawnEndgame",
   },
 ];
 

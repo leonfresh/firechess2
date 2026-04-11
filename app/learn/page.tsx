@@ -69,6 +69,7 @@ type LessonStep = {
   title: string;
   subtitle: string;
   icon: string;
+  motifTheme?: string; // lichess theme key used for dynamic position fetch
   // extra data per type
   conceptBody?: ConceptBody;
   tacticsTheme?: string; // Lichess theme slug
@@ -88,7 +89,7 @@ type ConceptBody = {
     event: string; // e.g. "Wijk aan Zee, 1999"
     story: string; // 2-3 sentence narrative about the game
     motifDescription: string; // what the motif-specific moment was
-    fen?: string; // position where the motif occurred (optional visual)
+    // fen removed — positions are now fetched live from Lichess
   };
 };
 
@@ -141,7 +142,6 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
         "Tal, the 'Magician from Riga', used breathtaking sacrifices and unexpected forks throughout the 1959 Candidates to become the youngest World Champion. Against Smyslov, his knight leapt to c7 attacking both rooks simultaneously — Smyslov could save only one.",
       motifDescription:
         "Tal's knight on c7 forked both rooks, winning the exchange immediately.",
-      fen: "1r3k2/8/8/2N5/8/8/8/4K3 w - - 0 1",
     },
   },
   pin: {
@@ -171,7 +171,6 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
         "Fischer demolished Byrne in just 21 moves, delivering what is often called the greatest game played in the US Championship. A bishop pin on Byrne's knight meant the knight couldn't recapture, letting Fischer's combination crash through before Byrne could unravel.",
       motifDescription:
         "Fischer used a bishop pin on the d2-knight to launch a brilliant queen sacrifice — with the knight pinned, Byrne's defence collapsed entirely.",
-      fen: "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3",
     },
   },
   skewer: {
@@ -258,7 +257,6 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
         "Playing at just 13 years old, Fischer delivered 'The Game of the Century'. After a stunning queen sacrifice, Fischer used a rook to invade the back rank — Byrne's king was trapped behind its own pawns, and there was simply no escape from the back-rank threat.",
       motifDescription:
         "Fischer's rook reached Byrne's back rank, and with the king imprisoned by its own un-moved pawns, checkmate was forced in just a few more moves.",
-      fen: "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1",
     },
   },
   deflection: {
@@ -838,6 +836,11 @@ const CONCEPT_TO_QUIZ_CATEGORY: Record<string, QuizQuestion["category"][]> = {
 };
 
 function getTopicQuizQuestion(conceptKey: string, seed: number): QuizQuestion {
+  // First priority: questions specifically tagged with this motif
+  const specific = QUIZ_BANK.filter((q) => q.motif === conceptKey);
+  if (specific.length > 0) return specific[Math.abs(seed) % specific.length];
+
+  // Second priority: category-level filter
   const cats = CONCEPT_TO_QUIZ_CATEGORY[conceptKey];
   const pool = cats
     ? QUIZ_BANK.filter((q) => cats.includes(q.category))
@@ -864,6 +867,7 @@ function buildFocusedLesson(
         ? topic.description
         : "Master this pattern",
     icon: topic.icon,
+    motifTheme: topic.lichessTheme,
     conceptBody: concept,
   });
 
@@ -909,9 +913,11 @@ function buildFocusedLesson(
 
 function ConceptCard({
   body,
+  theme,
   onComplete,
 }: {
   body: ConceptBody;
+  theme?: string;
   onComplete: () => void;
 }) {
   const boardTheme = useBoardTheme();
@@ -924,6 +930,52 @@ function ConceptCard({
   const isGmPage = hasGmGame && page === body.steps.length;
   const isLast = page === totalPages - 1;
   const step = !isGmPage ? body.steps[page] : null;
+
+  // Real-position state: fetched from Lichess when GM page is shown
+  const [gmPos, setGmPos] = useState<{
+    fen: string;
+    white: string;
+    black: string;
+    gameUrl?: string;
+  } | null>(null);
+  const [gmPosLoading, setGmPosLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isGmPage || gmPos || gmPosLoading || !theme) return;
+    setGmPosLoading(true);
+    fetch(`/api/puzzles?themes=${encodeURIComponent(theme)}&count=1`)
+      .then((r) => r.json())
+      .then((data) => {
+        const p = data.puzzles?.[0];
+        if (!p) return;
+        const pgn: string = p.game?.pgn ?? "";
+        const ply: number = p.puzzle?.initialPly ?? 0;
+        if (!pgn) return;
+        // Replay to ply+1 (after opponent's trigger move — the puzzle start position)
+        const fullGame = new Chess();
+        fullGame.loadPgn(pgn);
+        const history = fullGame.history({ verbose: true });
+        const board = new Chess();
+        for (let i = 0; i <= Math.min(ply, history.length - 1); i++) {
+          board.move(history[i].san);
+        }
+        const players: any[] = p.game?.players ?? [];
+        const white =
+          players.find((x) => x.color === "white")?.user?.name ??
+          players[0]?.name ??
+          "White";
+        const black =
+          players.find((x) => x.color === "black")?.user?.name ??
+          players[1]?.name ??
+          "Black";
+        const gameUrl = p.game?.id
+          ? `https://lichess.org/${p.game.id}`
+          : undefined;
+        setGmPos({ fen: board.fen(), white, black, gameUrl });
+      })
+      .catch(() => {})
+      .finally(() => setGmPosLoading(false));
+  }, [isGmPage, gmPos, gmPosLoading, theme]);
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-5">
@@ -991,25 +1043,57 @@ function ConceptCard({
             <p className="text-sm leading-relaxed text-slate-300">
               {body.gmGame.story}
             </p>
-            {/* Position board */}
-            {body.gmGame.fen && (
-              <div
-                className="overflow-hidden rounded-xl mx-auto"
-                style={{ width: boardSize, maxWidth: "100%" }}
-              >
-                <Chessboard
-                  position={body.gmGame.fen}
-                  arePiecesDraggable={false}
-                  boardOrientation="white"
-                  boardWidth={boardSize}
-                  customDarkSquareStyle={{
-                    backgroundColor: boardTheme.darkSquare,
-                  }}
-                  customLightSquareStyle={{
-                    backgroundColor: boardTheme.lightSquare,
-                  }}
-                  customPieces={customPieces}
-                />
+
+            {/* Real position board — fetched from Lichess */}
+            {gmPosLoading && (
+              <div className="flex items-center justify-center gap-2 py-6">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-amber-500/50 border-t-transparent" />
+                <span className="text-[11px] text-slate-600">
+                  Loading real position…
+                </span>
+              </div>
+            )}
+            {gmPos && (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between px-0.5">
+                  <p className="text-[10px] text-slate-500">
+                    {gmPos.white} vs {gmPos.black}
+                  </p>
+                  {gmPos.gameUrl && (
+                    <a
+                      href={gmPos.gameUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] text-amber-500/50 hover:text-amber-400 transition-colors"
+                    >
+                      View on Lichess →
+                    </a>
+                  )}
+                </div>
+                <div
+                  className="overflow-hidden rounded-xl mx-auto"
+                  style={{ width: boardSize, maxWidth: "100%" }}
+                >
+                  <Chessboard
+                    position={gmPos.fen}
+                    arePiecesDraggable={false}
+                    boardOrientation={
+                      gmPos.fen.split(" ")[1] === "b" ? "black" : "white"
+                    }
+                    boardWidth={boardSize}
+                    customDarkSquareStyle={{
+                      backgroundColor: boardTheme.darkSquare,
+                    }}
+                    customLightSquareStyle={{
+                      backgroundColor: boardTheme.lightSquare,
+                    }}
+                    customPieces={customPieces}
+                  />
+                </div>
+                <p className="text-center text-[10px] text-slate-600">
+                  Can you spot the {body.headline.toLowerCase()} in this
+                  position?
+                </p>
               </div>
             )}
             {/* Motif callout */}
@@ -2467,6 +2551,7 @@ export default function LearnPage() {
             {currentStep.type === "concept" && currentStep.conceptBody && (
               <ConceptCard
                 body={currentStep.conceptBody}
+                theme={currentStep.motifTheme}
                 onComplete={advance}
               />
             )}
