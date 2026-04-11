@@ -29,6 +29,7 @@ import { useSession } from "@/components/session-provider";
 import {
   ChessQuiz,
   getDailyQuizQuestions,
+  QUIZ_BANK,
   type QuizQuestion,
 } from "@/components/chess-quiz";
 import { PieceMemory, type MemoryPosition } from "@/components/piece-memory";
@@ -140,6 +141,7 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
         "Tal, the 'Magician from Riga', used breathtaking sacrifices and unexpected forks throughout the 1959 Candidates to become the youngest World Champion. Against Smyslov, his knight leapt to c7 attacking both rooks simultaneously — Smyslov could save only one.",
       motifDescription:
         "Tal's knight on c7 forked both rooks, winning the exchange immediately.",
+      fen: "1r3k2/8/8/2N5/8/8/8/4K3 w - - 0 1",
     },
   },
   pin: {
@@ -169,6 +171,7 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
         "Fischer demolished Byrne in just 21 moves, delivering what is often called the greatest game played in the US Championship. A bishop pin on Byrne's knight meant the knight couldn't recapture, letting Fischer's combination crash through before Byrne could unravel.",
       motifDescription:
         "Fischer used a bishop pin on the d2-knight to launch a brilliant queen sacrifice — with the knight pinned, Byrne's defence collapsed entirely.",
+      fen: "r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 3 3",
     },
   },
   skewer: {
@@ -255,6 +258,7 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
         "Playing at just 13 years old, Fischer delivered 'The Game of the Century'. After a stunning queen sacrifice, Fischer used a rook to invade the back rank — Byrne's king was trapped behind its own pawns, and there was simply no escape from the back-rank threat.",
       motifDescription:
         "Fischer's rook reached Byrne's back rank, and with the king imprisoned by its own un-moved pawns, checkmate was forced in just a few more moves.",
+      fen: "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1",
     },
   },
   deflection: {
@@ -816,6 +820,32 @@ function analyzeWeaknesses(reports: SavedReport[]): WeaknessTopic[] {
   return topics;
 }
 
+/* Maps a concept key to which quiz categories are relevant for it */
+const CONCEPT_TO_QUIZ_CATEGORY: Record<string, QuizQuestion["category"][]> = {
+  fork: ["tactics"],
+  pin: ["tactics"],
+  skewer: ["tactics"],
+  discoveredAttack: ["tactics"],
+  hangingPiece: ["tactics"],
+  backRankMate: ["tactics"],
+  deflection: ["tactics"],
+  kingsideAttack: ["tactics"],
+  rookEndgame: ["endgame"],
+  pawnEndgame: ["endgame"],
+  queenEndgame: ["endgame"],
+  bishopEndgame: ["endgame"],
+  knightEndgame: ["endgame"],
+};
+
+function getTopicQuizQuestion(conceptKey: string, seed: number): QuizQuestion {
+  const cats = CONCEPT_TO_QUIZ_CATEGORY[conceptKey];
+  const pool = cats
+    ? QUIZ_BANK.filter((q) => cats.includes(q.category))
+    : QUIZ_BANK;
+  const bank = pool.length > 0 ? pool : QUIZ_BANK;
+  return bank[Math.abs(seed) % bank.length];
+}
+
 function buildFocusedLesson(
   topic: WeaknessTopic,
   quizQs: QuizQuestion[],
@@ -837,7 +867,19 @@ function buildFocusedLesson(
     conceptBody: concept,
   });
 
-  // Step 2: Lichess puzzles on this theme
+  // Step 2: Own-game positions (shown right after theory for immediate relevance)
+  if (topic.ownPositions.length > 0) {
+    steps.push({
+      id: `own-${seed}`,
+      type: "blunder",
+      title: "Spot It in Your Game",
+      subtitle: "Find the move you missed in a real game",
+      icon: "🔍",
+      drillPositions: topic.ownPositions,
+    });
+  }
+
+  // Step 3: Lichess puzzles on this theme
   steps.push({
     id: `tactics-${seed}`,
     type: "tactics",
@@ -847,30 +889,16 @@ function buildFocusedLesson(
     tacticsTheme: topic.lichessTheme,
   });
 
-  // Step 3: Own-game positions if available
-  if (topic.ownPositions.length > 0) {
-    steps.push({
-      id: `own-${seed}`,
-      type: "blunder",
-      title: "Your Own Games",
-      subtitle: "Find the best move you missed",
-      icon: "🔍",
-      drillPositions: topic.ownPositions,
-    });
-  }
-
-  // Step 4: Quiz
-  const q = quizQs[seed % Math.max(quizQs.length, 1)];
-  if (q) {
-    steps.push({
-      id: `quiz-${seed}`,
-      type: "quiz",
-      title: "Knowledge Check",
-      subtitle: "Test what you just learned",
-      icon: "🧠",
-      quizQuestion: q,
-    });
-  }
+  // Step 4: Quiz — filtered to this topic's category
+  const q = getTopicQuizQuestion(topic.conceptKey, seed);
+  steps.push({
+    id: `quiz-${seed}`,
+    type: "quiz",
+    title: "Knowledge Check",
+    subtitle: "Test what you just learned",
+    icon: "🧠",
+    quizQuestion: q,
+  });
 
   return steps;
 }
@@ -886,6 +914,9 @@ function ConceptCard({
   body: ConceptBody;
   onComplete: () => void;
 }) {
+  const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
+  const { size: boardSize } = useBoardSize(320);
   const [page, setPage] = useState(0);
   // Extra "GM Game" page if we have gmGame data
   const hasGmGame = !!body.gmGame;
@@ -960,6 +991,27 @@ function ConceptCard({
             <p className="text-sm leading-relaxed text-slate-300">
               {body.gmGame.story}
             </p>
+            {/* Position board */}
+            {body.gmGame.fen && (
+              <div
+                className="overflow-hidden rounded-xl mx-auto"
+                style={{ width: boardSize, maxWidth: "100%" }}
+              >
+                <Chessboard
+                  position={body.gmGame.fen}
+                  arePiecesDraggable={false}
+                  boardOrientation="white"
+                  boardWidth={boardSize}
+                  customDarkSquareStyle={{
+                    backgroundColor: boardTheme.darkSquare,
+                  }}
+                  customLightSquareStyle={{
+                    backgroundColor: boardTheme.lightSquare,
+                  }}
+                  customPieces={customPieces}
+                />
+              </div>
+            )}
             {/* Motif callout */}
             <div className="flex gap-2.5 rounded-xl border border-violet-500/20 bg-violet-500/[0.06] px-4 py-3">
               <span className="shrink-0 text-base">{body.tipIcon}</span>
