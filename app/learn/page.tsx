@@ -31,11 +31,7 @@ import {
   getDailyQuizQuestions,
   type QuizQuestion,
 } from "@/components/chess-quiz";
-import {
-  PieceMemory,
-  getDailyMemoryPositions,
-  type MemoryPosition,
-} from "@/components/piece-memory";
+import { PieceMemory, type MemoryPosition } from "@/components/piece-memory";
 import { Chessboard } from "@/components/chessboard-compat";
 import { Chess } from "chess.js";
 import { playSound } from "@/lib/sounds";
@@ -91,6 +87,17 @@ type DrillPosition = {
   bestMove: string;
   label: string;
   cpLoss?: number;
+};
+
+type WeaknessTopic = {
+  key: string;
+  label: string;
+  icon: string;
+  description: string;
+  severity: "high" | "medium" | "low" | "universal";
+  lichessTheme: string;
+  conceptKey: string;
+  ownPositions: DrillPosition[];
 };
 
 /* ─────────────────────────────────────────────────────────────── */
@@ -460,71 +467,85 @@ const THEME_DISPLAY: Record<string, string> = {
 };
 
 /* ─────────────────────────────────────────────────────────────── */
-/*  Path generator                                                  */
+/*  Weakness analysis + focused lesson builder                      */
 /* ─────────────────────────────────────────────────────────────── */
 
-function buildLessonPath(
-  reports: SavedReport[],
-  quizQs: QuizQuestion[],
-  memPs: MemoryPosition[],
-  pathSeed: number,
-): LessonStep[] {
-  const steps: LessonStep[] = [];
+const UNIVERSAL_TOPICS: WeaknessTopic[] = [
+  "fork",
+  "pin",
+  "skewer",
+  "discoveredAttack",
+  "hangingPiece",
+  "backRankMate",
+  "deflection",
+  "kingsideAttack",
+  "rookEndgame",
+  "pawnEndgame",
+  "queenEndgame",
+  "bishopEndgame",
+  "knightEndgame",
+].map((key) => ({
+  key,
+  label: THEME_DISPLAY[key] ?? key,
+  icon: CONCEPT_CARDS[key]?.tipIcon ?? "♟",
+  description:
+    CONCEPT_CARDS[key]?.intro?.split(" ").slice(0, 7).join(" ") + "…" ?? "",
+  severity: "universal" as const,
+  lichessTheme: key,
+  conceptKey: key,
+  ownPositions: [],
+}));
 
-  // ── Weak motif data ──
+function analyzeWeaknesses(reports: SavedReport[]): WeaknessTopic[] {
   const motifCounts = new Map<string, number>();
-  const blunderPositions: DrillPosition[] = [];
+  const motifPositions = new Map<string, DrillPosition[]>();
 
   for (const r of reports) {
     for (const t of r.missedTactics ?? []) {
       for (const tag of t.tags ?? []) {
         const theme = MOTIF_TO_THEME[tag];
-        if (theme) motifCounts.set(theme, (motifCounts.get(theme) ?? 0) + 1);
-      }
-      // Collect blunder positions (big cp losses from own games)
-      if (t.cpLoss >= 200 && t.fenBefore && t.bestMove) {
-        blunderPositions.push({
-          fen: t.fenBefore,
-          bestMove: t.bestMove,
-          label: `Game #${t.gameIndex}, Move ${t.moveNumber}`,
-          cpLoss: t.cpLoss,
-        });
+        if (!theme) continue;
+        motifCounts.set(theme, (motifCounts.get(theme) ?? 0) + 1);
+        if (t.cpLoss >= 200 && t.fenBefore && t.bestMove) {
+          const arr = motifPositions.get(theme) ?? [];
+          arr.push({
+            fen: t.fenBefore,
+            bestMove: t.bestMove,
+            label: `Move ${t.moveNumber}`,
+            cpLoss: t.cpLoss,
+          });
+          motifPositions.set(theme, arr);
+        }
       }
     }
   }
 
-  const sortedMotifs = Array.from(motifCounts.entries()).sort(
-    (a, b) => b[1] - a[1],
-  );
-  const topMotif = sortedMotifs[0]?.[0] ?? null;
-
-  // ── Weak endgame data ──
-  const endgameMap = new Map<
+  const endgameData = new Map<
     string,
-    { total: number; count: number; mistakes: DrillPosition[] }
+    { total: number; count: number; positions: DrillPosition[] }
   >();
   for (const r of reports) {
     const stats = r.diagnostics?.endgameStats;
     if (stats?.byType) {
       for (const bt of stats.byType) {
-        const e = endgameMap.get(bt.type) ?? {
+        const e = endgameData.get(bt.type) ?? {
           total: 0,
           count: 0,
-          mistakes: [],
+          positions: [],
         };
         e.total += bt.avgCpLoss * bt.count;
         e.count += bt.count;
-        endgameMap.set(bt.type, e);
+        endgameData.set(bt.type, e);
       }
     }
     for (const m of r.diagnostics?.endgameMistakes ?? []) {
       if (m.fenBefore && m.bestMove) {
-        const e = endgameMap.get(m.endgameType);
+        const e = endgameData.get(m.endgameType);
         if (e) {
-          e.mistakes.push({
+          e.positions.push({
             fen: m.fenBefore,
             bestMove: m.bestMove,
-            label: `${m.endgameType} Endgame — Move ${m.moveNumber}`,
+            label: `${m.endgameType} — Move ${m.moveNumber}`,
             cpLoss: m.cpLoss,
           });
         }
@@ -532,121 +553,111 @@ function buildLessonPath(
     }
   }
 
-  const sortedEndgames = Array.from(endgameMap.entries())
-    .map(([type, d]) => ({
-      type,
-      avgCpLoss: d.count > 0 ? d.total / d.count : 0,
-      mistakes: d.mistakes,
-    }))
-    .filter((e) => e.avgCpLoss > 0)
-    .sort((a, b) => b.avgCpLoss - a.avgCpLoss);
-  const topEndgame = sortedEndgames[0] ?? null;
+  const topics: WeaknessTopic[] = [];
 
-  // ── STEP 1: Concept card for worst tactic motif (or default) ──
-  const conceptKey = topMotif ?? "default";
-  const conceptData = CONCEPT_CARDS[conceptKey] ?? CONCEPT_CARDS.default;
+  for (const [theme, count] of motifCounts.entries()) {
+    const concept = CONCEPT_CARDS[theme];
+    if (!concept) continue;
+    const severity: "high" | "medium" | "low" =
+      count >= 5 ? "high" : count >= 2 ? "medium" : "low";
+    topics.push({
+      key: theme,
+      label: THEME_DISPLAY[theme] ?? theme,
+      icon: concept.tipIcon,
+      description: `Missed ${count} time${count !== 1 ? "s" : ""} in your games`,
+      severity,
+      lichessTheme: theme,
+      conceptKey: theme,
+      ownPositions: motifPositions.get(theme)?.slice(0, 5) ?? [],
+    });
+  }
+
+  for (const [type, data] of endgameData.entries()) {
+    if (data.count < 1) continue;
+    const avgLoss = data.total / data.count;
+    if (avgLoss < 30) continue;
+    const conceptKey = ENDGAME_TO_CONCEPT[type] ?? "rookEndgame";
+    const lichessTheme = ENDGAME_TO_THEME[type] ?? "rookEndgame";
+    const concept = CONCEPT_CARDS[conceptKey];
+    if (!concept) continue;
+    const severity: "high" | "medium" | "low" =
+      avgLoss >= 150 ? "high" : avgLoss >= 80 ? "medium" : "low";
+    const existing = topics.find((t) => t.conceptKey === conceptKey);
+    if (existing) continue; // already added from tactics
+    topics.push({
+      key: `${conceptKey}_${type}`,
+      label: `${type} Endgames`,
+      icon: concept.tipIcon,
+      description: `Avg ${Math.round(avgLoss)} cp lost in ${type.toLowerCase()} endgames`,
+      severity,
+      lichessTheme,
+      conceptKey,
+      ownPositions: data.positions.slice(0, 5),
+    });
+  }
+
+  const sevOrder = { high: 0, medium: 1, low: 2, universal: 3 };
+  topics.sort((a, b) => sevOrder[a.severity] - sevOrder[b.severity]);
+  return topics;
+}
+
+function buildFocusedLesson(
+  topic: WeaknessTopic,
+  quizQs: QuizQuestion[],
+  seed: number,
+): LessonStep[] {
+  const steps: LessonStep[] = [];
+  const concept = CONCEPT_CARDS[topic.conceptKey] ?? CONCEPT_CARDS.default;
+
+  // Step 1: Concept lesson
   steps.push({
-    id: `concept-${pathSeed}`,
+    id: `concept-${seed}`,
     type: "concept",
-    title: conceptData.headline,
-    subtitle: topMotif
-      ? `Your most-missed tactic: ${THEME_DISPLAY[topMotif] ?? topMotif}`
-      : "Chess fundamentals",
-    icon: conceptData.tipIcon,
-    conceptBody: conceptData,
+    title: concept.headline,
+    subtitle:
+      topic.severity !== "universal"
+        ? topic.description
+        : "Master this pattern",
+    icon: topic.icon,
+    conceptBody: concept,
   });
 
-  // ── STEP 2: Tactics drill on the same motif ──
+  // Step 2: Lichess puzzles on this theme
   steps.push({
-    id: `tactics-${pathSeed}`,
+    id: `tactics-${seed}`,
     type: "tactics",
-    title: `${THEME_DISPLAY[conceptKey] ?? "Tactics"} Drill`,
-    subtitle: "Solve 3 puzzles on your weakness",
+    title: `${topic.label} Drill`,
+    subtitle: "Solve 3 puzzles on this pattern",
     icon: "🎯",
-    tacticsTheme: conceptKey === "default" ? "hangingPiece" : conceptKey,
+    tacticsTheme: topic.lichessTheme,
   });
 
-  // ── STEP 3: Own-game blunder OR endgame drill ──
-  if (blunderPositions.length > 0) {
+  // Step 3: Own-game positions if available
+  if (topic.ownPositions.length > 0) {
     steps.push({
-      id: `blunder-${pathSeed}`,
+      id: `own-${seed}`,
       type: "blunder",
-      title: "Your Own Blunders",
-      subtitle: "Find the best move from your real games",
+      title: "Your Own Games",
+      subtitle: "Find the best move you missed",
       icon: "🔍",
-      drillPositions: blunderPositions.slice(0, 5),
+      drillPositions: topic.ownPositions,
     });
-  } else if (topEndgame && topEndgame.mistakes.length > 0) {
-    const endgameConceptKey =
-      ENDGAME_TO_CONCEPT[topEndgame.type] ?? "rookEndgame";
-    const endgameConceptData =
-      CONCEPT_CARDS[endgameConceptKey] ?? CONCEPT_CARDS.default;
-    steps.push({
-      id: `endgame-concept-${pathSeed}`,
-      type: "concept",
-      title: endgameConceptData.headline,
-      subtitle: `Your weakest endgame: ${topEndgame.type}`,
-      icon: endgameConceptData.tipIcon,
-      conceptBody: endgameConceptData,
-    });
-  } else {
-    // Universal fallback: quiz
-    const q = quizQs[pathSeed % quizQs.length];
-    if (q) {
-      steps.push({
-        id: `quiz-fallback-${pathSeed}`,
-        type: "quiz",
-        title: "Quick Knowledge Check",
-        subtitle: "One chess theory question",
-        icon: "🧠",
-        quizQuestion: q,
-      });
-    }
   }
 
-  // ── STEP 4: Endgame drill or memory ──
-  if (
-    topEndgame &&
-    topEndgame.mistakes.length > 0 &&
-    blunderPositions.length > 0
-  ) {
-    steps.push({
-      id: `endgame-${pathSeed}`,
-      type: "endgame",
-      title: `${topEndgame.type} Endgame Practice`,
-      subtitle: "Drill from your actual endgame mistakes",
-      icon: "♟",
-      drillPositions: topEndgame.mistakes.slice(0, 5),
-    });
-  } else {
-    const mem = memPs[(pathSeed + 1) % Math.max(memPs.length, 1)];
-    if (mem) {
-      steps.push({
-        id: `memory-${pathSeed}`,
-        type: "memory",
-        title: "Piece Memory",
-        subtitle: "Memorise the position, then place the pieces",
-        icon: "🧩",
-        memoryPosition: mem,
-      });
-    }
-  }
-
-  // ── STEP 5: Quiz ──
-  const qIdx = (pathSeed + 2) % Math.max(quizQs.length, 1);
-  const q = quizQs[qIdx];
+  // Step 4: Quiz
+  const q = quizQs[seed % Math.max(quizQs.length, 1)];
   if (q) {
     steps.push({
-      id: `quiz-${pathSeed}`,
+      id: `quiz-${seed}`,
       type: "quiz",
-      title: "Chess Quiz",
-      subtitle: "Test your understanding",
+      title: "Knowledge Check",
+      subtitle: "Test what you just learned",
       icon: "🧠",
       quizQuestion: q,
     });
   }
 
-  return steps.slice(0, 5);
+  return steps;
 }
 
 /* ─────────────────────────────────────────────────────────────── */
@@ -760,14 +771,50 @@ function PositionDrillStep({
   const [idx, setIdx] = useState(0);
   const [status, setStatus] = useState<"idle" | "correct" | "wrong">("idle");
   const [fen, setFen] = useState<string>(positions[0]?.fen ?? "");
+  const [attempts, setAttempts] = useState(0);
+  const [showHint, setShowHint] = useState(false);
   const completedRef = useRef(false);
 
   const pos = positions[idx] ?? null;
+
+  // Reset hint/attempts when position changes
+  useEffect(() => {
+    setAttempts(0);
+    setShowHint(false);
+  }, [idx]);
 
   const orientation = useMemo<"white" | "black">(() => {
     const raw = pos?.fen ?? "";
     return raw.split(" ")[1] === "b" ? "black" : "white";
   }, [pos?.fen]);
+
+  const hintSquare = pos?.bestMove?.slice(0, 2) ?? null;
+
+  const customSquareStyles = useMemo(() => {
+    if (!showHint || !hintSquare) return {};
+    return {
+      [hintSquare]: {
+        backgroundColor: "rgba(251, 191, 36, 0.45)",
+        borderRadius: "4px",
+      },
+    };
+  }, [showHint, hintSquare]);
+
+  const advanceOrComplete = useCallback(
+    (nextIdx: number) => {
+      if (nextIdx >= positions.length) {
+        if (!completedRef.current) {
+          completedRef.current = true;
+          onComplete();
+        }
+      } else {
+        setIdx(nextIdx);
+        setFen(positions[nextIdx].fen);
+        setStatus("idle");
+      }
+    },
+    [positions, onComplete],
+  );
 
   const handleDrop = useCallback(
     (src: string, tgt: string): boolean => {
@@ -791,32 +838,44 @@ function PositionDrillStep({
 
       setFen(chess.fen());
       setStatus(correct ? "correct" : "wrong");
-      if (correct) playSound("correct");
-      else playSound("wrong");
 
-      setTimeout(() => {
-        if (correct) {
-          const next = idx + 1;
-          if (next >= positions.length) {
-            if (!completedRef.current) {
-              completedRef.current = true;
-              onComplete();
-            }
-          } else {
-            setIdx(next);
-            setFen(positions[next].fen);
-            setStatus("idle");
-          }
-        } else {
+      if (correct) {
+        playSound("correct");
+        setTimeout(() => advanceOrComplete(idx + 1), 1400);
+      } else {
+        playSound("wrong");
+        const newAttempts = attempts + 1;
+        setAttempts(newAttempts);
+        if (newAttempts >= 2) setShowHint(true);
+        setTimeout(() => {
           setFen(pos.fen);
           setStatus("idle");
-        }
-      }, 1400);
+        }, 1000);
+      }
 
       return true;
     },
-    [pos, status, idx, positions, onComplete],
+    [pos, status, idx, attempts, advanceOrComplete],
   );
+
+  const handleShowAnswer = useCallback(() => {
+    if (!pos) return;
+    const chess = new Chess(pos.fen);
+    try {
+      const best = pos.bestMove ?? "";
+      chess.move({
+        from: best.slice(0, 2),
+        to: best.slice(2, 4),
+        promotion: "q",
+      });
+      setFen(chess.fen());
+      setStatus("correct");
+      playSound("correct");
+      setTimeout(() => advanceOrComplete(idx + 1), 1800);
+    } catch {
+      advanceOrComplete(idx + 1);
+    }
+  }, [pos, idx, advanceOrComplete]);
 
   if (!pos) return null;
 
@@ -865,6 +924,7 @@ function PositionDrillStep({
           boardOrientation={orientation}
           onPieceDrop={handleDrop}
           arePiecesDraggable={status === "idle"}
+          customSquareStyles={customSquareStyles}
         />
       </div>
 
@@ -875,24 +935,41 @@ function PositionDrillStep({
             ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
             : status === "wrong"
               ? "border border-red-500/30 bg-red-500/10 text-red-300"
-              : "border border-white/[0.06] bg-white/[0.03] text-slate-500"
+              : showHint
+                ? "border border-amber-500/30 bg-amber-500/10 text-amber-300"
+                : "border border-white/[0.06] bg-white/[0.03] text-slate-500"
         }`}
       >
         {status === "correct"
           ? "✓ Correct!"
           : status === "wrong"
-            ? "✗ Not the best move — try again"
-            : (pos.label ?? "Drag a piece to make your move")}
+            ? attempts >= 2
+              ? "Keep trying — the highlighted piece is the key"
+              : "✗ Not the best move — try again"
+            : showHint
+              ? "💡 Hint: move the highlighted piece"
+              : (pos.label ?? "Drag a piece to make your move")}
       </div>
 
-      {/* Skip */}
-      <button
-        type="button"
-        onClick={onComplete}
-        className="mx-auto text-xs text-slate-700 underline-offset-2 hover:text-slate-500"
-      >
-        Skip →
-      </button>
+      {/* Hint / Show answer / Skip row */}
+      <div className="flex items-center justify-center gap-4">
+        {attempts >= 3 && status === "idle" && (
+          <button
+            type="button"
+            onClick={handleShowAnswer}
+            className="rounded-xl border border-amber-500/25 bg-amber-500/10 px-4 py-2 text-xs font-bold text-amber-300 transition-all hover:bg-amber-500/20"
+          >
+            Show answer →
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onComplete}
+          className="text-xs text-slate-700 underline-offset-2 hover:text-slate-500"
+        >
+          Skip →
+        </button>
+      </div>
     </div>
   );
 }
@@ -1053,86 +1130,116 @@ function StepHeader({
 }
 
 /* ─────────────────────────────────────────────────────────────── */
-/*  Path Overview Screen                                            */
+/*  Topic Picker Screen                                             */
 /* ─────────────────────────────────────────────────────────────── */
 
-const STEP_TYPE_LABELS: Record<StepType, string> = {
-  concept: "Learn",
-  tactics: "Practice",
-  blunder: "Review",
-  endgame: "Drill",
-  quiz: "Quiz",
-  memory: "Memory",
-};
-
-function PathOverview({
-  steps,
+function TopicPicker({
+  topics,
   username,
-  onStart,
+  onSelect,
 }: {
-  steps: LessonStep[];
+  topics: WeaknessTopic[];
   username: string | null;
-  onStart: () => void;
+  onSelect: (topic: WeaknessTopic) => void;
 }) {
-  const TYPE_DOT: Record<StepType, string> = {
-    concept: "bg-violet-500",
-    tactics: "bg-red-500",
-    blunder: "bg-amber-500",
-    endgame: "bg-cyan-500",
-    quiz: "bg-emerald-500",
-    memory: "bg-indigo-400",
+  const SEVERITY_STYLE: Record<WeaknessTopic["severity"], string> = {
+    high: "text-red-400 border-red-500/20 bg-red-500/[0.06]",
+    medium: "text-amber-400 border-amber-500/20 bg-amber-500/[0.06]",
+    low: "text-slate-400 border-white/[0.08] bg-white/[0.03]",
+    universal: "text-slate-500 border-white/[0.06] bg-white/[0.02]",
+  };
+  const SEVERITY_LABEL: Record<WeaknessTopic["severity"], string> = {
+    high: "Weak",
+    medium: "Fair",
+    low: "OK",
+    universal: "",
   };
 
+  const scanTopics = topics.filter((t) => t.severity !== "universal");
+  const universalTopics = topics.filter((t) => t.severity === "universal");
+
   return (
-    <div className="mx-auto max-w-md space-y-7">
-      {/* Hero */}
-      <div className="space-y-2 pt-2 text-center">
-        <p className="text-[11px] font-black uppercase tracking--widest text-purple-400">
-          ✦ Your lesson for today
+    <div className="mx-auto max-w-md space-y-6">
+      <div className="pt-2 text-center space-y-1.5">
+        <p className="text-[11px] font-black uppercase tracking-widest text-purple-400">
+          ✦ What do you want to work on?
         </p>
-        <h1 className="text-3xl font-black tracking-tight text-white">
-          {username ? `${username}'s Path` : "Daily Path"}
+        <h1 className="text-2xl font-black tracking-tight text-white">
+          Choose a lesson
         </h1>
-        <p className="text-sm text-slate-500">
-          {steps.length} steps · ~10 min · personalised
-        </p>
+        {username && (
+          <p className="text-sm text-slate-500">
+            Based on {username}&apos;s games
+          </p>
+        )}
       </div>
 
-      {/* Steps */}
-      <div className="space-y-2">
-        {steps.map((step, i) => (
-          <div
-            key={step.id}
-            className="flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.025] px-4 py-3.5"
-          >
-            <div
-              className={`h-8 w-8 shrink-0 rounded-full ${TYPE_DOT[step.type]} flex items-center justify-center text-xs font-black text-white`}
+      {scanTopics.length > 0 && (
+        <div className="space-y-2">
+          <p className="px-1 text-[10px] font-black uppercase tracking-widest text-slate-600">
+            From your games
+          </p>
+          {scanTopics.map((topic) => (
+            <button
+              key={topic.key}
+              type="button"
+              onClick={() => onSelect(topic)}
+              className="w-full flex items-center gap-4 rounded-2xl border border-white/[0.07] bg-white/[0.025] px-4 py-3.5 text-left transition-all hover:border-purple-500/30 hover:bg-purple-500/[0.05] active:scale-[0.99]"
             >
-              {i + 1}
-            </div>
+              <div className="text-2xl">{topic.icon}</div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-white text-sm">{topic.label}</p>
+                <p className="mt-0.5 text-[11px] text-slate-500">
+                  {topic.description}
+                </p>
+              </div>
+              <div
+                className={`shrink-0 rounded-lg border px-2 py-1 text-[10px] font-black uppercase ${SEVERITY_STYLE[topic.severity]}`}
+              >
+                {SEVERITY_LABEL[topic.severity] || "Drill"}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <p className="px-1 text-[10px] font-black uppercase tracking-widest text-slate-600">
+          {scanTopics.length > 0 ? "Universal lessons" : "Available lessons"}
+        </p>
+        {universalTopics.map((topic) => (
+          <button
+            key={topic.key}
+            type="button"
+            onClick={() => onSelect(topic)}
+            className="w-full flex items-center gap-4 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3.5 text-left transition-all hover:border-purple-500/30 hover:bg-purple-500/[0.05] active:scale-[0.99]"
+          >
+            <div className="text-2xl">{topic.icon}</div>
             <div className="flex-1 min-w-0">
-              <p className="truncate text-sm font-semibold text-white">
-                {step.title}
-              </p>
-              <p className="truncate text-[11px] text-slate-600">
-                {step.subtitle}
+              <p className="font-bold text-white text-sm">{topic.label}</p>
+              <p className="mt-0.5 text-[11px] text-slate-500">
+                {CONCEPT_CARDS[topic.conceptKey]?.intro
+                  .split(" ")
+                  .slice(0, 9)
+                  .join(" ") + "…"}
               </p>
             </div>
-            <span className="shrink-0 text-[10px] font-black uppercase tracking-wider text-slate-600">
-              {STEP_TYPE_LABELS[step.type]}
-            </span>
-          </div>
+            <svg
+              className="h-4 w-4 shrink-0 text-slate-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </button>
         ))}
       </div>
-
-      {/* CTA */}
-      <button
-        type="button"
-        onClick={onStart}
-        className="w-full rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-4 text-base font-bold text-white shadow-2xl shadow-purple-500/25 transition-all hover:brightness-110 active:scale-[0.98]"
-      >
-        Start Lesson →
-      </button>
 
       <p className="text-center text-[11px] text-slate-700">
         🧪 Early preview ·{" "}
@@ -1252,27 +1359,26 @@ export default function LearnPage() {
   const [quizQs] = useState<QuizQuestion[]>(() =>
     getDailyQuizQuestions(10, Math.floor(Date.now() / 86_400_000)),
   );
-  const [memPs] = useState<MemoryPosition[]>(() =>
-    getDailyMemoryPositions(5, Math.floor(Date.now() / 86_400_000)),
-  );
 
   // Path state
   const [pathSeed, setPathSeed] = useState(() =>
     Math.floor(Date.now() / 86_400_000),
-  ); // one per day
+  );
+  const [selectedTopic, setSelectedTopic] = useState<WeaknessTopic | null>(
+    null,
+  );
   const [phase, setPhase] = useState<"overview" | "active" | "done">(
     "overview",
   );
   const [stepIndex, setStepIndex] = useState(0);
-  const [coinsEarned, setCoinsEarned] = useState(0);
 
-  // Fetch saved reports (guests skip — they get universal path)
+  // Fetch saved reports (guests skip — they get universal topics)
   useEffect(() => {
     if (sessionLoading || !authenticated) {
       setLoadingReports(false);
       return;
     }
-    setLoadingReports(true); // ensure spinner shows while fetching
+    setLoadingReports(true);
     fetch("/api/reports")
       .then((r) => r.json())
       .then((data) => {
@@ -1292,9 +1398,15 @@ export default function LearnPage() {
     [reports, selectedUser],
   );
 
+  const topics = useMemo(
+    () => [...analyzeWeaknesses(userReports), ...UNIVERSAL_TOPICS],
+    [userReports],
+  );
+
   const steps = useMemo(
-    () => buildLessonPath(userReports, quizQs, memPs, pathSeed),
-    [userReports, quizQs, memPs, pathSeed],
+    () =>
+      selectedTopic ? buildFocusedLesson(selectedTopic, quizQs, pathSeed) : [],
+    [selectedTopic, quizQs, pathSeed],
   );
 
   const currentStep = steps[stepIndex] ?? null;
@@ -1311,8 +1423,8 @@ export default function LearnPage() {
   const restart = useCallback(() => {
     setPathSeed((s) => s + 1);
     setStepIndex(0);
+    setSelectedTopic(null);
     setPhase("overview");
-    setCoinsEarned(0);
   }, []);
 
   // Loading state
@@ -1328,25 +1440,48 @@ export default function LearnPage() {
     <div className="min-h-screen bg-[#0a0a0a]">
       {/* Top chrome — back + username */}
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/[0.05] bg-[#0a0a0a]/90 px-4 py-3 backdrop-blur sm:px-6">
-        <Link
-          href="/train"
-          className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"
-        >
-          <svg
-            className="h-3.5 w-3.5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2.5}
+        {phase === "overview" ? (
+          <Link
+            href="/train"
+            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-          Exit
-        </Link>
+            <svg
+              className="h-3.5 w-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            Exit
+          </Link>
+        ) : (
+          <button
+            type="button"
+            onClick={restart}
+            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors"
+          >
+            <svg
+              className="h-3.5 w-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15 19l-7-7 7-7"
+              />
+            </svg>
+            {phase === "active" ? "Topics" : "Exit"}
+          </button>
+        )}
 
         <span className="text-xs font-bold tracking-widest text-slate-600 uppercase">
           Learn
@@ -1381,7 +1516,7 @@ export default function LearnPage() {
         {!authenticated && (
           <div className="mb-8 flex items-center justify-between gap-3 rounded-2xl border border-purple-500/20 bg-purple-500/[0.05] px-4 py-3">
             <p className="text-xs text-purple-300/60">
-              Sign in & save a scan to personalise your path.
+              Sign in &amp; save a scan to personalise your lessons.
             </p>
             <Link
               href="/auth/signin"
@@ -1393,16 +1528,18 @@ export default function LearnPage() {
         )}
 
         {/* Content */}
-        {authenticated && reports.length === 0 ? (
-          <NoScanState />
-        ) : phase === "overview" ? (
-          <PathOverview
-            steps={steps}
-            username={selectedUser}
-            onStart={() => setPhase("active")}
-          />
-        ) : phase === "done" ? (
+        {phase === "done" ? (
           <CompletionScreen stepsCompleted={totalSteps} onRestart={restart} />
+        ) : phase === "overview" ? (
+          <TopicPicker
+            topics={topics}
+            username={selectedUser}
+            onSelect={(topic) => {
+              setSelectedTopic(topic);
+              setStepIndex(0);
+              setPhase("active");
+            }}
+          />
         ) : currentStep ? (
           <div>
             <StepHeader
@@ -1439,7 +1576,6 @@ export default function LearnPage() {
                 <ChessQuiz
                   question={currentStep.quizQuestion}
                   onComplete={(_correct) => {
-                    // ChessQuiz plays sound internally — don't double-play
                     setTimeout(advance, 800);
                   }}
                 />
