@@ -120,7 +120,8 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
   },
   pin: {
     headline: "The Pin",
-    intro: "A pin keeps an enemy piece frozen — because moving it reveals something worse.",
+    intro:
+      "A pin keeps an enemy piece frozen — because moving it reveals something worse.",
     steps: [
       {
         label: "Absolute vs. relative pin",
@@ -140,7 +141,8 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
   },
   skewer: {
     headline: "The Skewer",
-    intro: "A skewer is a pin in reverse — attack the valuable piece first, win what's hiding behind it.",
+    intro:
+      "A skewer is a pin in reverse — attack the valuable piece first, win what's hiding behind it.",
     steps: [
       {
         label: "How a skewer works",
@@ -160,7 +162,8 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
   },
   discoveredAttack: {
     headline: "Discovered Attack",
-    intro: "Move one piece — and the piece behind it suddenly attacks. Two threats, one move.",
+    intro:
+      "Move one piece — and the piece behind it suddenly attacks. Two threats, one move.",
     steps: [
       {
         label: "The trigger and the gun",
@@ -200,7 +203,8 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
   },
   deflection: {
     headline: "Deflection",
-    intro: "Force the one piece holding everything together to abandon its post.",
+    intro:
+      "Force the one piece holding everything together to abandon its post.",
     steps: [
       {
         label: "What deflection does",
@@ -220,7 +224,8 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
   },
   hangingPiece: {
     headline: "Hanging Pieces",
-    intro: "The fastest way to gain — and lose — material: pieces left undefended.",
+    intro:
+      "The fastest way to gain — and lose — material: pieces left undefended.",
     steps: [
       {
         label: "What 'hanging' means",
@@ -240,7 +245,8 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
   },
   rookEndgame: {
     headline: "Rook Endgames",
-    intro: "The most common endgame type — and the most technical. Activity wins, not material.",
+    intro:
+      "The most common endgame type — and the most technical. Activity wins, not material.",
     steps: [
       {
         label: "Rooks belong behind passed pawns",
@@ -300,7 +306,8 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
   },
   bishopEndgame: {
     headline: "Bishop Endgames",
-    intro: "Opposite-coloured bishops almost always draw. Same-coloured bishops almost always decide.",
+    intro:
+      "Opposite-coloured bishops almost always draw. Same-coloured bishops almost always decide.",
     steps: [
       {
         label: "Same-colour bishops",
@@ -320,7 +327,8 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
   },
   knightEndgame: {
     headline: "Knight Endgames",
-    intro: "Treat them like pawn endgames — king activity and extra pawns are decisive.",
+    intro:
+      "Treat them like pawn endgames — king activity and extra pawns are decisive.",
     steps: [
       {
         label: "Centralise the knight",
@@ -340,7 +348,8 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
   },
   kingsideAttack: {
     headline: "King Safety",
-    intro: "An exposed king is a target — in the middlegame, in the endgame, always.",
+    intro:
+      "An exposed king is a target — in the middlegame, in the endgame, always.",
     steps: [
       {
         label: "How king safety breaks down",
@@ -360,7 +369,8 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
   },
   default: {
     headline: "Chess Fundamentals",
-    intro: "Great chess comes from great habits, applied consistently on every single move.",
+    intro:
+      "Great chess comes from great habits, applied consistently on every single move.",
     steps: [
       {
         label: "Check for threats first",
@@ -703,7 +713,9 @@ function ConceptCard({
             <p className="mb-1 text-[11px] font-black uppercase tracking-widest text-amber-400">
               Key Principle
             </p>
-            <p className="text-sm leading-relaxed text-amber-100/70">{body.tip}</p>
+            <p className="text-sm leading-relaxed text-amber-100/70">
+              {body.tip}
+            </p>
           </div>
         </div>
       )}
@@ -727,9 +739,7 @@ function ConceptCard({
           }}
           className="flex-1 rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-3.5 text-base font-bold text-white shadow-xl shadow-purple-500/20 transition-all hover:brightness-110 active:scale-[0.98]"
         >
-          {isLast
-            ? "Got it →"
-            : `Next: ${body.steps[page + 1]?.label} →`}
+          {isLast ? "Got it →" : `Next: ${body.steps[page + 1]?.label} →`}
         </button>
       </div>
     </div>
