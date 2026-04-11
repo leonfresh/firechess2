@@ -37,6 +37,7 @@ import { Chess } from "chess.js";
 import { playSound, preloadSounds } from "@/lib/sounds";
 import { earnCoins } from "@/lib/coins";
 import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";
+import { useBoardSize } from "@/lib/use-board-size";
 
 /* ─────────────────────────────────────────────────────────────── */
 /*  Types                                                           */
@@ -81,6 +82,13 @@ type ConceptBody = {
   steps: { label: string; text: string }[];
   tip: string;
   tipIcon: string;
+  gmGame?: {
+    players: string; // e.g. "Kasparov vs Topalov"
+    event: string; // e.g. "Wijk aan Zee, 1999"
+    story: string; // 2-3 sentence narrative about the game
+    motifDescription: string; // what the motif-specific moment was
+    fen?: string; // position where the motif occurred (optional visual)
+  };
 };
 
 type DrillPosition = {
@@ -125,6 +133,14 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
     ],
     tip: "Before every knight move, ask: does this square attack two valuable targets at once?",
     tipIcon: "♞",
+    gmGame: {
+      players: "Mikhail Tal vs Vasily Smyslov",
+      event: "Candidates Tournament, 1959",
+      story:
+        "Tal, the 'Magician from Riga', used breathtaking sacrifices and unexpected forks throughout the 1959 Candidates to become the youngest World Champion. Against Smyslov, his knight leapt to c7 attacking both rooks simultaneously — Smyslov could save only one.",
+      motifDescription:
+        "Tal's knight on c7 forked both rooks, winning the exchange immediately.",
+    },
   },
   pin: {
     headline: "The Pin",
@@ -146,6 +162,14 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
     ],
     tip: "Look for pieces that are on the same rank, file, or diagonal as your opponent's king or queen.",
     tipIcon: "♗",
+    gmGame: {
+      players: "Bobby Fischer vs Robert Byrne",
+      event: "US Championship, New York, 1963",
+      story:
+        "Fischer demolished Byrne in just 21 moves, delivering what is often called the greatest game played in the US Championship. A bishop pin on Byrne's knight meant the knight couldn't recapture, letting Fischer's combination crash through before Byrne could unravel.",
+      motifDescription:
+        "Fischer used a bishop pin on the d2-knight to launch a brilliant queen sacrifice — with the knight pinned, Byrne's defence collapsed entirely.",
+    },
   },
   skewer: {
     headline: "The Skewer",
@@ -167,6 +191,14 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
     ],
     tip: "After forcing a king or queen to move, always check whether a piece was left behind.",
     tipIcon: "♜",
+    gmGame: {
+      players: "Garry Kasparov vs Viswanathan Anand",
+      event: "PCA World Championship, New York, 1995",
+      story:
+        "In Game 10, Kasparov demonstrated perfect endgame technique in a rook ending. But the tactical seed was a rook skewer in the middlegame — his rook attacked Anand's queen along the e-file, forcing it to step aside and exposing the rook behind it.",
+      motifDescription:
+        "Kasparov's rook skewered Anand's queen along the open e-file, winning the rook that had been sheltering behind it.",
+    },
   },
   discoveredAttack: {
     headline: "Discovered Attack",
@@ -188,6 +220,14 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
     ],
     tip: "Look for pieces blocking one of your long-range pieces — moving them could fire two threats at once.",
     tipIcon: "💥",
+    gmGame: {
+      players: "Garry Kasparov vs Veselin Topalov",
+      event: "Wijk aan Zee, 1999",
+      story:
+        "Widely voted the greatest game ever played, Kasparov sacrificed his rook twice in 20 moves in what became known as the 'Immortal Game' of the modern era. On move 20, Kasparov played Rxd4, a discovered attack — his bishop on h5 suddenly had a clear diagonal to g6, threatening devastating discovered checks that Topalov had no answer to.",
+      motifDescription:
+        "Rxd4 cleared the diagonal for Kasparov's bishop, unleashing a discovered attack that Topalov could not survive.",
+    },
   },
   backRankMate: {
     headline: "Back Rank Weakness",
@@ -208,6 +248,14 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
     ],
     tip: "Any rook on an open file near the opponent's king — immediately look for back-rank mate.",
     tipIcon: "🏚️",
+    gmGame: {
+      players: "Bobby Fischer vs Donald Byrne",
+      event: "Rosenwald Memorial Tournament, New York, 1956",
+      story:
+        "Playing at just 13 years old, Fischer delivered 'The Game of the Century'. After a stunning queen sacrifice, Fischer used a rook to invade the back rank — Byrne's king was trapped behind its own pawns, and there was simply no escape from the back-rank threat.",
+      motifDescription:
+        "Fischer's rook reached Byrne's back rank, and with the king imprisoned by its own un-moved pawns, checkmate was forced in just a few more moves.",
+    },
   },
   deflection: {
     headline: "Deflection",
@@ -229,6 +277,14 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
     ],
     tip: "Identify what one piece is doing for your opponent — then ask how you can force it away.",
     tipIcon: "🔀",
+    gmGame: {
+      players: "Paul Morphy vs Duke of Brunswick & Count Isouard",
+      event: "Paris Opera, 1858",
+      story:
+        "The 'Opera Game' is the most celebrated attacking game from the 19th century. Morphy, playing against two noblemen at the opera, used a deflection sacrifice on move 16 — Qb8+!! — to drag the rook away from defending the back rank, after which checkmate was unstoppable.",
+      motifDescription:
+        "Morphy's Qb8+! forced Black's rook to capture, deflecting it from its defensive post and clearing the way for a back-rank mate.",
+    },
   },
   hangingPiece: {
     headline: "Hanging Pieces",
@@ -250,6 +306,14 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
     ],
     tip: "After every move, ask: did I leave anything hanging? Did my opponent?",
     tipIcon: "🎣",
+    gmGame: {
+      players: "Magnus Carlsen vs Levon Aronian",
+      event: "Wijk aan Zee, 2012",
+      story:
+        "Carlsen, at the peak of his powers, built up a monster endgame advantage only to blunder a piece in time trouble — leaving a rook hanging on a7. Aronian snapped it up immediately with Ra8xa7, winning decisive material. It was a rare lapse that cost Carlsen the game while he was completely winning.",
+      motifDescription:
+        "Carlsen left his rook on a7 undefended. Aronian simply took it — a reminder that even World Champions must check for hanging pieces on every move.",
+    },
   },
   rookEndgame: {
     headline: "Rook Endgames",
@@ -271,6 +335,14 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
     ],
     tip: "Rooks are most powerful from behind — place your rook behind the passed pawn, not in front of it.",
     tipIcon: "♜",
+    gmGame: {
+      players: "Anatoly Karpov vs Viktor Korchnoi",
+      event: "World Championship Match, Baguio, 1978",
+      story:
+        "The 1978 World Championship match was an epic 32-game struggle. Karpov won several critical rook endings with the principle of placing his rook behind the passed pawn — squeezing Korchnoi with the Lucena technique to convert a single passed pawn into the win.",
+      motifDescription:
+        "Karpov placed his rook behind his passed d-pawn, and as the pawn advanced, his rook gained energy while Korchnoi's rook was pinned in front — the classic winning algorithm.",
+    },
   },
   pawnEndgame: {
     headline: "Pawn Endgames",
@@ -291,6 +363,14 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
     ],
     tip: "In a pawn endgame, race your king to the centre immediately — a passive king loses almost every time.",
     tipIcon: "♟",
+    gmGame: {
+      players: "José Raúl Capablanca vs Frank Marshall",
+      event: "New York, 1918",
+      story:
+        "Capablanca was one of chess history's greatest endgame artists. Against Marshall, he entered a pawn endgame that looked drawish to observers but was anything but. Capa activated his king immediately and used precise opposition to queen a pawn while Marshall's passive king could do nothing.",
+      motifDescription:
+        "Capablanca marched his king to the center to seize opposition. Marshall's king was driven back, and Capablanca's passed pawn promoted before Marshall could react.",
+    },
   },
   queenEndgame: {
     headline: "Queen Endgames",
@@ -311,6 +391,14 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
     ],
     tip: "Watch for stalemate tricks — always check the enemy king has a legal move before playing any queen check.",
     tipIcon: "♛",
+    gmGame: {
+      players: "Magnus Carlsen vs Sergey Karjakin",
+      event: "World Championship Match, New York, 2016",
+      story:
+        "After 12 drawn classical games, Carlsen and Karjakin went to tiebreaks. In one of the tensest moments, Carlsen held a queen-and-pawn advantage but Karjakin fought back with perpetual check threats. Carlsen found the precise king march to a safe haven, converting the point and retaining the title.",
+      motifDescription:
+        "Carlsen shielded his king from perpetual check by advancing it along the queenside, blocking Karjakin's queen out. The stalemate trap was carefully avoided, and the pawn promoted.",
+    },
   },
   bishopEndgame: {
     headline: "Bishop Endgames",
@@ -332,6 +420,14 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
     ],
     tip: "Place your pawns on the opposite colour to your bishop — they control more squares together.",
     tipIcon: "♗",
+    gmGame: {
+      players: "Akiba Rubinstein vs Georg Salwe",
+      event: "Łódź, 1908",
+      story:
+        "Rubinstein was the undisputed king of rook endgames but his technique in bishop endings was equally profound. In this game, he won from opposite-coloured bishops by creating a passed pawn his bishop could support while Salwe's bishop was completely unable to blockade — a masterclass in pawn placement.",
+      motifDescription:
+        "Rubinstein placed his pawns on squares his bishop covered, forcing Salwe's bishop into total passivity and pushing the pawn through.",
+    },
   },
   knightEndgame: {
     headline: "Knight Endgames",
@@ -353,6 +449,14 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
     ],
     tip: "Centralise the knight immediately — a knight on the rim is dim, especially in endgames.",
     tipIcon: "♞",
+    gmGame: {
+      players: "Tigran Petrosian vs Samuel Reshevsky",
+      event: "Zurich Candidates Tournament, 1953",
+      story:
+        "Petrosian, the master of prophylaxis and piece manoeuvres, outplayed Reshevsky in a knight-and-pawn ending. His knight was centralised on e5 for most of the endgame, controlling critical squares, while Reshevsky's knight drifted to the rim and became purely passive — a textbook demonstration of 'a knight on the rim is dim'.",
+      motifDescription:
+        "Petrosian's centralised knight on e5 dominated the board. Reshevsky's knight, stranded on h6, could not participate in either attack or defense.",
+    },
   },
   kingsideAttack: {
     headline: "King Safety",
@@ -374,6 +478,14 @@ const CONCEPT_CARDS: Record<string, ConceptBody> = {
     ],
     tip: "Count the attackers vs defenders near the king before committing to any sacrifice.",
     tipIcon: "🔥",
+    gmGame: {
+      players: "Garry Kasparov vs Anatoly Karpov",
+      event: "World Championship Match, Moscow, 1985",
+      story:
+        "Kasparov's legendary Game 24 to clinch the 1985 World Championship title was a kingside attack masterpiece. With three pieces bearing down on Karpov's castled king, Kasparov sacrificed a rook on f6 to rip open the king shelter, and Karpov's defenses crumbled with nowhere to run.",
+      motifDescription:
+        "Kasparov counted 4 attackers vs 2 defenders on Karpov's king zone. The rook sacrifice on f6 opened lines and unleashed a decisive mating attack.",
+    },
   },
   default: {
     headline: "Chess Fundamentals",
@@ -413,6 +525,44 @@ function parseUci(move: string) {
       | "n"
       | undefined,
   };
+}
+
+/* Small ✓/✗ badge positioned over the target square */
+function MoveIndicator({
+  square,
+  type,
+  orientation,
+  boardSize,
+}: {
+  square: string;
+  type: "correct" | "wrong";
+  orientation: "white" | "black";
+  boardSize: number;
+}) {
+  const file = square.charCodeAt(0) - 97;
+  const rank = parseInt(square[1]) - 1;
+  const sqSize = boardSize / 8;
+  const x = orientation === "white" ? file * sqSize : (7 - file) * sqSize;
+  const y = orientation === "white" ? (7 - rank) * sqSize : rank * sqSize;
+  const size = Math.max(18, Math.round(sqSize * 0.36));
+  return (
+    <div
+      className="pointer-events-none absolute z-20 flex items-center justify-center rounded-full font-bold shadow-lg"
+      style={{
+        left: x + sqSize - size - 2,
+        top: y + 2,
+        width: size,
+        height: size,
+        fontSize: size * 0.65,
+        lineHeight: 1,
+        backgroundColor: type === "correct" ? "#22c55e" : "#ef4444",
+        color: "#fff",
+        animation: "indicator-pop 0.15s ease-out",
+      }}
+    >
+      {type === "correct" ? "✓" : "✗"}
+    </div>
+  );
 }
 
 /* ─────────────────────────────────────────────────────────────── */
@@ -737,9 +887,12 @@ function ConceptCard({
   onComplete: () => void;
 }) {
   const [page, setPage] = useState(0);
-  const totalPages = body.steps.length;
+  // Extra "GM Game" page if we have gmGame data
+  const hasGmGame = !!body.gmGame;
+  const totalPages = body.steps.length + (hasGmGame ? 1 : 0);
+  const isGmPage = hasGmGame && page === body.steps.length;
   const isLast = page === totalPages - 1;
-  const step = body.steps[page];
+  const step = !isGmPage ? body.steps[page] : null;
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-5">
@@ -758,31 +911,68 @@ function ConceptCard({
 
       {/* Step dots */}
       <div className="flex items-center justify-center gap-1.5">
-        {body.steps.map((_, i) => (
+        {Array.from({ length: totalPages }).map((_, i) => (
           <div
             key={i}
             className={`h-1.5 rounded-full transition-all duration-300 ${
-              i <= page ? "w-5 bg-violet-500" : "w-1.5 bg-white/[0.12]"
+              i < page
+                ? "w-5 bg-violet-500"
+                : i === page
+                  ? "w-5 bg-violet-400"
+                  : "w-1.5 bg-white/[0.12]"
             }`}
           />
         ))}
       </div>
 
-      {/* Current step card */}
-      <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] px-6 py-6">
-        <div className="mb-3 flex items-center gap-2.5">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-600/80 text-xs font-black text-white">
-            {page + 1}
+      {/* Theory step card */}
+      {step && (
+        <div className="rounded-2xl border border-white/[0.07] bg-white/[0.025] px-6 py-6">
+          <div className="mb-3 flex items-center gap-2.5">
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-violet-600/80 text-xs font-black text-white">
+              {page + 1}
+            </div>
+            <p className="text-xs font-black uppercase tracking-widest text-violet-400">
+              {step.label}
+            </p>
           </div>
-          <p className="text-xs font-black uppercase tracking-widest text-violet-400">
-            {step.label}
-          </p>
+          <p className="text-[15px] leading-7 text-slate-200">{step.text}</p>
         </div>
-        <p className="text-[15px] leading-7 text-slate-200">{step.text}</p>
-      </div>
+      )}
 
-      {/* Key principle — only on last page */}
-      {isLast && (
+      {/* GM Game showcase page */}
+      {isGmPage && body.gmGame && (
+        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/[0.04] overflow-hidden">
+          {/* Header */}
+          <div className="border-b border-amber-500/10 px-5 py-3.5">
+            <p className="text-[10px] font-black uppercase tracking-widest text-amber-500/70 mb-1">
+              ♟ GM Masterclass
+            </p>
+            <p className="font-bold text-white text-sm">
+              {body.gmGame.players}
+            </p>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              {body.gmGame.event}
+            </p>
+          </div>
+          {/* Story */}
+          <div className="px-5 py-4 space-y-3">
+            <p className="text-sm leading-relaxed text-slate-300">
+              {body.gmGame.story}
+            </p>
+            {/* Motif callout */}
+            <div className="flex gap-2.5 rounded-xl border border-violet-500/20 bg-violet-500/[0.06] px-4 py-3">
+              <span className="shrink-0 text-base">{body.tipIcon}</span>
+              <p className="text-[13px] leading-relaxed text-violet-200/80">
+                {body.gmGame.motifDescription}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Key principle — only on last theory page (just before GM page, or last if no GM) */}
+      {!isGmPage && page === body.steps.length - 1 && (
         <div className="flex gap-3 rounded-2xl border border-amber-400/20 bg-amber-400/[0.04] px-5 py-4">
           <span className="mt-0.5 shrink-0 text-xl">💡</span>
           <div>
@@ -815,7 +1005,13 @@ function ConceptCard({
           }}
           className="flex-1 rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-3.5 text-base font-bold text-white shadow-xl shadow-purple-500/20 transition-all hover:brightness-110 active:scale-[0.98]"
         >
-          {isLast ? "Got it →" : `Next: ${body.steps[page + 1]?.label} →`}
+          {isLast
+            ? "Got it → Start Puzzles"
+            : isGmPage
+              ? "Done — Start Puzzles →"
+              : page === body.steps.length - 1 && hasGmGame
+                ? `See GM Example →`
+                : `Next: ${body.steps[page + 1]?.label} →`}
         </button>
       </div>
     </div>
@@ -835,12 +1031,18 @@ function PositionDrillStep({
 }) {
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
+  const { ref: boardRef, size: boardSize } = useBoardSize(480);
   const [idx, setIdx] = useState(0);
   const [status, setStatus] = useState<"idle" | "correct" | "wrong">("idle");
   const [fen, setFen] = useState<string>(positions[0]?.fen ?? "");
   const [attempts, setAttempts] = useState(0);
   const [showHint, setShowHint] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const [legalMoveSqs, setLegalMoveSqs] = useState<string[]>([]);
+  const [moveIndicator, setMoveIndicator] = useState<{
+    square: string;
+    type: "correct" | "wrong";
+  } | null>(null);
   const completedRef = useRef(false);
 
   const pos = positions[idx] ?? null;
@@ -869,8 +1071,30 @@ function PositionDrillStep({
     if (selected) {
       styles[selected] = { backgroundColor: "rgba(255,210,0,0.45)" };
     }
+    // Legal move dots
+    if (selected && status === "idle") {
+      try {
+        const chess = new Chess(pos?.fen ?? fen);
+        for (const sq of legalMoveSqs) {
+          const hasPiece = chess.get(sq as Parameters<typeof chess.get>[0]);
+          styles[sq] = hasPiece
+            ? {
+                background:
+                  "radial-gradient(circle, transparent 55%, rgba(0,0,0,0.28) 55%)",
+                borderRadius: "50%",
+              }
+            : {
+                background:
+                  "radial-gradient(circle, rgba(0,0,0,0.28) 26%, transparent 26%)",
+                borderRadius: "50%",
+              };
+        }
+      } catch {
+        /* ignore */
+      }
+    }
     return styles;
-  }, [showHint, hintSquare, selected]);
+  }, [showHint, hintSquare, selected, legalMoveSqs, status, pos?.fen, fen]);
 
   const advanceOrComplete = useCallback(
     (nextIdx: number) => {
@@ -910,16 +1134,23 @@ function PositionDrillStep({
 
       setFen(chess.fen());
       setStatus(correct ? "correct" : "wrong");
+      setSelected(null);
+      setLegalMoveSqs([]);
+      setMoveIndicator({ square: tgt, type: correct ? "correct" : "wrong" });
 
       if (correct) {
         playSound("correct");
-        setTimeout(() => advanceOrComplete(idx + 1), 1400);
+        setTimeout(() => {
+          setMoveIndicator(null);
+          advanceOrComplete(idx + 1);
+        }, 1400);
       } else {
         playSound("wrong");
         const newAttempts = attempts + 1;
         setAttempts(newAttempts);
         if (newAttempts >= 2) setShowHint(true);
         setTimeout(() => {
+          setMoveIndicator(null);
           setFen(pos.fen);
           setStatus("idle");
         }, 1000);
@@ -955,10 +1186,18 @@ function PositionDrillStep({
       if (!selected) {
         const chess = new Chess(pos.fen);
         const piece = chess.get(square as Parameters<typeof chess.get>[0]);
-        if (piece && piece.color === chess.turn()) setSelected(square);
+        if (piece && piece.color === chess.turn()) {
+          setSelected(square);
+          const moves = chess.moves({
+            square: square as Parameters<typeof chess.moves>[0]["square"],
+            verbose: true,
+          });
+          setLegalMoveSqs(moves.map((m) => m.to));
+        }
       } else {
         if (square === selected) {
           setSelected(null);
+          setLegalMoveSqs([]);
           return;
         }
         const moved = handleDrop(selected, square);
@@ -967,10 +1206,16 @@ function PositionDrillStep({
           const piece = chess.get(square as Parameters<typeof chess.get>[0]);
           if (piece && piece.color === chess.turn()) {
             setSelected(square);
+            const moves = chess.moves({
+              square: square as Parameters<typeof chess.moves>[0]["square"],
+              verbose: true,
+            });
+            setLegalMoveSqs(moves.map((m) => m.to));
             return;
           }
         }
         setSelected(null);
+        setLegalMoveSqs([]);
       }
     },
     [pos, status, selected, handleDrop],
@@ -1010,7 +1255,8 @@ function PositionDrillStep({
 
       {/* Board */}
       <div
-        className={`overflow-hidden rounded-2xl ring-2 transition-all duration-300 ${
+        ref={boardRef}
+        className={`relative overflow-hidden rounded-2xl ring-2 transition-all duration-300 ${
           status === "correct"
             ? "ring-emerald-500/60"
             : status === "wrong"
@@ -1029,6 +1275,14 @@ function PositionDrillStep({
           customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
           customPieces={customPieces}
         />
+        {moveIndicator && (
+          <MoveIndicator
+            square={moveIndicator.square}
+            type={moveIndicator.type}
+            orientation={orientation}
+            boardSize={boardSize}
+          />
+        )}
       </div>
 
       {/* Feedback */}
@@ -1104,6 +1358,7 @@ function LivePuzzleBoard({
 }: LivePuzzleBoardProps) {
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
+  const { ref: boardRef, size: boardSize } = useBoardSize(480);
   const [game, setGame] = useState(() => new Chess(fen));
   const [moveIndex, setMoveIndex] = useState(-1); // -1 = waiting for trigger
   const [status, setStatus] = useState<"playing" | "correct" | "wrong">(
@@ -1117,6 +1372,11 @@ function LivePuzzleBoard({
   } | null>(null);
   const [showHint, setShowHint] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const [legalMoveSqs, setLegalMoveSqs] = useState<string[]>([]);
+  const [moveIndicator, setMoveIndicator] = useState<{
+    square: string;
+    type: "correct" | "wrong";
+  } | null>(null);
   const MAX_ATTEMPTS = 3;
 
   useEffect(() => {
@@ -1169,6 +1429,9 @@ function LivePuzzleBoard({
         setGame(new Chess(newGame.fen()));
         setAttempts(0);
         setShowHint(false);
+        setSelected(null);
+        setLegalMoveSqs([]);
+        setMoveIndicator({ square: to, type: "correct" });
 
         const nextIndex = moveIndex + 1;
         if (nextIndex >= solutionMoves.length) {
@@ -1181,6 +1444,7 @@ function LivePuzzleBoard({
         const oppMove = solutionMoves[nextIndex];
         const oppParsed = parseUci(oppMove);
         setTimeout(() => {
+          setMoveIndicator(null);
           const g = new Chess(newGame.fen());
           try {
             g.move({
@@ -1203,11 +1467,13 @@ function LivePuzzleBoard({
 
       // Wrong
       playSound("wrong");
+      setMoveIndicator({ square: to, type: "wrong" });
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
       setShaking(true);
       if (newAttempts >= 2) setShowHint(true);
       setTimeout(() => setShaking(false), 400);
+      setTimeout(() => setMoveIndicator(null), 800);
 
       if (newAttempts >= MAX_ATTEMPTS) {
         setStatus("wrong");
@@ -1236,10 +1502,18 @@ function LivePuzzleBoard({
       if (status !== "playing" || moveIndex < 0) return;
       if (!selected) {
         const piece = game.get(square as Parameters<typeof game.get>[0]);
-        if (piece && piece.color === game.turn()) setSelected(square);
+        if (piece && piece.color === game.turn()) {
+          setSelected(square);
+          const moves = game.moves({
+            square: square as Parameters<typeof game.moves>[0]["square"],
+            verbose: true,
+          });
+          setLegalMoveSqs(moves.map((m) => m.to));
+        }
       } else {
         if (square === selected) {
           setSelected(null);
+          setLegalMoveSqs([]);
           return;
         }
         const moved = handleDrop(selected as CbSquare, square as CbSquare);
@@ -1247,10 +1521,16 @@ function LivePuzzleBoard({
           const piece = game.get(square as Parameters<typeof game.get>[0]);
           if (piece && piece.color === game.turn()) {
             setSelected(square);
+            const moves = game.moves({
+              square: square as Parameters<typeof game.moves>[0]["square"],
+              verbose: true,
+            });
+            setLegalMoveSqs(moves.map((m) => m.to));
             return;
           }
         }
         setSelected(null);
+        setLegalMoveSqs([]);
       }
     },
     [status, moveIndex, selected, game, handleDrop],
@@ -1292,6 +1572,27 @@ function LivePuzzleBoard({
   if (selected) {
     squareStyles[selected] = { backgroundColor: "rgba(255,210,0,0.45)" };
   }
+  // Legal move dots
+  if (selected && status === "playing") {
+    try {
+      for (const sq of legalMoveSqs) {
+        const hasPiece = game.get(sq as Parameters<typeof game.get>[0]);
+        squareStyles[sq] = hasPiece
+          ? {
+              background:
+                "radial-gradient(circle, transparent 55%, rgba(0,0,0,0.28) 55%)",
+              borderRadius: "50%",
+            }
+          : {
+              background:
+                "radial-gradient(circle, rgba(0,0,0,0.28) 26%, transparent 26%)",
+              borderRadius: "50%",
+            };
+      }
+    } catch {
+      /* ignore */
+    }
+  }
 
   const toMove = orientation === "white" ? "White" : "Black";
   const statusText =
@@ -1322,7 +1623,8 @@ function LivePuzzleBoard({
       </p>
 
       <div
-        className={`overflow-hidden rounded-2xl ring-2 transition-all duration-300 ${
+        ref={boardRef}
+        className={`relative overflow-hidden rounded-2xl ring-2 transition-all duration-300 ${
           status === "correct"
             ? "ring-emerald-500/50"
             : status === "wrong"
@@ -1342,6 +1644,14 @@ function LivePuzzleBoard({
           customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
           customPieces={customPieces}
         />
+        {moveIndicator && (
+          <MoveIndicator
+            square={moveIndicator.square}
+            type={moveIndicator.type}
+            orientation={orientation}
+            boardSize={boardSize}
+          />
+        )}
       </div>
 
       {/* Attempts dots */}
@@ -1624,121 +1934,179 @@ function TopicPicker({
   username: string | null;
   onSelect: (topic: WeaknessTopic) => void;
 }) {
-  const SEVERITY_STYLE: Record<WeaknessTopic["severity"], string> = {
-    high: "text-red-400 border-red-500/20 bg-red-500/[0.06]",
-    medium: "text-amber-400 border-amber-500/20 bg-amber-500/[0.06]",
-    low: "text-slate-400 border-white/[0.08] bg-white/[0.03]",
-    universal: "text-slate-500 border-white/[0.06] bg-white/[0.02]",
-  };
-  const SEVERITY_LABEL: Record<WeaknessTopic["severity"], string> = {
-    high: "Weak",
-    medium: "Fair",
-    low: "OK",
-    universal: "",
-  };
+  const [showAll, setShowAll] = useState(false);
 
   const scanTopics = topics.filter((t) => t.severity !== "universal");
   const universalTopics = topics.filter((t) => t.severity === "universal");
-  // The first few universal topics were sorted to the top because they're
-  // related to the user's weak areas — mark the top 3 as "Suggested"
-  const suggestedThreshold = scanTopics.length > 0 ? 3 : 0;
+  // Top 3 universal topics were sorted to be structurally related to the user's weak areas
+  const suggestedUniversal =
+    scanTopics.length > 0 ? universalTopics.slice(0, 3) : [];
+  const otherUniversal =
+    scanTopics.length > 0 ? universalTopics.slice(3) : universalTopics;
+
+  const SEVERITY_BADGE: Record<
+    "high" | "medium" | "low",
+    { label: string; color: string }
+  > = {
+    high: {
+      label: "Weak area",
+      color: "border-red-500/30 bg-red-500/10 text-red-400",
+    },
+    medium: {
+      label: "Needs work",
+      color: "border-amber-500/30 bg-amber-500/10 text-amber-400",
+    },
+    low: {
+      label: "Practice more",
+      color: "border-slate-500/30 bg-white/[0.05] text-slate-400",
+    },
+  };
+
+  const hasRecommended = scanTopics.length > 0 || suggestedUniversal.length > 0;
+  const recommendedTopics = [...scanTopics, ...suggestedUniversal];
 
   return (
-    <div className="mx-auto max-w-md space-y-6">
+    <div className="mx-auto max-w-md space-y-8">
+      {/* Header */}
       <div className="pt-2 text-center space-y-1.5">
         <p className="text-[11px] font-black uppercase tracking-widest text-purple-400">
-          ✦ What do you want to work on?
+          ✦ Personalised Learning
         </p>
         <h1 className="text-2xl font-black tracking-tight text-white">
           Choose a lesson
         </h1>
         {username && (
           <p className="text-sm text-slate-500">
-            Based on {username}&apos;s games
+            Tailored to {username}&apos;s games
           </p>
         )}
       </div>
 
-      {scanTopics.length > 0 && (
-        <div className="space-y-2">
-          <p className="px-1 text-[10px] font-black uppercase tracking-widest text-slate-600">
-            From your games
-          </p>
-          {scanTopics.map((topic) => (
-            <button
-              key={topic.key}
-              type="button"
-              onClick={() => onSelect(topic)}
-              className="w-full flex items-center gap-4 rounded-2xl border border-white/[0.07] bg-white/[0.025] px-4 py-3.5 text-left transition-all hover:border-purple-500/30 hover:bg-purple-500/[0.05] active:scale-[0.99]"
-            >
-              <div className="text-2xl">{topic.icon}</div>
-              <div className="flex-1 min-w-0">
-                <p className="font-bold text-white text-sm">{topic.label}</p>
-                <p className="mt-0.5 text-[11px] text-slate-500">
-                  {topic.description}
-                </p>
-              </div>
-              <div
-                className={`shrink-0 rounded-lg border px-2 py-1 text-[10px] font-black uppercase ${SEVERITY_STYLE[topic.severity]}`}
+      {/* Recommended section */}
+      {hasRecommended && (
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-2 px-0.5">
+            <span className="flex h-5 w-5 items-center justify-center rounded-md bg-purple-600 text-[9px] font-black text-white">
+              ✦
+            </span>
+            <p className="text-[11px] font-black uppercase tracking-widest text-purple-400">
+              Recommended for you
+            </p>
+          </div>
+          {recommendedTopics.map((topic, i) => {
+            const isPersonalised = topic.severity !== "universal";
+            const badge = isPersonalised
+              ? SEVERITY_BADGE[topic.severity as "high" | "medium" | "low"]
+              : null;
+            return (
+              <button
+                key={topic.key}
+                type="button"
+                onClick={() => onSelect(topic)}
+                className="group w-full flex items-center gap-3.5 rounded-2xl border border-purple-500/25 bg-purple-500/[0.06] px-4 py-4 text-left transition-all hover:border-purple-500/50 hover:bg-purple-500/[0.10] active:scale-[0.99]"
               >
-                {SEVERITY_LABEL[topic.severity] || "Drill"}
-              </div>
-            </button>
-          ))}
+                {/* Rank bubble */}
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-600/80 text-sm font-black text-white shadow-lg shadow-purple-500/20">
+                  {i + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="font-bold text-white text-sm">
+                      {topic.label}
+                    </p>
+                    {isPersonalised && badge && (
+                      <span
+                        className={`rounded-md border px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide ${badge.color}`}
+                      >
+                        {badge.label}
+                      </span>
+                    )}
+                    {!isPersonalised && (
+                      <span className="rounded-md border border-purple-500/30 bg-purple-500/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wide text-purple-400">
+                        Recommended
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-[11px] text-slate-500 line-clamp-1">
+                    {isPersonalised
+                      ? topic.description
+                      : (CONCEPT_CARDS[topic.conceptKey]?.intro
+                          ?.split(" ")
+                          .slice(0, 9)
+                          .join(" ") ?? "") + "…"}
+                  </p>
+                </div>
+                <span className="text-xl">{topic.icon}</span>
+              </button>
+            );
+          })}
         </div>
       )}
 
-      <div className="space-y-2">
-        <p className="px-1 text-[10px] font-black uppercase tracking-widest text-slate-600">
-          {scanTopics.length > 0 ? "Also practice" : "All lessons"}
-        </p>
-        {universalTopics.map((topic, i) => {
-          const isSuggested = i < suggestedThreshold;
-          return (
-            <button
-              key={topic.key}
-              type="button"
-              onClick={() => onSelect(topic)}
-              className={`w-full flex items-center gap-4 rounded-2xl border px-4 py-3.5 text-left transition-all hover:border-purple-500/30 hover:bg-purple-500/[0.05] active:scale-[0.99] ${
-                isSuggested
-                  ? "border-purple-500/20 bg-purple-500/[0.04]"
-                  : "border-white/[0.06] bg-white/[0.02]"
-              }`}
-            >
-              <div className="text-2xl">{topic.icon}</div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-bold text-white text-sm">{topic.label}</p>
-                  {isSuggested && (
-                    <span className="rounded-md border border-purple-500/30 bg-purple-500/10 px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider text-purple-400">
-                      Suggested
-                    </span>
-                  )}
-                </div>
-                <p className="mt-0.5 text-[11px] text-slate-500">
-                  {(CONCEPT_CARDS[topic.conceptKey]?.intro
-                    ?.split(" ")
-                    .slice(0, 9)
-                    .join(" ") ?? "") + "…"}
-                </p>
-              </div>
-              <svg
-                className="h-4 w-4 shrink-0 text-slate-600"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
+      {/* Other lessons */}
+      {otherUniversal.length > 0 && (
+        <div className="space-y-2">
+          <div className="flex items-center justify-between px-0.5">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">
+              {hasRecommended ? "Other lessons" : "All lessons"}
+            </p>
+            {!showAll && otherUniversal.length > 5 && (
+              <button
+                type="button"
+                onClick={() => setShowAll(true)}
+                className="text-[10px] font-semibold text-slate-600 hover:text-slate-400 transition-colors"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
+                Show all ({otherUniversal.length}) ↓
+              </button>
+            )}
+          </div>
+          {(showAll ? otherUniversal : otherUniversal.slice(0, 5)).map(
+            (topic) => (
+              <button
+                key={topic.key}
+                type="button"
+                onClick={() => onSelect(topic)}
+                className="w-full flex items-center gap-3.5 rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3.5 text-left transition-all hover:border-white/[0.12] hover:bg-white/[0.04] active:scale-[0.99]"
+              >
+                <div className="text-xl shrink-0">{topic.icon}</div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-slate-300 text-sm">
+                    {topic.label}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-slate-600 line-clamp-1">
+                    {(CONCEPT_CARDS[topic.conceptKey]?.intro
+                      ?.split(" ")
+                      .slice(0, 9)
+                      .join(" ") ?? "") + "…"}
+                  </p>
+                </div>
+                <svg
+                  className="h-4 w-4 shrink-0 text-slate-700"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+              </button>
+            ),
+          )}
+          {!showAll && otherUniversal.length > 5 && (
+            <button
+              type="button"
+              onClick={() => setShowAll(true)}
+              className="w-full rounded-2xl border border-white/[0.05] bg-white/[0.01] py-3 text-[12px] font-semibold text-slate-600 hover:text-slate-400 hover:bg-white/[0.03] transition-colors"
+            >
+              Show {otherUniversal.length - 5} more lessons ↓
             </button>
-          );
-        })}
-      </div>
+          )}
+        </div>
+      )}
 
       <p className="text-center text-[11px] text-slate-700">
         🧪 Early preview ·{" "}
