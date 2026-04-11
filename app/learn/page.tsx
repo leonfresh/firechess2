@@ -36,6 +36,7 @@ import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { Chess } from "chess.js";
 import { playSound, preloadSounds } from "@/lib/sounds";
 import { earnCoins } from "@/lib/coins";
+import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";
 
 /* ─────────────────────────────────────────────────────────────── */
 /*  Types                                                           */
@@ -832,11 +833,14 @@ function PositionDrillStep({
   positions: DrillPosition[];
   onComplete: () => void;
 }) {
+  const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
   const [idx, setIdx] = useState(0);
   const [status, setStatus] = useState<"idle" | "correct" | "wrong">("idle");
   const [fen, setFen] = useState<string>(positions[0]?.fen ?? "");
   const [attempts, setAttempts] = useState(0);
   const [showHint, setShowHint] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
   const completedRef = useRef(false);
 
   const pos = positions[idx] ?? null;
@@ -855,14 +859,18 @@ function PositionDrillStep({
   const hintSquare = pos?.bestMove?.slice(0, 2) ?? null;
 
   const customSquareStyles = useMemo(() => {
-    if (!showHint || !hintSquare) return {};
-    return {
-      [hintSquare]: {
+    const styles: Record<string, React.CSSProperties> = {};
+    if (showHint && hintSquare) {
+      styles[hintSquare] = {
         backgroundColor: "rgba(251, 191, 36, 0.45)",
         borderRadius: "4px",
-      },
-    };
-  }, [showHint, hintSquare]);
+      };
+    }
+    if (selected) {
+      styles[selected] = { backgroundColor: "rgba(255,210,0,0.45)" };
+    }
+    return styles;
+  }, [showHint, hintSquare, selected]);
 
   const advanceOrComplete = useCallback(
     (nextIdx: number) => {
@@ -941,6 +949,33 @@ function PositionDrillStep({
     }
   }, [pos, idx, advanceOrComplete]);
 
+  const handleSquareClick = useCallback(
+    (square: string) => {
+      if (!pos || status !== "idle") return;
+      if (!selected) {
+        const chess = new Chess(pos.fen);
+        const piece = chess.get(square as Parameters<typeof chess.get>[0]);
+        if (piece && piece.color === chess.turn()) setSelected(square);
+      } else {
+        if (square === selected) {
+          setSelected(null);
+          return;
+        }
+        const moved = handleDrop(selected, square);
+        if (!moved) {
+          const chess = new Chess(pos.fen);
+          const piece = chess.get(square as Parameters<typeof chess.get>[0]);
+          if (piece && piece.color === chess.turn()) {
+            setSelected(square);
+            return;
+          }
+        }
+        setSelected(null);
+      }
+    },
+    [pos, status, selected, handleDrop],
+  );
+
   if (!pos) return null;
 
   const toMove = pos.fen.split(" ")[1] === "b" ? "Black" : "White";
@@ -987,8 +1022,12 @@ function PositionDrillStep({
           position={fen}
           boardOrientation={orientation}
           onPieceDrop={handleDrop}
+          onSquareClick={handleSquareClick}
           arePiecesDraggable={status === "idle"}
           customSquareStyles={customSquareStyles}
+          customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+          customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+          customPieces={customPieces}
         />
       </div>
 
@@ -1063,6 +1102,8 @@ function LivePuzzleBoard({
   onSolved,
   onFailed,
 }: LivePuzzleBoardProps) {
+  const boardTheme = useBoardTheme();
+  const customPieces = useCustomPieces();
   const [game, setGame] = useState(() => new Chess(fen));
   const [moveIndex, setMoveIndex] = useState(-1); // -1 = waiting for trigger
   const [status, setStatus] = useState<"playing" | "correct" | "wrong">(
@@ -1075,6 +1116,7 @@ function LivePuzzleBoard({
     to: string;
   } | null>(null);
   const [showHint, setShowHint] = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
   const MAX_ATTEMPTS = 3;
 
   useEffect(() => {
@@ -1189,6 +1231,31 @@ function LivePuzzleBoard({
     [game, moveIndex, solutionMoves, status, attempts, onSolved, onFailed],
   );
 
+  const handleSquareClick = useCallback(
+    (square: string) => {
+      if (status !== "playing" || moveIndex < 0) return;
+      if (!selected) {
+        const piece = game.get(square as Parameters<typeof game.get>[0]);
+        if (piece && piece.color === game.turn()) setSelected(square);
+      } else {
+        if (square === selected) {
+          setSelected(null);
+          return;
+        }
+        const moved = handleDrop(selected as CbSquare, square as CbSquare);
+        if (!moved) {
+          const piece = game.get(square as Parameters<typeof game.get>[0]);
+          if (piece && piece.color === game.turn()) {
+            setSelected(square);
+            return;
+          }
+        }
+        setSelected(null);
+      }
+    },
+    [status, moveIndex, selected, game, handleDrop],
+  );
+
   const squareStyles: Record<string, React.CSSProperties> = {};
   if (opponentLastMove && status === "playing") {
     squareStyles[opponentLastMove.from] = {
@@ -1221,6 +1288,9 @@ function LivePuzzleBoard({
         boxShadow: "inset 0 0 14px 4px rgba(34,197,94,0.5)",
       };
     }
+  }
+  if (selected) {
+    squareStyles[selected] = { backgroundColor: "rgba(255,210,0,0.45)" };
   }
 
   const toMove = orientation === "white" ? "White" : "Black";
@@ -1264,9 +1334,13 @@ function LivePuzzleBoard({
           position={game.fen()}
           boardOrientation={orientation}
           onPieceDrop={handleDrop}
+          onSquareClick={handleSquareClick}
           arePiecesDraggable={status === "playing" && moveIndex >= 0}
           animationDuration={200}
           customSquareStyles={squareStyles}
+          customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+          customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+          customPieces={customPieces}
         />
       </div>
 
