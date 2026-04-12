@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Chess } from "chess.js";
 import { Chessboard } from "@/components/chessboard-compat";
@@ -29,10 +29,13 @@ type InteractSlide = {
   kind: "interact";
   heading: string;
   instruction: string;
-  fen: string;
+  // Hardcoded position mode
+  fen?: string;
   orientation?: "white" | "black";
-  correctMoves: string[]; // UCI strings that are CORRECT
-  wrongMoves?: string[]; // UCI strings that should be flagged as wrong
+  correctMoves?: string[];
+  wrongMoves?: string[];
+  // Live Lichess puzzle mode (fetchTheme overrides fen/correctMoves)
+  fetchTheme?: string;
   correctExplanation: string;
   wrongExplanation: string;
 };
@@ -117,17 +120,14 @@ const INITIATIVE_LESSON: Lesson = {
     },
     {
       kind: "interact",
-      heading: "The Greek Gift sacrifice",
+      heading: "Find the attacking move",
       instruction:
-        "Black has just castled kingside. White's bishop on d3 has a clear diagonal to h7. Find the move that blows open the Black king shelter.",
-      // QGD Tarrasch: 1.d4 d5 2.c4 e6 3.Nc3 Nf6 4.Bg5 Be7 5.e3 0-0 6.Nf3 Nbd7 7.Qc2 c5 8.cxd5 exd5 9.Bd3 c4
-      fen: "r1bq1rk1/pp1nbppp/5n2/3p2B1/2pP4/2NBPN2/PPQ2PPP/R3K2R w KQ - 0 10",
-      orientation: "white",
-      correctMoves: ["d3h7"],
+        "A real game position — your opponent's king is exposed. Find the best attacking move.",
+      fetchTheme: "kingsideAttack",
       correctExplanation:
-        "Bxh7+! The king must take, then Ng5+ attacks the king again. Black's king is dragged into the open with no shelter.",
+        "Excellent! Finding forcing attacks on an exposed king is how you seize and keep the initiative.",
       wrongExplanation:
-        "Look at White's bishop on d3. It has a clear path to h7 — and Black's king has just castled there.",
+        "Look for moves that open lines toward the opponent's king or land a piece with a concrete threat.",
     },
     {
       kind: "choice",
@@ -176,17 +176,14 @@ const INITIATIVE_LESSON: Lesson = {
     },
     {
       kind: "interact",
-      heading: "Now it IS correct to take",
+      heading: "Win the material",
       instruction:
-        "Both sides are castled and the position is stable. Black's knight on h5 just moved away from the centre, leaving the d5 pawn completely undefended. Take it.",
-      // Both kings castled, Black Nh5 has moved away leaving d5 with no defender
-      fen: "2r2rk1/pp2qppp/4p3/3p3n/3P4/2N1BN2/PP2BPPP/2RQ1RK1 w - - 0 13",
-      orientation: "white",
-      correctMoves: ["c3d5"],
+        "A real game position — the position is calm, your opponent has left material undefended. Find the winning move.",
+      fetchTheme: "advantage",
       correctExplanation:
-        "Nxd5! wins a clean pawn. Black's knight moved away from the centre leaving d5 completely undefended — in a stable position, an undefended pawn is simply free material.",
+        "In a stable position with no threats, winning free material is always the right call.",
       wrongExplanation:
-        "Look at the d5 pawn — Black's knight on h5 has moved away and nothing defends it. White's Nc3 can jump to d5 and win it.",
+        "Look for the piece or pawn your opponent has left without adequate defence.",
     },
     {
       kind: "choice",
@@ -393,6 +390,229 @@ function TextSlideView({
 }
 
 /* ─────────────────────────────────────────────────────────────── */
+/*  LiveInteractSlide — fetches a real Lichess puzzle              */
+/* ─────────────────────────────────────────────────────────────── */
+
+function LiveInteractSlide({
+  slide,
+  onNext,
+}: {
+  slide: InteractSlide;
+  onNext: () => void;
+}) {
+  const [loadState, setLoadState] = useState<"fetching" | "error" | "ready">("fetching");
+  const [fen, setFen] = useState("");
+  const [triggerPlayed, setTriggerPlayed] = useState(false);
+  const [solutionMoves, setSolutionMoves] = useState<string[]>([]);
+  const [orientation, setOrientation] = useState<"white" | "black">("white");
+  const [moveIdx, setMoveIdx] = useState(0);
+  const [solveState, setSolveState] = useState<"playing" | "correct">("playing");
+  const [attempts, setAttempts] = useState(0);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [legalSqs, setLegalSqs] = useState<string[]>([]);
+  const [hintSq, setHintSq] = useState<string | null>(null);
+  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
+  const fetched = useRef(false);
+  const gameRef = useRef(new Chess());
+  const preFenRef = useRef("");
+  const triggerRef = useRef<{ from: string; to: string } | null>(null);
+
+  useEffect(() => { preloadSounds(); }, []);
+
+  useEffect(() => {
+    if (fetched.current || !slide.fetchTheme) return;
+    fetched.current = true;
+    fetch(`/api/puzzles?themes=${slide.fetchTheme}&count=1`)
+      .then((r) => r.json())
+      .then((data) => {
+        const p = data.puzzles?.[0];
+        if (!p) { setLoadState("error"); return; }
+        const pgn: string = p.game?.pgn ?? "";
+        const initialPly: number = p.puzzle?.initialPly ?? 0;
+        const solution: string[] = p.puzzle?.solution ?? [];
+        if (!pgn || solution.length === 0) { setLoadState("error"); return; }
+        const full = new Chess();
+        full.loadPgn(pgn);
+        const history = full.history({ verbose: true });
+        const board = new Chess();
+        for (let i = 0; i < Math.min(initialPly, history.length); i++) {
+          board.move(history[i].san);
+        }
+        preFenRef.current = board.fen();
+        let tFrom: string | null = null, tTo: string | null = null;
+        if (initialPly < history.length) {
+          const m = history[initialPly];
+          tFrom = m.from; tTo = m.to;
+          board.move(m.san);
+        }
+        gameRef.current = new Chess(board.fen());
+        if (tFrom && tTo) triggerRef.current = { from: tFrom, to: tTo };
+        setFen(preFenRef.current);
+        setSolutionMoves(solution);
+        setOrientation(board.turn() === "w" ? "white" : "black");
+        setLoadState("ready");
+      })
+      .catch(() => setLoadState("error"));
+  }, [slide.fetchTheme]);
+
+  // Animate the opponent's trigger move before handing control to the player
+  useEffect(() => {
+    if (loadState !== "ready" || triggerPlayed) return;
+    const t = setTimeout(() => {
+      setFen(gameRef.current.fen());
+      if (triggerRef.current) setLastMove(triggerRef.current);
+      playSound("move");
+      setTriggerPlayed(true);
+    }, 700);
+    return () => clearTimeout(t);
+  }, [loadState, triggerPlayed]);
+
+  const uciParts = (uci: string) => ({
+    from: uci.slice(0, 2),
+    to: uci.slice(2, 4),
+    promotion: (uci[4] || "q") as "q" | "r" | "b" | "n",
+  });
+
+  const handleDrop = useCallback(
+    (from: string, to: string): boolean => {
+      if (!triggerPlayed || solveState !== "playing" || moveIdx >= solutionMoves.length) return false;
+      const exp = uciParts(solutionMoves[moveIdx]);
+      if (from !== exp.from || to !== exp.to) {
+        playSound("wrong");
+        const a = attempts + 1;
+        setAttempts(a);
+        if (a >= 2) setHintSq(exp.from);
+        return false;
+      }
+      const newGame = new Chess(gameRef.current.fen());
+      try { newGame.move({ from, to, promotion: exp.promotion }); } catch { return false; }
+      playSound(newGame.isCheck() ? "check" : "correct");
+      gameRef.current = new Chess(newGame.fen());
+      setFen(newGame.fen());
+      setLastMove({ from, to });
+      setHintSq(null); setSelected(null); setLegalSqs([]);
+      const nextIdx = moveIdx + 1;
+      if (nextIdx >= solutionMoves.length) {
+        setSolveState("correct");
+        setTimeout(onNext, 1400);
+        return true;
+      }
+      // Play the opponent's response automatically
+      const opp = uciParts(solutionMoves[nextIdx]);
+      setTimeout(() => {
+        const g2 = new Chess(gameRef.current.fen());
+        try { g2.move({ from: opp.from, to: opp.to, promotion: opp.promotion }); } catch { /* ignore */ }
+        playSound(g2.isCheck() ? "check" : "move");
+        gameRef.current = new Chess(g2.fen());
+        setFen(g2.fen());
+        setLastMove({ from: opp.from, to: opp.to });
+        setMoveIdx(nextIdx + 1);
+      }, 600);
+      setMoveIdx(nextIdx);
+      return true;
+    },
+    [triggerPlayed, solveState, moveIdx, solutionMoves, attempts, onNext],
+  );
+
+  const handleSquareClick = useCallback(
+    (sq: string) => {
+      if (!triggerPlayed || solveState !== "playing") return;
+      if (!selected) {
+        const piece = gameRef.current.get(sq as any);
+        if (piece && piece.color === gameRef.current.turn()) {
+          setSelected(sq);
+          setLegalSqs(gameRef.current.moves({ square: sq as any, verbose: true }).map((m) => m.to));
+        }
+      } else {
+        if (sq === selected) { setSelected(null); setLegalSqs([]); return; }
+        const moved = handleDrop(selected, sq);
+        if (!moved) {
+          const piece = gameRef.current.get(sq as any);
+          if (piece && piece.color === gameRef.current.turn()) {
+            setSelected(sq);
+            setLegalSqs(gameRef.current.moves({ square: sq as any, verbose: true }).map((m) => m.to));
+            return;
+          }
+        }
+        setSelected(null); setLegalSqs([]);
+      }
+    },
+    [triggerPlayed, solveState, selected, handleDrop],
+  );
+
+  const sqStyles: Record<string, React.CSSProperties> = {};
+  if (lastMove) {
+    sqStyles[lastMove.from] = { backgroundColor: "rgba(255,170,0,0.30)" };
+    sqStyles[lastMove.to] = { backgroundColor: "rgba(255,170,0,0.45)" };
+  }
+  if (hintSq) sqStyles[hintSq] = { boxShadow: "inset 0 0 18px 6px rgba(251,191,36,0.55)", borderRadius: "4px" };
+  if (selected) sqStyles[selected] = { backgroundColor: "rgba(255,210,0,0.45)" };
+  if (selected && solveState === "playing") {
+    for (const sq of legalSqs) {
+      const hasPiece = gameRef.current.get(sq as any);
+      sqStyles[sq] = hasPiece
+        ? { background: "radial-gradient(circle, transparent 55%, rgba(0,0,0,0.28) 55%)", borderRadius: "50%" }
+        : { background: "radial-gradient(circle, rgba(0,0,0,0.28) 26%, transparent 26%)", borderRadius: "50%" };
+    }
+  }
+
+  if (loadState === "fetching") return (
+    <div className="flex flex-col items-center gap-3 py-16">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-purple-500 border-t-transparent" />
+      <p className="text-sm text-slate-500">Loading position…</p>
+    </div>
+  );
+  if (loadState === "error") return (
+    <div className="flex flex-col items-center gap-4 py-12 text-center">
+      <p className="text-sm text-slate-500">Couldn't load puzzle. Try refreshing.</p>
+      <button type="button" onClick={onNext} className="rounded-xl bg-white/[0.06] px-6 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/[0.1]">
+        Skip →
+      </button>
+    </div>
+  );
+
+  const toMoveLabel = orientation === "white" ? "White" : "Black";
+  return (
+    <div className="mx-auto flex max-w-lg flex-col gap-5">
+      <div>
+        <h2 className="text-2xl font-black tracking-tight text-white">{slide.heading}</h2>
+        <p className="mt-2 text-sm text-slate-400">{slide.instruction}</p>
+        <p className="mt-1 text-[11px] font-semibold uppercase tracking-widest text-slate-600">
+          {!triggerPlayed ? "Opponent is moving…" : `${toMoveLabel} to move`}
+        </p>
+      </div>
+      <LessonBoard
+        fen={fen || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"}
+        orientation={orientation}
+        onDrop={handleDrop}
+        onSquareClick={handleSquareClick}
+        draggable={triggerPlayed && solveState === "playing"}
+        customSquareStyles={sqStyles}
+      />
+      {triggerPlayed && solveState === "playing" && (
+        <div className="flex items-center justify-center gap-2">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className={`h-2 w-2 rounded-full transition-colors ${i < attempts ? "bg-red-500" : "bg-white/[0.10]"}`} />
+          ))}
+          {hintSq && <span className="ml-2 text-xs text-amber-400">💡 Move the highlighted piece</span>}
+        </div>
+      )}
+      <div className={`rounded-2xl border px-5 py-4 transition-all duration-300 ${
+        solveState === "correct" ? "border-emerald-500/30 bg-emerald-500/[0.06]" : "border-white/[0.06] bg-white/[0.02]"
+      }`}>
+        <p className={`text-sm font-semibold ${solveState === "correct" ? "text-emerald-300" : "text-slate-500"}`}>
+          {solveState === "correct"
+            ? `✓ ${slide.correctExplanation}`
+            : !triggerPlayed
+              ? "Opponent's move is coming…"
+              : "Find the best move — drag or click"}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────── */
 /*  InteractSlideView                                               */
 /* ─────────────────────────────────────────────────────────────── */
 
@@ -405,7 +625,7 @@ function InteractSlideView({
 }) {
   const [state, setState] = useState<"idle" | "correct" | "wrong">("idle");
   const [attempts, setAttempts] = useState(0);
-  const [fen, setFen] = useState(slide.fen);
+  const [fen, setFen] = useState(slide.fen ?? "");
   const [selected, setSelected] = useState<string | null>(null);
   const [legalSqs, setLegalSqs] = useState<string[]>([]);
   const orientation = slide.orientation ?? "white";
@@ -417,7 +637,7 @@ function InteractSlideView({
   const tryMove = useCallback(
     (from: string, to: string): boolean => {
       if (state !== "idle") return false;
-      const chess = new Chess(slide.fen);
+      const chess = new Chess(slide.fen ?? "");
       let move;
       try {
         move = chess.move({ from, to, promotion: "q" });
@@ -427,7 +647,7 @@ function InteractSlideView({
       if (!move) return false;
 
       const uci = from + to;
-      const isCorrect = slide.correctMoves.some(
+      const isCorrect = (slide.correctMoves ?? []).some(
         (m) =>
           m === uci ||
           m === uci + "q" ||
@@ -449,7 +669,7 @@ function InteractSlideView({
         setSelected(null);
         setLegalSqs([]);
         setTimeout(() => {
-          setFen(slide.fen);
+          setFen(slide.fen ?? "");
           setState("idle");
         }, 1200);
       }
@@ -524,12 +744,12 @@ function InteractSlideView({
     }
   }
   if (attempts >= 2 && state === "idle") {
-    const hintFrom = slide.correctMoves[0]?.slice(0, 2);
+    const hintFrom = (slide.correctMoves ?? [])[0]?.slice(0, 2);
     if (hintFrom)
       squareStyles[hintFrom] = { backgroundColor: "rgba(251,191,36,0.45)" };
   }
 
-  const toMove = slide.fen.split(" ")[1] === "b" ? "Black" : "White";
+  const toMove = (slide.fen ?? "").split(" ")[1] === "b" ? "Black" : "White";
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-5">
@@ -781,7 +1001,9 @@ function LessonRunner({
         <TextSlideView slide={slide} onNext={handleNext} />
       )}
       {slide?.kind === "interact" && (
-        <InteractSlideView key={idx} slide={slide} onNext={handleNext} />
+        slide.fetchTheme
+          ? <LiveInteractSlide key={idx} slide={slide} onNext={handleNext} />
+          : <InteractSlideView key={idx} slide={slide} onNext={handleNext} />
       )}
       {slide?.kind === "choice" && (
         <ChoiceSlideView key={idx} slide={slide} onNext={handleNext} />
