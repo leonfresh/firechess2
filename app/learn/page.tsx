@@ -77,16 +77,13 @@ const INITIATIVE_LESSON: Lesson = {
   slides: [
     {
       kind: "text",
-      heading: "A pawn won, but the initiative lost",
-      body: "After 1.e4 e5 2.Nf3 Nc6 3.Bc4 Nd4?! 4.Nxe5? Qg5, White is technically a pawn up. Practically, White is the side in danger. The queen hits g2, the knight on e5 is loose, and Black is the one asking the questions. That is the initiative: not material, but the right to make threats.",
-      // Blackburne Shilling Gambit: 1.e4 e5 2.Nf3 Nc6 3.Bc4 Nd4?! 4.Nxe5? Qg5
-      fen: "r1b1kbnr/pppp1ppp/8/4N1q1/2BnP3/8/PPPP1PPP/RNBQK2R w KQkq - 1 5",
+      heading: "The loose pawn is a distraction",
+      body: "In this Queen's Gambit structure, Black's pawn on c4 looks free. White can take it immediately with Bxc4. But that is the wrong question. Black has already castled, White's bishop and queen are aimed at h7, and the kingside is where the position should be decided. When a real attack is available, grabbing a side pawn is often just wasted time.",
+      // QGD Tarrasch structure: 1.d4 d5 2.c4 e6 3.Nc3 Nf6 4.Bg5 Be7 5.e3 O-O 6.Nf3 Nbd7 7.Qc2 c5 8.cxd5 exd5 9.Bd3 c4
+      fen: "r1bq1rk1/pp1nbppp/5n2/3p2B1/2pP4/2NBPN2/PPQ3PP/R3K2R w KQ - 0 10",
       orientation: "white",
-      highlights: ["e5", "g5", "g2"],
-      arrows: [
-        ["g5", "g2"],
-        ["g5", "e5"],
-      ],
+      highlights: ["c4", "d3", "h7"],
+      arrows: [["d3", "h7"]],
     },
     {
       kind: "text",
@@ -95,50 +92,42 @@ const INITIATIVE_LESSON: Lesson = {
     },
     {
       kind: "interact",
-      heading: "Find White's forcing reply",
+      heading: "Choose the attack, not the pawn",
       instruction:
-        "White cannot spend a move defending everything. Find a forcing move that keeps Black's king exposed instead.",
-      // Blackburne Shilling Gambit: 1.e4 e5 2.Nf3 Nc6 3.Bc4 Nd4?! 4.Nxe5? Qg5
-      fen: "r1b1kbnr/pppp1ppp/8/4N1q1/2BnP3/8/PPPP1PPP/RNBQK2R w KQkq - 1 5",
+        "The pawn on c4 is hanging, but White has something much stronger. Find the move that starts a direct kingside attack.",
+      // QGD Tarrasch structure: 1.d4 d5 2.c4 e6 3.Nc3 Nf6 4.Bg5 Be7 5.e3 O-O 6.Nf3 Nbd7 7.Qc2 c5 8.cxd5 exd5 9.Bd3 c4
+      fen: "r1bq1rk1/pp1nbppp/5n2/3p2B1/2pP4/2NBPN2/PPQ3PP/R3K2R w KQ - 0 10",
       orientation: "white",
-      correctMoves: ["c4f7", "e5f7"],
+      correctMoves: ["d3h7"],
+      wrongMoves: ["d3c4"],
       correctExplanation:
-        "Correct. White survives by creating threats of White's own. In dynamic positions, forcing moves matter more than clinging to the extra pawn.",
+        "Exactly. Bxh7+ is the point. White should open the king, drag it forward, and keep every move forcing.",
       wrongExplanation:
-        "Passive defence is too slow here. Once you have handed over the initiative, you must ask questions back immediately.",
+        "Bxc4 wins a pawn and loses the plot. The attack matters more than this queenside cleanup.",
     },
     {
       kind: "text",
-      heading: "Sometimes you buy the initiative on purpose",
-      body: "The same logic works in reverse. In the King's Gambit, White offers the f-pawn immediately with 1.e4 e5 2.f4. White is not trying to be clever with material; White is buying open lines, central control, and rapid development. A pawn is being exchanged for time.",
-      // King's Gambit after 1.e4 e5 2.f4
-      fen: "rnbqkbnr/pppp1ppp/8/4p3/4PP2/8/PPPP2PP/RNBQKBNR b KQkq - 0 2",
+      heading: "What greed does to the attack",
+      body: "If White plays the natural-looking 10.Bxc4?, Black simply answers 10...dxc4. The loose pawn is gone, but so is White's attacking bishop. Black has traded off the most dangerous piece, the kingside attack has vanished, and White spent a move helping Black solve the position. That is the real cost of greed: not the pawn, but the attack you gave up to collect it.",
+      // After 10.Bxc4 dxc4 from the QGD Tarrasch structure above
+      fen: "r1bq1rk1/pp1nbppp/5n2/6B1/2pP4/2N1PN2/PPQ3PP/R3K2R w KQ - 0 11",
       orientation: "white",
-    },
-    {
-      kind: "choice",
-      heading: "The critical decision",
-      question:
-        "Before taking a free pawn in the opening, what is the most important question to ask?",
-      choices: [
-        "Is the pawn defended?",
-        "How many pawns will I be up?",
-        "What forcing threats does my opponent get after I take?",
-        "Can my queen escape quickly?",
-      ],
-      correctIndex: 2,
-      explanation:
-        "The right question is always: what does my opponent get? Usually the answer is 'a tempo, an open file, and a lead in development' — all worth more than one pawn in the opening.",
+      highlights: ["c4", "g5", "g8"],
+      arrows: [["d5", "c4"]],
     },
     {
       kind: "text",
-      heading: "The Poisoned Pawn",
-      body: "The classic example is the Sicilian Najdorf Poisoned Pawn. After 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 a6 6.Bg5 e6 7.f4, Black is tempted by ...Qb6 and ...Qxb2. The pawn can be taken, but the queen loses time and White's attack arrives first. The material is real; the danger is even more real.",
+      heading: "The other way greed backfires",
+      body: "Now flip the story. In the Poisoned Pawn Najdorf, Black can really grab b2. But after 7...Qb6 8.Qd2 Qxb2 9.Rb1 Qa3 10.e5, White gets exactly what every attacker wants: time. The queen is stranded on a3, Black still has pieces sleeping on b8 and c8, and White is the side accelerating.",
+      // Najdorf Poisoned Pawn branch: 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 a6 6.Bg5 e6 7.f4 Qb6 8.Qd2 Qxb2 9.Rb1 Qa3 10.e5
+      fen: "rnb1kb1r/1p3ppp/p2ppn2/4P1B1/3N1P2/q1N5/P1PQ2PP/1R2KB1R b Kkq - 0 10",
       // Najdorf tabiya: 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 a6 6.Bg5 e6 7.f4
-      fen: "rnbqkb1r/1p3ppp/p2ppn2/6B1/3NPP2/2N5/PPP3PP/R2QKB1R b KQkq - 0 7",
       orientation: "black",
-      highlights: ["b2", "d8"],
-      arrows: [["d8", "b6"]],
+      highlights: ["a3", "e5", "b8", "c8"],
+      arrows: [
+        ["b1", "b2"],
+        ["d4", "e5"],
+      ],
     },
     {
       kind: "interact",
@@ -154,6 +143,21 @@ const INITIATIVE_LESSON: Lesson = {
         "Exactly. ...Be7 is normal chess: finish development, castle, and only then talk about pawns. The queen raid creates a time debt Black may never repay.",
       wrongExplanation:
         "The pawn is poisoned because the queen loses time and White's attack arrives first. In dynamic positions, loose material is often bait.",
+    },
+    {
+      kind: "choice",
+      heading: "The critical decision",
+      question:
+        "Before taking a free pawn in a dynamic position, what should you ask first?",
+      choices: [
+        "Can I win the pawn with check?",
+        "What forcing threats or tempi do I give my opponent?",
+        "Will I still be a pawn up in the endgame?",
+        "Is the pawn protected by a rook?",
+      ],
+      correctIndex: 1,
+      explanation:
+        "That is the real test. If your capture gives the other side open lines, faster development, or a direct attack, the pawn was never truly free.",
     },
     {
       kind: "text",
