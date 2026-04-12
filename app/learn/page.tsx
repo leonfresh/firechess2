@@ -75,10 +75,10 @@ const INITIATIVE_LESSON: Lesson = {
     {
       kind: "text",
       heading: "The pawn is free. Should you take it?",
-      body: "White has just pushed e4 and Black's pawn on c5 looks undefended. You can take it right now for free. Your hand is already moving... but is this the right decision? In this lesson we will show you why capturing a free pawn can be one of the most dangerous moves on the board.",
+      body: "White has built a powerful centre with pawns on c4 and d4, and Black's pawn on c5 looks undefended. You can take it right now for free. Your hand is already moving... but is this the right decision? In this lesson we will show you why capturing a free pawn can be one of the most dangerous moves on the board.",
       fen: "r1bqk2r/pp1p1ppp/2n1pn2/2p5/2PP4/2N2N2/PP2PPPP/R1BQKB1R w KQkq - 0 6",
       orientation: "white",
-      highlights: ["c5", "d4"],
+      highlights: ["c5", "c4", "d4"],
     },
     {
       kind: "text",
@@ -88,7 +88,7 @@ const INITIATIVE_LESSON: Lesson = {
     {
       kind: "text",
       heading: "The cost of taking",
-      body: "After 1.e4 e5 2.Nf3 Nc6 3.Bc4, White's bishop stares down the f7 pawn. If Black grabs the pawn on b2, White gets a massive lead in development. Every move Black spends with the queen manoeuvring to capture and escape is a move White spends bringing pieces toward the uncastled Black king. The material gain comes with a time debt.",
+      body: "After 1.e4 e5 2.Nf3 Nc6 3.Bc4, White's bishop stares down the f7 pawn. In certain lines Black's queen can wander to b2 to grab a pawn — but White gets a massive lead in development in return. Every move Black spends with the queen manoeuvring to grab material and escape is a move White spends bringing pieces toward the uncastled Black king. The material gain comes with a time debt.",
       fen: "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
       orientation: "white",
       highlights: ["c4", "f7"],
@@ -101,7 +101,7 @@ const INITIATIVE_LESSON: Lesson = {
         "Black just played ...d5. There is a pawn on c5 available. Find the move that maintains the initiative rather than grabbing material.",
       fen: "r1bqkb1r/pp3ppp/2n1pn2/2pp4/3P4/2N2N2/PP2PPPP/R1BQKB1R w KQkq - 0 6",
       orientation: "white",
-      correctMoves: ["e2e4", "c1g5", "f1b5"],
+      correctMoves: ["e2e4", "c1g5"],
       wrongMoves: ["d4c5"],
       correctExplanation:
         "Exactly. Developing with tempo keeps the pressure on. Grabbing c5 would let Black equalise immediately with active play.",
@@ -117,16 +117,17 @@ const INITIATIVE_LESSON: Lesson = {
     },
     {
       kind: "interact",
-      heading: "Sacrifice the Exchange to seize the attack",
+      heading: "The Greek Gift sacrifice",
       instruction:
-        "White can sacrifice the bishop on h7, smashing open the king. Find the move that rips open the Black king position.",
-      fen: "r1bqk2r/pp2nppp/2p1p3/3pP3/1b1P4/2NB1N2/PP3PPP/R1BQK2R w KQkq - 0 9",
+        "Black has just castled kingside. White's bishop on d3 has a clear diagonal to h7. Find the move that blows open the Black king shelter.",
+      // QGD Tarrasch: 1.d4 d5 2.c4 e6 3.Nc3 Nf6 4.Bg5 Be7 5.e3 0-0 6.Nf3 Nbd7 7.Qc2 c5 8.cxd5 exd5 9.Bd3 c4
+      fen: "r1bq1rk1/pp1nbppp/5n2/3p2B1/2pP4/2NBPN2/PPQ2PPP/R3K2R w KQ - 0 10",
       orientation: "white",
       correctMoves: ["d3h7"],
       correctExplanation:
-        "Bxh7+! forces Kxh7 and White's attack is devastating — Black's king is dragged into the open and cannot castle.",
+        "Bxh7+! The king must take, then Ng5+ attacks the king again. Black's king is dragged into the open with no shelter.",
       wrongExplanation:
-        "There is a forcing sacrifice that wins by force here. Look at the h7 square.",
+        "Look at White's bishop on d3. It has a clear path to h7 — and Black's king has just castled there.",
     },
     {
       kind: "choice",
@@ -146,20 +147,22 @@ const INITIATIVE_LESSON: Lesson = {
     {
       kind: "text",
       heading: "The Poisoned Pawn",
-      body: "The most famous pawn-grab trap is the Poisoned Pawn in the Sicilian Najdorf. Black can take the b2 pawn with 6...Qxb2, winning a pawn. But White gets the bishop pair, an open b-file, and piece activity that is devastating. Grandmasters have studied this for 60 years and it remains controversial — even at the elite level the initiative is that dangerous.",
-      fen: "rn1qkb1r/pp3ppp/2pppn2/6B1/3NPP2/2N5/PPP3PP/R2QKB1R b KQkq - 0 7",
+      body: "The most famous pawn-grab trap is the Poisoned Pawn in the Sicilian Najdorf. After 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 a6 6.Bg5 e6 7.f4, Black can play 7...Qb6 threatening 8...Qxb2, winning a pawn. But White gets open lines, the bishop pair, and ferocious piece activity in return. Grandmasters have studied this for 60 years — even at the elite level, the initiative is that dangerous.",
+      // Real Najdorf tabiya: 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 a6 6.Bg5 e6 7.f4
+      fen: "rnbqkb1r/1p3ppp/p2ppn2/6B1/3NPP2/2N5/PPP3PP/R2QKB1R b KQkq - 0 7",
       orientation: "black",
       highlights: ["b2", "d8"],
-      arrows: [["d8", "b2"]],
+      arrows: [["d8", "b6"]],
     },
     {
       kind: "interact",
       heading: "Resist the temptation",
       instruction:
-        "Black can take on b2 but should not. Find a developing move instead that keeps Black safe.",
-      fen: "rn1qkb1r/pp3ppp/2pppn2/6B1/3NPP2/2N5/PPP3PP/R2QKB1R b KQkq - 0 7",
+        "Black can play ...Qb6 looking to grab b2, but should instead develop solidly. Find the move that keeps Black safe.",
+      // Real Najdorf tabiya: 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 a6 6.Bg5 e6 7.f4
+      fen: "rnbqkb1r/1p3ppp/p2ppn2/6B1/3NPP2/2N5/PPP3PP/R2QKB1R b KQkq - 0 7",
       orientation: "black",
-      correctMoves: ["f8e7", "h7h6", "d8b6"],
+      correctMoves: ["f8e7", "h7h6", "b8d7"],
       wrongMoves: ["d8b2"],
       correctExplanation:
         "Good. Developing and preparing to castle keeps Black solid. Grabbing b2 leads to a vicious attack that most players cannot survive.",
@@ -175,14 +178,15 @@ const INITIATIVE_LESSON: Lesson = {
       kind: "interact",
       heading: "Now it IS correct to take",
       instruction:
-        "The position is stable, both kings are safe, and there is a free pawn. White should simply take it.",
-      fen: "2rq1rk1/pp2bppp/2n1pn2/3p4/3P4/2N2NB1/PP2BPPP/2RQ1RK1 w - - 0 13",
+        "Both sides are castled and the position is stable. Black's knight on h5 just moved away from the centre, leaving the d5 pawn completely undefended. Take it.",
+      // Both kings castled, Black Nh5 has moved away leaving d5 with no defender
+      fen: "2r2rk1/pp2qppp/4p3/3p3n/3P4/2N1BN2/PP2BPPP/2RQ1RK1 w - - 0 13",
       orientation: "white",
-      correctMoves: ["d4d5", "c3d5", "f3d4"],
+      correctMoves: ["c3d5"],
       correctExplanation:
-        "Yes. Both sides are developed and castled. Taking the pawn here wins material with no compensation for Black — the initiative belongs to whoever has more material now.",
+        "Nxd5! wins a clean pawn. Black's knight moved away from the centre leaving d5 completely undefended — in a stable position, an undefended pawn is simply free material.",
       wrongExplanation:
-        "Look again — the position is quiet with both kings safe. A free pawn is simply a free pawn here.",
+        "Look at the d5 pawn — Black's knight on h5 has moved away and nothing defends it. White's Nc3 can jump to d5 and win it.",
     },
     {
       kind: "choice",
