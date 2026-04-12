@@ -70,64 +70,50 @@ const INITIATIVE_LESSON: Lesson = {
   id: "initiative-2000",
   band: "2000",
   title: "The Initiative",
-  subtitle: "When NOT to take free pawns — and when to sacrifice material",
+  subtitle: "When greed loses time, and when practical play takes over",
   icon: "⚡",
-  estimatedMinutes: 12,
+  estimatedMinutes: 9,
   tags: ["middlegame", "strategy", "initiative", "sacrifice"],
   slides: [
     {
       kind: "text",
-      heading: "The pawn is free. Should you take it?",
-      body: "White has built a powerful centre with pawns on c4 and d4, and Black's pawn on c5 looks undefended. You can take it right now for free. Your hand is already moving... but is this the right decision? In this lesson we will show you why capturing a free pawn can be one of the most dangerous moves on the board.",
-      fen: "r1bqk2r/pp1p1ppp/2n1pn2/2p5/2PP4/2N2N2/PP2PPPP/R1BQKB1R w KQkq - 0 6",
+      heading: "A pawn won, but the initiative lost",
+      body: "After 1.e4 e5 2.Nf3 Nc6 3.Bc4 Nd4?! 4.Nxe5? Qg5, White is technically a pawn up. Practically, White is the side in danger. The queen hits g2, the knight on e5 is loose, and Black is the one asking the questions. That is the initiative: not material, but the right to make threats.",
+      // Blackburne Shilling Gambit: 1.e4 e5 2.Nf3 Nc6 3.Bc4 Nd4?! 4.Nxe5? Qg5
+      fen: "r1b1kbnr/pppp1ppp/8/4N1q1/2BnP3/8/PPPP1PPP/RNBQK2R w KQkq - 1 5",
       orientation: "white",
-      highlights: ["c5", "c4", "d4"],
+      highlights: ["e5", "g5", "g2"],
+      arrows: [
+        ["g5", "g2"],
+        ["g5", "e5"],
+      ],
     },
     {
       kind: "text",
       heading: "What the initiative actually means",
-      body: "The initiative belongs to the side that is making threats and forcing the opponent to react. Each tempo you spend responding to your opponent is a tempo you cannot use to attack. The player with the initiative is dictating the game; the other player is just trying to survive. Material is meaningless if you run out of time to use it.",
-    },
-    {
-      kind: "text",
-      heading: "The cost of taking",
-      body: "After 1.e4 e5 2.Nf3 Nc6 3.Bc4, White's bishop stares down the f7 pawn. In certain lines Black's queen can wander to b2 to grab a pawn — but White gets a massive lead in development in return. Every move Black spends with the queen manoeuvring to grab material and escape is a move White spends bringing pieces toward the uncastled Black king. The material gain comes with a time debt.",
-      fen: "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4",
-      orientation: "white",
-      highlights: ["c4", "f7"],
-      arrows: [["c4", "f7"]],
+      body: "The initiative belongs to the side that is making threats and forcing the opponent to react. Every tempo spent answering a threat is a tempo not spent improving your own position. That is why a single pawn can be worthless if the other side gets open lines, quick development, or a vulnerable king to attack. Initiative is time converted into pressure.",
     },
     {
       kind: "interact",
-      heading: "Should White take the pawn?",
+      heading: "Find White's forcing reply",
       instruction:
-        "Black just played ...d5. There is a pawn on c5 available. Find the move that maintains the initiative rather than grabbing material.",
-      fen: "r1bqkb1r/pp3ppp/2n1pn2/2pp4/3P4/2N2N2/PP2PPPP/R1BQKB1R w KQkq - 0 6",
+        "White cannot spend a move defending everything. Find a forcing move that keeps Black's king exposed instead.",
+      // Blackburne Shilling Gambit: 1.e4 e5 2.Nf3 Nc6 3.Bc4 Nd4?! 4.Nxe5? Qg5
+      fen: "r1b1kbnr/pppp1ppp/8/4N1q1/2BnP3/8/PPPP1PPP/RNBQK2R w KQkq - 1 5",
       orientation: "white",
-      correctMoves: ["e2e4", "c1g5"],
-      wrongMoves: ["d4c5"],
+      correctMoves: ["c4f7", "e5f7"],
       correctExplanation:
-        "Exactly. Developing with tempo keeps the pressure on. Grabbing c5 would let Black equalise immediately with active play.",
+        "Correct. White survives by creating threats of White's own. In dynamic positions, forcing moves matter more than clinging to the extra pawn.",
       wrongExplanation:
-        "Taking on c5 gives Black freedom. After ...e6 and ...Bxc5, Black recaptures with tempo and is fully equal.",
+        "Passive defence is too slow here. Once you have handed over the initiative, you must ask questions back immediately.",
     },
     {
       kind: "text",
-      heading: "Give material to seize the initiative",
-      body: "The initiative can also be bought with material. In the King's Gambit, White sacrifices a pawn immediately — 1.e4 e5 2.f4. Why? Because after 2...exf4, White has given up a pawn but gets a free hand in the centre. Every piece White develops will come with a threat; Black will be perpetually on the back foot.",
+      heading: "Sometimes you buy the initiative on purpose",
+      body: "The same logic works in reverse. In the King's Gambit, White offers the f-pawn immediately with 1.e4 e5 2.f4. White is not trying to be clever with material; White is buying open lines, central control, and rapid development. A pawn is being exchanged for time.",
+      // King's Gambit after 1.e4 e5 2.f4
       fen: "rnbqkbnr/pppp1ppp/8/4p3/4PP2/8/PPPP2PP/RNBQKBNR b KQkq - 0 2",
       orientation: "white",
-    },
-    {
-      kind: "interact",
-      heading: "Find the attacking move",
-      instruction:
-        "A real game position — your opponent's king is exposed. Find the best attacking move.",
-      fetchTheme: "kingsideAttack",
-      correctExplanation:
-        "Excellent! Finding forcing attacks on an exposed king is how you seize and keep the initiative.",
-      wrongExplanation:
-        "Look for moves that open lines toward the opponent's king or land a piece with a concrete threat.",
     },
     {
       kind: "choice",
@@ -147,8 +133,8 @@ const INITIATIVE_LESSON: Lesson = {
     {
       kind: "text",
       heading: "The Poisoned Pawn",
-      body: "The most famous pawn-grab trap is the Poisoned Pawn in the Sicilian Najdorf. After 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 a6 6.Bg5 e6 7.f4, Black can play 7...Qb6 threatening 8...Qxb2, winning a pawn. But White gets open lines, the bishop pair, and ferocious piece activity in return. Grandmasters have studied this for 60 years — even at the elite level, the initiative is that dangerous.",
-      // Real Najdorf tabiya: 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 a6 6.Bg5 e6 7.f4
+      body: "The classic example is the Sicilian Najdorf Poisoned Pawn. After 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 a6 6.Bg5 e6 7.f4, Black is tempted by ...Qb6 and ...Qxb2. The pawn can be taken, but the queen loses time and White's attack arrives first. The material is real; the danger is even more real.",
+      // Najdorf tabiya: 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 a6 6.Bg5 e6 7.f4
       fen: "rnbqkb1r/1p3ppp/p2ppn2/6B1/3NPP2/2N5/PPP3PP/R2QKB1R b KQkq - 0 7",
       orientation: "black",
       highlights: ["b2", "d8"],
@@ -156,54 +142,62 @@ const INITIATIVE_LESSON: Lesson = {
     },
     {
       kind: "interact",
-      heading: "Resist the temptation",
+      heading: "Play the sober move",
       instruction:
-        "Black can play ...Qb6 looking to grab b2, but should instead develop solidly. Find the move that keeps Black safe.",
-      // Real Najdorf tabiya: 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 a6 6.Bg5 e6 7.f4
+        "Black is tempted by the queen raid ...Qb6 and ...Qxb2. Find the move that develops normally and keeps the king safe.",
+      // Najdorf tabiya: 1.e4 c5 2.Nf3 d6 3.d4 cxd4 4.Nxd4 Nf6 5.Nc3 a6 6.Bg5 e6 7.f4
       fen: "rnbqkb1r/1p3ppp/p2ppn2/6B1/3NPP2/2N5/PPP3PP/R2QKB1R b KQkq - 0 7",
       orientation: "black",
-      correctMoves: ["f8e7", "h7h6", "b8d7"],
-      wrongMoves: ["d8b2"],
+      correctMoves: ["f8e7"],
+      wrongMoves: ["d8b6"],
       correctExplanation:
-        "Good. Developing and preparing to castle keeps Black solid. Grabbing b2 leads to a vicious attack that most players cannot survive.",
+        "Exactly. ...Be7 is normal chess: finish development, castle, and only then talk about pawns. The queen raid creates a time debt Black may never repay.",
       wrongExplanation:
-        "Qxb2 is the Poisoned Pawn — White gets tremendous compensation with open lines toward the Black king. This pawn costs Black the game.",
+        "The pawn is poisoned because the queen loses time and White's attack arrives first. In dynamic positions, loose material is often bait.",
     },
     {
       kind: "text",
-      heading: "When SHOULD you take the material?",
-      body: "Taking material is correct when: (1) you keep the initiative afterward, (2) you can consolidate before being mated, or (3) you are already clearly winning and simplification helps. Also: in the endgame, extra material almost always wins. The 'do not take free pawns' rule is primarily a middlegame, opening-phase concept.",
+      heading: "When the attack has burned out",
+      body: "Now compare a quieter position. The queens are off. Both kings are safe. Black has just played ...h5, trying to look active on the kingside, but there is no mating attack here. Once the heavy pieces disappear, initiative matters less and static gains matter more.",
+      // Queen's Pawn structure: 1.d4 d5 2.Nf3 Nf6 3.e3 e6 4.Bd3 c5 5.O-O Nc6 6.c3 Bd6 7.Nbd2 O-O 8.dxc5 Bxc5 9.e4 dxe4 10.Nxe4 Nxe4 11.Bxe4 Qxd1 12.Rxd1 h5
+      fen: "r1b2rk1/pp3pp1/2n1p3/2b4p/4B3/2P2N2/PP3PPP/R1BR2K1 w - - 0 13",
+      orientation: "white",
+      highlights: ["c6", "c5", "h5"],
+      arrows: [["e4", "c6"]],
     },
     {
       kind: "interact",
-      heading: "Win the material",
+      heading: "Play the practical move",
       instruction:
-        "A real game position — the position is calm, your opponent has left material undefended. Find the winning move.",
-      fetchTheme: "advantage",
+        "With queens off and no direct attack left, improve White's position immediately. Find the practical move.",
+      // Queen's Pawn structure after ...h5 from the line above
+      fen: "r1b2rk1/pp3pp1/2n1p3/2b4p/4B3/2P2N2/PP3PPP/R1BR2K1 w - - 0 13",
+      orientation: "white",
+      correctMoves: ["e4c6"],
       correctExplanation:
-        "In a stable position with no threats, winning free material is always the right call.",
+        "Bxc6. With no direct attack left, White should cash in immediately: eliminate the knight and leave Black with damaged queenside pawns.",
       wrongExplanation:
-        "Look for the piece or pawn your opponent has left without adequate defence.",
+        "This is not the moment for a ghost attack. When the queens are gone and the king is safe, clean structural gains matter more than flashy ideas.",
     },
     {
       kind: "choice",
-      heading: "The fundamental question",
+      heading: "How do you know the initiative is fading?",
       question:
-        "When deciding whether to take a free pawn in the middlegame, the key question is:",
+        "Which detail most clearly tells you the position is no longer about a direct attack?",
       choices: [
-        "Is it defended by a pawn or just a piece?",
-        "Can I defend the pawn once I take it?",
-        "Who has the initiative in the position after I take?",
-        "How much material will I be up total?",
+        "There is still a pawn you could win",
+        "The queens are off and the king is no longer exposed",
+        "One side has the bishop pair",
+        "A rook is sitting on an open file",
       ],
-      correctIndex: 2,
+      correctIndex: 1,
       explanation:
-        "Material is meaningless without the time to use it. Asking 'who has the initiative after the capture' tells you whether the pawn is truly free or comes with a hidden bill.",
+        "Initiative is made of forcing threats. Once the queens are off and the king is safe, those threats shrink, so structural and material gains become the main story.",
     },
     {
       kind: "text",
       heading: "The takeaway",
-      body: "Steinitz said 'The right move requires the right moment.' Material advantage is only useful if you survive to convert it.\n\n✓ In the opening and early middlegame, the initiative > one pawn\n✓ Ask what forcing threats your opponent gets before capturing\n✓ Sacrificing material to gain the initiative is often winning\n✓ In the stable middlegame and endgame, extra material decides",
+      body: "Steinitz said 'The right move requires the right moment.' That is the whole lesson.\n\n✓ A pawn is not free if taking it hands your opponent the initiative\n✓ If you fall behind in time, answer with forcing moves, not passive defence\n✓ Sacrificing material is justified when it buys open lines, tempi, or king exposure\n✓ Once the queens come off and the king is safe, stop hunting ghosts and take the practical gain",
     },
   ],
 };
@@ -400,24 +394,32 @@ function LiveInteractSlide({
   slide: InteractSlide;
   onNext: () => void;
 }) {
-  const [loadState, setLoadState] = useState<"fetching" | "error" | "ready">("fetching");
+  const [loadState, setLoadState] = useState<"fetching" | "error" | "ready">(
+    "fetching",
+  );
   const [fen, setFen] = useState("");
   const [triggerPlayed, setTriggerPlayed] = useState(false);
   const [solutionMoves, setSolutionMoves] = useState<string[]>([]);
   const [orientation, setOrientation] = useState<"white" | "black">("white");
   const [moveIdx, setMoveIdx] = useState(0);
-  const [solveState, setSolveState] = useState<"playing" | "correct">("playing");
+  const [solveState, setSolveState] = useState<"playing" | "correct">(
+    "playing",
+  );
   const [attempts, setAttempts] = useState(0);
   const [selected, setSelected] = useState<string | null>(null);
   const [legalSqs, setLegalSqs] = useState<string[]>([]);
   const [hintSq, setHintSq] = useState<string | null>(null);
-  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
+  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(
+    null,
+  );
   const fetched = useRef(false);
   const gameRef = useRef(new Chess());
   const preFenRef = useRef("");
   const triggerRef = useRef<{ from: string; to: string } | null>(null);
 
-  useEffect(() => { preloadSounds(); }, []);
+  useEffect(() => {
+    preloadSounds();
+  }, []);
 
   useEffect(() => {
     if (fetched.current || !slide.fetchTheme) return;
@@ -426,11 +428,17 @@ function LiveInteractSlide({
       .then((r) => r.json())
       .then((data) => {
         const p = data.puzzles?.[0];
-        if (!p) { setLoadState("error"); return; }
+        if (!p) {
+          setLoadState("error");
+          return;
+        }
         const pgn: string = p.game?.pgn ?? "";
         const initialPly: number = p.puzzle?.initialPly ?? 0;
         const solution: string[] = p.puzzle?.solution ?? [];
-        if (!pgn || solution.length === 0) { setLoadState("error"); return; }
+        if (!pgn || solution.length === 0) {
+          setLoadState("error");
+          return;
+        }
         const full = new Chess();
         full.loadPgn(pgn);
         const history = full.history({ verbose: true });
@@ -439,10 +447,12 @@ function LiveInteractSlide({
           board.move(history[i].san);
         }
         preFenRef.current = board.fen();
-        let tFrom: string | null = null, tTo: string | null = null;
+        let tFrom: string | null = null,
+          tTo: string | null = null;
         if (initialPly < history.length) {
           const m = history[initialPly];
-          tFrom = m.from; tTo = m.to;
+          tFrom = m.from;
+          tTo = m.to;
           board.move(m.san);
         }
         gameRef.current = new Chess(board.fen());
@@ -475,7 +485,12 @@ function LiveInteractSlide({
 
   const handleDrop = useCallback(
     (from: string, to: string): boolean => {
-      if (!triggerPlayed || solveState !== "playing" || moveIdx >= solutionMoves.length) return false;
+      if (
+        !triggerPlayed ||
+        solveState !== "playing" ||
+        moveIdx >= solutionMoves.length
+      )
+        return false;
       const exp = uciParts(solutionMoves[moveIdx]);
       if (from !== exp.from || to !== exp.to) {
         playSound("wrong");
@@ -485,12 +500,18 @@ function LiveInteractSlide({
         return false;
       }
       const newGame = new Chess(gameRef.current.fen());
-      try { newGame.move({ from, to, promotion: exp.promotion }); } catch { return false; }
+      try {
+        newGame.move({ from, to, promotion: exp.promotion });
+      } catch {
+        return false;
+      }
       playSound(newGame.isCheck() ? "check" : "correct");
       gameRef.current = new Chess(newGame.fen());
       setFen(newGame.fen());
       setLastMove({ from, to });
-      setHintSq(null); setSelected(null); setLegalSqs([]);
+      setHintSq(null);
+      setSelected(null);
+      setLegalSqs([]);
       const nextIdx = moveIdx + 1;
       if (nextIdx >= solutionMoves.length) {
         setSolveState("correct");
@@ -501,7 +522,11 @@ function LiveInteractSlide({
       const opp = uciParts(solutionMoves[nextIdx]);
       setTimeout(() => {
         const g2 = new Chess(gameRef.current.fen());
-        try { g2.move({ from: opp.from, to: opp.to, promotion: opp.promotion }); } catch { /* ignore */ }
+        try {
+          g2.move({ from: opp.from, to: opp.to, promotion: opp.promotion });
+        } catch {
+          /* ignore */
+        }
         playSound(g2.isCheck() ? "check" : "move");
         gameRef.current = new Chess(g2.fen());
         setFen(g2.fen());
@@ -521,20 +546,33 @@ function LiveInteractSlide({
         const piece = gameRef.current.get(sq as any);
         if (piece && piece.color === gameRef.current.turn()) {
           setSelected(sq);
-          setLegalSqs(gameRef.current.moves({ square: sq as any, verbose: true }).map((m) => m.to));
+          setLegalSqs(
+            gameRef.current
+              .moves({ square: sq as any, verbose: true })
+              .map((m) => m.to),
+          );
         }
       } else {
-        if (sq === selected) { setSelected(null); setLegalSqs([]); return; }
+        if (sq === selected) {
+          setSelected(null);
+          setLegalSqs([]);
+          return;
+        }
         const moved = handleDrop(selected, sq);
         if (!moved) {
           const piece = gameRef.current.get(sq as any);
           if (piece && piece.color === gameRef.current.turn()) {
             setSelected(sq);
-            setLegalSqs(gameRef.current.moves({ square: sq as any, verbose: true }).map((m) => m.to));
+            setLegalSqs(
+              gameRef.current
+                .moves({ square: sq as any, verbose: true })
+                .map((m) => m.to),
+            );
             return;
           }
         }
-        setSelected(null); setLegalSqs([]);
+        setSelected(null);
+        setLegalSqs([]);
       }
     },
     [triggerPlayed, solveState, selected, handleDrop],
@@ -545,37 +583,60 @@ function LiveInteractSlide({
     sqStyles[lastMove.from] = { backgroundColor: "rgba(255,170,0,0.30)" };
     sqStyles[lastMove.to] = { backgroundColor: "rgba(255,170,0,0.45)" };
   }
-  if (hintSq) sqStyles[hintSq] = { boxShadow: "inset 0 0 18px 6px rgba(251,191,36,0.55)", borderRadius: "4px" };
-  if (selected) sqStyles[selected] = { backgroundColor: "rgba(255,210,0,0.45)" };
+  if (hintSq)
+    sqStyles[hintSq] = {
+      boxShadow: "inset 0 0 18px 6px rgba(251,191,36,0.55)",
+      borderRadius: "4px",
+    };
+  if (selected)
+    sqStyles[selected] = { backgroundColor: "rgba(255,210,0,0.45)" };
   if (selected && solveState === "playing") {
     for (const sq of legalSqs) {
       const hasPiece = gameRef.current.get(sq as any);
       sqStyles[sq] = hasPiece
-        ? { background: "radial-gradient(circle, transparent 55%, rgba(0,0,0,0.28) 55%)", borderRadius: "50%" }
-        : { background: "radial-gradient(circle, rgba(0,0,0,0.28) 26%, transparent 26%)", borderRadius: "50%" };
+        ? {
+            background:
+              "radial-gradient(circle, transparent 55%, rgba(0,0,0,0.28) 55%)",
+            borderRadius: "50%",
+          }
+        : {
+            background:
+              "radial-gradient(circle, rgba(0,0,0,0.28) 26%, transparent 26%)",
+            borderRadius: "50%",
+          };
     }
   }
 
-  if (loadState === "fetching") return (
-    <div className="flex flex-col items-center gap-3 py-16">
-      <div className="h-8 w-8 animate-spin rounded-full border-2 border-purple-500 border-t-transparent" />
-      <p className="text-sm text-slate-500">Loading position…</p>
-    </div>
-  );
-  if (loadState === "error") return (
-    <div className="flex flex-col items-center gap-4 py-12 text-center">
-      <p className="text-sm text-slate-500">Couldn't load puzzle. Try refreshing.</p>
-      <button type="button" onClick={onNext} className="rounded-xl bg-white/[0.06] px-6 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/[0.1]">
-        Skip →
-      </button>
-    </div>
-  );
+  if (loadState === "fetching")
+    return (
+      <div className="flex flex-col items-center gap-3 py-16">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-purple-500 border-t-transparent" />
+        <p className="text-sm text-slate-500">Loading position…</p>
+      </div>
+    );
+  if (loadState === "error")
+    return (
+      <div className="flex flex-col items-center gap-4 py-12 text-center">
+        <p className="text-sm text-slate-500">
+          Couldn't load puzzle. Try refreshing.
+        </p>
+        <button
+          type="button"
+          onClick={onNext}
+          className="rounded-xl bg-white/[0.06] px-6 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/[0.1]"
+        >
+          Skip →
+        </button>
+      </div>
+    );
 
   const toMoveLabel = orientation === "white" ? "White" : "Black";
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-5">
       <div>
-        <h2 className="text-2xl font-black tracking-tight text-white">{slide.heading}</h2>
+        <h2 className="text-2xl font-black tracking-tight text-white">
+          {slide.heading}
+        </h2>
         <p className="mt-2 text-sm text-slate-400">{slide.instruction}</p>
         <p className="mt-1 text-[11px] font-semibold uppercase tracking-widest text-slate-600">
           {!triggerPlayed ? "Opponent is moving…" : `${toMoveLabel} to move`}
@@ -592,15 +653,28 @@ function LiveInteractSlide({
       {triggerPlayed && solveState === "playing" && (
         <div className="flex items-center justify-center gap-2">
           {[0, 1, 2].map((i) => (
-            <div key={i} className={`h-2 w-2 rounded-full transition-colors ${i < attempts ? "bg-red-500" : "bg-white/[0.10]"}`} />
+            <div
+              key={i}
+              className={`h-2 w-2 rounded-full transition-colors ${i < attempts ? "bg-red-500" : "bg-white/[0.10]"}`}
+            />
           ))}
-          {hintSq && <span className="ml-2 text-xs text-amber-400">💡 Move the highlighted piece</span>}
+          {hintSq && (
+            <span className="ml-2 text-xs text-amber-400">
+              💡 Move the highlighted piece
+            </span>
+          )}
         </div>
       )}
-      <div className={`rounded-2xl border px-5 py-4 transition-all duration-300 ${
-        solveState === "correct" ? "border-emerald-500/30 bg-emerald-500/[0.06]" : "border-white/[0.06] bg-white/[0.02]"
-      }`}>
-        <p className={`text-sm font-semibold ${solveState === "correct" ? "text-emerald-300" : "text-slate-500"}`}>
+      <div
+        className={`rounded-2xl border px-5 py-4 transition-all duration-300 ${
+          solveState === "correct"
+            ? "border-emerald-500/30 bg-emerald-500/[0.06]"
+            : "border-white/[0.06] bg-white/[0.02]"
+        }`}
+      >
+        <p
+          className={`text-sm font-semibold ${solveState === "correct" ? "text-emerald-300" : "text-slate-500"}`}
+        >
           {solveState === "correct"
             ? `✓ ${slide.correctExplanation}`
             : !triggerPlayed
@@ -1000,11 +1074,12 @@ function LessonRunner({
       {slide?.kind === "text" && (
         <TextSlideView slide={slide} onNext={handleNext} />
       )}
-      {slide?.kind === "interact" && (
-        slide.fetchTheme
-          ? <LiveInteractSlide key={idx} slide={slide} onNext={handleNext} />
-          : <InteractSlideView key={idx} slide={slide} onNext={handleNext} />
-      )}
+      {slide?.kind === "interact" &&
+        (slide.fetchTheme ? (
+          <LiveInteractSlide key={idx} slide={slide} onNext={handleNext} />
+        ) : (
+          <InteractSlideView key={idx} slide={slide} onNext={handleNext} />
+        ))}
       {slide?.kind === "choice" && (
         <ChoiceSlideView key={idx} slide={slide} onNext={handleNext} />
       )}
