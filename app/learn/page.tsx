@@ -97,13 +97,16 @@ const INITIATIVE_LESSON: Lesson = {
     {
       kind: "interact",
       heading: "Should White take the pawn?",
-      instruction: "Black just played ...d5. There is a pawn on c5 available. Find the move that maintains the initiative rather than grabbing material.",
+      instruction:
+        "Black just played ...d5. There is a pawn on c5 available. Find the move that maintains the initiative rather than grabbing material.",
       fen: "r1bqkb1r/pp3ppp/2n1pn2/2pp4/3P4/2N2N2/PP2PPPP/R1BQKB1R w KQkq - 0 6",
       orientation: "white",
       correctMoves: ["e2e4", "c1g5", "f1b5"],
       wrongMoves: ["d4c5"],
-      correctExplanation: "Exactly. Developing with tempo keeps the pressure on. Grabbing c5 would let Black equalise immediately with active play.",
-      wrongExplanation: "Taking on c5 gives Black freedom. After ...e6 and ...Bxc5, Black recaptures with tempo and is fully equal.",
+      correctExplanation:
+        "Exactly. Developing with tempo keeps the pressure on. Grabbing c5 would let Black equalise immediately with active play.",
+      wrongExplanation:
+        "Taking on c5 gives Black freedom. After ...e6 and ...Bxc5, Black recaptures with tempo and is fully equal.",
     },
     {
       kind: "text",
@@ -115,17 +118,21 @@ const INITIATIVE_LESSON: Lesson = {
     {
       kind: "interact",
       heading: "Sacrifice the Exchange to seize the attack",
-      instruction: "White can sacrifice the bishop on h7, smashing open the king. Find the move that rips open the Black king position.",
+      instruction:
+        "White can sacrifice the bishop on h7, smashing open the king. Find the move that rips open the Black king position.",
       fen: "r1bqk2r/pp2nppp/2p1p3/3pP3/1b1P4/2NB1N2/PP3PPP/R1BQK2R w KQkq - 0 9",
       orientation: "white",
       correctMoves: ["d3h7"],
-      correctExplanation: "Bxh7+! forces Kxh7 and White's attack is devastating — Black's king is dragged into the open and cannot castle.",
-      wrongExplanation: "There is a forcing sacrifice that wins by force here. Look at the h7 square.",
+      correctExplanation:
+        "Bxh7+! forces Kxh7 and White's attack is devastating — Black's king is dragged into the open and cannot castle.",
+      wrongExplanation:
+        "There is a forcing sacrifice that wins by force here. Look at the h7 square.",
     },
     {
       kind: "choice",
       heading: "The critical decision",
-      question: "Before taking a free pawn in the opening, what is the most important question to ask?",
+      question:
+        "Before taking a free pawn in the opening, what is the most important question to ask?",
       choices: [
         "Is the pawn defended?",
         "How many pawns will I be up?",
@@ -133,7 +140,8 @@ const INITIATIVE_LESSON: Lesson = {
         "Can my queen escape quickly?",
       ],
       correctIndex: 2,
-      explanation: "The right question is always: what does my opponent get? Usually the answer is 'a tempo, an open file, and a lead in development' — all worth more than one pawn in the opening.",
+      explanation:
+        "The right question is always: what does my opponent get? Usually the answer is 'a tempo, an open file, and a lead in development' — all worth more than one pawn in the opening.",
     },
     {
       kind: "text",
@@ -147,13 +155,16 @@ const INITIATIVE_LESSON: Lesson = {
     {
       kind: "interact",
       heading: "Resist the temptation",
-      instruction: "Black can take on b2 but should not. Find a developing move instead that keeps Black safe.",
+      instruction:
+        "Black can take on b2 but should not. Find a developing move instead that keeps Black safe.",
       fen: "rn1qkb1r/pp3ppp/2pppn2/6B1/3NPP2/2N5/PPP3PP/R2QKB1R b KQkq - 0 7",
       orientation: "black",
       correctMoves: ["f8e7", "h7h6", "d8b6"],
       wrongMoves: ["d8b2"],
-      correctExplanation: "Good. Developing and preparing to castle keeps Black solid. Grabbing b2 leads to a vicious attack that most players cannot survive.",
-      wrongExplanation: "Qxb2 is the Poisoned Pawn — White gets tremendous compensation with open lines toward the Black king. This pawn costs Black the game.",
+      correctExplanation:
+        "Good. Developing and preparing to castle keeps Black solid. Grabbing b2 leads to a vicious attack that most players cannot survive.",
+      wrongExplanation:
+        "Qxb2 is the Poisoned Pawn — White gets tremendous compensation with open lines toward the Black king. This pawn costs Black the game.",
     },
     {
       kind: "text",
@@ -163,17 +174,21 @@ const INITIATIVE_LESSON: Lesson = {
     {
       kind: "interact",
       heading: "Now it IS correct to take",
-      instruction: "The position is stable, both kings are safe, and there is a free pawn. White should simply take it.",
+      instruction:
+        "The position is stable, both kings are safe, and there is a free pawn. White should simply take it.",
       fen: "2rq1rk1/pp2bppp/2n1pn2/3p4/3P4/2N2NB1/PP2BPPP/2RQ1RK1 w - - 0 13",
       orientation: "white",
       correctMoves: ["d4d5", "c3d5", "f3d4"],
-      correctExplanation: "Yes. Both sides are developed and castled. Taking the pawn here wins material with no compensation for Black — the initiative belongs to whoever has more material now.",
-      wrongExplanation: "Look again — the position is quiet with both kings safe. A free pawn is simply a free pawn here.",
+      correctExplanation:
+        "Yes. Both sides are developed and castled. Taking the pawn here wins material with no compensation for Black — the initiative belongs to whoever has more material now.",
+      wrongExplanation:
+        "Look again — the position is quiet with both kings safe. A free pawn is simply a free pawn here.",
     },
     {
       kind: "choice",
       heading: "The fundamental question",
-      question: "When deciding whether to take a free pawn in the middlegame, the key question is:",
+      question:
+        "When deciding whether to take a free pawn in the middlegame, the key question is:",
       choices: [
         "Is it defended by a pawn or just a piece?",
         "Can I defend the pawn once I take it?",
@@ -181,7 +196,8 @@ const INITIATIVE_LESSON: Lesson = {
         "How much material will I be up total?",
       ],
       correctIndex: 2,
-      explanation: "Material is meaningless without the time to use it. Asking 'who has the initiative after the capture' tells you whether the pawn is truly free or comes with a hidden bill.",
+      explanation:
+        "Material is meaningless without the time to use it. Asking 'who has the initiative after the capture' tells you whether the pawn is truly free or comes with a hidden bill.",
     },
     {
       kind: "text",
@@ -211,7 +227,10 @@ const BAND_DESCRIPTIONS: Record<RatingBand, string> = {
   "2000": "Mastery — initiative, dynamics, and compensation",
 };
 
-const BAND_COLORS: Record<RatingBand, { bg: string; text: string; ring: string; pill: string }> = {
+const BAND_COLORS: Record<
+  RatingBand,
+  { bg: string; text: string; ring: string; pill: string }
+> = {
   "800": {
     bg: "bg-emerald-500/[0.08]",
     text: "text-emerald-300",
@@ -242,14 +261,24 @@ const BAND_COLORS: Record<RatingBand, { bg: string; text: string; ring: string; 
 /*  LessonProgress                                                  */
 /* ─────────────────────────────────────────────────────────────── */
 
-function LessonProgress({ current, total }: { current: number; total: number }) {
+function LessonProgress({
+  current,
+  total,
+}: {
+  current: number;
+  total: number;
+}) {
   return (
     <div className="flex gap-1">
       {Array.from({ length: total }).map((_, i) => (
         <div
           key={i}
           className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-            i < current ? "bg-purple-500" : i === current ? "bg-purple-400/70" : "bg-white/[0.08]"
+            i < current
+              ? "bg-purple-500"
+              : i === current
+                ? "bg-purple-400/70"
+                : "bg-white/[0.08]"
           }`}
         />
       ))}
@@ -289,10 +318,15 @@ function LessonBoard({
     hlStyles[sq] = { backgroundColor: "rgba(251,191,36,0.38)" };
   }
 
-  const cbArrows = arrows.map(([f, t]) => [f, t, "rgba(139,92,246,0.7)"] as [string, string, string]);
+  const cbArrows = arrows.map(
+    ([f, t]) => [f, t, "rgba(139,92,246,0.7)"] as [string, string, string],
+  );
 
   return (
-    <div ref={ref} className="relative overflow-hidden rounded-2xl ring-1 ring-white/[0.08]">
+    <div
+      ref={ref}
+      className="relative overflow-hidden rounded-2xl ring-1 ring-white/[0.08]"
+    >
       <Chessboard
         position={fen}
         boardOrientation={orientation}
@@ -315,14 +349,22 @@ function LessonBoard({
 /*  TextSlideView                                                   */
 /* ─────────────────────────────────────────────────────────────── */
 
-function TextSlideView({ slide, onNext }: { slide: TextSlide; onNext: () => void }) {
+function TextSlideView({
+  slide,
+  onNext,
+}: {
+  slide: TextSlide;
+  onNext: () => void;
+}) {
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-6">
       <div>
         <h2 className="text-2xl font-black tracking-tight text-white leading-snug">
           {slide.heading}
         </h2>
-        <p className="mt-3 text-[15px] leading-7 text-slate-300 whitespace-pre-line">{slide.body}</p>
+        <p className="mt-3 text-[15px] leading-7 text-slate-300 whitespace-pre-line">
+          {slide.body}
+        </p>
       </div>
 
       {slide.fen && (
@@ -350,7 +392,13 @@ function TextSlideView({ slide, onNext }: { slide: TextSlide; onNext: () => void
 /*  InteractSlideView                                               */
 /* ─────────────────────────────────────────────────────────────── */
 
-function InteractSlideView({ slide, onNext }: { slide: InteractSlide; onNext: () => void }) {
+function InteractSlideView({
+  slide,
+  onNext,
+}: {
+  slide: InteractSlide;
+  onNext: () => void;
+}) {
   const [state, setState] = useState<"idle" | "correct" | "wrong">("idle");
   const [attempts, setAttempts] = useState(0);
   const [fen, setFen] = useState(slide.fen);
@@ -376,10 +424,13 @@ function InteractSlideView({ slide, onNext }: { slide: InteractSlide; onNext: ()
 
       const uci = from + to;
       const isCorrect = slide.correctMoves.some(
-        (m) => m === uci || m === uci + "q" || m.startsWith(from) && m.slice(2, 4) === to
+        (m) =>
+          m === uci ||
+          m === uci + "q" ||
+          (m.startsWith(from) && m.slice(2, 4) === to),
       );
       const isExplicitlyWrong = (slide.wrongMoves ?? []).some(
-        (m) => m === uci || m === uci + "q"
+        (m) => m === uci || m === uci + "q",
       );
 
       if (isCorrect) {
@@ -400,7 +451,7 @@ function InteractSlideView({ slide, onNext }: { slide: InteractSlide; onNext: ()
       }
       return true;
     },
-    [state, slide.fen, slide.correctMoves, slide.wrongMoves, attempts]
+    [state, slide.fen, slide.correctMoves, slide.wrongMoves, attempts],
   );
 
   const handleDrop = useCallback(
@@ -410,7 +461,7 @@ function InteractSlideView({ slide, onNext }: { slide: InteractSlide; onNext: ()
       setLegalSqs([]);
       return ok;
     },
-    [tryMove]
+    [tryMove],
   );
 
   const handleSquareClick = useCallback(
@@ -445,23 +496,33 @@ function InteractSlideView({ slide, onNext }: { slide: InteractSlide; onNext: ()
         setLegalSqs([]);
       }
     },
-    [state, fen, selected, tryMove]
+    [state, fen, selected, tryMove],
   );
 
   const squareStyles: Record<string, React.CSSProperties> = {};
-  if (selected) squareStyles[selected] = { backgroundColor: "rgba(255,210,0,0.45)" };
+  if (selected)
+    squareStyles[selected] = { backgroundColor: "rgba(255,210,0,0.45)" };
   if (selected && state === "idle") {
     const chess = new Chess(fen);
     for (const sq of legalSqs) {
       const hasPiece = chess.get(sq as any);
       squareStyles[sq] = hasPiece
-        ? { background: "radial-gradient(circle, transparent 55%, rgba(0,0,0,0.28) 55%)", borderRadius: "50%" }
-        : { background: "radial-gradient(circle, rgba(0,0,0,0.28) 26%, transparent 26%)", borderRadius: "50%" };
+        ? {
+            background:
+              "radial-gradient(circle, transparent 55%, rgba(0,0,0,0.28) 55%)",
+            borderRadius: "50%",
+          }
+        : {
+            background:
+              "radial-gradient(circle, rgba(0,0,0,0.28) 26%, transparent 26%)",
+            borderRadius: "50%",
+          };
     }
   }
   if (attempts >= 2 && state === "idle") {
     const hintFrom = slide.correctMoves[0]?.slice(0, 2);
-    if (hintFrom) squareStyles[hintFrom] = { backgroundColor: "rgba(251,191,36,0.45)" };
+    if (hintFrom)
+      squareStyles[hintFrom] = { backgroundColor: "rgba(251,191,36,0.45)" };
   }
 
   const toMove = slide.fen.split(" ")[1] === "b" ? "Black" : "White";
@@ -469,7 +530,9 @@ function InteractSlideView({ slide, onNext }: { slide: InteractSlide; onNext: ()
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-5">
       <div>
-        <h2 className="text-2xl font-black tracking-tight text-white">{slide.heading}</h2>
+        <h2 className="text-2xl font-black tracking-tight text-white">
+          {slide.heading}
+        </h2>
         <p className="mt-2 text-sm text-slate-400">{slide.instruction}</p>
         <p className="mt-1 text-[11px] font-semibold uppercase tracking-widest text-slate-600">
           {toMove} to move
@@ -491,10 +554,10 @@ function InteractSlideView({ slide, onNext }: { slide: InteractSlide; onNext: ()
           state === "correct"
             ? "border-emerald-500/30 bg-emerald-500/[0.06]"
             : state === "wrong"
-            ? "border-red-500/30 bg-red-500/[0.06]"
-            : attempts >= 2
-            ? "border-amber-500/30 bg-amber-500/[0.06]"
-            : "border-white/[0.06] bg-white/[0.02]"
+              ? "border-red-500/30 bg-red-500/[0.06]"
+              : attempts >= 2
+                ? "border-amber-500/30 bg-amber-500/[0.06]"
+                : "border-white/[0.06] bg-white/[0.02]"
         }`}
       >
         <p
@@ -502,19 +565,19 @@ function InteractSlideView({ slide, onNext }: { slide: InteractSlide; onNext: ()
             state === "correct"
               ? "text-emerald-300"
               : state === "wrong"
-              ? "text-red-300"
-              : attempts >= 2
-              ? "text-amber-300"
-              : "text-slate-500"
+                ? "text-red-300"
+                : attempts >= 2
+                  ? "text-amber-300"
+                  : "text-slate-500"
           }`}
         >
           {state === "correct"
             ? `✓ ${slide.correctExplanation}`
             : state === "wrong"
-            ? `✗ ${slide.wrongExplanation}`
-            : attempts >= 2
-            ? "💡 Hint: look at the highlighted piece"
-            : "Drag a piece or click to select"}
+              ? `✗ ${slide.wrongExplanation}`
+              : attempts >= 2
+                ? "💡 Hint: look at the highlighted piece"
+                : "Drag a piece or click to select"}
         </p>
       </div>
 
@@ -535,30 +598,45 @@ function InteractSlideView({ slide, onNext }: { slide: InteractSlide; onNext: ()
 /*  ChoiceSlideView                                                 */
 /* ─────────────────────────────────────────────────────────────── */
 
-function ChoiceSlideView({ slide, onNext }: { slide: ChoiceSlide; onNext: () => void }) {
+function ChoiceSlideView({
+  slide,
+  onNext,
+}: {
+  slide: ChoiceSlide;
+  onNext: () => void;
+}) {
   const [selected, setSelected] = useState<number | null>(null);
   const answered = selected !== null;
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-5">
       <div>
-        <h2 className="text-2xl font-black tracking-tight text-white">{slide.heading}</h2>
-        <p className="mt-3 text-[15px] leading-7 text-slate-200">{slide.question}</p>
+        <h2 className="text-2xl font-black tracking-tight text-white">
+          {slide.heading}
+        </h2>
+        <p className="mt-3 text-[15px] leading-7 text-slate-200">
+          {slide.question}
+        </p>
       </div>
 
       <div className="flex flex-col gap-2.5">
         {slide.choices.map((choice, i) => {
           const isSelected = selected === i;
           const isCorrect = i === slide.correctIndex;
-          let cls = "rounded-2xl border px-5 py-4 text-left text-sm font-semibold transition-all duration-200 ";
+          let cls =
+            "rounded-2xl border px-5 py-4 text-left text-sm font-semibold transition-all duration-200 ";
           if (!answered) {
-            cls += "border-white/[0.08] bg-white/[0.03] text-slate-200 hover:border-purple-500/40 hover:bg-purple-500/[0.06] cursor-pointer";
+            cls +=
+              "border-white/[0.08] bg-white/[0.03] text-slate-200 hover:border-purple-500/40 hover:bg-purple-500/[0.06] cursor-pointer";
           } else if (isCorrect) {
-            cls += "border-emerald-500/40 bg-emerald-500/[0.08] text-emerald-200 cursor-default";
+            cls +=
+              "border-emerald-500/40 bg-emerald-500/[0.08] text-emerald-200 cursor-default";
           } else if (isSelected && !isCorrect) {
-            cls += "border-red-500/40 bg-red-500/[0.08] text-red-300 cursor-default";
+            cls +=
+              "border-red-500/40 bg-red-500/[0.08] text-red-300 cursor-default";
           } else {
-            cls += "border-white/[0.04] bg-white/[0.01] text-slate-600 cursor-default";
+            cls +=
+              "border-white/[0.04] bg-white/[0.01] text-slate-600 cursor-default";
           }
 
           return (
@@ -566,11 +644,20 @@ function ChoiceSlideView({ slide, onNext }: { slide: ChoiceSlide; onNext: () => 
               key={i}
               type="button"
               className={cls}
-              onClick={() => { if (!answered) setSelected(i); }}
+              onClick={() => {
+                if (!answered) setSelected(i);
+              }}
               disabled={answered}
             >
               <span className="mr-2 font-black text-slate-600">
-                {answered ? (isCorrect ? "✓" : isSelected ? "✗" : String.fromCharCode(65 + i)) : String.fromCharCode(65 + i)}.
+                {answered
+                  ? isCorrect
+                    ? "✓"
+                    : isSelected
+                      ? "✗"
+                      : String.fromCharCode(65 + i)
+                  : String.fromCharCode(65 + i)}
+                .
               </span>
               {choice}
             </button>
@@ -581,7 +668,9 @@ function ChoiceSlideView({ slide, onNext }: { slide: ChoiceSlide; onNext: () => 
       {answered && (
         <>
           <div className="rounded-2xl border border-purple-500/20 bg-purple-500/[0.06] px-5 py-4">
-            <p className="text-sm leading-relaxed text-purple-200/80">{slide.explanation}</p>
+            <p className="text-sm leading-relaxed text-purple-200/80">
+              {slide.explanation}
+            </p>
           </div>
           <button
             type="button"
@@ -600,7 +689,15 @@ function ChoiceSlideView({ slide, onNext }: { slide: ChoiceSlide; onNext: () => 
 /*  LessonRunner                                                    */
 /* ─────────────────────────────────────────────────────────────── */
 
-function LessonRunner({ lesson, onBack, onComplete }: { lesson: Lesson; onBack: () => void; onComplete: () => void }) {
+function LessonRunner({
+  lesson,
+  onBack,
+  onComplete,
+}: {
+  lesson: Lesson;
+  onBack: () => void;
+  onComplete: () => void;
+}) {
   const [idx, setIdx] = useState(0);
   const [done, setDone] = useState(false);
   const slide = lesson.slides[idx];
@@ -624,12 +721,18 @@ function LessonRunner({ lesson, onBack, onComplete }: { lesson: Lesson; onBack: 
           🏆
         </div>
         <div>
-          <h2 className="text-3xl font-black tracking-tight text-white">Lesson Complete!</h2>
+          <h2 className="text-3xl font-black tracking-tight text-white">
+            Lesson Complete!
+          </h2>
           <p className="mt-2 text-sm text-slate-400">{lesson.title}</p>
         </div>
         <div className="w-full rounded-2xl border border-emerald-500/20 bg-emerald-500/[0.06] px-5 py-4">
-          <p className="text-sm font-black text-emerald-400">+10 coins earned</p>
-          <p className="mt-0.5 text-[11px] text-emerald-300/50">Keep practicing daily</p>
+          <p className="text-sm font-black text-emerald-400">
+            +10 coins earned
+          </p>
+          <p className="mt-0.5 text-[11px] text-emerald-300/50">
+            Keep practicing daily
+          </p>
         </div>
         <div className="flex w-full flex-col gap-2.5">
           <button
@@ -664,13 +767,21 @@ function LessonRunner({ lesson, onBack, onComplete }: { lesson: Lesson; onBack: 
         <div className="flex-1">
           <LessonProgress current={idx} total={total} />
         </div>
-        <span className="text-[11px] text-slate-600">{idx + 1} / {total}</span>
+        <span className="text-[11px] text-slate-600">
+          {idx + 1} / {total}
+        </span>
       </div>
 
       {/* Slide */}
-      {slide?.kind === "text" && <TextSlideView slide={slide} onNext={handleNext} />}
-      {slide?.kind === "interact" && <InteractSlideView key={idx} slide={slide} onNext={handleNext} />}
-      {slide?.kind === "choice" && <ChoiceSlideView key={idx} slide={slide} onNext={handleNext} />}
+      {slide?.kind === "text" && (
+        <TextSlideView slide={slide} onNext={handleNext} />
+      )}
+      {slide?.kind === "interact" && (
+        <InteractSlideView key={idx} slide={slide} onNext={handleNext} />
+      )}
+      {slide?.kind === "choice" && (
+        <ChoiceSlideView key={idx} slide={slide} onNext={handleNext} />
+      )}
     </div>
   );
 }
@@ -685,9 +796,15 @@ function LessonCatalog({ onSelect }: { onSelect: (lesson: Lesson) => void }) {
   return (
     <div className="mx-auto max-w-lg space-y-10">
       <div className="pt-2 text-center">
-        <p className="text-[11px] font-black uppercase tracking-widest text-purple-400">✦ Learn Chess</p>
-        <h1 className="mt-1 text-3xl font-black tracking-tight text-white">Lessons</h1>
-        <p className="mt-2 text-sm text-slate-500">Structured lessons on the topics that matter most at your level.</p>
+        <p className="text-[11px] font-black uppercase tracking-widest text-purple-400">
+          ✦ Learn Chess
+        </p>
+        <h1 className="mt-1 text-3xl font-black tracking-tight text-white">
+          Lessons
+        </h1>
+        <p className="mt-2 text-sm text-slate-500">
+          Structured lessons on the topics that matter most at your level.
+        </p>
       </div>
 
       {bands.map((band) => {
@@ -695,15 +812,25 @@ function LessonCatalog({ onSelect }: { onSelect: (lesson: Lesson) => void }) {
         const colors = BAND_COLORS[band];
         return (
           <div key={band} className="space-y-3">
-            <div className={`flex items-center gap-2.5 rounded-xl px-4 py-2.5 ring-1 ${colors.bg} ${colors.ring}`}>
+            <div
+              className={`flex items-center gap-2.5 rounded-xl px-4 py-2.5 ring-1 ${colors.bg} ${colors.ring}`}
+            >
               <div>
-                <p className={`text-xs font-black uppercase tracking-widest ${colors.text}`}>{BAND_LABELS[band]}</p>
-                <p className="text-[11px] text-slate-500">{BAND_DESCRIPTIONS[band]}</p>
+                <p
+                  className={`text-xs font-black uppercase tracking-widest ${colors.text}`}
+                >
+                  {BAND_LABELS[band]}
+                </p>
+                <p className="text-[11px] text-slate-500">
+                  {BAND_DESCRIPTIONS[band]}
+                </p>
               </div>
             </div>
             {bandLessons.length === 0 ? (
               <div className="rounded-2xl border border-white/[0.04] bg-white/[0.01] px-5 py-4 text-center">
-                <p className="text-[12px] text-slate-700">More lessons coming soon</p>
+                <p className="text-[12px] text-slate-700">
+                  More lessons coming soon
+                </p>
               </div>
             ) : (
               bandLessons.map((lesson) => (
@@ -718,20 +845,37 @@ function LessonCatalog({ onSelect }: { onSelect: (lesson: Lesson) => void }) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-white">{lesson.title}</p>
-                    <p className="mt-0.5 text-[12px] text-slate-500 line-clamp-1">{lesson.subtitle}</p>
+                    <p className="mt-0.5 text-[12px] text-slate-500 line-clamp-1">
+                      {lesson.subtitle}
+                    </p>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      <span className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${colors.pill}`}>
+                      <span
+                        className={`rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${colors.pill}`}
+                      >
                         {lesson.estimatedMinutes} min
                       </span>
                       {lesson.tags.slice(0, 2).map((tag) => (
-                        <span key={tag} className="rounded-md bg-white/[0.05] px-2 py-0.5 text-[10px] text-slate-500">
+                        <span
+                          key={tag}
+                          className="rounded-md bg-white/[0.05] px-2 py-0.5 text-[10px] text-slate-500"
+                        >
                           {tag}
                         </span>
                       ))}
                     </div>
                   </div>
-                  <svg className="h-4 w-4 shrink-0 text-slate-600 group-hover:text-slate-400 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                  <svg
+                    className="h-4 w-4 shrink-0 text-slate-600 group-hover:text-slate-400 transition-colors"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M9 5l7 7-7 7"
+                    />
                   </svg>
                 </button>
               ))
@@ -742,7 +886,12 @@ function LessonCatalog({ onSelect }: { onSelect: (lesson: Lesson) => void }) {
 
       <p className="text-center text-[11px] text-slate-700">
         🧪 Early preview ·{" "}
-        <a href="https://discord.gg/YS8fc4FtEk" target="_blank" rel="noopener noreferrer" className="text-slate-600 hover:text-slate-400 underline">
+        <a
+          href="https://discord.gg/YS8fc4FtEk"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-slate-600 hover:text-slate-400 underline"
+        >
           give feedback in Discord
         </a>
       </p>
@@ -775,16 +924,25 @@ export default function LearnPage() {
       {/* Top bar */}
       <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/[0.05] bg-[#0a0a0a]/90 px-4 py-3 backdrop-blur sm:px-6">
         {phase === "catalog" ? (
-          <Link href="/train" className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-400 transition-colors">
+          <Link
+            href="/train"
+            className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-400 transition-colors"
+          >
             ← Training Hub
           </Link>
         ) : (
-          <button type="button" onClick={handleBack} className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-400 transition-colors">
+          <button
+            type="button"
+            onClick={handleBack}
+            className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-400 transition-colors"
+          >
             ← Lessons
           </button>
         )}
         {activeLesson && phase === "lesson" && (
-          <p className="text-xs font-semibold text-slate-500 truncate max-w-[60%]">{activeLesson.title}</p>
+          <p className="text-xs font-semibold text-slate-500 truncate max-w-[60%]">
+            {activeLesson.title}
+          </p>
         )}
         <div className="w-24" />
       </div>
@@ -793,7 +951,11 @@ export default function LearnPage() {
       <div className="mx-auto max-w-2xl px-4 py-8 sm:px-6">
         {phase === "catalog" && <LessonCatalog onSelect={handleSelect} />}
         {phase === "lesson" && activeLesson && (
-          <LessonRunner lesson={activeLesson} onBack={handleBack} onComplete={handleBack} />
+          <LessonRunner
+            lesson={activeLesson}
+            onBack={handleBack}
+            onComplete={handleBack}
+          />
         )}
       </div>
     </div>
