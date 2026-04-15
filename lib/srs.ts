@@ -134,16 +134,15 @@ export function recordResult(
  * 2. Due today or overdue — sorted by how overdue + cpLoss
  * 3. Not yet due — excluded (they'll appear on their due date)
  */
-export function getSRSQueue(
-  tactics: Array<{ fenBefore: string; bestMove: string; cpLoss: number }>,
-  maxCount: number,
-): typeof tactics {
+export function getSRSQueue<
+  T extends { fenBefore: string; bestMove: string; cpLoss: number },
+>(tactics: T[], maxCount: number): T[] {
   if (typeof window === "undefined") return tactics.slice(0, maxCount);
 
   const store = loadStore();
   const today = todayStr();
 
-  type Scored = { tactic: (typeof tactics)[0]; score: number };
+  type Scored = { tactic: T; score: number };
 
   const scored: Scored[] = tactics.map((t) => {
     const id = cardId(t.fenBefore, t.bestMove);
