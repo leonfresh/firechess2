@@ -184,7 +184,9 @@ export function Chessboard(props: ChessboardCompatProps) {
     },
     darkSquareStyle: props.customDarkSquareStyle,
     lightSquareStyle: props.customLightSquareStyle,
-    squareStyles: props.customSquareStyles,
+    // When squareRenderer is provided, v5 skips the fallback div that applies
+    // squareStyles — so we inject them via the wrapper below instead.
+    squareStyles: props.customSquare ? undefined : props.customSquareStyles,
 
     // Arrows
     arrows: convertArrows(props.customArrows),
@@ -261,8 +263,21 @@ export function Chessboard(props: ChessboardCompatProps) {
         }
       : undefined,
 
-    // Square renderer
-    squareRenderer: props.customSquare as any,
+    // Square renderer — wrap to re-inject squareStyles as `style` prop, since
+    // v5 only applies squareStyles in the fallback path (skipped when squareRenderer is set).
+    squareRenderer: props.customSquare
+      ? (((rendererProps: any) => {
+          const sq = rendererProps?.square as string | undefined;
+          const squareStyle =
+            sq && props.customSquareStyles
+              ? props.customSquareStyles[sq]
+              : undefined;
+          return (props.customSquare as any)({
+            ...rendererProps,
+            style: squareStyle,
+          });
+        }) as any)
+      : undefined,
   };
 
   // --- Promotion dialog overlay (v5 removed the built-in one) ---
