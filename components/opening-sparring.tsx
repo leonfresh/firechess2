@@ -349,7 +349,6 @@ export default function OpeningSparring() {
   const playOpponentMove = useCallback(
     async (currentFen: string, chess: Chess) => {
       setIsOpponentThinking(true);
-      setPieceBadge(null);
       const sideToMove: Color = chess.turn() === "w" ? "white" : "black";
 
       try {
@@ -477,7 +476,6 @@ export default function OpeningSparring() {
   const playStockfishMove = useCallback(
     async (currentFen: string, chess: Chess) => {
       setIsOpponentThinking(true);
-      setPieceBadge(null);
       const depth = ratingToDepth(targetRating);
 
       try {
@@ -548,6 +546,9 @@ export default function OpeningSparring() {
       const chess = chessRef.current;
       if (chess.turn() !== (userColor === "white" ? "w" : "b")) return;
       if (phase !== "playing" && phase !== "stockfish") return;
+
+      // Clear previous move badge when starting a new move
+      setPieceBadge(null);
 
       // Capture FEN before the move for eval comparison
       const prevFen = chess.fen();
