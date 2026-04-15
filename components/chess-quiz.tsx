@@ -16,6 +16,8 @@ export type QuizQuestion = {
   category: "rules" | "tactics" | "endgame" | "openings" | "strategy";
   /** Concept key this question specifically tests (e.g. "fork", "pin", "rookEndgame") */
   motif?: string;
+  /** Difficulty tag — used to filter questions to the user's elo level */
+  difficulty?: "beginner" | "intermediate" | "advanced";
 };
 
 export const QUIZ_BANK: QuizQuestion[] = [
@@ -484,21 +486,251 @@ export const QUIZ_BANK: QuizQuestion[] = [
     category: "endgame",
     motif: "pawnEndgame",
   },
+  // ── Intermediate questions (1200–1700 elo) ────────────────────────────
+  {
+    question: "A 'good bishop' vs a 'bad bishop' — what's the difference?",
+    options: [
+      "A bishop near the center vs one on the edge",
+      "A bishop with open diagonals vs one blocked by its own pawns on the same colour",
+      "A light-squared bishop vs a dark-squared bishop",
+      "A bishop used for attack vs one used for defence",
+    ],
+    answer: 1,
+    explanation:
+      "A 'good bishop' has its own pawns on the OPPOSITE colour, giving it open diagonals. A 'bad bishop' is hemmed in by its own pawns on the same colour complex — reducing it to a tall pawn. Recognising this guides pawn placement for the rest of the game.",
+    category: "strategy",
+    difficulty: "intermediate",
+  },
+  {
+    question:
+      "The Isolated Queen Pawn (IQP) gives the owner which middlegame asset?",
+    options: [
+      "A permanent passed pawn ready to promote",
+      "A strong d5 outpost for pieces and dynamic attacking piece play",
+      "Extra material — it counts as two pawns in this structure",
+      "Automatic queenside pawn majority",
+    ],
+    answer: 1,
+    explanation:
+      "The IQP provides the d5 (or d4) outpost for a knight and creates active, open positions where the piece play typically compensates for the structural weakness. In endgames the IQP usually becomes a target — so the owner should seek activity and attack while pieces are on the board.",
+    category: "strategy",
+    difficulty: "intermediate",
+  },
+  {
+    question: "The 'principle of two weaknesses' says:",
+    options: [
+      "Never allow two pawn weaknesses in your own camp",
+      "Attack on both wings — once the defender addresses one weakness, you exploit the other",
+      "Always create two passed pawns simultaneously",
+      "Two isolated pawns cancel each other out structurally",
+    ],
+    answer: 1,
+    explanation:
+      "A solid defence can hold against one threat. To break through, create a second weakness far from the first — the defender cannot guard both forever. Zugzwang eventually forces a concession on one or the other side. This technique is the backbone of top-level endgame play.",
+    category: "strategy",
+    difficulty: "intermediate",
+  },
+  {
+    question: "Nimzowitsch's concept of 'blockade' means:",
+    options: [
+      "Locking all pawns in the center to prevent exchanges",
+      "Placing a piece (ideally a knight) on the square directly in front of a passed pawn to fix and neutralise it",
+      "Preventing the opponent from castling via piece pressure",
+      "Stacking rooks on the 7th rank",
+    ],
+    answer: 1,
+    explanation:
+      "Nimzowitsch's blockade: park a piece — especially a knight — directly in front of an enemy passed pawn. The piece restrains the pawn while simultaneously becoming a powerful outpost. A well-placed blockader can decide the entire game.",
+    category: "strategy",
+    difficulty: "intermediate",
+  },
+  {
+    question: "'Prophylaxis' in chess means:",
+    options: [
+      "A forcing sequence that creates two simultaneous threats",
+      "Anticipating and preventing the opponent's plan before they can execute it",
+      "An opening sacrifice for the initiative",
+      "Placing rooks on open files before the opponent does",
+    ],
+    answer: 1,
+    explanation:
+      "Prophylaxis (a concept developed by Petrosian) means spending a move to stop the opponent's best plan rather than blindly pursuing your own. In quiet positions this often wins more than an active move — by denying threatening counterplay, you maintain control and eventually outmanoeuvre the opponent.",
+    category: "strategy",
+    difficulty: "intermediate",
+  },
+  {
+    question: "A 'pawn break' achieves what?",
+    options: [
+      "Winning a pawn by force with a tactical sequence",
+      "Changing the pawn structure to open files, activate pieces, or release a passive bishop",
+      "Preventing the opponent from promoting",
+      "Promoting a pawn by sacrificing the others around it",
+    ],
+    answer: 1,
+    explanation:
+      "A pawn break (like …c5 in the King's Indian or …e5 in the French) disrupts a locked pawn structure. It opens diagonals for bishops, creates outposts, and activates rooks on newly opened files. Knowing which pawn break to play — and when — is a key strategic skill.",
+    category: "strategy",
+    difficulty: "intermediate",
+  },
+  // ── Advanced questions (1700+ elo) ────────────────────────────────────
+  {
+    question: "The Philidor position (R+P vs R endgame) is used to:",
+    options: [
+      "Win rook vs rook with an extra pawn using a piston technique",
+      "Draw as the defender: rook on the 6th rank holds, then swings to the back for perpetual check once the pawn advances",
+      "Win by cutting off the enemy king on the 4th rank",
+      "Force stalemate from a lost position with a counter-sacrifice",
+    ],
+    answer: 1,
+    explanation:
+      "In the Philidor, the defending rook sits on the 6th rank (e.g. Ra6). When the attacker pushes their king forward, the rook drops to the back rank and delivers perpetual check from behind the pawn — forcing a draw. It's the essential drawing technique in R+P vs R.",
+    category: "endgame",
+    motif: "rookEndgame",
+    difficulty: "advanced",
+  },
+  {
+    question: "Triangulation in king-pawn endgames allows you to:",
+    options: [
+      "Reach the same square in three moves instead of two, losing a tempo to create zugzwang",
+      "Triple the king's attacking range by advancing three ranks at once",
+      "Form a triangular formation that prevents the opponent from entering",
+      "Promote a pawn by triangulating around a defending piece",
+    ],
+    answer: 0,
+    explanation:
+      "Triangulation: your king takes 3 moves to reach a square it could reach in 2, while the opponent's king cannot mimic the manoeuvre. This 'wastes' one move, transferring the obligation to move to the opponent and placing them in zugzwang. It only works when there is an odd-even parity difference in the king paths.",
+    category: "endgame",
+    difficulty: "advanced",
+  },
+  {
+    question:
+      "Bishop pawn (a- or h-file) + wrong-colour bishop vs lone king — what is the result with best play?",
+    options: [
+      "A straightforward win — any extra pawn is enough",
+      "A draw — the defending king reaches the corner the bishop doesn't control and cannot be dislodged",
+      "A win only if the kings are not yet in opposition",
+      "A draw only if the defending king is already in the corner",
+    ],
+    answer: 1,
+    explanation:
+      "The 'wrong-colour bishop' draw is one of the most famous endgame exceptions: if the bishop doesn't control the queening square colour, the defending king hides in the corner of the opposite colour. Stalemate becomes unavoidable. Even a world champion cannot win this — it's a theoretical draw.",
+    category: "endgame",
+    difficulty: "advanced",
+  },
+  {
+    question:
+      "A 'trebuchet' (mutual zugzwang) in a king-and-pawn endgame means:",
+    options: [
+      "A rook on the 7th rank controlling two open files simultaneously",
+      "Whoever is to move loses their pawn — both kings hold the opposing pawn but must step aside on their turn",
+      "A bishop controlling both diagonals via a centralised outpost",
+      "Three connected passed pawns that always beat a rook",
+    ],
+    answer: 1,
+    explanation:
+      "A trebuchet is a mutual zugzwang where the side to move must give way, losing their pawn and (usually) the game. You force an opponent into a trebuchet by using triangulation to transfer the move to them. Recognising this structure instantly tells you whether a king-and-pawn endgame is won.",
+    category: "endgame",
+    difficulty: "advanced",
+  },
+  {
+    question:
+      "In the famous Saavedra endgame study, why does the pawn promote to a rook instead of a queen?",
+    options: [
+      "A rook is faster at delivering checkmate",
+      "Promoting to a queen allows a stalemate trick — giving up the rook with check creates stalemate; promoting to a rook avoids this and wins",
+      "A rook covers more endgame squares than a queen in that exact position",
+      "The queen would be immediately captured by the defending rook",
+    ],
+    answer: 1,
+    explanation:
+      "c8=Q?? allows the defender to sacrifice their rook with check on c6 (or a8), leaving the queen pinned against a stalemate. c8=R! sidesteps the stalemate while threatening Ra8# — and if the rook moves to avoid mate, White picks it up. Saavedra is the classic lesson that underpromotion is sometimes the ONLY winning move.",
+    category: "endgame",
+    difficulty: "advanced",
+  },
+  {
+    question:
+      "Two connected passed pawns on the 6th rank vs a lone rook — who is winning?",
+    options: [
+      "The rook easily holds — two-vs-one is manageable",
+      "The pawns win — they are generally stronger than a rook at that stage",
+      "The result depends entirely on which side has the move",
+      "It's always a draw with precise defensive play",
+    ],
+    answer: 1,
+    explanation:
+      "Connected passed pawns on the 6th rank are typically stronger than a rook. The rook must deal with both simultaneously — stopping one lets the other advance. This endgame caught out even world-class players: pawns on e6 and f6 typically win against a lone rook unless there is an immediate perpetual check or stalemate resource.",
+    category: "endgame",
+    difficulty: "advanced",
+  },
+  {
+    question:
+      "Against the Isolated Queen Pawn (IQP), what is the classic strategic recipe?",
+    options: [
+      "Trade all pieces immediately and reach a pure pawn endgame",
+      "Blockade the IQP with a piece on d5, trade off the IQP owner's active pieces, then attack the pawn as material decreases",
+      "Attack the king directly while ignoring the IQP",
+      "Push your own center pawns to neutralise the IQP's space advantage",
+    ],
+    answer: 1,
+    explanation:
+      "The correct IQP defence (mastered by Petrosian and Karpov): place a knight on d5 to blockade, eliminate the opponent's most active attacking pieces, and steer into an endgame where the isolated pawn is an unmovable target. An extra piece safely blockading the IQP often decides the game in the endgame.",
+    category: "strategy",
+    difficulty: "advanced",
+  },
+  {
+    question: "K+B+N vs K is:",
+    options: [
+      "A draw — bishop and knight together cannot force checkmate",
+      "A forced win, but technically demanding — checkmate must happen in the corner matching the bishop's colour",
+      "An easy win in under 20 moves with any technique",
+      "A win only if the defending king is already on the edge",
+    ],
+    answer: 1,
+    explanation:
+      "K+B+N vs K is a forced win but one of the hardest fundamentals to master. Checkmate only occurs in the corner that matches the bishop's colour, requiring precise coordination between the knight and bishop to drive the king there. The 'W-manoeuvre' to reroute the knight is the key technique, and it can require close to 50 moves.",
+    category: "endgame",
+    difficulty: "advanced",
+  },
 ];
 
-/* Deterministic daily selection seeded by day */
+const DIFFICULTY_RANK: Record<
+  NonNullable<QuizQuestion["difficulty"]>,
+  number
+> = {
+  beginner: 0,
+  intermediate: 1,
+  advanced: 2,
+};
+
+/**
+ * Return `count` quiz questions seeded by `seed`.
+ * When `difficulty` is provided, questions above the user's level are excluded
+ * so advanced users see hard questions and beginners don't see deep endgame theory.
+ */
 export function getDailyQuizQuestions(
   count: number,
   seed: number,
+  difficulty?: QuizQuestion["difficulty"],
 ): QuizQuestion[] {
-  const all = [...QUIZ_BANK];
+  let pool = [...QUIZ_BANK];
+
+  if (difficulty) {
+    const userRank = DIFFICULTY_RANK[difficulty];
+    // Keep questions at or below the user's level; untagged questions are always shown
+    const filtered = pool.filter(
+      (q) => !q.difficulty || DIFFICULTY_RANK[q.difficulty] <= userRank,
+    );
+    // Only apply the filter if it leaves enough questions to choose from
+    if (filtered.length >= Math.max(count * 2, 5)) pool = filtered;
+  }
+
   let s = seed;
-  for (let i = all.length - 1; i > 0; i--) {
+  for (let i = pool.length - 1; i > 0; i--) {
     s = (Math.imul(s, 1664525) + 1013904223) | 0;
     const j = Math.abs(s) % (i + 1);
-    [all[i], all[j]] = [all[j], all[i]];
+    [pool[i], pool[j]] = [pool[j], pool[i]];
   }
-  return all.slice(0, count);
+  return pool.slice(0, count);
 }
 
 /* ------------------------------------------------------------------ */

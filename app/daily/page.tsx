@@ -9,6 +9,7 @@ import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
 import { earnCoins } from "@/lib/coins";
 import type { MissedTactic } from "@/lib/types";
+import { getSRSQueue, recordResult, getSRSStats } from "@/lib/srs";
 import {
   ChessQuiz,
   getDailyQuizQuestions,
@@ -42,6 +43,7 @@ type SavedReport = {
   missedTactics: MissedTactic[];
   leaks: any[];
   diagnostics: any;
+  playerRating?: number | null;
 };
 
 type TaskIntro = {
@@ -125,16 +127,32 @@ function buildPuzzleIntro(puzzle: LichessPuzzle): TaskIntro {
   };
 }
 
-function buildBlunderIntro(tactic: MissedTactic): TaskIntro {
+function buildBlunderIntro(
+  tactic: MissedTactic,
+  card?: { reps: number; interval: number },
+): TaskIntro {
   const motifRaw = tactic.tags?.[0];
   const motifTheme = motifRaw ? MOTIF_TO_THEME[motifRaw] : undefined;
   const motifDisplay = motifTheme
     ? (THEME_DISPLAY[motifTheme] ?? "tactical")
     : "tactical";
+
+  // Spaced repetition context line
+  let srsSuffix = "";
+  if (card) {
+    if (card.reps === 0) srsSuffix = " First time seeing this one.";
+    else if (card.interval >= 14)
+      srsSuffix = ` You've seen this ${card.reps} time${card.reps !== 1 ? "s" : ""} — keep the streak going.`;
+    else srsSuffix = ` Review #${card.reps + 1} — pattern reinforcement.`;
+  }
+
   return {
-    icon: "⚠️",
-    headline: `Fix your move ${tactic.moveNumber} blunder`,
-    body: `On move ${tactic.moveNumber} you missed a ${motifDisplay} opportunity. This position is taken directly from your own game — let's drill until it becomes automatic.`,
+    icon: card && card.reps > 0 ? "🔁" : "⚠️",
+    headline:
+      card && card.reps > 0
+        ? `Revisit your move ${tactic.moveNumber} mistake`
+        : `Fix your move ${tactic.moveNumber} blunder`,
+    body: `On move ${tactic.moveNumber} you missed a ${motifDisplay} opportunity. This position is taken directly from your own game — let's drill until it becomes automatic.${srsSuffix}`,
   };
 }
 
@@ -405,6 +423,8 @@ function BlunderBoard({
         setIndicator({ sq: to, type: "correct" });
         setStatus("correct");
         earnCoins("study_task");
+        // Record correct result in SRS
+        recordResult(tactic.fenBefore, tactic.bestMove, tactic.cpLoss, true);
         setTimeout(() => onComplete(true), 900);
         return true;
       }
@@ -419,6 +439,8 @@ function BlunderBoard({
 
       if (next >= MAX_TRIES) {
         setStatus("wrong");
+        // Record wrong result in SRS — will show again tomorrow
+        recordResult(tactic.fenBefore, tactic.bestMove, tactic.cpLoss, false);
         setTimeout(() => {
           const g = new Chess(game.fen());
           try {
@@ -940,6 +962,11 @@ export default function DailyPage() {
   const [completedTotal, setCompletedTotal] = useState(0);
   const [hasTacticsScan, setHasTacticsScan] = useState(true);
   const [taskPhase, setTaskPhase] = useState<"intro" | "playing">("intro");
+  const [srsStats, setSrsStats] = useState<{
+    dueToday: number;
+    totalSeen: number;
+    totalCards: number;
+  } | null>(null);
 
   const today = useMemo(
     () =>
@@ -986,10 +1013,30 @@ export default function DailyPage() {
         );
         setHasTacticsScan(tacticsAvailable);
 
-        // Build blunder pool (day-seeded shuffle) — only if tactics data exists
+        // Compute SRS stats from the full blunder pool for display
+        if (tacticsAvailable) {
+          const fullPool = buildBlunderPool(reports);
+          setSrsStats(getSRSStats(fullPool));
+        }
+
+        // Derive user's chess rating from the most recent report that has it
+        const userRating =
+          reports.find((r) => r.playerRating)?.playerRating ?? null;
+
+        // Map rating to quiz difficulty bracket
+        const quizDifficulty: QuizQuestion["difficulty"] =
+          userRating === null
+            ? undefined
+            : userRating >= 1700
+              ? "advanced"
+              : userRating >= 1200
+                ? "intermediate"
+                : "beginner";
+
+        // Build blunder pool using SRS queue — surfaces positions due for review today
         const pool = tacticsAvailable ? buildBlunderPool(reports) : [];
-        const shuffled = seededShuffle(pool, dayOfYear());
-        const blunders = shuffled.slice(0, 3);
+        // getSRSQueue returns new + due positions sorted by priority; cap at 3 per session
+        const blunders = getSRSQueue(pool, 3);
 
         // Determine puzzle themes from weak motifs, or fall back to generic
         const weakThemes = getWeakThemes(reports);
@@ -998,11 +1045,12 @@ export default function DailyPage() {
           5,
         );
 
-        // Fetch Lichess puzzles
+        // Fetch Lichess puzzles — pass rating so Lichess targets appropriate difficulty
         let lichessPuzzles: LichessPuzzle[] = [];
         try {
+          const ratingParam = userRating ? `&rating=${userRating}` : "";
           const res = await fetch(
-            `/api/puzzles?themes=${themes.join(",")}&count=5`,
+            `/api/puzzles?themes=${themes.join(",")}&count=5${ratingParam}`,
           );
           const pData = await res.json();
           lichessPuzzles = pData.puzzles ?? [];
@@ -1031,10 +1079,13 @@ export default function DailyPage() {
           }
           if (bi < blunders.length) {
             const t = blunders[bi++];
+            // Load existing SRS card for the intro context
+            const { getCard } = await import("@/lib/srs");
+            const card = getCard(t.fenBefore, t.bestMove, t.cpLoss);
             taskList.push({
               type: "blunder",
               tactic: t,
-              intro: buildBlunderIntro(t),
+              intro: buildBlunderIntro(t, card),
             });
           }
         }
@@ -1048,16 +1099,29 @@ export default function DailyPage() {
         }
 
         // Add quiz and memory tasks at natural break points
-        const quizQs = getDailyQuizQuestions(1, dayOfYear());
+        const quizQs = getDailyQuizQuestions(1, dayOfYear(), quizDifficulty);
         const memoryPs = getDailyMemoryPositions(1, dayOfYear());
         if (quizQs.length > 0) {
+          const difficultyLabel =
+            quizDifficulty === "advanced"
+              ? "Advanced level"
+              : quizDifficulty === "intermediate"
+                ? "Intermediate level"
+                : quizDifficulty === "beginner"
+                  ? "Foundations"
+                  : "Chess Knowledge Check";
           taskList.splice(Math.min(2, taskList.length), 0, {
             type: "quiz",
             question: quizQs[0],
             intro: {
               icon: "🧠",
-              headline: "Chess Knowledge Check",
-              body: "A quick question to test your understanding of chess principles — no board needed. Gets you thinking before the next puzzle.",
+              headline: difficultyLabel + " — Knowledge Check",
+              body:
+                quizDifficulty === "advanced"
+                  ? "A question calibrated to your level. These are the nuances that separate good players from great ones."
+                  : quizDifficulty === "intermediate"
+                    ? "A question on chess strategy and technique — material matched to your current rating range."
+                    : "A quick question to test your understanding of chess principles — no board needed.",
             },
           });
         }
@@ -1352,6 +1416,29 @@ export default function DailyPage() {
               />
             ))}
           </div>
+
+          {/* SRS due-count badge */}
+          {srsStats && srsStats.totalCards > 0 && (
+            <div className="mt-3 flex items-center gap-2">
+              <span
+                className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
+                  srsStats.dueToday > 0
+                    ? "border-amber-500/25 bg-amber-500/[0.07] text-amber-400"
+                    : "border-emerald-500/25 bg-emerald-500/[0.07] text-emerald-400"
+                }`}
+              >
+                <span>{srsStats.dueToday > 0 ? "🔁" : "✅"}</span>
+                {srsStats.dueToday > 0
+                  ? `${srsStats.dueToday} blunder${srsStats.dueToday !== 1 ? "s" : ""} due for review`
+                  : "All blunders reviewed — come back tomorrow"}
+              </span>
+              {srsStats.totalSeen > 0 && (
+                <span className="text-[10px] text-slate-600">
+                  {srsStats.totalSeen}/{srsStats.totalCards} in rotation
+                </span>
+              )}
+            </div>
+          )}
 
           {/* No tactics scan notice */}
           {!hasTacticsScan && (
