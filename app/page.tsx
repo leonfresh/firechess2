@@ -214,6 +214,7 @@ export default function HomePage() {
   const [posExplaining, setPosExplaining] = useState<string | null>(null);
   const [timeUnlocked, setTimeUnlocked] = useState(false);
   const reportRef = useRef<HTMLElement>(null);
+  const loadingRef = useRef<HTMLDivElement>(null);
   const pngRef = useRef<HTMLDivElement>(null);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
@@ -1329,6 +1330,14 @@ export default function HomePage() {
       setResult(null);
       setSectionsDone(new Set());
       setSaveStatus("idle");
+      setTimeout(
+        () =>
+          loadingRef.current?.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          }),
+        50,
+      );
       const rangeLabel =
         gameRangeMode === "since" ? `since ${sinceDate}` : `${safeGames} games`;
       setProgressInfo({
@@ -1382,6 +1391,14 @@ export default function HomePage() {
     setResult(null);
     setSectionsDone(new Set());
     setSaveStatus("idle");
+    setTimeout(
+      () =>
+        loadingRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        }),
+      50,
+    );
     setProgressInfo({
       message: `🔄 Switching to ${mode} scan`,
       detail: "Re-analyzing with new scan mode...",
@@ -1641,7 +1658,10 @@ export default function HomePage() {
 
           {/* ─── Loading State ─── */}
           {state === "loading" && (
-            <div className="glass-card animate-scale-in mx-auto w-full max-w-3xl p-6">
+            <div
+              ref={loadingRef}
+              className="glass-card animate-scale-in mx-auto w-full max-w-3xl p-6"
+            >
               {/* Header */}
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
