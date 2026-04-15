@@ -133,8 +133,7 @@ export function Navbar() {
                 className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                   pathname === "/" ||
                   isActive("/analyze") ||
-                  isActive("/my-openings") ||
-                  isActive("/roast")
+                  isActive("/my-openings")
                     ? "bg-white/[0.06] text-white"
                     : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
                 }`}
@@ -169,18 +168,6 @@ export function Navbar() {
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/my-openings") ? "bg-orange-500/[0.08] text-orange-300" : "text-slate-400 hover:bg-orange-500/[0.06] hover:text-orange-300"}`}
                   >
                     🌲 My Opening Tree
-                  </Link>
-                  <Link
-                    href="/roast"
-                    onClick={() => {
-                      if (pathname.startsWith("/roast"))
-                        window.dispatchEvent(
-                          new CustomEvent("firechess:new-roast"),
-                        );
-                    }}
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/roast") ? "bg-orange-500/[0.08] text-orange-400" : "text-slate-400 hover:bg-orange-500/[0.06] hover:text-orange-400"}`}
-                  >
-                    🔥 Roast the Elo
                   </Link>
                 </div>
               </div>
@@ -346,7 +333,9 @@ export function Navbar() {
                 type="button"
                 aria-haspopup="true"
                 className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  isActive("/chaos") || isActive("/dungeon")
+                  isActive("/chaos") ||
+                  isActive("/dungeon") ||
+                  isActive("/roast")
                     ? "bg-white/[0.06] text-white"
                     : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
                 }`}
@@ -375,6 +364,18 @@ export function Navbar() {
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/dungeon") ? "bg-red-500/[0.08] text-red-400" : "text-slate-400 hover:bg-red-500/[0.06] hover:text-red-400"}`}
                   >
                     🗡️ Dungeon Tactics
+                  </Link>
+                  <Link
+                    href="/roast"
+                    onClick={() => {
+                      if (pathname.startsWith("/roast"))
+                        window.dispatchEvent(
+                          new CustomEvent("firechess:new-roast"),
+                        );
+                    }}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/roast") ? "bg-orange-500/[0.08] text-orange-400" : "text-slate-400 hover:bg-orange-500/[0.06] hover:text-orange-400"}`}
+                  >
+                    🔥 Roast the Elo
                   </Link>
                 </div>
               </div>
@@ -947,7 +948,6 @@ export function Navbar() {
                     { href: "/", label: "🔍 Analyze Games" },
                     { href: "/analyze", label: "♟️ PGN Analyzer" },
                     { href: "/my-openings", label: "🌲 My Opening Tree" },
-                    { href: "/roast", label: "🔥 Roast the Elo" },
                   ],
                 },
                 {
@@ -981,6 +981,7 @@ export function Navbar() {
                   links: [
                     { href: "/chaos", label: "⚡ Chaos Chess" },
                     { href: "/dungeon", label: "🗡️ Dungeon Tactics" },
+                    { href: "/roast", label: "🔥 Roast the Elo" },
                   ],
                 },
                 {

@@ -4,7 +4,11 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { Chess, type PieceSymbol } from "chess.js";
 import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { useBoardSize } from "@/lib/use-board-size";
-import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
+import {
+  useBoardTheme,
+  useShowCoordinates,
+  useCustomPieces,
+} from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
 
 /* ------------------------------------------------------------------ */
@@ -54,7 +58,7 @@ function isUci(move: string): boolean {
 
 function resolveMove(
   fen: string,
-  move: string | null | undefined
+  move: string | null | undefined,
 ): { from: string; to: string; promotion?: string; fen: string } | null {
   if (!move) return null;
   try {
@@ -69,7 +73,13 @@ function resolveMove(
     } else {
       r = chess.move(move);
     }
-    if (r) return { from: r.from, to: r.to, promotion: r.promotion, fen: chess.fen() };
+    if (r)
+      return {
+        from: r.from,
+        to: r.to,
+        promotion: r.promotion,
+        fen: chess.fen(),
+      };
   } catch {}
   return null;
 }
@@ -78,8 +88,10 @@ function resolveMove(
 /*  Main Component                                                      */
 /* ------------------------------------------------------------------ */
 
-export function PositionalMotifTrainer({ motifs }: PositionalMotifTrainerProps) {
-  const { ref: boardRef, size: boardSize } = useBoardSize(560);
+export function PositionalMotifTrainer({
+  motifs,
+}: PositionalMotifTrainerProps) {
+  const { ref: boardRef, size: boardSize } = useBoardSize(420);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
@@ -115,8 +127,13 @@ export function PositionalMotifTrainer({ motifs }: PositionalMotifTrainerProps) 
   const [trainState, setTrainState] = useState<TrainState>("thinking");
   const [selectedSq, setSelectedSq] = useState<string | null>(null);
   const [legalMoveSqs, setLegalMoveSqs] = useState<string[]>([]);
-  const [wrongMove, setWrongMove] = useState<{ from: string; to: string } | null>(null);
-  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
+  const [wrongMove, setWrongMove] = useState<{
+    from: string;
+    to: string;
+  } | null>(null);
+  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(
+    null,
+  );
   const [solved, setSolved] = useState(0);
   const [total, setTotal] = useState(0);
   const [hintShown, setHintShown] = useState(false);
@@ -184,7 +201,7 @@ export function PositionalMotifTrainer({ motifs }: PositionalMotifTrainerProps) 
         return false;
       }
     },
-    [trainState, current, fen]
+    [trainState, current, fen],
   );
 
   const onDrop = useCallback(
@@ -195,7 +212,7 @@ export function PositionalMotifTrainer({ motifs }: PositionalMotifTrainerProps) 
       setLegalMoveSqs([]);
       return result;
     },
-    [trainState, attemptMove]
+    [trainState, attemptMove],
   );
 
   const onSquareClick = useCallback(
@@ -224,7 +241,7 @@ export function PositionalMotifTrainer({ motifs }: PositionalMotifTrainerProps) 
         setLegalMoveSqs([]);
       }
     },
-    [trainState, fen, selectedSq, legalMoveSqs, attemptMove]
+    [trainState, fen, selectedSq, legalMoveSqs, attemptMove],
   );
 
   const revealSolution = useCallback(() => {
@@ -256,8 +273,16 @@ export function PositionalMotifTrainer({ motifs }: PositionalMotifTrainerProps) 
         for (const sq of legalMoveSqs) {
           const hasPiece = chess.get(sq as Parameters<Chess["get"]>[0]);
           styles[sq] = hasPiece
-            ? { background: "radial-gradient(circle, transparent 55%, rgba(0,0,0,0.25) 55%)", borderRadius: "50%" }
-            : { background: "radial-gradient(circle, rgba(0,0,0,0.25) 25%, transparent 25%)", borderRadius: "50%" };
+            ? {
+                background:
+                  "radial-gradient(circle, transparent 55%, rgba(0,0,0,0.25) 55%)",
+                borderRadius: "50%",
+              }
+            : {
+                background:
+                  "radial-gradient(circle, rgba(0,0,0,0.25) 25%, transparent 25%)",
+                borderRadius: "50%",
+              };
         }
       } catch {}
     }
@@ -280,7 +305,16 @@ export function PositionalMotifTrainer({ motifs }: PositionalMotifTrainerProps) 
     }
 
     return styles;
-  }, [lastMove, selectedSq, legalMoveSqs, fen, trainState, wrongMove, hintShown, current]);
+  }, [
+    lastMove,
+    selectedSq,
+    legalMoveSqs,
+    fen,
+    trainState,
+    wrongMove,
+    hintShown,
+    current,
+  ]);
 
   if (queue.length === 0) return null;
 
@@ -303,9 +337,9 @@ export function PositionalMotifTrainer({ motifs }: PositionalMotifTrainerProps) 
             Positional Pattern Trainer
           </h3>
           <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-slate-400">
-            Train the exact positions from your games where positional habits hurt you. Find the best
-            move in {queue.length} real position{queue.length !== 1 ? "s" : ""} — ranked by how much
-            you lost.
+            Train the exact positions from your games where positional habits
+            hurt you. Find the best move in {queue.length} real position
+            {queue.length !== 1 ? "s" : ""} — ranked by how much you lost.
           </p>
 
           {/* Motif chips */}
@@ -331,7 +365,9 @@ export function PositionalMotifTrainer({ motifs }: PositionalMotifTrainerProps) 
             <div className="flex flex-col items-center gap-2 rounded-xl border border-amber-500/15 bg-amber-500/[0.04] px-4 py-3">
               <span className="text-lg">♟️</span>
               <p className="text-xs font-bold text-white">Your Own Positions</p>
-              <p className="text-[10px] text-slate-500">Real mistakes from your games</p>
+              <p className="text-[10px] text-slate-500">
+                Real mistakes from your games
+              </p>
             </div>
             <div className="flex flex-col items-center gap-2 rounded-xl border border-orange-500/15 bg-orange-500/[0.04] px-4 py-3">
               <span className="text-lg">🎯</span>
@@ -341,7 +377,9 @@ export function PositionalMotifTrainer({ motifs }: PositionalMotifTrainerProps) 
             <div className="flex flex-col items-center gap-2 rounded-xl border border-amber-500/15 bg-amber-500/[0.04] px-4 py-3">
               <span className="text-lg">📈</span>
               <p className="text-xs font-bold text-white">Break the Pattern</p>
-              <p className="text-[10px] text-slate-500">Rewire your positional thinking</p>
+              <p className="text-[10px] text-slate-500">
+                Rewire your positional thinking
+              </p>
             </div>
           </div>
 
@@ -385,7 +423,9 @@ export function PositionalMotifTrainer({ motifs }: PositionalMotifTrainerProps) 
             🧠
           </span>
           <div>
-            <h2 className="text-xl font-bold text-white">Positional Pattern Trainer</h2>
+            <h2 className="text-xl font-bold text-white">
+              Positional Pattern Trainer
+            </h2>
             <p className="text-sm text-slate-400">
               Find the best move in positions from your own games
             </p>
@@ -447,7 +487,10 @@ export function PositionalMotifTrainer({ motifs }: PositionalMotifTrainerProps) 
 
       <div className="grid gap-6 md:grid-cols-[minmax(0,560px)_1fr] md:gap-8">
         {/* Board */}
-        <div ref={boardRef} className="relative mx-auto w-full max-w-[560px] shrink-0">
+        <div
+          ref={boardRef}
+          className="relative mx-auto w-full max-w-[420px] shrink-0"
+        >
           <Chessboard
             id={`positional-trainer-${currentIdx}`}
             position={fen}
@@ -507,28 +550,34 @@ export function PositionalMotifTrainer({ motifs }: PositionalMotifTrainerProps) 
             <p className="text-xs font-medium text-slate-400">
               {trainState === "thinking" && (
                 <>
-                  <span className="text-white">Find the best positional move.</span> This position
-                  is from one of your own games. Click a piece to see legal moves, or drag it to
-                  the target square.
+                  <span className="text-white">
+                    Find the best positional move.
+                  </span>{" "}
+                  This position is from one of your own games. Click a piece to
+                  see legal moves, or drag it to the target square.
                 </>
               )}
               {trainState === "correct" && (
                 <>
-                  <span className="text-emerald-400">Well done!</span> That&apos;s the best move
-                  here. Understanding <em>why</em> this works will help break the{" "}
-                  <span className="font-semibold text-amber-300">{current?.motifName}</span> habit.
+                  <span className="text-emerald-400">Well done!</span>{" "}
+                  That&apos;s the best move here. Understanding <em>why</em>{" "}
+                  this works will help break the{" "}
+                  <span className="font-semibold text-amber-300">
+                    {current?.motifName}
+                  </span>{" "}
+                  habit.
                 </>
               )}
               {trainState === "wrong" && (
                 <>
-                  <span className="text-red-400">Not quite.</span> The position will reset — try
-                  again, or use Hint / Show Solution below.
+                  <span className="text-red-400">Not quite.</span> The position
+                  will reset — try again, or use Hint / Show Solution below.
                 </>
               )}
               {trainState === "revealed" && (
                 <>
-                  <span className="text-blue-400">Solution revealed.</span> Study the position,
-                  then move to the next one when ready.
+                  <span className="text-blue-400">Solution revealed.</span>{" "}
+                  Study the position, then move to the next one when ready.
                 </>
               )}
             </p>

@@ -563,37 +563,59 @@ export default function HomePage() {
       userMove?: string;
       bestMove?: string | null;
       gameUrl?: string;
+      /**
+       * Eval from the USER's perspective AFTER their move (centipawns).
+       * Positive = user is still winning. Used to skip "still crushing" positions.
+       */
+      evalAfterUser?: number;
     };
+
+    // Threshold: if user is still winning by more than this after the blunder, skip it
+    const STILL_WINNING_THRESHOLD = 350; // +3.5 pawns — clearly still winning
+
     const allPositions: TaggedPosition[] = [];
 
     for (const t of missedTactics) {
+      // cpBefore and cpAfter are from side-to-move's perspective
+      // evalAfterUser = what the user (side that moved) has after their move
+      //   = negated cpAfter (since after the move it's opponent's turn)
+      const evalAfterUser = -t.cpAfter;
       allPositions.push({
         tags: t.tags,
         cpLoss: t.cpLoss,
         fenBefore: t.fenBefore,
         userMove: t.userMove,
         bestMove: t.bestMove,
+        evalAfterUser,
       });
     }
     for (const l of leaks) {
       if (l.tags?.length) {
+        // evalAfter is from the side-to-move's perspective after the move (opponent's perspective)
+        // evalAfterUser (original mover) = -evalAfter
+        const evalAfterUser =
+          typeof l.evalAfter === "number" ? -l.evalAfter : undefined;
         allPositions.push({
           tags: l.tags,
           cpLoss: l.cpLoss,
           fenBefore: l.fenBefore,
           userMove: l.userMove,
           bestMove: l.bestMove,
+          evalAfterUser,
         });
       }
     }
     for (const o of oneOffMistakes) {
       if (o.tags?.length) {
+        const evalAfterUser =
+          typeof o.evalAfter === "number" ? -o.evalAfter : undefined;
         allPositions.push({
           tags: o.tags,
           cpLoss: o.cpLoss,
           fenBefore: o.fenBefore,
           userMove: o.userMove,
           bestMove: o.bestMove,
+          evalAfterUser,
         });
       }
     }
@@ -605,6 +627,7 @@ export default function HomePage() {
           fenBefore: pf.fenBefore,
           userMove: pf.userMove,
           bestMove: pf.bestMove,
+          // PositionalFinding has no eval data; can't filter by winning margin
         });
       }
     }
@@ -805,6 +828,14 @@ export default function HomePage() {
       const matching: TaggedPosition[] = [];
       for (const p of allPositions) {
         if (def.match(p) && !seen.has(p.fenBefore)) {
+          // Skip positions where the user was still clearly winning after the mistake
+          // (e.g., saccing a queen but still up a rook vs lone king — not worth drilling)
+          if (
+            typeof p.evalAfterUser === "number" &&
+            p.evalAfterUser > STILL_WINNING_THRESHOLD
+          ) {
+            continue;
+          }
           seen.add(p.fenBefore);
           matching.push(p);
         }
@@ -3150,6 +3181,139 @@ export default function HomePage() {
                         </button>
                       )}
                     </div>
+
+                    {/* ── #1 Priority callout ── */}
+                    {state === "done" &&
+                      (() => {
+                        // Pick the single highest-impact finding to surface immediately
+                        const topLeak = leaks
+                          .filter((l) => !l.dbApproved)
+                          .sort(
+                            (a, b) =>
+                              b.cpLoss * b.reachCount - a.cpLoss * a.reachCount,
+                          )[0];
+                        const topTactic = missedTactics[0] ?? null;
+                        const topMotif = positionalMotifs[0] ?? null;
+
+                        // Decide what to highlight: leak > tactic > motif
+                        if (!topLeak && !topTactic && !topMotif) return null;
+
+                        if (topLeak) {
+                          return (
+                            <div className="mt-6 flex items-center gap-4 rounded-2xl border border-red-500/25 bg-gradient-to-r from-red-500/[0.08] to-transparent p-4 sm:p-5">
+                              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-red-500/15 text-2xl">
+                                🎯
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-red-400/70">
+                                  Your #1 priority
+                                </p>
+                                <p className="mt-0.5 text-sm font-semibold text-white">
+                                  {topLeak.openingName
+                                    ? `You're losing ${(topLeak.cpLoss / 100).toFixed(1)} pawns on move ${topLeak.reachCount > 1 ? `(×${topLeak.reachCount} games)` : ""} in your ${topLeak.openingName}`
+                                    : `Recurring opening mistake — −${(topLeak.cpLoss / 100).toFixed(1)} pawns, hit ${topLeak.reachCount} time${topLeak.reachCount !== 1 ? "s" : ""}`}
+                                </p>
+                                <p className="mt-0.5 text-xs text-slate-500">
+                                  Fix this one position and you stop bleeding
+                                  rating every time this line appears.
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  document
+                                    .getElementById("section-openings")
+                                    ?.scrollIntoView({
+                                      behavior: "smooth",
+                                      block: "start",
+                                    });
+                                }}
+                                className="shrink-0 rounded-xl bg-red-500/15 px-4 py-2.5 text-xs font-bold text-red-300 transition-all hover:bg-red-500/25 hover:text-red-200 border border-red-500/20"
+                              >
+                                Fix it →
+                              </button>
+                            </div>
+                          );
+                        }
+
+                        if (topTactic) {
+                          return (
+                            <div className="mt-6 flex items-center gap-4 rounded-2xl border border-yellow-500/25 bg-gradient-to-r from-yellow-500/[0.07] to-transparent p-4 sm:p-5">
+                              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-yellow-500/15 text-2xl">
+                                ⚡
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-yellow-400/70">
+                                  Your #1 priority
+                                </p>
+                                <p className="mt-0.5 text-sm font-semibold text-white">
+                                  You missed {missedTactics.length} tactic
+                                  {missedTactics.length !== 1 ? "s" : ""} — the
+                                  worst cost you −
+                                  {(topTactic.cpLoss / 100).toFixed(1)} pawns
+                                </p>
+                                <p className="mt-0.5 text-xs text-slate-500">
+                                  These are from your actual games, not random
+                                  puzzles.
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  document
+                                    .getElementById("section-tactics")
+                                    ?.scrollIntoView({
+                                      behavior: "smooth",
+                                      block: "start",
+                                    });
+                                  setTacticsOpen(true);
+                                }}
+                                className="shrink-0 rounded-xl bg-yellow-500/15 px-4 py-2.5 text-xs font-bold text-yellow-300 transition-all hover:bg-yellow-500/25 hover:text-yellow-200 border border-yellow-500/20"
+                              >
+                                Drill it →
+                              </button>
+                            </div>
+                          );
+                        }
+
+                        // topMotif only
+                        return (
+                          <div className="mt-6 flex items-center gap-4 rounded-2xl border border-amber-500/25 bg-gradient-to-r from-amber-500/[0.07] to-transparent p-4 sm:p-5">
+                            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-2xl">
+                              {topMotif!.icon}
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-amber-400/70">
+                                Your #1 priority
+                              </p>
+                              <p className="mt-0.5 text-sm font-semibold text-white">
+                                {topMotif!.name} — showed up {topMotif!.count}{" "}
+                                time{topMotif!.count !== 1 ? "s" : ""}, avg −
+                                {(topMotif!.avgCpLoss / 100).toFixed(1)} pawns
+                              </p>
+                              <p className="mt-0.5 text-xs text-slate-500">
+                                A recurring habit in your games. Train it out
+                                before it costs you more.
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                document
+                                  .getElementById("section-positional")
+                                  ?.scrollIntoView({
+                                    behavior: "smooth",
+                                    block: "start",
+                                  });
+                                setPatternsOpen(true);
+                              }}
+                              className="shrink-0 rounded-xl bg-amber-500/15 px-4 py-2.5 text-xs font-bold text-amber-300 transition-all hover:bg-amber-500/25 hover:text-amber-200 border border-amber-500/20"
+                            >
+                              Fix it →
+                            </button>
+                          </div>
+                        );
+                      })()}
 
                     {/* Positional DNA strip */}
                     {positionalMotifs.length > 0 && (

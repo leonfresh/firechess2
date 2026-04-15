@@ -340,7 +340,7 @@ export default function OpeningSparring() {
   const boardTheme = useBoardTheme();
   const showCoords = useShowCoordinates();
   const customPieces = useCustomPieces();
-  const { ref: containerRef, size: boardSize } = useBoardSize(520);
+  const { ref: containerRef, size: boardSize } = useBoardSize(460);
 
   /* ------------------------------------------------------------------ */
   /*  Fetch & play opponent move                                           */
@@ -639,6 +639,11 @@ export default function OpeningSparring() {
         // Not critical
       }
 
+      // Update eval bar immediately after user's move (white-relative)
+      evalPosition(newFen, 10).then((cp) => {
+        if (cp !== null) setEvalCp(cp);
+      });
+
       setMoveHistory((prev) => [
         ...prev,
         {
@@ -811,14 +816,14 @@ export default function OpeningSparring() {
   }
   if (selectedSquare) {
     customSquareStyles[selectedSquare] = {
-      background: "rgba(97, 170, 240, 0.55)",
+      background: "rgba(20, 85, 255, 0.45)",
     };
   }
   for (const sq of legalMoves) {
     customSquareStyles[sq] = {
       background: chessRef.current.get(sq as any)
-        ? "radial-gradient(circle, rgba(255,0,0,0.35) 60%, transparent 65%)"
-        : "radial-gradient(circle, rgba(0,0,0,0.2) 30%, transparent 35%)",
+        ? "radial-gradient(circle, transparent 52%, rgba(0,0,0,0.45) 52%)"
+        : "radial-gradient(circle, rgba(0,0,0,0.35) 25%, transparent 26%)",
     };
   }
 
@@ -826,12 +831,8 @@ export default function OpeningSparring() {
   /*  Eval bar value (white-relative)                                    */
   /* ------------------------------------------------------------------ */
 
-  // evalCp is stored from sideToMove's perspective — convert to white-relative
-  const evalBarCp = (() => {
-    if (evalCp === null) return 0;
-    const turn = chessRef.current.turn();
-    return turn === "w" ? evalCp : -evalCp;
-  })();
+  // evalCp is already stored as white-relative (evalPosition() converts it)
+  const evalBarCp = evalCp ?? 0;
 
   // Chess.com-style round badge on the destination square via customSquareRenderer
   const customSquareRenderer = useMemo(() => {

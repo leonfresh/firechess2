@@ -29,8 +29,7 @@ export function useBoardSize(fallback = 400, opts?: { evalBar?: boolean }) {
     const update = () => {
       const cs = getComputedStyle(el);
       const px =
-        parseFloat(cs.paddingLeft || "0") +
-        parseFloat(cs.paddingRight || "0");
+        parseFloat(cs.paddingLeft || "0") + parseFloat(cs.paddingRight || "0");
       // Content width inside padding
       const contentWidth = el.clientWidth - px;
       // Subtract eval-bar (24px) + gap (gap-2 = 8px on mobile, gap-3 = 12px sm+)
@@ -43,8 +42,9 @@ export function useBoardSize(fallback = 400, opts?: { evalBar?: boolean }) {
       const vh = window.visualViewport?.height ?? window.innerHeight;
       // Board should be at most 88% of viewport width (leave side padding)
       const maxByWidth = vw * 0.88;
-      // On narrow/short viewports, also cap by height to leave room for UI
-      const maxByHeight = vw < 1024 ? Math.max(260, vh - 250) : Infinity;
+      // Cap by height on ALL screen sizes — subtract enough for navbar + surrounding UI
+      // (navbar ~56px + board chrome above/below ~230px = ~286px; use 280 for a clean number)
+      const maxByHeight = Math.max(260, vh - 280);
       const maxSize = Math.min(maxByWidth, maxByHeight, fallback);
 
       setSize(Math.max(260, Math.min(available, maxSize)));
