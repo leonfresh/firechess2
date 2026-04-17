@@ -9,6 +9,7 @@ import { useSession } from "@/components/session-provider";
 import { LATEST_VERSION } from "@/lib/constants";
 import { useCoinBalance } from "@/lib/use-coins";
 import { useAvatarFrame } from "@/lib/use-coins";
+import { CoinShop } from "@/components/coin-shop";
 
 export function Navbar() {
   const pathname = usePathname();
@@ -18,6 +19,7 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [profileOpen, setProfileOpen] = useState(false);
+  const [coinShopOpen, setCoinShopOpen] = useState(false);
 
   const toggleSection = (key: string) =>
     setOpenSections((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -492,14 +494,15 @@ export function Navbar() {
             ) : (
               <>
                 {coinBalance > 0 && (
-                  <Link
-                    href="/dashboard"
+                  <button
+                    type="button"
+                    onClick={() => setCoinShopOpen(true)}
                     className="flex items-center gap-1 rounded-lg bg-amber-500/10 px-2.5 py-1.5 text-xs font-bold text-amber-400 transition-colors hover:bg-amber-500/15"
-                    title="Your coin balance"
+                    title="Open coin shop"
                   >
                     <span>🪙</span>
                     {coinBalance.toLocaleString()}
-                  </Link>
+                  </button>
                 )}
                 <Link
                   href="/dashboard"
@@ -598,6 +601,26 @@ export function Navbar() {
                                 : "Free"}
                           </span>
                         </div>
+                        <Link
+                          href="/profile"
+                          onClick={() => setProfileOpen(false)}
+                          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                        >
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                            />
+                          </svg>
+                          Chess Profile
+                        </Link>
                         <Link
                           href="/account"
                           onClick={() => setProfileOpen(false)}
@@ -1171,6 +1194,40 @@ export function Navbar() {
             </div>
           </div>
         </>
+      )}
+
+      {/* ── Coin Shop Modal ── */}
+      {coinShopOpen && (
+        <div
+          className="fixed inset-0 z-[200] flex items-start justify-center overflow-y-auto bg-black/70 backdrop-blur-sm pt-16 pb-8 px-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setCoinShopOpen(false);
+          }}
+        >
+          <div className="relative w-full max-w-3xl rounded-2xl border border-white/[0.08] bg-[#0d0a06] shadow-2xl">
+            <button
+              type="button"
+              onClick={() => setCoinShopOpen(false)}
+              className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+              aria-label="Close coin shop"
+            >
+              <svg
+                className="h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+            <CoinShop />
+          </div>
+        </div>
       )}
     </>
   );

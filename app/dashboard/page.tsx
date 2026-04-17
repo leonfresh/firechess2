@@ -25,7 +25,6 @@ import { DailyChallenge } from "@/components/daily-challenge";
 import { ProgressHighlights } from "@/components/progress-highlights";
 import { RepertoirePanel } from "@/components/opening-repertoire";
 import { PercentileWidget } from "@/components/percentile-widget";
-import { CoinShop } from "@/components/coin-shop";
 import { DailyLoginRewards } from "@/components/daily-login-rewards";
 import { DailyTipWidget } from "@/components/daily-tip";
 import { OnboardingTour } from "@/components/onboarding-tour";
@@ -941,15 +940,6 @@ export default function DashboardPage() {
                 </>
               )}
             </div>
-          </div>
-
-          {/* ─── Coin Shop ─── */}
-          <div
-            data-tour="coin-shop"
-            className="animate-fade-in-up"
-            style={{ animationDelay: "0.38s" }}
-          >
-            <CoinShop />
           </div>
 
           {/* ─── Key Metrics Comparison (latest vs previous) ─── */}
