@@ -596,7 +596,6 @@ const LINKED_USER_KEY = "fc-profile-linked-user";
 export default function ProfilePage() {
   const { loading: sessionLoading, authenticated, user } = useSession();
   const searchParams = useSearchParams();
-  const router = useRouter();
   const [reports, setReports] = useState<SavedReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [linkedUser, setLinkedUser] = useState<string>("");
