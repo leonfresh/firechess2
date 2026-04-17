@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "Chess Profile — FireChess",
@@ -12,5 +13,5 @@ export default function ProfileLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return children;
+  return <Suspense>{children}</Suspense>;
 }

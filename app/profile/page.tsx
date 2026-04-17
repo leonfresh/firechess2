@@ -9,6 +9,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Chess } from "chess.js";
 import { useSession } from "@/components/session-provider";
@@ -594,11 +595,14 @@ const LINKED_USER_KEY = "fc-profile-linked-user";
 
 export default function ProfilePage() {
   const { loading: sessionLoading, authenticated, user } = useSession();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [reports, setReports] = useState<SavedReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [linkedUser, setLinkedUser] = useState<string>("");
   const [showPlan, setShowPlan] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
 
   useEffect(() => {
     if (sessionLoading) return;
@@ -628,6 +632,12 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (playerOptions.length === 0) return;
+    // ?user=username__source takes highest priority (sharable links)
+    const paramUser = searchParams.get("user");
+    if (paramUser && playerOptions.some((p) => `${p.username}__${p.source}` === paramUser)) {
+      setLinkedUser(paramUser);
+      return;
+    }
     const saved =
       typeof window !== "undefined"
         ? localStorage.getItem(LINKED_USER_KEY)
@@ -649,12 +659,20 @@ export default function ProfilePage() {
     } else {
       setLinkedUser(`${playerOptions[0].username}__${playerOptions[0].source}`);
     }
-  }, [playerOptions, user?.name]);
+  }, [playerOptions, user?.name, searchParams]);
 
   useEffect(() => {
     if (linkedUser && typeof window !== "undefined")
       localStorage.setItem(LINKED_USER_KEY, linkedUser);
   }, [linkedUser]);
+
+  function shareProfile() {
+    const url = `${window.location.origin}/profile?user=${encodeURIComponent(linkedUser)}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2500);
+    });
+  }
 
   const profileName = linkedUser.split("__")[0] ?? "";
   const profileSource = linkedUser.split("__")[1] ?? "";
@@ -804,11 +822,31 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto max-w-3xl space-y-8 px-4 py-10">
       {/* ── Header ── */}
-      <div>
-        <h1 className="text-2xl font-bold text-white">Chess Profile</h1>
-        <p className="mt-1 text-sm text-slate-400">
-          Your linked identity, weakness breakdown and coach-ready lesson plan.
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Chess Profile</h1>
+          <p className="mt-1 text-sm text-slate-400">
+            Your linked identity, weakness breakdown and coach-ready lesson plan.
+          </p>
+        </div>
+        {linkedUser && (
+          <button
+            type="button"
+            onClick={shareProfile}
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-2 text-xs font-medium text-slate-400 transition hover:border-white/20 hover:text-white"
+          >
+            {copiedLink ? (
+              <><span className="text-emerald-400">✓</span> Copied!</>
+            ) : (
+              <>
+                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+                Share profile
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       {/* ── Player Picker ── */}
