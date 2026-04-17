@@ -4,17 +4,45 @@
  * /profile — Chess Profile & Lesson Plan Generator
  *
  * Lets the user link a chess username (picked from their scanned games),
- * view aggregated weakness data, and auto-generate a shareable lesson plan
- * for coaches or self-study.
+ * view aggregated weakness data, and auto-generate a detailed lesson plan
+ * with real positions from their games.
  */
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { Chess } from "chess.js";
 import { useSession } from "@/components/session-provider";
+import { Chessboard } from "@/components/chessboard-compat";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                               */
 /* ------------------------------------------------------------------ */
+
+type Leak = {
+  fenBefore: string;
+  fenAfter?: string;
+  userMove: string;
+  bestMove: string | null;
+  cpLoss: number;
+  sideToMove?: "white" | "black";
+  userColor?: "white" | "black";
+  openingName?: string;
+  reachCount?: number;
+  moveCount?: number;
+  tags?: string[];
+};
+
+type MissedTactic = {
+  fenBefore: string;
+  userMove: string;
+  bestMove: string;
+  cpLoss: number;
+  moveNumber?: number;
+  sideToMove?: "white" | "black";
+  userColor?: "white" | "black";
+  tags?: string[];
+  motif?: string;
+};
 
 type SavedReport = {
   id: string;
@@ -28,253 +56,37 @@ type SavedReport = {
   severeLeakRate: number | null;
   leakCount: number | null;
   tacticsCount: number | null;
-  leaks: { tags?: string[] }[];
-  missedTactics: { motif?: string }[];
+  leaks: Leak[];
+  missedTactics: MissedTactic[];
   reportMeta: { topTag?: string; vibeTitle?: string } | null;
   createdAt: string;
 };
 
 type PlayerOption = { username: string; source: "lichess" | "chesscom" };
 
-type LessonTask = {
-  week: number;
-  category: string;
-  title: string;
-  description: string;
-  link: string;
+type PositionExample = {
+  fenBefore: string;
+  userMove: string;
+  bestMove: string | null;
+  cpLoss: number;
+  openingName?: string;
+  moveNumber: number;
+  userColor: "white" | "black";
+  tags: string[];
+};
+
+type WeaknessGroup = {
+  tag: string;
   icon: string;
+  count: number;
+  coachNote: string;
+  drillLink: string;
+  drillLabel: string;
+  examples: PositionExample[];
 };
 
 /* ------------------------------------------------------------------ */
-/*  Lesson plan generator                                               */
-/* ------------------------------------------------------------------ */
-
-const TAG_TO_TRAINING: Record<
-  string,
-  { link: string; icon: string; label: string }
-> = {
-  Opening: {
-    link: "/openings",
-    icon: "🌲",
-    label: "Opening repertoire drills",
-  },
-  "Center Control": {
-    link: "/openings",
-    icon: "♟️",
-    label: "Center control openings",
-  },
-  Endgame: { link: "/endgames", icon: "👑", label: "Endgame technique" },
-  "Pawn Endgame": {
-    link: "/endgames",
-    icon: "♙",
-    label: "Pawn endgame technique",
-  },
-  "Rook Endgame": {
-    link: "/endgames",
-    icon: "♖",
-    label: "Rook endgame mastery",
-  },
-  "King Safety": { link: "/tactics", icon: "🛡️", label: "King safety drills" },
-  "Missed Check": {
-    link: "/tactics",
-    icon: "⚔️",
-    label: "Tactical pattern recognition",
-  },
-  "Missed Capture": {
-    link: "/tactics",
-    icon: "🎯",
-    label: "Tactical awareness",
-  },
-  "Tactical Miss": { link: "/tactics", icon: "🔍", label: "Tactic puzzles" },
-  "Major Blunder": {
-    link: "/tactics",
-    icon: "💥",
-    label: "Blunder prevention",
-  },
-  Crushing: { link: "/tactics", icon: "🚨", label: "Critical moment training" },
-  "Repeated Habit": {
-    link: "/train",
-    icon: "🔁",
-    label: "Break bad habits — drill mode",
-  },
-  Middlegame: { link: "/train", icon: "⚡", label: "Middlegame strategy" },
-  Fork: { link: "/tactics", icon: "🍴", label: "Fork pattern drills" },
-  Pin: { link: "/tactics", icon: "📌", label: "Pin & skewer tactics" },
-  Skewer: { link: "/tactics", icon: "📌", label: "Pin & skewer tactics" },
-};
-
-const DEFAULT_TRAINING = {
-  link: "/train",
-  icon: "📚",
-  label: "General training",
-};
-
-function generateLessonPlan(reports: SavedReport[]): LessonTask[] {
-  // Count tag frequency across all reports
-  const tagCounts = new Map<string, number>();
-  for (const r of reports) {
-    for (const leak of r.leaks ?? []) {
-      for (const tag of leak.tags ?? []) {
-        tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
-      }
-    }
-    for (const t of r.missedTactics ?? []) {
-      if (t.motif) tagCounts.set(t.motif, (tagCounts.get(t.motif) ?? 0) + 1);
-    }
-  }
-
-  // Sort by frequency, skip severity tags - keep actionable ones
-  const skipTags = new Set([
-    "Opening",
-    "Middlegame",
-    "Endgame",
-    "Repeated Habit",
-  ]);
-  const phaseTags = ["Opening", "Middlegame", "Endgame"];
-
-  const topActionable = [...tagCounts.entries()]
-    .filter(([tag]) => !skipTags.has(tag) && TAG_TO_TRAINING[tag])
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 6);
-
-  const topPhases = phaseTags
-    .filter((tag) => tagCounts.has(tag))
-    .sort((a, b) => (tagCounts.get(b) ?? 0) - (tagCounts.get(a) ?? 0))
-    .slice(0, 2);
-
-  const tasks: LessonTask[] = [];
-  let week = 1;
-
-  // Week 1: Top 2 critical issues
-  for (const [tag] of topActionable.slice(0, 2)) {
-    const training = TAG_TO_TRAINING[tag] ?? DEFAULT_TRAINING;
-    const count = tagCounts.get(tag) ?? 0;
-    tasks.push({
-      week,
-      category: tag,
-      title: training.label,
-      description: `Appeared ${count} time${count !== 1 ? "s" : ""} in your games. High priority.`,
-      link: training.link,
-      icon: training.icon,
-    });
-  }
-
-  // Add a phase focus if Opening or Endgame is a weakness
-  if (topPhases[0] === "Opening" || topPhases[0] === "Endgame") {
-    const tr = TAG_TO_TRAINING[topPhases[0]];
-    const count = tagCounts.get(topPhases[0]) ?? 0;
-    tasks.push({
-      week,
-      category: topPhases[0],
-      title: tr.label,
-      description: `${count} mistake${count !== 1 ? "s" : ""} in the ${topPhases[0].toLowerCase()} phase.`,
-      link: tr.link,
-      icon: tr.icon,
-    });
-  }
-
-  week = 2;
-
-  // Week 2: Next 2 issues
-  for (const [tag] of topActionable.slice(2, 4)) {
-    const training = TAG_TO_TRAINING[tag] ?? DEFAULT_TRAINING;
-    const count = tagCounts.get(tag) ?? 0;
-    tasks.push({
-      week,
-      category: tag,
-      title: training.label,
-      description: `Appeared ${count} time${count !== 1 ? "s" : ""} in your games.`,
-      link: training.link,
-      icon: training.icon,
-    });
-  }
-
-  // Add general review
-  tasks.push({
-    week: 2,
-    category: "Review",
-    title: "Game review — analyze your recent games",
-    description: "Re-scan your latest games to track improvement from Week 1.",
-    link: "/",
-    icon: "🔍",
-  });
-
-  week = 3;
-
-  // Week 3: Remaining issues + habit formation
-  for (const [tag] of topActionable.slice(4, 6)) {
-    const training = TAG_TO_TRAINING[tag] ?? DEFAULT_TRAINING;
-    const count = tagCounts.get(tag) ?? 0;
-    tasks.push({
-      week,
-      category: tag,
-      title: training.label,
-      description: `Appeared ${count} time${count !== 1 ? "s" : ""} in your games.`,
-      link: training.link,
-      icon: training.icon,
-    });
-  }
-
-  if (tagCounts.has("Repeated Habit")) {
-    const count = tagCounts.get("Repeated Habit") ?? 0;
-    tasks.push({
-      week: 3,
-      category: "Habit",
-      title: "Break recurring mistakes — drill mode",
-      description: `${count} repeated pattern${count !== 1 ? "s" : ""} detected. Drill until they stop.`,
-      link: "/train",
-      icon: "🔁",
-    });
-  }
-
-  tasks.push({
-    week: 4,
-    category: "Mixed",
-    title: "Full scan — measure improvement",
-    description:
-      "Do a fresh full scan to see how your accuracy and rating estimate have improved.",
-    link: "/",
-    icon: "📈",
-  });
-
-  tasks.push({
-    week: 4,
-    category: "Daily",
-    title: "Daily challenge habit",
-    description:
-      "Solve the daily puzzle every day this week to build pattern recognition.",
-    link: "/daily",
-    icon: "📅",
-  });
-
-  // If very few tags, fill with fallback recommendations
-  if (tasks.length < 4) {
-    tasks.push(
-      {
-        week: 1,
-        category: "Tactics",
-        title: "Tactic puzzles",
-        description: "Build pattern recognition with daily puzzles.",
-        link: "/tactics",
-        icon: "⚔️",
-      },
-      {
-        week: 1,
-        category: "Endgames",
-        title: "Endgame fundamentals",
-        description:
-          "Master king + pawn endgames — the most common endgame type.",
-        link: "/endgames",
-        icon: "👑",
-      },
-    );
-  }
-
-  return tasks;
-}
-
-/* ------------------------------------------------------------------ */
-/*  Sub-components                                                      */
+/*  Helpers                                                             */
 /* ------------------------------------------------------------------ */
 
 const SOURCE_LABEL: Record<
@@ -284,6 +96,233 @@ const SOURCE_LABEL: Record<
   chesscom: { name: "Chess.com", color: "text-emerald-400", flag: "♟️" },
   lichess: { name: "Lichess", color: "text-slate-300", flag: "🔥" },
 };
+
+/** Convert UCI move to SAN; fall back to UCI on failure */
+function uciToSan(fen: string, uci: string): string {
+  try {
+    const chess = new Chess(fen);
+    const move = chess.move({
+      from: uci.slice(0, 2),
+      to: uci.slice(2, 4),
+      promotion: uci[4],
+    });
+    return move?.san ?? uci;
+  } catch {
+    return uci;
+  }
+}
+
+/** Parse full move number from FEN (field 6) */
+function moveNumberFromFen(fen: string): number {
+  return parseInt(fen.split(" ")[5] ?? "1", 10);
+}
+
+const TAG_CONFIG: Record<
+  string,
+  { icon: string; coachNote: string; drillLink: string; drillLabel: string }
+> = {
+  "Tactical Miss": {
+    icon: "⚔️",
+    coachNote:
+      "You missed tactical shots in these positions. The pattern to study: scan for checks, captures, and threats every move before your reply. These are forcing sequences where the correct move wins material or delivers a decisive advantage.",
+    drillLink: "/tactics",
+    drillLabel: "Tactic puzzles",
+  },
+  "Major Blunder": {
+    icon: "💥",
+    coachNote:
+      "These are severe blunders — positions where a single move lost significant material or gave away a winning position. The common thread: moving without checking if your piece is hanging or if the opponent has a forcing reply.",
+    drillLink: "/tactics",
+    drillLabel: "Blunder prevention drills",
+  },
+  Crushing: {
+    icon: "🚨",
+    coachNote:
+      "Critical moment failures. In each of these positions there was a game-changing move available. Develop the habit of pausing when the position feels sharp — these moments require extra calculation time.",
+    drillLink: "/tactics",
+    drillLabel: "Critical moment training",
+  },
+  "Missed Check": {
+    icon: "✓",
+    coachNote:
+      "You played a passive move when you had a check available. Checks are forcing — they limit the opponent's options and often lead directly to material gain or mate. Always ask: 'Can I check?' before playing your move.",
+    drillLink: "/tactics",
+    drillLabel: "Forcing move drills",
+  },
+  "Missed Capture": {
+    icon: "🎯",
+    coachNote:
+      "Free material was left on the board. These are positions where you missed a capture that wins a piece or pawn with no compensation for the opponent. Always scan for hanging pieces before deciding on a plan.",
+    drillLink: "/tactics",
+    drillLabel: "Tactical awareness",
+  },
+  "King Safety": {
+    icon: "🛡️",
+    coachNote:
+      "Your king was left exposed in these positions. The best move prioritized king safety — whether by castling, blocking threats, or activating a defensive piece. King safety errors often snowball quickly.",
+    drillLink: "/tactics",
+    drillLabel: "King safety drills",
+  },
+  "Repeated Habit": {
+    icon: "🔁",
+    coachNote:
+      "These mistakes appear repeatedly across multiple games — that makes them habits, not one-off errors. Habits require deliberate repetition to break. Drill the correct response until the right move feels automatic.",
+    drillLink: "/train",
+    drillLabel: "Break habits — drill mode",
+  },
+  "Pawn Endgame": {
+    icon: "♙",
+    coachNote:
+      "Pawn endgames are won and lost by the distance of a tempo. Key principles: opposition (your king blocks the opponent's king), passed pawn advancement, and knowing when a pawn endgame is won vs drawn.",
+    drillLink: "/endgames",
+    drillLabel: "Pawn endgame drills",
+  },
+  "Rook Endgame": {
+    icon: "♖",
+    coachNote:
+      "Rook endgames are the most common endgame type and the hardest to convert. The Lucena and Philidor positions are must-know. Rooks belong behind passed pawns — yours or the opponent's.",
+    drillLink: "/endgames",
+    drillLabel: "Rook endgame drills",
+  },
+  Endgame: {
+    icon: "👑",
+    coachNote:
+      "Your accuracy drops in the endgame phase. The endgame is where calculated technique matters most — memorized patterns, king activation, and pawn structure all become critical when material is reduced.",
+    drillLink: "/endgames",
+    drillLabel: "Endgame technique",
+  },
+  "Center Control": {
+    icon: "♟️",
+    coachNote:
+      "The center was given up unnecessarily in these positions. Central pawns limit the opponent's piece mobility and create space for your pieces. When the best move targets the center and you don't play it, you give up the initiative.",
+    drillLink: "/openings",
+    drillLabel: "Opening center control",
+  },
+  Opening: {
+    icon: "🌲",
+    coachNote:
+      "Mistakes in the opening phase. These errors usually come from deviating into unfamiliar territory or playing automatic moves. Build a small, solid opening repertoire and understand the ideas behind each line rather than memorizing moves.",
+    drillLink: "/openings",
+    drillLabel: "Opening repertoire",
+  },
+  Fork: {
+    icon: "🍴",
+    coachNote:
+      "Knight forks and pawn forks were missed repeatedly. A fork attacks two pieces simultaneously. The classic knight fork pattern: a knight on the 5th rank creates fork threats against king, queen, and rooks. Always check knight outpost squares.",
+    drillLink: "/tactics",
+    drillLabel: "Fork pattern drills",
+  },
+  Pin: {
+    icon: "📌",
+    coachNote:
+      "Pins and skewers were missed in your games. A pin immobilizes a piece because moving it would expose a more valuable piece behind it. Recognize when your opponent's piece is aligned with a more valuable piece on a rank, file, or diagonal.",
+    drillLink: "/tactics",
+    drillLabel: "Pin & skewer tactics",
+  },
+  Skewer: {
+    icon: "📌",
+    coachNote:
+      "Skewers — attacks on a high-value piece that force it to move, exposing a less valuable piece behind it. A skewer is like a reverse pin. Bishops and rooks on long diagonals and open files create skewer threats frequently.",
+    drillLink: "/tactics",
+    drillLabel: "Pin & skewer tactics",
+  },
+};
+
+const DEFAULT_TAG_CONFIG = {
+  icon: "📚",
+  coachNote:
+    "Study this recurring pattern to improve your game. Practice the correct responses until they become automatic.",
+  drillLink: "/train",
+  drillLabel: "Training drills",
+};
+
+/* ------------------------------------------------------------------ */
+/*  Weakness group builder                                              */
+/* ------------------------------------------------------------------ */
+
+function buildWeaknessGroups(reports: SavedReport[]): WeaknessGroup[] {
+  const tagPositions = new Map<string, PositionExample[]>();
+  const tagRawCounts = new Map<string, number>();
+
+  for (const r of reports) {
+    for (const leak of r.leaks ?? []) {
+      for (const tag of leak.tags ?? []) {
+        tagRawCounts.set(tag, (tagRawCounts.get(tag) ?? 0) + 1);
+        if (!tagPositions.has(tag)) tagPositions.set(tag, []);
+        const arr = tagPositions.get(tag)!;
+        if (arr.length < 3) {
+          arr.push({
+            fenBefore: leak.fenBefore,
+            userMove: leak.userMove,
+            bestMove: leak.bestMove,
+            cpLoss: leak.cpLoss,
+            openingName: leak.openingName,
+            moveNumber: moveNumberFromFen(leak.fenBefore),
+            userColor: leak.userColor ?? "white",
+            tags: leak.tags ?? [],
+          });
+        }
+      }
+    }
+    for (const tactic of r.missedTactics ?? []) {
+      const tags = tactic.tags?.length
+        ? tactic.tags
+        : tactic.motif
+          ? [tactic.motif]
+          : ["Tactical Miss"];
+      for (const tag of tags) {
+        tagRawCounts.set(tag, (tagRawCounts.get(tag) ?? 0) + 1);
+        if (!tagPositions.has(tag)) tagPositions.set(tag, []);
+        const arr = tagPositions.get(tag)!;
+        if (arr.length < 3) {
+          arr.push({
+            fenBefore: tactic.fenBefore,
+            userMove: tactic.userMove,
+            bestMove: tactic.bestMove,
+            cpLoss: tactic.cpLoss,
+            openingName: undefined,
+            moveNumber:
+              tactic.moveNumber ?? moveNumberFromFen(tactic.fenBefore),
+            userColor: tactic.userColor ?? "white",
+            tags,
+          });
+        }
+      }
+    }
+  }
+
+  const skipPhase = new Set(["Middlegame"]);
+  const groups: WeaknessGroup[] = [];
+  const usedFens = new Set<string>();
+
+  const sorted = [...tagPositions.entries()].sort(
+    (a, b) => (tagRawCounts.get(b[0]) ?? 0) - (tagRawCounts.get(a[0]) ?? 0),
+  );
+
+  for (const [tag, examples] of sorted) {
+    if (groups.length >= 5) break;
+    if (skipPhase.has(tag)) continue;
+    const cfg = TAG_CONFIG[tag] ?? DEFAULT_TAG_CONFIG;
+    const deduped = examples.filter((e) => !usedFens.has(e.fenBefore));
+    if (deduped.length === 0) continue;
+    deduped.forEach((e) => usedFens.add(e.fenBefore));
+    groups.push({
+      tag,
+      icon: cfg.icon,
+      count: tagRawCounts.get(tag) ?? examples.length,
+      coachNote: cfg.coachNote,
+      drillLink: cfg.drillLink,
+      drillLabel: cfg.drillLabel,
+      examples: deduped.slice(0, 3),
+    });
+  }
+
+  return groups;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Sub-components                                                      */
+/* ------------------------------------------------------------------ */
 
 function SourceBadge({ source }: { source: string }) {
   const s = SOURCE_LABEL[source] ?? {
@@ -326,13 +365,212 @@ function WeaknessBar({
   );
 }
 
-const WEEK_COLORS = [
-  "border-orange-500/30 bg-orange-500/5",
-  "border-blue-500/30 bg-blue-500/5",
-  "border-violet-500/30 bg-violet-500/5",
-  "border-emerald-500/30 bg-emerald-500/5",
+function cpBadgeStyle(cpLoss: number): { label: string; color: string } {
+  if (cpLoss >= 300)
+    return { label: "Blunder", color: "bg-red-500/20 text-red-400" };
+  if (cpLoss >= 100)
+    return { label: "Mistake", color: "bg-amber-500/20 text-amber-400" };
+  return { label: "Inaccuracy", color: "bg-slate-500/20 text-slate-400" };
+}
+
+function PositionCard({ example }: { example: PositionExample }) {
+  const userSan = useMemo(
+    () => uciToSan(example.fenBefore, example.userMove),
+    [example.fenBefore, example.userMove],
+  );
+  const bestSan = useMemo(
+    () =>
+      example.bestMove ? uciToSan(example.fenBefore, example.bestMove) : null,
+    [example.fenBefore, example.bestMove],
+  );
+  const badge = cpBadgeStyle(example.cpLoss);
+
+  // Highlight squares: red for played move, green for best move
+  const customSquareStyles: Record<string, React.CSSProperties> = {};
+  if (example.userMove.length >= 4) {
+    const from = example.userMove.slice(0, 2);
+    const to = example.userMove.slice(2, 4);
+    customSquareStyles[from] = { backgroundColor: "rgba(239,68,68,0.35)" };
+    customSquareStyles[to] = { backgroundColor: "rgba(239,68,68,0.5)" };
+  }
+  if (example.bestMove && example.bestMove.length >= 4) {
+    const bto = example.bestMove.slice(2, 4);
+    // Only highlight best dest if different from played move dest
+    if (bto !== example.userMove.slice(2, 4)) {
+      customSquareStyles[bto] = { backgroundColor: "rgba(34,197,94,0.45)" };
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">
+      <div className="relative">
+        <Chessboard
+          position={example.fenBefore}
+          boardOrientation={example.userColor}
+          boardWidth={160}
+          arePiecesDraggable={false}
+          customSquareStyles={customSquareStyles}
+          animationDuration={0}
+        />
+        <span
+          className={`absolute right-2 top-2 rounded px-1.5 py-0.5 text-[10px] font-bold ${badge.color}`}
+        >
+          {badge.label}
+        </span>
+      </div>
+      <div className="p-3 space-y-1.5">
+        <div className="text-[10px] text-slate-500 uppercase tracking-wide">
+          Move {example.moveNumber} ·{" "}
+          {example.userColor === "white" ? "White" : "Black"}
+        </div>
+        <div className="flex items-center gap-1.5 text-xs">
+          <span className="text-red-400 font-mono font-semibold">
+            {userSan}
+          </span>
+          <span className="text-slate-600 text-[10px]">
+            −{example.cpLoss}cp
+          </span>
+        </div>
+        {bestSan && (
+          <div className="flex items-center gap-1 text-xs">
+            <span className="text-slate-500 text-[10px]">Best:</span>
+            <span className="text-emerald-400 font-mono font-semibold">
+              {bestSan}
+            </span>
+          </div>
+        )}
+        {example.openingName && (
+          <div
+            className="text-[10px] text-slate-600 truncate"
+            title={example.openingName}
+          >
+            {example.openingName}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function WeaknessGroupCard({
+  group,
+  index,
+}: {
+  group: WeaknessGroup;
+  index: number;
+}) {
+  const [expanded, setExpanded] = useState(index === 0);
+
+  return (
+    <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setExpanded((p) => !p)}
+        className="w-full flex items-center gap-3 p-4 text-left hover:bg-white/[0.02] transition-colors"
+      >
+        <span className="text-xl">{group.icon}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-white text-sm">
+              {group.tag}
+            </span>
+            <span className="rounded-full bg-red-500/20 px-2 py-0.5 text-[10px] font-bold text-red-400">
+              {group.count}×
+            </span>
+          </div>
+          <p className="mt-0.5 text-xs text-slate-500 line-clamp-1">
+            {group.coachNote.split(".")[0]}.
+          </p>
+        </div>
+        <svg
+          className={`h-4 w-4 flex-shrink-0 text-slate-500 transition-transform ${expanded ? "rotate-180" : ""}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </button>
+
+      {expanded && (
+        <div className="border-t border-white/[0.06] p-4 space-y-4">
+          <p className="text-sm text-slate-300 leading-relaxed">
+            {group.coachNote}
+          </p>
+
+          {group.examples.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                From Your Games
+              </h4>
+              <div className="grid gap-3 grid-cols-2 sm:grid-cols-3">
+                {group.examples.map((ex, i) => (
+                  <PositionCard key={i} example={ex} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          <Link
+            href={group.drillLink}
+            className="inline-flex items-center gap-2 rounded-lg bg-orange-500/10 border border-orange-500/20 px-4 py-2 text-sm font-medium text-orange-400 transition hover:bg-orange-500/20"
+          >
+            {group.icon} {group.drillLabel}
+            <svg
+              className="h-3.5 w-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9 5l7 7-7 7"
+              />
+            </svg>
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const WEEK_SCHEDULE = [
+  {
+    week: 1,
+    label: "Week 1 — Attack your worst pattern",
+    color: "border-red-500/30 bg-red-500/5",
+    description:
+      "Focus entirely on your #1 weakness above. Do 20 puzzles from that category daily. Review the position examples before each session — recognize the pattern before it happens in a game.",
+  },
+  {
+    week: 2,
+    label: "Week 2 — Second weakness + game review",
+    color: "border-amber-500/30 bg-amber-500/5",
+    description:
+      "Shift focus to your #2 pattern. Also re-scan your last 10 games to see if Week 1 improvements are showing in your accuracy score.",
+  },
+  {
+    week: 3,
+    label: "Week 3 — Mixed drilling",
+    color: "border-blue-500/30 bg-blue-500/5",
+    description:
+      "Alternate between all identified weaknesses. Test yourself: play 5 games and count how often you reproduce each mistake. The goal is zero.",
+  },
+  {
+    week: 4,
+    label: "Week 4 — Full scan + maintenance",
+    color: "border-emerald-500/30 bg-emerald-500/5",
+    description:
+      "Do a full FireChess scan to measure improvement. Accuracy and rating estimate should shift. Maintain gains with 10 daily puzzles going forward.",
+  },
 ];
-const WEEK_LABELS = ["Week 1", "Week 2", "Week 3", "Week 4"];
 
 /* ------------------------------------------------------------------ */
 /*  Main page                                                           */
@@ -344,11 +582,10 @@ export default function ProfilePage() {
   const { loading: sessionLoading, authenticated, user } = useSession();
   const [reports, setReports] = useState<SavedReport[]>([]);
   const [loading, setLoading] = useState(true);
-  const [linkedUser, setLinkedUser] = useState<string>(""); // "username__source"
+  const [linkedUser, setLinkedUser] = useState<string>("");
   const [showPlan, setShowPlan] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Load reports
   useEffect(() => {
     if (sessionLoading) return;
     if (!authenticated) {
@@ -362,7 +599,6 @@ export default function ProfilePage() {
       .finally(() => setLoading(false));
   }, [authenticated, sessionLoading]);
 
-  // Unique player options
   const playerOptions = useMemo<PlayerOption[]>(() => {
     const seen = new Map<string, PlayerOption>();
     for (const r of reports) {
@@ -376,7 +612,6 @@ export default function ProfilePage() {
     return Array.from(seen.values());
   }, [reports]);
 
-  // Load/persist linked user
   useEffect(() => {
     if (playerOptions.length === 0) return;
     const saved =
@@ -392,26 +627,24 @@ export default function ProfilePage() {
       const match = playerOptions.find(
         (p) => p.username.toLowerCase() === user.name!.toLowerCase(),
       );
-      if (match) setLinkedUser(`${match.username}__${match.source}`);
-      else
-        setLinkedUser(
-          `${playerOptions[0].username}__${playerOptions[0].source}`,
-        );
+      setLinkedUser(
+        match
+          ? `${match.username}__${match.source}`
+          : `${playerOptions[0].username}__${playerOptions[0].source}`,
+      );
     } else {
       setLinkedUser(`${playerOptions[0].username}__${playerOptions[0].source}`);
     }
   }, [playerOptions, user?.name]);
 
   useEffect(() => {
-    if (linkedUser && typeof window !== "undefined") {
+    if (linkedUser && typeof window !== "undefined")
       localStorage.setItem(LINKED_USER_KEY, linkedUser);
-    }
   }, [linkedUser]);
 
   const profileName = linkedUser.split("__")[0] ?? "";
   const profileSource = linkedUser.split("__")[1] ?? "";
 
-  // Reports for the linked user
   const profileReports = useMemo(
     () =>
       reports.filter((r) => `${r.chessUsername}__${r.source}` === linkedUser),
@@ -420,14 +653,12 @@ export default function ProfilePage() {
 
   const latestReport = profileReports[0] ?? null;
 
-  // Aggregate tag counts
   const tagCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const r of profileReports) {
       for (const leak of r.leaks ?? []) {
-        for (const tag of leak.tags ?? []) {
+        for (const tag of leak.tags ?? [])
           counts.set(tag, (counts.get(tag) ?? 0) + 1);
-        }
       }
     }
     return counts;
@@ -443,20 +674,10 @@ export default function ProfilePage() {
 
   const maxTagCount = topTags[0]?.[1] ?? 1;
 
-  // Lesson plan
-  const lessonPlan = useMemo(
-    () => (showPlan ? generateLessonPlan(profileReports) : []),
+  const weaknessGroups = useMemo(
+    () => (showPlan ? buildWeaknessGroups(profileReports) : []),
     [showPlan, profileReports],
   );
-
-  const planByWeek = useMemo(() => {
-    const weeks: Record<number, LessonTask[]> = {};
-    for (const task of lessonPlan) {
-      if (!weeks[task.week]) weeks[task.week] = [];
-      weeks[task.week].push(task);
-    }
-    return weeks;
-  }, [lessonPlan]);
 
   const profileCompleteness = useMemo(() => {
     let score = 0;
@@ -475,25 +696,45 @@ export default function ProfilePage() {
   }, [linkedUser, profileReports]);
 
   function copyPlan() {
+    const sourceName = SOURCE_LABEL[profileSource]?.name ?? profileSource;
     const lines = [
-      `Chess Training Plan — ${profileName} on ${SOURCE_LABEL[profileSource]?.name ?? profileSource}`,
+      `Chess Training Plan — ${profileName} (${sourceName})`,
+      "Generated by FireChess — firechess.app",
+      "",
+      `Based on ${profileReports.reduce((s, r) => s + r.gamesAnalyzed, 0)} games across ${profileReports.length} scan(s).`,
       "",
     ];
-    for (const [w, tasks] of Object.entries(planByWeek)) {
-      lines.push(`${WEEK_LABELS[Number(w) - 1]}:`);
-      for (const t of tasks) {
-        lines.push(`  ${t.icon} ${t.title} — ${t.description}`);
+    for (const group of weaknessGroups) {
+      lines.push(`── ${group.tag} (${group.count}×) ──`);
+      lines.push(group.coachNote);
+      if (group.examples.length > 0) {
+        lines.push("Example positions from your games:");
+        for (const ex of group.examples) {
+          const userSan = uciToSan(ex.fenBefore, ex.userMove);
+          const bestSan = ex.bestMove
+            ? uciToSan(ex.fenBefore, ex.bestMove)
+            : null;
+          lines.push(
+            `  • Move ${ex.moveNumber}: played ${userSan} (−${ex.cpLoss}cp)${bestSan ? `, best was ${bestSan}` : ""}${ex.openingName ? ` — ${ex.openingName}` : ""}`,
+          );
+        }
       }
-      lines.push("");
+      lines.push(
+        `Drill: ${group.drillLabel} — firechess.app${group.drillLink}`,
+        "",
+      );
     }
-    lines.push("Generated by FireChess — firechess.app");
+    lines.push("── 4-Week Schedule ──");
+    for (const w of WEEK_SCHEDULE) {
+      lines.push(`${w.label}: ${w.description}`);
+    }
     navigator.clipboard.writeText(lines.join("\n")).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     });
   }
 
-  /* ── Render ── */
+  /* ── Empty states ── */
 
   if (!sessionLoading && !authenticated) {
     return (
@@ -507,7 +748,7 @@ export default function ProfilePage() {
         </div>
         <Link
           href="/auth/signin"
-          className="rounded-xl bg-gradient-to-r from-orange-500 to-red-600 px-6 py-2.5 text-sm font-semibold text-white shadow-glow-sm transition hover:opacity-90"
+          className="rounded-xl bg-gradient-to-r from-orange-500 to-red-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
         >
           Sign in
         </Link>
@@ -552,7 +793,7 @@ export default function ProfilePage() {
       <div>
         <h1 className="text-2xl font-bold text-white">Chess Profile</h1>
         <p className="mt-1 text-sm text-slate-400">
-          Your linked chess identity and auto-generated training plan.
+          Your linked identity, weakness breakdown and coach-ready lesson plan.
         </p>
       </div>
 
@@ -563,7 +804,6 @@ export default function ProfilePage() {
           Select which scanned username represents you. Lesson plans are
           generated for this profile.
         </p>
-
         <div className="grid gap-3 sm:grid-cols-2">
           {playerOptions.map((p) => {
             const key = `${p.username}__${p.source}`;
@@ -637,11 +877,7 @@ export default function ProfilePage() {
           </div>
           <div className="h-2 w-full rounded-full bg-white/[0.06]">
             <div
-              className={`h-2 rounded-full transition-all duration-700 ${
-                profileCompleteness.score >= 100
-                  ? "bg-emerald-500"
-                  : "bg-gradient-to-r from-orange-500 to-amber-400"
-              }`}
+              className={`h-2 rounded-full transition-all duration-700 ${profileCompleteness.score >= 100 ? "bg-emerald-500" : "bg-gradient-to-r from-orange-500 to-amber-400"}`}
               style={{ width: `${profileCompleteness.score}%` }}
             />
           </div>
@@ -691,13 +927,13 @@ export default function ProfilePage() {
           </div>
           {profileCompleteness.score < 100 && (
             <p className="text-xs text-slate-500">
-              Complete all scans to unlock the full lesson plan generator.
+              Complete all scan types for a fuller lesson plan.
             </p>
           )}
         </div>
       )}
 
-      {/* ── stats summary ── */}
+      {/* ── Stats summary ── */}
       {latestReport && (
         <div className="glass-card p-6 space-y-5">
           <div className="flex items-center justify-between">
@@ -709,7 +945,6 @@ export default function ProfilePage() {
               {profileReports.length !== 1 ? "s" : ""}
             </span>
           </div>
-
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             {[
               {
@@ -755,7 +990,6 @@ export default function ProfilePage() {
               </div>
             ))}
           </div>
-
           {topTags.length > 0 && (
             <div className="space-y-3">
               <h3 className="text-sm font-medium text-slate-300">
@@ -782,126 +1016,136 @@ export default function ProfilePage() {
           <div>
             <h2 className="text-base font-semibold text-white">Lesson Plan</h2>
             <p className="mt-1 text-sm text-slate-400">
-              Auto-generated from your weaknesses. Share this with your coach.
+              Coach-style breakdown of your weaknesses with positions from your
+              actual games.
             </p>
           </div>
-          {!showPlan ? (
-            <button
-              type="button"
-              onClick={() => setShowPlan(true)}
-              disabled={profileReports.length === 0}
-              className="flex-shrink-0 rounded-xl bg-gradient-to-r from-orange-500 to-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Generate Plan
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={copyPlan}
-              className="flex-shrink-0 flex items-center gap-1.5 rounded-xl border border-white/[0.12] bg-white/[0.04] px-4 py-2 text-sm font-medium text-slate-300 transition hover:border-white/[0.2] hover:text-white"
-            >
-              {copied ? (
-                <>
-                  <svg
-                    className="h-4 w-4 text-emerald-400"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                    />
-                  </svg>
-                  Copy for coach
-                </>
-              )}
-            </button>
-          )}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {showPlan && weaknessGroups.length > 0 && (
+              <button
+                type="button"
+                onClick={copyPlan}
+                className="flex items-center gap-1.5 rounded-xl border border-white/[0.12] bg-white/[0.04] px-3 py-2 text-sm font-medium text-slate-300 transition hover:border-white/[0.2] hover:text-white"
+              >
+                {copied ? (
+                  <>
+                    <svg
+                      className="h-4 w-4 text-emerald-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                      />
+                    </svg>
+                    Copy for coach
+                  </>
+                )}
+              </button>
+            )}
+            {!showPlan && (
+              <button
+                type="button"
+                onClick={() => setShowPlan(true)}
+                disabled={profileReports.length === 0}
+                className="rounded-xl bg-gradient-to-r from-orange-500 to-red-600 px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Generate Plan
+              </button>
+            )}
+          </div>
         </div>
 
-        {showPlan && Object.entries(planByWeek).length > 0 && (
-          <div className="space-y-4">
-            {Object.entries(planByWeek).map(([w, tasks]) => {
-              const weekIdx = Number(w) - 1;
-              return (
-                <div
-                  key={w}
-                  className={`rounded-xl border p-4 space-y-3 ${WEEK_COLORS[weekIdx] ?? WEEK_COLORS[0]}`}
-                >
-                  <h3 className="text-sm font-bold text-white">
-                    {WEEK_LABELS[weekIdx] ?? `Week ${w}`}
+        {showPlan && (
+          <>
+            {weaknessGroups.length === 0 ? (
+              <p className="text-sm text-slate-500">
+                Not enough data yet. Scan more games to generate a full plan.
+              </p>
+            ) : (
+              <div className="space-y-6">
+                {/* Weakness breakdown with positions */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    Your Weaknesses
                   </h3>
                   <div className="space-y-2">
-                    {tasks.map((task, i) => (
-                      <Link
-                        key={i}
-                        href={task.link}
-                        className="flex items-start gap-3 rounded-lg bg-black/20 p-3 text-sm transition hover:bg-black/30"
-                      >
-                        <span className="text-base leading-none mt-0.5">
-                          {task.icon}
-                        </span>
-                        <div>
-                          <div className="font-medium text-white">
-                            {task.title}
-                          </div>
-                          <div className="text-xs text-slate-400 mt-0.5">
-                            {task.description}
-                          </div>
-                        </div>
-                        <svg
-                          className="ml-auto h-4 w-4 flex-shrink-0 text-slate-600 mt-0.5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M9 5l7 7-7 7"
-                          />
-                        </svg>
-                      </Link>
+                    {weaknessGroups.map((group, i) => (
+                      <WeaknessGroupCard
+                        key={group.tag}
+                        group={group}
+                        index={i}
+                      />
                     ))}
                   </div>
                 </div>
-              );
-            })}
 
-            <p className="text-xs text-slate-600 pt-1">
-              Plan based on{" "}
-              {profileReports.reduce((s, r) => s + (r.leakCount ?? 0), 0)}{" "}
-              mistakes across{" "}
-              {profileReports.reduce((s, r) => s + r.gamesAnalyzed, 0)} games.
-            </p>
-          </div>
-        )}
+                {/* 4-week schedule */}
+                <div className="space-y-3">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                    4-Week Training Schedule
+                  </h3>
+                  <div className="space-y-2">
+                    {WEEK_SCHEDULE.map((w) => (
+                      <div
+                        key={w.week}
+                        className={`rounded-xl border p-4 ${w.color}`}
+                      >
+                        <div className="font-semibold text-white text-sm">
+                          {w.label}
+                        </div>
+                        <p className="mt-1 text-xs text-slate-400">
+                          {w.description}
+                        </p>
+                        {w.week <= weaknessGroups.length && (
+                          <Link
+                            href={
+                              weaknessGroups[w.week - 1]?.drillLink ?? "/train"
+                            }
+                            className="mt-2 inline-flex items-center gap-1 text-xs text-orange-400 hover:underline"
+                          >
+                            {weaknessGroups[w.week - 1]?.icon} Start:{" "}
+                            {weaknessGroups[w.week - 1]?.drillLabel ??
+                              "training"}{" "}
+                            →
+                          </Link>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
-        {showPlan && Object.entries(planByWeek).length === 0 && (
-          <p className="text-sm text-slate-500">
-            Not enough data yet. Scan more games to generate a full plan.
-          </p>
+                <p className="text-xs text-slate-600">
+                  Plan based on{" "}
+                  {profileReports.reduce((s, r) => s + (r.leakCount ?? 0), 0)}{" "}
+                  mistakes across{" "}
+                  {profileReports.reduce((s, r) => s + r.gamesAnalyzed, 0)}{" "}
+                  games.
+                </p>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
