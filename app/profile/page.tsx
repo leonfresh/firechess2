@@ -241,10 +241,23 @@ const DEFAULT_TAG_CONFIG = {
 /* ------------------------------------------------------------------ */
 
 function buildWeaknessGroups(reports: SavedReport[]): WeaknessGroup[] {
+  // Use only the latest report per scan mode so stale data from old scans
+  // doesn't inflate counts or show positions the user may have fixed.
+  const latestPerMode = new Map<string, SavedReport>();
+  for (const r of reports) {
+    const key = r.scanMode ?? "unknown";
+    const existing = latestPerMode.get(key);
+    if (!existing || new Date(r.createdAt) > new Date(existing.createdAt)) {
+      latestPerMode.set(key, r);
+    }
+  }
+  // "both" mode covers openings + tactics and is already stored in the map.
+  const freshReports = [...latestPerMode.values()];
+
   const tagPositions = new Map<string, PositionExample[]>();
   const tagRawCounts = new Map<string, number>();
 
-  for (const r of reports) {
+  for (const r of freshReports) {
     for (const leak of r.leaks ?? []) {
       for (const tag of leak.tags ?? []) {
         tagRawCounts.set(tag, (tagRawCounts.get(tag) ?? 0) + 1);
