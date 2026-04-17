@@ -385,20 +385,21 @@ function PositionCard({ example }: { example: PositionExample }) {
   );
   const badge = cpBadgeStyle(example.cpLoss);
 
-  // Highlight squares: red for played move, green for best move
-  const customSquareStyles: Record<string, React.CSSProperties> = {};
+  // Red arrow for the played (bad) move, green arrow for the best move
+  const customArrows: [string, string, string][] = [];
   if (example.userMove.length >= 4) {
-    const from = example.userMove.slice(0, 2);
-    const to = example.userMove.slice(2, 4);
-    customSquareStyles[from] = { backgroundColor: "rgba(239,68,68,0.35)" };
-    customSquareStyles[to] = { backgroundColor: "rgba(239,68,68,0.5)" };
+    customArrows.push([
+      example.userMove.slice(0, 2),
+      example.userMove.slice(2, 4),
+      "rgba(239,68,68,0.85)",
+    ]);
   }
   if (example.bestMove && example.bestMove.length >= 4) {
-    const bto = example.bestMove.slice(2, 4);
-    // Only highlight best dest if different from played move dest
-    if (bto !== example.userMove.slice(2, 4)) {
-      customSquareStyles[bto] = { backgroundColor: "rgba(34,197,94,0.45)" };
-    }
+    customArrows.push([
+      example.bestMove.slice(0, 2),
+      example.bestMove.slice(2, 4),
+      "rgba(34,197,94,0.85)",
+    ]);
   }
 
   return (
@@ -409,7 +410,7 @@ function PositionCard({ example }: { example: PositionExample }) {
           boardOrientation={example.userColor}
           boardWidth={160}
           arePiecesDraggable={false}
-          customSquareStyles={customSquareStyles}
+          customArrows={customArrows}
           animationDuration={0}
         />
         <span

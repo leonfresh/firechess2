@@ -460,6 +460,7 @@ export default function HomePage() {
 
   /* ── Fetch latest saved report leaks for personalized hero board ── */
   const [heroLeaks, setHeroLeaks] = useState<RepeatedOpeningLeak[]>([]);
+  const [savedScanModes, setSavedScanModes] = useState<Set<string>>(new Set());
   useEffect(() => {
     if (!authenticated) return;
     let cancelled = false;
@@ -468,9 +469,18 @@ export default function HomePage() {
         const res = await fetch("/api/reports");
         if (!res.ok) return;
         const json = await res.json();
-        const latest = json.reports?.[0];
-        if (!cancelled && latest?.leaks?.length) {
-          setHeroLeaks(latest.leaks as RepeatedOpeningLeak[]);
+        const allReports: Array<{ scanMode?: string; leaks?: unknown[] }> =
+          json.reports ?? [];
+        if (!cancelled) {
+          const modes = new Set<string>();
+          for (const r of allReports) {
+            if (r.scanMode) modes.add(r.scanMode);
+          }
+          setSavedScanModes(modes);
+          const latest = allReports[0];
+          if (latest?.leaks?.length) {
+            setHeroLeaks(latest.leaks as RepeatedOpeningLeak[]);
+          }
         }
       } catch {
         /* silent */
@@ -1760,6 +1770,104 @@ export default function HomePage() {
                   );
                 })}
               </div>
+
+              {/* ── Profile completion widget ── */}
+              {authenticated &&
+                (() => {
+                  const hasSaved = (mode: string) =>
+                    savedScanModes.has(mode) ||
+                    savedScanModes.has("both") ||
+                    (mode === "openings" && savedScanModes.has("both")) ||
+                    (mode === "tactics" && savedScanModes.has("both"));
+                  const steps = [
+                    { label: "Opening scan saved", done: hasSaved("openings") },
+                    { label: "Tactics scan saved", done: hasSaved("tactics") },
+                    { label: "Endgame scan saved", done: hasSaved("endgames") },
+                  ];
+                  const doneCount = steps.filter((s) => s.done).length;
+                  // +1 for "account linked" which is always true if authenticated
+                  const totalScore = Math.round(((doneCount + 1) / 4) * 100);
+                  return (
+                    <Link
+                      href="/profile"
+                      className="mt-5 block rounded-xl border border-orange-500/20 bg-orange-500/[0.05] px-4 py-3.5 transition hover:bg-orange-500/[0.09]"
+                    >
+                      <div className="flex items-center justify-between mb-2.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">🎓</span>
+                          <span className="text-sm font-semibold text-white">
+                            Chess Profile
+                          </span>
+                          {doneCount === 3 ? (
+                            <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-400">
+                              Complete
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-orange-500/20 px-2 py-0.5 text-[10px] font-bold text-orange-400">
+                              {totalScore}% complete
+                            </span>
+                          )}
+                        </div>
+                        <svg
+                          className="h-3.5 w-3.5 text-slate-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </div>
+                      {/* Progress bar */}
+                      <div className="mb-3 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                        <div
+                          className={`h-full rounded-full transition-all duration-700 ${
+                            doneCount === 3
+                              ? "bg-emerald-500"
+                              : "bg-gradient-to-r from-orange-500 to-amber-400"
+                          }`}
+                          style={{ width: `${totalScore}%` }}
+                        />
+                      </div>
+                      {/* Steps */}
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                        <div className="flex items-center gap-1.5 text-xs">
+                          <span className="text-emerald-400">✓</span>
+                          <span className="text-slate-300">Account linked</span>
+                        </div>
+                        {steps.map((s) => (
+                          <div
+                            key={s.label}
+                            className="flex items-center gap-1.5 text-xs"
+                          >
+                            {s.done ? (
+                              <span className="text-emerald-400">✓</span>
+                            ) : (
+                              <span className="text-slate-600">○</span>
+                            )}
+                            <span
+                              className={
+                                s.done ? "text-slate-300" : "text-slate-500"
+                              }
+                            >
+                              {s.label}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      {doneCount < 3 && (
+                        <p className="mt-2.5 text-[11px] text-slate-500">
+                          Complete all scans to unlock your personalized lesson
+                          plan →
+                        </p>
+                      )}
+                    </Link>
+                  );
+                })()}
             </div>
           )}
 
