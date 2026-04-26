@@ -122,7 +122,7 @@ export const BOARD_THEMES: BoardTheme[] = [
  */
 
 const LICHESS_PIECE_CDN =
-  "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece";
+  "https://cdn.jsdelivr.net/gh/lichess-org/lila@master/public/piece";
 
 export type PieceTheme = {
   id: string;

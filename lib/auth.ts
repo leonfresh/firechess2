@@ -73,61 +73,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const isLoggedIn = !!session?.user;
       const path = nextUrl.pathname;
 
-      // Public routes — always allowed
-      const publicPaths = [
-        "/",
-        "/pricing",
-        "/auth",
-        "/dashboard",
-        "/account",
-        "/blog",
-        "/about",
-        "/changelog",
-        "/feedback",
-        "/admin",
-        "/terms",
-        "/privacy",
-        "/support",
-        "/train",
-        "/roast",
-        "/analyze",
-        "/openings",
-        "/my-openings",
-        "/dungeon",
-        "/guess",
-        "/leaderboard",
-        "/shop",
-        "/chaos",
-        "/escape",
-        "/coaches",
-        "/youtubers",
-        "/coach",
-        "/tactics",
-        "/endgames",
-        "/positions",
-        "/time-controls",
-        "/mistakes",
-        "/improve",
-        "/games",
-        "/players",
-        "/glossary",
-        "/learn",
+      // Only a small set of routes are truly private (require login).
+      // Everything else is public so Googlebot can crawl all landing pages
+      // and new routes are public by default without needing to be listed here.
+      const privatePaths = [
+        "/account", // personal settings / billing
+        "/admin", // admin panel
       ];
-      const isPublic =
-        publicPaths.some((p) => path === p || path.startsWith(p + "/")) ||
-        path.startsWith("/api/auth") ||
-        path.startsWith("/api/webhooks") ||
-        path.startsWith("/api/chaos") ||
-        path.startsWith("/api/me") ||
-        path.startsWith("/api/reports") ||
-        path.startsWith("/api/puzzles") ||
-        path.startsWith("/api/roast") ||
-        path.startsWith("/api/explorer") ||
-        path.startsWith("/api/feedback");
 
-      if (isPublic) return true;
+      const isPrivate = privatePaths.some(
+        (p) => path === p || path.startsWith(p + "/"),
+      );
 
-      // Protected routes require login
+      if (!isPrivate) return true;
+
+      // Private routes require login
       return isLoggedIn;
     },
     async jwt({ token, user, trigger }) {
