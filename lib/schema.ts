@@ -791,6 +791,7 @@ export const communityPosts = pgTable(
       .$type<
         | "analysis"
         | "manual"
+        | "community-thread"
         | "famous-game"
         | "opening-guide"
         | "endgame-scan"

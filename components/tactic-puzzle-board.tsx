@@ -334,7 +334,7 @@ export function TacticPuzzleBoard({
       if (!expected) return false;
 
       const legalMoves = chess.moves({
-        square: from as Parameters<Chess["moves"]>[0],
+        square: from as Parameters<Chess["moves"]>[0]["square"],
         verbose: true,
       }) as Array<{
         from: string;
@@ -452,7 +452,7 @@ export function TacticPuzzleBoard({
       const chess = new Chess(displayFen);
       return (
         chess.moves({
-          square: selected as Parameters<Chess["moves"]>[0],
+          square: selected as Parameters<Chess["moves"]>[0]["square"],
           verbose: true,
         }) as Array<{ to: string }>
       ).map((move) => move.to);

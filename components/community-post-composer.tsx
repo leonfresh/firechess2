@@ -580,7 +580,7 @@ export function CommunityPostComposer({
   const nextMoveIdRef = useRef(initialBoardState.moves.at(-1)?.id ?? 0);
   const analysisVersionRef = useRef(0);
   const boardSectionRef = useRef<HTMLElement | null>(null);
-  const puzzleBuilderSectionRef = useRef<HTMLElement | null>(null);
+  const puzzleBuilderSectionRef = useRef<HTMLDivElement | null>(null);
   const loadSectionRef = useRef<HTMLElement | null>(null);
   const publishSectionRef = useRef<HTMLElement | null>(null);
   const autoFocusedPuzzleBuilderRef = useRef(false);

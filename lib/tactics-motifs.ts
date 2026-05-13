@@ -91,7 +91,7 @@ export const TACTIC_MOTIFS: TacticMotif[] = [
         fen: "r1b1k2r/ppp2ppp/2np4/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 0 1",
         orientation: "white",
         puzzle: "Bb5",
-        continuation: "a6,Bxc6+,dxc6",
+        continuation: "a6,Bxc6+,bxc6",
         caption:
           "Absolute pin in the Ruy Lopez — the knight cannot legally move!",
       },
@@ -381,18 +381,20 @@ export const TACTIC_MOTIFS: TacticMotif[] = [
       "White can play Rd8+ and if Black blocks with a back-rank piece, Rxd8 is checkmate. If Black's pawns were on f7-g7-h7 with no escape, Rd8# would be immediate. This is the purest illustration of back-rank vulnerability — Black needs luft (h6 or g6) urgently.",
     examples: [
       {
-        fen: "6k1/5ppp/8/8/8/8/5PPP/R5K1 w - - 0 1",
+        fen: "6k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1",
         orientation: "white",
-        puzzle: "Ra8+",
-        continuation: "Rf8,Rxf8#",
-        caption: "Black's back rank is vulnerable — deliver the killing blow!",
+        puzzle: "Rd8#",
+        continuation: "",
+        caption:
+          "Black has no luft, no interposition, and no escape squares. Finish the back-rank mate in one.",
       },
       {
         fen: "3r2k1/5ppp/8/8/8/8/5PPP/3R2K1 w - - 0 1",
         orientation: "white",
-        puzzle: "Rd8+",
-        continuation: "Rxd8,Rxd8#",
-        caption: "Offer the rook exchange to force a back-rank checkmate",
+        puzzle: "Rxd8#",
+        continuation: "",
+        caption:
+          "The back-rank defender is loose. Capture it and the king is mated immediately.",
       },
     ],
     related: ["deflection", "interference"],
@@ -446,23 +448,23 @@ export const TACTIC_MOTIFS: TacticMotif[] = [
     ],
     exampleFen: "6rk/6pp/8/8/8/8/6PP/6NK w - - 0 1",
     exampleDescription:
-      "White has a smothered mate in two: Nf7+ Rxf7?? Nh6#. Black's king on h8 is surrounded — g8 is occupied by its own rook (after Nf7+ forces Rxf7), g7 and h7 are blocked by pawns. The knight delivers checkmate on h6 to the trapped king. This is the essence of smothered mate.",
+      "In a pure smothered mate, the knight gives check while the king's own rook and pawns take away every escape square. Here the cornered black king has no luft, so a single knight jump is enough to finish the game.",
     examples: [
       {
-        fen: "6rk/6pp/8/8/8/8/6PP/6NK w - - 0 1",
+        fen: "6rk/6pp/7N/8/8/8/8/7K w - - 0 1",
         orientation: "white",
-        puzzle: "Nf7+",
-        continuation: "Rxf7,Nh6#",
+        puzzle: "Nf7#",
+        continuation: "",
         caption:
-          "Begin the smothered mate — the king is trapped by its own pieces!",
+          "The rook on g8 and pawns on g7-h7 smother Black's king. Find the mating knight jump.",
       },
       {
-        fen: "5rkr/6pp/8/8/8/8/6PP/5QNK w - - 0 1",
+        fen: "6kr/5Npp/8/8/8/8/8/6K1 w - - 0 1",
         orientation: "white",
-        puzzle: "Nf3+",
-        continuation: "Kg8,Nh4+,Kh8,Ng6+,hxg6,Qxf8#",
+        puzzle: "Nh6#",
+        continuation: "",
         caption:
-          "Weave the knight toward f7 to smother the king — find the first move",
+          "The king on g8 is boxed in by its own rook and pawns. Finish the classic smothered pattern in one.",
       },
     ],
     related: ["back-rank-mate", "deflection"],
@@ -523,7 +525,7 @@ export const TACTIC_MOTIFS: TacticMotif[] = [
         fen: "r1bq1rk1/ppp2ppp/2n5/3p4/2PP4/2N1BN2/PP3PPP/R2QK2R b KQkq - 0 1",
         orientation: "black",
         puzzle: "dxc4",
-        continuation: "Bxc4,Qb6+",
+        continuation: "",
         caption:
           "Black plays an in-between move instead of recapturing — find the zwischenzug!",
       },
@@ -531,7 +533,7 @@ export const TACTIC_MOTIFS: TacticMotif[] = [
         fen: "r3k2r/ppp2ppp/2n5/3q4/3P4/2N2N2/PPP2PPP/R2QK2R b KQkq - 0 1",
         orientation: "black",
         puzzle: "Qxd4",
-        continuation: "Nxd4,Qd1+,Ke2,Nxd4+",
+        continuation: "",
         caption:
           "Instead of retreating, find the zwischenzug that wins material",
       },
@@ -589,20 +591,12 @@ export const TACTIC_MOTIFS: TacticMotif[] = [
       "White can deflect Black's back-rank defender with Rd8+! If Rxd8, the rook is gone and White has won decisive material. Black's rook was overloaded — defending the back rank AND possibly other duties. Forcing it to capture defects the defensive structure.",
     examples: [
       {
-        fen: "6k1/5ppp/8/8/2r5/8/5PPP/5RK1 w - - 0 1",
-        orientation: "white",
-        puzzle: "Rxc4",
-        continuation: "Rxc4,Rf8#",
-        caption:
-          "Deflect the defender away from the back rank to force checkmate",
-      },
-      {
         fen: "3r2k1/5ppp/3q4/8/8/8/5PPP/3Q1RK1 w - - 0 1",
         orientation: "white",
-        puzzle: "Qd6",
-        continuation: "Qxd6,Rf8#",
+        puzzle: "Qxd6",
+        continuation: "",
         caption:
-          "Force the enemy queen away from its defensive duty — then deliver mate",
+          "Capture the key defender first — once that piece is deflected, the position collapses.",
       },
     ],
     related: ["back-rank-mate", "interference", "zwischenzug"],

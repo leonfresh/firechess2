@@ -165,7 +165,21 @@ export function Navbar() {
     },
   ];
 
-  const mobileSections = [
+  type MobileSectionLink = {
+    href: string;
+    label: string;
+    onClick?: () => void;
+    hasBadge?: boolean;
+  };
+
+  type MobileSection = {
+    key: string;
+    label: string;
+    isActive: boolean;
+    links: MobileSectionLink[];
+  };
+
+  const mobileSections: MobileSection[] = [
     {
       key: "analyze",
       label: "Analyze",

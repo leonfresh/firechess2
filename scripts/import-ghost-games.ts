@@ -165,10 +165,7 @@ function buildMovesArray(pgnMoves: string): GhostGameMove[] {
     .trim()
     .split(/\s+/)
     .filter(
-      (t) =>
-        t &&
-        !/^\d+\.+$/.test(t) &&
-        !/^(1-0|0-1|1\/2-1\/2|\*)$/.test(t),
+      (t) => t && !/^\d+\.+$/.test(t) && !/^(1-0|0-1|1\/2-1\/2|\*)$/.test(t),
     );
 
   const result: GhostGameMove[] = [];
@@ -404,64 +401,5 @@ async function main() {
 
 main().catch((err) => {
   console.error("Fatal error:", err);
-  process.exit(1);
-});
-
-main().catch((err) => {
-  console.error("Fatal error:", err);
-  process.exit(1);
-});
-          console.log(`  ✅ Updated (id: ${existing[0].id})`);
-        } else {
-          const [inserted] = await db
-            .insert(ghostGames)
-            .values({
-              whiteName: game.whiteName,
-              blackName: game.blackName,
-              whiteElo: game.whiteElo ?? undefined,
-              blackElo: game.blackElo ?? undefined,
-              tournament: game.tournament,
-              eventDate: game.eventDate,
-              result: game.result,
-              eco: game.eco ?? null,
-              openingName: game.openingName ?? null,
-              pgnMoves: game.pgnMoves,
-              moves,
-              playAs: game.playAs,
-              startPly,
-              endPly,
-              missionTitle: game.missionTitle,
-              missionContext: game.missionContext,
-              missionObjective: game.missionObjective,
-              difficulty: game.difficulty,
-              tags: game.tags,
-              featured: game.featured,
-              cookCandidates,
-              sourceUrl: game.sourceUrl ?? null,
-            })
-            .returning({ id: ghostGames.id });
-          console.log(`  ✅ Inserted (id: ${inserted.id})`);
-        }
-        dbDone = true;
-      } catch (dbErr) {
-        console.warn(
-          `  ⚠ DB error (attempt ${attempt + 1}):`,
-          (dbErr as Error).message?.slice(0, 120),
-        );
-        if (attempt === 3) {
-          console.error(`  ❌ Giving up on game ${i + 1} after 4 DB attempts`);
-        }
-      }
-    }
-
-    // Small pause between games
-    if (i < seed.length - 1) await sleep(500);
-  }
-
-  console.log("\n🎉 Import complete!\n");
-}
-
-main().catch((err) => {
-  console.error("Import failed:", err);
   process.exit(1);
 });

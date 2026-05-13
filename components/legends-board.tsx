@@ -145,10 +145,11 @@ type Phase = "briefing" | "timelapse" | "play" | "result";
 /* ────────────────────────────────────────────────── Component ──────── */
 
 export function LegendsBoard({ game }: { game: LegendGame }) {
-  const { boardStyle } = useBoardTheme();
+  const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const boardSize = useBoardSize(400, { evalBar: false });
+  const { ref: boardRef, size: boardSize } = useBoardSize(400, {
+    evalBar: false,
+  });
 
   const [phase, setPhase] = useState<Phase>("briefing");
 
@@ -321,14 +322,16 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
   /* ── Handle user's piece drop ─────────────────────────────────────── */
 
   const handleDrop = useCallback(
-    (sourceSquare: CbSquare, targetSquare: CbSquare, piece: string) => {
+    (sourceSquare: CbSquare, targetSquare: CbSquare, piece?: string) => {
       if (phase !== "play") return false;
       if (!isUserTurn(currentPly)) return false;
 
       const chess = new Chess(fen);
-      const promotion = piece.toLowerCase().includes("q")
-        ? undefined
-        : piece.slice(1).toLowerCase();
+      const promotion = piece
+        ? piece.toLowerCase().includes("q")
+          ? undefined
+          : piece.slice(1).toLowerCase()
+        : undefined;
 
       let moveResult: ReturnType<typeof chess.move> | null = null;
       try {
@@ -834,7 +837,7 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
     liveTotal > 0 ? Math.round((syncPoints / liveTotal) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col" ref={containerRef}>
+    <div className="min-h-screen bg-slate-950 flex flex-col">
       {/* Top bar */}
       <div className="border-b border-white/[0.06] bg-slate-900/80 backdrop-blur px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -876,7 +879,7 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
                 : game.whiteName}
           </div>
 
-          <div className="w-full max-w-[560px]">
+          <div ref={boardRef} className="w-full max-w-[560px]">
             <Chessboard
               id="legends-board"
               position={fen}
@@ -884,7 +887,12 @@ export function LegendsBoard({ game }: { game: LegendGame }) {
               onSquareClick={handleSquareClick}
               boardOrientation={isFlipped ? "black" : "white"}
               boardWidth={boardSize}
-              customBoardStyle={boardStyle}
+              customDarkSquareStyle={{
+                backgroundColor: boardTheme.darkSquare,
+              }}
+              customLightSquareStyle={{
+                backgroundColor: boardTheme.lightSquare,
+              }}
               customPieces={customPieces}
               customSquareStyles={customSquareStyles}
               arePiecesDraggable={phase === "play" && isUserTurn(currentPly)}
