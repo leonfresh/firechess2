@@ -220,7 +220,12 @@ export type MentalStats = {
 
 /* ── Time Management types ── */
 
-export type TimeVerdict = "justified" | "wasted" | "rushed" | "neutral";
+export type TimeVerdict =
+  | "justified"
+  | "wasted"
+  | "rushed"
+  | "efficient"
+  | "neutral";
 
 /** A single notable moment of time usage in a game */
 export type TimeMoment = {
@@ -268,6 +273,8 @@ export type TimeManagementReport = {
   timeScrambleCount: number;
   /** Number of moments where extra time was justified */
   justifiedThinks: number;
+  /** Number of moments where fast pattern recognition still produced a good move */
+  efficientMoves: number;
   /** Number of moments where time was wasted on simple positions */
   wastedThinks: number;
   /** Number of moments where user moved too fast in complex positions */

@@ -1,0 +1,2 @@
+export const MINIMAL_CREATOR_SAMPLE_FEN =
+  "r2q1rk1/pp2bppp/2n1pn2/2bp4/2P5/2NP1NP1/PP2PPBP/R1BQ1RK1 w - - 0 9";

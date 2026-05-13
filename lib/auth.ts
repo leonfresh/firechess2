@@ -17,6 +17,22 @@ import { subscriptions } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { isAdmin as checkIsAdmin } from "@/lib/admin";
 
+function resolveAuthSecret() {
+  const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+
+  if (secret) {
+    return secret;
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    return "firechess-dev-auth-secret-change-me";
+  }
+
+  throw new Error("AUTH_SECRET or NEXTAUTH_SECRET must be set in production.");
+}
+
+const authSecret = resolveAuthSecret();
+
 /** Custom Lichess OAuth2 provider — PKCE, no client secret. */
 function Lichess(): OAuthConfig<any> {
   return {
@@ -57,6 +73,7 @@ function Lichess(): OAuthConfig<any> {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db),
+  secret: authSecret,
   providers: [
     Google,
     Lichess,

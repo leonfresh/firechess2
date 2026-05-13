@@ -4,7 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "@/components/chessboard-compat";
 import { useBoardSize } from "@/lib/use-board-size";
-import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
+import {
+  useBoardTheme,
+  useShowCoordinates,
+  useCustomPieces,
+} from "@/lib/use-coins";
 import type { RepeatedOpeningLeak } from "@/lib/types";
 
 /* ── Mini eval bar (matches the real EvalBar look) ── */
@@ -12,7 +16,9 @@ function MiniEvalBar({ evalCp, height }: { evalCp: number; height: number }) {
   const whitePercent = Math.min(98, Math.max(2, 50 + evalCp / 14));
   const label =
     Math.abs(evalCp) >= 10000
-      ? evalCp > 0 ? "M" : "-M"
+      ? evalCp > 0
+        ? "M"
+        : "-M"
       : `${evalCp > 0 ? "+" : ""}${(evalCp / 100).toFixed(1)}`;
   return (
     <div
@@ -53,8 +59,8 @@ type DemoScenario = {
   playedSan: string;
   bestSan: string;
   badge: "Mistake" | "Sideline";
-  evalBefore: number;   // cp from white POV
-  evalAfter: number;    // cp from white POV
+  evalBefore: number; // cp from white POV
+  evalAfter: number; // cp from white POV
   cpLoss: number;
   reachCount: number;
   moveCount: number;
@@ -175,7 +181,11 @@ const SCENARIOS: DemoScenario[] = [
   },
 ];
 
-function moveToArrow(fen: string, move: string, color: string): [string, string, string?] | null {
+function moveToArrow(
+  fen: string,
+  move: string,
+  color: string,
+): [string, string, string?] | null {
   if (!move) return null;
   try {
     const chess = new Chess(fen);
@@ -184,7 +194,12 @@ function moveToArrow(fen: string, move: string, color: string): [string, string,
       const result = chess.move({
         from: move.slice(0, 2),
         to: move.slice(2, 4),
-        promotion: (move.slice(4, 5).toLowerCase() || undefined) as "q" | "r" | "b" | "n" | undefined,
+        promotion: (move.slice(4, 5).toLowerCase() || undefined) as
+          | "q"
+          | "r"
+          | "b"
+          | "n"
+          | undefined,
       });
       if (result?.from && result?.to) return [result.from, result.to, color];
     }
@@ -206,7 +221,12 @@ function toSan(fen: string, move: string | null): string | null {
       const result = chess.move({
         from: move.slice(0, 2),
         to: move.slice(2, 4),
-        promotion: (move.slice(4, 5).toLowerCase() || undefined) as "q" | "r" | "b" | "n" | undefined,
+        promotion: (move.slice(4, 5).toLowerCase() || undefined) as
+          | "q"
+          | "r"
+          | "b"
+          | "n"
+          | undefined,
       });
       return result?.san ?? null;
     }
@@ -229,14 +249,19 @@ function badgeColor(badge: DemoScenario["badge"]): string {
 /** Convert user report leaks into demo scenarios */
 function leaksToScenarios(leaks: RepeatedOpeningLeak[]): DemoScenario[] {
   // Pick the most interesting leaks — mix of mistakes and sidelines
-  const mistakes = leaks.filter((l) => !l.dbApproved && l.cpLoss >= 30).sort((a, b) => b.cpLoss - a.cpLoss);
-  const sidelines = leaks.filter((l) => l.dbApproved).sort((a, b) => b.reachCount - a.reachCount);
+  const mistakes = leaks
+    .filter((l) => !l.dbApproved && l.cpLoss >= 30)
+    .sort((a, b) => b.cpLoss - a.cpLoss);
+  const sidelines = leaks
+    .filter((l) => l.dbApproved)
+    .sort((a, b) => b.reachCount - a.reachCount);
 
   const picked: RepeatedOpeningLeak[] = [];
   // Alternate between mistakes and sidelines, up to 6 total
   const mMax = Math.min(mistakes.length, 4);
   const sMax = Math.min(sidelines.length, 3);
-  let mi = 0, si = 0;
+  let mi = 0,
+    si = 0;
   while (picked.length < 6 && (mi < mMax || si < sMax)) {
     if (mi < mMax) picked.push(mistakes[mi++]);
     if (picked.length < 6 && si < sMax) picked.push(sidelines[si++]);
@@ -271,8 +296,14 @@ function leaksToScenarios(leaks: RepeatedOpeningLeak[]): DemoScenario[] {
     .filter((s): s is DemoScenario => s !== null);
 }
 
-export function HeroDemoBoard({ paused, userLeaks }: { paused?: boolean; userLeaks?: RepeatedOpeningLeak[] }) {
-  const { ref: heroBoardRef, size: heroBoardSize } = useBoardSize(380);
+export function HeroDemoBoard({
+  paused,
+  userLeaks,
+}: {
+  paused?: boolean;
+  userLeaks?: RepeatedOpeningLeak[];
+}) {
+  const { ref: heroBoardRef, size: heroBoardSize } = useBoardSize(300);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
@@ -280,20 +311,28 @@ export function HeroDemoBoard({ paused, userLeaks }: { paused?: boolean; userLea
   const [autoplay, setAutoplay] = useState(true);
 
   const scenarios = useMemo(() => {
-    const base = (userLeaks?.length ? leaksToScenarios(userLeaks) : []).length > 0
-      ? leaksToScenarios(userLeaks!)
-      : SCENARIOS;
+    const base =
+      (userLeaks?.length ? leaksToScenarios(userLeaks) : []).length > 0
+        ? leaksToScenarios(userLeaks!)
+        : SCENARIOS;
     return base.map((s) => ({
       ...s,
       bestArrow: moveToArrow(s.fen, s.bestMove, "rgba(34,197,94,0.95)"),
       mistakeArrow: moveToArrow(s.fen, s.playedMove, "rgba(239,68,68,0.95)"),
-      dbArrow: s.dbPick ? moveToArrow(s.fen, s.dbPick.uci, "rgba(59,130,246,0.85)") : null,
+      dbArrow: s.dbPick
+        ? moveToArrow(s.fen, s.dbPick.uci, "rgba(59,130,246,0.85)")
+        : null,
     }));
   }, [userLeaks]);
 
-  const current = useMemo(() => scenarios[index % scenarios.length], [index, scenarios]);
+  const current = useMemo(
+    () => scenarios[index % scenarios.length],
+    [index, scenarios],
+  );
 
-  useEffect(() => { setIndex(0); }, [scenarios]);
+  useEffect(() => {
+    setIndex(0);
+  }, [scenarios]);
 
   useEffect(() => {
     if (!autoplay || paused) return;
@@ -303,31 +342,14 @@ export function HeroDemoBoard({ paused, userLeaks }: { paused?: boolean; userLea
     return () => window.clearInterval(interval);
   }, [autoplay, paused, scenarios.length]);
 
-  const goNext = () => { setAutoplay(false); setIndex((prev) => (prev + 1) % scenarios.length); };
-  const goPrev = () => { setAutoplay(false); setIndex((prev) => (prev - 1 + scenarios.length) % scenarios.length); };
-
-  const customSquare = useMemo(() => {
-    const targetSq = current.mistakeArrow?.[1];
-    const badge = current.badge;
-    const Sq = (props: any) => {
-      const square = props?.square as string | undefined;
-      const showBadge = square === targetSq;
-      return (
-        <div style={props?.style} className="relative h-full w-full">
-          {props?.children}
-          {showBadge && (
-            <span
-              className="pointer-events-none absolute right-0.5 top-0.5 z-[40] rounded px-1 py-[1px] text-[8px] font-bold text-white shadow"
-              style={{ backgroundColor: badgeColor(badge) }}
-            >
-              {badge}
-            </span>
-          )}
-        </div>
-      );
-    };
-    return Sq;
-  }, [current.mistakeArrow, current.badge]) as any;
+  const goNext = () => {
+    setAutoplay(false);
+    setIndex((prev) => (prev + 1) % scenarios.length);
+  };
+  const goPrev = () => {
+    setAutoplay(false);
+    setIndex((prev) => (prev - 1 + scenarios.length) % scenarios.length);
+  };
 
   // Custom highlighted squares for the bad move (red tint)
   const customSquareStyles = useMemo(() => {
@@ -349,146 +371,189 @@ export function HeroDemoBoard({ paused, userLeaks }: { paused?: boolean; userLea
   const boardOrientation = current.fen.includes(" b ") ? "black" : "white";
 
   return (
-    <div className="mx-auto w-full max-w-[740px]">
-      <article className="glass-card-hover group relative overflow-hidden">
-        <div className="grid gap-0 md:grid-cols-[1fr_280px]">
-
-          {/* Board side */}
-          <div ref={heroBoardRef} className="relative border-b border-white/[0.04] bg-white/[0.01] p-4 sm:p-5 md:border-b-0 md:border-r">
-            <div className="flex items-start gap-2.5">
-              <MiniEvalBar evalCp={current.evalBefore} height={heroBoardSize} />
-              <div className="relative overflow-hidden rounded-xl shadow-lg shadow-black/30">
-                <Chessboard
-                  id="hero-demo-board"
-                  position={current.fen}
-                  arePiecesDraggable={false}
-                  boardWidth={heroBoardSize}
-                  animationDuration={0}
-                  customSquare={customSquare}
-                  customSquareStyles={customSquareStyles}
-                  customArrows={arrows as any[]}
-                  boardOrientation={boardOrientation}
-                  customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-                  customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
-                  showBoardNotation={showCoords}
-                  customPieces={customPieces}
-                />
-              </div>
-            </div>
-
-            {/* Arrow legend */}
-            <div className="mt-3 flex items-center gap-4 pl-[30px]">
-              <span className="flex items-center gap-1.5 text-[10px] text-slate-400">
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-500" /> Best move
-              </span>
-              <span className="flex items-center gap-1.5 text-[10px] text-slate-400">
-                <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" /> Your move
-              </span>
-              {current.dbArrow && (
-                <span className="flex items-center gap-1.5 text-[10px] text-slate-400">
-                  <span className="inline-block h-2.5 w-2.5 rounded-full bg-blue-500" /> DB pick
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Info side */}
-          <div className="flex flex-col gap-3 p-4 sm:p-5">
-                {/* Header badge row */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className="shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-bold text-white shadow-sm"
-                    style={{ backgroundColor: badgeColor(current.badge) }}
-                  >
-                    {current.tag}
-                  </span>
-                  {current.repeatedHabit && (
-                    <span className="flex items-center gap-1 rounded-lg bg-fuchsia-500/15 px-2 py-1 text-[10px] font-bold text-fuchsia-400">
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
-                      Repeated
-                    </span>
-                  )}
-                  {current.dbApproved && (
-                    <span className="flex items-center gap-1 rounded-lg bg-indigo-500/15 px-2 py-1 text-[10px] font-bold text-indigo-400">
-                      📚 Known Line
-                    </span>
-                  )}
-                </div>
-
-                {/* KEY INSIGHT — big highlighted callout */}
-                <div className="rounded-xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-3.5">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Pattern Detected</p>
-                  <p className="mt-1.5 text-[13px] leading-snug text-slate-200">
-                    You reached this position{" "}
-                    <span className="rounded-md bg-amber-500/15 px-1.5 py-0.5 font-bold text-amber-400">{current.reachCount}×</span>{" "}
-                    and played{" "}
-                    <span className="rounded-md bg-red-500/15 px-1.5 py-0.5 font-mono font-bold text-red-400">{current.playedSan}</span>{" "}
-                    <span className="rounded-md bg-amber-500/15 px-1.5 py-0.5 font-bold text-amber-400">{current.moveCount}×</span>
-                  </p>
-                  <div className="mt-2.5 flex items-center gap-2">
-                    <span className="text-[10px] text-slate-500">Better:</span>
-                    <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 font-mono text-sm font-bold text-emerald-400">{current.bestSan}</span>
-                  </div>
-                </div>
-
-                {/* Eval comparison bar */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Eval Shift</span>
-                    <span className="rounded-md bg-red-500/10 px-2 py-0.5 text-xs font-bold text-red-400">{formatEval(current.cpLoss)} lost</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-center">
-                      <p className="text-[9px] font-medium uppercase tracking-wider text-slate-500">Before</p>
-                      <p className="text-base font-bold text-slate-200">{formatEval(current.evalBefore)}</p>
-                    </div>
-                    <div className="rounded-lg border border-red-500/20 bg-red-500/[0.04] px-3 py-2 text-center">
-                      <p className="text-[9px] font-medium uppercase tracking-wider text-slate-500">After</p>
-                      <p className="text-base font-bold text-red-400">{formatEval(current.evalAfter)}</p>
-                    </div>
-                  </div>
-                </div>
-
+    <article className="w-full overflow-hidden rounded-[1.7rem] border border-white/[0.08] bg-[linear-gradient(160deg,rgba(7,11,28,0.88),rgba(10,16,36,0.94)_48%,rgba(29,18,49,0.92))] shadow-[0_34px_90px_-52px_rgba(125,211,252,0.45)] backdrop-blur-sm">
+      {/* ── Board row ── */}
+      <div ref={heroBoardRef} className="relative p-2.5 sm:p-3">
+        <div className="flex items-start justify-center gap-1.5 lg:justify-start">
+          <MiniEvalBar evalCp={current.evalBefore} height={heroBoardSize} />
+          <div className="relative min-w-0 overflow-hidden rounded-[1.15rem] bg-[linear-gradient(180deg,rgba(7,11,28,0.96),rgba(30,43,90,0.88)_60%,rgba(236,72,153,0.26))] p-1 shadow-2xl shadow-black/40 ring-1 ring-white/[0.08]">
+            <Chessboard
+              id="hero-demo-board"
+              position={current.fen}
+              arePiecesDraggable={false}
+              boardWidth={heroBoardSize}
+              animationDuration={0}
+              customSquareStyles={customSquareStyles}
+              customArrows={arrows as any[]}
+              boardOrientation={boardOrientation}
+              customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
+              customLightSquareStyle={{
+                backgroundColor: boardTheme.lightSquare,
+              }}
+              showBoardNotation={showCoords}
+              customPieces={customPieces}
+            />
           </div>
         </div>
+      </div>
 
-        {/* Bottom controls bar */}
-        <div className="flex items-center gap-2.5 border-t border-white/[0.04] px-4 sm:px-5 py-3">
-              <button type="button" className="btn-secondary flex h-8 items-center gap-1 px-3 text-xs" onClick={goPrev}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-                Prev
-              </button>
-              <button type="button" className="btn-secondary flex h-8 items-center gap-1 px-3 text-xs" onClick={goNext}>
-                Next
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-              </button>
-              <button
-                type="button"
-                className={`flex h-8 items-center gap-1.5 rounded-xl border px-3 text-xs font-medium transition-all duration-200 ${
-                  autoplay
-                    ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300 shadow-glow-sm"
-                    : "border-white/[0.1] bg-white/[0.04] text-slate-400 hover:bg-white/[0.06]"
-                }`}
-                onClick={() => setAutoplay((prev) => !prev)}
+      {/* ── Info strip ── */}
+      <div className="border-t border-white/[0.05] px-2.5 py-2 sm:px-3">
+        {/* Badge row */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span
+            className="rounded-md px-1.5 py-0.5 text-[9px] font-bold text-white"
+            style={{ backgroundColor: badgeColor(current.badge) }}
+          >
+            {current.tag}
+          </span>
+          {current.repeatedHabit && (
+            <span className="flex items-center gap-1 rounded-md bg-fuchsia-500/15 px-1.5 py-0.5 text-[9px] font-bold text-fuchsia-400">
+              <svg
+                width="9"
+                height="9"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
               >
-                <span className={`h-1.5 w-1.5 rounded-full ${autoplay ? "animate-pulse bg-emerald-400" : "bg-slate-500"}`} />
-                {autoplay ? "Auto" : "Paused"}
-              </button>
-              {/* Dots indicator */}
-              <div className="ml-auto flex items-center gap-1.5">
-                {scenarios.map((_, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => { setAutoplay(false); setIndex(i); }}
-                    className={`h-2 rounded-full transition-all duration-300 ${
-                      i === index % scenarios.length ? "w-5 bg-emerald-400" : "w-2 bg-white/10 hover:bg-white/20"
-                    }`}
-                  />
-                ))}
-              </div>
+                <path d="M17 1l4 4-4 4" />
+                <path d="M3 11V9a4 4 0 014-4h14" />
+                <path d="M7 23l-4-4 4-4" />
+                <path d="M21 13v2a4 4 0 01-4 4H3" />
+              </svg>
+              Repeated
+            </span>
+          )}
+          {current.dbApproved && (
+            <span className="rounded-md bg-indigo-500/15 px-1.5 py-0.5 text-[9px] font-bold text-indigo-400">
+              📚 Known Line
+            </span>
+          )}
+          {/* Eval delta pushed right */}
+          <span className="ml-auto rounded-md bg-red-500/10 px-1.5 py-0.5 text-[9px] font-bold text-red-400 tabular-nums">
+            {formatEval(current.cpLoss)} lost
+          </span>
         </div>
-      </article>
-    </div>
+
+        {/* Pattern line */}
+        <p className="mt-1.5 text-[10px] leading-snug text-slate-300">
+          <span className="rounded bg-amber-500/15 px-1 font-bold text-amber-300">
+            {current.reachCount}×
+          </span>
+          {" reach · "}
+          <span className="rounded bg-red-500/15 px-1 font-mono font-bold text-red-300">
+            {current.playedSan}
+          </span>
+          {" vs "}
+          <span className="rounded bg-emerald-500/15 px-1 font-mono font-bold text-emerald-300">
+            {current.bestSan}
+          </span>
+        </p>
+
+        {/* Eval before/after — inline chips */}
+        <div className="mt-1.5 flex items-center gap-1.5">
+          <span className="rounded bg-white/[0.04] px-1.5 py-0.5 font-mono text-[9px] text-slate-400 tabular-nums">
+            {formatEval(current.evalBefore)}
+          </span>
+          <svg
+            className="h-3 w-3 shrink-0 text-slate-600"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2.5}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M13 7l5 5m0 0l-5 5m5-5H6"
+            />
+          </svg>
+          <span className="rounded bg-red-500/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold text-red-400 tabular-nums">
+            {formatEval(current.evalAfter)}
+          </span>
+          {/* Legend */}
+          <span className="ml-auto flex items-center gap-2 text-[8px] text-slate-600">
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+              Best
+            </span>
+            <span className="flex items-center gap-1">
+              <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
+              Played
+            </span>
+          </span>
+        </div>
+      </div>
+
+      {/* ── Controls ── */}
+      <div className="flex items-center gap-1.5 border-t border-white/[0.05] px-2.5 py-1.5 sm:px-3">
+        <button
+          type="button"
+          className="btn-secondary flex h-6 items-center gap-1 px-2 text-[10px]"
+          onClick={goPrev}
+        >
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          Prev
+        </button>
+        <button
+          type="button"
+          className="btn-secondary flex h-6 items-center gap-1 px-2 text-[10px]"
+          onClick={goNext}
+        >
+          Next
+          <svg
+            width="11"
+            height="11"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
+            <polyline points="9 18 15 12 9 6" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          className={`flex h-6 items-center gap-1.5 rounded-lg border px-2 text-[10px] font-medium transition-all duration-200 ${
+            autoplay
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+              : "border-white/[0.08] bg-white/[0.03] text-slate-500 hover:text-slate-300"
+          }`}
+          onClick={() => setAutoplay((prev) => !prev)}
+        >
+          <span
+            className={`h-1.5 w-1.5 rounded-full ${autoplay ? "animate-pulse bg-emerald-400" : "bg-slate-600"}`}
+          />
+          {autoplay ? "Auto" : "Paused"}
+        </button>
+        <div className="ml-auto flex items-center gap-1">
+          {scenarios.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => {
+                setAutoplay(false);
+                setIndex(i);
+              }}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                i === index % scenarios.length
+                  ? "w-4 bg-emerald-400"
+                  : "w-1.5 bg-white/[0.08] hover:bg-white/20"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    </article>
   );
 }

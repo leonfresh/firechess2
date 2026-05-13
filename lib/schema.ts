@@ -17,6 +17,8 @@ import {
   unique,
 } from "drizzle-orm/pg-core";
 import type { AdapterAccountType } from "next-auth/adapters";
+import type { AnalyzeResponse } from "./types";
+import type { ComputedScanReport, ScanSessionConfig } from "./scan-session";
 
 /* ------------------------------------------------------------------ */
 /*  Auth.js core tables                                                */
@@ -161,6 +163,34 @@ export const reports = pgTable("report", {
   contentHash: text("contentHash"),
 
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+});
+
+export const scanSessions = pgTable("scan_session", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text("userId").references(() => users.id, { onDelete: "set null" }),
+  guestToken: text("guestToken"),
+  chessUsername: text("chessUsername").notNull(),
+  source: text("source").$type<"lichess" | "chesscom">().notNull(),
+  scanMode: text("scanMode")
+    .$type<"openings" | "tactics" | "endgames" | "time-management" | "both">()
+    .notNull()
+    .default("both"),
+  status: text("status")
+    .$type<"processing" | "ready" | "failed">()
+    .notNull()
+    .default("processing"),
+  config: jsonb("config").$type<ScanSessionConfig>().notNull(),
+  result: jsonb("result").$type<AnalyzeResponse | null>(),
+  reportMeta: jsonb("reportMeta").$type<ComputedScanReport | null>(),
+  error: text("error"),
+  savedReportId: text("savedReportId").references(() => reports.id, {
+    onDelete: "set null",
+  }),
+  expiresAt: timestamp("expiresAt", { mode: "date" }),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+  updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow(),
 });
 
 /* ------------------------------------------------------------------ */
@@ -648,3 +678,185 @@ export const recruitGhostBuilds = pgTable("recruit_ghost_build", {
   isAI: boolean("isAI").notNull().default(false),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
 });
+
+/* ------------------------------------------------------------------ */
+/*  Ghost Mode — Play Like a Legend                                     */
+/* ------------------------------------------------------------------ */
+
+export type GhostCookCandidate = {
+  /** 0-based ply index within the full game */
+  ply: number;
+  /** The move the master actually played (UCI) */
+  masterUci: string;
+  /** Centipawn eval of the master's move (from side-to-move perspective) */
+  masterEval: number;
+  /** Best move found by Lichess cloud engine (UCI) */
+  stockfishBestUci: string;
+  /** Centipawn eval of the best move (from side-to-move perspective) */
+  stockfishEval: number;
+};
+
+export type GhostGameMove = {
+  /** 0-based ply index */
+  ply: number;
+  san: string;
+  uci: string;
+  /** FEN *after* this move */
+  fenAfter: string;
+};
+
+/** One legendary game that players can simulate */
+export const ghostGames = pgTable("ghost_game", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  whiteName: text("whiteName").notNull(),
+  blackName: text("blackName").notNull(),
+  whiteElo: integer("whiteElo"),
+  blackElo: integer("blackElo"),
+  tournament: text("tournament").notNull(),
+  eventDate: text("eventDate").notNull(),
+  result: text("result").notNull(),
+  eco: text("eco"),
+  openingName: text("openingName"),
+  /** Full PGN move text (space-separated SAN moves, no move numbers) */
+  pgnMoves: text("pgnMoves").notNull(),
+  /** Pre-computed move array [{ply, san, uci, fenAfter}] */
+  moves: jsonb("moves").$type<GhostGameMove[]>().notNull().default([]),
+  /** "white" | "black" — which side the user plays */
+  playAs: text("playAs").$type<"white" | "black">().notNull(),
+  /** 0-based ply where time-lapse stops and user begins */
+  startPly: integer("startPly").notNull(),
+  /** 0-based ply where the sequence ends (inclusive) */
+  endPly: integer("endPly").notNull(),
+  /** Mission narrative shown before play */
+  missionTitle: text("missionTitle").notNull(),
+  missionContext: text("missionContext").notNull(),
+  missionObjective: text("missionObjective").notNull(),
+  difficulty: text("difficulty")
+    .$type<"beginner" | "intermediate" | "expert">()
+    .notNull()
+    .default("intermediate"),
+  tags: jsonb("tags").$type<string[]>().notNull().default([]),
+  featured: boolean("featured").notNull().default(false),
+  /** Pre-computed cook candidates from Lichess cloud eval */
+  cookCandidates: jsonb("cookCandidates")
+    .$type<GhostCookCandidate[]>()
+    .notNull()
+    .default([]),
+  /** Optional link to the original game (e.g. chessgames.com) */
+  sourceUrl: text("sourceUrl"),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+});
+
+/** One user attempt at a Ghost Mode session */
+export const ghostResults = pgTable("ghost_result", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  gameId: text("gameId")
+    .notNull()
+    .references(() => ghostGames.id, { onDelete: "cascade" }),
+  userId: text("userId").references(() => users.id, { onDelete: "set null" }),
+  guestToken: text("guestToken"),
+  /** 0–100 sync rate */
+  syncRate: real("syncRate").notNull().default(0),
+  movesPlayed: integer("movesPlayed").notNull().default(0),
+  movesMatched: integer("movesMatched").notNull().default(0),
+  cookFound: boolean("cookFound").notNull().default(false),
+  cookPly: integer("cookPly"),
+  cookUci: text("cookUci"),
+  completedAt: timestamp("completedAt", { mode: "date" }).defaultNow(),
+});
+
+/* ------------------------------------------------------------------ */
+/*  Community posts, comments, and reactions                           */
+/* ------------------------------------------------------------------ */
+
+export const communityPosts = pgTable(
+  "community_post",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    authorId: text("authorId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    slug: text("slug").notNull(),
+    kind: text("kind")
+      .$type<"position" | "opening" | "puzzle">()
+      .notNull()
+      .default("position"),
+    sourceType: text("sourceType")
+      .$type<
+        | "analysis"
+        | "manual"
+        | "famous-game"
+        | "opening-guide"
+        | "endgame-scan"
+        | "puzzle-source"
+      >()
+      .notNull()
+      .default("manual"),
+    title: text("title").notNull(),
+    prompt: text("prompt").notNull(),
+    description: text("description"),
+    fen: text("fen").notNull(),
+    pgn: text("pgn"),
+    orientation: text("orientation")
+      .$type<"white" | "black">()
+      .notNull()
+      .default("white"),
+    openingName: text("openingName"),
+    tags: jsonb("tags").$type<string[]>().notNull().default([]),
+    collectionKey: text("collectionKey"),
+    visibility: text("visibility")
+      .$type<"public" | "unlisted">()
+      .notNull()
+      .default("public"),
+    previewMode: text("previewMode")
+      .$type<"board" | "gif">()
+      .notNull()
+      .default("board"),
+    likesCount: integer("likesCount").notNull().default(0),
+    commentsCount: integer("commentsCount").notNull().default(0),
+    savesCount: integer("savesCount").notNull().default(0),
+    hotScore: real("hotScore").notNull().default(0),
+    createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow(),
+  },
+  (t) => [unique().on(t.slug)],
+);
+
+export const communityComments = pgTable("community_comment", {
+  id: text("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  postId: text("postId")
+    .notNull()
+    .references(() => communityPosts.id, { onDelete: "cascade" }),
+  authorId: text("authorId").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  parentId: text("parentId"),
+  body: text("body").notNull(),
+  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+});
+
+export const communityReactions = pgTable(
+  "community_reaction",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    postId: text("postId")
+      .notNull()
+      .references(() => communityPosts.id, { onDelete: "cascade" }),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: text("kind").$type<"like" | "save">().notNull().default("like"),
+    createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+  },
+  (t) => [unique().on(t.postId, t.userId, t.kind)],
+);

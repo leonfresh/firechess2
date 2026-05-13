@@ -88,28 +88,162 @@ export function Navbar() {
     };
   }, [mobileOpen]);
 
-  // Reload the page when clicking a nav link that points to the current route
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      const a = (e.target as HTMLElement).closest("a[href]");
-      if (!a) return;
-      const href = a.getAttribute("href");
-      if (href && href === pathname) {
-        e.preventDefault();
-        window.location.reload();
-      }
-    };
-    document.addEventListener("click", handler);
-    return () => document.removeEventListener("click", handler);
-  }, [pathname]);
-
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
 
+  const isAnalyzeActive =
+    pathname === "/" || isActive("/analyze") || isActive("/my-openings");
+  const isTrainActive =
+    isActive("/daily") ||
+    isActive("/train") ||
+    isActive("/sparring") ||
+    isActive("/guess") ||
+    isActive("/chaos") ||
+    isActive("/dungeon") ||
+    isActive("/roast");
+  const isLearnActive =
+    isActive("/openings") ||
+    isActive("/tactics") ||
+    isActive("/endgames") ||
+    isActive("/positions") ||
+    isActive("/time-controls") ||
+    isActive("/mistakes") ||
+    isActive("/improve") ||
+    isActive("/games") ||
+    isActive("/players") ||
+    isActive("/glossary");
+  const isCommunityActive = isActive("/community") || isActive("/board");
+  const isExploreActive =
+    isActive("/blog") ||
+    isActive("/leaderboard") ||
+    isActive("/shop") ||
+    isActive("/coaches") ||
+    isActive("/youtubers") ||
+    isActive("/about") ||
+    isActive("/changelog");
+  const isAccountActive =
+    isActive("/dashboard") ||
+    isActive("/account") ||
+    isActive("/support") ||
+    isActive("/feedback");
+  const desktopCaretClassName =
+    "h-3 w-3 text-slate-500 transition-transform group-hover:rotate-180 group-focus-within:rotate-180";
+  const desktopDropdownClassName =
+    "invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100";
+
+  const closeMobileMenu = () => setMobileOpen(false);
+  const handleRoastClick = () => {
+    if (pathname.startsWith("/roast")) {
+      window.dispatchEvent(new CustomEvent("firechess:new-roast"));
+    }
+  };
+
+  const mobilePrimaryLinks = [
+    {
+      href: "/",
+      label: "Analyze",
+      description: "Scan games",
+      active: isAnalyzeActive,
+    },
+    {
+      href: "/train",
+      label: "Play",
+      description: "Puzzles and drills",
+      active: isTrainActive,
+    },
+    {
+      href: "/openings",
+      label: "Learn",
+      description: "Study library",
+      active: isLearnActive,
+    },
+    {
+      href: "/community",
+      label: "Community",
+      description: "Live boards",
+      active: isCommunityActive,
+    },
+  ];
+
+  const mobileSections = [
+    {
+      key: "analyze",
+      label: "Analyze",
+      isActive: isAnalyzeActive,
+      links: [
+        { href: "/", label: "🔍 Analyze Games" },
+        { href: "/analyze", label: "♟️ PGN Analyzer" },
+        { href: "/my-openings", label: "🌲 My Opening Tree" },
+      ],
+    },
+    {
+      key: "train",
+      label: "Play",
+      isActive: isTrainActive,
+      links: [
+        { href: "/daily", label: "📅 Daily Routine" },
+        { href: "/train", label: "🎯 Puzzles & Drills" },
+        { href: "/sparring", label: "⚔️ Opening Sparring" },
+        { href: "/guess", label: "🧩 Guess the Move" },
+        { href: "/chaos", label: "⚡ Chaos Chess" },
+        { href: "/dungeon", label: "🗡️ Dungeon Tactics" },
+        {
+          href: "/roast",
+          label: "🔥 Roast the Elo",
+          onClick: handleRoastClick,
+        },
+      ],
+    },
+    {
+      key: "learn",
+      label: "Learn",
+      isActive: isLearnActive,
+      links: [
+        { href: "/openings", label: "📖 Openings" },
+        { href: "/tactics", label: "⚡ Tactics" },
+        { href: "/endgames", label: "♟ Endgames" },
+        { href: "/positions", label: "🧠 Positions" },
+        { href: "/time-controls", label: "⏱ Time Controls" },
+        { href: "/mistakes", label: "❌ Common Mistakes" },
+        { href: "/improve", label: "📈 Improve by Rating" },
+        { href: "/games", label: "♛ Famous Games" },
+        { href: "/players", label: "👑 Grandmasters" },
+        { href: "/glossary", label: "📚 Glossary" },
+      ],
+    },
+    {
+      key: "community",
+      label: "Community",
+      isActive: isCommunityActive,
+      links: [
+        { href: "/community", label: "🔥 Community Hub" },
+        { href: "/board", label: "🧰 Board Workbench" },
+      ],
+    },
+    {
+      key: "explore",
+      label: "Explore",
+      isActive: isExploreActive,
+      links: [
+        { href: "/blog", label: "📝 Blog" },
+        { href: "/leaderboard", label: "🏆 Leaderboard" },
+        { href: "/coaches", label: "🎓 For Coaches" },
+        { href: "/youtubers", label: "🎬 For Creators" },
+        { href: "/about", label: "About" },
+        { href: "/shop", label: "🪙 Coin Shop" },
+        {
+          href: "/changelog",
+          label: "Changelog",
+          hasBadge: hasUnseenChanges,
+        },
+      ],
+    },
+  ];
+
   return (
     <>
-      <header className="sticky top-0 z-50 border-b border-white/[0.06] bg-[#030712]/80 backdrop-blur-2xl">
-        <nav className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 py-3 md:px-10">
+      <header className="sticky top-0 z-50 bg-[linear-gradient(180deg,rgba(4,8,20,0.88),rgba(4,8,20,0.56)_62%,rgba(4,8,20,0))] px-3 pt-3 backdrop-blur-xl sm:px-4">
+        <nav className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 border-b border-white/[0.08] px-0 pb-3 md:px-1 xl:px-0">
           {/* ── Logo ── */}
           <Link
             href="/"
@@ -125,7 +259,7 @@ export function Navbar() {
             <span className="tracking-tight">FireChess</span>
           </Link>
 
-          {/* ── Desktop nav — 4 grouped dropdowns ── */}
+          {/* ── Desktop nav — grouped dropdowns ── */}
           <div className="hidden items-center gap-0.5 lg:flex">
             {/* Analyze */}
             <div className="group relative">
@@ -133,16 +267,14 @@ export function Navbar() {
                 type="button"
                 aria-haspopup="true"
                 className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  pathname === "/" ||
-                  isActive("/analyze") ||
-                  isActive("/my-openings")
+                  isAnalyzeActive
                     ? "bg-white/[0.06] text-white"
                     : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
                 }`}
               >
                 Analyze
                 <svg
-                  className="h-3 w-3 text-slate-500 transition-transform group-hover:rotate-180"
+                  className={desktopCaretClassName}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -151,8 +283,8 @@ export function Navbar() {
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
-              <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
-                <div className="min-w-[200px] rounded-xl border border-white/[0.08] bg-[#0d0a06] p-1.5 shadow-xl shadow-black/50">
+              <div className={desktopDropdownClassName}>
+                <div className="min-w-[200px] rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/"
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${pathname === "/" ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
@@ -175,27 +307,20 @@ export function Navbar() {
               </div>
             </div>
 
-            {/* Train */}
+            {/* Play */}
             <div className="group relative">
               <button
                 type="button"
                 aria-haspopup="true"
                 className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  isActive("/train") ||
-                  isActive("/daily") ||
-                  isActive("/sparring") ||
-                  isActive("/guess") ||
-                  isActive("/dungeon") ||
-                  isActive("/openings") ||
-                  isActive("/tactics") ||
-                  isActive("/endgames")
+                  isTrainActive
                     ? "bg-white/[0.06] text-white"
                     : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
                 }`}
               >
-                Train
+                Play
                 <svg
-                  className="h-3 w-3 text-slate-500 transition-transform group-hover:rotate-180"
+                  className={desktopCaretClassName}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -204,8 +329,8 @@ export function Navbar() {
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
-              <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
-                <div className="min-w-[210px] rounded-xl border border-white/[0.08] bg-[#0d0a06] p-1.5 shadow-xl shadow-black/50">
+              <div className={desktopDropdownClassName}>
+                <div className="min-w-[220px] rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/daily"
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/daily") ? "bg-amber-500/[0.12] text-amber-400" : "text-slate-400 hover:bg-amber-500/[0.06] hover:text-amber-400"}`}
@@ -230,30 +355,44 @@ export function Navbar() {
                   >
                     🧩 Guess the Move
                   </Link>
+                  <div className="my-1 h-px bg-white/[0.06]" />
+                  <Link
+                    href="/chaos"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/chaos") ? "bg-purple-500/[0.08] text-purple-400" : "text-slate-400 hover:bg-purple-500/[0.06] hover:text-purple-400"}`}
+                  >
+                    ⚡ Chaos Chess
+                  </Link>
+                  <Link
+                    href="/dungeon"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/dungeon") ? "bg-red-500/[0.08] text-red-400" : "text-slate-400 hover:bg-red-500/[0.06] hover:text-red-400"}`}
+                  >
+                    🗡️ Dungeon Tactics
+                  </Link>
+                  <Link
+                    href="/roast"
+                    onClick={handleRoastClick}
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/roast") ? "bg-orange-500/[0.08] text-orange-400" : "text-slate-400 hover:bg-orange-500/[0.06] hover:text-orange-400"}`}
+                  >
+                    🔥 Roast the Elo
+                  </Link>
                 </div>
               </div>
             </div>
 
-            {/* Guides */}
+            {/* Learn */}
             <div className="group relative">
               <button
                 type="button"
                 aria-haspopup="true"
                 className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  isActive("/openings") ||
-                  isActive("/tactics") ||
-                  isActive("/endgames") ||
-                  isActive("/positions") ||
-                  isActive("/time-controls") ||
-                  isActive("/mistakes") ||
-                  isActive("/improve")
+                  isLearnActive
                     ? "bg-white/[0.06] text-white"
                     : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
                 }`}
               >
-                Guides
+                Learn
                 <svg
-                  className="h-3 w-3 text-slate-500 transition-transform group-hover:rotate-180"
+                  className={desktopCaretClassName}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -262,8 +401,8 @@ export function Navbar() {
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
-              <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
-                <div className="min-w-[200px] rounded-xl border border-white/[0.08] bg-[#0d0a06] p-1.5 shadow-xl shadow-black/50">
+              <div className={desktopDropdownClassName}>
+                <div className="min-w-[200px] rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/openings"
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/openings") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
@@ -329,80 +468,20 @@ export function Navbar() {
               </div>
             </div>
 
-            {/* Play */}
-            <div className="group relative">
-              <button
-                type="button"
-                aria-haspopup="true"
-                className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  isActive("/chaos") ||
-                  isActive("/dungeon") ||
-                  isActive("/roast")
-                    ? "bg-white/[0.06] text-white"
-                    : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
-                }`}
-              >
-                Play
-                <svg
-                  className="h-3 w-3 text-slate-500 transition-transform group-hover:rotate-180"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-              <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
-                <div className="min-w-[200px] rounded-xl border border-white/[0.08] bg-[#0d0a06] p-1.5 shadow-xl shadow-black/50">
-                  <Link
-                    href="/chaos"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/chaos") ? "bg-purple-500/[0.08] text-purple-400" : "text-slate-400 hover:bg-purple-500/[0.06] hover:text-purple-400"}`}
-                  >
-                    ⚡ Chaos Chess
-                  </Link>
-                  <Link
-                    href="/dungeon"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/dungeon") ? "bg-red-500/[0.08] text-red-400" : "text-slate-400 hover:bg-red-500/[0.06] hover:text-red-400"}`}
-                  >
-                    🗡️ Dungeon Tactics
-                  </Link>
-                  <Link
-                    href="/roast"
-                    onClick={() => {
-                      if (pathname.startsWith("/roast"))
-                        window.dispatchEvent(
-                          new CustomEvent("firechess:new-roast"),
-                        );
-                    }}
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/roast") ? "bg-orange-500/[0.08] text-orange-400" : "text-slate-400 hover:bg-orange-500/[0.06] hover:text-orange-400"}`}
-                  >
-                    🔥 Roast the Elo
-                  </Link>
-                </div>
-              </div>
-            </div>
-
             {/* Community */}
             <div className="group relative">
               <button
                 type="button"
                 aria-haspopup="true"
                 className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  isActive("/blog") ||
-                  isActive("/leaderboard") ||
-                  isActive("/shop") ||
-                  isActive("/coaches") ||
-                  isActive("/youtubers") ||
-                  isActive("/about") ||
-                  isActive("/changelog")
+                  isCommunityActive
                     ? "bg-white/[0.06] text-white"
                     : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
                 }`}
               >
                 Community
                 <svg
-                  className="h-3 w-3 text-slate-500 transition-transform group-hover:rotate-180"
+                  className={desktopCaretClassName}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -411,8 +490,56 @@ export function Navbar() {
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
-              <div className="invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100">
-                <div className="min-w-[180px] rounded-xl border border-white/[0.08] bg-[#0d0a06] p-1.5 shadow-xl shadow-black/50">
+              <div className={desktopDropdownClassName}>
+                <div className="min-w-[210px] rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
+                  <Link
+                    href="/community"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/community") ? "bg-orange-500/[0.08] text-orange-300" : "text-slate-400 hover:bg-orange-500/[0.06] hover:text-orange-300"}`}
+                  >
+                    🔥 Community Hub
+                  </Link>
+                  <Link
+                    href="/board"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/board") ? "bg-cyan-500/[0.08] text-cyan-300" : "text-slate-400 hover:bg-cyan-500/[0.06] hover:text-cyan-300"}`}
+                  >
+                    🧰 Board Workbench
+                  </Link>
+                  {user?.id && (
+                    <Link
+                      href={`/community/profile/${user.id}`}
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/community/profile") ? "bg-fuchsia-500/[0.08] text-fuchsia-300" : "text-slate-400 hover:bg-fuchsia-500/[0.06] hover:text-fuchsia-300"}`}
+                    >
+                      🗂️ My Public Profile
+                    </Link>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Explore */}
+            <div className="group relative">
+              <button
+                type="button"
+                aria-haspopup="true"
+                className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                  isExploreActive
+                    ? "bg-white/[0.06] text-white"
+                    : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
+                }`}
+              >
+                Explore
+                <svg
+                  className={desktopCaretClassName}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+              <div className={desktopDropdownClassName}>
+                <div className="min-w-[180px] rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/blog"
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/blog") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
@@ -454,7 +581,7 @@ export function Navbar() {
                     href="/changelog"
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/changelog") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
                   >
-                    Dev Notes
+                    Changelog
                     {authenticated && hasUnseenChanges && (
                       <span className="ml-auto h-2 w-2 rounded-full bg-red-500" />
                     )}
@@ -469,7 +596,7 @@ export function Navbar() {
             {/* Pro CTA */}
             <Link
               href="/pricing"
-              className={`inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 px-3.5 py-1.5 text-sm font-semibold text-white transition-all duration-200 hover:shadow-glow-sm ${isActive("/pricing") ? "shadow-glow-sm" : ""}`}
+              className={`inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-sky-500 via-violet-500 to-fuchsia-500 px-3.5 py-1.5 text-sm font-semibold text-white shadow-[0_14px_36px_-20px_rgba(168,85,247,0.7)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_-18px_rgba(168,85,247,0.78)] ${isActive("/pricing") ? "ring-1 ring-white/15" : ""}`}
             >
               <svg
                 className="h-3.5 w-3.5"
@@ -542,7 +669,7 @@ export function Navbar() {
                       />
                     ) : null}
                     <div
-                      className={`${user?.image ? "hidden" : "flex"} h-6 w-6 items-center justify-center rounded-full bg-orange-500/20 text-xs font-bold text-orange-400 ${avatarFrame.frameClass}`}
+                      className={`${user?.image ? "hidden" : "flex"} h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-sky-500/20 to-fuchsia-500/20 text-xs font-bold text-sky-100 ${avatarFrame.frameClass}`}
                       style={avatarFrame.frameStyle}
                     >
                       {(
@@ -555,7 +682,7 @@ export function Navbar() {
                       {user?.name ?? user?.email ?? "Account"}
                     </span>
                     {(plan === "pro" || plan === "lifetime") && (
-                      <span className="rounded bg-gradient-to-r from-orange-500/20 to-amber-500/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-400">
+                      <span className="rounded bg-gradient-to-r from-sky-500/20 to-fuchsia-500/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-sky-100">
                         {plan === "lifetime" ? "∞" : "Pro"}
                       </span>
                     )}
@@ -575,7 +702,7 @@ export function Navbar() {
                   </button>
 
                   {profileOpen && (
-                    <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-white/[0.08] bg-[#140f0a] shadow-2xl animate-in fade-in slide-in-from-top-2">
+                    <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(8,12,28,0.98),rgba(24,18,44,0.96))] shadow-2xl animate-in fade-in slide-in-from-top-2 backdrop-blur-xl">
                       <div className="border-b border-white/[0.06] px-4 py-3">
                         <p className="truncate text-sm font-medium text-white">
                           {user?.name ?? "User"}
@@ -621,6 +748,28 @@ export function Navbar() {
                           </svg>
                           Chess Profile
                         </Link>
+                        {user?.id && (
+                          <Link
+                            href={`/community/profile/${user.id}`}
+                            onClick={() => setProfileOpen(false)}
+                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
+                          >
+                            <svg
+                              className="h-4 w-4"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M17 20h5v-1a4 4 0 00-5.356-3.772M9 20H4v-1a4 4 0 015.356-3.772M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 13v-1a6 6 0 00-9-5.197M3 20v-1a6 6 0 019-5.197"
+                              />
+                            </svg>
+                            Public Community Profile
+                          </Link>
+                        )}
                         <Link
                           href="/account"
                           onClick={() => setProfileOpen(false)}
@@ -672,7 +821,7 @@ export function Navbar() {
                               </span>
                             )}
                           </span>
-                          Dev Notes{hasUnseenChanges ? " — New!" : ""}
+                          Changelog{hasUnseenChanges ? " — New!" : ""}
                         </Link>
                         <Link
                           href="/support"
@@ -855,7 +1004,7 @@ export function Navbar() {
           <button
             type="button"
             onClick={() => setMobileOpen((p) => !p)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white lg:hidden"
+            className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.04] text-slate-300 transition-colors hover:bg-white/[0.08] hover:text-white lg:hidden"
             aria-label="Toggle menu"
           >
             {mobileOpen ? (
@@ -895,10 +1044,10 @@ export function Navbar() {
       {mobileOpen && (
         <>
           <div
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-40 bg-[radial-gradient(circle_at_top,rgba(125,211,252,0.12),transparent_24%),rgba(2,6,23,0.72)] backdrop-blur-sm lg:hidden"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="fixed inset-y-0 right-0 z-50 w-72 overflow-y-auto border-l border-white/[0.06] bg-[#110c08] px-4 pb-8 pt-4 lg:hidden">
+          <div className="fixed inset-y-0 right-0 z-50 w-72 overflow-y-auto border-l border-white/[0.08] bg-[linear-gradient(180deg,rgba(7,11,28,0.97),rgba(10,16,36,0.96)_52%,rgba(30,19,52,0.94))] px-4 pb-8 pt-4 shadow-[-24px_0_80px_-40px_rgba(125,211,252,0.5)] backdrop-blur-2xl lg:hidden">
             {/* Header row: user info + close */}
             <div className="mb-5 flex items-center justify-between">
               {authenticated && user ? (
@@ -920,7 +1069,7 @@ export function Navbar() {
                     />
                   ) : null}
                   <div
-                    className={`${user.image ? "hidden" : "flex"} h-8 w-8 items-center justify-center rounded-full bg-orange-500/20 text-sm font-bold text-orange-400 ${avatarFrame.frameClass}`}
+                    className={`${user.image ? "hidden" : "flex"} h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-sky-500/20 to-fuchsia-500/20 text-sm font-bold text-sky-100 ${avatarFrame.frameClass}`}
                     style={avatarFrame.frameStyle}
                   >
                     {(user.name?.[0] ?? user.email?.[0] ?? "?").toUpperCase()}
@@ -961,71 +1110,25 @@ export function Navbar() {
               </button>
             </div>
 
+            <div className="mb-5 grid grid-cols-2 gap-2">
+              {mobilePrimaryLinks.map((link) => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={closeMobileMenu}
+                  className={`rounded-xl border px-3 py-3 text-left transition-colors ${link.active ? "border-white/[0.12] bg-white/[0.08] text-white" : "border-white/[0.06] bg-white/[0.03] text-slate-300 hover:border-white/[0.1] hover:bg-white/[0.05] hover:text-white"}`}
+                >
+                  <p className="text-sm font-semibold">{link.label}</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    {link.description}
+                  </p>
+                </Link>
+              ))}
+            </div>
+
             {/* ── Accordion sections ── */}
-            {(
-              [
-                {
-                  key: "analyze",
-                  label: "Analyze",
-                  links: [
-                    { href: "/", label: "🔍 Analyze Games" },
-                    { href: "/analyze", label: "♟️ PGN Analyzer" },
-                    { href: "/my-openings", label: "🌲 My Opening Tree" },
-                  ],
-                },
-                {
-                  key: "train",
-                  label: "Train",
-                  links: [
-                    { href: "/train", label: "🎯 Puzzles & Drills" },
-                    { href: "/sparring", label: "⚔️ Opening Sparring" },
-                    { href: "/guess", label: "🧩 Guess the Move" },
-                  ],
-                },
-                {
-                  key: "guides",
-                  label: "Guides",
-                  links: [
-                    { href: "/openings", label: "📖 Openings" },
-                    { href: "/tactics", label: "⚡ Tactics" },
-                    { href: "/endgames", label: "♟ Endgames" },
-                    { href: "/positions", label: "🧠 Positions" },
-                    { href: "/time-controls", label: "⏱ Time Controls" },
-                    { href: "/mistakes", label: "❌ Common Mistakes" },
-                    { href: "/improve", label: "📈 Improve by Rating" },
-                    { href: "/games", label: "♛ Famous Games" },
-                    { href: "/players", label: "👑 Grandmasters" },
-                    { href: "/glossary", label: "📚 Glossary" },
-                  ],
-                },
-                {
-                  key: "play",
-                  label: "Play",
-                  links: [
-                    { href: "/chaos", label: "⚡ Chaos Chess" },
-                    { href: "/dungeon", label: "🗡️ Dungeon Tactics" },
-                    { href: "/roast", label: "🔥 Roast the Elo" },
-                  ],
-                },
-                {
-                  key: "community",
-                  label: "Community",
-                  links: [
-                    { href: "/blog", label: "📝 Blog" },
-                    { href: "/leaderboard", label: "🏆 Leaderboard" },
-                    { href: "/coaches", label: "🎓 For Coaches" },
-                    { href: "/youtubers", label: "🎬 For Creators" },
-                    { href: "/about", label: "About" },
-                    { href: "/shop", label: "🪙 Coin Shop" },
-                    { href: "/changelog", label: "Dev Notes" },
-                  ],
-                },
-              ] as const
-            ).map((section) => {
+            {mobileSections.map((section) => {
               const isExpanded = !!openSections[section.key];
-              const hasActive = section.links.some((l) =>
-                l.href === "/" ? pathname === "/" : isActive(l.href),
-              );
               return (
                 <div
                   key={section.key}
@@ -1034,7 +1137,7 @@ export function Navbar() {
                   <button
                     type="button"
                     onClick={() => toggleSection(section.key)}
-                    className={`flex w-full items-center justify-between px-3.5 py-2.5 text-left text-sm font-semibold transition-colors ${hasActive ? "text-white" : "text-slate-400 hover:text-white"}`}
+                    className={`flex w-full items-center justify-between px-3.5 py-2.5 text-left text-sm font-semibold transition-colors ${section.isActive ? "text-white" : "text-slate-400 hover:text-white"}`}
                   >
                     {section.label}
                     <svg
@@ -1049,17 +1152,23 @@ export function Navbar() {
                   </button>
                   {isExpanded && (
                     <div className="border-t border-white/[0.05] px-2 pb-2 pt-1 space-y-0.5">
-                      {section.links.map((l) => {
+                      {section.links.map((link) => {
                         const active =
-                          l.href === "/" ? pathname === "/" : isActive(l.href);
+                          link.href === "/"
+                            ? pathname === "/"
+                            : isActive(link.href);
                         return (
                           <Link
-                            key={l.href}
-                            href={l.href}
+                            key={link.href}
+                            href={link.href}
+                            onClick={() => {
+                              closeMobileMenu();
+                              link.onClick?.();
+                            }}
                             className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${active ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
                           >
-                            {l.label}
-                            {l.href === "/changelog" && hasUnseenChanges && (
+                            {link.label}
+                            {link.hasBadge && (
                               <span className="ml-auto h-2 w-2 rounded-full bg-red-500" />
                             )}
                           </Link>
@@ -1077,7 +1186,7 @@ export function Navbar() {
                 <button
                   type="button"
                   onClick={() => toggleSection("account")}
-                  className={`flex w-full items-center justify-between px-3.5 py-2.5 text-left text-sm font-semibold transition-colors ${isActive("/dashboard") || isActive("/account") || isActive("/support") || isActive("/feedback") ? "text-white" : "text-slate-400 hover:text-white"}`}
+                  className={`flex w-full items-center justify-between px-3.5 py-2.5 text-left text-sm font-semibold transition-colors ${isAccountActive ? "text-white" : "text-slate-400 hover:text-white"}`}
                 >
                   Account
                   <svg
@@ -1094,18 +1203,30 @@ export function Navbar() {
                   <div className="border-t border-white/[0.05] px-2 pb-2 pt-1 space-y-0.5">
                     <Link
                       href="/dashboard"
+                      onClick={closeMobileMenu}
                       className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/dashboard") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
                     >
                       Dashboard
                     </Link>
+                    {user?.id && (
+                      <Link
+                        href={`/community/profile/${user.id}`}
+                        onClick={closeMobileMenu}
+                        className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/community/profile") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
+                      >
+                        Public Community Profile
+                      </Link>
+                    )}
                     <Link
                       href="/account"
+                      onClick={closeMobileMenu}
                       className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/account") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
                     >
                       Account & Billing
                     </Link>
                     <Link
                       href="/support"
+                      onClick={closeMobileMenu}
                       className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/support") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
                     >
                       My Tickets
@@ -1118,6 +1239,7 @@ export function Navbar() {
                     </Link>
                     <Link
                       href="/feedback"
+                      onClick={closeMobileMenu}
                       className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/feedback") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
                     >
                       Feedback
@@ -1136,6 +1258,7 @@ export function Navbar() {
                           <Link
                             key={l.href}
                             href={l.href}
+                            onClick={closeMobileMenu}
                             className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-orange-400 transition-colors hover:bg-orange-500/10 hover:text-orange-300"
                           >
                             {l.label}
@@ -1156,6 +1279,7 @@ export function Navbar() {
             <div className="mt-4 space-y-2">
               <Link
                 href="/pricing"
+                onClick={closeMobileMenu}
                 className={`flex w-full items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-orange-500 to-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:shadow-glow-sm ${isActive("/pricing") ? "shadow-glow-sm" : ""}`}
               >
                 <svg

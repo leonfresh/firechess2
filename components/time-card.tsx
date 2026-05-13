@@ -6,9 +6,14 @@ import { EvalBar } from "@/components/eval-bar";
 import { ExplanationModal } from "@/components/explanation-modal";
 import { Chessboard } from "@/components/chessboard-compat";
 import { useBoardSize } from "@/lib/use-board-size";
-import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
+import {
+  useBoardTheme,
+  useShowCoordinates,
+  useCustomPieces,
+} from "@/lib/use-coins";
 import { explainMoves } from "@/lib/position-explainer";
 import type { PositionExplanation } from "@/lib/position-explainer";
+import { stockfishClient } from "@/lib/stockfish-client";
 import type { TimeMoment, MoveSquare } from "@/lib/types";
 
 type TimeCardProps = {
@@ -16,14 +21,70 @@ type TimeCardProps = {
 };
 
 type BoardSquare =
-  | "a1" | "a2" | "a3" | "a4" | "a5" | "a6" | "a7" | "a8"
-  | "b1" | "b2" | "b3" | "b4" | "b5" | "b6" | "b7" | "b8"
-  | "c1" | "c2" | "c3" | "c4" | "c5" | "c6" | "c7" | "c8"
-  | "d1" | "d2" | "d3" | "d4" | "d5" | "d6" | "d7" | "d8"
-  | "e1" | "e2" | "e3" | "e4" | "e5" | "e6" | "e7" | "e8"
-  | "f1" | "f2" | "f3" | "f4" | "f5" | "f6" | "f7" | "f8"
-  | "g1" | "g2" | "g3" | "g4" | "g5" | "g6" | "g7" | "g8"
-  | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "h7" | "h8";
+  | "a1"
+  | "a2"
+  | "a3"
+  | "a4"
+  | "a5"
+  | "a6"
+  | "a7"
+  | "a8"
+  | "b1"
+  | "b2"
+  | "b3"
+  | "b4"
+  | "b5"
+  | "b6"
+  | "b7"
+  | "b8"
+  | "c1"
+  | "c2"
+  | "c3"
+  | "c4"
+  | "c5"
+  | "c6"
+  | "c7"
+  | "c8"
+  | "d1"
+  | "d2"
+  | "d3"
+  | "d4"
+  | "d5"
+  | "d6"
+  | "d7"
+  | "d8"
+  | "e1"
+  | "e2"
+  | "e3"
+  | "e4"
+  | "e5"
+  | "e6"
+  | "e7"
+  | "e8"
+  | "f1"
+  | "f2"
+  | "f3"
+  | "f4"
+  | "f5"
+  | "f6"
+  | "f7"
+  | "f8"
+  | "g1"
+  | "g2"
+  | "g3"
+  | "g4"
+  | "g5"
+  | "g6"
+  | "g7"
+  | "g8"
+  | "h1"
+  | "h2"
+  | "h3"
+  | "h4"
+  | "h5"
+  | "h6"
+  | "h7"
+  | "h8";
 
 function isBoardSquare(square: string): square is BoardSquare {
   return /^[a-h][1-8]$/.test(square);
@@ -101,6 +162,18 @@ const VERDICT_CONFIG = {
     arrowColor: "rgba(245, 158, 11, 0.9)",
     squareBg: "rgba(245, 158, 11, 0.2)",
   },
+  efficient: {
+    icon: "⚡",
+    label: "Fast and Accurate",
+    color: "text-sky-300",
+    bgColor: "bg-sky-500/10",
+    borderColor: "border-sky-400/20",
+    gradientFrom: "from-sky-500/[0.06]",
+    tagBg: "bg-sky-500/15",
+    tagText: "text-sky-300",
+    arrowColor: "rgba(56, 189, 248, 0.9)",
+    squareBg: "rgba(56, 189, 248, 0.2)",
+  },
   justified: {
     icon: "✅",
     label: "Well-Timed Think",
@@ -134,32 +207,50 @@ export function TimeCard({ moment }: TimeCardProps) {
   const showCoords = useShowCoordinates();
   const [fenCopied, setFenCopied] = useState(false);
   const [explainOpen, setExplainOpen] = useState(false);
-  const [explainData, setExplainData] = useState<PositionExplanation | null>(null);
-  const [explaining, setExplaining] = useState(false);
+  const [explainData, setExplainData] = useState<PositionExplanation | null>(
+    null,
+  );
+  const [explainingTarget, setExplainingTarget] = useState<
+    "played" | "best" | null
+  >(null);
+  const [explainMode, setExplainMode] = useState<"played" | "best">("played");
+  const [explainLineUci, setExplainLineUci] = useState<string[]>([]);
 
-  const config = VERDICT_CONFIG[moment.verdict];
   const boardOrientation = moment.userColor === "black" ? "black" : "white";
 
   const userSan = useMemo(
     () => deriveSan(moment.fen, moment.userMove),
-    [moment.fen, moment.userMove]
+    [moment.fen, moment.userMove],
   );
 
   const bestSan = useMemo(
     () => (moment.bestMove ? deriveSan(moment.fen, moment.bestMove) : null),
-    [moment.fen, moment.bestMove]
+    [moment.fen, moment.bestMove],
   );
 
   // Compute eval for the eval bar (white perspective)
   const whiteEval = useMemo(() => {
     if (moment.evalBefore == null) return 0;
     // evalBefore is from user perspective; convert to white perspective
-    return moment.userColor === "white" ? moment.evalBefore : -moment.evalBefore;
+    return moment.userColor === "white"
+      ? moment.evalBefore
+      : -moment.evalBefore;
   }, [moment.evalBefore, moment.userColor]);
+
+  const userMoveMatchesBest =
+    moment.bestMove && moment.bestMove === moment.userMove;
+  const displayVerdict =
+    moment.verdict === "rushed" && userMoveMatchesBest
+      ? "efficient"
+      : moment.verdict;
+  const config = VERDICT_CONFIG[displayVerdict];
 
   // Square styles — highlight the move
   const squareStyles = useMemo(() => {
-    const styles: Record<string, { backgroundColor?: string; boxShadow?: string }> = {};
+    const styles: Record<
+      string,
+      { backgroundColor?: string; boxShadow?: string }
+    > = {};
     const parsed = parseMove(moment.userMove);
     if (parsed) {
       if (isBoardSquare(parsed.from)) {
@@ -173,7 +264,6 @@ export function TimeCard({ moment }: TimeCardProps) {
   }, [moment.userMove, config.squareBg]);
 
   // Arrow showing the user's move — red if wrong, green if matches best
-  const userMoveMatchesBest = moment.bestMove && moment.bestMove === moment.userMove;
   const arrows = useMemo(() => {
     const parsed = parseMove(moment.userMove);
     if (!parsed) return [];
@@ -181,7 +271,11 @@ export function TimeCard({ moment }: TimeCardProps) {
       const color = userMoveMatchesBest
         ? "rgba(34, 197, 94, 0.9)"
         : "rgba(239, 68, 68, 0.85)";
-      return [[parsed.from, parsed.to, color]] as [BoardSquare, BoardSquare, string?][];
+      return [[parsed.from, parsed.to, color]] as [
+        BoardSquare,
+        BoardSquare,
+        string?,
+      ][];
     }
     return [];
   }, [moment.userMove, userMoveMatchesBest]);
@@ -192,14 +286,18 @@ export function TimeCard({ moment }: TimeCardProps) {
     const parsed = parseMove(moment.bestMove);
     if (!parsed) return [];
     if (isBoardSquare(parsed.from) && isBoardSquare(parsed.to)) {
-      return [[parsed.from, parsed.to, "rgba(34, 197, 94, 0.9)"]] as [BoardSquare, BoardSquare, string?][];
+      return [[parsed.from, parsed.to, "rgba(34, 197, 94, 0.9)"]] as [
+        BoardSquare,
+        BoardSquare,
+        string?,
+      ][];
     }
     return [];
   }, [moment.bestMove, moment.userMove]);
 
   const allArrows = useMemo(
     () => [...bestArrows, ...arrows],
-    [arrows, bestArrows]
+    [arrows, bestArrows],
   );
 
   const copyFen = async () => {
@@ -207,43 +305,110 @@ export function TimeCard({ moment }: TimeCardProps) {
       await navigator.clipboard.writeText(moment.fen);
       setFenCopied(true);
       setTimeout(() => setFenCopied(false), 1200);
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   };
 
-  /** Open the rich explanation modal */
-  const openExplain = useCallback(async () => {
-    if (explaining) return;
-    setExplaining(true);
-    try {
-      const evalAfter = moment.evalBefore != null && moment.cpLoss != null
+  const buildExplainResult = useCallback(() => {
+    const evalAfter =
+      moment.evalBefore != null && moment.cpLoss != null
         ? moment.evalBefore - moment.cpLoss
-        : moment.evalBefore ?? 0;
-      const result = explainMoves(
-        moment.fen,
-        moment.userMove,
-        moment.bestMove ?? null,
-        moment.cpLoss ?? 0,
-        moment.evalBefore ?? 0,
-        evalAfter,
-      );
+        : (moment.evalBefore ?? 0);
+
+    return explainMoves(
+      moment.fen,
+      moment.userMove,
+      moment.bestMove ?? null,
+      moment.cpLoss ?? 0,
+      moment.evalBefore ?? 0,
+      evalAfter,
+    );
+  }, [moment]);
+
+  /** Open the rich explanation modal for the played move */
+  const openPlayedExplain = useCallback(async () => {
+    if (explainingTarget) return;
+    setExplainingTarget("played");
+    try {
+      const result = buildExplainResult();
+      setExplainMode("played");
       setExplainData(result.played);
+      setExplainLineUci([moment.userMove]);
       setExplainOpen(true);
-    } catch { /* silently fail */ }
-    setExplaining(false);
-  }, [moment, explaining]);
+    } catch {
+      /* silently fail */
+    } finally {
+      setExplainingTarget(null);
+    }
+  }, [buildExplainResult, explainingTarget, moment.userMove]);
+
+  /** Open the rich explanation modal for the engine-best line */
+  const openBestExplain = useCallback(async () => {
+    if (explainingTarget || !moment.bestMove) return;
+    setExplainingTarget("best");
+
+    try {
+      const result = buildExplainResult();
+      const bestLine = [moment.bestMove];
+      setExplainMode("best");
+      setExplainData(result.best);
+      setExplainLineUci(bestLine);
+      setExplainOpen(true);
+
+      const parsed = parseMove(moment.bestMove);
+
+      if (parsed) {
+        try {
+          const chess = new Chess(moment.fen);
+          const moved = chess.move({
+            from: parsed.from,
+            to: parsed.to,
+            promotion: parsed.promotion as PieceSymbol | undefined,
+          });
+
+          if (moved) {
+            const continuation = await stockfishClient.getPrincipalVariation(
+              chess.fen(),
+              8,
+              12,
+            );
+            if (continuation?.pvMoves?.length) {
+              bestLine.push(...continuation.pvMoves);
+              setExplainLineUci([...bestLine]);
+            }
+          }
+        } catch {
+          // Fall back to the best move alone when the engine line is unavailable.
+        }
+      }
+    } catch {
+      /* silently fail */
+    } finally {
+      setExplainingTarget(null);
+    }
+  }, [buildExplainResult, explainingTarget, moment.bestMove, moment.fen]);
 
   // Complexity bar
   const complexityColor =
-    moment.complexity >= 70 ? "bg-red-400" :
-    moment.complexity >= 50 ? "bg-amber-400" :
-    moment.complexity >= 30 ? "bg-cyan-400" :
-    "bg-slate-400";
+    moment.complexity >= 70
+      ? "bg-red-400"
+      : moment.complexity >= 50
+        ? "bg-amber-400"
+        : moment.complexity >= 30
+          ? "bg-cyan-400"
+          : "bg-slate-400";
 
   return (
-    <div className={`glass-card-hover overflow-hidden ${config.borderColor} bg-gradient-to-br ${config.gradientFrom} to-transparent`}>
+    <div
+      className={`glass-card-hover overflow-hidden ${config.borderColor} bg-gradient-to-br ${config.gradientFrom} to-transparent`}
+    >
       <div className="grid gap-0 md:grid-cols-[minmax(0,520px)_1fr]">
         {/* Board side */}
-        <div ref={boardSizeRef} className="relative overflow-hidden border-b border-white/[0.04] bg-white/[0.01] p-3 sm:p-5 md:border-b-0 md:border-r">
+        <div
+          ref={boardSizeRef}
+          className="relative overflow-hidden border-b border-white/[0.04] bg-white/[0.01] p-3 sm:p-5 md:border-b-0 md:border-r"
+        >
           <div className="mx-auto flex w-full max-w-[460px] items-start gap-2 sm:gap-3">
             {moment.evalBefore != null && (
               <EvalBar evalCp={whiteEval} height={boardSize} />
@@ -258,8 +423,12 @@ export function TimeCard({ moment }: TimeCardProps) {
                 customArrows={allArrows}
                 customSquareStyles={squareStyles}
                 showBoardNotation={showCoords}
-                customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-                customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                customDarkSquareStyle={{
+                  backgroundColor: boardTheme.darkSquare,
+                }}
+                customLightSquareStyle={{
+                  backgroundColor: boardTheme.lightSquare,
+                }}
                 customBoardStyle={{ borderRadius: "12px", overflow: "hidden" }}
                 customPieces={customPieces}
               />
@@ -269,10 +438,18 @@ export function TimeCard({ moment }: TimeCardProps) {
           {bestArrows.length > 0 && (
             <div className="mx-auto mt-2 flex w-full max-w-[460px] items-center gap-3 pl-[27px] text-[10px] text-slate-500">
               <span className="flex items-center gap-1">
-                <span className="inline-block h-1.5 w-4 rounded-sm" style={{ backgroundColor: "rgba(239, 68, 68, 0.85)" }} /> Your move
+                <span
+                  className="inline-block h-1.5 w-4 rounded-sm"
+                  style={{ backgroundColor: "rgba(239, 68, 68, 0.85)" }}
+                />{" "}
+                Your move
               </span>
               <span className="flex items-center gap-1">
-                <span className="inline-block h-1.5 w-4 rounded-sm" style={{ backgroundColor: "rgba(34, 197, 94, 0.9)" }} /> Best move
+                <span
+                  className="inline-block h-1.5 w-4 rounded-sm"
+                  style={{ backgroundColor: "rgba(34, 197, 94, 0.9)" }}
+                />{" "}
+                Best move
               </span>
             </div>
           )}
@@ -283,10 +460,14 @@ export function TimeCard({ moment }: TimeCardProps) {
           {/* Header badge row */}
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className={`shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-bold text-white shadow-sm ${config.bgColor}`}>
+              <span
+                className={`shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-bold text-white shadow-sm ${config.bgColor}`}
+              >
                 {config.icon} {config.label}
               </span>
-              <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${config.tagBg} ${config.tagText}`}>
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${config.tagBg} ${config.tagText}`}
+              >
                 Game {moment.gameIndex}
               </span>
               {moment.isTactical && (
@@ -296,29 +477,51 @@ export function TimeCard({ moment }: TimeCardProps) {
               )}
               {userMoveMatchesBest && (
                 <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
                   Engine Approved
                 </span>
               )}
             </div>
             <h3 className="mt-2 text-lg font-bold text-white">
-              Move {moment.moveNumber} · {moment.userColor === "white" ? "White" : "Black"}
+              Move {moment.moveNumber} ·{" "}
+              {moment.userColor === "white" ? "White" : "Black"}
             </h3>
           </div>
 
           {/* Time insight callout */}
           <div className="rounded-xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Time Insight</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+              Time Insight
+            </p>
             <p className="mt-2 text-[13px] leading-relaxed text-slate-200">
               Spent{" "}
-              <span className={`rounded-md px-1.5 py-0.5 font-bold ${config.tagBg} ${config.tagText}`}>{formatTime(moment.timeSpentSec)}</span>{" "}
+              <span
+                className={`rounded-md px-1.5 py-0.5 font-bold ${config.tagBg} ${config.tagText}`}
+              >
+                {formatTime(moment.timeSpentSec)}
+              </span>{" "}
               on this move with{" "}
-              <span className="rounded-md bg-white/[0.06] px-1.5 py-0.5 font-bold text-slate-300">{formatTime(moment.timeRemainingSec)}</span>{" "}
+              <span className="rounded-md bg-white/[0.06] px-1.5 py-0.5 font-bold text-slate-300">
+                {formatTime(moment.timeRemainingSec)}
+              </span>{" "}
               remaining on the clock.
             </p>
             <div className="mt-3 flex items-center gap-2">
               <span className="text-[10px] text-slate-500">Played:</span>
-              <span className={`rounded-md px-2 py-0.5 font-mono text-sm font-bold ${moment.verdict === "justified" ? "bg-emerald-500/15 text-emerald-400" : moment.cpLoss && moment.cpLoss >= 100 ? "bg-red-500/15 text-red-400" : "bg-white/[0.06] text-slate-200"}`}>
+              <span
+                className={`rounded-md px-2 py-0.5 font-mono text-sm font-bold ${displayVerdict === "justified" ? "bg-emerald-500/15 text-emerald-400" : displayVerdict === "efficient" ? "bg-sky-500/15 text-sky-300" : moment.cpLoss && moment.cpLoss >= 100 ? "bg-red-500/15 text-red-400" : "bg-white/[0.06] text-slate-200"}`}
+              >
                 {userSan ?? moment.userMove}
               </span>
               {moment.cpLoss != null && moment.cpLoss > 0 && (
@@ -329,12 +532,25 @@ export function TimeCard({ moment }: TimeCardProps) {
               {bestSan && moment.bestMove !== moment.userMove && (
                 <>
                   <span className="text-[10px] text-slate-500">Best:</span>
-                  <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 font-mono text-sm font-bold text-emerald-400">{bestSan}</span>
+                  <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 font-mono text-sm font-bold text-emerald-400">
+                    {bestSan}
+                  </span>
                 </>
               )}
               {userMoveMatchesBest && (
                 <span className="flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-400">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  <svg
+                    width="12"
+                    height="12"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
                   Top engine move
                 </span>
               )}
@@ -343,15 +559,23 @@ export function TimeCard({ moment }: TimeCardProps) {
 
           {/* Time analysis reasoning */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Time Analysis</p>
-            <p className="mt-2 text-sm leading-relaxed text-slate-300">{moment.reason}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              Time Analysis
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-slate-300">
+              {moment.reason}
+            </p>
           </div>
 
           {/* Complexity meter */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
             <div className="flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Position Complexity</p>
-              <span className="text-xs font-bold text-slate-300">{moment.complexity}/100</span>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                Position Complexity
+              </p>
+              <span className="text-xs font-bold text-slate-300">
+                {moment.complexity}/100
+              </span>
             </div>
             <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
               <div
@@ -367,24 +591,90 @@ export function TimeCard({ moment }: TimeCardProps) {
 
           {/* Actions */}
           <div className="flex flex-wrap items-center gap-2">
-            {/* Explain button */}
             <button
               type="button"
-              onClick={openExplain}
-              disabled={explaining}
+              onClick={openPlayedExplain}
+              disabled={Boolean(explainingTarget)}
               className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
                 config.borderColor
               } ${config.bgColor} ${config.color} hover:brightness-125 disabled:opacity-50`}
             >
-              {explaining ? (
+              {explainingTarget === "played" ? (
                 <>
-                  <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10" strokeDasharray="31.4 31.4" strokeLinecap="round" /></svg>
+                  <svg
+                    className="h-3.5 w-3.5 animate-spin"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      strokeDasharray="31.4 31.4"
+                      strokeLinecap="round"
+                    />
+                  </svg>
                   Analyzing…
                 </>
               ) : (
                 <>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                  Explain
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                  Show your move
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={openBestExplain}
+              disabled={Boolean(explainingTarget) || !moment.bestMove}
+              className="flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-300 transition hover:brightness-125 disabled:opacity-50"
+            >
+              {explainingTarget === "best" ? (
+                <>
+                  <svg
+                    className="h-3.5 w-3.5 animate-spin"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <circle
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      strokeDasharray="31.4 31.4"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  Analyzing…
+                </>
+              ) : (
+                <>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
+                  Show best line
                 </>
               )}
             </button>
@@ -397,12 +687,32 @@ export function TimeCard({ moment }: TimeCardProps) {
             >
               {fenCopied ? (
                 <>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-emerald-400"><polyline points="20 6 9 17 4 12"/></svg>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    className="text-emerald-400"
+                  >
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
                   Copied!
                 </>
               ) : (
                 <>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                  </svg>
                   Copy FEN
                 </>
               )}
@@ -418,11 +728,20 @@ export function TimeCard({ moment }: TimeCardProps) {
         variant="tactic"
         richExplanation={explainData}
         fen={moment.fen}
-        uciMoves={[moment.userMove]}
+        uciMoves={explainLineUci}
         boardOrientation={boardOrientation}
         autoPlay
-        title={`Your Move: ${userSan ?? moment.userMove}`}
-        subtitle={explainData?.headline ?? moment.reason}
+        title={
+          explainMode === "best"
+            ? `Best Line: ${bestSan ?? moment.bestMove ?? "Engine"}`
+            : `Your Move: ${userSan ?? moment.userMove}`
+        }
+        subtitle={
+          explainData?.headline ??
+          (explainMode === "best"
+            ? "Engine-best continuation from this position."
+            : moment.reason)
+        }
       />
     </div>
   );

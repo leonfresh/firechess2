@@ -25,8 +25,8 @@ import {
 
 export type RadarDimension = {
   dimension: string;
-  value: number;          // 0‒100
-  fullMark: number;       // always 100
+  value: number; // 0‒100
+  fullMark: number; // always 100
 };
 
 export type RadarProps = {
@@ -79,12 +79,14 @@ export function computeRadarData(props: RadarProps): RadarDimension[] {
   //    Exponential decay on per-game rate:
   //    0/game → 100, 1/game → 55, 2/game → 30, 4/game → 9
   //    When tactics weren't scanned (tacticsCount === -1), estimate from accuracy.
-  const dim3 = tacticsCount < 0
-    ? clamp(dim1 * 0.9)                               // proxy when no tactics scan
-    : (() => {
-        const tacticsPerGame = gamesAnalyzed > 0 ? tacticsCount / gamesAnalyzed : 0;
-        return clamp(100 * Math.exp(-tacticsPerGame * 0.6));
-      })();
+  const dim3 =
+    tacticsCount < 0
+      ? clamp(dim1 * 0.9) // proxy when no tactics scan
+      : (() => {
+          const tacticsPerGame =
+            gamesAnalyzed > 0 ? tacticsCount / gamesAnalyzed : 0;
+          return clamp(100 * Math.exp(-tacticsPerGame * 0.6));
+        })();
 
   // 4. Composure — inverse severe leak rate, exponential
   //    2% → ~74, 5% → ~47, 10% → ~22, 25% → ~2
@@ -115,12 +117,12 @@ export function StrengthsRadar(props: RadarProps) {
   // Dynamic color based on average
   const fillColor =
     avg >= 75
-      ? "rgb(16, 185, 129)"   // emerald-500
+      ? "rgb(16, 185, 129)" // emerald-500
       : avg >= 50
-        ? "rgb(6, 182, 212)"    // cyan-500
+        ? "rgb(6, 182, 212)" // cyan-500
         : avg >= 30
-          ? "rgb(245, 158, 11)"  // amber-500
-          : "rgb(239, 68, 68)";  // red-500
+          ? "rgb(245, 158, 11)" // amber-500
+          : "rgb(239, 68, 68)"; // red-500
 
   const strokeColor =
     avg >= 75
@@ -134,11 +136,13 @@ export function StrengthsRadar(props: RadarProps) {
   return (
     <div className={`relative ${className}`}>
       <ResponsiveContainer width="100%" height={compact ? 200 : 320}>
-        <RadarChart cx="50%" cy="50%" outerRadius={compact ? "65%" : "70%"} data={data}>
-          <PolarGrid
-            stroke="rgba(255,255,255,0.08)"
-            strokeDasharray="3 3"
-          />
+        <RadarChart
+          cx="50%"
+          cy="50%"
+          outerRadius={compact ? "65%" : "70%"}
+          data={data}
+        >
+          <PolarGrid stroke="rgba(255,255,255,0.08)" strokeDasharray="3 3" />
           {!compact && (
             <PolarAngleAxis
               dataKey="dimension"
@@ -178,7 +182,10 @@ export function StrengthsRadar(props: RadarProps) {
                 color: "#fff",
                 fontSize: "13px",
               }}
-              formatter={(value: number | undefined) => [`${value ?? 0}/100`, "Score"]}
+              formatter={(value: number | undefined) => [
+                `${value ?? 0}/100`,
+                "Score",
+              ]}
             />
           )}
         </RadarChart>
@@ -207,7 +214,15 @@ export function StrengthsRadar(props: RadarProps) {
  * Each card shows the score, verdict, deep analysis, practical meaning,
  * and a 3-step structured improvement plan.
  */
-export function InsightCards({ data, props, hasProAccess = false }: { data: RadarDimension[]; props: RadarProps; hasProAccess?: boolean }) {
+export function InsightCards({
+  data,
+  props,
+  hasProAccess = false,
+}: {
+  data: RadarDimension[];
+  props: RadarProps;
+  hasProAccess?: boolean;
+}) {
   const [modalDim, setModalDim] = useState<string | null>(null);
 
   // Close modal on Escape
@@ -232,7 +247,13 @@ export function InsightCards({ data, props, hasProAccess = false }: { data: Rada
   const strongest = sorted[sorted.length - 1];
 
   const borderForValue = (v: number) =>
-    v >= 75 ? "border-emerald-500/20" : v >= 50 ? "border-cyan-500/20" : v >= 30 ? "border-amber-500/20" : "border-red-500/20";
+    v >= 75
+      ? "border-emerald-500/20"
+      : v >= 50
+        ? "border-cyan-500/20"
+        : v >= 30
+          ? "border-amber-500/20"
+          : "border-red-500/20";
   const bgGrad = (v: number) =>
     v >= 75
       ? "from-emerald-500/[0.06] to-transparent"
@@ -242,43 +263,114 @@ export function InsightCards({ data, props, hasProAccess = false }: { data: Rada
           ? "from-amber-500/[0.06] to-transparent"
           : "from-red-500/[0.06] to-transparent";
   const scoreColor = (v: number) =>
-    v >= 75 ? "text-emerald-400" : v >= 50 ? "text-cyan-400" : v >= 30 ? "text-amber-400" : "text-red-400";
+    v >= 75
+      ? "text-emerald-400"
+      : v >= 50
+        ? "text-cyan-400"
+        : v >= 30
+          ? "text-amber-400"
+          : "text-red-400";
   const scoreBg = (v: number) =>
-    v >= 75 ? "bg-emerald-500/15" : v >= 50 ? "bg-cyan-500/15" : v >= 30 ? "bg-amber-500/15" : "bg-red-500/15";
+    v >= 75
+      ? "bg-emerald-500/15"
+      : v >= 50
+        ? "bg-cyan-500/15"
+        : v >= 30
+          ? "bg-amber-500/15"
+          : "bg-red-500/15";
   const barBg = (v: number) =>
-    v >= 75 ? "bg-emerald-400" : v >= 50 ? "bg-cyan-400" : v >= 30 ? "bg-amber-400" : "bg-red-400";
+    v >= 75
+      ? "bg-emerald-400"
+      : v >= 50
+        ? "bg-cyan-400"
+        : v >= 30
+          ? "bg-amber-400"
+          : "bg-red-400";
   const ringColor = (v: number) =>
-    v >= 75 ? "ring-emerald-500/30" : v >= 50 ? "ring-cyan-500/30" : v >= 30 ? "ring-amber-500/30" : "ring-red-500/30";
+    v >= 75
+      ? "ring-emerald-500/30"
+      : v >= 50
+        ? "ring-cyan-500/30"
+        : v >= 30
+          ? "ring-amber-500/30"
+          : "ring-red-500/30";
   const solidBg = (v: number) =>
-    v >= 75 ? "bg-emerald-500" : v >= 50 ? "bg-cyan-500" : v >= 30 ? "bg-amber-500" : "bg-red-500";
+    v >= 75
+      ? "bg-emerald-500"
+      : v >= 50
+        ? "bg-cyan-500"
+        : v >= 30
+          ? "bg-amber-500"
+          : "bg-red-500";
 
   // Modal data
-  const modalData = modalDim ? data.find(d => d.dimension === modalDim) : null;
-  const modalInsight = modalData ? getDimInsight(modalData.dimension, modalData.value, props) : null;
+  const modalData = modalDim
+    ? data.find((d) => d.dimension === modalDim)
+    : null;
+  const modalInsight = modalData
+    ? getDimInsight(modalData.dimension, modalData.value, props)
+    : null;
   const modalIcon = modalData ? (DIM_ICONS[modalData.dimension] ?? "📈") : "";
-  const modalSubtitle = modalData ? (DIM_SUBTITLE[modalData.dimension] ?? "") : "";
+  const modalSubtitle = modalData
+    ? (DIM_SUBTITLE[modalData.dimension] ?? "")
+    : "";
 
   return (
     <div className="space-y-6">
       {/* Section header */}
       <div className="glass-card border-white/[0.08] bg-gradient-to-r from-fuchsia-500/[0.04] to-transparent p-6">
         <div className="flex items-center gap-4">
-          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-fuchsia-500/15 text-3xl shadow-lg shadow-fuchsia-500/10">📊</span>
+          <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-fuchsia-500/15 text-3xl shadow-lg shadow-fuchsia-500/10">
+            📊
+          </span>
           <div className="flex-1">
             <h2 className="text-2xl font-extrabold tracking-tight text-white">
               Deep Analysis
-              <span className={`ml-3 inline-flex items-center rounded-full px-3 py-1 text-base font-bold ${scoreBg(avg)} ${scoreColor(avg)}`}>
+              <span
+                className={`ml-3 inline-flex items-center rounded-full px-3 py-1 text-base font-bold ${scoreBg(avg)} ${scoreColor(avg)}`}
+              >
                 {avg}/100
               </span>
             </h2>
             <p className="mt-1 text-sm text-slate-400">
-              {avg >= 75
-                ? <>Strong profile. Your edge is <span className="font-semibold text-emerald-400">{strongest.dimension}</span> — maintain it while shoring up <span className="text-amber-400">{weakest.dimension}</span>.</>
-                : avg >= 50
-                  ? <>Solid foundation. <span className="font-semibold text-emerald-400">{strongest.dimension}</span> leads your profile; <span className="font-semibold text-amber-400">{weakest.dimension}</span> ({weakest.value}) has the most upside.</>
-                  : avg >= 30
-                    ? <>Room to grow. Prioritize <span className="font-semibold text-amber-400">{weakest.dimension}</span> ({weakest.value}) — it&apos;s your biggest bottleneck.</>
-                    : <>Developing player — start with <span className="font-semibold text-red-400">{weakest.dimension}</span> for the fastest gains.</>}
+              {avg >= 75 ? (
+                <>
+                  Strong profile. Your edge is{" "}
+                  <span className="font-semibold text-emerald-400">
+                    {strongest.dimension}
+                  </span>{" "}
+                  — maintain it while shoring up{" "}
+                  <span className="text-amber-400">{weakest.dimension}</span>.
+                </>
+              ) : avg >= 50 ? (
+                <>
+                  Solid foundation.{" "}
+                  <span className="font-semibold text-emerald-400">
+                    {strongest.dimension}
+                  </span>{" "}
+                  leads your profile;{" "}
+                  <span className="font-semibold text-amber-400">
+                    {weakest.dimension}
+                  </span>{" "}
+                  ({weakest.value}) has the most upside.
+                </>
+              ) : avg >= 30 ? (
+                <>
+                  Room to grow. Prioritize{" "}
+                  <span className="font-semibold text-amber-400">
+                    {weakest.dimension}
+                  </span>{" "}
+                  ({weakest.value}) — it&apos;s your biggest bottleneck.
+                </>
+              ) : (
+                <>
+                  Developing player — start with{" "}
+                  <span className="font-semibold text-red-400">
+                    {weakest.dimension}
+                  </span>{" "}
+                  for the fastest gains.
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -301,7 +393,9 @@ export function InsightCards({ data, props, hasProAccess = false }: { data: Rada
               <div className="p-5">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <span className={`flex h-11 w-11 items-center justify-center rounded-xl ${scoreBg(d.value)} text-xl ring-1 ${ringColor(d.value)}`}>
+                    <span
+                      className={`flex h-11 w-11 items-center justify-center rounded-xl ${scoreBg(d.value)} text-xl ring-1 ${ringColor(d.value)}`}
+                    >
                       {icon}
                     </span>
                     <div>
@@ -310,8 +404,16 @@ export function InsightCards({ data, props, hasProAccess = false }: { data: Rada
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className={`text-2xl font-black ${scoreColor(d.value)}`}>{d.value}</span>
-                    <p className={`text-[10px] font-semibold ${scoreColor(d.value)} opacity-80`}>{insight.verdict}</p>
+                    <span
+                      className={`text-2xl font-black ${scoreColor(d.value)}`}
+                    >
+                      {d.value}
+                    </span>
+                    <p
+                      className={`text-[10px] font-semibold ${scoreColor(d.value)} opacity-80`}
+                    >
+                      {insight.verdict}
+                    </p>
                   </div>
                 </div>
 
@@ -324,7 +426,9 @@ export function InsightCards({ data, props, hasProAccess = false }: { data: Rada
                 </div>
 
                 {/* Short description */}
-                <p className="mt-3 text-[12px] leading-relaxed text-slate-400">{insight.desc}</p>
+                <p className="mt-3 text-[12px] leading-relaxed text-slate-400">
+                  {insight.desc}
+                </p>
 
                 {/* CTA Button */}
                 {hasProAccess ? (
@@ -333,7 +437,17 @@ export function InsightCards({ data, props, hasProAccess = false }: { data: Rada
                     onClick={() => setModalDim(d.dimension)}
                     className={`mt-4 flex w-full items-center justify-center gap-2 rounded-xl border ${borderForValue(d.value)} ${scoreBg(d.value)} px-4 py-2.5 text-xs font-bold ${scoreColor(d.value)} transition-all hover:brightness-125`}
                   >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/><path d="M12 9v6"/></svg>
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <path d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      <path d="M12 9v6" />
+                    </svg>
                     Full Analysis & Study Plan
                   </button>
                 ) : (
@@ -341,8 +455,16 @@ export function InsightCards({ data, props, hasProAccess = false }: { data: Rada
                     href="/pricing"
                     className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-violet-500/20 bg-violet-500/10 px-4 py-2.5 text-xs font-bold text-violet-400 transition-all hover:bg-violet-500/20 hover:border-violet-500/30"
                   >
-                    <svg className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                    <svg
+                      className="h-3.5 w-3.5"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                     Pro: Full Analysis & Study Plan
                   </a>
@@ -355,7 +477,10 @@ export function InsightCards({ data, props, hasProAccess = false }: { data: Rada
 
       {/* ─── Deep Analysis Modal ─── */}
       {modalDim && modalData && modalInsight && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" onClick={() => setModalDim(null)}>
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          onClick={() => setModalDim(null)}
+        >
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
@@ -370,22 +495,45 @@ export function InsightCards({ data, props, hasProAccess = false }: { data: Rada
               onClick={() => setModalDim(null)}
               className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
             </button>
 
             {/* Modal header */}
-            <div className={`border-b border-white/[0.06] bg-gradient-to-r ${bgGrad(modalData.value)} p-6 sm:p-8`}>
+            <div
+              className={`border-b border-white/[0.06] bg-gradient-to-r ${bgGrad(modalData.value)} p-6 sm:p-8`}
+            >
               <div className="flex items-center gap-4">
-                <span className={`flex h-16 w-16 items-center justify-center rounded-2xl ${scoreBg(modalData.value)} text-3xl ring-2 ${ringColor(modalData.value)}`}>
+                <span
+                  className={`flex h-16 w-16 items-center justify-center rounded-2xl ${scoreBg(modalData.value)} text-3xl ring-2 ${ringColor(modalData.value)}`}
+                >
                   {modalIcon}
                 </span>
                 <div className="flex-1">
-                  <h2 className="text-2xl font-extrabold text-white">{modalData.dimension}</h2>
+                  <h2 className="text-2xl font-extrabold text-white">
+                    {modalData.dimension}
+                  </h2>
                   <p className="text-sm text-slate-400">{modalSubtitle}</p>
                 </div>
                 <div className="text-right">
-                  <div className={`text-4xl font-black ${scoreColor(modalData.value)}`}>{modalData.value}</div>
-                  <p className={`text-sm font-bold ${scoreColor(modalData.value)} opacity-80`}>{modalInsight.verdict}</p>
+                  <div
+                    className={`text-4xl font-black ${scoreColor(modalData.value)}`}
+                  >
+                    {modalData.value}
+                  </div>
+                  <p
+                    className={`text-sm font-bold ${scoreColor(modalData.value)} opacity-80`}
+                  >
+                    {modalInsight.verdict}
+                  </p>
                 </div>
               </div>
 
@@ -397,9 +545,15 @@ export function InsightCards({ data, props, hasProAccess = false }: { data: Rada
                 />
               </div>
               <div className="mt-1.5 flex items-center justify-between">
-                <span className="text-[10px] font-medium text-red-400/60">0</span>
-                <span className="text-[10px] font-medium text-slate-500">50</span>
-                <span className="text-[10px] font-medium text-emerald-400/60">100</span>
+                <span className="text-[10px] font-medium text-red-400/60">
+                  0
+                </span>
+                <span className="text-[10px] font-medium text-slate-500">
+                  50
+                </span>
+                <span className="text-[10px] font-medium text-emerald-400/60">
+                  100
+                </span>
               </div>
             </div>
 
@@ -409,13 +563,23 @@ export function InsightCards({ data, props, hasProAccess = false }: { data: Rada
               <div className="space-y-4">
                 {/* Key stat card */}
                 {modalInsight.keyStat && (
-                  <div className={`flex items-center gap-3 rounded-xl border ${borderForValue(modalData.value)} bg-gradient-to-r ${bgGrad(modalData.value)} p-4`}>
-                    <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${scoreBg(modalData.value)} text-xl font-bold ${scoreColor(modalData.value)}`}>
+                  <div
+                    className={`flex items-center gap-3 rounded-xl border ${borderForValue(modalData.value)} bg-gradient-to-r ${bgGrad(modalData.value)} p-4`}
+                  >
+                    <span
+                      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${scoreBg(modalData.value)} text-xl font-bold ${scoreColor(modalData.value)}`}
+                    >
                       {modalInsight.keyStat.icon}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{modalInsight.keyStat.label}</p>
-                      <p className={`text-base font-bold ${scoreColor(modalData.value)}`}>{modalInsight.keyStat.value}</p>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                        {modalInsight.keyStat.label}
+                      </p>
+                      <p
+                        className={`text-base font-bold ${scoreColor(modalData.value)}`}
+                      >
+                        {modalInsight.keyStat.value}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -423,19 +587,31 @@ export function InsightCards({ data, props, hasProAccess = false }: { data: Rada
                 {/* Detailed Analysis */}
                 <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
                   <div className="mb-3 flex items-center gap-2">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-500/10 text-sm">🔍</span>
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-white/60">Detailed Analysis</h3>
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-500/10 text-sm">
+                      🔍
+                    </span>
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-white/60">
+                      Detailed Analysis
+                    </h3>
                   </div>
-                  <p className="text-sm leading-relaxed text-slate-400">{modalInsight.analysis}</p>
+                  <p className="text-sm leading-relaxed text-slate-400">
+                    {modalInsight.analysis}
+                  </p>
                 </div>
 
                 {/* What This Means */}
                 <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
                   <div className="mb-3 flex items-center gap-2">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-500/10 text-sm">💡</span>
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-white/60">What This Means</h3>
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-500/10 text-sm">
+                      💡
+                    </span>
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-white/60">
+                      What This Means
+                    </h3>
                   </div>
-                  <p className="text-sm leading-relaxed text-slate-400">{modalInsight.meaning}</p>
+                  <p className="text-sm leading-relaxed text-slate-400">
+                    {modalInsight.meaning}
+                  </p>
                 </div>
               </div>
 
@@ -444,23 +620,36 @@ export function InsightCards({ data, props, hasProAccess = false }: { data: Rada
                 {/* Study Plan */}
                 <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
                   <div className="mb-4 flex items-center gap-2">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 text-sm">📋</span>
-                    <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-400/70">Study Plan</h3>
+                    <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 text-sm">
+                      📋
+                    </span>
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-emerald-400/70">
+                      Study Plan
+                    </h3>
                   </div>
                   <div className="space-y-3">
                     {modalInsight.studyPlan.map((step, si) => (
-                      <div key={si} className={`flex gap-3 rounded-xl border p-4 transition-all ${
-                        si === 0
-                          ? `${borderForValue(modalData.value)} bg-gradient-to-r ${bgGrad(modalData.value)}`
-                          : "border-white/[0.06] bg-white/[0.02]"
-                      }`}>
-                        <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${
-                          si === 0 ? `${solidBg(modalData.value)} text-white` : `${scoreBg(modalData.value)} ${scoreColor(modalData.value)}`
-                        }`}>
+                      <div
+                        key={si}
+                        className={`flex gap-3 rounded-xl border p-4 transition-all ${
+                          si === 0
+                            ? `${borderForValue(modalData.value)} bg-gradient-to-r ${bgGrad(modalData.value)}`
+                            : "border-white/[0.06] bg-white/[0.02]"
+                        }`}
+                      >
+                        <span
+                          className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${
+                            si === 0
+                              ? `${solidBg(modalData.value)} text-white`
+                              : `${scoreBg(modalData.value)} ${scoreColor(modalData.value)}`
+                          }`}
+                        >
                           {si + 1}
                         </span>
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium leading-relaxed text-slate-300">{step}</p>
+                          <p className="text-sm font-medium leading-relaxed text-slate-300">
+                            {step}
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -468,34 +657,57 @@ export function InsightCards({ data, props, hasProAccess = false }: { data: Rada
                 </div>
 
                 {/* Quick Win card — accent colored */}
-                <div className={`flex gap-3 rounded-xl ${scoreBg(modalData.value)} border ${borderForValue(modalData.value)} p-5`}>
+                <div
+                  className={`flex gap-3 rounded-xl ${scoreBg(modalData.value)} border ${borderForValue(modalData.value)} p-5`}
+                >
                   <span className="mt-0.5 text-xl">⚡</span>
                   <div>
-                    <p className={`mb-1.5 text-xs font-bold uppercase tracking-wider ${scoreColor(modalData.value)}`}>Quick Win</p>
-                    <p className="text-sm font-medium leading-relaxed text-slate-300">{modalInsight.tip}</p>
+                    <p
+                      className={`mb-1.5 text-xs font-bold uppercase tracking-wider ${scoreColor(modalData.value)}`}
+                    >
+                      Quick Win
+                    </p>
+                    <p className="text-sm font-medium leading-relaxed text-slate-300">
+                      {modalInsight.tip}
+                    </p>
                   </div>
                 </div>
 
                 {/* Score context — all dimensions mini comparison */}
                 <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-5">
-                  <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">How This Compares</h3>
+                  <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">
+                    How This Compares
+                  </h3>
                   <div className="space-y-2">
                     {data.map((dd) => (
-                      <div key={dd.dimension} className="flex items-center gap-3">
-                        <span className="w-20 truncate text-xs text-slate-500">{dd.dimension}</span>
+                      <div
+                        key={dd.dimension}
+                        className="flex items-center gap-3"
+                      >
+                        <span className="w-20 truncate text-xs text-slate-500">
+                          {dd.dimension}
+                        </span>
                         <div className="flex-1">
                           <div className="h-1.5 w-full rounded-full bg-white/[0.06]">
                             <div
                               className={`h-1.5 rounded-full ${
-                                dd.dimension === modalData.dimension ? barBg(dd.value) : "bg-white/20"
+                                dd.dimension === modalData.dimension
+                                  ? barBg(dd.value)
+                                  : "bg-white/20"
                               } transition-all duration-500`}
                               style={{ width: `${dd.value}%` }}
                             />
                           </div>
                         </div>
-                        <span className={`w-8 text-right text-xs font-bold ${
-                          dd.dimension === modalData.dimension ? scoreColor(dd.value) : "text-slate-500"
-                        }`}>{dd.value}</span>
+                        <span
+                          className={`w-8 text-right text-xs font-bold ${
+                            dd.dimension === modalData.dimension
+                              ? scoreColor(dd.value)
+                              : "text-slate-500"
+                          }`}
+                        >
+                          {dd.value}
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -507,7 +719,7 @@ export function InsightCards({ data, props, hasProAccess = false }: { data: Rada
       )}
     </div>
   );
-}/**
+} /**
  * Dynamic per-dimension insight generator.
  * Returns score-dependent description, verdict, improvement tip, and deep analysis.
  */
@@ -543,8 +755,19 @@ const DIM_SUBTITLE: Record<string, string> = {
   Resilience: "Mental Fortitude & Recovery",
 };
 
-function getDimInsight(dim: string, value: number, props: RadarProps): DimInsight {
-  const { leakCount, repeatedPositions, tacticsCount, gamesAnalyzed, weightedCpLoss, severeLeakRate } = props;
+function getDimInsight(
+  dim: string,
+  value: number,
+  props: RadarProps,
+): DimInsight {
+  const {
+    leakCount,
+    repeatedPositions,
+    tacticsCount,
+    gamesAnalyzed,
+    weightedCpLoss,
+    severeLeakRate,
+  } = props;
 
   switch (dim) {
     case "Accuracy": {
@@ -553,9 +776,14 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
           verdict: "Excellent",
           desc: `Your opening moves match the engine's top choices ${value}% of the time — that's strong preparation.`,
           tip: "Focus on the rare positions where you deviate. Check for novelties or transpositions that catch you off-guard.",
-          keyStat: { icon: "🎯", label: "Accuracy Rate", value: `${value}% match rate` },
+          keyStat: {
+            icon: "🎯",
+            label: "Accuracy Rate",
+            value: `${value}% match rate`,
+          },
           analysis: `Across your scanned games, you chose the engine's recommended move or an equally-valued alternative ${value}% of the time in positions you've seen before. This is a hallmark of serious preparation — most players rated under 2000 hover in the 50-70% range. Your deviations, when they happen, tend to be minor inaccuracies rather than fundamental misunderstandings of the position.`,
-          meaning: "In practical terms, your opponents rarely get a free advantage from the opening. You're consistently entering the middlegame with equal or better chances, which means your results hinge on middlegame skill rather than opening preparation gaps.",
+          meaning:
+            "In practical terms, your opponents rarely get a free advantage from the opening. You're consistently entering the middlegame with equal or better chances, which means your results hinge on middlegame skill rather than opening preparation gaps.",
           studyPlan: [
             "Identify the 2-3 specific positions where you still deviate — these are in the leaks section below. Even patching one will push you above 90%.",
             "Check for transposition tricks: sometimes you know line A perfectly but reach it via move order B and get confused. Map out the transpositions in your repertoire.",
@@ -567,9 +795,14 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
           verdict: "Solid",
           desc: `You're playing the right move about ${value}% of the time, which is respectable but leaves room for growth.`,
           tip: "Pick your 2-3 most-played openings and learn the critical lines to depth 12-15 moves. Even small accuracy gains compound.",
-          keyStat: { icon: "🎯", label: "Accuracy Rate", value: `${value}% — top move ${100 - value}% missed` },
+          keyStat: {
+            icon: "🎯",
+            label: "Accuracy Rate",
+            value: `${value}% — top move ${100 - value}% missed`,
+          },
           analysis: `At ${value}% accuracy, you have a reasonable grasp of your openings but are leaking small advantages in roughly ${100 - value}% of familiar positions. These aren't catastrophic mistakes — they're the kind of second-best moves that don't lose on the spot but hand your opponent a slight edge consistently. Over many games, this compounds into noticeable rating points lost.`,
-          meaning: "You're getting playable positions most of the time, but you're starting many games a fraction of a pawn down. Against well-prepared opponents at your level, that small edge often decides the game. The good news: this is one of the easiest dimensions to improve because it's pure knowledge, not calculation.",
+          meaning:
+            "You're getting playable positions most of the time, but you're starting many games a fraction of a pawn down. Against well-prepared opponents at your level, that small edge often decides the game. The good news: this is one of the easiest dimensions to improve because it's pure knowledge, not calculation.",
           studyPlan: [
             "Build a focused repertoire of 2-3 openings per color. Go deep (12-15 moves) rather than wide. Breadth comes later.",
             "Use the specific leaks flagged in this report as your study list — they're positions you actually reach, so fixing them has immediate impact.",
@@ -581,9 +814,14 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
           verdict: "Inconsistent",
           desc: `At ${value}%, you know the right ideas but frequently choose second-best moves in familiar positions.`,
           tip: "Build a personal repertoire and drill it. Use the leaks flagged in this report as your study list — they're the highest-leverage fixes.",
-          keyStat: { icon: "🎯", label: "Accuracy Rate", value: `${value}% — wrong move in ${100 - value}% of positions` },
+          keyStat: {
+            icon: "🎯",
+            label: "Accuracy Rate",
+            value: `${value}% — wrong move in ${100 - value}% of positions`,
+          },
           analysis: `With ${value}% accuracy, you're playing the right move less than half the time in positions you reach repeatedly. This suggests you have general opening knowledge — you know which openings you play and the broad plans — but haven't committed the specific move orders to memory. You're relying on intuition where concrete knowledge would serve you better.`,
-          meaning: "In practice, you're giving your opponents a free advantage in more than half your games before the middlegame even begins. This is a significant handicap that's masking your true playing strength. Players with better opening prep at your skill level are winning games they shouldn't, purely from the opening edge.",
+          meaning:
+            "In practice, you're giving your opponents a free advantage in more than half your games before the middlegame even begins. This is a significant handicap that's masking your true playing strength. Players with better opening prep at your skill level are winning games they shouldn't, purely from the opening edge.",
           studyPlan: [
             "Simplify ruthlessly: pick ONE opening as White and ONE as Black. Stick with them for at least 50 games each.",
             "For each opening, learn the first 10 moves of the 3 most common opponent responses. Use a repertoire trainer to drill these daily.",
@@ -594,9 +832,14 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
         verdict: "Needs Work",
         desc: `Only ${value}% accuracy suggests you're winging it in the opening rather than following known good lines.`,
         tip: "Start simple: pick one opening as White and one as Black. Study the first 10 moves deeply. Accuracy comes from repetition.",
-        keyStat: { icon: "🎯", label: "Accuracy Rate", value: `${value}% — improvising ${100 - value}% of the time` },
+        keyStat: {
+          icon: "🎯",
+          label: "Accuracy Rate",
+          value: `${value}% — improvising ${100 - value}% of the time`,
+        },
         analysis: `At ${value}% accuracy, you're essentially improvising in the opening phase. Most of your moves in familiar positions are suboptimal, meaning you haven't internalized any particular repertoire. This is the single biggest area of improvement available to you — the gap between where you are and where you could be with basic preparation is enormous.`,
-        meaning: "You're effectively starting every game at a disadvantage. While stronger players enter the middlegame with a plan and an equal position, you're frequently entering it confused and worse off. The silver lining: because this score is so low, even modest study will produce dramatic improvements in your results.",
+        meaning:
+          "You're effectively starting every game at a disadvantage. While stronger players enter the middlegame with a plan and an equal position, you're frequently entering it confused and worse off. The silver lining: because this score is so low, even modest study will produce dramatic improvements in your results.",
         studyPlan: [
           "Pick the simplest possible openings: as White, try the London System or Italian Game. As Black, try the Caro-Kann or the Classical Sicilian. These have clear plans.",
           "Learn just the first 5-7 moves of each. Don't go deeper until you can play these moves instantly without thinking.",
@@ -606,16 +849,25 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
     }
 
     case "Opening Prep": {
-      const leakRate = repeatedPositions > 0 ? ((leakCount / repeatedPositions) * 100).toFixed(0) : "0";
-      const leakRateNum = repeatedPositions > 0 ? (leakCount / repeatedPositions) * 100 : 0;
+      const leakRate =
+        repeatedPositions > 0
+          ? ((leakCount / repeatedPositions) * 100).toFixed(0)
+          : "0";
+      const leakRateNum =
+        repeatedPositions > 0 ? (leakCount / repeatedPositions) * 100 : 0;
       if (value >= 80)
         return {
           verdict: "Well-Prepared",
           desc: `Only ${leakRate}% of your repeated positions leak eval — your repertoire is well-drilled.`,
           tip: "Maintain your edge by occasionally checking for new engine developments in your main lines.",
-          keyStat: { icon: "📚", label: "Leak Rate", value: `${leakRate}% — ${leakCount} of ${repeatedPositions} positions` },
+          keyStat: {
+            icon: "📚",
+            label: "Leak Rate",
+            value: `${leakRate}% — ${leakCount} of ${repeatedPositions} positions`,
+          },
           analysis: `Out of ${repeatedPositions} positions you reached multiple times, only ${leakCount} showed a consistent eval loss — a ${leakRate}% leak rate. This means your repertoire is battle-tested and solid. You're not just knowing the right moves in theory; you're executing them consistently in actual games under time pressure.`,
-          meaning: "Your preparation gives you a genuine competitive edge. Opponents who haven't studied their openings as deeply are handing you small advantages game after game. Over a tournament or a rating climb, this compounds significantly. You're winning the opening battle before the middlegame begins.",
+          meaning:
+            "Your preparation gives you a genuine competitive edge. Opponents who haven't studied their openings as deeply are handing you small advantages game after game. Over a tournament or a rating climb, this compounds significantly. You're winning the opening battle before the middlegame begins.",
           studyPlan: [
             "Review the few leaks that do exist — at your level, fixing even one or two remaining weak spots can have outsized impact.",
             "Expand your repertoire sideways: add a secondary weapon for situations where your main line is heavily analyzed by your opponents.",
@@ -627,7 +879,11 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
           verdict: "Decent Coverage",
           desc: `${leakRate}% of repeated positions are leaks. You know your openings, but there are gaps opponents can exploit.`,
           tip: "The top 3 leaks in this report are low-hanging fruit. Patch those and your prep score will jump significantly.",
-          keyStat: { icon: "📚", label: "Leak Rate", value: `${leakRate}% — ${leakCount} leaks in ${repeatedPositions} positions` },
+          keyStat: {
+            icon: "📚",
+            label: "Leak Rate",
+            value: `${leakRate}% — ${leakCount} leaks in ${repeatedPositions} positions`,
+          },
           analysis: `You have ${leakCount} leaking positions out of ${repeatedPositions} repeated ones (${leakRate}%). Your repertoire has a solid core, but there are specific positions where you consistently choose a suboptimal move. These aren't random mistakes — they're systematic. You reach the same position, face the same decision, and make the same wrong choice each time.`,
           meaning: `Any opponent who studies your games will find these patterns. At your level, that might not happen often, but you're still leaving ${leakRateNum > 20 ? "significant" : "some"} rating points on the table. The positions you're leaking in are ones you already see regularly — fixing them doesn't require learning anything new, just correcting what you already play.`,
           studyPlan: [
@@ -641,9 +897,14 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
           verdict: "Patchy",
           desc: `${leakCount} leaks across ${repeatedPositions} positions (${leakRate}% leak rate) means you have significant blind spots.`,
           tip: "You're making the same mistake in the same position repeatedly. Drill each flagged leak until the correct move is instinct.",
-          keyStat: { icon: "📚", label: "Leak Rate", value: `${leakRate}% — ${leakCount} of ${repeatedPositions} positions leaking` },
+          keyStat: {
+            icon: "📚",
+            label: "Leak Rate",
+            value: `${leakRate}% — ${leakCount} of ${repeatedPositions} positions leaking`,
+          },
           analysis: `With ${leakCount} leaks out of ${repeatedPositions} positions (${leakRate}% leak rate), nearly ${leakRateNum > 40 ? "half" : "a third"} of your familiar positions are problematic. This isn't about encountering new positions — you're seeing the same boards over and over and choosing poorly each time. The pattern is clear: you have general opening knowledge but haven't drilled the specific critical moments.`,
-          meaning: "In practical terms, you're donating small advantages to your opponents in a large fraction of your games. These mini-disadvantages seem small individually, but they add up to significantly worse results than your tactical and middlegame skills would predict. Your rating is being held back by preparation gaps.",
+          meaning:
+            "In practical terms, you're donating small advantages to your opponents in a large fraction of your games. These mini-disadvantages seem small individually, but they add up to significantly worse results than your tactical and middlegame skills would predict. Your rating is being held back by preparation gaps.",
           studyPlan: [
             "Pick the 5 most frequent leaks from this report. Create flashcards: position on one side, correct move + explanation on the other.",
             "Drill these positions daily for 2 weeks. Studies show spaced repetition cements opening knowledge faster than any other method.",
@@ -654,9 +915,14 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
         verdict: "Unprepared",
         desc: `A ${leakRate}% leak rate is very high — you're essentially improvising in positions you see regularly.`,
         tip: "Go through each leak one by one. Even learning 5 correct responses will dramatically change your results.",
-        keyStat: { icon: "📚", label: "Leak Rate", value: `${leakRate}% — ${leakCount} of ${repeatedPositions} positions` },
+        keyStat: {
+          icon: "📚",
+          label: "Leak Rate",
+          value: `${leakRate}% — ${leakCount} of ${repeatedPositions} positions`,
+        },
         analysis: `${leakCount} leaks out of ${repeatedPositions} positions means a ${leakRate}% leak rate — the vast majority of positions you reach repeatedly are ones where you play a suboptimal move. This is the chess equivalent of retaking the same exam and getting the same questions wrong each time. The positions are familiar, but you don't have reliable knowledge of what to do.`,
-        meaning: "This is likely the single biggest factor limiting your rating. You're essentially entering every game with a preparation deficit, meaning you need to outplay your opponents in the middlegame just to equalize. Fixing your preparation would effectively give you a free rating boost without improving any other aspect of your game.",
+        meaning:
+          "This is likely the single biggest factor limiting your rating. You're essentially entering every game with a preparation deficit, meaning you need to outplay your opponents in the middlegame just to equalize. Fixing your preparation would effectively give you a free rating boost without improving any other aspect of your game.",
         studyPlan: [
           "Don't try to fix everything at once. Pick the 3 leaks you see most often and learn the correct move for each. Just three.",
           "After learning those 3, play 10-15 games and actively look for those positions. When they appear, play the correct move consciously.",
@@ -672,9 +938,15 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
           verdict: "Not Scanned",
           desc: "Tactics weren't included in this scan. Run a scan with tactics enabled for precise data.",
           tip: "Run a full scan (openings + tactics) or a tactics-only scan to get accurate tactical eye metrics.",
-          keyStat: { icon: "⚡", label: "Estimated", value: `Score estimated from accuracy (${value}/100)` },
-          analysis: "This score is estimated from your overall move accuracy because tactics weren't scanned separately. Without dedicated tactical analysis, we can't count exactly how many forcing moves you missed. The estimate gives a rough idea, but a proper tactics scan will reveal specific missed forks, pins, skewers, and other patterns.",
-          meaning: "To get actionable tactical insights — including which specific motifs you miss most and concrete study recommendations — enable the tactics scan. This is where most players find the biggest improvement opportunities.",
+          keyStat: {
+            icon: "⚡",
+            label: "Estimated",
+            value: `Score estimated from accuracy (${value}/100)`,
+          },
+          analysis:
+            "This score is estimated from your overall move accuracy because tactics weren't scanned separately. Without dedicated tactical analysis, we can't count exactly how many forcing moves you missed. The estimate gives a rough idea, but a proper tactics scan will reveal specific missed forks, pins, skewers, and other patterns.",
+          meaning:
+            "To get actionable tactical insights — including which specific motifs you miss most and concrete study recommendations — enable the tactics scan. This is where most players find the biggest improvement opportunities.",
           studyPlan: [
             "Run a new scan with the tactics option enabled to get precise missed-tactic counts and motif breakdowns.",
             "In the meantime, a daily habit of 10-15 tactical puzzles on Lichess or Chess Tempo will keep your pattern recognition sharp.",
@@ -682,15 +954,21 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
           ],
         };
       }
-      const perGame = gamesAnalyzed > 0 ? (tacticsCount / gamesAnalyzed).toFixed(1) : "0";
+      const perGame =
+        gamesAnalyzed > 0 ? (tacticsCount / gamesAnalyzed).toFixed(1) : "0";
       if (value >= 80)
         return {
           verdict: "Sharp",
           desc: `Averaging ${perGame} missed tactics per game — you're catching most forcing opportunities.`,
           tip: "Keep your tactical edge by doing 10-15 puzzles daily. Focus on speed to build pattern recognition.",
-          keyStat: { icon: "⚡", label: "Missed / Game", value: `${perGame} avg — ${tacticsCount} total in ${gamesAnalyzed} games` },
+          keyStat: {
+            icon: "⚡",
+            label: "Missed / Game",
+            value: `${perGame} avg — ${tacticsCount} total in ${gamesAnalyzed} games`,
+          },
           analysis: `Across ${gamesAnalyzed} games, you missed only ${tacticsCount} tactical opportunities — an average of ${perGame} per game. Most of these are likely deep or complex sequences rather than simple one-move tactics. Your pattern recognition is strong, and you're consistently checking for forcing moves before committing to a plan.`,
-          meaning: "Your tactical awareness is a genuine weapon. When opponents leave pieces en prise, miss back-rank threats, or allow forks, you're usually there to punish them. This translates directly to points on the board — tactical players at your level win games they 'shouldn't' because they capitalize on every opportunity.",
+          meaning:
+            "Your tactical awareness is a genuine weapon. When opponents leave pieces en prise, miss back-rank threats, or allow forks, you're usually there to punish them. This translates directly to points on the board — tactical players at your level win games they 'shouldn't' because they capitalize on every opportunity.",
           studyPlan: [
             "Shift from quantity to quality in tactics training. Focus on 2200+ rated puzzles that require 4+ move calculations rather than simple one-movers.",
             "Review the specific tactics you did miss (shown in this report). Are they a specific motif? Discovered attacks, zwischenzugs, or quiet moves in combinations?",
@@ -702,7 +980,11 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
           verdict: "Aware",
           desc: `${perGame} missed tactics per game means you see a lot but let some slip. ${tacticsCount} total missed across ${gamesAnalyzed} games.`,
           tip: "You're missing tactics in specific motifs. Check the pattern analysis above — train your weakest motif category first.",
-          keyStat: { icon: "⚡", label: "Missed / Game", value: `${perGame} avg — ${tacticsCount} total opportunities missed` },
+          keyStat: {
+            icon: "⚡",
+            label: "Missed / Game",
+            value: `${perGame} avg — ${tacticsCount} total opportunities missed`,
+          },
           analysis: `With ${tacticsCount} missed tactics across ${gamesAnalyzed} games (${perGame} per game), you have decent tactical awareness but aren't catching everything. The tactics you're missing likely fall into specific categories — perhaps you see knight forks easily but miss discovered attacks, or you calculate well in sharp positions but overlook tactics in quiet ones.`,
           meaning: `You're leaving wins and advantages on the table in roughly ${Number(perGame) > 1.5 ? "every other" : "some"} game${Number(perGame) > 1.5 ? "" : "s"}. These aren't positions where a tactic is barely visible — the engine found a significant advantage (≥200cp) that you walked past. Closing this gap would convert drawn games into wins and losing games into draws.`,
           studyPlan: [
@@ -716,9 +998,14 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
           verdict: "Spotty",
           desc: `${perGame} missed per game (${tacticsCount} total) — you're leaving significant material on the table.`,
           tip: "Dedicate 15 minutes daily to tactical puzzles, especially forks, pins, and discovered attacks. The patterns will click.",
-          keyStat: { icon: "⚡", label: "Missed / Game", value: `${perGame} avg — ${tacticsCount} forcing moves overlooked` },
+          keyStat: {
+            icon: "⚡",
+            label: "Missed / Game",
+            value: `${perGame} avg — ${tacticsCount} forcing moves overlooked`,
+          },
           analysis: `Missing ${perGame} tactics per game (${tacticsCount} across ${gamesAnalyzed} games) indicates a significant gap in pattern recognition. You're not calculating through forcing sequences before deciding on your move, meaning you settle for 'decent-looking' moves when winning ones are available. This is extremely common at intermediate levels and is the most fixable weakness.`,
-          meaning: "In concrete terms, you're probably winning 15-25% fewer games than a player with your same positional understanding but better tactical vision. Every missed tactic is either a win you didn't take, an advantage you didn't press, or material you left on the board. This is likely the fastest path to gaining rating.",
+          meaning:
+            "In concrete terms, you're probably winning 15-25% fewer games than a player with your same positional understanding but better tactical vision. Every missed tactic is either a win you didn't take, an advantage you didn't press, or material you left on the board. This is likely the fastest path to gaining rating.",
           studyPlan: [
             "Start a daily puzzle habit: 20 puzzles, untimed, focusing on getting the right answer rather than speed. Do this for 30 days straight.",
             "Study the basic tactical patterns: fork, pin, skewer, discovered attack, double check, removing the defender, deflection. Learn to name them when you see them.",
@@ -729,9 +1016,14 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
         verdict: "Blind Spots",
         desc: `Missing ${perGame} tactics per game suggests you aren't scanning for forcing moves before deciding.`,
         tip: "Before every move, ask: are there any checks, captures, or threats? This one habit can cut your missed tactics in half.",
-        keyStat: { icon: "⚡", label: "Missed / Game", value: `${perGame} avg — ${tacticsCount} total in ${gamesAnalyzed} games` },
+        keyStat: {
+          icon: "⚡",
+          label: "Missed / Game",
+          value: `${perGame} avg — ${tacticsCount} total in ${gamesAnalyzed} games`,
+        },
         analysis: `At ${perGame} missed tactics per game (${tacticsCount} total), you're consistently failing to check for forcing moves. This isn't about complex 5-move combinations — many of these are 2-3 move sequences that involve basic patterns like forks and pins. Your decision-making process likely skips the 'Is there a tactic here?' check and goes straight to positional considerations.`,
-        meaning: "This is probably costing you more rating points than any other single factor. Even if your positional understanding is good, missing basic tactics means you're leaving whole pieces and decisive advantages on the board. The good news: tactical vision improves faster than any other chess skill with targeted practice.",
+        meaning:
+          "This is probably costing you more rating points than any other single factor. Even if your positional understanding is good, missing basic tactics means you're leaving whole pieces and decisive advantages on the board. The good news: tactical vision improves faster than any other chess skill with targeted practice.",
         studyPlan: [
           "Start with basic 1-move tactical puzzles (mate-in-1, simple forks). Get comfortable with the patterns before moving to harder content.",
           "Install the 'checks, captures, threats' habit: before EVERY move, spend 10 seconds checking all checks, all captures, and all threats — for both sides.",
@@ -748,9 +1040,14 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
           verdict: "Cool-Headed",
           desc: `Only ${sevPct}% severe leak rate — you rarely crack under pressure. Blunders are uncommon in your games.`,
           tip: "Protect this strength. When you feel tilt coming on, take a break between games rather than playing through frustration.",
-          keyStat: { icon: "🧘", label: "Severe Leak Rate", value: `${sevPct}% — only 1 in ${oneInN} moves` },
+          keyStat: {
+            icon: "🧘",
+            label: "Severe Leak Rate",
+            value: `${sevPct}% — only 1 in ${oneInN} moves`,
+          },
           analysis: `With only ${sevPct}% of your positions resulting in severe eval drops (≥200cp loss), you demonstrate exceptional emotional control at the board. Roughly only 1 in ${oneInN} of your moves is a serious blunder. This means you maintain a stable decision-making process even when the position gets complicated or when you're under time pressure.`,
-          meaning: "Composure is one of the hardest skills to develop and one of the most valuable. Players who don't blunder win games by simply outlasting opponents who do. Your low blunder rate means you're a tough opponent to beat — people need to genuinely outplay you rather than waiting for you to self-destruct.",
+          meaning:
+            "Composure is one of the hardest skills to develop and one of the most valuable. Players who don't blunder win games by simply outlasting opponents who do. Your low blunder rate means you're a tough opponent to beat — people need to genuinely outplay you rather than waiting for you to self-destruct.",
           studyPlan: [
             "Maintain this strength by recognizing your personal tilt triggers. When you notice frustration, anxiety, or overconfidence — pause before moving.",
             "Practice 'blunder-checking' as an automatic habit: before clicking your move, spend 3 seconds asking 'Am I leaving anything hanging?' even when you feel confident.",
@@ -762,9 +1059,14 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
           verdict: "Mostly Steady",
           desc: `${sevPct}% of positions result in severe eval drops. You're generally composed but have occasional meltdowns.`,
           tip: "Review your worst moments from this report. Do they cluster around a specific opening or game phase? Fixing the trigger stops the collapse.",
-          keyStat: { icon: "🧘", label: "Severe Leak Rate", value: `${sevPct}% — 1 in ${oneInN} moves is a blunder` },
+          keyStat: {
+            icon: "🧘",
+            label: "Severe Leak Rate",
+            value: `${sevPct}% — 1 in ${oneInN} moves is a blunder`,
+          },
           analysis: `At ${sevPct}% severe leak rate, you're stable most of the time but have predictable breaking points. Roughly 1 in ${oneInN} positions leads to a serious mistake. These blunders aren't random — they likely cluster in specific situations: positions with lots of pieces, time scrambles, or after you've already made one mistake (the 'tilt cascade' where one error leads to several more).`,
-          meaning: "Your blunder rate is a significant but fixable drag on your results. You probably have several games where you were winning or equal before a single catastrophic move changed the outcome. If you could halve your severe leak rate, you'd likely see a 50-100 point rating increase from the games you'd stop losing.",
+          meaning:
+            "Your blunder rate is a significant but fixable drag on your results. You probably have several games where you were winning or equal before a single catastrophic move changed the outcome. If you could halve your severe leak rate, you'd likely see a 50-100 point rating increase from the games you'd stop losing.",
           studyPlan: [
             "Identify your blunder clusters: are they in specific openings, time scrambles, or after already making a mistake? Knowing the trigger is half the fix.",
             "Implement a physical pause before critical moves: take your hand off the mouse, take a breath, re-evaluate. Blunders often happen when we move too quickly.",
@@ -776,9 +1078,14 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
           verdict: "Volatile",
           desc: `A ${sevPct}% severe leak rate means roughly 1 in ${oneInN} positions is a disaster.`,
           tip: "Build a pre-move checklist: (1) What did my opponent just threaten? (2) Is anything hanging? (3) Any checks? Run it every time.",
-          keyStat: { icon: "🧘", label: "Severe Leak Rate", value: `${sevPct}% — 1 in ${oneInN} moves is catastrophic` },
+          keyStat: {
+            icon: "🧘",
+            label: "Severe Leak Rate",
+            value: `${sevPct}% — 1 in ${oneInN} moves is catastrophic`,
+          },
           analysis: `With ${sevPct}% of positions resulting in severe eval drops, you're blundering far too often. Roughly 1 in ${oneInN} moves is a serious mistake — that's likely multiple significant blunders per game. This pattern suggests impulsive decision-making: you're choosing moves based on first impressions rather than checking for safety. When things go wrong in a game, the errors tend to cascade.`,
-          meaning: "This is dramatically affecting your results. Even if you find strong ideas and build winning positions, the frequent collapses mean you're converting far fewer wins than your skill level suggests. Many of your losses are probably games you should have won or drawn. Improving composure alone could add 100-200 rating points.",
+          meaning:
+            "This is dramatically affecting your results. Even if you find strong ideas and build winning positions, the frequent collapses mean you're converting far fewer wins than your skill level suggests. Many of your losses are probably games you should have won or drawn. Improving composure alone could add 100-200 rating points.",
           studyPlan: [
             "Adopt the '10-second rule': before EVERY move, count to 10 and re-check the board. Is anything hanging? Any opponent checks or captures?",
             "Play longer time controls (15+10 or 30-minute games). Speed chess reinforces bad habits; slower chess lets you practice the discipline of checking.",
@@ -789,9 +1096,14 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
         verdict: "Fragile",
         desc: `${sevPct}% severe leaks is very high — you're losing won games through avoidable collapses.`,
         tip: "Slow down significantly. Set a rule: never move in under 5 seconds. Most severe blunders come from speed, not skill.",
-        keyStat: { icon: "🧘", label: "Severe Leak Rate", value: `${sevPct}% — 1 in ${oneInN} moves is a blunder` },
+        keyStat: {
+          icon: "🧘",
+          label: "Severe Leak Rate",
+          value: `${sevPct}% — 1 in ${oneInN} moves is a blunder`,
+        },
         analysis: `A ${sevPct}% severe leak rate means you're making game-changing blunders at an alarming frequency. Multiple times per game, you're making moves that lose 200+ centipawns — often equivalent to blundering a full piece or walking into checkmate. This isn't a skill issue in the traditional sense; it's a process issue. You're not checking your moves before playing them.`,
-        meaning: "This is the single most important thing for you to fix. Nothing else in chess matters if you're giving away pieces every few moves. The good news: this is entirely fixable with discipline, not talent. Every strong player has been through this phase and overcome it the same way — by slowing down and checking.",
+        meaning:
+          "This is the single most important thing for you to fix. Nothing else in chess matters if you're giving away pieces every few moves. The good news: this is entirely fixable with discipline, not talent. Every strong player has been through this phase and overcome it the same way — by slowing down and checking.",
         studyPlan: [
           "Rule #1 for the next 50 games: never move in under 10 seconds, no matter how obvious the move seems. Set a physical timer if needed.",
           "Before every move, say to yourself (even out loud): 'Is anything hanging? Can my opponent give check?' If the answer isn't clear, don't move yet.",
@@ -807,9 +1119,15 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
           verdict: "No Data",
           desc: "Clock data wasn't available for your games. Play with clocks enabled to unlock this dimension.",
           tip: "Lichess and Chess.com both record clock times — make sure clocks are enabled in your games.",
-          keyStat: { icon: "⏱️", label: "Clock Data", value: "Not available for these games" },
-          analysis: "We couldn't compute a time management score because the games analyzed didn't include clock timestamps. This can happen with imported games, older archives, or certain game types. The dimension defaults to 50 when clock data is missing.",
-          meaning: "Time management is one of the most practical skills in competitive chess, especially in blitz and rapid. Without clock data, we can't tell you how well you're pacing yourself — but the other five dimensions still give a strong picture of your play.",
+          keyStat: {
+            icon: "⏱️",
+            label: "Clock Data",
+            value: "Not available for these games",
+          },
+          analysis:
+            "We couldn't compute a time management score because the games analyzed didn't include clock timestamps. This can happen with imported games, older archives, or certain game types. The dimension defaults to 50 when clock data is missing.",
+          meaning:
+            "Time management is one of the most practical skills in competitive chess, especially in blitz and rapid. Without clock data, we can't tell you how well you're pacing yourself — but the other five dimensions still give a strong picture of your play.",
           studyPlan: [
             "Play timed games on Lichess or Chess.com with clocks enabled so future scans can analyze your time usage.",
             "When you re-scan, this card will show your pacing consistency, time scramble frequency, and early-game time usage.",
@@ -821,9 +1139,14 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
           verdict: "Metronome",
           desc: "Your clock usage is consistent and disciplined — you're rarely in time trouble and you pace your games well.",
           tip: "Strong time management means you can play longer time controls and outperform opponents who get into scrambles. Use this edge.",
-          keyStat: { icon: "⏱️", label: "Pacing Score", value: `${value}/100 — disciplined and consistent` },
+          keyStat: {
+            icon: "⏱️",
+            label: "Pacing Score",
+            value: `${value}/100 — disciplined and consistent`,
+          },
           analysis: `With a time management score of ${value}, your pacing is excellent. You distribute your thinking time evenly across the game, avoid time scrambles, and don't waste clock on early moves where your preparation should carry you. This level of discipline is what separates tournament players from casual ones — you're making decisions about when to think, not just what to think.`,
-          meaning: "In practical play, good time management is force multiplication. The same calculation ability produces better moves when you have 5 minutes left instead of 30 seconds. You're consistently giving yourself enough time for the critical moments, which means your tactical and positional skills are fully expressed in your games rather than being handicapped by time pressure.",
+          meaning:
+            "In practical play, good time management is force multiplication. The same calculation ability produces better moves when you have 5 minutes left instead of 30 seconds. You're consistently giving yourself enough time for the critical moments, which means your tactical and positional skills are fully expressed in your games rather than being handicapped by time pressure.",
           studyPlan: [
             "Focus on critical moment recognition: learn when a position demands deep calculation vs when you can play on intuition. This lets you reallocate time even more effectively.",
             "Experiment with faster time controls where your pacing advantage becomes an even bigger weapon — many opponents collapse under time pressure that doesn't affect you.",
@@ -835,9 +1158,14 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
           verdict: "Steady",
           desc: "Your time usage is reasonable but has room for improvement — occasional time scrambles or uneven pacing in some games.",
           tip: "Try setting mental checkpoints: know roughly how much time you should have at moves 10, 20, and 30.",
-          keyStat: { icon: "⏱️", label: "Pacing Score", value: `${value}/100 — some uneven stretches` },
+          keyStat: {
+            icon: "⏱️",
+            label: "Pacing Score",
+            value: `${value}/100 — some uneven stretches`,
+          },
           analysis: `A time management score of ${value} means you're generally okay with the clock but have inconsistencies. You might spend too long on some moves and then rush through others, or occasionally fall into time trouble in longer games. The core issue is usually decision-making speed rather than the clock itself — when you're unsure, you burn time.`,
-          meaning: "The practical impact is that your move quality probably dips in the second half of your games. Your early-game accuracy might be solid, but rushed late-game decisions undo that advantage. In tournaments, this pattern leads to 'should have won' draws and 'almost held' losses — games where better time allocation would have changed the result.",
+          meaning:
+            "The practical impact is that your move quality probably dips in the second half of your games. Your early-game accuracy might be solid, but rushed late-game decisions undo that advantage. In tournaments, this pattern leads to 'should have won' draws and 'almost held' losses — games where better time allocation would have changed the result.",
           studyPlan: [
             "After each game, review your clock at key moments: how much time did you have at move 15? Move 25? Look for patterns in when you speed up or slow down.",
             "Build opening preparation depth so you can play the first 8-12 moves quickly and confidently, banking time for complex middlegame decisions.",
@@ -849,9 +1177,14 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
           verdict: "Erratic",
           desc: "Your time usage is inconsistent — you're frequently getting into time trouble or spending disproportionate time on early moves.",
           tip: "Use an increment time control (e.g. 10+5) to build better pacing habits before moving to non-increment games.",
-          keyStat: { icon: "⏱️", label: "Pacing Score", value: `${value}/100 — frequent time scrambles` },
+          keyStat: {
+            icon: "⏱️",
+            label: "Pacing Score",
+            value: `${value}/100 — frequent time scrambles`,
+          },
           analysis: `A score of ${value} indicates significant time management issues. Common patterns include: spending 20%+ of your total time in the first 5-10 moves (often replaying preparation you should know), long tanks on positions that don't warrant deep calculation, and then scrambling with very little time left for genuinely critical decisions. This isn't about thinking speed — it's about thinking allocation.`,
-          meaning: "In practical terms, you're probably playing many of your critical moves — the ones that decide the game — with a fraction of the time you should have. A player with your same tactical and positional ability but better time management would score significantly higher. You're effectively handicapping yourself every game.",
+          meaning:
+            "In practical terms, you're probably playing many of your critical moves — the ones that decide the game — with a fraction of the time you should have. A player with your same tactical and positional ability but better time management would score significantly higher. You're effectively handicapping yourself every game.",
           studyPlan: [
             "Play 5 games where you deliberately spend less than 5 seconds on each of the first 10 moves. This breaks the habit of re-analyzing known positions over the board.",
             "Switch to increment games (10+5 or 15+10) exclusively for 2 weeks. The increment safety net builds confidence in committing to moves faster.",
@@ -862,9 +1195,14 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
         verdict: "Time Trouble",
         desc: "You frequently run very low on time, and your move pacing is highly uneven. This is likely costing you multiple games.",
         tip: "Start with slower time controls with increment. Focus on making any reasonable move within 15 seconds — speed of decision matters more than perfection.",
-        keyStat: { icon: "⏱️", label: "Pacing Score", value: `${value}/100 — clock is beating you` },
+        keyStat: {
+          icon: "⏱️",
+          label: "Pacing Score",
+          value: `${value}/100 — clock is beating you`,
+        },
         analysis: `With a score of ${value}, time management is a major weakness. You're likely getting into severe time trouble in most games, spending heavily in the opening or early middlegame and then being forced to blitz out critical moves. The clock is essentially an extra opponent that's beating you in many games before your actual opponent does.`,
-        meaning: "This is likely your single biggest practical weakness. Improving your time management would improve your results more than any amount of tactical training or opening study, because those skills only work when you have time to use them. Many of your losses probably happen in positions where you had a good or even winning position but couldn't convert due to time pressure.",
+        meaning:
+          "This is likely your single biggest practical weakness. Improving your time management would improve your results more than any amount of tactical training or opening study, because those skills only work when you have time to use them. Many of your losses probably happen in positions where you had a good or even winning position but couldn't convert due to time pressure.",
         studyPlan: [
           "Play 20 games of 15+10 where your only goal is to never drop below 3 minutes remaining. Don't worry about winning — just manage the clock.",
           "Build a simple opening repertoire you can play on autopilot in 10 seconds per move for the first 8 moves. This banks time immediately.",
@@ -879,9 +1217,15 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
           verdict: "Rock-Solid",
           desc: "You maintain quality even in uncomfortable positions — strong mental game combined with good fundamentals.",
           tip: "Push yourself with harder challenges: play up in rating pools or try classical time controls where precision matters more.",
-          keyStat: { icon: "🛡️", label: "Resilience Score", value: `${value}/100 — tournament-tough` },
-          analysis: "Your resilience score combines accuracy and composure — two skills that together determine how you perform under real game conditions. A score this high means you're not just good in a vacuum; you maintain your level when positions get messy, when you're under time pressure, and when things aren't going according to plan. This is the hallmark of a tournament-tough player.",
-          meaning: "In tournament contexts, resilience is often the deciding factor. Two players with similar skills but different resilience scores will have dramatically different results in long events. You're the kind of player who's dangerous even from worse positions because opponents know you won't crack and hand them the game.",
+          keyStat: {
+            icon: "🛡️",
+            label: "Resilience Score",
+            value: `${value}/100 — tournament-tough`,
+          },
+          analysis:
+            "Your resilience score combines accuracy and composure — two skills that together determine how you perform under real game conditions. A score this high means you're not just good in a vacuum; you maintain your level when positions get messy, when you're under time pressure, and when things aren't going according to plan. This is the hallmark of a tournament-tough player.",
+          meaning:
+            "In tournament contexts, resilience is often the deciding factor. Two players with similar skills but different resilience scores will have dramatically different results in long events. You're the kind of player who's dangerous even from worse positions because opponents know you won't crack and hand them the game.",
           studyPlan: [
             "Challenge yourself with harder competition: play up in rating pools, enter tournaments, or try longer time controls where sustained quality matters most.",
             "Study defensive techniques specifically — exchange sacrifices, fortress constructions, and counterattacking resources. Making your resilience even more active.",
@@ -893,9 +1237,15 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
           verdict: "Durable",
           desc: "You mostly hold it together but can falter when things get messy. Your baseline skills carry you through most positions.",
           tip: "Practice playing slightly worse positions on purpose. Defending well is a trainable skill — and it frustrates opponents.",
-          keyStat: { icon: "🛡️", label: "Resilience Score", value: `${value}/100 — solid but can crack` },
-          analysis: "Your accuracy and composure are both reasonable, giving you enough resilience to handle normal game situations. However, when both are tested simultaneously — for example, a complex position where you're slightly worse and low on time — cracks can appear. Your quality drops more than it should when multiple stressors combine.",
-          meaning: "In most games, your resilience is fine. But in critical tournament games or positions where everything is on the line, you're likely to perform below your normal level. The gap between your 'comfortable game' quality and your 'under pressure' quality is where rating points get lost.",
+          keyStat: {
+            icon: "🛡️",
+            label: "Resilience Score",
+            value: `${value}/100 — solid but can crack`,
+          },
+          analysis:
+            "Your accuracy and composure are both reasonable, giving you enough resilience to handle normal game situations. However, when both are tested simultaneously — for example, a complex position where you're slightly worse and low on time — cracks can appear. Your quality drops more than it should when multiple stressors combine.",
+          meaning:
+            "In most games, your resilience is fine. But in critical tournament games or positions where everything is on the line, you're likely to perform below your normal level. The gap between your 'comfortable game' quality and your 'under pressure' quality is where rating points get lost.",
           studyPlan: [
             "Practice defending worse positions intentionally: set up engines to give you slightly worse endgames and try to hold the draw. This builds comfort with adversity.",
             "When you make a mistake in a game, make a conscious effort to reset emotionally before the next move. The 'tilt cascade' — where one error leads to several more — is your biggest risk.",
@@ -907,9 +1257,15 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
           verdict: "Brittle",
           desc: "When your accuracy drops or pressure mounts, the quality of your play deteriorates quickly.",
           tip: "Work on composure first — that's the bigger contributor to this score. Even small improvements in blunder-avoidance will boost resilience.",
-          keyStat: { icon: "🛡️", label: "Resilience Score", value: `${value}/100 — collapses under stress` },
-          analysis: "Your resilience is limited by weaknesses in both accuracy and composure. When the position demands precise play AND emotional control, your results suffer significantly. This often manifests as games where a single mistake triggers a collapse — you go from a playable position to a lost one in just 2-3 moves because the first error rattles you into making more.",
-          meaning: "This pattern probably feels familiar: you play well for 20 moves, then one bad move leads to two more, and suddenly the game is over. Opponents who recognize this pattern (even subconsciously) will play provocatively against you, creating complications because they know you're more likely to crack than play precisely under pressure.",
+          keyStat: {
+            icon: "🛡️",
+            label: "Resilience Score",
+            value: `${value}/100 — collapses under stress`,
+          },
+          analysis:
+            "Your resilience is limited by weaknesses in both accuracy and composure. When the position demands precise play AND emotional control, your results suffer significantly. This often manifests as games where a single mistake triggers a collapse — you go from a playable position to a lost one in just 2-3 moves because the first error rattles you into making more.",
+          meaning:
+            "This pattern probably feels familiar: you play well for 20 moves, then one bad move leads to two more, and suddenly the game is over. Opponents who recognize this pattern (even subconsciously) will play provocatively against you, creating complications because they know you're more likely to crack than play precisely under pressure.",
           studyPlan: [
             "Prioritize composure training (see the Composure card) — it contributes 70% of this score. Reducing blunders will have the biggest single impact on resilience.",
             "After a mistake, take a deliberate 30-second pause. Get a drink of water. Look away from the board. Break the emotional response before choosing your next move.",
@@ -920,9 +1276,15 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
         verdict: "Fragile",
         desc: "Both accuracy and composure are low, meaning you struggle to maintain any consistency when the position gets complex.",
         tip: "Simplify your openings. Play solid, well-known structures with fewer tactical complications until your fundamentals improve.",
-        keyStat: { icon: "🛡️", label: "Resilience Score", value: `${value}/100 — high variance play` },
-        analysis: "A low resilience score reflects foundational weaknesses in both opening accuracy and blunder-avoidance. Complex, sharp positions are your kryptonite because they demand both precise knowledge and emotional steadiness — and both are currently areas of growth for you. Your play likely has high variance: occasionally solid games followed by rapid collapses.",
-        meaning: "In practical terms, your results are unpredictable. You can beat players rated significantly higher than you on a good day, but you can also lose to much weaker players when things go wrong. Stabilizing your play — reducing the lows rather than trying to reach higher highs — is the fastest path to sustainable improvement.",
+        keyStat: {
+          icon: "🛡️",
+          label: "Resilience Score",
+          value: `${value}/100 — high variance play`,
+        },
+        analysis:
+          "A low resilience score reflects foundational weaknesses in both opening accuracy and blunder-avoidance. Complex, sharp positions are your kryptonite because they demand both precise knowledge and emotional steadiness — and both are currently areas of growth for you. Your play likely has high variance: occasionally solid games followed by rapid collapses.",
+        meaning:
+          "In practical terms, your results are unpredictable. You can beat players rated significantly higher than you on a good day, but you can also lose to much weaker players when things go wrong. Stabilizing your play — reducing the lows rather than trying to reach higher highs — is the fastest path to sustainable improvement.",
         studyPlan: [
           "Simplify everything: play solid, low-theory openings (London System, Caro-Kann) where the positions are calm and the right moves are logical rather than memorized.",
           "Address the Composure dimension first. If you can cut your blunder rate, that alone will stabilize your games and build the foundation for everything else.",
@@ -932,14 +1294,27 @@ function getDimInsight(dim: string, value: number, props: RadarProps): DimInsigh
     }
 
     default:
-      return { verdict: "", desc: "", tip: "", analysis: "", meaning: "", studyPlan: ["", "", ""] };
+      return {
+        verdict: "",
+        desc: "",
+        tip: "",
+        analysis: "",
+        meaning: "",
+        studyPlan: ["", "", ""],
+      };
   }
 }
 
 /**
  * RadarLegend — shows each dimension with its score, dynamic assessment, and tailored tips.
  */
-export function RadarLegend({ data, props }: { data: RadarDimension[]; props: RadarProps }) {
+export function RadarLegend({
+  data,
+  props,
+}: {
+  data: RadarDimension[];
+  props: RadarProps;
+}) {
   const [expandedDim, setExpandedDim] = useState<string | null>(null);
 
   // Derive overall assessment
@@ -953,13 +1328,46 @@ export function RadarLegend({ data, props }: { data: RadarDimension[]; props: Ra
       {/* Overall summary sentence */}
       <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-[11px] leading-relaxed text-slate-400">
         {avg >= 75 ? (
-          <>Strong overall profile ({avg}/100). Your biggest edge is <span className="font-semibold text-emerald-400">{strongest.dimension}</span> — keep leveraging it.</>
+          <>
+            Strong overall profile ({avg}/100). Your biggest edge is{" "}
+            <span className="font-semibold text-emerald-400">
+              {strongest.dimension}
+            </span>{" "}
+            — keep leveraging it.
+          </>
         ) : avg >= 50 ? (
-          <>Solid foundation ({avg}/100). <span className="font-semibold text-emerald-400">{strongest.dimension}</span> is your strength; <span className="font-semibold text-amber-400">{weakest.dimension}</span> ({weakest.value}) is holding you back the most.</>
+          <>
+            Solid foundation ({avg}/100).{" "}
+            <span className="font-semibold text-emerald-400">
+              {strongest.dimension}
+            </span>{" "}
+            is your strength;{" "}
+            <span className="font-semibold text-amber-400">
+              {weakest.dimension}
+            </span>{" "}
+            ({weakest.value}) is holding you back the most.
+          </>
         ) : avg >= 30 ? (
-          <>Room to grow ({avg}/100). Focus on <span className="font-semibold text-amber-400">{weakest.dimension}</span> ({weakest.value}) first — it&apos;s your biggest bottleneck. <span className="font-semibold text-cyan-400">{strongest.dimension}</span> ({strongest.value}) shows promise.</>
+          <>
+            Room to grow ({avg}/100). Focus on{" "}
+            <span className="font-semibold text-amber-400">
+              {weakest.dimension}
+            </span>{" "}
+            ({weakest.value}) first — it&apos;s your biggest bottleneck.{" "}
+            <span className="font-semibold text-cyan-400">
+              {strongest.dimension}
+            </span>{" "}
+            ({strongest.value}) shows promise.
+          </>
         ) : (
-          <>Developing player ({avg}/100). Start with <span className="font-semibold text-red-400">{weakest.dimension}</span> — even small gains there will have the biggest impact on your results.</>
+          <>
+            Developing player ({avg}/100). Start with{" "}
+            <span className="font-semibold text-red-400">
+              {weakest.dimension}
+            </span>{" "}
+            — even small gains there will have the biggest impact on your
+            results.
+          </>
         )}
       </div>
 
@@ -1004,13 +1412,27 @@ export function RadarLegend({ data, props }: { data: RadarDimension[]; props: Ra
                   <div className="mb-1 flex items-center justify-between">
                     <span className="flex items-center gap-1 text-xs font-medium text-white/60">
                       {d.dimension}
-                      <svg className="h-3 w-3 text-white/20" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z" clipRule="evenodd" />
+                      <svg
+                        className="h-3 w-3 text-white/20"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a.75.75 0 000 1.5h.253a.25.25 0 01.244.304l-.459 2.066A1.75 1.75 0 0010.747 15H11a.75.75 0 000-1.5h-.253a.25.25 0 01-.244-.304l.459-2.066A1.75 1.75 0 009.253 9H9z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <span className={`text-[10px] font-medium ${verdictColor}`}>{insight.verdict}</span>
-                      <span className={`text-xs font-bold ${color}`}>{d.value}</span>
+                      <span
+                        className={`text-[10px] font-medium ${verdictColor}`}
+                      >
+                        {insight.verdict}
+                      </span>
+                      <span className={`text-xs font-bold ${color}`}>
+                        {d.value}
+                      </span>
                     </span>
                   </div>
                   <div className="h-1 w-full rounded-full bg-white/5">
@@ -1026,7 +1448,9 @@ export function RadarLegend({ data, props }: { data: RadarDimension[]; props: Ra
                 <div className="animate-fade-in mt-1.5 mb-1 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-[11px] leading-relaxed">
                   <p className="text-slate-400">{insight.desc}</p>
                   <p className="mt-1.5 text-slate-500">
-                    <span className="font-semibold text-emerald-400/80">How to improve:</span>{" "}
+                    <span className="font-semibold text-emerald-400/80">
+                      How to improve:
+                    </span>{" "}
                     {insight.tip}
                   </p>
                 </div>

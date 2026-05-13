@@ -8,7 +8,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { subscriptions } from "@/lib/schema";
+import { subscriptions, users } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { isAdmin as checkIsAdmin } from "@/lib/admin";
 
@@ -27,6 +27,16 @@ export async function GET() {
     .where(eq(subscriptions.userId, userId))
     .limit(1);
 
+  const [profile] = await db
+    .select({
+      name: users.name,
+      email: users.email,
+      image: users.image,
+    })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
   const admin = await checkIsAdmin(userId);
   const plan = admin ? "lifetime" : (sub?.plan ?? "free");
   const subscriptionStatus = sub?.status ?? "active";
@@ -38,9 +48,9 @@ export async function GET() {
     isAdmin: admin,
     user: {
       id: session.user.id,
-      name: session.user.name,
-      email: session.user.email,
-      image: session.user.image,
+      name: profile?.name ?? session.user.name,
+      email: profile?.email ?? session.user.email,
+      image: profile?.image ?? session.user.image,
     },
   });
 }

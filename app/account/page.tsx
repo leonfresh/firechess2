@@ -27,6 +27,12 @@ export default function AccountPage() {
     null,
   );
   const [chaosUsernameSaved, setChaosUsernameSaved] = useState(false);
+  const [profileImageUrl, setProfileImageUrl] = useState("");
+  const [profileImageSaving, setProfileImageSaving] = useState(false);
+  const [profileImageError, setProfileImageError] = useState<string | null>(
+    null,
+  );
+  const [profileImageSaved, setProfileImageSaved] = useState(false);
 
   // Load current chaos username from the server once authenticated
   useEffect(() => {
@@ -38,6 +44,11 @@ export default function AccountPage() {
       })
       .catch(() => {});
   }, [authenticated]);
+
+  useEffect(() => {
+    if (!authenticated) return;
+    setProfileImageUrl(user?.image ?? "");
+  }, [authenticated, user?.image]);
 
   const saveChaosUsername = async () => {
     setChaosUsernameSaving(true);
@@ -61,6 +72,39 @@ export default function AccountPage() {
     } finally {
       setChaosUsernameSaving(false);
     }
+  };
+
+  const saveProfileImage = async (nextImage = profileImageUrl) => {
+    setProfileImageSaving(true);
+    setProfileImageError(null);
+    setProfileImageSaved(false);
+
+    try {
+      const res = await fetch("/api/account/profile-image", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ image: nextImage }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        setProfileImageError(data.error ?? "Failed to save profile image.");
+      } else {
+        setProfileImageUrl(data.image ?? "");
+        refresh();
+        setProfileImageSaved(true);
+        setTimeout(() => setProfileImageSaved(false), 3000);
+      }
+    } catch {
+      setProfileImageError("Something went wrong. Please try again.");
+    } finally {
+      setProfileImageSaving(false);
+    }
+  };
+
+  const clearProfileImage = async () => {
+    setProfileImageUrl("");
+    await saveProfileImage("");
   };
 
   const syncPlan = async () => {
@@ -161,6 +205,55 @@ export default function AccountPage() {
                     </p>
                   )}
                 </div>
+              </div>
+
+              <div className="mt-5 rounded-xl border border-white/[0.08] bg-black/15 p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  Profile image URL
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                  Paste an avatar URL and save it here, or clear it to fall back
+                  to your initials. If the image host blocks embedding,
+                  FireChess may not be able to display it.
+                </p>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                  <input
+                    type="url"
+                    value={profileImageUrl}
+                    onChange={(e) => {
+                      setProfileImageUrl(e.target.value);
+                      setProfileImageError(null);
+                      setProfileImageSaved(false);
+                    }}
+                    placeholder="https://example.com/avatar.png"
+                    className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white placeholder-slate-600 outline-none focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => saveProfileImage()}
+                    disabled={profileImageSaving}
+                    className="inline-flex items-center justify-center rounded-xl border border-cyan-500/30 bg-cyan-500/15 px-4 py-2 text-sm font-semibold text-cyan-200 transition-all hover:bg-cyan-500/25 disabled:opacity-40"
+                  >
+                    {profileImageSaving
+                      ? "Saving..."
+                      : profileImageSaved
+                        ? "Saved!"
+                        : "Save image"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={clearProfileImage}
+                    disabled={profileImageSaving || !profileImageUrl.trim()}
+                    className="inline-flex items-center justify-center rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-300 transition-all hover:border-white/[0.16] hover:text-white disabled:opacity-40"
+                  >
+                    Clear
+                  </button>
+                </div>
+                {profileImageError && (
+                  <p className="mt-2 text-xs text-red-400">
+                    {profileImageError}
+                  </p>
+                )}
               </div>
             </section>
 

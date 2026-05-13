@@ -9,9 +9,11 @@ import {
   useState,
 } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { CommunityPostComposerModal } from "@/components/community-post-composer-modal";
 import { DrillMode } from "@/components/drill-mode";
-import { HeroDemoBoard } from "@/components/hero-demo-board";
-import { HeroProductAnimation } from "@/components/hero-product-animation";
+import { HeroProductScreenshot } from "@/components/hero-product-screenshot";
+import { HomepageCommunityFeed } from "@/components/homepage-community-feed";
 import { MistakeCard } from "@/components/mistake-card";
 import { TacticCard } from "@/components/tactic-card";
 import { EndgameCard } from "@/components/endgame-card";
@@ -56,6 +58,7 @@ import { Chess, type PieceSymbol } from "chess.js";
 import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";
 import { DEFAULT_LAUNCHER, type LauncherConfig } from "@/lib/launcher-apps";
 import { LauncherEditor } from "@/components/launcher-editor";
+import { scanOwnerStorageKey } from "@/lib/scan-session";
 
 /* ── Inline help tooltip ── */
 function HelpTip({ text }: { text: string }) {
@@ -75,6 +78,7 @@ function HelpTip({ text }: { text: string }) {
 type RequestState = "idle" | "loading" | "done" | "error";
 const PREFS_KEY = "firechess-user-prefs";
 const REPORT_CACHE_KEY_PREFIX = "fc-last-report";
+const FULL_SCAN_MODE: ScanMode = "both";
 
 type CachedReportEntry = {
   result: AnalyzeResponse;
@@ -99,6 +103,7 @@ const FREE_MAX_DEPTH = 12;
 const FREE_MAX_MOVES = 30;
 const FREE_TACTIC_SAMPLE = 10;
 const FREE_ENDGAME_SAMPLE = 10;
+const FREE_TIME_MANAGEMENT_SAMPLE = 10;
 const FREE_POSITIONAL_SAMPLE = 3;
 const LOCAL_PRO_HOTKEY_ENABLED =
   process.env.NEXT_PUBLIC_ENABLE_LOCAL_PRO_HOTKEY !== "false";
@@ -128,7 +133,8 @@ function AnalysisSectionSkeleton({ label }: { label: string }) {
 }
 
 export default function HomePage() {
-  const { plan: sessionPlan, authenticated } = useSession();
+  const { plan: sessionPlan, authenticated, user } = useSession();
+  const router = useRouter();
   const [heroPhase, setHeroPhase] = useState<"idle" | "hiding" | "revealing">(
     "idle",
   );
@@ -143,8 +149,7 @@ export default function HomePage() {
   const [cpThreshold, setCpThreshold] = useState(50);
   const [engineDepth, setEngineDepth] = useState(12);
   const [source, setSource] = useState<AnalysisSource | null>(null);
-  const [scanMode, setScanMode] = useState<ScanMode>("openings");
-  const [includeTactics, setIncludeTactics] = useState(false);
+  const [scanMode, setScanMode] = useState<ScanMode>(FULL_SCAN_MODE);
   const [speed, setSpeed] = useState<TimeControl[]>(["all"]);
   const [cardViewMode, setCardViewMode] = useState<CardViewMode>(() => {
     if (typeof window !== "undefined" && window.innerWidth < 640)
@@ -163,6 +168,7 @@ export default function HomePage() {
   const [state, setState] = useState<RequestState>("idle");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [isLaunchingScan, setIsLaunchingScan] = useState(false);
   const [progressInfo, setProgressInfo] = useState<{
     message: string;
     detail?: string;
@@ -177,6 +183,7 @@ export default function HomePage() {
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [copyLinkLabel, setCopyLinkLabel] = useState("Copy Link");
+  const [communityComposerOpen, setCommunityComposerOpen] = useState(false);
   const [welcomeBack, setWelcomeBack] = useState<string | null>(null);
   const [cachedReportEntry, setCachedReportEntry] =
     useState<CachedReportEntry | null>(null);
@@ -365,7 +372,7 @@ export default function HomePage() {
         parsed.scanMode === "both" ||
         parsed.scanMode === "time-management"
       ) {
-        setScanMode(parsed.scanMode as ScanMode);
+        setScanMode(FULL_SCAN_MODE);
       }
       // Restore speed (supports both legacy single string and new array format)
       if (Array.isArray(parsed.speed)) {
@@ -404,7 +411,7 @@ export default function HomePage() {
           cpThreshold,
           engineDepth,
           source,
-          scanMode,
+          scanMode: FULL_SCAN_MODE,
           speed,
           gameRangeMode,
           sinceDate,
@@ -1172,15 +1179,10 @@ export default function HomePage() {
     since?: number,
   ) => {
     if (reason) setNotice(reason);
-    // Respect the user's scan mode choice. When free users pick "All",
-    // they get a limited taste of tactics + endgames (capped samples).
-    // Free users can now pick any scan mode; results are capped by
-    // FREE_TACTIC_SAMPLE / FREE_ENDGAME_SAMPLE instead.
-    const baseScanMode: ScanMode = scanModeOverride ?? scanMode;
-    const effectiveScanMode: ScanMode =
-      baseScanMode === "openings" && includeTactics ? "both" : baseScanMode;
-    const effectiveMaxTactics = !hasProAccess ? FREE_TACTIC_SAMPLE : Infinity;
-    const effectiveMaxEndgames = !hasProAccess ? FREE_ENDGAME_SAMPLE : Infinity;
+    // Consolidated scans always run the full report so counts and ranking stay complete.
+    const effectiveScanMode: ScanMode = FULL_SCAN_MODE;
+    const effectiveMaxTactics = Infinity;
+    const effectiveMaxEndgames = Infinity;
 
     const browserResult = await analyzeOpeningLeaksInBrowser(trimmed, {
       source: safeSource,
@@ -1324,51 +1326,69 @@ export default function HomePage() {
         Math.max(6, Math.floor(engineDepth || 12)),
       );
       const safeSource: AnalysisSource = source!;
+      const safeScanMode: ScanMode = FULL_SCAN_MODE;
       setLastRunConfig({
         maxGames: safeGames,
         maxMoves: safeMoves,
         cpThreshold: safeCpThreshold,
         engineDepth: safeDepth,
         source: safeSource,
-        scanMode,
+        scanMode: safeScanMode,
         speed,
       });
 
-      setState("loading");
+      setIsLaunchingScan(true);
+      setState("idle");
       setError("");
-      setNotice("");
-      setResult(null);
-      setSectionsDone(new Set());
-      setSaveStatus("idle");
-      setTimeout(
-        () =>
-          loadingRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-          }),
-        50,
+      setNotice(
+        "Opening your dedicated scan page. Results will stream in there as each section finishes.",
       );
-      const rangeLabel =
-        gameRangeMode === "since" ? `since ${sinceDate}` : `${safeGames} games`;
-      setProgressInfo({
-        message: "🚀 Starting analysis",
-        detail: `${safeSource === "chesscom" ? "Chess.com" : "Lichess"} · ${speed.includes("all") ? "All time controls" : speed.join(", ")} · ${rangeLabel} · Depth ${safeDepth}`,
-        percent: 0,
-        phase: "fetch",
+      setSaveStatus("idle");
+
+      const sessionRes = await fetch("/api/scans", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chessUsername: trimmed,
+          config: {
+            maxGames: safeGames,
+            maxMoves: safeMoves,
+            cpThreshold: safeCpThreshold,
+            engineDepth: safeDepth,
+            source: safeSource,
+            scanMode: safeScanMode,
+            speed,
+            since: safeSince ?? null,
+            maxTactics: null,
+            maxEndgames: null,
+          },
+        }),
       });
 
-      await runBrowserAnalysis(
-        trimmed,
-        safeGames,
-        safeMoves,
-        safeCpThreshold,
-        safeDepth,
-        safeSource,
-        undefined,
-        undefined,
-        safeSince,
-      );
+      const sessionJson = (await sessionRes.json()) as {
+        id?: string;
+        guestToken?: string | null;
+        error?: string;
+      };
+
+      if (!sessionRes.ok || !sessionJson.id) {
+        throw new Error(sessionJson.error || "Could not create report page.");
+      }
+
+      if (sessionJson.guestToken) {
+        try {
+          window.localStorage.setItem(
+            scanOwnerStorageKey(sessionJson.id),
+            sessionJson.guestToken,
+          );
+        } catch {
+          // Ignore storage failures; the public page still works.
+        }
+      }
+
+      router.push(`/report/${sessionJson.id}`);
     } catch (err) {
+      setIsLaunchingScan(false);
       const message = err instanceof Error ? err.message : "Unexpected error";
       if (
         /cannot reach lichess\.org|timed out|fetch failed|network/i.test(
@@ -1381,14 +1401,16 @@ export default function HomePage() {
       } else {
         setError(message);
       }
+      setNotice("");
       setState("error");
     }
   };
 
-  /** Quick-switch: change scan mode and immediately re-run with the same settings */
-  const quickScanMode = async (mode: ScanMode) => {
+  /** Legacy reruns collapse back into the full scan. */
+  const quickScanMode = async (_mode: ScanMode) => {
     const trimmed = username.trim();
     if (!trimmed || !lastRunConfig) return;
+    const mode = FULL_SCAN_MODE;
     setScanMode(mode);
     setLastRunConfig({
       ...lastRunConfig,
@@ -1410,8 +1432,8 @@ export default function HomePage() {
       50,
     );
     setProgressInfo({
-      message: `🔄 Switching to ${mode} scan`,
-      detail: "Re-analyzing with new scan mode...",
+      message: "🔄 Refreshing full scan",
+      detail: "Re-analyzing openings, tactics, endgames, and time together...",
       percent: 0,
       phase: "fetch",
     });
@@ -1423,7 +1445,7 @@ export default function HomePage() {
         lastRunConfig.cpThreshold,
         lastRunConfig.engineDepth,
         lastRunConfig.source,
-        `Running ${mode} scan for ${trimmed}...`,
+        `Running full scan for ${trimmed}...`,
         mode,
       );
     } catch (err) {
@@ -1440,116 +1462,70 @@ export default function HomePage() {
         className={`pointer-events-none fixed inset-0 z-0 overflow-hidden transition-opacity duration-300 ${puzzleBoardOpen ? "opacity-0" : ""}`}
         style={puzzleBoardOpen ? { display: "none" } : undefined}
       >
-        <div className="animate-float absolute -left-32 top-20 h-96 w-96 rounded-full bg-emerald-500/[0.07] blur-[100px] will-change-transform" />
-        <div className="animate-float-delayed absolute -right-32 top-40 h-80 w-80 rounded-full bg-cyan-500/[0.06] blur-[100px] will-change-transform" />
-        <div className="animate-float absolute bottom-20 left-1/3 h-72 w-72 rounded-full bg-fuchsia-500/[0.05] blur-[100px] will-change-transform" />
-        <div className="animate-float-delayed absolute right-1/4 top-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.04] blur-[80px] will-change-transform" />
+        <div className="absolute -left-32 top-20 h-96 w-96 rounded-full bg-emerald-500/[0.06] blur-[80px]" />
+        <div className="absolute -right-32 top-40 h-80 w-80 rounded-full bg-cyan-500/[0.05] blur-[80px]" />
+        <div className="absolute bottom-20 left-1/3 h-72 w-72 rounded-full bg-fuchsia-500/[0.04] blur-[80px]" />
+        <div className="absolute right-1/4 top-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.03] blur-[60px]" />
       </div>
 
       <div className="relative z-10 px-4 py-12 sm:px-6 md:px-10">
-        <section className="mx-auto w-full max-w-6xl space-y-16 overflow-x-hidden">
+        <section className="mx-auto w-full max-w-6xl space-y-12 sm:space-y-14 lg:space-y-16">
           {/* ─── Hero Section ─── */}
           <header className="animate-fade-in-up">
-            <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:items-center lg:gap-16">
-              {/* ── Left col: text + CTAs ── */}
-              <div className="space-y-7 text-center lg:text-left">
-                {/* Trust pill */}
-                <div
-                  className={`flex items-center justify-center gap-3 lg:justify-start ${heroAnim(1)}`}
-                >
-                  <span className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3.5 py-1.5 text-xs font-semibold text-emerald-400">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                    Free to start &nbsp;·&nbsp; No account needed &nbsp;·&nbsp;
-                    Lichess &amp; Chess.com
-                  </span>
-                </div>
-
-                <div className="space-y-5">
-                  {/* Tag pills */}
+            <div className="relative px-1 py-4 sm:px-2 sm:py-5 lg:px-1 lg:py-6">
+              <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/18 to-transparent" />
+              <div className="pointer-events-none absolute left-[6%] top-8 h-48 w-48 rounded-full bg-sky-400/[0.08] blur-3xl" />
+              <div className="pointer-events-none absolute right-[8%] top-14 h-44 w-44 rounded-full bg-fuchsia-500/[0.07] blur-3xl" />
+              <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
+                {/* ── Left column ── */}
+                <div className="space-y-8 text-center lg:text-left">
+                  {/* Badge */}
                   <div
-                    className={`flex flex-wrap items-center justify-center gap-3 lg:justify-start ${heroAnim(1)}`}
+                    className={`flex items-center justify-center lg:justify-start ${heroAnim(1)}`}
                   >
-                    <span className="tag-fuchsia">
-                      <span className="text-sm">🔥</span> FireChess
+                    <span className="inline-flex items-center gap-2 rounded-full border border-fuchsia-400/25 bg-fuchsia-500/10 px-4 py-1.5 text-xs font-semibold text-fuchsia-100 shadow-[0_14px_34px_-24px_rgba(244,114,182,0.55)]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
+                      For serious improvers
                     </span>
-                    <span className="tag-emerald">
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-                      </svg>
-                      Powered by Stockfish 18
-                    </span>
-                    <a
-                      href="https://www.youtube.com/watch?v=MpWsW10YE5M"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="tag-emerald cursor-pointer gap-1.5 transition-all hover:shadow-glow-sm active:scale-95 no-underline"
-                    >
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <polygon points="5 3 19 12 5 21 5 3" />
-                      </svg>
-                      Watch Trailer
-                    </a>
                   </div>
 
                   {/* Headline */}
-                  <h1
-                    className={`text-4xl font-black leading-[1.1] tracking-tight md:text-5xl lg:text-6xl ${heroAnim(2)}`}
-                  >
-                    <span className="block text-white">Stop making the </span>
-                    <span className={`block gradient-text ${heroAnim(3)}`}>
-                      same mistakes.
-                    </span>
-                  </h1>
+                  <div className={`space-y-3 ${heroAnim(2)}`}>
+                    <p className="font-mono text-[11px] uppercase tracking-[0.34em] text-sky-200/70">
+                      Archive to board to plan
+                    </p>
+                    <div className="space-y-1">
+                      <h1 className="text-5xl font-black leading-[0.98] tracking-[-0.05em] text-white md:text-6xl lg:text-[4.35rem]">
+                        Analyze more.
+                      </h1>
+                      <h1 className="bg-gradient-to-r from-sky-300 via-violet-300 to-fuchsia-300 bg-clip-text text-5xl font-black italic leading-[0.98] tracking-[-0.05em] text-transparent md:text-6xl lg:text-[4.35rem]">
+                        Improve faster.
+                      </h1>
+                    </div>
+                  </div>
 
                   {/* Description */}
                   <p
-                    className={`text-base text-slate-400 md:text-lg lg:max-w-lg ${heroAnim(4)}`}
+                    className={`text-base leading-relaxed text-slate-300/90 md:text-lg lg:max-w-lg ${heroAnim(3)}`}
                   >
-                    FireChess scans your{" "}
-                    <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text font-semibold text-transparent">
-                      openings
-                    </span>
-                    ,{" "}
-                    <span className="bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text font-semibold text-transparent">
-                      tactics
-                    </span>
-                    , and{" "}
-                    <span className="bg-gradient-to-r from-blue-400 to-violet-400 bg-clip-text font-semibold text-transparent">
-                      endgames
-                    </span>{" "}
-                    — finds the mistakes you keep repeating, explains the better
-                    move, and drills you until the fix sticks.
+                    One scan finds the leak. The board gives you the next move.
                   </p>
 
-                  {/* CTA buttons */}
+                  {/* CTAs */}
                   <div
-                    className={`flex flex-wrap items-center justify-center gap-3 lg:justify-start ${heroAnim(5)}`}
+                    className={`flex flex-wrap items-center justify-center gap-3 lg:justify-start ${heroAnim(4)}`}
                   >
                     <a
                       href="#analyzer"
-                      className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.03] hover:shadow-emerald-500/30 active:scale-[0.98]"
+                      className="btn-primary inline-flex items-center justify-center gap-2 px-7"
                     >
-                      Analyze My Games
+                      Analyze Your Games
                       <svg
                         className="h-4 w-4"
                         fill="none"
                         viewBox="0 0 24 24"
                         stroke="currentColor"
-                        strokeWidth={2}
+                        strokeWidth={2.5}
                       >
                         <path
                           strokeLinecap="round"
@@ -1558,112 +1534,503 @@ export default function HomePage() {
                         />
                       </svg>
                     </a>
-                    <a
-                      href="https://www.youtube.com/watch?v=MpWsW10YE5M"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 rounded-xl border border-white/[0.10] bg-white/[0.04] px-6 py-3 text-sm font-semibold text-slate-300 transition-all hover:bg-white/[0.08] hover:text-white"
-                    >
-                      <svg
-                        className="h-4 w-4 text-red-400"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <polygon points="5 3 19 12 5 21 5 3" />
-                      </svg>
-                      Watch Demo
-                    </a>
                     <Link
-                      href="/pricing"
-                      className="inline-flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 px-5 py-3 text-sm font-semibold text-amber-400 transition-all hover:bg-amber-500/15"
+                      href="/community"
+                      className="inline-flex items-center gap-2 rounded-xl border border-white/[0.12] bg-[linear-gradient(135deg,rgba(255,255,255,0.06),rgba(125,211,252,0.04))] px-7 py-3 text-sm font-semibold text-slate-100 transition-all hover:border-white/[0.18] hover:bg-[linear-gradient(135deg,rgba(255,255,255,0.08),rgba(125,211,252,0.07))] hover:text-white"
                     >
                       <svg
-                        className="h-4 w-4"
+                        className="h-4 w-4 text-slate-400"
+                        fill="none"
                         viewBox="0 0 24 24"
-                        fill="currentColor"
+                        stroke="currentColor"
+                        strokeWidth={2}
                       >
-                        <path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm0 2h14v2H5v-2z" />
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M17 20h5V4H2v16h5m10 0v-4a3 3 0 10-6 0v4m6 0H7"
+                        />
                       </svg>
-                      Go Pro
+                      Explore Community
                     </Link>
                   </div>
+
+                  <form
+                    id="analyzer"
+                    onSubmit={onSubmit}
+                    className={`glass-card space-y-4 p-4 sm:p-5 ${heroAnim(5)}`}
+                  >
+                    <div className="flex flex-col gap-1">
+                      <div>
+                        <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-sky-200/75">
+                          Quick Scan
+                        </p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          Lichess or Chess.com
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-3">
+                      <div
+                        className={`flex flex-1 items-center overflow-hidden rounded-xl border bg-white/[0.04] transition-colors duration-200 focus-within:border-emerald-500/30 ${
+                          !source
+                            ? "border-sky-400/30 ring-1 ring-sky-400/15"
+                            : "border-white/[0.08]"
+                        }`}
+                      >
+                        <div className="flex shrink-0 items-center gap-0.5 px-1.5 py-1.5">
+                          <button
+                            type="button"
+                            onClick={() => setSource("lichess")}
+                            className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
+                              source === "lichess"
+                                ? "bg-gradient-to-r from-sky-300 to-violet-400 text-slate-950 shadow-[0_14px_30px_-18px_rgba(125,211,252,0.75)]"
+                                : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
+                            }`}
+                          >
+                            Lichess
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSource("chesscom")}
+                            className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
+                              source === "chesscom"
+                                ? "bg-gradient-to-r from-sky-300 to-violet-400 text-slate-950 shadow-[0_14px_30px_-18px_rgba(125,211,252,0.75)]"
+                                : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
+                            }`}
+                          >
+                            Chess.com
+                          </button>
+                        </div>
+                        <div className="h-5 w-px shrink-0 bg-white/[0.10]" />
+                        <input
+                          type="text"
+                          value={username}
+                          onChange={(e) => setUsername(e.target.value)}
+                          placeholder={
+                            source === "chesscom"
+                              ? "Your Chess.com username"
+                              : source === "lichess"
+                                ? "Your Lichess username"
+                                : "Pick a platform, then enter username"
+                          }
+                          aria-label="Chess username"
+                          className="flex-1 bg-transparent py-3 pl-3 pr-4 text-sm text-white outline-none placeholder:text-slate-500"
+                        />
+                      </div>
+
+                      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div className="max-w-xl">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200/70">
+                              Full Scan
+                            </p>
+                            <h3 className="mt-2 text-lg font-bold text-white">
+                              One report, all your patterns
+                            </h3>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-xs font-semibold text-slate-200 sm:min-w-[260px] sm:grid-cols-4">
+                            {[
+                              ["📖", "Openings"],
+                              ["⚡", "Tactics"],
+                              ["♟️", "Endgames"],
+                              ["⏱️", "Time"],
+                            ].map(([icon, label]) => (
+                              <div
+                                key={label}
+                                className="rounded-xl border border-white/[0.08] bg-slate-950/60 px-3 py-2 text-center"
+                              >
+                                <span className="block text-sm">{icon}</span>
+                                <span className="mt-1 block">{label}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <button
+                          type="submit"
+                          disabled={
+                            state === "loading" ||
+                            isLaunchingScan ||
+                            freeLimitsExceeded
+                          }
+                          className="btn-primary flex flex-1 items-center justify-center gap-2"
+                        >
+                          {state === "loading" || isLaunchingScan ? (
+                            <>
+                              <svg
+                                className="h-4 w-4 animate-spin"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                />
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                                />
+                              </svg>
+                              {isLaunchingScan
+                                ? "Opening report..."
+                                : "Scanning..."}
+                            </>
+                          ) : freeLimitsExceeded ? (
+                            "Upgrade for Pro limits"
+                          ) : (
+                            <>
+                              Scan Full Report
+                              <svg
+                                className="h-4 w-4"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                strokeWidth={2.5}
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M13 7l5 5m0 0l-5 5m5-5H6"
+                                />
+                              </svg>
+                            </>
+                          )}
+                        </button>
+                        <a
+                          href="#advanced-scan-center"
+                          className="text-xs font-medium text-slate-500 transition-colors hover:text-slate-300"
+                        >
+                          Advanced settings below
+                        </a>
+                      </div>
+                    </div>
+                  </form>
                 </div>
 
-                {/* Stats trust bar */}
+                {/* ── Right column: live product proof ── */}
                 <div
-                  className={`flex flex-wrap items-center justify-center gap-x-7 gap-y-2 lg:justify-start ${heroAnim(6)}`}
+                  className={`relative mx-auto w-full max-w-[36rem] md:max-w-[42rem] lg:max-w-none ${heroAnim(5)}`}
                 >
+                  <div className="pointer-events-none absolute inset-x-10 top-10 h-40 rounded-full bg-[radial-gradient(circle,rgba(125,211,252,0.14),transparent_60%)] blur-3xl" />
+
+                  <div className="relative px-1">
+                    <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-sky-200/75">
+                      Product tour
+                    </p>
+                    <h2 className="mt-2 text-xl font-semibold leading-tight tracking-[-0.03em] text-white sm:text-2xl">
+                      Rating picture. Strength map. Real boards.
+                    </h2>
+                  </div>
+
+                  <div className="relative mt-5">
+                    <HeroProductScreenshot paused={state !== "idle"} />
+                  </div>
+
+                  <p className="mt-4 max-w-xl px-1 text-xs leading-relaxed text-slate-500">
+                    Flip through the rating snapshot, strengths radar, and the
+                    positions that actually need work.
+                  </p>
+                </div>
+              </div>
+
+              <div
+                className={`mt-8 space-y-4 border-t border-white/[0.07] pt-6 ${heroAnim(6)}`}
+              >
+                <div className="flex flex-wrap items-center justify-center gap-3 lg:justify-start">
                   {[
-                    { icon: "🎯", label: "Opening leak detection" },
-                    { icon: "⚡", label: "Stockfish 18 evaluation" },
-                    { icon: "🏋️", label: "Drill mode" },
-                    { icon: "🆓", label: "Free to start" },
-                  ].map(({ icon, label }) => (
+                    {
+                      label: "10k+ players",
+                      className:
+                        "border-sky-400/20 bg-sky-400/[0.08] text-sky-100",
+                    },
+                    {
+                      label: "Board-first study",
+                      className:
+                        "border-violet-400/20 bg-violet-500/[0.08] text-violet-100",
+                    },
+                    {
+                      label: "Live community loop",
+                      className:
+                        "border-fuchsia-400/20 bg-fuchsia-500/[0.08] text-fuchsia-100",
+                    },
+                  ].map(({ label, className }) => (
                     <span
                       key={label}
-                      className="flex items-center gap-1.5 text-xs text-slate-500"
+                      className={`tag-pill text-[11px] ${className}`}
                     >
-                      <span>{icon}</span>
                       {label}
                     </span>
                   ))}
                 </div>
-              </div>
 
-              {/* ── Right col: animated product demo ── */}
-              <div className={`w-full ${heroAnim(6)}`}>
-                <HeroProductAnimation paused={puzzleBoardOpen} />
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {[
+                    {
+                      accentClass: "text-sky-300",
+                      icon: (
+                        <svg
+                          className="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={1.8}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                          />
+                        </svg>
+                      ),
+                      title: "Archive-scale",
+                      desc: "Find the repeat leaks, not the noise.",
+                    },
+                    {
+                      accentClass: "text-fuchsia-300",
+                      icon: (
+                        <svg
+                          className="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={1.8}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                          />
+                        </svg>
+                      ),
+                      title: "Weakness map",
+                      desc: "See where the position keeps breaking.",
+                    },
+                    {
+                      accentClass: "text-violet-300",
+                      icon: (
+                        <svg
+                          className="h-5 w-5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={1.8}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                          />
+                        </svg>
+                      ),
+                      title: "Next move",
+                      desc: "Drill it, post it, or save it.",
+                    },
+                  ].map(({ icon, title, desc, accentClass }) => (
+                    <div
+                      key={title}
+                      className="flex flex-col gap-2 rounded-2xl border border-white/[0.08] bg-[linear-gradient(160deg,rgba(255,255,255,0.04),rgba(125,211,252,0.02)_48%,rgba(244,114,182,0.03))] p-3.5 shadow-[0_20px_40px_-34px_rgba(125,211,252,0.5)]"
+                    >
+                      <span className={accentClass}>{icon}</span>
+                      <div>
+                        <p className="text-xs font-bold text-white">{title}</p>
+                        <p className="mt-0.5 text-[10px] leading-snug text-slate-500">
+                          {desc}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </header>
 
-          {/* ─── How it works ─── */}
+          {/* ─── Community Loop ─── */}
           {state === "idle" && (
-            <div className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-4 sm:grid-cols-3">
-              {[
-                {
-                  step: "01",
-                  icon: "🔗",
-                  title: "Connect your account",
-                  desc: "Enter your Lichess or Chess.com username — no login required.",
-                  color: "from-emerald-500/20 to-cyan-500/20 text-emerald-400",
-                },
-                {
-                  step: "02",
-                  icon: "🧠",
-                  title: "AI finds your leaks",
-                  desc: "Stockfish 18 scans your last games and pinpoints the openings, tactics, and endgames where you keep losing.",
-                  color: "from-cyan-500/20 to-blue-500/20 text-cyan-400",
-                },
-                {
-                  step: "03",
-                  icon: "🏋️",
-                  title: "Drill until it sticks",
-                  desc: "Replay your exact mistakes with guided corrections, puzzles, and pattern drilling.",
-                  color: "from-violet-500/20 to-fuchsia-500/20 text-violet-400",
-                },
-              ].map(({ step, icon, title, desc, color }) => (
-                <div
-                  key={step}
-                  className="glass-card flex flex-col gap-3 p-5 text-left"
-                >
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br text-xl ${color}`}
-                  >
-                    {icon}
+            <section className="relative left-1/2 w-screen -translate-x-1/2 px-4 py-4 sm:px-6 sm:py-5 md:px-10">
+              <div className="pointer-events-none absolute inset-y-0 left-1/2 w-screen -translate-x-1/2 bg-[radial-gradient(ellipse_72%_42%_at_18%_16%,rgba(56,189,248,0.07),transparent_72%),radial-gradient(ellipse_58%_34%_at_78%_20%,rgba(217,70,239,0.06),transparent_74%),radial-gradient(ellipse_56%_32%_at_50%_52%,rgba(15,23,42,0.18),transparent_78%)] opacity-90" />
+              <div className="relative mx-auto w-full max-w-6xl space-y-7 px-1 sm:px-2">
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                  <div className="max-w-3xl">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-200/75">
+                      Community loop
+                    </p>
+
+                    <div className="mt-4">
+                      <h2 className="text-2xl font-bold text-white sm:text-3xl">
+                        Turn every report into a board people can actually use.
+                      </h2>
+                      <p className="mt-3 text-sm leading-relaxed text-slate-400 sm:text-base">
+                        Once the scan finds the leak, you should be able to cut
+                        the exact position, ask a sharper question, collect
+                        ideas, and keep the lesson inside your study workflow.
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="mb-0.5 text-[10px] font-bold uppercase tracking-widest text-slate-600">
-                      Step {step}
+
+                  <div className="flex flex-col gap-3 lg:items-end">
+                    <p className="max-w-sm text-sm leading-relaxed text-slate-500 lg:text-right">
+                      Fresh positions, opening debates, and study boards should
+                      stay playable right on the homepage.
                     </p>
-                    <h3 className="text-sm font-bold text-white">{title}</h3>
-                    <p className="mt-1 text-xs leading-relaxed text-slate-400">
-                      {desc}
-                    </p>
+                    <Link
+                      href="/community"
+                      className="inline-flex items-center gap-2 text-sm font-semibold text-sky-200 transition-colors hover:text-white"
+                    >
+                      View full feed
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M13 7l5 5m0 0l-5 5m5-5H6"
+                        />
+                      </svg>
+                    </Link>
                   </div>
                 </div>
-              ))}
-            </div>
+
+                <div className="mt-6">
+                  <HomepageCommunityFeed />
+                </div>
+
+                <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,0.95fr)]">
+                  <div className="divide-y divide-white/[0.08]">
+                    {[
+                      {
+                        href: "/board",
+                        icon: "🧰",
+                        title: "Board Workbench",
+                        description:
+                          "Paste a FEN or PGN, trim the exact moment, and publish it without rebuilding the position by hand.",
+                        accent:
+                          "border-cyan-500/20 bg-cyan-500/[0.05] text-cyan-300 hover:border-cyan-400/40",
+                      },
+                      {
+                        href: "/community",
+                        icon: "🔥",
+                        title: "Community Hub",
+                        description:
+                          "Browse live positions, opening debates, and study posts grounded in real boards rather than generic chat.",
+                        accent:
+                          "border-orange-500/20 bg-orange-500/[0.05] text-orange-300 hover:border-orange-400/40",
+                      },
+                      {
+                        href:
+                          authenticated && user?.id
+                            ? `/community/profile/${user.id}`
+                            : "/community",
+                        icon: "🗂️",
+                        title: authenticated
+                          ? "My Study Profile"
+                          : "Study Profiles",
+                        description: authenticated
+                          ? "Your saved boards and posts become a reviewable study surface instead of a forgotten report archive."
+                          : "Profiles collect positions, lessons, and lines into a shareable review deck.",
+                        accent:
+                          "border-fuchsia-500/20 bg-fuchsia-500/[0.05] text-fuchsia-300 hover:border-fuchsia-400/40",
+                      },
+                    ].map((item, index) => (
+                      <Link
+                        key={item.title}
+                        href={item.href}
+                        className="group grid gap-3 py-4 transition-colors sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-start"
+                      >
+                        <div
+                          className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${item.accent}`}
+                        >
+                          <span className="text-lg">{item.icon}</span>
+                        </div>
+
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-600">
+                            0{index + 1}
+                          </p>
+                          <h3 className="mt-1 text-base font-semibold text-white transition-colors group-hover:text-sky-100">
+                            {item.title}
+                          </h3>
+                          <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-400">
+                            {item.description}
+                          </p>
+                        </div>
+
+                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-white/60 transition-colors group-hover:text-white sm:justify-self-end sm:pt-6">
+                          Open
+                          <svg
+                            className="h-3.5 w-3.5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2.5}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M13 7l5 5m0 0l-5 5m5-5H6"
+                            />
+                          </svg>
+                        </span>
+                      </Link>
+                    ))}
+                  </div>
+
+                  <div className="space-y-4 lg:pl-6">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+                      Study Flow
+                    </p>
+
+                    <div className="space-y-4 border-l border-white/[0.08] pl-4 sm:pl-5">
+                      {[
+                        {
+                          step: "01",
+                          title: "Scan the archive",
+                          description:
+                            "Run a report and isolate the repeat leaks that matter.",
+                        },
+                        {
+                          step: "02",
+                          title: "Lift the board out",
+                          description:
+                            "Push the exact moment into the workbench with context intact.",
+                        },
+                        {
+                          step: "03",
+                          title: "Discuss or drill",
+                          description:
+                            "Turn the lesson into a post, a saved card, or a training target.",
+                        },
+                      ].map((item) => (
+                        <div key={item.step} className="relative">
+                          <span className="absolute -left-[1.3rem] top-1.5 h-2.5 w-2.5 rounded-full bg-white/35 shadow-[0_0_0_6px_rgba(255,255,255,0.02)] sm:-left-[1.55rem]" />
+                          <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-slate-600">
+                            Step {item.step}
+                          </p>
+                          <h3 className="mt-1.5 text-sm font-semibold text-white">
+                            {item.title}
+                          </h3>
+                          <p className="mt-1.5 text-sm leading-relaxed text-slate-400">
+                            {item.description}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
           )}
 
           {/* ─── Loading State ─── */}
@@ -1873,7 +2240,7 @@ export default function HomePage() {
 
           {/* ─── Control Center ─── */}
           <form
-            id="analyzer"
+            id="advanced-scan-center"
             onSubmit={onSubmit}
             className="glass-card animate-fade-in-up mx-auto w-full max-w-5xl space-y-6 p-6 md:p-8"
           >
@@ -1884,10 +2251,11 @@ export default function HomePage() {
                   <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 text-sm">
                     ⚡
                   </span>
-                  Control Center
+                  Advanced Scan Settings
                 </h2>
                 <p className="mt-1 text-sm text-slate-400">
-                  Configure your scan parameters
+                  Fine-tune games, thresholds, and depth after setting the core
+                  scan above.
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -1954,7 +2322,7 @@ export default function HomePage() {
                         {cachedReportEntry.result.username}
                       </span>
                       <span className="ml-2 rounded-md bg-cyan-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-cyan-400 uppercase tracking-wide">
-                        {cachedReportEntry.config.scanMode}
+                        Full scan
                       </span>
                     </p>
                     <p className="text-xs text-slate-500 mt-0.5">
@@ -1980,9 +2348,12 @@ export default function HomePage() {
                       const entry = cachedReportEntry;
                       setUsername(entry.result.username);
                       setSource(entry.config.source);
-                      setScanMode(entry.config.scanMode);
+                      setScanMode(FULL_SCAN_MODE);
                       setSpeed(entry.config.speed);
-                      setLastRunConfig(entry.config);
+                      setLastRunConfig({
+                        ...entry.config,
+                        scanMode: FULL_SCAN_MODE,
+                      });
                       setResult(entry.result);
                       setState("done");
                       setSaveStatus("idle");
@@ -2086,10 +2457,12 @@ export default function HomePage() {
               </div>
               <button
                 type="submit"
-                disabled={state === "loading" || freeLimitsExceeded}
+                disabled={
+                  state === "loading" || isLaunchingScan || freeLimitsExceeded
+                }
                 className="btn-primary flex items-center justify-center gap-2"
               >
-                {state === "loading" ? (
+                {state === "loading" || isLaunchingScan ? (
                   <>
                     <svg
                       className="h-4 w-4 animate-spin"
@@ -2110,7 +2483,7 @@ export default function HomePage() {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
                       />
                     </svg>
-                    Scanning...
+                    {isLaunchingScan ? "Starting full scan..." : "Scanning..."}
                   </>
                 ) : freeLimitsExceeded ? (
                   <Link href="/pricing" className="text-inherit no-underline">
@@ -2132,121 +2505,6 @@ export default function HomePage() {
                   </>
                 )}
               </button>
-            </div>
-
-            {/* Scan mode toggle */}
-            <div className="stat-card space-y-2 p-4">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
-                  Scan Mode
-                  <HelpTip text="Choose what to analyze: openings finds repeated patterns, tactics finds missed forcing moves, endgames checks your technique, and time management analyses your clock usage." />
-                </span>
-                {!hasProAccess && (
-                  <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-400">
-                    Full tactics = Pro
-                  </span>
-                )}
-              </div>
-              <div className="grid h-auto grid-cols-2 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1 sm:h-10 sm:grid-cols-4">
-                <button
-                  type="button"
-                  onClick={() => setScanMode("openings")}
-                  className={`rounded-md text-xs font-semibold transition-all duration-200 ${
-                    scanMode === "openings"
-                      ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 shadow-glow-sm"
-                      : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
-                  }`}
-                >
-                  📖 Openings
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setScanMode("tactics");
-                  }}
-                  className={`relative rounded-md text-xs font-semibold transition-all duration-200 ${
-                    scanMode === "tactics"
-                      ? "bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-glow-sm"
-                      : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
-                  }`}
-                >
-                  ⚡ Tactics
-                  {!hasProAccess && (
-                    <span className="ml-0.5 text-[9px] text-amber-400/60">
-                      sample
-                    </span>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setScanMode("endgames");
-                  }}
-                  className={`relative rounded-md text-xs font-semibold transition-all duration-200 ${
-                    scanMode === "endgames"
-                      ? "bg-gradient-to-r from-sky-500 to-sky-600 text-slate-950 shadow-glow-sm"
-                      : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
-                  }`}
-                >
-                  ♟️ Endgames
-                  {!hasProAccess && (
-                    <span className="ml-0.5 text-[9px] text-sky-400/60">
-                      sample
-                    </span>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setScanMode("time-management");
-                  }}
-                  className={`relative rounded-md text-xs font-semibold transition-all duration-200 ${
-                    scanMode === "time-management"
-                      ? "bg-gradient-to-r from-violet-500 to-violet-600 text-white shadow-glow-sm"
-                      : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
-                  }`}
-                >
-                  ⏱️ Time
-                </button>
-              </div>
-              <p className="text-xs text-slate-500">
-                {scanMode === "openings" &&
-                  (includeTactics
-                    ? "Opening patterns + missed tactics — slower but more thorough"
-                    : "Finds repeated patterns in your first N moves")}
-                {scanMode === "tactics" &&
-                  (hasProAccess
-                    ? "Scans full games for missed forcing moves (slower)"
-                    : `Scans for missed tactics — free users see up to ${FREE_TACTIC_SAMPLE} results`)}
-                {scanMode === "endgames" &&
-                  (hasProAccess
-                    ? "Analyses your endgame technique — conversions, holds & accuracy"
-                    : `Analyses endgame technique — free users see up to ${FREE_ENDGAME_SAMPLE} results`)}
-                {scanMode === "time-management" &&
-                  "Analyses your clock usage — finds rushed moves, wasted time, and time scrambles"}
-              </p>
-
-              {/* Tactics toggle — visible only in openings mode */}
-              {scanMode === "openings" && (
-                <label className="mt-1.5 flex cursor-pointer items-center gap-2 select-none">
-                  <div className="relative">
-                    <input
-                      type="checkbox"
-                      checked={includeTactics}
-                      onChange={() => setIncludeTactics((v) => !v)}
-                      className="peer sr-only"
-                    />
-                    <div className="h-5 w-9 rounded-full bg-white/[0.08] transition-colors peer-checked:bg-amber-500/60" />
-                    <div className="absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-slate-300 transition-transform peer-checked:translate-x-4 peer-checked:bg-white" />
-                  </div>
-                  <span className="text-xs text-slate-400">
-                    Also scan for tactics
-                    {!hasProAccess && (
-                      <span className="ml-1 text-amber-400/60">(sample)</span>
-                    )}
-                  </span>
-                </label>
-              )}
             </div>
 
             {/* Settings grid — row 1: toggles, row 2: number inputs */}
@@ -2495,8 +2753,8 @@ export default function HomePage() {
             ))}
           </section>
 
-          {/* ─── App Launcher ─── */}
-          {state === "idle" && (
+          {/* ─── App Launcher (hidden for now) ─── */}
+          {false && state === "idle" && (
             <section className="animate-fade-in mx-auto w-full max-w-5xl">
               <div className="mb-6 text-center">
                 <span className="mb-2 inline-block rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-400">
@@ -2517,294 +2775,156 @@ export default function HomePage() {
             </section>
           )}
 
-          {/* ─── Chaos Chess + Training CTA (side-by-side on desktop, chaos first on mobile) ─── */}
+          {/* ─── Product Proof ─── */}
           {state === "idle" && (
-            <section className="animate-fade-in mx-auto w-full max-w-5xl">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                {/* Chaos Chess — first in DOM = first on mobile */}
-                <Link
-                  href="/chaos"
-                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-purple-500/[0.08] via-transparent to-violet-500/[0.08] p-7 transition-all hover:border-white/[0.15] hover:shadow-lg hover:shadow-purple-500/[0.06]"
-                >
-                  <div className="relative z-10 flex flex-1 flex-col gap-3">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-500/20 to-violet-500/20 text-3xl transition-transform group-hover:scale-110">
-                      ⚡
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-white">
-                        Chaos Chess
-                      </h3>
-                      <p className="mt-1 text-sm text-slate-400">
-                        Draft permanent power-ups every 5 turns — Knooks, ghost
-                        rooks, nuclear queens and more. Free vs AI or friends.
-                      </p>
-                      <div className="mt-3 flex flex-wrap gap-1.5">
-                        {["vs Stockfish AI", "vs Friend", "ELO Ranked"].map(
-                          (m) => (
-                            <span
-                              key={m}
-                              className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-medium text-slate-300"
-                            >
-                              {m}
-                            </span>
-                          ),
-                        )}
-                      </div>
-                    </div>
-                    <div className="mt-2 flex items-center gap-1.5 self-start rounded-xl bg-gradient-to-r from-purple-600 to-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-lg transition-all group-hover:shadow-purple-500/25 group-hover:scale-105">
-                      Play Now
-                      <svg
-                        className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-purple-500/[0.07] blur-[60px] opacity-50 transition-opacity group-hover:opacity-100" />
-                  <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-violet-500/[0.07] blur-[60px] opacity-50 transition-opacity group-hover:opacity-100" />
-                </Link>
+            <section className="animate-fade-in mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+              <div className="relative overflow-hidden rounded-[2.25rem] bg-[linear-gradient(160deg,rgba(9,13,30,0.34),rgba(12,16,36,0.12)_55%,rgba(34,19,58,0.16))] px-6 py-6 ring-1 ring-inset ring-white/[0.04] md:px-7 md:py-7">
+                <div className="pointer-events-none absolute -left-10 top-8 h-40 w-40 rounded-full bg-sky-400/[0.08] blur-[90px]" />
+                <div className="pointer-events-none absolute right-0 bottom-0 h-44 w-44 rounded-full bg-fuchsia-500/[0.08] blur-[105px]" />
+                <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
-                {/* Training Center — second in DOM = second on mobile */}
-                <Link
-                  href="/train"
-                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-fuchsia-500/[0.08] via-transparent to-cyan-500/[0.08] p-7 transition-all hover:border-white/[0.15] hover:shadow-lg hover:shadow-fuchsia-500/[0.06]"
-                >
-                  <div className="relative z-10 flex flex-1 flex-col gap-3">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500/20 to-cyan-500/20 text-3xl transition-transform group-hover:scale-110">
-                      🎯
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-lg font-bold text-white">
-                        Training Center
-                      </h3>
-                      <p className="mt-1 text-sm text-slate-400">
-                        5 modes that drill your real weaknesses — tactic
-                        puzzles, opening leaks, endgame practice. Run a scan to
-                        unlock personalized training.
-                      </p>
-                      <div className="mt-3 flex flex-wrap gap-1.5">
-                        {[
-                          "Weakness Trainer",
-                          "Blunder Spotter",
-                          "Endgame Gym",
-                        ].map((m) => (
-                          <span
-                            key={m}
-                            className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-medium text-slate-300"
-                          >
-                            {m}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="mt-2 flex items-center gap-1.5 self-start rounded-xl bg-gradient-to-r from-fuchsia-600 to-cyan-600 px-4 py-2 text-sm font-semibold text-white shadow-lg transition-all group-hover:shadow-fuchsia-500/25 group-hover:scale-105">
-                      Start Training
-                      <svg
-                        className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
-                    </div>
-                  </div>
-                  <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-fuchsia-500/[0.07] blur-[60px] opacity-50 transition-opacity group-hover:opacity-100" />
-                  <div className="pointer-events-none absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-cyan-500/[0.07] blur-[60px] opacity-50 transition-opacity group-hover:opacity-100" />
-                </Link>
-              </div>
-            </section>
-          )}
+                <div className="relative">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-orange-300/75">
+                    Why It Feels Different
+                  </p>
+                  <h2 className="mt-3 text-2xl font-bold text-white sm:text-3xl">
+                    Built to turn a vague weakness into a concrete next move.
+                  </h2>
+                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
+                    Most chess tools stop at charts or throw generic puzzles at
+                    you. FireChess is strongest when it carries the exact board
+                    from diagnosis into review, discussion, and training.
+                  </p>
 
-          {/* ─── Testimonials ─── */}
-          {state === "idle" && (
-            <section className="animate-fade-in mx-auto w-full max-w-5xl space-y-6">
-              <div className="text-center">
-                <h2 className="text-lg font-bold text-white">
-                  Loved by chess players worldwide
-                </h2>
-                <p className="mt-1 text-sm text-slate-400">
-                  From club players to titled competitors — here's what they
-                  found
-                </p>
-                {/* Logo strip */}
-                <div className="mt-5 flex flex-wrap items-center justify-center gap-x-7 gap-y-3">
-                  {[
-                    { label: "Hacker News", icon: "🟠" },
-                    { label: "Reddit r/chess", icon: "🔴" },
-                    { label: "Lichess Forums", icon: "♞" },
-                    { label: "Chess.com Community", icon: "♟" },
-                    { label: "ChessTalk Discord", icon: "💬" },
-                  ].map(({ label, icon }) => (
-                    <span
-                      key={label}
-                      className="flex items-center gap-1.5 text-xs font-medium text-slate-500"
-                    >
-                      <span>{icon}</span>
-                      {label}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {[
-                  {
-                    name: "Marcus R.",
-                    handle: "@marcus_chess",
-                    platform: "𝕏",
-                    rating: "1847 Lichess",
-                    avatar: "♔",
-                    badge: "⭐ Top review",
-                    text: "I kept losing in the Caro-Kann exchange and had no idea why. FireChess showed me I was misplaying the same pawn structure in 14 of my last 50 games. Fixed the line, gained 80 Elo in two weeks. Wild how blind I was to my own patterns.",
-                    time: "2d",
-                  },
-                  {
-                    name: "Sophie L.",
-                    handle: "@sophplays",
-                    platform: "𝕏",
-                    rating: "1523 Chess.com",
-                    avatar: "♕",
-                    badge: "",
-                    text: "The drill mode is genuinely addictive. It pulls your actual blunders and makes you re-solve them. Way better than random puzzles because these are YOUR mistakes — you remember the position and finally learn the fix.",
-                    time: "5d",
-                  },
-                  {
-                    name: "montgomery_r",
-                    handle: "Hacker News",
-                    platform: "HN",
-                    rating: "",
-                    avatar: "♗",
-                    badge: "🔥 Trending HN",
-                    text: "Brilliant — I've always wondered what my better move was in oft-repeated openings and this tells me. The radar was eye-opening too: apparently my play falls off a cliff when I'm worse. Thought I was good at battling on. Wrong.",
-                    time: "2h",
-                  },
-                  {
-                    name: "Arjun P.",
-                    handle: "@arjun_blitz",
-                    platform: "𝕏",
-                    rating: "2103 Lichess",
-                    avatar: "♘",
-                    badge: "",
-                    text: "The tactical radar called me out. I thought I was sharp but I was hanging pieces in 23% of games. Endgame scanner is a bonus — found out I draw rook endings I should convert. Worth it just for that insight.",
-                    time: "1w",
-                  },
-                  {
-                    name: "James K.",
-                    handle: "@jk_pawns",
-                    platform: "𝕏",
-                    rating: "1680 Lichess",
-                    avatar: "♖",
-                    badge: "",
-                    text: "Scanned 200 rapid games and found I lose 90% of my rook endgames. The targeted endgame drills alone made Pro worth it. My conversion rate is noticeably better after just a month of drilling.",
-                    time: "4d",
-                  },
-                  {
-                    name: "Priya S.",
-                    handle: "@priya_chess64",
-                    platform: "𝕏",
-                    rating: "1410 Chess.com",
-                    avatar: "♚",
-                    badge: "🎓 Coach approved",
-                    text: "I showed my coach the radar chart and he was genuinely impressed. Said it gave a clearer picture of my weaknesses than he could put into words. We now use it to structure our lessons every week.",
-                    time: "1w",
-                  },
-                ].map((t, i) => (
-                  <div
-                    key={t.handle}
-                    className="glass-card-hover flex flex-col gap-3 p-5 transition-all"
-                  >
-                    {/* Badge */}
-                    {t.badge && (
-                      <span className="w-fit rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-400">
-                        {t.badge}
-                      </span>
-                    )}
-                    {/* Stars */}
-                    <div
-                      className="flex gap-0.5 text-amber-400"
-                      aria-label="5 stars"
-                    >
-                      {"★★★★★".split("").map((s, si) => (
-                        <span key={si} className="text-xs">
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-                    {/* Body */}
-                    <p className="flex-1 text-[13px] leading-relaxed text-slate-300">
-                      "{t.text}"
-                    </p>
-                    {/* Author row */}
-                    <div className="flex items-center gap-3 border-t border-white/[0.05] pt-3">
-                      <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 text-base">
-                        {t.avatar}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-xs font-semibold text-slate-100">
-                            {t.name}
-                          </span>
-                          <span className="text-[10px] text-slate-600">
-                            {t.platform}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-slate-500">
-                          {t.handle}
-                          {t.rating ? ` · ${t.rating}` : ""}
+                  <div className="mt-6 grid gap-5 md:grid-cols-3 md:gap-6">
+                    {[
+                      {
+                        title: "Signal from your own games",
+                        description:
+                          "The engine surfaces patterns from your archive instead of pretending every player needs the same lesson.",
+                      },
+                      {
+                        title: "Board-first follow-up",
+                        description:
+                          "The important position stays intact, so the fix is easier to inspect, save, publish, and revisit.",
+                      },
+                      {
+                        title: "Training after context",
+                        description:
+                          "Practice comes after the diagnosis, which makes each drill feel attached to a real mistake instead of random volume.",
+                      },
+                    ].map((item, index) => (
+                      <div
+                        key={item.title}
+                        className={
+                          index === 0
+                            ? ""
+                            : "border-t border-white/[0.08] pt-4 md:border-l md:border-t-0 md:pl-5 md:pt-0"
+                        }
+                      >
+                        <h3 className="text-sm font-semibold text-white">
+                          {item.title}
+                        </h3>
+                        <p className="mt-2 text-sm leading-relaxed text-slate-400">
+                          {item.description}
                         </p>
                       </div>
-                      <span className="text-[10px] text-slate-600">
-                        {t.time}
-                      </span>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                </div>
               </div>
 
-              {/* CTA below testimonials */}
-              <div className="rounded-2xl border border-white/[0.06] bg-gradient-to-br from-emerald-500/[0.07] to-cyan-500/[0.05] p-8 text-center">
-                <p className="text-xs font-bold uppercase tracking-widest text-emerald-500">
-                  Free · No account needed
-                </p>
-                <h3 className="mt-2 text-2xl font-black text-white md:text-3xl">
-                  Find out what's holding you back.
-                </h3>
-                <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">
-                  Enter your username and FireChess will show you the exact
-                  openings, tactics, and endgame patterns costing you Elo.
-                </p>
-                <a
-                  href="#analyzer"
-                  className="mt-5 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 px-7 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.03] hover:shadow-emerald-500/30 active:scale-[0.98]"
-                >
-                  Scan My Games — It's Free
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M13 7l5 5m0 0l-5 5m5-5H6"
-                    />
-                  </svg>
-                </a>
+              <div className="relative overflow-hidden rounded-[2.25rem] bg-[linear-gradient(160deg,rgba(18,12,20,0.28),rgba(13,18,39,0.12)_45%,rgba(33,20,55,0.18))] px-6 py-6 ring-1 ring-inset ring-white/[0.04] md:px-7 md:py-7">
+                <div className="pointer-events-none absolute -right-10 top-0 h-44 w-44 rounded-full bg-fuchsia-500/[0.08] blur-[110px]" />
+                <div className="pointer-events-none absolute -left-8 bottom-8 h-36 w-36 rounded-full bg-orange-400/[0.08] blur-[90px]" />
+                <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
+                <div className="relative">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-orange-200/80">
+                    Start Here
+                  </p>
+                  <h3 className="mt-3 text-2xl font-bold text-white">
+                    Run the scan, then choose the right follow-up.
+                  </h3>
+                  <p className="mt-3 text-sm leading-relaxed text-slate-300">
+                    Analyze first. If the board needs discussion, post it. If
+                    the weakness needs repetition, drill it. The homepage should
+                    make that product loop obvious.
+                  </p>
+
+                  <div className="mt-6 space-y-4">
+                    <a
+                      href="#analyzer"
+                      className="btn-primary flex w-full items-center justify-center gap-2"
+                    >
+                      Scan My Games
+                      <svg
+                        className="h-4 w-4"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2.5}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M13 7l5 5m0 0l-5 5m5-5H6"
+                        />
+                      </svg>
+                    </a>
+
+                    <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-slate-300">
+                      <Link
+                        href="/board"
+                        className="inline-flex items-center gap-2 transition-colors hover:text-white"
+                      >
+                        Open Workbench
+                        <svg
+                          className="h-3.5 w-3.5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2.5}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M13 7l5 5m0 0l-5 5m5-5H6"
+                          />
+                        </svg>
+                      </Link>
+                      <Link
+                        href="/train"
+                        className="inline-flex items-center gap-2 transition-colors hover:text-white"
+                      >
+                        Go to Training
+                        <svg
+                          className="h-3.5 w-3.5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2.5}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M13 7l5 5m0 0l-5 5m5-5H6"
+                          />
+                        </svg>
+                      </Link>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 border-t border-white/[0.08] pt-4">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+                      Product Stance
+                    </p>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-300">
+                      No random puzzle spam. No dead-end reports. Just your
+                      games, your repeat positions, and clearer next actions.
+                    </p>
+                  </div>
+                </div>
               </div>
             </section>
           )}
@@ -4944,9 +5064,10 @@ export default function HomePage() {
                               )}
                             </div>
                             <p className="mt-1.5 text-sm text-slate-400 leading-relaxed">
-                              Recurring positional habits detected from your
-                              games — these subtle decisions quietly cost you
-                              material and position.
+                              Human-readable pattern labels from your games —
+                              things like premature trades, released tension,
+                              and poor piece activity, not just abstract engine
+                              noise.
                             </p>
                           </div>
                           <svg
@@ -4972,12 +5093,12 @@ export default function HomePage() {
                             <div className="flex flex-wrap items-center justify-between gap-4">
                               <div>
                                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-400/70">
-                                  Your Positional DNA
+                                  Human-Readable Habits
                                 </p>
                                 <p className="mt-1 text-sm text-slate-300 leading-relaxed">
                                   {positionalMotifs.length === 1
-                                    ? "One recurring habit stands out across your games."
-                                    : `${positionalMotifs.length} recurring habits detected — the ones at the top are your highest-priority fixes.`}
+                                    ? "One concrete habit stands out across your games."
+                                    : `${positionalMotifs.length} concrete habits detected — the ones at the top are your highest-priority fixes.`}
                                 </p>
                               </div>
                               <div className="flex flex-wrap gap-2">
@@ -7467,6 +7588,7 @@ export default function HomePage() {
                             wastedThinks,
                             rushedMoves,
                             justifiedThinks,
+                            efficientMoves,
                             avgTimePerMove,
                             timeScrambleCount,
                             moments,
@@ -7488,6 +7610,15 @@ export default function HomePage() {
                             headline = "Your clock management is a weapon.";
                             headlineColor = "gradient-text-emerald";
                           } else if (
+                            efficientMoves >= 2 &&
+                            rushedMoves === 0 &&
+                            timeScrambleCount === 0 &&
+                            score >= 60
+                          ) {
+                            headline =
+                              "Your quick intuition is helping, not hurting.";
+                            headlineColor = "gradient-text-emerald";
+                          } else if (
                             wasteRatio > rushRatio &&
                             wastedThinks >= 3
                           ) {
@@ -7507,6 +7638,11 @@ export default function HomePage() {
                           if (justifiedThinks >= 3)
                             lines.push({
                               text: `${justifiedThinks} moments where you invested time wisely — great instinct for critical positions.`,
+                              type: "positive",
+                            });
+                          if (efficientMoves >= 2)
+                            lines.push({
+                              text: `${efficientMoves} fast decisions still matched the best move or lost almost nothing. That's good intuition, not bad clock usage.`,
                               type: "positive",
                             });
                           if (
@@ -7535,7 +7671,7 @@ export default function HomePage() {
                             });
                           if (rushedMoves >= 3)
                             lines.push({
-                              text: `${rushedMoves} rushed decisions in complex positions. When the position is sharp, invest an extra 5-10 seconds.`,
+                              text: `${rushedMoves} fast decisions actually cost move quality in complex positions. Those are the moments to spend the extra 5-10 seconds.`,
                               type: "improve",
                             });
                           if (timeScrambleCount >= 2)
@@ -8391,6 +8527,31 @@ export default function HomePage() {
           )}
         </section>
       </div>
+
+      <button
+        type="button"
+        onClick={() => setCommunityComposerOpen(true)}
+        aria-label="Create community post"
+        aria-haspopup="dialog"
+        className={`fixed right-4 z-40 flex items-center gap-3 rounded-full border border-white/[0.1] bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.26),_rgba(15,23,42,0.92)_42%,_rgba(2,6,23,0.98)_100%)] px-3 py-3 text-white shadow-[0_20px_60px_rgba(6,182,212,0.18)] backdrop-blur-xl transition hover:scale-[1.02] hover:border-cyan-300/30 sm:right-6 sm:px-4 ${state === "done" && result && saveStatus !== "saved" && saveStatus !== "duplicate" ? "bottom-24" : "bottom-5 sm:bottom-6"}`}
+      >
+        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-lg font-black text-slate-950 shadow-lg shadow-cyan-500/20">
+          +
+        </span>
+        <span className="hidden sm:block">
+          <span className="block text-[10px] font-semibold uppercase tracking-[0.24em] text-cyan-200/70">
+            Community
+          </span>
+          <span className="block text-sm font-semibold text-white">
+            Create a post
+          </span>
+        </span>
+      </button>
+
+      <CommunityPostComposerModal
+        open={communityComposerOpen}
+        onClose={() => setCommunityComposerOpen(false)}
+      />
 
       {/* ─── Sticky Save Bar ─── */}
       {state === "done" &&

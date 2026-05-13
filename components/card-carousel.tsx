@@ -15,9 +15,17 @@ interface CardCarouselProps {
 }
 
 /* ── Grid modal ── */
-function GridModal({ children, onClose }: { children: ReactNode; onClose: () => void }) {
+function GridModal({
+  children,
+  onClose,
+}: {
+  children: ReactNode;
+  onClose: () => void;
+}) {
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
     document.addEventListener("keydown", handler);
     document.body.style.overflow = "hidden";
     return () => {
@@ -27,13 +35,16 @@ function GridModal({ children, onClose }: { children: ReactNode; onClose: () => 
   }, [onClose]);
 
   const modal = (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4"
+      onClick={onClose}
+    >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
       {/* Modal — scroll lives on the card itself, matching ExplanationModal */}
       <div
         className="relative z-10 max-h-[95vh] w-full max-w-5xl overflow-y-auto rounded-3xl border border-white/[0.1] bg-slate-950 shadow-2xl shadow-black/50 animate-fade-in-up"
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         <button
           type="button"
@@ -41,20 +52,33 @@ function GridModal({ children, onClose }: { children: ReactNode; onClose: () => 
           className="absolute right-4 top-4 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.06] text-slate-400 transition-colors hover:bg-white/[0.12] hover:text-white"
           aria-label="Close"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
         </button>
-        <div className="p-4 sm:p-6">
-          {children}
-        </div>
+        <div className="p-4 sm:p-6">{children}</div>
       </div>
     </div>
   );
 
-  return typeof document !== "undefined" ? createPortal(modal, document.body) : null;
+  return typeof document !== "undefined"
+    ? createPortal(modal, document.body)
+    : null;
 }
 
 /* ── Component ── */
-export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) {
+export function CardCarousel({
+  children,
+  footer,
+  viewMode,
+}: CardCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [gridModalIndex, setGridModalIndex] = useState<number | null>(null);
@@ -97,12 +121,21 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
     if (!el) return;
     const card = el.querySelector<HTMLElement>(`[data-idx="${idx}"]`);
     if (!card) return;
-    const left = card.offsetLeft - el.offsetLeft - (el.clientWidth - card.offsetWidth) / 2;
+    const left =
+      card.offsetLeft - el.offsetLeft - (el.clientWidth - card.offsetWidth) / 2;
     el.scrollTo({ left: Math.max(0, left), behavior: "smooth" });
   }, []);
 
-  const goPrev = () => { const i = Math.max(0, activeIndex - 1); setActiveIndex(i); scrollTo(i); };
-  const goNext = () => { const i = Math.min(total - 1, activeIndex + 1); setActiveIndex(i); scrollTo(i); };
+  const goPrev = () => {
+    const i = Math.max(0, activeIndex - 1);
+    setActiveIndex(i);
+    scrollTo(i);
+  };
+  const goNext = () => {
+    const i = Math.min(total - 1, activeIndex + 1);
+    setActiveIndex(i);
+    scrollTo(i);
+  };
 
   /* ── List mode: plain vertical stack (cap animation delay at 8 items) ── */
   if (viewMode === "list") {
@@ -110,7 +143,11 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
       <>
         <div className="space-y-6">
           {children.map((child, idx) => (
-            <div key={idx} className="animate-fade-in-up" style={{ animationDelay: `${Math.min(idx, 8) * 80}ms` }}>
+            <div
+              key={idx}
+              className="animate-fade-in-up"
+              style={{ animationDelay: `${Math.min(idx, 8) * 80}ms` }}
+            >
               {child}
             </div>
           ))}
@@ -126,16 +163,26 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
       <>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {children.map((child, idx) => (
-            <button
+            <div
               key={idx}
-              type="button"
+              role="button"
+              tabIndex={0}
               onClick={() => setGridModalIndex(idx)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  setGridModalIndex(idx);
+                }
+              }}
               className="group relative overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.02] transition-all hover:border-white/[0.15] hover:bg-white/[0.04] animate-fade-in-up text-left"
               style={{ animationDelay: `${Math.min(idx, 12) * 50}ms` }}
             >
               {/* Preview: scaled-down card clipped to visible area */}
               <div className="pointer-events-none h-[280px] overflow-hidden">
-                <div className="origin-top-left scale-[0.48]" style={{ width: "208%" }}>
+                <div
+                  className="origin-top-left scale-[0.48]"
+                  style={{ width: "208%" }}
+                >
                   {child}
                 </div>
               </div>
@@ -144,7 +191,19 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
               {/* Expand overlay */}
               <div className="absolute inset-x-0 bottom-0 flex items-center justify-center pb-3 pt-8">
                 <span className="flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-[11px] font-semibold text-white/80 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <polyline points="15 3 21 3 21 9" />
+                    <polyline points="9 21 3 21 3 15" />
+                    <line x1="21" y1="3" x2="14" y2="10" />
+                    <line x1="3" y1="21" x2="10" y2="14" />
+                  </svg>
                   View Details
                 </span>
               </div>
@@ -152,7 +211,7 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
               <div className="absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-[10px] font-bold text-white/70 backdrop-blur-sm">
                 {idx + 1}
               </div>
-            </button>
+            </div>
           ))}
         </div>
 
@@ -160,11 +219,15 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
         {gridModalIndex !== null && (
           <GridModal onClose={() => setGridModalIndex(null)}>
             <div className="mb-3 flex items-center justify-between">
-              <span className="text-sm font-semibold text-white/60">{gridModalIndex + 1} of {total}</span>
+              <span className="text-sm font-semibold text-white/60">
+                {gridModalIndex + 1} of {total}
+              </span>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setGridModalIndex(Math.max(0, gridModalIndex - 1))}
+                  onClick={() =>
+                    setGridModalIndex(Math.max(0, gridModalIndex - 1))
+                  }
                   disabled={gridModalIndex === 0}
                   className="rounded-lg border border-white/[0.1] bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-white/[0.1] disabled:opacity-30"
                 >
@@ -172,7 +235,9 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
                 </button>
                 <button
                   type="button"
-                  onClick={() => setGridModalIndex(Math.min(total - 1, gridModalIndex + 1))}
+                  onClick={() =>
+                    setGridModalIndex(Math.min(total - 1, gridModalIndex + 1))
+                  }
                   disabled={gridModalIndex === total - 1}
                   className="rounded-lg border border-white/[0.1] bg-white/[0.05] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-white/[0.1] disabled:opacity-30"
                 >
@@ -202,7 +267,11 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
           aria-label="Previous card"
         >
           <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L9.832 10l2.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+            <path
+              fillRule="evenodd"
+              d="M12.79 5.23a.75.75 0 01-.02 1.06L9.832 10l2.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+              clipRule="evenodd"
+            />
           </svg>
           Prev
         </button>
@@ -220,7 +289,11 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
         >
           Next
           <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor">
-            <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L10.168 10 6.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+            <path
+              fillRule="evenodd"
+              d="M7.21 14.77a.75.75 0 01.02-1.06L10.168 10 6.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+              clipRule="evenodd"
+            />
           </svg>
         </button>
       </div>
@@ -239,7 +312,9 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
                 data-idx={idx}
                 className="w-full flex-shrink-0 snap-center"
               >
-                {inWindow ? child : (
+                {inWindow ? (
+                  child
+                ) : (
                   /* Lightweight placeholder — preserves scroll width without mounting heavy card */
                   <div className="aspect-[4/3] w-full rounded-xl bg-white/[0.02]" />
                 )}
@@ -257,7 +332,11 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
             aria-label="Previous card"
           >
             <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L9.832 10l2.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M12.79 5.23a.75.75 0 01-.02 1.06L9.832 10l2.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                clipRule="evenodd"
+              />
             </svg>
           </button>
         )}
@@ -271,7 +350,11 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
             aria-label="Next card"
           >
             <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L10.168 10 6.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M7.21 14.77a.75.75 0 01.02-1.06L10.168 10 6.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                clipRule="evenodd"
+              />
             </svg>
           </button>
         )}
@@ -284,7 +367,10 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
             <button
               key={i}
               type="button"
-              onClick={() => { setActiveIndex(i); scrollTo(i); }}
+              onClick={() => {
+                setActiveIndex(i);
+                scrollTo(i);
+              }}
               className={`h-1.5 rounded-full transition-all ${
                 i === activeIndex
                   ? "w-4 bg-emerald-400"
@@ -306,7 +392,11 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
             className="flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-slate-300 transition-colors hover:bg-white/[0.08] hover:text-white disabled:opacity-30 disabled:pointer-events-none"
           >
             <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L9.832 10l2.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M12.79 5.23a.75.75 0 01-.02 1.06L9.832 10l2.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                clipRule="evenodd"
+              />
             </svg>
             Prev Position
           </button>
@@ -318,7 +408,11 @@ export function CardCarousel({ children, footer, viewMode }: CardCarouselProps) 
           >
             Next Position
             <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L10.168 10 6.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+              <path
+                fillRule="evenodd"
+                d="M7.21 14.77a.75.75 0 01.02-1.06L10.168 10 6.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                clipRule="evenodd"
+              />
             </svg>
           </button>
         </div>
@@ -342,7 +436,14 @@ export function ViewModeToggle({
       value: "list",
       label: "List",
       icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <line x1="8" y1="6" x2="21" y2="6" />
           <line x1="8" y1="12" x2="21" y2="12" />
           <line x1="8" y1="18" x2="21" y2="18" />
@@ -356,7 +457,14 @@ export function ViewModeToggle({
       value: "carousel",
       label: "Swipe",
       icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <rect x="2" y="4" width="20" height="16" rx="2" />
           <path d="M9 18l3-3-3-3" />
         </svg>
@@ -366,7 +474,14 @@ export function ViewModeToggle({
       value: "grid",
       label: "Grid",
       icon: (
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <rect x="3" y="3" width="7" height="7" rx="1" />
           <rect x="14" y="3" width="7" height="7" rx="1" />
           <rect x="3" y="14" width="7" height="7" rx="1" />

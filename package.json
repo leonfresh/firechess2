@@ -10,6 +10,7 @@
     "lint": "next lint",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "seed:community-demo": "node scripts/seed-community-demo.mjs",
     "party:dev": "npx partykit dev",
     "party:deploy": "npx partykit deploy"
   },
@@ -19,7 +20,7 @@
     "@neondatabase/serverless": "^1.0.2",
     "@vercel/analytics": "^1.6.1",
     "chess.js": "^1.4.0",
-    "dotenv": "^17.3.1",
+    "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.1",
     "gray-matter": "^4.0.3",
     "html2canvas-pro": "^2.0.0",
@@ -27,6 +28,7 @@
     "next-auth": "^5.0.0-beta.30",
     "partykit": "^0.0.115",
     "partysocket": "^1.1.16",
+    "pg": "^8.20.0",
     "react": "^19.0.0",
     "react-chessboard": "^5.10.0",
     "react-dnd-touch-backend": "^16.0.1",
@@ -36,6 +38,7 @@
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
     "resend": "^6.9.2",
+    "stockfish": "^18.0.7",
     "stripe": "^20.3.1"
   },
   "browserslist": [

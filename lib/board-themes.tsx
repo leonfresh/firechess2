@@ -30,11 +30,11 @@ export type BoardTheme = {
 export const BOARD_THEMES: BoardTheme[] = [
   {
     id: "classic",
-    name: "Classic Green",
+    name: "Nebula Glass",
     price: 0,
-    darkSquare: "#779952",
-    lightSquare: "#edeed1",
-    preview: ["#779952", "#edeed1"],
+    darkSquare: "#7892e6",
+    lightSquare: "#f5efff",
+    preview: ["#7892e6", "#f5efff"],
   },
   {
     id: "ocean",
@@ -115,8 +115,7 @@ export const BOARD_THEMES: BoardTheme[] = [
 /* ================================================================== */
 
 /**
- * Piece sets sourced from Lichess (github.com/lichess-org/lila).
- * SVGs served from GitHub raw CDN.
+ * Piece sets sourced from local assets and Lichess (github.com/lichess-org/lila).
  * react-chessboard expects piece codes like "wP", "wN", "wB", "wR", "wQ", "wK",
  * "bP", "bN", "bB", "bR", "bQ", "bK" — which matches Lichess file naming exactly.
  */
@@ -129,7 +128,7 @@ export type PieceTheme = {
   name: string;
   /** Coin cost (0 = free / default) */
   price: number;
-  /** Lichess set folder name — used to build CDN URLs.  null = react-chessboard default */
+  /** Asset key used to build piece URLs. null = react-chessboard default */
   setName: string | null;
   /** Descriptive style tag */
   style: string;
@@ -138,10 +137,10 @@ export type PieceTheme = {
 export const PIECE_THEMES: PieceTheme[] = [
   {
     id: "piece-default",
-    name: "Default",
+    name: "Chess24",
     price: 0,
-    setName: null,
-    style: "Classic",
+    setName: "chess24",
+    style: "Broadcast",
   },
   {
     id: "piece-cburnett",
@@ -312,6 +311,10 @@ export const PIECE_THEMES: PieceTheme[] = [
  * @param piece   - e.g. "wK", "bQ"
  */
 export function getPieceImageUrl(setName: string, piece: string): string {
+  if (setName === "chess24") {
+    return `/pieces/chess24/${piece}.png`;
+  }
+
   return `${LICHESS_PIECE_CDN}/${setName}/${piece}.svg`;
 }
 

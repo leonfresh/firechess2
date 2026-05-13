@@ -2135,9 +2135,10 @@ export async function analyzeOpeningLeaksInBrowser(
   const engineDepth = clampInt(options?.engineDepth, 10, 6, 24);
   const maxOpeningPlies = maxOpeningMoves * 2;
   const scanMode: ScanMode = options?.scanMode ?? "both";
-  const doOpenings = scanMode === "openings" || scanMode === "both";
-  const doTactics = scanMode === "tactics" || scanMode === "both";
-  const doEndgames = scanMode === "endgames" || scanMode === "both";
+  const isFullScan = scanMode === "both";
+  const doOpenings = scanMode === "openings" || isFullScan;
+  const doTactics = scanMode === "tactics" || isFullScan;
+  const doEndgames = scanMode === "endgames" || isFullScan;
   const doTimeOnly = scanMode === "time-management";
 
   let games: SourceGame[] = [];
@@ -3075,6 +3076,8 @@ export async function analyzeOpeningLeaksInBrowser(
       phase: "tactics",
       message: "⚔️ Hunting for missed tactics",
       detail: `Scanning ${games.length} games for blunders and missed wins...`,
+      current: 0,
+      total: games.length,
       percent: tacticsStart,
     });
 
@@ -3383,6 +3386,8 @@ export async function analyzeOpeningLeaksInBrowser(
       phase: "endgames",
       message: "♟️ Scanning endgames",
       detail: `Analysing endgame play across ${games.length} games...`,
+      current: 0,
+      total: games.length,
       percent: endgameStart,
     });
 
@@ -3756,6 +3761,8 @@ export async function analyzeOpeningLeaksInBrowser(
       phase: "time",
       message: "⏱️ Analysing time management",
       detail: `Scanning clock data from ${games.length} games...`,
+      current: 0,
+      total: games.length,
       percent: 60,
     });
   }
@@ -3898,6 +3905,21 @@ export async function analyzeOpeningLeaksInBrowser(
 
     for (let gameIndex = 0; gameIndex < games.length; gameIndex++) {
       const game = games[gameIndex];
+
+      if (
+        doTimeOnly &&
+        (gameIndex % 10 === 0 || gameIndex === games.length - 1)
+      ) {
+        emitProgress(options, {
+          phase: "time",
+          message: "⏱️ Analysing time management",
+          detail: `Game ${Math.min(gameIndex + 1, games.length)} of ${games.length}`,
+          current: Math.min(gameIndex + 1, games.length),
+          total: games.length,
+          percent:
+            60 + Math.round(((gameIndex + 1) / Math.max(1, games.length)) * 30),
+        });
+      }
 
       // Yield to browser every 5 games to prevent UI freeze
       if (gameIndex > 0 && gameIndex % 5 === 0) {
@@ -4188,12 +4210,34 @@ export async function analyzeOpeningLeaksInBrowser(
       });
     }
 
+    // Reclassify fast moves after fallback eval fills in missing best-move data.
+    // If the move was still engine-approved or effectively equal, that is good
+    // pattern recognition rather than a harmful rush.
+    for (const moment of moments) {
+      if (moment.verdict !== "rushed") continue;
+
+      const fastAndAccurate =
+        moment.bestMove === moment.userMove ||
+        (moment.cpLoss != null && moment.cpLoss <= 20);
+
+      if (!fastAndAccurate) continue;
+
+      moment.verdict = "efficient";
+
+      if (moment.bestMove === moment.userMove) {
+        moment.reason = `Only ${moment.timeSpentSec.toFixed(1)}s on a sharp position, but you still found the engine's top move. This was strong pattern recognition, not bad time management.`;
+      } else {
+        moment.reason = `Only ${moment.timeSpentSec.toFixed(1)}s on a complex position, but the move kept the damage negligible (${(moment.cpLoss! / 100).toFixed(1)} pawns). This looks more like good intuition than a reckless rush.`;
+      }
+    }
+
     // Sort: wasted/rushed first (bad moments), then justified (good moments)
     const verdictOrder: Record<TimeVerdict, number> = {
       wasted: 0,
       rushed: 1,
-      justified: 2,
-      neutral: 3,
+      efficient: 2,
+      justified: 3,
+      neutral: 4,
     };
     moments.sort((a, b) => {
       const vd = verdictOrder[a.verdict] - verdictOrder[b.verdict];
@@ -4215,6 +4259,7 @@ export async function analyzeOpeningLeaksInBrowser(
         totalMoves > 0 ? Math.round((totalSpentSec / totalMoves) * 10) / 10 : 0,
       timeScrambleCount: scrambleCount,
       justifiedThinks: moments.filter((m) => m.verdict === "justified").length,
+      efficientMoves: moments.filter((m) => m.verdict === "efficient").length,
       wastedThinks: moments.filter((m) => m.verdict === "wasted").length,
       rushedMoves: moments.filter((m) => m.verdict === "rushed").length,
     };

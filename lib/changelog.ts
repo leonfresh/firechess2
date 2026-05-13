@@ -15,6 +15,63 @@ export interface ChangeEntry {
 
 export const CHANGELOG: ChangeEntry[] = [
   {
+    version: 28,
+    date: "May 14, 2026",
+    title: "Unified Reports and Community Composer Refresh",
+    description:
+      "Scan reports, sharing, and community composition were streamlined into one cleaner flow: dedicated shareable report pages, a lighter report UI, a local puzzle builder in the quick composer, and a simplified full board workbench.",
+    changes: [
+      {
+        type: "feature",
+        text: "Dedicated report pages (/report/[id]) — scans now open on a shareable report route, while old /scan/[id] links redirect automatically to the canonical report URL",
+      },
+      {
+        type: "improvement",
+        text: "Homepage scanning now behaves as one unified mode by default — every run analyzes openings, tactics, endgames, and time management together instead of splitting users across separate scan surfaces",
+      },
+      {
+        type: "improvement",
+        text: "Cached scan sessions on the dedicated report page — refreshing a report reuses the saved result instead of regenerating it, and owned unsaved sessions can be regenerated explicitly",
+      },
+      {
+        type: "design",
+        text: "Scan report sections were rebuilt into a compact card-based layout inspired by community posts, with section-local loading states instead of one large page-level blocker",
+      },
+      {
+        type: "improvement",
+        text: "Free report gating tightened — free users can preview the first 9 tactics, endgames, and time-management examples, with the remaining examples locked behind Pro and cleaner load-more copy",
+      },
+      {
+        type: "fix",
+        text: "Strength radar and profile surfaces no longer disappear when report metadata is still pending or a smaller scan lacks enough signal yet — the page keeps a visible placeholder/loading state instead",
+      },
+      {
+        type: "design",
+        text: "Quick community post creation was compacted into a lighter modal flow with a live board preview, smaller publishing form, and optional metadata tucked out of the way",
+      },
+      {
+        type: "feature",
+        text: "Puzzle Builder now opens directly inside the quick composer and minimal board flow — set the current board as the puzzle start, paste SAN, or record the continuation on the same live board without leaving the post modal",
+      },
+      {
+        type: "fix",
+        text: "Community board inputs now stay synced with the live position — FEN fields update from real board moves, preview boards can show the previous move highlight, and the composer no longer drifts away from the board state you are publishing",
+      },
+      {
+        type: "fix",
+        text: "Resolved the board highlight rerender warning caused by mixing CSS background shorthand with backgroundImage overlays while moving pieces in the composer/workbench",
+      },
+      {
+        type: "improvement",
+        text: "Time-management report cards now split explanation into Show your move and Show best line, opening the best-line modal immediately and extending it with Stockfish continuation when available",
+      },
+      {
+        type: "design",
+        text: "The full /board workbench was simplified to feel like an extended version of the quick composer: larger live board up front, inline puzzle building, and report/engine/move-grade tools hidden behind a collapsed Advanced tools panel by default",
+      },
+    ],
+  },
+  {
     version: 27,
     date: "Apr 10, 2026",
     title: "Daily Training Routine",
