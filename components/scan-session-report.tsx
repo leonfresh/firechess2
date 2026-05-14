@@ -27,10 +27,12 @@ import type {
   PublicScanSessionPayload,
 } from "@/lib/scan-session";
 import type {
+  EndgameStats,
   EndgameMistake,
   MissedTactic,
   PositionalFinding,
   RepeatedOpeningLeak,
+  TimeManagementReport,
   TimeMoment,
 } from "@/lib/types";
 
@@ -963,6 +965,654 @@ function formatPawnLoss(cpLoss: number) {
   return `${(cpLoss / 100).toFixed(2)} pawns`;
 }
 
+type CoachInsightLine = {
+  text: string;
+  type: "positive" | "improve";
+};
+
+const ENDGAME_TYPE_ICONS: Record<string, string> = {
+  Pawn: "♟",
+  Rook: "♜",
+  "Rook + Bishop": "♜♝",
+  "Rook + Knight": "♜♞",
+  "Rook + Minor": "♜♝",
+  "Knight vs Knight": "♞♞",
+  "Bishop vs Bishop": "♝♝",
+  "Knight vs Bishop": "♞♝",
+  "Bishop vs Knight": "♝♞",
+  "Bishop + Knight": "♝♞",
+  "Two Bishops": "♝♝",
+  "Two Knights": "♞♞",
+  "Minor Piece": "♝",
+  Queen: "♛",
+  "Queen + Rook": "♛♜",
+  "Queen + Minor": "♛♝",
+  "Opposite Bishops": "♗♝",
+  Complex: "♔",
+};
+
+const ENDGAME_TYPE_NOTES: Record<string, string> = {
+  Pawn: "Practice king activity, opposition, and key squares. These endings are decided by tempi more often than tactics.",
+  Rook: "Study Lucena and Philidor positions first. Rook activity behind passed pawns usually matters more than pawn grabbing.",
+  "Rook + Bishop":
+    "Use the rook to create targets while the bishop controls long diagonals. Restriction matters more than speed here.",
+  "Rook + Knight":
+    "Knights need stable outposts. If the board opens, the rook usually becomes the star piece.",
+  "Rook + Minor":
+    "Coordinate the rook with the minor piece instead of letting them chase separate plans.",
+  "Knight vs Knight":
+    "These often behave like pawn endings. Central king activity and passed-pawn races decide more than flashy tactics.",
+  "Bishop vs Bishop":
+    "Fix pawns on the enemy bishop's color and use the king aggressively to create targets.",
+  "Knight vs Bishop":
+    "If you have the knight, lock the structure. If you have the bishop, open the board and use the long-range pressure.",
+  "Bishop vs Knight":
+    "Use the bishop's range and play on both wings when possible. Do not let the knight settle on stable outposts.",
+  "Bishop + Knight":
+    "Coordinate both pieces before pushing for concrete gains. The pieces are strong together but awkward when split.",
+  "Two Bishops":
+    "Keep the board open and avoid unnecessary bishop trades. The pair wins by stretching the opponent.",
+  "Two Knights":
+    "Support pawn promotion plans. The knights need concrete targets or they can drift without impact.",
+  "Minor Piece":
+    "Piece activity and pawn structure decide these endings. Look for the pawn skeletons where your piece is naturally stronger.",
+  Queen:
+    "Centralize the queen, watch perpetual-check resources, and keep king safety ahead of material greed.",
+  "Queen + Rook":
+    "Look for mating nets, back-rank ideas, and perpetual tricks. This material balance punishes loose kings fast.",
+  "Queen + Minor":
+    "Use the queen to create threats while the minor piece controls key escape squares and supports conversion.",
+  "Opposite Bishops":
+    "These are often drawish. The attacker usually needs play on both wings to make progress.",
+  Complex:
+    "Simplify when ahead and complicate when behind. King safety and piece coordination matter more than memorized technique.",
+};
+
+function CoachInsightPanel({
+  headline,
+  headlineClass,
+  lines,
+  borderClass,
+  backgroundClass,
+}: {
+  headline: string;
+  headlineClass: string;
+  lines: CoachInsightLine[];
+  borderClass: string;
+  backgroundClass: string;
+}) {
+  if (lines.length === 0) return null;
+
+  return (
+    <div
+      className={`rounded-[1.5rem] border p-5 sm:p-6 ${borderClass} ${backgroundClass}`}
+    >
+      <p
+        className={`text-lg font-black tracking-tight sm:text-xl ${headlineClass}`}
+      >
+        {headline}
+      </p>
+      <div className="mt-3 space-y-2">
+        {lines.map((line, index) => (
+          <div key={`${line.type}-${index}`} className="flex items-start gap-2">
+            <span
+              className={`mt-0.5 text-xs ${line.type === "positive" ? "text-emerald-400" : "text-slate-500"}`}
+            >
+              {line.type === "positive" ? "✦" : "▸"}
+            </span>
+            <p
+              className={`text-sm leading-relaxed ${line.type === "positive" ? "text-emerald-300/90" : "text-slate-400"}`}
+            >
+              {line.text}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TacticsCoachInsight({
+  missedTactics,
+}: {
+  missedTactics: MissedTactic[];
+}) {
+  if (missedTactics.length === 0) return null;
+
+  const timePressureCount = missedTactics.filter(
+    (tactic) =>
+      typeof tactic.timeRemainingSec === "number" &&
+      tactic.timeRemainingSec <= 30,
+  ).length;
+  const timePressureRate =
+    missedTactics.length > 0 ? timePressureCount / missedTactics.length : 0;
+  const matesMissed = missedTactics.filter(
+    (tactic) => tactic.cpLoss >= 99000,
+  ).length;
+  const nonMateTactics = missedTactics.filter(
+    (tactic) => tactic.cpLoss < 99000,
+  );
+  const avgLoss =
+    nonMateTactics.reduce((sum, tactic) => sum + tactic.cpLoss, 0) /
+    Math.max(1, nonMateTactics.length);
+  const totalMissed = missedTactics.length;
+
+  let headline = "A few tactical gaps to patch.";
+  let headlineClass = "text-amber-100";
+  const lines: CoachInsightLine[] = [];
+
+  if (totalMissed <= 2 && matesMissed === 0) {
+    headline = "Sharp tactical vision.";
+    headlineClass = "text-emerald-200";
+  } else if (matesMissed >= 2) {
+    headline = "Forced mates are slipping through.";
+  } else if (timePressureRate > 0.5 && timePressureCount >= 2) {
+    headline = "Time pressure is blinding your tactics.";
+  } else if (avgLoss > 500) {
+    headline = "You're leaving pieces on the table.";
+  } else if (totalMissed >= 5) {
+    headline = "Too many tactics are going unnoticed.";
+  }
+
+  if (matesMissed === 0 && totalMissed > 0) {
+    lines.push({
+      text: "You did not miss any forced checkmates. Your mating pattern awareness is holding up well.",
+      type: "positive",
+    });
+  }
+  if (timePressureCount === 0 && totalMissed > 0) {
+    lines.push({
+      text: "None of these misses came under severe time pressure, so this looks more like pattern recognition than panic.",
+      type: "positive",
+    });
+  }
+  if (totalMissed <= 3 && totalMissed > 0 && avgLoss < 300) {
+    lines.push({
+      text: "Most of the misses are smaller tactical edges rather than total collapses. That is easier to tighten up than a full rebuild.",
+      type: "positive",
+    });
+  }
+  if (matesMissed >= 1) {
+    lines.push({
+      text: `${matesMissed} forced mate${matesMissed > 1 ? "s" : ""} slipped through. Daily mate-in-2 and mate-in-3 reps should pay back quickly here.`,
+      type: "improve",
+    });
+  }
+  if (timePressureRate > 0.4 && timePressureCount >= 2) {
+    lines.push({
+      text: `${(timePressureRate * 100).toFixed(0)}% of the misses happened with 30 seconds or less. That is a sign to slow down slightly in sharp positions.`,
+      type: "improve",
+    });
+  }
+  if (avgLoss > 400 && nonMateTactics.length >= 2) {
+    lines.push({
+      text: `The average miss is worth ${(avgLoss / 100).toFixed(1)} pawns. Rebuilding a habit of checking checks, captures, and threats before every move is the fastest fix.`,
+      type: "improve",
+    });
+  }
+  if (totalMissed >= 5) {
+    lines.push({
+      text: `${totalMissed} tactical misses across the sample is enough to justify a short daily puzzle block focused on pattern repetition, not just raw difficulty.`,
+      type: "improve",
+    });
+  }
+
+  return (
+    <CoachInsightPanel
+      headline={headline}
+      headlineClass={headlineClass}
+      lines={lines.slice(0, 3)}
+      borderClass="border-amber-500/15"
+      backgroundClass="bg-[radial-gradient(circle_at_top_right,_rgba(245,158,11,0.10),_rgba(15,23,42,0.82)_40%,_rgba(2,6,23,0.96)_100%)]"
+    />
+  );
+}
+
+function TacticalPatternAnalysis({ motifs }: { motifs: DerivedMotif[] }) {
+  if (motifs.length === 0) return null;
+
+  return (
+    <div className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Pattern Analysis
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-slate-400">
+            Ranked worst to best so the training target is obvious instead of
+            buried in the tactic list.
+          </p>
+        </div>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+          Ranked Worst to Best
+        </p>
+      </div>
+
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+        {motifs.map((motif, index) => {
+          const total = motifs.length;
+          const isWorst = index === 0;
+          const isBest = index === total - 1;
+          const ratio = total > 1 ? index / (total - 1) : 0.5;
+          const rankColor =
+            ratio >= 0.7
+              ? "text-emerald-400"
+              : ratio >= 0.3
+                ? "text-amber-400"
+                : "text-red-400";
+          const borderClass = isWorst
+            ? "border-red-500/20 bg-red-500/[0.06]"
+            : isBest
+              ? "border-emerald-500/20 bg-emerald-500/[0.04]"
+              : "border-white/[0.06] bg-white/[0.02]";
+          const badgeBg = isWorst
+            ? "bg-red-500/15"
+            : isBest
+              ? "bg-emerald-500/15"
+              : "bg-white/[0.06]";
+
+          return (
+            <div
+              key={motif.name}
+              className={`flex items-center gap-3 rounded-xl border p-3 transition-all hover:border-white/[0.12] ${borderClass}`}
+            >
+              <div
+                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-black ${badgeBg} ${rankColor}`}
+              >
+                #{index + 1}
+              </div>
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] text-lg">
+                {motif.icon}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-white">
+                  {motif.name}
+                  {isWorst ? (
+                    <span className="ml-1.5 rounded bg-red-500/15 px-1.5 py-0.5 text-[10px] font-bold text-red-400">
+                      WEAKEST
+                    </span>
+                  ) : null}
+                  {isBest && total > 1 ? (
+                    <span className="ml-1.5 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400">
+                      BEST
+                    </span>
+                  ) : null}
+                </p>
+                <p className="text-xs text-slate-400">
+                  {motif.count}x missed
+                  {motif.avgCpLoss < 99000 ? (
+                    <>
+                      {" "}
+                      · avg{" "}
+                      <span className={rankColor}>
+                        -{(motif.avgCpLoss / 100).toFixed(1)}
+                      </span>
+                    </>
+                  ) : (
+                    " · forced mate"
+                  )}
+                </p>
+              </div>
+              <span
+                className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-bold ${badgeBg} ${rankColor}`}
+              >
+                {motif.count}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {motifs.length >= 2 ? (
+        <p className="mt-4 text-xs text-slate-500">
+          Focus the next round of training on the top recurring motif first.
+          That is where repetition is hurting you most.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function EndgameCoachInsight({
+  endgameStats,
+  endgameMistakes,
+}: {
+  endgameStats: EndgameStats;
+  endgameMistakes: EndgameMistake[];
+}) {
+  const { totalPositions, avgCpLoss, conversionRate, holdRate, weakestType } =
+    endgameStats;
+  const mistakeCount = endgameMistakes.length;
+  const mistakeRate = totalPositions > 0 ? mistakeCount / totalPositions : 0;
+
+  let headline = "Decent endgame play with room to grow.";
+  let headlineClass = "text-sky-100";
+  const lines: CoachInsightLine[] = [];
+
+  if (avgCpLoss <= 20 && mistakeRate <= 0.1) {
+    headline = "Your endgame technique is rock-solid.";
+    headlineClass = "text-emerald-200";
+  } else if (conversionRate != null && conversionRate < 40) {
+    headline = "You are letting winning endgames slip away.";
+  } else if (holdRate != null && holdRate < 30) {
+    headline = "Defensive endgames need work.";
+  } else if (avgCpLoss > 60) {
+    headline = "Endgame inaccuracies are adding up.";
+  } else if (mistakeRate > 0.25) {
+    headline = "Too many endgame errors for this sample.";
+  }
+
+  if (conversionRate != null && conversionRate >= 70) {
+    lines.push({
+      text: `${conversionRate.toFixed(0)}% conversion rate. You are cashing in winning endings reliably.`,
+      type: "positive",
+    });
+  }
+  if (holdRate != null && holdRate >= 60) {
+    lines.push({
+      text: `${holdRate.toFixed(0)}% hold rate from worse endings. That defensive skill saves real points.`,
+      type: "positive",
+    });
+  }
+  if (avgCpLoss <= 25 && totalPositions >= 3) {
+    lines.push({
+      text: `Only ${(avgCpLoss / 100).toFixed(2)} average pawn loss in endings. Your technical moves are already fairly clean.`,
+      type: "positive",
+    });
+  }
+  if (mistakeRate <= 0.1 && mistakeCount > 0) {
+    lines.push({
+      text: `Only ${mistakeCount} notable endgame mistake${mistakeCount !== 1 ? "s" : ""} across ${totalPositions} positions.`,
+      type: "positive",
+    });
+  }
+  if (conversionRate != null && conversionRate < 50) {
+    lines.push({
+      text: `You are converting only ${conversionRate.toFixed(0)}% of winning endings. Technique work should give a direct rating return here.`,
+      type: "improve",
+    });
+  }
+  if (holdRate != null && holdRate < 40) {
+    lines.push({
+      text: `Only ${holdRate.toFixed(0)}% of worse endings are being held. Fortress ideas and defensive king activity are the first place to train.`,
+      type: "improve",
+    });
+  }
+  if (weakestType) {
+    lines.push({
+      text: `${weakestType} endings are the clearest weak spot in this report. Targeted work there should move the whole endgame section fastest.`,
+      type: "improve",
+    });
+  }
+  if (avgCpLoss > 60) {
+    lines.push({
+      text: `Average endgame loss is ${(avgCpLoss / 100).toFixed(2)} pawns. Slowing down and calculating one move deeper in simplified positions should help.`,
+      type: "improve",
+    });
+  }
+
+  return (
+    <CoachInsightPanel
+      headline={headline}
+      headlineClass={headlineClass}
+      lines={lines.slice(0, 3)}
+      borderClass="border-sky-500/15"
+      backgroundClass="bg-[radial-gradient(circle_at_top_right,_rgba(14,165,233,0.10),_rgba(15,23,42,0.82)_40%,_rgba(2,6,23,0.96)_100%)]"
+    />
+  );
+}
+
+function EndgameTypeBreakdown({
+  endgameStats,
+  endgameMistakes,
+}: {
+  endgameStats: EndgameStats;
+  endgameMistakes: EndgameMistake[];
+}) {
+  if (endgameStats.byType.length === 0 && endgameMistakes.length === 0)
+    return null;
+
+  const mistakeRate =
+    endgameStats.totalPositions > 0
+      ? ((endgameMistakes.length / endgameStats.totalPositions) * 100).toFixed(
+          0,
+        )
+      : "0";
+  const failedConversions = endgameMistakes.filter((mistake) =>
+    mistake.tags.includes("Failed Conversion"),
+  ).length;
+  const worstBlunder =
+    endgameMistakes.length === 0
+      ? "N/A"
+      : endgameMistakes.some((mistake) => mistake.cpLoss >= 99000)
+        ? "Mate"
+        : `-${(Math.max(...endgameMistakes.map((mistake) => mistake.cpLoss)) / 100).toFixed(1)}`;
+
+  return (
+    <div className="space-y-4">
+      {endgameStats.byType.length > 0 ? (
+        <div className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                By Type
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-slate-400">
+                Ranked worst to best so you can see which endgame family is
+                actually costing you the most.
+              </p>
+            </div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+              Ranked Worst to Best
+            </p>
+          </div>
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+            {endgameStats.byType.map((entry, index) => {
+              const total = endgameStats.byType.length;
+              const isWeakest = index === 0;
+              const isBest = index === total - 1;
+              const ratio = total > 1 ? index / (total - 1) : 0.5;
+              const rankColor =
+                ratio >= 0.7
+                  ? "text-emerald-400"
+                  : ratio >= 0.3
+                    ? "text-amber-400"
+                    : "text-red-400";
+              const borderClass = isWeakest
+                ? "border-red-500/20 bg-red-500/[0.06]"
+                : isBest
+                  ? "border-emerald-500/20 bg-emerald-500/[0.04]"
+                  : "border-white/[0.06] bg-white/[0.02]";
+              const badgeBg = isWeakest
+                ? "bg-red-500/15"
+                : isBest
+                  ? "bg-emerald-500/15"
+                  : "bg-white/[0.06]";
+
+              return (
+                <div
+                  key={entry.type}
+                  className={`flex items-center gap-3 rounded-xl border p-3 transition-all hover:border-white/[0.12] ${borderClass}`}
+                >
+                  <div
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-black ${badgeBg} ${rankColor}`}
+                  >
+                    #{index + 1}
+                  </div>
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] text-lg">
+                    {ENDGAME_TYPE_ICONS[entry.type] ?? "♔"}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-white">
+                      {entry.type}
+                      {isWeakest ? (
+                        <span className="ml-1.5 rounded bg-red-500/15 px-1.5 py-0.5 text-[10px] font-bold text-red-400">
+                          WEAKEST
+                        </span>
+                      ) : null}
+                      {isBest ? (
+                        <span className="ml-1.5 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400">
+                          BEST
+                        </span>
+                      ) : null}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      {entry.count} position{entry.count !== 1 ? "s" : ""} · avg{" "}
+                      <span className={rankColor}>
+                        -{(entry.avgCpLoss / 100).toFixed(2)}
+                      </span>{" "}
+                      · {entry.mistakes} mistake
+                      {entry.mistakes !== 1 ? "s" : ""}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
+      {endgameStats.weakestType ? (
+        <div className="rounded-[1.25rem] border border-red-500/15 bg-red-500/[0.05] p-5">
+          <p className="text-sm font-semibold text-red-300">
+            Weakest area: {endgameStats.weakestType} endgames
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-slate-400">
+            {ENDGAME_TYPE_NOTES[endgameStats.weakestType] ??
+              "Focus on this endgame family first. It is the clearest place where technique work should improve practical results."}
+          </p>
+        </div>
+      ) : null}
+
+      {endgameMistakes.length > 0 ? (
+        <div className="grid gap-3 sm:grid-cols-3">
+          <MetricCard
+            label="Mistake rate"
+            value={`${mistakeRate}%`}
+            tone="amber"
+          />
+          <MetricCard label="Worst blunder" value={worstBlunder} tone="sky" />
+          <MetricCard
+            label="Failed conversions"
+            value={failedConversions}
+            tone="fuchsia"
+          />
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function TimeManagementCoachInsight({
+  timeManagement,
+}: {
+  timeManagement: TimeManagementReport;
+}) {
+  const {
+    score,
+    wastedThinks,
+    rushedMoves,
+    justifiedThinks,
+    efficientMoves,
+    avgTimePerMove,
+    timeScrambleCount,
+    moments,
+    gamesWithClockData,
+  } = timeManagement;
+  const total = moments.length;
+  const rushRatio = total > 0 ? rushedMoves / total : 0;
+  const wasteRatio = total > 0 ? wastedThinks / total : 0;
+
+  let headline = "Room to sharpen your clock sense.";
+  let headlineClass = "text-fuchsia-100";
+  const lines: CoachInsightLine[] = [];
+
+  if (score >= 75) {
+    headline = "Your clock management is a weapon.";
+    headlineClass = "text-emerald-200";
+  } else if (
+    efficientMoves >= 2 &&
+    rushedMoves === 0 &&
+    timeScrambleCount === 0 &&
+    score >= 60
+  ) {
+    headline = "Your quick intuition is helping, not hurting.";
+    headlineClass = "text-emerald-200";
+  } else if (wasteRatio > rushRatio && wastedThinks >= 3) {
+    headline = "You are overthinking quiet positions.";
+  } else if (rushRatio > wasteRatio && rushedMoves >= 3) {
+    headline = "Slow down. Speed is costing you.";
+  } else if (score < 50) {
+    headline = "Your clock is working against you.";
+  }
+
+  if (justifiedThinks >= 3) {
+    lines.push({
+      text: `${justifiedThinks} moments show you invested time in the right spots. That is a real strength, not hesitation.`,
+      type: "positive",
+    });
+  }
+  if (efficientMoves >= 2) {
+    lines.push({
+      text: `${efficientMoves} fast decisions still held move quality. That is good intuition, not careless speed.`,
+      type: "positive",
+    });
+  }
+  if (timeScrambleCount === 0 && gamesWithClockData >= 3) {
+    lines.push({
+      text: "You avoided time scrambles across the whole sample. That keeps your real chess available in the late game.",
+      type: "positive",
+    });
+  }
+  if (avgTimePerMove >= 8 && avgTimePerMove <= 25 && score >= 60) {
+    lines.push({
+      text: `Averaging ${avgTimePerMove.toFixed(1)} seconds per move is a healthy pace for stable decision-making.`,
+      type: "positive",
+    });
+  }
+  if (wastedThinks >= 3) {
+    lines.push({
+      text: `${wastedThinks} moments were spent overthinking non-critical positions. Trust simpler moves faster and save clock for the real decisions.`,
+      type: "improve",
+    });
+  }
+  if (rushedMoves >= 3) {
+    lines.push({
+      text: `${rushedMoves} complex positions were played too quickly. Those are the moves that deserve the extra 5 to 10 seconds.`,
+      type: "improve",
+    });
+  }
+  if (timeScrambleCount >= 2) {
+    lines.push({
+      text: `${timeScrambleCount} games ended in serious time trouble. More even clock budgeting should convert directly into better late-game accuracy.`,
+      type: "improve",
+    });
+  }
+  if (avgTimePerMove < 5 && score < 60) {
+    lines.push({
+      text: `Only ${avgTimePerMove.toFixed(1)} seconds per move on average is probably too fast for the complexity you are reaching.`,
+      type: "improve",
+    });
+  }
+  if (avgTimePerMove > 30) {
+    lines.push({
+      text: `${avgTimePerMove.toFixed(1)} seconds per move is high. Routine pattern recognition work should help you reserve time for real complications.`,
+      type: "improve",
+    });
+  }
+
+  return (
+    <CoachInsightPanel
+      headline={headline}
+      headlineClass={headlineClass}
+      lines={lines.slice(0, 3)}
+      borderClass="border-fuchsia-500/15"
+      backgroundClass="bg-[radial-gradient(circle_at_top_right,_rgba(168,85,247,0.10),_rgba(15,23,42,0.82)_40%,_rgba(2,6,23,0.96)_100%)]"
+    />
+  );
+}
+
 function orientationFromFen(fen: string): "white" | "black" {
   return fen.includes(" w ") ? "white" : "black";
 }
@@ -1760,29 +2410,7 @@ export function ScanSessionReport({
             live={isProcessing}
           />
 
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {tacticalMotifs.map((motif) => (
-              <div
-                key={motif.name}
-                className="rounded-[1.25rem] border border-white/[0.08] bg-white/[0.03] p-4"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-lg">{motif.icon}</p>
-                    <h3 className="mt-2 text-base font-bold text-white">
-                      {motif.name}
-                    </h3>
-                  </div>
-                  <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-xs font-semibold text-slate-300">
-                    {motif.count}x
-                  </span>
-                </div>
-                <p className="mt-3 text-sm text-slate-400">
-                  Average damage: {formatPawnLoss(motif.avgCpLoss)}
-                </p>
-              </div>
-            ))}
-          </div>
+          <TacticalPatternAnalysis motifs={tacticalMotifs} />
         </section>
       ) : null}
 
@@ -1805,6 +2433,10 @@ export function ScanSessionReport({
             })}
             live={isProcessing}
           />
+
+          {missedTactics.length > 0 ? (
+            <TacticsCoachInsight missedTactics={missedTactics} />
+          ) : null}
 
           {missedTactics.length > 0 ? (
             <CardCarousel
@@ -1909,6 +2541,20 @@ export function ScanSessionReport({
                 tone="emerald"
               />
             </div>
+          ) : null}
+
+          {endgameStats ? (
+            <EndgameCoachInsight
+              endgameStats={endgameStats}
+              endgameMistakes={endgameMistakes}
+            />
+          ) : null}
+
+          {endgameStats ? (
+            <EndgameTypeBreakdown
+              endgameStats={endgameStats}
+              endgameMistakes={endgameMistakes}
+            />
           ) : null}
 
           {endgameMistakes.length > 0 ? (
@@ -2019,6 +2665,18 @@ export function ScanSessionReport({
                 tone="cyan"
               />
             </div>
+          ) : null}
+
+          {timeManagement?.timeScrambleCount ? (
+            <div className="rounded-[1.25rem] border border-red-500/15 bg-red-500/[0.05] px-4 py-3 text-sm text-red-200">
+              {timeManagement.timeScrambleCount} of{" "}
+              {timeManagement.gamesWithClockData} games had time scrambles. That
+              usually means the late moves were played under avoidable pressure.
+            </div>
+          ) : null}
+
+          {timeManagement ? (
+            <TimeManagementCoachInsight timeManagement={timeManagement} />
           ) : null}
 
           {visibleMoments.length > 0 ? (

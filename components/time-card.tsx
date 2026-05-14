@@ -460,39 +460,64 @@ export function TimeCard({ moment, onCreateCommunityPost }: TimeCardProps) {
         <div className="space-y-5 p-5 md:p-6">
           {/* Header badge row */}
           <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={`shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-bold text-white shadow-sm ${config.bgColor}`}
-              >
-                {config.icon} {config.label}
-              </span>
-              <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${config.tagBg} ${config.tagText}`}
-              >
-                Game {moment.gameIndex}
-              </span>
-              {moment.isTactical && (
-                <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
-                  Tactical
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-bold text-white shadow-sm ${config.bgColor}`}
+                >
+                  {config.icon} {config.label}
                 </span>
-              )}
-              {userMoveMatchesBest && (
-                <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${config.tagBg} ${config.tagText}`}
+                >
+                  Game {moment.gameIndex}
+                </span>
+                {moment.isTactical && (
+                  <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
+                    Tactical
+                  </span>
+                )}
+                {userMoveMatchesBest && (
+                  <span className="flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-400">
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    Engine Approved
+                  </span>
+                )}
+              </div>
+
+              {onCreateCommunityPost ? (
+                <button
+                  type="button"
+                  onClick={onCreateCommunityPost}
+                  aria-label="Create community post"
+                  title="Create community post"
+                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-2.5 text-[11px] font-semibold text-cyan-200 transition hover:bg-cyan-500/20 hover:text-white"
+                >
                   <svg
-                    width="10"
-                    height="10"
+                    width="12"
+                    height="12"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                    strokeWidth="2.2"
                   >
-                    <polyline points="20 6 9 17 4 12" />
+                    <path d="M12 5v14" />
+                    <path d="M5 12h14" />
                   </svg>
-                  Engine Approved
-                </span>
-              )}
+                  <span className="hidden sm:inline">Make post</span>
+                </button>
+              ) : null}
             </div>
             <h3 className="mt-2 text-lg font-bold text-white">
               Move {moment.moveNumber} ·{" "}
@@ -695,7 +720,6 @@ export function TimeCard({ moment, onCreateCommunityPost }: TimeCardProps) {
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="2.5"
-                    className="text-emerald-400"
                   >
                     <polyline points="20 6 9 17 4 12" />
                   </svg>

@@ -23,6 +23,27 @@ import {
 } from "@/lib/scan-session";
 import type { AnalyzeResponse } from "@/lib/types";
 
+const REPORT_CACHE_KEY_PREFIX = "fc-last-report";
+
+type CachedReportEntry = {
+  result: AnalyzeResponse;
+  config: {
+    maxGames: number;
+    maxMoves: number;
+    cpThreshold: number;
+    engineDepth: number;
+    source: PublicScanSessionPayload["source"];
+    scanMode: PublicScanSessionPayload["scanMode"];
+    speed: PublicScanSessionPayload["config"]["speed"];
+  };
+  savedAt: string;
+  reportPath?: string;
+};
+
+function reportCacheKey(mode: PublicScanSessionPayload["scanMode"]) {
+  return `${REPORT_CACHE_KEY_PREFIX}-${mode}`;
+}
+
 function formatScanMode(mode: PublicScanSessionPayload["scanMode"]) {
   switch (mode) {
     case "openings":
@@ -312,6 +333,34 @@ export function ScanSessionPage({
     })();
   }, [isOwner, ownerToken, scan]);
 
+  useEffect(() => {
+    if (!isOwner || scan.status !== "ready" || !scan.result) return;
+
+    try {
+      const entry: CachedReportEntry = {
+        result: scan.result,
+        config: {
+          maxGames: scan.config.maxGames,
+          maxMoves: scan.config.maxMoves,
+          cpThreshold: scan.config.cpThreshold,
+          engineDepth: scan.config.engineDepth,
+          source: scan.config.source,
+          scanMode: scan.config.scanMode,
+          speed: scan.config.speed,
+        },
+        savedAt: scan.updatedAt ?? scan.createdAt ?? new Date().toISOString(),
+        reportPath: `/report/${scan.id}`,
+      };
+
+      window.localStorage.setItem(
+        reportCacheKey(scan.scanMode),
+        JSON.stringify(entry),
+      );
+    } catch {
+      // Ignore storage failures.
+    }
+  }, [isOwner, scan]);
+
   const dismissExpiryPopup = () => {
     setShowExpiryPopup(false);
     try {
@@ -591,15 +640,6 @@ export function ScanSessionPage({
                           : "Regenerate"}
                   </button>
                 ) : null}
-                <button
-                  type="button"
-                  onClick={() => openComposer()}
-                  aria-label="Make community post"
-                  aria-haspopup="dialog"
-                  className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-400/40 hover:text-white"
-                >
-                  Make community post
-                </button>
                 {saveState === "saved" ? (
                   <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300">
                     Saved

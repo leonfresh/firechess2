@@ -91,6 +91,7 @@ type CachedReportEntry = {
     speed: TimeControl[];
   };
   savedAt: string;
+  reportPath?: string;
 };
 
 function reportCacheKey(mode: ScanMode): string {
@@ -183,6 +184,7 @@ export default function HomePage() {
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [copyLinkLabel, setCopyLinkLabel] = useState("Copy Link");
+  const [activeReportPath, setActiveReportPath] = useState<string | null>(null);
   const [communityComposerOpen, setCommunityComposerOpen] = useState(false);
   const [welcomeBack, setWelcomeBack] = useState<string | null>(null);
   const [cachedReportEntry, setCachedReportEntry] =
@@ -943,6 +945,10 @@ export default function HomePage() {
       computeScanReportMeta(result, lastRunConfig?.cpThreshold ?? cpThreshold),
     [cpThreshold, lastRunConfig?.cpThreshold, result],
   );
+  const activeReportUrl = useMemo(() => {
+    if (!activeReportPath || typeof window === "undefined") return null;
+    return new URL(activeReportPath, window.location.origin).toString();
+  }, [activeReportPath]);
   const maxObservedCpLoss = useMemo(() => {
     const losses = diagnostics?.positionTraces
       .map((trace) => trace.cpLoss)
@@ -1131,6 +1137,7 @@ export default function HomePage() {
       },
     });
     setResult(browserResult);
+    setActiveReportPath(null);
     setState("done");
 
     // Cache report in localStorage for offline restore
@@ -1323,6 +1330,7 @@ export default function HomePage() {
     setError("");
     setNotice("");
     setResult(null);
+    setActiveReportPath(null);
     setSectionsDone(new Set());
     setSaveStatus("idle");
     setTimeout(
@@ -2099,6 +2107,7 @@ export default function HomePage() {
                             scanMode: FULL_SCAN_MODE,
                           });
                           setResult(entry.result);
+                          setActiveReportPath(entry.reportPath ?? null);
                           setState("done");
                           setSaveStatus("idle");
                           setShowRestoreBanner(false);
@@ -2733,16 +2742,23 @@ export default function HomePage() {
                   {/* Share on X / Twitter */}
                   <button
                     type="button"
+                    disabled={!activeReportUrl}
+                    title={
+                      activeReportUrl
+                        ? undefined
+                        : "Share links only work from dedicated report pages."
+                    }
                     onClick={() => {
                       const text = `🔥 My FireChess analysis: ${report ? `${report.estimatedAccuracy.toFixed(1)}% accuracy` : `${result.gamesAnalyzed} games scanned`}${result.playerRating ? ` (${result.playerRating} rated)` : ""} — ${result.leaks.length} opening leaks, ${result.missedTactics.length} missed tactics found\n\nScan your games free at`;
-                      const url = "https://firechess.com";
+                      if (!activeReportUrl) return;
+                      const url = activeReportUrl;
                       window.open(
                         `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
                         "_blank",
                         "noopener",
                       );
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <svg
                       className="h-4 w-4"
@@ -2757,15 +2773,22 @@ export default function HomePage() {
                   {/* Share on Reddit */}
                   <button
                     type="button"
+                    disabled={!activeReportUrl}
+                    title={
+                      activeReportUrl
+                        ? undefined
+                        : "Share links only work from dedicated report pages."
+                    }
                     onClick={() => {
+                      if (!activeReportUrl) return;
                       const title = `My FireChess Analysis: ${report ? `${report.estimatedAccuracy.toFixed(1)}% accuracy` : `${result.gamesAnalyzed} games`}${result.playerRating ? ` (${result.playerRating})` : ""} — ${result.leaks.length} leaks, ${result.missedTactics.length} missed tactics`;
                       window.open(
-                        `https://www.reddit.com/submit?url=${encodeURIComponent("https://firechess.com")}&title=${encodeURIComponent(title)}`,
+                        `https://www.reddit.com/submit?url=${encodeURIComponent(activeReportUrl)}&title=${encodeURIComponent(title)}`,
                         "_blank",
                         "noopener",
                       );
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-orange-500/30 hover:bg-orange-500/[0.08] hover:text-orange-400"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-orange-500/30 hover:bg-orange-500/[0.08] hover:text-orange-400 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <svg
                       className="h-4 w-4"
@@ -2780,12 +2803,19 @@ export default function HomePage() {
                   {/* Copy Link */}
                   <button
                     type="button"
+                    disabled={!activeReportUrl}
+                    title={
+                      activeReportUrl
+                        ? undefined
+                        : "Share links only work from dedicated report pages."
+                    }
                     onClick={() => {
-                      navigator.clipboard.writeText(window.location.href);
+                      if (!activeReportUrl) return;
+                      navigator.clipboard.writeText(activeReportUrl);
                       setCopyLinkLabel("Copied!");
                       setTimeout(() => setCopyLinkLabel("Copy Link"), 1500);
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-white"
+                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <svg
                       className="h-4 w-4"
@@ -8041,18 +8071,25 @@ export default function HomePage() {
                     {/* Share on X */}
                     <button
                       type="button"
+                      disabled={!activeReportUrl}
+                      title={
+                        activeReportUrl
+                          ? undefined
+                          : "Share links only work from dedicated report pages."
+                      }
                       onClick={() => {
                         const acc = report
                           ? `${report.estimatedAccuracy.toFixed(1)}% accuracy`
                           : `${result.gamesAnalyzed} games scanned`;
                         const text = `🔥 Just analyzed my chess games on FireChess:\n\n${acc}${result.playerRating ? ` (${result.playerRating})` : ""}\n📊 ${result.leaks.length} opening leaks\n⚔️ ${result.missedTactics.length} missed tactics\n${report?.vibeTitle ? `\n"${report.vibeTitle}"\n` : ""}\nCan you beat my score? Scan yours free 👇`;
+                        if (!activeReportUrl) return;
                         window.open(
-                          `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent("https://firechess.com")}`,
+                          `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(activeReportUrl)}`,
                           "_blank",
                           "noopener",
                         );
                       }}
-                      className="inline-flex items-center gap-2 rounded-xl bg-white/[0.08] px-6 py-3 text-sm font-bold text-white transition-all hover:bg-white/[0.14] hover:shadow-lg"
+                      className="inline-flex items-center gap-2 rounded-xl bg-white/[0.08] px-6 py-3 text-sm font-bold text-white transition-all hover:bg-white/[0.14] hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <svg
                         className="h-5 w-5"
@@ -8067,15 +8104,22 @@ export default function HomePage() {
                     {/* Share on Reddit */}
                     <button
                       type="button"
+                      disabled={!activeReportUrl}
+                      title={
+                        activeReportUrl
+                          ? undefined
+                          : "Share links only work from dedicated report pages."
+                      }
                       onClick={() => {
+                        if (!activeReportUrl) return;
                         const title = `🔥 My FireChess Analysis: ${report ? `${report.estimatedAccuracy.toFixed(1)}% accuracy` : `${result.gamesAnalyzed} games`}${result.playerRating ? ` (${result.playerRating})` : ""} — can you beat this?`;
                         window.open(
-                          `https://www.reddit.com/submit?url=${encodeURIComponent("https://firechess.com")}&title=${encodeURIComponent(title)}`,
+                          `https://www.reddit.com/submit?url=${encodeURIComponent(activeReportUrl)}&title=${encodeURIComponent(title)}`,
                           "_blank",
                           "noopener",
                         );
                       }}
-                      className="inline-flex items-center gap-2 rounded-xl bg-orange-500/10 px-6 py-3 text-sm font-bold text-orange-400 transition-all hover:bg-orange-500/20 hover:shadow-lg"
+                      className="inline-flex items-center gap-2 rounded-xl bg-orange-500/10 px-6 py-3 text-sm font-bold text-orange-400 transition-all hover:bg-orange-500/20 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <svg
                         className="h-5 w-5"
@@ -8127,12 +8171,19 @@ export default function HomePage() {
                     {/* Copy link */}
                     <button
                       type="button"
+                      disabled={!activeReportUrl}
+                      title={
+                        activeReportUrl
+                          ? undefined
+                          : "Share links only work from dedicated report pages."
+                      }
                       onClick={() => {
-                        navigator.clipboard.writeText("https://firechess.com");
+                        if (!activeReportUrl) return;
+                        navigator.clipboard.writeText(activeReportUrl);
                         setCopyLinkLabel("Copied!");
                         setTimeout(() => setCopyLinkLabel("Copy Link"), 1500);
                       }}
-                      className="inline-flex items-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.04] px-6 py-3 text-sm font-bold text-slate-300 transition-all hover:bg-white/[0.08] hover:text-white"
+                      className="inline-flex items-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.04] px-6 py-3 text-sm font-bold text-slate-300 transition-all hover:bg-white/[0.08] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <svg
                         className="h-5 w-5"

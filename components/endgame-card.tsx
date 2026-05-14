@@ -685,12 +685,36 @@ export function EndgameCard({
                   Game #{mistake.gameIndex}, Move {mistake.moveNumber}
                 </span>
               </h3>
-              <span
-                className="shrink-0 rounded-lg px-2.5 py-1 text-xs font-bold text-white"
-                style={{ backgroundColor: severityColor }}
-              >
-                {severityLabel}
-              </span>
+              <div className="flex shrink-0 items-center gap-2">
+                {onCreateCommunityPost ? (
+                  <button
+                    type="button"
+                    onClick={onCreateCommunityPost}
+                    aria-label="Create community post"
+                    title="Create community post"
+                    className="inline-flex h-8 items-center gap-1 rounded-lg border border-sky-500/20 bg-sky-500/10 px-2.5 text-[11px] font-semibold text-sky-200 transition hover:bg-sky-500/20 hover:text-white"
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                    >
+                      <path d="M12 5v14" />
+                      <path d="M5 12h14" />
+                    </svg>
+                    <span className="hidden sm:inline">Make post</span>
+                  </button>
+                ) : null}
+                <span
+                  className="shrink-0 rounded-lg px-2.5 py-1 text-xs font-bold text-white"
+                  style={{ backgroundColor: severityColor }}
+                >
+                  {severityLabel}
+                </span>
+              </div>
             </div>
             <p className="mt-2 text-sm text-slate-400">
               You played{" "}

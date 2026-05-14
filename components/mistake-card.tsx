@@ -1712,48 +1712,73 @@ export function MistakeCard({
         <div className="space-y-5 p-5 md:p-6">
           {/* Header badge row */}
           <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className="shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-bold text-white shadow-sm"
-                style={{ backgroundColor: moveBadge.color }}
-              >
-                {moveBadge.label}
-              </span>
-              {leak.reachCount > 1 && leak.moveCount > 1 && (
-                <span className="flex items-center gap-1 rounded-lg bg-fuchsia-500/15 px-2 py-1 text-[10px] font-bold text-fuchsia-400">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className="shrink-0 rounded-lg px-2.5 py-1 text-[11px] font-bold text-white shadow-sm"
+                  style={{ backgroundColor: moveBadge.color }}
+                >
+                  {moveBadge.label}
+                </span>
+                {leak.reachCount > 1 && leak.moveCount > 1 && (
+                  <span className="flex items-center gap-1 rounded-lg bg-fuchsia-500/15 px-2 py-1 text-[10px] font-bold text-fuchsia-400">
+                    <svg
+                      width="10"
+                      height="10"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                    >
+                      <path d="M17 1l4 4-4 4" />
+                      <path d="M3 11V9a4 4 0 014-4h14" />
+                      <path d="M7 23l-4-4 4-4" />
+                      <path d="M21 13v2a4 4 0 01-4 4H3" />
+                    </svg>
+                    Repeated
+                  </span>
+                )}
+                {moveBadge.label === "Sideline" &&
+                  (() => {
+                    const wr =
+                      leak.dbApproved && leak.dbWinRate != null
+                        ? leak.dbWinRate
+                        : userMoveExplorerData?.winRate;
+                    return wr != null ? (
+                      <span className="flex items-center gap-1 rounded-lg bg-indigo-500/15 px-2 py-1 text-[10px] font-bold text-indigo-400">
+                        📚 Known Line
+                      </span>
+                    ) : null;
+                  })()}
+                {openingName && (
+                  <span className="rounded-lg bg-white/[0.04] px-2 py-1 text-[10px] font-medium text-slate-400">
+                    {openingName}
+                  </span>
+                )}
+              </div>
+
+              {onCreateCommunityPost ? (
+                <button
+                  type="button"
+                  onClick={onCreateCommunityPost}
+                  aria-label="Create community post"
+                  title="Create community post"
+                  className="inline-flex h-8 items-center gap-1 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-2.5 text-[11px] font-semibold text-cyan-200 transition hover:bg-cyan-500/20 hover:text-white"
+                >
                   <svg
-                    width="10"
-                    height="10"
+                    width="12"
+                    height="12"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="2.5"
+                    strokeWidth="2.2"
                   >
-                    <path d="M17 1l4 4-4 4" />
-                    <path d="M3 11V9a4 4 0 014-4h14" />
-                    <path d="M7 23l-4-4 4-4" />
-                    <path d="M21 13v2a4 4 0 01-4 4H3" />
+                    <path d="M12 5v14" />
+                    <path d="M5 12h14" />
                   </svg>
-                  Repeated
-                </span>
-              )}
-              {moveBadge.label === "Sideline" &&
-                (() => {
-                  const wr =
-                    leak.dbApproved && leak.dbWinRate != null
-                      ? leak.dbWinRate
-                      : userMoveExplorerData?.winRate;
-                  return wr != null ? (
-                    <span className="flex items-center gap-1 rounded-lg bg-indigo-500/15 px-2 py-1 text-[10px] font-bold text-indigo-400">
-                      📚 Known Line
-                    </span>
-                  ) : null;
-                })()}
-              {openingName && (
-                <span className="rounded-lg bg-white/[0.04] px-2 py-1 text-[10px] font-medium text-slate-400">
-                  {openingName}
-                </span>
-              )}
+                  <span className="hidden sm:inline">Make post</span>
+                </button>
+              ) : null}
             </div>
 
             <h3 className="mt-2 text-lg font-bold text-white">
