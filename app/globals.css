@@ -76,6 +76,15 @@ body {
       rgba(244, 114, 182, 0.08),
       transparent
     );
+  background-repeat: no-repeat;
+  background-size:
+    100% 100%,
+    160% 115%,
+    110% 82%,
+    110% 84%,
+    100% 92%,
+    96% 92%,
+    92% 76%;
   overflow-x: hidden;
 }
 
