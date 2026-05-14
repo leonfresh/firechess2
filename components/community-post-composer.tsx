@@ -68,6 +68,14 @@ type PuzzleBuilderState = {
   startMoveCount: number;
 };
 
+type ComposerBoardSnapshot = {
+  rootFen: string;
+  currentFen: string;
+  moveHistory: WorkbenchMove[];
+  nextMoveId: number;
+  orientation: "white" | "black";
+};
+
 const CLASSIFICATION_STYLES: Record<
   MoveClassification,
   {
@@ -350,6 +358,65 @@ function buildWorkbenchMovesFromSanLine(
   }
 }
 
+function buildWorkbenchMovesFromUciLine(
+  startFen: string,
+  uciMoves: string[],
+  startingMoveId: number,
+) {
+  if (uciMoves.length === 0) {
+    return {
+      moves: [] as WorkbenchMove[],
+      finalFen: startFen,
+      error: "Enter at least one move for the puzzle line.",
+    };
+  }
+
+  try {
+    const chess = new Chess(startFen);
+    const moves: WorkbenchMove[] = [];
+    let nextMoveId = startingMoveId;
+
+    for (const uci of uciMoves) {
+      const parsed = parseUci(uci);
+      if (!parsed) {
+        return {
+          moves: [] as WorkbenchMove[],
+          finalFen: startFen,
+          error: `"${uci}" is not a valid move from this puzzle start.`,
+        };
+      }
+
+      const fenBefore = chess.fen();
+      const move = chess.move(
+        parsed as { from: string; to: string; promotion?: string },
+      ) as ChessMoveResult | null;
+
+      if (!move) {
+        return {
+          moves: [] as WorkbenchMove[],
+          finalFen: startFen,
+          error: `"${uci}" is not legal from the current puzzle position.`,
+        };
+      }
+
+      nextMoveId += 1;
+      moves.push(createWorkbenchMove(nextMoveId, move, fenBefore, chess.fen()));
+    }
+
+    return {
+      moves,
+      finalFen: chess.fen(),
+      error: null,
+    };
+  } catch {
+    return {
+      moves: [] as WorkbenchMove[],
+      finalFen: startFen,
+      error: "The engine line could not be applied from this puzzle start.",
+    };
+  }
+}
+
 function buildPgnFromMoves(rootFen: string, moves: WorkbenchMove[]) {
   if (moves.length === 0) return null;
 
@@ -474,7 +541,10 @@ function buildBoardStateFromInput(
 
 function hydrateInitialBoardState(initialFen: string, initialPgn: string) {
   if (initialPgn.trim()) {
-    return buildBoardStateFromPgn(initialPgn);
+    const hydratedFromPgn = buildBoardStateFromPgn(initialPgn);
+    if (!hydratedFromPgn.error) {
+      return hydratedFromPgn;
+    }
   }
 
   if (initialFen.trim()) {
@@ -496,8 +566,12 @@ export function CommunityPostComposer({
   initialPgn = "",
   initialTitle = "",
   initialPrompt = "",
+  initialDescription = "",
   initialOpeningName = "",
   initialOrientation = "white",
+  initialPuzzleMoves = [],
+  initialTags = [],
+  editSlug,
   minimal = false,
 }: {
   initialKind?: CommunityPostKind;
@@ -506,14 +580,19 @@ export function CommunityPostComposer({
   initialPgn?: string;
   initialTitle?: string;
   initialPrompt?: string;
+  initialDescription?: string;
   initialOpeningName?: string;
   initialOrientation?: "white" | "black";
+  initialPuzzleMoves?: string[];
+  initialTags?: string[];
+  editSlug?: string;
   minimal?: boolean;
 }) {
   const initialBoardState = useMemo(
     () => hydrateInitialBoardState(initialFen, initialPgn),
     [initialFen, initialPgn],
   );
+  const editingPost = Boolean(editSlug);
   const quickPostMode = minimal && initialKind !== "puzzle";
   const streamlinedWorkbenchMode = !minimal;
   const compactComposerMode = quickPostMode || streamlinedWorkbenchMode;
@@ -543,12 +622,12 @@ export function CommunityPostComposer({
   );
   const [title, setTitle] = useState(initialTitle);
   const [prompt, setPrompt] = useState(initialPrompt);
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState(initialDescription);
   const [openingName, setOpeningName] = useState(initialOpeningName);
   const [orientation, setOrientation] = useState<"white" | "black">(
     initialOrientation,
   );
-  const [tags, setTags] = useState("");
+  const [tags, setTags] = useState(initialTags.join(", "));
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(
     initialBoardState.error,
@@ -566,6 +645,7 @@ export function CommunityPostComposer({
   const [quickPuzzleSanError, setQuickPuzzleSanError] = useState<string | null>(
     null,
   );
+  const [autoSeedingPuzzle, setAutoSeedingPuzzle] = useState(false);
   const [engineEnabled, setEngineEnabled] = useState(!compactComposerMode);
   const [engineDepth, setEngineDepth] = useState(12);
   const [engineBusy, setEngineBusy] = useState(false);
@@ -584,6 +664,8 @@ export function CommunityPostComposer({
   const loadSectionRef = useRef<HTMLElement | null>(null);
   const publishSectionRef = useRef<HTMLElement | null>(null);
   const autoFocusedPuzzleBuilderRef = useRef(false);
+  const puzzleRestoreSnapshotRef = useRef<ComposerBoardSnapshot | null>(null);
+  const autoSeededPuzzleRef = useRef(false);
 
   const normalizedTags = useMemo(() => normalizeTags(tags), [tags]);
   const collectionKey = defaultCollectionKey(kind, sourceType);
@@ -641,25 +723,23 @@ export function CommunityPostComposer({
     [puzzleBuilder, puzzleContextMoves, rootFen],
   );
   const puzzleData = useMemo<CommunityPuzzleData | null>(() => {
-    if (
-      !puzzleBuilder ||
-      !puzzlePreviousMove ||
-      puzzleSolutionMoves.length === 0
-    ) {
+    if (!puzzleBuilder || puzzleSolutionMoves.length === 0) {
       return null;
     }
 
     return {
       startFen: puzzleBuilder.startFen,
       orientation,
-      previousMove: serializePuzzleLineMove(puzzlePreviousMove),
+      previousMove: puzzlePreviousMove
+        ? serializePuzzleLineMove(puzzlePreviousMove)
+        : undefined,
       solution: puzzleSolutionMoves.map(serializePuzzleLineMove),
     };
   }, [orientation, puzzleBuilder, puzzlePreviousMove, puzzleSolutionMoves]);
   const analysisReady = Boolean(generatedPgn);
   const lineSourceLabel =
     rootFen === STARTING_FEN ? "Start position" : "Custom setup";
-  const puzzleSetupReady = Boolean(puzzleBuilder && puzzlePreviousMove);
+  const puzzleSetupReady = Boolean(puzzleBuilder);
   const puzzlePromptReady =
     kind === "puzzle" && title.trim().length > 0 && prompt.trim().length > 0;
   const puzzleLineReady = puzzleSolutionMoves.length > 0;
@@ -681,9 +761,49 @@ export function CommunityPostComposer({
     : compactComposerMode
       ? Math.min(boardSize, 420)
       : boardSize;
+  const primaryActionLabel = authenticated
+    ? submitting
+      ? editingPost
+        ? "Saving..."
+        : "Publishing..."
+      : kind === "puzzle"
+        ? editingPost
+          ? "Save Puzzle"
+          : "Publish Puzzle"
+        : editingPost
+          ? "Save Post"
+          : "Publish Post"
+    : kind === "puzzle"
+      ? editingPost
+        ? "Sign In to Edit Puzzle"
+        : "Sign In to Publish Puzzle"
+      : editingPost
+        ? "Sign In to Edit"
+        : "Sign In to Publish";
 
   const scrollSectionIntoView = (element: HTMLElement | null) => {
     element?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const captureBoardSnapshot = (): ComposerBoardSnapshot => ({
+    rootFen,
+    currentFen,
+    moveHistory: [...moveHistory],
+    nextMoveId: nextMoveIdRef.current,
+    orientation,
+  });
+
+  const restorePuzzleBoardSnapshot = () => {
+    const snapshot = puzzleRestoreSnapshotRef.current;
+    if (!snapshot) return;
+
+    setRootFen(snapshot.rootFen);
+    setCurrentFen(snapshot.currentFen);
+    setMoveHistory(snapshot.moveHistory);
+    nextMoveIdRef.current = snapshot.nextMoveId;
+    setOrientation(snapshot.orientation);
+    setSelectedSquare(null);
+    puzzleRestoreSnapshotRef.current = null;
   };
 
   const applyPuzzleDefaults = () => {
@@ -702,16 +822,84 @@ export function CommunityPostComposer({
     }
   };
 
+  const lockPuzzleStartFromCurrentPosition = () => {
+    applyPuzzleDefaults();
+
+    if (!puzzleRestoreSnapshotRef.current) {
+      puzzleRestoreSnapshotRef.current = captureBoardSnapshot();
+    }
+
+    const nextBuilder = {
+      startFen: currentFen,
+      startMoveCount: moveHistory.length,
+    } satisfies PuzzleBuilderState;
+
+    setPuzzleBuilder(nextBuilder);
+    setOrientation(currentChess.turn() === "w" ? "white" : "black");
+    setPublishError(null);
+    setQuickPuzzleSanError(null);
+
+    return nextBuilder;
+  };
+
+  const applyQuickPuzzleUciLine = (
+    nextBuilder: PuzzleBuilderState,
+    uciMoves: string[],
+  ) => {
+    const baseMoves = moveHistory.slice(0, nextBuilder.startMoveCount);
+    const startingMoveId = baseMoves.at(-1)?.id ?? 0;
+    const builtLine = buildWorkbenchMovesFromUciLine(
+      nextBuilder.startFen,
+      uciMoves,
+      startingMoveId,
+    );
+
+    if (builtLine.error) {
+      setQuickPuzzleSanError(builtLine.error);
+      return false;
+    }
+
+    setMoveHistory([...baseMoves, ...builtLine.moves]);
+    setCurrentFen(builtLine.finalFen);
+    setSelectedSquare(null);
+    setPublishError(null);
+    setQuickPuzzleSanError(null);
+    setQuickPuzzleSanInput(builtLine.moves.map((move) => move.san).join(" "));
+    nextMoveIdRef.current = builtLine.moves.at(-1)?.id ?? startingMoveId;
+
+    builtLine.moves.forEach((move) => {
+      void updateMoveClassification(move.id, move);
+    });
+
+    return true;
+  };
+
+  const activateQuickPositionPost = () => {
+    autoSeededPuzzleRef.current = false;
+    setAutoSeedingPuzzle(false);
+    restorePuzzleBoardSnapshot();
+    setQuickPuzzleBuilderOpen(false);
+    setQuickPuzzleSanInput("");
+    setQuickPuzzleSanError(null);
+    setPuzzleBuilder(null);
+    setKind(initialKind === "puzzle" ? "position" : initialKind);
+    setPublishError(null);
+  };
+
+  const activateQuickPuzzlePost = () => {
+    applyPuzzleDefaults();
+    setQuickPuzzleBuilderOpen(true);
+    setQuickPuzzleSanError(null);
+    setQuickPuzzleSanInput(
+      puzzleSolutionMoves.length > 0
+        ? puzzleSolutionMoves.map((move) => move.san).join(" ")
+        : "",
+    );
+  };
+
   const openPuzzleBuilder = () => {
     if (compactComposerMode) {
-      applyPuzzleDefaults();
-      setQuickPuzzleBuilderOpen(true);
-      setQuickPuzzleSanError(null);
-      setQuickPuzzleSanInput(
-        puzzleSolutionMoves.length > 0
-          ? puzzleSolutionMoves.map((move) => move.san).join(" ")
-          : "",
-      );
+      activateQuickPuzzlePost();
       return;
     }
 
@@ -725,12 +913,7 @@ export function CommunityPostComposer({
   };
 
   const revertQuickPuzzleBuilder = () => {
-    setQuickPuzzleBuilderOpen(false);
-    setQuickPuzzleSanInput("");
-    setQuickPuzzleSanError(null);
-    setPuzzleBuilder(null);
-    setKind(initialKind);
-    setPublishError(null);
+    activateQuickPositionPost();
   };
 
   const applyQuickPuzzleSanLine = () => {
@@ -766,6 +949,78 @@ export function CommunityPostComposer({
     });
   };
 
+  const autoBuildPuzzleWithStockfish = async (
+    preferredMoves: string[] = [],
+  ) => {
+    setAutoSeedingPuzzle(true);
+    setQuickPuzzleSanError(null);
+    setPublishError(null);
+
+    let suggestedMoves = preferredMoves.filter(Boolean);
+    const puzzleStartFen = currentFen;
+
+    if (suggestedMoves.length === 0) {
+      try {
+        const topMoves = await stockfishClient.getTopMoves(
+          puzzleStartFen,
+          1,
+          engineDepth,
+        );
+        const fallbackMove = topMoves[0]?.bestMove ?? null;
+        if (fallbackMove) {
+          suggestedMoves = [fallbackMove];
+        }
+      } catch {
+        // Fall back to manual entry when the engine is unavailable.
+      }
+    }
+
+    if (suggestedMoves.length > 0) {
+      const parsedLead = parseUci(suggestedMoves[0]);
+
+      if (parsedLead) {
+        try {
+          const chess = new Chess(puzzleStartFen);
+          const moved = chess.move(
+            parsedLead as { from: string; to: string; promotion?: string },
+          );
+
+          if (moved) {
+            const continuation = await stockfishClient.getPrincipalVariation(
+              chess.fen(),
+              6,
+              engineDepth,
+            );
+
+            if (continuation?.pvMoves?.length) {
+              suggestedMoves = [
+                ...suggestedMoves,
+                ...continuation.pvMoves.slice(0, 5),
+              ];
+            }
+          }
+        } catch {
+          // Keep the lead move only when continuation lookup fails.
+        }
+      }
+    }
+
+    const nextBuilder = lockPuzzleStartFromCurrentPosition();
+
+    if (suggestedMoves.length === 0) {
+      setQuickPuzzleSanInput("");
+      setQuickPuzzleSanError(
+        "FireChess could not prefill a line for this puzzle yet. You can still record one manually.",
+      );
+      setAutoSeedingPuzzle(false);
+      return false;
+    }
+
+    applyQuickPuzzleUciLine(nextBuilder, suggestedMoves);
+    setAutoSeedingPuzzle(false);
+    return true;
+  };
+
   useEffect(() => {
     if (minimal || initialKind !== "puzzle") return;
     if (autoFocusedPuzzleBuilderRef.current) return;
@@ -785,20 +1040,7 @@ export function CommunityPostComposer({
   };
 
   const startPuzzleModeFromCurrentPosition = () => {
-    applyPuzzleDefaults();
-
-    if (moveHistory.length === 0) {
-      setPublishError(
-        "Puzzles need the opponent's last move first. Load a PGN or play that move before you start puzzle mode.",
-      );
-      return;
-    }
-
-    setPuzzleBuilder({
-      startFen: currentFen,
-      startMoveCount: moveHistory.length,
-    });
-    setOrientation(currentChess.turn() === "w" ? "white" : "black");
+    lockPuzzleStartFromCurrentPosition();
   };
 
   const legalTargets = useMemo(() => {
@@ -946,6 +1188,20 @@ export function CommunityPostComposer({
 
     setQuickPuzzleBuilderOpen(true);
   }, [compactComposerMode, kind]);
+
+  useEffect(() => {
+    if (kind !== "puzzle") return;
+    if (initialPuzzleMoves.length === 0) return;
+    if (autoSeededPuzzleRef.current) return;
+
+    autoSeededPuzzleRef.current = true;
+
+    const seedPuzzleFromCurrentPosition = async () => {
+      await autoBuildPuzzleWithStockfish(initialPuzzleMoves);
+    };
+
+    void seedPuzzleFromCurrentPosition();
+  }, [currentFen, engineDepth, initialPuzzleMoves, kind]);
 
   useEffect(() => {
     if (puzzleBuilder && moveHistory.length < puzzleBuilder.startMoveCount) {
@@ -1126,16 +1382,9 @@ export function CommunityPostComposer({
     }
 
     if (kind === "puzzle") {
-      if (!puzzleBuilder || !puzzlePreviousMove) {
+      if (!puzzleBuilder) {
         setPublishError(
-          "Use Start Puzzle Mode on the exact puzzle start so FireChess can save the opponent's last move.",
-        );
-        return;
-      }
-
-      if (!puzzleContextPgn) {
-        setPublishError(
-          "Puzzles need PGN context ending on the opponent's last move. Load a PGN or build the setup move before publishing.",
+          "Mark the exact puzzle start before you publish this puzzle.",
         );
         return;
       }
@@ -1165,8 +1414,13 @@ export function CommunityPostComposer({
           ? `${puzzleSideToMove} to move. Find the best move.`
           : "What would you play here?");
 
-      const res = await fetch("/api/community/posts", {
-        method: "POST",
+      const endpoint = editSlug
+        ? `/api/community/posts/${encodeURIComponent(editSlug)}`
+        : "/api/community/posts";
+      const method = editSlug ? "PATCH" : "POST";
+
+      const res = await fetch(endpoint, {
+        method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           kind,
@@ -1191,7 +1445,10 @@ export function CommunityPostComposer({
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Failed to create post.");
+        throw new Error(
+          data.error ||
+            (editSlug ? "Failed to update post." : "Failed to create post."),
+        );
       }
 
       router.push(`/community/${data.slug}`);
@@ -1225,18 +1482,28 @@ export function CommunityPostComposer({
         <section
           className={`space-y-3 rounded-[2rem] border border-white/[0.08] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-3 sm:p-4 md:sticky md:top-0 md:flex-none ${quickPostMode ? "md:w-[320px]" : "md:w-[440px]"}`}
         >
-          <div className="flex items-start justify-between gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200/70">
-                {quickPostMode ? "Board Preview" : "Board Workbench"}
+                {quickPostMode
+                  ? "Board Preview"
+                  : editingPost
+                    ? "Edit Community Post"
+                    : "Board Workbench"}
               </p>
               <h2 className="mt-1.5 text-xl font-bold tracking-tight text-white sm:text-2xl">
-                {quickPostMode ? "Preview board" : "Live board"}
+                {quickPostMode
+                  ? "Preview board"
+                  : editingPost
+                    ? "Update live post"
+                    : "Live board"}
               </h2>
               <p className="mt-1 hidden text-sm leading-relaxed text-slate-400 md:block">
                 {quickPostMode
                   ? "Sample board is live. Edit it directly or swap in your own position in the setup panel."
-                  : "Use the same light composer flow as the modal, just with more room for the board and optional advanced tools when you need them."}
+                  : editingPost
+                    ? "Adjust the live board, notes, or puzzle line, then save changes back to the same community post."
+                    : "Use the same light composer flow as the modal, just with more room for the board and optional advanced tools when you need them."}
               </p>
             </div>
             <span className="rounded-full border border-fuchsia-500/20 bg-fuchsia-500/10 px-3 py-1 text-xs font-semibold text-fuchsia-200">
@@ -1360,6 +1627,42 @@ export function CommunityPostComposer({
             </div>
           ) : null}
 
+          {quickPostMode ? (
+            <section className="mb-4 rounded-[1.75rem] border border-white/[0.08] bg-black/15 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h3 className="text-sm font-semibold text-white">
+                    Choose post type
+                  </h3>
+                  <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                    Publish this report position as a discussion spot or turn it
+                    into a puzzle with an engine-suggested line.
+                  </p>
+                </div>
+                <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-[11px] text-slate-300">
+                  {kind === "puzzle" ? "Puzzle flow" : "Position flow"}
+                </span>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={activateQuickPositionPost}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${kind !== "puzzle" ? "bg-white text-black" : "bg-white/[0.05] text-slate-300 hover:bg-white/[0.08] hover:text-white"}`}
+                >
+                  Position post
+                </button>
+                <button
+                  type="button"
+                  onClick={activateQuickPuzzlePost}
+                  className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${kind === "puzzle" ? "bg-fuchsia-200 text-slate-950" : "bg-fuchsia-500/12 text-fuchsia-100 hover:bg-fuchsia-500/18 hover:text-white"}`}
+                >
+                  Puzzle post
+                </button>
+              </div>
+            </section>
+          ) : null}
+
           <section
             ref={loadSectionRef}
             className="rounded-[1.75rem] border border-white/[0.08] bg-white/[0.03] p-4"
@@ -1461,9 +1764,10 @@ export function CommunityPostComposer({
                     Lock the start, then add the exact line
                   </h3>
                   <p className="mt-1 text-sm leading-relaxed text-slate-300">
-                    Keep the current board on the solver position after the
-                    opponent's last move. Then either drag the continuation on
-                    the preview board or paste the SAN line here.
+                    Keep the current board on the solver position. If you loaded
+                    a PGN, FireChess also saves the move that led here. Then
+                    either drag the continuation on the preview board or paste
+                    the SAN line here.
                   </p>
                 </div>
                 <button
@@ -1479,7 +1783,6 @@ export function CommunityPostComposer({
                 <button
                   type="button"
                   onClick={startPuzzleModeFromCurrentPosition}
-                  disabled={moveHistory.length === 0}
                   className="rounded-full border border-fuchsia-500/25 bg-fuchsia-500/12 px-3 py-1.5 text-xs font-semibold text-fuchsia-100 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {puzzleBuilder
@@ -1497,12 +1800,30 @@ export function CommunityPostComposer({
                 ) : null}
                 <button
                   type="button"
+                  onClick={() => {
+                    void autoBuildPuzzleWithStockfish();
+                  }}
+                  disabled={autoSeedingPuzzle}
+                  className="rounded-full border border-emerald-500/25 bg-emerald-500/12 px-3 py-1.5 text-xs font-semibold text-emerald-100 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {autoSeedingPuzzle
+                    ? "Building with Stockfish..."
+                    : "Build with Stockfish"}
+                </button>
+                <button
+                  type="button"
                   onClick={revertQuickPuzzleBuilder}
                   className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-xs font-semibold text-slate-300 transition hover:text-white"
                 >
                   Use regular post instead
                 </button>
               </div>
+
+              {autoSeedingPuzzle ? (
+                <p className="mt-3 text-xs leading-relaxed text-fuchsia-100/80">
+                  Prefilling the puzzle line from the engine...
+                </p>
+              ) : null}
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-2xl border border-white/[0.08] bg-black/15 px-4 py-3">
@@ -1521,11 +1842,20 @@ export function CommunityPostComposer({
                         {puzzleBuilder.startFen}
                       </p>
                     </>
+                  ) : puzzleBuilder ? (
+                    <>
+                      <p className="mt-2 text-sm font-semibold text-white">
+                        {puzzleSideToMove} to move from this saved position
+                      </p>
+                      <p className="mt-1 break-all font-mono text-[11px] text-slate-400">
+                        {puzzleBuilder.startFen}
+                      </p>
+                    </>
                   ) : (
                     <p className="mt-2 text-sm leading-relaxed text-slate-400">
-                      Load a PGN or make the opponent's last move on the preview
-                      board first, then lock this exact board as the puzzle
-                      start.
+                      Lock the current board as the puzzle start. PGN context is
+                      optional now, but it helps FireChess show the lead-in move
+                      on the published card.
                     </p>
                   )}
                 </div>
@@ -1697,6 +2027,10 @@ export function CommunityPostComposer({
                   {formatCommunityLineMove(
                     serializePuzzleLineMove(puzzlePreviousMove),
                   )}
+                </p>
+              ) : kind === "puzzle" && puzzleBuilder ? (
+                <p className="mt-1 text-xs text-slate-400">
+                  Standalone puzzle start: {puzzleSideToMove} to move
                 </p>
               ) : null}
               {kind === "puzzle" && puzzleSolutionMoves.length > 0 ? (
@@ -2019,15 +2353,7 @@ export function CommunityPostComposer({
               disabled={submitting}
               className="rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-6 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {authenticated
-                ? submitting
-                  ? "Publishing..."
-                  : kind === "puzzle"
-                    ? "Publish Puzzle"
-                    : "Publish Post"
-                : kind === "puzzle"
-                  ? "Sign In to Publish Puzzle"
-                  : "Sign In to Publish"}
+              {primaryActionLabel}
             </button>
           </div>
 
@@ -2052,16 +2378,20 @@ export function CommunityPostComposer({
             <h2 className="text-2xl font-bold tracking-tight text-white">
               {quickPostMode
                 ? "Quick community post"
-                : minimal
-                  ? "New Community Post"
-                  : "Board Workbench"}
+                : editingPost
+                  ? "Edit Community Post"
+                  : minimal
+                    ? "New Community Post"
+                    : "Board Workbench"}
             </h2>
             <p className="max-w-2xl text-sm leading-relaxed text-slate-400">
               {quickPostMode
                 ? "Use the small board preview, add a short caption, and publish. If you need puzzle setup or heavier editing, jump to the full board workbench."
-                : minimal
-                  ? "Start from the sample board, switch into puzzle mode only if you need it, and publish without the heavier workbench extras."
-                  : "Build the line directly on the board, grade moves live, and send the finished PGN into the full analyzer when you want the report."}
+                : editingPost
+                  ? "Load the live post, adjust the board or notes, and save the update back to the same community thread."
+                  : minimal
+                    ? "Start from the sample board, switch into puzzle mode only if you need it, and publish without the heavier workbench extras."
+                    : "Build the line directly on the board, grade moves live, and send the finished PGN into the full analyzer when you want the report."}
             </p>
             <div className="flex flex-wrap gap-2 text-xs text-slate-300">
               <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-cyan-300">
@@ -2415,8 +2745,27 @@ export function CommunityPostComposer({
                 >
                   {puzzleBuilder ? "Restart from current" : "Start puzzle mode"}
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    void autoBuildPuzzleWithStockfish();
+                  }}
+                  disabled={autoSeedingPuzzle}
+                  className="rounded-full border border-emerald-500/25 bg-emerald-500/12 px-3 py-1.5 text-xs font-semibold text-emerald-100 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {autoSeedingPuzzle
+                    ? "Building with Stockfish..."
+                    : "Build with Stockfish"}
+                </button>
               </div>
             </div>
+
+            {autoSeedingPuzzle ? (
+              <p className="mt-3 text-xs leading-relaxed text-fuchsia-100/80">
+                FireChess is locking the current start and generating the main
+                line with Stockfish.
+              </p>
+            ) : null}
 
             {puzzleBuilder && puzzlePreviousMove && (
               <div className="mt-4 rounded-2xl border border-fuchsia-500/20 bg-black/20 px-4 py-4">
@@ -3138,15 +3487,7 @@ export function CommunityPostComposer({
                   disabled={submitting}
                   className="rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {authenticated
-                    ? submitting
-                      ? "Publishing..."
-                      : kind === "puzzle"
-                        ? "Publish Puzzle"
-                        : "Publish Post"
-                    : kind === "puzzle"
-                      ? "Sign In to Publish Puzzle"
-                      : "Sign In to Publish"}
+                  {primaryActionLabel}
                 </button>
               </div>
 
@@ -3395,15 +3736,7 @@ export function CommunityPostComposer({
                   disabled={submitting}
                   className="rounded-full bg-gradient-to-r from-orange-500 to-amber-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {authenticated
-                    ? submitting
-                      ? "Publishing..."
-                      : kind === "puzzle"
-                        ? "Publish Puzzle"
-                        : "Publish Post"
-                    : kind === "puzzle"
-                      ? "Sign In to Publish Puzzle"
-                      : "Sign In to Publish"}
+                  {primaryActionLabel}
                 </button>
               </div>
 

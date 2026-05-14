@@ -8,8 +8,9 @@
  *   2. Opening Prep   — inverse of leak rate (fewer repeated leaks → stronger)
  *   3. Tactical Eye   — inverse of tactics‑miss rate
  *   4. Composure      — inverse of severe leak rate
- *   5. Consistency    — low cpLoss variance → high consistency
- *   6. Resilience     — survival despite bad positions (low severe rate + decent accuracy)
+ *   5. Time Mgmt      — clock usage and move pacing when available
+ *   6. Endgames       — technical conversion and defense when enough endgame data exists
+ *                      otherwise fall back to a resilience proxy
  */
 
 import { useState, useEffect, useCallback } from "react";
@@ -46,6 +47,8 @@ export type RadarProps = {
   severeLeakRate: number;
   /** Time management score 0-100 (from clock data, null if unavailable) */
   timeManagementScore?: number | null;
+  /** Endgame technique score 0-100 (from endgame summary, null if unavailable) */
+  endgameTechniqueScore?: number | null;
   /** compact mode — smaller radius, no labels */
   compact?: boolean;
   /** custom class */
@@ -96,8 +99,15 @@ export function computeRadarData(props: RadarProps): RadarDimension[] {
   //    Falls back to 50 if no clock data available
   const dim5 = clamp(props.timeManagementScore ?? 50);
 
-  // 6. Resilience — blend of accuracy + composure, composure-weighted
-  const dim6 = clamp(dim1 * 0.3 + dim4 * 0.7);
+  // 6. Endgames — use the persisted endgame technique score when available.
+  //    Older reports fall back to the previous resilience proxy.
+  const hasEndgameScore = typeof props.endgameTechniqueScore === "number";
+  const dim6 = clamp(
+    hasEndgameScore
+      ? (props.endgameTechniqueScore ?? 50)
+      : dim1 * 0.3 + dim4 * 0.7,
+  );
+  const dim6Label = hasEndgameScore ? "Endgames" : "Resilience";
 
   return [
     { dimension: "Accuracy", value: Math.round(dim1), fullMark: 100 },
@@ -105,7 +115,7 @@ export function computeRadarData(props: RadarProps): RadarDimension[] {
     { dimension: "Tactical Eye", value: Math.round(dim3), fullMark: 100 },
     { dimension: "Composure", value: Math.round(dim4), fullMark: 100 },
     { dimension: "Time Mgmt", value: Math.round(dim5), fullMark: 100 },
-    { dimension: "Resilience", value: Math.round(dim6), fullMark: 100 },
+    { dimension: dim6Label, value: Math.round(dim6), fullMark: 100 },
   ];
 }
 
@@ -743,6 +753,7 @@ const DIM_ICONS: Record<string, string> = {
   "Tactical Eye": "⚡",
   Composure: "🧘",
   "Time Mgmt": "⏱️",
+  Endgames: "♜",
   Resilience: "🛡️",
 };
 
@@ -752,6 +763,7 @@ const DIM_SUBTITLE: Record<string, string> = {
   "Tactical Eye": "Forcing Move Detection",
   Composure: "Blunder Resistance Under Pressure",
   "Time Mgmt": "Clock Usage & Move Pacing",
+  Endgames: "Conversion & Defensive Technique",
   Resilience: "Mental Fortitude & Recovery",
 };
 
@@ -1207,6 +1219,88 @@ function getDimInsight(
           "Play 20 games of 15+10 where your only goal is to never drop below 3 minutes remaining. Don't worry about winning — just manage the clock.",
           "Build a simple opening repertoire you can play on autopilot in 10 seconds per move for the first 8 moves. This banks time immediately.",
           "Practice decision-making speed with puzzle rush or timed tactics: the goal is getting faster at committing to a move, not finding the perfect one.",
+        ],
+      };
+    }
+
+    case "Endgames": {
+      if (value >= 80)
+        return {
+          verdict: "Clinical",
+          desc: `Your endgame technique is converting and saving practical endings at a high level (${value}/100).`,
+          tip: "Keep that edge sharp with short review blocks on rook endings, pawn races, and the specific weakest endgame family from the report.",
+          keyStat: {
+            icon: "♜",
+            label: "Endgame Technique",
+            value: `${value}/100 practical score`,
+          },
+          analysis:
+            "This score reflects how cleanly you handle the endings the scan actually found: converting better positions, holding difficult ones, and avoiding technical slips that turn equal or better endings into losses. A score this high means your technique is already saving and earning real points.",
+          meaning:
+            "In practical play, this is a quiet rating booster. Players with strong endgame technique squeeze extra half-points out of equal positions and avoid throwing away wins once pieces come off. That stability makes the rest of your profile more trustworthy.",
+          studyPlan: [
+            "Refresh the core theoretical endings that appear most often in your games so your practical strength stays backed by exact knowledge.",
+            "Review the few endgame mistakes from the report and classify each one: conversion error, defensive slip, or calculation miss.",
+            "Play a few training games starting from simplified positions so you keep converting cleanly under clock pressure.",
+          ],
+        };
+      if (value >= 55)
+        return {
+          verdict: "Serviceable",
+          desc: `Your endgame handling is mostly holding up, but there are still practical points left on the table (${value}/100).`,
+          tip: "Use the weakest endgame family from the report as your first study target rather than trying to study every ending at once.",
+          keyStat: {
+            icon: "♜",
+            label: "Endgame Technique",
+            value: `${value}/100 with clear upside`,
+          },
+          analysis:
+            "You are avoiding total chaos in endings, but the scan still sees enough conversion and defensive mistakes to matter. That usually means your general intuition is fine, yet a few recurring technical positions are costing you points when precision matters.",
+          meaning:
+            "This is a good place to improve because endgame gains are sticky. Once you really learn a conversion or drawing method, it keeps paying you back in future games instead of disappearing like a one-off tactical trick.",
+          studyPlan: [
+            "Start with the endgame type the report flags as weakest and learn the standard plans, not just the engine move.",
+            "Review every endgame mistake and ask whether the miss came from calculation, king activity, pawn structure, or piece placement.",
+            "Practice converting slightly better endings against an engine from move 30 onward so technique becomes automatic.",
+          ],
+        };
+      if (value >= 30)
+        return {
+          verdict: "Shaky",
+          desc: `Too many endings are still slipping once the position gets technical (${value}/100).`,
+          tip: "Start with king-and-pawn endings, basic rook endings, and the weakest endgame category from this report.",
+          keyStat: {
+            icon: "♜",
+            label: "Endgame Technique",
+            value: `${value}/100 — fragile under pressure`,
+          },
+          analysis:
+            "The scan is picking up a recurring pattern: once the game simplifies, your decisions are often not precise enough to convert winning chances or save difficult positions. This is rarely about one dramatic blunder; it is more often a chain of small technical inaccuracies.",
+          meaning:
+            "That matters because endgames decide a large share of competitive games. Even modest improvement here can turn losses into draws and draws into wins without needing a wholesale rebuild of the rest of your chess.",
+          studyPlan: [
+            "Learn the basic theoretical endings first so you stop spending clock on positions that should already be familiar.",
+            "Take the worst endgame examples from the report and replay them slowly until the correct plan feels obvious.",
+            "Train simplified positions specifically, because technical confidence only grows when you practice the final phase on purpose.",
+          ],
+        };
+      return {
+        verdict: "Needs Work",
+        desc: `Your endgame technique is currently costing too many practical points (${value}/100).`,
+        tip: "Treat endgames as a core rating skill, not a bonus topic. A small amount of structured study here will pay back quickly.",
+        keyStat: {
+          icon: "♜",
+          label: "Endgame Technique",
+          value: `${value}/100 — major growth area`,
+        },
+        analysis:
+          "Right now the endings in your games are not stable enough. The report suggests that when the position simplifies, you are often missing the key conversion idea, defensive setup, or king activation plan. That turns playable endings into unnecessary losses and winning endings into frustration.",
+        meaning:
+          "This is one of the highest-leverage areas in the whole report because endgame technique transfers across openings and middlegames. Fixing it improves results everywhere, not just in one repertoire branch.",
+        studyPlan: [
+          "Start with a narrow endgame foundation: opposition, basic pawn endings, Lucena, Philidor, and the simplest winning king-and-pawn patterns.",
+          "Use the report's weakest endgame type as your first practical study block so the work maps directly to your own games.",
+          "Replay endgames from strong players move by move and say the plan out loud; building the verbal plan is often what turns theory into usable technique.",
         ],
       };
     }

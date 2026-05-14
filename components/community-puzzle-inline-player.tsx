@@ -70,25 +70,39 @@ export function CommunityPuzzleInlinePlayer({
           orientation={orientation ?? puzzleData.orientation}
           size={size}
           showCoordinates={showCoordinates}
+          showReplayControls={false}
         />
       )}
 
       {(showFooterBar || showPlayToggle || href) && (
-        <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+        <div className="flex flex-col gap-3 px-1 sm:flex-row sm:items-center sm:justify-between">
           {showFooterBar ? (
-            <div className="rounded-full border border-white/[0.08] bg-black/20 px-3 py-1.5 text-[11px] text-slate-300">
-              <span className="font-semibold uppercase tracking-[0.14em] text-slate-500">
-                Last Move
-              </span>{" "}
-              <span className="ml-1 font-mono text-white">
-                {formatCommunityLineMove(puzzleData.previousMove)}
-              </span>
+            <div className="max-w-full rounded-full border border-white/[0.08] bg-black/20 px-3 py-1.5 text-[11px] leading-relaxed text-slate-300">
+              {puzzleData.previousMove ? (
+                <>
+                  <span className="font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    Last Move
+                  </span>{" "}
+                  <span className="ml-1 font-mono text-white">
+                    {formatCommunityLineMove(puzzleData.previousMove)}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="font-semibold uppercase tracking-[0.14em] text-slate-500">
+                    Puzzle Start
+                  </span>{" "}
+                  <span className="ml-1 font-mono text-white">
+                    {puzzleData.orientation === "white"
+                      ? "White to move"
+                      : "Black to move"}
+                  </span>
+                </>
+              )}
             </div>
-          ) : (
-            <div />
-          )}
+          ) : null}
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
             {showPlayToggle && (
               <button
                 type="button"

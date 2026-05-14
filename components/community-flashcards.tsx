@@ -12,7 +12,7 @@ type FlashcardPost = {
   startFen: string;
   orientation: "white" | "black";
   kind: string;
-  previousMove: {
+  previousMove?: {
     san: string;
     uci: string;
     color: "w" | "b";
@@ -26,7 +26,7 @@ type FlashcardPost = {
   }>;
 };
 
-function formatLineMove(move: FlashcardPost["previousMove"]) {
+function formatLineMove(move: NonNullable<FlashcardPost["previousMove"]>) {
   return move.color === "w"
     ? `${move.moveNumber}. ${move.san}`
     : `${move.moveNumber}... ${move.san}`;
@@ -135,10 +135,23 @@ export function CommunityFlashcards({ posts }: { posts: FlashcardPost[] }) {
                   </p>
 
                   <div className="mt-3 rounded-xl border border-white/[0.06] bg-black/20 px-3 py-2 text-xs text-slate-300">
-                    <span className="text-slate-500">Last move:</span>{" "}
-                    <span className="font-mono text-white">
-                      {formatLineMove(post.previousMove)}
-                    </span>
+                    {post.previousMove ? (
+                      <>
+                        <span className="text-slate-500">Last move:</span>{" "}
+                        <span className="font-mono text-white">
+                          {formatLineMove(post.previousMove)}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-slate-500">Puzzle start:</span>{" "}
+                        <span className="font-mono text-white">
+                          {post.orientation === "white"
+                            ? "White to move"
+                            : "Black to move"}
+                        </span>
+                      </>
+                    )}
                   </div>
 
                   {post.description && (

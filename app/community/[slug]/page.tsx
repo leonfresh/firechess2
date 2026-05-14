@@ -11,6 +11,7 @@ import {
 } from "@/lib/community-shared";
 import { CommunityBoardPreview } from "@/components/community-board-preview";
 import { CommunityPuzzleInlinePlayer } from "@/components/community-puzzle-inline-player";
+import { CommunityPostAdminMenu } from "@/components/community-post-admin-menu";
 import { CommunityComments } from "@/components/community-comments";
 import { CommunityReactionBar } from "@/components/community-reaction-bar";
 
@@ -69,7 +70,7 @@ export default async function CommunityPostPage({
   return (
     <div className="min-h-screen bg-[#030712] text-white">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-        <nav className="mb-5 flex items-center gap-2 text-xs text-slate-500">
+        <nav className="mb-5 flex flex-wrap items-center gap-2 text-xs text-slate-500">
           <Link
             href="/community"
             className="transition-colors hover:text-slate-300"
@@ -77,21 +78,31 @@ export default async function CommunityPostPage({
             Community
           </Link>
           <span>/</span>
-          <span className="text-slate-300">{post.title}</span>
+          <span className="min-w-0 break-words text-slate-300">
+            {post.title}
+          </span>
         </nav>
 
         <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
           <section className="space-y-6 rounded-[2rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
-            <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-              <span className="rounded-full border border-cyan-500/25 bg-cyan-500/10 px-2.5 py-1 text-cyan-300">
-                {COMMUNITY_KIND_LABELS[post.kind]}
-              </span>
-              <span>{COMMUNITY_SOURCE_LABELS[post.sourceType]}</span>
-              {collectionLabel && (
-                <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 normal-case tracking-normal text-slate-400">
-                  {collectionLabel}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                <span className="rounded-full border border-cyan-500/25 bg-cyan-500/10 px-2.5 py-1 text-cyan-300">
+                  {COMMUNITY_KIND_LABELS[post.kind]}
                 </span>
-              )}
+                <span>{COMMUNITY_SOURCE_LABELS[post.sourceType]}</span>
+                {collectionLabel && (
+                  <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 normal-case tracking-normal text-slate-400">
+                    {collectionLabel}
+                  </span>
+                )}
+              </div>
+
+              <CommunityPostAdminMenu
+                slug={post.slug}
+                title={post.title}
+                redirectHref="/community"
+              />
             </div>
 
             <div>
@@ -124,10 +135,16 @@ export default async function CommunityPostPage({
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-slate-300">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                      Last Move Played
+                      {puzzleData.previousMove
+                        ? "Last Move Played"
+                        : "Puzzle Start"}
                     </p>
                     <p className="mt-1 font-mono text-white">
-                      {formatCommunityLineMove(puzzleData.previousMove)}
+                      {puzzleData.previousMove
+                        ? formatCommunityLineMove(puzzleData.previousMove)
+                        : puzzleData.orientation === "white"
+                          ? "White to move"
+                          : "Black to move"}
                     </p>
                   </div>
                   <div className="rounded-2xl border border-white/[0.08] bg-black/20 px-4 py-3 text-sm text-slate-300">

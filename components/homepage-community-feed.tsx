@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { CommunityPostAdminMenu } from "@/components/community-post-admin-menu";
 import { CommunityBoardPreview } from "@/components/community-board-preview";
 import { CommunityPuzzleInlinePlayer } from "@/components/community-puzzle-inline-player";
 import type { CommunityPostCard as CommunityPostCardData } from "@/lib/community";
@@ -96,8 +97,15 @@ export function HomepageCommunityFeed() {
     loading: true,
     error: null,
   });
-  const [sort, setSort] = useState<CommunitySortMode>("hot");
+  const [sort, setSort] = useState<CommunitySortMode>("new");
   const [category, setCategory] = useState<CommunityCategoryId>("all");
+
+  function removePost(slug: string) {
+    setState((current) => ({
+      ...current,
+      posts: current.posts.filter((post) => post.slug !== slug),
+    }));
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -424,7 +432,7 @@ export function HomepageCommunityFeed() {
 
                     return (
                       <div className="relative flex h-full flex-col">
-                        <div className="flex items-start justify-between gap-3">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                             <span
                               className={`rounded-full border px-3 py-1 ${theme.badge}`}
@@ -433,9 +441,16 @@ export function HomepageCommunityFeed() {
                             </span>
                           </div>
 
-                          <span className="shrink-0 pt-1 text-[11px] font-medium text-slate-500">
-                            {formatCreatedAt(post.createdAt)}
-                          </span>
+                          <div className="ml-auto flex items-center gap-2">
+                            <span className="shrink-0 pt-1 text-[11px] font-medium text-slate-500">
+                              {formatCreatedAt(post.createdAt)}
+                            </span>
+                            <CommunityPostAdminMenu
+                              slug={post.slug}
+                              title={post.title}
+                              onDeleted={() => removePost(post.slug)}
+                            />
+                          </div>
                         </div>
 
                         <div
@@ -460,18 +475,14 @@ export function HomepageCommunityFeed() {
                             </div>
                           ) : (
                             <div className="relative overflow-hidden rounded-[1.35rem]">
-                              <Link
+                              <CommunityBoardPreview
+                                fen={post.fen}
+                                pgn={post.pgn}
+                                orientation={post.orientation ?? "white"}
+                                size={560}
+                                showCoordinates={false}
                                 href={`/community/${post.slug}`}
-                                className="block w-full"
-                              >
-                                <CommunityBoardPreview
-                                  fen={post.fen}
-                                  pgn={post.pgn}
-                                  orientation={post.orientation ?? "white"}
-                                  size={560}
-                                  showCoordinates={false}
-                                />
-                              </Link>
+                              />
                             </div>
                           )}
                         </div>
@@ -489,7 +500,7 @@ export function HomepageCommunityFeed() {
                             </p>
                           </Link>
 
-                          <div className="mt-auto flex items-center justify-between gap-3 pt-4">
+                          <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4">
                             <div className="flex min-w-0 items-center gap-3">
                               {post.authorImage ? (
                                 <img
@@ -520,7 +531,7 @@ export function HomepageCommunityFeed() {
                               </div>
                             </div>
 
-                            <span className="shrink-0 text-[11px] font-semibold text-slate-400">
+                            <span className="ml-auto shrink-0 text-[11px] font-semibold text-slate-400">
                               {formatSignalCount(totalSignals)}
                             </span>
                           </div>

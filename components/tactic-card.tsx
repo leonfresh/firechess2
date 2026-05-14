@@ -7,13 +7,21 @@ import { EvalBar } from "@/components/eval-bar";
 import { Chessboard } from "@/components/chessboard-compat";
 import { playSound } from "@/lib/sounds";
 import { useBoardSize } from "@/lib/use-board-size";
-import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
-import { ExplanationModal, type SimpleExplanation } from "@/components/explanation-modal";
+import {
+  useBoardTheme,
+  useShowCoordinates,
+  useCustomPieces,
+} from "@/lib/use-coins";
+import {
+  ExplanationModal,
+  type SimpleExplanation,
+} from "@/components/explanation-modal";
 import type { MissedTactic, MoveSquare } from "@/lib/types";
 
 type TacticCardProps = {
   tactic: MissedTactic;
   engineDepth: number;
+  onCreateCommunityPost?: () => void;
 };
 
 type MoveDetails = {
@@ -24,14 +32,70 @@ type MoveDetails = {
 };
 
 type BoardSquare =
-  | "a1" | "a2" | "a3" | "a4" | "a5" | "a6" | "a7" | "a8"
-  | "b1" | "b2" | "b3" | "b4" | "b5" | "b6" | "b7" | "b8"
-  | "c1" | "c2" | "c3" | "c4" | "c5" | "c6" | "c7" | "c8"
-  | "d1" | "d2" | "d3" | "d4" | "d5" | "d6" | "d7" | "d8"
-  | "e1" | "e2" | "e3" | "e4" | "e5" | "e6" | "e7" | "e8"
-  | "f1" | "f2" | "f3" | "f4" | "f5" | "f6" | "f7" | "f8"
-  | "g1" | "g2" | "g3" | "g4" | "g5" | "g6" | "g7" | "g8"
-  | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "h7" | "h8";
+  | "a1"
+  | "a2"
+  | "a3"
+  | "a4"
+  | "a5"
+  | "a6"
+  | "a7"
+  | "a8"
+  | "b1"
+  | "b2"
+  | "b3"
+  | "b4"
+  | "b5"
+  | "b6"
+  | "b7"
+  | "b8"
+  | "c1"
+  | "c2"
+  | "c3"
+  | "c4"
+  | "c5"
+  | "c6"
+  | "c7"
+  | "c8"
+  | "d1"
+  | "d2"
+  | "d3"
+  | "d4"
+  | "d5"
+  | "d6"
+  | "d7"
+  | "d8"
+  | "e1"
+  | "e2"
+  | "e3"
+  | "e4"
+  | "e5"
+  | "e6"
+  | "e7"
+  | "e8"
+  | "f1"
+  | "f2"
+  | "f3"
+  | "f4"
+  | "f5"
+  | "f6"
+  | "f7"
+  | "f8"
+  | "g1"
+  | "g2"
+  | "g3"
+  | "g4"
+  | "g5"
+  | "g6"
+  | "g7"
+  | "g8"
+  | "h1"
+  | "h2"
+  | "h3"
+  | "h4"
+  | "h5"
+  | "h6"
+  | "h7"
+  | "h8";
 
 function isBoardSquare(square: string): square is BoardSquare {
   return /^[a-h][1-8]$/.test(square);
@@ -46,11 +110,14 @@ function parseMove(move: string): MoveSquare | null {
   return {
     from: move.slice(0, 2),
     to: move.slice(2, 4),
-    promotion: move.slice(4, 5) || undefined
+    promotion: move.slice(4, 5) || undefined,
   };
 }
 
-function deriveMoveDetails(fen: string, move: string | null): MoveDetails | null {
+function deriveMoveDetails(
+  fen: string,
+  move: string | null,
+): MoveDetails | null {
   if (!move) return null;
   try {
     const chess = new Chess(fen);
@@ -60,14 +127,24 @@ function deriveMoveDetails(fen: string, move: string | null): MoveDetails | null
       const result = chess.move({
         from: parsed.from,
         to: parsed.to,
-        promotion: parsed.promotion as PieceSymbol | undefined
+        promotion: parsed.promotion as PieceSymbol | undefined,
       });
       if (!result) return null;
-      return { from: result.from, to: result.to, promotion: result.promotion ?? undefined, san: result.san };
+      return {
+        from: result.from,
+        to: result.to,
+        promotion: result.promotion ?? undefined,
+        san: result.san,
+      };
     }
     const result = chess.move(move);
     if (!result) return null;
-    return { from: result.from, to: result.to, promotion: result.promotion ?? undefined, san: result.san };
+    return {
+      from: result.from,
+      to: result.to,
+      promotion: result.promotion ?? undefined,
+      san: result.san,
+    };
   } catch {
     return null;
   }
@@ -86,7 +163,7 @@ function formatPrincipalVariation(fen: string, uciMoves: string[]): string {
       const result = chess.move({
         from: parsed.from,
         to: parsed.to,
-        promotion: parsed.promotion as PieceSymbol | undefined
+        promotion: parsed.promotion as PieceSymbol | undefined,
       });
       if (!result) break;
       if (side === "w") {
@@ -124,7 +201,10 @@ function computeStepAnnotations(
     : "rgba(239, 68, 68, 0.18)";
 
   const arrows: [BoardSquare, BoardSquare, string?][] = [];
-  const highlights: Record<string, { backgroundColor?: string; boxShadow?: string }> = {};
+  const highlights: Record<
+    string,
+    { backgroundColor?: string; boxShadow?: string }
+  > = {};
   const badges: Record<string, { label: string; color: string }> = {};
 
   if (isBoardSquare(moveFrom) && isBoardSquare(moveTo)) {
@@ -180,15 +260,23 @@ function computeStepAnnotations(
           const moves = flipped.moves({ verbose: true, square: moveTo as any });
           const attacks = moves
             .filter((m) => m.captured && m.from === moveTo)
-            .map((m) => ({ sq: m.to, val: PV[m.captured!] ?? 0, piece: m.captured! }))
+            .map((m) => ({
+              sq: m.to,
+              val: PV[m.captured!] ?? 0,
+              piece: m.captured!,
+            }))
             .filter((a) => a.val >= 3);
 
           if (attacks.length >= 2) {
             // Fork
-            const label = movedType === "n" ? "Knight Fork!"
-              : movedType === "q" ? "Queen Fork!"
-              : movedType === "p" ? "Pawn Fork!"
-              : "Fork!";
+            const label =
+              movedType === "n"
+                ? "Knight Fork!"
+                : movedType === "q"
+                  ? "Queen Fork!"
+                  : movedType === "p"
+                    ? "Pawn Fork!"
+                    : "Fork!";
             badges[moveTo] = { label, color: "#f59e0b" };
             for (const a of attacks) {
               highlights[a.sq] = {
@@ -196,11 +284,17 @@ function computeStepAnnotations(
                 boxShadow: "inset 0 0 8px rgba(245, 158, 11, 0.5)",
               };
               if (isBoardSquare(moveTo) && isBoardSquare(a.sq)) {
-                arrows.push([moveTo as BoardSquare, a.sq as BoardSquare, "rgba(245, 158, 11, 0.7)"]);
+                arrows.push([
+                  moveTo as BoardSquare,
+                  a.sq as BoardSquare,
+                  "rgba(245, 158, 11, 0.7)",
+                ]);
               }
             }
           } else if (attacks.length === 1 && attacks[0].val >= 5) {
-            highlights[attacks[0].sq] = { backgroundColor: "rgba(245, 158, 11, 0.35)" };
+            highlights[attacks[0].sq] = {
+              backgroundColor: "rgba(245, 158, 11, 0.35)",
+            };
             if (isBoardSquare(moveTo) && isBoardSquare(attacks[0].sq)) {
               arrows.push([
                 moveTo as BoardSquare,
@@ -209,12 +303,18 @@ function computeStepAnnotations(
               ]);
             }
           }
-        } catch { /* skip */ }
+        } catch {
+          /* skip */
+        }
       }
     }
 
     // ── Discovered Attack — highlight the unmasked line ──
-    if ((tagSet.has("Discovered Attack") || (chess.isCheck() && movedType !== "n" && movedType !== "q")) && piece) {
+    if (
+      (tagSet.has("Discovered Attack") ||
+        (chess.isCheck() && movedType !== "n" && movedType !== "q")) &&
+      piece
+    ) {
       // find sliders of the mover's color that now attack opponent pieces through the vacated square
       try {
         const parts2 = fenAfterMove.split(" ");
@@ -222,26 +322,50 @@ function computeStepAnnotations(
         const flipped2 = new Chess(parts2.join(" "));
         for (const row of chess.board()) {
           for (const sq of row) {
-            if (sq && sq.color === movedColor && (sq.type === "b" || sq.type === "r" || sq.type === "q") && sq.square !== moveTo) {
-              const sliderMoves = flipped2.moves({ verbose: true, square: sq.square as any });
-              const hitsOpp = sliderMoves.filter(m => m.captured && m.from === sq.square);
+            if (
+              sq &&
+              sq.color === movedColor &&
+              (sq.type === "b" || sq.type === "r" || sq.type === "q") &&
+              sq.square !== moveTo
+            ) {
+              const sliderMoves = flipped2.moves({
+                verbose: true,
+                square: sq.square as any,
+              });
+              const hitsOpp = sliderMoves.filter(
+                (m) => m.captured && m.from === sq.square,
+              );
               for (const hit of hitsOpp) {
                 const targetPiece = chess.get(hit.to as any);
-                if (targetPiece && targetPiece.color === oppColor && PV[targetPiece.type] >= 3) {
-                  if (!badges[sq.square]) badges[sq.square] = { label: "Discovery!", color: "#a855f7" };
+                if (
+                  targetPiece &&
+                  targetPiece.color === oppColor &&
+                  PV[targetPiece.type] >= 3
+                ) {
+                  if (!badges[sq.square])
+                    badges[sq.square] = {
+                      label: "Discovery!",
+                      color: "#a855f7",
+                    };
                   highlights[hit.to] = {
                     backgroundColor: "rgba(168, 85, 247, 0.35)",
                     boxShadow: "inset 0 0 8px rgba(168, 85, 247, 0.4)",
                   };
                   if (isBoardSquare(sq.square) && isBoardSquare(hit.to)) {
-                    arrows.push([sq.square as BoardSquare, hit.to as BoardSquare, "rgba(168, 85, 247, 0.7)"]);
+                    arrows.push([
+                      sq.square as BoardSquare,
+                      hit.to as BoardSquare,
+                      "rgba(168, 85, 247, 0.7)",
+                    ]);
                   }
                 }
               }
             }
           }
         }
-      } catch { /* skip */ }
+      } catch {
+        /* skip */
+      }
     }
 
     // ── Pin detection — highlight pinned piece ──
@@ -251,14 +375,22 @@ function computeStepAnnotations(
         const oppMoves = chess.moves({ verbose: true });
         // Find opponent pieces with 0 legal moves from their square (they might be pinned)
         const pieceSqs = new Map<string, number>();
-        for (const m of oppMoves) pieceSqs.set(m.from, (pieceSqs.get(m.from) ?? 0) + 1);
+        for (const m of oppMoves)
+          pieceSqs.set(m.from, (pieceSqs.get(m.from) ?? 0) + 1);
         // Look for pieces on the line between a slider and king — simplified via tag hint
-      } catch { /* skip */ }
+      } catch {
+        /* skip */
+      }
     }
 
     // ── Skewer — tag-based highlight ──
-    if (tagSet.has("Skewer") && piece && (movedType === "r" || movedType === "b" || movedType === "q")) {
-      if (!badges[moveTo]) badges[moveTo] = { label: "Skewer!", color: "#ec4899" };
+    if (
+      tagSet.has("Skewer") &&
+      piece &&
+      (movedType === "r" || movedType === "b" || movedType === "q")
+    ) {
+      if (!badges[moveTo])
+        badges[moveTo] = { label: "Skewer!", color: "#ec4899" };
     }
 
     // ── Sacrifice ──
@@ -275,7 +407,9 @@ function computeStepAnnotations(
             };
           }
         }
-      } catch { /* skip */ }
+      } catch {
+        /* skip */
+      }
     }
 
     // ── Hanging Piece — highlight the piece left hanging ──
@@ -285,7 +419,8 @@ function computeStepAnnotations(
         backgroundColor: "rgba(239, 68, 68, 0.35)",
         boxShadow: "inset 0 0 8px rgba(239, 68, 68, 0.4)",
       };
-      if (!badges[moveTo]) badges[moveTo] = { label: "Hanging!", color: "#ef4444" };
+      if (!badges[moveTo])
+        badges[moveTo] = { label: "Hanging!", color: "#ef4444" };
     }
 
     // ── En Passant ──
@@ -300,16 +435,27 @@ function computeStepAnnotations(
         badges[epSquare] = { label: "e.p.", color: "#f59e0b" };
       }
     }
-    if (tagSet.has("En Passant") && !Object.values(badges).some(b => b.label === "e.p.")) {
-      if (!badges[moveTo]) badges[moveTo] = { label: "En Passant", color: "#f59e0b" };
+    if (
+      tagSet.has("En Passant") &&
+      !Object.values(badges).some((b) => b.label === "e.p.")
+    ) {
+      if (!badges[moveTo])
+        badges[moveTo] = { label: "En Passant", color: "#f59e0b" };
     }
 
     // ── Promotion ──
-    if (san.includes("=") || tagSet.has("Promotion") || tagSet.has("Underpromotion")) {
+    if (
+      san.includes("=") ||
+      tagSet.has("Promotion") ||
+      tagSet.has("Underpromotion")
+    ) {
       const promoMatch = san.match(/=([QRBN])/);
       if (promoMatch) {
-        const promoLabel = tagSet.has("Underpromotion") ? `Underpromotes!` : `Promotes!`;
-        if (!badges[moveTo]) badges[moveTo] = { label: promoLabel, color: "#22c55e" };
+        const promoLabel = tagSet.has("Underpromotion")
+          ? `Underpromotes!`
+          : `Promotes!`;
+        if (!badges[moveTo])
+          badges[moveTo] = { label: promoLabel, color: "#22c55e" };
         highlights[moveTo] = {
           backgroundColor: "rgba(34, 197, 94, 0.35)",
           boxShadow: "inset 0 0 10px rgba(34, 197, 94, 0.5)",
@@ -336,7 +482,8 @@ function computeStepAnnotations(
               backgroundColor: "rgba(239, 68, 68, 0.3)",
               boxShadow: "inset 0 0 10px rgba(239, 68, 68, 0.4)",
             };
-            if (!badges[sq.square]) badges[sq.square] = { label: "Exposed!", color: "#ef4444" };
+            if (!badges[sq.square])
+              badges[sq.square] = { label: "Exposed!", color: "#ef4444" };
           }
         }
       }
@@ -347,9 +494,15 @@ function computeStepAnnotations(
       // Generic king safety concern — subtle highlight
       for (const row of chess.board()) {
         for (const sq of row) {
-          if (sq && sq.type === "k" && sq.color === (isGoodSide ? movedColor : oppColor)) {
+          if (
+            sq &&
+            sq.type === "k" &&
+            sq.color === (isGoodSide ? movedColor : oppColor)
+          ) {
             if (!highlights[sq.square]) {
-              highlights[sq.square] = { backgroundColor: "rgba(239, 68, 68, 0.2)" };
+              highlights[sq.square] = {
+                backgroundColor: "rgba(239, 68, 68, 0.2)",
+              };
             }
           }
         }
@@ -358,12 +511,17 @@ function computeStepAnnotations(
 
     // ── Castling ──
     if (tagSet.has("Castling") && san.startsWith("O")) {
-      if (!badges[moveTo]) badges[moveTo] = { label: "Castles", color: "#3b82f6" };
+      if (!badges[moveTo])
+        badges[moveTo] = { label: "Castles", color: "#3b82f6" };
     }
 
     // ── Center Control ──
-    if (tagSet.has("Center Control") && ["d4","d5","e4","e5"].includes(moveTo)) {
-      if (!badges[moveTo]) badges[moveTo] = { label: "Center!", color: "#3b82f6" };
+    if (
+      tagSet.has("Center Control") &&
+      ["d4", "d5", "e4", "e5"].includes(moveTo)
+    ) {
+      if (!badges[moveTo])
+        badges[moveTo] = { label: "Center!", color: "#3b82f6" };
     }
 
     // ── Capture badge (fallback when no other badge present) ──
@@ -405,7 +563,10 @@ function formatEval(valueCp: number, options?: { showPlus?: boolean }): string {
   }
   const evalPawns = valueCp / 100;
   const rounded = Math.round(evalPawns * 100) / 100;
-  const text = rounded.toFixed(2).replace(/\.00$/, "").replace(/(\.)0$/, "$1");
+  const text = rounded
+    .toFixed(2)
+    .replace(/\.00$/, "")
+    .replace(/(\.)0$/, "$1");
   if (options?.showPlus && rounded > 0) return `+${text}`;
   return text;
 }
@@ -414,29 +575,38 @@ function formatEvalLoss(cpLoss: number): string {
   if (cpLoss >= MATE_THRESHOLD) return "Mate";
   const pawns = cpLoss / 100;
   const rounded = Math.round(pawns * 100) / 100;
-  return rounded.toFixed(2).replace(/\.00$/, "").replace(/(\.)0$/, "$1");
+  return rounded
+    .toFixed(2)
+    .replace(/\.00$/, "")
+    .replace(/(\.)0$/, "$1");
 }
 
-export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
+export function TacticCard({
+  tactic,
+  engineDepth,
+  onCreateCommunityPost,
+}: TacticCardProps) {
   const { ref: boardSizeRef, size: boardSize } = useBoardSize(400);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
   const userMoveDetails = useMemo(
     () => deriveMoveDetails(tactic.fenBefore, tactic.userMove),
-    [tactic.fenBefore, tactic.userMove]
+    [tactic.fenBefore, tactic.userMove],
   );
   const bestMoveDetails = useMemo(
     () => deriveMoveDetails(tactic.fenBefore, tactic.bestMove),
-    [tactic.fenBefore, tactic.bestMove]
+    [tactic.fenBefore, tactic.bestMove],
   );
   const boardId = useMemo(
     () => `tactic-${tactic.fenBefore.replace(/[^a-zA-Z0-9]/g, "-")}`,
-    [tactic.fenBefore]
+    [tactic.fenBefore],
   );
   const boardOrientation = tactic.userColor === "black" ? "black" : "white";
-  const whiteEvalBefore = tactic.sideToMove === "white" ? tactic.cpBefore : -tactic.cpBefore;
-  const whiteEvalAfter = tactic.sideToMove === "white" ? tactic.cpAfter : -tactic.cpAfter;
+  const whiteEvalBefore =
+    tactic.sideToMove === "white" ? tactic.cpBefore : -tactic.cpBefore;
+  const whiteEvalAfter =
+    tactic.sideToMove === "white" ? tactic.cpAfter : -tactic.cpAfter;
 
   const [fen, setFen] = useState(tactic.fenBefore);
   const [explaining, setExplaining] = useState(false);
@@ -457,16 +627,35 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
   const timerIds = useRef<number[]>([]);
   const fenCopiedTimerRef = useRef<number | null>(null);
 
-  const isMate = isMateScore(tactic.cpBefore) || tactic.cpLoss >= MATE_THRESHOLD;
-  const severityColor = isMate ? "#dc2626" : tactic.cpLoss >= 600 ? "#ef4444" : tactic.cpLoss >= 400 ? "#f59e0b" : "#f97316";
-  const severityLabel = isMate ? "Missed Mate" : tactic.cpLoss >= 600 ? "Critical" : tactic.cpLoss >= 400 ? "Major" : "Missed";
+  const isMate =
+    isMateScore(tactic.cpBefore) || tactic.cpLoss >= MATE_THRESHOLD;
+  const severityColor = isMate
+    ? "#dc2626"
+    : tactic.cpLoss >= 600
+      ? "#ef4444"
+      : tactic.cpLoss >= 400
+        ? "#f59e0b"
+        : "#f97316";
+  const severityLabel = isMate
+    ? "Missed Mate"
+    : tactic.cpLoss >= 600
+      ? "Critical"
+      : tactic.cpLoss >= 400
+        ? "Major"
+        : "Missed";
 
   const [animEvalCp, setAnimEvalCp] = useState<number | null>(null);
 
   // Per-step annotations shown during PV animation
-  const [animArrows, setAnimArrows] = useState<[BoardSquare, BoardSquare, string?][]>([]);
-  const [animSquareStyles, setAnimSquareStyles] = useState<Record<string, { backgroundColor?: string; boxShadow?: string }>>({});
-  const [animBadges, setAnimBadges] = useState<Record<string, { label: string; color: string }>>({});
+  const [animArrows, setAnimArrows] = useState<
+    [BoardSquare, BoardSquare, string?][]
+  >([]);
+  const [animSquareStyles, setAnimSquareStyles] = useState<
+    Record<string, { backgroundColor?: string; boxShadow?: string }>
+  >({});
+  const [animBadges, setAnimBadges] = useState<
+    Record<string, { label: string; color: string }>
+  >({});
 
   const displayedEvalCp = useMemo(() => {
     if (animEvalCp !== null) return animEvalCp;
@@ -482,7 +671,8 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
   useEffect(() => {
     return () => {
       clearTimers();
-      if (fenCopiedTimerRef.current) window.clearTimeout(fenCopiedTimerRef.current);
+      if (fenCopiedTimerRef.current)
+        window.clearTimeout(fenCopiedTimerRef.current);
     };
   }, []);
 
@@ -490,8 +680,12 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
     try {
       await navigator.clipboard.writeText(tactic.fenBefore);
       setFenCopied(true);
-      if (fenCopiedTimerRef.current) window.clearTimeout(fenCopiedTimerRef.current);
-      fenCopiedTimerRef.current = window.setTimeout(() => setFenCopied(false), 1200);
+      if (fenCopiedTimerRef.current)
+        window.clearTimeout(fenCopiedTimerRef.current);
+      fenCopiedTimerRef.current = window.setTimeout(
+        () => setFenCopied(false),
+        1200,
+      );
     } catch {
       setExplanation("Could not copy FEN to clipboard on this browser.");
     }
@@ -502,18 +696,34 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
     if (!userMoveDetails) return {};
     return {
       [userMoveDetails.from]: { backgroundColor: "rgba(245, 158, 11, 0.40)" },
-      [userMoveDetails.to]: { backgroundColor: "rgba(245, 158, 11, 0.40)" }
+      [userMoveDetails.to]: { backgroundColor: "rgba(245, 158, 11, 0.40)" },
     };
   }, [animating, animSquareStyles, userMoveDetails]);
 
   const customArrows = useMemo(() => {
     if (animating) return animArrows;
     const arrows: [BoardSquare, BoardSquare, string?][] = [];
-    if (bestMoveDetails && isBoardSquare(bestMoveDetails.from) && isBoardSquare(bestMoveDetails.to)) {
-      arrows.push([bestMoveDetails.from, bestMoveDetails.to, "rgba(34, 197, 94, 0.9)"]);
+    if (
+      bestMoveDetails &&
+      isBoardSquare(bestMoveDetails.from) &&
+      isBoardSquare(bestMoveDetails.to)
+    ) {
+      arrows.push([
+        bestMoveDetails.from,
+        bestMoveDetails.to,
+        "rgba(34, 197, 94, 0.9)",
+      ]);
     }
-    if (userMoveDetails && isBoardSquare(userMoveDetails.from) && isBoardSquare(userMoveDetails.to)) {
-      arrows.push([userMoveDetails.from, userMoveDetails.to, "rgba(245, 158, 11, 0.9)"]);
+    if (
+      userMoveDetails &&
+      isBoardSquare(userMoveDetails.from) &&
+      isBoardSquare(userMoveDetails.to)
+    ) {
+      arrows.push([
+        userMoveDetails.from,
+        userMoveDetails.to,
+        "rgba(245, 158, 11, 0.9)",
+      ]);
     }
     return arrows;
   }, [animating, animArrows, userMoveDetails, bestMoveDetails]);
@@ -522,8 +732,11 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
     return ((props: any) => {
       const square = props?.square as string | undefined;
       const animBadge = animating && square ? animBadges[square] : null;
-      const showSeverity = !animating && !!userMoveDetails && square === userMoveDetails.to;
-      const badge = animBadge ?? (showSeverity ? { label: severityLabel, color: severityColor } : null);
+      const showSeverity =
+        !animating && !!userMoveDetails && square === userMoveDetails.to;
+      const badge =
+        animBadge ??
+        (showSeverity ? { label: severityLabel, color: severityColor } : null);
       return (
         <div style={props?.style} className="relative h-full w-full">
           {props?.children}
@@ -574,47 +787,54 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
     }
 
     steps.forEach((step, moveIndex) => {
-      const timerId = window.setTimeout(() => {
-        const parsed = parseMove(step.uci);
-        if (!parsed) return;
-        const fenBeforeStep = chess.fen();
-        const result = chess.move({
-          from: parsed.from,
-          to: parsed.to,
-          promotion: parsed.promotion as PieceSymbol | undefined,
-        });
-        if (result) {
-          setFen(chess.fen());
+      const timerId = window.setTimeout(
+        () => {
+          const parsed = parseMove(step.uci);
+          if (!parsed) return;
+          const fenBeforeStep = chess.fen();
+          const result = chess.move({
+            from: parsed.from,
+            to: parsed.to,
+            promotion: parsed.promotion as PieceSymbol | undefined,
+          });
+          if (result) {
+            setFen(chess.fen());
 
-          // Compute tactical annotations for this step
-          const isGoodSide = result.color === userColorChar;
-          const ann = computeStepAnnotations(
-            fenBeforeStep,
-            chess.fen(),
-            result.from,
-            result.to,
-            result.san,
-            isGoodSide,
-            result.captured,
-            tactic.tags,
-          );
-          setAnimArrows(ann.arrows);
-          setAnimSquareStyles(ann.highlights);
-          setAnimBadges(ann.badges);
+            // Compute tactical annotations for this step
+            const isGoodSide = result.color === userColorChar;
+            const ann = computeStepAnnotations(
+              fenBeforeStep,
+              chess.fen(),
+              result.from,
+              result.to,
+              result.san,
+              isGoodSide,
+              result.captured,
+              tactic.tags,
+            );
+            setAnimArrows(ann.arrows);
+            setAnimSquareStyles(ann.highlights);
+            setAnimBadges(ann.badges);
 
-          // Play appropriate move sound
-          if (/[+#]/.test(result.san)) playSound("check");
-          else if (result.captured) playSound("capture");
-          else playSound("move");
-          stockfishClient.evaluateFen(step.fen, 8).then((evalResult) => {
-            if (evalResult) {
-              const turn = new Chess(step.fen).turn();
-              const whiteEval = turn === "w" ? evalResult.cp : -evalResult.cp;
-              setAnimEvalCp(whiteEval);
-            }
-          }).catch(() => {});
-        }
-      }, (moveIndex + 1) * 2000);
+            // Play appropriate move sound
+            if (/[+#]/.test(result.san)) playSound("check");
+            else if (result.captured) playSound("capture");
+            else playSound("move");
+            stockfishClient
+              .evaluateFen(step.fen, 8)
+              .then((evalResult) => {
+                if (evalResult) {
+                  const turn = new Chess(step.fen).turn();
+                  const whiteEval =
+                    turn === "w" ? evalResult.cp : -evalResult.cp;
+                  setAnimEvalCp(whiteEval);
+                }
+              })
+              .catch(() => {});
+          }
+        },
+        (moveIndex + 1) * 2000,
+      );
       timerIds.current.push(timerId);
     });
 
@@ -628,7 +848,7 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
         setAnimBadges({});
         setBoardInstance((v) => v + 1);
       },
-      (steps.length + 1) * 2000 + 4000
+      (steps.length + 1) * 2000 + 4000,
     );
     timerIds.current.push(resetTimerId);
   };
@@ -665,20 +885,30 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
       const moved = bestFenChess.move({
         from: parsed.from,
         to: parsed.to,
-        promotion: parsed.promotion as PieceSymbol | undefined
+        promotion: parsed.promotion as PieceSymbol | undefined,
       });
       if (!moved) {
         setExplanation("Could not apply the winning move for this position.");
         return;
       }
       let evalAfterBestStr: string | undefined;
-      const bestEval = await stockfishClient.evaluateFen(bestFenChess.fen(), engineDepth);
+      const bestEval = await stockfishClient.evaluateFen(
+        bestFenChess.fen(),
+        engineDepth,
+      );
       if (bestEval) {
         evalAfterBestStr = formatEval(bestEval.cp, { showPlus: true });
       }
-      const continuation = await stockfishClient.getPrincipalVariation(bestFenChess.fen(), 9, engineDepth);
+      const continuation = await stockfishClient.getPrincipalVariation(
+        bestFenChess.fen(),
+        9,
+        engineDepth,
+      );
       const bestContinuationMoves = continuation?.pvMoves ?? [];
-      const pvText = formatPrincipalVariation(tactic.fenBefore, [bestUci, ...bestContinuationMoves]);
+      const pvText = formatPrincipalVariation(tactic.fenBefore, [
+        bestUci,
+        ...bestContinuationMoves,
+      ]);
       const gainText = isMate
         ? "leads to forced mate"
         : `gains about ${formatEvalLoss(tactic.cpLoss)} eval`;
@@ -693,7 +923,10 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
       setAnimLineUci(fullBestLine);
       setExplainModalOpen(true);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to explain this position.";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to explain this position.";
       setExplanation(message);
     } finally {
       setExplaining(false);
@@ -721,19 +954,26 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
       const playedResult = afterPlayed.move({
         from: playedParsed.from,
         to: playedParsed.to,
-        promotion: playedParsed.promotion as PieceSymbol | undefined
+        promotion: playedParsed.promotion as PieceSymbol | undefined,
       });
       if (!playedResult) {
         setExplanation("Could not play your move on this position.");
         return;
       }
-      const line = await stockfishClient.getPrincipalVariation(afterPlayed.fen(), 10, 12);
+      const line = await stockfishClient.getPrincipalVariation(
+        afterPlayed.fen(),
+        10,
+        12,
+      );
       if (!line) {
         setExplanation("Engine did not return a principal variation.");
         return;
       }
       const sanLine: string[] = [playedResult.san];
-      const continuation = formatPrincipalVariation(afterPlayed.fen(), line.pvMoves);
+      const continuation = formatPrincipalVariation(
+        afterPlayed.fen(),
+        line.pvMoves,
+      );
       if (continuation) sanLine.push(continuation);
       const missedText = isMate
         ? "missed a forced mate"
@@ -749,7 +989,10 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
       setAnimLineUci(fullLine);
       setExplainModalOpen(true);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to explain this position.";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to explain this position.";
       setExplanation(message);
     } finally {
       setExplaining(false);
@@ -760,7 +1003,10 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
     <article className="glass-card-hover overflow-hidden border-amber-500/10">
       <div className="grid gap-0 md:grid-cols-[minmax(0,480px)_1fr]">
         {/* Board side */}
-        <div ref={boardSizeRef} className="relative overflow-hidden border-b border-amber-500/[0.08] bg-amber-500/[0.02] p-3 sm:p-5 md:border-b-0 md:border-r">
+        <div
+          ref={boardSizeRef}
+          className="relative overflow-hidden border-b border-amber-500/[0.08] bg-amber-500/[0.02] p-3 sm:p-5 md:border-b-0 md:border-r"
+        >
           <div className="mx-auto flex w-full max-w-[460px] items-start gap-2 sm:gap-3">
             <EvalBar evalCp={displayedEvalCp} height={boardSize} />
             <div className="overflow-hidden rounded-xl">
@@ -774,8 +1020,12 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
                 customArrows={customArrows}
                 boardOrientation={boardOrientation}
                 boardWidth={boardSize}
-                customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-                customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                customDarkSquareStyle={{
+                  backgroundColor: boardTheme.darkSquare,
+                }}
+                customLightSquareStyle={{
+                  backgroundColor: boardTheme.lightSquare,
+                }}
                 showBoardNotation={showCoords}
                 customPieces={customPieces}
               />
@@ -803,12 +1053,29 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
             </div>
             <p className="mt-2 text-sm text-slate-400">
               {isMate ? (
-                <>You had a <span className="font-semibold text-red-400">forced mate</span> but played{" "}
-                <span className="font-mono text-amber-400">{userMoveDetails?.san ?? tactic.userMove}</span> instead.</>
+                <>
+                  You had a{" "}
+                  <span className="font-semibold text-red-400">
+                    forced mate
+                  </span>{" "}
+                  but played{" "}
+                  <span className="font-mono text-amber-400">
+                    {userMoveDetails?.san ?? tactic.userMove}
+                  </span>{" "}
+                  instead.
+                </>
               ) : (
-                <>You had a forcing move that wins{" "}
-                <span className="font-semibold text-amber-300">~{formatEvalLoss(tactic.cpLoss)}</span> eval, but you played{" "}
-                <span className="font-mono text-amber-400">{userMoveDetails?.san ?? tactic.userMove}</span> instead.</>
+                <>
+                  You had a forcing move that wins{" "}
+                  <span className="font-semibold text-amber-300">
+                    ~{formatEvalLoss(tactic.cpLoss)}
+                  </span>{" "}
+                  eval, but you played{" "}
+                  <span className="font-mono text-amber-400">
+                    {userMoveDetails?.san ?? tactic.userMove}
+                  </span>{" "}
+                  instead.
+                </>
               )}
             </p>
           </div>
@@ -816,25 +1083,35 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
           {/* Stats grid */}
           <div className="grid grid-cols-2 gap-2">
             <div className="stat-card py-3">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Eval Before</p>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                Eval Before
+              </p>
               <p className="mt-0.5 text-lg font-bold text-slate-200">
                 {formatEval(tactic.cpBefore, { showPlus: true })}
               </p>
             </div>
             <div className="stat-card py-3">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Eval After Your Move</p>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                Eval After Your Move
+              </p>
               <p className="mt-0.5 text-lg font-bold text-amber-400">
                 {formatEval(tactic.cpAfter, { showPlus: true })}
               </p>
             </div>
             <div className="stat-card py-3">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">{isMate ? "Missed" : "Material Missed"}</p>
-              <p className={`mt-0.5 text-lg font-bold ${isMate ? "text-red-500" : "text-red-400"}`}>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                {isMate ? "Missed" : "Material Missed"}
+              </p>
+              <p
+                className={`mt-0.5 text-lg font-bold ${isMate ? "text-red-500" : "text-red-400"}`}
+              >
                 {isMate ? "Forced Mate" : `−${formatEvalLoss(tactic.cpLoss)}`}
               </p>
             </div>
             <div className="stat-card py-3">
-              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Winning Move</p>
+              <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                Winning Move
+              </p>
               <p className="mt-0.5 text-lg font-bold font-mono text-emerald-400">
                 {bestMoveDetails?.san ?? tactic.bestMove}
               </p>
@@ -844,30 +1121,56 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
           {/* Tags */}
           {(!!tactic.tags?.length || tactic.timeRemainingSec !== null) && (
             <div className="flex flex-wrap gap-1.5">
-              {tactic.tags.filter(t => t !== "Time Pressure").map((tag) => (
-                <span key={`${tactic.fenBefore}-${tag}`} className="tag-amber text-[11px]">
-                  {tag}
-                </span>
-              ))}
-              {typeof tactic.timeRemainingSec === "number" && (() => {
-                const secs = tactic.timeRemainingSec!;
-                const mins = Math.floor(secs / 60);
-                const rem = secs % 60;
-                const timeStr = mins > 0 ? `${mins}:${String(rem).padStart(2, "0")}` : `${secs}s`;
-                const pct = typeof tactic.initialTimeSec === "number" && tactic.initialTimeSec > 0
-                  ? Math.round((secs / tactic.initialTimeSec) * 100)
-                  : null;
-                const isLow = secs <= 30;
-                const borderColor = isLow ? "border-red-500/20" : "border-slate-500/20";
-                const bgColor = isLow ? "bg-red-500/10" : "bg-slate-500/10";
-                const textColor = isLow ? "text-red-400" : "text-slate-400";
-                return (
-                  <span className={`inline-flex items-center gap-1 rounded-full border ${borderColor} ${bgColor} px-2.5 py-1 text-[11px] font-semibold ${textColor}`}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                    {isLow ? "Time Pressure" : "Clock"}: {timeStr}{pct !== null ? ` (${pct}% left)` : ""}
+              {tactic.tags
+                .filter((t) => t !== "Time Pressure")
+                .map((tag) => (
+                  <span
+                    key={`${tactic.fenBefore}-${tag}`}
+                    className="tag-amber text-[11px]"
+                  >
+                    {tag}
                   </span>
-                );
-              })()}
+                ))}
+              {typeof tactic.timeRemainingSec === "number" &&
+                (() => {
+                  const secs = tactic.timeRemainingSec!;
+                  const mins = Math.floor(secs / 60);
+                  const rem = secs % 60;
+                  const timeStr =
+                    mins > 0
+                      ? `${mins}:${String(rem).padStart(2, "0")}`
+                      : `${secs}s`;
+                  const pct =
+                    typeof tactic.initialTimeSec === "number" &&
+                    tactic.initialTimeSec > 0
+                      ? Math.round((secs / tactic.initialTimeSec) * 100)
+                      : null;
+                  const isLow = secs <= 30;
+                  const borderColor = isLow
+                    ? "border-red-500/20"
+                    : "border-slate-500/20";
+                  const bgColor = isLow ? "bg-red-500/10" : "bg-slate-500/10";
+                  const textColor = isLow ? "text-red-400" : "text-slate-400";
+                  return (
+                    <span
+                      className={`inline-flex items-center gap-1 rounded-full border ${borderColor} ${bgColor} px-2.5 py-1 text-[11px] font-semibold ${textColor}`}
+                    >
+                      <svg
+                        width="11"
+                        height="11"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                      </svg>
+                      {isLow ? "Time Pressure" : "Clock"}: {timeStr}
+                      {pct !== null ? ` (${pct}% left)` : ""}
+                    </span>
+                  );
+                })()}
             </div>
           )}
 
@@ -877,18 +1180,21 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
               <span className="mt-0.5 shrink-0 text-amber-400">💡</span>
               <span>
                 {isMate
-                  ? "Before every move, ask: \"Can I give check? Can I checkmate?\" Build the habit of scanning for mate patterns first."
-                  : typeof tactic.timeRemainingSec === "number" && tactic.timeRemainingSec <= 30
+                  ? 'Before every move, ask: "Can I give check? Can I checkmate?" Build the habit of scanning for mate patterns first.'
+                  : typeof tactic.timeRemainingSec === "number" &&
+                      tactic.timeRemainingSec <= 30
                     ? "This tactic was missed under time pressure. Practice blitz tactics puzzles to improve your speed pattern recognition."
-                    : tactic.tags.includes("Missed Capture") || tactic.tags.includes("Forcing Capture")
-                      ? "Always evaluate captures before quiet moves. Ask \"What does this capture actually win?\" — count the exchange carefully."
+                    : tactic.tags.includes("Missed Capture") ||
+                        tactic.tags.includes("Forcing Capture")
+                      ? 'Always evaluate captures before quiet moves. Ask "What does this capture actually win?" — count the exchange carefully.'
                       : tactic.tags.includes("Knight Fork?")
                         ? "Knight forks are one of the most common tactical patterns. Look for squares where a knight attacks two or more pieces simultaneously."
                         : tactic.tags.includes("Back Rank")
                           ? "Back rank weaknesses are deadly. Always check if your back rank has an escape square — consider h3/h6 luft moves proactively."
-                          : tactic.tags.includes("Pin") || tactic.tags.includes("Skewer")
+                          : tactic.tags.includes("Pin") ||
+                              tactic.tags.includes("Skewer")
                             ? "Pins and skewers exploit piece alignment along a rank, file, or diagonal. Before moving, check if any pieces are aligned with your king or queen."
-                            : "Before committing to a move, apply the \"CCT\" checklist: Checks, Captures, Threats. This simple habit catches most tactics."}
+                            : 'Before committing to a move, apply the "CCT" checklist: Checks, Captures, Threats. This simple habit catches most tactics.'}
               </span>
             </p>
           </div>
@@ -904,8 +1210,14 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
           {/* FEN block */}
           <div className="rounded-xl border border-amber-500/[0.08] bg-amber-500/[0.02] p-3">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Position FEN</span>
-              <button type="button" onClick={copyFen} className="btn-secondary h-7 px-2.5 text-[11px]">
+              <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                Position FEN
+              </span>
+              <button
+                type="button"
+                onClick={copyFen}
+                className="btn-secondary h-7 px-2.5 text-[11px]"
+              >
                 {fenCopied ? "✓ Copied" : "Copy"}
               </button>
             </div>
@@ -923,16 +1235,42 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
               onClick={onShowWinningLine}
             >
               {explaining ? (
-                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                <svg
+                  className="h-4 w-4 animate-spin"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
                 </svg>
               ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
                   <polygon points="5 3 19 12 5 21 5 3" />
                 </svg>
               )}
-              {explaining ? "Analyzing..." : animating ? "Animating..." : "Show winning line"}
+              {explaining
+                ? "Analyzing..."
+                : animating
+                  ? "Animating..."
+                  : "Show winning line"}
             </button>
 
             <button
@@ -941,13 +1279,41 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
               className="btn-secondary flex h-10 items-center gap-2 text-sm"
               onClick={onShowPunishment}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <circle cx="12" cy="12" r="10" />
                 <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
                 <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
               {explaining ? "..." : animating ? "..." : "Why it matters"}
             </button>
+
+            {onCreateCommunityPost ? (
+              <button
+                type="button"
+                onClick={onCreateCommunityPost}
+                className="flex h-10 items-center gap-2 rounded-xl border border-fuchsia-500/25 bg-fuchsia-500/10 px-4 text-sm font-semibold text-fuchsia-100 transition-all hover:bg-fuchsia-500/20 hover:text-white"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                >
+                  <path d="M12 5v14" />
+                  <path d="M5 12h14" />
+                </svg>
+                Post to community
+              </button>
+            ) : null}
 
             {animating && (
               <div className="ml-1 flex items-center gap-1 rounded-xl border border-white/[0.08] bg-white/[0.03] p-1">
@@ -957,7 +1323,12 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
                   onClick={stopAnimation}
                   title="Stop"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
                     <rect x="6" y="6" width="12" height="12" rx="2" />
                   </svg>
                 </button>
@@ -981,12 +1352,19 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <p className={`text-sm font-semibold ${
-                        tacticCards.type === "winning" ? "text-emerald-300" : "text-red-300"
-                      }`}>
+                      <p
+                        className={`text-sm font-semibold ${
+                          tacticCards.type === "winning"
+                            ? "text-emerald-300"
+                            : "text-red-300"
+                        }`}
+                      >
                         {tacticCards.type === "winning" ? "✓ " : "✗ "}
-                        <strong className="text-white">{tacticCards.move}</strong>
-                        {" — "}{tacticCards.impact}
+                        <strong className="text-white">
+                          {tacticCards.move}
+                        </strong>
+                        {" — "}
+                        {tacticCards.impact}
                       </p>
                       {tacticCards.evalAfter && (
                         <span className="shrink-0 rounded-md bg-emerald-500/15 px-2 py-0.5 text-[11px] font-mono font-bold tabular-nums text-emerald-400">
@@ -995,7 +1373,16 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
                       )}
                     </div>
                     <p className="mt-2 flex items-center gap-1 text-[11px] text-slate-500">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                      </svg>
                       Tap to see full explanation
                     </p>
                   </button>
@@ -1019,11 +1406,16 @@ export function TacticCard({ tactic, engineDepth }: TacticCardProps) {
             uciMoves={animLineUci}
             boardOrientation={boardOrientation}
             autoPlay
-            title={tacticCards?.type === "winning"
-              ? `Winning Move: ${bestMoveDetails?.san ?? tactic.bestMove}`
-              : `Your Move: ${userMoveDetails?.san ?? tactic.userMove}`
+            title={
+              tacticCards?.type === "winning"
+                ? `Winning Move: ${bestMoveDetails?.san ?? tactic.bestMove}`
+                : `Your Move: ${userMoveDetails?.san ?? tactic.userMove}`
             }
-            subtitle={isMate ? "Missed forced mate" : `Missed ${formatEvalLoss(tactic.cpLoss)} eval gain`}
+            subtitle={
+              isMate
+                ? "Missed forced mate"
+                : `Missed ${formatEvalLoss(tactic.cpLoss)} eval gain`
+            }
           />
         </div>
       </div>

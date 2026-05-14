@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CommunityPostAdminMenu } from "@/components/community-post-admin-menu";
 import { CommunityBoardPreview } from "@/components/community-board-preview";
 import { CommunityPuzzleInlinePlayer } from "@/components/community-puzzle-inline-player";
 import type { CommunityPostCard as CommunityPostCardData } from "@/lib/community";
@@ -68,16 +69,19 @@ export function CommunityPostCard({ post }: { post: CommunityPostCardData }) {
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.06),transparent_30%),radial-gradient(circle_at_85%_0%,rgba(56,189,248,0.1),transparent_36%),radial-gradient(circle_at_bottom_right,rgba(249,115,22,0.1),transparent_32%)] opacity-80" />
 
       <div className="relative flex h-full flex-col">
-        <div className="flex items-start justify-between gap-3 px-5 pt-5">
+        <div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-5">
           <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
             <span className={`rounded-full border px-3 py-1 ${theme.badge}`}>
               {COMMUNITY_KIND_LABELS[post.kind]}
             </span>
           </div>
 
-          <span className="shrink-0 pt-1 text-[11px] font-medium text-slate-500">
-            {createdAt}
-          </span>
+          <div className="ml-auto flex items-center gap-2">
+            <span className="shrink-0 pt-1 text-[11px] font-medium text-slate-500">
+              {createdAt}
+            </span>
+            <CommunityPostAdminMenu slug={post.slug} title={post.title} />
+          </div>
         </div>
 
         <div className="px-5 pt-4">
@@ -105,15 +109,14 @@ export function CommunityPostCard({ post }: { post: CommunityPostCardData }) {
               </div>
             ) : (
               <div className="relative overflow-hidden rounded-[1.3rem]">
-                <Link href={`/community/${post.slug}`} className="block">
-                  <CommunityBoardPreview
-                    fen={post.fen}
-                    pgn={post.pgn}
-                    orientation={post.orientation ?? "white"}
-                    size={420}
-                    showCoordinates={false}
-                  />
-                </Link>
+                <CommunityBoardPreview
+                  fen={post.fen}
+                  pgn={post.pgn}
+                  orientation={post.orientation ?? "white"}
+                  size={420}
+                  showCoordinates={false}
+                  href={`/community/${post.slug}`}
+                />
               </div>
             )}
           </div>
@@ -129,7 +132,7 @@ export function CommunityPostCard({ post }: { post: CommunityPostCardData }) {
             </p>
           </Link>
 
-          <div className="mt-auto flex items-center justify-between gap-3 pt-4">
+          <div className="mt-auto flex flex-wrap items-center justify-between gap-3 pt-4">
             <div className="flex min-w-0 items-center gap-3">
               {post.authorImage ? (
                 <img
@@ -160,7 +163,7 @@ export function CommunityPostCard({ post }: { post: CommunityPostCardData }) {
               </div>
             </div>
 
-            <span className="shrink-0 text-[11px] font-semibold text-slate-400">
+            <span className="ml-auto shrink-0 text-[11px] font-semibold text-slate-400">
               {formatSignalCount(totalSignals)}
             </span>
           </div>

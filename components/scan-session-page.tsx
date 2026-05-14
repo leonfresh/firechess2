@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CommunityPostComposerModal } from "@/components/community-post-composer-modal";
+import {
+  CommunityPostComposerModal,
+  type CommunityPostComposerSeed,
+} from "@/components/community-post-composer-modal";
 import { ScanSessionReport } from "@/components/scan-session-report";
 import { useSession } from "@/components/session-provider";
 import {
@@ -94,6 +97,9 @@ export function ScanSessionPage({
     "idle" | "resetting" | "error"
   >("idle");
   const [composerOpen, setComposerOpen] = useState(false);
+  const [composerSeed, setComposerSeed] = useState<CommunityPostComposerSeed>(
+    {},
+  );
   const [progress, setProgress] = useState<AnalysisProgress>({
     phase: "fetch",
     message: "Preparing scan",
@@ -119,13 +125,86 @@ export function ScanSessionPage({
   const topLeak = scan.result?.leaks[0] ?? null;
   const topTactic = scan.result?.missedTactics[0] ?? null;
   const topEndgame = scan.result?.endgameMistakes[0] ?? null;
+  const topTimeMoment = scan.result?.timeManagement?.moments?.[0] ?? null;
   const hasProAccess = plan === "pro" || plan === "lifetime";
+  const defaultComposerSeed = useMemo<CommunityPostComposerSeed>(() => {
+    if (topLeak) {
+      return {
+        initialKind: "position",
+        initialSourceType: "analysis",
+        initialFen: topLeak.fenBefore,
+        initialTitle: topLeak.openingName
+          ? `What is the right move in this ${topLeak.openingName}?`
+          : "What would you play in this report position?",
+        initialPrompt: topLeak.openingName
+          ? `My report flagged this ${topLeak.openingName} position. What would you play here, and why?`
+          : "My report flagged this position. What would you play here, and why?",
+        initialOpeningName: topLeak.openingName ?? "",
+        initialOrientation: topLeak.fenBefore.includes(" w ")
+          ? "white"
+          : "black",
+        initialPuzzleMoves: topLeak.bestMove ? [topLeak.bestMove] : [],
+      };
+    }
+
+    if (topTactic) {
+      return {
+        initialKind: "position",
+        initialSourceType: "analysis",
+        initialFen: topTactic.fenBefore,
+        initialTitle: `Find the missed tactic from game #${topTactic.gameIndex}`,
+        initialPrompt:
+          "My report flagged this as a missed tactic. What is the winning line here?",
+        initialOrientation: topTactic.fenBefore.includes(" w ")
+          ? "white"
+          : "black",
+        initialPuzzleMoves: topTactic.bestMove ? [topTactic.bestMove] : [],
+      };
+    }
+
+    if (topEndgame) {
+      return {
+        initialKind: "position",
+        initialSourceType: "endgame-scan",
+        initialFen: topEndgame.fenBefore,
+        initialTitle: `${topEndgame.endgameType} endgame from game #${topEndgame.gameIndex}`,
+        initialPrompt: `My report flagged this ${topEndgame.endgameType.toLowerCase()} endgame. What is the best move here?`,
+        initialOrientation: topEndgame.fenBefore.includes(" w ")
+          ? "white"
+          : "black",
+        initialPuzzleMoves: topEndgame.bestMove ? [topEndgame.bestMove] : [],
+      };
+    }
+
+    if (topTimeMoment) {
+      return {
+        initialKind: "position",
+        initialSourceType: "analysis",
+        initialFen: topTimeMoment.fen,
+        initialTitle: `Clock decision from game #${topTimeMoment.gameIndex}, move ${topTimeMoment.moveNumber}`,
+        initialPrompt: `My report tagged this as a ${topTimeMoment.verdict} time-management moment. What is the best move here?`,
+        initialOrientation: topTimeMoment.fen.includes(" w ")
+          ? "white"
+          : "black",
+        initialPuzzleMoves: topTimeMoment.bestMove
+          ? [topTimeMoment.bestMove]
+          : [],
+      };
+    }
+
+    return {};
+  }, [topEndgame, topLeak, topTactic, topTimeMoment]);
   const liveReportMeta = useMemo(
     () =>
       scan.reportMeta ??
       computeScanReportMeta(scan.result, scan.config.cpThreshold),
     [scan.config.cpThreshold, scan.reportMeta, scan.result],
   );
+
+  const openComposer = (seed?: CommunityPostComposerSeed) => {
+    setComposerSeed(seed ?? defaultComposerSeed);
+    setComposerOpen(true);
+  };
 
   useEffect(() => {
     if (!isOwner || scan.savedReportId || !scan.expiresAt) return;
@@ -256,7 +335,7 @@ export function ScanSessionPage({
   };
 
   const handleSave = async () => {
-    if (!scan.result || !scan.reportMeta) return;
+    if (!scan.result || !liveReportMeta) return;
 
     if (!authenticated) {
       signIn(undefined, { callbackUrl: window.location.href });
@@ -291,10 +370,10 @@ export function ScanSessionPage({
           maxMoves: scan.config.maxMoves,
           cpThreshold: scan.config.cpThreshold,
           engineDepth: scan.config.engineDepth,
-          estimatedAccuracy: scan.reportMeta.estimatedAccuracy,
-          estimatedRating: scan.reportMeta.estimatedRating,
-          weightedCpLoss: scan.reportMeta.weightedCpLoss,
-          severeLeakRate: scan.reportMeta.severeLeakRate,
+          estimatedAccuracy: liveReportMeta.estimatedAccuracy,
+          estimatedRating: liveReportMeta.estimatedRating,
+          weightedCpLoss: liveReportMeta.weightedCpLoss,
+          severeLeakRate: liveReportMeta.severeLeakRate,
           repeatedPositions: scan.result.repeatedPositions,
           leaks: scan.result.leaks,
           oneOffMistakes: scan.result.oneOffMistakes,
@@ -304,12 +383,13 @@ export function ScanSessionPage({
           timeManagement: scan.result.timeManagement ?? null,
           playerRating: scan.result.playerRating ?? null,
           reportMeta: {
-            consistencyScore: scan.reportMeta.consistencyScore,
-            p75CpLoss: scan.reportMeta.p75CpLoss,
-            confidence: scan.reportMeta.confidence,
-            topTag: scan.reportMeta.topTag,
-            vibeTitle: scan.reportMeta.vibeTitle,
-            sampleSize: scan.reportMeta.sampleSize,
+            consistencyScore: liveReportMeta.consistencyScore,
+            p75CpLoss: liveReportMeta.p75CpLoss,
+            confidence: liveReportMeta.confidence,
+            topTag: liveReportMeta.topTag,
+            vibeTitle: liveReportMeta.vibeTitle,
+            sampleSize: liveReportMeta.sampleSize,
+            endgameTechniqueScore: liveReportMeta.endgameTechniqueScore ?? null,
           },
           contentHash,
         }),
@@ -353,14 +433,14 @@ export function ScanSessionPage({
           chessUsername: scan.result.username,
           source: scan.config.source,
           topLeakOpenings: [],
-          accuracy: scan.reportMeta.estimatedAccuracy,
+          accuracy: liveReportMeta.estimatedAccuracy,
           leakCount: scan.result.leaks.length,
           repeatedPositions: scan.result.repeatedPositions,
           tacticsCount: scan.result.totalTacticsFound,
           gamesAnalyzed: scan.result.gamesAnalyzed,
-          weightedCpLoss: scan.reportMeta.weightedCpLoss,
-          severeLeakRate: scan.reportMeta.severeLeakRate,
-          estimatedRating: scan.reportMeta.estimatedRating,
+          weightedCpLoss: liveReportMeta.weightedCpLoss,
+          severeLeakRate: liveReportMeta.severeLeakRate,
+          estimatedRating: liveReportMeta.estimatedRating,
           scanMode: scan.config.scanMode,
         }),
       }).catch(() => undefined);
@@ -513,7 +593,7 @@ export function ScanSessionPage({
                 ) : null}
                 <button
                   type="button"
-                  onClick={() => setComposerOpen(true)}
+                  onClick={() => openComposer()}
                   aria-label="Make community post"
                   aria-haspopup="dialog"
                   className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-400/40 hover:text-white"
@@ -588,23 +668,11 @@ export function ScanSessionPage({
 
         <CommunityPostComposerModal
           open={composerOpen}
-          onClose={() => setComposerOpen(false)}
-          initialKind="position"
-          initialSourceType={topLeak ? "analysis" : "manual"}
-          initialFen={topLeak?.fenBefore ?? ""}
-          initialTitle={
-            topLeak?.openingName
-              ? `Fix this ${topLeak.openingName} leak`
-              : topLeak
-                ? "Fix this recurring opening leak"
-                : ""
-          }
-          initialPrompt={
-            topLeak
-              ? "What would you play here, and why is the engine move better?"
-              : ""
-          }
-          initialOpeningName={topLeak?.openingName ?? ""}
+          onClose={() => {
+            setComposerOpen(false);
+            setComposerSeed({});
+          }}
+          {...composerSeed}
         />
 
         {scan.status === "processing" ? (
@@ -676,6 +744,7 @@ export function ScanSessionPage({
             reportMeta={liveReportMeta}
             hasProAccess={hasProAccess}
             scanProgress={progress}
+            onCreateCommunityPost={openComposer}
           />
         ) : null}
       </div>

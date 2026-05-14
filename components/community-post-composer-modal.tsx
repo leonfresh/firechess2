@@ -7,6 +7,18 @@ import type {
   CommunitySourceType,
 } from "@/lib/community-shared";
 
+export type CommunityPostComposerSeed = {
+  initialKind?: CommunityPostKind;
+  initialSourceType?: CommunitySourceType;
+  initialFen?: string;
+  initialPgn?: string;
+  initialTitle?: string;
+  initialPrompt?: string;
+  initialOpeningName?: string;
+  initialOrientation?: "white" | "black";
+  initialPuzzleMoves?: string[];
+};
+
 export function CommunityPostComposerModal({
   open,
   onClose,
@@ -17,17 +29,12 @@ export function CommunityPostComposerModal({
   initialTitle = "",
   initialPrompt = "",
   initialOpeningName = "",
+  initialOrientation = "white",
+  initialPuzzleMoves = [],
 }: {
   open: boolean;
   onClose: () => void;
-  initialKind?: CommunityPostKind;
-  initialSourceType?: CommunitySourceType;
-  initialFen?: string;
-  initialPgn?: string;
-  initialTitle?: string;
-  initialPrompt?: string;
-  initialOpeningName?: string;
-}) {
+} & CommunityPostComposerSeed) {
   useEffect(() => {
     if (!open) return;
 
@@ -100,6 +107,8 @@ export function CommunityPostComposerModal({
             initialTitle={initialTitle}
             initialPrompt={initialPrompt}
             initialOpeningName={initialOpeningName}
+            initialOrientation={initialOrientation}
+            initialPuzzleMoves={initialPuzzleMoves}
             minimal
           />
         </div>

@@ -20,7 +20,7 @@ export type CommunityPuzzleLineMove = {
 export type CommunityPuzzleData = {
   startFen: string;
   orientation: "white" | "black";
-  previousMove: CommunityPuzzleLineMove;
+  previousMove?: CommunityPuzzleLineMove;
   solution: CommunityPuzzleLineMove[];
 };
 
@@ -109,14 +109,14 @@ export function coerceCommunityPuzzleData(
     return null;
   }
 
-  if (!previousMove || solution.length === 0) {
+  if (solution.length === 0) {
     return null;
   }
 
   return {
     startFen,
     orientation,
-    previousMove,
+    previousMove: previousMove ?? undefined,
     solution,
   };
 }
@@ -141,11 +141,12 @@ export function attachCommunityPuzzleDataToPgn(
     return cleanPgn || null;
   }
 
+  const encoded = encodeURIComponent(JSON.stringify(normalizedPuzzleData));
+
   if (!cleanPgn) {
-    return null;
+    return `[${COMMUNITY_PUZZLE_PGN_HEADER} "${encoded}"]`;
   }
 
-  const encoded = encodeURIComponent(JSON.stringify(normalizedPuzzleData));
   const segments = cleanPgn.split(/\n\s*\n/);
 
   if (segments.length > 1) {

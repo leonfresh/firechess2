@@ -4,19 +4,33 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess, type PieceSymbol } from "chess.js";
 import { stockfishClient } from "@/lib/stockfish-client";
 import { EvalBar } from "@/components/eval-bar";
-import { Chessboard, type CbSquare, type PromotionPieceOption } from "@/components/chessboard-compat";
+import {
+  Chessboard,
+  type CbSquare,
+  type PromotionPieceOption,
+} from "@/components/chessboard-compat";
 import { playSound } from "@/lib/sounds";
 import { useBoardSize } from "@/lib/use-board-size";
 import type { MoveSquare, RepeatedOpeningLeak } from "@/lib/types";
 import { fetchExplorerMoves, type ExplorerMove } from "@/lib/lichess-explorer";
-import { explainOpeningLeak, describeEndPosition, type MoveExplanation, type PositionExplanation } from "@/lib/position-explainer";
+import {
+  explainOpeningLeak,
+  describeEndPosition,
+  type MoveExplanation,
+  type PositionExplanation,
+} from "@/lib/position-explainer";
 import { SaveToRepertoireButton } from "@/components/opening-repertoire";
-import { useBoardTheme, useShowCoordinates, useCustomPieces } from "@/lib/use-coins";
+import {
+  useBoardTheme,
+  useShowCoordinates,
+  useCustomPieces,
+} from "@/lib/use-coins";
 import { ExplanationModal } from "@/components/explanation-modal";
 
 type MistakeCardProps = {
   leak: RepeatedOpeningLeak;
   engineDepth: number;
+  onCreateCommunityPost?: () => void;
 };
 
 type MoveDetails = {
@@ -111,11 +125,14 @@ function parseMove(move: string): MoveSquare | null {
   return {
     from: move.slice(0, 2),
     to: move.slice(2, 4),
-    promotion: move.slice(4, 5) || undefined
+    promotion: move.slice(4, 5) || undefined,
   };
 }
 
-function deriveMoveDetails(fen: string, move: string | null): MoveDetails | null {
+function deriveMoveDetails(
+  fen: string,
+  move: string | null,
+): MoveDetails | null {
   if (!move) return null;
 
   try {
@@ -128,7 +145,7 @@ function deriveMoveDetails(fen: string, move: string | null): MoveDetails | null
       const result = chess.move({
         from: parsed.from,
         to: parsed.to,
-        promotion: parsed.promotion as PieceSymbol | undefined
+        promotion: parsed.promotion as PieceSymbol | undefined,
       });
 
       if (!result) return null;
@@ -136,7 +153,7 @@ function deriveMoveDetails(fen: string, move: string | null): MoveDetails | null
         from: result.from,
         to: result.to,
         promotion: result.promotion ?? undefined,
-        san: result.san
+        san: result.san,
       };
     }
 
@@ -147,7 +164,7 @@ function deriveMoveDetails(fen: string, move: string | null): MoveDetails | null
       from: result.from,
       to: result.to,
       promotion: result.promotion ?? undefined,
-      san: result.san
+      san: result.san,
     };
   } catch {
     return null;
@@ -169,7 +186,7 @@ function formatPrincipalVariation(fen: string, uciMoves: string[]): string {
       const result = chess.move({
         from: parsed.from,
         to: parsed.to,
-        promotion: parsed.promotion as PieceSymbol | undefined
+        promotion: parsed.promotion as PieceSymbol | undefined,
       });
 
       if (!result) break;
@@ -187,7 +204,11 @@ function formatPrincipalVariation(fen: string, uciMoves: string[]): string {
   }
 }
 
-function classifyLossBadge(cpLoss: number, dbApproved?: boolean, explorerMove?: ExplorerMove | null): MoveBadge {
+function classifyLossBadge(
+  cpLoss: number,
+  dbApproved?: boolean,
+  explorerMove?: ExplorerMove | null,
+): MoveBadge {
   // Analysis-side DB approval (exact threshold match)
   if (dbApproved) return { label: "Sideline", color: "#6366f1" };
 
@@ -196,16 +217,25 @@ function classifyLossBadge(cpLoss: number, dbApproved?: boolean, explorerMove?: 
   // is needed before we call the move an inaccuracy/mistake.
   // Popular gambits (Budapest, Vienna, etc.) with 5K+ games in the DB get
   // a popularity bonus; very popular lines (50K+) are always flagged as sidelines.
-  if (explorerMove && explorerMove.totalGames >= 50 && explorerMove.winRate >= 0.35) {
+  if (
+    explorerMove &&
+    explorerMove.totalGames >= 50 &&
+    explorerMove.winRate >= 0.35
+  ) {
     // Very popular lines are always known openings
     if (explorerMove.totalGames >= 50000 && explorerMove.winRate >= 0.35) {
       return { label: "Sideline", color: "#6366f1" };
     }
     const dbScore = Math.min(
       300,
-      Math.log10(explorerMove.totalGames) * 40 * (explorerMove.winRate / 0.50),
+      Math.log10(explorerMove.totalGames) * 40 * (explorerMove.winRate / 0.5),
     );
-    const popularityBonus = explorerMove.totalGames >= 5000 ? 50 : explorerMove.totalGames >= 1000 ? 25 : 0;
+    const popularityBonus =
+      explorerMove.totalGames >= 5000
+        ? 50
+        : explorerMove.totalGames >= 1000
+          ? 25
+          : 0;
     if (cpLoss <= dbScore + popularityBonus) {
       return { label: "Sideline", color: "#6366f1" };
     }
@@ -230,31 +260,52 @@ function formatEval(valueCp: number, options?: { showPlus?: boolean }): string {
   }
   const evalPawns = valueCp / 100;
   const rounded = Math.round(evalPawns * 100) / 100;
-  const text = rounded.toFixed(2).replace(/\.00$/, "").replace(/(\.\d)0$/, "$1");
+  const text = rounded
+    .toFixed(2)
+    .replace(/\.00$/, "")
+    .replace(/(\.\d)0$/, "$1");
   if (options?.showPlus && rounded > 0) {
     return `+${text}`;
   }
   return text;
 }
 
-export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
+export function MistakeCard({
+  leak,
+  engineDepth,
+  onCreateCommunityPost,
+}: MistakeCardProps) {
   const { ref: boardSizeRef, size: boardSize } = useBoardSize(480);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
-  const badMove = useMemo(() => deriveMoveDetails(leak.fenBefore, leak.userMove), [leak.fenBefore, leak.userMove]);
-  const bestMove = useMemo(() => deriveMoveDetails(leak.fenBefore, leak.bestMove), [leak.fenBefore, leak.bestMove]);
-  const boardId = useMemo(() => `mistake-${leak.fenBefore.replace(/[^a-zA-Z0-9]/g, "-")}`, [leak.fenBefore]);
+  const badMove = useMemo(
+    () => deriveMoveDetails(leak.fenBefore, leak.userMove),
+    [leak.fenBefore, leak.userMove],
+  );
+  const bestMove = useMemo(
+    () => deriveMoveDetails(leak.fenBefore, leak.bestMove),
+    [leak.fenBefore, leak.bestMove],
+  );
+  const boardId = useMemo(
+    () => `mistake-${leak.fenBefore.replace(/[^a-zA-Z0-9]/g, "-")}`,
+    [leak.fenBefore],
+  );
   const boardOrientation = leak.sideToMove === "black" ? "black" : "white";
-  const whiteEvalBefore = leak.sideToMove === "white" ? leak.evalBefore : -leak.evalBefore;
-  const whiteEvalAfter = leak.sideToMove === "white" ? leak.evalAfter : -leak.evalAfter;
+  const whiteEvalBefore =
+    leak.sideToMove === "white" ? leak.evalBefore : -leak.evalBefore;
+  const whiteEvalAfter =
+    leak.sideToMove === "white" ? leak.evalAfter : -leak.evalAfter;
 
   const [fen, setFen] = useState(leak.fenBefore);
   const [explaining, setExplaining] = useState(false);
   const [animating, setAnimating] = useState(false);
   const [explanation, setExplanation] = useState("");
-  const [richExplanation, setRichExplanation] = useState<PositionExplanation | null>(null);
-  const [activeExplainTab, setActiveExplainTab] = useState<"played" | "best" | "db" | null>(null);
+  const [richExplanation, setRichExplanation] =
+    useState<PositionExplanation | null>(null);
+  const [activeExplainTab, setActiveExplainTab] = useState<
+    "played" | "best" | "db" | null
+  >(null);
   const [explainModalOpen, setExplainModalOpen] = useState(false);
   const [animLineUci, setAnimLineUci] = useState<string[]>([]);
   const [altLineUci, setAltLineUci] = useState<string[]>([]);
@@ -275,7 +326,10 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   const [freeplayEvalCp, setFreeplayEvalCp] = useState<number | null>(null);
   const [freeplayHistory, setFreeplayHistory] = useState<string[]>([]); // stack of FENs for undo
   const [freeplayEvaluating, setFreeplayEvaluating] = useState(false);
-  const [freeplayBadge, setFreeplayBadge] = useState<{ label: string; color: string } | null>(null);
+  const [freeplayBadge, setFreeplayBadge] = useState<{
+    label: string;
+    color: string;
+  } | null>(null);
   const freeplayBadgeTimer = useRef<number | null>(null);
   const [fpLastMoveTo, setFpLastMoveTo] = useState<string | null>(null);
   const [fpLastMoveFrom, setFpLastMoveFrom] = useState<string | null>(null);
@@ -318,7 +372,9 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     // Restore hidden piece opacity
     const el = boardContainerRef.current;
     if (el && dragSourceSq.current) {
-      const sq = el.querySelector(`[data-square="${dragSourceSq.current}"]`) as HTMLElement | null;
+      const sq = el.querySelector(
+        `[data-square="${dragSourceSq.current}"]`,
+      ) as HTMLElement | null;
       if (sq) {
         const pieceEl = sq.querySelector("[data-piece]") as HTMLElement | null;
         if (pieceEl) pieceEl.style.opacity = "1";
@@ -344,7 +400,9 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     // Find the piece image in the square
     const el = boardContainerRef.current;
     if (!el) return;
-    const sqEl = el.querySelector(`[data-square="${square}"]`) as HTMLElement | null;
+    const sqEl = el.querySelector(
+      `[data-square="${square}"]`,
+    ) as HTMLElement | null;
     if (!sqEl) return;
     const pieceEl = sqEl.querySelector("[data-piece]") as HTMLElement | null;
     // Try to find an <img> or <svg> inside, or clone the whole piece element
@@ -383,9 +441,12 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     isDragging.current = true;
 
     // Also set selection highlight
-    const moves = chess.moves({ square: square as Parameters<Chess["moves"]>[0]["square"], verbose: true });
+    const moves = chess.moves({
+      square: square as Parameters<Chess["moves"]>[0]["square"],
+      verbose: true,
+    });
     setFpSelectedSq(square);
-    setFpLegalMoves(moves.map(m => m.to));
+    setFpLegalMoves(moves.map((m) => m.to));
 
     // Capture pointer for smooth tracking
     (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
@@ -414,7 +475,9 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     const piece = chess.get(sourceSquare as Parameters<Chess["get"]>[0]);
     if (piece?.type === "p") {
       const targetRank = parseInt(targetSquare[1]);
-      const isPromo = (piece.color === "w" && targetRank === 8) || (piece.color === "b" && targetRank === 1);
+      const isPromo =
+        (piece.color === "w" && targetRank === 8) ||
+        (piece.color === "b" && targetRank === 1);
       if (isPromo) {
         setFpPromoFrom(sourceSquare);
         setFpPromoTo(targetSquare);
@@ -430,13 +493,30 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
 
   // Cleanup drag on unmount or mode change
   useEffect(() => {
-    return () => { cleanupDrag(); };
+    return () => {
+      cleanupDrag();
+    };
   }, [freeplayMode]);
 
   // Pre-compute coaching explanations once
   const coaching = useMemo<MoveExplanation>(
-    () => explainOpeningLeak(leak.fenBefore, leak.userMove, leak.bestMove, leak.cpLoss, leak.evalBefore, leak.evalAfter),
-    [leak.fenBefore, leak.userMove, leak.bestMove, leak.cpLoss, leak.evalBefore, leak.evalAfter],
+    () =>
+      explainOpeningLeak(
+        leak.fenBefore,
+        leak.userMove,
+        leak.bestMove,
+        leak.cpLoss,
+        leak.evalBefore,
+        leak.evalAfter,
+      ),
+    [
+      leak.fenBefore,
+      leak.userMove,
+      leak.bestMove,
+      leak.cpLoss,
+      leak.evalBefore,
+      leak.evalAfter,
+    ],
   );
 
   /* ── Lichess explorer database moves ── */
@@ -446,8 +526,11 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   const [dbPick, setDbPick] = useState<ExplorerMove | null>(null);
   const [dbPickApproved, setDbPickApproved] = useState(false);
   const [showExplorer, setShowExplorer] = useState(false);
-  const [userMoveExplorerData, setUserMoveExplorerData] = useState<ExplorerMove | null>(null);
-  const [openingName, setOpeningName] = useState<string | null>(leak.openingName ?? null);
+  const [userMoveExplorerData, setUserMoveExplorerData] =
+    useState<ExplorerMove | null>(null);
+  const [openingName, setOpeningName] = useState<string | null>(
+    leak.openingName ?? null,
+  );
   const moveBadge = useMemo(
     () => classifyLossBadge(leak.cpLoss, leak.dbApproved, userMoveExplorerData),
     [leak.cpLoss, leak.dbApproved, userMoveExplorerData],
@@ -470,7 +553,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
 
       // Check if the user's move is in the explorer with decent stats
       const userMoveInDb = filteredMoves.find(
-        (m) => m.uci === leak.userMove || m.san === leak.userMove
+        (m) => m.uci === leak.userMove || m.san === leak.userMove,
       );
       if (userMoveInDb && userMoveInDb.totalGames >= 50) {
         setUserMoveExplorerData(userMoveInDb);
@@ -485,7 +568,10 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
         if (isDifferent) {
           // Engine-check: make sure the DB move doesn't lose significant eval
           try {
-            const moveDetails = deriveMoveDetails(leak.fenBefore, result.topPick.uci);
+            const moveDetails = deriveMoveDetails(
+              leak.fenBefore,
+              result.topPick.uci,
+            );
             if (moveDetails) {
               const afterDb = new Chess(leak.fenBefore);
               const moved = afterDb.move({
@@ -494,7 +580,10 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                 promotion: moveDetails.promotion as PieceSymbol | undefined,
               });
               if (moved) {
-                const evalResult = await stockfishClient.evaluateFen(afterDb.fen(), 10);
+                const evalResult = await stockfishClient.evaluateFen(
+                  afterDb.fen(),
+                  10,
+                );
                 if (evalResult && !cancelled) {
                   // Compare: eval after DB move vs eval before (from side-to-move perspective)
                   const evalAfterDb = -evalResult.cp; // flip because it's now opponent's turn
@@ -521,8 +610,16 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
         }
       }
     });
-    return () => { cancelled = true; };
-  }, [leak.fenBefore, leak.sideToMove, leak.bestMove, leak.userMove, leak.evalBefore]);
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    leak.fenBefore,
+    leak.sideToMove,
+    leak.bestMove,
+    leak.userMove,
+    leak.evalBefore,
+  ]);
 
   const [animEvalCp, setAnimEvalCp] = useState<number | null>(null);
 
@@ -531,7 +628,15 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     if (animEvalCp !== null) return animEvalCp;
     if (fen === leak.fenAfter) return whiteEvalAfter;
     return whiteEvalBefore;
-  }, [fen, leak.fenAfter, whiteEvalAfter, whiteEvalBefore, animEvalCp, freeplayMode, freeplayEvalCp]);
+  }, [
+    fen,
+    leak.fenAfter,
+    whiteEvalAfter,
+    whiteEvalBefore,
+    animEvalCp,
+    freeplayMode,
+    freeplayEvalCp,
+  ]);
 
   const clearTimers = () => {
     timerIds.current.forEach((timerId) => window.clearTimeout(timerId));
@@ -557,7 +662,10 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
       if (fenCopiedTimerRef.current) {
         window.clearTimeout(fenCopiedTimerRef.current);
       }
-      fenCopiedTimerRef.current = window.setTimeout(() => setFenCopied(false), 1200);
+      fenCopiedTimerRef.current = window.setTimeout(
+        () => setFenCopied(false),
+        1200,
+      );
     } catch {
       setExplanation("Could not copy FEN to clipboard on this browser.");
     }
@@ -590,13 +698,16 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                 const rank = String(8 - r);
                 const kingSq = `${file}${rank}`;
                 styles[kingSq] = {
-                  background: "radial-gradient(circle, rgba(239, 68, 68, 0.85) 0%, rgba(239, 68, 68, 0.45) 40%, rgba(239, 68, 68, 0.15) 70%, transparent 100%)",
+                  background:
+                    "radial-gradient(circle, rgba(239, 68, 68, 0.85) 0%, rgba(239, 68, 68, 0.45) 40%, rgba(239, 68, 68, 0.15) 70%, transparent 100%)",
                 };
               }
             }
           }
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
 
       // Selection + legal move dots (drawn on top of last-move highlights)
       if (fpSelectedSq) {
@@ -606,12 +717,22 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
           for (const sq of fpLegalMoves) {
             const hasPiece = chess.get(sq as Parameters<Chess["get"]>[0]);
             if (hasPiece) {
-              styles[sq] = { background: "radial-gradient(circle, transparent 55%, rgba(0,0,0,0.25) 55%)", borderRadius: "50%" };
+              styles[sq] = {
+                background:
+                  "radial-gradient(circle, transparent 55%, rgba(0,0,0,0.25) 55%)",
+                borderRadius: "50%",
+              };
             } else {
-              styles[sq] = { background: "radial-gradient(circle, rgba(0,0,0,0.25) 25%, transparent 25%)", borderRadius: "50%" };
+              styles[sq] = {
+                background:
+                  "radial-gradient(circle, rgba(0,0,0,0.25) 25%, transparent 25%)",
+                borderRadius: "50%",
+              };
             }
           }
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       }
       return styles;
     }
@@ -620,9 +741,18 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
 
     return {
       [badMove.from]: { backgroundColor: "rgba(239, 68, 68, 0.45)" },
-      [badMove.to]: { backgroundColor: "rgba(239, 68, 68, 0.45)" }
+      [badMove.to]: { backgroundColor: "rgba(239, 68, 68, 0.45)" },
     };
-  }, [animating, badMove, freeplayMode, fpSelectedSq, fpLegalMoves, fen, fpLastMoveFrom, fpLastMoveTo]);
+  }, [
+    animating,
+    badMove,
+    freeplayMode,
+    fpSelectedSq,
+    fpLegalMoves,
+    fen,
+    fpLastMoveFrom,
+    fpLastMoveTo,
+  ]);
 
   const customArrows = useMemo(() => {
     if (animating) {
@@ -631,7 +761,11 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
 
     const arrows: [BoardSquare, BoardSquare, string?][] = [];
 
-    if (bestMove && isBoardSquare(bestMove.from) && isBoardSquare(bestMove.to)) {
+    if (
+      bestMove &&
+      isBoardSquare(bestMove.from) &&
+      isBoardSquare(bestMove.to)
+    ) {
       arrows.push([bestMove.from, bestMove.to, "rgba(34, 197, 94, 0.9)"]);
     }
 
@@ -640,7 +774,13 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     }
 
     // 3rd arrow: Lichess database pick (blue) — only if engine-approved
-    if (dbPick && dbPickApproved && dbPickMove && isBoardSquare(dbPickMove.from) && isBoardSquare(dbPickMove.to)) {
+    if (
+      dbPick &&
+      dbPickApproved &&
+      dbPickMove &&
+      isBoardSquare(dbPickMove.from) &&
+      isBoardSquare(dbPickMove.to)
+    ) {
       arrows.push([dbPickMove.from, dbPickMove.to, "rgba(59, 130, 246, 0.85)"]);
     }
 
@@ -648,7 +788,9 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   }, [animating, badMove, bestMove, dbPick, dbPickApproved, dbPickMove]);
 
   /* ── Freeplay helpers ── */
-  const classifyFreeplayBadge = (cpLoss: number): { label: string; color: string } => {
+  const classifyFreeplayBadge = (
+    cpLoss: number,
+  ): { label: string; color: string } => {
     if (cpLoss <= 10) return { label: "Best", color: "#10b981" };
     if (cpLoss <= 50) return { label: "Good", color: "#22d3ee" };
     if (cpLoss <= 100) return { label: "Inaccuracy", color: "#f97316" };
@@ -708,21 +850,28 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     setFpLastMoveFrom(null);
     setFpLastMoveTo(null);
     // Re-evaluate the previous position
-    stockfishClient.evaluateFen(prevFen, 10).then((ev) => {
-      if (ev) {
-        const whiteEv = prevFen.includes(" w ") ? ev.cp : -ev.cp;
-        setFreeplayEvalCp(whiteEv);
-      }
-    }).catch(() => {});
+    stockfishClient
+      .evaluateFen(prevFen, 10)
+      .then((ev) => {
+        if (ev) {
+          const whiteEv = prevFen.includes(" w ") ? ev.cp : -ev.cp;
+          setFreeplayEvalCp(whiteEv);
+        }
+      })
+      .catch(() => {});
   };
 
-  const executeFreeplayMove = (sourceSquare: string, targetSquare: string, promotion?: string) => {
+  const executeFreeplayMove = (
+    sourceSquare: string,
+    targetSquare: string,
+    promotion?: string,
+  ) => {
     try {
       const chess = new Chess(fen);
       const result = chess.move({
         from: sourceSquare,
         to: targetSquare,
-        promotion: (promotion as PieceSymbol | undefined),
+        promotion: promotion as PieceSymbol | undefined,
       });
       if (!result) return false;
 
@@ -736,7 +885,8 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
       setFpLastMoveTo(targetSquare);
 
       // Sound
-      if (result.san.includes("+") || result.san.includes("#")) playSound("check");
+      if (result.san.includes("+") || result.san.includes("#"))
+        playSound("check");
       else if (result.captured) playSound("capture");
       else playSound("move");
 
@@ -750,23 +900,34 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
           ]);
           if (afterEval) {
             // Eval from white's perspective
-            const whiteEvAfter = newFen.includes(" w ") ? afterEval.cp : -afterEval.cp;
+            const whiteEvAfter = newFen.includes(" w ")
+              ? afterEval.cp
+              : -afterEval.cp;
             setFreeplayEvalCp(whiteEvAfter);
 
             // Compute cpLoss for the mover
             if (beforeEval) {
               const moverColor = beforeFen.includes(" w ") ? "w" : "b";
-              const moverEvBefore = moverColor === "w" ? beforeEval.cp : -beforeEval.cp;
-              const moverEvAfter = moverColor === "w" ? (-afterEval.cp) : afterEval.cp;
+              const moverEvBefore =
+                moverColor === "w" ? beforeEval.cp : -beforeEval.cp;
+              const moverEvAfter =
+                moverColor === "w" ? -afterEval.cp : afterEval.cp;
               const cpLoss = Math.max(0, moverEvBefore - moverEvAfter);
               const badge = classifyFreeplayBadge(cpLoss);
               setFreeplayBadge(badge);
-              if (freeplayBadgeTimer.current) window.clearTimeout(freeplayBadgeTimer.current);
-              freeplayBadgeTimer.current = window.setTimeout(() => setFreeplayBadge(null), 3000);
+              if (freeplayBadgeTimer.current)
+                window.clearTimeout(freeplayBadgeTimer.current);
+              freeplayBadgeTimer.current = window.setTimeout(
+                () => setFreeplayBadge(null),
+                3000,
+              );
             }
           }
-        } catch { /* best-effort */ }
-        finally { setFreeplayEvaluating(false); }
+        } catch {
+          /* best-effort */
+        } finally {
+          setFreeplayEvaluating(false);
+        }
       })();
 
       return true;
@@ -775,7 +936,11 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     }
   };
 
-  const onFreeplayDrop = (sourceSquare: string, targetSquare: string, piece: string) => {
+  const onFreeplayDrop = (
+    sourceSquare: string,
+    targetSquare: string,
+    piece: string,
+  ) => {
     const promotion = piece[1]?.toLowerCase();
     return executeFreeplayMove(sourceSquare, targetSquare, promotion);
   };
@@ -795,7 +960,9 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
         const piece = chess.get(fpSelectedSq as Parameters<Chess["get"]>[0]);
         if (piece?.type === "p") {
           const targetRank = parseInt(square[1]);
-          const isPromo = (piece.color === "w" && targetRank === 8) || (piece.color === "b" && targetRank === 1);
+          const isPromo =
+            (piece.color === "w" && targetRank === 8) ||
+            (piece.color === "b" && targetRank === 1);
           if (isPromo) {
             setFpPromoFrom(fpSelectedSq);
             setFpPromoTo(square);
@@ -813,8 +980,11 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     const pieceOnSquare = chess.get(square as Parameters<Chess["get"]>[0]);
     if (pieceOnSquare && pieceOnSquare.color === sideToMove) {
       setFpSelectedSq(square);
-      const moves = chess.moves({ square: square as Parameters<Chess["moves"]>[0]["square"], verbose: true });
-      setFpLegalMoves(moves.map(m => m.to));
+      const moves = chess.moves({
+        square: square as Parameters<Chess["moves"]>[0]["square"],
+        verbose: true,
+      });
+      setFpLegalMoves(moves.map((m) => m.to));
     } else {
       setFpSelectedSq(null);
       setFpLegalMoves([]);
@@ -839,7 +1009,12 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     return ((props: any) => {
       const square = props?.square as string | undefined;
       // In freeplay, show badge on destination square of last move
-      if (freeplayMode && fpLastMoveTo && square === fpLastMoveTo && freeplayBadge) {
+      if (
+        freeplayMode &&
+        fpLastMoveTo &&
+        square === fpLastMoveTo &&
+        freeplayBadge
+      ) {
         return (
           <div style={props?.style} className="relative h-full w-full">
             {props?.children}
@@ -852,7 +1027,8 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
           </div>
         );
       }
-      const showBadge = !freeplayMode && !animating && !!badMove && square === badMove.to;
+      const showBadge =
+        !freeplayMode && !animating && !!badMove && square === badMove.to;
 
       return (
         <div style={props?.style} className="relative h-full w-full">
@@ -868,7 +1044,15 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
         </div>
       );
     }) as any;
-  }, [animating, badMove, moveBadge.color, moveBadge.label, freeplayMode, fpLastMoveTo, freeplayBadge]);
+  }, [
+    animating,
+    badMove,
+    moveBadge.color,
+    moveBadge.label,
+    freeplayMode,
+    fpLastMoveTo,
+    freeplayBadge,
+  ]);
 
   const moveToUci = (move: MoveDetails | null): string | null => {
     if (!move) return null;
@@ -876,21 +1060,31 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
   };
 
   /** Replay UCI moves from a starting FEN — returns the final FEN or null on failure */
-  const computeFinalFen = (startFen: string, uciMoves: string[]): string | null => {
+  const computeFinalFen = (
+    startFen: string,
+    uciMoves: string[],
+  ): string | null => {
     try {
       const sim = new Chess(startFen);
       for (const uci of uciMoves) {
         if (!isUci(uci)) return null;
         const p = parseMove(uci);
         if (!p) return null;
-        const r = sim.move({ from: p.from, to: p.to, promotion: p.promotion as PieceSymbol | undefined });
+        const r = sim.move({
+          from: p.from,
+          to: p.to,
+          promotion: p.promotion as PieceSymbol | undefined,
+        });
         if (!r) return null;
       }
       return sim.fen();
-    } catch { return null; }
+    } catch {
+      return null;
+    }
   };
 
-  const userPerspective = leak.sideToMove === "white" ? "w" as const : "b" as const;
+  const userPerspective =
+    leak.sideToMove === "white" ? ("w" as const) : ("b" as const);
 
   const animateSequence = (startFen: string, uciMoves: string[]) => {
     clearTimers();
@@ -953,13 +1147,16 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     setFen(chess.fen());
 
     // Evaluate position at this step for eval bar
-    stockfishClient.evaluateFen(step.fen, 8).then((evalResult) => {
-      if (evalResult) {
-        const turn = new Chess(step.fen).turn();
-        const whiteEval = turn === "w" ? evalResult.cp : -evalResult.cp;
-        setAnimEvalCp(whiteEval);
-      }
-    }).catch(() => {});
+    stockfishClient
+      .evaluateFen(step.fen, 8)
+      .then((evalResult) => {
+        if (evalResult) {
+          const turn = new Chess(step.fen).turn();
+          const whiteEval = turn === "w" ? evalResult.cp : -evalResult.cp;
+          setAnimEvalCp(whiteEval);
+        }
+      })
+      .catch(() => {});
   };
 
   const pvNext = () => {
@@ -985,7 +1182,7 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     return () => {
       if (autoplayTimer.current) window.clearTimeout(autoplayTimer.current);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pvAutoplay, animating, pvStepIndex, pvSteps.length]);
 
   const stopAnimation = () => {
@@ -1029,16 +1226,23 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
       const playedResult = afterPlayed.move({
         from: playedParsed.from,
         to: playedParsed.to,
-        promotion: playedParsed.promotion as PieceSymbol | undefined
+        promotion: playedParsed.promotion as PieceSymbol | undefined,
       });
 
       if (!playedResult) return;
 
-      const line = await stockfishClient.getPrincipalVariation(afterPlayed.fen(), 10, 12);
+      const line = await stockfishClient.getPrincipalVariation(
+        afterPlayed.fen(),
+        10,
+        12,
+      );
       if (!line) return;
 
       const sanLine: string[] = [playedResult.san];
-      const continuation = formatPrincipalVariation(afterPlayed.fen(), line.pvMoves);
+      const continuation = formatPrincipalVariation(
+        afterPlayed.fen(),
+        line.pvMoves,
+      );
       if (continuation) sanLine.push(continuation);
 
       // Compute the final FEN for position outlook
@@ -1047,25 +1251,37 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
       let outlookObs: string[] = [];
       if (finalFen) {
         const finalEval = await stockfishClient.evaluateFen(finalFen, 8);
-        const outlook = describeEndPosition(finalFen, userPerspective, finalEval?.cp ?? null);
-        if (outlook.summary) outlookObs.push(`**Position outlook**: ${outlook.summary}`);
-        outlookObs = outlookObs.concat(outlook.details.map(d => `  · ${d}`));
+        const outlook = describeEndPosition(
+          finalFen,
+          userPerspective,
+          finalEval?.cp ?? null,
+        );
+        if (outlook.summary)
+          outlookObs.push(`**Position outlook**: ${outlook.summary}`);
+        outlookObs = outlookObs.concat(outlook.details.map((d) => `  · ${d}`));
       }
 
       // Append the PV + outlook to the coaching text
-      setRichExplanation(prev => prev ? {
-        ...prev,
-        observations: [
-          ...prev.observations,
-          `**Engine punishment line**: ${sanLine.join(" ")}`,
-          ...outlookObs,
-        ]
-      } : prev);
+      setRichExplanation((prev) =>
+        prev
+          ? {
+              ...prev,
+              observations: [
+                ...prev.observations,
+                `**Engine punishment line**: ${sanLine.join(" ")}`,
+                ...outlookObs,
+              ],
+            }
+          : prev,
+      );
 
       setAnimLineUci(fullMistakeLine);
       setExplainModalOpen(true);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to explain this position.";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to explain this position.";
       setExplanation(message);
     } finally {
       setExplaining(false);
@@ -1086,7 +1302,9 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     try {
       const bestUci = moveToUci(bestMove);
       if (!bestUci) {
-        setExplanation("Could not parse the highlighted best move for this position.");
+        setExplanation(
+          "Could not parse the highlighted best move for this position.",
+        );
         return;
       }
 
@@ -1102,16 +1320,26 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
       const moved = bestFenChess.move({
         from: parsed.from,
         to: parsed.to,
-        promotion: parsed.promotion as PieceSymbol | undefined
+        promotion: parsed.promotion as PieceSymbol | undefined,
       });
 
       if (!moved) return;
 
-      const bestEval = await stockfishClient.evaluateFen(bestFenChess.fen(), engineDepth);
-      const continuation = await stockfishClient.getPrincipalVariation(bestFenChess.fen(), 9, engineDepth);
+      const bestEval = await stockfishClient.evaluateFen(
+        bestFenChess.fen(),
+        engineDepth,
+      );
+      const continuation = await stockfishClient.getPrincipalVariation(
+        bestFenChess.fen(),
+        9,
+        engineDepth,
+      );
       bestContinuationMoves = continuation?.pvMoves ?? [];
 
-      const pvText = formatPrincipalVariation(leak.fenBefore, [bestUci, ...bestContinuationMoves]);
+      const pvText = formatPrincipalVariation(leak.fenBefore, [
+        bestUci,
+        ...bestContinuationMoves,
+      ]);
 
       // Position outlook for the best line end position
       const fullBestLine = [bestUci, ...bestContinuationMoves];
@@ -1119,25 +1347,38 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
       let bestOutlookObs: string[] = [];
       if (bestFinalFen) {
         const fe = await stockfishClient.evaluateFen(bestFinalFen, 8);
-        const outlook = describeEndPosition(bestFinalFen, userPerspective, fe?.cp ?? null);
-        if (outlook.summary) bestOutlookObs.push(`**Position outlook**: ${outlook.summary}`);
-        bestOutlookObs = bestOutlookObs.concat(outlook.details.map(d => `  · ${d}`));
+        const outlook = describeEndPosition(
+          bestFinalFen,
+          userPerspective,
+          fe?.cp ?? null,
+        );
+        if (outlook.summary)
+          bestOutlookObs.push(`**Position outlook**: ${outlook.summary}`);
+        bestOutlookObs = bestOutlookObs.concat(
+          outlook.details.map((d) => `  · ${d}`),
+        );
       }
 
       // Append eval, PV, and outlook to coaching observations
       const extraObs: string[] = [];
       if (bestEval) {
-        extraObs.push(`**Eval after best move**: ${formatEval(-bestEval.cp, { showPlus: true })}`);
+        extraObs.push(
+          `**Eval after best move**: ${formatEval(-bestEval.cp, { showPlus: true })}`,
+        );
       }
       if (pvText) {
         extraObs.push(`**Engine best line**: ${pvText}`);
       }
       extraObs.push(...bestOutlookObs);
       if (extraObs.length > 0) {
-        setRichExplanation(prev => prev ? {
-          ...prev,
-          observations: [...prev.observations, ...extraObs]
-        } : prev);
+        setRichExplanation((prev) =>
+          prev
+            ? {
+                ...prev,
+                observations: [...prev.observations, ...extraObs],
+              }
+            : prev,
+        );
       }
 
       // ── Detect natural recapture ("if they take?") ──
@@ -1146,33 +1387,53 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
       try {
         const destSq = bestUci.slice(2, 4);
         const oppMoves = bestFenChess.moves({ verbose: true });
-        const captureMoves = oppMoves.filter(m => m.to === destSq && (m.flags.includes('c') || m.flags.includes('e')));
+        const captureMoves = oppMoves.filter(
+          (m) =>
+            m.to === destSq && (m.flags.includes("c") || m.flags.includes("e")),
+        );
         if (captureMoves.length > 0) {
-          const pieceOrder: string[] = ['p','n','b','r','q','k'];
-          captureMoves.sort((a, b) => pieceOrder.indexOf(a.piece) - pieceOrder.indexOf(b.piece));
+          const pieceOrder: string[] = ["p", "n", "b", "r", "q", "k"];
+          captureMoves.sort(
+            (a, b) => pieceOrder.indexOf(a.piece) - pieceOrder.indexOf(b.piece),
+          );
           const recapture = captureMoves[0];
-          const recaptureUci = `${recapture.from}${recapture.to}${recapture.promotion ?? ''}`;
+          const recaptureUci = `${recapture.from}${recapture.to}${recapture.promotion ?? ""}`;
           // Set the 2-move baseline immediately
           fullNaturalLine = [bestUci, recaptureUci];
           naturalLabel = `If ${recapture.san}?`;
           // Then try to extend with engine continuation
           try {
             const afterRecapChess = new Chess(bestFenChess.fen());
-            afterRecapChess.move({ from: recapture.from, to: recapture.to, promotion: recapture.promotion as PieceSymbol | undefined });
-            const recapPv = await stockfishClient.getPrincipalVariation(afterRecapChess.fen(), 9, engineDepth);
+            afterRecapChess.move({
+              from: recapture.from,
+              to: recapture.to,
+              promotion: recapture.promotion as PieceSymbol | undefined,
+            });
+            const recapPv = await stockfishClient.getPrincipalVariation(
+              afterRecapChess.fen(),
+              9,
+              engineDepth,
+            );
             if (recapPv?.pvMoves?.length) {
               fullNaturalLine = [bestUci, recaptureUci, ...recapPv.pvMoves];
             }
-          } catch { /* keep 2-move baseline */ }
+          } catch {
+            /* keep 2-move baseline */
+          }
         }
-      } catch { /* skip natural recapture */ }
+      } catch {
+        /* skip natural recapture */
+      }
 
       setAltLineUci(fullNaturalLine);
       setAltLineLabel(naturalLabel);
       setAnimLineUci(fullBestLine);
       setExplainModalOpen(true);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to explain this position.";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to explain this position.";
       setExplanation(message);
     } finally {
       setExplaining(false);
@@ -1209,22 +1470,35 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
       }
 
       const winPct = (dbPick.winRate * 100).toFixed(1);
-      const gamesText = dbPick.totalGames >= 1_000
-        ? `${(dbPick.totalGames / 1_000).toFixed(0)}K`
-        : dbPick.totalGames.toLocaleString();
+      const gamesText =
+        dbPick.totalGames >= 1_000
+          ? `${(dbPick.totalGames / 1_000).toFixed(0)}K`
+          : dbPick.totalGames.toLocaleString();
 
       // Build rich explanation for DB move
       const dbObservations: string[] = [];
 
-      const evalResult = await stockfishClient.evaluateFen(afterDb.fen(), engineDepth);
+      const evalResult = await stockfishClient.evaluateFen(
+        afterDb.fen(),
+        engineDepth,
+      );
       if (evalResult) {
         const evalAfterDb = -evalResult.cp;
-        dbObservations.push(`**Eval after move**: ${formatEval(evalAfterDb, { showPlus: true })}`);
+        dbObservations.push(
+          `**Eval after move**: ${formatEval(evalAfterDb, { showPlus: true })}`,
+        );
       }
 
-      const continuation = await stockfishClient.getPrincipalVariation(afterDb.fen(), 9, engineDepth);
+      const continuation = await stockfishClient.getPrincipalVariation(
+        afterDb.fen(),
+        9,
+        engineDepth,
+      );
       const contMoves = continuation?.pvMoves ?? [];
-      const pvText = formatPrincipalVariation(leak.fenBefore, [dbUci, ...contMoves]);
+      const pvText = formatPrincipalVariation(leak.fenBefore, [
+        dbUci,
+        ...contMoves,
+      ]);
       if (pvText) {
         dbObservations.push(`**Likely continuation**: ${pvText}`);
       }
@@ -1234,9 +1508,14 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
       const dbFinalFen = computeFinalFen(leak.fenBefore, fullDbLine);
       if (dbFinalFen) {
         const fe = await stockfishClient.evaluateFen(dbFinalFen, 8);
-        const outlook = describeEndPosition(dbFinalFen, userPerspective, fe?.cp ?? null);
-        if (outlook.summary) dbObservations.push(`**Position outlook**: ${outlook.summary}`);
-        outlook.details.forEach(d => dbObservations.push(`  · ${d}`));
+        const outlook = describeEndPosition(
+          dbFinalFen,
+          userPerspective,
+          fe?.cp ?? null,
+        );
+        if (outlook.summary)
+          dbObservations.push(`**Position outlook**: ${outlook.summary}`);
+        outlook.details.forEach((d) => dbObservations.push(`  · ${d}`));
       }
 
       setRichExplanation({
@@ -1254,7 +1533,10 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
       setAnimLineUci(fullLine);
       setExplainModalOpen(true);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to explain this position.";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to explain this position.";
       setExplanation(message);
     } finally {
       setExplaining(false);
@@ -1265,7 +1547,10 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
     <article className="glass-card-hover overflow-hidden">
       <div className="grid gap-0 md:grid-cols-[minmax(0,520px)_1fr]">
         {/* Board side */}
-        <div ref={boardSizeRef} className="relative overflow-hidden border-b border-white/[0.04] bg-white/[0.01] p-3 sm:p-5 md:border-b-0 md:border-r">
+        <div
+          ref={boardSizeRef}
+          className="relative overflow-hidden border-b border-white/[0.04] bg-white/[0.01] p-3 sm:p-5 md:border-b-0 md:border-r"
+        >
           <div className="mx-auto flex w-full max-w-[460px] items-start gap-2 sm:gap-3">
             <EvalBar evalCp={displayedEvalCp} height={boardSize} />
             <div
@@ -1282,16 +1567,24 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                 position={fen}
                 arePiecesDraggable={false}
                 onSquareClick={freeplayMode ? onFreeplaySquareClick : undefined}
-                onPromotionPieceSelect={freeplayMode ? onFreeplayPromoPick : undefined}
+                onPromotionPieceSelect={
+                  freeplayMode ? onFreeplayPromoPick : undefined
+                }
                 showPromotionDialog={freeplayMode && showFpPromo}
-                promotionToSquare={(freeplayMode && fpPromoTo) as CbSquare | undefined}
+                promotionToSquare={
+                  (freeplayMode && fpPromoTo) as CbSquare | undefined
+                }
                 customSquare={customSquare}
                 customSquareStyles={customSquareStyles}
                 customArrows={freeplayMode ? [] : customArrows}
                 boardOrientation={boardOrientation}
                 boardWidth={boardSize}
-                customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-                customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                customDarkSquareStyle={{
+                  backgroundColor: boardTheme.darkSquare,
+                }}
+                customLightSquareStyle={{
+                  backgroundColor: boardTheme.lightSquare,
+                }}
                 customBoardStyle={{ borderRadius: "12px", overflow: "hidden" }}
                 showBoardNotation={showCoords}
                 customPieces={customPieces}
@@ -1303,9 +1596,13 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
           {freeplayMode && (
             <div className="mx-auto mt-2 flex w-full max-w-[460px] items-center justify-between pl-[27px]">
               <div className="flex items-center gap-1.5">
-                <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">Freeplay</span>
+                <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                  Freeplay
+                </span>
                 {freeplayEvaluating && (
-                  <span className="text-[10px] text-slate-500 animate-pulse">Evaluating…</span>
+                  <span className="text-[10px] text-slate-500 animate-pulse">
+                    Evaluating…
+                  </span>
                 )}
                 {freeplayBadge && !freeplayEvaluating && (
                   <span
@@ -1317,7 +1614,8 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                 )}
                 {freeplayHistory.length > 1 && (
                   <span className="text-[10px] tabular-nums text-slate-500">
-                    {freeplayHistory.length - 1} move{freeplayHistory.length - 1 !== 1 ? "s" : ""}
+                    {freeplayHistory.length - 1} move
+                    {freeplayHistory.length - 1 !== 1 ? "s" : ""}
                   </span>
                 )}
               </div>
@@ -1330,7 +1628,17 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                   disabled={freeplayHistory.length <= 1}
                   title="Undo move"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <polyline points="1 4 1 10 7 10" />
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                  </svg>
                 </button>
                 {/* Reset */}
                 <button
@@ -1340,7 +1648,17 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                   disabled={freeplayHistory.length <= 1}
                   title="Reset to starting position"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                    <path d="M3 3v5h5" />
+                  </svg>
                 </button>
                 {/* Exit freeplay */}
                 <button
@@ -1349,7 +1667,17 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                   onClick={exitFreeplay}
                   title="Exit freeplay"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
                 </button>
               </div>
             </div>
@@ -1363,7 +1691,17 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                 className="flex h-7 items-center gap-1.5 rounded-lg border border-white/[0.06] bg-white/[0.03] px-2.5 text-[11px] text-slate-400 transition-colors hover:border-emerald-500/20 hover:bg-emerald-500/[0.06] hover:text-emerald-400"
                 onClick={enterFreeplay}
               >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <polygon points="10 8 16 12 10 16 10 8" />
+                </svg>
                 Freeplay
               </button>
             </div>
@@ -1383,102 +1721,173 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
               </span>
               {leak.reachCount > 1 && leak.moveCount > 1 && (
                 <span className="flex items-center gap-1 rounded-lg bg-fuchsia-500/15 px-2 py-1 text-[10px] font-bold text-fuchsia-400">
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 014-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 01-4 4H3"/></svg>
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <path d="M17 1l4 4-4 4" />
+                    <path d="M3 11V9a4 4 0 014-4h14" />
+                    <path d="M7 23l-4-4 4-4" />
+                    <path d="M21 13v2a4 4 0 01-4 4H3" />
+                  </svg>
                   Repeated
                 </span>
               )}
-              {moveBadge.label === "Sideline" && (() => {
-                const wr = leak.dbApproved && leak.dbWinRate != null ? leak.dbWinRate : userMoveExplorerData?.winRate;
-                return wr != null ? (
-                  <span className="flex items-center gap-1 rounded-lg bg-indigo-500/15 px-2 py-1 text-[10px] font-bold text-indigo-400">
-                    📚 Known Line
-                  </span>
-                ) : null;
-              })()}
+              {moveBadge.label === "Sideline" &&
+                (() => {
+                  const wr =
+                    leak.dbApproved && leak.dbWinRate != null
+                      ? leak.dbWinRate
+                      : userMoveExplorerData?.winRate;
+                  return wr != null ? (
+                    <span className="flex items-center gap-1 rounded-lg bg-indigo-500/15 px-2 py-1 text-[10px] font-bold text-indigo-400">
+                      📚 Known Line
+                    </span>
+                  ) : null;
+                })()}
               {openingName && (
-                <span className="rounded-lg bg-white/[0.04] px-2 py-1 text-[10px] font-medium text-slate-400">{openingName}</span>
+                <span className="rounded-lg bg-white/[0.04] px-2 py-1 text-[10px] font-medium text-slate-400">
+                  {openingName}
+                </span>
               )}
             </div>
 
             <h3 className="mt-2 text-lg font-bold text-white">
-              {moveBadge.label === "Sideline" ? "Offbeat Sideline" : "Repeated Opening Leak"}
+              {moveBadge.label === "Sideline"
+                ? "Offbeat Sideline"
+                : "Repeated Opening Leak"}
             </h3>
           </div>
 
           {/* KEY INSIGHT — Pattern Detected callout (hero-style) */}
           <div className="rounded-xl border border-white/[0.08] bg-gradient-to-br from-white/[0.04] to-white/[0.01] p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Pattern Detected</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+              Pattern Detected
+            </p>
             <p className="mt-2 text-[13px] leading-relaxed text-slate-200">
               You reached this position{" "}
-              <span className="rounded-md bg-amber-500/15 px-1.5 py-0.5 font-bold text-amber-400">{leak.reachCount}×</span>{" "}
+              <span className="rounded-md bg-amber-500/15 px-1.5 py-0.5 font-bold text-amber-400">
+                {leak.reachCount}×
+              </span>{" "}
               and played{" "}
-              <span className="rounded-md bg-red-500/15 px-1.5 py-0.5 font-mono font-bold text-red-400">{badMove?.san ?? leak.userMove}</span>{" "}
-              <span className="rounded-md bg-amber-500/15 px-1.5 py-0.5 font-bold text-amber-400">{leak.moveCount}×</span>
+              <span className="rounded-md bg-red-500/15 px-1.5 py-0.5 font-mono font-bold text-red-400">
+                {badMove?.san ?? leak.userMove}
+              </span>{" "}
+              <span className="rounded-md bg-amber-500/15 px-1.5 py-0.5 font-bold text-amber-400">
+                {leak.moveCount}×
+              </span>
             </p>
             <div className="mt-3 flex items-center gap-2">
               <span className="text-[10px] text-slate-500">Better:</span>
-              <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 font-mono text-sm font-bold text-emerald-400">{bestMove?.san ?? "N/A"}</span>
+              <span className="rounded-md bg-emerald-500/15 px-2 py-0.5 font-mono text-sm font-bold text-emerald-400">
+                {bestMove?.san ?? "N/A"}
+              </span>
             </div>
           </div>
 
           {/* Offbeat sideline banner — from analysis or card's explorer lookup */}
-          {moveBadge.label === "Sideline" && (() => {
-            const wr = leak.dbApproved && leak.dbWinRate != null ? leak.dbWinRate : userMoveExplorerData?.winRate;
-            const gm = leak.dbApproved && leak.dbGames != null ? leak.dbGames : userMoveExplorerData?.totalGames;
-            return wr != null && gm != null ? (
-              <div className="flex items-center gap-3 rounded-xl border border-indigo-500/20 bg-indigo-500/[0.06] px-3.5 py-2.5">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/20 text-lg">
-                  📚
+          {moveBadge.label === "Sideline" &&
+            (() => {
+              const wr =
+                leak.dbApproved && leak.dbWinRate != null
+                  ? leak.dbWinRate
+                  : userMoveExplorerData?.winRate;
+              const gm =
+                leak.dbApproved && leak.dbGames != null
+                  ? leak.dbGames
+                  : userMoveExplorerData?.totalGames;
+              return wr != null && gm != null ? (
+                <div className="flex items-center gap-3 rounded-xl border border-indigo-500/20 bg-indigo-500/[0.06] px-3.5 py-2.5">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/20 text-lg">
+                    📚
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-indigo-400/70">
+                      Known Opening Line
+                    </p>
+                    <p className="mt-0.5 text-xs text-slate-400">
+                      Your move{" "}
+                      <span className="font-mono font-bold text-slate-300">
+                        {badMove?.san}
+                      </span>{" "}
+                      is played in{" "}
+                      <span className="font-semibold text-slate-300">
+                        {gm.toLocaleString()}
+                      </span>{" "}
+                      database games with a{" "}
+                      <span className="font-semibold text-indigo-400">
+                        {(wr * 100).toFixed(0)}%
+                      </span>{" "}
+                      win rate. The engine prefers a different approach, but
+                      this is a well-known sideline with practical results.
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-medium uppercase tracking-wider text-indigo-400/70">
-                    Known Opening Line
-                  </p>
-                  <p className="mt-0.5 text-xs text-slate-400">
-                    Your move <span className="font-mono font-bold text-slate-300">{badMove?.san}</span> is played in{" "}
-                    <span className="font-semibold text-slate-300">{gm.toLocaleString()}</span> database games
-                    with a <span className="font-semibold text-indigo-400">{(wr * 100).toFixed(0)}%</span> win rate.
-                    The engine prefers a different approach, but this is a well-known sideline with practical results.
-                  </p>
-                </div>
-              </div>
-            ) : null;
-          })()}
+              ) : null;
+            })()}
 
           {/* Low-confidence explorer note for non-sideline inaccuracies */}
-          {moveBadge.label === "Inaccuracy" && userMoveExplorerData && userMoveExplorerData.winRate >= 0.45 && (
-            <div className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-3.5 py-2.5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 text-sm">
-                ✅
+          {moveBadge.label === "Inaccuracy" &&
+            userMoveExplorerData &&
+            userMoveExplorerData.winRate >= 0.45 && (
+              <div className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.06] px-3.5 py-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/20 text-sm">
+                  ✅
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-emerald-400/70">
+                    Practical Opening Choice
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-400">
+                    Your move{" "}
+                    <span className="font-mono font-bold text-slate-300">
+                      {badMove?.san}
+                    </span>{" "}
+                    is played in{" "}
+                    <span className="font-semibold text-slate-300">
+                      {userMoveExplorerData.totalGames.toLocaleString()}
+                    </span>{" "}
+                    games with a{" "}
+                    <span className="font-semibold text-emerald-400">
+                      {(userMoveExplorerData.winRate * 100).toFixed(0)}%
+                    </span>{" "}
+                    win rate. The engine slightly prefers another move, but this
+                    is a fine choice against human players.
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] font-medium uppercase tracking-wider text-emerald-400/70">
-                  Practical Opening Choice
-                </p>
-                <p className="mt-0.5 text-xs text-slate-400">
-                  Your move <span className="font-mono font-bold text-slate-300">{badMove?.san}</span> is played in{" "}
-                  <span className="font-semibold text-slate-300">{userMoveExplorerData.totalGames.toLocaleString()}</span> games
-                  with a <span className="font-semibold text-emerald-400">{(userMoveExplorerData.winRate * 100).toFixed(0)}%</span> win rate.
-                  The engine slightly prefers another move, but this is a fine choice against human players.
-                </p>
-              </div>
-            </div>
-          )}
+            )}
 
           {/* Eval Shift (hero-style) */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">Eval Shift</span>
-              <span className="rounded-md bg-red-500/10 px-2 py-0.5 text-xs font-bold text-red-400">{formatEval(leak.cpLoss)} lost</span>
+              <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+                Eval Shift
+              </span>
+              <span className="rounded-md bg-red-500/10 px-2 py-0.5 text-xs font-bold text-red-400">
+                {formatEval(leak.cpLoss)} lost
+              </span>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="rounded-lg border border-white/[0.06] bg-white/[0.025] px-3 py-2.5 text-center">
-                <p className="text-[9px] font-medium uppercase tracking-wider text-slate-500">Before</p>
-                <p className="mt-0.5 text-lg font-bold text-slate-200">{formatEval(whiteEvalBefore, { showPlus: true })}</p>
+                <p className="text-[9px] font-medium uppercase tracking-wider text-slate-500">
+                  Before
+                </p>
+                <p className="mt-0.5 text-lg font-bold text-slate-200">
+                  {formatEval(whiteEvalBefore, { showPlus: true })}
+                </p>
               </div>
               <div className="rounded-lg border border-red-500/20 bg-red-500/[0.04] px-3 py-2.5 text-center">
-                <p className="text-[9px] font-medium uppercase tracking-wider text-slate-500">After</p>
-                <p className="mt-0.5 text-lg font-bold text-red-400">{formatEval(whiteEvalAfter, { showPlus: true })}</p>
+                <p className="text-[9px] font-medium uppercase tracking-wider text-slate-500">
+                  After
+                </p>
+                <p className="mt-0.5 text-lg font-bold text-red-400">
+                  {formatEval(whiteEvalAfter, { showPlus: true })}
+                </p>
               </div>
             </div>
           </div>
@@ -1490,228 +1899,303 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
             const l = leak.userLosses ?? 0;
             const total = w + d + l;
             if (total === 0) return null;
-            const pct = ((w + 0.5 * d) / total * 100).toFixed(0);
-            const barW = total > 0 ? (w / total * 100) : 0;
-            const barD = total > 0 ? (d / total * 100) : 0;
-            const barL = total > 0 ? (l / total * 100) : 0;
+            const pct = (((w + 0.5 * d) / total) * 100).toFixed(0);
+            const barW = total > 0 ? (w / total) * 100 : 0;
+            const barD = total > 0 ? (d / total) * 100 : 0;
+            const barL = total > 0 ? (l / total) * 100 : 0;
             const pctNum = parseFloat(pct);
-            const pctColor = pctNum >= 55 ? "text-emerald-400" : pctNum >= 45 ? "text-amber-400" : "text-red-400";
+            const pctColor =
+              pctNum >= 55
+                ? "text-emerald-400"
+                : pctNum >= 45
+                  ? "text-amber-400"
+                  : "text-red-400";
             return (
               <div className="stat-card px-3.5 py-3">
                 <div className="flex items-center justify-between">
-                  <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">Your Record With This Line</p>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                    Your Record With This Line
+                  </p>
                   <p className={`text-sm font-bold ${pctColor}`}>{pct}%</p>
                 </div>
                 <div className="mt-2 flex gap-0.5 overflow-hidden rounded-full h-2">
-                  {barW > 0 && <div className="bg-emerald-500" style={{ width: `${barW}%` }} />}
-                  {barD > 0 && <div className="bg-slate-400" style={{ width: `${barD}%` }} />}
-                  {barL > 0 && <div className="bg-red-500" style={{ width: `${barL}%` }} />}
+                  {barW > 0 && (
+                    <div
+                      className="bg-emerald-500"
+                      style={{ width: `${barW}%` }}
+                    />
+                  )}
+                  {barD > 0 && (
+                    <div
+                      className="bg-slate-400"
+                      style={{ width: `${barD}%` }}
+                    />
+                  )}
+                  {barL > 0 && (
+                    <div className="bg-red-500" style={{ width: `${barL}%` }} />
+                  )}
                 </div>
                 <div className="mt-1.5 flex items-center justify-between text-[10px] text-slate-500">
-                  <span><span className="font-semibold text-emerald-400">{w}W</span> · <span className="font-semibold text-slate-400">{d}D</span> · <span className="font-semibold text-red-400">{l}L</span></span>
-                  <span>{total} game{total !== 1 ? "s" : ""}</span>
+                  <span>
+                    <span className="font-semibold text-emerald-400">{w}W</span>{" "}
+                    · <span className="font-semibold text-slate-400">{d}D</span>{" "}
+                    · <span className="font-semibold text-red-400">{l}L</span>
+                  </span>
+                  <span>
+                    {total} game{total !== 1 ? "s" : ""}
+                  </span>
                 </div>
               </div>
             );
           })()}
 
           {/* Lichess Opening Explorer */}
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={() => setShowExplorer((v) => !v)}
-                className="flex w-full items-center gap-2 rounded-xl border border-blue-500/20 bg-blue-500/[0.06] px-3.5 py-2.5 text-left transition-colors hover:bg-blue-500/[0.1]"
-              >
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/20">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgb(59,130,246)" strokeWidth="2">
-                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-                  </svg>
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-medium uppercase tracking-wider text-blue-400/70">Opening Explorer</p>
-                  <p className="mt-0.5 text-xs text-slate-400">
-                    {explorerTotal > 0
-                      ? `What other players chose here · ${explorerTotal.toLocaleString()} games in database`
-                      : "See what other players chose in this position"}
-                  </p>
-                </div>
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => setShowExplorer((v) => !v)}
+              className="flex w-full items-center gap-2 rounded-xl border border-blue-500/20 bg-blue-500/[0.06] px-3.5 py-2.5 text-left transition-colors hover:bg-blue-500/[0.1]"
+            >
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/20">
                 <svg
-                  className={`h-4 w-4 shrink-0 text-blue-400/50 transition-transform ${showExplorer ? "rotate-180" : ""}`}
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="rgb(59,130,246)"
+                  strokeWidth="2"
                 >
-                  <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
                 </svg>
-              </button>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-blue-400/70">
+                  Opening Explorer
+                </p>
+                <p className="mt-0.5 text-xs text-slate-400">
+                  {explorerTotal > 0
+                    ? `What other players chose here · ${explorerTotal.toLocaleString()} games in database`
+                    : "See what other players chose in this position"}
+                </p>
+              </div>
+              <svg
+                className={`h-4 w-4 shrink-0 text-blue-400/50 transition-transform ${showExplorer ? "rotate-180" : ""}`}
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                  clipRule="evenodd"
+                />
+              </svg>
+            </button>
 
-              {showExplorer && (
-                <div className="animate-fade-in overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.02]">
-                  {explorerMoves.length > 0 ? (
+            {showExplorer && (
+              <div className="animate-fade-in overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.02]">
+                {explorerMoves.length > 0 ? (
                   <>
-                  {/* Info tooltip */}
-                  <div className="border-b border-white/[0.04] px-3.5 py-2">
-                    <p className="text-[11px] text-slate-500">
-                      Moves played by rated players (1600–2500) in this exact position on Lichess.
-                      Sorted by win rate. Popularity shown as % of total games.
-                    </p>
-                  </div>
+                    {/* Info tooltip */}
+                    <div className="border-b border-white/[0.04] px-3.5 py-2">
+                      <p className="text-[11px] text-slate-500">
+                        Moves played by rated players (1600–2500) in this exact
+                        position on Lichess. Sorted by win rate. Popularity
+                        shown as % of total games.
+                      </p>
+                    </div>
 
-                  {/* Table header */}
-                  <div className="grid grid-cols-[minmax(50px,1fr)_60px_1fr_50px] items-center gap-1 px-3.5 py-1.5 text-[10px] font-medium uppercase tracking-wider text-slate-500">
-                    <span>Move</span>
-                    <span className="text-right">Games</span>
-                    <span className="text-center">White / Draw / Black</span>
-                    <span className="text-right">Win%</span>
-                  </div>
+                    {/* Table header */}
+                    <div className="grid grid-cols-[minmax(50px,1fr)_60px_1fr_50px] items-center gap-1 px-3.5 py-1.5 text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                      <span>Move</span>
+                      <span className="text-right">Games</span>
+                      <span className="text-center">White / Draw / Black</span>
+                      <span className="text-right">Win%</span>
+                    </div>
 
-                  {/* Move rows */}
-                  {explorerMoves
-                    .sort((a, b) => b.winRate - a.winRate)
-                    .slice(0, 12)
-                    .map((m, idx) => {
-                      const total = m.white + m.draws + m.black;
-                      const wPct = total > 0 ? (m.white / total) * 100 : 0;
-                      const dPct = total > 0 ? (m.draws / total) * 100 : 0;
-                      const bPct = total > 0 ? (m.black / total) * 100 : 0;
-                      const popularity = explorerTotal > 0 ? (m.totalGames / explorerTotal) * 100 : 0;
-                      const isUserMove = m.uci === leak.userMove;
-                      const isBest = m.uci === leak.bestMove;
-                      const isDbPick = dbPick?.uci === m.uci;
+                    {/* Move rows */}
+                    {explorerMoves
+                      .sort((a, b) => b.winRate - a.winRate)
+                      .slice(0, 12)
+                      .map((m, idx) => {
+                        const total = m.white + m.draws + m.black;
+                        const wPct = total > 0 ? (m.white / total) * 100 : 0;
+                        const dPct = total > 0 ? (m.draws / total) * 100 : 0;
+                        const bPct = total > 0 ? (m.black / total) * 100 : 0;
+                        const popularity =
+                          explorerTotal > 0
+                            ? (m.totalGames / explorerTotal) * 100
+                            : 0;
+                        const isUserMove = m.uci === leak.userMove;
+                        const isBest = m.uci === leak.bestMove;
+                        const isDbPick = dbPick?.uci === m.uci;
 
-                      return (
-                        <div
-                          key={`${m.uci}-${idx}`}
-                          className={`grid grid-cols-[minmax(50px,1fr)_60px_1fr_50px] items-center gap-1 px-3.5 py-1.5 text-xs ${
-                            idx % 2 === 0 ? "bg-white/[0.01]" : ""
-                          } ${isDbPick ? "ring-1 ring-blue-500/30 bg-blue-500/[0.06]" : ""}`}
-                        >
-                          {/* Move name */}
-                          <div className="flex items-center gap-1.5">
-                            <span
-                              className={`font-mono font-semibold ${
-                                isBest
-                                  ? "text-emerald-400"
-                                  : isUserMove
-                                    ? "text-red-400"
-                                    : isDbPick
-                                      ? "text-blue-400"
-                                      : "text-slate-300"
-                              }`}
-                            >
-                              {m.san}
+                        return (
+                          <div
+                            key={`${m.uci}-${idx}`}
+                            className={`grid grid-cols-[minmax(50px,1fr)_60px_1fr_50px] items-center gap-1 px-3.5 py-1.5 text-xs ${
+                              idx % 2 === 0 ? "bg-white/[0.01]" : ""
+                            } ${isDbPick ? "ring-1 ring-blue-500/30 bg-blue-500/[0.06]" : ""}`}
+                          >
+                            {/* Move name */}
+                            <div className="flex items-center gap-1.5">
+                              <span
+                                className={`font-mono font-semibold ${
+                                  isBest
+                                    ? "text-emerald-400"
+                                    : isUserMove
+                                      ? "text-red-400"
+                                      : isDbPick
+                                        ? "text-blue-400"
+                                        : "text-slate-300"
+                                }`}
+                              >
+                                {m.san}
+                              </span>
+                              <span className="text-[10px] text-slate-500">
+                                {popularity.toFixed(0)}%
+                              </span>
+                            </div>
+
+                            {/* Game count */}
+                            <span className="text-right tabular-nums text-slate-400">
+                              {m.totalGames >= 1_000_000
+                                ? `${(m.totalGames / 1_000_000).toFixed(1)}M`
+                                : m.totalGames >= 1_000
+                                  ? `${(m.totalGames / 1_000).toFixed(0)}K`
+                                  : m.totalGames.toLocaleString()}
                             </span>
-                            <span className="text-[10px] text-slate-500">{popularity.toFixed(0)}%</span>
+
+                            {/* Win/Draw/Loss bar */}
+                            <div className="flex h-4 overflow-hidden rounded-sm">
+                              <div
+                                className="bg-white transition-all"
+                                style={{ width: `${wPct}%` }}
+                                title={`White wins: ${wPct.toFixed(1)}%`}
+                              />
+                              <div
+                                className="bg-slate-500 transition-all"
+                                style={{ width: `${dPct}%` }}
+                                title={`Draws: ${dPct.toFixed(1)}%`}
+                              />
+                              <div
+                                className="bg-slate-800 transition-all"
+                                style={{ width: `${bPct}%` }}
+                                title={`Black wins: ${bPct.toFixed(1)}%`}
+                              />
+                            </div>
+
+                            {/* Win rate */}
+                            <span className="text-right tabular-nums font-medium text-slate-300">
+                              {(m.winRate * 100).toFixed(0)}%
+                            </span>
                           </div>
+                        );
+                      })}
 
-                          {/* Game count */}
-                          <span className="text-right tabular-nums text-slate-400">
-                            {m.totalGames >= 1_000_000
-                              ? `${(m.totalGames / 1_000_000).toFixed(1)}M`
-                              : m.totalGames >= 1_000
-                                ? `${(m.totalGames / 1_000).toFixed(0)}K`
-                                : m.totalGames.toLocaleString()}
-                          </span>
-
-                          {/* Win/Draw/Loss bar */}
-                          <div className="flex h-4 overflow-hidden rounded-sm">
-                            <div
-                              className="bg-white transition-all"
-                              style={{ width: `${wPct}%` }}
-                              title={`White wins: ${wPct.toFixed(1)}%`}
-                            />
-                            <div
-                              className="bg-slate-500 transition-all"
-                              style={{ width: `${dPct}%` }}
-                              title={`Draws: ${dPct.toFixed(1)}%`}
-                            />
-                            <div
-                              className="bg-slate-800 transition-all"
-                              style={{ width: `${bPct}%` }}
-                              title={`Black wins: ${bPct.toFixed(1)}%`}
-                            />
-                          </div>
-
-                          {/* Win rate */}
-                          <span className="text-right tabular-nums font-medium text-slate-300">
-                            {(m.winRate * 100).toFixed(0)}%
-                          </span>
-                        </div>
-                      );
-                    })}
-
-                  {/* Legend */}
-                  <div className="flex items-center gap-4 border-t border-white/[0.04] px-3.5 py-2 text-[10px] text-slate-500">
-                    <span className="flex items-center gap-1">
-                      <span className="inline-block h-2 w-4 rounded-sm bg-white" /> White wins
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="inline-block h-2 w-4 rounded-sm bg-slate-500" /> Draw
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="inline-block h-2 w-4 rounded-sm bg-slate-800" /> Black wins
-                    </span>
-                    {explorerMoves.some((m) => m.uci === leak.bestMove) && (
+                    {/* Legend */}
+                    <div className="flex items-center gap-4 border-t border-white/[0.04] px-3.5 py-2 text-[10px] text-slate-500">
                       <span className="flex items-center gap-1">
-                        <span className="font-mono font-semibold text-emerald-400">Abc</span> = engine best
+                        <span className="inline-block h-2 w-4 rounded-sm bg-white" />{" "}
+                        White wins
                       </span>
-                    )}
-                    {explorerMoves.some((m) => m.uci === leak.userMove) && (
                       <span className="flex items-center gap-1">
-                        <span className="font-mono font-semibold text-red-400">Abc</span> = your move
+                        <span className="inline-block h-2 w-4 rounded-sm bg-slate-500" />{" "}
+                        Draw
                       </span>
-                    )}
-                  </div>
+                      <span className="flex items-center gap-1">
+                        <span className="inline-block h-2 w-4 rounded-sm bg-slate-800" />{" "}
+                        Black wins
+                      </span>
+                      {explorerMoves.some((m) => m.uci === leak.bestMove) && (
+                        <span className="flex items-center gap-1">
+                          <span className="font-mono font-semibold text-emerald-400">
+                            Abc
+                          </span>{" "}
+                          = engine best
+                        </span>
+                      )}
+                      {explorerMoves.some((m) => m.uci === leak.userMove) && (
+                        <span className="flex items-center gap-1">
+                          <span className="font-mono font-semibold text-red-400">
+                            Abc
+                          </span>{" "}
+                          = your move
+                        </span>
+                      )}
+                    </div>
                   </>
-                  ) : explorerLoading ? (
+                ) : explorerLoading ? (
                   <div className="px-3.5 py-4 text-center">
                     <div className="inline-flex items-center gap-2">
-                      <svg className="h-4 w-4 animate-spin text-blue-400" viewBox="0 0 24 24" fill="none">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      <svg
+                        className="h-4 w-4 animate-spin text-blue-400"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                        />
                       </svg>
-                      <p className="text-xs text-slate-400">Loading explorer data…</p>
+                      <p className="text-xs text-slate-400">
+                        Loading explorer data…
+                      </p>
                     </div>
                   </div>
-                  ) : (
+                ) : (
                   <div className="px-3.5 py-4 text-center">
                     <p className="text-xs text-slate-500">
-                      This position is too deep or rare for the Lichess database.
-                      No games with enough occurrences found.
+                      This position is too deep or rare for the Lichess
+                      database. No games with enough occurrences found.
                     </p>
                   </div>
-                  )}
-                </div>
-              )}
+                )}
+              </div>
+            )}
 
-              {/* DB pick highlight — only when approved */}
-              {dbPick && dbPickApproved && dbPickMove && (
-                <div className="flex items-center gap-3 rounded-xl border border-blue-500/20 bg-blue-500/[0.06] px-3.5 py-2.5">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/20 text-sm">
-                    📊
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-blue-400/70">
-                      Top Database Pick · Engine Approved ✓
-                    </p>
-                    <p className="mt-0.5 text-xs text-slate-400">
-                      <span className="font-mono font-bold text-blue-400">{dbPickMove.san}</span>
-                      {" "}has the highest win rate ({(dbPick.winRate * 100).toFixed(1)}%) among moves
-                      that don&apos;t lose significant eval.
-                      Shown as the{" "}
-                      <span className="inline-block h-2 w-2 rounded-full bg-blue-500" />{" "}
-                      blue arrow on the board.
-                    </p>
-                  </div>
+            {/* DB pick highlight — only when approved */}
+            {dbPick && dbPickApproved && dbPickMove && (
+              <div className="flex items-center gap-3 rounded-xl border border-blue-500/20 bg-blue-500/[0.06] px-3.5 py-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-500/20 text-sm">
+                  📊
                 </div>
-              )}
-            </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-blue-400/70">
+                    Top Database Pick · Engine Approved ✓
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-400">
+                    <span className="font-mono font-bold text-blue-400">
+                      {dbPickMove.san}
+                    </span>{" "}
+                    has the highest win rate (
+                    {(dbPick.winRate * 100).toFixed(1)}%) among moves that
+                    don&apos;t lose significant eval. Shown as the{" "}
+                    <span className="inline-block h-2 w-2 rounded-full bg-blue-500" />{" "}
+                    blue arrow on the board.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Tags */}
           {!!leak.tags?.length && (
             <div className="flex flex-wrap gap-1.5">
               {leak.tags.map((tag) => (
-                <span key={`${leak.fenBefore}-${tag}`} className="tag-emerald text-[11px]">
+                <span
+                  key={`${leak.fenBefore}-${tag}`}
+                  className="tag-emerald text-[11px]"
+                >
                   {tag}
                 </span>
               ))}
@@ -1723,7 +2207,9 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
             <div className="flex items-center">
               <SaveToRepertoireButton
                 fen={leak.fenBefore}
-                correctMove={typeof leak.bestMove === "string" ? leak.bestMove : ""}
+                correctMove={
+                  typeof leak.bestMove === "string" ? leak.bestMove : ""
+                }
                 userMove={leak.userMove}
                 tags={leak.tags ?? []}
                 sideToMove={leak.sideToMove}
@@ -1751,7 +2237,9 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
           {/* FEN block */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
             <div className="mb-2 flex items-center justify-between">
-              <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">Position FEN</span>
+              <span className="text-[11px] font-medium uppercase tracking-wider text-slate-500">
+                Position FEN
+              </span>
               <button
                 type="button"
                 onClick={copyFen}
@@ -1774,11 +2262,42 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
               onClick={onExplainBestMove}
             >
               {explaining ? (
-                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+                <svg
+                  className="h-4 w-4 animate-spin"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                  />
+                </svg>
               ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
               )}
-              {explaining ? "Explaining..." : animating ? "Animating..." : "Explain best move"}
+              {explaining
+                ? "Explaining..."
+                : animating
+                  ? "Animating..."
+                  : "Explain best move"}
             </button>
 
             <button
@@ -1787,9 +2306,41 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
               className="btn-secondary flex h-10 items-center gap-2 text-sm"
               onClick={onExplainMistake}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
               {explaining ? "..." : animating ? "..." : "Explain played move"}
             </button>
+
+            {onCreateCommunityPost ? (
+              <button
+                type="button"
+                onClick={onCreateCommunityPost}
+                className="flex h-10 items-center gap-2 rounded-xl border border-cyan-500/20 bg-cyan-500/10 px-4 text-sm font-semibold text-cyan-200 transition-all hover:bg-cyan-500/20 hover:text-white"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                >
+                  <path d="M12 5v14" />
+                  <path d="M5 12h14" />
+                </svg>
+                Post to community
+              </button>
+            ) : null}
 
             {dbPick && dbPickApproved && dbPickMove && (
               <button
@@ -1798,11 +2349,22 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                 className="flex h-10 items-center gap-2 rounded-xl border border-blue-500/30 bg-blue-500/[0.08] px-4 text-sm font-medium text-blue-400 transition-colors hover:bg-blue-500/[0.15] disabled:opacity-40"
                 onClick={onExplainDbMove}
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
-                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                  <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
                 </svg>
-                {explaining ? "..." : animating ? "..." : "Explain database move"}
+                {explaining
+                  ? "..."
+                  : animating
+                    ? "..."
+                    : "Explain database move"}
               </button>
             )}
 
@@ -1816,7 +2378,14 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                   disabled={pvStepIndex <= -1}
                   title="First"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
+                  </svg>
                 </button>
                 {/* Prev */}
                 <button
@@ -1826,19 +2395,40 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                   disabled={pvStepIndex <= -1}
                   title="Previous move"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z"/></svg>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6z" />
+                  </svg>
                 </button>
                 {/* Play / Pause */}
                 <button
                   type="button"
                   className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-white/[0.06] hover:text-white"
-                  onClick={() => setPvAutoplay(a => !a)}
+                  onClick={() => setPvAutoplay((a) => !a)}
                   title={pvAutoplay ? "Pause" : "Autoplay"}
                 >
                   {pvAutoplay ? (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6zm8-14v14h4V5z"/></svg>
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path d="M6 19h4V5H6zm8-14v14h4V5z" />
+                    </svg>
                   ) : (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                    >
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
                   )}
                 </button>
                 {/* Next */}
@@ -1849,7 +2439,14 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                   disabled={pvStepIndex >= pvSteps.length - 1}
                   title="Next move"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z"/></svg>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6z" />
+                  </svg>
                 </button>
                 {/* Last */}
                 <button
@@ -1859,7 +2456,14 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                   disabled={pvStepIndex >= pvSteps.length - 1}
                   title="Last"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12h2V6z"/></svg>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                  >
+                    <path d="M4 18l8.5-6L4 6v12zm9-12v12h2V6z" />
+                  </svg>
                 </button>
                 {/* Move counter */}
                 <span className="px-1.5 text-[11px] tabular-nums text-slate-500">
@@ -1872,7 +2476,17 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                   onClick={stopAnimation}
                   title="Stop and reset"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
                 </button>
               </div>
             )}
@@ -1885,7 +2499,13 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                 <>
                   {/* Tab header */}
                   <div className="flex items-center gap-2">
-                    {(["played", "best", ...(dbPick && dbPickApproved ? ["db" as const] : [])] as ("played" | "best" | "db")[]).map((tab) => (
+                    {(
+                      [
+                        "played",
+                        "best",
+                        ...(dbPick && dbPickApproved ? ["db" as const] : []),
+                      ] as ("played" | "best" | "db")[]
+                    ).map((tab) => (
                       <button
                         key={tab}
                         type="button"
@@ -1909,7 +2529,11 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                             : "bg-white/[0.04] text-slate-500 border border-transparent hover:bg-white/[0.08] hover:text-slate-400"
                         }`}
                       >
-                        {tab === "played" ? `Your Move (${badMove?.san ?? leak.userMove})` : tab === "best" ? `Best Move (${bestMove?.san ?? "?"})` : `DB Move (${dbPickMove?.san ?? "?"})`}
+                        {tab === "played"
+                          ? `Your Move (${badMove?.san ?? leak.userMove})`
+                          : tab === "best"
+                            ? `Best Move (${bestMove?.san ?? "?"})`
+                            : `DB Move (${dbPickMove?.san ?? "?"})`}
                       </button>
                     ))}
                   </div>
@@ -1927,47 +2551,78 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
                     }`}
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-medium text-slate-200" dangerouslySetInnerHTML={{
-                        __html: (richExplanation.moveDescription ?? richExplanation.headline)
-                          .replace(/\*\*(.+?)\*\*/g, '<strong class="text-white">$1</strong>')
-                      }} />
+                      <p
+                        className="text-sm font-medium text-slate-200"
+                        dangerouslySetInnerHTML={{
+                          __html: (
+                            richExplanation.moveDescription ??
+                            richExplanation.headline
+                          ).replace(
+                            /\*\*(.+?)\*\*/g,
+                            '<strong class="text-white">$1</strong>',
+                          ),
+                        }}
+                      />
                       {richExplanation.evalShift && (
-                        <span className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-mono font-bold tabular-nums ${
-                          activeExplainTab === "played"
-                            ? "bg-red-500/15 text-red-400"
-                            : activeExplainTab === "best"
-                              ? "bg-emerald-500/15 text-emerald-400"
-                              : "bg-blue-500/15 text-blue-400"
-                        }`}>
+                        <span
+                          className={`shrink-0 rounded-md px-2 py-0.5 text-[11px] font-mono font-bold tabular-nums ${
+                            activeExplainTab === "played"
+                              ? "bg-red-500/15 text-red-400"
+                              : activeExplainTab === "best"
+                                ? "bg-emerald-500/15 text-emerald-400"
+                                : "bg-blue-500/15 text-blue-400"
+                          }`}
+                        >
                           {richExplanation.evalShift}
                         </span>
                       )}
                     </div>
-                    <p className={`mt-1 text-[11px] font-medium ${
-                      activeExplainTab === "played" ? "text-red-400/70" : activeExplainTab === "best" ? "text-emerald-400/70" : "text-blue-400/70"
-                    }`}>
+                    <p
+                      className={`mt-1 text-[11px] font-medium ${
+                        activeExplainTab === "played"
+                          ? "text-red-400/70"
+                          : activeExplainTab === "best"
+                            ? "text-emerald-400/70"
+                            : "text-blue-400/70"
+                      }`}
+                    >
                       {richExplanation.headline}
                     </p>
 
                     {/* Theme pills preview (max 3) */}
-                    {richExplanation.themeCards && richExplanation.themeCards.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {richExplanation.themeCards.slice(0, 3).map((card, i) => (
-                          <span key={i} className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-0.5 text-[10px] font-medium text-slate-400">
-                            {card.icon} {card.label}
-                          </span>
-                        ))}
-                        {richExplanation.themeCards.length > 3 && (
-                          <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] text-slate-500">
-                            +{richExplanation.themeCards.length - 3} more
-                          </span>
-                        )}
-                      </div>
-                    )}
+                    {richExplanation.themeCards &&
+                      richExplanation.themeCards.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {richExplanation.themeCards
+                            .slice(0, 3)
+                            .map((card, i) => (
+                              <span
+                                key={i}
+                                className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-0.5 text-[10px] font-medium text-slate-400"
+                              >
+                                {card.icon} {card.label}
+                              </span>
+                            ))}
+                          {richExplanation.themeCards.length > 3 && (
+                            <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-[10px] text-slate-500">
+                              +{richExplanation.themeCards.length - 3} more
+                            </span>
+                          )}
+                        </div>
+                      )}
 
                     {/* Expand hint */}
                     <p className="mt-2 flex items-center gap-1 text-[11px] text-slate-500">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></svg>
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                      </svg>
                       Tap to see full explanation
                     </p>
                   </button>
@@ -1988,7 +2643,11 @@ export function MistakeCard({ leak, engineDepth }: MistakeCardProps) {
             plainExplanation={explanation || undefined}
             fen={leak.fenBefore}
             uciMoves={animLineUci}
-            altUciMoves={activeExplainTab === "best" && altLineUci.length > 0 ? altLineUci : undefined}
+            altUciMoves={
+              activeExplainTab === "best" && altLineUci.length > 0
+                ? altLineUci
+                : undefined
+            }
             altUciLabel={activeExplainTab === "best" ? altLineLabel : undefined}
             boardOrientation={boardOrientation}
             autoPlay

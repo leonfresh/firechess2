@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { CardCarousel } from "@/components/card-carousel";
+import type { CommunityPostComposerSeed } from "@/components/community-post-composer-modal";
 import { EndgameCard } from "@/components/endgame-card";
 import { MistakeCard } from "@/components/mistake-card";
 import {
@@ -9,25 +11,27 @@ import {
   ScanMentalGame,
 } from "@/components/scan-mental-game";
 import { OpeningRankings } from "@/components/opening-rankings";
-import { PersonalizedPuzzles } from "@/components/personalized-puzzles";
 import { ScanPositionalMotifs } from "@/components/scan-positional-motifs";
 import {
-  InsightCards,
   RadarLegend,
   StrengthsRadar,
   computeRadarData,
+  type RadarDimension,
 } from "@/components/radar-chart";
 import { TacticCard } from "@/components/tactic-card";
 import { TimeCard } from "@/components/time-card";
 import type { AnalysisProgress } from "@/lib/client-analysis";
+import { computeEndgameTechniqueScore } from "@/lib/scan-session";
 import type {
   ComputedScanReport,
   PublicScanSessionPayload,
 } from "@/lib/scan-session";
 import type {
+  EndgameMistake,
   MissedTactic,
   PositionalFinding,
   RepeatedOpeningLeak,
+  TimeMoment,
 } from "@/lib/types";
 
 const POSITIONAL_MOTIF_NAMES = new Set([
@@ -354,29 +358,6 @@ const MOTIF_DEFS: MotifDefinition[] = [
   },
 ];
 
-function AnalysisSectionSkeleton({ label }: { label: string }) {
-  return (
-    <div className="space-y-4 animate-pulse py-2">
-      {[1, 2, 3].map((index) => (
-        <div
-          key={index}
-          className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4"
-        >
-          <div className="flex gap-4">
-            <div className="h-16 w-16 shrink-0 rounded-xl bg-white/[0.08]" />
-            <div className="flex-1 space-y-2 pt-1">
-              <div className="h-3.5 w-3/4 rounded bg-white/[0.08]" />
-              <div className="h-3 w-1/2 rounded bg-white/[0.06]" />
-              <div className="h-3 w-2/3 rounded bg-white/[0.06]" />
-            </div>
-          </div>
-        </div>
-      ))}
-      <p className="text-center text-xs text-slate-500">{label}</p>
-    </div>
-  );
-}
-
 function EmptySection({ message }: { message: string }) {
   return (
     <div className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 text-sm text-slate-400 sm:p-6">
@@ -496,7 +477,7 @@ function RadarLoadingState({
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-2xl">
           <h2 className="text-lg font-bold text-white">
-            Strengths and weaknesses
+            Strengths and coaching
           </h2>
           <p className="mt-2 text-sm font-semibold text-white">{heading}</p>
           <p className="mt-1 text-sm leading-relaxed text-slate-400">
@@ -521,7 +502,44 @@ function RadarLoadingState({
         </div>
       )}
 
-      <div className="mt-5 grid gap-6 md:grid-cols-2">
+      <div className="mt-5 grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <div className="rounded-[1.75rem] border border-white/[0.08] bg-[radial-gradient(circle_at_top_right,_rgba(16,185,129,0.12),_rgba(15,23,42,0.82)_38%,_rgba(2,6,23,0.96)_100%)] p-6 sm:p-7">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+            Good news first
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-slate-300">
+            {isProcessing
+              ? "FireChess is still locking the strength profile, but this section stays visible so the report does not jump from metrics straight into weaknesses."
+              : "The confidence-first strengths summary appears here as soon as enough positions are scored."}
+          </p>
+          <div className="mt-4 space-y-2 animate-pulse">
+            <div className="h-4 w-4/5 rounded-full bg-white/[0.08]" />
+            <div className="h-4 w-3/5 rounded-full bg-white/[0.06]" />
+          </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          {["Current edge", "Also helping"].map((label) => (
+            <div
+              key={label}
+              className="rounded-[1.25rem] border border-white/[0.08] bg-white/[0.02] p-4 animate-pulse"
+            >
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                {label}
+              </p>
+              <div className="mt-3 flex items-center gap-3">
+                <div className="h-11 w-11 shrink-0 rounded-2xl bg-white/[0.08]" />
+                <div className="min-w-0 flex-1">
+                  <div className="h-3 w-2/3 rounded-full bg-white/[0.08]" />
+                  <div className="mt-2 h-2.5 w-full rounded-full bg-white/[0.06]" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-5 grid gap-6 xl:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
         <div className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.02] p-5">
           <div className="mx-auto flex aspect-square w-full max-w-[22rem] items-center justify-center rounded-full border border-white/[0.08] bg-[radial-gradient(circle,_rgba(34,211,238,0.08),_rgba(15,23,42,0.18)_52%,_rgba(2,6,23,0.08)_100%)]">
             <div className="flex flex-col items-center gap-3 text-center">
@@ -536,22 +554,330 @@ function RadarLoadingState({
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
-          {["Accuracy", "Opening Prep", "Tactical Eye", "Composure"].map(
-            (label) => (
-              <div
-                key={label}
-                className="rounded-[1.25rem] border border-white/[0.08] bg-white/[0.02] p-4 animate-pulse"
-              >
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                  {label}
-                </p>
-                <div className="mt-3 h-3 w-3/4 rounded-full bg-white/[0.08]" />
-                <div className="mt-2 h-2.5 w-1/2 rounded-full bg-white/[0.06]" />
-              </div>
-            ),
-          )}
+        <div className="space-y-4">
+          <div className="rounded-[1.75rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6 animate-pulse">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              Coach&apos;s note
+            </p>
+            <div className="mt-4 h-3 w-full rounded-full bg-white/[0.08]" />
+            <div className="mt-2 h-3 w-11/12 rounded-full bg-white/[0.06]" />
+            <div className="mt-2 h-3 w-4/5 rounded-full bg-white/[0.06]" />
+          </div>
+
+          <div className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.02] p-5 sm:p-6">
+            <div className="max-w-2xl">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                Profile outline
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-slate-400">
+                The detailed readout appears here as soon as the strength map
+                stabilizes.
+              </p>
+            </div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {["Accuracy", "Opening Prep", "Tactical Eye", "Composure"].map(
+                (label) => (
+                  <div
+                    key={label}
+                    className="rounded-[1.25rem] border border-white/[0.08] bg-white/[0.02] p-4 animate-pulse"
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      {label}
+                    </p>
+                    <div className="mt-3 h-3 w-3/4 rounded-full bg-white/[0.08]" />
+                    <div className="mt-2 h-2.5 w-1/2 rounded-full bg-white/[0.06]" />
+                  </div>
+                ),
+              )}
+            </div>
+          </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function FollowUpStatusRow({
+  label,
+  detail,
+  status,
+  tone,
+}: {
+  label: string;
+  detail: string;
+  status: string;
+  tone: "cyan" | "emerald" | "amber";
+}) {
+  const toneClasses = {
+    cyan: {
+      border: "border-cyan-500/20 bg-cyan-500/[0.06]",
+      badge: "border-cyan-500/20 bg-cyan-500/10 text-cyan-200",
+      dot: "bg-cyan-400",
+    },
+    emerald: {
+      border: "border-emerald-500/20 bg-emerald-500/[0.06]",
+      badge: "border-emerald-500/20 bg-emerald-500/10 text-emerald-200",
+      dot: "bg-emerald-400",
+    },
+    amber: {
+      border: "border-amber-500/20 bg-amber-500/[0.06]",
+      badge: "border-amber-500/20 bg-amber-500/10 text-amber-100",
+      dot: "bg-amber-400",
+    },
+  }[tone];
+
+  return (
+    <div className={`rounded-[1.25rem] border p-4 ${toneClasses.border}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-white">{label}</p>
+          <p className="mt-1 text-xs leading-relaxed text-slate-400">
+            {detail}
+          </p>
+        </div>
+        <span
+          className={`inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${toneClasses.badge}`}
+        >
+          <span className={`h-1.5 w-1.5 rounded-full ${toneClasses.dot}`} />
+          {status}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function ReportFollowUpCta({
+  drillsReady,
+  issueCount,
+  isProcessing,
+}: {
+  drillsReady: boolean;
+  issueCount: number;
+  isProcessing: boolean;
+}) {
+  const statusLabel = drillsReady
+    ? `${issueCount} target${issueCount === 1 ? "" : "s"} ready`
+    : isProcessing
+      ? "Loading"
+      : "Standby";
+
+  return (
+    <div className="rounded-[1.75rem] border border-white/[0.08] bg-[radial-gradient(circle_at_top_right,_rgba(16,185,129,0.12),_rgba(15,23,42,0.82)_38%,_rgba(2,6,23,0.96)_100%)] p-6 sm:p-7">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="max-w-2xl">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+            Follow-up queue
+          </p>
+          <h3 className="mt-2 text-2xl font-black tracking-tight text-white">
+            Keep the report moving
+          </h3>
+          <p className="mt-2 text-sm leading-relaxed text-slate-300">
+            {drillsReady
+              ? "The scan is ready to hand off into drills. Use the CTA below instead of expanding another heavy report block here."
+              : isProcessing
+                ? "FireChess is still building the drill handoff from the live scan. The CTA stays here so you can jump in as soon as it locks."
+                : "The follow-up shell is in place. FireChess will light it up here once the drill handoff is ready."}
+          </p>
+        </div>
+
+        <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-sm font-semibold text-slate-200">
+          {statusLabel}
+        </span>
+      </div>
+
+      <div className="mt-5 grid gap-3 lg:grid-cols-3">
+        <FollowUpStatusRow
+          label="Weakness drills"
+          detail={
+            drillsReady
+              ? "Theme-matched drills are ready from the report issues above."
+              : "Matching recurring mistakes to the drill queue."
+          }
+          status={drillsReady ? "Ready" : "Loading..."}
+          tone={drillsReady ? "emerald" : "cyan"}
+        />
+        <FollowUpStatusRow
+          label="Study plan"
+          detail="Weekly follow-up is being wired into this report flow."
+          status="Loading..."
+          tone="amber"
+        />
+        <FollowUpStatusRow
+          label="Daily follow-up"
+          detail="Short report-linked sessions will slot in here once the handoff is finished."
+          status={drillsReady ? "Loading..." : "Queued"}
+          tone={drillsReady ? "cyan" : "amber"}
+        />
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-3">
+        {drillsReady ? (
+          <Link
+            href="/train"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/12 px-5 py-2.5 text-sm font-semibold text-emerald-100 transition hover:border-emerald-400/40 hover:bg-emerald-500/18 hover:text-white"
+          >
+            Open Puzzles & Drills
+          </Link>
+        ) : (
+          <button
+            type="button"
+            disabled
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-slate-300 opacity-70"
+          >
+            Drills loading...
+          </button>
+        )}
+
+        <button
+          type="button"
+          disabled
+          className="inline-flex items-center justify-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-slate-300 opacity-70"
+        >
+          Study plan loading...
+        </button>
+      </div>
+    </div>
+  );
+}
+
+const RADAR_DIMENSION_ICONS: Record<string, string> = {
+  Accuracy: "🎯",
+  "Opening Prep": "📚",
+  "Tactical Eye": "⚡",
+  Composure: "🧘",
+  "Time Mgmt": "⏱️",
+  Endgames: "♜",
+  Resilience: "🛡️",
+};
+
+const RADAR_STRENGTH_NOTES: Record<string, string> = {
+  Accuracy:
+    "Your move quality is already giving the rest of your game a steadier base.",
+  "Opening Prep":
+    "You are reaching enough familiar structures to avoid starting every game from scratch.",
+  "Tactical Eye":
+    "You are spotting enough forcing ideas to create chances instead of only reacting.",
+  Composure:
+    "You are holding enough positions together to avoid every rough moment turning into a collapse.",
+  "Time Mgmt":
+    "Your clock handling is giving your chess enough room to show up on the board.",
+  Endgames:
+    "Your endgame technique is converting enough better endings and saving enough worse ones to matter.",
+  Resilience:
+    "You keep enough fight in messy spots to stay competitive after mistakes.",
+};
+
+function buildRadarNarrative(data: RadarDimension[]) {
+  const sorted = [...data].sort((a, b) => a.value - b.value);
+  const strongest = sorted.at(-1) ?? data[0];
+  const backupStrength = sorted.at(-2) ?? strongest;
+  const weakest = sorted[0] ?? data[0];
+  const avg = Math.round(
+    data.reduce((sum, dimension) => sum + dimension.value, 0) / data.length,
+  );
+
+  if (!strongest || !backupStrength || !weakest) {
+    return {
+      topStrengths: data.slice(0, 2),
+      confidenceLead:
+        "There is already something useful in this profile to build around.",
+      strengthNote:
+        "The point of this section is to show where your confidence should come from before the training plan starts asking for more.",
+      coachingParagraph:
+        "Use the report as a starting point, not a verdict. Lean on what already feels stable and make the next improvement one clear target at a time.",
+    };
+  }
+
+  if (avg >= 75) {
+    return {
+      topStrengths: [strongest, backupStrength],
+      confidenceLead: `${strongest.dimension} is already a real weapon in your games, with ${backupStrength.dimension} right behind it.`,
+      strengthNote:
+        "This report reads more like refinement than repair. You already have clear strengths to lean on.",
+      coachingParagraph: `You already have a strong base, especially in ${strongest.dimension}. The cleanest next gain now is ${weakest.dimension}: tighten that one bottleneck and the rest of the profile should feel even more reliable. Treat this report as sharpening, not rebuilding.`,
+    };
+  }
+
+  if (avg >= 50) {
+    return {
+      topStrengths: [strongest, backupStrength],
+      confidenceLead: `${strongest.dimension} is already giving your games real structure.`,
+      strengthNote: `You are not starting from zero here. ${backupStrength.dimension} is also helping keep the floor of your game higher.`,
+      coachingParagraph: `You already have a solid foundation, led by ${strongest.dimension}. The next jump should come from ${weakest.dimension}, because that is the main thing pulling the rest of the profile down. Fix that one deliberately and the rest of your game should feel steadier without losing confidence.`,
+    };
+  }
+
+  if (avg >= 30) {
+    return {
+      topStrengths: [strongest, backupStrength],
+      confidenceLead: `${strongest.dimension} is the first part of your game that already looks buildable.`,
+      strengthNote:
+        "That matters more than the low points. The report still shows a base you can trust while you improve the rest.",
+      coachingParagraph: `There is enough here to build on, especially in ${strongest.dimension}. The biggest lift now comes from ${weakest.dimension}: get that bottleneck under control and the whole profile should calm down. Focus on one weakness at a time and let your stronger area keep the rest of your game stable.`,
+    };
+  }
+
+  return {
+    topStrengths: [strongest, backupStrength],
+    confidenceLead: `${strongest.dimension} is still the best place to start building confidence.`,
+    strengthNote:
+      "Even a rough report is useful when it shows you where the first solid footing is.",
+    coachingParagraph: `This report is a starting point, not a label. Build around ${strongest.dimension} first, then put most of your effort into ${weakest.dimension}, because that is where the fastest gains should come from. Small progress there will make the rest of your game feel less fragile.`,
+  };
+}
+
+function StrengthSpotlightCard({
+  label,
+  dimension,
+  accent,
+}: {
+  label: string;
+  dimension: RadarDimension;
+  accent: "emerald" | "cyan";
+}) {
+  const accentClasses =
+    accent === "emerald"
+      ? {
+          border: "border-emerald-500/20 bg-emerald-500/[0.06]",
+          badge: "border-emerald-500/20 bg-emerald-500/12 text-emerald-100",
+          icon: "bg-emerald-500/15 text-emerald-200",
+        }
+      : {
+          border: "border-cyan-500/20 bg-cyan-500/[0.06]",
+          badge: "border-cyan-500/20 bg-cyan-500/12 text-cyan-100",
+          icon: "bg-cyan-500/15 text-cyan-200",
+        };
+
+  return (
+    <div className={`rounded-[1.5rem] border p-5 ${accentClasses.border}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+            {label}
+          </p>
+          <div className="mt-3 flex items-center gap-3">
+            <span
+              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-xl ${accentClasses.icon}`}
+            >
+              {RADAR_DIMENSION_ICONS[dimension.dimension] ?? "✨"}
+            </span>
+            <div className="min-w-0">
+              <h3 className="text-base font-bold text-white">
+                {dimension.dimension}
+              </h3>
+              <p className="mt-1 text-sm leading-relaxed text-slate-300">
+                {RADAR_STRENGTH_NOTES[dimension.dimension] ??
+                  "There is already something reliable here to build around."}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <span
+          className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold ${accentClasses.badge}`}
+        >
+          {dimension.value}/100
+        </span>
       </div>
     </div>
   );
@@ -635,6 +961,80 @@ function MetricCard({
 
 function formatPawnLoss(cpLoss: number) {
   return `${(cpLoss / 100).toFixed(2)} pawns`;
+}
+
+function orientationFromFen(fen: string): "white" | "black" {
+  return fen.includes(" w ") ? "white" : "black";
+}
+
+function buildOpeningLeakCommunitySeed(
+  leak: RepeatedOpeningLeak,
+): CommunityPostComposerSeed {
+  const openingName = leak.openingName?.trim() ?? "";
+
+  return {
+    initialKind: "position",
+    initialSourceType: "analysis",
+    initialFen: leak.fenBefore,
+    initialTitle: openingName
+      ? `What is the right move in this ${openingName}?`
+      : "What would you play in this report position?",
+    initialPrompt: openingName
+      ? `My report flagged this ${openingName} position. What would you play here, and why?`
+      : "My report flagged this position. What would you play here, and why?",
+    initialOpeningName: openingName,
+    initialOrientation: orientationFromFen(leak.fenBefore),
+    initialPuzzleMoves: leak.bestMove ? [leak.bestMove] : [],
+  };
+}
+
+function buildTacticCommunitySeed(
+  tactic: MissedTactic,
+): CommunityPostComposerSeed {
+  const missedMate =
+    tactic.tags.includes("Missed Mate") || tactic.cpLoss >= 99000;
+
+  return {
+    initialKind: "position",
+    initialSourceType: "analysis",
+    initialFen: tactic.fenBefore,
+    initialTitle: missedMate
+      ? `Find the missed mate from game #${tactic.gameIndex}`
+      : `Find the missed tactic from game #${tactic.gameIndex}`,
+    initialPrompt: missedMate
+      ? "My report says there was a forced mate here. Can you find it?"
+      : "My report flagged this as a missed tactic. What is the winning line here?",
+    initialOrientation: orientationFromFen(tactic.fenBefore),
+    initialPuzzleMoves: tactic.bestMove ? [tactic.bestMove] : [],
+  };
+}
+
+function buildEndgameCommunitySeed(
+  mistake: EndgameMistake,
+): CommunityPostComposerSeed {
+  return {
+    initialKind: "position",
+    initialSourceType: "endgame-scan",
+    initialFen: mistake.fenBefore,
+    initialTitle: `${mistake.endgameType} endgame from game #${mistake.gameIndex}`,
+    initialPrompt: `My report flagged this ${mistake.endgameType.toLowerCase()} endgame. What is the best move here?`,
+    initialOrientation: orientationFromFen(mistake.fenBefore),
+    initialPuzzleMoves: mistake.bestMove ? [mistake.bestMove] : [],
+  };
+}
+
+function buildTimeMomentCommunitySeed(
+  moment: TimeMoment,
+): CommunityPostComposerSeed {
+  return {
+    initialKind: "position",
+    initialSourceType: "analysis",
+    initialFen: moment.fen,
+    initialTitle: `Clock decision from game #${moment.gameIndex}, move ${moment.moveNumber}`,
+    initialPrompt: `My report tagged this as a ${moment.verdict} time-management moment. What is the best move here?`,
+    initialOrientation: orientationFromFen(moment.fen),
+    initialPuzzleMoves: moment.bestMove ? [moment.bestMove] : [],
+  };
 }
 
 function buildMotifs(
@@ -751,11 +1151,13 @@ export function ScanSessionReport({
   reportMeta,
   hasProAccess = false,
   scanProgress = null,
+  onCreateCommunityPost,
 }: {
   scan: PublicScanSessionPayload;
   reportMeta: ComputedScanReport | null;
   hasProAccess?: boolean;
   scanProgress?: AnalysisProgress | null;
+  onCreateCommunityPost?: (seed: CommunityPostComposerSeed) => void;
 }) {
   const result = scan.result;
   const isProcessing = scan.status === "processing";
@@ -806,8 +1208,11 @@ export function ScanSessionReport({
       weightedCpLoss: reportMeta.weightedCpLoss,
       severeLeakRate: reportMeta.severeLeakRate,
       timeManagementScore,
+      endgameTechniqueScore:
+        reportMeta.endgameTechniqueScore ??
+        computeEndgameTechniqueScore(endgameStats),
     };
-  }, [realLeakCount, reportMeta, result, timeManagementScore]);
+  }, [endgameStats, realLeakCount, reportMeta, result, timeManagementScore]);
 
   const radarData = useMemo(
     () => (radarProps ? computeRadarData(radarProps) : null),
@@ -891,12 +1296,11 @@ export function ScanSessionReport({
 
   const showTimeManagement =
     isTimeManagementScan || scan.scanMode === "both" || Boolean(timeManagement);
-
-  const showTraining =
-    scan.status === "ready" &&
-    (leaks.length > 0 ||
-      missedTactics.length > 0 ||
-      endgameMistakes.length > 0);
+  const followUpIssueCount =
+    leaks.length + missedTactics.length + endgameMistakes.length;
+  const drillsReady =
+    scan.status === "ready" && followUpIssueCount > 0 && !isProcessing;
+  const radarNarrative = radarData ? buildRadarNarrative(radarData) : null;
 
   const phaseOrder: Record<AnalysisProgress["phase"], number> = {
     fetch: 0,
@@ -921,13 +1325,12 @@ export function ScanSessionReport({
 
   const openingsSectionProgress =
     isProcessing &&
-    scanProgress &&
     leaks.length === 0 &&
     oneOffMistakes.length === 0 &&
     openingSummaries.length === 0 &&
-    (scanProgress.phase === "parse" ||
-      scanProgress.phase === "aggregate" ||
-      scanProgress.phase === "eval")
+    (scanProgress?.phase === "parse" ||
+    scanProgress?.phase === "aggregate" ||
+    scanProgress?.phase === "eval"
       ? {
           message: scanProgress.message,
           detail:
@@ -941,7 +1344,16 @@ export function ScanSessionReport({
               ? "positions"
               : "games",
         }
-      : null;
+      : !hasReachedPhase("parse")
+        ? {
+            message: "Opening pass is queued",
+            detail: "Starts as soon as the archive fetch finishes.",
+            current: 0,
+            total: scanGameTotal,
+            percent: 0,
+            countLabel: "games",
+          }
+        : null);
 
   const tacticsSectionProgress =
     isProcessing &&
@@ -1128,23 +1540,82 @@ export function ScanSessionReport({
         </section>
       ) : null}
 
-      {radarProps && radarData ? (
-        <>
-          <div className="rounded-[1.75rem] border border-white/[0.08] bg-white/[0.03] p-6">
-            <h2 className="text-lg font-bold text-white">
-              Strengths and weaknesses
-            </h2>
-            <div className="mt-5 grid gap-6 md:grid-cols-2">
-              <StrengthsRadar {...radarProps} />
-              <RadarLegend data={radarData} props={radarProps} />
+      {radarProps && radarData && radarNarrative ? (
+        <div className="space-y-4">
+          <section className="space-y-4">
+            <SectionHeader
+              eyebrow="Strengths"
+              title="What is already working"
+              description="Start with the part of the report that should feel good: these are the pieces of your game already giving you something real to stand on."
+            />
+
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+              <div className="rounded-[1.75rem] border border-white/[0.08] bg-[radial-gradient(circle_at_top_right,_rgba(16,185,129,0.12),_rgba(15,23,42,0.82)_38%,_rgba(2,6,23,0.96)_100%)] p-6 sm:p-7">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                  Good news first
+                </p>
+                <h3 className="mt-3 text-2xl font-black tracking-tight text-white">
+                  {radarNarrative.confidenceLead}
+                </h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-300">
+                  {radarNarrative.strengthNote}
+                </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                {radarNarrative.topStrengths.map((dimension, index) => (
+                  <StrengthSpotlightCard
+                    key={dimension.dimension}
+                    label={index === 0 ? "Current edge" : "Also helping"}
+                    dimension={dimension}
+                    accent={index === 0 ? "emerald" : "cyan"}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-          <InsightCards
-            data={radarData}
-            props={radarProps}
-            hasProAccess={hasProAccess}
-          />
-        </>
+          </section>
+
+          <section className="space-y-4">
+            <SectionHeader
+              eyebrow="Profile"
+              title="Radar and coaching summary"
+              description="A quick human read on where the next training gain should come from, without losing sight of what is already working."
+            />
+
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
+              <div className="rounded-[1.75rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
+                <StrengthsRadar {...radarProps} />
+              </div>
+
+              <div className="space-y-4">
+                <div className="rounded-[1.75rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                    Coach&apos;s note
+                  </p>
+                  <p className="mt-3 text-sm leading-relaxed text-slate-300">
+                    {radarNarrative.coachingParagraph}
+                  </p>
+                </div>
+
+                <div className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.02] p-5 sm:p-6">
+                  <div className="max-w-2xl">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                      Profile outline
+                    </p>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-400">
+                      Read the full profile as a quick outline: what is holding
+                      up, what is dragging, and where the next training gain
+                      should come from.
+                    </p>
+                  </div>
+                  <div className="mt-5">
+                    <RadarLegend data={radarData} props={radarProps} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
       ) : isProcessing || result ? (
         <RadarLoadingState
           progress={scanProgress}
@@ -1205,14 +1676,31 @@ export function ScanSessionReport({
                     key={`${leak.fenBefore}-${leak.userMove}`}
                     leak={leak}
                     engineDepth={scan.config.engineDepth}
+                    onCreateCommunityPost={
+                      onCreateCommunityPost
+                        ? () =>
+                            onCreateCommunityPost(
+                              buildOpeningLeakCommunitySeed(leak),
+                            )
+                        : undefined
+                    }
                   />
                 ))}
               </CardCarousel>
             </div>
           ) : openingsSectionProgress ? (
             <SectionLoadingProgress {...openingsSectionProgress} />
+          ) : isProcessing && hasPassedPhase("eval") ? (
+            <EmptySection message="No recurring opening leaks detected so far. The rest of the report is still processing." />
           ) : isProcessing ? (
-            <AnalysisSectionSkeleton label="Collecting recurring opening leaks..." />
+            <SectionLoadingProgress
+              message="Preparing opening report"
+              detail="Collecting recurring opening leaks and expensive one-off misses."
+              current={0}
+              total={scanGameTotal}
+              percent={0}
+              countLabel="games"
+            />
           ) : (
             <EmptySection message="No recurring opening leaks were detected in this scan." />
           )}
@@ -1246,6 +1734,14 @@ export function ScanSessionReport({
                     key={`${mistake.fenBefore}-${mistake.userMove}-${mistake.moveCount}`}
                     leak={mistake}
                     engineDepth={scan.config.engineDepth}
+                    onCreateCommunityPost={
+                      onCreateCommunityPost
+                        ? () =>
+                            onCreateCommunityPost(
+                              buildOpeningLeakCommunitySeed(mistake),
+                            )
+                        : undefined
+                    }
                   />
                 ))}
               </CardCarousel>
@@ -1328,6 +1824,14 @@ export function ScanSessionReport({
                   key={`${tactic.fenBefore}-${tactic.userMove}-${tactic.gameIndex}`}
                   tactic={tactic}
                   engineDepth={scan.config.engineDepth}
+                  onCreateCommunityPost={
+                    onCreateCommunityPost
+                      ? () =>
+                          onCreateCommunityPost(
+                            buildTacticCommunitySeed(tactic),
+                          )
+                      : undefined
+                  }
                 />
               ))}
             </CardCarousel>
@@ -1336,7 +1840,14 @@ export function ScanSessionReport({
           ) : isProcessing && hasPassedPhase("tactics") ? (
             <EmptySection message="No major missed tactics detected so far. The rest of the report is still processing." />
           ) : isProcessing ? (
-            <AnalysisSectionSkeleton label="Scanning for missed tactics..." />
+            <SectionLoadingProgress
+              message="Tactics scan is warming up"
+              detail="Scanning for missed forcing lines and tactical shots."
+              current={0}
+              total={scanGameTotal}
+              percent={0}
+              countLabel="games"
+            />
           ) : (
             <EmptySection message="No major missed tactics were detected in this scan." />
           )}
@@ -1418,6 +1929,14 @@ export function ScanSessionReport({
                   key={`${mistake.fenBefore}-${mistake.userMove}-${mistake.gameIndex}`}
                   mistake={mistake}
                   engineDepth={scan.config.engineDepth}
+                  onCreateCommunityPost={
+                    onCreateCommunityPost
+                      ? () =>
+                          onCreateCommunityPost(
+                            buildEndgameCommunitySeed(mistake),
+                          )
+                      : undefined
+                  }
                 />
               ))}
             </CardCarousel>
@@ -1426,7 +1945,14 @@ export function ScanSessionReport({
           ) : isProcessing && hasPassedPhase("endgames") ? (
             <EmptySection message="No major endgame mistakes detected so far. The rest of the report is still processing." />
           ) : isProcessing ? (
-            <AnalysisSectionSkeleton label="Analyzing endgame positions..." />
+            <SectionLoadingProgress
+              message="Endgame scan is warming up"
+              detail="Checking conversion and defense errors across the scanned games."
+              current={0}
+              total={scanGameTotal}
+              percent={0}
+              countLabel="games"
+            />
           ) : (
             <EmptySection message="No major endgame mistakes were detected in this scan." />
           )}
@@ -1512,6 +2038,14 @@ export function ScanSessionReport({
                 <TimeCard
                   key={`${moment.fen}-${moment.userMove}-${moment.gameIndex}`}
                   moment={moment}
+                  onCreateCommunityPost={
+                    onCreateCommunityPost
+                      ? () =>
+                          onCreateCommunityPost(
+                            buildTimeMomentCommunitySeed(moment),
+                          )
+                      : undefined
+                  }
                 />
               ))}
             </CardCarousel>
@@ -1520,7 +2054,14 @@ export function ScanSessionReport({
           ) : isProcessing && hasPassedPhase("time") ? (
             <EmptySection message="No notable time-management moments detected so far. The rest of the report is still processing." />
           ) : isProcessing ? (
-            <AnalysisSectionSkeleton label="Analyzing clock usage..." />
+            <SectionLoadingProgress
+              message="Time-management scan is warming up"
+              detail="Stitching together move times, scrambles, and rushed decisions."
+              current={0}
+              total={scanGameTotal}
+              percent={0}
+              countLabel="games"
+            />
           ) : (
             <EmptySection message="No notable time-management moments were detected in this scan." />
           )}
@@ -1560,17 +2101,21 @@ export function ScanSessionReport({
         </section>
       ) : null}
 
-      {showTraining ? (
+      {result ? (
         <section className="space-y-4">
           <SectionHeader
             eyebrow="Training"
-            title="Puzzle follow-up"
-            description="Turn the scan into drills immediately with theme-matched practice pulled from the exact weaknesses found above."
+            title="What to do next"
+            description={
+              drillsReady
+                ? "The scan is finished. Use the next-step CTA below to jump into drills without adding another full report block here."
+                : "The report follow-up appears here early so you can see what is coming next, even while the drill handoff is still loading."
+            }
           />
-          <PersonalizedPuzzles
-            tactics={missedTactics}
-            endgames={endgameMistakes}
-            leaks={leaks}
+          <ReportFollowUpCta
+            drillsReady={drillsReady}
+            issueCount={followUpIssueCount}
+            isProcessing={isProcessing}
           />
         </section>
       ) : null}

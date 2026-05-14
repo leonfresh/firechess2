@@ -3,7 +3,7 @@ import type {
   ScanMode,
   TimeControl,
 } from "@/lib/client-analysis";
-import type { AnalyzeResponse } from "@/lib/types";
+import type { AnalyzeResponse, EndgameStats } from "@/lib/types";
 
 export type ScanSessionStatus = "processing" | "ready" | "failed";
 
@@ -31,6 +31,7 @@ export type ComputedScanReport = {
   topTag: string;
   sampleSize: number;
   vibeTitle: string;
+  endgameTechniqueScore?: number | null;
 };
 
 export type PublicScanSessionPayload = {
@@ -102,6 +103,34 @@ export function buildReportContentHash(
       )
       .sort(),
   });
+}
+
+export function computeEndgameTechniqueScore(
+  endgameStats: EndgameStats | null,
+) {
+  if (!endgameStats || endgameStats.totalPositions <= 0) return null;
+
+  const clampScore = (value: number) => Math.max(0, Math.min(100, value));
+  const lossScore = clampScore(100 * Math.exp(-endgameStats.avgCpLoss / 60));
+  const weightedParts = [{ value: lossScore, weight: 0.6 }];
+
+  if (typeof endgameStats.conversionRate === "number") {
+    weightedParts.push({ value: endgameStats.conversionRate, weight: 0.25 });
+  }
+
+  if (typeof endgameStats.holdRate === "number") {
+    weightedParts.push({ value: endgameStats.holdRate, weight: 0.15 });
+  }
+
+  const totalWeight = weightedParts.reduce((sum, part) => sum + part.weight, 0);
+  const rawScore =
+    totalWeight > 0
+      ? weightedParts.reduce((sum, part) => sum + part.value * part.weight, 0) /
+        totalWeight
+      : 50;
+  const sampleWeight = Math.min(1, endgameStats.totalPositions / 12);
+
+  return Math.round(clampScore(50 + (rawScore - 50) * sampleWeight));
 }
 
 export function computeScanReportMeta(
@@ -209,6 +238,9 @@ export function computeScanReportMeta(
         : estimatedRating >= 1200
           ? "🌱 Growth Arc Activated"
           : "🧠 Training Arc Beginning";
+  const endgameTechniqueScore = computeEndgameTechniqueScore(
+    result?.endgameStats ?? null,
+  );
 
   return {
     estimatedAccuracy,
@@ -221,5 +253,6 @@ export function computeScanReportMeta(
     topTag,
     sampleSize: valid.length,
     vibeTitle,
+    endgameTechniqueScore,
   };
 }

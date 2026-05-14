@@ -58,9 +58,8 @@ import { Chess, type PieceSymbol } from "chess.js";
 import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";
 import { DEFAULT_LAUNCHER, type LauncherConfig } from "@/lib/launcher-apps";
 import { LauncherEditor } from "@/components/launcher-editor";
-import { scanOwnerStorageKey } from "@/lib/scan-session";
+import { computeScanReportMeta, scanOwnerStorageKey } from "@/lib/scan-session";
 
-/* ── Inline help tooltip ── */
 function HelpTip({ text }: { text: string }) {
   return (
     <span className="group relative ml-1 inline-flex">
@@ -91,7 +90,7 @@ type CachedReportEntry = {
     scanMode: ScanMode;
     speed: TimeControl[];
   };
-  savedAt: string; // ISO timestamp
+  savedAt: string;
 };
 
 function reportCacheKey(mode: ScanMode): string {
@@ -152,8 +151,9 @@ export default function HomePage() {
   const [scanMode, setScanMode] = useState<ScanMode>(FULL_SCAN_MODE);
   const [speed, setSpeed] = useState<TimeControl[]>(["all"]);
   const [cardViewMode, setCardViewMode] = useState<CardViewMode>(() => {
-    if (typeof window !== "undefined" && window.innerWidth < 640)
+    if (typeof window !== "undefined" && window.innerWidth < 640) {
       return "carousel";
+    }
     return "list";
   });
   const [lastRunConfig, setLastRunConfig] = useState<{
@@ -188,6 +188,7 @@ export default function HomePage() {
   const [cachedReportEntry, setCachedReportEntry] =
     useState<CachedReportEntry | null>(null);
   const [showRestoreBanner, setShowRestoreBanner] = useState(false);
+  const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
   const [leakTab, setLeakTab] = useState<"repeated" | "one-off">("repeated");
   const [openingFolder, setOpeningFolder] = useState<"mistakes" | "rankings">(
     "mistakes",
@@ -226,7 +227,6 @@ export default function HomePage() {
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
 
-  /* ── Launcher config (fetched from API on mount) ── */
   const [launcherConfig, setLauncherConfig] =
     useState<LauncherConfig>(DEFAULT_LAUNCHER);
   useEffect(() => {
@@ -256,6 +256,32 @@ export default function HomePage() {
   const freeLimitsExceeded =
     !hasProAccess &&
     (gamesOverFreeLimit || depthOverFreeLimit || movesOverFreeLimit);
+
+  useEffect(() => {
+    if (!advancedSettingsOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setAdvancedSettingsOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [advancedSettingsOpen]);
+
+  useEffect(() => {
+    if (state !== "idle") {
+      setAdvancedSettingsOpen(false);
+    }
+  }, [state]);
 
   /* ── Hero typography animation ── */
   const heroAnim = (step: number) =>
@@ -912,136 +938,11 @@ export default function HomePage() {
   );
 
   const diagnostics = result?.diagnostics;
-  const report = useMemo(() => {
-    if (!diagnostics?.positionTraces?.length) return null;
-
-    const valid = diagnostics.positionTraces.filter(
-      (trace) => typeof trace.cpLoss === "number",
-    );
-    if (valid.length === 0) return null;
-
-    const lossValues = valid.map((trace) => trace.cpLoss ?? 0);
-    const sortedLosses = [...lossValues].sort((a, b) => a - b);
-    const percentileIndex = Math.floor(sortedLosses.length * 0.75);
-    const p75CpLoss =
-      sortedLosses[Math.min(sortedLosses.length - 1, percentileIndex)] ?? 0;
-    const meanCpLoss =
-      lossValues.reduce((sum, value) => sum + value, 0) / lossValues.length;
-    const variance =
-      lossValues.reduce(
-        (sum, value) => sum + Math.pow(value - meanCpLoss, 2),
-        0,
-      ) / Math.max(1, lossValues.length);
-    const stdDevCpLoss = Math.sqrt(variance);
-
-    const weightedLossNumerator = valid.reduce(
-      (sum, trace) => sum + (trace.cpLoss ?? 0) * trace.reachCount,
-      0,
-    );
-    const totalWeight = valid.reduce((sum, trace) => sum + trace.reachCount, 0);
-    const weightedCpLoss =
-      totalWeight > 0 ? weightedLossNumerator / totalWeight : 0;
-    const severeLeakRate =
-      valid.filter(
-        (trace) =>
-          (trace.cpLoss ?? 0) >= (lastRunConfig?.cpThreshold ?? cpThreshold),
-      ).length / valid.length;
-
-    // Accuracy: exponential decay — 15cp ≈ 88%, 30cp ≈ 78%, 60cp ≈ 61%
-    const estimatedAccuracy = Math.min(
-      99.5,
-      Math.max(25, 100 * Math.exp(-weightedCpLoss / 120)),
-    );
-
-    // Rating estimation:
-    // If we have the player's actual rating from the API, use it as the base
-    // and apply a small adjustment from the analysis signal.
-    // Otherwise fall back to the analysis-only estimate.
-    const actualRating = result?.playerRating;
-    let estimatedRating: number;
-
-    if (actualRating && actualRating > 0) {
-      // Analysis-based adjustment: good opening play nudges up, bad nudges down.
-      // Scale: ±200 max based on opening quality relative to their level.
-      const clampedLoss = Math.max(1, weightedCpLoss);
-      // "Expected" cp loss for their level (rough curve)
-      const expectedLoss = Math.max(2, 50 - actualRating / 60);
-      const diff = expectedLoss - clampedLoss; // positive = better than expected
-      const adjustment = Math.max(-200, Math.min(200, diff * 8));
-      const leakAdj = severeLeakRate * -150;
-      estimatedRating = Math.round(
-        Math.min(2800, Math.max(400, actualRating + adjustment + leakAdj)),
-      );
-    } else {
-      // Fallback: pure analysis estimate (no actual rating available)
-      const clampedLoss = Math.max(2, weightedCpLoss);
-      const baseRating = 1800 - 400 * Math.log10(clampedLoss);
-      const leakPenalty = severeLeakRate * 400;
-      const sampleFactor = Math.min(1, valid.length / 50);
-      const rawRating = baseRating - leakPenalty;
-      const adjustedRating = 1200 + (rawRating - 1200) * sampleFactor;
-      estimatedRating = Math.round(
-        Math.min(2400, Math.max(400, adjustedRating)),
-      );
-    }
-
-    const consistencyScore = Math.max(
-      1,
-      Math.min(100, Math.round(100 - stdDevCpLoss / 4)),
-    );
-    const confidence = Math.max(
-      10,
-      Math.min(99, Math.round((valid.length / 40) * 100)),
-    );
-
-    const topTag = (() => {
-      if (!result?.leaks?.length) return "No big leak pattern";
-      const counts = new Map<string, number>();
-      for (const leak of result.leaks) {
-        for (const tag of leak.tags ?? []) {
-          counts.set(tag, (counts.get(tag) ?? 0) + 1);
-        }
-      }
-      if (counts.size === 0) return "No big leak pattern";
-      let best = "No big leak pattern";
-      let bestCount = 0;
-      for (const [tag, count] of counts.entries()) {
-        if (count > bestCount) {
-          best = tag;
-          bestCount = count;
-        }
-      }
-      return best;
-    })();
-
-    const vibeTitle =
-      estimatedRating >= 2000
-        ? "🔥 Certified Opening Demon"
-        : estimatedRating >= 1600
-          ? "⚡ Solid Climber Energy"
-          : estimatedRating >= 1200
-            ? "🌱 Growth Arc Activated"
-            : "🧠 Training Arc Beginning";
-
-    return {
-      estimatedAccuracy,
-      estimatedRating,
-      weightedCpLoss,
-      severeLeakRate,
-      p75CpLoss,
-      consistencyScore,
-      confidence,
-      topTag,
-      sampleSize: valid.length,
-      vibeTitle,
-    };
-  }, [
-    diagnostics,
-    lastRunConfig,
-    cpThreshold,
-    result?.leaks,
-    result?.playerRating,
-  ]);
+  const report = useMemo(
+    () =>
+      computeScanReportMeta(result, lastRunConfig?.cpThreshold ?? cpThreshold),
+    [cpThreshold, lastRunConfig?.cpThreshold, result],
+  );
   const maxObservedCpLoss = useMemo(() => {
     const losses = diagnostics?.positionTraces
       .map((trace) => trace.cpLoss)
@@ -1119,6 +1020,7 @@ export default function HomePage() {
                 topTag: report.topTag,
                 vibeTitle: report.vibeTitle,
                 sampleSize: report.sampleSize,
+                endgameTechniqueScore: report.endgameTechniqueScore ?? null,
               }
             : null,
           contentHash,
@@ -1478,19 +1380,9 @@ export default function HomePage() {
               <div className="pointer-events-none absolute right-[8%] top-14 h-44 w-44 rounded-full bg-fuchsia-500/[0.07] blur-3xl" />
               <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
                 {/* ── Left column ── */}
-                <div className="space-y-8 text-center lg:text-left">
-                  {/* Badge */}
-                  <div
-                    className={`flex items-center justify-center lg:justify-start ${heroAnim(1)}`}
-                  >
-                    <span className="inline-flex items-center gap-2 rounded-full border border-fuchsia-400/25 bg-fuchsia-500/10 px-4 py-1.5 text-xs font-semibold text-fuchsia-100 shadow-[0_14px_34px_-24px_rgba(244,114,182,0.55)]">
-                      <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
-                      For serious improvers
-                    </span>
-                  </div>
-
+                <div className="space-y-6 text-center lg:text-left">
                   {/* Headline */}
-                  <div className={`space-y-3 ${heroAnim(2)}`}>
+                  <div className={`space-y-2 ${heroAnim(2)}`}>
                     <p className="font-mono text-[11px] uppercase tracking-[0.34em] text-sky-200/70">
                       Archive to board to plan
                     </p>
@@ -1508,57 +1400,14 @@ export default function HomePage() {
                   <p
                     className={`text-base leading-relaxed text-slate-300/90 md:text-lg lg:max-w-lg ${heroAnim(3)}`}
                   >
-                    One scan finds the leak. The board gives you the next move.
+                    One scan spots the leak. The board shows you the fix move by
+                    move.
                   </p>
-
-                  {/* CTAs */}
-                  <div
-                    className={`flex flex-wrap items-center justify-center gap-3 lg:justify-start ${heroAnim(4)}`}
-                  >
-                    <a
-                      href="#analyzer"
-                      className="btn-primary inline-flex items-center justify-center gap-2 px-7"
-                    >
-                      Analyze Your Games
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2.5}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M13 7l5 5m0 0l-5 5m5-5H6"
-                        />
-                      </svg>
-                    </a>
-                    <Link
-                      href="/community"
-                      className="inline-flex items-center gap-2 rounded-xl border border-white/[0.12] bg-[linear-gradient(135deg,rgba(255,255,255,0.06),rgba(125,211,252,0.04))] px-7 py-3 text-sm font-semibold text-slate-100 transition-all hover:border-white/[0.18] hover:bg-[linear-gradient(135deg,rgba(255,255,255,0.08),rgba(125,211,252,0.07))] hover:text-white"
-                    >
-                      <svg
-                        className="h-4 w-4 text-slate-400"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M17 20h5V4H2v16h5m10 0v-4a3 3 0 10-6 0v4m6 0H7"
-                        />
-                      </svg>
-                      Explore Community
-                    </Link>
-                  </div>
 
                   <form
                     id="analyzer"
                     onSubmit={onSubmit}
-                    className={`glass-card space-y-4 p-4 sm:p-5 ${heroAnim(5)}`}
+                    className={`glass-card space-y-5 p-4 sm:p-5 ${heroAnim(5)}`}
                   >
                     <div className="flex flex-col gap-1">
                       <div>
@@ -1620,36 +1469,20 @@ export default function HomePage() {
                         />
                       </div>
 
-                      <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
-                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                          <div className="max-w-xl">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200/70">
-                              Full Scan
-                            </p>
-                            <h3 className="mt-2 text-lg font-bold text-white">
-                              One report, all your patterns
-                            </h3>
-                          </div>
-                          <div className="grid grid-cols-2 gap-2 text-xs font-semibold text-slate-200 sm:min-w-[260px] sm:grid-cols-4">
-                            {[
-                              ["📖", "Openings"],
-                              ["⚡", "Tactics"],
-                              ["♟️", "Endgames"],
-                              ["⏱️", "Time"],
-                            ].map(([icon, label]) => (
-                              <div
-                                key={label}
-                                className="rounded-xl border border-white/[0.08] bg-slate-950/60 px-3 py-2 text-center"
-                              >
-                                <span className="block text-sm">{icon}</span>
-                                <span className="mt-1 block">{label}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
+                      <div className="rounded-[1.35rem] border border-white/[0.08] bg-white/[0.03] px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200/72">
+                          Full Scan
+                        </p>
+                        <p className="mt-1.5 text-sm leading-relaxed text-slate-400">
+                          One report across{" "}
+                          <span className="text-slate-200">openings</span>,{" "}
+                          <span className="text-slate-200">tactics</span>,{" "}
+                          <span className="text-slate-200">endgames</span>, and{" "}
+                          <span className="text-slate-200">time</span>.
+                        </p>
                       </div>
 
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
                         <button
                           type="submit"
                           disabled={
@@ -1705,12 +1538,26 @@ export default function HomePage() {
                             </>
                           )}
                         </button>
-                        <a
-                          href="#advanced-scan-center"
-                          className="text-xs font-medium text-slate-500 transition-colors hover:text-slate-300"
+                        <button
+                          type="button"
+                          onClick={() => setAdvancedSettingsOpen(true)}
+                          className="inline-flex items-center justify-center gap-2 text-sm font-medium text-slate-400 transition-colors hover:text-slate-200 sm:justify-end"
                         >
-                          Advanced settings below
-                        </a>
+                          Advanced settings
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 5v14m0 0l6-6m-6 6l-6-6"
+                            />
+                          </svg>
+                        </button>
                       </div>
                     </div>
                   </form>
@@ -1722,132 +1569,13 @@ export default function HomePage() {
                 >
                   <div className="pointer-events-none absolute inset-x-10 top-10 h-40 rounded-full bg-[radial-gradient(circle,rgba(125,211,252,0.14),transparent_60%)] blur-3xl" />
 
-                  <div className="relative px-1">
-                    <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-sky-200/75">
-                      Product tour
-                    </p>
-                    <h2 className="mt-2 text-xl font-semibold leading-tight tracking-[-0.03em] text-white sm:text-2xl">
-                      Rating picture. Strength map. Real boards.
-                    </h2>
-                  </div>
+                  <p className="relative px-1 font-mono text-[11px] uppercase tracking-[0.28em] text-sky-200/70">
+                    Live report preview
+                  </p>
 
-                  <div className="relative mt-5">
+                  <div className="relative mt-4">
                     <HeroProductScreenshot paused={state !== "idle"} />
                   </div>
-
-                  <p className="mt-4 max-w-xl px-1 text-xs leading-relaxed text-slate-500">
-                    Flip through the rating snapshot, strengths radar, and the
-                    positions that actually need work.
-                  </p>
-                </div>
-              </div>
-
-              <div
-                className={`mt-8 space-y-4 border-t border-white/[0.07] pt-6 ${heroAnim(6)}`}
-              >
-                <div className="flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-                  {[
-                    {
-                      label: "10k+ players",
-                      className:
-                        "border-sky-400/20 bg-sky-400/[0.08] text-sky-100",
-                    },
-                    {
-                      label: "Board-first study",
-                      className:
-                        "border-violet-400/20 bg-violet-500/[0.08] text-violet-100",
-                    },
-                    {
-                      label: "Live community loop",
-                      className:
-                        "border-fuchsia-400/20 bg-fuchsia-500/[0.08] text-fuchsia-100",
-                    },
-                  ].map(({ label, className }) => (
-                    <span
-                      key={label}
-                      className={`tag-pill text-[11px] ${className}`}
-                    >
-                      {label}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-3">
-                  {[
-                    {
-                      accentClass: "text-sky-300",
-                      icon: (
-                        <svg
-                          className="h-5 w-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={1.8}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                          />
-                        </svg>
-                      ),
-                      title: "Archive-scale",
-                      desc: "Find the repeat leaks, not the noise.",
-                    },
-                    {
-                      accentClass: "text-fuchsia-300",
-                      icon: (
-                        <svg
-                          className="h-5 w-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={1.8}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                          />
-                        </svg>
-                      ),
-                      title: "Weakness map",
-                      desc: "See where the position keeps breaking.",
-                    },
-                    {
-                      accentClass: "text-violet-300",
-                      icon: (
-                        <svg
-                          className="h-5 w-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={1.8}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                          />
-                        </svg>
-                      ),
-                      title: "Next move",
-                      desc: "Drill it, post it, or save it.",
-                    },
-                  ].map(({ icon, title, desc, accentClass }) => (
-                    <div
-                      key={title}
-                      className="flex flex-col gap-2 rounded-2xl border border-white/[0.08] bg-[linear-gradient(160deg,rgba(255,255,255,0.04),rgba(125,211,252,0.02)_48%,rgba(244,114,182,0.03))] p-3.5 shadow-[0_20px_40px_-34px_rgba(125,211,252,0.5)]"
-                    >
-                      <span className={accentClass}>{icon}</span>
-                      <div>
-                        <p className="text-xs font-bold text-white">{title}</p>
-                        <p className="mt-0.5 text-[10px] leading-snug text-slate-500">
-                          {desc}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
                 </div>
               </div>
             </div>
@@ -2238,482 +1966,405 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* ─── Control Center ─── */}
-          <form
-            id="advanced-scan-center"
-            onSubmit={onSubmit}
-            className="glass-card animate-fade-in-up mx-auto w-full max-w-5xl space-y-6 p-6 md:p-8"
-          >
-            {/* Header */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="flex items-center gap-2 text-xl font-bold text-white">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 text-sm">
-                    ⚡
-                  </span>
-                  Advanced Scan Settings
-                </h2>
-                <p className="mt-1 text-sm text-slate-400">
-                  Fine-tune games, thresholds, and depth after setting the core
-                  scan above.
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="tag-cyan text-[11px]">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-400" />
-                  Browser analysis
-                </span>
-                {IS_DEV && LOCAL_PRO_HOTKEY_ENABLED && (
-                  <span
-                    className={`tag-pill text-[11px] ${
-                      localProEnabled
-                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-                        : "border-white/10 bg-white/[0.03] text-slate-400"
-                    }`}
-                  >
-                    Pro: {localProEnabled ? "ON" : "OFF"} (~)
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Welcome back prompt */}
-            {welcomeBack && state === "idle" && !result && (
-              <div className="flex items-center gap-3 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.05] px-4 py-3">
-                <span className="text-lg">👋</span>
-                <p className="flex-1 text-sm text-slate-300">
-                  Welcome back! Ready to scan{" "}
-                  <span className="font-semibold text-white">
-                    {welcomeBack}
-                  </span>{" "}
-                  again?
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setWelcomeBack(null)}
-                  className="text-slate-500 hover:text-slate-300 transition-colors"
-                  aria-label="Dismiss"
-                >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M18 6L6 18M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-            )}
-
-            {/* Restore last report banner */}
-            {showRestoreBanner &&
-              cachedReportEntry &&
-              state === "idle" &&
-              !result && (
-                <div className="flex flex-wrap items-center gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.06] px-4 py-3">
-                  <span className="text-lg">📋</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-slate-200">
-                      Last report:{" "}
-                      <span className="text-white">
-                        {cachedReportEntry.result.username}
-                      </span>
-                      <span className="ml-2 rounded-md bg-cyan-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-cyan-400 uppercase tracking-wide">
-                        Full scan
-                      </span>
+          {advancedSettingsOpen && (
+            <div className="fixed inset-0 z-[80] flex items-start justify-center bg-[rgba(2,6,23,0.78)] px-4 py-6 backdrop-blur-sm sm:items-center sm:px-6">
+              <div
+                className="absolute inset-0"
+                onClick={() => setAdvancedSettingsOpen(false)}
+                aria-hidden="true"
+              />
+              <section className="relative z-10 max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[2rem] border border-white/[0.08] bg-[rgba(6,11,26,0.96)] p-5 shadow-[0_30px_120px_-48px_rgba(2,6,23,0.98)] sm:p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-cyan-200/72">
+                      Advanced Scan Settings
                     </p>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      {cachedReportEntry.result.gamesAnalyzed} games ·{" "}
-                      {cachedReportEntry.result.leaks.length} opening leaks ·{" "}
-                      {cachedReportEntry.result.missedTactics.length} missed
-                      tactics
-                      {" · "}
-                      {new Date(cachedReportEntry.savedAt).toLocaleDateString(
-                        undefined,
-                        {
-                          month: "short",
-                          day: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        },
-                      )}
+                    <h2 className="mt-2 text-2xl font-bold text-white">
+                      Tune the scan without crowding the homepage.
+                    </h2>
+                    <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+                      These settings apply to the quick scan above. Set the
+                      platform and username there, then use this panel for
+                      depth, thresholds, and range.
                     </p>
                   </div>
                   <button
                     type="button"
-                    onClick={() => {
-                      const entry = cachedReportEntry;
-                      setUsername(entry.result.username);
-                      setSource(entry.config.source);
-                      setScanMode(FULL_SCAN_MODE);
-                      setSpeed(entry.config.speed);
-                      setLastRunConfig({
-                        ...entry.config,
-                        scanMode: FULL_SCAN_MODE,
-                      });
-                      setResult(entry.result);
-                      setState("done");
-                      setSaveStatus("idle");
-                      setShowRestoreBanner(false);
-                      setTimeout(() => {
-                        reportRef.current?.scrollIntoView({
-                          behavior: "smooth",
-                          block: "start",
-                        });
-                      }, 300);
-                    }}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-300 transition-all hover:bg-cyan-500/20"
+                    onClick={() => setAdvancedSettingsOpen(false)}
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-slate-400 transition hover:border-white/[0.16] hover:text-white"
+                    aria-label="Close advanced scan settings"
                   >
-                    <svg
-                      className="h-3.5 w-3.5"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                      />
-                    </svg>
-                    Load Last Report
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowRestoreBanner(false)}
-                    className="text-slate-500 hover:text-slate-300 transition-colors"
-                    aria-label="Dismiss"
-                  >
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <path d="M18 6L6 18M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              )}
-
-            {/* Search bar */}
-            <div className="flex flex-col gap-3 md:flex-row">
-              {/* Composed input: platform toggle + username field in one bar */}
-              <div
-                className={`flex flex-1 items-center overflow-hidden rounded-xl border bg-white/[0.04] transition-colors duration-200 focus-within:border-emerald-500/30 ${
-                  !source
-                    ? "border-amber-500/30 ring-1 ring-amber-500/20"
-                    : "border-white/[0.08]"
-                }`}
-              >
-                {/* Platform pill */}
-                <div className="flex shrink-0 items-center gap-0.5 px-1.5 py-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setSource("lichess")}
-                    className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
-                      source === "lichess"
-                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 shadow-glow-sm"
-                        : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
-                    }`}
-                  >
-                    Lichess
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSource("chesscom")}
-                    className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
-                      source === "chesscom"
-                        ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 shadow-glow-sm"
-                        : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
-                    }`}
-                  >
-                    Chess.com
-                  </button>
-                </div>
-                {/* Divider */}
-                <div className="h-5 w-px bg-white/[0.10] shrink-0" />
-                {/* Text input */}
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder={
-                    source === "chesscom"
-                      ? "Your Chess.com username"
-                      : source === "lichess"
-                        ? "Your Lichess username"
-                        : "Pick a platform, then enter username"
-                  }
-                  aria-label="Chess username"
-                  className="flex-1 bg-transparent py-2.5 pl-3 pr-4 text-sm text-white outline-none placeholder:text-slate-500"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={
-                  state === "loading" || isLaunchingScan || freeLimitsExceeded
-                }
-                className="btn-primary flex items-center justify-center gap-2"
-              >
-                {state === "loading" || isLaunchingScan ? (
-                  <>
-                    <svg
-                      className="h-4 w-4 animate-spin"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                      />
-                    </svg>
-                    {isLaunchingScan ? "Starting full scan..." : "Scanning..."}
-                  </>
-                ) : freeLimitsExceeded ? (
-                  <Link href="/pricing" className="text-inherit no-underline">
-                    Upgrade for Pro limits
-                  </Link>
-                ) : (
-                  <>
                     <svg
                       width="16"
                       height="16"
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
-                      strokeWidth="2.5"
+                      strokeWidth="2.2"
                     >
-                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                      <path d="M18 6 6 18M6 6l12 12" />
                     </svg>
-                    Scan Games
-                  </>
-                )}
-              </button>
-            </div>
+                  </button>
+                </div>
 
-            {/* Settings grid — row 1: toggles, row 2: number inputs */}
-            <div className="space-y-3">
-              <div className="grid gap-3">
-                <div className="stat-card space-y-2">
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
-                    Time Control
-                    <HelpTip text="Filter which game speeds to include. Pick specific ones or All. Multi-select is supported — click multiple to combine." />
+                <div className="mt-5 flex flex-wrap items-center gap-2">
+                  <span className="tag-cyan text-[11px]">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-400" />
+                    Browser analysis
                   </span>
-                  <div className="grid h-auto grid-cols-3 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1 sm:h-10 sm:grid-cols-5">
-                    {[
-                      { value: "all" as const, label: "All" },
-                      { value: "bullet" as const, label: "Bullet" },
-                      { value: "blitz" as const, label: "Blitz" },
-                      { value: "rapid" as const, label: "Rapid" },
-                      { value: "classical" as const, label: "Classical" },
-                    ].map((tc) => {
-                      const isActive = speed.includes(tc.value);
-                      return (
-                        <button
-                          key={tc.value}
-                          type="button"
-                          onClick={() => {
-                            if (tc.value === "all") {
-                              // "All" resets to just ["all"]
-                              setSpeed(["all"]);
-                            } else {
-                              setSpeed((prev) => {
-                                const withoutAll = prev.filter(
-                                  (s) => s !== "all",
-                                );
-                                const next = withoutAll.includes(tc.value)
-                                  ? withoutAll.filter((s) => s !== tc.value)
-                                  : [...withoutAll, tc.value];
-                                // If nothing selected or all 4 specific ones selected, reset to "all"
-                                return next.length === 0 || next.length === 4
-                                  ? ["all"]
-                                  : next;
-                              });
-                            }
-                          }}
-                          className={`rounded-md text-[11px] font-semibold transition-all duration-200 ${
-                            isActive
-                              ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 shadow-glow-sm"
-                              : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
-                          }`}
-                        >
-                          {tc.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                  {!speed.includes("all") && speed.length > 1 && (
-                    <p className="text-[10px] text-slate-500">
-                      {speed.length} time controls selected
-                    </p>
+                  {IS_DEV && LOCAL_PRO_HOTKEY_ENABLED && (
+                    <span
+                      className={`tag-pill text-[11px] ${
+                        localProEnabled
+                          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                          : "border-white/10 bg-white/[0.03] text-slate-400"
+                      }`}
+                    >
+                      Pro: {localProEnabled ? "ON" : "OFF"} (~)
+                    </span>
                   )}
                 </div>
-              </div>
 
-              <div className="grid gap-3 grid-cols-2 md:grid-cols-4">
-                <div className="stat-card space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
-                      Games
-                      <HelpTip text="How many recent games to scan (Last N), or pick a start date (Since) to include all games from that point." />
-                    </span>
-                    <div className="grid h-6 grid-cols-2 gap-0.5 rounded-md border border-white/[0.06] bg-white/[0.02] p-0.5">
+                {welcomeBack && state === "idle" && !result && (
+                  <div className="mt-5 flex items-center gap-3 rounded-xl border border-emerald-500/15 bg-emerald-500/[0.05] px-4 py-3">
+                    <span className="text-lg">👋</span>
+                    <p className="flex-1 text-sm text-slate-300">
+                      Welcome back! Ready to scan{" "}
+                      <span className="font-semibold text-white">
+                        {welcomeBack}
+                      </span>{" "}
+                      again?
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setWelcomeBack(null)}
+                      className="text-slate-500 transition-colors hover:text-slate-300"
+                      aria-label="Dismiss"
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                      >
+                        <path d="M18 6L6 18M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+
+                {showRestoreBanner &&
+                  cachedReportEntry &&
+                  state === "idle" &&
+                  !result && (
+                    <div className="mt-4 flex flex-wrap items-center gap-3 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.06] px-4 py-3">
+                      <span className="text-lg">📋</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-slate-200">
+                          Last report:{" "}
+                          <span className="text-white">
+                            {cachedReportEntry.result.username}
+                          </span>
+                          <span className="ml-2 rounded-md bg-cyan-500/15 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-cyan-400">
+                            Full scan
+                          </span>
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-500">
+                          {cachedReportEntry.result.gamesAnalyzed} games ·{" "}
+                          {cachedReportEntry.result.leaks.length} opening leaks
+                          · {cachedReportEntry.result.missedTactics.length}{" "}
+                          missed tactics ·{" "}
+                          {new Date(
+                            cachedReportEntry.savedAt,
+                          ).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
                       <button
                         type="button"
-                        onClick={() => setGameRangeMode("count")}
-                        className={`rounded px-1.5 text-[10px] font-semibold transition-all ${
-                          gameRangeMode === "count"
-                            ? "bg-emerald-500/80 text-slate-950"
-                            : "text-slate-500 hover:text-slate-300"
-                        }`}
+                        onClick={() => {
+                          const entry = cachedReportEntry;
+                          setUsername(entry.result.username);
+                          setSource(entry.config.source);
+                          setScanMode(FULL_SCAN_MODE);
+                          setSpeed(entry.config.speed);
+                          setLastRunConfig({
+                            ...entry.config,
+                            scanMode: FULL_SCAN_MODE,
+                          });
+                          setResult(entry.result);
+                          setState("done");
+                          setSaveStatus("idle");
+                          setShowRestoreBanner(false);
+                          setAdvancedSettingsOpen(false);
+                          setTimeout(() => {
+                            reportRef.current?.scrollIntoView({
+                              behavior: "smooth",
+                              block: "start",
+                            });
+                          }, 300);
+                        }}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-300 transition-all hover:bg-cyan-500/20"
                       >
-                        Last N
+                        <svg
+                          className="h-3.5 w-3.5"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                          />
+                        </svg>
+                        Load Last Report
                       </button>
                       <button
                         type="button"
-                        onClick={() => setGameRangeMode("since")}
-                        className={`rounded px-1.5 text-[10px] font-semibold transition-all ${
-                          gameRangeMode === "since"
-                            ? "bg-emerald-500/80 text-slate-950"
-                            : "text-slate-500 hover:text-slate-300"
-                        }`}
+                        onClick={() => setShowRestoreBanner(false)}
+                        className="text-slate-500 transition-colors hover:text-slate-300"
+                        aria-label="Dismiss"
                       >
-                        Since
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                        >
+                          <path d="M18 6L6 18M6 6l12 12" />
+                        </svg>
                       </button>
                     </div>
+                  )}
+
+                <div className="mt-6 space-y-3">
+                  <div className="stat-card space-y-2">
+                    <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                      Time Control
+                      <HelpTip text="Filter which game speeds to include. Pick specific ones or All. Multi-select is supported — click multiple to combine." />
+                    </span>
+                    <div className="grid h-auto grid-cols-3 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1 sm:h-10 sm:grid-cols-5">
+                      {[
+                        { value: "all" as const, label: "All" },
+                        { value: "bullet" as const, label: "Bullet" },
+                        { value: "blitz" as const, label: "Blitz" },
+                        { value: "rapid" as const, label: "Rapid" },
+                        { value: "classical" as const, label: "Classical" },
+                      ].map((tc) => {
+                        const isActive = speed.includes(tc.value);
+                        return (
+                          <button
+                            key={tc.value}
+                            type="button"
+                            onClick={() => {
+                              if (tc.value === "all") {
+                                setSpeed(["all"]);
+                              } else {
+                                setSpeed((prev) => {
+                                  const withoutAll = prev.filter(
+                                    (s) => s !== "all",
+                                  );
+                                  const next = withoutAll.includes(tc.value)
+                                    ? withoutAll.filter((s) => s !== tc.value)
+                                    : [...withoutAll, tc.value];
+                                  return next.length === 0 || next.length === 4
+                                    ? ["all"]
+                                    : next;
+                                });
+                              }
+                            }}
+                            className={`rounded-md text-[11px] font-semibold transition-all duration-200 ${
+                              isActive
+                                ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 shadow-glow-sm"
+                                : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
+                            }`}
+                          >
+                            {tc.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {!speed.includes("all") && speed.length > 1 && (
+                      <p className="text-[10px] text-slate-500">
+                        {speed.length} time controls selected
+                      </p>
+                    )}
                   </div>
-                  {gameRangeMode === "count" ? (
-                    <input
-                      type="number"
-                      min={1}
-                      max={hasProAccess ? 5000 : 300}
-                      value={gameCount}
-                      onChange={(e) => setGameCount(Number(e.target.value))}
-                      aria-label="Number of games to scan"
-                      className="glass-input h-10 text-sm"
-                    />
-                  ) : (
-                    <input
-                      type="date"
-                      value={sinceDate}
-                      onChange={(e) => setSinceDate(e.target.value)}
-                      max={new Date().toISOString().split("T")[0]}
-                      aria-label="Scan games since date"
-                      className="glass-input h-10 text-sm"
-                    />
-                  )}
-                  {gameRangeMode === "count" && gamesOverFreeLimit && (
-                    <p className="text-xs font-medium text-amber-400">
-                      {!hasProAccess ? (
-                        <>
-                          Requires{" "}
-                          <Link href="/pricing" className="underline">
-                            Pro
-                          </Link>
-                        </>
-                      ) : gameCount > 1000 ? (
-                        `${gameCount.toLocaleString()} games — may take a while`
+
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                    <div className="stat-card space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                          Games
+                          <HelpTip text="How many recent games to scan (Last N), or pick a start date (Since) to include all games from that point." />
+                        </span>
+                        <div className="grid h-6 grid-cols-2 gap-0.5 rounded-md border border-white/[0.06] bg-white/[0.02] p-0.5">
+                          <button
+                            type="button"
+                            onClick={() => setGameRangeMode("count")}
+                            className={`rounded px-1.5 text-[10px] font-semibold transition-all ${
+                              gameRangeMode === "count"
+                                ? "bg-emerald-500/80 text-slate-950"
+                                : "text-slate-500 hover:text-slate-300"
+                            }`}
+                          >
+                            Last N
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setGameRangeMode("since")}
+                            className={`rounded px-1.5 text-[10px] font-semibold transition-all ${
+                              gameRangeMode === "since"
+                                ? "bg-emerald-500/80 text-slate-950"
+                                : "text-slate-500 hover:text-slate-300"
+                            }`}
+                          >
+                            Since
+                          </button>
+                        </div>
+                      </div>
+                      {gameRangeMode === "count" ? (
+                        <input
+                          type="number"
+                          min={1}
+                          max={hasProAccess ? 5000 : 300}
+                          value={gameCount}
+                          onChange={(e) => setGameCount(Number(e.target.value))}
+                          aria-label="Number of games to scan"
+                          className="glass-input h-10 text-sm"
+                        />
                       ) : (
-                        "Unlocked"
+                        <input
+                          type="date"
+                          value={sinceDate}
+                          onChange={(e) => setSinceDate(e.target.value)}
+                          max={new Date().toISOString().split("T")[0]}
+                          aria-label="Scan games since date"
+                          className="glass-input h-10 text-sm"
+                        />
                       )}
-                    </p>
-                  )}
-                  {gameRangeMode === "since" && !sinceDate && (
-                    <p className="text-[10px] text-slate-500">
-                      Pick a start date
-                    </p>
-                  )}
-                </div>
+                      {gameRangeMode === "count" && gamesOverFreeLimit && (
+                        <p className="text-xs font-medium text-amber-400">
+                          {!hasProAccess ? (
+                            <>
+                              Requires{" "}
+                              <Link href="/pricing" className="underline">
+                                Pro
+                              </Link>
+                            </>
+                          ) : gameCount > 1000 ? (
+                            `${gameCount.toLocaleString()} games — may take a while`
+                          ) : (
+                            "Unlocked"
+                          )}
+                        </p>
+                      )}
+                      {gameRangeMode === "since" && !sinceDate && (
+                        <p className="text-[10px] text-slate-500">
+                          Pick a start date
+                        </p>
+                      )}
+                    </div>
 
-                <div className="stat-card space-y-2">
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
-                    Moves
-                    <HelpTip text="How deep into the opening to scan (number of moves per side). Higher values catch later opening deviations but take longer." />
-                  </span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={hasProAccess ? 40 : FREE_MAX_MOVES}
-                    value={moveCount}
-                    onChange={(e) => setMoveCount(Number(e.target.value))}
-                    aria-label="Number of moves to scan"
-                    className="glass-input h-10 text-sm"
-                  />
-                  {!hasProAccess && movesOverFreeLimit && (
-                    <p className="text-xs font-medium text-amber-400">
-                      Free capped at {FREE_MAX_MOVES}.{" "}
-                      <Link href="/pricing" className="underline">
-                        Upgrade
-                      </Link>{" "}
-                      for up to 40.
-                    </p>
-                  )}
-                </div>
-
-                <div className="stat-card space-y-2">
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
-                    CP Threshold
-                    <HelpTip text="Minimum centipawn loss to flag a move as a mistake. Lower = stricter (catches inaccuracies). Default 50cp works well for most players." />
-                  </span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={1000}
-                    value={cpThreshold}
-                    onChange={(e) => setCpThreshold(Number(e.target.value))}
-                    aria-label="Centipawn loss threshold"
-                    className="glass-input h-10 text-sm"
-                  />
-                </div>
-
-                <div className="stat-card space-y-2">
-                  <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
-                    Depth
-                    <HelpTip text="Stockfish engine search depth. Higher = more accurate but slower. 12 is good for quick scans, 18+ for serious analysis. Pro unlocks up to 24." />
-                  </span>
-                  <input
-                    type="number"
-                    min={6}
-                    max={24}
-                    value={engineDepth}
-                    onChange={(e) => setEngineDepth(Number(e.target.value))}
-                    aria-label="Engine search depth"
-                    className="glass-input h-10 text-sm"
-                  />
-                  {depthOverFreeLimit && (
-                    <p className="text-xs font-medium text-amber-400">
-                      {!hasProAccess ? (
-                        <>
-                          Requires{" "}
+                    <div className="stat-card space-y-2">
+                      <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                        Moves
+                        <HelpTip text="How deep into the opening to scan (number of moves per side). Higher values catch later opening deviations but take longer." />
+                      </span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={hasProAccess ? 40 : FREE_MAX_MOVES}
+                        value={moveCount}
+                        onChange={(e) => setMoveCount(Number(e.target.value))}
+                        aria-label="Number of moves to scan"
+                        className="glass-input h-10 text-sm"
+                      />
+                      {!hasProAccess && movesOverFreeLimit && (
+                        <p className="text-xs font-medium text-amber-400">
+                          Free capped at {FREE_MAX_MOVES}.{" "}
                           <Link href="/pricing" className="underline">
-                            Pro
-                          </Link>
-                        </>
-                      ) : (
-                        "Unlocked"
+                            Upgrade
+                          </Link>{" "}
+                          for up to 40.
+                        </p>
                       )}
-                    </p>
-                  )}
+                    </div>
+
+                    <div className="stat-card space-y-2">
+                      <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                        CP Threshold
+                        <HelpTip text="Minimum centipawn loss to flag a move as a mistake. Lower = stricter (catches inaccuracies). Default 50cp works well for most players." />
+                      </span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={1000}
+                        value={cpThreshold}
+                        onChange={(e) => setCpThreshold(Number(e.target.value))}
+                        aria-label="Centipawn loss threshold"
+                        className="glass-input h-10 text-sm"
+                      />
+                    </div>
+
+                    <div className="stat-card space-y-2">
+                      <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                        Depth
+                        <HelpTip text="Stockfish engine search depth. Higher = more accurate but slower. 12 is good for quick scans, 18+ for serious analysis. Pro unlocks up to 24." />
+                      </span>
+                      <input
+                        type="number"
+                        min={6}
+                        max={24}
+                        value={engineDepth}
+                        onChange={(e) => setEngineDepth(Number(e.target.value))}
+                        aria-label="Engine search depth"
+                        className="glass-input h-10 text-sm"
+                      />
+                      {depthOverFreeLimit && (
+                        <p className="text-xs font-medium text-amber-400">
+                          {!hasProAccess ? (
+                            <>
+                              Requires{" "}
+                              <Link href="/pricing" className="underline">
+                                Pro
+                              </Link>
+                            </>
+                          ) : (
+                            "Unlocked"
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
+
+                <div className="mt-6 flex flex-col gap-3 border-t border-white/[0.08] pt-4 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs leading-relaxed text-slate-500">
+                    These settings update the next scan immediately. Use the
+                    main scan button in the quick-scan card when you are ready.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setAdvancedSettingsOpen(false)}
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-white transition hover:border-white/[0.18] hover:bg-white/[0.07]"
+                  >
+                    Done
+                  </button>
+                </div>
+              </section>
             </div>
-          </form>
+          )}
 
           {/* ─── Feature Pills ─── */}
           <section className="animate-fade-in mx-auto grid w-full max-w-5xl gap-4 sm:grid-cols-3">
@@ -2775,87 +2426,51 @@ export default function HomePage() {
             </section>
           )}
 
-          {/* ─── Product Proof ─── */}
+          {/* ─── Landing Close ─── */}
           {state === "idle" && (
-            <section className="animate-fade-in mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-              <div className="relative overflow-hidden rounded-[2.25rem] bg-[linear-gradient(160deg,rgba(9,13,30,0.34),rgba(12,16,36,0.12)_55%,rgba(34,19,58,0.16))] px-6 py-6 ring-1 ring-inset ring-white/[0.04] md:px-7 md:py-7">
-                <div className="pointer-events-none absolute -left-10 top-8 h-40 w-40 rounded-full bg-sky-400/[0.08] blur-[90px]" />
-                <div className="pointer-events-none absolute right-0 bottom-0 h-44 w-44 rounded-full bg-fuchsia-500/[0.08] blur-[105px]" />
+            <section className="animate-fade-in mx-auto w-full max-w-5xl">
+              <div className="relative overflow-hidden rounded-[2.25rem] bg-[linear-gradient(160deg,rgba(9,13,30,0.26),rgba(12,16,36,0.12)_58%,rgba(30,22,49,0.14))] px-6 py-6 ring-1 ring-inset ring-white/[0.04] md:px-7 md:py-7">
+                <div className="pointer-events-none absolute -left-12 top-10 h-40 w-40 rounded-full bg-sky-400/[0.06] blur-[95px]" />
+                <div className="pointer-events-none absolute right-0 bottom-0 h-40 w-40 rounded-full bg-fuchsia-500/[0.06] blur-[100px]" />
                 <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
-                <div className="relative">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-orange-300/75">
-                    Why It Feels Different
-                  </p>
-                  <h2 className="mt-3 text-2xl font-bold text-white sm:text-3xl">
-                    Built to turn a vague weakness into a concrete next move.
-                  </h2>
-                  <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
-                    Most chess tools stop at charts or throw generic puzzles at
-                    you. FireChess is strongest when it carries the exact board
-                    from diagnosis into review, discussion, and training.
-                  </p>
+                <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)] lg:items-end">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-orange-300/75">
+                      What Happens Next
+                    </p>
+                    <h2 className="mt-3 max-w-3xl text-2xl font-bold text-white sm:text-3xl">
+                      Run the scan, keep the board, choose the right follow-up.
+                    </h2>
+                    <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
+                      FireChess works best when the exact position survives the
+                      diagnosis. Review it, post it, or train it without losing
+                      the mistake that made it matter.
+                    </p>
 
-                  <div className="mt-6 grid gap-5 md:grid-cols-3 md:gap-6">
-                    {[
-                      {
-                        title: "Signal from your own games",
-                        description:
-                          "The engine surfaces patterns from your archive instead of pretending every player needs the same lesson.",
-                      },
-                      {
-                        title: "Board-first follow-up",
-                        description:
-                          "The important position stays intact, so the fix is easier to inspect, save, publish, and revisit.",
-                      },
-                      {
-                        title: "Training after context",
-                        description:
-                          "Practice comes after the diagnosis, which makes each drill feel attached to a real mistake instead of random volume.",
-                      },
-                    ].map((item, index) => (
-                      <div
-                        key={item.title}
-                        className={
-                          index === 0
-                            ? ""
-                            : "border-t border-white/[0.08] pt-4 md:border-l md:border-t-0 md:pl-5 md:pt-0"
-                        }
-                      >
-                        <h3 className="text-sm font-semibold text-white">
-                          {item.title}
-                        </h3>
-                        <p className="mt-2 text-sm leading-relaxed text-slate-400">
-                          {item.description}
-                        </p>
-                      </div>
-                    ))}
+                    <div className="mt-5 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-slate-300">
+                      <span className="inline-flex items-center gap-2 text-slate-400">
+                        <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
+                        Signal from your own games
+                      </span>
+                      <span className="inline-flex items-center gap-2 text-slate-400">
+                        <span className="h-1.5 w-1.5 rounded-full bg-fuchsia-300" />
+                        Board-first follow-up
+                      </span>
+                      <span className="inline-flex items-center gap-2 text-slate-400">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                        Training after context
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              <div className="relative overflow-hidden rounded-[2.25rem] bg-[linear-gradient(160deg,rgba(18,12,20,0.28),rgba(13,18,39,0.12)_45%,rgba(33,20,55,0.18))] px-6 py-6 ring-1 ring-inset ring-white/[0.04] md:px-7 md:py-7">
-                <div className="pointer-events-none absolute -right-10 top-0 h-44 w-44 rounded-full bg-fuchsia-500/[0.08] blur-[110px]" />
-                <div className="pointer-events-none absolute -left-8 bottom-8 h-36 w-36 rounded-full bg-orange-400/[0.08] blur-[90px]" />
-                <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
-
-                <div className="relative">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-orange-200/80">
-                    Start Here
-                  </p>
-                  <h3 className="mt-3 text-2xl font-bold text-white">
-                    Run the scan, then choose the right follow-up.
-                  </h3>
-                  <p className="mt-3 text-sm leading-relaxed text-slate-300">
-                    Analyze first. If the board needs discussion, post it. If
-                    the weakness needs repetition, drill it. The homepage should
-                    make that product loop obvious.
-                  </p>
-
-                  <div className="mt-6 space-y-4">
+                  <div className="rounded-[1.75rem] border border-white/[0.08] bg-black/15 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+                      Start Here
+                    </p>
                     <a
                       href="#analyzer"
-                      className="btn-primary flex w-full items-center justify-center gap-2"
+                      className="btn-primary mt-4 flex w-full items-center justify-center gap-2"
                     >
                       Scan My Games
                       <svg
@@ -2873,7 +2488,7 @@ export default function HomePage() {
                       </svg>
                     </a>
 
-                    <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-slate-300">
+                    <div className="mt-4 flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold text-slate-300">
                       <Link
                         href="/board"
                         className="inline-flex items-center gap-2 transition-colors hover:text-white"
@@ -2912,14 +2527,28 @@ export default function HomePage() {
                           />
                         </svg>
                       </Link>
+                      <Link
+                        href="/community"
+                        className="inline-flex items-center gap-2 transition-colors hover:text-white"
+                      >
+                        Explore Community
+                        <svg
+                          className="h-3.5 w-3.5"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2.5}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M13 7l5 5m0 0l-5 5m5-5H6"
+                          />
+                        </svg>
+                      </Link>
                     </div>
-                  </div>
 
-                  <div className="mt-6 border-t border-white/[0.08] pt-4">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
-                      Product Stance
-                    </p>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-300">
+                    <p className="mt-5 border-t border-white/[0.08] pt-4 text-sm leading-relaxed text-slate-400">
                       No random puzzle spam. No dead-end reports. Just your
                       games, your repeat positions, and clearer next actions.
                     </p>
@@ -3791,6 +3420,7 @@ export default function HomePage() {
                         weightedCpLoss={report.weightedCpLoss}
                         severeLeakRate={report.severeLeakRate}
                         timeManagementScore={result.timeManagementScore}
+                        endgameTechniqueScore={report.endgameTechniqueScore}
                       />
                       <RadarLegend
                         data={computeRadarData({
@@ -3802,6 +3432,7 @@ export default function HomePage() {
                           weightedCpLoss: report.weightedCpLoss,
                           severeLeakRate: report.severeLeakRate,
                           timeManagementScore: result.timeManagementScore,
+                          endgameTechniqueScore: report.endgameTechniqueScore,
                         })}
                         props={{
                           accuracy: report.estimatedAccuracy,
@@ -3812,6 +3443,7 @@ export default function HomePage() {
                           weightedCpLoss: report.weightedCpLoss,
                           severeLeakRate: report.severeLeakRate,
                           timeManagementScore: result.timeManagementScore,
+                          endgameTechniqueScore: report.endgameTechniqueScore,
                         }}
                       />
                     </div>
@@ -3830,6 +3462,7 @@ export default function HomePage() {
                       weightedCpLoss: report.weightedCpLoss,
                       severeLeakRate: report.severeLeakRate,
                       timeManagementScore: result.timeManagementScore,
+                      endgameTechniqueScore: report.endgameTechniqueScore,
                     })}
                     props={{
                       accuracy: report.estimatedAccuracy,
@@ -3840,6 +3473,7 @@ export default function HomePage() {
                       weightedCpLoss: report.weightedCpLoss,
                       severeLeakRate: report.severeLeakRate,
                       timeManagementScore: result.timeManagementScore,
+                      endgameTechniqueScore: report.endgameTechniqueScore,
                     }}
                     hasProAccess={hasProAccess}
                   />

@@ -81,6 +81,7 @@ type SavedReport = {
     topTag?: string;
     vibeTitle?: string;
     sampleSize?: number;
+    endgameTechniqueScore?: number | null;
   } | null;
   timeManagement: {
     score: number;
@@ -126,6 +127,7 @@ function radarPropsFrom(r: SavedReport): RadarProps {
     weightedCpLoss: r.weightedCpLoss ?? 0,
     severeLeakRate: r.severeLeakRate ?? 0,
     timeManagementScore: null,
+    endgameTechniqueScore: r.reportMeta?.endgameTechniqueScore ?? null,
   };
 }
 

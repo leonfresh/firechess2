@@ -18,6 +18,7 @@ import type { TimeMoment, MoveSquare } from "@/lib/types";
 
 type TimeCardProps = {
   moment: TimeMoment;
+  onCreateCommunityPost?: () => void;
 };
 
 type BoardSquare =
@@ -200,7 +201,7 @@ const VERDICT_CONFIG = {
   },
 } as const;
 
-export function TimeCard({ moment }: TimeCardProps) {
+export function TimeCard({ moment, onCreateCommunityPost }: TimeCardProps) {
   const { ref: boardSizeRef, size: boardSize } = useBoardSize(400);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
@@ -717,6 +718,27 @@ export function TimeCard({ moment }: TimeCardProps) {
                 </>
               )}
             </button>
+
+            {onCreateCommunityPost ? (
+              <button
+                type="button"
+                onClick={onCreateCommunityPost}
+                className="flex items-center gap-1.5 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-500/20 hover:text-white"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                >
+                  <path d="M12 5v14" />
+                  <path d="M5 12h14" />
+                </svg>
+                Post to community
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
