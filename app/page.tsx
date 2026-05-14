@@ -1392,59 +1392,77 @@ export default function HomePage() {
 
   return (
     <div className="relative min-h-screen">
-      {/* Animated floating orbs — hidden during puzzle solving for drag perf */}
-      <div
-        className={`pointer-events-none fixed inset-0 z-0 overflow-hidden transition-opacity duration-300 ${puzzleBoardOpen ? "opacity-0" : ""}`}
-        style={puzzleBoardOpen ? { display: "none" } : undefined}
-      >
-        <div className="absolute -left-32 top-20 h-96 w-96 rounded-full bg-emerald-500/[0.06] blur-[80px]" />
-        <div className="absolute -right-32 top-40 h-80 w-80 rounded-full bg-cyan-500/[0.05] blur-[80px]" />
-        <div className="absolute bottom-20 left-1/3 h-72 w-72 rounded-full bg-fuchsia-500/[0.04] blur-[80px]" />
-        <div className="absolute right-1/4 top-1/2 h-64 w-64 rounded-full bg-emerald-500/[0.03] blur-[60px]" />
-      </div>
-
-      <div className="relative z-10 px-4 py-12 sm:px-6 md:px-10">
-        <section className="mx-auto w-full max-w-6xl space-y-12 sm:space-y-14 lg:space-y-16">
+      <div className="relative z-10 px-4 py-10 sm:px-6 md:px-10">
+        <section className="mx-auto w-full max-w-7xl space-y-12 sm:space-y-14 lg:space-y-16">
           {/* ─── Hero Section ─── */}
           <header className="animate-fade-in-up">
-            <div className="relative px-1 py-4 sm:px-2 sm:py-5 lg:px-1 lg:py-6">
-              <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/18 to-transparent" />
-              <div className="pointer-events-none absolute left-[6%] top-8 h-48 w-48 rounded-full bg-sky-400/[0.08] blur-3xl" />
-              <div className="pointer-events-none absolute right-[8%] top-14 h-44 w-44 rounded-full bg-fuchsia-500/[0.07] blur-3xl" />
-              <div className="grid grid-cols-1 gap-10 lg:grid-cols-2 lg:items-center lg:gap-14">
-                {/* ── Left column ── */}
+            <div className="relative overflow-hidden rounded-[2rem] border border-white/[0.08] bg-slate-950/60 px-5 py-6 shadow-[0_32px_120px_-54px_rgba(2,6,23,0.95)] sm:px-8 sm:py-8 lg:px-10 lg:py-10">
+              <div
+                className="pointer-events-none absolute inset-0 opacity-95"
+                style={{
+                  background:
+                    "radial-gradient(circle at 16% 18%, rgba(125, 211, 252, 0.18), transparent 28%), radial-gradient(circle at 84% 76%, rgba(251, 191, 36, 0.14), transparent 30%), linear-gradient(135deg, rgba(6, 10, 24, 0.98) 0%, rgba(10, 23, 42, 0.96) 48%, rgba(18, 35, 58, 0.98) 100%)",
+                }}
+              />
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-100/30 to-transparent" />
+
+              <div className="relative grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-center lg:gap-12">
                 <div className="space-y-6 text-center lg:text-left">
-                  {/* Headline */}
-                  <div className={`space-y-2 ${heroAnim(2)}`}>
-                    <p className="font-mono text-[11px] uppercase tracking-[0.34em] text-sky-200/70">
+                  <div className={`space-y-3 ${heroAnim(2)}`}>
+                    <span className="inline-flex rounded-full border border-sky-300/20 bg-sky-300/[0.08] px-3 py-1 font-mono text-[11px] uppercase tracking-[0.32em] text-sky-100/80">
                       Archive to board to plan
-                    </p>
-                    <div className="space-y-1">
-                      <h1 className="text-5xl font-black leading-[0.98] tracking-[-0.05em] text-white md:text-6xl lg:text-[4.35rem]">
-                        Analyze more.
+                    </span>
+                    <div className="space-y-2">
+                      <h1 className="text-5xl font-black leading-[0.96] tracking-[-0.05em] text-white md:text-6xl lg:text-[4.45rem]">
+                        Analyze less noise.
                       </h1>
-                      <h1 className="bg-gradient-to-r from-sky-300 via-violet-300 to-fuchsia-300 bg-clip-text text-5xl font-black italic leading-[0.98] tracking-[-0.05em] text-transparent md:text-6xl lg:text-[4.35rem]">
-                        Improve faster.
+                      <h1 className="bg-gradient-to-r from-sky-200 via-cyan-200 to-amber-200 bg-clip-text text-5xl font-black italic leading-[0.96] tracking-[-0.05em] text-transparent md:text-6xl lg:text-[4.45rem]">
+                        Keep the useful positions.
                       </h1>
                     </div>
                   </div>
 
-                  {/* Description */}
                   <p
-                    className={`text-base leading-relaxed text-slate-300/90 md:text-lg lg:max-w-lg ${heroAnim(3)}`}
+                    className={`text-base leading-relaxed text-slate-300/90 md:text-lg lg:max-w-xl ${heroAnim(3)}`}
                   >
-                    One scan spots the leak. The board shows you the fix move by
-                    move.
+                    FireChess pulls your recent games into one clean report,
+                    then turns the sharpest positions into boards you can
+                    review, share, and drill.
                   </p>
+
+                  <div
+                    className={`grid gap-2 text-left sm:grid-cols-2 xl:grid-cols-4 ${heroAnim(4)}`}
+                  >
+                    {[
+                      { label: "Openings", value: "Recurring leak map" },
+                      { label: "Tactics", value: "Forcing moments first" },
+                      { label: "Endgames", value: "Technique check" },
+                      { label: "Time", value: "Clock habits exposed" },
+                    ].map((item) => (
+                      <div
+                        key={item.label}
+                        className="rounded-2xl border border-white/[0.08] bg-slate-950/30 px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+                      >
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+                          {item.label}
+                        </p>
+                        <p className="mt-1.5 text-sm font-semibold text-white">
+                          {item.value}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
 
                   <form
                     id="analyzer"
                     onSubmit={onSubmit}
-                    className={`glass-card space-y-5 p-4 sm:p-5 ${heroAnim(5)}`}
+                    className={`relative overflow-hidden rounded-[1.75rem] border border-white/[0.08] bg-slate-950/50 p-4 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.98)] sm:p-5 ${heroAnim(5)}`}
                   >
-                    <div className="flex flex-col gap-1">
+                    <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent_38%)]" />
+
+                    <div className="relative flex flex-col gap-1">
                       <div>
-                        <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-sky-200/75">
+                        <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-amber-100/80">
                           Quick Scan
                         </p>
                         <p className="mt-1 text-xs text-slate-500">
@@ -1453,9 +1471,9 @@ export default function HomePage() {
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-3">
+                    <div className="relative mt-5 flex flex-col gap-3">
                       <div
-                        className={`flex flex-1 items-center overflow-hidden rounded-xl border bg-white/[0.04] transition-colors duration-200 focus-within:border-emerald-500/30 ${
+                        className={`flex flex-1 items-center overflow-hidden rounded-xl border bg-white/[0.04] transition-colors duration-200 focus-within:border-sky-400/35 ${
                           !source
                             ? "border-sky-400/30 ring-1 ring-sky-400/15"
                             : "border-white/[0.08]"
@@ -1467,7 +1485,7 @@ export default function HomePage() {
                             onClick={() => setSource("lichess")}
                             className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
                               source === "lichess"
-                                ? "bg-gradient-to-r from-sky-300 to-violet-400 text-slate-950 shadow-[0_14px_30px_-18px_rgba(125,211,252,0.75)]"
+                                ? "bg-gradient-to-r from-sky-200 to-cyan-300 text-slate-950 shadow-[0_14px_30px_-18px_rgba(125,211,252,0.75)]"
                                 : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
                             }`}
                           >
@@ -1478,7 +1496,7 @@ export default function HomePage() {
                             onClick={() => setSource("chesscom")}
                             className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
                               source === "chesscom"
-                                ? "bg-gradient-to-r from-sky-300 to-violet-400 text-slate-950 shadow-[0_14px_30px_-18px_rgba(125,211,252,0.75)]"
+                                ? "bg-gradient-to-r from-sky-200 to-cyan-300 text-slate-950 shadow-[0_14px_30px_-18px_rgba(125,211,252,0.75)]"
                                 : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
                             }`}
                           >
@@ -1502,16 +1520,21 @@ export default function HomePage() {
                         />
                       </div>
 
-                      <div className="rounded-[1.35rem] border border-white/[0.08] bg-white/[0.03] px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200/72">
-                          Full Scan
-                        </p>
-                        <p className="mt-1.5 text-sm leading-relaxed text-slate-400">
+                      <div className="rounded-[1.35rem] border border-sky-300/12 bg-sky-300/[0.04] px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-100/75">
+                            Full Scan
+                          </p>
+                          <span className="rounded-full border border-amber-300/15 bg-amber-300/[0.08] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-100/75">
+                            openings tactics endgames time
+                          </span>
+                        </div>
+                        <p className="mt-1.5 text-sm leading-relaxed text-slate-300/80">
                           One report across{" "}
-                          <span className="text-slate-200">openings</span>,{" "}
-                          <span className="text-slate-200">tactics</span>,{" "}
-                          <span className="text-slate-200">endgames</span>, and{" "}
-                          <span className="text-slate-200">time</span>.
+                          <span className="text-white">openings</span>,{" "}
+                          <span className="text-white">tactics</span>,{" "}
+                          <span className="text-white">endgames</span>, and{" "}
+                          <span className="text-white">time</span>.
                         </p>
                       </div>
 
@@ -1523,7 +1546,11 @@ export default function HomePage() {
                             isLaunchingScan ||
                             freeLimitsExceeded
                           }
-                          className="btn-primary flex flex-1 items-center justify-center gap-2"
+                          className="btn-primary flex flex-1 items-center justify-center gap-2 text-slate-950 shadow-[0_20px_50px_-26px_rgba(56,189,248,0.65)]"
+                          style={{
+                            background:
+                              "linear-gradient(135deg, rgba(186, 230, 253, 0.98) 0%, rgba(103, 232, 249, 0.96) 52%, rgba(251, 191, 36, 0.92) 100%)",
+                          }}
                         >
                           {state === "loading" || isLaunchingScan ? (
                             <>
@@ -1574,7 +1601,7 @@ export default function HomePage() {
                         <button
                           type="button"
                           onClick={() => setAdvancedSettingsOpen(true)}
-                          className="inline-flex items-center justify-center gap-2 text-sm font-medium text-slate-400 transition-colors hover:text-slate-200 sm:justify-end"
+                          className="inline-flex items-center justify-center gap-2 text-sm font-medium text-amber-100/70 transition-colors hover:text-amber-50 sm:justify-end"
                         >
                           Advanced settings
                           <svg
@@ -1596,18 +1623,37 @@ export default function HomePage() {
                   </form>
                 </div>
 
-                {/* ── Right column: live product proof ── */}
                 <div
-                  className={`relative mx-auto w-full max-w-[36rem] md:max-w-[42rem] lg:max-w-none ${heroAnim(5)}`}
+                  className={`relative mx-auto w-full max-w-[38rem] lg:max-w-none ${heroAnim(5)}`}
                 >
-                  <div className="pointer-events-none absolute inset-x-10 top-10 h-40 rounded-full bg-[radial-gradient(circle,rgba(125,211,252,0.14),transparent_60%)] blur-3xl" />
+                  <div className="rounded-[1.75rem] border border-white/[0.08] bg-slate-950/35 p-4 shadow-[0_28px_80px_-46px_rgba(15,23,42,0.98)] sm:p-5">
+                    <div className="flex flex-wrap items-center justify-between gap-3 px-1">
+                      <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-amber-100/75">
+                        Live report preview
+                      </p>
+                      <span className="inline-flex rounded-full border border-white/[0.10] bg-white/[0.04] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">
+                        streaming sections
+                      </span>
+                    </div>
 
-                  <p className="relative px-1 font-mono text-[11px] uppercase tracking-[0.28em] text-sky-200/70">
-                    Live report preview
-                  </p>
+                    <div className="relative mt-4 overflow-hidden rounded-[1.5rem] border border-white/[0.06] bg-slate-950/70 p-2 sm:p-3">
+                      <HeroProductScreenshot paused={state !== "idle"} />
+                    </div>
 
-                  <div className="relative mt-4">
-                    <HeroProductScreenshot paused={state !== "idle"} />
+                    <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                      {[
+                        "Clean report route",
+                        "Board-first review",
+                        "Shareable positions",
+                      ].map((item) => (
+                        <div
+                          key={item}
+                          className="rounded-2xl border border-white/[0.06] bg-white/[0.04] px-3 py-2 text-center text-xs font-medium text-slate-300"
+                        >
+                          {item}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1616,177 +1662,187 @@ export default function HomePage() {
 
           {/* ─── Community Loop ─── */}
           {state === "idle" && (
-            <section className="relative left-1/2 w-screen -translate-x-1/2 px-4 py-4 sm:px-6 sm:py-5 md:px-10">
-              <div className="pointer-events-none absolute inset-y-0 left-1/2 w-screen -translate-x-1/2 bg-[radial-gradient(ellipse_72%_42%_at_18%_16%,rgba(56,189,248,0.07),transparent_72%),radial-gradient(ellipse_58%_34%_at_78%_20%,rgba(217,70,239,0.06),transparent_74%),radial-gradient(ellipse_56%_32%_at_50%_52%,rgba(15,23,42,0.18),transparent_78%)] opacity-90" />
-              <div className="relative mx-auto w-full max-w-6xl space-y-7 px-1 sm:px-2">
-                <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-                  <div className="max-w-3xl">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-sky-200/75">
-                      Community loop
-                    </p>
-
-                    <div className="mt-4">
-                      <h2 className="text-2xl font-bold text-white sm:text-3xl">
-                        Turn every report into a board people can actually use.
-                      </h2>
-                      <p className="mt-3 text-sm leading-relaxed text-slate-400 sm:text-base">
-                        Once the scan finds the leak, you should be able to cut
-                        the exact position, ask a sharper question, collect
-                        ideas, and keep the lesson inside your study workflow.
+            <section className="relative">
+              <div className="relative overflow-hidden rounded-[2rem] border border-white/[0.08] bg-slate-950/55 px-5 py-6 shadow-[0_30px_100px_-56px_rgba(15,23,42,0.98)] sm:px-6 sm:py-7 lg:px-8">
+                <div
+                  className="pointer-events-none absolute inset-0 opacity-90"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, rgba(7, 12, 27, 0.98) 0%, rgba(9, 19, 37, 0.96) 52%, rgba(21, 32, 47, 0.98) 100%), radial-gradient(circle at 14% 20%, rgba(56, 189, 248, 0.10), transparent 24%), radial-gradient(circle at 82% 26%, rgba(251, 191, 36, 0.08), transparent 22%)",
+                  }}
+                />
+                <div className="relative space-y-7">
+                  <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                    <div className="max-w-3xl">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-amber-100/75">
+                        Community loop
                       </p>
+
+                      <div className="mt-4">
+                        <h2 className="text-2xl font-bold text-white sm:text-3xl">
+                          Turn every report into a board people can actually
+                          use.
+                        </h2>
+                        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-300/80 sm:text-base">
+                          Once the scan finds the leak, you should be able to
+                          cut the exact position, ask a sharper question,
+                          collect ideas, and keep the lesson inside your study
+                          workflow.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-3 lg:items-end">
+                      <p className="max-w-sm text-sm leading-relaxed text-slate-400 lg:text-right">
+                        Fresh positions, opening debates, and study boards
+                        should stay playable right on the homepage.
+                      </p>
+                      <Link
+                        href="/community"
+                        className="inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-300/[0.08] px-4 py-2 text-sm font-semibold text-sky-100 transition-colors hover:border-sky-200/35 hover:bg-sky-300/[0.14] hover:text-white"
+                      >
+                        View full feed
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2.5}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M13 7l5 5m0 0l-5 5m5-5H6"
+                          />
+                        </svg>
+                      </Link>
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-3 lg:items-end">
-                    <p className="max-w-sm text-sm leading-relaxed text-slate-500 lg:text-right">
-                      Fresh positions, opening debates, and study boards should
-                      stay playable right on the homepage.
-                    </p>
-                    <Link
-                      href="/community"
-                      className="inline-flex items-center gap-2 text-sm font-semibold text-sky-200 transition-colors hover:text-white"
-                    >
-                      View full feed
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2.5}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M13 7l5 5m0 0l-5 5m5-5H6"
-                        />
-                      </svg>
-                    </Link>
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <HomepageCommunityFeed />
-                </div>
-
-                <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,0.95fr)]">
-                  <div className="divide-y divide-white/[0.08]">
-                    {[
-                      {
-                        href: "/board",
-                        icon: "🧰",
-                        title: "Board Workbench",
-                        description:
-                          "Paste a FEN or PGN, trim the exact moment, and publish it without rebuilding the position by hand.",
-                        accent:
-                          "border-cyan-500/20 bg-cyan-500/[0.05] text-cyan-300 hover:border-cyan-400/40",
-                      },
-                      {
-                        href: "/community",
-                        icon: "🔥",
-                        title: "Community Hub",
-                        description:
-                          "Browse live positions, opening debates, and study posts grounded in real boards rather than generic chat.",
-                        accent:
-                          "border-orange-500/20 bg-orange-500/[0.05] text-orange-300 hover:border-orange-400/40",
-                      },
-                      {
-                        href:
-                          authenticated && user?.id
-                            ? `/community/profile/${user.id}`
-                            : "/community",
-                        icon: "🗂️",
-                        title: authenticated
-                          ? "My Study Profile"
-                          : "Study Profiles",
-                        description: authenticated
-                          ? "Your saved boards and posts become a reviewable study surface instead of a forgotten report archive."
-                          : "Profiles collect positions, lessons, and lines into a shareable review deck.",
-                        accent:
-                          "border-fuchsia-500/20 bg-fuchsia-500/[0.05] text-fuchsia-300 hover:border-fuchsia-400/40",
-                      },
-                    ].map((item, index) => (
-                      <Link
-                        key={item.title}
-                        href={item.href}
-                        className="group grid gap-3 py-4 transition-colors sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-start"
-                      >
-                        <div
-                          className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${item.accent}`}
-                        >
-                          <span className="text-lg">{item.icon}</span>
-                        </div>
-
-                        <div className="min-w-0">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-600">
-                            0{index + 1}
-                          </p>
-                          <h3 className="mt-1 text-base font-semibold text-white transition-colors group-hover:text-sky-100">
-                            {item.title}
-                          </h3>
-                          <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-400">
-                            {item.description}
-                          </p>
-                        </div>
-
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold text-white/60 transition-colors group-hover:text-white sm:justify-self-end sm:pt-6">
-                          Open
-                          <svg
-                            className="h-3.5 w-3.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={2.5}
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M13 7l5 5m0 0l-5 5m5-5H6"
-                            />
-                          </svg>
-                        </span>
-                      </Link>
-                    ))}
+                  <div className="mt-6">
+                    <HomepageCommunityFeed />
                   </div>
 
-                  <div className="space-y-4 lg:pl-6">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
-                      Study Flow
-                    </p>
-
-                    <div className="space-y-4 border-l border-white/[0.08] pl-4 sm:pl-5">
+                  <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,0.95fr)]">
+                    <div className="divide-y divide-white/[0.08]">
                       {[
                         {
-                          step: "01",
-                          title: "Scan the archive",
+                          href: "/board",
+                          icon: "🧰",
+                          title: "Board Workbench",
                           description:
-                            "Run a report and isolate the repeat leaks that matter.",
+                            "Paste a FEN or PGN, trim the exact moment, and publish it without rebuilding the position by hand.",
+                          accent:
+                            "border-sky-400/20 bg-sky-400/[0.07] text-sky-200 hover:border-sky-300/40",
                         },
                         {
-                          step: "02",
-                          title: "Lift the board out",
+                          href: "/community",
+                          icon: "🔥",
+                          title: "Community Hub",
                           description:
-                            "Push the exact moment into the workbench with context intact.",
+                            "Browse live positions, opening debates, and study posts grounded in real boards rather than generic chat.",
+                          accent:
+                            "border-amber-400/20 bg-amber-400/[0.07] text-amber-200 hover:border-amber-300/40",
                         },
                         {
-                          step: "03",
-                          title: "Discuss or drill",
-                          description:
-                            "Turn the lesson into a post, a saved card, or a training target.",
+                          href:
+                            authenticated && user?.id
+                              ? `/community/profile/${user.id}`
+                              : "/community",
+                          icon: "🗂️",
+                          title: authenticated
+                            ? "My Study Profile"
+                            : "Study Profiles",
+                          description: authenticated
+                            ? "Your saved boards and posts become a reviewable study surface instead of a forgotten report archive."
+                            : "Profiles collect positions, lessons, and lines into a shareable review deck.",
+                          accent:
+                            "border-emerald-400/20 bg-emerald-400/[0.07] text-emerald-200 hover:border-emerald-300/40",
                         },
-                      ].map((item) => (
-                        <div key={item.step} className="relative">
-                          <span className="absolute -left-[1.3rem] top-1.5 h-2.5 w-2.5 rounded-full bg-white/35 shadow-[0_0_0_6px_rgba(255,255,255,0.02)] sm:-left-[1.55rem]" />
-                          <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-slate-600">
-                            Step {item.step}
-                          </p>
-                          <h3 className="mt-1.5 text-sm font-semibold text-white">
-                            {item.title}
-                          </h3>
-                          <p className="mt-1.5 text-sm leading-relaxed text-slate-400">
-                            {item.description}
-                          </p>
-                        </div>
+                      ].map((item, index) => (
+                        <Link
+                          key={item.title}
+                          href={item.href}
+                          className="group grid gap-3 py-4 transition-colors sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-start"
+                        >
+                          <div
+                            className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${item.accent}`}
+                          >
+                            <span className="text-lg">{item.icon}</span>
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-sky-100/40">
+                              0{index + 1}
+                            </p>
+                            <h3 className="mt-1 text-base font-semibold text-white transition-colors group-hover:text-sky-100">
+                              {item.title}
+                            </h3>
+                            <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-400">
+                              {item.description}
+                            </p>
+                          </div>
+
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-white/60 transition-colors group-hover:text-white sm:justify-self-end sm:pt-6">
+                            Open
+                            <svg
+                              className="h-3.5 w-3.5"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              strokeWidth={2.5}
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M13 7l5 5m0 0l-5 5m5-5H6"
+                              />
+                            </svg>
+                          </span>
+                        </Link>
                       ))}
+                    </div>
+
+                    <div className="space-y-4 lg:pl-6">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-amber-100/65">
+                        Study Flow
+                      </p>
+
+                      <div className="space-y-4 border-l border-white/[0.08] pl-4 sm:pl-5">
+                        {[
+                          {
+                            step: "01",
+                            title: "Scan the archive",
+                            description:
+                              "Run a report and isolate the repeat leaks that matter.",
+                          },
+                          {
+                            step: "02",
+                            title: "Lift the board out",
+                            description:
+                              "Push the exact moment into the workbench with context intact.",
+                          },
+                          {
+                            step: "03",
+                            title: "Discuss or drill",
+                            description:
+                              "Turn the lesson into a post, a saved card, or a training target.",
+                          },
+                        ].map((item) => (
+                          <div key={item.step} className="relative">
+                            <span className="absolute -left-[1.3rem] top-1.5 h-2.5 w-2.5 rounded-full bg-amber-200/70 shadow-[0_0_0_6px_rgba(251,191,36,0.06)] sm:-left-[1.55rem]" />
+                            <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-slate-500">
+                              Step {item.step}
+                            </p>
+                            <h3 className="mt-1.5 text-sm font-semibold text-white">
+                              {item.title}
+                            </h3>
+                            <p className="mt-1.5 text-sm leading-relaxed text-slate-400">
+                              {item.description}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
