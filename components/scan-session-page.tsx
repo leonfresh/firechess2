@@ -394,18 +394,21 @@ export function ScanSessionPage({
     setSaveState("saving");
 
     try {
-      const hashInput = buildReportContentHash(
-        scan.result,
-        scan.config.source,
-        scan.config.scanMode,
-      );
-      const hashBuffer = await crypto.subtle.digest(
-        "SHA-256",
-        new TextEncoder().encode(hashInput),
-      );
-      const contentHash = Array.from(new Uint8Array(hashBuffer))
-        .map((byte) => byte.toString(16).padStart(2, "0"))
-        .join("");
+      let contentHash = scan.result.scanSignature ?? null;
+      if (!contentHash) {
+        const hashInput = buildReportContentHash(
+          scan.result,
+          scan.config.source,
+          scan.config.scanMode,
+        );
+        const hashBuffer = await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode(hashInput),
+        );
+        contentHash = Array.from(new Uint8Array(hashBuffer))
+          .map((byte) => byte.toString(16).padStart(2, "0"))
+          .join("");
+      }
 
       const saveRes = await fetch("/api/reports", {
         method: "POST",

@@ -6,6 +6,7 @@ import { stockfishClient } from "@/lib/stockfish-client";
 import { EvalBar } from "@/components/eval-bar";
 import { Chessboard } from "@/components/chessboard-compat";
 import { playSound } from "@/lib/sounds";
+import { isMissedMateTactic } from "@/lib/tactic-utils";
 import { useBoardSize } from "@/lib/use-board-size";
 import {
   useBoardTheme,
@@ -572,7 +573,7 @@ function formatEval(valueCp: number, options?: { showPlus?: boolean }): string {
 }
 
 function formatEvalLoss(cpLoss: number): string {
-  if (cpLoss >= MATE_THRESHOLD) return "Mate";
+  if (cpLoss >= MATE_THRESHOLD) return "9.9+";
   const pawns = cpLoss / 100;
   const rounded = Math.round(pawns * 100) / 100;
   return rounded
@@ -627,8 +628,7 @@ export function TacticCard({
   const timerIds = useRef<number[]>([]);
   const fenCopiedTimerRef = useRef<number | null>(null);
 
-  const isMate =
-    isMateScore(tactic.cpBefore) || tactic.cpLoss >= MATE_THRESHOLD;
+  const isMate = isMissedMateTactic(tactic);
   const severityColor = isMate
     ? "#dc2626"
     : tactic.cpLoss >= 600

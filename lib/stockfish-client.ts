@@ -1,6 +1,7 @@
 export type LocalEngineEval = {
   cp: number;
   bestMove: string | null;
+  mateIn?: number | null;
 };
 
 export type LocalEngineLine = LocalEngineEval & {
@@ -130,6 +131,7 @@ class StockfishClient {
     let latestScoreCp: number | null = null;
     let latestBestMove: string | null = null;
     let latestPvMoves: string[] = [];
+    let latestMateIn: number | null = null;
 
     for (const line of lines) {
       if (line.startsWith("info ")) {
@@ -142,8 +144,10 @@ class StockfishClient {
           const sign = mateValue > 0 ? 1 : -1;
           latestScoreCp =
             sign * (MATE_CP - Math.min(Math.abs(mateValue), 1000));
+          latestMateIn = mateValue;
         } else if (scoreCpMatch) {
           latestScoreCp = Number(scoreCpMatch[1]);
+          latestMateIn = null;
         }
 
         if (pvMatch) {
@@ -163,6 +167,7 @@ class StockfishClient {
     return {
       cp: latestScoreCp,
       bestMove: latestBestMove,
+      mateIn: latestMateIn,
       pvMoves: latestPvMoves,
     };
   }
@@ -170,7 +175,10 @@ class StockfishClient {
   /** Parse multi-PV output — returns one LocalEngineLine per PV, sorted best-first */
   private parseMultiPv(lines: string[]): LocalEngineLine[] {
     // Collect the latest info line for each multipv index
-    const pvMap = new Map<number, { cp: number; pv: string[] }>();
+    const pvMap = new Map<
+      number,
+      { cp: number; mateIn: number | null; pv: string[] }
+    >();
     let bestMove: string | null = null;
 
     for (const line of lines) {
@@ -180,11 +188,13 @@ class StockfishClient {
         const pvIdx = Number(pvIdxMatch[1]);
 
         let cp: number | null = null;
+        let mateIn: number | null = null;
         const scoreCpMatch = line.match(/\bscore cp (-?\d+)/);
         const scoreMateMatch = line.match(/\bscore mate (-?\d+)/);
         if (scoreMateMatch) {
           const m = Number(scoreMateMatch[1]);
           cp = (m > 0 ? 1 : -1) * (MATE_CP - Math.min(Math.abs(m), 1000));
+          mateIn = m;
         } else if (scoreCpMatch) {
           cp = Number(scoreCpMatch[1]);
         }
@@ -195,7 +205,7 @@ class StockfishClient {
           ? pvMatch[1].trim().split(/\s+/).filter(Boolean)
           : [];
 
-        pvMap.set(pvIdx, { cp, pv });
+        pvMap.set(pvIdx, { cp, mateIn, pv });
       }
 
       if (line.startsWith("bestmove ")) {
@@ -209,6 +219,7 @@ class StockfishClient {
       results.push({
         cp: val.cp,
         bestMove: val.pv[0] ?? null,
+        mateIn: val.mateIn,
         pvMoves: val.pv,
       });
     }
@@ -308,7 +319,9 @@ class StockfishClient {
         }
 
         const line = await this.analyzeFenInternal(fen, depth, 0, skillLevel);
-        const parsed = line ? { cp: line.cp, bestMove: line.bestMove } : null;
+        const parsed = line
+          ? { cp: line.cp, bestMove: line.bestMove, mateIn: line.mateIn }
+          : null;
         this.evalCache.set(cacheKey, parsed);
         // Track max depth for fast higher-depth lookups (full-strength only)
         if (skillLevel === undefined) {

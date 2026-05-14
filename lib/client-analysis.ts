@@ -1,6 +1,7 @@
 import { Chess } from "chess.js";
 import { stockfishPool } from "@/lib/stockfish-client";
 import { fetchExplorerMoves } from "@/lib/lichess-explorer";
+import { SHORT_TACTIC_MATE_MAX_MOVES } from "@/lib/tactic-utils";
 import type {
   AnalyzeResponse,
   EndgameMistake,
@@ -109,7 +110,7 @@ export type AnalysisProgress = {
   percent: number;
 };
 
-type AnalyzeOptions = {
+export type AnalyzeOptions = {
   maxGames?: number;
   maxOpeningMoves?: number;
   cpLossThreshold?: number;
@@ -754,6 +755,244 @@ function saveGameCache(
   } catch {
     // localStorage quota exceeded — silently skip
   }
+}
+
+function normalizeTimeControls(
+  timeControl?: TimeControl | TimeControl[],
+): TimeControl[] {
+  return Array.isArray(timeControl)
+    ? timeControl
+    : timeControl
+      ? [timeControl]
+      : ["all"];
+}
+
+function buildScanSignatureGameKey(game: SourceGame): string {
+  return JSON.stringify({
+    white: (game.whiteName ?? "").toLowerCase(),
+    black: (game.blackName ?? "").toLowerCase(),
+    playedAt: game.playedAt ?? null,
+    gameUrl: game.gameUrl ?? null,
+    moves: game.moves,
+  });
+}
+
+async function createScanSignature(args: {
+  username: string;
+  source: AnalysisSource;
+  scanMode: ScanMode;
+  maxGames: number;
+  maxOpeningMoves: number;
+  cpLossThreshold: number;
+  engineDepth: number;
+  timeControls: TimeControl[];
+  since: number | null;
+  maxTactics: number | null;
+  maxEndgames: number | null;
+  games: SourceGame[];
+}): Promise<string> {
+  const hashInput = JSON.stringify({
+    username: args.username.trim().toLowerCase(),
+    source: args.source,
+    scanMode: args.scanMode,
+    maxGames: args.maxGames,
+    maxOpeningMoves: args.maxOpeningMoves,
+    cpLossThreshold: args.cpLossThreshold,
+    engineDepth: args.engineDepth,
+    timeControls: [...args.timeControls].sort(),
+    since: args.since,
+    maxTactics: args.maxTactics,
+    maxEndgames: args.maxEndgames,
+    games: args.games.map(buildScanSignatureGameKey).sort(),
+  });
+
+  const hashBuffer = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(hashInput),
+  );
+
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((byte) => byte.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function loadGamesForAnalysis(
+  username: string,
+  maxGames: number,
+  source: AnalysisSource,
+  options?: AnalyzeOptions,
+): Promise<SourceGame[]> {
+  let games: SourceGame[] = [];
+
+  // ── Game cache: avoid re-downloading games we already have ──
+  const tcArr = normalizeTimeControls(options?.timeControl);
+  const cache = loadGameCache(username, source, tcArr);
+
+  // Determine effective "since" for incremental fetch
+  let fetchSince = options?.since ?? 0;
+  // Only use incremental fetch if cache already covers the requested game count.
+  // If the user asks for MORE games than we have cached, do a full fetch so we
+  // pick up the older games the cache doesn't contain.
+  const cacheCoversRequest = cache && cache.games.length >= maxGames;
+  if (cache && cache.games.length > 0 && cacheCoversRequest) {
+    const cachedNewestAt = Math.max(...cache.games.map((g) => g.playedAt ?? 0));
+    if (cachedNewestAt > 0) {
+      fetchSince = Math.max(fetchSince, cachedNewestAt + 1);
+    }
+    emitProgress(options, {
+      phase: "fetch",
+      message: "💾 Found cached games",
+      detail: `${cache.games.length} games from previous scan — checking for new ones`,
+      percent: 1,
+    });
+  } else if (cache && cache.games.length > 0) {
+    emitProgress(options, {
+      phase: "fetch",
+      message: "🔄 Fetching more games",
+      detail: `You requested ${maxGames} games but only ${cache.games.length} were cached — doing a full fetch`,
+      percent: 1,
+    });
+  }
+
+  if (source === "chesscom") {
+    emitProgress(options, {
+      phase: "fetch",
+      message: "🌐 Connecting to Chess.com",
+      detail: cache
+        ? "Fetching new games only..."
+        : "Fetching your recent game archives...",
+      percent: 2,
+    });
+
+    try {
+      const fetchOpts =
+        fetchSince > 0 ? { ...options, since: fetchSince } : options;
+      games = await fetchChessComGamesInReverse(username, maxGames, fetchOpts);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "unknown error";
+      throw new Error(
+        `Browser cannot reach api.chess.com. Last error: ${message}`,
+      );
+    }
+  } else {
+    emitProgress(options, {
+      phase: "fetch",
+      message: "🌐 Connecting to Lichess",
+      detail: cache
+        ? "Fetching new games only..."
+        : "Streaming your recent games...",
+      percent: 2,
+    });
+
+    const lichessPerfs = tcArr
+      .filter((t): t is Speed => t !== "all")
+      .map((t) => t);
+    const perfParam =
+      lichessPerfs.length > 0 ? `&perfType=${lichessPerfs.join(",")}` : "";
+    const sinceParam = fetchSince > 0 ? `&since=${fetchSince}` : "";
+    const lichessUrl = `https://lichess.org/api/games/user/${encodeURIComponent(username)}?max=${maxGames}&moves=true&opening=true&clocks=true&evals=false&pgnInJson=false${perfParam}${sinceParam}`;
+
+    const hasSinceFilter = fetchSince > 0;
+    const lichessGames = await streamLichessGames(
+      lichessUrl,
+      maxGames,
+      (count) => {
+        emitProgress(options, {
+          phase: "fetch",
+          message: "🌐 Downloading from Lichess",
+          detail: hasSinceFilter
+            ? `${count} new games received so far`
+            : `${count} of ${maxGames} games received`,
+          current: count,
+          total: hasSinceFilter ? undefined : maxGames,
+          percent: hasSinceFilter
+            ? Math.min(38, 2 + Math.round(count / 10))
+            : 2 + Math.round((count / maxGames) * 36),
+        });
+      },
+      3,
+    );
+
+    games = sourceGamesFromLichess(lichessGames);
+  }
+
+  // ── Merge with cached games (dedup by fingerprint) ──
+  // Only merge when we used incremental fetch (cache covered the request).
+  // If we did a full re-fetch, the fresh results are authoritative.
+  const newGameCount = games.length;
+  if (
+    cacheCoversRequest &&
+    cache &&
+    cache.games.length > 0 &&
+    games.length < maxGames
+  ) {
+    const fingerprints = new Set(games.map(gameFingerprint));
+    let additions = cache.games.filter(
+      (g) => !fingerprints.has(gameFingerprint(g)),
+    );
+    if (options?.since) {
+      additions = additions.filter(
+        (g) => !g.playedAt || g.playedAt >= options.since!,
+      );
+    }
+    if (additions.length > 0) {
+      games = [...games, ...additions].slice(0, maxGames);
+      emitProgress(options, {
+        phase: "fetch",
+        message: `💾 ${newGameCount} new + ${additions.length} cached`,
+        detail: `${games.length} total games ready for analysis`,
+        percent: 39,
+      });
+    }
+  }
+
+  saveGameCache(username, source, tcArr, games);
+
+  return games;
+}
+
+export async function buildScanReuseSignatureInBrowser(
+  username: string,
+  options?: AnalyzeOptions,
+): Promise<string> {
+  const source: AnalysisSource = options?.source ?? "lichess";
+  const maxGames = clampInt(options?.maxGames, DEFAULT_MAX_GAMES, 1, 5000);
+  const maxOpeningMoves = clampInt(
+    options?.maxOpeningMoves,
+    DEFAULT_MAX_OPENING_MOVES,
+    1,
+    30,
+  );
+  const cpLossThreshold = clampInt(
+    options?.cpLossThreshold,
+    CP_LOSS_THRESHOLD,
+    1,
+    1000,
+  );
+  const engineDepth = clampInt(options?.engineDepth, 10, 6, 24);
+  const scanMode: ScanMode = options?.scanMode ?? "both";
+  const games = await loadGamesForAnalysis(username, maxGames, source, options);
+
+  return createScanSignature({
+    username,
+    source,
+    scanMode,
+    maxGames,
+    maxOpeningMoves,
+    cpLossThreshold,
+    engineDepth,
+    timeControls: normalizeTimeControls(options?.timeControl),
+    since: options?.since ?? null,
+    maxTactics:
+      typeof options?.maxTactics === "number"
+        ? Math.max(1, Math.floor(options.maxTactics))
+        : null,
+    maxEndgames:
+      typeof options?.maxEndgames === "number"
+        ? Math.max(1, Math.floor(options.maxEndgames))
+        : null,
+    games,
+  });
 }
 
 /**
@@ -1548,11 +1787,20 @@ function deriveTacticTags(args: {
   userMove: string;
   bestMove: string;
   bestMoveSan: string;
+  mateIn?: number | null;
   cpLoss: number;
   cpBefore: number;
 }): string[] {
   const tags: string[] = [];
-  const { fenBefore, userMove, bestMove, bestMoveSan, cpLoss, cpBefore } = args;
+  const {
+    fenBefore,
+    userMove,
+    bestMove,
+    bestMoveSan,
+    mateIn,
+    cpLoss,
+    cpBefore,
+  } = args;
 
   // ── Severity ──
   if (cpLoss >= 600) tags.push("Winning Blunder");
@@ -1560,7 +1808,9 @@ function deriveTacticTags(args: {
   else tags.push("Tactical Miss");
 
   // ── Mate / Check / Capture classification ──
-  if (bestMoveSan.includes("#")) {
+  if (typeof mateIn === "number" && mateIn > 0) {
+    tags.push("Missed Mate");
+  } else if (bestMoveSan.includes("#")) {
     tags.push("Missed Mate");
   } else if (bestMoveSan.includes("+") && bestMoveSan.includes("x")) {
     tags.push("Forcing Capture");
@@ -2140,137 +2390,27 @@ export async function analyzeOpeningLeaksInBrowser(
   const doTactics = scanMode === "tactics" || isFullScan;
   const doEndgames = scanMode === "endgames" || isFullScan;
   const doTimeOnly = scanMode === "time-management";
-
-  let games: SourceGame[] = [];
-
-  // ── Game cache: avoid re-downloading games we already have ──
-  const tcRaw = options?.timeControl;
-  const tcArr = Array.isArray(tcRaw) ? tcRaw : tcRaw ? [tcRaw] : ["all"];
-  const cache = loadGameCache(username, source, tcArr);
-
-  // Determine effective "since" for incremental fetch
-  let fetchSince = options?.since ?? 0;
-  // Only use incremental fetch if cache already covers the requested game count.
-  // If the user asks for MORE games than we have cached, do a full fetch so we
-  // pick up the older games the cache doesn't contain.
-  const cacheCoversRequest = cache && cache.games.length >= maxGames;
-  if (cache && cache.games.length > 0 && cacheCoversRequest) {
-    const cachedNewestAt = Math.max(...cache.games.map((g) => g.playedAt ?? 0));
-    if (cachedNewestAt > 0) {
-      fetchSince = Math.max(fetchSince, cachedNewestAt + 1);
-    }
-    emitProgress(options, {
-      phase: "fetch",
-      message: "💾 Found cached games",
-      detail: `${cache.games.length} games from previous scan — checking for new ones`,
-      percent: 1,
-    });
-  } else if (cache && cache.games.length > 0) {
-    emitProgress(options, {
-      phase: "fetch",
-      message: "🔄 Fetching more games",
-      detail: `You requested ${maxGames} games but only ${cache.games.length} were cached — doing a full fetch`,
-      percent: 1,
-    });
-  }
-
-  if (source === "chesscom") {
-    emitProgress(options, {
-      phase: "fetch",
-      message: "🌐 Connecting to Chess.com",
-      detail: cache
-        ? "Fetching new games only..."
-        : "Fetching your recent game archives...",
-      percent: 2,
-    });
-
-    try {
-      // Pass cache-aware since to avoid re-downloading known games
-      const fetchOpts =
-        fetchSince > 0 ? { ...options, since: fetchSince } : options;
-      games = await fetchChessComGamesInReverse(username, maxGames, fetchOpts);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "unknown error";
-      throw new Error(
-        `Browser cannot reach api.chess.com. Last error: ${message}`,
-      );
-    }
-  } else {
-    emitProgress(options, {
-      phase: "fetch",
-      message: "🌐 Connecting to Lichess",
-      detail: cache
-        ? "Fetching new games only..."
-        : "Streaming your recent games...",
-      percent: 2,
-    });
-
-    // Build Lichess URL with optional time control filter (supports multi-select)
-    const lichessPerfs = tcArr
-      .filter((t): t is Speed => t !== "all")
-      .map((t) => t); // Lichess perfType values match our Speed type directly
-    const perfParam =
-      lichessPerfs.length > 0 ? `&perfType=${lichessPerfs.join(",")}` : "";
-    const sinceParam = fetchSince > 0 ? `&since=${fetchSince}` : "";
-    const lichessUrl = `https://lichess.org/api/games/user/${encodeURIComponent(username)}?max=${maxGames}&moves=true&opening=true&clocks=true&evals=false&pgnInJson=false${perfParam}${sinceParam}`;
-
-    const hasSinceFilter = fetchSince > 0;
-    const lichessGames = await streamLichessGames(
-      lichessUrl,
-      maxGames,
-      (count) => {
-        emitProgress(options, {
-          phase: "fetch",
-          message: "🌐 Downloading from Lichess",
-          detail: hasSinceFilter
-            ? `${count} new games received so far`
-            : `${count} of ${maxGames} games received`,
-          current: count,
-          total: hasSinceFilter ? undefined : maxGames,
-          percent: hasSinceFilter
-            ? Math.min(38, 2 + Math.round(count / 10))
-            : 2 + Math.round((count / maxGames) * 36),
-        });
-      },
-      3,
-    );
-
-    games = sourceGamesFromLichess(lichessGames);
-  }
-
-  // ── Merge with cached games (dedup by fingerprint) ──
-  // Only merge when we used incremental fetch (cache covered the request).
-  // If we did a full re-fetch, the fresh results are authoritative.
-  const newGameCount = games.length;
-  if (
-    cacheCoversRequest &&
-    cache &&
-    cache.games.length > 0 &&
-    games.length < maxGames
-  ) {
-    const fingerprints = new Set(games.map(gameFingerprint));
-    let additions = cache.games.filter(
-      (g) => !fingerprints.has(gameFingerprint(g)),
-    );
-    // Apply user's original since filter to cached games
-    if (options?.since) {
-      additions = additions.filter(
-        (g) => !g.playedAt || g.playedAt >= options.since!,
-      );
-    }
-    if (additions.length > 0) {
-      games = [...games, ...additions].slice(0, maxGames);
-      emitProgress(options, {
-        phase: "fetch",
-        message: `💾 ${newGameCount} new + ${additions.length} cached`,
-        detail: `${games.length} total games ready for analysis`,
-        percent: 39,
-      });
-    }
-  }
-
-  // Save merged games to cache for next time
-  saveGameCache(username, source, tcArr, games);
+  const games = await loadGamesForAnalysis(username, maxGames, source, options);
+  const scanSignature = await createScanSignature({
+    username,
+    source,
+    scanMode,
+    maxGames,
+    maxOpeningMoves,
+    cpLossThreshold,
+    engineDepth,
+    timeControls: normalizeTimeControls(options?.timeControl),
+    since: options?.since ?? null,
+    maxTactics:
+      typeof options?.maxTactics === "number"
+        ? Math.max(1, Math.floor(options.maxTactics))
+        : null,
+    maxEndgames:
+      typeof options?.maxEndgames === "number"
+        ? Math.max(1, Math.floor(options.maxEndgames))
+        : null,
+    games,
+  });
 
   emitProgress(options, {
     phase: "parse",
@@ -3283,6 +3423,17 @@ export async function analyzeOpeningLeaksInBrowser(
                         );
 
                         const cpLoss = cpBefore - cpAfterUser;
+                        const mateIn =
+                          typeof beforeEval.mateIn === "number" &&
+                          beforeEval.mateIn > 0
+                            ? beforeEval.mateIn
+                            : null;
+                        const shortMateIn =
+                          typeof beforeEval.mateIn === "number" &&
+                          beforeEval.mateIn > 0 &&
+                          beforeEval.mateIn <= SHORT_TACTIC_MATE_MAX_MOVES
+                            ? beforeEval.mateIn
+                            : null;
 
                         // Skip if user was already heavily losing
                         if (cpBefore < -300) {
@@ -3294,6 +3445,7 @@ export async function analyzeOpeningLeaksInBrowser(
                             userMove: userUci,
                             bestMove: beforeEval.bestMove,
                             bestMoveSan: bestMoveSan,
+                            mateIn: shortMateIn,
                             cpLoss,
                             cpBefore,
                           });
@@ -3327,6 +3479,7 @@ export async function analyzeOpeningLeaksInBrowser(
                             fenAfter: fenAfterUser,
                             userMove: userUci,
                             bestMove: beforeEval.bestMove,
+                            mateIn,
                             cpBefore,
                             cpAfter: cpAfterUser,
                             cpLoss,
@@ -4565,6 +4718,7 @@ export async function analyzeOpeningLeaksInBrowser(
 
   return {
     username,
+    scanSignature,
     gamesAnalyzed,
     repeatedPositions,
     leaks,

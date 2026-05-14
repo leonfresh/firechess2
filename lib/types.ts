@@ -89,6 +89,8 @@ export type MissedTactic = {
   fenAfter: string;
   userMove: string;
   bestMove: string;
+  /** Positive values mean the engine found a forced mate for the user in N moves. */
+  mateIn?: number | null;
   cpBefore: number;
   cpAfter: number;
   cpLoss: number;
@@ -294,6 +296,8 @@ export type PositionalFinding = {
 
 export type AnalyzeResponse = {
   username: string;
+  /** Stable hash of the exact downloaded games plus scan settings. */
+  scanSignature?: string;
   gamesAnalyzed: number;
   repeatedPositions: number;
   leaks: RepeatedOpeningLeak[];

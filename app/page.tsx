@@ -32,7 +32,10 @@ import {
   InsightCards,
   computeRadarData,
 } from "@/components/radar-chart";
-import { analyzeOpeningLeaksInBrowser } from "@/lib/client-analysis";
+import {
+  analyzeOpeningLeaksInBrowser,
+  buildScanReuseSignatureInBrowser,
+} from "@/lib/client-analysis";
 import type { AnalysisProgress } from "@/lib/client-analysis";
 import type {
   AnalysisSource,
@@ -58,7 +61,12 @@ import { Chess, type PieceSymbol } from "chess.js";
 import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";
 import { DEFAULT_LAUNCHER, type LauncherConfig } from "@/lib/launcher-apps";
 import { LauncherEditor } from "@/components/launcher-editor";
-import { computeScanReportMeta, scanOwnerStorageKey } from "@/lib/scan-session";
+import {
+  buildReportContentHash,
+  computeScanReportMeta,
+  scanOwnerStorageKey,
+} from "@/lib/scan-session";
+import { isMissedMateTactic } from "@/lib/tactic-utils";
 
 function HelpTip({ text }: { text: string }) {
   return (
@@ -713,10 +721,7 @@ export default function HomePage() {
       {
         name: "Missed Mate",
         icon: "👑",
-        match: (t) =>
-          t.tags.some(
-            (tag) => tag === "Missed Mate" || tag === "Winning Blunder",
-          ) && t.cpLoss >= 99000,
+        match: (t) => t.tags.includes("Missed Mate"),
       },
       {
         name: "Missed Check",
@@ -972,26 +977,21 @@ export default function HomePage() {
     if (!result || !lastRunConfig) return;
     setSaveStatus("saving");
     try {
-      // Build a content hash for dedup (SHA-256 of key fields)
-      const hashInput = JSON.stringify({
-        u: result.username,
-        s: lastRunConfig.source,
-        m: lastRunConfig.scanMode,
-        g: result.gamesAnalyzed,
-        leakKeys: result.leaks
-          .map((l) => `${l.fenBefore}:${l.userMove}`)
-          .sort(),
-        tacticKeys: result.missedTactics
-          .map((t) => `${t.fenBefore}:${t.userMove}:${t.gameIndex}`)
-          .sort(),
-      });
-      const hashBuffer = await crypto.subtle.digest(
-        "SHA-256",
-        new TextEncoder().encode(hashInput),
-      );
-      const contentHash = Array.from(new Uint8Array(hashBuffer))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
+      let contentHash = result.scanSignature ?? null;
+      if (!contentHash) {
+        const hashInput = buildReportContentHash(
+          result,
+          lastRunConfig.source,
+          lastRunConfig.scanMode,
+        );
+        const hashBuffer = await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode(hashInput),
+        );
+        contentHash = Array.from(new Uint8Array(hashBuffer))
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+      }
 
       const res = await fetch("/api/reports", {
         method: "POST",
@@ -1250,33 +1250,52 @@ export default function HomePage() {
       setState("idle");
       setError("");
       setNotice(
-        "Opening your dedicated scan page. Results will stream in there as each section finishes.",
+        authenticated
+          ? "Checking your latest saved scan before opening a dedicated report page."
+          : "Opening your dedicated scan page. Results will stream in there as each section finishes.",
       );
       setSaveStatus("idle");
+
+      const scanConfig = {
+        maxGames: safeGames,
+        maxMoves: safeMoves,
+        cpThreshold: safeCpThreshold,
+        engineDepth: safeDepth,
+        source: safeSource,
+        scanMode: safeScanMode,
+        speed,
+        since: safeSince ?? null,
+        maxTactics: null,
+        maxEndgames: null,
+      };
+
+      const reuseSignature = authenticated
+        ? await buildScanReuseSignatureInBrowser(trimmed, {
+            maxGames: safeGames,
+            maxOpeningMoves: safeMoves,
+            cpLossThreshold: safeCpThreshold,
+            engineDepth: safeDepth,
+            source: safeSource,
+            scanMode: safeScanMode,
+            timeControl: speed,
+            since: safeSince,
+          })
+        : null;
 
       const sessionRes = await fetch("/api/scans", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           chessUsername: trimmed,
-          config: {
-            maxGames: safeGames,
-            maxMoves: safeMoves,
-            cpThreshold: safeCpThreshold,
-            engineDepth: safeDepth,
-            source: safeSource,
-            scanMode: safeScanMode,
-            speed,
-            since: safeSince ?? null,
-            maxTactics: null,
-            maxEndgames: null,
-          },
+          config: scanConfig,
+          reuseSignature,
         }),
       });
 
       const sessionJson = (await sessionRes.json()) as {
         id?: string;
         guestToken?: string | null;
+        reused?: boolean;
         error?: string;
       };
 
@@ -1293,6 +1312,12 @@ export default function HomePage() {
         } catch {
           // Ignore storage failures; the public page still works.
         }
+      }
+
+      if (sessionJson.reused) {
+        setNotice(
+          "Reusing your latest saved report because the downloaded games and settings are unchanged.",
+        );
       }
 
       router.push(`/report/${sessionJson.id}`);
@@ -5919,9 +5944,11 @@ export default function HomePage() {
                                 Worst Miss
                               </p>
                               <p className="mt-0.5 text-lg font-bold text-red-400">
-                                {missedTactics.some((t) => t.cpLoss >= 99000)
+                                {missedTactics.some(isMissedMateTactic)
                                   ? "Mate"
-                                  : `−${(Math.max(...missedTactics.map((t) => t.cpLoss)) / 100).toFixed(1)}`}
+                                  : missedTactics.some((t) => t.cpLoss >= 99000)
+                                    ? "−9.9+"
+                                    : `−${(Math.max(...missedTactics.map((t) => t.cpLoss)) / 100).toFixed(1)}`}
                               </p>
                             </div>
                             <div className="stat-card py-3">
@@ -5956,9 +5983,8 @@ export default function HomePage() {
                               missedTactics.length > 0
                                 ? timePressureCount / missedTactics.length
                                 : 0;
-                            const matesMissed = missedTactics.filter(
-                              (t) => t.cpLoss >= 99000,
-                            ).length;
+                            const matesMissed =
+                              missedTactics.filter(isMissedMateTactic).length;
                             const nonMateTactics = missedTactics.filter(
                               (t) => t.cpLoss < 99000,
                             );

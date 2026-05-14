@@ -22,6 +22,7 @@ import { TacticCard } from "@/components/tactic-card";
 import { TimeCard } from "@/components/time-card";
 import type { AnalysisProgress } from "@/lib/client-analysis";
 import { computeEndgameTechniqueScore } from "@/lib/scan-session";
+import { isMissedMateTactic } from "@/lib/tactic-utils";
 import type {
   ComputedScanReport,
   PublicScanSessionPayload,
@@ -214,10 +215,7 @@ const MOTIF_DEFS: MotifDefinition[] = [
   {
     name: "Missed Mate",
     icon: "👑",
-    match: (position) =>
-      position.tags.some(
-        (tag) => tag === "Missed Mate" || tag === "Winning Blunder",
-      ) && position.cpLoss >= 99000,
+    match: (position) => position.tags.includes("Missed Mate"),
   },
   {
     name: "Missed Check",
@@ -1086,9 +1084,7 @@ function TacticsCoachInsight({
   ).length;
   const timePressureRate =
     missedTactics.length > 0 ? timePressureCount / missedTactics.length : 0;
-  const matesMissed = missedTactics.filter(
-    (tactic) => tactic.cpLoss >= 99000,
-  ).length;
+  const matesMissed = missedTactics.filter(isMissedMateTactic).length;
   const nonMateTactics = missedTactics.filter(
     (tactic) => tactic.cpLoss < 99000,
   );
@@ -1641,8 +1637,7 @@ function buildOpeningLeakCommunitySeed(
 function buildTacticCommunitySeed(
   tactic: MissedTactic,
 ): CommunityPostComposerSeed {
-  const missedMate =
-    tactic.tags.includes("Missed Mate") || tactic.cpLoss >= 99000;
+  const missedMate = isMissedMateTactic(tactic);
 
   return {
     initialKind: "position",

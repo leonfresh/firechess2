@@ -1,7 +1,8 @@
+import { and, desc, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { scanSessions } from "@/lib/schema";
+import { reports, scanSessions } from "@/lib/schema";
 import {
   getGuestScanExpiryDate,
   type ScanSessionConfig,
@@ -32,6 +33,7 @@ export async function POST(req: NextRequest) {
     const body = (await req.json()) as {
       chessUsername?: string;
       config?: ScanSessionConfig;
+      reuseSignature?: string | null;
     };
 
     const chessUsername = body.chessUsername?.trim();
@@ -47,6 +49,41 @@ export async function POST(req: NextRequest) {
         { error: "Invalid scan configuration." },
         { status: 400 },
       );
+    }
+
+    if (session?.user?.id && typeof body.reuseSignature === "string") {
+      const [latestReport] = await db
+        .select({
+          id: reports.id,
+          contentHash: reports.contentHash,
+        })
+        .from(reports)
+        .where(eq(reports.userId, session.user.id))
+        .orderBy(desc(reports.createdAt))
+        .limit(1);
+
+      if (latestReport?.contentHash === body.reuseSignature) {
+        const [reusedSession] = await db
+          .select({ id: scanSessions.id })
+          .from(scanSessions)
+          .where(
+            and(
+              eq(scanSessions.userId, session.user.id),
+              eq(scanSessions.savedReportId, latestReport.id),
+              eq(scanSessions.status, "ready"),
+            ),
+          )
+          .orderBy(desc(scanSessions.updatedAt))
+          .limit(1);
+
+        if (reusedSession) {
+          return NextResponse.json({
+            id: reusedSession.id,
+            guestToken: null,
+            reused: true,
+          });
+        }
+      }
     }
 
     const isGuest = !session?.user?.id;
