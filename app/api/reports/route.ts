@@ -7,8 +7,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { reports } from "@/lib/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { reports, scanSessions } from "@/lib/schema";
+import { eq, desc, and, inArray } from "drizzle-orm";
 
 /* ------------------------------------------------------------------ */
 /*  GET  — list user reports                                           */
@@ -25,7 +25,41 @@ export async function GET() {
     .where(eq(reports.userId, session.user.id))
     .orderBy(desc(reports.createdAt));
 
-  return NextResponse.json({ reports: rows });
+  if (rows.length === 0) {
+    return NextResponse.json({ reports: [] });
+  }
+
+  const linkedSessions = await db
+    .select({
+      id: scanSessions.id,
+      savedReportId: scanSessions.savedReportId,
+    })
+    .from(scanSessions)
+    .where(
+      inArray(
+        scanSessions.savedReportId,
+        rows.map((row) => row.id),
+      ),
+    )
+    .orderBy(desc(scanSessions.updatedAt), desc(scanSessions.createdAt));
+
+  const scanSessionIdByReportId = new Map<string, string>();
+  for (const sessionRow of linkedSessions) {
+    if (
+      !sessionRow.savedReportId ||
+      scanSessionIdByReportId.has(sessionRow.savedReportId)
+    ) {
+      continue;
+    }
+    scanSessionIdByReportId.set(sessionRow.savedReportId, sessionRow.id);
+  }
+
+  return NextResponse.json({
+    reports: rows.map((row) => ({
+      ...row,
+      scanSessionId: scanSessionIdByReportId.get(row.id) ?? null,
+    })),
+  });
 }
 
 /* ------------------------------------------------------------------ */
@@ -64,7 +98,10 @@ export async function POST(req: NextRequest) {
   } = body;
 
   if (!chessUsername || !source) {
-    return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing required fields" },
+      { status: 400 },
+    );
   }
 
   // Dedup: check if a report with the same hash exists for this user
@@ -75,13 +112,17 @@ export async function POST(req: NextRequest) {
       .where(
         and(
           eq(reports.userId, session.user.id),
-          eq(reports.contentHash, contentHash)
-        )
+          eq(reports.contentHash, contentHash),
+        ),
       )
       .limit(1);
 
     if (dup) {
-      return NextResponse.json({ saved: false, reason: "duplicate", id: dup.id });
+      return NextResponse.json({
+        saved: false,
+        reason: "duplicate",
+        id: dup.id,
+      });
     }
   }
 
@@ -92,7 +133,8 @@ export async function POST(req: NextRequest) {
   const ga = gamesAnalyzed ?? 0;
   const cpl = typeof weightedCpLoss === "number" ? weightedCpLoss : 50;
   const rawScore = acc * 8 - cpl * 2 - lc * 3 - tc * 4 + Math.min(ga, 50) * 0.5;
-  const firechessScore = Math.round(Math.max(0, Math.min(1000, rawScore)) * 10) / 10;
+  const firechessScore =
+    Math.round(Math.max(0, Math.min(1000, rawScore)) * 10) / 10;
 
   const [inserted] = await db
     .insert(reports)
@@ -147,12 +189,7 @@ export async function DELETE(req: NextRequest) {
   // Only delete if the report belongs to the authenticated user
   const deleted = await db
     .delete(reports)
-    .where(
-      and(
-        eq(reports.id, id),
-        eq(reports.userId, session.user.id)
-      )
-    )
+    .where(and(eq(reports.id, id), eq(reports.userId, session.user.id)))
     .returning({ id: reports.id });
 
   if (deleted.length === 0) {

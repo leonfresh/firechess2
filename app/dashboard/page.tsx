@@ -56,6 +56,7 @@ import {
 
 type SavedReport = {
   id: string;
+  scanSessionId?: string | null;
   chessUsername: string;
   source: string;
   scanMode: string;
@@ -1128,6 +1129,10 @@ function ReportRow({
 }) {
   const r = report;
   const isTimeMgmt = r.scanMode === "time-management";
+  const reportHref =
+    r.scanMode === "both" && r.scanSessionId
+      ? `/report/${r.scanSessionId}`
+      : null;
   const rProps = radarPropsFrom(r);
   const radarData = computeRadarData(rProps);
   const radarAvg = Math.round(
@@ -1167,64 +1172,73 @@ function ReportRow({
             ? "bg-violet-500/10 text-violet-400"
             : "bg-white/5 text-white/40";
 
-  return (
-    <div className="glass-card relative overflow-hidden">
-      <button
-        onClick={onToggle}
-        className="flex w-full items-center gap-4 p-4 pr-10 text-left transition-colors hover:bg-white/[0.02]"
+  const rowContent = (
+    <>
+      <div
+        className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-sm font-bold ${avgColor}`}
       >
-        {/* Mini score circle */}
-        <div
-          className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-white/10 bg-white/[0.03] text-sm font-bold ${avgColor}`}
-        >
-          {avg}
-        </div>
+        {avg}
+      </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="truncate text-sm font-semibold text-white">
-              {r.chessUsername}
-            </span>
-            <span className="text-xs text-white/30">{sourceIcon}</span>
-            <span
-              className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${modeTagColor}`}
-            >
-              {modeLabel}
-            </span>
-          </div>
-          <div className="mt-0.5 flex items-center gap-3 text-xs text-white/30">
-            <span>{r.gamesAnalyzed} games</span>
-            {r.scanMode === "time-management" ? (
-              <>
-                <span>·</span>
-                <span>{r.timeManagement?.moments.length ?? 0} moments</span>
-                <span>·</span>
-                <span>Score: {r.timeManagement?.score ?? "—"}/100</span>
-              </>
-            ) : (
-              <>
-                <span>·</span>
-                <span>{r.leakCount ?? 0} leaks</span>
-                <span>·</span>
-                <span>{r.tacticsCount ?? 0} tactics</span>
-              </>
-            )}
-          </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="truncate text-sm font-semibold text-white">
+            {r.chessUsername}
+          </span>
+          <span className="text-xs text-white/30">{sourceIcon}</span>
+          <span
+            className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${modeTagColor}`}
+          >
+            {modeLabel}
+          </span>
         </div>
+        <div className="mt-0.5 flex items-center gap-3 text-xs text-white/30">
+          <span>{r.gamesAnalyzed} games</span>
+          {r.scanMode === "time-management" ? (
+            <>
+              <span>·</span>
+              <span>{r.timeManagement?.moments.length ?? 0} moments</span>
+              <span>·</span>
+              <span>Score: {r.timeManagement?.score ?? "—"}/100</span>
+            </>
+          ) : (
+            <>
+              <span>·</span>
+              <span>{r.leakCount ?? 0} leaks</span>
+              <span>·</span>
+              <span>{r.tacticsCount ?? 0} tactics</span>
+            </>
+          )}
+        </div>
+      </div>
 
-        <div className="flex-shrink-0 text-right">
-          <div className="text-xs text-white/30">{formatDate(r.createdAt)}</div>
-          <div className="mt-1 text-xs text-white/20">
-            {r.scanMode === "time-management"
+      <div className="flex-shrink-0 text-right">
+        <div className="text-xs text-white/30">{formatDate(r.createdAt)}</div>
+        <div className="mt-1 text-xs text-white/20">
+          {reportHref
+            ? "Open report page"
+            : r.scanMode === "time-management"
               ? r.timeManagement
                 ? `${r.timeManagement.score}/100 score`
                 : ""
               : r.estimatedAccuracy != null
                 ? `${r.estimatedAccuracy.toFixed(1)}% acc`
                 : ""}
-          </div>
         </div>
+      </div>
 
+      {reportHref ? (
+        <svg
+          className="h-4 w-4 flex-shrink-0 text-cyan-300/70"
+          viewBox="0 0 20 20"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+        >
+          <path d="M7 13l6-6" />
+          <path d="M8 7h5v5" />
+        </svg>
+      ) : (
         <svg
           className={`h-4 w-4 flex-shrink-0 text-white/20 transition-transform ${expanded ? "rotate-180" : ""}`}
           viewBox="0 0 20 20"
@@ -1236,7 +1250,27 @@ function ReportRow({
             clipRule="evenodd"
           />
         </svg>
-      </button>
+      )}
+    </>
+  );
+
+  return (
+    <div className="glass-card relative overflow-hidden">
+      {reportHref ? (
+        <Link
+          href={reportHref}
+          className="flex w-full items-center gap-4 p-4 pr-10 text-left transition-colors hover:bg-white/[0.02]"
+        >
+          {rowContent}
+        </Link>
+      ) : (
+        <button
+          onClick={onToggle}
+          className="flex w-full items-center gap-4 p-4 pr-10 text-left transition-colors hover:bg-white/[0.02]"
+        >
+          {rowContent}
+        </button>
+      )}
 
       {/* Delete button */}
       <button
@@ -1256,7 +1290,7 @@ function ReportRow({
         </svg>
       </button>
 
-      {expanded && (
+      {expanded && !reportHref && (
         <div className="border-t border-white/5 p-6 space-y-6">
           {/* Time Management Report */}
           {r.scanMode === "time-management" && r.timeManagement && (
