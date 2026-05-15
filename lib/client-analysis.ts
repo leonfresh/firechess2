@@ -2626,782 +2626,1152 @@ export async function analyzeOpeningLeaksInBrowser(
   ]);
   let repeatedPositions = 0;
 
-  if (doOpenings) {
-    const repeatedEntries = [...byFen.entries()].filter(
-      ([, data]) => data.totalReachCount >= MIN_POSITION_REPEATS,
-    );
+  // ── Declarations hoisted so all three engine phases can run concurrently ──
+  const TACTIC_CP_THRESHOLD = 200;
+  const SCREEN_DEPTH = scanMode === "openings" ? 5 : 8;
+  const SCREEN_CP_THRESHOLD = 100;
+  const MAX_TACTICS = options?.maxTactics ?? Infinity;
+  const missedTactics: MissedTactic[] = [];
+  let totalTacticsFound = doTactics ? 0 : -1;
+  const ENDGAME_CP_THRESHOLD = 80;
+  const MAX_ENDGAME_MISTAKES = options?.maxEndgames ?? Infinity;
+  const endgameMistakes: EndgameMistake[] = [];
+  let wonEndgames = 0;
+  let convertedWins = 0;
+  let slightlyWorse = 0;
+  let heldDraws = 0;
+  let totalEndgameCpLoss = 0;
+  let totalEndgameMoves = 0;
+  const typeStats = new Map<
+    EndgameType,
+    { count: number; totalCpLoss: number; mistakes: number }
+  >();
+  let endgameStats: EndgameStats | null = null;
 
-    emitProgress(options, {
-      phase: "aggregate",
-      message: `🔍 ${repeatedEntries.length} recurring positions found`,
-      detail:
-        "Positions you've reached 3+ times — these are your opening habits",
-      percent: 56,
-    });
-
-    emitProgress(options, {
-      phase: "eval",
-      message: `🧠 Stockfish evaluation starting`,
-      detail: `Depth ${engineDepth} analysis on ${repeatedEntries.length} positions`,
-      percent: 58,
-    });
-
-    let evalCompleted = 0;
-    await parallelForEach(
-      repeatedEntries,
-      stockfishPool.size,
-      async ([fenBefore, data], index) => {
-        repeatedPositions += 1;
-        evalCompleted++;
-
-        if (
-          evalCompleted % 5 === 0 ||
-          evalCompleted === repeatedEntries.length
-        ) {
-          emitProgress(options, {
-            phase: "eval",
-            message: `🧠 Evaluating positions`,
-            detail: `Position ${evalCompleted} of ${repeatedEntries.length}`,
-            current: evalCompleted,
-            total: repeatedEntries.length,
-            percent:
-              58 + Math.round((evalCompleted / repeatedEntries.length) * 22),
-          });
-        }
-
-        let chosenMove = "";
-        let chosenCount = -1;
-
-        for (const [move, count] of data.moveCounts.entries()) {
-          if (count > chosenCount) {
-            chosenMove = move;
-            chosenCount = count;
-          }
-        }
-
-        if (!chosenMove) return;
-
-        const fenAfter = computeFenAfterMove(fenBefore, chosenMove);
-        if (!fenAfter) {
-          positionTraces.push({
-            fenBefore,
-            userMove: chosenMove,
-            bestMove: null,
-            reachCount: data.totalReachCount,
-            moveCount: chosenCount,
-            evalBefore: null,
-            evalAfter: null,
-            cpLoss: null,
-            flagged: false,
-            skippedReason: "invalid_move",
-          });
-          return;
-        }
-
-        const sideToMove: PlayerColor = fenBefore.includes(" w ")
-          ? "white"
-          : "black";
-        const beforeEval = await stockfishPool.evaluateFen(
-          fenBefore,
-          engineDepth,
+  // Run openings, tactics and endgames concurrently — they're independent:
+  // all read from `games` (read-only), write to separate arrays, share stockfishPool safely.
+  await Promise.all([
+    // ── OPENINGS ────────────────────────────────────────────────────────
+    (async () => {
+      if (doOpenings) {
+        const repeatedEntries = [...byFen.entries()].filter(
+          ([, data]) => data.totalReachCount >= MIN_POSITION_REPEATS,
         );
 
-        if (!beforeEval) {
-          positionTraces.push({
-            fenBefore,
-            userMove: chosenMove,
-            bestMove: null,
-            reachCount: data.totalReachCount,
-            moveCount: chosenCount,
-            evalBefore: null,
-            evalAfter: null,
-            cpLoss: null,
-            flagged: false,
-            skippedReason: "missing_eval",
-          });
-          return;
-        }
+        emitProgress(options, {
+          phase: "aggregate",
+          message: `🔍 ${repeatedEntries.length} recurring positions found`,
+          detail:
+            "Positions you've reached 3+ times — these are your opening habits",
+          percent: 56,
+        });
 
-        // Early-exit: if user played the engine's best move, skip the 2nd eval call
-        const bestMoveSan = sanForMove(fenBefore, beforeEval.bestMove);
-        if (bestMoveSan && bestMoveSan === chosenMove) {
-          positionTraces.push({
-            fenBefore,
-            userMove: chosenMove,
-            bestMove: beforeEval.bestMove,
-            reachCount: data.totalReachCount,
-            moveCount: chosenCount,
-            evalBefore: scoreToCpFromUserPerspective(
+        emitProgress(options, {
+          phase: "eval",
+          message: `🧠 Stockfish evaluation starting`,
+          detail: `Depth ${engineDepth} analysis on ${repeatedEntries.length} positions`,
+          percent: 58,
+        });
+
+        let evalCompleted = 0;
+        await parallelForEach(
+          repeatedEntries,
+          stockfishPool.size,
+          async ([fenBefore, data], index) => {
+            repeatedPositions += 1;
+            evalCompleted++;
+
+            if (
+              evalCompleted % 5 === 0 ||
+              evalCompleted === repeatedEntries.length
+            ) {
+              emitProgress(options, {
+                phase: "eval",
+                message: `🧠 Evaluating positions`,
+                detail: `Position ${evalCompleted} of ${repeatedEntries.length}`,
+                current: evalCompleted,
+                total: repeatedEntries.length,
+                percent:
+                  58 +
+                  Math.round((evalCompleted / repeatedEntries.length) * 22),
+              });
+            }
+
+            let chosenMove = "";
+            let chosenCount = -1;
+
+            for (const [move, count] of data.moveCounts.entries()) {
+              if (count > chosenCount) {
+                chosenMove = move;
+                chosenCount = count;
+              }
+            }
+
+            if (!chosenMove) return;
+
+            const fenAfter = computeFenAfterMove(fenBefore, chosenMove);
+            if (!fenAfter) {
+              positionTraces.push({
+                fenBefore,
+                userMove: chosenMove,
+                bestMove: null,
+                reachCount: data.totalReachCount,
+                moveCount: chosenCount,
+                evalBefore: null,
+                evalAfter: null,
+                cpLoss: null,
+                flagged: false,
+                skippedReason: "invalid_move",
+              });
+              return;
+            }
+
+            const sideToMove: PlayerColor = fenBefore.includes(" w ")
+              ? "white"
+              : "black";
+            const beforeEval = await stockfishPool.evaluateFen(
+              fenBefore,
+              engineDepth,
+            );
+
+            if (!beforeEval) {
+              positionTraces.push({
+                fenBefore,
+                userMove: chosenMove,
+                bestMove: null,
+                reachCount: data.totalReachCount,
+                moveCount: chosenCount,
+                evalBefore: null,
+                evalAfter: null,
+                cpLoss: null,
+                flagged: false,
+                skippedReason: "missing_eval",
+              });
+              return;
+            }
+
+            // Early-exit: if user played the engine's best move, skip the 2nd eval call
+            const bestMoveSan = sanForMove(fenBefore, beforeEval.bestMove);
+            if (bestMoveSan && bestMoveSan === chosenMove) {
+              positionTraces.push({
+                fenBefore,
+                userMove: chosenMove,
+                bestMove: beforeEval.bestMove,
+                reachCount: data.totalReachCount,
+                moveCount: chosenCount,
+                evalBefore: scoreToCpFromUserPerspective(
+                  beforeEval.cp,
+                  sideToMove,
+                  sideToMove,
+                ),
+                evalAfter: null,
+                cpLoss: 0,
+                flagged: false,
+              });
+              return;
+            }
+
+            const afterEval = await stockfishPool.evaluateFen(
+              fenAfter,
+              engineDepth,
+            );
+
+            if (!afterEval) {
+              positionTraces.push({
+                fenBefore,
+                userMove: chosenMove,
+                bestMove: beforeEval?.bestMove ?? null,
+                reachCount: data.totalReachCount,
+                moveCount: chosenCount,
+                evalBefore: null,
+                evalAfter: null,
+                cpLoss: null,
+                flagged: false,
+                skippedReason: "missing_eval",
+              });
+              return;
+            }
+
+            const evalBefore = scoreToCpFromUserPerspective(
               beforeEval.cp,
               sideToMove,
               sideToMove,
-            ),
-            evalAfter: null,
-            cpLoss: 0,
-            flagged: false,
-          });
-          return;
-        }
-
-        const afterEval = await stockfishPool.evaluateFen(
-          fenAfter,
-          engineDepth,
-        );
-
-        if (!afterEval) {
-          positionTraces.push({
-            fenBefore,
-            userMove: chosenMove,
-            bestMove: beforeEval?.bestMove ?? null,
-            reachCount: data.totalReachCount,
-            moveCount: chosenCount,
-            evalBefore: null,
-            evalAfter: null,
-            cpLoss: null,
-            flagged: false,
-            skippedReason: "missing_eval",
-          });
-          return;
-        }
-
-        const evalBefore = scoreToCpFromUserPerspective(
-          beforeEval.cp,
-          sideToMove,
-          sideToMove,
-        );
-        const opponentToMove: PlayerColor =
-          sideToMove === "white" ? "black" : "white";
-        const evalAfter = scoreToCpFromUserPerspective(
-          afterEval.cp,
-          opponentToMove,
-          sideToMove,
-        );
-        const cpLoss = evalBefore - evalAfter;
-        const flagged = cpLoss > cpLossThreshold;
-        const tags = deriveLeakTags({
-          fenBefore,
-          userMove: chosenMove,
-          bestMove: beforeEval.bestMove,
-          cpLoss,
-          reachCount: data.totalReachCount,
-          moveCount: chosenCount,
-        });
-
-        positionTraces.push({
-          fenBefore,
-          userMove: chosenMove,
-          bestMove: beforeEval.bestMove,
-          reachCount: data.totalReachCount,
-          moveCount: chosenCount,
-          evalBefore,
-          evalAfter,
-          cpLoss,
-          flagged,
-        });
-
-        if (!flagged) {
-          // Even if not flagged as a main leak, capture positional patterns at lower cpLoss
-          // Skip if engine's best move is the same as the user's move (noise at low depth)
-          const userUci = moveToUci(new Chess(fenBefore), chosenMove);
-          if (
-            cpLoss >= 50 &&
-            tags.some((t) => POSITIONAL_TAGS.has(t)) &&
-            userUci !== beforeEval.bestMove
-          ) {
-            positionalFindings.push({
+            );
+            const opponentToMove: PlayerColor =
+              sideToMove === "white" ? "black" : "white";
+            const evalAfter = scoreToCpFromUserPerspective(
+              afterEval.cp,
+              opponentToMove,
+              sideToMove,
+            );
+            const cpLoss = evalBefore - evalAfter;
+            const flagged = cpLoss > cpLossThreshold;
+            const tags = deriveLeakTags({
               fenBefore,
               userMove: chosenMove,
               bestMove: beforeEval.bestMove,
               cpLoss,
-              tags,
-              gameUrl: fenToGameUrl.get(fenBefore),
-            });
-          }
-          return;
-        }
-
-        // ── Database validation: check if the Lichess DB approves this move ──
-        // Formula-based: more games + higher win rate → higher CPL tolerance.
-        // e.g. Dutch (500K games, 50% WR) → dbScore ≈ 228, so CPL 51 is a sideline.
-        // Popular gambits (Budapest, Vienna, etc.) with 5K+ games get a popularity
-        // bonus so they're classified as sidelines rather than inaccuracies.
-        let dbApproved = false;
-        let dbWinRate: number | undefined;
-        let dbGames: number | undefined;
-        try {
-          const explorer = await fetchExplorerMoves(fenBefore, sideToMove);
-          // If the API failed (429/network/timeout), skip DB validation but keep the leak.
-          // A cpLoss > threshold is already a significant mistake; better to show it than lose it.
-          if (!explorer.failed) {
-            const dbMove = explorer.moves.find(
-              (m) => m.san === chosenMove || m.uci === chosenMove,
-            );
-            if (dbMove && dbMove.totalGames >= 50 && dbMove.winRate >= 0.35) {
-              // Very popular lines (50K+) with decent WR are always known openings
-              if (dbMove.totalGames >= 50000 && dbMove.winRate >= 0.35) {
-                dbApproved = true;
-                dbWinRate = dbMove.winRate;
-                dbGames = dbMove.totalGames;
-              } else {
-                const dbScore = Math.min(
-                  300,
-                  Math.log10(dbMove.totalGames) * 40 * (dbMove.winRate / 0.5),
-                );
-                // Popularity bonus: well-known gambits/sidelines get extra CPL tolerance
-                const popularityBonus =
-                  dbMove.totalGames >= 5000
-                    ? 50
-                    : dbMove.totalGames >= 1000
-                      ? 25
-                      : 0;
-                if (cpLoss <= dbScore + popularityBonus) {
-                  dbApproved = true;
-                  dbWinRate = dbMove.winRate;
-                  dbGames = dbMove.totalGames;
-                }
-              }
-            }
-          }
-        } catch {
-          /* explorer unavailable — proceed without DB data */
-        }
-
-        leaks.push({
-          fenBefore,
-          fenAfter,
-          userMove: chosenMove,
-          bestMove: beforeEval.bestMove,
-          tags,
-          reachCount: data.totalReachCount,
-          moveCount: chosenCount,
-          cpLoss,
-          evalBefore,
-          evalAfter,
-          sideToMove,
-          userColor: sideToMove,
-          dbApproved,
-          dbWinRate,
-          dbGames,
-          userWins: data.moveOutcomes.get(chosenMove)?.w ?? 0,
-          userDraws: data.moveOutcomes.get(chosenMove)?.d ?? 0,
-          userLosses: data.moveOutcomes.get(chosenMove)?.l ?? 0,
-          openingName: fenOpeningName.get(fenBefore),
-        });
-      },
-    );
-
-    // Real leaks first (sorted by cpLoss desc), then DB-approved sidelines
-    leaks.sort((a, b) => {
-      if (a.dbApproved !== b.dbApproved) return a.dbApproved ? 1 : -1;
-      return b.cpLoss - a.cpLoss;
-    });
-
-    /* ── One-off opening mistakes (positions reached exactly 2 times with significant cpLoss) ── */
-    const ONE_OFF_CP_THRESHOLD = 100; // lowered from 150 — catch more habits
-    const MAX_ONE_OFFS = 30;
-    const MAX_ONE_OFF_SCREENS = 100; // was 60 — scan more positions
-    const ONE_OFF_SCREEN_DEPTH = 5; // cheaper screen pass
-    const oneOffEntries = [...byFen.entries()]
-      .filter(
-        ([, data]) =>
-          data.totalReachCount >= 2 &&
-          data.totalReachCount < MIN_POSITION_REPEATS,
-      )
-      .slice(0, MAX_ONE_OFF_SCREENS);
-
-    if (oneOffEntries.length > 0) {
-      emitProgress(options, {
-        phase: "eval",
-        message: "🔎 Checking one-off opening mistakes",
-        detail: `Screening ${oneOffEntries.length} non-repeated positions`,
-        percent: 80,
-      });
-    }
-
-    await parallelForEach(
-      oneOffEntries,
-      stockfishPool.size,
-      async ([fenBefore, data], oIdx) => {
-        if (oneOffMistakes.length >= MAX_ONE_OFFS) return;
-
-        let chosenMove = "";
-        let chosenCount = -1;
-        for (const [move, count] of data.moveCounts.entries()) {
-          if (count > chosenCount) {
-            chosenMove = move;
-            chosenCount = count;
-          }
-        }
-        if (!chosenMove) return;
-
-        const fenAfter = computeFenAfterMove(fenBefore, chosenMove);
-        if (!fenAfter) return;
-
-        const sideToMove: PlayerColor = fenBefore.includes(" w ")
-          ? "white"
-          : "black";
-
-        // Quick screen at low depth first
-        const screenBefore = await stockfishPool.evaluateFen(
-          fenBefore,
-          ONE_OFF_SCREEN_DEPTH,
-        );
-        const screenAfter = await stockfishPool.evaluateFen(
-          fenAfter,
-          ONE_OFF_SCREEN_DEPTH,
-        );
-        if (!screenBefore || !screenAfter) return;
-
-        const screenEvalBefore = scoreToCpFromUserPerspective(
-          screenBefore.cp,
-          sideToMove,
-          sideToMove,
-        );
-        const opponentToMove: PlayerColor =
-          sideToMove === "white" ? "black" : "white";
-        const screenEvalAfter = scoreToCpFromUserPerspective(
-          screenAfter.cp,
-          opponentToMove,
-          sideToMove,
-        );
-        const screenCpLoss = screenEvalBefore - screenEvalAfter;
-
-        // Capture positional patterns even below ONE_OFF_CP_THRESHOLD
-        if (screenCpLoss >= 50 && screenCpLoss < ONE_OFF_CP_THRESHOLD) {
-          // Skip if engine's best move is the same as the user's move (noise at low depth)
-          const userUci = moveToUci(new Chess(fenBefore), chosenMove);
-          if (userUci !== screenBefore.bestMove) {
-            const posTags = deriveLeakTags({
-              fenBefore,
-              userMove: chosenMove,
-              bestMove: screenBefore.bestMove,
-              cpLoss: screenCpLoss,
               reachCount: data.totalReachCount,
               moveCount: chosenCount,
             });
-            if (posTags.some((t) => POSITIONAL_TAGS.has(t))) {
-              positionalFindings.push({
-                fenBefore,
-                userMove: chosenMove,
-                bestMove: screenBefore.bestMove,
-                cpLoss: screenCpLoss,
-                tags: posTags,
-                gameUrl: fenToGameUrl.get(fenBefore),
-              });
-            }
-          }
-          return; // not a big enough mistake for one-off leak
-        }
 
-        if (screenCpLoss < ONE_OFF_CP_THRESHOLD) return;
-
-        // Confirm at full depth
-        const beforeEval = await stockfishPool.evaluateFen(
-          fenBefore,
-          engineDepth,
-        );
-        const afterEval = await stockfishPool.evaluateFen(
-          fenAfter,
-          engineDepth,
-        );
-        if (!beforeEval || !afterEval) return;
-
-        const evalBefore = scoreToCpFromUserPerspective(
-          beforeEval.cp,
-          sideToMove,
-          sideToMove,
-        );
-        const evalAfter = scoreToCpFromUserPerspective(
-          afterEval.cp,
-          opponentToMove,
-          sideToMove,
-        );
-        const cpLoss = evalBefore - evalAfter;
-
-        if (cpLoss < ONE_OFF_CP_THRESHOLD) return;
-
-        const tags = deriveLeakTags({
-          fenBefore,
-          userMove: chosenMove,
-          bestMove: beforeEval.bestMove,
-          cpLoss,
-          reachCount: data.totalReachCount,
-          moveCount: chosenCount,
-        });
-
-        // DB validation — formula-based sideline detection (one-off path)
-        // Uses same lenient thresholds as main leak path to catch popular gambits
-        let dbApproved = false;
-        let dbWinRate: number | undefined;
-        let dbGames: number | undefined;
-        try {
-          const explorer = await fetchExplorerMoves(fenBefore, sideToMove);
-          // If the API failed, skip DB validation but keep the one-off mistake.
-          if (!explorer.failed) {
-            const dbMove = explorer.moves.find(
-              (m) => m.san === chosenMove || m.uci === chosenMove,
-            );
-            if (dbMove && dbMove.totalGames >= 50 && dbMove.winRate >= 0.35) {
-              if (dbMove.totalGames >= 50000 && dbMove.winRate >= 0.35) {
-                dbApproved = true;
-                dbWinRate = dbMove.winRate;
-                dbGames = dbMove.totalGames;
-              } else {
-                const dbScore = Math.min(
-                  300,
-                  Math.log10(dbMove.totalGames) * 40 * (dbMove.winRate / 0.5),
-                );
-                const popularityBonus =
-                  dbMove.totalGames >= 5000
-                    ? 50
-                    : dbMove.totalGames >= 1000
-                      ? 25
-                      : 0;
-                if (cpLoss <= dbScore + popularityBonus) {
-                  dbApproved = true;
-                  dbWinRate = dbMove.winRate;
-                  dbGames = dbMove.totalGames;
-                }
-              }
-            }
-          }
-        } catch {
-          /* skip */
-        }
-
-        // Don't flag DB-approved sidelines as one-off mistakes
-        if (dbApproved) return;
-
-        oneOffMistakes.push({
-          fenBefore,
-          fenAfter,
-          userMove: chosenMove,
-          bestMove: beforeEval.bestMove,
-          tags,
-          reachCount: data.totalReachCount,
-          moveCount: chosenCount,
-          cpLoss,
-          evalBefore,
-          evalAfter,
-          sideToMove,
-          userColor: sideToMove,
-          userWins: data.moveOutcomes.get(chosenMove)?.w ?? 0,
-          userDraws: data.moveOutcomes.get(chosenMove)?.d ?? 0,
-          userLosses: data.moveOutcomes.get(chosenMove)?.l ?? 0,
-          openingName: fenOpeningName.get(fenBefore),
-        });
-      },
-    );
-
-    oneOffMistakes.sort((a, b) => b.cpLoss - a.cpLoss);
-
-    /* ── Positional scan for single-occurrence positions (count=1) ── */
-    const MAX_POSITIONAL_SCREENS = 150; // was 80
-    const POSITIONAL_SCREEN_DEPTH = 5;
-    const singleEntries = [...byFen.entries()]
-      .filter(([, data]) => data.totalReachCount === 1)
-      .slice(0, MAX_POSITIONAL_SCREENS);
-
-    if (singleEntries.length > 0 && positionalFindings.length < 60) {
-      emitProgress(options, {
-        phase: "eval",
-        message: "🎯 Scanning for positional patterns",
-        detail: `Checking ${singleEntries.length} positions for positional motifs`,
-        percent: 84,
-      });
-
-      await parallelForEach(
-        singleEntries,
-        stockfishPool.size,
-        async ([fenBefore, data]) => {
-          if (positionalFindings.length >= 60) return;
-
-          let chosenMove = "";
-          let chosenCount = -1;
-          for (const [move, cnt] of data.moveCounts.entries()) {
-            if (cnt > chosenCount) {
-              chosenMove = move;
-              chosenCount = cnt;
-            }
-          }
-          if (!chosenMove) return;
-
-          const fenAfter = computeFenAfterMove(fenBefore, chosenMove);
-          if (!fenAfter) return;
-
-          const sideToMove: PlayerColor = fenBefore.includes(" w ")
-            ? "white"
-            : "black";
-
-          const scBefore = await stockfishPool.evaluateFen(
-            fenBefore,
-            POSITIONAL_SCREEN_DEPTH,
-          );
-          const scAfter = await stockfishPool.evaluateFen(
-            fenAfter,
-            POSITIONAL_SCREEN_DEPTH,
-          );
-          if (!scBefore || !scAfter) return;
-
-          const scEvalBefore = scoreToCpFromUserPerspective(
-            scBefore.cp,
-            sideToMove,
-            sideToMove,
-          );
-          const oppToMove: PlayerColor =
-            sideToMove === "white" ? "black" : "white";
-          const scEvalAfter = scoreToCpFromUserPerspective(
-            scAfter.cp,
-            oppToMove,
-            sideToMove,
-          );
-          const scCpLoss = scEvalBefore - scEvalAfter;
-
-          if (scCpLoss < 50 || scCpLoss > 300) return; // minimum 50cp (0.5 pawns) to avoid noise
-
-          // Skip if engine's best move is the same as the user's move
-          const userUci = moveToUci(new Chess(fenBefore), chosenMove);
-          if (userUci === scBefore.bestMove) return;
-
-          const posTags = deriveLeakTags({
-            fenBefore,
-            userMove: chosenMove,
-            bestMove: scBefore.bestMove,
-            cpLoss: scCpLoss,
-            reachCount: 1,
-            moveCount: chosenCount,
-          });
-          if (posTags.some((t) => POSITIONAL_TAGS.has(t))) {
-            positionalFindings.push({
+            positionTraces.push({
               fenBefore,
               userMove: chosenMove,
-              bestMove: scBefore.bestMove,
-              cpLoss: scCpLoss,
-              tags: posTags,
-              gameUrl: fenToGameUrl.get(fenBefore),
+              bestMove: beforeEval.bestMove,
+              reachCount: data.totalReachCount,
+              moveCount: chosenCount,
+              evalBefore,
+              evalAfter,
+              cpLoss,
+              flagged,
             });
-          }
-        },
-      );
-    }
-  } // end if (doOpenings)
 
-  options?.onSectionReady?.("openings", {
-    username,
-    gamesAnalyzed,
-    repeatedPositions,
-    leaks,
-    oneOffMistakes,
-    positionalFindings:
-      positionalFindings.length > 0 ? positionalFindings : undefined,
-    openingSummaries:
-      openingSummaries.length > 0 ? openingSummaries : undefined,
-  });
+            if (!flagged) {
+              // Even if not flagged as a main leak, capture positional patterns at lower cpLoss
+              // Skip if engine's best move is the same as the user's move (noise at low depth)
+              const userUci = moveToUci(new Chess(fenBefore), chosenMove);
+              if (
+                cpLoss >= 50 &&
+                tags.some((t) => POSITIONAL_TAGS.has(t)) &&
+                userUci !== beforeEval.bestMove
+              ) {
+                positionalFindings.push({
+                  fenBefore,
+                  userMove: chosenMove,
+                  bestMove: beforeEval.bestMove,
+                  cpLoss,
+                  tags,
+                  gameUrl: fenToGameUrl.get(fenBefore),
+                });
+              }
+              return;
+            }
 
-  /* ── Phase: Missed Tactics Detection ─────────────────────────── */
+            // ── Database validation: check if the Lichess DB approves this move ──
+            // Formula-based: more games + higher win rate → higher CPL tolerance.
+            // e.g. Dutch (500K games, 50% WR) → dbScore ≈ 228, so CPL 51 is a sideline.
+            // Popular gambits (Budapest, Vienna, etc.) with 5K+ games get a popularity
+            // bonus so they're classified as sidelines rather than inaccuracies.
+            let dbApproved = false;
+            let dbWinRate: number | undefined;
+            let dbGames: number | undefined;
+            try {
+              const explorer = await fetchExplorerMoves(fenBefore, sideToMove);
+              // If the API failed (429/network/timeout), skip DB validation but keep the leak.
+              // A cpLoss > threshold is already a significant mistake; better to show it than lose it.
+              if (!explorer.failed) {
+                const dbMove = explorer.moves.find(
+                  (m) => m.san === chosenMove || m.uci === chosenMove,
+                );
+                if (
+                  dbMove &&
+                  dbMove.totalGames >= 50 &&
+                  dbMove.winRate >= 0.35
+                ) {
+                  // Very popular lines (50K+) with decent WR are always known openings
+                  if (dbMove.totalGames >= 50000 && dbMove.winRate >= 0.35) {
+                    dbApproved = true;
+                    dbWinRate = dbMove.winRate;
+                    dbGames = dbMove.totalGames;
+                  } else {
+                    const dbScore = Math.min(
+                      300,
+                      Math.log10(dbMove.totalGames) *
+                        40 *
+                        (dbMove.winRate / 0.5),
+                    );
+                    // Popularity bonus: well-known gambits/sidelines get extra CPL tolerance
+                    const popularityBonus =
+                      dbMove.totalGames >= 5000
+                        ? 50
+                        : dbMove.totalGames >= 1000
+                          ? 25
+                          : 0;
+                    if (cpLoss <= dbScore + popularityBonus) {
+                      dbApproved = true;
+                      dbWinRate = dbMove.winRate;
+                      dbGames = dbMove.totalGames;
+                    }
+                  }
+                }
+              }
+            } catch {
+              /* explorer unavailable — proceed without DB data */
+            }
 
-  const TACTIC_CP_THRESHOLD = 200;
-  // When tactics is a side-scan (openings mode), use cheaper screen depth for speed
-  const SCREEN_DEPTH = scanMode === "openings" ? 5 : 8;
-  const SCREEN_CP_THRESHOLD = 100; // minimum CPL at screen depth to confirm at full depth
-  const MAX_TACTICS = options?.maxTactics ?? Infinity;
-  const missedTactics: MissedTactic[] = [];
-  let totalTacticsFound = doTactics ? 0 : -1; // -1 sentinel = tactics not scanned
+            leaks.push({
+              fenBefore,
+              fenAfter,
+              userMove: chosenMove,
+              bestMove: beforeEval.bestMove,
+              tags,
+              reachCount: data.totalReachCount,
+              moveCount: chosenCount,
+              cpLoss,
+              evalBefore,
+              evalAfter,
+              sideToMove,
+              userColor: sideToMove,
+              dbApproved,
+              dbWinRate,
+              dbGames,
+              userWins: data.moveOutcomes.get(chosenMove)?.w ?? 0,
+              userDraws: data.moveOutcomes.get(chosenMove)?.d ?? 0,
+              userLosses: data.moveOutcomes.get(chosenMove)?.l ?? 0,
+              openingName: fenOpeningName.get(fenBefore),
+            });
+          },
+        );
 
-  if (doTactics) {
-    const tacticsStart = doEndgames ? 73 : 81;
-    const tacticsSpan = doEndgames ? 12 : 16;
+        // Real leaks first (sorted by cpLoss desc), then DB-approved sidelines
+        leaks.sort((a, b) => {
+          if (a.dbApproved !== b.dbApproved) return a.dbApproved ? 1 : -1;
+          return b.cpLoss - a.cpLoss;
+        });
 
-    emitProgress(options, {
-      phase: "tactics",
-      message: "⚔️ Hunting for missed tactics",
-      detail: `Scanning ${games.length} games for blunders and missed wins...`,
-      current: 0,
-      total: games.length,
-      percent: tacticsStart,
-    });
+        /* ── One-off opening mistakes (positions reached exactly 2 times with significant cpLoss) ── */
+        const ONE_OFF_CP_THRESHOLD = 100; // lowered from 150 — catch more habits
+        const MAX_ONE_OFFS = 30;
+        const MAX_ONE_OFF_SCREENS = 100; // was 60 — scan more positions
+        const ONE_OFF_SCREEN_DEPTH = 5; // cheaper screen pass
+        const oneOffEntries = [...byFen.entries()]
+          .filter(
+            ([, data]) =>
+              data.totalReachCount >= 2 &&
+              data.totalReachCount < MIN_POSITION_REPEATS,
+          )
+          .slice(0, MAX_ONE_OFF_SCREENS);
 
-    const seenTacticFens = new Set<string>();
-
-    let tacticsGamesCompleted = 0;
-    await parallelForEach(
-      games.map((game, i) => ({ game, gameIndex: i })),
-      stockfishPool.size,
-      async ({ game, gameIndex }) => {
-        if (!game.moves) return;
-
-        const whiteName = game.whiteName;
-        const blackName = game.blackName;
-        const target = normalizeName(username);
-
-        const userColor: PlayerColor | null =
-          whiteName && normalizeName(whiteName) === target
-            ? "white"
-            : blackName && normalizeName(blackName) === target
-              ? "black"
-              : null;
-
-        if (!userColor) return;
-
-        // Collect rating if not already done via openings scan
-        if (!doOpenings) {
-          const gameRating =
-            userColor === "white" ? game.whiteRating : game.blackRating;
-          if (gameRating && gameRating > 0) playerRatings.push(gameRating);
-        }
-
-        tacticsGamesCompleted++;
-        if (
-          tacticsGamesCompleted % 10 === 0 ||
-          tacticsGamesCompleted === games.length
-        ) {
+        if (oneOffEntries.length > 0) {
           emitProgress(options, {
-            phase: "tactics",
-            message: `⚔️ Scanning for missed tactics`,
-            detail: `Game ${tacticsGamesCompleted} of ${games.length}`,
-            current: tacticsGamesCompleted,
-            total: games.length,
-            percent:
-              tacticsStart +
-              Math.round((tacticsGamesCompleted / games.length) * tacticsSpan),
+            phase: "eval",
+            message: "🔎 Checking one-off opening mistakes",
+            detail: `Screening ${oneOffEntries.length} non-repeated positions`,
+            percent: 80,
           });
         }
 
-        const chess = new Chess();
-        const allTokens = game.moves.split(" ").filter(Boolean);
+        await parallelForEach(
+          oneOffEntries,
+          stockfishPool.size,
+          async ([fenBefore, data], oIdx) => {
+            if (oneOffMistakes.length >= MAX_ONE_OFFS) return;
 
-        for (let ply = 0; ply < allTokens.length; ply += 1) {
-          // Yield to browser periodically to prevent UI freeze during long games
-          if (ply > 0 && ply % 60 === 0) {
-            await new Promise<void>((r) => setTimeout(r, 0));
-          }
+            let chosenMove = "";
+            let chosenCount = -1;
+            for (const [move, count] of data.moveCounts.entries()) {
+              if (count > chosenCount) {
+                chosenMove = move;
+                chosenCount = count;
+              }
+            }
+            if (!chosenMove) return;
 
-          const sideToMove: PlayerColor = ply % 2 === 0 ? "white" : "black";
-          const token = allTokens[ply];
-          const fenBefore = chess.fen();
+            const fenAfter = computeFenAfterMove(fenBefore, chosenMove);
+            if (!fenAfter) return;
 
-          if (sideToMove === userColor && !seenTacticFens.has(fenBefore)) {
-            // Quick heuristic: skip dead-quiet positions (< 4 pieces total = trivial)
-            const boardPieces = chess.board().flat().filter(Boolean);
-            if (boardPieces.length < 4) {
-              const ok = applyMoveToken(chess, token);
-              if (!ok) break;
-              continue;
+            const sideToMove: PlayerColor = fenBefore.includes(" w ")
+              ? "white"
+              : "black";
+
+            // Quick screen at low depth first
+            const screenBefore = await stockfishPool.evaluateFen(
+              fenBefore,
+              ONE_OFF_SCREEN_DEPTH,
+            );
+            const screenAfter = await stockfishPool.evaluateFen(
+              fenAfter,
+              ONE_OFF_SCREEN_DEPTH,
+            );
+            if (!screenBefore || !screenAfter) return;
+
+            const screenEvalBefore = scoreToCpFromUserPerspective(
+              screenBefore.cp,
+              sideToMove,
+              sideToMove,
+            );
+            const opponentToMove: PlayerColor =
+              sideToMove === "white" ? "black" : "white";
+            const screenEvalAfter = scoreToCpFromUserPerspective(
+              screenAfter.cp,
+              opponentToMove,
+              sideToMove,
+            );
+            const screenCpLoss = screenEvalBefore - screenEvalAfter;
+
+            // Capture positional patterns even below ONE_OFF_CP_THRESHOLD
+            if (screenCpLoss >= 50 && screenCpLoss < ONE_OFF_CP_THRESHOLD) {
+              // Skip if engine's best move is the same as the user's move (noise at low depth)
+              const userUci = moveToUci(new Chess(fenBefore), chosenMove);
+              if (userUci !== screenBefore.bestMove) {
+                const posTags = deriveLeakTags({
+                  fenBefore,
+                  userMove: chosenMove,
+                  bestMove: screenBefore.bestMove,
+                  cpLoss: screenCpLoss,
+                  reachCount: data.totalReachCount,
+                  moveCount: chosenCount,
+                });
+                if (posTags.some((t) => POSITIONAL_TAGS.has(t))) {
+                  positionalFindings.push({
+                    fenBefore,
+                    userMove: chosenMove,
+                    bestMove: screenBefore.bestMove,
+                    cpLoss: screenCpLoss,
+                    tags: posTags,
+                    gameUrl: fenToGameUrl.get(fenBefore),
+                  });
+                }
+              }
+              return; // not a big enough mistake for one-off leak
             }
 
-            // Check if captures or checks exist (forcing moves)
-            const legalMoves = chess.moves({ verbose: true });
-            const hasForcingMoves = legalMoves.some(
-              (m) => m.captured || m.san.includes("+") || m.san.includes("#"),
+            if (screenCpLoss < ONE_OFF_CP_THRESHOLD) return;
+
+            // Confirm at full depth
+            const beforeEval = await stockfishPool.evaluateFen(
+              fenBefore,
+              engineDepth,
             );
+            const afterEval = await stockfishPool.evaluateFen(
+              fenAfter,
+              engineDepth,
+            );
+            if (!beforeEval || !afterEval) return;
 
-            if (hasForcingMoves) {
-              // === Two-pass depth screening ===
-              // Pass 1: cheap screen at low depth
-              const screenBefore = await stockfishPool.evaluateFen(
+            const evalBefore = scoreToCpFromUserPerspective(
+              beforeEval.cp,
+              sideToMove,
+              sideToMove,
+            );
+            const evalAfter = scoreToCpFromUserPerspective(
+              afterEval.cp,
+              opponentToMove,
+              sideToMove,
+            );
+            const cpLoss = evalBefore - evalAfter;
+
+            if (cpLoss < ONE_OFF_CP_THRESHOLD) return;
+
+            const tags = deriveLeakTags({
+              fenBefore,
+              userMove: chosenMove,
+              bestMove: beforeEval.bestMove,
+              cpLoss,
+              reachCount: data.totalReachCount,
+              moveCount: chosenCount,
+            });
+
+            // DB validation — formula-based sideline detection (one-off path)
+            // Uses same lenient thresholds as main leak path to catch popular gambits
+            let dbApproved = false;
+            let dbWinRate: number | undefined;
+            let dbGames: number | undefined;
+            try {
+              const explorer = await fetchExplorerMoves(fenBefore, sideToMove);
+              // If the API failed, skip DB validation but keep the one-off mistake.
+              if (!explorer.failed) {
+                const dbMove = explorer.moves.find(
+                  (m) => m.san === chosenMove || m.uci === chosenMove,
+                );
+                if (
+                  dbMove &&
+                  dbMove.totalGames >= 50 &&
+                  dbMove.winRate >= 0.35
+                ) {
+                  if (dbMove.totalGames >= 50000 && dbMove.winRate >= 0.35) {
+                    dbApproved = true;
+                    dbWinRate = dbMove.winRate;
+                    dbGames = dbMove.totalGames;
+                  } else {
+                    const dbScore = Math.min(
+                      300,
+                      Math.log10(dbMove.totalGames) *
+                        40 *
+                        (dbMove.winRate / 0.5),
+                    );
+                    const popularityBonus =
+                      dbMove.totalGames >= 5000
+                        ? 50
+                        : dbMove.totalGames >= 1000
+                          ? 25
+                          : 0;
+                    if (cpLoss <= dbScore + popularityBonus) {
+                      dbApproved = true;
+                      dbWinRate = dbMove.winRate;
+                      dbGames = dbMove.totalGames;
+                    }
+                  }
+                }
+              }
+            } catch {
+              /* skip */
+            }
+
+            // Don't flag DB-approved sidelines as one-off mistakes
+            if (dbApproved) return;
+
+            oneOffMistakes.push({
+              fenBefore,
+              fenAfter,
+              userMove: chosenMove,
+              bestMove: beforeEval.bestMove,
+              tags,
+              reachCount: data.totalReachCount,
+              moveCount: chosenCount,
+              cpLoss,
+              evalBefore,
+              evalAfter,
+              sideToMove,
+              userColor: sideToMove,
+              userWins: data.moveOutcomes.get(chosenMove)?.w ?? 0,
+              userDraws: data.moveOutcomes.get(chosenMove)?.d ?? 0,
+              userLosses: data.moveOutcomes.get(chosenMove)?.l ?? 0,
+              openingName: fenOpeningName.get(fenBefore),
+            });
+          },
+        );
+
+        oneOffMistakes.sort((a, b) => b.cpLoss - a.cpLoss);
+
+        /* ── Positional scan for single-occurrence positions (count=1) ── */
+        const MAX_POSITIONAL_SCREENS = 150; // was 80
+        const POSITIONAL_SCREEN_DEPTH = 5;
+        const singleEntries = [...byFen.entries()]
+          .filter(([, data]) => data.totalReachCount === 1)
+          .slice(0, MAX_POSITIONAL_SCREENS);
+
+        if (singleEntries.length > 0 && positionalFindings.length < 60) {
+          emitProgress(options, {
+            phase: "eval",
+            message: "🎯 Scanning for positional patterns",
+            detail: `Checking ${singleEntries.length} positions for positional motifs`,
+            percent: 84,
+          });
+
+          await parallelForEach(
+            singleEntries,
+            stockfishPool.size,
+            async ([fenBefore, data]) => {
+              if (positionalFindings.length >= 60) return;
+
+              let chosenMove = "";
+              let chosenCount = -1;
+              for (const [move, cnt] of data.moveCounts.entries()) {
+                if (cnt > chosenCount) {
+                  chosenMove = move;
+                  chosenCount = cnt;
+                }
+              }
+              if (!chosenMove) return;
+
+              const fenAfter = computeFenAfterMove(fenBefore, chosenMove);
+              if (!fenAfter) return;
+
+              const sideToMove: PlayerColor = fenBefore.includes(" w ")
+                ? "white"
+                : "black";
+
+              const scBefore = await stockfishPool.evaluateFen(
                 fenBefore,
-                SCREEN_DEPTH,
+                POSITIONAL_SCREEN_DEPTH,
               );
-              if (!screenBefore || !screenBefore.bestMove) {
-                const ok = applyMoveToken(chess, token);
-                if (!ok) break;
-                continue;
-              }
-
-              // Check if the best move at screen depth is forcing
-              const screenBestSan = sanForMove(
-                fenBefore,
-                screenBefore.bestMove,
+              const scAfter = await stockfishPool.evaluateFen(
+                fenAfter,
+                POSITIONAL_SCREEN_DEPTH,
               );
-              const isScreenBestForcing =
-                screenBestSan &&
-                (screenBestSan.includes("x") ||
-                  screenBestSan.includes("+") ||
-                  screenBestSan.includes("#"));
+              if (!scBefore || !scAfter) return;
 
-              if (!isScreenBestForcing) {
-                const ok = applyMoveToken(chess, token);
-                if (!ok) break;
-                continue;
-              }
-
-              // Quick screen: did user play the best move? If so, skip.
-              const screenUserUci = moveToUci(chess, token);
-              if (!screenUserUci || screenUserUci === screenBefore.bestMove) {
-                const ok = applyMoveToken(chess, token);
-                if (!ok) break;
-                continue;
-              }
-
-              // Screen-depth eval after user's move
-              const screenFenAfter = computeFenAfterMove(fenBefore, token);
-              if (!screenFenAfter) {
-                const ok = applyMoveToken(chess, token);
-                if (!ok) break;
-                continue;
-              }
-              const screenAfter = await stockfishPool.evaluateFen(
-                screenFenAfter,
-                SCREEN_DEPTH,
-              );
-              if (!screenAfter) {
-                const ok = applyMoveToken(chess, token);
-                if (!ok) break;
-                continue;
-              }
-
-              const screenCpBefore = scoreToCpFromUserPerspective(
-                screenBefore.cp,
+              const scEvalBefore = scoreToCpFromUserPerspective(
+                scBefore.cp,
                 sideToMove,
-                userColor,
+                sideToMove,
               );
-              const screenOpponent: PlayerColor =
+              const oppToMove: PlayerColor =
                 sideToMove === "white" ? "black" : "white";
-              const screenCpAfter = scoreToCpFromUserPerspective(
-                screenAfter.cp,
-                screenOpponent,
-                userColor,
+              const scEvalAfter = scoreToCpFromUserPerspective(
+                scAfter.cp,
+                oppToMove,
+                sideToMove,
               );
-              const screenCpLoss = screenCpBefore - screenCpAfter;
+              const scCpLoss = scEvalBefore - scEvalAfter;
 
-              // If screen CPL is below threshold, skip — not a real tactic
-              if (screenCpLoss < SCREEN_CP_THRESHOLD) {
-                const ok = applyMoveToken(chess, token);
-                if (!ok) break;
-                continue;
-              }
+              if (scCpLoss < 50 || scCpLoss > 300) return; // minimum 50cp (0.5 pawns) to avoid noise
 
-              // Count this as a confirmed tactic at screen depth
-              totalTacticsFound++;
+              // Skip if engine's best move is the same as the user's move
+              const userUci = moveToUci(new Chess(fenBefore), chosenMove);
+              if (userUci === scBefore.bestMove) return;
 
-              // If we already have enough detailed samples, skip full-depth confirmation
-              if (missedTactics.length >= MAX_TACTICS) {
-                seenTacticFens.add(fenBefore);
-                const ok = applyMoveToken(chess, token);
-                if (!ok) break;
-                continue;
-              }
-
-              // === Pass 2: confirm at full depth ===
-              const beforeEval = await stockfishPool.evaluateFen(
+              const posTags = deriveLeakTags({
                 fenBefore,
-                engineDepth,
-              );
+                userMove: chosenMove,
+                bestMove: scBefore.bestMove,
+                cpLoss: scCpLoss,
+                reachCount: 1,
+                moveCount: chosenCount,
+              });
+              if (posTags.some((t) => POSITIONAL_TAGS.has(t))) {
+                positionalFindings.push({
+                  fenBefore,
+                  userMove: chosenMove,
+                  bestMove: scBefore.bestMove,
+                  cpLoss: scCpLoss,
+                  tags: posTags,
+                  gameUrl: fenToGameUrl.get(fenBefore),
+                });
+              }
+            },
+          );
+        }
+      } // end if (doOpenings)
 
-              if (beforeEval && beforeEval.bestMove) {
-                const bestMoveSan = sanForMove(fenBefore, beforeEval.bestMove);
-                const isBestMoveForcing =
-                  bestMoveSan &&
-                  (bestMoveSan.includes("x") ||
-                    bestMoveSan.includes("+") ||
-                    bestMoveSan.includes("#"));
+      options?.onSectionReady?.("openings", {
+        username,
+        gamesAnalyzed,
+        repeatedPositions,
+        leaks,
+        oneOffMistakes,
+        positionalFindings:
+          positionalFindings.length > 0 ? positionalFindings : undefined,
+        openingSummaries:
+          openingSummaries.length > 0 ? openingSummaries : undefined,
+      });
+    })(), // end openings
 
-                if (isBestMoveForcing) {
-                  const userUci = moveToUci(chess, token);
+    // ── TACTICS ──────────────────────────────────────────────────────────────
+    (async () => {
+      if (doTactics) {
+        const tacticsStart = doEndgames ? 73 : 81;
+        const tacticsSpan = doEndgames ? 12 : 16;
 
-                  if (userUci && userUci !== beforeEval.bestMove) {
-                    const fenAfterUser = computeFenAfterMove(fenBefore, token);
+        emitProgress(options, {
+          phase: "tactics",
+          message: "⚔️ Hunting for missed tactics",
+          detail: `Scanning ${games.length} games for blunders and missed wins...`,
+          current: 0,
+          total: games.length,
+          percent: tacticsStart,
+        });
 
+        const seenTacticFens = new Set<string>();
+
+        let tacticsGamesCompleted = 0;
+        await parallelForEach(
+          games.map((game, i) => ({ game, gameIndex: i })),
+          stockfishPool.size,
+          async ({ game, gameIndex }) => {
+            if (!game.moves) return;
+
+            const whiteName = game.whiteName;
+            const blackName = game.blackName;
+            const target = normalizeName(username);
+
+            const userColor: PlayerColor | null =
+              whiteName && normalizeName(whiteName) === target
+                ? "white"
+                : blackName && normalizeName(blackName) === target
+                  ? "black"
+                  : null;
+
+            if (!userColor) return;
+
+            // Collect rating if not already done via openings scan
+            if (!doOpenings) {
+              const gameRating =
+                userColor === "white" ? game.whiteRating : game.blackRating;
+              if (gameRating && gameRating > 0) playerRatings.push(gameRating);
+            }
+
+            tacticsGamesCompleted++;
+            if (
+              tacticsGamesCompleted % 10 === 0 ||
+              tacticsGamesCompleted === games.length
+            ) {
+              emitProgress(options, {
+                phase: "tactics",
+                message: `⚔️ Scanning for missed tactics`,
+                detail: `Game ${tacticsGamesCompleted} of ${games.length}`,
+                current: tacticsGamesCompleted,
+                total: games.length,
+                percent:
+                  tacticsStart +
+                  Math.round(
+                    (tacticsGamesCompleted / games.length) * tacticsSpan,
+                  ),
+              });
+            }
+
+            const chess = new Chess();
+            const allTokens = game.moves.split(" ").filter(Boolean);
+
+            for (let ply = 0; ply < allTokens.length; ply += 1) {
+              // Yield to browser periodically to prevent UI freeze during long games
+              if (ply > 0 && ply % 60 === 0) {
+                await new Promise<void>((r) => setTimeout(r, 0));
+              }
+
+              const sideToMove: PlayerColor = ply % 2 === 0 ? "white" : "black";
+              const token = allTokens[ply];
+              const fenBefore = chess.fen();
+
+              if (sideToMove === userColor && !seenTacticFens.has(fenBefore)) {
+                // Quick heuristic: skip dead-quiet positions (< 4 pieces total = trivial)
+                const boardPieces = chess.board().flat().filter(Boolean);
+                if (boardPieces.length < 4) {
+                  const ok = applyMoveToken(chess, token);
+                  if (!ok) break;
+                  continue;
+                }
+
+                // Check if captures or checks exist (forcing moves)
+                const legalMoves = chess.moves({ verbose: true });
+                const hasForcingMoves = legalMoves.some(
+                  (m) =>
+                    m.captured || m.san.includes("+") || m.san.includes("#"),
+                );
+
+                if (hasForcingMoves) {
+                  // === Two-pass depth screening ===
+                  // Pass 1: cheap screen at low depth
+                  const screenBefore = await stockfishPool.evaluateFen(
+                    fenBefore,
+                    SCREEN_DEPTH,
+                  );
+                  if (!screenBefore || !screenBefore.bestMove) {
+                    const ok = applyMoveToken(chess, token);
+                    if (!ok) break;
+                    continue;
+                  }
+
+                  // Check if the best move at screen depth is forcing
+                  const screenBestSan = sanForMove(
+                    fenBefore,
+                    screenBefore.bestMove,
+                  );
+                  const isScreenBestForcing =
+                    screenBestSan &&
+                    (screenBestSan.includes("x") ||
+                      screenBestSan.includes("+") ||
+                      screenBestSan.includes("#"));
+
+                  if (!isScreenBestForcing) {
+                    const ok = applyMoveToken(chess, token);
+                    if (!ok) break;
+                    continue;
+                  }
+
+                  // Quick screen: did user play the best move? If so, skip.
+                  const screenUserUci = moveToUci(chess, token);
+                  if (
+                    !screenUserUci ||
+                    screenUserUci === screenBefore.bestMove
+                  ) {
+                    const ok = applyMoveToken(chess, token);
+                    if (!ok) break;
+                    continue;
+                  }
+
+                  // Screen-depth eval after user's move
+                  const screenFenAfter = computeFenAfterMove(fenBefore, token);
+                  if (!screenFenAfter) {
+                    const ok = applyMoveToken(chess, token);
+                    if (!ok) break;
+                    continue;
+                  }
+                  const screenAfter = await stockfishPool.evaluateFen(
+                    screenFenAfter,
+                    SCREEN_DEPTH,
+                  );
+                  if (!screenAfter) {
+                    const ok = applyMoveToken(chess, token);
+                    if (!ok) break;
+                    continue;
+                  }
+
+                  const screenCpBefore = scoreToCpFromUserPerspective(
+                    screenBefore.cp,
+                    sideToMove,
+                    userColor,
+                  );
+                  const screenOpponent: PlayerColor =
+                    sideToMove === "white" ? "black" : "white";
+                  const screenCpAfter = scoreToCpFromUserPerspective(
+                    screenAfter.cp,
+                    screenOpponent,
+                    userColor,
+                  );
+                  const screenCpLoss = screenCpBefore - screenCpAfter;
+
+                  // If screen CPL is below threshold, skip — not a real tactic
+                  if (screenCpLoss < SCREEN_CP_THRESHOLD) {
+                    const ok = applyMoveToken(chess, token);
+                    if (!ok) break;
+                    continue;
+                  }
+
+                  // Count this as a confirmed tactic at screen depth
+                  totalTacticsFound++;
+
+                  // If we already have enough detailed samples, skip full-depth confirmation
+                  if (missedTactics.length >= MAX_TACTICS) {
+                    seenTacticFens.add(fenBefore);
+                    const ok = applyMoveToken(chess, token);
+                    if (!ok) break;
+                    continue;
+                  }
+
+                  // === Pass 2: confirm at full depth ===
+                  const beforeEval = await stockfishPool.evaluateFen(
+                    fenBefore,
+                    engineDepth,
+                  );
+
+                  if (beforeEval && beforeEval.bestMove) {
+                    const bestMoveSan = sanForMove(
+                      fenBefore,
+                      beforeEval.bestMove,
+                    );
+                    const isBestMoveForcing =
+                      bestMoveSan &&
+                      (bestMoveSan.includes("x") ||
+                        bestMoveSan.includes("+") ||
+                        bestMoveSan.includes("#"));
+
+                    if (isBestMoveForcing) {
+                      const userUci = moveToUci(chess, token);
+
+                      if (userUci && userUci !== beforeEval.bestMove) {
+                        const fenAfterUser = computeFenAfterMove(
+                          fenBefore,
+                          token,
+                        );
+
+                        if (fenAfterUser) {
+                          const afterEval = await stockfishPool.evaluateFen(
+                            fenAfterUser,
+                            engineDepth,
+                          );
+
+                          if (afterEval) {
+                            const cpBefore = scoreToCpFromUserPerspective(
+                              beforeEval.cp,
+                              sideToMove,
+                              userColor,
+                            );
+                            const opponentSide: PlayerColor =
+                              sideToMove === "white" ? "black" : "white";
+                            const cpAfterUser = scoreToCpFromUserPerspective(
+                              afterEval.cp,
+                              opponentSide,
+                              userColor,
+                            );
+
+                            const cpLoss = cpBefore - cpAfterUser;
+                            const mateIn =
+                              typeof beforeEval.mateIn === "number" &&
+                              beforeEval.mateIn > 0
+                                ? beforeEval.mateIn
+                                : null;
+                            const shortMateIn =
+                              typeof beforeEval.mateIn === "number" &&
+                              beforeEval.mateIn > 0 &&
+                              beforeEval.mateIn <= SHORT_TACTIC_MATE_MAX_MOVES
+                                ? beforeEval.mateIn
+                                : null;
+
+                            // Skip if user was already heavily losing
+                            if (cpBefore < -300) {
+                              // Don't flag tactics when already lost
+                            } else if (cpLoss >= TACTIC_CP_THRESHOLD) {
+                              const fullMoveNumber = Math.floor(ply / 2) + 1;
+                              const tacticTags = deriveTacticTags({
+                                fenBefore,
+                                userMove: userUci,
+                                bestMove: beforeEval.bestMove,
+                                bestMoveSan: bestMoveSan,
+                                mateIn: shortMateIn,
+                                cpLoss,
+                                cpBefore,
+                              });
+
+                              // Extract clock time for this ply (centiseconds → seconds)
+                              let timeRemainingSec: number | null = null;
+                              let initialTimeSec: number | null = null;
+                              if (game.clocks && ply < game.clocks.length) {
+                                timeRemainingSec = Math.round(
+                                  game.clocks[ply] / 100,
+                                );
+                                // Initial time: first clock reading for the user's color
+                                const initPly = userColor === "white" ? 0 : 1;
+                                if (initPly < game.clocks.length) {
+                                  initialTimeSec = Math.round(
+                                    game.clocks[initPly] / 100,
+                                  );
+                                }
+                              }
+
+                              // Add time pressure tag if under 30 seconds
+                              if (
+                                typeof timeRemainingSec === "number" &&
+                                timeRemainingSec <= 30
+                              ) {
+                                tacticTags.push("Time Pressure");
+                              }
+
+                              missedTactics.push({
+                                fenBefore,
+                                fenAfter: fenAfterUser,
+                                userMove: userUci,
+                                bestMove: beforeEval.bestMove,
+                                mateIn,
+                                cpBefore,
+                                cpAfter: cpAfterUser,
+                                cpLoss,
+                                sideToMove,
+                                userColor,
+                                gameIndex: gameIndex + 1,
+                                moveNumber: fullMoveNumber,
+                                tags: tacticTags,
+                                timeRemainingSec,
+                                initialTimeSec,
+                              });
+
+                              seenTacticFens.add(fenBefore);
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+
+              const ok = applyMoveToken(chess, token);
+              if (!ok) break;
+            }
+          },
+        );
+
+        missedTactics.sort((a, b) => b.cpLoss - a.cpLoss);
+      } // end if (doTactics)
+
+      options?.onSectionReady?.("tactics", {
+        missedTactics,
+        totalTacticsFound,
+      });
+    })(), // end tactics
+
+    // ── ENDGAMES ──────────────────────────────────────────────────────────────
+    (async () => {
+      if (doEndgames) {
+        const endgameStart = doTactics ? 86 : 81;
+        const endgameSpan = doTactics ? 11 : 16;
+
+        emitProgress(options, {
+          phase: "endgames",
+          message: "♟️ Scanning endgames",
+          detail: `Analysing endgame play across ${games.length} games...`,
+          current: 0,
+          total: games.length,
+          percent: endgameStart,
+        });
+
+        const ENDGAME_SCREEN_DEPTH = 8;
+
+        let endgameGamesCompleted = 0;
+        await parallelForEach(
+          games.map((game, i) => ({ game, gameIndex: i })),
+          stockfishPool.size,
+          async ({ game, gameIndex }) => {
+            if (endgameMistakes.length >= MAX_ENDGAME_MISTAKES) return;
+
+            if (!game.moves) return;
+
+            const target = normalizeName(username);
+            const userColor: PlayerColor | null =
+              game.whiteName && normalizeName(game.whiteName) === target
+                ? "white"
+                : game.blackName && normalizeName(game.blackName) === target
+                  ? "black"
+                  : null;
+            if (!userColor) return;
+
+            // Collect rating if needed
+            if (!doOpenings && !doTactics) {
+              const gameRating =
+                userColor === "white" ? game.whiteRating : game.blackRating;
+              if (gameRating && gameRating > 0) playerRatings.push(gameRating);
+            }
+
+            endgameGamesCompleted++;
+            if (
+              endgameGamesCompleted % 10 === 0 ||
+              endgameGamesCompleted === games.length
+            ) {
+              emitProgress(options, {
+                phase: "endgames",
+                message: "♟️ Scanning endgames",
+                detail: `Game ${endgameGamesCompleted} of ${games.length}`,
+                current: endgameGamesCompleted,
+                total: games.length,
+                percent:
+                  endgameStart +
+                  Math.round(
+                    (endgameGamesCompleted / games.length) * endgameSpan,
+                  ),
+              });
+            }
+
+            const chess = new Chess();
+            const allTokens = game.moves.split(" ").filter(Boolean);
+            let enteredEndgame = false;
+            let endgameStartEval: number | null = null;
+            let endgameType: EndgameType = "Complex";
+
+            for (let ply = 0; ply < allTokens.length; ply += 1) {
+              // Yield to browser periodically to prevent UI freeze during long games
+              if (ply > 0 && ply % 60 === 0) {
+                await new Promise<void>((r) => setTimeout(r, 0));
+              }
+
+              const token = allTokens[ply];
+              const fenBefore = chess.fen();
+              const sideToMove: PlayerColor = ply % 2 === 0 ? "white" : "black";
+
+              // Check if we've entered the endgame
+              if (!enteredEndgame && isEndgame(chess)) {
+                enteredEndgame = true;
+                endgameType = classifyEndgameType(chess);
+
+                // Get eval at endgame start to track conversion/hold — always evaluate,
+                // regardless of whose move it is (previous code skipped ~50% of games)
+                const startEv = await stockfishPool.evaluateFen(
+                  fenBefore,
+                  Math.min(engineDepth, 12),
+                );
+                if (startEv) {
+                  endgameStartEval = scoreToCpFromUserPerspective(
+                    startEv.cp,
+                    sideToMove,
+                    userColor,
+                  );
+                }
+              }
+
+              if (enteredEndgame && sideToMove === userColor) {
+                // Early exit: stop deep-scanning this game once we have enough endgame samples
+                if (
+                  endgameMistakes.length >= MAX_ENDGAME_MISTAKES &&
+                  MAX_ENDGAME_MISTAKES !== Infinity
+                ) {
+                  const ok = applyMoveToken(chess, token);
+                  if (!ok) break;
+                  continue;
+                }
+
+                // Endgame move sampling: evaluate captures, checks, and every 2nd move
+                const egLegalMoves = chess.moves({ verbose: true });
+                const userMoveToken = token;
+                const egUserMove = egLegalMoves.find(
+                  (m) => m.san === userMoveToken || m.lan === userMoveToken,
+                );
+                const isCapture = egUserMove?.captured;
+                const isCheck =
+                  userMoveToken.includes("+") || userMoveToken.includes("#");
+                // endgamePlyCounter tracks user plies in endgame for sampling
+                if (!isCapture && !isCheck && totalEndgameMoves % 2 !== 0) {
+                  // Skip non-forcing moves on odd indices (sample every 2nd quiet move)
+                  totalEndgameMoves += 1;
+                  const ok = applyMoveToken(chess, token);
+                  if (!ok) break;
+                  continue;
+                }
+
+                // Evaluate the user's endgame move — two-pass depth screening
+                // Pass 1: cheap screen at low depth
+                const screenBefore = await stockfishPool.evaluateFen(
+                  fenBefore,
+                  ENDGAME_SCREEN_DEPTH,
+                );
+                if (!screenBefore || !screenBefore.bestMove) {
+                  totalEndgameMoves += 1;
+                  const ok = applyMoveToken(chess, token);
+                  if (!ok) break;
+                  continue;
+                }
+
+                const userUci = moveToUci(chess, token);
+                // If user played the engine's top choice at screen depth, skip (no mistake)
+                if (!userUci || userUci === screenBefore.bestMove) {
+                  totalEndgameMoves += 1;
+                  const ok = applyMoveToken(chess, token);
+                  if (!ok) break;
+                  continue;
+                }
+
+                const fenAfterUser = computeFenAfterMove(fenBefore, token);
+                if (!fenAfterUser) {
+                  totalEndgameMoves += 1;
+                  const ok = applyMoveToken(chess, token);
+                  if (!ok) break;
+                  continue;
+                }
+
+                const screenAfter = await stockfishPool.evaluateFen(
+                  fenAfterUser,
+                  ENDGAME_SCREEN_DEPTH,
+                );
+                if (!screenAfter) {
+                  totalEndgameMoves += 1;
+                  const ok = applyMoveToken(chess, token);
+                  if (!ok) break;
+                  continue;
+                }
+
+                const screenCpBefore = scoreToCpFromUserPerspective(
+                  screenBefore.cp,
+                  sideToMove,
+                  userColor,
+                );
+                const screenOpponent: PlayerColor =
+                  sideToMove === "white" ? "black" : "white";
+                const screenCpAfter = scoreToCpFromUserPerspective(
+                  screenAfter.cp,
+                  screenOpponent,
+                  userColor,
+                );
+                const screenCpLoss = Math.max(
+                  0,
+                  screenCpBefore - screenCpAfter,
+                );
+
+                // If screen shows no significant loss, count as clean move and skip full depth
+                if (screenCpLoss < ENDGAME_CP_THRESHOLD * 0.6) {
+                  totalEndgameCpLoss += screenCpLoss;
+                  totalEndgameMoves += 1;
+                  // Update type stats with screen values
+                  const ts = typeStats.get(endgameType) ?? {
+                    count: 0,
+                    totalCpLoss: 0,
+                    mistakes: 0,
+                  };
+                  ts.count += 1;
+                  ts.totalCpLoss += screenCpLoss;
+                  typeStats.set(endgameType, ts);
+                  const ok = applyMoveToken(chess, token);
+                  if (!ok) break;
+                  continue;
+                }
+
+                // Pass 2: confirm at full depth
+                const beforeEval = await stockfishPool.evaluateFen(
+                  fenBefore,
+                  engineDepth,
+                );
+
+                if (beforeEval && beforeEval.bestMove) {
+                  if (userUci) {
                     if (fenAfterUser) {
                       const afterEval = await stockfishPool.evaluateFen(
                         fenAfterUser,
@@ -3422,471 +3792,145 @@ export async function analyzeOpeningLeaksInBrowser(
                           userColor,
                         );
 
-                        const cpLoss = cpBefore - cpAfterUser;
-                        const mateIn =
-                          typeof beforeEval.mateIn === "number" &&
-                          beforeEval.mateIn > 0
-                            ? beforeEval.mateIn
-                            : null;
-                        const shortMateIn =
-                          typeof beforeEval.mateIn === "number" &&
-                          beforeEval.mateIn > 0 &&
-                          beforeEval.mateIn <= SHORT_TACTIC_MATE_MAX_MOVES
-                            ? beforeEval.mateIn
-                            : null;
+                        const cpLoss = Math.max(0, cpBefore - cpAfterUser);
+                        totalEndgameCpLoss += cpLoss;
+                        totalEndgameMoves += 1;
 
-                        // Skip if user was already heavily losing
-                        if (cpBefore < -300) {
-                          // Don't flag tactics when already lost
-                        } else if (cpLoss >= TACTIC_CP_THRESHOLD) {
-                          const fullMoveNumber = Math.floor(ply / 2) + 1;
-                          const tacticTags = deriveTacticTags({
-                            fenBefore,
-                            userMove: userUci,
-                            bestMove: beforeEval.bestMove,
-                            bestMoveSan: bestMoveSan,
-                            mateIn: shortMateIn,
-                            cpLoss,
-                            cpBefore,
-                          });
+                        // Update type stats
+                        const ts = typeStats.get(endgameType) ?? {
+                          count: 0,
+                          totalCpLoss: 0,
+                          mistakes: 0,
+                        };
+                        ts.count += 1;
+                        ts.totalCpLoss += cpLoss;
 
-                          // Extract clock time for this ply (centiseconds → seconds)
-                          let timeRemainingSec: number | null = null;
-                          let initialTimeSec: number | null = null;
-                          if (game.clocks && ply < game.clocks.length) {
-                            timeRemainingSec = Math.round(
-                              game.clocks[ply] / 100,
-                            );
-                            // Initial time: first clock reading for the user's color
-                            const initPly = userColor === "white" ? 0 : 1;
-                            if (initPly < game.clocks.length) {
-                              initialTimeSec = Math.round(
-                                game.clocks[initPly] / 100,
-                              );
-                            }
+                        // Skip flagging as a mistake if the position was already a forced mate —
+                        // slower conversion (M6 → +9.42) is not an endgame mistake.
+                        if (
+                          cpLoss >= ENDGAME_CP_THRESHOLD &&
+                          cpBefore < 99000
+                        ) {
+                          ts.mistakes += 1;
+
+                          if (endgameMistakes.length < MAX_ENDGAME_MISTAKES) {
+                            const fullMoveNumber = Math.floor(ply / 2) + 1;
+                            const tags: string[] = [];
+
+                            if (cpLoss >= 300) tags.push("Blunder");
+                            else if (cpLoss >= 150) tags.push("Mistake");
+                            else tags.push("Inaccuracy");
+
+                            // Add endgame-specific tags
+                            if (endgameType !== "Complex")
+                              tags.push(endgameType + " Endgame");
+
+                            // Check if it's a conversion failure (was winning, blundered)
+                            if (cpBefore > 150 && cpAfterUser < 50)
+                              tags.push("Failed Conversion");
+                            // Check for stalemate-related errors
+                            const afterChess = new Chess(fenAfterUser);
+                            if (afterChess.isStalemate())
+                              tags.push("Stalemate!");
+
+                            endgameMistakes.push({
+                              fenBefore,
+                              fenAfter: fenAfterUser,
+                              userMove: userUci,
+                              bestMove: beforeEval.bestMove,
+                              cpBefore,
+                              cpAfter: cpAfterUser,
+                              cpLoss,
+                              sideToMove,
+                              userColor,
+                              gameIndex: gameIndex + 1,
+                              moveNumber: fullMoveNumber,
+                              endgameType,
+                              tags,
+                            });
                           }
-
-                          // Add time pressure tag if under 30 seconds
-                          if (
-                            typeof timeRemainingSec === "number" &&
-                            timeRemainingSec <= 30
-                          ) {
-                            tacticTags.push("Time Pressure");
-                          }
-
-                          missedTactics.push({
-                            fenBefore,
-                            fenAfter: fenAfterUser,
-                            userMove: userUci,
-                            bestMove: beforeEval.bestMove,
-                            mateIn,
-                            cpBefore,
-                            cpAfter: cpAfterUser,
-                            cpLoss,
-                            sideToMove,
-                            userColor,
-                            gameIndex: gameIndex + 1,
-                            moveNumber: fullMoveNumber,
-                            tags: tacticTags,
-                            timeRemainingSec,
-                            initialTimeSec,
-                          });
-
-                          seenTacticFens.add(fenBefore);
                         }
+
+                        typeStats.set(endgameType, ts);
                       }
                     }
                   }
                 }
               }
-            }
-          }
 
-          const ok = applyMoveToken(chess, token);
-          if (!ok) break;
-        }
-      },
-    );
-
-    missedTactics.sort((a, b) => b.cpLoss - a.cpLoss);
-  } // end if (doTactics)
-
-  options?.onSectionReady?.("tactics", { missedTactics, totalTacticsFound });
-
-  /* ── Phase: Endgame Analysis ────────────────────────────────── */
-
-  const ENDGAME_CP_THRESHOLD = 80; // flag endgame mistakes ≥ 80cp
-  const MAX_ENDGAME_MISTAKES = options?.maxEndgames ?? Infinity;
-  const endgameMistakes: EndgameMistake[] = [];
-
-  // Track conversion/hold data for stats
-  let wonEndgames = 0; // endgames where user had eval > +150 at start
-  let convertedWins = 0; // of those, how many were actually won
-  let slightlyWorse = 0; // endgames where user had eval between -50 and -150
-  let heldDraws = 0; // of those, how many were drawn
-  let totalEndgameCpLoss = 0;
-  let totalEndgameMoves = 0;
-  const typeStats = new Map<
-    EndgameType,
-    { count: number; totalCpLoss: number; mistakes: number }
-  >();
-
-  if (doEndgames) {
-    const endgameStart = doTactics ? 86 : 81;
-    const endgameSpan = doTactics ? 11 : 16;
-
-    emitProgress(options, {
-      phase: "endgames",
-      message: "♟️ Scanning endgames",
-      detail: `Analysing endgame play across ${games.length} games...`,
-      current: 0,
-      total: games.length,
-      percent: endgameStart,
-    });
-
-    const ENDGAME_SCREEN_DEPTH = 8;
-
-    let endgameGamesCompleted = 0;
-    await parallelForEach(
-      games.map((game, i) => ({ game, gameIndex: i })),
-      stockfishPool.size,
-      async ({ game, gameIndex }) => {
-        if (endgameMistakes.length >= MAX_ENDGAME_MISTAKES) return;
-
-        if (!game.moves) return;
-
-        const target = normalizeName(username);
-        const userColor: PlayerColor | null =
-          game.whiteName && normalizeName(game.whiteName) === target
-            ? "white"
-            : game.blackName && normalizeName(game.blackName) === target
-              ? "black"
-              : null;
-        if (!userColor) return;
-
-        // Collect rating if needed
-        if (!doOpenings && !doTactics) {
-          const gameRating =
-            userColor === "white" ? game.whiteRating : game.blackRating;
-          if (gameRating && gameRating > 0) playerRatings.push(gameRating);
-        }
-
-        endgameGamesCompleted++;
-        if (
-          endgameGamesCompleted % 10 === 0 ||
-          endgameGamesCompleted === games.length
-        ) {
-          emitProgress(options, {
-            phase: "endgames",
-            message: "♟️ Scanning endgames",
-            detail: `Game ${endgameGamesCompleted} of ${games.length}`,
-            current: endgameGamesCompleted,
-            total: games.length,
-            percent:
-              endgameStart +
-              Math.round((endgameGamesCompleted / games.length) * endgameSpan),
-          });
-        }
-
-        const chess = new Chess();
-        const allTokens = game.moves.split(" ").filter(Boolean);
-        let enteredEndgame = false;
-        let endgameStartEval: number | null = null;
-        let endgameType: EndgameType = "Complex";
-
-        for (let ply = 0; ply < allTokens.length; ply += 1) {
-          // Yield to browser periodically to prevent UI freeze during long games
-          if (ply > 0 && ply % 60 === 0) {
-            await new Promise<void>((r) => setTimeout(r, 0));
-          }
-
-          const token = allTokens[ply];
-          const fenBefore = chess.fen();
-          const sideToMove: PlayerColor = ply % 2 === 0 ? "white" : "black";
-
-          // Check if we've entered the endgame
-          if (!enteredEndgame && isEndgame(chess)) {
-            enteredEndgame = true;
-            endgameType = classifyEndgameType(chess);
-
-            // Get eval at endgame start to track conversion/hold — always evaluate,
-            // regardless of whose move it is (previous code skipped ~50% of games)
-            const startEv = await stockfishPool.evaluateFen(
-              fenBefore,
-              Math.min(engineDepth, 12),
-            );
-            if (startEv) {
-              endgameStartEval = scoreToCpFromUserPerspective(
-                startEv.cp,
-                sideToMove,
-                userColor,
-              );
-            }
-          }
-
-          if (enteredEndgame && sideToMove === userColor) {
-            // Early exit: stop deep-scanning this game once we have enough endgame samples
-            if (
-              endgameMistakes.length >= MAX_ENDGAME_MISTAKES &&
-              MAX_ENDGAME_MISTAKES !== Infinity
-            ) {
               const ok = applyMoveToken(chess, token);
               if (!ok) break;
-              continue;
             }
 
-            // Endgame move sampling: evaluate captures, checks, and every 2nd move
-            const egLegalMoves = chess.moves({ verbose: true });
-            const userMoveToken = token;
-            const egUserMove = egLegalMoves.find(
-              (m) => m.san === userMoveToken || m.lan === userMoveToken,
-            );
-            const isCapture = egUserMove?.captured;
-            const isCheck =
-              userMoveToken.includes("+") || userMoveToken.includes("#");
-            // endgamePlyCounter tracks user plies in endgame for sampling
-            if (!isCapture && !isCheck && totalEndgameMoves % 2 !== 0) {
-              // Skip non-forcing moves on odd indices (sample every 2nd quiet move)
-              totalEndgameMoves += 1;
-              const ok = applyMoveToken(chess, token);
-              if (!ok) break;
-              continue;
+            // Track conversion/hold for this game's endgame
+            // Use game.winner from the source API (Lichess/Chess.com) instead of
+            // inferGameResult which can only detect checkmate/stalemate from FEN
+            // and misses resignation/timeout (the vast majority of games).
+            if (enteredEndgame && endgameStartEval !== null && game.winner) {
+              const userWon = game.winner === userColor;
+              const drew = game.winner === "draw";
+
+              if (endgameStartEval > 100) {
+                // User had a winning advantage at endgame start
+                wonEndgames++;
+                if (userWon) convertedWins++;
+              } else if (endgameStartEval >= -200 && endgameStartEval <= -50) {
+                // User was slightly worse — did they hold?
+                slightlyWorse++;
+                if (drew || userWon) heldDraws++;
+              }
             }
+          },
+        );
 
-            // Evaluate the user's endgame move — two-pass depth screening
-            // Pass 1: cheap screen at low depth
-            const screenBefore = await stockfishPool.evaluateFen(
-              fenBefore,
-              ENDGAME_SCREEN_DEPTH,
-            );
-            if (!screenBefore || !screenBefore.bestMove) {
-              totalEndgameMoves += 1;
-              const ok = applyMoveToken(chess, token);
-              if (!ok) break;
-              continue;
-            }
+        endgameMistakes.sort((a, b) => b.cpLoss - a.cpLoss);
+      } // end if (doEndgames)
 
-            const userUci = moveToUci(chess, token);
-            // If user played the engine's top choice at screen depth, skip (no mistake)
-            if (!userUci || userUci === screenBefore.bestMove) {
-              totalEndgameMoves += 1;
-              const ok = applyMoveToken(chess, token);
-              if (!ok) break;
-              continue;
-            }
+      // Compute endgame stats
+      endgameStats =
+        totalEndgameMoves > 0
+          ? (() => {
+              const byType: EndgameStats["byType"] = [];
+              let worstAvg = -1;
+              let weakestType: EndgameType | null = null;
 
-            const fenAfterUser = computeFenAfterMove(fenBefore, token);
-            if (!fenAfterUser) {
-              totalEndgameMoves += 1;
-              const ok = applyMoveToken(chess, token);
-              if (!ok) break;
-              continue;
-            }
+              for (const [type, data] of typeStats) {
+                const avg = data.count > 0 ? data.totalCpLoss / data.count : 0;
+                byType.push({
+                  type,
+                  count: data.count,
+                  avgCpLoss: Math.round(avg),
+                  mistakes: data.mistakes,
+                });
+                if (avg > worstAvg && data.count >= 3) {
+                  worstAvg = avg;
+                  weakestType = type;
+                }
+              }
+              byType.sort((a, b) => b.avgCpLoss - a.avgCpLoss);
+              // Filter out categories with only 1 position — too small a sample to rank reliably
+              const rankedByType = byType.filter((t) => t.count >= 2);
 
-            const screenAfter = await stockfishPool.evaluateFen(
-              fenAfterUser,
-              ENDGAME_SCREEN_DEPTH,
-            );
-            if (!screenAfter) {
-              totalEndgameMoves += 1;
-              const ok = applyMoveToken(chess, token);
-              if (!ok) break;
-              continue;
-            }
-
-            const screenCpBefore = scoreToCpFromUserPerspective(
-              screenBefore.cp,
-              sideToMove,
-              userColor,
-            );
-            const screenOpponent: PlayerColor =
-              sideToMove === "white" ? "black" : "white";
-            const screenCpAfter = scoreToCpFromUserPerspective(
-              screenAfter.cp,
-              screenOpponent,
-              userColor,
-            );
-            const screenCpLoss = Math.max(0, screenCpBefore - screenCpAfter);
-
-            // If screen shows no significant loss, count as clean move and skip full depth
-            if (screenCpLoss < ENDGAME_CP_THRESHOLD * 0.6) {
-              totalEndgameCpLoss += screenCpLoss;
-              totalEndgameMoves += 1;
-              // Update type stats with screen values
-              const ts = typeStats.get(endgameType) ?? {
-                count: 0,
-                totalCpLoss: 0,
-                mistakes: 0,
+              return {
+                totalPositions: totalEndgameMoves,
+                avgCpLoss: Math.round(totalEndgameCpLoss / totalEndgameMoves),
+                conversionRate:
+                  wonEndgames >= 3
+                    ? Math.round((convertedWins / wonEndgames) * 100)
+                    : null,
+                holdRate:
+                  slightlyWorse >= 3
+                    ? Math.round((heldDraws / slightlyWorse) * 100)
+                    : null,
+                byType: rankedByType,
+                weakestType,
               };
-              ts.count += 1;
-              ts.totalCpLoss += screenCpLoss;
-              typeStats.set(endgameType, ts);
-              const ok = applyMoveToken(chess, token);
-              if (!ok) break;
-              continue;
-            }
+            })()
+          : null;
 
-            // Pass 2: confirm at full depth
-            const beforeEval = await stockfishPool.evaluateFen(
-              fenBefore,
-              engineDepth,
-            );
-
-            if (beforeEval && beforeEval.bestMove) {
-              if (userUci) {
-                if (fenAfterUser) {
-                  const afterEval = await stockfishPool.evaluateFen(
-                    fenAfterUser,
-                    engineDepth,
-                  );
-
-                  if (afterEval) {
-                    const cpBefore = scoreToCpFromUserPerspective(
-                      beforeEval.cp,
-                      sideToMove,
-                      userColor,
-                    );
-                    const opponentSide: PlayerColor =
-                      sideToMove === "white" ? "black" : "white";
-                    const cpAfterUser = scoreToCpFromUserPerspective(
-                      afterEval.cp,
-                      opponentSide,
-                      userColor,
-                    );
-
-                    const cpLoss = Math.max(0, cpBefore - cpAfterUser);
-                    totalEndgameCpLoss += cpLoss;
-                    totalEndgameMoves += 1;
-
-                    // Update type stats
-                    const ts = typeStats.get(endgameType) ?? {
-                      count: 0,
-                      totalCpLoss: 0,
-                      mistakes: 0,
-                    };
-                    ts.count += 1;
-                    ts.totalCpLoss += cpLoss;
-
-                    // Skip flagging as a mistake if the position was already a forced mate —
-                    // slower conversion (M6 → +9.42) is not an endgame mistake.
-                    if (cpLoss >= ENDGAME_CP_THRESHOLD && cpBefore < 99000) {
-                      ts.mistakes += 1;
-
-                      if (endgameMistakes.length < MAX_ENDGAME_MISTAKES) {
-                        const fullMoveNumber = Math.floor(ply / 2) + 1;
-                        const tags: string[] = [];
-
-                        if (cpLoss >= 300) tags.push("Blunder");
-                        else if (cpLoss >= 150) tags.push("Mistake");
-                        else tags.push("Inaccuracy");
-
-                        // Add endgame-specific tags
-                        if (endgameType !== "Complex")
-                          tags.push(endgameType + " Endgame");
-
-                        // Check if it's a conversion failure (was winning, blundered)
-                        if (cpBefore > 150 && cpAfterUser < 50)
-                          tags.push("Failed Conversion");
-                        // Check for stalemate-related errors
-                        const afterChess = new Chess(fenAfterUser);
-                        if (afterChess.isStalemate()) tags.push("Stalemate!");
-
-                        endgameMistakes.push({
-                          fenBefore,
-                          fenAfter: fenAfterUser,
-                          userMove: userUci,
-                          bestMove: beforeEval.bestMove,
-                          cpBefore,
-                          cpAfter: cpAfterUser,
-                          cpLoss,
-                          sideToMove,
-                          userColor,
-                          gameIndex: gameIndex + 1,
-                          moveNumber: fullMoveNumber,
-                          endgameType,
-                          tags,
-                        });
-                      }
-                    }
-
-                    typeStats.set(endgameType, ts);
-                  }
-                }
-              }
-            }
-          }
-
-          const ok = applyMoveToken(chess, token);
-          if (!ok) break;
-        }
-
-        // Track conversion/hold for this game's endgame
-        // Use game.winner from the source API (Lichess/Chess.com) instead of
-        // inferGameResult which can only detect checkmate/stalemate from FEN
-        // and misses resignation/timeout (the vast majority of games).
-        if (enteredEndgame && endgameStartEval !== null && game.winner) {
-          const userWon = game.winner === userColor;
-          const drew = game.winner === "draw";
-
-          if (endgameStartEval > 100) {
-            // User had a winning advantage at endgame start
-            wonEndgames++;
-            if (userWon) convertedWins++;
-          } else if (endgameStartEval >= -200 && endgameStartEval <= -50) {
-            // User was slightly worse — did they hold?
-            slightlyWorse++;
-            if (drew || userWon) heldDraws++;
-          }
-        }
-      },
-    );
-
-    endgameMistakes.sort((a, b) => b.cpLoss - a.cpLoss);
-  } // end if (doEndgames)
-
-  // Compute endgame stats
-  const endgameStats: EndgameStats | null =
-    totalEndgameMoves > 0
-      ? (() => {
-          const byType: EndgameStats["byType"] = [];
-          let worstAvg = -1;
-          let weakestType: EndgameType | null = null;
-
-          for (const [type, data] of typeStats) {
-            const avg = data.count > 0 ? data.totalCpLoss / data.count : 0;
-            byType.push({
-              type,
-              count: data.count,
-              avgCpLoss: Math.round(avg),
-              mistakes: data.mistakes,
-            });
-            if (avg > worstAvg && data.count >= 3) {
-              worstAvg = avg;
-              weakestType = type;
-            }
-          }
-          byType.sort((a, b) => b.avgCpLoss - a.avgCpLoss);
-          // Filter out categories with only 1 position — too small a sample to rank reliably
-          const rankedByType = byType.filter((t) => t.count >= 2);
-
-          return {
-            totalPositions: totalEndgameMoves,
-            avgCpLoss: Math.round(totalEndgameCpLoss / totalEndgameMoves),
-            conversionRate:
-              wonEndgames >= 3
-                ? Math.round((convertedWins / wonEndgames) * 100)
-                : null,
-            holdRate:
-              slightlyWorse >= 3
-                ? Math.round((heldDraws / slightlyWorse) * 100)
-                : null,
-            byType: rankedByType,
-            weakestType,
-          };
-        })()
-      : null;
-
-  options?.onSectionReady?.("endgames", { endgameMistakes, endgameStats });
+      options?.onSectionReady?.("endgames", { endgameMistakes, endgameStats });
+    })(), // end endgames
+  ]); // end Promise.all — openings, tactics, endgames finished
 
   emitProgress(options, {
     phase: "done",
@@ -4074,8 +4118,8 @@ export async function analyzeOpeningLeaksInBrowser(
         });
       }
 
-      // Yield to browser every 5 games to prevent UI freeze
-      if (gameIndex > 0 && gameIndex % 5 === 0) {
+      // Yield to browser every 15 games to keep UI responsive with less sleep overhead
+      if (gameIndex > 0 && gameIndex % 15 === 0) {
         await new Promise<void>((r) => setTimeout(r, 0));
       }
 
@@ -4107,6 +4151,9 @@ export async function analyzeOpeningLeaksInBrowser(
       const allTokens = (game.moves ?? "").split(" ").filter(Boolean);
       const chess = new Chess();
       let userMoveIdx = 0; // index into userClocks
+      // Running sum for per-game average time-per-move (avoids O(n²) array rebuild)
+      let gameRunningSpentSec = 0;
+      let gameRunningMoveCount = 0;
 
       for (let ply = 0; ply < allTokens.length; ply++) {
         const sideToMove: PlayerColor = ply % 2 === 0 ? "white" : "black";
@@ -4132,22 +4179,33 @@ export async function analyzeOpeningLeaksInBrowser(
 
             totalSpentSec += spent;
             totalMoves++;
-
-            // Assess position complexity using lightweight heuristics:
+            // Use the running sum for per-game average (avoid O(n²) array rebuild)
+            const gameAvg =
+              gameRunningMoveCount > 0
+                ? gameRunningSpentSec / gameRunningMoveCount
+                : spent;
             // 1. Are there forcing moves (captures, checks)?
             // 2. Is this a known missed-tactic position?
             // 3. Move number (opening = low complexity for time)
             // 4. Piece count (endgame = potentially complex)
-            const legalMoves = chess.moves({ verbose: true });
-            const captures = legalMoves.filter((m) => m.captured);
-            const checks = legalMoves.filter(
-              (m) => m.san.includes("+") || m.san.includes("#"),
+            // Use non-verbose chess.moves() (string array) — much cheaper than
+            // verbose mode which allocates full move objects for every legal move.
+            const legalSans = chess.moves(); // SAN strings, e.g. ["e4", "Nf3", "Bxc4+"]
+            const captureCount = legalSans.reduce(
+              (n, s) => n + (s.includes("x") ? 1 : 0),
+              0,
             );
-            const hasForcingMoves = captures.length > 0 || checks.length > 0;
-            const boardPieces = chess.board().flat().filter(Boolean);
-            const pieceCount = boardPieces.length;
+            const checkCount = legalSans.reduce(
+              (n, s) => n + (s.includes("+") || s.includes("#") ? 1 : 0),
+              0,
+            );
+            const hasForcingMoves = captureCount > 0 || checkCount > 0;
+            // Count pieces from FEN piece-placement field — faster than chess.board()
+            const pieceCount = (
+              fenBefore.split(" ")[0].match(/[a-zA-Z]/g) ?? []
+            ).length;
             const isTactical =
-              hasForcingMoves && (captures.length >= 2 || checks.length >= 1);
+              hasForcingMoves && (captureCount >= 2 || checkCount >= 1);
             const isKnownTactic = tacticFenSet.has(fenBefore);
 
             // Complexity 0-100
@@ -4157,7 +4215,7 @@ export async function analyzeOpeningLeaksInBrowser(
             else if (fullMoveNumber <= 12) complexity = 25; // early middlegame
             if (isTactical) complexity += 25;
             if (isKnownTactic) complexity += 30;
-            if (legalMoves.length >= 30) complexity += 10; // many options
+            if (legalSans.length >= 30) complexity += 10; // many options
             if (pieceCount <= 8 && fullMoveNumber >= 25) complexity += 15; // endgame tech
 
             // King safety: open king (missing pawn shield) = natural to think longer
@@ -4197,7 +4255,7 @@ export async function analyzeOpeningLeaksInBrowser(
                   }
                 }
                 // Also check if opponent has pieces aimed at king area (checks available)
-                if (checks.length > 0) complexity += 10;
+                if (checkCount > 0) complexity += 10;
               }
             }
 
@@ -4210,17 +4268,10 @@ export async function analyzeOpeningLeaksInBrowser(
             const evalBefore = moveData?.evalBefore ?? null;
             const isKnownMistake = moveData != null;
 
-            // Compute average time per move so far for this game
-            const gameMoveTimesSoFar: number[] = [];
-            for (let j = 1; j <= userMoveIdx && j < userClocks.length; j++) {
-              gameMoveTimesSoFar.push(
-                Math.max(0, userClocks[j - 1] - userClocks[j]) / 100,
-              );
-            }
+            // Average time per move so far this game (using running sum — O(1))
             const gameAvg =
-              gameMoveTimesSoFar.length > 0
-                ? gameMoveTimesSoFar.reduce((s, v) => s + v, 0) /
-                  gameMoveTimesSoFar.length
+              gameRunningMoveCount > 0
+                ? gameRunningSpentSec / gameRunningMoveCount
                 : spent;
 
             // Determine verdict
@@ -4314,6 +4365,8 @@ export async function analyzeOpeningLeaksInBrowser(
                 });
             }
           }
+          gameRunningSpentSec += spent;
+          gameRunningMoveCount++;
           userMoveIdx++;
         }
 

@@ -12,6 +12,8 @@ interface CardCarouselProps {
    *  or below the carousel in carousel mode. */
   footer?: ReactNode;
   viewMode: CardViewMode;
+  /** Max items to show before the "Show all" button appears (list + grid only). */
+  defaultVisible?: number;
 }
 
 /* ── Grid modal ── */
@@ -78,16 +80,23 @@ export function CardCarousel({
   children,
   footer,
   viewMode,
+  defaultVisible = 6,
 }: CardCarouselProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [gridModalIndex, setGridModalIndex] = useState<number | null>(null);
+  const [visibleCount, setVisibleCount] = useState(defaultVisible);
   const total = children.length;
 
   /* ── Keep activeIndex in bounds when children change ── */
   useEffect(() => {
     if (activeIndex >= total) setActiveIndex(Math.max(0, total - 1));
   }, [total, activeIndex]);
+
+  /* ── Reset visible count when view mode changes ── */
+  useEffect(() => {
+    setVisibleCount(defaultVisible);
+  }, [viewMode, defaultVisible]);
 
   /* ── Virtualisation window: only mount cards within ±1 of active ── */
   const RENDER_WINDOW = 1; // cards on each side of the active card to render
@@ -139,10 +148,12 @@ export function CardCarousel({
 
   /* ── List mode: plain vertical stack (cap animation delay at 8 items) ── */
   if (viewMode === "list") {
+    const shown = children.slice(0, visibleCount);
+    const remaining = total - shown.length;
     return (
       <>
         <div className="space-y-6">
-          {children.map((child, idx) => (
+          {shown.map((child, idx) => (
             <div
               key={idx}
               className="animate-fade-in-up"
@@ -152,6 +163,18 @@ export function CardCarousel({
             </div>
           ))}
         </div>
+        {remaining > 0 && (
+          <button
+            type="button"
+            onClick={() => setVisibleCount((v) => v + defaultVisible)}
+            className="w-full rounded-xl border border-white/[0.07] bg-white/[0.03] py-3 text-sm font-semibold text-slate-400 transition-colors hover:border-white/[0.12] hover:bg-white/[0.05] hover:text-slate-200"
+          >
+            Show {Math.min(remaining, defaultVisible)} more
+            <span className="ml-1.5 text-slate-600">
+              ({remaining} remaining)
+            </span>
+          </button>
+        )}
         {footer}
       </>
     );
@@ -159,10 +182,12 @@ export function CardCarousel({
 
   /* ── Grid mode: compact cards with click-to-expand modal ── */
   if (viewMode === "grid") {
+    const shown = children.slice(0, visibleCount);
+    const remaining = total - shown.length;
     return (
       <>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {children.map((child, idx) => (
+          {shown.map((child, idx) => (
             <div
               key={idx}
               role="button"
@@ -247,6 +272,19 @@ export function CardCarousel({
             </div>
             {children[gridModalIndex]}
           </GridModal>
+        )}
+
+        {remaining > 0 && (
+          <button
+            type="button"
+            onClick={() => setVisibleCount((v) => v + defaultVisible)}
+            className="w-full rounded-xl border border-white/[0.07] bg-white/[0.03] py-3 text-sm font-semibold text-slate-400 transition-colors hover:border-white/[0.12] hover:bg-white/[0.05] hover:text-slate-200"
+          >
+            Show {Math.min(remaining, defaultVisible)} more
+            <span className="ml-1.5 text-slate-600">
+              ({remaining} remaining)
+            </span>
+          </button>
         )}
 
         {footer}

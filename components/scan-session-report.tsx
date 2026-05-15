@@ -698,15 +698,15 @@ function ReportFollowUpCta({
         />
         <FollowUpStatusRow
           label="Study plan"
-          detail="Weekly follow-up is being wired into this report flow."
-          status="Loading..."
-          tone="amber"
+          detail="A personalised weekly plan is generated from your scan results and waiting on your dashboard."
+          status="Ready"
+          tone="emerald"
         />
         <FollowUpStatusRow
           label="Daily follow-up"
-          detail="Short report-linked sessions will slot in here once the handoff is finished."
-          status={drillsReady ? "Loading..." : "Queued"}
-          tone={drillsReady ? "cyan" : "amber"}
+          detail="Your daily challenge is live. Short sessions tied to today's theme help reinforce what the scan found."
+          status="Ready"
+          tone="emerald"
         />
       </div>
 
@@ -728,13 +728,18 @@ function ReportFollowUpCta({
           </button>
         )}
 
-        <button
-          type="button"
-          disabled
-          className="inline-flex items-center justify-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-slate-300 opacity-70"
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center justify-center gap-2 rounded-full border border-violet-500/25 bg-violet-500/12 px-5 py-2.5 text-sm font-semibold text-violet-100 transition hover:border-violet-400/40 hover:bg-violet-500/18 hover:text-white"
         >
-          Study plan loading...
-        </button>
+          View Study Plan
+        </Link>
+        <Link
+          href="/daily"
+          className="inline-flex items-center justify-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/12 px-5 py-2.5 text-sm font-semibold text-cyan-100 transition hover:border-cyan-400/40 hover:bg-cyan-500/18 hover:text-white"
+        >
+          Daily Challenge
+        </Link>
       </div>
     </div>
   );
