@@ -1396,28 +1396,29 @@ export default function HomePage() {
         <section className="mx-auto w-full max-w-7xl space-y-12 sm:space-y-14 lg:space-y-16">
           {/* ─── Hero Section ─── */}
           <header className="animate-fade-in-up">
-            <div className="relative overflow-hidden rounded-[2rem] border border-white/[0.08] bg-slate-950/60 px-5 py-6 shadow-[0_32px_120px_-54px_rgba(2,6,23,0.95)] sm:px-8 sm:py-8 lg:px-10 lg:py-10">
-              <div
-                className="pointer-events-none absolute inset-0 opacity-95"
-                style={{
-                  background:
-                    "radial-gradient(circle at 16% 18%, rgba(125, 211, 252, 0.18), transparent 28%), radial-gradient(circle at 84% 76%, rgba(251, 191, 36, 0.14), transparent 30%), linear-gradient(135deg, rgba(6, 10, 24, 0.98) 0%, rgba(10, 23, 42, 0.96) 48%, rgba(18, 35, 58, 0.98) 100%)",
-                }}
-              />
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-100/30 to-transparent" />
+            <div
+              className="relative overflow-hidden rounded-[2.75rem] px-5 py-7 shadow-[0_40px_120px_-64px_rgba(20,8,5,0.95)] sm:px-8 sm:py-9 lg:px-10 lg:py-10"
+              style={{
+                background:
+                  "linear-gradient(145deg, rgba(10, 9, 13, 0.97) 0%, rgba(19, 13, 16, 0.96) 46%, rgba(56, 25, 12, 0.95) 100%)",
+              }}
+            >
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-200/35 to-transparent" />
+              <div className="pointer-events-none absolute left-[-8%] top-[-10%] h-48 w-48 rounded-full bg-orange-400/[0.08] blur-3xl" />
+              <div className="pointer-events-none absolute bottom-[-12%] right-[8%] h-44 w-44 rounded-full bg-red-500/[0.07] blur-3xl" />
 
-              <div className="relative grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-center lg:gap-12">
+              <div className="relative grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start lg:gap-10">
                 <div className="space-y-6 text-center lg:text-left">
                   <div className={`space-y-3 ${heroAnim(2)}`}>
-                    <span className="inline-flex rounded-full border border-sky-300/20 bg-sky-300/[0.08] px-3 py-1 font-mono text-[11px] uppercase tracking-[0.32em] text-sky-100/80">
+                    <span className="inline-flex rounded-full bg-orange-400/[0.07] px-3 py-1 font-mono text-[11px] uppercase tracking-[0.32em] text-orange-100/70">
                       Archive to board to plan
                     </span>
                     <div className="space-y-2">
                       <h1 className="text-5xl font-black leading-[0.96] tracking-[-0.05em] text-white md:text-6xl lg:text-[4.45rem]">
-                        Analyze less noise.
+                        Analyze more.
                       </h1>
-                      <h1 className="bg-gradient-to-r from-sky-200 via-cyan-200 to-amber-200 bg-clip-text text-5xl font-black italic leading-[0.96] tracking-[-0.05em] text-transparent md:text-6xl lg:text-[4.45rem]">
-                        Keep the useful positions.
+                      <h1 className="bg-gradient-to-r from-amber-200 via-orange-300 to-red-400 bg-clip-text text-5xl font-black italic leading-[0.96] tracking-[-0.05em] text-transparent md:text-6xl lg:text-[4.45rem]">
+                        Improve faster.
                       </h1>
                     </div>
                   </div>
@@ -1430,251 +1431,348 @@ export default function HomePage() {
                     review, share, and drill.
                   </p>
 
-                  <div
-                    className={`grid gap-2 text-left sm:grid-cols-2 xl:grid-cols-4 ${heroAnim(4)}`}
-                  >
-                    {[
-                      { label: "Openings", value: "Recurring leak map" },
-                      { label: "Tactics", value: "Forcing moments first" },
-                      { label: "Endgames", value: "Technique check" },
-                      { label: "Time", value: "Clock habits exposed" },
-                    ].map((item) => (
-                      <div
-                        key={item.label}
-                        className="rounded-2xl border border-white/[0.08] bg-slate-950/30 px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"
+                  <div className={`space-y-4 ${heroAnim(4)}`}>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center lg:justify-start">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          document.getElementById("analyzer")?.scrollIntoView({
+                            behavior: "smooth",
+                            block: "start",
+                          })
+                        }
+                        className="inline-flex h-12 items-center justify-center rounded-xl px-6 text-base font-semibold text-white shadow-[0_22px_56px_-24px_rgba(249,115,22,0.62)] transition-transform duration-200 hover:-translate-y-0.5"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, rgba(251, 191, 36, 0.98) 0%, rgba(249, 115, 22, 0.96) 54%, rgba(220, 38, 38, 0.92) 100%)",
+                        }}
                       >
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-slate-500">
-                          {item.label}
-                        </p>
-                        <p className="mt-1.5 text-sm font-semibold text-white">
-                          {item.value}
-                        </p>
-                      </div>
-                    ))}
+                        Analyze Your Games
+                      </button>
+                      <Link
+                        href="/community"
+                        className="inline-flex h-12 items-center justify-center rounded-xl bg-white/[0.05] px-6 text-base font-semibold text-slate-100 transition-colors duration-200 hover:bg-orange-400/[0.08] hover:text-white"
+                      >
+                        Browse Study Boards
+                      </Link>
+                    </div>
                   </div>
-
-                  <form
-                    id="analyzer"
-                    onSubmit={onSubmit}
-                    className={`relative overflow-hidden rounded-[1.75rem] border border-white/[0.08] bg-slate-950/50 p-4 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.98)] sm:p-5 ${heroAnim(5)}`}
-                  >
-                    <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent_38%)]" />
-
-                    <div className="relative flex flex-col gap-1">
-                      <div>
-                        <p className="font-mono text-[11px] uppercase tracking-[0.3em] text-amber-100/80">
-                          Quick Scan
-                        </p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          Lichess or Chess.com
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="relative mt-5 flex flex-col gap-3">
-                      <div
-                        className={`flex flex-1 items-center overflow-hidden rounded-xl border bg-white/[0.04] transition-colors duration-200 focus-within:border-sky-400/35 ${
-                          !source
-                            ? "border-sky-400/30 ring-1 ring-sky-400/15"
-                            : "border-white/[0.08]"
-                        }`}
-                      >
-                        <div className="flex shrink-0 items-center gap-0.5 px-1.5 py-1.5">
-                          <button
-                            type="button"
-                            onClick={() => setSource("lichess")}
-                            className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
-                              source === "lichess"
-                                ? "bg-gradient-to-r from-sky-200 to-cyan-300 text-slate-950 shadow-[0_14px_30px_-18px_rgba(125,211,252,0.75)]"
-                                : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
-                            }`}
-                          >
-                            Lichess
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setSource("chesscom")}
-                            className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
-                              source === "chesscom"
-                                ? "bg-gradient-to-r from-sky-200 to-cyan-300 text-slate-950 shadow-[0_14px_30px_-18px_rgba(125,211,252,0.75)]"
-                                : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
-                            }`}
-                          >
-                            Chess.com
-                          </button>
-                        </div>
-                        <div className="h-5 w-px shrink-0 bg-white/[0.10]" />
-                        <input
-                          type="text"
-                          value={username}
-                          onChange={(e) => setUsername(e.target.value)}
-                          placeholder={
-                            source === "chesscom"
-                              ? "Your Chess.com username"
-                              : source === "lichess"
-                                ? "Your Lichess username"
-                                : "Pick a platform, then enter username"
-                          }
-                          aria-label="Chess username"
-                          className="flex-1 bg-transparent py-3 pl-3 pr-4 text-sm text-white outline-none placeholder:text-slate-500"
-                        />
-                      </div>
-
-                      <div className="rounded-[1.35rem] border border-sky-300/12 bg-sky-300/[0.04] px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-100/75">
-                            Full Scan
-                          </p>
-                          <span className="rounded-full border border-amber-300/15 bg-amber-300/[0.08] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-amber-100/75">
-                            openings tactics endgames time
-                          </span>
-                        </div>
-                        <p className="mt-1.5 text-sm leading-relaxed text-slate-300/80">
-                          One report across{" "}
-                          <span className="text-white">openings</span>,{" "}
-                          <span className="text-white">tactics</span>,{" "}
-                          <span className="text-white">endgames</span>, and{" "}
-                          <span className="text-white">time</span>.
-                        </p>
-                      </div>
-
-                      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-                        <button
-                          type="submit"
-                          disabled={
-                            state === "loading" ||
-                            isLaunchingScan ||
-                            freeLimitsExceeded
-                          }
-                          className="btn-primary flex flex-1 items-center justify-center gap-2 text-slate-950 shadow-[0_20px_50px_-26px_rgba(56,189,248,0.65)]"
-                          style={{
-                            background:
-                              "linear-gradient(135deg, rgba(186, 230, 253, 0.98) 0%, rgba(103, 232, 249, 0.96) 52%, rgba(251, 191, 36, 0.92) 100%)",
-                          }}
-                        >
-                          {state === "loading" || isLaunchingScan ? (
-                            <>
-                              <svg
-                                className="h-4 w-4 animate-spin"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                              >
-                                <circle
-                                  className="opacity-25"
-                                  cx="12"
-                                  cy="12"
-                                  r="10"
-                                  stroke="currentColor"
-                                  strokeWidth="4"
-                                />
-                                <path
-                                  className="opacity-75"
-                                  fill="currentColor"
-                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                                />
-                              </svg>
-                              {isLaunchingScan
-                                ? "Opening report..."
-                                : "Scanning..."}
-                            </>
-                          ) : freeLimitsExceeded ? (
-                            "Upgrade for Pro limits"
-                          ) : (
-                            <>
-                              Scan Full Report
-                              <svg
-                                className="h-4 w-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                strokeWidth={2.5}
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M13 7l5 5m0 0l-5 5m5-5H6"
-                                />
-                              </svg>
-                            </>
-                          )}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setAdvancedSettingsOpen(true)}
-                          className="inline-flex items-center justify-center gap-2 text-sm font-medium text-amber-100/70 transition-colors hover:text-amber-50 sm:justify-end"
-                        >
-                          Advanced settings
-                          <svg
-                            className="h-4 w-4"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth={2}
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M12 5v14m0 0l6-6m-6 6l-6-6"
-                            />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  </form>
                 </div>
 
                 <div
                   className={`relative mx-auto w-full max-w-[38rem] lg:max-w-none ${heroAnim(5)}`}
                 >
-                  <div className="rounded-[1.75rem] border border-white/[0.08] bg-slate-950/35 p-4 shadow-[0_28px_80px_-46px_rgba(15,23,42,0.98)] sm:p-5">
-                    <div className="flex flex-wrap items-center justify-between gap-3 px-1">
-                      <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-amber-100/75">
-                        Live report preview
-                      </p>
-                      <span className="inline-flex rounded-full border border-white/[0.10] bg-white/[0.04] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-300">
-                        streaming sections
+                  <div className="pointer-events-none absolute -inset-10 rounded-full bg-orange-500/[0.06] blur-3xl" />
+                  <div className="relative overflow-hidden rounded-[2rem] bg-black/55 p-1 shadow-[0_0_80px_-16px_rgba(249,115,22,0.22),0_48px_120px_-52px_rgba(0,0,0,0.95)] ring-1 ring-white/[0.04]">
+                    <HeroProductScreenshot paused={state !== "idle"} />
+                    <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 backdrop-blur-sm">
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-green-400" />
                       </span>
-                    </div>
-
-                    <div className="relative mt-4 overflow-hidden rounded-[1.5rem] border border-white/[0.06] bg-slate-950/70 p-2 sm:p-3">
-                      <HeroProductScreenshot paused={state !== "idle"} />
-                    </div>
-
-                    <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                      {[
-                        "Clean report route",
-                        "Board-first review",
-                        "Shareable positions",
-                      ].map((item) => (
-                        <div
-                          key={item}
-                          className="rounded-2xl border border-white/[0.06] bg-white/[0.04] px-3 py-2 text-center text-xs font-medium text-slate-300"
-                        >
-                          {item}
-                        </div>
-                      ))}
+                      <span className="text-[10px] font-medium text-white/60">
+                        Live
+                      </span>
                     </div>
                   </div>
                 </div>
               </div>
+
+              <div
+                className={`relative mt-8 grid gap-5 pt-6 sm:grid-cols-3 ${heroAnim(6)}`}
+              >
+                {[
+                  {
+                    title: "Mass Analysis",
+                    description:
+                      "Scan your recent archive in one pass instead of checking games by hand.",
+                  },
+                  {
+                    title: "Deep Insights",
+                    description:
+                      "Surface the missed tactics, opening leaks, and endgame slips worth fixing.",
+                  },
+                  {
+                    title: "Track Progress",
+                    description:
+                      "Keep report pages, shared boards, and saved scans tied to one workflow.",
+                  },
+                ].map((item) => (
+                  <div key={item.title} className="px-1 py-1">
+                    <p className="text-sm font-semibold text-white/90">
+                      {item.title}
+                    </p>
+                    <p className="mt-1.5 text-sm leading-relaxed text-slate-400">
+                      {item.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
             </div>
           </header>
+
+          <section
+            id="analyzer"
+            className="animate-fade-in-up grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.95fr)]"
+          >
+            <form
+              onSubmit={onSubmit}
+              className="relative overflow-hidden rounded-[1.9rem] px-5 py-5 shadow-[0_28px_90px_-52px_rgba(37,12,7,0.98)] sm:px-6 sm:py-6"
+              style={{
+                background:
+                  "linear-gradient(160deg, rgba(11, 9, 12, 0.97) 0%, rgba(18, 12, 15, 0.96) 58%, rgba(41, 21, 13, 0.94) 100%)",
+              }}
+            >
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-200/35 to-transparent" />
+
+              <div className="relative flex flex-col gap-1">
+                <h2 className="text-xl font-bold text-white">
+                  Scan your recent games
+                </h2>
+                <p className="max-w-xl text-sm leading-relaxed text-slate-400">
+                  Pick a platform, enter your username, and get a full report in
+                  seconds.
+                </p>
+              </div>
+
+              <div className="relative mt-6 flex flex-col gap-4">
+                <div
+                  className={`flex flex-1 items-center overflow-hidden rounded-2xl border bg-white/[0.04] transition-colors duration-200 focus-within:border-orange-400/35 ${
+                    !source
+                      ? "border-orange-400/30 ring-1 ring-orange-400/15"
+                      : "border-orange-500/10"
+                  }`}
+                >
+                  <div className="flex shrink-0 items-center gap-0.5 px-2 py-2">
+                    <button
+                      type="button"
+                      onClick={() => setSource("lichess")}
+                      className={`rounded-xl px-3 py-2 text-sm font-semibold transition-all duration-200 ${
+                        source === "lichess"
+                          ? "bg-gradient-to-r from-amber-200 to-orange-300 text-slate-950 shadow-[0_14px_30px_-18px_rgba(251,146,60,0.78)]"
+                          : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
+                      }`}
+                    >
+                      Lichess
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSource("chesscom")}
+                      className={`rounded-xl px-3 py-2 text-sm font-semibold transition-all duration-200 ${
+                        source === "chesscom"
+                          ? "bg-gradient-to-r from-amber-200 to-orange-300 text-slate-950 shadow-[0_14px_30px_-18px_rgba(251,146,60,0.78)]"
+                          : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
+                      }`}
+                    >
+                      Chess.com
+                    </button>
+                  </div>
+                  <div className="h-6 w-px shrink-0 bg-white/[0.10]" />
+                  <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder={
+                      source === "chesscom"
+                        ? "Your Chess.com username"
+                        : source === "lichess"
+                          ? "Your Lichess username"
+                          : "Pick a platform, then enter username"
+                    }
+                    aria-label="Chess username"
+                    className="flex-1 bg-transparent py-4 pl-4 pr-4 text-base text-white outline-none placeholder:text-slate-500"
+                  />
+                </div>
+
+                <div
+                  className="rounded-[1.45rem] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+                  style={{
+                    background:
+                      "linear-gradient(140deg, rgba(78, 34, 15, 0.22) 0%, rgba(37, 20, 16, 0.7) 58%, rgba(18, 12, 16, 0.92) 100%)",
+                  }}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-orange-100/80">
+                      Full Scan
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {["openings", "tactics", "endgames", "time"].map(
+                        (item) => (
+                          <span
+                            key={item}
+                            className="rounded-full bg-orange-300/[0.08] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-orange-100/80"
+                          >
+                            {item}
+                          </span>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-300/80">
+                    One report across{" "}
+                    <span className="text-white">openings</span>,{" "}
+                    <span className="text-white">tactics</span>,{" "}
+                    <span className="text-white">endgames</span>, and{" "}
+                    <span className="text-white">time</span>.
+                  </p>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                  <button
+                    type="submit"
+                    disabled={
+                      state === "loading" ||
+                      isLaunchingScan ||
+                      freeLimitsExceeded
+                    }
+                    className="btn-primary flex flex-1 items-center justify-center gap-2 text-white shadow-[0_22px_56px_-24px_rgba(249,115,22,0.62)]"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, rgba(251, 191, 36, 0.98) 0%, rgba(249, 115, 22, 0.96) 54%, rgba(220, 38, 38, 0.92) 100%)",
+                    }}
+                  >
+                    {state === "loading" || isLaunchingScan ? (
+                      <>
+                        <svg
+                          className="h-4 w-4 animate-spin"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                          />
+                        </svg>
+                        {isLaunchingScan ? "Opening report..." : "Scanning..."}
+                      </>
+                    ) : freeLimitsExceeded ? (
+                      "Upgrade for Pro limits"
+                    ) : (
+                      <>
+                        Analyze Your Games
+                        <svg
+                          className="h-4 w-4"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={2.5}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M13 7l5 5m0 0l-5 5m5-5H6"
+                          />
+                        </svg>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAdvancedSettingsOpen(true)}
+                    className="inline-flex items-center justify-center gap-2 text-sm font-medium text-orange-100/70 transition-colors hover:text-orange-50 sm:justify-end"
+                  >
+                    Advanced settings
+                    <svg
+                      className="h-3.5 w-3.5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={1.75}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.107-1.204l-.527-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z"
+                      />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            <div>
+              <div
+                className="rounded-[1.9rem] px-5 py-5 shadow-[0_28px_90px_-52px_rgba(37,12,7,0.98)]"
+                style={{
+                  background:
+                    "linear-gradient(160deg, rgba(11, 9, 12, 0.97) 0%, rgba(18, 12, 15, 0.96) 58%, rgba(41, 21, 13, 0.94) 100%)",
+                }}
+              >
+                <h3 className="text-base font-semibold uppercase tracking-[0.18em] text-orange-100/60">
+                  What you get
+                </h3>
+                <div className="mt-5 space-y-4">
+                  {[
+                    [
+                      "Missed tactics",
+                      "Short, forcing positions bubble to the top first.",
+                      "tactics",
+                    ],
+                    [
+                      "Opening leaks",
+                      "Repeated positions get grouped into clearer priorities.",
+                      "openings",
+                    ],
+                    [
+                      "Canonical report",
+                      "Each full scan opens on its own dedicated report page.",
+                      "report",
+                    ],
+                  ].map(([title, text, kind]) => (
+                    <div
+                      key={title}
+                      className="flex gap-3 border-b border-white/[0.05] pb-4 last:border-none last:pb-0"
+                    >
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-400/[0.12] text-[11px]">
+                        {kind === "tactics"
+                          ? "⚡"
+                          : kind === "openings"
+                            ? "♟"
+                            : "📋"}
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-white">
+                          {title}
+                        </p>
+                        <p className="mt-1 text-sm leading-relaxed text-slate-400">
+                          {text}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
 
           {/* ─── Community Loop ─── */}
           {state === "idle" && (
             <section className="relative">
-              <div className="relative overflow-hidden rounded-[2rem] border border-white/[0.08] bg-slate-950/55 px-5 py-6 shadow-[0_30px_100px_-56px_rgba(15,23,42,0.98)] sm:px-6 sm:py-7 lg:px-8">
-                <div
-                  className="pointer-events-none absolute inset-0 opacity-90"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, rgba(7, 12, 27, 0.98) 0%, rgba(9, 19, 37, 0.96) 52%, rgba(21, 32, 47, 0.98) 100%), radial-gradient(circle at 14% 20%, rgba(56, 189, 248, 0.10), transparent 24%), radial-gradient(circle at 82% 26%, rgba(251, 191, 36, 0.08), transparent 22%)",
-                  }}
-                />
+              <div
+                className="relative overflow-hidden rounded-[2rem] px-5 py-6 shadow-[0_30px_100px_-56px_rgba(37,12,7,0.98)] sm:px-6 sm:py-7 lg:px-8"
+                style={{
+                  background:
+                    "linear-gradient(150deg, rgba(11, 9, 12, 0.97) 0%, rgba(17, 12, 15, 0.96) 54%, rgba(46, 24, 14, 0.94) 100%)",
+                }}
+              >
                 <div className="relative space-y-7">
                   <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div className="max-w-3xl">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-amber-100/75">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-orange-100/80">
                         Community loop
                       </p>
 
@@ -1699,7 +1797,7 @@ export default function HomePage() {
                       </p>
                       <Link
                         href="/community"
-                        className="inline-flex items-center gap-2 rounded-full border border-sky-300/20 bg-sky-300/[0.08] px-4 py-2 text-sm font-semibold text-sky-100 transition-colors hover:border-sky-200/35 hover:bg-sky-300/[0.14] hover:text-white"
+                        className="inline-flex items-center gap-2 rounded-full border border-orange-400/20 bg-orange-400/[0.08] px-4 py-2 text-sm font-semibold text-orange-100 transition-colors hover:border-orange-300/35 hover:bg-orange-400/[0.14] hover:text-white"
                       >
                         View full feed
                         <svg
@@ -1733,7 +1831,7 @@ export default function HomePage() {
                           description:
                             "Paste a FEN or PGN, trim the exact moment, and publish it without rebuilding the position by hand.",
                           accent:
-                            "border-sky-400/20 bg-sky-400/[0.07] text-sky-200 hover:border-sky-300/40",
+                            "border-amber-400/20 bg-amber-400/[0.07] text-amber-200 hover:border-amber-300/40",
                         },
                         {
                           href: "/community",
@@ -1742,7 +1840,7 @@ export default function HomePage() {
                           description:
                             "Browse live positions, opening debates, and study posts grounded in real boards rather than generic chat.",
                           accent:
-                            "border-amber-400/20 bg-amber-400/[0.07] text-amber-200 hover:border-amber-300/40",
+                            "border-orange-400/20 bg-orange-400/[0.07] text-orange-200 hover:border-orange-300/40",
                         },
                         {
                           href:
@@ -1757,7 +1855,7 @@ export default function HomePage() {
                             ? "Your saved boards and posts become a reviewable study surface instead of a forgotten report archive."
                             : "Profiles collect positions, lessons, and lines into a shareable review deck.",
                           accent:
-                            "border-emerald-400/20 bg-emerald-400/[0.07] text-emerald-200 hover:border-emerald-300/40",
+                            "border-red-400/20 bg-red-400/[0.07] text-red-200 hover:border-red-300/40",
                         },
                       ].map((item, index) => (
                         <Link
@@ -1772,10 +1870,10 @@ export default function HomePage() {
                           </div>
 
                           <div className="min-w-0">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-sky-100/40">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-100/40">
                               0{index + 1}
                             </p>
-                            <h3 className="mt-1 text-base font-semibold text-white transition-colors group-hover:text-sky-100">
+                            <h3 className="mt-1 text-base font-semibold text-white transition-colors group-hover:text-orange-100">
                               {item.title}
                             </h3>
                             <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-400">
@@ -1804,7 +1902,7 @@ export default function HomePage() {
                     </div>
 
                     <div className="space-y-4 lg:pl-6">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-amber-100/65">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-100/70">
                         Study Flow
                       </p>
 

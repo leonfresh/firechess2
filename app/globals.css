@@ -37,54 +37,17 @@
 
 body {
   @apply text-stone-100 antialiased;
-  /* Gradients baked directly into body — no fixed compositing layer needed */
-  background-color: var(--bg-primary);
-  background-image:
-    linear-gradient(
-      180deg,
-      rgba(4, 7, 18, 0.96) 0%,
-      rgba(6, 10, 24, 0.9) 22%,
-      rgba(10, 12, 30, 0.96) 100%
-    ),
-    radial-gradient(
-      ellipse 96% 72% at 50% 118%,
-      rgba(56, 189, 248, 0.22),
-      transparent
-    ),
-    radial-gradient(
-      ellipse 62% 42% at 12% 16%,
-      rgba(125, 211, 252, 0.14),
-      transparent
-    ),
-    radial-gradient(
-      ellipse 58% 42% at 88% 14%,
-      rgba(168, 85, 247, 0.18),
-      transparent
-    ),
-    radial-gradient(
-      ellipse 52% 34% at 82% 74%,
-      rgba(244, 114, 182, 0.11),
-      transparent
-    ),
-    radial-gradient(
-      ellipse 48% 34% at 16% 82%,
-      rgba(59, 130, 246, 0.1),
-      transparent
-    ),
-    radial-gradient(
-      ellipse 42% 26% at 48% 10%,
-      rgba(244, 114, 182, 0.08),
-      transparent
-    );
+  /* Keep the page on one stable background layer to avoid hero seams/tiling artifacts. */
+  background-color: #08070b;
+  background-image: linear-gradient(
+    180deg,
+    rgba(8, 9, 14, 0.99) 0%,
+    rgba(11, 14, 22, 0.99) 24%,
+    rgba(17, 14, 19, 0.985) 58%,
+    rgba(34, 17, 10, 0.985) 100%
+  );
   background-repeat: no-repeat;
-  background-size:
-    100% 100%,
-    160% 115%,
-    110% 82%,
-    110% 84%,
-    100% 92%,
-    96% 92%,
-    92% 76%;
+  background-size: 100% 100%;
   overflow-x: hidden;
 }
 
