@@ -60,7 +60,7 @@ const POSITIONAL_MOTIF_NAMES = new Set([
 
 const STILL_WINNING_THRESHOLD = 350;
 const FREE_SCAN_SECTION_SAMPLE = 9;
-const COMPACT_REPORT_INITIAL_COUNT = 3;
+const COMPACT_REPORT_INITIAL_COUNT = 6;
 const COMPACT_REPORT_SECOND_STEP = 9;
 
 type TaggedPosition = {
@@ -1801,12 +1801,16 @@ export function ScanSessionReport({
   reportMeta,
   hasProAccess = false,
   scanProgress = null,
+  perPhaseProgress,
   onCreateCommunityPost,
 }: {
   scan: PublicScanSessionPayload;
   reportMeta: ComputedScanReport | null;
   hasProAccess?: boolean;
   scanProgress?: AnalysisProgress | null;
+  perPhaseProgress?: Partial<
+    Record<AnalysisProgress["phase"], AnalysisProgress>
+  >;
   onCreateCommunityPost?: (seed: CommunityPostComposerSeed) => void;
 }) {
   const result = scan.result;
@@ -1964,7 +1968,7 @@ export function ScanSessionReport({
   };
   const currentPhaseRank = scanProgress ? phaseOrder[scanProgress.phase] : -1;
   const hasReachedPhase = (phase: AnalysisProgress["phase"]) =>
-    currentPhaseRank >= phaseOrder[phase];
+    currentPhaseRank >= phaseOrder[phase] || Boolean(perPhaseProgress?.[phase]);
   const hasPassedPhase = (phase: AnalysisProgress["phase"]) =>
     currentPhaseRank > phaseOrder[phase];
   const scanGameTotal = Math.max(
@@ -1978,108 +1982,129 @@ export function ScanSessionReport({
     leaks.length === 0 &&
     oneOffMistakes.length === 0 &&
     openingSummaries.length === 0 &&
-    (scanProgress?.phase === "parse" ||
-    scanProgress?.phase === "aggregate" ||
-    scanProgress?.phase === "eval"
-      ? {
-          message: scanProgress.message,
+    (() => {
+      const p =
+        perPhaseProgress?.["eval"] ??
+        perPhaseProgress?.["aggregate"] ??
+        perPhaseProgress?.["parse"] ??
+        (scanProgress?.phase === "parse" ||
+        scanProgress?.phase === "aggregate" ||
+        scanProgress?.phase === "eval"
+          ? scanProgress
+          : null);
+      if (p)
+        return {
+          message: p.message,
           detail:
-            scanProgress.detail ??
+            p.detail ??
             "Walking your archive and scoring recurring opening positions.",
-          current: scanProgress.current,
-          total: scanProgress.total,
-          percent: scanProgress.percent,
+          current: p.current,
+          total: p.total,
+          percent: p.percent,
           countLabel:
-            scanProgress.phase === "eval" || scanProgress.phase === "aggregate"
+            p.phase === "eval" || p.phase === "aggregate"
               ? "positions"
               : "games",
-        }
-      : !hasReachedPhase("parse")
-        ? {
-            message: "Opening pass is queued",
-            detail: "Starts as soon as the archive fetch finishes.",
-            current: 0,
-            total: scanGameTotal,
-            percent: 0,
-            countLabel: "games",
-          }
-        : null);
+        };
+      if (!hasReachedPhase("parse"))
+        return {
+          message: "Opening pass is queued",
+          detail: "Starts as soon as the archive fetch finishes.",
+          current: 0,
+          total: scanGameTotal,
+          percent: 0,
+          countLabel: "games",
+        };
+      return null;
+    })();
 
   const tacticsSectionProgress =
     isProcessing &&
     missedTactics.length === 0 &&
-    (scanProgress?.phase === "tactics"
-      ? {
-          message: scanProgress.message,
-          detail:
-            scanProgress.detail ??
-            "Scanning the archive for missed forcing lines.",
-          current: scanProgress.current ?? 0,
-          total: scanProgress.total ?? scanGameTotal,
-          percent: scanProgress.percent,
+    (() => {
+      const p =
+        perPhaseProgress?.["tactics"] ??
+        (scanProgress?.phase === "tactics" ? scanProgress : null);
+      if (p)
+        return {
+          message: p.message,
+          detail: p.detail ?? "Scanning the archive for missed forcing lines.",
+          current: p.current ?? 0,
+          total: p.total ?? scanGameTotal,
+          percent: p.percent,
           countLabel: "games",
-        }
-      : !hasReachedPhase("tactics")
-        ? {
-            message: "Tactics queue is ready",
-            detail: "Starts automatically after the opening pass finishes.",
-            current: 0,
-            total: scanGameTotal,
-            percent: 0,
-            countLabel: "games",
-          }
-        : null);
+        };
+      if (!hasReachedPhase("tactics"))
+        return {
+          message: "Tactics queue is ready",
+          detail: "Starts automatically after the opening pass finishes.",
+          current: 0,
+          total: scanGameTotal,
+          percent: 0,
+          countLabel: "games",
+        };
+      return null;
+    })();
 
   const endgamesSectionProgress =
     isProcessing &&
     endgameMistakes.length === 0 &&
     !endgameStats &&
-    (scanProgress?.phase === "endgames"
-      ? {
-          message: scanProgress.message,
+    (() => {
+      const p =
+        perPhaseProgress?.["endgames"] ??
+        (scanProgress?.phase === "endgames" ? scanProgress : null);
+      if (p)
+        return {
+          message: p.message,
           detail:
-            scanProgress.detail ??
+            p.detail ??
             "Checking conversion and defense errors across your archive.",
-          current: scanProgress.current ?? 0,
-          total: scanProgress.total ?? scanGameTotal,
-          percent: scanProgress.percent,
+          current: p.current ?? 0,
+          total: p.total ?? scanGameTotal,
+          percent: p.percent,
           countLabel: "games",
-        }
-      : !hasReachedPhase("endgames")
-        ? {
-            message: "Endgame pass is queued",
-            detail: "Starts after tactics finishes.",
-            current: 0,
-            total: scanGameTotal,
-            percent: 0,
-            countLabel: "games",
-          }
-        : null);
+        };
+      if (!hasReachedPhase("endgames"))
+        return {
+          message: "Endgame pass is queued",
+          detail: "Starts after tactics finishes.",
+          current: 0,
+          total: scanGameTotal,
+          percent: 0,
+          countLabel: "games",
+        };
+      return null;
+    })();
 
   const timeSectionProgress =
     isProcessing &&
     !timeManagement &&
-    (scanProgress?.phase === "time"
-      ? {
-          message: scanProgress.message,
+    (() => {
+      const p =
+        perPhaseProgress?.["time"] ??
+        (scanProgress?.phase === "time" ? scanProgress : null);
+      if (p)
+        return {
+          message: p.message,
           detail:
-            scanProgress.detail ??
-            "Checking clocks, scrambles, and rushed decisions.",
-          current: scanProgress.current ?? 0,
-          total: scanProgress.total ?? scanGameTotal,
-          percent: scanProgress.percent,
+            p.detail ?? "Checking clocks, scrambles, and rushed decisions.",
+          current: p.current ?? 0,
+          total: p.total ?? scanGameTotal,
+          percent: p.percent,
           countLabel: "games",
-        }
-      : !hasReachedPhase("time")
-        ? {
-            message: "Time-management pass is queued",
-            detail: "Starts after the endgame pass completes.",
-            current: 0,
-            total: scanGameTotal,
-            percent: 0,
-            countLabel: "games",
-          }
-        : null);
+        };
+      if (!hasReachedPhase("time"))
+        return {
+          message: "Time-management pass is queued",
+          detail: "Starts after the endgame pass completes.",
+          current: 0,
+          total: scanGameTotal,
+          percent: 0,
+          countLabel: "games",
+        };
+      return null;
+    })();
 
   return (
     <div className="mt-6 space-y-6">

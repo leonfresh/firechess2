@@ -126,6 +126,9 @@ export function ScanSessionPage({
     message: "Preparing scan",
     percent: 0,
   });
+  const [perPhaseProgress, setPerPhaseProgress] = useState<
+    Partial<Record<AnalysisProgress["phase"], AnalysisProgress>>
+  >({});
   const [showExpiryPopup, setShowExpiryPopup] = useState(false);
   const analysisStartedRef = useRef(false);
 
@@ -264,7 +267,16 @@ export function ScanSessionPage({
             maxEndgames: scan.config.maxEndgames ?? Infinity,
             since: scan.config.since ?? undefined,
             onProgress: (nextProgress) => {
-              setProgress(nextProgress);
+              // Monotonic global percent so the top bar never goes backward
+              setProgress((prev) => ({
+                ...nextProgress,
+                percent: Math.max(prev.percent, nextProgress.percent),
+              }));
+              // Per-phase tracking so each section bar is stable
+              setPerPhaseProgress((prev) => ({
+                ...prev,
+                [nextProgress.phase]: nextProgress,
+              }));
             },
             onSectionReady: (_, partial) => {
               setScan((current) => ({
@@ -537,6 +549,7 @@ export function ScanSessionPage({
       }
 
       analysisStartedRef.current = false;
+      setPerPhaseProgress({});
       setProgress({
         phase: "fetch",
         message: "Preparing scan",
@@ -787,6 +800,7 @@ export function ScanSessionPage({
             reportMeta={liveReportMeta}
             hasProAccess={hasProAccess}
             scanProgress={progress}
+            perPhaseProgress={perPhaseProgress}
             onCreateCommunityPost={openComposer}
           />
         ) : null}
