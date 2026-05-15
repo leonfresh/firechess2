@@ -4179,11 +4179,6 @@ export async function analyzeOpeningLeaksInBrowser(
 
             totalSpentSec += spent;
             totalMoves++;
-            // Use the running sum for per-game average (avoid O(n²) array rebuild)
-            const gameAvg =
-              gameRunningMoveCount > 0
-                ? gameRunningSpentSec / gameRunningMoveCount
-                : spent;
             // 1. Are there forcing moves (captures, checks)?
             // 2. Is this a known missed-tactic position?
             // 3. Move number (opening = low complexity for time)
@@ -4295,7 +4290,7 @@ export async function analyzeOpeningLeaksInBrowser(
               if (isKnownTactic) {
                 reason = `Only ${spent.toFixed(1)}s on a critical tactical moment (you missed a tactic here${cpLoss ? ` losing ${(cpLoss / 100).toFixed(1)} pawns` : ""}). This position deserved deep calculation.`;
               } else {
-                reason = `Only ${spent.toFixed(1)}s on a complex position with ${legalMoves.length} legal moves and forcing options. Slowing down here could have found better moves.`;
+                reason = `Only ${spent.toFixed(1)}s on a complex position with ${legalSans.length} legal moves and forcing options. Slowing down here could have found better moves.`;
               }
             }
             // JUSTIFIED: spent significant time and got it right (no cpLoss or low cpLoss) on complex position
@@ -4364,9 +4359,9 @@ export async function analyzeOpeningLeaksInBrowser(
                   bestMove: bestMove ?? userMoveUci,
                 });
             }
+            gameRunningSpentSec += spent;
+            gameRunningMoveCount++;
           }
-          gameRunningSpentSec += spent;
-          gameRunningMoveCount++;
           userMoveIdx++;
         }
 
