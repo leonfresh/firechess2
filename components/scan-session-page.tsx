@@ -129,6 +129,7 @@ export function ScanSessionPage({
   const [perPhaseProgress, setPerPhaseProgress] = useState<
     Partial<Record<AnalysisProgress["phase"], AnalysisProgress>>
   >({});
+  const [sectionsReady, setSectionsReady] = useState<Set<string>>(new Set());
   const [showExpiryPopup, setShowExpiryPopup] = useState(false);
   const analysisStartedRef = useRef(false);
 
@@ -278,7 +279,8 @@ export function ScanSessionPage({
                 [nextProgress.phase]: nextProgress,
               }));
             },
-            onSectionReady: (_, partial) => {
+            onSectionReady: (section, partial) => {
+              setSectionsReady((prev) => new Set([...prev, section]));
               setScan((current) => ({
                 ...current,
                 result: buildPartialResult(
@@ -550,6 +552,7 @@ export function ScanSessionPage({
 
       analysisStartedRef.current = false;
       setPerPhaseProgress({});
+      setSectionsReady(new Set());
       setProgress({
         phase: "fetch",
         message: "Preparing scan",
@@ -733,55 +736,134 @@ export function ScanSessionPage({
 
         {scan.status === "processing" ? (
           <section className="mt-6 rounded-[1.75rem] border border-white/[0.08] bg-white/[0.03] p-6 sm:p-7">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            {/* Header */}
+            <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-semibold text-white">
                   {progress.message}
                 </p>
-                <p className="mt-1 text-sm text-slate-400">
-                  {progress.detail ??
-                    "Crunching your games into a shareable report page."}{" "}
-                  Sections below unlock as soon as they finish.
+                <p className="mt-0.5 text-sm text-slate-400">
+                  {sectionsReady.size > 0
+                    ? `${sectionsReady.size} section${sectionsReady.size === 1 ? "" : "s"} complete — results unlocking below`
+                    : (progress.detail ??
+                      "Crunching your games into a shareable report page.")}
                 </p>
               </div>
               <p className="text-2xl font-black text-cyan-300">
                 {Math.round(progress.percent)}%
               </p>
             </div>
-            <div className="mt-4 h-3 overflow-hidden rounded-full bg-white/[0.06]">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400 transition-[width] duration-300"
-                style={{ width: `${Math.max(6, progress.percent)}%` }}
-              />
+
+            {/* Per-phase bars */}
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {(
+                [
+                  {
+                    key: "openings",
+                    label: "Openings",
+                    icon: "📚",
+                    phases: [
+                      "parse",
+                      "aggregate",
+                      "eval",
+                    ] as AnalysisProgress["phase"][],
+                    show:
+                      scan.config.scanMode === "openings" ||
+                      scan.config.scanMode === "both",
+                  },
+                  {
+                    key: "tactics",
+                    label: "Tactics",
+                    icon: "⚔️",
+                    phases: ["tactics"] as AnalysisProgress["phase"][],
+                    show:
+                      scan.config.scanMode === "tactics" ||
+                      scan.config.scanMode === "both",
+                  },
+                  {
+                    key: "endgames",
+                    label: "Endgames",
+                    icon: "♜",
+                    phases: ["endgames"] as AnalysisProgress["phase"][],
+                    show:
+                      scan.config.scanMode === "endgames" ||
+                      scan.config.scanMode === "both",
+                  },
+                  {
+                    key: "time",
+                    label: "Time",
+                    icon: "⏱️",
+                    phases: ["time"] as AnalysisProgress["phase"][],
+                    show:
+                      scan.config.scanMode === "time-management" ||
+                      scan.config.scanMode === "both",
+                  },
+                ] as const
+              )
+                .filter((s) => s.show)
+                .map((s) => {
+                  const done = sectionsReady.has(s.key);
+                  // Use the latest progress event for any of this section's phases
+                  const activePhase = s.phases
+                    .map((ph) => perPhaseProgress[ph])
+                    .filter(Boolean)
+                    .at(-1);
+                  const barPct = done
+                    ? 100
+                    : activePhase?.total
+                      ? Math.round(
+                          ((activePhase.current ?? 0) / activePhase.total) *
+                            100,
+                        )
+                      : activePhase
+                        ? 5 // started but no count yet
+                        : 0; // queued
+                  const statusText = done
+                    ? "Done"
+                    : activePhase
+                      ? activePhase.total
+                        ? `${activePhase.current ?? 0} / ${activePhase.total}`
+                        : "Running…"
+                      : "Queued";
+                  const barColor = done
+                    ? "bg-emerald-500"
+                    : activePhase
+                      ? "bg-cyan-500"
+                      : "bg-white/20";
+
+                  return (
+                    <div
+                      key={s.key}
+                      className="rounded-xl border border-white/[0.07] bg-black/20 px-4 py-3"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-semibold text-white">
+                          {s.icon} {s.label}
+                        </span>
+                        <span
+                          className={`text-xs font-semibold ${
+                            done
+                              ? "text-emerald-400"
+                              : activePhase
+                                ? "text-cyan-300"
+                                : "text-slate-500"
+                          }`}
+                        >
+                          {statusText}
+                        </span>
+                      </div>
+                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
+                        <div
+                          className={`h-full rounded-full transition-[width] duration-500 ${barColor}`}
+                          style={{
+                            width: `${Math.max(done ? 100 : activePhase ? 5 : 0, barPct)}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
             </div>
-            {scan.result ? (
-              <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-white/[0.08] bg-black/15 px-4 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    Leaks found
-                  </p>
-                  <p className="mt-1 text-2xl font-black text-white">
-                    {scan.result.leaks.length}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-white/[0.08] bg-black/15 px-4 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    Tactics found
-                  </p>
-                  <p className="mt-1 text-2xl font-black text-white">
-                    {scan.result.missedTactics.length}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-white/[0.08] bg-black/15 px-4 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    Endgames found
-                  </p>
-                  <p className="mt-1 text-2xl font-black text-white">
-                    {scan.result.endgameMistakes.length}
-                  </p>
-                </div>
-              </div>
-            ) : null}
           </section>
         ) : null}
 

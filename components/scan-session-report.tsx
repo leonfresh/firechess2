@@ -59,9 +59,8 @@ const POSITIONAL_MOTIF_NAMES = new Set([
 ]);
 
 const STILL_WINNING_THRESHOLD = 350;
-const FREE_SCAN_SECTION_SAMPLE = 9;
+const FREE_SCAN_SECTION_SAMPLE = 6;
 const COMPACT_REPORT_INITIAL_COUNT = 6;
-const COMPACT_REPORT_SECOND_STEP = 9;
 
 type TaggedPosition = {
   tags: string[];
@@ -94,11 +93,7 @@ type MotifDefinition = {
   match: (position: TaggedPosition) => boolean;
 };
 
-function nextCompactRevealTarget(current: number, total: number) {
-  if (current < COMPACT_REPORT_SECOND_STEP) {
-    return Math.min(total, COMPACT_REPORT_SECOND_STEP);
-  }
-
+function nextCompactRevealTarget(_current: number, total: number) {
   return total;
 }
 
@@ -151,8 +146,6 @@ function CompactCardFooter({
   if (total <= COMPACT_REPORT_INITIAL_COUNT) return null;
 
   const remaining = Math.max(0, total - shown);
-  const nextTarget = nextCompactRevealTarget(shown, total);
-  const nextIncrement = Math.max(0, nextTarget - shown);
 
   return (
     <div className="mt-4 flex flex-col gap-3 rounded-[1.25rem] border border-white/[0.08] bg-white/[0.03] p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -168,9 +161,7 @@ function CompactCardFooter({
             onClick={onLoadMore}
             className="inline-flex items-center justify-center rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/20"
           >
-            {shown >= COMPACT_REPORT_SECOND_STEP
-              ? `Load remaining ${remaining}`
-              : `Load ${nextIncrement} more`}
+            Show all {total}
           </button>
         ) : null}
         {shown > COMPACT_REPORT_INITIAL_COUNT ? (
