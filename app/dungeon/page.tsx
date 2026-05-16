@@ -926,34 +926,6 @@ function BattleBoard({
     }
   }, [selected, state, fen]);
 
-  const handleSquareClick = useCallback(
-    (square: string) => {
-      if (state !== "solving") return;
-      try {
-        const chess = new Chess(fen);
-        const piece = chess.get(square as any);
-        const turn = chess.turn();
-        if (!selected) {
-          if (piece && piece.color === turn) setSelected(square);
-          return;
-        }
-        if (square === selected) {
-          setSelected(null);
-          return;
-        }
-        if (piece && piece.color === turn) {
-          setSelected(square);
-          return;
-        }
-        attemptMove(selected, square);
-        setSelected(null);
-      } catch {
-        setSelected(null);
-      }
-    },
-    [state, fen, selected, attemptMove],
-  );
-
   // Setup trigger move
   useEffect(() => {
     preloadSounds();
@@ -1140,6 +1112,34 @@ function BattleBoard({
       onSolved,
       onFailed,
     ],
+  );
+
+  const handleSquareClick = useCallback(
+    (square: string) => {
+      if (state !== "solving") return;
+      try {
+        const chess = new Chess(fen);
+        const piece = chess.get(square as any);
+        const turn = chess.turn();
+        if (!selected) {
+          if (piece && piece.color === turn) setSelected(square);
+          return;
+        }
+        if (square === selected) {
+          setSelected(null);
+          return;
+        }
+        if (piece && piece.color === turn) {
+          setSelected(square);
+          return;
+        }
+        attemptMove(selected, square);
+        setSelected(null);
+      } catch {
+        setSelected(null);
+      }
+    },
+    [state, fen, selected, attemptMove],
   );
 
   const onDrop = useCallback(
