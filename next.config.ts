@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
         hostname: "upload.wikimedia.org",
         pathname: "/wikipedia/**",
       },
+      {
+        protocol: "https",
+        hostname: "images.chesscomfiles.com",
+      },
     ],
   },
   async rewrites() {

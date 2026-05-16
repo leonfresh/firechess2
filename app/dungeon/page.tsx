@@ -4,7 +4,11 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Chess } from "chess.js";
 import { Chessboard } from "@/components/chessboard-compat";
 import { useBoardSize } from "@/lib/use-board-size";
-import { useBoardTheme, useCustomPieces, useShowCoordinates } from "@/lib/use-coins";
+import {
+  useBoardTheme,
+  useCustomPieces,
+  useShowCoordinates,
+} from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
 import { playDungeonSound, preloadDungeonSounds } from "@/lib/dungeon-sounds";
 import {
@@ -85,7 +89,11 @@ function setupPuzzlePosition(pgn: string, initialPly: number) {
   const chess = new Chess();
   const moves = parsePgnMoves(pgn);
   for (let i = 0; i < Math.min(initialPly, moves.length); i++) {
-    try { chess.move(moves[i]); } catch { break; }
+    try {
+      chess.move(moves[i]);
+    } catch {
+      break;
+    }
   }
   const preTriggerFen = chess.fen();
   let triggerFrom = "";
@@ -101,7 +109,8 @@ function setupPuzzlePosition(pgn: string, initialPly: number) {
       }
     } catch {}
   }
-  const solverColor: "white" | "black" = new Chess(postTriggerFen).turn() === "w" ? "white" : "black";
+  const solverColor: "white" | "black" =
+    new Chess(postTriggerFen).turn() === "w" ? "white" : "black";
   return { preTriggerFen, postTriggerFen, triggerFrom, triggerTo, solverColor };
 }
 
@@ -109,15 +118,32 @@ function setupPuzzlePosition(pgn: string, initialPly: number) {
 /*  Floating Particles                                                  */
 /* ================================================================== */
 
-function DungeonParticles({ variant = "embers" }: { variant?: "embers" | "sparkle" | "ash" | "runes" | "snow" | "void" | "lightning" }) {
+function DungeonParticles({
+  variant = "embers",
+}: {
+  variant?:
+    | "embers"
+    | "sparkle"
+    | "ash"
+    | "runes"
+    | "snow"
+    | "void"
+    | "lightning";
+}) {
   const colors =
-    variant === "embers" ? ["#f97316", "#ef4444", "#fbbf24"] :
-    variant === "sparkle" ? ["#fbbf24", "#a78bfa", "#34d399"] :
-    variant === "runes" ? ["#a78bfa", "#818cf8", "#c4b5fd"] :
-    variant === "snow" ? ["#e2e8f0", "#cbd5e1", "#f1f5f9"] :
-    variant === "void" ? ["#6d28d9", "#4c1d95", "#312e81"] :
-    variant === "lightning" ? ["#38bdf8", "#7dd3fc", "#e0f2fe"] :
-    ["#64748b", "#475569", "#94a3b8"]; // ash
+    variant === "embers"
+      ? ["#f97316", "#ef4444", "#fbbf24"]
+      : variant === "sparkle"
+        ? ["#fbbf24", "#a78bfa", "#34d399"]
+        : variant === "runes"
+          ? ["#a78bfa", "#818cf8", "#c4b5fd"]
+          : variant === "snow"
+            ? ["#e2e8f0", "#cbd5e1", "#f1f5f9"]
+            : variant === "void"
+              ? ["#6d28d9", "#4c1d95", "#312e81"]
+              : variant === "lightning"
+                ? ["#38bdf8", "#7dd3fc", "#e0f2fe"]
+                : ["#64748b", "#475569", "#94a3b8"]; // ash
 
   const isSnow = variant === "snow";
   const isRunes = variant === "runes";
@@ -126,32 +152,55 @@ function DungeonParticles({ variant = "embers" }: { variant?: "embers" | "sparkl
 
   return (
     <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
-      {Array.from({ length: isLightning ? 8 : isVoid ? 24 : 18 }).map((_, i) => {
-        const size = isRunes ? 6 + Math.random() * 4 : isVoid ? 3 + Math.random() * 5 : 2 + Math.random() * 3;
-        const duration = isSnow ? 6 + Math.random() * 8 : isLightning ? 1 + Math.random() * 2 : 4 + Math.random() * 6;
-        const anim = isSnow ? "dungeon-snow-fall" : isVoid ? "dungeon-void-drift" : isLightning ? "dungeon-lightning-flash" : "dungeon-ember-float";
+      {Array.from({ length: isLightning ? 8 : isVoid ? 24 : 18 }).map(
+        (_, i) => {
+          const size = isRunes
+            ? 6 + Math.random() * 4
+            : isVoid
+              ? 3 + Math.random() * 5
+              : 2 + Math.random() * 3;
+          const duration = isSnow
+            ? 6 + Math.random() * 8
+            : isLightning
+              ? 1 + Math.random() * 2
+              : 4 + Math.random() * 6;
+          const anim = isSnow
+            ? "dungeon-snow-fall"
+            : isVoid
+              ? "dungeon-void-drift"
+              : isLightning
+                ? "dungeon-lightning-flash"
+                : "dungeon-ember-float";
 
-        return (
-          <div
-            key={i}
-            className={`absolute ${isRunes ? "font-mono text-[10px] flex items-center justify-center" : "rounded-full"}`}
-            style={{
-              width: `${size}px`,
-              height: `${size}px`,
-              backgroundColor: isRunes ? "transparent" : colors[i % colors.length],
-              color: isRunes ? colors[i % colors.length] : undefined,
-              left: `${5 + Math.random() * 90}%`,
-              bottom: isSnow ? undefined : `${-5 + Math.random() * 10}%`,
-              top: isSnow ? `${-10 + Math.random() * 5}%` : undefined,
-              opacity: 0,
-              animation: `${anim} ${duration}s ${isLightning ? "ease-in" : "ease-out"} ${Math.random() * 5}s infinite`,
-              ...(isVoid ? { borderRadius: "50%", boxShadow: `0 0 ${4 + Math.random() * 6}px ${colors[i % colors.length]}` } : {}),
-            }}
-          >
-            {isRunes ? ["♜", "♞", "♝", "♛", "♚", "♟", "⚔", "✦"][i % 8] : null}
-          </div>
-        );
-      })}
+          return (
+            <div
+              key={i}
+              className={`absolute ${isRunes ? "font-mono text-[10px] flex items-center justify-center" : "rounded-full"}`}
+              style={{
+                width: `${size}px`,
+                height: `${size}px`,
+                backgroundColor: isRunes
+                  ? "transparent"
+                  : colors[i % colors.length],
+                color: isRunes ? colors[i % colors.length] : undefined,
+                left: `${5 + Math.random() * 90}%`,
+                bottom: isSnow ? undefined : `${-5 + Math.random() * 10}%`,
+                top: isSnow ? `${-10 + Math.random() * 5}%` : undefined,
+                opacity: 0,
+                animation: `${anim} ${duration}s ${isLightning ? "ease-in" : "ease-out"} ${Math.random() * 5}s infinite`,
+                ...(isVoid
+                  ? {
+                      borderRadius: "50%",
+                      boxShadow: `0 0 ${4 + Math.random() * 6}px ${colors[i % colors.length]}`,
+                    }
+                  : {}),
+              }}
+            >
+              {isRunes ? ["♜", "♞", "♝", "♛", "♚", "♟", "⚔", "✦"][i % 8] : null}
+            </div>
+          );
+        },
+      )}
     </div>
   );
 }
@@ -162,14 +211,18 @@ function DungeonParticles({ variant = "embers" }: { variant?: "embers" | "sparkl
 
 const BASE_PUZZLE_TIME = 30; // seconds
 
-function getPuzzleTimeLimit(stats: { attack: number }, perks: Perk[]): number | null {
+function getPuzzleTimeLimit(
+  stats: { attack: number },
+  perks: Perk[],
+): number | null {
   // Zen Master = unlimited
-  if (perks.some(p => p.id === "zen-master")) return null;
+  if (perks.some((p) => p.id === "zen-master")) return null;
 
   let time = BASE_PUZZLE_TIME + stats.attack * 2;
 
   // Cursed Clock = halve time
-  if (perks.some(p => p.id === "cursed-clock")) time = Math.max(10, Math.floor(time / 2));
+  if (perks.some((p) => p.id === "cursed-clock"))
+    time = Math.max(10, Math.floor(time / 2));
 
   return time;
 }
@@ -196,7 +249,7 @@ function PuzzleTimer({
   useEffect(() => {
     if (timeLimit === null || paused) return;
     const interval = setInterval(() => {
-      setRemaining(prev => {
+      setRemaining((prev) => {
         const next = Math.max(0, prev - 0.1);
         if (next <= 0 && !expiredRef.current) {
           expiredRef.current = true;
@@ -221,16 +274,32 @@ function PuzzleTimer({
   const isLow = remaining <= 10;
   const isCritical = remaining <= 5;
 
-  const barColor = isCritical ? "bg-red-500" : isLow ? "bg-amber-500" : "bg-cyan-500";
-  const glowColor = isCritical ? "shadow-red-500/40" : isLow ? "shadow-amber-500/30" : "shadow-cyan-500/20";
-  const textColor = isCritical ? "text-red-400" : isLow ? "text-amber-400" : "text-slate-400";
+  const barColor = isCritical
+    ? "bg-red-500"
+    : isLow
+      ? "bg-amber-500"
+      : "bg-cyan-500";
+  const glowColor = isCritical
+    ? "shadow-red-500/40"
+    : isLow
+      ? "shadow-amber-500/30"
+      : "shadow-cyan-500/20";
+  const textColor = isCritical
+    ? "text-red-400"
+    : isLow
+      ? "text-amber-400"
+      : "text-slate-400";
 
   return (
-    <div className={`flex items-center gap-2 ${isCritical ? "animate-[dungeon-timer-pulse_0.5s_ease-in-out_infinite]" : ""}`}>
+    <div
+      className={`flex items-center gap-2 ${isCritical ? "animate-[dungeon-timer-pulse_0.5s_ease-in-out_infinite]" : ""}`}
+    >
       <span className={`text-xs font-mono font-bold ${textColor} min-w-[32px]`}>
         {Math.ceil(remaining)}s
       </span>
-      <div className={`h-2 flex-1 rounded-full bg-white/[0.06] overflow-hidden min-w-[100px] shadow-sm ${glowColor}`}>
+      <div
+        className={`h-2 flex-1 rounded-full bg-white/[0.06] overflow-hidden min-w-[100px] shadow-sm ${glowColor}`}
+      >
         <div
           className={`h-full rounded-full transition-all duration-100 ease-linear ${barColor}`}
           style={{ width: `${pct}%` }}
@@ -245,7 +314,16 @@ function PuzzleTimer({
 /*  SVG Node Shape Renderers                                            */
 /* ================================================================== */
 
-function SvgNodeShape({ type, x, y, isCurrent, isReachable, isVisited, isHidden, puzzleMode }: {
+function SvgNodeShape({
+  type,
+  x,
+  y,
+  isCurrent,
+  isReachable,
+  isVisited,
+  isHidden,
+  puzzleMode,
+}: {
   type: NodeType;
   x: number;
   y: number;
@@ -259,19 +337,25 @@ function SvgNodeShape({ type, x, y, isCurrent, isReachable, isVisited, isHidden,
   const size = type === "boss" ? 28 : 22;
 
   // Colors
-  const fillColor =
-    isCurrent ? "rgba(16, 185, 129, 0.25)" :
-    isReachable ? "rgba(147, 197, 253, 0.12)" :
-    isVisited ? "rgba(255, 255, 255, 0.03)" :
-    isHidden ? "rgba(255, 255, 255, 0.02)" :
-    "rgba(255, 255, 255, 0.05)";
+  const fillColor = isCurrent
+    ? "rgba(16, 185, 129, 0.25)"
+    : isReachable
+      ? "rgba(147, 197, 253, 0.12)"
+      : isVisited
+        ? "rgba(255, 255, 255, 0.03)"
+        : isHidden
+          ? "rgba(255, 255, 255, 0.02)"
+          : "rgba(255, 255, 255, 0.05)";
 
-  const strokeColor =
-    isCurrent ? "#10b981" :
-    isReachable ? "rgba(147, 197, 253, 0.5)" :
-    isVisited ? "rgba(255, 255, 255, 0.08)" :
-    isHidden ? "rgba(255, 255, 255, 0.06)" :
-    "rgba(255, 255, 255, 0.12)";
+  const strokeColor = isCurrent
+    ? "#10b981"
+    : isReachable
+      ? "rgba(147, 197, 253, 0.5)"
+      : isVisited
+        ? "rgba(255, 255, 255, 0.08)"
+        : isHidden
+          ? "rgba(255, 255, 255, 0.06)"
+          : "rgba(255, 255, 255, 0.12)";
 
   const opacity = isHidden ? 0.3 : isVisited && !isCurrent ? 0.5 : 1;
 
@@ -287,29 +371,50 @@ function SvgNodeShape({ type, x, y, isCurrent, isReachable, isVisited, isHidden,
   const diamondPoints = (cx: number, cy: number, r: number) =>
     `${cx},${cy - r} ${cx + r * 0.75},${cy} ${cx},${cy + r} ${cx - r * 0.75},${cy}`;
 
-  const shape = type === "boss" || type === "battle" ? (
-    <polygon points={hexPoints(x, y, size)} fill={fillColor} stroke={strokeColor} strokeWidth={isCurrent ? 2.5 : 1.5} />
-  ) : type === "elite" ? (
-    <polygon points={diamondPoints(x, y, size)} fill={fillColor} stroke={strokeColor} strokeWidth={isCurrent ? 2.5 : 1.5} />
-  ) : (
-    <circle cx={x} cy={y} r={size * 0.85} fill={fillColor} stroke={strokeColor} strokeWidth={isCurrent ? 2.5 : 1.5} />
-  );
+  const shape =
+    type === "boss" || type === "battle" ? (
+      <polygon
+        points={hexPoints(x, y, size)}
+        fill={fillColor}
+        stroke={strokeColor}
+        strokeWidth={isCurrent ? 2.5 : 1.5}
+      />
+    ) : type === "elite" ? (
+      <polygon
+        points={diamondPoints(x, y, size)}
+        fill={fillColor}
+        stroke={strokeColor}
+        strokeWidth={isCurrent ? 2.5 : 1.5}
+      />
+    ) : (
+      <circle
+        cx={x}
+        cy={y}
+        r={size * 0.85}
+        fill={fillColor}
+        stroke={strokeColor}
+        strokeWidth={isCurrent ? 2.5 : 1.5}
+      />
+    );
 
   // Glow effect for boss
-  const glow = type === "boss" && !isHidden ? (
-    <polygon
-      points={hexPoints(x, y, size + 4)}
-      fill="none"
-      stroke="rgba(220, 38, 38, 0.3)"
-      strokeWidth={1}
-      className="dungeon-boss-throb"
-    />
-  ) : null;
+  const glow =
+    type === "boss" && !isHidden ? (
+      <polygon
+        points={hexPoints(x, y, size + 4)}
+        fill="none"
+        stroke="rgba(220, 38, 38, 0.3)"
+        strokeWidth={1}
+        className="dungeon-boss-throb"
+      />
+    ) : null;
 
   // Pulse ring for current node
   const pulse = isCurrent ? (
     <circle
-      cx={x} cy={y} r={size + 6}
+      cx={x}
+      cy={y}
+      r={size + 6}
       fill="none"
       stroke="rgba(16, 185, 129, 0.3)"
       strokeWidth={1.5}
@@ -319,7 +424,10 @@ function SvgNodeShape({ type, x, y, isCurrent, isReachable, isVisited, isHidden,
   ) : null;
 
   return (
-    <g opacity={opacity} className={isReachable && !isCurrent ? "cursor-pointer" : ""}>
+    <g
+      opacity={opacity}
+      className={isReachable && !isCurrent ? "cursor-pointer" : ""}
+    >
       {glow}
       {pulse}
       {shape}
@@ -341,13 +449,19 @@ function SvgNodeShape({ type, x, y, isCurrent, isReachable, isVisited, isHidden,
           fontSize={9}
           fontWeight="bold"
           fill={
-            type === "boss" ? "#ef4444" :
-            type === "elite" ? "#c084fc" :
-            type === "battle" ? "#60a5fa" :
-            type === "mystery" ? "#a78bfa" :
-            type === "shop" ? "#fbbf24" :
-            type === "rest" ? "#34d399" :
-            "#94a3b8"
+            type === "boss"
+              ? "#ef4444"
+              : type === "elite"
+                ? "#c084fc"
+                : type === "battle"
+                  ? "#60a5fa"
+                  : type === "mystery"
+                    ? "#a78bfa"
+                    : type === "shop"
+                      ? "#fbbf24"
+                      : type === "rest"
+                        ? "#34d399"
+                        : "#94a3b8"
           }
           className="select-none"
         >
@@ -355,19 +469,25 @@ function SvgNodeShape({ type, x, y, isCurrent, isReachable, isVisited, isHidden,
         </text>
       )}
       {/* Puzzle mode indicator for battle nodes */}
-      {!isHidden && type === "battle" && puzzleMode && puzzleMode !== "tactic" && (
-        <text
-          x={x}
-          y={y + size + 22}
-          textAnchor="middle"
-          fontSize={7}
-          fill="#94a3b8"
-          opacity={0.6}
-          className="select-none"
-        >
-          {PUZZLE_MODE_INFO[puzzleMode].icon} {PUZZLE_MODE_INFO[puzzleMode].label.replace("Guess the ", "").replace("Solve the ", "")}
-        </text>
-      )}
+      {!isHidden &&
+        type === "battle" &&
+        puzzleMode &&
+        puzzleMode !== "tactic" && (
+          <text
+            x={x}
+            y={y + size + 22}
+            textAnchor="middle"
+            fontSize={7}
+            fill="#94a3b8"
+            opacity={0.6}
+            className="select-none"
+          >
+            {PUZZLE_MODE_INFO[puzzleMode].icon}{" "}
+            {PUZZLE_MODE_INFO[puzzleMode].label
+              .replace("Guess the ", "")
+              .replace("Solve the ", "")}
+          </text>
+        )}
     </g>
   );
 }
@@ -378,12 +498,22 @@ function SvgNodeShape({ type, x, y, isCurrent, isReachable, isVisited, isHidden,
 
 function HpBar({ hp, maxHp }: { hp: number; maxHp: number }) {
   const pct = Math.max(0, Math.min(100, (hp / maxHp) * 100));
-  const color = pct > 60 ? "bg-emerald-500" : pct > 30 ? "bg-amber-500" : "bg-red-500";
-  const glowColor = pct > 60 ? "shadow-emerald-500/30" : pct > 30 ? "shadow-amber-500/30" : "shadow-red-500/30";
+  const color =
+    pct > 60 ? "bg-emerald-500" : pct > 30 ? "bg-amber-500" : "bg-red-500";
+  const glowColor =
+    pct > 60
+      ? "shadow-emerald-500/30"
+      : pct > 30
+        ? "shadow-amber-500/30"
+        : "shadow-red-500/30";
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs font-bold text-red-400">❤️ {hp}/{maxHp}</span>
-      <div className={`h-3 flex-1 rounded-full bg-white/[0.06] overflow-hidden min-w-[80px] shadow-sm ${glowColor}`}>
+      <span className="text-xs font-bold text-red-400">
+        ❤️ {hp}/{maxHp}
+      </span>
+      <div
+        className={`h-3 flex-1 rounded-full bg-white/[0.06] overflow-hidden min-w-[80px] shadow-sm ${glowColor}`}
+      >
         <div
           className={`h-full rounded-full transition-all duration-700 ease-out ${color}`}
           style={{ width: `${pct}%` }}
@@ -427,7 +557,7 @@ function DungeonMap({
   perks: Perk[];
   onSelectNode: (node: MapNode) => void;
 }) {
-  const hasScoutsMap = perks.some(p => p.id === "scouts-map");
+  const hasScoutsMap = perks.some((p) => p.id === "scouts-map");
   const visibleFloors = hasScoutsMap ? currentFloor + 4 : currentFloor + 3;
 
   const floors = useMemo(() => {
@@ -440,11 +570,14 @@ function DungeonMap({
     return byFloor;
   }, [nodes]);
 
-  const currentNode = nodes.find(n => n.id === currentNodeId);
+  const currentNode = nodes.find((n) => n.id === currentNodeId);
   const reachableIds = new Set(currentNode?.connections ?? []);
 
   const startFloor = Math.max(0, currentFloor - 2);
-  const endFloor = Math.min(Math.max(...Array.from(floors.keys())), visibleFloors);
+  const endFloor = Math.min(
+    Math.max(...Array.from(floors.keys())),
+    visibleFloors,
+  );
 
   const displayFloors: number[] = [];
   for (let f = endFloor; f >= startFloor; f--) {
@@ -464,7 +597,7 @@ function DungeonMap({
     const positions = new Map<string, { x: number; y: number }>();
     displayFloors.forEach((floor, rowIdx) => {
       const floorNodes = floors.get(floor) ?? [];
-      floorNodes.forEach(node => {
+      floorNodes.forEach((node) => {
         positions.set(node.id, {
           x: node.col * COL_W + PAD_X,
           y: rowIdx * ROW_H + PAD_Y,
@@ -476,10 +609,16 @@ function DungeonMap({
 
   // Collect visible connection lines
   const connections = useMemo(() => {
-    const lines: { from: { x: number; y: number }; to: { x: number; y: number }; isReachable: boolean; fromId: string; toId: string }[] = [];
+    const lines: {
+      from: { x: number; y: number };
+      to: { x: number; y: number };
+      isReachable: boolean;
+      fromId: string;
+      toId: string;
+    }[] = [];
     const visibleNodeIds = new Set(nodePositions.keys());
     for (const [nodeId, fromPos] of nodePositions) {
-      const node = nodes.find(n => n.id === nodeId);
+      const node = nodes.find((n) => n.id === nodeId);
       if (!node) continue;
       for (const connId of node.connections) {
         if (!visibleNodeIds.has(connId)) continue;
@@ -502,7 +641,15 @@ function DungeonMap({
       {/* Title */}
       <div className="mb-3 text-center">
         <h2 className="text-lg font-bold text-white tracking-tight flex items-center justify-center gap-2">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-400">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="text-amber-400"
+          >
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
             <circle cx="12" cy="10" r="3" />
           </svg>
@@ -516,7 +663,10 @@ function DungeonMap({
         {/* Fog overlay at top */}
         <div
           className="pointer-events-none absolute inset-x-0 top-0 h-16 z-10"
-          style={{ background: "linear-gradient(to bottom, rgba(3,7,18,0.9) 0%, transparent 100%)" }}
+          style={{
+            background:
+              "linear-gradient(to bottom, rgba(3,7,18,0.9) 0%, transparent 100%)",
+          }}
         />
 
         <svg
@@ -550,14 +700,22 @@ function DungeonMap({
                 <path
                   d={pathD}
                   fill="none"
-                  stroke={conn.isReachable ? "rgba(147, 197, 253, 0.15)" : "rgba(255,255,255,0.04)"}
+                  stroke={
+                    conn.isReachable
+                      ? "rgba(147, 197, 253, 0.15)"
+                      : "rgba(255,255,255,0.04)"
+                  }
                   strokeWidth={conn.isReachable ? 6 : 2}
                 />
                 {/* Main line */}
                 <path
                   d={pathD}
                   fill="none"
-                  stroke={conn.isReachable ? "url(#reachable-grad)" : "rgba(255,255,255,0.08)"}
+                  stroke={
+                    conn.isReachable
+                      ? "url(#reachable-grad)"
+                      : "rgba(255,255,255,0.08)"
+                  }
                   strokeWidth={conn.isReachable ? 2.5 : 1}
                   strokeLinecap="round"
                   strokeDasharray={conn.isReachable ? "6 4" : "none"}
@@ -583,9 +741,9 @@ function DungeonMap({
           ))}
 
           {/* Nodes */}
-          {displayFloors.map(floor => {
+          {displayFloors.map((floor) => {
             const floorNodes = floors.get(floor) ?? [];
-            return floorNodes.map(node => {
+            return floorNodes.map((node) => {
               const pos = nodePositions.get(node.id);
               if (!pos) return null;
 
@@ -682,7 +840,9 @@ function BattleBoard({
   onSolved: () => void;
   onFailed: () => void;
 }) {
-  const { ref: boardRef, size: boardSize } = useBoardSize(720, { evalBar: false });
+  const { ref: boardRef, size: boardSize } = useBoardSize(720, {
+    evalBar: false,
+  });
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
@@ -691,30 +851,43 @@ function BattleBoard({
   const [shaking, setShaking] = useState(false);
   const [glowCorrect, setGlowCorrect] = useState(false);
   const [flashDamage, setFlashDamage] = useState(false);
-  const [moveIndicator, setMoveIndicator] = useState<{ square: string; type: "correct" | "wrong" } | null>(null);
+  const [moveIndicator, setMoveIndicator] = useState<{
+    square: string;
+    type: "correct" | "wrong";
+  } | null>(null);
 
-  const currentNode = run.map.find(n => n.id === run.currentNodeId);
+  const currentNode = run.map.find((n) => n.id === run.currentNodeId);
   const isBoss = currentNode?.type === "boss";
   const isElite = currentNode?.type === "elite";
   const act = getAct(run.currentFloor);
 
-  const hasSecondWind = run.perks.some(p => p.id === "second-wind" && !p.consumed);
-  const hasGlassCannon = run.perks.some(p => p.id === "glass-cannon");
-  const hasCursedMirror = run.perks.some(p => p.id === "cursed-mirror");
+  const hasSecondWind = run.perks.some(
+    (p) => p.id === "second-wind" && !p.consumed,
+  );
+  const hasGlassCannon = run.perks.some((p) => p.id === "glass-cannon");
+  const hasCursedMirror = run.perks.some((p) => p.id === "cursed-mirror");
   const maxAttempts = hasSecondWind ? 2 : 1;
 
   const setup = useMemo(
     () => setupPuzzlePosition(puzzle.game.pgn, puzzle.puzzle.initialPly),
-    [puzzle]
+    [puzzle],
   );
 
   const [fen, setFen] = useState(setup.preTriggerFen);
   const [solutionIdx, setSolutionIdx] = useState(0);
-  const [state, setState] = useState<"setup" | "solving" | "correct" | "wrong">("setup");
+  const [state, setState] = useState<"setup" | "solving" | "correct" | "wrong">(
+    "setup",
+  );
   const [attempts, setAttempts] = useState(0);
-  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
-  const [wrongMove, setWrongMove] = useState<{ from: string; to: string } | null>(null);
+  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(
+    null,
+  );
+  const [wrongMove, setWrongMove] = useState<{
+    from: string;
+    to: string;
+  } | null>(null);
   const [hintSquare, setHintSquare] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(null);
   const puzzleSetupRef = useRef<typeof setup | null>(null);
 
   const orientation: "white" | "black" = useMemo(() => {
@@ -724,7 +897,11 @@ function BattleBoard({
   }, [setup.solverColor, hasCursedMirror]);
 
   const sideToMove = useMemo(() => {
-    try { return new Chess(fen).turn(); } catch { return "w"; }
+    try {
+      return new Chess(fen).turn();
+    } catch {
+      return "w";
+    }
   }, [fen]);
 
   const isDraggablePiece = useCallback(
@@ -732,7 +909,49 @@ function BattleBoard({
       if (state !== "solving") return false;
       return piece.startsWith(sideToMove === "w" ? "w" : "b");
     },
-    [state, sideToMove]
+    [state, sideToMove],
+  );
+
+  const legalMoveSquares = useMemo(() => {
+    if (!selected || state !== "solving") return [];
+    try {
+      const chess = new Chess(fen);
+      return (
+        chess.moves({ square: selected as any, verbose: true }) as Array<{
+          to: string;
+        }>
+      ).map((m) => m.to);
+    } catch {
+      return [];
+    }
+  }, [selected, state, fen]);
+
+  const handleSquareClick = useCallback(
+    (square: string) => {
+      if (state !== "solving") return;
+      try {
+        const chess = new Chess(fen);
+        const piece = chess.get(square as any);
+        const turn = chess.turn();
+        if (!selected) {
+          if (piece && piece.color === turn) setSelected(square);
+          return;
+        }
+        if (square === selected) {
+          setSelected(null);
+          return;
+        }
+        if (piece && piece.color === turn) {
+          setSelected(square);
+          return;
+        }
+        attemptMove(selected, square);
+        setSelected(null);
+      } catch {
+        setSelected(null);
+      }
+    },
+    [state, fen, selected, attemptMove],
   );
 
   // Setup trigger move
@@ -746,6 +965,7 @@ function BattleBoard({
     setLastMove(null);
     setWrongMove(null);
     setHintSquare(null);
+    setSelected(null);
   }, [setup]);
 
   useEffect(() => {
@@ -764,7 +984,11 @@ function BattleBoard({
 
   // Glass cannon hint
   useEffect(() => {
-    if (hasGlassCannon && state === "solving" && solutionIdx < puzzle.puzzle.solution.length) {
+    if (
+      hasGlassCannon &&
+      state === "solving" &&
+      solutionIdx < puzzle.puzzle.solution.length
+    ) {
       const move = puzzle.puzzle.solution[solutionIdx];
       setHintSquare(move.slice(0, 2));
     } else {
@@ -787,13 +1011,19 @@ function BattleBoard({
         promotion = expectedPromo;
       }
 
-      const matches = from + to === expectedBase && (!expectedPromo || promotion === expectedPromo);
+      const matches =
+        from + to === expectedBase &&
+        (!expectedPromo || promotion === expectedPromo);
 
       if (!matches) {
         // Check if this is even a legal move — don't penalize mouse slips / illegal moves
         try {
           const legCheck = new Chess(fen);
-          const legResult = legCheck.move({ from, to, promotion: promotion || "q" } as any);
+          const legResult = legCheck.move({
+            from,
+            to,
+            promotion: promotion || "q",
+          } as any);
           if (!legResult) return false; // illegal move, ignore silently
         } catch {
           return false; // illegal move, ignore silently
@@ -808,7 +1038,10 @@ function BattleBoard({
         const newAttempts = attempts + 1;
         setAttempts(newAttempts);
 
-        setTimeout(() => { setWrongMove(null); setMoveIndicator(null); }, 800);
+        setTimeout(() => {
+          setWrongMove(null);
+          setMoveIndicator(null);
+        }, 800);
 
         if (newAttempts >= maxAttempts) {
           setState("wrong");
@@ -820,7 +1053,11 @@ function BattleBoard({
             setTimeout(() => {
               const g = new Chess(fen);
               try {
-                g.move({ from: correct.slice(0, 2), to: correct.slice(2, 4), promotion: correct.slice(4, 5) || undefined } as any);
+                g.move({
+                  from: correct.slice(0, 2),
+                  to: correct.slice(2, 4),
+                  promotion: correct.slice(4, 5) || undefined,
+                } as any);
                 setFen(g.fen());
               } catch {}
             }, 600);
@@ -835,7 +1072,11 @@ function BattleBoard({
         const chess = new Chess(fen);
         const targetPiece = chess.get(expected.slice(2, 4) as any);
         const isCapture = !!targetPiece;
-        chess.move({ from: expected.slice(0, 2), to: expected.slice(2, 4), promotion: expectedPromo || undefined } as any);
+        chess.move({
+          from: expected.slice(0, 2),
+          to: expected.slice(2, 4),
+          promotion: expectedPromo || undefined,
+        } as any);
         const newFen = chess.fen();
         setFen(newFen);
         setLastMove({ from: expected.slice(0, 2), to: expected.slice(2, 4) });
@@ -864,9 +1105,16 @@ function BattleBoard({
               const c2 = new Chess(newFen);
               const oppTarget = c2.get(oppMove.slice(2, 4) as any);
               const oppCapture = !!oppTarget;
-              c2.move({ from: oppMove.slice(0, 2), to: oppMove.slice(2, 4), promotion: oppMove.slice(4, 5) || undefined } as any);
+              c2.move({
+                from: oppMove.slice(0, 2),
+                to: oppMove.slice(2, 4),
+                promotion: oppMove.slice(4, 5) || undefined,
+              } as any);
               setFen(c2.fen());
-              setLastMove({ from: oppMove.slice(0, 2), to: oppMove.slice(2, 4) });
+              setLastMove({
+                from: oppMove.slice(0, 2),
+                to: oppMove.slice(2, 4),
+              });
               setSolutionIdx(nextIdx + 1);
               setMoveIndicator(null);
               if (c2.isCheck()) playSound("check");
@@ -882,22 +1130,55 @@ function BattleBoard({
         return false;
       }
     },
-    [state, solutionIdx, fen, puzzle, attempts, maxAttempts, onSolved, onFailed]
+    [
+      state,
+      solutionIdx,
+      fen,
+      puzzle,
+      attempts,
+      maxAttempts,
+      onSolved,
+      onFailed,
+    ],
   );
 
   const onDrop = useCallback(
     (from: string, to: string, _piece: string) => {
       if (state !== "solving") return false;
+      setSelected(null);
       return attemptMove(from, to);
     },
-    [state, attemptMove]
+    [state, attemptMove],
   );
 
   // Square styles
   const customSquareStyles: Record<string, React.CSSProperties> = {};
   if (lastMove) {
-    customSquareStyles[lastMove.from] = { backgroundColor: "rgba(255, 255, 0, 0.25)" };
-    customSquareStyles[lastMove.to] = { backgroundColor: "rgba(255, 255, 0, 0.35)" };
+    customSquareStyles[lastMove.from] = {
+      backgroundColor: "rgba(255, 255, 0, 0.25)",
+    };
+    customSquareStyles[lastMove.to] = {
+      backgroundColor: "rgba(255, 255, 0, 0.35)",
+    };
+  }
+  if (selected && state === "solving") {
+    customSquareStyles[selected] = {
+      ...customSquareStyles[selected],
+      backgroundColor: "rgba(255, 210, 0, 0.45)",
+    };
+    try {
+      const selChess = new Chess(fen);
+      for (const sq of legalMoveSquares) {
+        const hasPiece = selChess.get(sq as any);
+        customSquareStyles[sq] = {
+          ...customSquareStyles[sq],
+          background: hasPiece
+            ? "radial-gradient(circle, transparent 56%, rgba(255,255,255,0.34) 56%)"
+            : "radial-gradient(circle, rgba(255,255,255,0.3) 23%, transparent 24%)",
+          borderRadius: "50%",
+        };
+      }
+    } catch {}
   }
   // King in check — red glow
   try {
@@ -912,7 +1193,8 @@ function BattleBoard({
             const sq = String.fromCharCode(97 + f) + (8 - r);
             customSquareStyles[sq] = {
               ...customSquareStyles[sq],
-              background: "radial-gradient(circle, rgba(239,68,68,0.6) 0%, rgba(239,68,68,0.2) 60%, transparent 80%)",
+              background:
+                "radial-gradient(circle, rgba(239,68,68,0.6) 0%, rgba(239,68,68,0.2) 60%, transparent 80%)",
             };
           }
         }
@@ -920,16 +1202,24 @@ function BattleBoard({
     }
   } catch {}
   if (wrongMove) {
-    customSquareStyles[wrongMove.to] = { backgroundColor: "rgba(239, 68, 68, 0.4)" };
+    customSquareStyles[wrongMove.to] = {
+      backgroundColor: "rgba(239, 68, 68, 0.4)",
+    };
   }
   if (hintSquare) {
-    customSquareStyles[hintSquare] = { backgroundColor: "rgba(34, 197, 94, 0.3)" };
+    customSquareStyles[hintSquare] = {
+      backgroundColor: "rgba(34, 197, 94, 0.3)",
+    };
   }
 
-  const statusLabel = state === "setup" ? "Watch the opponent's move…"
-    : state === "solving" ? `Find the best move${attempts > 0 ? ` (attempt ${attempts + 1}/${maxAttempts})` : ""}`
-    : state === "correct" ? "✅ Correct!"
-    : "❌ Incorrect";
+  const statusLabel =
+    state === "setup"
+      ? "Watch the opponent's move…"
+      : state === "solving"
+        ? `Find the best move${attempts > 0 ? ` (attempt ${attempts + 1}/${maxAttempts})` : ""}`
+        : state === "correct"
+          ? "✅ Correct!"
+          : "❌ Incorrect";
 
   return (
     <div className="w-full dungeon-screen-enter">
@@ -958,21 +1248,30 @@ function BattleBoard({
                 arePiecesDraggable={state === "solving"}
                 isDraggablePiece={isDraggablePiece}
                 animationDuration={200}
-                customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-                customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                customDarkSquareStyle={{
+                  backgroundColor: boardTheme.darkSquare,
+                }}
+                customLightSquareStyle={{
+                  backgroundColor: boardTheme.lightSquare,
+                }}
                 showBoardNotation={showCoords}
                 customSquareStyles={customSquareStyles}
                 customPieces={customPieces}
+                onSquareClick={handleSquareClick}
               />
             </div>
           </div>
 
           {/* Status below board */}
-          <div className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-all ${
-            state === "correct" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-              : state === "wrong" ? "border-red-500/30 bg-red-500/10 text-red-400"
-              : "border-white/[0.08] bg-white/[0.03] text-slate-400"
-          }`}>
+          <div
+            className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-all ${
+              state === "correct"
+                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                : state === "wrong"
+                  ? "border-red-500/30 bg-red-500/10 text-red-400"
+                  : "border-white/[0.08] bg-white/[0.03] text-slate-400"
+            }`}
+          >
             {statusLabel}
           </div>
         </div>
@@ -988,28 +1287,46 @@ function BattleBoard({
               </div>
             </div>
           ) : (
-            <div className={`flex items-center justify-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider border ${
-              isElite ? "border-purple-500/30 bg-purple-500/10 text-purple-400" :
-              "border-blue-500/20 bg-blue-500/5 text-blue-400"
-            }`}>
+            <div
+              className={`flex items-center justify-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider border ${
+                isElite
+                  ? "border-purple-500/30 bg-purple-500/10 text-purple-400"
+                  : "border-blue-500/20 bg-blue-500/5 text-blue-400"
+              }`}
+            >
               {isElite ? "💀 Elite Fight" : "⚔️ Battle"}
             </div>
           )}
 
           {/* Battle scene vignette */}
-          {!isBoss && <BattleSceneVignette actId={act.id} seed={run.seed + run.currentFloor} />}
+          {!isBoss && (
+            <BattleSceneVignette
+              actId={act.id}
+              seed={run.seed + run.currentFloor}
+            />
+          )}
 
           {/* Narrative flavor text */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
             <p className="text-xs italic leading-relaxed text-slate-400">
-              {isBoss ? act.bossIntro.split("\n")[0] : getBattleFlavor(run.currentFloor, run.seed)}
+              {isBoss
+                ? act.bossIntro.split("\n")[0]
+                : getBattleFlavor(run.currentFloor, run.seed)}
             </p>
           </div>
 
           {/* Puzzle info */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
             <div className="flex items-center gap-2 text-xs text-slate-500">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-500">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="text-amber-500"
+              >
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
               <span>{puzzle.puzzle.rating}</span>
@@ -1036,11 +1353,13 @@ function BattleBoard({
           </div>
 
           {moveIndicator && (
-            <div className={`rounded-xl border px-4 py-3 text-center text-sm font-bold ${
-              moveIndicator.type === "correct"
-                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                : "border-red-500/30 bg-red-500/10 text-red-400"
-            }`}>
+            <div
+              className={`rounded-xl border px-4 py-3 text-center text-sm font-bold ${
+                moveIndicator.type === "correct"
+                  ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                  : "border-red-500/30 bg-red-500/10 text-red-400"
+              }`}
+            >
               {moveIndicator.type === "correct" ? "✓ Correct!" : "✗ Wrong move"}
             </div>
           )}
@@ -1055,11 +1374,39 @@ function BattleBoard({
 /* ================================================================== */
 
 const EVAL_BUCKETS = [
-  { label: "White crushing", range: "+3 or more", min: 3, color: "text-white bg-white/10 border-white/20" },
-  { label: "White better", range: "+1 to +3", min: 1, max: 3, color: "text-blue-300 bg-blue-500/10 border-blue-500/20" },
-  { label: "Roughly equal", range: "-1 to +1", min: -1, max: 1, color: "text-slate-300 bg-slate-500/10 border-slate-500/20" },
-  { label: "Black better", range: "-3 to -1", min: -3, max: -1, color: "text-purple-300 bg-purple-500/10 border-purple-500/20" },
-  { label: "Black crushing", range: "-3 or less", max: -3, color: "text-zinc-300 bg-zinc-500/10 border-zinc-500/20" },
+  {
+    label: "White crushing",
+    range: "+3 or more",
+    min: 3,
+    color: "text-white bg-white/10 border-white/20",
+  },
+  {
+    label: "White better",
+    range: "+1 to +3",
+    min: 1,
+    max: 3,
+    color: "text-blue-300 bg-blue-500/10 border-blue-500/20",
+  },
+  {
+    label: "Roughly equal",
+    range: "-1 to +1",
+    min: -1,
+    max: 1,
+    color: "text-slate-300 bg-slate-500/10 border-slate-500/20",
+  },
+  {
+    label: "Black better",
+    range: "-3 to -1",
+    min: -3,
+    max: -1,
+    color: "text-purple-300 bg-purple-500/10 border-purple-500/20",
+  },
+  {
+    label: "Black crushing",
+    range: "-3 or less",
+    max: -3,
+    color: "text-zinc-300 bg-zinc-500/10 border-zinc-500/20",
+  },
 ] as const;
 
 function getEvalBucket(cp: number): number {
@@ -1082,14 +1429,16 @@ function GuessEvalBoard({
   onSolved: () => void;
   onFailed: () => void;
 }) {
-  const { ref: boardRef, size: boardSize } = useBoardSize(720, { evalBar: false });
+  const { ref: boardRef, size: boardSize } = useBoardSize(720, {
+    evalBar: false,
+  });
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
 
   const setup = useMemo(
     () => setupPuzzlePosition(puzzle.game.pgn, puzzle.puzzle.initialPly),
-    [puzzle]
+    [puzzle],
   );
 
   const [selectedBucket, setSelectedBucket] = useState<number | null>(null);
@@ -1106,7 +1455,10 @@ function GuessEvalBoard({
     let cancelled = false;
     (async () => {
       try {
-        const result = await stockfishPool.evaluateFen(setup.postTriggerFen, 14);
+        const result = await stockfishPool.evaluateFen(
+          setup.postTriggerFen,
+          14,
+        );
         if (!cancelled && result) {
           evalRef.current = result.cp;
           setActualEval(result.cp);
@@ -1115,25 +1467,30 @@ function GuessEvalBoard({
       } catch {}
       if (!cancelled) setEvaluating(false);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [setup.postTriggerFen]);
 
-  const handleGuess = useCallback((bucketIdx: number) => {
-    if (revealed || evaluating || actualBucket === null) return;
-    setSelectedBucket(bucketIdx);
-    setRevealed(true);
+  const handleGuess = useCallback(
+    (bucketIdx: number) => {
+      if (revealed || evaluating || actualBucket === null) return;
+      setSelectedBucket(bucketIdx);
+      setRevealed(true);
 
-    const distance = Math.abs(bucketIdx - actualBucket);
-    // Exact or one off = correct, farther = wrong
-    if (distance <= 1) {
-      playSound("correct");
-      setTimeout(() => onSolved(), 1500);
-    } else {
-      playSound("wrong");
-      playDungeonSound("damage");
-      setTimeout(() => onFailed(), 2000);
-    }
-  }, [revealed, evaluating, actualBucket, onSolved, onFailed]);
+      const distance = Math.abs(bucketIdx - actualBucket);
+      // Exact or one off = correct, farther = wrong
+      if (distance <= 1) {
+        playSound("correct");
+        setTimeout(() => onSolved(), 1500);
+      } else {
+        playSound("wrong");
+        playDungeonSound("damage");
+        setTimeout(() => onFailed(), 2000);
+      }
+    },
+    [revealed, evaluating, actualBucket, onSolved, onFailed],
+  );
 
   const orientation: "white" | "black" = useMemo(() => {
     return new Chess(setup.postTriggerFen).turn() === "w" ? "white" : "black";
@@ -1147,7 +1504,9 @@ function GuessEvalBoard({
   const lastMoveStyles: Record<string, React.CSSProperties> = useMemo(() => {
     const styles: Record<string, React.CSSProperties> = {};
     if (setup.triggerFrom && setup.triggerTo) {
-      styles[setup.triggerFrom] = { backgroundColor: "rgba(255, 255, 0, 0.25)" };
+      styles[setup.triggerFrom] = {
+        backgroundColor: "rgba(255, 255, 0, 0.25)",
+      };
       styles[setup.triggerTo] = { backgroundColor: "rgba(255, 255, 0, 0.35)" };
     }
     return styles;
@@ -1165,8 +1524,12 @@ function GuessEvalBoard({
                 boardOrientation={orientation}
                 boardWidth={boardSize}
                 arePiecesDraggable={false}
-                customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-                customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                customDarkSquareStyle={{
+                  backgroundColor: boardTheme.darkSquare,
+                }}
+                customLightSquareStyle={{
+                  backgroundColor: boardTheme.lightSquare,
+                }}
                 showBoardNotation={showCoords}
                 customSquareStyles={lastMoveStyles}
                 customPieces={customPieces}
@@ -1176,8 +1539,12 @@ function GuessEvalBoard({
 
           {/* Turn indicator */}
           <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.03] px-3 py-1.5">
-            <div className={`h-3 w-3 rounded-full ${turnToMove === "White" ? "bg-white border border-slate-400" : "bg-zinc-800 border border-zinc-600"}`} />
-            <span className="text-sm font-medium text-slate-300">{turnToMove} to move</span>
+            <div
+              className={`h-3 w-3 rounded-full ${turnToMove === "White" ? "bg-white border border-slate-400" : "bg-zinc-800 border border-zinc-600"}`}
+            />
+            <span className="text-sm font-medium text-slate-300">
+              {turnToMove} to move
+            </span>
             {setup.triggerFrom && setup.triggerTo && (
               <span className="text-xs text-slate-500 ml-1">
                 (last: {setup.triggerFrom}→{setup.triggerTo})
@@ -1188,11 +1555,18 @@ function GuessEvalBoard({
           {/* Eval guess buttons */}
           <div className="w-full max-w-md space-y-2">
             <p className="text-center text-sm font-medium text-slate-300">
-              {evaluating ? "Analyzing position…" : revealed ? "Result:" : "Who stands better?"}
+              {evaluating
+                ? "Analyzing position…"
+                : revealed
+                  ? "Result:"
+                  : "Who stands better?"}
             </p>
             {EVAL_BUCKETS.map((bucket, idx) => {
               const isSelected = selectedBucket === idx;
-              const isCorrect = revealed && actualBucket !== null && Math.abs(idx - actualBucket) <= 1;
+              const isCorrect =
+                revealed &&
+                actualBucket !== null &&
+                Math.abs(idx - actualBucket) <= 1;
               const isActual = revealed && idx === actualBucket;
 
               return (
@@ -1218,11 +1592,18 @@ function GuessEvalBoard({
             })}
             {revealed && actualEval !== null && (
               <p className="text-center text-xs text-slate-400 mt-2">
-                Engine eval: <span className="font-mono font-bold text-white">{actualEval >= 0 ? "+" : ""}{(actualEval / 100).toFixed(1)}</span>
-                {selectedBucket !== null && actualBucket !== null && Math.abs(selectedBucket - actualBucket) <= 1
-                  ? <span className="ml-2 text-emerald-400">Close enough! ✓</span>
-                  : <span className="ml-2 text-red-400">Too far off ✗</span>
-                }
+                Engine eval:{" "}
+                <span className="font-mono font-bold text-white">
+                  {actualEval >= 0 ? "+" : ""}
+                  {(actualEval / 100).toFixed(1)}
+                </span>
+                {selectedBucket !== null &&
+                actualBucket !== null &&
+                Math.abs(selectedBucket - actualBucket) <= 1 ? (
+                  <span className="ml-2 text-emerald-400">Close enough! ✓</span>
+                ) : (
+                  <span className="ml-2 text-red-400">Too far off ✗</span>
+                )}
               </p>
             )}
           </div>
@@ -1233,15 +1614,27 @@ function GuessEvalBoard({
           <div className="flex items-center justify-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider border border-cyan-500/20 bg-cyan-500/5 text-cyan-400">
             📊 Guess the Eval
           </div>
-          <BattleSceneVignette actId={act.id} seed={run.seed + run.currentFloor} />
+          <BattleSceneVignette
+            actId={act.id}
+            seed={run.seed + run.currentFloor}
+          />
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
             <p className="text-xs italic leading-relaxed text-slate-400">
-              Study the position carefully. Is White or Black doing better? How much?
+              Study the position carefully. Is White or Black doing better? How
+              much?
             </p>
           </div>
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
             <div className="flex items-center gap-2 text-xs text-slate-500">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-500">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="text-amber-500"
+              >
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
               <span>{puzzle.puzzle.rating}</span>
@@ -1285,7 +1678,9 @@ function GuessMoveBoard({
   onSolved: () => void;
   onFailed: () => void;
 }) {
-  const { ref: boardRef, size: boardSize } = useBoardSize(720, { evalBar: false });
+  const { ref: boardRef, size: boardSize } = useBoardSize(720, {
+    evalBar: false,
+  });
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
@@ -1297,7 +1692,11 @@ function GuessMoveBoard({
     const targetPly = Math.max(4, puzzle.puzzle.initialPly - 2);
     const chess = new Chess();
     for (let i = 0; i < Math.min(targetPly, moves.length); i++) {
-      try { chess.move(moves[i]); } catch { break; }
+      try {
+        chess.move(moves[i]);
+      } catch {
+        break;
+      }
     }
     const position = chess.fen();
     const nextMoveStr = moves[targetPly];
@@ -1308,24 +1707,36 @@ function GuessMoveBoard({
       moveResult = chess.move(nextMoveStr);
       san = moveResult?.san ?? nextMoveStr;
     } catch {}
-    const ori: "white" | "black" = new Chess(position).turn() === "w" ? "white" : "black";
+    const ori: "white" | "black" =
+      new Chess(position).turn() === "w" ? "white" : "black";
     return {
       fen: position,
-      correctMove: moveResult ? { from: moveResult.from, to: moveResult.to } : null,
+      correctMove: moveResult
+        ? { from: moveResult.from, to: moveResult.to }
+        : null,
       orientation: ori,
       moveSAN: san,
     };
   }, [puzzle]);
 
-  const [state, setState] = useState<"waiting" | "correct" | "wrong">("waiting");
+  const [state, setState] = useState<"waiting" | "correct" | "wrong">(
+    "waiting",
+  );
   const [attempts, setAttempts] = useState(0);
-  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
+  const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(
+    null,
+  );
   const [currentFen, setCurrentFen] = useState(fen);
+  const [selected, setSelected] = useState<string | null>(null);
 
   const act = getAct(run.currentFloor);
 
   const sideToMove = useMemo(() => {
-    try { return new Chess(fen).turn(); } catch { return "w"; }
+    try {
+      return new Chess(fen).turn();
+    } catch {
+      return "w";
+    }
   }, [fen]);
 
   const isDraggablePiece = useCallback(
@@ -1333,12 +1744,13 @@ function GuessMoveBoard({
       if (state !== "waiting") return false;
       return piece.startsWith(sideToMove === "w" ? "w" : "b");
     },
-    [state, sideToMove]
+    [state, sideToMove],
   );
 
   const onDrop = useCallback(
     (from: string, to: string) => {
       if (state !== "waiting" || !correctMove) return false;
+      setSelected(null);
 
       if (from === correctMove.from && to === correctMove.to) {
         // Correct!
@@ -1363,7 +1775,7 @@ function GuessMoveBoard({
         }
 
         // Wrong but legal move
-        setAttempts(a => a + 1);
+        setAttempts((a) => a + 1);
         playSound("wrong");
         if (attempts >= 1) {
           // Two fails — show the answer
@@ -1372,7 +1784,11 @@ function GuessMoveBoard({
           if (correctMove) {
             const chess = new Chess(fen);
             try {
-              chess.move({ from: correctMove.from, to: correctMove.to, promotion: "q" });
+              chess.move({
+                from: correctMove.from,
+                to: correctMove.to,
+                promotion: "q",
+              });
               setTimeout(() => {
                 setCurrentFen(chess.fen());
                 setLastMove({ from: correctMove.from, to: correctMove.to });
@@ -1384,13 +1800,78 @@ function GuessMoveBoard({
         return false;
       }
     },
-    [state, correctMove, fen, attempts, onSolved, onFailed]
+    [state, correctMove, fen, attempts, onSolved, onFailed],
+  );
+
+  const legalMoveSquares = useMemo(() => {
+    if (!selected || state !== "waiting") return [];
+    try {
+      const chess = new Chess(currentFen);
+      return (
+        chess.moves({ square: selected as any, verbose: true }) as Array<{
+          to: string;
+        }>
+      ).map((m) => m.to);
+    } catch {
+      return [];
+    }
+  }, [selected, state, currentFen]);
+
+  const handleSquareClick = useCallback(
+    (square: string) => {
+      if (state !== "waiting") return;
+      try {
+        const chess = new Chess(currentFen);
+        const piece = chess.get(square as any);
+        const turn = chess.turn();
+        if (!selected) {
+          if (piece && piece.color === turn) setSelected(square);
+          return;
+        }
+        if (square === selected) {
+          setSelected(null);
+          return;
+        }
+        if (piece && piece.color === turn) {
+          setSelected(square);
+          return;
+        }
+        onDrop(selected, square);
+        setSelected(null);
+      } catch {
+        setSelected(null);
+      }
+    },
+    [state, currentFen, selected, onDrop],
   );
 
   const customSquareStyles: Record<string, React.CSSProperties> = {};
   if (lastMove) {
-    customSquareStyles[lastMove.from] = { backgroundColor: "rgba(255, 255, 0, 0.25)" };
-    customSquareStyles[lastMove.to] = { backgroundColor: "rgba(255, 255, 0, 0.35)" };
+    customSquareStyles[lastMove.from] = {
+      backgroundColor: "rgba(255, 255, 0, 0.25)",
+    };
+    customSquareStyles[lastMove.to] = {
+      backgroundColor: "rgba(255, 255, 0, 0.35)",
+    };
+  }
+  if (selected && state === "waiting") {
+    customSquareStyles[selected] = {
+      ...customSquareStyles[selected],
+      backgroundColor: "rgba(255, 210, 0, 0.45)",
+    };
+    try {
+      const selChess = new Chess(currentFen);
+      for (const sq of legalMoveSquares) {
+        const hasPiece = selChess.get(sq as any);
+        customSquareStyles[sq] = {
+          ...customSquareStyles[sq],
+          background: hasPiece
+            ? "radial-gradient(circle, transparent 56%, rgba(255,255,255,0.34) 56%)"
+            : "radial-gradient(circle, rgba(255,255,255,0.3) 23%, transparent 24%)",
+          borderRadius: "50%",
+        };
+      }
+    } catch {}
   }
 
   return (
@@ -1408,26 +1889,34 @@ function GuessMoveBoard({
                 arePiecesDraggable={state === "waiting"}
                 isDraggablePiece={isDraggablePiece}
                 animationDuration={200}
-                customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-                customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                customDarkSquareStyle={{
+                  backgroundColor: boardTheme.darkSquare,
+                }}
+                customLightSquareStyle={{
+                  backgroundColor: boardTheme.lightSquare,
+                }}
                 showBoardNotation={showCoords}
                 customSquareStyles={customSquareStyles}
                 customPieces={customPieces}
+                onSquareClick={handleSquareClick}
               />
             </div>
           </div>
 
-          <div className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-all ${
-            state === "correct" ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-              : state === "wrong" ? "border-red-500/30 bg-red-500/10 text-red-400"
-              : "border-white/[0.08] bg-white/[0.03] text-slate-400"
-          }`}>
+          <div
+            className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-all ${
+              state === "correct"
+                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
+                : state === "wrong"
+                  ? "border-red-500/30 bg-red-500/10 text-red-400"
+                  : "border-white/[0.08] bg-white/[0.03] text-slate-400"
+            }`}
+          >
             {state === "waiting"
               ? `What did the player play here?${attempts > 0 ? " (last chance!)" : ""}`
               : state === "correct"
                 ? `✅ Correct! The move was ${moveSAN}`
-                : `❌ Wrong — the move was ${moveSAN}`
-            }
+                : `❌ Wrong — the move was ${moveSAN}`}
           </div>
         </div>
 
@@ -1436,15 +1925,27 @@ function GuessMoveBoard({
           <div className="flex items-center justify-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider border border-amber-500/20 bg-amber-500/5 text-amber-400">
             🔍 Guess the Move
           </div>
-          <BattleSceneVignette actId={act.id} seed={run.seed + run.currentFloor} />
+          <BattleSceneVignette
+            actId={act.id}
+            seed={run.seed + run.currentFloor}
+          />
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
             <p className="text-xs italic leading-relaxed text-slate-400">
-              This position is from a real game. Can you find the move that was actually played?
+              This position is from a real game. Can you find the move that was
+              actually played?
             </p>
           </div>
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
             <div className="flex items-center gap-2 text-xs text-slate-500">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-500">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="text-amber-500"
+              >
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
               <span>{puzzle.puzzle.rating}</span>
@@ -1465,9 +1966,16 @@ function GuessMoveBoard({
                   if (correctMove) {
                     const chess = new Chess(fen);
                     try {
-                      chess.move({ from: correctMove.from, to: correctMove.to, promotion: "q" });
+                      chess.move({
+                        from: correctMove.from,
+                        to: correctMove.to,
+                        promotion: "q",
+                      });
                       setCurrentFen(chess.fen());
-                      setLastMove({ from: correctMove.from, to: correctMove.to });
+                      setLastMove({
+                        from: correctMove.from,
+                        to: correctMove.to,
+                      });
                     } catch {}
                   }
                   setTimeout(() => onFailed(), 2000);
@@ -1486,11 +1994,36 @@ function GuessMoveBoard({
 /* ================================================================== */
 
 const ELO_RANGES = [
-  { label: "Beginner", range: "Under 1200", mid: 1000, color: "text-green-300 bg-green-500/10 border-green-500/20" },
-  { label: "Intermediate", range: "1200–1500", mid: 1350, color: "text-blue-300 bg-blue-500/10 border-blue-500/20" },
-  { label: "Advanced", range: "1500–1800", mid: 1650, color: "text-purple-300 bg-purple-500/10 border-purple-500/20" },
-  { label: "Expert", range: "1800–2100", mid: 1950, color: "text-amber-300 bg-amber-500/10 border-amber-500/20" },
-  { label: "Master+", range: "2100+", mid: 2250, color: "text-red-300 bg-red-500/10 border-red-500/20" },
+  {
+    label: "Beginner",
+    range: "Under 1200",
+    mid: 1000,
+    color: "text-green-300 bg-green-500/10 border-green-500/20",
+  },
+  {
+    label: "Intermediate",
+    range: "1200–1500",
+    mid: 1350,
+    color: "text-blue-300 bg-blue-500/10 border-blue-500/20",
+  },
+  {
+    label: "Advanced",
+    range: "1500–1800",
+    mid: 1650,
+    color: "text-purple-300 bg-purple-500/10 border-purple-500/20",
+  },
+  {
+    label: "Expert",
+    range: "1800–2100",
+    mid: 1950,
+    color: "text-amber-300 bg-amber-500/10 border-amber-500/20",
+  },
+  {
+    label: "Master+",
+    range: "2100+",
+    mid: 2250,
+    color: "text-red-300 bg-red-500/10 border-red-500/20",
+  },
 ] as const;
 
 function getEloBucket(elo: number): number {
@@ -1512,7 +2045,9 @@ function GuessEloBoard({
   onSolved: () => void;
   onFailed: () => void;
 }) {
-  const { ref: boardRef, size: boardSize } = useBoardSize(720, { evalBar: false });
+  const { ref: boardRef, size: boardSize } = useBoardSize(720, {
+    evalBar: false,
+  });
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
@@ -1523,18 +2058,27 @@ function GuessEloBoard({
     const targetPly = Math.min(puzzle.puzzle.initialPly, moves.length);
     const chess = new Chess();
     for (let i = 0; i < targetPly; i++) {
-      try { chess.move(moves[i]); } catch { break; }
+      try {
+        chess.move(moves[i]);
+      } catch {
+        break;
+      }
     }
     const position = chess.fen();
-    const ori: "white" | "black" = new Chess(position).turn() === "w" ? "white" : "black";
+    const ori: "white" | "black" =
+      new Chess(position).turn() === "w" ? "white" : "black";
 
     // Get average rating from players — Lichess format: [{color, name, rating?}, ...]
     let avg = 1500;
     try {
       const players = puzzle.game.players;
       if (Array.isArray(players) && players.length >= 2) {
-        const ratings = players.map((p: any) => p.rating ?? p.user?.rating ?? 1500);
-        avg = Math.round(ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length);
+        const ratings = players.map(
+          (p: any) => p.rating ?? p.user?.rating ?? 1500,
+        );
+        avg = Math.round(
+          ratings.reduce((a: number, b: number) => a + b, 0) / ratings.length,
+        );
       }
     } catch {}
 
@@ -1553,7 +2097,9 @@ function GuessEloBoard({
 
   // Also replay a short sequence of recent moves via autoplay
   const [displayFen, setDisplayFen] = useState(fen);
-  const [replayMoves, setReplayMoves] = useState<{ from: string; to: string }[]>([]);
+  const [replayMoves, setReplayMoves] = useState<
+    { from: string; to: string }[]
+  >([]);
   const [currentMoveIdx, setCurrentMoveIdx] = useState(0);
 
   useEffect(() => {
@@ -1563,7 +2109,11 @@ function GuessEloBoard({
     const endPly = puzzle.puzzle.initialPly;
     const chess = new Chess();
     for (let i = 0; i < startPly; i++) {
-      try { chess.move(moves[i]); } catch { break; }
+      try {
+        chess.move(moves[i]);
+      } catch {
+        break;
+      }
     }
     setDisplayFen(chess.fen());
 
@@ -1572,7 +2122,9 @@ function GuessEloBoard({
       try {
         const result = chess.move(moves[i]);
         if (result) replays.push({ from: result.from, to: result.to });
-      } catch { break; }
+      } catch {
+        break;
+      }
     }
     setReplayMoves(replays);
     setCurrentMoveIdx(0);
@@ -1586,33 +2138,40 @@ function GuessEloBoard({
       const startPly = Math.max(0, puzzle.puzzle.initialPly - 6);
       const chess = new Chess();
       for (let i = 0; i < startPly + currentMoveIdx + 1; i++) {
-        try { chess.move(moves[i]); } catch { break; }
+        try {
+          chess.move(moves[i]);
+        } catch {
+          break;
+        }
       }
       setDisplayFen(chess.fen());
-      setCurrentMoveIdx(prev => prev + 1);
+      setCurrentMoveIdx((prev) => prev + 1);
       playSound("move");
     }, 1200);
     return () => clearTimeout(timer);
   }, [currentMoveIdx, replayMoves.length, puzzle, revealed]);
 
-  const handleGuess = useCallback((bucketIdx: number) => {
-    if (revealed) return;
-    setSelectedBucket(bucketIdx);
-    setRevealed(true);
+  const handleGuess = useCallback(
+    (bucketIdx: number) => {
+      if (revealed) return;
+      setSelectedBucket(bucketIdx);
+      setRevealed(true);
 
-    // Show final position
-    setDisplayFen(fen);
+      // Show final position
+      setDisplayFen(fen);
 
-    const distance = Math.abs(bucketIdx - actualBucket);
-    if (distance <= 1) {
-      playSound("correct");
-      setTimeout(() => onSolved(), 1500);
-    } else {
-      playSound("wrong");
-      playDungeonSound("damage");
-      setTimeout(() => onFailed(), 2000);
-    }
-  }, [revealed, actualBucket, fen, onSolved, onFailed]);
+      const distance = Math.abs(bucketIdx - actualBucket);
+      if (distance <= 1) {
+        playSound("correct");
+        setTimeout(() => onSolved(), 1500);
+      } else {
+        playSound("wrong");
+        playDungeonSound("damage");
+        setTimeout(() => onFailed(), 2000);
+      }
+    },
+    [revealed, actualBucket, fen, onSolved, onFailed],
+  );
 
   return (
     <div className="w-full dungeon-screen-enter">
@@ -1626,8 +2185,12 @@ function GuessEloBoard({
                 boardOrientation={orientation}
                 boardWidth={boardSize}
                 arePiecesDraggable={false}
-                customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-                customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                customDarkSquareStyle={{
+                  backgroundColor: boardTheme.darkSquare,
+                }}
+                customLightSquareStyle={{
+                  backgroundColor: boardTheme.lightSquare,
+                }}
                 showBoardNotation={showCoords}
                 customPieces={customPieces}
               />
@@ -1646,7 +2209,10 @@ function GuessEloBoard({
             {ELO_RANGES.map((range, idx) => {
               const isSelected = selectedBucket === idx;
               const isActual = revealed && idx === actualBucket;
-              const isClose = revealed && selectedBucket !== null && Math.abs(selectedBucket - actualBucket) <= 1;
+              const isClose =
+                revealed &&
+                selectedBucket !== null &&
+                Math.abs(selectedBucket - actualBucket) <= 1;
 
               return (
                 <button
@@ -1673,11 +2239,14 @@ function GuessEloBoard({
             })}
             {revealed && (
               <p className="text-center text-xs text-slate-400 mt-2">
-                Average rating: <span className="font-mono font-bold text-white">{avgElo}</span>
-                {selectedBucket !== null && Math.abs(selectedBucket - actualBucket) <= 1
-                  ? <span className="ml-2 text-emerald-400">Close enough! ✓</span>
-                  : <span className="ml-2 text-red-400">Too far off ✗</span>
-                }
+                Average rating:{" "}
+                <span className="font-mono font-bold text-white">{avgElo}</span>
+                {selectedBucket !== null &&
+                Math.abs(selectedBucket - actualBucket) <= 1 ? (
+                  <span className="ml-2 text-emerald-400">Close enough! ✓</span>
+                ) : (
+                  <span className="ml-2 text-red-400">Too far off ✗</span>
+                )}
               </p>
             )}
           </div>
@@ -1688,15 +2257,27 @@ function GuessEloBoard({
           <div className="flex items-center justify-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider border border-yellow-500/20 bg-yellow-500/5 text-yellow-400">
             ⭐ Guess the Elo
           </div>
-          <BattleSceneVignette actId={act.id} seed={run.seed + run.currentFloor} />
+          <BattleSceneVignette
+            actId={act.id}
+            seed={run.seed + run.currentFloor}
+          />
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
             <p className="text-xs italic leading-relaxed text-slate-400">
-              Watch these moves from a real game. Can you guess the players&apos; rating?
+              Watch these moves from a real game. Can you guess the
+              players&apos; rating?
             </p>
           </div>
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
             <div className="flex items-center gap-2 text-xs text-slate-500">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-500">
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="text-amber-500"
+              >
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
               <span>{puzzle.puzzle.rating}</span>
@@ -1743,7 +2324,9 @@ function PerkSelect({
     <div className="text-center dungeon-screen-enter">
       <div className="text-4xl mb-2">🗡️</div>
       <h2 className="mb-1 text-xl font-bold text-white">Choose a Perk</h2>
-      <p className="mb-6 text-sm text-slate-400">Select one to add to your arsenal</p>
+      <p className="mb-6 text-sm text-slate-400">
+        Select one to add to your arsenal
+      </p>
       <div className="flex flex-wrap justify-center gap-4">
         {choices.map((perk, idx) => (
           <button
@@ -1757,13 +2340,19 @@ function PerkSelect({
           >
             <span className="text-4xl drop-shadow-lg">{perk.icon}</span>
             <span className="text-sm font-bold">{perk.name}</span>
-            <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-              perk.rarity === "legendary" ? "bg-amber-500/20 text-amber-400" :
-              perk.rarity === "epic" ? "bg-purple-500/20 text-purple-400" :
-              perk.rarity === "rare" ? "bg-blue-500/20 text-blue-400" :
-              perk.rarity === "cursed" ? "bg-red-500/20 text-red-400" :
-              "bg-white/[0.06] text-slate-500"
-            }`}>
+            <span
+              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                perk.rarity === "legendary"
+                  ? "bg-amber-500/20 text-amber-400"
+                  : perk.rarity === "epic"
+                    ? "bg-purple-500/20 text-purple-400"
+                    : perk.rarity === "rare"
+                      ? "bg-blue-500/20 text-blue-400"
+                      : perk.rarity === "cursed"
+                        ? "bg-red-500/20 text-red-400"
+                        : "bg-white/[0.06] text-slate-500"
+              }`}
+            >
               {perk.rarity}
             </span>
             <span className="text-xs opacity-80">{perk.description}</span>
@@ -1792,21 +2381,29 @@ function EventScreen({
   event: MysteryEvent;
   onChoice: (idx: number) => void;
 }) {
-  useEffect(() => { playDungeonSound("event"); }, []);
+  useEffect(() => {
+    playDungeonSound("event");
+  }, []);
 
   return (
     <div className="mx-auto max-w-md text-center dungeon-screen-enter">
       {/* Atmospheric purple glow */}
       <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute inset-0" style={{
-          background: "radial-gradient(circle at 50% 40%, rgba(139, 92, 246, 0.08) 0%, transparent 60%)"
-        }} />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 40%, rgba(139, 92, 246, 0.08) 0%, transparent 60%)",
+          }}
+        />
       </div>
 
       <div className="relative z-10">
         <span className="text-6xl drop-shadow-lg">{event.icon}</span>
         <h2 className="mt-3 text-xl font-bold text-white">{event.title}</h2>
-        <p className="mt-2 text-sm text-slate-400 italic leading-relaxed">{event.description}</p>
+        <p className="mt-2 text-sm text-slate-400 italic leading-relaxed">
+          {event.description}
+        </p>
         <div className="mt-6 space-y-2">
           {event.choices.map((choice, i) => (
             <button
@@ -1815,8 +2412,12 @@ function EventScreen({
               onClick={() => onChoice(i)}
               className={`dungeon-stagger-${i + 1} w-full rounded-xl border border-white/[0.08] bg-white/[0.03] p-4 text-left transition-all hover:border-purple-500/30 hover:bg-purple-500/5 hover:shadow-lg hover:shadow-purple-500/5 group`}
             >
-              <p className="text-sm font-medium text-white group-hover:text-purple-200 transition-colors">{choice.label}</p>
-              <p className="text-xs text-slate-500 mt-0.5">{choice.description}</p>
+              <p className="text-sm font-medium text-white group-hover:text-purple-200 transition-colors">
+                {choice.label}
+              </p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {choice.description}
+              </p>
             </button>
           ))}
         </div>
@@ -1848,21 +2449,30 @@ function RestScreen({
     <div className="mx-auto max-w-md text-center dungeon-screen-enter">
       {/* Warm campfire glow */}
       <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute inset-0" style={{
-          background: "radial-gradient(circle at 50% 60%, rgba(251, 146, 60, 0.06) 0%, transparent 50%)"
-        }} />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 60%, rgba(251, 146, 60, 0.06) 0%, transparent 50%)",
+          }}
+        />
       </div>
 
       <div className="relative z-10">
         {/* Animated campfire */}
         <div className="relative inline-block">
           <span className="text-6xl">🏕️</span>
-          <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-orange-500/20 blur-xl" style={{
-            animation: "dungeon-torch-flicker 1.5s ease-in-out infinite"
-          }} />
+          <div
+            className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-orange-500/20 blur-xl"
+            style={{
+              animation: "dungeon-torch-flicker 1.5s ease-in-out infinite",
+            }}
+          />
         </div>
         <h2 className="mt-3 text-xl font-bold text-white">Rest Stop</h2>
-        <p className="mt-2 text-xs italic text-slate-500 max-w-sm mx-auto leading-relaxed">{flavor}</p>
+        <p className="mt-2 text-xs italic text-slate-500 max-w-sm mx-auto leading-relaxed">
+          {flavor}
+        </p>
         <p className="mt-2 text-sm text-slate-400">Take a moment to recover…</p>
         <div className="mt-6 flex flex-col gap-3">
           <button
@@ -1897,13 +2507,55 @@ function RestScreen({
 /* ================================================================== */
 
 const SHOP_ITEMS = [
-  { id: "shop-heal-30", name: "Health Potion", icon: "🧪", description: "Restore 30 HP", cost: 25 },
-  { id: "shop-heal-full", name: "Full Heal", icon: "💖", description: "Restore to max HP", cost: 50 },
-  { id: "shop-max-hp", name: "HP Upgrade", icon: "🪖", description: "+20 max HP", cost: 40 },
-  { id: "shop-attack", name: "Whetstone", icon: "⚔️", description: "+1 Attack", cost: 30 },
-  { id: "shop-defense", name: "Shield Polish", icon: "🛡️", description: "+1 Defense", cost: 30 },
-  { id: "shop-luck", name: "Lucky Charm", icon: "🍀", description: "+2 Luck", cost: 35 },
-  { id: "shop-perk", name: "Mystery Perk", icon: "🎁", description: "Random rare+ perk", cost: 60 },
+  {
+    id: "shop-heal-30",
+    name: "Health Potion",
+    icon: "🧪",
+    description: "Restore 30 HP",
+    cost: 25,
+  },
+  {
+    id: "shop-heal-full",
+    name: "Full Heal",
+    icon: "💖",
+    description: "Restore to max HP",
+    cost: 50,
+  },
+  {
+    id: "shop-max-hp",
+    name: "HP Upgrade",
+    icon: "🪖",
+    description: "+20 max HP",
+    cost: 40,
+  },
+  {
+    id: "shop-attack",
+    name: "Whetstone",
+    icon: "⚔️",
+    description: "+1 Attack",
+    cost: 30,
+  },
+  {
+    id: "shop-defense",
+    name: "Shield Polish",
+    icon: "🛡️",
+    description: "+1 Defense",
+    cost: 30,
+  },
+  {
+    id: "shop-luck",
+    name: "Lucky Charm",
+    icon: "🍀",
+    description: "+2 Luck",
+    cost: 35,
+  },
+  {
+    id: "shop-perk",
+    name: "Mystery Perk",
+    icon: "🎁",
+    description: "Random rare+ perk",
+    cost: 60,
+  },
 ];
 
 function ShopScreen({
@@ -1921,17 +2573,31 @@ function ShopScreen({
     <div className="mx-auto max-w-md text-center dungeon-screen-enter">
       {/* Golden ambient */}
       <div className="pointer-events-none fixed inset-0 z-0">
-        <div className="absolute inset-0" style={{
-          background: "radial-gradient(circle at 50% 40%, rgba(251, 191, 36, 0.05) 0%, transparent 60%)"
-        }} />
+        <div
+          className="absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(circle at 50% 40%, rgba(251, 191, 36, 0.05) 0%, transparent 60%)",
+          }}
+        />
       </div>
 
       <div className="relative z-10">
         <span className="text-6xl">🏪</span>
         <h2 className="mt-3 text-xl font-bold text-white">Dungeon Shop</h2>
-        <p className="mt-2 text-sm text-slate-400">Spend your hard-earned coins</p>
+        <p className="mt-2 text-sm text-slate-400">
+          Spend your hard-earned coins
+        </p>
         <p className="mt-1 text-sm font-bold text-amber-400 flex items-center justify-center gap-1">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-amber-400">
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className="text-amber-400"
+          >
             <circle cx="12" cy="12" r="10" />
             <path d="M12 6v12M6 12h12" />
           </svg>
@@ -1940,8 +2606,10 @@ function ShopScreen({
         <div className="mt-4 space-y-2">
           {SHOP_ITEMS.map((item, idx) => {
             const canAfford = coins >= item.cost;
-            const isHealFull = item.id === "shop-heal-full" && stats.hp >= stats.maxHp;
-            const isHeal30 = item.id === "shop-heal-30" && stats.hp >= stats.maxHp;
+            const isHealFull =
+              item.id === "shop-heal-full" && stats.hp >= stats.maxHp;
+            const isHeal30 =
+              item.id === "shop-heal-30" && stats.hp >= stats.maxHp;
             const disabled = !canAfford || isHealFull || isHeal30;
             return (
               <button
@@ -1959,7 +2627,9 @@ function ShopScreen({
                   <p className="text-sm font-medium text-white">{item.name}</p>
                   <p className="text-xs text-slate-500">{item.description}</p>
                 </div>
-                <span className="text-sm font-bold text-amber-400 whitespace-nowrap">{item.cost} 🪙</span>
+                <span className="text-sm font-bold text-amber-400 whitespace-nowrap">
+                  {item.cost} 🪙
+                </span>
               </button>
             );
           })}
@@ -2004,7 +2674,8 @@ function RunSummary({
   const currentLevelXp = xpForLevel(newLevel);
   const progressXp = profile.xp - currentLevelXp;
   const neededXp = nextLevelXp - currentLevelXp;
-  const xpPercent = neededXp > 0 ? Math.min(100, (progressXp / neededXp) * 100) : 100;
+  const xpPercent =
+    neededXp > 0 ? Math.min(100, (progressXp / neededXp) * 100) : 100;
 
   useEffect(() => {
     playDungeonSound(isVictory ? "victory" : "death");
@@ -2021,8 +2692,14 @@ function RunSummary({
 
   return (
     <div className="mx-auto max-w-md text-center dungeon-screen-enter">
-      {isVictory ? <VictoryIllustration size={140} /> : <DeathIllustration size={140} />}
-      <h2 className={`mt-3 text-3xl font-bold ${isVictory ? "text-amber-400 dungeon-victory-glow" : "text-red-400"}`}>
+      {isVictory ? (
+        <VictoryIllustration size={140} />
+      ) : (
+        <DeathIllustration size={140} />
+      )}
+      <h2
+        className={`mt-3 text-3xl font-bold ${isVictory ? "text-amber-400 dungeon-victory-glow" : "text-red-400"}`}
+      >
         {isVictory ? "Victory!" : "Run Over"}
       </h2>
       <p className="mt-1 text-sm text-slate-400">
@@ -2038,12 +2715,19 @@ function RunSummary({
 
       {/* XP Earned Breakdown */}
       <div className="mt-5 rounded-xl border border-amber-500/20 bg-amber-500/[0.04] p-4">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400/80">XP Earned</h3>
+        <h3 className="text-xs font-bold uppercase tracking-wider text-amber-400/80">
+          XP Earned
+        </h3>
         <div className="mt-2 space-y-1">
-          {xpData.breakdown.map(b => (
-            <div key={b.label} className="flex items-center justify-between text-xs">
+          {xpData.breakdown.map((b) => (
+            <div
+              key={b.label}
+              className="flex items-center justify-between text-xs"
+            >
               <span className="text-slate-400">{b.label}</span>
-              <span className="font-mono font-bold text-amber-300">+{b.value}</span>
+              <span className="font-mono font-bold text-amber-300">
+                +{b.value}
+              </span>
             </div>
           ))}
           <div className="flex items-center justify-between border-t border-white/[0.06] pt-1 text-sm font-bold">
@@ -2055,8 +2739,12 @@ function RunSummary({
         {/* Level bar */}
         <div className="mt-3">
           <div className="flex items-center justify-between text-[10px] text-slate-500">
-            <span>Lv. {newLevel} — {profile.title}</span>
-            <span>{progressXp} / {neededXp} XP</span>
+            <span>
+              Lv. {newLevel} — {profile.title}
+            </span>
+            <span>
+              {progressXp} / {neededXp} XP
+            </span>
           </div>
           <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
             <div
@@ -2076,17 +2764,26 @@ function RunSummary({
       {/* New achievements */}
       {newAchievements.length > 0 && (
         <div className="mt-4">
-          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-purple-400/80">Achievements Unlocked!</p>
+          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-purple-400/80">
+            Achievements Unlocked!
+          </p>
           <div className="space-y-1.5">
-            {newAchievements.map(id => {
-              const ach = ALL_ACHIEVEMENTS.find(a => a.id === id);
+            {newAchievements.map((id) => {
+              const ach = ALL_ACHIEVEMENTS.find((a) => a.id === id);
               if (!ach) return null;
               return (
-                <div key={id} className="flex items-center gap-2 rounded-lg border border-purple-500/20 bg-purple-500/[0.06] px-3 py-2 text-left">
+                <div
+                  key={id}
+                  className="flex items-center gap-2 rounded-lg border border-purple-500/20 bg-purple-500/[0.06] px-3 py-2 text-left"
+                >
                   <span className="text-xl">{ach.icon}</span>
                   <div>
-                    <div className="text-xs font-bold text-purple-300">{ach.name}</div>
-                    <div className="text-[10px] text-slate-500">{ach.description}</div>
+                    <div className="text-xs font-bold text-purple-300">
+                      {ach.name}
+                    </div>
+                    <div className="text-[10px] text-slate-500">
+                      {ach.description}
+                    </div>
                   </div>
                 </div>
               );
@@ -2098,9 +2795,14 @@ function RunSummary({
       {/* Stats grid */}
       <div className="mt-5 grid grid-cols-3 gap-2">
         {stats.map((s, i) => (
-          <div key={s.label} className={`dungeon-stagger-${Math.min(i + 1, 4)} rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 transition-all hover:bg-white/[0.04]`}>
+          <div
+            key={s.label}
+            className={`dungeon-stagger-${Math.min(i + 1, 4)} rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5 transition-all hover:bg-white/[0.04]`}
+          >
             <div className="text-xl">{s.icon}</div>
-            <div className="mt-0.5 text-base font-bold text-white">{s.value}</div>
+            <div className="mt-0.5 text-base font-bold text-white">
+              {s.value}
+            </div>
             <div className="text-[9px] text-slate-500">{s.label}</div>
           </div>
         ))}
@@ -2109,9 +2811,13 @@ function RunSummary({
       {/* Perks collected */}
       {run.perks.length > 0 && (
         <div className="mt-4">
-          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">Perks Collected</p>
+          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+            Perks Collected
+          </p>
           <div className="flex flex-wrap justify-center gap-1.5">
-            {run.perks.map(p => <PerkBadge key={p.id} perk={p} small />)}
+            {run.perks.map((p) => (
+              <PerkBadge key={p.id} perk={p} small />
+            ))}
           </div>
         </div>
       )}
@@ -2174,68 +2880,79 @@ export default function DungeonPage() {
   }, []);
 
   /* ── Navigate to a node ── */
-  const navigateToNode = useCallback(async (node: MapNode) => {
-    if (!run) return;
-    playDungeonSound("footstep");
+  const navigateToNode = useCallback(
+    async (node: MapNode) => {
+      if (!run) return;
+      playDungeonSound("footstep");
 
-    const updated = { ...run };
-    updated.currentNodeId = node.id;
-    updated.currentFloor = node.floor;
+      const updated = { ...run };
+      updated.currentNodeId = node.id;
+      updated.currentFloor = node.floor;
 
-    // Mark visited
-    const nodeIdx = updated.map.findIndex(n => n.id === node.id);
-    if (nodeIdx >= 0) updated.map = [...updated.map];
-    if (nodeIdx >= 0) updated.map[nodeIdx] = { ...updated.map[nodeIdx], visited: true };
+      // Mark visited
+      const nodeIdx = updated.map.findIndex((n) => n.id === node.id);
+      if (nodeIdx >= 0) updated.map = [...updated.map];
+      if (nodeIdx >= 0)
+        updated.map[nodeIdx] = { ...updated.map[nodeIdx], visited: true };
 
-    updated.floorsCleared = Math.max(updated.floorsCleared, node.floor);
+      updated.floorsCleared = Math.max(updated.floorsCleared, node.floor);
 
-    // Act transition — show narrative text when entering a new act
-    const newAct = getAct(node.floor);
-    if (newAct.id !== lastActRef.current && node.floor > 0) {
-      lastActRef.current = newAct.id;
-      setStoryMessage(newAct.transition);
-      setTimeout(() => setStoryMessage(null), 5000);
-    }
-
-    // Devil's Pawn damage every 3 floors
-    if (run.perks.some(p => p.id === "devils-pawn") && node.floor > 0 && node.floor % 3 === 0) {
-      updated.stats = { ...updated.stats, hp: Math.max(0, updated.stats.hp - 5) };
-    }
-
-    switch (node.type) {
-      case "battle":
-      case "elite":
-      case "boss":
-        updated.status = "battle";
-        setRun(updated);
-        playDungeonSound(node.type === "boss" ? "bossIntro" : "battleStart");
-        await fetchPuzzle(node.difficulty ?? "easy");
-        break;
-
-      case "mystery": {
-        const events = ALL_EVENTS;
-        const event = events[Math.floor(Math.random() * events.length)];
-        updated.status = "event";
-        updated.activeEvent = event;
-        setRun(updated);
-        break;
+      // Act transition — show narrative text when entering a new act
+      const newAct = getAct(node.floor);
+      if (newAct.id !== lastActRef.current && node.floor > 0) {
+        lastActRef.current = newAct.id;
+        setStoryMessage(newAct.transition);
+        setTimeout(() => setStoryMessage(null), 5000);
       }
 
-      case "shop":
-        updated.status = "shop";
-        setRun(updated);
-        break;
+      // Devil's Pawn damage every 3 floors
+      if (
+        run.perks.some((p) => p.id === "devils-pawn") &&
+        node.floor > 0 &&
+        node.floor % 3 === 0
+      ) {
+        updated.stats = {
+          ...updated.stats,
+          hp: Math.max(0, updated.stats.hp - 5),
+        };
+      }
 
-      case "rest":
-        updated.status = "rest";
-        setRun(updated);
-        break;
+      switch (node.type) {
+        case "battle":
+        case "elite":
+        case "boss":
+          updated.status = "battle";
+          setRun(updated);
+          playDungeonSound(node.type === "boss" ? "bossIntro" : "battleStart");
+          await fetchPuzzle(node.difficulty ?? "easy");
+          break;
 
-      default:
-        updated.status = "exploring";
-        setRun(updated);
-    }
-  }, [run, fetchPuzzle]);
+        case "mystery": {
+          const events = ALL_EVENTS;
+          const event = events[Math.floor(Math.random() * events.length)];
+          updated.status = "event";
+          updated.activeEvent = event;
+          setRun(updated);
+          break;
+        }
+
+        case "shop":
+          updated.status = "shop";
+          setRun(updated);
+          break;
+
+        case "rest":
+          updated.status = "rest";
+          setRun(updated);
+          break;
+
+        default:
+          updated.status = "exploring";
+          setRun(updated);
+      }
+    },
+    [run, fetchPuzzle],
+  );
 
   /* ── Puzzle solved ── */
   const handlePuzzleSolved = useCallback(() => {
@@ -2244,9 +2961,12 @@ export default function DungeonPage() {
     updated.puzzlesSolved++;
     updated.streak++;
     updated.bestStreak = Math.max(updated.bestStreak, updated.streak);
-    updated.streakMultiplier = getStreakMultiplier(updated.streak, updated.perks);
+    updated.streakMultiplier = getStreakMultiplier(
+      updated.streak,
+      updated.perks,
+    );
 
-    const currentNode = updated.map.find(n => n.id === updated.currentNodeId);
+    const currentNode = updated.map.find((n) => n.id === updated.currentNodeId);
     const diff = currentNode?.difficulty ?? "easy";
 
     // Earn coins
@@ -2270,8 +2990,17 @@ export default function DungeonPage() {
       updated.puzzlesSolved % 3 === 0;
 
     if (shouldOfferPerk) {
-      const perkCount = currentNode?.type === "boss" ? 3 : currentNode?.type === "elite" ? 3 : 3;
-      updated.perkChoices = rollPerks(perkCount, updated.perks, updated.stats.luck);
+      const perkCount =
+        currentNode?.type === "boss"
+          ? 3
+          : currentNode?.type === "elite"
+            ? 3
+            : 3;
+      updated.perkChoices = rollPerks(
+        perkCount,
+        updated.perks,
+        updated.stats.luck,
+      );
       updated.status = "perk-select";
     } else {
       updated.status = "exploring";
@@ -2301,7 +3030,7 @@ export default function DungeonPage() {
     updated.streak = 0;
     updated.streakMultiplier = 1;
 
-    const currentNode = updated.map.find(n => n.id === updated.currentNodeId);
+    const currentNode = updated.map.find((n) => n.id === updated.currentNodeId);
     const diff = currentNode?.difficulty ?? "easy";
 
     // Take damage
@@ -2319,10 +3048,15 @@ export default function DungeonPage() {
     // Death check
     if (updated.stats.hp <= 0) {
       // Phoenix Feather?
-      const phoenixIdx = updated.perks.findIndex(p => p.id === "phoenix-feather" && !p.consumed);
+      const phoenixIdx = updated.perks.findIndex(
+        (p) => p.id === "phoenix-feather" && !p.consumed,
+      );
       if (phoenixIdx >= 0) {
         updated.perks = [...updated.perks];
-        updated.perks[phoenixIdx] = { ...updated.perks[phoenixIdx], consumed: true };
+        updated.perks[phoenixIdx] = {
+          ...updated.perks[phoenixIdx],
+          consumed: true,
+        };
         updated.stats = { ...updated.stats, hp: 30 };
         setEventMessage("🔥 Phoenix Feather activated! Revived with 30 HP!");
         setTimeout(() => setEventMessage(null), 3000);
@@ -2339,31 +3073,34 @@ export default function DungeonPage() {
   }, [run]);
 
   /* ── Perk selected ── */
-  const handlePerkPick = useCallback((perk: Perk) => {
-    if (!run) return;
-    const updated = { ...run };
-    updated.perks = [...updated.perks, perk];
-    updated.perkChoices = [];
-    updated.status = "exploring";
+  const handlePerkPick = useCallback(
+    (perk: Perk) => {
+      if (!run) return;
+      const updated = { ...run };
+      updated.perks = [...updated.perks, perk];
+      updated.perkChoices = [];
+      updated.status = "exploring";
 
-    // Apply stat effects
-    if (perk.effects) {
-      const s = { ...updated.stats };
-      if (perk.effects.maxHp) s.maxHp += perk.effects.maxHp;
-      if (perk.effects.hp) s.hp = Math.min(s.maxHp, s.hp + perk.effects.hp);
-      if (perk.effects.attack) s.attack += perk.effects.attack;
-      if (perk.effects.defense) s.defense += perk.effects.defense;
-      if (perk.effects.luck) s.luck += perk.effects.luck;
-      updated.stats = s;
-    }
+      // Apply stat effects
+      if (perk.effects) {
+        const s = { ...updated.stats };
+        if (perk.effects.maxHp) s.maxHp += perk.effects.maxHp;
+        if (perk.effects.hp) s.hp = Math.min(s.maxHp, s.hp + perk.effects.hp);
+        if (perk.effects.attack) s.attack += perk.effects.attack;
+        if (perk.effects.defense) s.defense += perk.effects.defense;
+        if (perk.effects.luck) s.luck += perk.effects.luck;
+        updated.stats = s;
+      }
 
-    // Immortal Game: heal to full
-    if (perk.id === "immortal-game") {
-      updated.stats = { ...updated.stats, hp: updated.stats.maxHp };
-    }
+      // Immortal Game: heal to full
+      if (perk.id === "immortal-game") {
+        updated.stats = { ...updated.stats, hp: updated.stats.maxHp };
+      }
 
-    setRun(updated);
-  }, [run]);
+      setRun(updated);
+    },
+    [run],
+  );
 
   const handlePerkSkip = useCallback(() => {
     if (!run) return;
@@ -2371,195 +3108,238 @@ export default function DungeonPage() {
   }, [run]);
 
   /* ── Mystery event choice ── */
-  const handleEventChoice = useCallback((idx: number) => {
-    if (!run || !run.activeEvent) return;
-    const event = run.activeEvent;
-    const choice = event.choices[idx];
-    const outcome = choice.outcome;
-    const updated = { ...run };
+  const handleEventChoice = useCallback(
+    (idx: number) => {
+      if (!run || !run.activeEvent) return;
+      const event = run.activeEvent;
+      const choice = event.choices[idx];
+      const outcome = choice.outcome;
+      const updated = { ...run };
 
-    // Apply outcome
-    if (outcome.hpChange) {
-      updated.stats = {
-        ...updated.stats,
-        hp: Math.min(updated.stats.maxHp, Math.max(0, updated.stats.hp + outcome.hpChange)),
-      };
-    }
-    if (outcome.coinsChange) {
-      updated.coins = Math.max(0, updated.coins + outcome.coinsChange);
-    }
-    if (outcome.addPerk) {
-      const fromCatalogue = ALL_PERKS.find((p: Perk) => p.id === outcome.addPerk);
-      if (fromCatalogue) {
-        updated.perks = [...updated.perks, fromCatalogue];
-        if (fromCatalogue.effects) {
-          const s = { ...updated.stats };
-          if (fromCatalogue.effects.maxHp) s.maxHp += fromCatalogue.effects.maxHp;
-          if (fromCatalogue.effects.hp) s.hp = Math.min(s.maxHp, s.hp + fromCatalogue.effects.hp);
-          if (fromCatalogue.effects.attack) s.attack += fromCatalogue.effects.attack;
-          if (fromCatalogue.effects.defense) s.defense += fromCatalogue.effects.defense;
-          if (fromCatalogue.effects.luck) s.luck += fromCatalogue.effects.luck;
-          updated.stats = s;
-        }
+      // Apply outcome
+      if (outcome.hpChange) {
+        updated.stats = {
+          ...updated.stats,
+          hp: Math.min(
+            updated.stats.maxHp,
+            Math.max(0, updated.stats.hp + outcome.hpChange),
+          ),
+        };
       }
-    }
-
-    // Special event handling
-    if (event.id === "chess-gambler" && idx === 0) {
-      // 50/50 gamble
-      if (Math.random() < 0.5) {
-        updated.coins += 30;
-        setEventMessage("🎲 You won! +30 coins!");
-      } else {
-        updated.coins = Math.max(0, updated.coins - 15);
-        setEventMessage("🎲 You lost! −15 coins.");
+      if (outcome.coinsChange) {
+        updated.coins = Math.max(0, updated.coins + outcome.coinsChange);
       }
-      setTimeout(() => setEventMessage(null), 2500);
-    } else if (event.id === "treasure-room" && idx === 2) {
-      // 50% perk
-      if (Math.random() < 0.5) {
-        const perks = rollPerks(1, updated.perks, updated.stats.luck);
-        if (perks.length > 0) {
-          updated.perks = [...updated.perks, perks[0]];
-          setEventMessage(`🎁 You found: ${perks[0].icon} ${perks[0].name}!`);
-        }
-      } else {
-        setEventMessage("Empty… nothing here.");
-      }
-      setTimeout(() => setEventMessage(null), 2500);
-    } else if (event.id === "chess-spirit") {
-      // Apply stat bonuses based on choice
-      const s = { ...updated.stats };
-      if (idx === 0) s.attack += 2;
-      else if (idx === 1) { s.maxHp += 20; s.hp = Math.min(s.maxHp, s.hp + 20); }
-      else if (idx === 2) s.luck += 3;
-      updated.stats = s;
-      setEventMessage(outcome.message);
-      setTimeout(() => setEventMessage(null), 2500);
-    } else if (event.id === "ancient-book") {
-      const s = { ...updated.stats };
-      if (idx === 0) s.attack += 2;
-      else if (idx === 1) s.attack += 1;
-      updated.stats = s;
-      setEventMessage(outcome.message);
-      setTimeout(() => setEventMessage(null), 2500);
-    } else if (event.id === "fallen-knight" && idx === 0) {
-      // Give random rare perk
-      const perks = rollPerks(1, updated.perks, updated.stats.luck + 5); // boosted luck for rare
-      if (perks.length > 0) {
-        updated.perks = [...updated.perks, perks[0]];
-        setEventMessage(`${perks[0].icon} The knight teaches you: ${perks[0].name}!`);
-      }
-      setTimeout(() => setEventMessage(null), 2500);
-    } else if (event.id === "fallen-knight" && idx === 1) {
-      const s = { ...updated.stats };
-      s.defense += 1;
-      s.attack += 1;
-      updated.stats = s;
-      setEventMessage(outcome.message);
-      setTimeout(() => setEventMessage(null), 2500);
-    } else if (event.id === "mysterious-gm" && idx === 0) {
-      // Elite fight
-      updated.status = "battle";
-      updated.activeEvent = null;
-      setRun(updated);
-      fetchPuzzle("hard");
-      return;
-    } else {
-      setEventMessage(outcome.message);
-      setTimeout(() => setEventMessage(null), 2500);
-    }
-
-    // Death check after event
-    if (updated.stats.hp <= 0) {
-      const phoenixIdx = updated.perks.findIndex(p => p.id === "phoenix-feather" && !p.consumed);
-      if (phoenixIdx >= 0) {
-        updated.perks = [...updated.perks];
-        updated.perks[phoenixIdx] = { ...updated.perks[phoenixIdx], consumed: true };
-        updated.stats = { ...updated.stats, hp: 30 };
-      } else {
-        updated.status = "dead";
-        updated.activeEvent = null;
-        setRun(updated);
-        return;
-      }
-    }
-
-    updated.activeEvent = null;
-    updated.status = "exploring";
-    setRun(updated);
-  }, [run, fetchPuzzle]);
-
-  /* ── Rest actions ── */
-  const handleRest = useCallback((action: "heal" | "upgrade") => {
-    if (!run) return;
-    const updated = { ...run };
-
-    if (action === "heal") {
-      updated.stats = {
-        ...updated.stats,
-        hp: Math.min(updated.stats.maxHp, updated.stats.hp + 30),
-      };
-      updated.status = "exploring";
-    } else {
-      // Upgrade — give a random perk
-      updated.perkChoices = rollPerks(3, updated.perks, updated.stats.luck);
-      updated.status = "perk-select";
-    }
-
-    setRun(updated);
-  }, [run]);
-
-  /* ── Shop buy ── */
-  const handleShopBuy = useCallback((itemId: string) => {
-    if (!run) return;
-    const item = SHOP_ITEMS.find(i => i.id === itemId);
-    if (!item || run.coins < item.cost) return;
-
-    const updated = { ...run };
-    updated.coins -= item.cost;
-
-    switch (itemId) {
-      case "shop-heal-30":
-        updated.stats = { ...updated.stats, hp: Math.min(updated.stats.maxHp, updated.stats.hp + 30) };
-        break;
-      case "shop-heal-full":
-        updated.stats = { ...updated.stats, hp: updated.stats.maxHp };
-        break;
-      case "shop-max-hp":
-        updated.stats = { ...updated.stats, maxHp: updated.stats.maxHp + 20, hp: updated.stats.hp + 20 };
-        break;
-      case "shop-attack":
-        updated.stats = { ...updated.stats, attack: updated.stats.attack + 1 };
-        break;
-      case "shop-defense":
-        updated.stats = { ...updated.stats, defense: updated.stats.defense + 1 };
-        break;
-      case "shop-luck":
-        updated.stats = { ...updated.stats, luck: updated.stats.luck + 2 };
-        break;
-      case "shop-perk": {
-        const perks = rollPerks(1, updated.perks, updated.stats.luck + 5);
-        if (perks.length > 0) {
-          updated.perks = [...updated.perks, perks[0]];
-          if (perks[0].effects) {
+      if (outcome.addPerk) {
+        const fromCatalogue = ALL_PERKS.find(
+          (p: Perk) => p.id === outcome.addPerk,
+        );
+        if (fromCatalogue) {
+          updated.perks = [...updated.perks, fromCatalogue];
+          if (fromCatalogue.effects) {
             const s = { ...updated.stats };
-            if (perks[0].effects.maxHp) s.maxHp += perks[0].effects.maxHp;
-            if (perks[0].effects.hp) s.hp = Math.min(s.maxHp, s.hp + perks[0].effects.hp);
-            if (perks[0].effects.attack) s.attack += perks[0].effects.attack;
-            if (perks[0].effects.defense) s.defense += perks[0].effects.defense;
-            if (perks[0].effects.luck) s.luck += perks[0].effects.luck;
+            if (fromCatalogue.effects.maxHp)
+              s.maxHp += fromCatalogue.effects.maxHp;
+            if (fromCatalogue.effects.hp)
+              s.hp = Math.min(s.maxHp, s.hp + fromCatalogue.effects.hp);
+            if (fromCatalogue.effects.attack)
+              s.attack += fromCatalogue.effects.attack;
+            if (fromCatalogue.effects.defense)
+              s.defense += fromCatalogue.effects.defense;
+            if (fromCatalogue.effects.luck)
+              s.luck += fromCatalogue.effects.luck;
             updated.stats = s;
           }
-          setEventMessage(`🎁 You got: ${perks[0].icon} ${perks[0].name}!`);
-          setTimeout(() => setEventMessage(null), 2500);
         }
-        break;
       }
-    }
 
-    setRun(updated);
-  }, [run]);
+      // Special event handling
+      if (event.id === "chess-gambler" && idx === 0) {
+        // 50/50 gamble
+        if (Math.random() < 0.5) {
+          updated.coins += 30;
+          setEventMessage("🎲 You won! +30 coins!");
+        } else {
+          updated.coins = Math.max(0, updated.coins - 15);
+          setEventMessage("🎲 You lost! −15 coins.");
+        }
+        setTimeout(() => setEventMessage(null), 2500);
+      } else if (event.id === "treasure-room" && idx === 2) {
+        // 50% perk
+        if (Math.random() < 0.5) {
+          const perks = rollPerks(1, updated.perks, updated.stats.luck);
+          if (perks.length > 0) {
+            updated.perks = [...updated.perks, perks[0]];
+            setEventMessage(`🎁 You found: ${perks[0].icon} ${perks[0].name}!`);
+          }
+        } else {
+          setEventMessage("Empty… nothing here.");
+        }
+        setTimeout(() => setEventMessage(null), 2500);
+      } else if (event.id === "chess-spirit") {
+        // Apply stat bonuses based on choice
+        const s = { ...updated.stats };
+        if (idx === 0) s.attack += 2;
+        else if (idx === 1) {
+          s.maxHp += 20;
+          s.hp = Math.min(s.maxHp, s.hp + 20);
+        } else if (idx === 2) s.luck += 3;
+        updated.stats = s;
+        setEventMessage(outcome.message);
+        setTimeout(() => setEventMessage(null), 2500);
+      } else if (event.id === "ancient-book") {
+        const s = { ...updated.stats };
+        if (idx === 0) s.attack += 2;
+        else if (idx === 1) s.attack += 1;
+        updated.stats = s;
+        setEventMessage(outcome.message);
+        setTimeout(() => setEventMessage(null), 2500);
+      } else if (event.id === "fallen-knight" && idx === 0) {
+        // Give random rare perk
+        const perks = rollPerks(1, updated.perks, updated.stats.luck + 5); // boosted luck for rare
+        if (perks.length > 0) {
+          updated.perks = [...updated.perks, perks[0]];
+          setEventMessage(
+            `${perks[0].icon} The knight teaches you: ${perks[0].name}!`,
+          );
+        }
+        setTimeout(() => setEventMessage(null), 2500);
+      } else if (event.id === "fallen-knight" && idx === 1) {
+        const s = { ...updated.stats };
+        s.defense += 1;
+        s.attack += 1;
+        updated.stats = s;
+        setEventMessage(outcome.message);
+        setTimeout(() => setEventMessage(null), 2500);
+      } else if (event.id === "mysterious-gm" && idx === 0) {
+        // Elite fight
+        updated.status = "battle";
+        updated.activeEvent = null;
+        setRun(updated);
+        fetchPuzzle("hard");
+        return;
+      } else {
+        setEventMessage(outcome.message);
+        setTimeout(() => setEventMessage(null), 2500);
+      }
+
+      // Death check after event
+      if (updated.stats.hp <= 0) {
+        const phoenixIdx = updated.perks.findIndex(
+          (p) => p.id === "phoenix-feather" && !p.consumed,
+        );
+        if (phoenixIdx >= 0) {
+          updated.perks = [...updated.perks];
+          updated.perks[phoenixIdx] = {
+            ...updated.perks[phoenixIdx],
+            consumed: true,
+          };
+          updated.stats = { ...updated.stats, hp: 30 };
+        } else {
+          updated.status = "dead";
+          updated.activeEvent = null;
+          setRun(updated);
+          return;
+        }
+      }
+
+      updated.activeEvent = null;
+      updated.status = "exploring";
+      setRun(updated);
+    },
+    [run, fetchPuzzle],
+  );
+
+  /* ── Rest actions ── */
+  const handleRest = useCallback(
+    (action: "heal" | "upgrade") => {
+      if (!run) return;
+      const updated = { ...run };
+
+      if (action === "heal") {
+        updated.stats = {
+          ...updated.stats,
+          hp: Math.min(updated.stats.maxHp, updated.stats.hp + 30),
+        };
+        updated.status = "exploring";
+      } else {
+        // Upgrade — give a random perk
+        updated.perkChoices = rollPerks(3, updated.perks, updated.stats.luck);
+        updated.status = "perk-select";
+      }
+
+      setRun(updated);
+    },
+    [run],
+  );
+
+  /* ── Shop buy ── */
+  const handleShopBuy = useCallback(
+    (itemId: string) => {
+      if (!run) return;
+      const item = SHOP_ITEMS.find((i) => i.id === itemId);
+      if (!item || run.coins < item.cost) return;
+
+      const updated = { ...run };
+      updated.coins -= item.cost;
+
+      switch (itemId) {
+        case "shop-heal-30":
+          updated.stats = {
+            ...updated.stats,
+            hp: Math.min(updated.stats.maxHp, updated.stats.hp + 30),
+          };
+          break;
+        case "shop-heal-full":
+          updated.stats = { ...updated.stats, hp: updated.stats.maxHp };
+          break;
+        case "shop-max-hp":
+          updated.stats = {
+            ...updated.stats,
+            maxHp: updated.stats.maxHp + 20,
+            hp: updated.stats.hp + 20,
+          };
+          break;
+        case "shop-attack":
+          updated.stats = {
+            ...updated.stats,
+            attack: updated.stats.attack + 1,
+          };
+          break;
+        case "shop-defense":
+          updated.stats = {
+            ...updated.stats,
+            defense: updated.stats.defense + 1,
+          };
+          break;
+        case "shop-luck":
+          updated.stats = { ...updated.stats, luck: updated.stats.luck + 2 };
+          break;
+        case "shop-perk": {
+          const perks = rollPerks(1, updated.perks, updated.stats.luck + 5);
+          if (perks.length > 0) {
+            updated.perks = [...updated.perks, perks[0]];
+            if (perks[0].effects) {
+              const s = { ...updated.stats };
+              if (perks[0].effects.maxHp) s.maxHp += perks[0].effects.maxHp;
+              if (perks[0].effects.hp)
+                s.hp = Math.min(s.maxHp, s.hp + perks[0].effects.hp);
+              if (perks[0].effects.attack) s.attack += perks[0].effects.attack;
+              if (perks[0].effects.defense)
+                s.defense += perks[0].effects.defense;
+              if (perks[0].effects.luck) s.luck += perks[0].effects.luck;
+              updated.stats = s;
+            }
+            setEventMessage(`🎁 You got: ${perks[0].icon} ${perks[0].name}!`);
+            setTimeout(() => setEventMessage(null), 2500);
+          }
+          break;
+        }
+      }
+
+      setRun(updated);
+    },
+    [run],
+  );
 
   /* ── Start screen ── */
   if (showStartScreen) {
@@ -2586,23 +3366,32 @@ export default function DungeonPage() {
           </h1>
           <p className="mt-3 text-sm text-slate-400 max-w-sm leading-relaxed">
             Beneath the ruins of an ancient chess academy lies a cursed dungeon,
-            its halls guarded by tactical puzzles of increasing ferocity.
-            Three bosses stand between you and the Dark Engine — the sentient
-            machine that corrupted it all.
+            its halls guarded by tactical puzzles of increasing ferocity. Three
+            bosses stand between you and the Dark Engine — the sentient machine
+            that corrupted it all.
           </p>
 
           {/* Act preview */}
           <div className="mt-6 w-full max-w-xs space-y-2">
             {DUNGEON_ACTS.map((act, i) => (
-              <div key={act.id} className={`dungeon-stagger-${i + 1} overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.02] transition-all hover:bg-white/[0.04]`}>
+              <div
+                key={act.id}
+                className={`dungeon-stagger-${i + 1} overflow-hidden rounded-xl border border-white/[0.06] bg-white/[0.02] transition-all hover:bg-white/[0.04]`}
+              >
                 <ActScene actId={act.id} height={40} />
                 <div className="flex items-start gap-3 px-3 py-2 text-left">
                   <span className="text-xl mt-0.5">{act.icon}</span>
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-bold text-white">Act {act.id}: {act.name}</p>
-                    <p className="text-[10px] text-slate-500 leading-relaxed">{act.subtitle} · Boss: {act.bossIcon} {act.bossName}</p>
+                    <p className="text-xs font-bold text-white">
+                      Act {act.id}: {act.name}
+                    </p>
+                    <p className="text-[10px] text-slate-500 leading-relaxed">
+                      {act.subtitle} · Boss: {act.bossIcon} {act.bossName}
+                    </p>
                   </div>
-                  <span className="text-[9px] text-slate-600 whitespace-nowrap mt-1">F{act.floorRange[0]}-{act.floorRange[1]}</span>
+                  <span className="text-[9px] text-slate-600 whitespace-nowrap mt-1">
+                    F{act.floorRange[0]}-{act.floorRange[1]}
+                  </span>
                 </div>
               </div>
             ))}
@@ -2624,18 +3413,27 @@ export default function DungeonPage() {
                     {p.level}
                   </div>
                   <div className="flex-1">
-                    <div className="text-sm font-bold text-white">{p.title}</div>
-                    <div className="text-[10px] text-slate-500">{prog} / {need} XP to next level</div>
+                    <div className="text-sm font-bold text-white">
+                      {p.title}
+                    </div>
+                    <div className="text-[10px] text-slate-500">
+                      {prog} / {need} XP to next level
+                    </div>
                   </div>
                 </div>
                 <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
-                  <div className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-400" style={{ width: `${pct}%` }} />
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-400"
+                    style={{ width: `${pct}%` }}
+                  />
                 </div>
                 <div className="mt-3 flex justify-between text-[10px] text-slate-500">
                   <span>{p.totalRuns} runs</span>
                   <span>{p.totalVictories} wins</span>
                   <span>{p.totalPuzzlesSolved} puzzles</span>
-                  <span>{p.achievements.length}/{ALL_ACHIEVEMENTS.length} 🏅</span>
+                  <span>
+                    {p.achievements.length}/{ALL_ACHIEVEMENTS.length} 🏅
+                  </span>
                 </div>
               </div>
             );
@@ -2670,7 +3468,9 @@ export default function DungeonPage() {
             ].map((feat, i) => (
               <div key={i} className={`dungeon-stagger-${i + 1}`}>
                 <div className="text-3xl">{feat.icon}</div>
-                <p className="text-xs text-slate-500 mt-1.5 leading-tight">{feat.label}</p>
+                <p className="text-xs text-slate-500 mt-1.5 leading-tight">
+                  {feat.label}
+                </p>
               </div>
             ))}
           </div>
@@ -2685,11 +3485,17 @@ export default function DungeonPage() {
   if (run.status === "dead" || run.status === "victory") {
     return (
       <div className="min-h-screen bg-[#030712]">
-        <DungeonParticles variant={run.status === "victory" ? "sparkle" : "ash"} />
+        <DungeonParticles
+          variant={run.status === "victory" ? "sparkle" : "ash"}
+        />
         <div className="pointer-events-none fixed inset-0 overflow-hidden">
-          <div className={`animate-float absolute -left-32 top-20 h-96 w-96 rounded-full blur-[100px] ${
-            run.status === "victory" ? "bg-amber-500/[0.06]" : "bg-red-500/[0.05]"
-          }`} />
+          <div
+            className={`animate-float absolute -left-32 top-20 h-96 w-96 rounded-full blur-[100px] ${
+              run.status === "victory"
+                ? "bg-amber-500/[0.06]"
+                : "bg-red-500/[0.05]"
+            }`}
+          />
         </div>
         <div className="relative z-10 mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center px-4">
           <RunSummary
@@ -2703,8 +3509,9 @@ export default function DungeonPage() {
   }
 
   /* ── Main game layout ── */
-  const currentNodeForLayout = run.map.find(n => n.id === run.currentNodeId);
-  const isBossBattle = run.status === "battle" && currentNodeForLayout?.type === "boss";
+  const currentNodeForLayout = run.map.find((n) => n.id === run.currentNodeId);
+  const isBossBattle =
+    run.status === "battle" && currentNodeForLayout?.type === "boss";
 
   return (
     <div className="min-h-screen bg-[#030712]">
@@ -2714,9 +3521,13 @@ export default function DungeonPage() {
           <>
             <div className="animate-float absolute -left-32 top-20 h-96 w-96 rounded-full bg-red-500/[0.04] blur-[100px]" />
             {isBossBattle && (
-              <div className="absolute inset-0" style={{
-                background: "radial-gradient(circle at 50% 50%, rgba(220, 38, 38, 0.06) 0%, transparent 60%)"
-              }} />
+              <div
+                className="absolute inset-0"
+                style={{
+                  background:
+                    "radial-gradient(circle at 50% 50%, rgba(220, 38, 38, 0.06) 0%, transparent 60%)",
+                }}
+              />
             )}
           </>
         ) : run.status === "exploring" ? (
@@ -2733,11 +3544,13 @@ export default function DungeonPage() {
       </div>
 
       {/* Subtle particles — per-act variety */}
-      {run.status === "battle" && (() => {
-        const act = getAct(run.currentFloor);
-        const pv = act.id === 1 ? "embers" : act.id === 2 ? "runes" : "lightning";
-        return <DungeonParticles variant={pv as any} />;
-      })()}
+      {run.status === "battle" &&
+        (() => {
+          const act = getAct(run.currentFloor);
+          const pv =
+            act.id === 1 ? "embers" : act.id === 2 ? "runes" : "lightning";
+          return <DungeonParticles variant={pv as any} />;
+        })()}
       {run.status === "exploring" && <DungeonParticles variant="ash" />}
       {run.status === "event" && <DungeonParticles variant="void" />}
       {run.status === "rest" && <DungeonParticles variant="snow" />}
@@ -2747,22 +3560,49 @@ export default function DungeonPage() {
         <div className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl border border-white/[0.06] bg-gradient-to-r from-white/[0.03] to-transparent p-4 backdrop-blur-sm">
           <div className="flex items-center gap-2">
             <div className="relative">
-              <svg width="28" height="28" viewBox="0 0 28 28" className="drop-shadow">
+              <svg
+                width="28"
+                height="28"
+                viewBox="0 0 28 28"
+                className="drop-shadow"
+              >
                 <defs>
                   <linearGradient id="topbar-sword" x1="0" y1="0" x2="1" y2="1">
                     <stop offset="0%" stopColor="#fbbf24" />
                     <stop offset="100%" stopColor="#f59e0b" />
                   </linearGradient>
                 </defs>
-                <path d="M14 3 L17 17 L14 20 L11 17 Z" fill="url(#topbar-sword)" />
-                <rect x="10" y="17" width="8" height="2" rx="1" fill="#d97706" />
-                <rect x="12.5" y="19" width="3" height="5" rx="0.5" fill="#92400e" />
+                <path
+                  d="M14 3 L17 17 L14 20 L11 17 Z"
+                  fill="url(#topbar-sword)"
+                />
+                <rect
+                  x="10"
+                  y="17"
+                  width="8"
+                  height="2"
+                  rx="1"
+                  fill="#d97706"
+                />
+                <rect
+                  x="12.5"
+                  y="19"
+                  width="3"
+                  height="5"
+                  rx="0.5"
+                  fill="#92400e"
+                />
                 <circle cx="14" cy="26" r="1.5" fill="#b45309" />
               </svg>
             </div>
             <div>
               <h1 className="text-lg font-bold text-white">Dungeon Tactics</h1>
-              <p className="text-[10px] text-slate-500 font-mono">Floor {run.currentFloor} — <span className="text-slate-400">{getAct(run.currentFloor).name}</span></p>
+              <p className="text-[10px] text-slate-500 font-mono">
+                Floor {run.currentFloor} —{" "}
+                <span className="text-slate-400">
+                  {getAct(run.currentFloor).name}
+                </span>
+              </p>
             </div>
           </div>
 
@@ -2771,10 +3611,15 @@ export default function DungeonPage() {
           {/* Stats bar */}
           <div className="flex flex-wrap items-center gap-4 text-xs">
             <HpBar hp={run.stats.hp} maxHp={run.stats.maxHp} />
-            <span className="text-amber-400 font-bold flex items-center gap-0.5">💰 {run.coins}</span>
+            <span className="text-amber-400 font-bold flex items-center gap-0.5">
+              💰 {run.coins}
+            </span>
             {run.streak > 0 && (
               <span className="text-orange-400 font-bold">
-                🔥 {run.streak} <span className="text-orange-300">(×{run.streakMultiplier})</span>
+                🔥 {run.streak}{" "}
+                <span className="text-orange-300">
+                  (×{run.streakMultiplier})
+                </span>
               </span>
             )}
             <div className="flex gap-3 text-slate-400">
@@ -2783,7 +3628,8 @@ export default function DungeonPage() {
                 <span className="font-bold">{run.stats.attack}</span>
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-50">
                   <div className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-[11px] text-slate-300 whitespace-nowrap shadow-xl">
-                    <span className="font-bold text-cyan-400">Attack</span> — +{2 + run.stats.attack * 2}s thinking time
+                    <span className="font-bold text-cyan-400">Attack</span> — +
+                    {2 + run.stats.attack * 2}s thinking time
                   </div>
                 </div>
               </div>
@@ -2792,7 +3638,9 @@ export default function DungeonPage() {
                 <span className="font-bold">{run.stats.defense}</span>
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-50">
                   <div className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-[11px] text-slate-300 whitespace-nowrap shadow-xl">
-                    <span className="font-bold text-blue-400">Defense</span> — {run.stats.defense > 0 ? `-${run.stats.defense * 5}` : "no"} damage reduction
+                    <span className="font-bold text-blue-400">Defense</span> —{" "}
+                    {run.stats.defense > 0 ? `-${run.stats.defense * 5}` : "no"}{" "}
+                    damage reduction
                   </div>
                 </div>
               </div>
@@ -2801,7 +3649,8 @@ export default function DungeonPage() {
                 <span className="font-bold">{run.stats.luck}</span>
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-50">
                   <div className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-[11px] text-slate-300 whitespace-nowrap shadow-xl">
-                    <span className="font-bold text-emerald-400">Luck</span> — better perk rarity rolls
+                    <span className="font-bold text-emerald-400">Luck</span> —
+                    better perk rarity rolls
                   </div>
                 </div>
               </div>
@@ -2819,15 +3668,21 @@ export default function DungeonPage() {
         {/* Story / act transition toast */}
         {storyMessage && (
           <div className="mb-4 rounded-xl border border-purple-500/20 bg-purple-500/[0.06] px-5 py-3 text-center">
-            <p className="text-xs italic leading-relaxed text-purple-300/90">{storyMessage}</p>
+            <p className="text-xs italic leading-relaxed text-purple-300/90">
+              {storyMessage}
+            </p>
           </div>
         )}
 
         {/* Perks bar (compact, always visible) */}
         {run.perks.length > 0 && (
           <div className="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-2">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mr-1">🎒 Perks</span>
-            {run.perks.map((p, i) => <PerkBadge key={`${p.id}-${i}`} perk={p} small />)}
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 mr-1">
+              🎒 Perks
+            </span>
+            {run.perks.map((p, i) => (
+              <PerkBadge key={`${p.id}-${i}`} perk={p} small />
+            ))}
           </div>
         )}
 
@@ -2845,10 +3700,16 @@ export default function DungeonPage() {
                     <div className="flex items-center gap-3 px-4 py-2.5">
                       <span className="text-xl">{a.icon}</span>
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-bold text-white">Act {a.id}: {a.name}</p>
-                        <p className="text-[10px] text-slate-500 italic">{a.subtitle}</p>
+                        <p className="text-xs font-bold text-white">
+                          Act {a.id}: {a.name}
+                        </p>
+                        <p className="text-[10px] text-slate-500 italic">
+                          {a.subtitle}
+                        </p>
                       </div>
-                      <span className="text-[9px] text-slate-600">Floors {a.floorRange[0]}–{a.floorRange[1]}</span>
+                      <span className="text-[9px] text-slate-600">
+                        Floors {a.floorRange[0]}–{a.floorRange[1]}
+                      </span>
                     </div>
                   </div>
                 );
@@ -2871,23 +3732,34 @@ export default function DungeonPage() {
                   const prg = p.xp - cur;
                   const nd = nxt - cur;
                   return (
-                    <div className="flex items-center gap-1.5" title={`${prg}/${nd} XP to level ${p.level + 1}`}>
-                      <span className="text-amber-400 font-bold">Lv.{p.level}</span>
+                    <div
+                      className="flex items-center gap-1.5"
+                      title={`${prg}/${nd} XP to level ${p.level + 1}`}
+                    >
+                      <span className="text-amber-400 font-bold">
+                        Lv.{p.level}
+                      </span>
                       <span className="text-slate-600">{p.title}</span>
                     </div>
                   );
                 })()}
                 <div className="flex items-center gap-1.5">
                   <span className="text-slate-500">Solved</span>
-                  <span className="font-bold text-emerald-400">{run.puzzlesSolved}</span>
+                  <span className="font-bold text-emerald-400">
+                    {run.puzzlesSolved}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="text-slate-500">Failed</span>
-                  <span className="font-bold text-red-400">{run.puzzlesFailed}</span>
+                  <span className="font-bold text-red-400">
+                    {run.puzzlesFailed}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="text-slate-500">Best Streak</span>
-                  <span className="font-bold text-orange-400">{run.bestStreak}</span>
+                  <span className="font-bold text-orange-400">
+                    {run.bestStreak}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="text-slate-500">Coins</span>
@@ -2899,7 +3771,10 @@ export default function DungeonPage() {
               <div className="mt-4 text-center">
                 <button
                   type="button"
-                  onClick={() => { setRun(null); setShowStartScreen(true); }}
+                  onClick={() => {
+                    setRun(null);
+                    setShowStartScreen(true);
+                  }}
                   className="rounded-lg border border-red-500/10 px-4 py-1.5 text-xs text-red-400/60 transition-colors hover:text-red-400 hover:border-red-500/30"
                 >
                   Abandon Run
@@ -2909,60 +3784,116 @@ export default function DungeonPage() {
           )}
 
           {/* Battle — full-width board, no map */}
-          {run.status === "battle" && loading && (() => {
-            const loadNode = run.map.find(n => n.id === run.currentNodeId);
-            const isBossLoad = loadNode?.type === "boss";
-            const a = getAct(run.currentFloor);
-            return (
-              <div className="text-center min-h-[400px] flex flex-col items-center justify-center dungeon-screen-enter">
-                {isBossLoad ? (
-                  <>
-                    <BossPortrait actId={a.id} size={140} />
-                    <h2 className="mt-4 text-2xl font-extrabold text-red-400">{a.bossName}</h2>
-                    <p className="text-xs uppercase tracking-wider text-red-400/60 mt-1">{a.bossTitle}</p>
-                    <div className="mt-4 max-w-sm">
-                      {a.bossIntro.split("\n").filter(Boolean).map((line, i) => (
-                        <p key={i} className="mt-2 text-xs italic leading-relaxed text-slate-400">{line}</p>
-                      ))}
-                    </div>
-                    <div className="mt-6 mx-auto h-10 w-10 animate-spin rounded-full border-4 border-red-500/20 border-t-red-400" />
-                  </>
-                ) : (
-                  <>
-                    <BattleSceneVignette actId={a.id} seed={run.seed + run.currentFloor} />
-                    {(() => {
-                      const mode = loadNode?.puzzleMode ?? "tactic";
-                      const modeInfo = PUZZLE_MODE_INFO[mode];
-                      return (
-                        <div className="mt-4 flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-1.5">
-                          <span className="text-sm">{modeInfo.icon}</span>
-                          <span className="text-xs font-bold text-white">{modeInfo.label}</span>
-                        </div>
-                      );
-                    })()}
-                    <div className="mt-4 mx-auto h-10 w-10 animate-spin rounded-full border-4 border-white/10 border-t-emerald-400" />
-                    <p className="mt-3 text-sm text-slate-400">Summoning challenge…</p>
-                    <p className="mt-2 text-xs italic text-slate-600">{getBattleFlavor(run.currentFloor, run.seed)}</p>
-                  </>
-                )}
-              </div>
-            );
-          })()}
+          {run.status === "battle" &&
+            loading &&
+            (() => {
+              const loadNode = run.map.find((n) => n.id === run.currentNodeId);
+              const isBossLoad = loadNode?.type === "boss";
+              const a = getAct(run.currentFloor);
+              return (
+                <div className="text-center min-h-[400px] flex flex-col items-center justify-center dungeon-screen-enter">
+                  {isBossLoad ? (
+                    <>
+                      <BossPortrait actId={a.id} size={140} />
+                      <h2 className="mt-4 text-2xl font-extrabold text-red-400">
+                        {a.bossName}
+                      </h2>
+                      <p className="text-xs uppercase tracking-wider text-red-400/60 mt-1">
+                        {a.bossTitle}
+                      </p>
+                      <div className="mt-4 max-w-sm">
+                        {a.bossIntro
+                          .split("\n")
+                          .filter(Boolean)
+                          .map((line, i) => (
+                            <p
+                              key={i}
+                              className="mt-2 text-xs italic leading-relaxed text-slate-400"
+                            >
+                              {line}
+                            </p>
+                          ))}
+                      </div>
+                      <div className="mt-6 mx-auto h-10 w-10 animate-spin rounded-full border-4 border-red-500/20 border-t-red-400" />
+                    </>
+                  ) : (
+                    <>
+                      <BattleSceneVignette
+                        actId={a.id}
+                        seed={run.seed + run.currentFloor}
+                      />
+                      {(() => {
+                        const mode = loadNode?.puzzleMode ?? "tactic";
+                        const modeInfo = PUZZLE_MODE_INFO[mode];
+                        return (
+                          <div className="mt-4 flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-1.5">
+                            <span className="text-sm">{modeInfo.icon}</span>
+                            <span className="text-xs font-bold text-white">
+                              {modeInfo.label}
+                            </span>
+                          </div>
+                        );
+                      })()}
+                      <div className="mt-4 mx-auto h-10 w-10 animate-spin rounded-full border-4 border-white/10 border-t-emerald-400" />
+                      <p className="mt-3 text-sm text-slate-400">
+                        Summoning challenge…
+                      </p>
+                      <p className="mt-2 text-xs italic text-slate-600">
+                        {getBattleFlavor(run.currentFloor, run.seed)}
+                      </p>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
 
-          {run.status === "battle" && puzzle && !loading && (() => {
-            const currentNode = run.map.find(n => n.id === run.currentNodeId);
-            const mode = currentNode?.puzzleMode ?? "tactic";
-            switch (mode) {
-              case "guess-eval":
-                return <GuessEvalBoard puzzle={puzzle} run={run} onSolved={handlePuzzleSolved} onFailed={handlePuzzleFailed} />;
-              case "guess-move":
-                return <GuessMoveBoard puzzle={puzzle} run={run} onSolved={handlePuzzleSolved} onFailed={handlePuzzleFailed} />;
-              case "guess-elo":
-                return <GuessEloBoard puzzle={puzzle} run={run} onSolved={handlePuzzleSolved} onFailed={handlePuzzleFailed} />;
-              default:
-                return <BattleBoard puzzle={puzzle} run={run} onSolved={handlePuzzleSolved} onFailed={handlePuzzleFailed} />;
-            }
-          })()}
+          {run.status === "battle" &&
+            puzzle &&
+            !loading &&
+            (() => {
+              const currentNode = run.map.find(
+                (n) => n.id === run.currentNodeId,
+              );
+              const mode = currentNode?.puzzleMode ?? "tactic";
+              switch (mode) {
+                case "guess-eval":
+                  return (
+                    <GuessEvalBoard
+                      puzzle={puzzle}
+                      run={run}
+                      onSolved={handlePuzzleSolved}
+                      onFailed={handlePuzzleFailed}
+                    />
+                  );
+                case "guess-move":
+                  return (
+                    <GuessMoveBoard
+                      puzzle={puzzle}
+                      run={run}
+                      onSolved={handlePuzzleSolved}
+                      onFailed={handlePuzzleFailed}
+                    />
+                  );
+                case "guess-elo":
+                  return (
+                    <GuessEloBoard
+                      puzzle={puzzle}
+                      run={run}
+                      onSolved={handlePuzzleSolved}
+                      onFailed={handlePuzzleFailed}
+                    />
+                  );
+                default:
+                  return (
+                    <BattleBoard
+                      puzzle={puzzle}
+                      run={run}
+                      onSolved={handlePuzzleSolved}
+                      onFailed={handlePuzzleFailed}
+                    />
+                  );
+              }
+            })()}
 
           {/* Perk selection */}
           {run.status === "perk-select" && (
@@ -2975,10 +3906,7 @@ export default function DungeonPage() {
 
           {/* Mystery event */}
           {run.status === "event" && run.activeEvent && (
-            <EventScreen
-              event={run.activeEvent}
-              onChoice={handleEventChoice}
-            />
+            <EventScreen event={run.activeEvent} onChoice={handleEventChoice} />
           )}
 
           {/* Rest */}

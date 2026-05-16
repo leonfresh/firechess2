@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import {
@@ -89,9 +90,21 @@ function SampleReportCard({
       <div className="relative flex items-start gap-3">
         {/* Avatar */}
         <div className="relative shrink-0">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-orange-400/30 to-red-500/20 text-base font-bold text-white shadow-inner">
-            {avatarInitial}
-          </div>
+          {report.imageUrl ? (
+            <div className="h-11 w-11 overflow-hidden rounded-xl ring-1 ring-white/10">
+              <Image
+                src={report.imageUrl}
+                alt={report.displayName ?? report.username}
+                width={44}
+                height={44}
+                className="h-full w-full object-cover"
+              />
+            </div>
+          ) : (
+            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-orange-400/30 to-red-500/20 text-base font-bold text-white shadow-inner">
+              {avatarInitial}
+            </div>
+          )}
           {/* Platform dot */}
           <span
             className={`absolute -bottom-0.5 -right-0.5 flex h-3 w-3 items-center justify-center rounded-full text-[6px] font-bold ${

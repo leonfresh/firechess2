@@ -4,6 +4,11 @@ import { ScanSessionPage } from "@/components/scan-session-page";
 import { db } from "@/lib/db";
 import { scanSessions } from "@/lib/schema";
 import { isExpiredScanSession } from "@/lib/scan-session";
+import { SAMPLE_REPORTS } from "@/lib/sample-reports";
+
+const SAMPLE_REPORT_IDS = new Set(
+  SAMPLE_REPORTS.map((r) => r.reportId).filter(Boolean),
+);
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +25,7 @@ export default async function ReportPage({
     .where(eq(scanSessions.id, id))
     .limit(1);
 
-  if (!scan || isExpiredScanSession(scan)) {
+  if (!scan || (!SAMPLE_REPORT_IDS.has(id) && isExpiredScanSession(scan))) {
     notFound();
   }
 
