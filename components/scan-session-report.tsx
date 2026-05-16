@@ -94,6 +94,86 @@ type MotifDefinition = {
   match: (position: TaggedPosition) => boolean;
 };
 
+// ── Floating section nav ─────────────────────────────────────────────────────
+
+type FloatingNavSection = {
+  id: string;
+  label: string;
+  icon: string;
+  count?: number;
+  countColor?: string;
+};
+
+function FloatingSectionNav({ sections }: { sections: FloatingNavSection[] }) {
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const elements = sections
+      .map((s) => document.getElementById(s.id))
+      .filter((el): el is HTMLElement => el !== null);
+    if (!elements.length) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) setActiveId(entry.target.id);
+        }
+      },
+      { rootMargin: "-15% 0px -55% 0px", threshold: 0 },
+    );
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [sections]);
+
+  if (sections.length < 2) return null;
+
+  return (
+    <div className="fixed right-4 top-1/2 z-30 hidden -translate-y-1/2 flex-col gap-1.5 2xl:flex">
+      {sections.map(({ id, label, icon, count, countColor }) => {
+        const isActive = id === activeId;
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() =>
+              document
+                .getElementById(id)
+                ?.scrollIntoView({ behavior: "smooth", block: "start" })
+            }
+            aria-label={`Jump to ${label}`}
+            className={`group relative flex items-center gap-2 rounded-xl border transition-all duration-200 ${
+              isActive
+                ? "border-white/20 bg-white/[0.09] px-3 py-1.5 text-white shadow-lg shadow-black/20"
+                : "border-white/[0.07] bg-white/[0.04] p-2 text-slate-500 hover:border-white/[0.15] hover:bg-white/[0.07] hover:text-slate-300"
+            }`}
+          >
+            {/* Hover tooltip for inactive items */}
+            {!isActive && (
+              <span className="pointer-events-none absolute right-full mr-2.5 whitespace-nowrap rounded-lg border border-white/[0.1] bg-slate-900/95 px-2.5 py-1 text-[11px] font-semibold text-slate-200 opacity-0 shadow-xl backdrop-blur-sm transition-opacity duration-150 group-hover:opacity-100">
+                {label}
+                {count ? ` · ${count}` : ""}
+              </span>
+            )}
+            <span className="text-sm leading-none">{icon}</span>
+            {isActive && (
+              <span className="text-[11px] font-semibold">{label}</span>
+            )}
+            {isActive && count !== undefined && count > 0 && (
+              <span
+                className={`rounded-full px-1.5 text-[9px] font-bold ${countColor ?? "bg-white/[0.1] text-slate-300"}`}
+              >
+                {count}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 function nextCompactRevealTarget(current: number, total: number) {
   return Math.min(total, current + COMPACT_REPORT_LOAD_BATCH);
 }
@@ -2161,786 +2241,844 @@ export function ScanSessionReport({
       return null;
     })();
 
+  const floatingNavSections: FloatingNavSection[] = [
+    showOpenings && {
+      id: "section-openings",
+      label: "Openings",
+      icon: "📚",
+      count: leaks.length || undefined,
+      countColor: "bg-cyan-500/20 text-cyan-300",
+    },
+    showTactics && {
+      id: "section-tactics",
+      label: "Tactics",
+      icon: "⚔️",
+      count: missedTactics.length || undefined,
+      countColor: "bg-amber-500/20 text-amber-300",
+    },
+    showEndgames && {
+      id: "section-endgames",
+      label: "Endgames",
+      icon: "♟",
+      count: endgameMistakes.length || undefined,
+      countColor: "bg-sky-500/20 text-sky-300",
+    },
+    showTimeManagement && {
+      id: "section-time",
+      label: "Time",
+      icon: "⏱️",
+      count: timeMoments.length || undefined,
+      countColor: "bg-fuchsia-500/20 text-fuchsia-300",
+    },
+  ].filter(Boolean) as FloatingNavSection[];
+
   return (
-    <div className="mt-6 space-y-6">
-      {showOpenings || showTactics || showEndgames || showTimeManagement ? (
-        <nav
-          aria-label="Report sections"
-          className="flex items-center gap-2 overflow-x-auto rounded-2xl border border-white/[0.07] bg-white/[0.02] px-3 py-2.5"
-        >
-          {showOpenings ? (
-            <a
-              href="#section-openings"
-              className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white"
-            >
-              📚 Openings
-              {leaks.length > 0 ? (
-                <span className="rounded-full bg-cyan-500/20 px-1.5 text-[10px] font-bold text-cyan-300">
-                  {leaks.length}
-                </span>
-              ) : null}
-            </a>
-          ) : null}
-          {showTactics ? (
-            <a
-              href="#section-tactics"
-              className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white"
-            >
-              ⚔️ Tactics
-              {missedTactics.length > 0 ? (
-                <span className="rounded-full bg-amber-500/20 px-1.5 text-[10px] font-bold text-amber-300">
-                  {missedTactics.length}
-                </span>
-              ) : null}
-            </a>
-          ) : null}
-          {showEndgames ? (
-            <a
-              href="#section-endgames"
-              className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white"
-            >
-              ♟ Endgames
-              {endgameMistakes.length > 0 ? (
-                <span className="rounded-full bg-sky-500/20 px-1.5 text-[10px] font-bold text-sky-300">
-                  {endgameMistakes.length}
-                </span>
-              ) : null}
-            </a>
-          ) : null}
-          {showTimeManagement ? (
-            <a
-              href="#section-time"
-              className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white"
-            >
-              ⏱️ Time
-              {timeMoments.length > 0 ? (
-                <span className="rounded-full bg-fuchsia-500/20 px-1.5 text-[10px] font-bold text-fuchsia-300">
-                  {timeMoments.length}
-                </span>
-              ) : null}
-            </a>
-          ) : null}
-        </nav>
-      ) : null}
+    <>
+      <FloatingSectionNav sections={floatingNavSections} />
+      <div className="mt-6 space-y-6">
+        {showOpenings || showTactics || showEndgames || showTimeManagement ? (
+          <nav
+            aria-label="Report sections"
+            className="flex items-center gap-2 overflow-x-auto rounded-2xl border border-white/[0.07] bg-white/[0.02] px-3 py-2.5"
+          >
+            {showOpenings ? (
+              <button
+                type="button"
+                onClick={() =>
+                  document
+                    .getElementById("section-openings")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white"
+              >
+                📚 Openings
+                {leaks.length > 0 ? (
+                  <span className="rounded-full bg-cyan-500/20 px-1.5 text-[10px] font-bold text-cyan-300">
+                    {leaks.length}
+                  </span>
+                ) : null}
+              </button>
+            ) : null}
+            {showTactics ? (
+              <button
+                type="button"
+                onClick={() =>
+                  document
+                    .getElementById("section-tactics")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white"
+              >
+                ⚔️ Tactics
+                {missedTactics.length > 0 ? (
+                  <span className="rounded-full bg-amber-500/20 px-1.5 text-[10px] font-bold text-amber-300">
+                    {missedTactics.length}
+                  </span>
+                ) : null}
+              </button>
+            ) : null}
+            {showEndgames ? (
+              <button
+                type="button"
+                onClick={() =>
+                  document
+                    .getElementById("section-endgames")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white"
+              >
+                ♟ Endgames
+                {endgameMistakes.length > 0 ? (
+                  <span className="rounded-full bg-sky-500/20 px-1.5 text-[10px] font-bold text-sky-300">
+                    {endgameMistakes.length}
+                  </span>
+                ) : null}
+              </button>
+            ) : null}
+            {showTimeManagement ? (
+              <button
+                type="button"
+                onClick={() =>
+                  document
+                    .getElementById("section-time")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white"
+              >
+                ⏱️ Time
+                {timeMoments.length > 0 ? (
+                  <span className="rounded-full bg-fuchsia-500/20 px-1.5 text-[10px] font-bold text-fuchsia-300">
+                    {timeMoments.length}
+                  </span>
+                ) : null}
+              </button>
+            ) : null}
+          </nav>
+        ) : null}
 
-      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-        <MetricCard
-          label="Games analyzed"
-          value={result.gamesAnalyzed || scan.config.maxGames}
-          hint={isProcessing ? "Updating live" : undefined}
-        />
-        <MetricCard
-          label="Repeat positions"
-          value={result.repeatedPositions}
-          tone="emerald"
-        />
-        <MetricCard
-          label="Opening leaks"
-          value={leaks.length}
-          tone="cyan"
-          hint={
-            realLeakCount !== leaks.length
-              ? `${realLeakCount} count toward scoring`
-              : undefined
-          }
-        />
-        <MetricCard
-          label="Missed tactics"
-          value={result.totalTacticsFound || missedTactics.length}
-          tone="amber"
-        />
-        <MetricCard
-          label="Endgame mistakes"
-          value={endgameMistakes.length}
-          tone="sky"
-        />
-        {reportMeta ? (
+        <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
           <MetricCard
-            label={
-              isTimeManagementScan && timeManagementScore != null
-                ? "Time score"
-                : "Accuracy"
-            }
-            value={
-              isTimeManagementScan && timeManagementScore != null
-                ? `${timeManagementScore}/100`
-                : `${reportMeta.estimatedAccuracy.toFixed(1)}%`
-            }
-            tone="fuchsia"
+            label="Games analyzed"
+            value={result.gamesAnalyzed || scan.config.maxGames}
+            hint={isProcessing ? "Updating live" : undefined}
           />
-        ) : (
           <MetricCard
-            label="Overall profile"
-            value={isProcessing ? "Building" : "Pending"}
-            hint="Scores appear once enough positions are evaluated"
-            tone="fuchsia"
+            label="Repeat positions"
+            value={result.repeatedPositions}
+            tone="emerald"
           />
-        )}
-      </section>
-
-      {reportMeta ? (
-        <section className="grid gap-4 xl:grid-cols-[1.25fr_0.95fr]">
-          <div className="rounded-[1.75rem] border border-white/[0.08] bg-[radial-gradient(circle_at_top_right,_rgba(34,211,238,0.16),_rgba(15,23,42,0.9)_42%,_rgba(2,6,23,0.98)_100%)] p-6 sm:p-7">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
-              {isProcessing ? "Live report preview" : "Report summary"}
-            </p>
-            <h2 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-[2.2rem]">
-              {reportMeta.vibeTitle}
-            </h2>
-            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-300 sm:text-base">
-              {reportMeta.topTag === "No big leak pattern"
-                ? "The scan has enough signal to score the profile, but no single opening tag is dominating the sample."
-                : `Your strongest recurring signal right now is ${reportMeta.topTag}. The sections below update as more detail locks in.`}
-            </p>
-            <div className="mt-5 flex flex-wrap gap-2 text-xs">
-              <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-slate-200">
-                Confidence {reportMeta.confidence}%
-              </span>
-              <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-slate-200">
-                {reportMeta.sampleSize} scored positions
-              </span>
-              <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-slate-200">
-                Consistency {reportMeta.consistencyScore}/100
-              </span>
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
+          <MetricCard
+            label="Opening leaks"
+            value={leaks.length}
+            tone="cyan"
+            hint={
+              realLeakCount !== leaks.length
+                ? `${realLeakCount} count toward scoring`
+                : undefined
+            }
+          />
+          <MetricCard
+            label="Missed tactics"
+            value={result.totalTacticsFound || missedTactics.length}
+            tone="amber"
+          />
+          <MetricCard
+            label="Endgame mistakes"
+            value={endgameMistakes.length}
+            tone="sky"
+          />
+          {reportMeta ? (
             <MetricCard
-              label="Estimated rating"
-              value={reportMeta.estimatedRating}
-              tone="cyan"
-            />
-            <MetricCard
-              label="Avg eval loss"
-              value={formatPawnLoss(reportMeta.weightedCpLoss)}
+              label={
+                isTimeManagementScan && timeManagementScore != null
+                  ? "Time score"
+                  : "Accuracy"
+              }
+              value={
+                isTimeManagementScan && timeManagementScore != null
+                  ? `${timeManagementScore}/100`
+                  : `${reportMeta.estimatedAccuracy.toFixed(1)}%`
+              }
               tone="fuchsia"
             />
-            <MetricCard
-              label="Severe leak rate"
-              value={`${(reportMeta.severeLeakRate * 100).toFixed(0)}%`}
-              tone="amber"
-            />
-            <MetricCard
-              label="75th percentile loss"
-              value={formatPawnLoss(reportMeta.p75CpLoss)}
-              tone="emerald"
-            />
-          </div>
-        </section>
-      ) : null}
-
-      {radarProps && radarData && radarNarrative ? (
-        <div className="space-y-4">
-          <section className="space-y-4">
-            <SectionHeader
-              eyebrow="Strengths"
-              title="What is already working"
-              description="Start with the part of the report that should feel good: these are the pieces of your game already giving you something real to stand on."
-            />
-
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-              <div className="rounded-[1.75rem] border border-white/[0.08] bg-[radial-gradient(circle_at_top_right,_rgba(16,185,129,0.12),_rgba(15,23,42,0.82)_38%,_rgba(2,6,23,0.96)_100%)] p-6 sm:p-7">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                  Good news first
-                </p>
-                <h3 className="mt-3 text-2xl font-black tracking-tight text-white">
-                  {radarNarrative.confidenceLead}
-                </h3>
-                <p className="mt-3 text-sm leading-relaxed text-slate-300">
-                  {radarNarrative.strengthNote}
-                </p>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                {radarNarrative.topStrengths.map((dimension, index) => (
-                  <StrengthSpotlightCard
-                    key={dimension.dimension}
-                    label={index === 0 ? "Current edge" : "Also helping"}
-                    dimension={dimension}
-                    accent={index === 0 ? "emerald" : "cyan"}
-                  />
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-4">
-            <SectionHeader
-              eyebrow="Profile"
-              title="Radar and coaching summary"
-              description="A quick human read on where the next training gain should come from, without losing sight of what is already working."
-            />
-
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
-              <div className="rounded-[1.75rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
-                <StrengthsRadar {...radarProps} />
-              </div>
-
-              <div className="space-y-4">
-                <div className="rounded-[1.75rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                    Coach&apos;s note
-                  </p>
-                  <p className="mt-3 text-sm leading-relaxed text-slate-300">
-                    {radarNarrative.coachingParagraph}
-                  </p>
-                </div>
-
-                <div className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.02] p-5 sm:p-6">
-                  <div className="max-w-2xl">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
-                      Profile outline
-                    </p>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-400">
-                      Read the full profile as a quick outline: what is holding
-                      up, what is dragging, and where the next training gain
-                      should come from.
-                    </p>
-                  </div>
-                  <div className="mt-5">
-                    <RadarLegend data={radarData} props={radarProps} />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        </div>
-      ) : isProcessing || result ? (
-        <RadarLoadingState
-          progress={scanProgress}
-          isProcessing={isProcessing}
-        />
-      ) : null}
-
-      {showOpenings ? (
-        <section id="section-openings" className="space-y-4">
-          <SectionHeader
-            eyebrow="Openings"
-            title="Opening report"
-            description={
-              isProcessing
-                ? "Recurring leaks, rankings, and one-off misses appear here as each opening pass completes."
-                : "Recurring leaks, opening rankings, and the sharpest one-off misses from the scanned archive."
-            }
-            badge={formatCompactBadge({
-              shown: visibleLeaks.length,
-              available: accessibleLeaks.length,
-              total: leaks.length,
-              singular: "recurring leak",
-              plural: "recurring leaks",
-            })}
-            live={isProcessing}
-          />
-
-          {openingSummaries.length > 0 ? (
-            <OpeningRankings openingSummaries={openingSummaries} />
-          ) : null}
-
-          {leaks.length > 0 ? (
-            <div className="space-y-4">
-              <div className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
-                <div className="flex items-start justify-between gap-3">
-                  <h3 className="text-lg font-bold text-white">
-                    Recurring opening leaks
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={() => toggleSV("leaks")}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-400 transition hover:bg-white/[0.08] hover:text-slate-200"
-                  >
-                    {getSV("leaks") === "list" ? "Grid" : "List"}
-                  </button>
-                </div>
-                <p className="mt-2 text-sm text-slate-400">
-                  Positions you keep reaching and misplaying often enough to
-                  become a real pattern in your repertoire.
-                </p>
-              </div>
-
-              <CardCarousel
-                viewMode={getSV("leaks")}
-                footer={
-                  <CompactCardFooter
-                    shown={visibleLeaks.length}
-                    total={accessibleLeaks.length}
-                    label="opening leaks"
-                    onLoadMore={leakReveal.loadMore}
-                    onShowLess={leakReveal.showLess}
-                  />
-                }
-              >
-                {visibleLeaks.map((leak) => (
-                  <MistakeCard
-                    key={`${leak.fenBefore}-${leak.userMove}`}
-                    leak={leak}
-                    engineDepth={scan.config.engineDepth}
-                    onCreateCommunityPost={
-                      onCreateCommunityPost
-                        ? () =>
-                            onCreateCommunityPost(
-                              buildOpeningLeakCommunitySeed(leak),
-                            )
-                        : undefined
-                    }
-                  />
-                ))}
-              </CardCarousel>
-            </div>
-          ) : openingsSectionProgress ? (
-            <SectionLoadingProgress {...openingsSectionProgress} />
-          ) : isProcessing && hasPassedPhase("eval") ? (
-            <EmptySection message="No recurring opening leaks detected so far. The rest of the report is still processing." />
-          ) : isProcessing ? (
-            <SectionLoadingProgress
-              message="Preparing opening report"
-              detail="Collecting recurring opening leaks and expensive one-off misses."
-              current={0}
-              total={scanGameTotal}
-              percent={0}
-              countLabel="games"
-            />
           ) : (
-            <EmptySection message="No recurring opening leaks were detected in this scan." />
+            <MetricCard
+              label="Overall profile"
+              value={isProcessing ? "Building" : "Pending"}
+              hint="Scores appear once enough positions are evaluated"
+              tone="fuchsia"
+            />
           )}
+        </section>
 
-          {oneOffMistakes.length > 0 ? (
-            <div className="space-y-4">
-              <div className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
-                <div className="flex items-start justify-between gap-3">
-                  <h3 className="text-lg font-bold text-white">
-                    Sharp one-off misses
-                  </h3>
-                  <button
-                    type="button"
-                    onClick={() => toggleSV("one-offs")}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-400 transition hover:bg-white/[0.08] hover:text-slate-200"
-                  >
-                    {getSV("one-offs") === "list" ? "Grid" : "List"}
-                  </button>
-                </div>
-                <p className="mt-2 text-sm text-slate-400">
-                  Positions that did not repeat often enough to become leaks,
-                  but were still expensive.
-                </p>
+        {reportMeta ? (
+          <section className="grid gap-4 xl:grid-cols-[1.25fr_0.95fr]">
+            <div className="rounded-[1.75rem] border border-white/[0.08] bg-[radial-gradient(circle_at_top_right,_rgba(34,211,238,0.16),_rgba(15,23,42,0.9)_42%,_rgba(2,6,23,0.98)_100%)] p-6 sm:p-7">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                {isProcessing ? "Live report preview" : "Report summary"}
+              </p>
+              <h2 className="mt-3 text-3xl font-black tracking-tight text-white sm:text-[2.2rem]">
+                {reportMeta.vibeTitle}
+              </h2>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-300 sm:text-base">
+                {reportMeta.topTag === "No big leak pattern"
+                  ? "The scan has enough signal to score the profile, but no single opening tag is dominating the sample."
+                  : `Your strongest recurring signal right now is ${reportMeta.topTag}. The sections below update as more detail locks in.`}
+              </p>
+              <div className="mt-5 flex flex-wrap gap-2 text-xs">
+                <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-slate-200">
+                  Confidence {reportMeta.confidence}%
+                </span>
+                <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-slate-200">
+                  {reportMeta.sampleSize} scored positions
+                </span>
+                <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-slate-200">
+                  Consistency {reportMeta.consistencyScore}/100
+                </span>
               </div>
-
-              <CardCarousel
-                viewMode={getSV("one-offs")}
-                footer={
-                  <CompactCardFooter
-                    shown={visibleOneOffMistakes.length}
-                    total={accessibleOneOffMistakes.length}
-                    label="one-off misses"
-                    onLoadMore={oneOffReveal.loadMore}
-                    onShowLess={oneOffReveal.showLess}
-                  />
-                }
-              >
-                {visibleOneOffMistakes.map((mistake) => (
-                  <MistakeCard
-                    key={`${mistake.fenBefore}-${mistake.userMove}-${mistake.moveCount}`}
-                    leak={mistake}
-                    engineDepth={scan.config.engineDepth}
-                    onCreateCommunityPost={
-                      onCreateCommunityPost
-                        ? () =>
-                            onCreateCommunityPost(
-                              buildOpeningLeakCommunitySeed(mistake),
-                            )
-                        : undefined
-                    }
-                  />
-                ))}
-              </CardCarousel>
             </div>
-          ) : null}
-        </section>
-      ) : null}
 
-      {tacticalMotifs.length > 0 ? (
-        <section className="space-y-4">
-          <SectionHeader
-            eyebrow="Patterns"
-            title="Recurring tactical themes"
-            description="Grouped motifs ranked by impact so you can see what keeps showing up across your games."
-            badge={`${tacticalMotifs.length} motif${tacticalMotifs.length === 1 ? "" : "s"}`}
-            live={isProcessing}
-          />
-
-          <TacticalPatternAnalysis motifs={tacticalMotifs} />
-        </section>
-      ) : null}
-
-      {showTactics ? (
-        <section id="section-tactics" className="space-y-4">
-          <SectionHeader
-            eyebrow="Tactics"
-            title="Missed tactics"
-            description={
-              isProcessing
-                ? "Tactical misses land here as soon as the forcing-line pass finishes."
-                : "Forcing moves and tactical shots the scan found and ranked by impact."
-            }
-            badge={formatCompactBadge({
-              shown: visibleTactics.length,
-              available: accessibleTactics.length,
-              total: Math.max(result.totalTacticsFound, missedTactics.length),
-              singular: "found",
-              plural: "found",
-            })}
-            live={isProcessing}
-            viewMode={getSV("tactics")}
-            onToggleView={() => toggleSV("tactics")}
-          />
-
-          {missedTactics.length > 0 ? (
-            <TacticsCoachInsight missedTactics={missedTactics} />
-          ) : null}
-
-          {missedTactics.length > 0 ? (
-            <CardCarousel
-              viewMode={getSV("tactics")}
-              footer={
-                <CompactCardFooter
-                  shown={visibleTactics.length}
-                  total={accessibleTactics.length}
-                  label="tactics"
-                  onLoadMore={tacticReveal.loadMore}
-                  onShowLess={tacticReveal.showLess}
-                />
-              }
-            >
-              {visibleTactics.map((tactic) => (
-                <TacticCard
-                  key={`${tactic.fenBefore}-${tactic.userMove}-${tactic.gameIndex}`}
-                  tactic={tactic}
-                  engineDepth={scan.config.engineDepth}
-                  onCreateCommunityPost={
-                    onCreateCommunityPost
-                      ? () =>
-                          onCreateCommunityPost(
-                            buildTacticCommunitySeed(tactic),
-                          )
-                      : undefined
-                  }
-                />
-              ))}
-            </CardCarousel>
-          ) : tacticsSectionProgress ? (
-            <SectionLoadingProgress {...tacticsSectionProgress} />
-          ) : isProcessing && hasPassedPhase("tactics") ? (
-            <EmptySection message="No major missed tactics detected so far. The rest of the report is still processing." />
-          ) : isProcessing ? (
-            <SectionLoadingProgress
-              message="Tactics scan is warming up"
-              detail="Scanning for missed forcing lines and tactical shots."
-              current={0}
-              total={scanGameTotal}
-              percent={0}
-              countLabel="games"
-            />
-          ) : (
-            <EmptySection message="No major missed tactics were detected in this scan." />
-          )}
-
-          {!isProcessing && hiddenTacticsCount > 0 ? (
-            <ProSectionLimitNotice
-              label="tactics"
-              shown={accessibleTactics.length}
-              total={missedTactics.length}
-            />
-          ) : null}
-        </section>
-      ) : null}
-
-      {showEndgames ? (
-        <section id="section-endgames" className="space-y-4">
-          <SectionHeader
-            eyebrow="Endgames"
-            title="Endgame report"
-            description={
-              isProcessing
-                ? "As endgame positions finish evaluating, the sharpest conversion and defense errors appear here."
-                : "Conversion errors, hold failures, and the endgame types that cost the most."
-            }
-            badge={formatCompactBadge({
-              shown: visibleEndgames.length,
-              available: accessibleEndgames.length,
-              total: endgameMistakes.length,
-              singular: "mistake",
-              plural: "mistakes",
-            })}
-            live={isProcessing}
-            viewMode={getSV("endgames")}
-            onToggleView={() => toggleSV("endgames")}
-          />
-
-          {endgameStats ? (
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2">
               <MetricCard
-                label="Positions analyzed"
-                value={endgameStats.totalPositions}
-                tone="sky"
-              />
-              <MetricCard
-                label="Average loss"
-                value={formatPawnLoss(endgameStats.avgCpLoss)}
-                tone="amber"
-              />
-              <MetricCard
-                label="Weakest type"
-                value={endgameStats.weakestType ?? "None"}
+                label="Estimated rating"
+                value={reportMeta.estimatedRating}
                 tone="cyan"
               />
               <MetricCard
-                label="Conversion rate"
-                value={
-                  endgameStats.conversionRate == null
-                    ? "N/A"
-                    : `${endgameStats.conversionRate.toFixed(0)}%`
-                }
-                tone="emerald"
-              />
-            </div>
-          ) : null}
-
-          {endgameStats ? (
-            <EndgameCoachInsight
-              endgameStats={endgameStats}
-              endgameMistakes={endgameMistakes}
-            />
-          ) : null}
-
-          {endgameStats ? (
-            <EndgameTypeBreakdown
-              endgameStats={endgameStats}
-              endgameMistakes={endgameMistakes}
-            />
-          ) : null}
-
-          {endgameMistakes.length > 0 ? (
-            <CardCarousel
-              viewMode={getSV("endgames")}
-              footer={
-                <CompactCardFooter
-                  shown={visibleEndgames.length}
-                  total={accessibleEndgames.length}
-                  label="endgame mistakes"
-                  onLoadMore={endgameReveal.loadMore}
-                  onShowLess={endgameReveal.showLess}
-                />
-              }
-            >
-              {visibleEndgames.map((mistake) => (
-                <EndgameCard
-                  key={`${mistake.fenBefore}-${mistake.userMove}-${mistake.gameIndex}`}
-                  mistake={mistake}
-                  engineDepth={scan.config.engineDepth}
-                  onCreateCommunityPost={
-                    onCreateCommunityPost
-                      ? () =>
-                          onCreateCommunityPost(
-                            buildEndgameCommunitySeed(mistake),
-                          )
-                      : undefined
-                  }
-                />
-              ))}
-            </CardCarousel>
-          ) : endgamesSectionProgress ? (
-            <SectionLoadingProgress {...endgamesSectionProgress} />
-          ) : isProcessing && hasPassedPhase("endgames") ? (
-            <EmptySection message="No major endgame mistakes detected so far. The rest of the report is still processing." />
-          ) : isProcessing ? (
-            <SectionLoadingProgress
-              message="Endgame scan is warming up"
-              detail="Checking conversion and defense errors across the scanned games."
-              current={0}
-              total={scanGameTotal}
-              percent={0}
-              countLabel="games"
-            />
-          ) : (
-            <EmptySection message="No major endgame mistakes were detected in this scan." />
-          )}
-
-          {!isProcessing && hiddenEndgamesCount > 0 ? (
-            <ProSectionLimitNotice
-              label="endgame mistakes"
-              shown={accessibleEndgames.length}
-              total={endgameMistakes.length}
-            />
-          ) : null}
-        </section>
-      ) : null}
-
-      {showTimeManagement ? (
-        <section id="section-time" className="space-y-4">
-          <SectionHeader
-            eyebrow="Time"
-            title="Time management"
-            description={
-              isProcessing
-                ? "Clock-usage patterns appear here once move times and engine agreement are stitched together."
-                : "Rushed moves, wasted thinks, and the moments where your clock management actually helped."
-            }
-            badge={
-              timeManagement
-                ? formatCompactBadge({
-                    shown: visibleMoments.length,
-                    available: accessibleMoments.length,
-                    total: timeMoments.length,
-                    singular: "moment",
-                    plural: "moments",
-                  })
-                : "Waiting for clock data"
-            }
-            live={isProcessing}
-            viewMode={getSV("time")}
-            onToggleView={() => toggleSV("time")}
-          />
-
-          {timeManagement ? (
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-              <MetricCard
-                label="Score"
-                value={`${timeManagement.score}/100`}
+                label="Avg eval loss"
+                value={formatPawnLoss(reportMeta.weightedCpLoss)}
                 tone="fuchsia"
               />
               <MetricCard
-                label="Avg / move"
-                value={`${timeManagement.avgTimePerMove.toFixed(1)}s`}
-                tone="slate"
-              />
-              <MetricCard
-                label="Justified thinks"
-                value={timeManagement.justifiedThinks}
-                tone="emerald"
-              />
-              <MetricCard
-                label="Time wasted"
-                value={timeManagement.wastedThinks}
+                label="Severe leak rate"
+                value={`${(reportMeta.severeLeakRate * 100).toFixed(0)}%`}
                 tone="amber"
               />
               <MetricCard
-                label="Rushed moves"
-                value={timeManagement.rushedMoves}
-                tone="cyan"
+                label="75th percentile loss"
+                value={formatPawnLoss(reportMeta.p75CpLoss)}
+                tone="emerald"
               />
             </div>
-          ) : null}
+          </section>
+        ) : null}
 
-          {timeManagement?.timeScrambleCount ? (
-            <div className="rounded-[1.25rem] border border-red-500/15 bg-red-500/[0.05] px-4 py-3 text-sm text-red-200">
-              {timeManagement.timeScrambleCount} of{" "}
-              {timeManagement.gamesWithClockData} games had time scrambles. That
-              usually means the late moves were played under avoidable pressure.
-            </div>
-          ) : null}
+        {radarProps && radarData && radarNarrative ? (
+          <div className="space-y-4">
+            <section className="space-y-4">
+              <SectionHeader
+                eyebrow="Strengths"
+                title="What is already working"
+                description="Start with the part of the report that should feel good: these are the pieces of your game already giving you something real to stand on."
+              />
 
-          {timeManagement ? (
-            <TimeManagementCoachInsight timeManagement={timeManagement} />
-          ) : null}
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+                <div className="rounded-[1.75rem] border border-white/[0.08] bg-[radial-gradient(circle_at_top_right,_rgba(16,185,129,0.12),_rgba(15,23,42,0.82)_38%,_rgba(2,6,23,0.96)_100%)] p-6 sm:p-7">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                    Good news first
+                  </p>
+                  <h3 className="mt-3 text-2xl font-black tracking-tight text-white">
+                    {radarNarrative.confidenceLead}
+                  </h3>
+                  <p className="mt-3 text-sm leading-relaxed text-slate-300">
+                    {radarNarrative.strengthNote}
+                  </p>
+                </div>
 
-          {visibleMoments.length > 0 ? (
-            <CardCarousel
-              viewMode={getSV("time")}
-              footer={
-                <CompactCardFooter
-                  shown={visibleMoments.length}
-                  total={accessibleMoments.length}
-                  label="time-management moments"
-                  onLoadMore={timeReveal.loadMore}
-                  onShowLess={timeReveal.showLess}
-                />
-              }
-            >
-              {visibleMoments.map((moment) => (
-                <TimeCard
-                  key={`${moment.fen}-${moment.userMove}-${moment.gameIndex}`}
-                  moment={moment}
-                  onCreateCommunityPost={
-                    onCreateCommunityPost
-                      ? () =>
-                          onCreateCommunityPost(
-                            buildTimeMomentCommunitySeed(moment),
-                          )
-                      : undefined
-                  }
-                />
-              ))}
-            </CardCarousel>
-          ) : timeSectionProgress ? (
-            <SectionLoadingProgress {...timeSectionProgress} />
-          ) : isProcessing && hasPassedPhase("time") ? (
-            <EmptySection message="No notable time-management moments detected so far. The rest of the report is still processing." />
-          ) : isProcessing ? (
-            <SectionLoadingProgress
-              message="Time-management scan is warming up"
-              detail="Stitching together move times, scrambles, and rushed decisions."
-              current={0}
-              total={scanGameTotal}
-              percent={0}
-              countLabel="games"
-            />
-          ) : (
-            <EmptySection message="No notable time-management moments were detected in this scan." />
-          )}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {radarNarrative.topStrengths.map((dimension, index) => (
+                    <StrengthSpotlightCard
+                      key={dimension.dimension}
+                      label={index === 0 ? "Current edge" : "Also helping"}
+                      dimension={dimension}
+                      accent={index === 0 ? "emerald" : "cyan"}
+                    />
+                  ))}
+                </div>
+              </div>
+            </section>
 
-          {!isProcessing && hiddenTimeMomentsCount > 0 ? (
-            <ProSectionLimitNotice
-              label="time-management moments"
-              shown={accessibleMoments.length}
-              total={timeMoments.length}
-            />
-          ) : null}
-        </section>
-      ) : null}
+            <section className="space-y-4">
+              <SectionHeader
+                eyebrow="Profile"
+                title="Radar and coaching summary"
+                description="A quick human read on where the next training gain should come from, without losing sight of what is already working."
+              />
 
-      {mentalStats ? (
-        <ScanMentalGame mentalStats={mentalStats} hasProAccess={hasProAccess} />
-      ) : isProcessing ? (
-        <MentalGameLoading />
-      ) : null}
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,28rem)_minmax(0,1fr)]">
+                <div className="rounded-[1.75rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
+                  <StrengthsRadar {...radarProps} />
+                </div>
 
-      {positionalMotifs.length > 0 ? (
-        <section className="space-y-4">
-          <SectionHeader
-            eyebrow="Positional"
-            title="Habits beneath the blunders"
-            description="These quieter patterns show up before the tactical punishment. They are strong follow-up training targets."
-            badge={`${positionalMotifs.length} motif${positionalMotifs.length === 1 ? "" : "s"}`}
-            live={isProcessing}
-          />
+                <div className="space-y-4">
+                  <div className="rounded-[1.75rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                      Coach&apos;s note
+                    </p>
+                    <p className="mt-3 text-sm leading-relaxed text-slate-300">
+                      {radarNarrative.coachingParagraph}
+                    </p>
+                  </div>
 
-          <ScanPositionalMotifs
-            motifs={positionalMotifs}
+                  <div className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.02] p-5 sm:p-6">
+                    <div className="max-w-2xl">
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+                        Profile outline
+                      </p>
+                      <p className="mt-2 text-sm leading-relaxed text-slate-400">
+                        Read the full profile as a quick outline: what is
+                        holding up, what is dragging, and where the next
+                        training gain should come from.
+                      </p>
+                    </div>
+                    <div className="mt-5">
+                      <RadarLegend data={radarData} props={radarProps} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+        ) : isProcessing || result ? (
+          <RadarLoadingState
+            progress={scanProgress}
             isProcessing={isProcessing}
-            showTrainer={scan.status === "ready"}
+          />
+        ) : null}
+
+        {showOpenings ? (
+          <section id="section-openings" className="space-y-4">
+            <SectionHeader
+              eyebrow="Openings"
+              title="Opening report"
+              description={
+                isProcessing
+                  ? "Recurring leaks, rankings, and one-off misses appear here as each opening pass completes."
+                  : "Recurring leaks, opening rankings, and the sharpest one-off misses from the scanned archive."
+              }
+              badge={formatCompactBadge({
+                shown: visibleLeaks.length,
+                available: accessibleLeaks.length,
+                total: leaks.length,
+                singular: "recurring leak",
+                plural: "recurring leaks",
+              })}
+              live={isProcessing}
+            />
+
+            {openingSummaries.length > 0 ? (
+              <OpeningRankings openingSummaries={openingSummaries} />
+            ) : null}
+
+            {leaks.length > 0 ? (
+              <div className="space-y-4">
+                <div className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-lg font-bold text-white">
+                      Recurring opening leaks
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => toggleSV("leaks")}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-400 transition hover:bg-white/[0.08] hover:text-slate-200"
+                    >
+                      {getSV("leaks") === "list" ? "Grid" : "List"}
+                    </button>
+                  </div>
+                  <p className="mt-2 text-sm text-slate-400">
+                    Positions you keep reaching and misplaying often enough to
+                    become a real pattern in your repertoire.
+                  </p>
+                </div>
+
+                <CardCarousel
+                  viewMode={getSV("leaks")}
+                  footer={
+                    <CompactCardFooter
+                      shown={visibleLeaks.length}
+                      total={accessibleLeaks.length}
+                      label="opening leaks"
+                      onLoadMore={leakReveal.loadMore}
+                      onShowLess={leakReveal.showLess}
+                    />
+                  }
+                >
+                  {visibleLeaks.map((leak) => (
+                    <MistakeCard
+                      key={`${leak.fenBefore}-${leak.userMove}`}
+                      leak={leak}
+                      engineDepth={scan.config.engineDepth}
+                      onCreateCommunityPost={
+                        onCreateCommunityPost
+                          ? () =>
+                              onCreateCommunityPost(
+                                buildOpeningLeakCommunitySeed(leak),
+                              )
+                          : undefined
+                      }
+                    />
+                  ))}
+                </CardCarousel>
+              </div>
+            ) : openingsSectionProgress ? (
+              <SectionLoadingProgress {...openingsSectionProgress} />
+            ) : isProcessing && hasPassedPhase("eval") ? (
+              <EmptySection message="No recurring opening leaks detected so far. The rest of the report is still processing." />
+            ) : isProcessing ? (
+              <SectionLoadingProgress
+                message="Preparing opening report"
+                detail="Collecting recurring opening leaks and expensive one-off misses."
+                current={0}
+                total={scanGameTotal}
+                percent={0}
+                countLabel="games"
+              />
+            ) : (
+              <EmptySection message="No recurring opening leaks were detected in this scan." />
+            )}
+
+            {oneOffMistakes.length > 0 ? (
+              <div className="space-y-4">
+                <div className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
+                  <div className="flex items-start justify-between gap-3">
+                    <h3 className="text-lg font-bold text-white">
+                      Sharp one-off misses
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => toggleSV("one-offs")}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-400 transition hover:bg-white/[0.08] hover:text-slate-200"
+                    >
+                      {getSV("one-offs") === "list" ? "Grid" : "List"}
+                    </button>
+                  </div>
+                  <p className="mt-2 text-sm text-slate-400">
+                    Positions that did not repeat often enough to become leaks,
+                    but were still expensive.
+                  </p>
+                </div>
+
+                <CardCarousel
+                  viewMode={getSV("one-offs")}
+                  footer={
+                    <CompactCardFooter
+                      shown={visibleOneOffMistakes.length}
+                      total={accessibleOneOffMistakes.length}
+                      label="one-off misses"
+                      onLoadMore={oneOffReveal.loadMore}
+                      onShowLess={oneOffReveal.showLess}
+                    />
+                  }
+                >
+                  {visibleOneOffMistakes.map((mistake) => (
+                    <MistakeCard
+                      key={`${mistake.fenBefore}-${mistake.userMove}-${mistake.moveCount}`}
+                      leak={mistake}
+                      engineDepth={scan.config.engineDepth}
+                      onCreateCommunityPost={
+                        onCreateCommunityPost
+                          ? () =>
+                              onCreateCommunityPost(
+                                buildOpeningLeakCommunitySeed(mistake),
+                              )
+                          : undefined
+                      }
+                    />
+                  ))}
+                </CardCarousel>
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+
+        {tacticalMotifs.length > 0 ? (
+          <section className="space-y-4">
+            <SectionHeader
+              eyebrow="Patterns"
+              title="Recurring tactical themes"
+              description="Grouped motifs ranked by impact so you can see what keeps showing up across your games."
+              badge={`${tacticalMotifs.length} motif${tacticalMotifs.length === 1 ? "" : "s"}`}
+              live={isProcessing}
+            />
+
+            <TacticalPatternAnalysis motifs={tacticalMotifs} />
+          </section>
+        ) : null}
+
+        {showTactics ? (
+          <section id="section-tactics" className="space-y-4">
+            <SectionHeader
+              eyebrow="Tactics"
+              title="Missed tactics"
+              description={
+                isProcessing
+                  ? "Tactical misses land here as soon as the forcing-line pass finishes."
+                  : "Forcing moves and tactical shots the scan found and ranked by impact."
+              }
+              badge={formatCompactBadge({
+                shown: visibleTactics.length,
+                available: accessibleTactics.length,
+                total: Math.max(result.totalTacticsFound, missedTactics.length),
+                singular: "found",
+                plural: "found",
+              })}
+              live={isProcessing}
+              viewMode={getSV("tactics")}
+              onToggleView={() => toggleSV("tactics")}
+            />
+
+            {missedTactics.length > 0 ? (
+              <TacticsCoachInsight missedTactics={missedTactics} />
+            ) : null}
+
+            {missedTactics.length > 0 ? (
+              <CardCarousel
+                viewMode={getSV("tactics")}
+                footer={
+                  <CompactCardFooter
+                    shown={visibleTactics.length}
+                    total={accessibleTactics.length}
+                    label="tactics"
+                    onLoadMore={tacticReveal.loadMore}
+                    onShowLess={tacticReveal.showLess}
+                  />
+                }
+              >
+                {visibleTactics.map((tactic) => (
+                  <TacticCard
+                    key={`${tactic.fenBefore}-${tactic.userMove}-${tactic.gameIndex}`}
+                    tactic={tactic}
+                    engineDepth={scan.config.engineDepth}
+                    onCreateCommunityPost={
+                      onCreateCommunityPost
+                        ? () =>
+                            onCreateCommunityPost(
+                              buildTacticCommunitySeed(tactic),
+                            )
+                        : undefined
+                    }
+                  />
+                ))}
+              </CardCarousel>
+            ) : tacticsSectionProgress ? (
+              <SectionLoadingProgress {...tacticsSectionProgress} />
+            ) : isProcessing && hasPassedPhase("tactics") ? (
+              <EmptySection message="No major missed tactics detected so far. The rest of the report is still processing." />
+            ) : isProcessing ? (
+              <SectionLoadingProgress
+                message="Tactics scan is warming up"
+                detail="Scanning for missed forcing lines and tactical shots."
+                current={0}
+                total={scanGameTotal}
+                percent={0}
+                countLabel="games"
+              />
+            ) : (
+              <EmptySection message="No major missed tactics were detected in this scan." />
+            )}
+
+            {!isProcessing && hiddenTacticsCount > 0 ? (
+              <ProSectionLimitNotice
+                label="tactics"
+                shown={accessibleTactics.length}
+                total={missedTactics.length}
+              />
+            ) : null}
+          </section>
+        ) : null}
+
+        {showEndgames ? (
+          <section id="section-endgames" className="space-y-4">
+            <SectionHeader
+              eyebrow="Endgames"
+              title="Endgame report"
+              description={
+                isProcessing
+                  ? "As endgame positions finish evaluating, the sharpest conversion and defense errors appear here."
+                  : "Conversion errors, hold failures, and the endgame types that cost the most."
+              }
+              badge={formatCompactBadge({
+                shown: visibleEndgames.length,
+                available: accessibleEndgames.length,
+                total: endgameMistakes.length,
+                singular: "mistake",
+                plural: "mistakes",
+              })}
+              live={isProcessing}
+              viewMode={getSV("endgames")}
+              onToggleView={() => toggleSV("endgames")}
+            />
+
+            {endgameStats ? (
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <MetricCard
+                  label="Positions analyzed"
+                  value={endgameStats.totalPositions}
+                  tone="sky"
+                />
+                <MetricCard
+                  label="Average loss"
+                  value={formatPawnLoss(endgameStats.avgCpLoss)}
+                  tone="amber"
+                />
+                <MetricCard
+                  label="Weakest type"
+                  value={endgameStats.weakestType ?? "None"}
+                  tone="cyan"
+                />
+                <MetricCard
+                  label="Conversion rate"
+                  value={
+                    endgameStats.conversionRate == null
+                      ? "N/A"
+                      : `${endgameStats.conversionRate.toFixed(0)}%`
+                  }
+                  tone="emerald"
+                />
+              </div>
+            ) : null}
+
+            {endgameStats ? (
+              <EndgameCoachInsight
+                endgameStats={endgameStats}
+                endgameMistakes={endgameMistakes}
+              />
+            ) : null}
+
+            {endgameStats ? (
+              <EndgameTypeBreakdown
+                endgameStats={endgameStats}
+                endgameMistakes={endgameMistakes}
+              />
+            ) : null}
+
+            {endgameMistakes.length > 0 ? (
+              <CardCarousel
+                viewMode={getSV("endgames")}
+                footer={
+                  <CompactCardFooter
+                    shown={visibleEndgames.length}
+                    total={accessibleEndgames.length}
+                    label="endgame mistakes"
+                    onLoadMore={endgameReveal.loadMore}
+                    onShowLess={endgameReveal.showLess}
+                  />
+                }
+              >
+                {visibleEndgames.map((mistake) => (
+                  <EndgameCard
+                    key={`${mistake.fenBefore}-${mistake.userMove}-${mistake.gameIndex}`}
+                    mistake={mistake}
+                    engineDepth={scan.config.engineDepth}
+                    onCreateCommunityPost={
+                      onCreateCommunityPost
+                        ? () =>
+                            onCreateCommunityPost(
+                              buildEndgameCommunitySeed(mistake),
+                            )
+                        : undefined
+                    }
+                  />
+                ))}
+              </CardCarousel>
+            ) : endgamesSectionProgress ? (
+              <SectionLoadingProgress {...endgamesSectionProgress} />
+            ) : isProcessing && hasPassedPhase("endgames") ? (
+              <EmptySection message="No major endgame mistakes detected so far. The rest of the report is still processing." />
+            ) : isProcessing ? (
+              <SectionLoadingProgress
+                message="Endgame scan is warming up"
+                detail="Checking conversion and defense errors across the scanned games."
+                current={0}
+                total={scanGameTotal}
+                percent={0}
+                countLabel="games"
+              />
+            ) : (
+              <EmptySection message="No major endgame mistakes were detected in this scan." />
+            )}
+
+            {!isProcessing && hiddenEndgamesCount > 0 ? (
+              <ProSectionLimitNotice
+                label="endgame mistakes"
+                shown={accessibleEndgames.length}
+                total={endgameMistakes.length}
+              />
+            ) : null}
+          </section>
+        ) : null}
+
+        {showTimeManagement ? (
+          <section id="section-time" className="space-y-4">
+            <SectionHeader
+              eyebrow="Time"
+              title="Time management"
+              description={
+                isProcessing
+                  ? "Clock-usage patterns appear here once move times and engine agreement are stitched together."
+                  : "Rushed moves, wasted thinks, and the moments where your clock management actually helped."
+              }
+              badge={
+                timeManagement
+                  ? formatCompactBadge({
+                      shown: visibleMoments.length,
+                      available: accessibleMoments.length,
+                      total: timeMoments.length,
+                      singular: "moment",
+                      plural: "moments",
+                    })
+                  : "Waiting for clock data"
+              }
+              live={isProcessing}
+              viewMode={getSV("time")}
+              onToggleView={() => toggleSV("time")}
+            />
+
+            {timeManagement ? (
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                <MetricCard
+                  label="Score"
+                  value={`${timeManagement.score}/100`}
+                  tone="fuchsia"
+                />
+                <MetricCard
+                  label="Avg / move"
+                  value={`${timeManagement.avgTimePerMove.toFixed(1)}s`}
+                  tone="slate"
+                />
+                <MetricCard
+                  label="Justified thinks"
+                  value={timeManagement.justifiedThinks}
+                  tone="emerald"
+                />
+                <MetricCard
+                  label="Time wasted"
+                  value={timeManagement.wastedThinks}
+                  tone="amber"
+                />
+                <MetricCard
+                  label="Rushed moves"
+                  value={timeManagement.rushedMoves}
+                  tone="cyan"
+                />
+              </div>
+            ) : null}
+
+            {timeManagement?.timeScrambleCount ? (
+              <div className="rounded-[1.25rem] border border-red-500/15 bg-red-500/[0.05] px-4 py-3 text-sm text-red-200">
+                {timeManagement.timeScrambleCount} of{" "}
+                {timeManagement.gamesWithClockData} games had time scrambles.
+                That usually means the late moves were played under avoidable
+                pressure.
+              </div>
+            ) : null}
+
+            {timeManagement ? (
+              <TimeManagementCoachInsight timeManagement={timeManagement} />
+            ) : null}
+
+            {visibleMoments.length > 0 ? (
+              <CardCarousel
+                viewMode={getSV("time")}
+                footer={
+                  <CompactCardFooter
+                    shown={visibleMoments.length}
+                    total={accessibleMoments.length}
+                    label="time-management moments"
+                    onLoadMore={timeReveal.loadMore}
+                    onShowLess={timeReveal.showLess}
+                  />
+                }
+              >
+                {visibleMoments.map((moment) => (
+                  <TimeCard
+                    key={`${moment.fen}-${moment.userMove}-${moment.gameIndex}`}
+                    moment={moment}
+                    onCreateCommunityPost={
+                      onCreateCommunityPost
+                        ? () =>
+                            onCreateCommunityPost(
+                              buildTimeMomentCommunitySeed(moment),
+                            )
+                        : undefined
+                    }
+                  />
+                ))}
+              </CardCarousel>
+            ) : timeSectionProgress ? (
+              <SectionLoadingProgress {...timeSectionProgress} />
+            ) : isProcessing && hasPassedPhase("time") ? (
+              <EmptySection message="No notable time-management moments detected so far. The rest of the report is still processing." />
+            ) : isProcessing ? (
+              <SectionLoadingProgress
+                message="Time-management scan is warming up"
+                detail="Stitching together move times, scrambles, and rushed decisions."
+                current={0}
+                total={scanGameTotal}
+                percent={0}
+                countLabel="games"
+              />
+            ) : (
+              <EmptySection message="No notable time-management moments were detected in this scan." />
+            )}
+
+            {!isProcessing && hiddenTimeMomentsCount > 0 ? (
+              <ProSectionLimitNotice
+                label="time-management moments"
+                shown={accessibleMoments.length}
+                total={timeMoments.length}
+              />
+            ) : null}
+          </section>
+        ) : null}
+
+        {mentalStats ? (
+          <ScanMentalGame
+            mentalStats={mentalStats}
             hasProAccess={hasProAccess}
           />
-        </section>
-      ) : null}
+        ) : isProcessing ? (
+          <MentalGameLoading />
+        ) : null}
 
-      {result ? (
-        <section className="space-y-4">
-          <SectionHeader
-            eyebrow="Training"
-            title="What to do next"
-            description={
-              drillsReady
-                ? "The scan is finished. Use the next-step CTA below to jump into drills without adding another full report block here."
-                : "The report follow-up appears here early so you can see what is coming next, even while the drill handoff is still loading."
-            }
-          />
-          <ReportFollowUpCta
-            drillsReady={drillsReady}
-            issueCount={followUpIssueCount}
-            isProcessing={isProcessing}
-          />
-        </section>
-      ) : null}
-    </div>
+        {positionalMotifs.length > 0 ? (
+          <section className="space-y-4">
+            <SectionHeader
+              eyebrow="Positional"
+              title="Habits beneath the blunders"
+              description="These quieter patterns show up before the tactical punishment. They are strong follow-up training targets."
+              badge={`${positionalMotifs.length} motif${positionalMotifs.length === 1 ? "" : "s"}`}
+              live={isProcessing}
+            />
+
+            <ScanPositionalMotifs
+              motifs={positionalMotifs}
+              isProcessing={isProcessing}
+              showTrainer={scan.status === "ready"}
+              hasProAccess={hasProAccess}
+            />
+          </section>
+        ) : null}
+
+        {result ? (
+          <section className="space-y-4">
+            <SectionHeader
+              eyebrow="Training"
+              title="What to do next"
+              description={
+                drillsReady
+                  ? "The scan is finished. Use the next-step CTA below to jump into drills without adding another full report block here."
+                  : "The report follow-up appears here early so you can see what is coming next, even while the drill handoff is still loading."
+              }
+            />
+            <ReportFollowUpCta
+              drillsReady={drillsReady}
+              issueCount={followUpIssueCount}
+              isProcessing={isProcessing}
+            />
+          </section>
+        ) : null}
+      </div>
+    </>
   );
 }

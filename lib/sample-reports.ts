@@ -41,27 +41,27 @@ export const SAMPLE_REPORTS: SampleReport[] = [
     rating: 3300,
     tier: "elite",
     label: "GM · World #2",
-    reportId: "", // TODO: paste report ID after scan
+    reportId: "88380276-6956-4e06-ad71-4cbee54b09f3",
     highlights: {},
   },
   {
     username: "MagnusCarlsen",
     displayName: "Magnus Carlsen",
     source: "chess.com",
-    rating: 3400,
+    rating: 3377,
     tier: "elite",
     label: "GM · World #1",
-    reportId: "", // TODO: paste report ID after scan
+    reportId: "6f64d6c0-f0b5-4f8c-a471-98a477a9d1ec",
     highlights: {},
   },
   {
     username: "GothamChess",
     displayName: "Levy Rozman",
     source: "chess.com",
-    rating: 2400,
+    rating: 2453,
     tier: "elite",
     label: "IM · GothamChess",
-    reportId: "", // TODO: paste report ID after scan
+    reportId: "4c5ce129-2015-4c3e-9036-9acb88632fad",
     highlights: {},
   },
 
@@ -70,20 +70,20 @@ export const SAMPLE_REPORTS: SampleReport[] = [
     username: "AlexandraBotez",
     displayName: "Alexandra Botez",
     source: "chess.com",
-    rating: 1800,
+    rating: 2267,
     tier: "club",
     label: "WFM · Botez Live",
-    reportId: "", // TODO: paste report ID after scan
+    reportId: "bbacb94a-f71b-47f3-84ab-39d5696c1925",
     highlights: {},
   },
   {
-    username: "AndreaBotez",
+    username: "supersecret12345",
     displayName: "Andrea Botez",
     source: "chess.com",
-    rating: 2000,
+    rating: 2070,
     tier: "club",
     label: "Streamer · Botez Live",
-    reportId: "", // TODO: paste report ID after scan
+    reportId: "f16a5e29-532c-4ee8-ba00-52fb01c20b3f",
     highlights: {},
   },
   {
@@ -93,7 +93,7 @@ export const SAMPLE_REPORTS: SampleReport[] = [
     rating: 2400,
     tier: "club",
     label: "IM · Oh no my queen",
-    reportId: "", // TODO: paste report ID after scan
+    reportId: "ab8976ae-7a10-496b-8aee-56e4a3f3758e",
     highlights: {},
   },
 
@@ -102,30 +102,30 @@ export const SAMPLE_REPORTS: SampleReport[] = [
     username: "BIG_TONKA_T",
     displayName: "Tyler1",
     source: "chess.com",
-    rating: 500,
+    rating: 1596,
     tier: "beginner",
     label: "Streamer · PogChamps",
-    reportId: "", // TODO: paste report ID after scan
+    reportId: "45315c3e-c79f-465d-973a-c629f7a341fd",
     highlights: {},
   },
   {
-    username: "xqcow",
+    username: "XQCow1",
     displayName: "xQc",
     source: "chess.com",
-    rating: 700,
+    rating: 804,
     tier: "beginner",
     label: "Streamer · PogChamps",
-    reportId: "", // TODO: paste report ID after scan
+    reportId: "6ee89e5c-d93a-4c1b-b813-fa8a1f0df340",
     highlights: {},
   },
   {
-    username: "MoistCr1TiKaL",
+    username: "turbofisto",
     displayName: "MoistCr1TiKaL",
     source: "chess.com",
-    rating: 700,
+    rating: 619,
     tier: "beginner",
     label: "Streamer · PogChamps",
-    reportId: "", // TODO: paste report ID after scan
+    reportId: "5ec6e272-4a2e-4c7e-afa5-7c4cc0462619",
     highlights: {},
   },
 ];

@@ -3793,7 +3793,20 @@ export async function analyzeOpeningLeaksInBrowser(
                         );
 
                         const cpLoss = Math.max(0, cpBefore - cpAfterUser);
-                        totalEndgameCpLoss += cpLoss;
+
+                        // In clearly winning positions (e.g. Q+K vs K, R+K vs K) any
+                        // suboptimal-but-still-winning move should not tank the score.
+                        // Cap the contribution when the position remains comfortably winning
+                        // after the move (advantage stays above 150 cp).
+                        const TRIVIAL_WIN_CP = 400; // winning by 4+ pawns
+                        const STILL_WINNING_CP = 150; // position still clearly won
+                        const accumulatedCpLoss =
+                          cpBefore >= TRIVIAL_WIN_CP &&
+                          cpAfterUser >= STILL_WINNING_CP
+                            ? Math.min(cpLoss, 30)
+                            : cpLoss;
+
+                        totalEndgameCpLoss += accumulatedCpLoss;
                         totalEndgameMoves += 1;
 
                         // Update type stats
@@ -3803,14 +3816,18 @@ export async function analyzeOpeningLeaksInBrowser(
                           mistakes: 0,
                         };
                         ts.count += 1;
-                        ts.totalCpLoss += cpLoss;
+                        ts.totalCpLoss += accumulatedCpLoss;
+
+                        // In very winning positions require a materially larger drop to flag
+                        // as a mistake — e.g. slower checkmate path is not an endgame mistake.
+                        const mistakeThreshold =
+                          cpBefore >= TRIVIAL_WIN_CP
+                            ? Math.max(ENDGAME_CP_THRESHOLD, 250)
+                            : ENDGAME_CP_THRESHOLD;
 
                         // Skip flagging as a mistake if the position was already a forced mate —
                         // slower conversion (M6 → +9.42) is not an endgame mistake.
-                        if (
-                          cpLoss >= ENDGAME_CP_THRESHOLD &&
-                          cpBefore < 99000
-                        ) {
+                        if (cpLoss >= mistakeThreshold && cpBefore < 99000) {
                           ts.mistakes += 1;
 
                           if (endgameMistakes.length < MAX_ENDGAME_MISTAKES) {

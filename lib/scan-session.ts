@@ -111,7 +111,7 @@ export function computeEndgameTechniqueScore(
   if (!endgameStats || endgameStats.totalPositions <= 0) return null;
 
   const clampScore = (value: number) => Math.max(0, Math.min(100, value));
-  const lossScore = clampScore(100 * Math.exp(-endgameStats.avgCpLoss / 60));
+  const lossScore = clampScore(100 * Math.exp(-endgameStats.avgCpLoss / 100));
   const weightedParts = [{ value: lossScore, weight: 0.6 }];
 
   if (typeof endgameStats.conversionRate === "number") {
@@ -168,9 +168,22 @@ export function computeScanReportMeta(
     valid.filter((trace) => (trace.cpLoss ?? 0) >= cpThreshold).length /
     valid.length;
 
+  // Blend opening cp loss with endgame avg cp loss for a more holistic accuracy %.
+  // Opening leaks are frequency-weighted; endgame avgCpLoss is a simple average.
+  // When both are available, weight them 55/45 to reflect the full-game picture.
+  const endgameAvgCpLoss =
+    typeof result?.endgameStats?.avgCpLoss === "number" &&
+    result.endgameStats.avgCpLoss > 0
+      ? result.endgameStats.avgCpLoss
+      : null;
+  const blendedCpLoss =
+    endgameAvgCpLoss !== null
+      ? weightedCpLoss * 0.55 + endgameAvgCpLoss * 0.45
+      : weightedCpLoss;
+
   const estimatedAccuracy = Math.min(
     99.5,
-    Math.max(25, 100 * Math.exp(-weightedCpLoss / 120)),
+    Math.max(25, 100 * Math.exp(-blendedCpLoss / 120)),
   );
 
   const actualRating = result?.playerRating;

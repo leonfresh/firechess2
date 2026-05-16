@@ -371,10 +371,10 @@ export function HeroDemoBoard({
   const boardOrientation = current.fen.includes(" b ") ? "black" : "white";
 
   return (
-    <article className="w-full overflow-hidden rounded-[1.7rem] border border-white/[0.08] bg-[linear-gradient(160deg,rgba(7,11,28,0.88),rgba(10,16,36,0.94)_48%,rgba(29,18,49,0.92))] shadow-[0_34px_90px_-52px_rgba(125,211,252,0.45)] backdrop-blur-sm">
-      {/* ── Board row ── */}
-      <div ref={heroBoardRef} className="relative p-2.5 sm:p-3">
-        <div className="flex items-start justify-center gap-1.5 lg:justify-start">
+    <article className="w-full overflow-hidden rounded-[1.7rem] border border-white/[0.08] bg-[linear-gradient(160deg,rgba(7,11,28,0.88),rgba(10,16,36,0.94)_48%,rgba(29,18,49,0.92))] shadow-[0_34px_90px_-52px_rgba(125,211,252,0.45)] backdrop-blur-sm sm:grid sm:grid-cols-[auto_1fr]">
+      {/* ── Left column: board ── */}
+      <div ref={heroBoardRef} className="p-2.5 sm:border-r sm:border-white/[0.05] sm:p-3">
+        <div className="flex items-start gap-1.5">
           <MiniEvalBar evalCp={current.evalBefore} height={heroBoardSize} />
           <div className="relative min-w-0 overflow-hidden rounded-[1.15rem] bg-[linear-gradient(180deg,rgba(7,11,28,0.96),rgba(30,43,90,0.88)_60%,rgba(236,72,153,0.26))] p-1 shadow-2xl shadow-black/40 ring-1 ring-white/[0.08]">
             <Chessboard
@@ -397,147 +397,154 @@ export function HeroDemoBoard({
         </div>
       </div>
 
-      {/* ── Info strip ── */}
-      <div className="border-t border-white/[0.05] px-2.5 py-2 sm:px-3">
-        {/* Badge row */}
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span
-            className="rounded-md px-1.5 py-0.5 text-[9px] font-bold text-white"
-            style={{ backgroundColor: badgeColor(current.badge) }}
-          >
-            {current.tag}
-          </span>
-          {current.repeatedHabit && (
-            <span className="flex items-center gap-1 rounded-md bg-fuchsia-500/15 px-1.5 py-0.5 text-[9px] font-bold text-fuchsia-400">
-              <svg
-                width="9"
-                height="9"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <path d="M17 1l4 4-4 4" />
-                <path d="M3 11V9a4 4 0 014-4h14" />
-                <path d="M7 23l-4-4 4-4" />
-                <path d="M21 13v2a4 4 0 01-4 4H3" />
-              </svg>
-              Repeated
+      {/* ── Right column: info strip + controls ── */}
+      <div className="flex min-w-0 flex-col">
+        {/* Info strip */}
+        <div className="flex-1 border-t border-white/[0.05] px-2.5 py-2 sm:border-t-0 sm:px-3 sm:py-3">
+          {/* Badge row */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span
+              className="rounded-md px-1.5 py-0.5 text-[9px] font-bold text-white"
+              style={{ backgroundColor: badgeColor(current.badge) }}
+            >
+              {current.tag}
             </span>
-          )}
-          {current.dbApproved && (
-            <span className="rounded-md bg-indigo-500/15 px-1.5 py-0.5 text-[9px] font-bold text-indigo-400">
-              📚 Known Line
+            {current.repeatedHabit && (
+              <span className="flex items-center gap-1 rounded-md bg-fuchsia-500/15 px-1.5 py-0.5 text-[9px] font-bold text-fuchsia-400">
+                <svg
+                  width="9"
+                  height="9"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <path d="M17 1l4 4-4 4" />
+                  <path d="M3 11V9a4 4 0 014-4h14" />
+                  <path d="M7 23l-4-4 4-4" />
+                  <path d="M21 13v2a4 4 0 01-4 4H3" />
+                </svg>
+                Repeated
+              </span>
+            )}
+            {current.dbApproved && (
+              <span className="rounded-md bg-indigo-500/15 px-1.5 py-0.5 text-[9px] font-bold text-indigo-400">
+                📚 Known Line
+              </span>
+            )}
+            {/* Eval delta pushed right */}
+            <span className="ml-auto rounded-md bg-red-500/10 px-1.5 py-0.5 text-[9px] font-bold text-red-400 tabular-nums">
+              {formatEval(current.cpLoss)} lost
             </span>
-          )}
-          {/* Eval delta pushed right */}
-          <span className="ml-auto rounded-md bg-red-500/10 px-1.5 py-0.5 text-[9px] font-bold text-red-400 tabular-nums">
-            {formatEval(current.cpLoss)} lost
-          </span>
+          </div>
+
+          {/* Title */}
+          <p className="mt-2 text-[11px] font-semibold leading-snug text-slate-200">
+            {current.title}
+          </p>
+
+          {/* Pattern line */}
+          <p className="mt-1.5 text-[10px] leading-snug text-slate-300">
+            <span className="rounded bg-amber-500/15 px-1 font-bold text-amber-300">
+              {current.reachCount}×
+            </span>
+            {" reach · "}
+            <span className="rounded bg-red-500/15 px-1 font-mono font-bold text-red-300">
+              {current.playedSan}
+            </span>
+            {" vs "}
+            <span className="rounded bg-emerald-500/15 px-1 font-mono font-bold text-emerald-300">
+              {current.bestSan}
+            </span>
+          </p>
+
+          {/* Eval before/after — inline chips */}
+          <div className="mt-1.5 flex items-center gap-1.5">
+            <span className="rounded bg-white/[0.04] px-1.5 py-0.5 font-mono text-[9px] text-slate-400 tabular-nums">
+              {formatEval(current.evalBefore)}
+            </span>
+            <svg
+              className="h-3 w-3 shrink-0 text-slate-600"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M13 7l5 5m0 0l-5 5m5-5H6"
+              />
+            </svg>
+            <span className="rounded bg-red-500/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold text-red-400 tabular-nums">
+              {formatEval(current.evalAfter)}
+            </span>
+            {/* Legend */}
+            <span className="ml-auto flex items-center gap-2 text-[8px] text-slate-600">
+              <span className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                Best
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
+                Played
+              </span>
+            </span>
+          </div>
         </div>
 
-        {/* Pattern line */}
-        <p className="mt-1.5 text-[10px] leading-snug text-slate-300">
-          <span className="rounded bg-amber-500/15 px-1 font-bold text-amber-300">
-            {current.reachCount}×
-          </span>
-          {" reach · "}
-          <span className="rounded bg-red-500/15 px-1 font-mono font-bold text-red-300">
-            {current.playedSan}
-          </span>
-          {" vs "}
-          <span className="rounded bg-emerald-500/15 px-1 font-mono font-bold text-emerald-300">
-            {current.bestSan}
-          </span>
-        </p>
-
-        {/* Eval before/after — inline chips */}
-        <div className="mt-1.5 flex items-center gap-1.5">
-          <span className="rounded bg-white/[0.04] px-1.5 py-0.5 font-mono text-[9px] text-slate-400 tabular-nums">
-            {formatEval(current.evalBefore)}
-          </span>
-          <svg
-            className="h-3 w-3 shrink-0 text-slate-600"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2.5}
+        {/* ── Controls ── */}
+        <div className="flex items-center gap-1.5 border-t border-white/[0.05] px-2.5 py-1.5 sm:px-3">
+          <button
+            type="button"
+            className="btn-secondary flex h-6 items-center gap-1 px-2 text-[10px]"
+            onClick={goPrev}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M13 7l5 5m0 0l-5 5m5-5H6"
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            Prev
+          </button>
+          <button
+            type="button"
+            className="btn-secondary flex h-6 items-center gap-1 px-2 text-[10px]"
+            onClick={goNext}
+          >
+            Next
+            <svg
+              width="11"
+              height="11"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className={`flex h-6 items-center gap-1.5 rounded-lg border px-2 text-[10px] font-medium transition-all duration-200 ${
+              autoplay
+                ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                : "border-white/[0.08] bg-white/[0.03] text-slate-500 hover:text-slate-300"
+            }`}
+            onClick={() => setAutoplay((prev) => !prev)}
+          >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${autoplay ? "animate-pulse bg-emerald-400" : "bg-slate-600"}`}
             />
-          </svg>
-          <span className="rounded bg-red-500/10 px-1.5 py-0.5 font-mono text-[9px] font-semibold text-red-400 tabular-nums">
-            {formatEval(current.evalAfter)}
-          </span>
-          {/* Legend */}
-          <span className="ml-auto flex items-center gap-2 text-[8px] text-slate-600">
-            <span className="flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
-              Best
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
-              Played
-            </span>
-          </span>
-        </div>
-      </div>
-
-      {/* ── Controls ── */}
-      <div className="flex items-center gap-1.5 border-t border-white/[0.05] px-2.5 py-1.5 sm:px-3">
-        <button
-          type="button"
-          className="btn-secondary flex h-6 items-center gap-1 px-2 text-[10px]"
-          onClick={goPrev}
-        >
-          <svg
-            width="11"
-            height="11"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-          >
-            <polyline points="15 18 9 12 15 6" />
-          </svg>
-          Prev
-        </button>
-        <button
-          type="button"
-          className="btn-secondary flex h-6 items-center gap-1 px-2 text-[10px]"
-          onClick={goNext}
-        >
-          Next
-          <svg
-            width="11"
-            height="11"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-          >
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-        </button>
-        <button
-          type="button"
-          className={`flex h-6 items-center gap-1.5 rounded-lg border px-2 text-[10px] font-medium transition-all duration-200 ${
-            autoplay
-              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
-              : "border-white/[0.08] bg-white/[0.03] text-slate-500 hover:text-slate-300"
-          }`}
-          onClick={() => setAutoplay((prev) => !prev)}
-        >
-          <span
-            className={`h-1.5 w-1.5 rounded-full ${autoplay ? "animate-pulse bg-emerald-400" : "bg-slate-600"}`}
-          />
-          {autoplay ? "Auto" : "Paused"}
-        </button>
-        <div className="ml-auto flex items-center gap-1">
-          {scenarios.map((_, i) => (
+            {autoplay ? "Auto" : "Paused"}
+          </button>
+          <div className="ml-auto flex items-center gap-1">
+            {scenarios.map((_, i) => (
             <button
               key={i}
               type="button"
