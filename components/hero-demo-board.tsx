@@ -561,6 +561,7 @@ export function HeroDemoBoard({
           ))}
         </div>
       </div>
+    </div>
     </article>
   );
 }
