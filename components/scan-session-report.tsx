@@ -1807,6 +1807,8 @@ export function ScanSessionReport({
   const result = scan.result;
   const isProcessing = scan.status === "processing";
 
+  const [cardView, setCardView] = useState<"compact" | "list">("compact");
+
   const leaks = result?.leaks ?? [];
   const oneOffMistakes = result?.oneOffMistakes ?? [];
   const missedTactics = result?.missedTactics ?? [];
@@ -2289,6 +2291,62 @@ export function ScanSessionReport({
         />
       ) : null}
 
+      {/* Card view toggle */}
+      {result || isProcessing ? (
+        <div className="flex items-center justify-end">
+          <div className="flex gap-1 rounded-xl border border-white/[0.08] bg-white/[0.03] p-1">
+            <button
+              type="button"
+              onClick={() => setCardView("compact")}
+              title="Grid view"
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                cardView === "compact"
+                  ? "bg-white/[0.10] text-white"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 16 16"
+                fill="currentColor"
+              >
+                <rect x="0" y="0" width="6" height="6" rx="1.5" />
+                <rect x="10" y="0" width="6" height="6" rx="1.5" />
+                <rect x="0" y="10" width="6" height="6" rx="1.5" />
+                <rect x="10" y="10" width="6" height="6" rx="1.5" />
+              </svg>
+              Grid
+            </button>
+            <button
+              type="button"
+              onClick={() => setCardView("list")}
+              title="List view"
+              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                cardView === "list"
+                  ? "bg-white/[0.10] text-white"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 16 16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              >
+                <line x1="0" y1="3" x2="16" y2="3" />
+                <line x1="0" y1="8" x2="16" y2="8" />
+                <line x1="0" y1="13" x2="16" y2="13" />
+              </svg>
+              List
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {showOpenings ? (
         <section className="space-y-4">
           <SectionHeader
@@ -2326,7 +2384,7 @@ export function ScanSessionReport({
               </div>
 
               <CardCarousel
-                viewMode="grid"
+                viewMode={cardView}
                 footer={
                   <CompactCardFooter
                     shown={visibleLeaks.length}
@@ -2456,7 +2514,7 @@ export function ScanSessionReport({
 
           {missedTactics.length > 0 ? (
             <CardCarousel
-              viewMode="grid"
+              viewMode={cardView}
               footer={
                 <CompactCardFooter
                   shown={visibleTactics.length}
@@ -2575,7 +2633,7 @@ export function ScanSessionReport({
 
           {endgameMistakes.length > 0 ? (
             <CardCarousel
-              viewMode="grid"
+              viewMode={cardView}
               footer={
                 <CompactCardFooter
                   shown={visibleEndgames.length}
@@ -2697,7 +2755,7 @@ export function ScanSessionReport({
 
           {visibleMoments.length > 0 ? (
             <CardCarousel
-              viewMode="grid"
+              viewMode={cardView}
               footer={
                 <CompactCardFooter
                   shown={visibleMoments.length}

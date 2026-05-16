@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Chess, type PieceSymbol } from "chess.js";
 import { stockfishClient } from "@/lib/stockfish-client";
 import { EvalBar } from "@/components/eval-bar";
@@ -8,6 +8,7 @@ import { Chessboard } from "@/components/chessboard-compat";
 import { playSound } from "@/lib/sounds";
 import { isMissedMateTactic } from "@/lib/tactic-utils";
 import { useBoardSize } from "@/lib/use-board-size";
+import { CardLayoutContext } from "@/components/card-carousel";
 import {
   useBoardTheme,
   useShowCoordinates,
@@ -588,6 +589,7 @@ export function TacticCard({
   onCreateCommunityPost,
 }: TacticCardProps) {
   const { ref: boardSizeRef, size: boardSize } = useBoardSize(400);
+  const cardLayout = useContext(CardLayoutContext);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
@@ -1001,11 +1003,17 @@ export function TacticCard({
 
   return (
     <article className="glass-card-hover overflow-hidden border-amber-500/10">
-      <div className="grid gap-0 md:grid-cols-[minmax(0,480px)_1fr]">
+      <div
+        className={
+          cardLayout === "vertical"
+            ? "grid gap-0"
+            : "grid gap-0 md:grid-cols-[minmax(0,480px)_1fr]"
+        }
+      >
         {/* Board side */}
         <div
           ref={boardSizeRef}
-          className="relative overflow-hidden border-b border-amber-500/[0.08] bg-amber-500/[0.02] p-3 sm:p-5 md:border-b-0 md:border-r"
+          className={`relative overflow-hidden border-b border-amber-500/[0.08] bg-amber-500/[0.02] p-3 sm:p-5${cardLayout === "horizontal" ? " md:border-b-0 md:border-r" : ""}`}
         >
           <div className="mx-auto flex w-full max-w-[460px] items-start gap-2 sm:gap-3">
             <EvalBar evalCp={displayedEvalCp} height={boardSize} />

@@ -1,10 +1,23 @@
 "use client";
 
-import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import {
+  ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 
 /* ── Types ── */
-export type CardViewMode = "carousel" | "list" | "grid";
+export type CardViewMode = "carousel" | "list" | "grid" | "compact";
+
+/** Consumed by card components to switch between vertical (board on top) and horizontal (side-by-side) layouts. */
+export const CardLayoutContext = createContext<"vertical" | "horizontal">(
+  "horizontal",
+);
 
 interface CardCarouselProps {
   children: ReactNode[];
@@ -146,12 +159,43 @@ export function CardCarousel({
     scrollTo(i);
   };
 
+  /* ── Compact mode: responsive 3-col grid with vertical cards (board on top) ── */
+  if (viewMode === "compact") {
+    const shown = children.slice(0, visibleCount);
+    const remaining = total - shown.length;
+    return (
+      <CardLayoutContext.Provider value="vertical">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {shown.map((child, idx) => (
+            <div
+              key={idx}
+              className="animate-fade-in-up"
+              style={{ animationDelay: `${Math.min(idx, 12) * 50}ms` }}
+            >
+              {child}
+            </div>
+          ))}
+        </div>
+        {remaining > 0 && (
+          <button
+            type="button"
+            onClick={() => setVisibleCount(total)}
+            className="w-full rounded-xl border border-white/[0.07] bg-white/[0.03] py-3 text-sm font-semibold text-slate-400 transition-colors hover:border-white/[0.12] hover:bg-white/[0.05] hover:text-slate-200"
+          >
+            Show all {total}
+          </button>
+        )}
+        {footer}
+      </CardLayoutContext.Provider>
+    );
+  }
+
   /* ── List mode: plain vertical stack (cap animation delay at 8 items) ── */
   if (viewMode === "list") {
     const shown = children.slice(0, visibleCount);
     const remaining = total - shown.length;
     return (
-      <>
+      <CardLayoutContext.Provider value="horizontal">
         <div className="space-y-6">
           {shown.map((child, idx) => (
             <div
@@ -176,7 +220,7 @@ export function CardCarousel({
           </button>
         )}
         {footer}
-      </>
+      </CardLayoutContext.Provider>
     );
   }
 
