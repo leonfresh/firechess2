@@ -373,7 +373,10 @@ export function HeroDemoBoard({
   return (
     <article className="w-full overflow-hidden rounded-[1.7rem] border border-white/[0.08] bg-[linear-gradient(160deg,rgba(7,11,28,0.88),rgba(10,16,36,0.94)_48%,rgba(29,18,49,0.92))] shadow-[0_34px_90px_-52px_rgba(125,211,252,0.45)] backdrop-blur-sm sm:grid sm:grid-cols-[auto_1fr]">
       {/* ── Left column: board ── */}
-      <div ref={heroBoardRef} className="p-2.5 sm:border-r sm:border-white/[0.05] sm:p-3">
+      <div
+        ref={heroBoardRef}
+        className="p-2.5 sm:border-r sm:border-white/[0.05] sm:p-3"
+      >
         <div className="flex items-start gap-1.5">
           <MiniEvalBar evalCp={current.evalBefore} height={heroBoardSize} />
           <div className="relative min-w-0 overflow-hidden rounded-[1.15rem] bg-[linear-gradient(180deg,rgba(7,11,28,0.96),rgba(30,43,90,0.88)_60%,rgba(236,72,153,0.26))] p-1 shadow-2xl shadow-black/40 ring-1 ring-white/[0.08]">
@@ -439,24 +442,32 @@ export function HeroDemoBoard({
           </div>
 
           {/* Title */}
-          <p className="mt-2 text-[11px] font-semibold leading-snug text-slate-200">
+          <p className="mt-1.5 text-[10px] font-semibold leading-snug text-slate-400">
             {current.title}
           </p>
 
-          {/* Pattern line */}
-          <p className="mt-1.5 text-[10px] leading-snug text-slate-300">
-            <span className="rounded bg-amber-500/15 px-1 font-bold text-amber-300">
+          {/* Frequency headline — key proof this is a multi-game scan */}
+          <div className="mt-1.5 flex items-end gap-2">
+            <span className="text-[32px] font-black leading-none tabular-nums text-amber-300">
               {current.reachCount}×
             </span>
-            {" reach · "}
-            <span className="rounded bg-red-500/15 px-1 font-mono font-bold text-red-300">
+            <span className="mb-1 text-[10px] leading-tight text-slate-400">
+              you played this line
+              <br />
+              across your games
+            </span>
+          </div>
+
+          {/* Move comparison */}
+          <div className="mt-1.5 flex items-center gap-1.5">
+            <span className="rounded bg-red-500/15 px-1.5 py-0.5 font-mono text-[11px] font-bold text-red-300">
               {current.playedSan}
             </span>
-            {" vs "}
-            <span className="rounded bg-emerald-500/15 px-1 font-mono font-bold text-emerald-300">
+            <span className="text-[10px] text-slate-600">→</span>
+            <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 font-mono text-[11px] font-bold text-emerald-300">
               {current.bestSan}
             </span>
-          </p>
+          </div>
 
           {/* Eval before/after — inline chips */}
           <div className="mt-1.5 flex items-center gap-1.5">
@@ -545,23 +556,23 @@ export function HeroDemoBoard({
           </button>
           <div className="ml-auto flex items-center gap-1">
             {scenarios.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => {
-                setAutoplay(false);
-                setIndex(i);
-              }}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                i === index % scenarios.length
-                  ? "w-4 bg-emerald-400"
-                  : "w-1.5 bg-white/[0.08] hover:bg-white/20"
-              }`}
-            />
-          ))}
+              <button
+                key={i}
+                type="button"
+                onClick={() => {
+                  setAutoplay(false);
+                  setIndex(i);
+                }}
+                className={`h-1.5 rounded-full transition-all duration-300 ${
+                  i === index % scenarios.length
+                    ? "w-4 bg-emerald-400"
+                    : "w-1.5 bg-white/[0.08] hover:bg-white/20"
+                }`}
+              />
+            ))}
+          </div>
         </div>
       </div>
-    </div>
     </article>
   );
 }

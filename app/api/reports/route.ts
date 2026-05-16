@@ -104,7 +104,9 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Dedup: check if a report with the same hash exists for this user
+  // Dedup: check if a report with the same hash exists for this user.
+  // If found, refresh its computed fields so re-saves after formula updates
+  // always reflect the latest stats.
   if (contentHash) {
     const [dup] = await db
       .select({ id: reports.id })
@@ -118,6 +120,35 @@ export async function POST(req: NextRequest) {
       .limit(1);
 
     if (dup) {
+      // Recompute firechessScore with the freshly-supplied values
+      const accDup =
+        typeof estimatedAccuracy === "number" ? estimatedAccuracy : 50;
+      const lcDup = leaks?.length ?? 0;
+      const tcDup = missedTactics?.length ?? 0;
+      const gaDup = gamesAnalyzed ?? 0;
+      const cplDup = typeof weightedCpLoss === "number" ? weightedCpLoss : 50;
+      const rawScoreDup =
+        accDup * 8 -
+        cplDup * 2 -
+        lcDup * 3 -
+        tcDup * 4 +
+        Math.min(gaDup, 50) * 0.5;
+      const firechessScoreDup =
+        Math.round(Math.max(0, Math.min(1000, rawScoreDup)) * 10) / 10;
+
+      await db
+        .update(reports)
+        .set({
+          reportMeta: reportMeta ?? null,
+          estimatedAccuracy,
+          estimatedRating,
+          weightedCpLoss,
+          severeLeakRate,
+          firechessScore: firechessScoreDup,
+          playerRating: typeof playerRating === "number" ? playerRating : null,
+        })
+        .where(eq(reports.id, dup.id));
+
       return NextResponse.json({
         saved: false,
         reason: "duplicate",

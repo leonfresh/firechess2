@@ -41,7 +41,7 @@ export const SAMPLE_REPORTS: SampleReport[] = [
     rating: 3300,
     tier: "elite",
     label: "GM · World #2",
-    reportId: "88380276-6956-4e06-ad71-4cbee54b09f3",
+    reportId: "d88ee0a8-2686-4c9a-9100-cb5c7c6a0068",
     highlights: {},
   },
   {
@@ -51,7 +51,7 @@ export const SAMPLE_REPORTS: SampleReport[] = [
     rating: 3377,
     tier: "elite",
     label: "GM · World #1",
-    reportId: "6f64d6c0-f0b5-4f8c-a471-98a477a9d1ec",
+    reportId: "4aa88749-ca3b-430e-9d03-f7dca08eadf2",
     highlights: {},
   },
   {
@@ -61,7 +61,7 @@ export const SAMPLE_REPORTS: SampleReport[] = [
     rating: 2453,
     tier: "elite",
     label: "IM · GothamChess",
-    reportId: "4c5ce129-2015-4c3e-9036-9acb88632fad",
+    reportId: "8c8d499e-1f04-4121-aabc-71a818b98ce6",
     highlights: {},
   },
 
@@ -93,7 +93,7 @@ export const SAMPLE_REPORTS: SampleReport[] = [
     rating: 2400,
     tier: "club",
     label: "IM · Oh no my queen",
-    reportId: "ab8976ae-7a10-496b-8aee-56e4a3f3758e",
+    reportId: "43d5016b-8693-40e0-bf5a-2d87434a7931",
     highlights: {},
   },
 
