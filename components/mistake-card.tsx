@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Chess, type PieceSymbol } from "chess.js";
 import { stockfishClient } from "@/lib/stockfish-client";
 import { EvalBar } from "@/components/eval-bar";
@@ -11,7 +11,6 @@ import {
 } from "@/components/chessboard-compat";
 import { playSound } from "@/lib/sounds";
 import { useBoardSize } from "@/lib/use-board-size";
-import { CardLayoutContext } from "@/components/card-carousel";
 import type { MoveSquare, RepeatedOpeningLeak } from "@/lib/types";
 import { fetchExplorerMoves, type ExplorerMove } from "@/lib/lichess-explorer";
 import {
@@ -277,7 +276,6 @@ export function MistakeCard({
   onCreateCommunityPost,
 }: MistakeCardProps) {
   const { ref: boardSizeRef, size: boardSize } = useBoardSize(480);
-  const cardLayout = useContext(CardLayoutContext);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
@@ -1547,17 +1545,11 @@ export function MistakeCard({
 
   return (
     <article className="glass-card-hover overflow-hidden">
-      <div
-        className={
-          cardLayout === "vertical"
-            ? "grid gap-0"
-            : "grid gap-0 md:grid-cols-[minmax(0,520px)_1fr]"
-        }
-      >
+      <div className="grid gap-0 md:grid-cols-[minmax(0,520px)_1fr]">
         {/* Board side */}
         <div
           ref={boardSizeRef}
-          className={`relative overflow-hidden border-b border-white/[0.04] bg-white/[0.01] p-3 sm:p-5${cardLayout === "horizontal" ? " md:border-b-0 md:border-r" : ""}`}
+          className="relative overflow-hidden border-b border-white/[0.04] bg-white/[0.01] p-3 sm:p-5 md:border-b-0 md:border-r"
         >
           <div className="mx-auto flex w-full max-w-[460px] items-start gap-2 sm:gap-3">
             <EvalBar evalCp={displayedEvalCp} height={boardSize} />

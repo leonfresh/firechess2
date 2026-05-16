@@ -245,8 +245,12 @@ class StockfishClient {
       await this.sendAndWaitFor("isready", (line) => line.trim() === "readyok");
     }
     this.worker.postMessage(`position fen ${fen}`);
-    const searchLines = await this.sendAndWaitFor(`go depth ${depth}`, (line) =>
-      line.startsWith("bestmove "),
+    // Cap movetime so we always respond before the 20 s sendAndWaitFor timeout,
+    // even at high depths under CPU contention from parallel analysis phases.
+    const moveTimeMs = Math.min(17500, Math.max(4000, depth * 1000));
+    const searchLines = await this.sendAndWaitFor(
+      `go depth ${depth} movetime ${moveTimeMs}`,
+      (line) => line.startsWith("bestmove "),
     );
     if (skillLevel !== undefined) {
       // Reset to full strength for any non-AI usage (analysis etc.)
@@ -272,8 +276,10 @@ class StockfishClient {
     }
     await this.sendAndWaitFor("isready", (line) => line.trim() === "readyok");
     this.worker.postMessage(`position fen ${fen}`);
-    const searchLines = await this.sendAndWaitFor(`go depth ${depth}`, (line) =>
-      line.startsWith("bestmove "),
+    const moveTimeMs = Math.min(17500, Math.max(4000, depth * 1000));
+    const searchLines = await this.sendAndWaitFor(
+      `go depth ${depth} movetime ${moveTimeMs}`,
+      (line) => line.startsWith("bestmove "),
     );
     // Reset multi-PV and skill level back to defaults
     this.worker.postMessage("setoption name MultiPV value 1");

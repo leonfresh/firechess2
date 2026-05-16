@@ -61,6 +61,7 @@ const POSITIONAL_MOTIF_NAMES = new Set([
 const STILL_WINNING_THRESHOLD = 350;
 const FREE_SCAN_SECTION_SAMPLE = 6;
 const COMPACT_REPORT_INITIAL_COUNT = 6;
+const COMPACT_REPORT_LOAD_BATCH = 24;
 
 type TaggedPosition = {
   tags: string[];
@@ -93,8 +94,8 @@ type MotifDefinition = {
   match: (position: TaggedPosition) => boolean;
 };
 
-function nextCompactRevealTarget(_current: number, total: number) {
-  return total;
+function nextCompactRevealTarget(current: number, total: number) {
+  return Math.min(total, current + COMPACT_REPORT_LOAD_BATCH);
 }
 
 function useCompactSectionReveal(total: number, resetKey: string) {
@@ -161,7 +162,9 @@ function CompactCardFooter({
             onClick={onLoadMore}
             className="inline-flex items-center justify-center rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/20"
           >
-            Show all {total}
+            {remaining <= COMPACT_REPORT_LOAD_BATCH
+              ? `Show all ${remaining}`
+              : `Load ${COMPACT_REPORT_LOAD_BATCH} more`}
           </button>
         ) : null}
         {shown > COMPACT_REPORT_INITIAL_COUNT ? (
@@ -351,7 +354,8 @@ const MOTIF_DEFS: MotifDefinition[] = [
 
 function EmptySection({ message }: { message: string }) {
   return (
-    <div className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 text-sm text-slate-400 sm:p-6">
+    <div className="flex items-center gap-3 rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 text-sm text-slate-400 sm:p-6">
+      <span className="shrink-0 text-emerald-500">✓</span>
       {message}
     </div>
   );
@@ -885,12 +889,16 @@ function SectionHeader({
   description,
   badge,
   live,
+  viewMode,
+  onToggleView,
 }: {
   eyebrow: string;
   title: string;
   description: string;
   badge?: ReactNode;
   live?: boolean;
+  viewMode?: "list" | "grid";
+  onToggleView?: () => void;
 }) {
   return (
     <div className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
@@ -907,7 +915,7 @@ function SectionHeader({
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2 text-xs">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
           {badge ? (
             <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-slate-300">
               {badge}
@@ -917,6 +925,52 @@ function SectionHeader({
             <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-cyan-200">
               Live update
             </span>
+          ) : null}
+          {onToggleView ? (
+            <button
+              type="button"
+              onClick={onToggleView}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-400 transition hover:bg-white/[0.08] hover:text-slate-200"
+              aria-label={`Switch to ${viewMode === "list" ? "grid" : "list"} view`}
+            >
+              {viewMode === "list" ? (
+                <>
+                  <svg
+                    width="11"
+                    height="11"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <rect x="3" y="3" width="8" height="8" rx="1" />
+                    <rect x="13" y="3" width="8" height="8" rx="1" />
+                    <rect x="3" y="13" width="8" height="8" rx="1" />
+                    <rect x="13" y="13" width="8" height="8" rx="1" />
+                  </svg>
+                  Grid
+                </>
+              ) : (
+                <>
+                  <svg
+                    width="11"
+                    height="11"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
+                    <line x1="8" y1="6" x2="21" y2="6" />
+                    <line x1="8" y1="12" x2="21" y2="12" />
+                    <line x1="8" y1="18" x2="21" y2="18" />
+                    <circle cx="3" cy="6" r="1" fill="currentColor" />
+                    <circle cx="3" cy="12" r="1" fill="currentColor" />
+                    <circle cx="3" cy="18" r="1" fill="currentColor" />
+                  </svg>
+                  List
+                </>
+              )}
+            </button>
           ) : null}
         </div>
       </div>
@@ -1807,8 +1861,6 @@ export function ScanSessionReport({
   const result = scan.result;
   const isProcessing = scan.status === "processing";
 
-  const [cardView, setCardView] = useState<"compact" | "list">("compact");
-
   const leaks = result?.leaks ?? [];
   const oneOffMistakes = result?.oneOffMistakes ?? [];
   const missedTactics = result?.missedTactics ?? [];
@@ -1898,6 +1950,16 @@ export function ScanSessionReport({
     accessibleMoments.length,
     `${scan.id}:time`,
   );
+
+  const [sectionViewModes, setSectionViewModes] = useState<
+    Record<string, "list" | "grid">
+  >({});
+  const getSV = (id: string): "list" | "grid" => sectionViewModes[id] ?? "list";
+  const toggleSV = (id: string) =>
+    setSectionViewModes((p) => ({
+      ...p,
+      [id]: (p[id] ?? "list") === "list" ? "grid" : "list",
+    }));
 
   const visibleLeaks = accessibleLeaks.slice(0, leakReveal.shownCount);
   const visibleOneOffMistakes = accessibleOneOffMistakes.slice(
@@ -2101,6 +2163,66 @@ export function ScanSessionReport({
 
   return (
     <div className="mt-6 space-y-6">
+      {showOpenings || showTactics || showEndgames || showTimeManagement ? (
+        <nav
+          aria-label="Report sections"
+          className="flex items-center gap-2 overflow-x-auto rounded-2xl border border-white/[0.07] bg-white/[0.02] px-3 py-2.5"
+        >
+          {showOpenings ? (
+            <a
+              href="#section-openings"
+              className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white"
+            >
+              📚 Openings
+              {leaks.length > 0 ? (
+                <span className="rounded-full bg-cyan-500/20 px-1.5 text-[10px] font-bold text-cyan-300">
+                  {leaks.length}
+                </span>
+              ) : null}
+            </a>
+          ) : null}
+          {showTactics ? (
+            <a
+              href="#section-tactics"
+              className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white"
+            >
+              ⚔️ Tactics
+              {missedTactics.length > 0 ? (
+                <span className="rounded-full bg-amber-500/20 px-1.5 text-[10px] font-bold text-amber-300">
+                  {missedTactics.length}
+                </span>
+              ) : null}
+            </a>
+          ) : null}
+          {showEndgames ? (
+            <a
+              href="#section-endgames"
+              className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white"
+            >
+              ♟ Endgames
+              {endgameMistakes.length > 0 ? (
+                <span className="rounded-full bg-sky-500/20 px-1.5 text-[10px] font-bold text-sky-300">
+                  {endgameMistakes.length}
+                </span>
+              ) : null}
+            </a>
+          ) : null}
+          {showTimeManagement ? (
+            <a
+              href="#section-time"
+              className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white"
+            >
+              ⏱️ Time
+              {timeMoments.length > 0 ? (
+                <span className="rounded-full bg-fuchsia-500/20 px-1.5 text-[10px] font-bold text-fuchsia-300">
+                  {timeMoments.length}
+                </span>
+              ) : null}
+            </a>
+          ) : null}
+        </nav>
+      ) : null}
+
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
         <MetricCard
           label="Games analyzed"
@@ -2291,64 +2413,8 @@ export function ScanSessionReport({
         />
       ) : null}
 
-      {/* Card view toggle */}
-      {result || isProcessing ? (
-        <div className="flex items-center justify-end">
-          <div className="flex gap-1 rounded-xl border border-white/[0.08] bg-white/[0.03] p-1">
-            <button
-              type="button"
-              onClick={() => setCardView("compact")}
-              title="Grid view"
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                cardView === "compact"
-                  ? "bg-white/[0.10] text-white"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 16 16"
-                fill="currentColor"
-              >
-                <rect x="0" y="0" width="6" height="6" rx="1.5" />
-                <rect x="10" y="0" width="6" height="6" rx="1.5" />
-                <rect x="0" y="10" width="6" height="6" rx="1.5" />
-                <rect x="10" y="10" width="6" height="6" rx="1.5" />
-              </svg>
-              Grid
-            </button>
-            <button
-              type="button"
-              onClick={() => setCardView("list")}
-              title="List view"
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                cardView === "list"
-                  ? "bg-white/[0.10] text-white"
-                  : "text-slate-400 hover:text-white"
-              }`}
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 16 16"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-              >
-                <line x1="0" y1="3" x2="16" y2="3" />
-                <line x1="0" y1="8" x2="16" y2="8" />
-                <line x1="0" y1="13" x2="16" y2="13" />
-              </svg>
-              List
-            </button>
-          </div>
-        </div>
-      ) : null}
-
       {showOpenings ? (
-        <section className="space-y-4">
+        <section id="section-openings" className="space-y-4">
           <SectionHeader
             eyebrow="Openings"
             title="Opening report"
@@ -2374,9 +2440,18 @@ export function ScanSessionReport({
           {leaks.length > 0 ? (
             <div className="space-y-4">
               <div className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
-                <h3 className="text-lg font-bold text-white">
-                  Recurring opening leaks
-                </h3>
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-lg font-bold text-white">
+                    Recurring opening leaks
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => toggleSV("leaks")}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-400 transition hover:bg-white/[0.08] hover:text-slate-200"
+                  >
+                    {getSV("leaks") === "list" ? "Grid" : "List"}
+                  </button>
+                </div>
                 <p className="mt-2 text-sm text-slate-400">
                   Positions you keep reaching and misplaying often enough to
                   become a real pattern in your repertoire.
@@ -2384,7 +2459,7 @@ export function ScanSessionReport({
               </div>
 
               <CardCarousel
-                viewMode={cardView}
+                viewMode={getSV("leaks")}
                 footer={
                   <CompactCardFooter
                     shown={visibleLeaks.length}
@@ -2432,9 +2507,18 @@ export function ScanSessionReport({
           {oneOffMistakes.length > 0 ? (
             <div className="space-y-4">
               <div className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
-                <h3 className="text-lg font-bold text-white">
-                  Sharp one-off misses
-                </h3>
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-lg font-bold text-white">
+                    Sharp one-off misses
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => toggleSV("one-offs")}
+                    className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1 text-xs font-medium text-slate-400 transition hover:bg-white/[0.08] hover:text-slate-200"
+                  >
+                    {getSV("one-offs") === "list" ? "Grid" : "List"}
+                  </button>
+                </div>
                 <p className="mt-2 text-sm text-slate-400">
                   Positions that did not repeat often enough to become leaks,
                   but were still expensive.
@@ -2442,7 +2526,7 @@ export function ScanSessionReport({
               </div>
 
               <CardCarousel
-                viewMode="grid"
+                viewMode={getSV("one-offs")}
                 footer={
                   <CompactCardFooter
                     shown={visibleOneOffMistakes.length}
@@ -2489,7 +2573,7 @@ export function ScanSessionReport({
       ) : null}
 
       {showTactics ? (
-        <section className="space-y-4">
+        <section id="section-tactics" className="space-y-4">
           <SectionHeader
             eyebrow="Tactics"
             title="Missed tactics"
@@ -2506,6 +2590,8 @@ export function ScanSessionReport({
               plural: "found",
             })}
             live={isProcessing}
+            viewMode={getSV("tactics")}
+            onToggleView={() => toggleSV("tactics")}
           />
 
           {missedTactics.length > 0 ? (
@@ -2514,7 +2600,7 @@ export function ScanSessionReport({
 
           {missedTactics.length > 0 ? (
             <CardCarousel
-              viewMode={cardView}
+              viewMode={getSV("tactics")}
               footer={
                 <CompactCardFooter
                   shown={visibleTactics.length}
@@ -2569,7 +2655,7 @@ export function ScanSessionReport({
       ) : null}
 
       {showEndgames ? (
-        <section className="space-y-4">
+        <section id="section-endgames" className="space-y-4">
           <SectionHeader
             eyebrow="Endgames"
             title="Endgame report"
@@ -2586,6 +2672,8 @@ export function ScanSessionReport({
               plural: "mistakes",
             })}
             live={isProcessing}
+            viewMode={getSV("endgames")}
+            onToggleView={() => toggleSV("endgames")}
           />
 
           {endgameStats ? (
@@ -2633,7 +2721,7 @@ export function ScanSessionReport({
 
           {endgameMistakes.length > 0 ? (
             <CardCarousel
-              viewMode={cardView}
+              viewMode={getSV("endgames")}
               footer={
                 <CompactCardFooter
                   shown={visibleEndgames.length}
@@ -2688,7 +2776,7 @@ export function ScanSessionReport({
       ) : null}
 
       {showTimeManagement ? (
-        <section className="space-y-4">
+        <section id="section-time" className="space-y-4">
           <SectionHeader
             eyebrow="Time"
             title="Time management"
@@ -2709,6 +2797,8 @@ export function ScanSessionReport({
                 : "Waiting for clock data"
             }
             live={isProcessing}
+            viewMode={getSV("time")}
+            onToggleView={() => toggleSV("time")}
           />
 
           {timeManagement ? (
@@ -2755,7 +2845,7 @@ export function ScanSessionReport({
 
           {visibleMoments.length > 0 ? (
             <CardCarousel
-              viewMode={cardView}
+              viewMode={getSV("time")}
               footer={
                 <CompactCardFooter
                   shown={visibleMoments.length}

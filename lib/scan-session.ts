@@ -230,14 +230,75 @@ export function computeScanReportMeta(
     return best;
   })();
 
-  const vibeTitle =
+  // Pick a title that reflects the dominant weakness across all report sections,
+  // not just openings, crossed with a rough skill tier.
+  const openingCount = result?.leaks?.length ?? 0;
+  const tacticsCount = result?.missedTactics?.length ?? 0;
+  const endgameCount = result?.endgameMistakes?.length ?? 0;
+  const timeCount = result?.timeManagement?.moments?.length ?? 0;
+
+  type WeaknessType = "tactics" | "endgame" | "opening" | "time" | "balanced";
+  const dominant: WeaknessType = (() => {
+    // Weight tactics and endgame higher — they're more signal-dense than opening leaks
+    const scores = {
+      tactics: tacticsCount * 1.5,
+      endgame: endgameCount * 1.2,
+      time: timeCount,
+      opening: openingCount,
+    };
+    const max = Math.max(...Object.values(scores));
+    if (max === 0) return "balanced";
+    if (scores.tactics === max) return "tactics";
+    if (scores.endgame === max) return "endgame";
+    if (scores.time === max) return "time";
+    if (scores.opening === max) return "opening";
+    return "balanced";
+  })();
+
+  // tier 0 = <1200, 1 = 1200-1599, 2 = 1600-1999, 3 = 2000+
+  const ratingTier =
     estimatedRating >= 2000
-      ? "🔥 Certified Opening Demon"
+      ? 3
       : estimatedRating >= 1600
-        ? "⚡ Solid Climber Energy"
+        ? 2
         : estimatedRating >= 1200
-          ? "🌱 Growth Arc Activated"
-          : "🧠 Training Arc Beginning";
+          ? 1
+          : 0;
+
+  const VIBE_TITLES: Record<WeaknessType, [string, string, string, string]> = {
+    tactics: [
+      "⚔️ Pattern Recognition Arc",
+      "⚔️ Sharpness Loading...",
+      "⚔️ Tactics Holding the Rating Back",
+      "⚔️ Your Tactics Are the Ceiling",
+    ],
+    endgame: [
+      "♟ Converting Is Hard",
+      "♟ Winning Then Losing",
+      "♟ The Last 20 Moves Hurt",
+      "♟ Winning Then Stumbling",
+    ],
+    opening: [
+      "📚 Opening Habits In Progress",
+      "📚 Building Your Opening Map",
+      "📚 Opening Drift Costing Points",
+      "📚 Prep Gap Showing",
+    ],
+    time: [
+      "⏱ The Clock Is the Enemy",
+      "⏱ Playing Too Fast",
+      "⏱ Time Pressure Is Leaking",
+      "⏱ Clock Costs You Games",
+    ],
+    balanced: [
+      "🧠 Every Game Is a Lesson",
+      "🌱 Improvement Arc Active",
+      "⚡ Solid — Small Leaks Everywhere",
+      "🔥 Near the Top, Still Leaking",
+    ],
+  };
+
+  const vibeTitle = VIBE_TITLES[dominant][ratingTier];
   const endgameTechniqueScore = computeEndgameTechniqueScore(
     result?.endgameStats ?? null,
   );

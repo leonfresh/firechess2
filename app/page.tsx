@@ -22,6 +22,7 @@ import { DailyLoginPopup } from "@/components/daily-login-rewards";
 import { SetupWizard } from "@/components/setup-wizard";
 import { ProWelcomeModal } from "@/components/lifetime-welcome";
 import { AdminDebug } from "@/components/admin-debug";
+import { SampleReportsSection } from "@/components/sample-reports-section";
 import { CardCarousel, ViewModeToggle } from "@/components/card-carousel";
 import type { CardViewMode } from "@/components/card-carousel";
 import { useSession } from "@/components/session-provider";
@@ -1510,6 +1511,8 @@ export default function HomePage() {
               </div>
             </div>
           </header>
+
+          <SampleReportsSection />
 
           <section
             id="analyzer"
