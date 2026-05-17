@@ -22,6 +22,7 @@ import type { MissedTactic, MoveSquare } from "@/lib/types";
 type TacticCardProps = {
   tactic: MissedTactic;
   engineDepth: number;
+  onOpenAnalysis?: () => void;
   onCreateCommunityPost?: () => void;
 };
 
@@ -585,6 +586,7 @@ function formatEvalLoss(cpLoss: number): string {
 export function TacticCard({
   tactic,
   engineDepth,
+  onOpenAnalysis,
   onCreateCommunityPost,
 }: TacticCardProps) {
   const { ref: boardSizeRef, size: boardSize } = useBoardSize(400);
@@ -1317,6 +1319,16 @@ export function TacticCard({
               </svg>
               {explaining ? "..." : animating ? "..." : "Why it matters"}
             </button>
+
+            {onOpenAnalysis ? (
+              <button
+                type="button"
+                onClick={onOpenAnalysis}
+                className="flex h-10 items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 text-sm font-semibold text-emerald-100 transition-all hover:bg-emerald-500/20 hover:text-white"
+              >
+                Open analysis
+              </button>
+            ) : null}
 
             {onCreateCommunityPost ? (
               <button

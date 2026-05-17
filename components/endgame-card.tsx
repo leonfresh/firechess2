@@ -21,6 +21,7 @@ import type { EndgameMistake, MoveSquare } from "@/lib/types";
 type EndgameCardProps = {
   mistake: EndgameMistake;
   engineDepth: number;
+  onOpenAnalysis?: () => void;
   onCreateCommunityPost?: () => void;
 };
 
@@ -272,6 +273,7 @@ const ENDGAME_TIPS: Record<string, string> = {
 export function EndgameCard({
   mistake,
   engineDepth,
+  onOpenAnalysis,
   onCreateCommunityPost,
 }: EndgameCardProps) {
   const { ref: boardSizeRef, size: boardSize } = useBoardSize(400);
@@ -898,6 +900,16 @@ export function EndgameCard({
               </svg>
               {explaining ? "..." : animating ? "..." : "What went wrong"}
             </button>
+
+            {onOpenAnalysis ? (
+              <button
+                type="button"
+                onClick={onOpenAnalysis}
+                className="flex h-10 items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 text-sm font-semibold text-emerald-100 transition-all hover:bg-emerald-500/20 hover:text-white"
+              >
+                Open analysis
+              </button>
+            ) : null}
 
             {onCreateCommunityPost ? (
               <button

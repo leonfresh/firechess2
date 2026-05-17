@@ -30,6 +30,7 @@ import { ExplanationModal } from "@/components/explanation-modal";
 type MistakeCardProps = {
   leak: RepeatedOpeningLeak;
   engineDepth: number;
+  onOpenAnalysis?: () => void;
   onCreateCommunityPost?: () => void;
 };
 
@@ -273,6 +274,7 @@ function formatEval(valueCp: number, options?: { showPlus?: boolean }): string {
 export function MistakeCard({
   leak,
   engineDepth,
+  onOpenAnalysis,
   onCreateCommunityPost,
 }: MistakeCardProps) {
   const { ref: boardSizeRef, size: boardSize } = useBoardSize(480);
@@ -2345,6 +2347,16 @@ export function MistakeCard({
               </svg>
               {explaining ? "..." : animating ? "..." : "Explain played move"}
             </button>
+
+            {onOpenAnalysis ? (
+              <button
+                type="button"
+                onClick={onOpenAnalysis}
+                className="flex h-10 items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-4 text-sm font-semibold text-emerald-100 transition-all hover:bg-emerald-500/20 hover:text-white"
+              >
+                <span>Open analysis</span>
+              </button>
+            ) : null}
 
             {onCreateCommunityPost ? (
               <button

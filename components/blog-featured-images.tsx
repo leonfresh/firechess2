@@ -28,6 +28,12 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <MiddlegameArt />;
     case "chaos-chess-roguelike-draft-mode":
       return <ChaosArt />;
+    case "chess-accuracy-score-explained":
+      return <AccuracyArt />;
+    case "how-to-improve-at-chess":
+      return <ImproveArt />;
+    case "chess-brilliant-move-explained":
+      return <BrilliantArt />;
     default:
       return <DefaultArt />;
   }
@@ -698,6 +704,175 @@ function ChaosArt() {
 /* ================================================================== */
 /*  Default  atmospheric chess silhouette                              */
 /* ================================================================== */
+function AccuracyArt() {
+  return (
+    <svg viewBox="0 0 680 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="acBg2" x1="0" y1="0" x2="680" y2="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#080d1a" /><stop offset="1" stopColor="#0d1425" />
+        </linearGradient>
+        <radialGradient id="acG12" cx="200" cy="100" r="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#6366f1" stopOpacity="0.07" /><stop offset="1" stopColor="#6366f1" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="acG22" cx="500" cy="180" r="180" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#10b981" stopOpacity="0.07" /><stop offset="1" stopColor="#10b981" stopOpacity="0" />
+        </radialGradient>
+        <filter id="acGlow2"><feGaussianBlur stdDeviation="4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+        <linearGradient id="arcGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#ef4444" /><stop offset="0.5" stopColor="#f59e0b" /><stop offset="1" stopColor="#10b981" />
+        </linearGradient>
+      </defs>
+      <rect width="680" height="280" rx="18" fill="url(#acBg2)" />
+      <rect x="1" y="1" width="678" height="278" rx="17" stroke="white" strokeOpacity="0.05" />
+      <rect width="680" height="280" rx="18" fill="url(#acG12)" />
+      <rect width="680" height="280" rx="18" fill="url(#acG22)" />
+      <text x="340" y="34" textAnchor="middle" fill="white" fontSize="16" fontWeight="700" fontFamily="system-ui">Chess Accuracy Explained</text>
+      {/* Gauge arc */}
+      <g transform="translate(170,155)">
+        <path d="M -85 0 A 85 85 0 0 1 85 0" stroke="#1e293b" strokeWidth="14" fill="none" strokeLinecap="round" />
+        <path d="M -85 0 A 85 85 0 0 1 70 -45" stroke="#6366f1" strokeWidth="14" fill="none" strokeLinecap="round" />
+        <line x1="0" y1="0" x2="67" y2="-43" stroke="#a5b4fc" strokeWidth="3" strokeLinecap="round" filter="url(#acGlow2)" />
+        <circle r="7" fill="#6366f1" filter="url(#acGlow2)" />
+        <text y="26" textAnchor="middle" fill="white" fontSize="28" fontWeight="800" fontFamily="system-ui" filter="url(#acGlow2)">94%</text>
+        <text y="44" textAnchor="middle" fill="#a5b4fc" fontSize="12" fontFamily="system-ui">Accuracy</text>
+        <text x="-90" y="14" fill="#ef4444" fontSize="10" textAnchor="middle" fontFamily="system-ui">0</text>
+        <text x="0" y="-92" fill="#f59e0b" fontSize="10" textAnchor="middle" fontFamily="system-ui">50</text>
+        <text x="90" y="14" fill="#10b981" fontSize="10" textAnchor="middle" fontFamily="system-ui">100</text>
+      </g>
+      {/* Bracket bars */}
+      <g transform="translate(360, 55)">
+        {[
+          { label: "1000–1200", val: 60, color: "#ef4444" },
+          { label: "1200–1600", val: 74, color: "#f59e0b" },
+          { label: "1600–2000", val: 87, color: "#22d3ee" },
+          { label: "2000–2400", val: 93, color: "#10b981" },
+          { label: "2400+ GM", val: 100, color: "#a5b4fc" },
+        ].map((row, i) => (
+          <g key={row.label} transform={`translate(0, ${i * 38})`}>
+            <rect width="280" height="30" rx="6" fill="#0f172a" fillOpacity="0.7" stroke="#1e293b" />
+            <text x="10" y="19" fill="#94a3b8" fontSize="11" fontFamily="system-ui">{row.label}</text>
+            <rect x="120" y="8" width="110" height="10" rx="4" fill="#1e293b" />
+            <rect x="120" y="8" width={row.val * 1.1} height="10" rx="4" fill={row.color} fillOpacity="0.7" />
+            <text x="240" y="18" fill={row.color} fontSize="11" fontFamily="system-ui">~{row.val}%</text>
+          </g>
+        ))}
+      </g>
+    </svg>
+  );
+}
+
+function ImproveArt() {
+  return (
+    <svg viewBox="0 0 680 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="impBg2" x1="0" y1="0" x2="680" y2="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#080c18" /><stop offset="1" stopColor="#0e1422" />
+        </linearGradient>
+        <radialGradient id="impG2" cx="340" cy="140" r="220" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#22c55e" stopOpacity="0.06" /><stop offset="1" stopColor="#22c55e" stopOpacity="0" />
+        </radialGradient>
+        <filter id="impF2"><feGaussianBlur stdDeviation="4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="680" height="280" rx="18" fill="url(#impBg2)" />
+      <rect x="1" y="1" width="678" height="278" rx="17" stroke="white" strokeOpacity="0.05" />
+      <rect width="680" height="280" rx="18" fill="url(#impG2)" />
+      <text x="340" y="34" textAnchor="middle" fill="white" fontSize="16" fontWeight="700" fontFamily="system-ui">The Improvement Triangle</text>
+      {/* Triangle */}
+      <polygon points="340,60 90,245 590,245" fill="none" stroke="#334155" strokeWidth="1.5" />
+      <polygon points="340,60 215,153 340,153" fill="#6366f1" fillOpacity="0.07" />
+      <polygon points="340,60 465,153 340,153" fill="#10b981" fillOpacity="0.07" />
+      <polygon points="215,153 90,245 340,245" fill="#f59e0b" fillOpacity="0.07" />
+      <polygon points="465,153 590,245 340,245" fill="#22d3ee" fillOpacity="0.07" />
+      <line x1="340" y1="60" x2="340" y2="245" stroke="#1e293b" strokeWidth="1" />
+      <line x1="215" y1="153" x2="465" y2="153" stroke="#1e293b" strokeWidth="1" />
+      {/* Apex: Tactics */}
+      <circle cx="340" cy="60" r="26" fill="#6366f1" fillOpacity="0.12" stroke="#6366f1" strokeOpacity="0.3" />
+      <text x="340" y="57" textAnchor="middle" fill="#a5b4fc" fontSize="12" fontWeight="700" fontFamily="system-ui">TACTICS</text>
+      <text x="340" y="70" textAnchor="middle" fill="#818cf8" fontSize="9" fontFamily="system-ui">highest ROI</text>
+      {/* Left: Endgame */}
+      <circle cx="140" cy="222" r="28" fill="#f59e0b" fillOpacity="0.10" stroke="#f59e0b" strokeOpacity="0.25" />
+      <text x="140" y="219" textAnchor="middle" fill="#fcd34d" fontSize="11" fontWeight="700" fontFamily="system-ui">ENDGAME</text>
+      <text x="140" y="231" textAnchor="middle" fill="#fbbf24" fontSize="9" fontFamily="system-ui">technique</text>
+      {/* Right: Opening */}
+      <circle cx="540" cy="222" r="28" fill="#22d3ee" fillOpacity="0.10" stroke="#22d3ee" strokeOpacity="0.25" />
+      <text x="540" y="219" textAnchor="middle" fill="#67e8f9" fontSize="11" fontWeight="700" fontFamily="system-ui">OPENING</text>
+      <text x="540" y="231" textAnchor="middle" fill="#22d3ee" fontSize="9" fontFamily="system-ui">structure</text>
+      {/* Center: Analysis */}
+      <circle cx="340" cy="178" r="24" fill="#10b981" fillOpacity="0.12" stroke="#10b981" strokeOpacity="0.3" />
+      <text x="340" y="175" textAnchor="middle" fill="#6ee7b7" fontSize="11" fontWeight="700" fontFamily="system-ui">ANALYSIS</text>
+      <text x="340" y="189" textAnchor="middle" fill="#34d399" fontSize="9" fontFamily="system-ui">the glue</text>
+    </svg>
+  );
+}
+
+function BrilliantArt() {
+  return (
+    <svg viewBox="0 0 680 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="brBg2" x1="0" y1="0" x2="680" y2="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#080a16" /><stop offset="1" stopColor="#0b0e1e" />
+        </linearGradient>
+        <radialGradient id="brGl2" cx="340" cy="140" r="230" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#06b6d4" stopOpacity="0.1" /><stop offset="1" stopColor="#06b6d4" stopOpacity="0" />
+        </radialGradient>
+        <filter id="brF3"><feGaussianBlur stdDeviation="6" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+        <filter id="brF4"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="680" height="280" rx="18" fill="url(#brBg2)" />
+      <rect x="1" y="1" width="678" height="278" rx="17" stroke="white" strokeOpacity="0.05" />
+      <rect width="680" height="280" rx="18" fill="url(#brGl2)" />
+      {/* Central diamond */}
+      <g transform="translate(340, 140)">
+        <circle r="70" fill="#06b6d4" fillOpacity="0.05" filter="url(#brF3)" />
+        <circle r="52" fill="#06b6d4" fillOpacity="0.07" />
+        <polygon points="0,-42 28,0 0,42 -28,0" fill="#06b6d4" fillOpacity="0.18" stroke="#06b6d4" strokeWidth="1.5" filter="url(#brF4)" />
+        <polygon points="0,-42 28,0 0,42 -28,0" fill="none" stroke="#67e8f9" strokeWidth="0.5" strokeOpacity="0.6" />
+        <line x1="0" y1="-42" x2="28" y2="0" stroke="#22d3ee" strokeWidth="0.5" strokeOpacity="0.4" />
+        <line x1="0" y1="-42" x2="-28" y2="0" stroke="#22d3ee" strokeWidth="0.5" strokeOpacity="0.4" />
+        <line x1="-28" y1="0" x2="0" y2="9" stroke="#22d3ee" strokeWidth="0.5" strokeOpacity="0.3" />
+        <line x1="28" y1="0" x2="0" y2="9" stroke="#22d3ee" strokeWidth="0.5" strokeOpacity="0.3" />
+        {/* Sparkles */}
+        <g filter="url(#brF4)" stroke="#67e8f9" strokeWidth="1" strokeOpacity="0.8">
+          <line x1="-53" y1="-40" x2="-49" y2="-40" /><line x1="-51" y1="-42" x2="-51" y2="-38" />
+          <line x1="50" y1="-50" x2="54" y2="-50" /><line x1="52" y1="-52" x2="52" y2="-48" />
+          <line x1="54" y1="36" x2="58" y2="36" /><line x1="56" y1="34" x2="56" y2="38" />
+        </g>
+        <text y="66" textAnchor="middle" fill="#67e8f9" fontSize="14" fontWeight="700" fontFamily="system-ui" letterSpacing="2">BRILLIANT</text>
+      </g>
+      {/* Left criteria */}
+      <g transform="translate(28, 48)">
+        <text fill="#475569" fontSize="10" fontWeight="600" fontFamily="system-ui" letterSpacing="1">CRITERIA</text>
+        {[
+          ["1", "Sacrifice or non-obvious", "Alternatives clearly worse"],
+          ["2", "Objectively best move", "Engine top-1, large gap"],
+          ["3", "Counterintuitive", "Hard for humans to find"],
+        ].map(([n, title, sub], i) => (
+          <g key={n} transform={`translate(0, ${20 + i * 56})`}>
+            <rect width="180" height="46" rx="7" fill="#0f172a" stroke="#1e293b" />
+            <circle cx="16" cy="23" r="8" fill="#06b6d4" fillOpacity="0.15" stroke="#06b6d4" strokeOpacity="0.4" />
+            <text x="16" y="27" textAnchor="middle" fill="#22d3ee" fontSize="11" fontFamily="system-ui">{n}</text>
+            <text x="34" y="18" fill="#cbd5e1" fontSize="11" fontFamily="system-ui">{title}</text>
+            <text x="34" y="33" fill="#475569" fontSize="10" fontFamily="system-ui">{sub}</text>
+          </g>
+        ))}
+      </g>
+      {/* Right rarity */}
+      <g transform="translate(472, 48)">
+        <text fill="#475569" fontSize="10" fontWeight="600" fontFamily="system-ui" letterSpacing="1">RARITY</text>
+        <rect y="16" width="180" height="72" rx="8" fill="#0f172a" stroke="#1e293b" />
+        <text x="12" y="36" fill="#94a3b8" fontSize="11" fontFamily="system-ui">Per 100 games (1400–1800):</text>
+        <text x="12" y="62" fill="#22d3ee" fontSize="30" fontWeight="800" fontFamily="system-ui" filter="url(#brF4)">~1–3</text>
+        <text x="12" y="80" fill="#475569" fontSize="10" fontFamily="system-ui">brilliants found</text>
+        <rect y="104" width="180" height="78" rx="8" fill="#0f172a" stroke="#1e293b" />
+        <text x="12" y="122" fill="#94a3b8" fontSize="11" fontFamily="system-ui">Most brilliants involve:</text>
+        <text x="12" y="142" fill="#67e8f9" fontSize="11" fontFamily="system-ui">♞ Piece sacrifice</text>
+        <text x="12" y="158" fill="#67e8f9" fontSize="11" fontFamily="system-ui">♖ Rook to active square</text>
+        <text x="12" y="174" fill="#67e8f9" fontSize="11" fontFamily="system-ui">♕ Queen deflection</text>
+      </g>
+    </svg>
+  );
+}
+
 function DefaultArt() {
   return (
     <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">

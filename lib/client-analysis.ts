@@ -1,9 +1,15 @@
 import { Chess } from "chess.js";
 import { stockfishPool } from "@/lib/stockfish-client";
 import { fetchExplorerMoves } from "@/lib/lichess-explorer";
+import {
+  buildMoveQualityCommentary,
+  isBrilliantCandidate,
+  isBrilliantMove,
+} from "@/lib/move-quality";
 import { SHORT_TACTIC_MATE_MAX_MOVES } from "@/lib/tactic-utils";
 import type {
   AnalyzeResponse,
+  BrilliantMove,
   EndgameMistake,
   EndgameStats,
   EndgameType,
@@ -1042,6 +1048,164 @@ function sanForMove(fen: string, move: string | null): string | null {
   } catch {
     return null;
   }
+}
+
+function formatPvMovesAsSan(fen: string, pvMoves: string[]): string[] {
+  if (pvMoves.length === 0) return [];
+
+  try {
+    const chess = new Chess(fen);
+    const tokens: string[] = [];
+
+    for (const move of pvMoves.slice(0, 8)) {
+      const san = sanForMove(chess.fen(), move);
+      if (!san) break;
+      const prefix =
+        chess.turn() === "w" ? `${chess.moveNumber()}.` : `${chess.moveNumber()}...`;
+      if (!applyMoveToken(chess, move)) break;
+      tokens.push(`${prefix}${san}`);
+    }
+
+    return tokens;
+  } catch {
+    return [];
+  }
+}
+
+async function analyzeBrilliantMovesFromGames(
+  username: string,
+  games: SourceGame[],
+  engineDepth: number,
+) {
+  const brilliantMoves: BrilliantMove[] = [];
+
+  await parallelForEach(games, 2, async (game, gameIndex) => {
+    if (!game.moves) return;
+
+    const target = normalizeName(username);
+    const userColor: PlayerColor | null =
+      game.whiteName && normalizeName(game.whiteName) === target
+        ? "white"
+        : game.blackName && normalizeName(game.blackName) === target
+          ? "black"
+          : null;
+
+    if (!userColor) return;
+
+    const chess = new Chess();
+    const moveTokens = game.moves.split(" ").filter(Boolean);
+
+    for (let ply = 0; ply < moveTokens.length; ply += 1) {
+      const token = moveTokens[ply];
+      const sideToMove: PlayerColor = ply % 2 === 0 ? "white" : "black";
+      const fenBefore = chess.fen();
+
+      if (sideToMove === userColor) {
+        const parsedMove = parseMoveToSquares(fenBefore, token);
+        const userUci = parsedMove
+          ? `${parsedMove.from}${parsedMove.to}${parsedMove.promotion ?? ""}`
+          : null;
+        const fenAfter = computeFenAfterMove(fenBefore, token);
+
+        if (
+          userUci &&
+          fenAfter &&
+          ply >= 6 &&
+          isBrilliantCandidate(fenBefore, userUci)
+        ) {
+          const screenDepth = Math.max(7, engineDepth - 4);
+          const screenBefore = await stockfishPool.evaluateFen(
+            fenBefore,
+            screenDepth,
+          );
+          const screenAfter = await stockfishPool.evaluateFen(
+            fenAfter,
+            screenDepth,
+          );
+
+          if (screenBefore?.bestMove && screenAfter) {
+            const screenBeforeCp = scoreToCpFromUserPerspective(
+              screenBefore.cp,
+              sideToMove,
+              userColor,
+            );
+            const screenAfterCp = scoreToCpFromUserPerspective(
+              screenAfter.cp,
+              fenAfter.includes(" w ") ? "white" : "black",
+              userColor,
+            );
+            const screenCpLoss = Math.max(0, screenBeforeCp - screenAfterCp);
+            const isBestScreenMove =
+              screenBefore.bestMove === userUci ||
+              (screenBefore.bestMove &&
+                userUci.startsWith(screenBefore.bestMove.slice(0, 4)) &&
+                screenCpLoss <= 5);
+
+            if (
+              isBrilliantMove({
+                fenBefore,
+                moveUci: userUci,
+                cpLoss: screenCpLoss,
+                evalBeforeMover: screenBeforeCp,
+                evalAfterMover: screenAfterCp,
+                isBestMove: !!isBestScreenMove,
+                moveIndex: ply,
+              })
+            ) {
+              const pvResult = await stockfishPool.getPrincipalVariation(
+                fenBefore,
+                6,
+                Math.max(8, engineDepth - 2),
+              );
+
+              brilliantMoves.push({
+                fenBefore,
+                fenAfter,
+                userMove: userUci,
+                bestMove: screenBefore.bestMove,
+                cpBefore: screenBeforeCp,
+                cpAfter: screenAfterCp,
+                cpLoss: screenCpLoss,
+                userColor,
+                gameIndex: gameIndex + 1,
+                moveNumber: Math.floor(ply / 2) + 1,
+                line: formatPvMovesAsSan(fenBefore, pvResult?.pvMoves ?? []),
+                reason: buildMoveQualityCommentary({
+                  classification: "brilliant",
+                  cpLoss: screenCpLoss,
+                  evalBefore: screenBeforeCp,
+                  evalAfter: screenAfterCp,
+                  bestMoveSan: sanForMove(fenBefore, screenBefore.bestMove),
+                }),
+                gameUrl: game.gameUrl,
+              });
+            }
+          }
+        }
+      }
+
+      if (!applyMoveToken(chess, token)) {
+        break;
+      }
+    }
+  });
+
+  return [...brilliantMoves].sort(
+    (left, right) =>
+      right.cpAfter - right.cpBefore - (left.cpAfter - left.cpBefore),
+  );
+}
+
+export async function analyzeBrilliantMovesInBrowser(
+  username: string,
+  options?: AnalyzeOptions,
+): Promise<BrilliantMove[]> {
+  const source: AnalysisSource = options?.source ?? "lichess";
+  const maxGames = clampInt(options?.maxGames, DEFAULT_MAX_GAMES, 1, 5000);
+  const engineDepth = clampInt(options?.engineDepth, 10, 6, 24);
+  const games = await loadGamesForAnalysis(username, maxGames, source, options);
+
+  return analyzeBrilliantMovesFromGames(username, games, engineDepth);
 }
 
 function deriveLeakTags(args: {
@@ -2631,6 +2795,7 @@ export async function analyzeOpeningLeaksInBrowser(
   const SCREEN_DEPTH = scanMode === "openings" ? 5 : 8;
   const SCREEN_CP_THRESHOLD = 100;
   const MAX_TACTICS = options?.maxTactics ?? Infinity;
+  const brilliantMoves: BrilliantMove[] = [];
   const missedTactics: MissedTactic[] = [];
   let totalTacticsFound = doTactics ? 0 : -1;
   const ENDGAME_CP_THRESHOLD = 80;
@@ -3968,6 +4133,12 @@ export async function analyzeOpeningLeaksInBrowser(
         })()
       : null;
 
+  if (!doTimeOnly) {
+    brilliantMoves.push(
+      ...(await analyzeBrilliantMovesFromGames(username, games, engineDepth)),
+    );
+  }
+
   // ── Compute Time Management Score (0-100) from clock data ──
   // Measures: consistency of move timing, avoiding time scrambles, not wasting time
   if (doTimeOnly) {
@@ -4783,6 +4954,7 @@ export async function analyzeOpeningLeaksInBrowser(
 
   return {
     username,
+    reportVersion: 2,
     scanSignature,
     gamesAnalyzed,
     repeatedPositions,
@@ -4790,6 +4962,7 @@ export async function analyzeOpeningLeaksInBrowser(
     oneOffMistakes,
     positionalFindings:
       positionalFindings.length > 0 ? positionalFindings : undefined,
+    brilliantMoves: brilliantMoves.length > 0 ? brilliantMoves : undefined,
     missedTactics,
     totalTacticsFound,
     endgameMistakes,

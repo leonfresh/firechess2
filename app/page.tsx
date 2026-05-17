@@ -23,6 +23,7 @@ import { SetupWizard } from "@/components/setup-wizard";
 import { ProWelcomeModal } from "@/components/lifetime-welcome";
 import { AdminDebug } from "@/components/admin-debug";
 import { SampleReportsSection } from "@/components/sample-reports-section";
+import { HomepageBlogSection } from "@/components/homepage-blog-section";
 import { CardCarousel, ViewModeToggle } from "@/components/card-carousel";
 import type { CardViewMode } from "@/components/card-carousel";
 import { useSession } from "@/components/session-provider";
@@ -1442,11 +1443,7 @@ export default function HomePage() {
                             block: "start",
                           })
                         }
-                        className="inline-flex h-12 items-center justify-center rounded-xl px-6 text-base font-semibold text-white shadow-[0_22px_56px_-24px_rgba(249,115,22,0.62)] transition-transform duration-200 hover:-translate-y-0.5"
-                        style={{
-                          background:
-                            "linear-gradient(135deg, rgba(251, 191, 36, 0.98) 0%, rgba(249, 115, 22, 0.96) 54%, rgba(220, 38, 38, 0.92) 100%)",
-                        }}
+                        className="btn-cta-fire inline-flex h-12 items-center justify-center rounded-xl px-6 text-base font-semibold text-white"
                       >
                         Analyze Your Games
                       </button>
@@ -1480,30 +1477,47 @@ export default function HomePage() {
               </div>
 
               <div
-                className={`relative mt-8 grid gap-5 pt-6 sm:grid-cols-3 ${heroAnim(6)}`}
+                className={`relative mt-8 grid gap-3 border-t border-white/[0.07] pt-6 sm:grid-cols-3 ${heroAnim(6)}`}
               >
                 {[
                   {
+                    icon: "⚡",
                     title: "Mass Analysis",
                     description:
                       "Scan your recent archive in one pass instead of checking games by hand.",
+                    accent: "from-amber-400/25 to-orange-500/0",
                   },
                   {
+                    icon: "🧠",
                     title: "Deep Insights",
                     description:
                       "Surface the missed tactics, opening leaks, and endgame slips worth fixing.",
+                    accent: "from-orange-400/25 to-red-500/0",
                   },
                   {
+                    icon: "📈",
                     title: "Track Progress",
                     description:
                       "Keep report pages, shared boards, and saved scans tied to one workflow.",
+                    accent: "from-red-400/20 to-pink-500/0",
                   },
                 ].map((item) => (
-                  <div key={item.title} className="px-1 py-1">
-                    <p className="text-sm font-semibold text-white/90">
-                      {item.title}
-                    </p>
-                    <p className="mt-1.5 text-sm leading-relaxed text-slate-400">
+                  <div
+                    key={item.title}
+                    className="group relative overflow-hidden rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-3.5 transition-colors hover:border-white/[0.09] hover:bg-white/[0.04]"
+                  >
+                    <div
+                      className={`pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r ${item.accent}`}
+                    />
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] text-sm">
+                        {item.icon}
+                      </span>
+                      <p className="text-sm font-semibold text-white/90">
+                        {item.title}
+                      </p>
+                    </div>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-400/90">
                       {item.description}
                     </p>
                   </div>
@@ -1511,6 +1525,30 @@ export default function HomePage() {
               </div>
             </div>
           </header>
+
+          {/* ─── Social proof strip ─── */}
+          {state === "idle" && (
+            <div className="scroll-reveal flex flex-wrap items-center justify-center gap-x-8 gap-y-3 px-2">
+              {[
+                { value: "Lichess + Chess.com", label: "Both platforms" },
+                { value: "Stockfish 16", label: "Engine-powered" },
+                { value: "Openings · Tactics · Endgames", label: "Full coverage" },
+                { value: "Free forever", label: "No credit card" },
+              ].map((stat, i) => (
+                <div
+                  key={stat.label}
+                  className={`chip-pop flex items-center gap-2`}
+                  style={{ animationDelay: `${i * 0.08}s` }}
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-orange-400/60" />
+                  <span className="text-sm font-semibold text-white/85">
+                    {stat.value}
+                  </span>
+                  <span className="text-sm text-slate-500">— {stat.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           <SampleReportsSection />
 
@@ -1628,11 +1666,7 @@ export default function HomePage() {
                       isLaunchingScan ||
                       freeLimitsExceeded
                     }
-                    className="btn-primary flex flex-1 items-center justify-center gap-2 text-white shadow-[0_22px_56px_-24px_rgba(249,115,22,0.62)]"
-                    style={{
-                      background:
-                        "linear-gradient(135deg, rgba(251, 191, 36, 0.98) 0%, rgba(249, 115, 22, 0.96) 54%, rgba(220, 38, 38, 0.92) 100%)",
-                    }}
+                    className="btn-primary btn-cta-fire flex flex-1 items-center justify-center gap-2 text-white disabled:animate-none"
                   >
                     {state === "loading" || isLaunchingScan ? (
                       <>
@@ -1709,50 +1743,62 @@ export default function HomePage() {
 
             <div>
               <div
-                className="rounded-[1.9rem] px-5 py-5 shadow-[0_28px_90px_-52px_rgba(37,12,7,0.98)]"
+                className="relative overflow-hidden rounded-[1.9rem] px-5 py-5 shadow-[0_28px_90px_-52px_rgba(37,12,7,0.98)]"
                 style={{
                   background:
                     "linear-gradient(160deg, rgba(11, 9, 12, 0.97) 0%, rgba(18, 12, 15, 0.96) 58%, rgba(41, 21, 13, 0.94) 100%)",
                 }}
               >
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-200/25 to-transparent" />
                 <h3 className="text-base font-semibold uppercase tracking-[0.18em] text-orange-100/60">
                   What you get
                 </h3>
-                <div className="mt-5 space-y-4">
+                <div className="mt-5 space-y-3">
                   {[
-                    [
-                      "Missed tactics",
-                      "Short, forcing positions bubble to the top first.",
-                      "tactics",
-                    ],
-                    [
-                      "Opening leaks",
-                      "Repeated positions get grouped into clearer priorities.",
-                      "openings",
-                    ],
-                    [
-                      "Canonical report",
-                      "Each full scan opens on its own dedicated report page.",
-                      "report",
-                    ],
-                  ].map(([title, text, kind]) => (
+                    {
+                      icon: "⚡",
+                      color: "from-amber-400/20 to-orange-500/10",
+                      iconColor: "text-amber-400",
+                      title: "Missed tactics",
+                      text: "Short, forcing positions bubble to the top first.",
+                    },
+                    {
+                      icon: "♟",
+                      color: "from-orange-400/20 to-red-500/10",
+                      iconColor: "text-orange-400",
+                      title: "Opening leaks",
+                      text: "Repeated positions get grouped into clearer priorities.",
+                    },
+                    {
+                      icon: "📋",
+                      color: "from-red-400/15 to-pink-500/10",
+                      iconColor: "text-red-400",
+                      title: "Canonical report",
+                      text: "Each full scan opens on its own dedicated report page.",
+                    },
+                    {
+                      icon: "💎",
+                      color: "from-cyan-400/15 to-blue-500/10",
+                      iconColor: "text-cyan-400",
+                      title: "Brilliant moves",
+                      text: "Exceptional plays detected and highlighted in your report.",
+                    },
+                  ].map((item) => (
                     <div
-                      key={title}
-                      className="flex gap-3 border-b border-white/[0.05] pb-4 last:border-none last:pb-0"
+                      key={item.title}
+                      className="group flex gap-3 rounded-xl border border-white/[0.04] p-3 transition-colors hover:border-white/[0.08] hover:bg-white/[0.02]"
                     >
-                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-400/[0.12] text-[11px]">
-                        {kind === "tactics"
-                          ? "⚡"
-                          : kind === "openings"
-                            ? "♟"
-                            : "📋"}
-                      </span>
+                      <div
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${item.color} ${item.iconColor} text-sm`}
+                      >
+                        {item.icon}
+                      </div>
                       <div>
                         <p className="text-sm font-semibold text-white">
-                          {title}
+                          {item.title}
                         </p>
-                        <p className="mt-1 text-sm leading-relaxed text-slate-400">
-                          {text}
+                        <p className="mt-0.5 text-sm leading-relaxed text-slate-400">
+                          {item.text}
                         </p>
                       </div>
                     </div>
@@ -1949,6 +1995,68 @@ export default function HomePage() {
                 </div>
               </div>
             </section>
+          )}
+
+          {/* ─── Blog Section ─── */}
+          {state === "idle" && (
+            <>
+              {/* CTA Banner */}
+              <div
+                className="relative overflow-hidden rounded-[2rem] px-6 py-10 text-center shadow-[0_0_80px_-20px_rgba(249,115,22,0.18)] sm:px-10 sm:py-12"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(30,14,6,0.97) 0%, rgba(51,22,8,0.96) 42%, rgba(72,18,8,0.95) 75%, rgba(30,8,14,0.97) 100%)",
+                }}
+              >
+                {/* Edge glow lines */}
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/40 to-transparent" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-red-400/20 to-transparent" />
+                {/* Ambient orbs */}
+                <div className="pointer-events-none absolute left-[10%] top-[-20%] h-64 w-64 rounded-full bg-orange-500/[0.07] blur-3xl" />
+                <div className="pointer-events-none absolute bottom-[-20%] right-[12%] h-56 w-56 rounded-full bg-red-600/[0.06] blur-3xl" />
+
+                <div className="relative mx-auto max-w-2xl">
+                  <span className="inline-flex rounded-full bg-orange-400/[0.1] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.32em] text-orange-200/70">
+                    Free · No credit card
+                  </span>
+                  <h2 className="mt-4 bg-gradient-to-r from-amber-200 via-orange-300 to-red-400 bg-clip-text text-3xl font-black leading-tight tracking-tight text-transparent sm:text-4xl">
+                    Get your free chess analysis report
+                  </h2>
+                  <p className="mx-auto mt-3 max-w-lg text-base leading-relaxed text-slate-300/80">
+                    Paste your Lichess or Chess.com username and discover exactly
+                    where your rating is leaking — openings, tactics, endgames,
+                    and time management in one clean report.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      document.getElementById("analyzer")?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                      })
+                    }
+                    className="btn-cta-fire mt-6 inline-flex h-12 items-center gap-2 rounded-xl px-8 text-base font-bold text-white"
+                  >
+                    Analyze my games — it's free
+                    <svg
+                      className="h-4 w-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2.5}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M13 7l5 5m0 0l-5 5m5-5H6"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              <HomepageBlogSection />
+            </>
           )}
 
           {/* ─── Loading State ─── */}

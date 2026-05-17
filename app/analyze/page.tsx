@@ -11,15 +11,33 @@
  *   - "Explain" button per move using the ExplanationModal
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { Chess } from "chess.js";
 import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { EvalBar } from "@/components/eval-bar";
 import { ExplanationModal } from "@/components/explanation-modal";
+import { MoveBadge } from "@/components/move-badge";
 import {
   explainMoves,
   type PositionExplanation,
 } from "@/lib/position-explainer";
+import {
+  buildMoveQualityCommentary,
+  classifyMoveQuality,
+  MOVE_CLASSIFICATION_BG as CLASSIFICATION_BG,
+  MOVE_CLASSIFICATION_BORDER as CLASSIFICATION_BORDER,
+  MOVE_CLASSIFICATION_COLORS as CLASSIFICATION_COLORS,
+  MOVE_CLASSIFICATION_EMOJI as CLASSIFICATION_EMOJI,
+  MOVE_CLASSIFICATION_SHORT_LABELS as CLASSIFICATION_ICONS,
+  type MoveClassification,
+} from "@/lib/move-quality";
 import { stockfishPool } from "@/lib/stockfish-client";
 import { useBoardSize } from "@/lib/use-board-size";
 import {
@@ -46,15 +64,6 @@ const TAG_OPTIONS = [
 ] as const;
 
 /* ────────────────────────── Types ────────────────────────── */
-
-type MoveClassification =
-  | "brilliant"
-  | "best"
-  | "good"
-  | "book"
-  | "inaccuracy"
-  | "mistake"
-  | "blunder";
 
 type AnalyzedMove = {
   /** Move index (0-based) */
@@ -92,104 +101,6 @@ type AnalyzedMove = {
 const DEFAULT_ENGINE_DEPTH = 14;
 const DEPTH_OPTIONS = [8, 10, 12, 14, 16, 18, 20] as const;
 
-const CLASSIFICATION_COLORS: Record<MoveClassification, string> = {
-  brilliant: "text-cyan-400",
-  best: "text-emerald-400",
-  good: "text-emerald-400/70",
-  book: "text-slate-400",
-  inaccuracy: "text-amber-400",
-  mistake: "text-orange-400",
-  blunder: "text-red-400",
-};
-
-const CLASSIFICATION_BG: Record<MoveClassification, string> = {
-  brilliant: "bg-cyan-500/15",
-  best: "bg-emerald-500/15",
-  good: "bg-emerald-500/10",
-  book: "bg-white/[0.04]",
-  inaccuracy: "bg-amber-500/15",
-  mistake: "bg-orange-500/15",
-  blunder: "bg-red-500/15",
-};
-
-const CLASSIFICATION_ICONS: Record<MoveClassification, string> = {
-  brilliant: "!!",
-  best: "!",
-  good: "",
-  book: "📖",
-  inaccuracy: "?!",
-  mistake: "?",
-  blunder: "??",
-};
-
-const CLASSIFICATION_BORDER: Record<MoveClassification, string> = {
-  brilliant: "border-cyan-500/30",
-  best: "border-emerald-500/20",
-  good: "border-emerald-500/10",
-  book: "border-white/[0.06]",
-  inaccuracy: "border-amber-500/20",
-  mistake: "border-orange-500/20",
-  blunder: "border-red-500/30",
-};
-
-function classifyMove(
-  cpLoss: number,
-  isBestMove: boolean,
-  evalBeforeMover: number,
-  evalAfterMover: number,
-): MoveClassification {
-  if (isBestMove) return "best";
-
-  // Winning-side leniency: when the player is already heavily winning
-  // and is STILL winning after the move, relax the classification.
-  // e.g. sacrificing a rook when you're up a queen+rook vs lone king
-  // shouldn't be called a blunder — you're still completely winning.
-  const stillWinning = evalAfterMover >= 400;
-  const wasWinning = evalBeforeMover >= 400;
-
-  if (wasWinning && stillWinning) {
-    // Position was winning and still is — be very lenient
-    if (cpLoss <= 50) return "good";
-    if (cpLoss <= 200) return "inaccuracy";
-    // Even huge cp losses are at most a "mistake" if still totally winning
-    return "mistake";
-  }
-
-  if (wasWinning && evalAfterMover >= 200) {
-    // Was winning and still significantly ahead — moderate leniency
-    if (cpLoss <= 35) return "good";
-    if (cpLoss <= 120) return "inaccuracy";
-    if (cpLoss <= 300) return "mistake";
-    return "blunder";
-  }
-
-  // Standard thresholds for normal positions
-  if (cpLoss <= 25) return "good";
-  if (cpLoss <= 75) return "inaccuracy";
-  if (cpLoss <= 200) return "mistake";
-  return "blunder";
-}
-
-const CLASSIFICATION_EMOJI: Record<MoveClassification, string> = {
-  brilliant: "💎",
-  best: "✅",
-  good: "👍",
-  book: "📖",
-  inaccuracy: "⚠️",
-  mistake: "❌",
-  blunder: "💀",
-};
-
-const CLASSIFICATION_BADGE_COLORS: Record<MoveClassification, string> = {
-  brilliant: "rgba(6,182,212,0.9)",
-  best: "rgba(16,185,129,0.85)",
-  good: "rgba(16,185,129,0.6)",
-  book: "rgba(148,163,184,0.7)",
-  inaccuracy: "rgba(245,158,11,0.85)",
-  mistake: "rgba(249,115,22,0.9)",
-  blunder: "rgba(239,68,68,0.9)",
-};
-
 function formatEval(cp: number): string {
   if (Math.abs(cp) >= 99000) {
     const n = 100000 - Math.abs(cp);
@@ -198,6 +109,36 @@ function formatEval(cp: number): string {
   }
   const pawns = cp / 100;
   return `${pawns > 0 ? "+" : ""}${(Math.round(pawns * 10) / 10).toFixed(1)}`;
+}
+
+function formatPvLine(fen: string, pvMoves: string[]): string {
+  if (pvMoves.length === 0) return "";
+
+  try {
+    const chess = new Chess(fen);
+    const tokens: string[] = [];
+
+    for (const move of pvMoves.slice(0, 8)) {
+      const prefix =
+        chess.turn() === "w" ? `${chess.moveNumber()}.` : `${chess.moveNumber()}...`;
+      const result = chess.move({
+        from: move.slice(0, 2),
+        to: move.slice(2, 4),
+        promotion: (move.slice(4, 5) || undefined) as
+          | "q"
+          | "r"
+          | "b"
+          | "n"
+          | undefined,
+      });
+      if (!result) break;
+      tokens.push(`${prefix}${result.san}`);
+    }
+
+    return tokens.join(" ");
+  } catch {
+    return "";
+  }
 }
 
 type PgnParseResult = {
@@ -719,11 +660,29 @@ export default function AnalyzePage() {
 
   const selectedMove =
     selectedMoveIdx >= 0 ? analyzedMoves[selectedMoveIdx] : null;
+  const selectedMovePv = useMemo(
+    () =>
+      selectedMove
+        ? formatPvLine(selectedMove.fenBefore, selectedMove.pvMoves)
+        : "",
+    [selectedMove],
+  );
+  const selectedMoveCommentary = useMemo(
+    () =>
+      selectedMove
+        ? buildMoveQualityCommentary({
+            classification: selectedMove.classification,
+            cpLoss: selectedMove.cpLoss,
+            evalBefore: selectedMove.evalBefore,
+            evalAfter: selectedMove.evalAfter,
+            bestMoveSan: selectedMove.bestMoveSan,
+          })
+        : "",
+    [selectedMove],
+  );
 
   /* ── Board overlay: highlight from/to squares & show accuracy badge ── */
-  const analyzeSquareStyles = useMemo<
-    Record<string, React.CSSProperties>
-  >(() => {
+  const analyzeSquareStyles = useMemo<Record<string, CSSProperties>>(() => {
     if (!selectedMove) return {};
     const from = selectedMove.uci.slice(0, 2);
     const to = selectedMove.uci.slice(2, 4);
@@ -750,16 +709,11 @@ export default function AnalyzePage() {
         <div style={props?.style} className="relative h-full w-full">
           {props?.children}
           {showBadge && (
-            <span
-              className="pointer-events-none absolute -right-0.5 -top-0.5 z-[40] flex h-5 w-5 items-center justify-center rounded-full text-[11px] shadow-lg"
-              style={{
-                backgroundColor:
-                  CLASSIFICATION_BADGE_COLORS[selectedMove.classification],
-              }}
-              title={selectedMove.classification}
-            >
-              {CLASSIFICATION_EMOJI[selectedMove.classification]}
-            </span>
+            <MoveBadge
+              classification={selectedMove.classification}
+              variant="corner"
+              className="right-1 top-1"
+            />
           )}
         </div>
       );
@@ -968,12 +922,15 @@ export default function AnalyzePage() {
         bestMove: bestResult?.bestMove ?? null,
         bestMoveSan,
         cpLoss,
-        classification: classifyMove(
+        classification: classifyMoveQuality({
           cpLoss,
-          !!isBestMove,
+          isBestMove: !!isBestMove,
           evalBeforeMover,
           evalAfterMover,
-        ),
+          fenBefore: move.fenBefore,
+          moveUci: move.uci,
+          moveIndex: i,
+        }),
         color: move.color,
         moveNumber: move.moveNumber,
         pvMoves: pvResult?.pvMoves ?? [],
@@ -1516,6 +1473,11 @@ export default function AnalyzePage() {
                         Best {summary.white.best}
                       </span>
                     )}
+                    {summary.white.book > 0 && (
+                      <span className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[11px] font-bold text-slate-300">
+                        Book {summary.white.book}
+                      </span>
+                    )}
                     {summary.white.good > 0 && (
                       <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-400/70">
                         Good {summary.white.good}
@@ -1565,6 +1527,11 @@ export default function AnalyzePage() {
                     {summary.black.best > 0 && (
                       <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-bold text-emerald-400">
                         Best {summary.black.best}
+                      </span>
+                    )}
+                    {summary.black.book > 0 && (
+                      <span className="rounded-full bg-white/[0.05] px-2 py-0.5 text-[11px] font-bold text-slate-300">
+                        Book {summary.black.book}
                       </span>
                     )}
                     {summary.black.good > 0 && (
@@ -1770,56 +1737,73 @@ export default function AnalyzePage() {
                   <div
                     className={`w-full max-w-[640px] rounded-xl border ${CLASSIFICATION_BORDER[selectedMove.classification]} ${CLASSIFICATION_BG[selectedMove.classification]} p-3`}
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`text-lg font-black font-mono ${CLASSIFICATION_COLORS[selectedMove.classification]}`}
-                        >
-                          {selectedMove.moveNumber}
-                          {selectedMove.color === "w" ? "." : "..."}
-                          {selectedMove.san}
-                        </span>
-                        {CLASSIFICATION_ICONS[selectedMove.classification] && (
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <span
-                            className={`rounded-md px-1.5 py-0.5 text-xs font-bold ${CLASSIFICATION_BG[selectedMove.classification]} ${CLASSIFICATION_COLORS[selectedMove.classification]}`}
+                            className={`text-lg font-black font-mono ${CLASSIFICATION_COLORS[selectedMove.classification]}`}
                           >
-                            {CLASSIFICATION_ICONS[selectedMove.classification]}
+                            {selectedMove.moveNumber}
+                            {selectedMove.color === "w" ? "." : "..."}
+                            {selectedMove.san}
                           </span>
-                        )}
-                        <span className="text-sm">
-                          {CLASSIFICATION_EMOJI[selectedMove.classification]}
-                        </span>
-                        <span className="text-xs capitalize text-slate-400">
-                          {selectedMove.classification}
-                        </span>
+                          <MoveBadge classification={selectedMove.classification} />
+                          <span className="text-sm">
+                            {CLASSIFICATION_EMOJI[selectedMove.classification]}
+                          </span>
+                        </div>
+                        <p className="max-w-2xl text-xs leading-relaxed text-slate-300">
+                          {selectedMoveCommentary}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-xs text-slate-500">
                           {formatEval(selectedMove.evalBefore)} →{" "}
                           {formatEval(selectedMove.evalAfter)}
                         </span>
-                        {selectedMove.cpLoss > 0 && (
+                        {selectedMove.cpLoss > 0 ? (
                           <span
                             className={`text-xs font-bold ${CLASSIFICATION_COLORS[selectedMove.classification]}`}
                           >
                             −{(selectedMove.cpLoss / 100).toFixed(1)}
                           </span>
+                        ) : (
+                          <span className="text-xs font-semibold text-emerald-300">
+                            0.0
+                          </span>
                         )}
                       </div>
                     </div>
 
-                    {/* Best move & action buttons */}
-                    <div className="mt-2 flex items-center justify-between gap-2">
-                      {selectedMove.bestMoveSan &&
-                        selectedMove.bestMove !== selectedMove.uci && (
-                          <p className="text-xs text-slate-400">
-                            Best:{" "}
-                            <span className="font-bold text-emerald-400">
-                              {selectedMove.bestMoveSan}
-                            </span>
-                          </p>
-                        )}
-                      <div className="flex gap-1.5 ml-auto">
+                    <div className="mt-3 grid gap-3 rounded-xl border border-white/[0.06] bg-black/10 p-3 sm:grid-cols-2">
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                          Engine recommendation
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-white">
+                          {selectedMove.bestMoveSan &&
+                          selectedMove.bestMove !== selectedMove.uci
+                            ? selectedMove.bestMoveSan
+                            : "You played the top engine move"}
+                        </p>
+                        <p className="mt-1 text-xs text-slate-400">
+                          {selectedMove.bestMove && selectedMove.bestMove !== selectedMove.uci
+                            ? `Best line starts with ${selectedMove.bestMoveSan}.`
+                            : "This move stayed on the engine's first line."}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                          Principal variation
+                        </p>
+                        <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                          {selectedMovePv || "PV will appear once the engine finishes stitching the line."}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-3 flex items-center justify-between gap-2">
+                      <div className="flex flex-wrap gap-1.5">
                         <button
                           onClick={() => openExplain(selectedMove, "played")}
                           className={`rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors ${
@@ -1892,35 +1876,19 @@ export default function AnalyzePage() {
                                 onClick={() =>
                                   setSelectedMoveIdx(whiteMove.idx)
                                 }
-                                className={`relative flex items-center gap-1 rounded-md px-2 py-0.5 text-left text-xs font-mono transition-colors ${
+                                className={`relative flex items-center gap-1 rounded-md border px-2 py-1 text-left text-xs font-mono transition-colors ${
                                   selectedMoveIdx === whiteMove.idx
-                                    ? `${CLASSIFICATION_BG[whiteMove.classification]} ${CLASSIFICATION_COLORS[whiteMove.classification]} font-bold`
-                                    : "text-slate-300 hover:bg-white/[0.06]"
+                                    ? `${CLASSIFICATION_BG[whiteMove.classification]} ${CLASSIFICATION_BORDER[whiteMove.classification]} ${CLASSIFICATION_COLORS[whiteMove.classification]} font-bold`
+                                    : "border-white/[0.04] text-slate-300 hover:bg-white/[0.06]"
                                 }`}
                               >
                                 <span>{whiteMove.san}</span>
-                                {whiteMove.classification !== "good" &&
-                                  whiteMove.classification !== "book" && (
-                                    <span
-                                      className={`text-[10px] ${CLASSIFICATION_COLORS[whiteMove.classification]}`}
-                                    >
-                                      {
-                                        CLASSIFICATION_ICONS[
-                                          whiteMove.classification
-                                        ]
-                                      }
-                                    </span>
-                                  )}
-                                <span
-                                  className="absolute -top-1.5 -right-1 text-[9px] leading-none"
-                                  title={whiteMove.classification}
-                                >
-                                  {
-                                    CLASSIFICATION_EMOJI[
-                                      whiteMove.classification
-                                    ]
-                                  }
-                                </span>
+                                {whiteMove.classification !== "good" ? (
+                                  <MoveBadge
+                                    classification={whiteMove.classification}
+                                    variant="corner"
+                                  />
+                                ) : null}
                               </button>
                             ) : (
                               <div />
@@ -1932,35 +1900,19 @@ export default function AnalyzePage() {
                                 onClick={() =>
                                   setSelectedMoveIdx(blackMove.idx)
                                 }
-                                className={`relative flex items-center gap-1 rounded-md px-2 py-0.5 text-left text-xs font-mono transition-colors ${
+                                className={`relative flex items-center gap-1 rounded-md border px-2 py-1 text-left text-xs font-mono transition-colors ${
                                   selectedMoveIdx === blackMove.idx
-                                    ? `${CLASSIFICATION_BG[blackMove.classification]} ${CLASSIFICATION_COLORS[blackMove.classification]} font-bold`
-                                    : "text-slate-300 hover:bg-white/[0.06]"
+                                    ? `${CLASSIFICATION_BG[blackMove.classification]} ${CLASSIFICATION_BORDER[blackMove.classification]} ${CLASSIFICATION_COLORS[blackMove.classification]} font-bold`
+                                    : "border-white/[0.04] text-slate-300 hover:bg-white/[0.06]"
                                 }`}
                               >
                                 <span>{blackMove.san}</span>
-                                {blackMove.classification !== "good" &&
-                                  blackMove.classification !== "book" && (
-                                    <span
-                                      className={`text-[10px] ${CLASSIFICATION_COLORS[blackMove.classification]}`}
-                                    >
-                                      {
-                                        CLASSIFICATION_ICONS[
-                                          blackMove.classification
-                                        ]
-                                      }
-                                    </span>
-                                  )}
-                                <span
-                                  className="absolute -top-1.5 -right-1 text-[9px] leading-none"
-                                  title={blackMove.classification}
-                                >
-                                  {
-                                    CLASSIFICATION_EMOJI[
-                                      blackMove.classification
-                                    ]
-                                  }
-                                </span>
+                                {blackMove.classification !== "good" ? (
+                                  <MoveBadge
+                                    classification={blackMove.classification}
+                                    variant="corner"
+                                  />
+                                ) : null}
                               </button>
                             ) : (
                               <div />

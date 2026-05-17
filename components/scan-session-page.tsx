@@ -10,6 +10,7 @@ import {
 import { ScanSessionReport } from "@/components/scan-session-report";
 import { useSession } from "@/components/session-provider";
 import {
+  analyzeBrilliantMovesInBrowser,
   analyzeOpeningLeaksInBrowser,
   type AnalysisProgress,
 } from "@/lib/client-analysis";
@@ -84,11 +85,13 @@ function buildPartialResult(
 ) {
   const base: AnalyzeResponse = {
     username,
+    reportVersion: 2,
     gamesAnalyzed: 0,
     repeatedPositions: 0,
     leaks: [],
     oneOffMistakes: [],
     positionalFindings: [],
+    brilliantMoves: [],
     missedTactics: [],
     totalTacticsFound: 0,
     endgameMistakes: [],
@@ -107,7 +110,7 @@ export function ScanSessionPage({
 }: {
   initialScan: PublicScanSessionPayload;
 }) {
-  const { authenticated, plan, user } = useSession();
+  const { authenticated, plan, user, isAdmin } = useSession();
   const [scan, setScan] = useState(initialScan);
   const [ownerToken, setOwnerToken] = useState<string | null>(null);
   const [copyLabel, setCopyLabel] = useState("Copy Link");
@@ -116,6 +119,12 @@ export function ScanSessionPage({
   >("idle");
   const [regenerateState, setRegenerateState] = useState<
     "idle" | "resetting" | "error"
+  >("idle");
+  const [brilliantBackfillState, setBrilliantBackfillState] = useState<
+    "idle" | "running" | "done" | "error"
+  >("idle");
+  const [reportMetaState, setReportMetaState] = useState<
+    "idle" | "running" | "done" | "error"
   >("idle");
   const [composerOpen, setComposerOpen] = useState(false);
   const [composerSeed, setComposerSeed] = useState<CommunityPostComposerSeed>(
@@ -152,6 +161,12 @@ export function ScanSessionPage({
   const topEndgame = scan.result?.endgameMistakes[0] ?? null;
   const topTimeMoment = scan.result?.timeManagement?.moments?.[0] ?? null;
   const hasProAccess = plan === "pro" || plan === "lifetime";
+  const needsBrilliantBackfill = Boolean(
+    scan.scanMode !== "time-management" &&
+      scan.status === "ready" &&
+      scan.result &&
+      (scan.result.reportVersion ?? 0) < 2,
+  );
   const defaultComposerSeed = useMemo<CommunityPostComposerSeed>(() => {
     if (topLeak) {
       return {
@@ -572,6 +587,93 @@ export function ScanSessionPage({
     }
   };
 
+  const handleBrilliantBackfill = async () => {    if (!scan.result || !isAdmin || !needsBrilliantBackfill) return;
+
+    setBrilliantBackfillState("running");
+
+    try {
+      const brilliantMoves = await analyzeBrilliantMovesInBrowser(
+        scan.chessUsername,
+        {
+          source: scan.config.source,
+          scanMode: scan.config.scanMode,
+          timeControl: scan.config.speed,
+          maxGames: scan.config.maxGames,
+          maxOpeningMoves: scan.config.maxMoves,
+          cpLossThreshold: scan.config.cpThreshold,
+          engineDepth: scan.config.engineDepth,
+          maxTactics: scan.config.maxTactics ?? Infinity,
+          maxEndgames: scan.config.maxEndgames ?? Infinity,
+          since: scan.config.since ?? undefined,
+        },
+      );
+
+      const nextResult: AnalyzeResponse = {
+        ...scan.result,
+        reportVersion: 2,
+        brilliantMoves,
+      };
+
+      const headers: HeadersInit = { "Content-Type": "application/json" };
+      if (ownerToken) headers["x-scan-owner-token"] = ownerToken;
+
+      const res = await fetch(`/api/scans/${scan.id}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({
+          result: nextResult,
+        }),
+      });
+
+      if (!res.ok) {
+        const json = (await res.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        throw new Error(json?.error ?? "Failed to update the brilliant section.");
+      }
+
+      setScan((current) => ({
+        ...current,
+        result: nextResult,
+        updatedAt: new Date().toISOString(),
+      }));
+      setBrilliantBackfillState("done");
+    } catch {
+      setBrilliantBackfillState("error");
+    }
+  };
+
+  const handleReportMetaRefresh = async () => {
+    if (!isAdmin || !scan.result) return;
+    setReportMetaState("running");
+    try {
+      const headers: HeadersInit = { "Content-Type": "application/json" };
+      if (ownerToken) headers["x-scan-owner-token"] = ownerToken;
+      const res = await fetch(`/api/scans/${scan.id}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ regenerateReportMeta: true }),
+      });
+      if (!res.ok) {
+        const json = (await res.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        throw new Error(json?.error ?? "Failed to refresh report meta.");
+      }
+      const json = (await res.json()) as { scan?: PublicScanSessionPayload };
+      if (json.scan?.reportMeta) {
+        setScan((current) => ({
+          ...current,
+          reportMeta: json.scan!.reportMeta,
+          updatedAt: new Date().toISOString(),
+        }));
+      }
+      setReportMetaState("done");
+    } catch {
+      setReportMetaState("error");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#030712] text-white">
       <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
@@ -654,9 +756,41 @@ export function ScanSessionPage({
                       ? "Regenerating..."
                       : scan.status === "failed"
                         ? "Run again"
-                        : regenerateState === "error"
+                      : regenerateState === "error"
                           ? "Retry regenerate"
                           : "Regenerate"}
+                  </button>
+                ) : null}
+                {isAdmin && needsBrilliantBackfill ? (
+                  <button
+                    type="button"
+                    onClick={handleBrilliantBackfill}
+                    disabled={brilliantBackfillState === "running"}
+                    className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {brilliantBackfillState === "running"
+                      ? "Regenerating brilliant section..."
+                      : brilliantBackfillState === "error"
+                        ? "Retry brilliant section"
+                        : brilliantBackfillState === "done"
+                          ? "Brilliant section updated"
+                          : "Regenerate brilliant section"}
+                  </button>
+                ) : null}
+                {isAdmin && scan.status === "ready" && scan.result ? (
+                  <button
+                    type="button"
+                    onClick={handleReportMetaRefresh}
+                    disabled={reportMetaState === "running"}
+                    className="rounded-full border border-violet-500/20 bg-violet-500/10 px-4 py-2 text-sm font-semibold text-violet-100 transition hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {reportMetaState === "running"
+                      ? "Refreshing title & stats..."
+                      : reportMetaState === "error"
+                        ? "Retry title refresh"
+                        : reportMetaState === "done"
+                          ? "Title & stats refreshed ✓"
+                          : "Refresh title & stats"}
                   </button>
                 ) : null}
                 {saveState === "saved" ? (
@@ -690,6 +824,50 @@ export function ScanSessionPage({
             </div>
           </div>
         </section>
+
+        {isAdmin && needsBrilliantBackfill ? (
+          <section className="mt-6 rounded-[1.5rem] border border-cyan-500/20 bg-cyan-500/[0.06] p-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200/80">
+              Admin backfill
+            </p>
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="max-w-3xl text-sm leading-relaxed text-slate-200">
+                This report predates the brilliant-move section. Regenerate only
+                that section to publish the updated brilliant list on this public
+                report without rerunning the full scan.
+              </p>
+              {brilliantBackfillState === "done" ? (
+                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+                  Brilliant section refreshed
+                </span>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
+
+        {isAdmin && scan.status === "ready" && scan.result ? (
+          <section className="mt-4 rounded-[1.5rem] border border-violet-500/20 bg-violet-500/[0.05] p-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-violet-300/80">
+              Admin — report meta
+            </p>
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="max-w-3xl text-sm leading-relaxed text-slate-200">
+                Recompute the title, full-report summary, and radar scores from
+                the stored result. Use this after tuning the scoring logic to
+                refresh all 9 sample reports without a full rescan.
+              </p>
+              {reportMetaState === "done" ? (
+                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
+                  Title & stats refreshed ✓
+                </span>
+              ) : reportMetaState === "error" ? (
+                <span className="rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-300">
+                  Error — check console
+                </span>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
 
         {showExpiryPopup ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">

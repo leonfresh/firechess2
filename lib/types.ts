@@ -294,8 +294,26 @@ export type PositionalFinding = {
   gameUrl?: string;
 };
 
+export type BrilliantMove = {
+  fenBefore: string;
+  fenAfter: string;
+  userMove: string;
+  bestMove: string | null;
+  cpBefore: number;
+  cpAfter: number;
+  cpLoss: number;
+  userColor: PlayerColor;
+  gameIndex: number;
+  moveNumber: number;
+  line: string[];
+  reason: string;
+  gameUrl?: string;
+};
+
 export type AnalyzeResponse = {
   username: string;
+  /** Bump when persisted report payloads gain new sections or semantics. */
+  reportVersion?: number;
   /** Stable hash of the exact downloaded games plus scan settings. */
   scanSignature?: string;
   gamesAnalyzed: number;
@@ -304,6 +322,7 @@ export type AnalyzeResponse = {
   oneOffMistakes: RepeatedOpeningLeak[];
   /** Positional-pattern findings below the main cpLoss threshold */
   positionalFindings?: PositionalFinding[];
+  brilliantMoves?: BrilliantMove[];
   missedTactics: MissedTactic[];
   /** Total tactics found (may exceed missedTactics.length when capped) */
   totalTacticsFound: number;

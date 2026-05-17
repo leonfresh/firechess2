@@ -18,6 +18,7 @@ import type { TimeMoment, MoveSquare } from "@/lib/types";
 
 type TimeCardProps = {
   moment: TimeMoment;
+  onOpenAnalysis?: () => void;
   onCreateCommunityPost?: () => void;
 };
 
@@ -201,7 +202,11 @@ const VERDICT_CONFIG = {
   },
 } as const;
 
-export function TimeCard({ moment, onCreateCommunityPost }: TimeCardProps) {
+export function TimeCard({
+  moment,
+  onOpenAnalysis,
+  onCreateCommunityPost,
+}: TimeCardProps) {
   const { ref: boardSizeRef, size: boardSize } = useBoardSize(400);
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
@@ -742,6 +747,16 @@ export function TimeCard({ moment, onCreateCommunityPost }: TimeCardProps) {
                 </>
               )}
             </button>
+
+            {onOpenAnalysis ? (
+              <button
+                type="button"
+                onClick={onOpenAnalysis}
+                className="flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-100 transition hover:bg-emerald-500/20 hover:text-white"
+              >
+                Open analysis
+              </button>
+            ) : null}
 
             {onCreateCommunityPost ? (
               <button

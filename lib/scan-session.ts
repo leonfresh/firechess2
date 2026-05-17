@@ -31,6 +31,7 @@ export type ComputedScanReport = {
   topTag: string;
   sampleSize: number;
   vibeTitle: string;
+  reportSummary?: string;
   endgameTechniqueScore?: number | null;
 };
 
@@ -243,8 +244,7 @@ export function computeScanReportMeta(
     return best;
   })();
 
-  // Pick a title that reflects the dominant weakness across all report sections,
-  // not just openings, crossed with a rough skill tier.
+  // Determine dominant weakness (used for both title and summary)
   const openingCount = result?.leaks?.length ?? 0;
   const tacticsCount = result?.missedTactics?.length ?? 0;
   const endgameCount = result?.endgameMistakes?.length ?? 0;
@@ -252,7 +252,6 @@ export function computeScanReportMeta(
 
   type WeaknessType = "tactics" | "endgame" | "opening" | "time" | "balanced";
   const dominant: WeaknessType = (() => {
-    // Weight tactics and endgame higher — they're more signal-dense than opening leaks
     const scores = {
       tactics: tacticsCount * 1.5,
       endgame: endgameCount * 1.2,
@@ -268,50 +267,189 @@ export function computeScanReportMeta(
     return "balanced";
   })();
 
-  // tier 0 = <1200, 1 = 1200-1599, 2 = 1600-1999, 3 = 2000+
+  // ── Title system ─────────────────────────────────────────────────────────
+  // 6 ELO tiers, feel-good framing that celebrates player level while
+  // naming the single growth area. Each title validates where the player IS,
+  // not just what they're missing.
+  //   tier 0: < 800   | tier 1: 800-1199 | tier 2: 1200-1599
+  //   tier 3: 1600-1999 | tier 4: 2000-2299 | tier 5: 2300+
   const ratingTier =
-    estimatedRating >= 2000
-      ? 3
-      : estimatedRating >= 1600
-        ? 2
-        : estimatedRating >= 1200
-          ? 1
-          : 0;
+    estimatedRating >= 2300
+      ? 5
+      : estimatedRating >= 2000
+        ? 4
+        : estimatedRating >= 1600
+          ? 3
+          : estimatedRating >= 1200
+            ? 2
+            : estimatedRating >= 800
+              ? 1
+              : 0;
 
-  const VIBE_TITLES: Record<WeaknessType, [string, string, string, string]> = {
+  const VIBE_TITLES: Record<
+    WeaknessType,
+    [string, string, string, string, string, string]
+  > = {
     tactics: [
-      "⚔️ Pattern Recognition Arc",
-      "⚔️ Sharpness Loading...",
-      "⚔️ Tactics Holding the Rating Back",
-      "⚔️ Your Tactics Are the Ceiling",
+      "Sharp Instincts Finding Their Edge",
+      "Pattern Hunter on the Rise",
+      "Calculation Getting Dangerous",
+      "Precise and Near-Master Sharp",
+      "Expert Attacker, One Sharp Edge Remains",
+      "World-Class Sharpness, Final Calculation Thread",
     ],
     endgame: [
-      "♟ Converting Is Hard",
-      "♟ Winning Then Losing",
-      "♟ The Last 20 Moves Hurt",
-      "♟ Winning Then Stumbling",
+      "Fighting Spirit, Conversion Learning",
+      "Resilient Defender, Technique Building",
+      "Strong Fighter, Endgame Mastery Unlocking",
+      "Advanced Technician, Converting Under Pressure",
+      "Expert Strategist, Endgame Refinement Ahead",
+      "Near-Flawless — Endgame Precision Is the Last Step",
     ],
     opening: [
-      "📚 Opening Habits In Progress",
-      "📚 Building Your Opening Map",
-      "📚 Opening Drift Costing Points",
-      "📚 Prep Gap Showing",
+      "Fearless Explorer, Repertoire Building",
+      "Bold Player, Opening Map Expanding",
+      "Solid Thinker, Opening System Developing",
+      "Sharp Repertoire, Preparation Deepening",
+      "Expert Theorist, Deep Prep Forming",
+      "World-Class Opening Sense, Final Lines Loading",
     ],
     time: [
-      "⏱ The Clock Is the Enemy",
-      "⏱ Playing Too Fast",
-      "⏱ Time Pressure Is Leaking",
-      "⏱ Clock Costs You Games",
+      "Fearless Under Pressure, Clock Taming Next",
+      "Tenacious Fighter, Time Sense Evolving",
+      "Determined Player, Clock Management Developing",
+      "Skilled Competitor, Time Mastery Ahead",
+      "Expert Vision, Clock Precision the Next Edge",
+      "Elite Mind, Clock Mastery the Final Frontier",
     ],
     balanced: [
-      "🧠 Every Game Is a Lesson",
-      "🌱 Improvement Arc Active",
-      "⚡ Solid — Small Leaks Everywhere",
-      "🔥 Near the Top, Still Leaking",
+      "Fearless Beginner, Every Game Builds the Foundation",
+      "Rising Player, Solid Instincts Across the Board",
+      "Well-Rounded Competitor, Edges Quietly Closing",
+      "Advanced All-Rounder, Closing the Final Gap",
+      "Expert Competitor, Elite Within Reach",
+      "World-Class All-Rounder, Perfecting the Peak",
     ],
   };
 
   const vibeTitle = VIBE_TITLES[dominant][ratingTier];
+
+  // ── Human-like report summary ─────────────────────────────────────────────
+  const username = result?.username ?? "This player";
+
+  const ratingLabel =
+    estimatedRating >= 2300
+      ? "GM-level"
+      : estimatedRating >= 2000
+        ? "expert-level"
+        : estimatedRating >= 1600
+          ? "advanced club-level"
+          : estimatedRating >= 1200
+            ? "intermediate"
+            : estimatedRating >= 800
+              ? "developing"
+              : "beginner";
+
+  const accuracyLabel =
+    estimatedAccuracy >= 90
+      ? "exceptional"
+      : estimatedAccuracy >= 80
+        ? "strong"
+        : estimatedAccuracy >= 70
+          ? "solid"
+          : estimatedAccuracy >= 60
+            ? "moderate"
+            : "developing";
+
+  const consistencyLabel =
+    consistencyScore >= 85
+      ? "remarkably consistent"
+      : consistencyScore >= 70
+        ? "fairly consistent"
+        : consistencyScore >= 55
+          ? "somewhat inconsistent"
+          : "prone to high-variance swings";
+
+  const strengthLines: string[] = [];
+  const weaknessLines: string[] = [];
+
+  // Strengths
+  const openingLeakRatio =
+    openingCount > 0 && (result?.repeatedPositions ?? 0) > 0
+      ? openingCount / result!.repeatedPositions
+      : null;
+  if (openingLeakRatio !== null && openingLeakRatio < 0.08) {
+    strengthLines.push("opening preparation is a genuine asset");
+  }
+  if (tacticsCount <= 2) {
+    strengthLines.push("tactical awareness is a clear strength");
+  }
+  if (endgameCount <= 2) {
+    strengthLines.push("endgame technique is reliable");
+  }
+  if (severeLeakRate < 0.1) {
+    strengthLines.push("composure under pressure stands out");
+  }
+
+  // Weaknesses
+  if (dominant === "tactics" && tacticsCount > 3) {
+    weaknessLines.push(
+      `missed ${tacticsCount} tactical shots — pattern recognition work will unlock the most rating points`,
+    );
+  }
+  if (dominant === "endgame" && endgameCount > 3) {
+    weaknessLines.push(
+      `${endgameCount} endgame errors suggest conversion and technique is the area to focus on`,
+    );
+  }
+  if (dominant === "opening" && openingCount > 3) {
+    weaknessLines.push(
+      `${openingCount} recurring opening leaks signal that a tighter repertoire will add immediate stability`,
+    );
+  }
+  if (dominant === "time" && timeCount > 3) {
+    weaknessLines.push(
+      "time management under pressure is the clearest leak — slower moves in complex positions will improve results",
+    );
+  }
+  if (dominant === "balanced") {
+    weaknessLines.push(
+      "no single area dominates, which means incremental gains across all pillars will compound quickly",
+    );
+  }
+
+  const strengthsText =
+    strengthLines.length > 0
+      ? `Standout strengths include ${strengthLines.slice(0, 2).join(" and ")}.`
+      : "";
+
+  const weaknessText =
+    weaknessLines.length > 0
+      ? `The key growth area: ${weaknessLines[0]}.`
+      : "";
+
+  const consistencyText = `Move quality is ${consistencyLabel} (consistency score ${consistencyScore}/100), with a ${(severeLeakRate * 100).toFixed(0)}% rate of high-cost errors.`;
+
+  const outlookText =
+    estimatedRating >= 2300
+      ? "The profile reflects a world-class game — refinements at this level are subtle and deeply specific."
+      : estimatedRating >= 2000
+        ? "The fundamentals are expert-grade. Addressing the flagged area could push this profile into master territory."
+        : estimatedRating >= 1600
+          ? "This is a well-developed game. Targeted work on the weak pillar will have an outsized effect at this level."
+          : estimatedRating >= 1200
+            ? "The foundation is solid. Locking in the key weakness will accelerate improvement significantly."
+            : "Every game is adding to the pattern library. Consistent practice on the flagged area will fast-track growth.";
+
+  const reportSummary = [
+    `${username} shows ${accuracyLabel} ${ratingLabel} play with ${estimatedAccuracy.toFixed(1)}% move accuracy across ${valid.length} scored positions.`,
+    strengthsText,
+    weaknessText,
+    consistencyText,
+    outlookText,
+  ]
+    .filter(Boolean)
+    .join(" ");
   const endgameTechniqueScore = computeEndgameTechniqueScore(
     result?.endgameStats ?? null,
   );
@@ -327,6 +465,7 @@ export function computeScanReportMeta(
     topTag,
     sampleSize: valid.length,
     vibeTitle,
+    reportSummary,
     endgameTechniqueScore,
   };
 }

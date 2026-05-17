@@ -47,6 +47,7 @@ body {
     rgba(34, 17, 10, 0.985) 100%
   );
   background-repeat: no-repeat;
+  background-attachment: fixed;
   background-size: 100% 100%;
   overflow-x: hidden;
 }
@@ -1043,4 +1044,148 @@ body {
 .gt-wrapper .goog-te-combo:hover {
   border-color: rgba(255, 255, 255, 0.15) !important;
   color: #94a3b8 !important;
+}
+
+/* ── Homepage scroll-reveal ── */
+/* Utility for elements that should animate in when they enter the viewport.    Use with IntersectionObserver in JS, or as a CSS-only soft fade on load.    Apply to any section for a consistent entrance feel. */
+@keyframes scroll-reveal-up {
+  0% {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.scroll-reveal {
+  animation: scroll-reveal-up 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.scroll-reveal-delay-1 {
+  animation-delay: 0.1s;
+}
+.scroll-reveal-delay-2 {
+  animation-delay: 0.2s;
+}
+.scroll-reveal-delay-3 {
+  animation-delay: 0.35s;
+}
+
+/* ── CTA button fire shimmer ── */
+/* Solid base + a soft gloss-sweep — no hard gradient edge */
+@keyframes btn-shine-sweep {
+  0% {
+    transform: translateX(-150%) skewX(-12deg);
+  }
+  100% {
+    transform: translateX(300%) skewX(-12deg);
+  }
+}
+
+@keyframes btn-glow-pulse {
+  0%, 100% {
+    box-shadow:
+      0 8px 24px -10px rgba(249, 115, 22, 0.55),
+      0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  }
+  50% {
+    box-shadow:
+      0 10px 32px -10px rgba(249, 115, 22, 0.75),
+      0 0 48px -20px rgba(220, 38, 38, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.12) inset,
+      inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
+}
+
+.btn-cta-fire {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background: linear-gradient(
+    135deg,
+    #f59e0b 0%,
+    #ea580c 42%,
+    #f97316 68%,
+    #dc2626 100%
+  );
+  box-shadow:
+    0 8px 24px -10px rgba(249, 115, 22, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  animation: btn-glow-pulse 3.5s ease-in-out infinite;
+  transition:
+    box-shadow 0.25s,
+    transform 0.2s;
+}
+
+/* soft gloss sweep — blurry, feathered edges */
+.btn-cta-fire::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 55%;
+  background: linear-gradient(
+    110deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 30%,
+    rgba(255, 255, 255, 0.22) 50%,
+    rgba(255, 255, 255, 0.06) 70%,
+    transparent 100%
+  );
+  animation: btn-shine-sweep 3.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.btn-cta-fire:hover {
+  box-shadow:
+    0 16px 40px -12px rgba(249, 115, 22, 0.75),
+    0 0 64px -28px rgba(220, 38, 38, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.14) inset,
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  transform: translateY(-2px);
+  animation: none;
+}
+
+.btn-cta-fire:active {
+  transform: translateY(0);
+}
+
+.btn-cta-fire:disabled {
+  animation: none;
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-cta-fire:disabled::after {
+  display: none;
+}
+
+/* ── Navbar scroll shadow ── */
+/* Add class "nav-scrolled" via JS when scrollY > 10 */
+.nav-scrolled {
+  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 32px -8px rgba(0, 0, 0, 0.6);
+}
+
+/* ── Stat chip pop-in ── */
+@keyframes chip-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.88) translateY(6px);
+  }
+  60% {
+    transform: scale(1.03) translateY(-1px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.chip-pop {
+  animation: chip-pop 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
 }

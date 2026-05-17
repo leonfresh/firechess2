@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { AnalysisBoardModal } from "@/components/analysis-board-modal";
+import { BrilliantMoveCard } from "@/components/brilliant-move-card";
 import { CardCarousel } from "@/components/card-carousel";
 import type { CommunityPostComposerSeed } from "@/components/community-post-composer-modal";
 import { EndgameCard } from "@/components/endgame-card";
@@ -28,6 +30,7 @@ import type {
   PublicScanSessionPayload,
 } from "@/lib/scan-session";
 import type {
+  BrilliantMove,
   EndgameStats,
   EndgameMistake,
   MissedTactic,
@@ -62,6 +65,8 @@ const STILL_WINNING_THRESHOLD = 350;
 const FREE_SCAN_SECTION_SAMPLE = 6;
 const COMPACT_REPORT_INITIAL_COUNT = 6;
 const COMPACT_REPORT_LOAD_BATCH = 24;
+const DEFAULT_ANALYSIS_FEN =
+  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 type TaggedPosition = {
   tags: string[];
@@ -102,6 +107,13 @@ type FloatingNavSection = {
   icon: string;
   count?: number;
   countColor?: string;
+};
+
+type ReportAnalysisTarget = {
+  fen: string;
+  orientation: "white" | "black";
+  title: string;
+  subtitle: string;
 };
 
 function FloatingSectionNav({ sections }: { sections: FloatingNavSection[] }) {
@@ -229,19 +241,30 @@ function CompactCardFooter({
   const remaining = Math.max(0, total - shown);
 
   return (
-    <div className="mt-4 flex flex-col gap-3 rounded-[1.25rem] border border-white/[0.08] bg-white/[0.03] p-4 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-sm text-slate-400">
-        {shown < total
-          ? `Showing ${shown} of ${total} ${label}.`
-          : `Showing all ${total} ${label}.`}
-      </p>
+    <div className="mt-4 flex flex-col gap-3 rounded-[1.25rem] border border-white/[0.07] bg-white/[0.02] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-center gap-2">
+        <div className="h-1.5 w-28 overflow-hidden rounded-full bg-white/[0.06]">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-orange-400 to-amber-300 transition-all duration-500"
+            style={{ width: `${Math.min(100, (shown / total) * 100)}%` }}
+          />
+        </div>
+        <p className="text-xs text-slate-500">
+          <span className="font-semibold text-slate-300">{shown}</span> of{" "}
+          <span className="font-semibold text-slate-300">{total}</span>{" "}
+          {label}
+        </p>
+      </div>
       <div className="flex flex-wrap gap-2">
         {remaining > 0 ? (
           <button
             type="button"
             onClick={onLoadMore}
-            className="inline-flex items-center justify-center rounded-full border border-cyan-500/20 bg-cyan-500/10 px-4 py-2 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/20"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-orange-500/25 bg-orange-500/[0.09] px-4 py-2 text-xs font-semibold text-orange-200 transition-all duration-200 hover:border-orange-400/40 hover:bg-orange-500/[0.16] hover:text-white active:scale-[0.97]"
           >
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
             {remaining <= COMPACT_REPORT_LOAD_BATCH
               ? `Show all ${remaining}`
               : `Load ${COMPACT_REPORT_LOAD_BATCH} more`}
@@ -251,7 +274,7 @@ function CompactCardFooter({
           <button
             type="button"
             onClick={onShowLess}
-            className="inline-flex items-center justify-center rounded-full border border-white/[0.12] bg-white/[0.04] px-4 py-2 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08]"
+            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-xs font-semibold text-slate-400 transition-all duration-200 hover:border-white/[0.14] hover:bg-white/[0.07] hover:text-slate-200 active:scale-[0.97]"
           >
             Show fewer
           </button>
@@ -434,9 +457,9 @@ const MOTIF_DEFS: MotifDefinition[] = [
 
 function EmptySection({ message }: { message: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 text-sm text-slate-400 sm:p-6">
-      <span className="shrink-0 text-emerald-500">✓</span>
-      {message}
+    <div className="flex items-center gap-3 rounded-[1.5rem] border border-emerald-500/[0.12] bg-emerald-500/[0.04] p-5 text-sm text-slate-400 sm:p-6">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/[0.15] text-xs text-emerald-400">✓</span>
+      <span className="text-slate-300">{message}</span>
     </div>
   );
 }
@@ -450,22 +473,46 @@ function ProSectionLimitNotice({
   shown: number;
   total: number;
 }) {
+  const hidden = total - shown;
   return (
-    <div className="rounded-[1.5rem] border border-amber-500/20 bg-amber-500/[0.08] p-5 text-sm text-amber-100 sm:p-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="font-semibold text-amber-200">
-            Free shows the top {shown} {label}.
-          </p>
-          <p className="mt-1 text-amber-100/80">
-            {total - shown} more {label} unlock with Pro.
-          </p>
+    <div className="relative overflow-hidden rounded-[1.5rem] border border-amber-500/25 p-5 sm:p-6"
+      style={{
+        background:
+          "linear-gradient(135deg, rgba(30,16,4,0.97) 0%, rgba(44,22,6,0.97) 52%, rgba(56,22,8,0.96) 100%)",
+      }}
+    >
+      {/* top shimmer line */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-400/50 to-transparent" />
+      {/* ambient glow */}
+      <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-amber-500/[0.07] blur-3xl" />
+
+      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-4">
+          {/* lock icon */}
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/[0.12] text-xl">
+            🔒
+          </div>
+          <div>
+            <p className="font-bold text-white">
+              {hidden} more {label} locked
+            </p>
+            <p className="mt-0.5 text-sm leading-relaxed text-amber-100/70">
+              You're seeing{" "}
+              <span className="font-semibold text-amber-200">{shown}</span> of{" "}
+              <span className="font-semibold text-white">{total}</span>{" "}
+              {label}. Pro unlocks the complete list and every future scan.
+            </p>
+          </div>
         </div>
+
         <a
           href="/pricing"
-          className="inline-flex items-center justify-center rounded-full border border-amber-400/30 bg-amber-400/10 px-4 py-2 text-xs font-semibold text-amber-100 transition hover:bg-amber-400/20"
+          className="btn-cta-fire inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white"
         >
-          Unlock Full List
+          Unlock Pro
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
         </a>
       </div>
     </div>
@@ -789,30 +836,43 @@ function ReportFollowUpCta({
         {drillsReady ? (
           <Link
             href="/train"
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-emerald-500/25 bg-emerald-500/12 px-5 py-2.5 text-sm font-semibold text-emerald-100 transition hover:border-emerald-400/40 hover:bg-emerald-500/18 hover:text-white"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.12] px-5 py-2.5 text-sm font-semibold text-emerald-100 shadow-[0_8px_24px_-12px_rgba(16,185,129,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-400/50 hover:bg-emerald-500/[0.2] hover:text-white hover:shadow-[0_12px_32px_-12px_rgba(16,185,129,0.45)]"
           >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
             Open Puzzles & Drills
           </Link>
         ) : (
           <button
             type="button"
             disabled
-            className="inline-flex items-center justify-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-slate-300 opacity-70"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-5 py-2.5 text-sm font-semibold text-slate-400 opacity-60 cursor-not-allowed"
           >
+            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
             Drills loading...
           </button>
         )}
 
         <Link
           href="/dashboard"
-          className="inline-flex items-center justify-center gap-2 rounded-full border border-violet-500/25 bg-violet-500/12 px-5 py-2.5 text-sm font-semibold text-violet-100 transition hover:border-violet-400/40 hover:bg-violet-500/18 hover:text-white"
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-500/30 bg-violet-500/[0.10] px-5 py-2.5 text-sm font-semibold text-violet-100 shadow-[0_8px_24px_-12px_rgba(139,92,246,0.3)] transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-400/50 hover:bg-violet-500/[0.18] hover:text-white"
         >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
           View Study Plan
         </Link>
         <Link
           href="/daily"
-          className="inline-flex items-center justify-center gap-2 rounded-full border border-cyan-500/25 bg-cyan-500/12 px-5 py-2.5 text-sm font-semibold text-cyan-100 transition hover:border-cyan-400/40 hover:bg-cyan-500/18 hover:text-white"
+          className="inline-flex items-center justify-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/[0.10] px-5 py-2.5 text-sm font-semibold text-cyan-100 shadow-[0_8px_24px_-12px_rgba(6,182,212,0.25)] transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-400/50 hover:bg-cyan-500/[0.18] hover:text-white"
         >
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
           Daily Challenge
         </Link>
       </div>
@@ -997,13 +1057,17 @@ function SectionHeader({
 
         <div className="flex flex-wrap items-center gap-2 text-xs">
           {badge ? (
-            <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-slate-300">
+            <span className="rounded-full border border-white/[0.1] bg-white/[0.05] px-3 py-1 font-medium text-slate-200">
               {badge}
             </span>
           ) : null}
           {live ? (
-            <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 text-cyan-200">
-              Live update
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/25 bg-cyan-500/[0.1] px-3 py-1 text-cyan-200">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-cyan-400" />
+              </span>
+              Live
             </span>
           ) : null}
           {onToggleView ? (
@@ -1812,6 +1876,58 @@ function buildTimeMomentCommunitySeed(
   };
 }
 
+function buildOpeningAnalysisTarget(
+  leak: RepeatedOpeningLeak,
+): ReportAnalysisTarget {
+  return {
+    fen: leak.fenBefore,
+    orientation: orientationFromFen(leak.fenBefore),
+    title: leak.openingName?.trim()
+      ? `${leak.openingName} analysis board`
+      : "Opening report position",
+    subtitle:
+      "Explore the full opening position, branch alternatives, and keep the report open in the background.",
+  };
+}
+
+function buildTacticAnalysisTarget(tactic: MissedTactic): ReportAnalysisTarget {
+  return {
+    fen: tactic.fenBefore,
+    orientation: orientationFromFen(tactic.fenBefore),
+    title: `Missed tactic · Game ${tactic.gameIndex}`,
+    subtitle: `Move ${tactic.moveNumber} · Branch the line, inspect alternatives, and replay the tactic cleanly.`,
+  };
+}
+
+function buildEndgameAnalysisTarget(
+  mistake: EndgameMistake,
+): ReportAnalysisTarget {
+  return {
+    fen: mistake.fenBefore,
+    orientation: orientationFromFen(mistake.fenBefore),
+    title: `${mistake.endgameType} endgame analysis`,
+    subtitle: `Game ${mistake.gameIndex} · Move ${mistake.moveNumber} · Explore the technique from this exact position.`,
+  };
+}
+
+function buildTimeAnalysisTarget(moment: TimeMoment): ReportAnalysisTarget {
+  return {
+    fen: moment.fen,
+    orientation: orientationFromFen(moment.fen),
+    title: `${moment.verdict} clock moment`,
+    subtitle: `Game ${moment.gameIndex} · Move ${moment.moveNumber} · Inspect the move and clock decision on a clean board.`,
+  };
+}
+
+function buildBrilliantAnalysisTarget(move: BrilliantMove): ReportAnalysisTarget {
+  return {
+    fen: move.fenBefore,
+    orientation: orientationFromFen(move.fenBefore),
+    title: `Brilliant move · Game ${move.gameIndex}`,
+    subtitle: `Move ${move.moveNumber} · Replay the shot, test alternatives, and inspect the engine line without leaving the report.`,
+  };
+}
+
 function buildMotifs(
   missedTactics: MissedTactic[],
   leaks: RepeatedOpeningLeak[],
@@ -1945,6 +2061,7 @@ export function ScanSessionReport({
   const oneOffMistakes = result?.oneOffMistakes ?? [];
   const missedTactics = result?.missedTactics ?? [];
   const endgameMistakes = result?.endgameMistakes ?? [];
+  const brilliantMoves = result?.brilliantMoves ?? [];
   const openingSummaries = result?.openingSummaries ?? [];
   const positionalFindings = result?.positionalFindings ?? [];
   const timeManagement = result?.timeManagement ?? null;
@@ -2006,6 +2123,9 @@ export function ScanSessionReport({
   const accessibleEndgames = hasProAccess
     ? endgameMistakes
     : endgameMistakes.slice(0, FREE_SCAN_SECTION_SAMPLE);
+  const accessibleBrilliants = hasProAccess
+    ? brilliantMoves
+    : brilliantMoves.slice(0, FREE_SCAN_SECTION_SAMPLE);
   const accessibleMoments = hasProAccess
     ? timeMoments
     : timeMoments.slice(0, FREE_SCAN_SECTION_SAMPLE);
@@ -2026,10 +2146,16 @@ export function ScanSessionReport({
     accessibleEndgames.length,
     `${scan.id}:endgames`,
   );
+  const brilliantReveal = useCompactSectionReveal(
+    accessibleBrilliants.length,
+    `${scan.id}:brilliant`,
+  );
   const timeReveal = useCompactSectionReveal(
     accessibleMoments.length,
     `${scan.id}:time`,
   );
+  const [analysisTarget, setAnalysisTarget] =
+    useState<ReportAnalysisTarget | null>(null);
 
   const [sectionViewModes, setSectionViewModes] = useState<
     Record<string, "list" | "grid">
@@ -2048,6 +2174,10 @@ export function ScanSessionReport({
   );
   const visibleTactics = accessibleTactics.slice(0, tacticReveal.shownCount);
   const visibleEndgames = accessibleEndgames.slice(0, endgameReveal.shownCount);
+  const visibleBrilliantMoves = accessibleBrilliants.slice(
+    0,
+    brilliantReveal.shownCount,
+  );
   const visibleMoments = accessibleMoments.slice(0, timeReveal.shownCount);
   const hiddenTacticsCount = Math.max(
     0,
@@ -2056,6 +2186,10 @@ export function ScanSessionReport({
   const hiddenEndgamesCount = Math.max(
     0,
     endgameMistakes.length - accessibleEndgames.length,
+  );
+  const hiddenBrilliantMovesCount = Math.max(
+    0,
+    brilliantMoves.length - accessibleBrilliants.length,
   );
   const hiddenTimeMomentsCount = Math.max(
     0,
@@ -2083,6 +2217,9 @@ export function ScanSessionReport({
     endgameMistakes.length > 0 ||
     Boolean(endgameStats);
 
+  const showBrilliants =
+    scan.scanMode !== "time-management" &&
+    ((result?.reportVersion ?? 0) >= 2 || brilliantMoves.length > 0);
   const showTimeManagement =
     isTimeManagementScan || scan.scanMode === "both" || Boolean(timeManagement);
   const followUpIssueCount =
@@ -2263,6 +2400,13 @@ export function ScanSessionReport({
       count: endgameMistakes.length || undefined,
       countColor: "bg-sky-500/20 text-sky-300",
     },
+    showBrilliants && {
+      id: "section-brilliant",
+      label: "Brilliant",
+      icon: "💎",
+      count: brilliantMoves.length || undefined,
+      countColor: "bg-cyan-500/20 text-cyan-300",
+    },
     showTimeManagement && {
       id: "section-time",
       label: "Time",
@@ -2276,7 +2420,7 @@ export function ScanSessionReport({
     <>
       <FloatingSectionNav sections={floatingNavSections} />
       <div className="mt-6 space-y-6">
-        {showOpenings || showTactics || showEndgames || showTimeManagement ? (
+        {showOpenings || showTactics || showEndgames || showBrilliants || showTimeManagement ? (
           <nav
             aria-label="Report sections"
             className="flex items-center gap-2 overflow-x-auto rounded-2xl border border-white/[0.07] bg-white/[0.02] px-3 py-2.5"
@@ -2331,6 +2475,24 @@ export function ScanSessionReport({
                 {endgameMistakes.length > 0 ? (
                   <span className="rounded-full bg-sky-500/20 px-1.5 text-[10px] font-bold text-sky-300">
                     {endgameMistakes.length}
+                  </span>
+                ) : null}
+              </button>
+            ) : null}
+            {showBrilliants ? (
+              <button
+                type="button"
+                onClick={() =>
+                  document
+                    .getElementById("section-brilliant")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white"
+              >
+                💎 Brilliant
+                {brilliantMoves.length > 0 ? (
+                  <span className="rounded-full bg-cyan-500/20 px-1.5 text-[10px] font-bold text-cyan-300">
+                    {brilliantMoves.length}
                   </span>
                 ) : null}
               </button>
@@ -2421,9 +2583,11 @@ export function ScanSessionReport({
                 {reportMeta.vibeTitle}
               </h2>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-300 sm:text-base">
-                {reportMeta.topTag === "No big leak pattern"
-                  ? "The scan has enough signal to score the profile, but no single opening tag is dominating the sample."
-                  : `Your strongest recurring signal right now is ${reportMeta.topTag}. The sections below update as more detail locks in.`}
+                {reportMeta.reportSummary
+                  ? reportMeta.reportSummary
+                  : reportMeta.topTag === "No big leak pattern"
+                    ? "The scan has enough signal to score the profile, but no single opening tag is dominating the sample."
+                    : `Your strongest recurring signal right now is ${reportMeta.topTag}. The sections below update as more detail locks in.`}
               </p>
               <div className="mt-5 flex flex-wrap gap-2 text-xs">
                 <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-slate-200">
@@ -2608,6 +2772,9 @@ export function ScanSessionReport({
                       key={`${leak.fenBefore}-${leak.userMove}`}
                       leak={leak}
                       engineDepth={scan.config.engineDepth}
+                      onOpenAnalysis={() =>
+                        setAnalysisTarget(buildOpeningAnalysisTarget(leak))
+                      }
                       onCreateCommunityPost={
                         onCreateCommunityPost
                           ? () =>
@@ -2675,6 +2842,9 @@ export function ScanSessionReport({
                       key={`${mistake.fenBefore}-${mistake.userMove}-${mistake.moveCount}`}
                       leak={mistake}
                       engineDepth={scan.config.engineDepth}
+                      onOpenAnalysis={() =>
+                        setAnalysisTarget(buildOpeningAnalysisTarget(mistake))
+                      }
                       onCreateCommunityPost={
                         onCreateCommunityPost
                           ? () =>
@@ -2687,6 +2857,74 @@ export function ScanSessionReport({
                   ))}
                 </CardCarousel>
               </div>
+            ) : null}
+          </section>
+        ) : null}
+
+        {showBrilliants ? (
+          <section id="section-brilliant" className="space-y-4">
+            <SectionHeader
+              eyebrow="Highlights"
+              title="Brilliant moves"
+              description={
+                isProcessing
+                  ? "Sacrifices and engine-approved shots are collected near the end of the report."
+                  : "Every brilliant move the scan found, with free members seeing the first six and Pro unlocking the full set."
+              }
+              badge={formatCompactBadge({
+                shown: visibleBrilliantMoves.length,
+                available: accessibleBrilliants.length,
+                total: brilliantMoves.length,
+                singular: "brilliant move",
+                plural: "brilliant moves",
+              })}
+              live={isProcessing}
+              viewMode={getSV("brilliant")}
+              onToggleView={() => toggleSV("brilliant")}
+            />
+
+            {visibleBrilliantMoves.length > 0 ? (
+              <CardCarousel
+                viewMode={getSV("brilliant")}
+                footer={
+                  <CompactCardFooter
+                    shown={visibleBrilliantMoves.length}
+                    total={accessibleBrilliants.length}
+                    label="brilliant moves"
+                    onLoadMore={brilliantReveal.loadMore}
+                    onShowLess={brilliantReveal.showLess}
+                  />
+                }
+              >
+                {visibleBrilliantMoves.map((move) => (
+                  <BrilliantMoveCard
+                    key={`${move.gameIndex}-${move.moveNumber}-${move.userMove}`}
+                    move={move}
+                    onOpenAnalysis={() =>
+                      setAnalysisTarget(buildBrilliantAnalysisTarget(move))
+                    }
+                  />
+                ))}
+              </CardCarousel>
+            ) : isProcessing ? (
+              <SectionLoadingProgress
+                message="Brilliant-move highlights are compiling"
+                detail="Checking for best-move sacrifices and other standout tactical shots."
+                current={0}
+                total={scanGameTotal}
+                percent={0}
+                countLabel="games"
+              />
+            ) : (
+              <EmptySection message="No brilliant moves were detected in this scan." />
+            )}
+
+            {!isProcessing && hiddenBrilliantMovesCount > 0 ? (
+              <ProSectionLimitNotice
+                label="brilliant moves"
+                shown={accessibleBrilliants.length}
+                total={brilliantMoves.length}
+              />
             ) : null}
           </section>
         ) : null}
@@ -2749,6 +2987,9 @@ export function ScanSessionReport({
                     key={`${tactic.fenBefore}-${tactic.userMove}-${tactic.gameIndex}`}
                     tactic={tactic}
                     engineDepth={scan.config.engineDepth}
+                    onOpenAnalysis={() =>
+                      setAnalysisTarget(buildTacticAnalysisTarget(tactic))
+                    }
                     onCreateCommunityPost={
                       onCreateCommunityPost
                         ? () =>
@@ -2870,6 +3111,9 @@ export function ScanSessionReport({
                     key={`${mistake.fenBefore}-${mistake.userMove}-${mistake.gameIndex}`}
                     mistake={mistake}
                     engineDepth={scan.config.engineDepth}
+                    onOpenAnalysis={() =>
+                      setAnalysisTarget(buildEndgameAnalysisTarget(mistake))
+                    }
                     onCreateCommunityPost={
                       onCreateCommunityPost
                         ? () =>
@@ -2994,6 +3238,9 @@ export function ScanSessionReport({
                   <TimeCard
                     key={`${moment.fen}-${moment.userMove}-${moment.gameIndex}`}
                     moment={moment}
+                    onOpenAnalysis={() =>
+                      setAnalysisTarget(buildTimeAnalysisTarget(moment))
+                    }
                     onCreateCommunityPost={
                       onCreateCommunityPost
                         ? () =>
@@ -3079,6 +3326,14 @@ export function ScanSessionReport({
           </section>
         ) : null}
       </div>
+      <AnalysisBoardModal
+        open={Boolean(analysisTarget)}
+        onClose={() => setAnalysisTarget(null)}
+        fen={analysisTarget?.fen ?? DEFAULT_ANALYSIS_FEN}
+        orientation={analysisTarget?.orientation ?? "white"}
+        title={analysisTarget?.title}
+        subtitle={analysisTarget?.subtitle}
+      />
     </>
   );
 }

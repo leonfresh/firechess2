@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
+import { isAdmin } from "@/lib/admin";
 import { db } from "@/lib/db";
 import { scanSessions } from "@/lib/schema";
 import {
+  computeScanReportMeta,
   isExpiredScanSession,
   type ComputedScanReport,
   type PublicScanSessionPayload,
@@ -32,7 +34,7 @@ function toPayload(row: ScanSessionRow): PublicScanSessionPayload {
   };
 }
 
-function canManageSession(
+async function canManageSession(
   row: ScanSessionRow,
   userId: string | null | undefined,
   ownerToken: string | null,
@@ -40,6 +42,7 @@ function canManageSession(
   if (userId && row.userId === userId) return true;
   if (ownerToken && row.guestToken && ownerToken === row.guestToken)
     return true;
+  if (userId && (await isAdmin(userId))) return true;
   return false;
 }
 
@@ -88,7 +91,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Scan not found." }, { status: 404 });
     }
 
-    if (!canManageSession(row, session?.user?.id, ownerToken)) {
+    if (!(await canManageSession(row, session?.user?.id, ownerToken))) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -99,6 +102,7 @@ export async function PATCH(
       error?: string | null;
       savedReportId?: string | null;
       clearExpiry?: boolean;
+      regenerateReportMeta?: boolean;
     };
 
     const nextStatus = body.status;
@@ -109,6 +113,39 @@ export async function PATCH(
       nextStatus !== "failed"
     ) {
       return NextResponse.json({ error: "Invalid status." }, { status: 400 });
+    }
+
+    // Admin-only: recompute title, summary and radar stats from stored result
+    if (body.regenerateReportMeta) {
+      const adminCheck = session?.user?.id
+        ? await isAdmin(session.user.id)
+        : false;
+      if (!adminCheck) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+      const currentResult = row.result;
+      if (!currentResult) {
+        return NextResponse.json(
+          { error: "No result stored — run the full scan first." },
+          { status: 400 },
+        );
+      }
+      const freshMeta = computeScanReportMeta(
+        currentResult,
+        row.config.cpThreshold,
+      );
+      if (!freshMeta) {
+        return NextResponse.json(
+          { error: "Not enough data to compute report meta." },
+          { status: 400 },
+        );
+      }
+      const [updated] = await db
+        .update(scanSessions)
+        .set({ reportMeta: freshMeta, updatedAt: new Date() })
+        .where(eq(scanSessions.id, id))
+        .returning();
+      return NextResponse.json({ scan: toPayload(updated) });
     }
 
     const updates: Partial<typeof scanSessions.$inferInsert> & {
