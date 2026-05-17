@@ -134,7 +134,7 @@ export type AnalyzeOptions = {
   onProgress?: (progress: AnalysisProgress) => void;
   /** Called when each section finishes — enables progressive rendering. */
   onSectionReady?: (
-    section: "openings" | "tactics" | "endgames" | "time" | "mental",
+    section: "openings" | "tactics" | "endgames" | "time" | "mental" | "brilliant",
     partial: Partial<AnalyzeResponse>,
   ) => void;
 };
@@ -2813,8 +2813,8 @@ export async function analyzeOpeningLeaksInBrowser(
   >();
   let endgameStats: EndgameStats | null = null;
 
-  // Run openings, tactics and endgames concurrently — they're independent:
-  // all read from `games` (read-only), write to separate arrays, share stockfishPool safely.
+  // Run openings, tactics, endgames, and brilliant moves concurrently — all read from `games`
+  // (read-only) and write to separate arrays, sharing stockfishPool safely.
   await Promise.all([
     // ── OPENINGS ────────────────────────────────────────────────────────
     (async () => {
@@ -4112,7 +4112,16 @@ export async function analyzeOpeningLeaksInBrowser(
 
       options?.onSectionReady?.("endgames", { endgameMistakes, endgameStats });
     })(), // end endgames
-  ]); // end Promise.all — openings, tactics, endgames finished
+
+    // ── BRILLIANT MOVES ─────────────────────────────────────────────────
+    (async () => {
+      if (!doTimeOnly) {
+        const found = await analyzeBrilliantMovesFromGames(username, games, engineDepth);
+        brilliantMoves.push(...found);
+        options?.onSectionReady?.("brilliant", { brilliantMoves });
+      }
+    })(), // end brilliant moves
+  ]); // end Promise.all — openings, tactics, endgames, brilliant finished
 
   emitProgress(options, {
     phase: "done",
@@ -4132,12 +4141,6 @@ export async function analyzeOpeningLeaksInBrowser(
             : sorted[mid];
         })()
       : null;
-
-  if (!doTimeOnly) {
-    brilliantMoves.push(
-      ...(await analyzeBrilliantMovesFromGames(username, games, engineDepth)),
-    );
-  }
 
   // ── Compute Time Management Score (0-100) from clock data ──
   // Measures: consistency of move timing, avoiding time scrambles, not wasting time

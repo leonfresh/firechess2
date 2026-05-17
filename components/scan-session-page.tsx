@@ -587,7 +587,7 @@ export function ScanSessionPage({
     }
   };
 
-  const handleBrilliantBackfill = async () => {    if (!scan.result || !isAdmin || !needsBrilliantBackfill) return;
+  const handleBrilliantBackfill = async () => {    if (!scan.result || !isAdmin) return;
 
     setBrilliantBackfillState("running");
 
@@ -761,7 +761,7 @@ export function ScanSessionPage({
                           : "Regenerate"}
                   </button>
                 ) : null}
-                {isAdmin && needsBrilliantBackfill ? (
+                {isAdmin && scan.status === "ready" && scan.result ? (
                   <button
                     type="button"
                     onClick={handleBrilliantBackfill}
@@ -825,16 +825,16 @@ export function ScanSessionPage({
           </div>
         </section>
 
-        {isAdmin && needsBrilliantBackfill ? (
+        {isAdmin && scan.status === "ready" && scan.result ? (
           <section className="mt-6 rounded-[1.5rem] border border-cyan-500/20 bg-cyan-500/[0.06] p-5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-200/80">
-              Admin backfill
+              Admin — brilliant section
             </p>
             <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="max-w-3xl text-sm leading-relaxed text-slate-200">
-                This report predates the brilliant-move section. Regenerate only
-                that section to publish the updated brilliant list on this public
-                report without rerunning the full scan.
+                Re-scan all games for brilliant moves and update this report
+                publicly. Useful after tuning the detection algorithm or to
+                refresh an old report that predates this section.
               </p>
               {brilliantBackfillState === "done" ? (
                 <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
