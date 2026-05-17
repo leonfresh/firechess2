@@ -118,6 +118,7 @@ type ReportAnalysisTarget = {
 
 function FloatingSectionNav({ sections }: { sections: FloatingNavSection[] }) {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const elements = sections
@@ -137,49 +138,75 @@ function FloatingSectionNav({ sections }: { sections: FloatingNavSection[] }) {
     return () => observer.disconnect();
   }, [sections]);
 
+  // Show only after scrolling past the top nav bar
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > 300);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   if (sections.length < 2) return null;
 
   return (
-    <div className="fixed right-4 top-1/2 z-30 hidden -translate-y-1/2 flex-col gap-1.5 2xl:flex">
-      {sections.map(({ id, label, icon, count, countColor }) => {
-        const isActive = id === activeId;
-        return (
-          <button
-            key={id}
-            type="button"
-            onClick={() =>
-              document
-                .getElementById(id)
-                ?.scrollIntoView({ behavior: "smooth", block: "start" })
-            }
-            aria-label={`Jump to ${label}`}
-            className={`group relative flex items-center gap-2 rounded-xl border transition-all duration-200 ${
-              isActive
-                ? "border-white/20 bg-white/[0.09] px-3 py-1.5 text-white shadow-lg shadow-black/20"
-                : "border-white/[0.07] bg-white/[0.04] p-2 text-slate-500 hover:border-white/[0.15] hover:bg-white/[0.07] hover:text-slate-300"
-            }`}
-          >
-            {/* Hover tooltip for inactive items */}
-            {!isActive && (
-              <span className="pointer-events-none absolute right-full mr-2.5 whitespace-nowrap rounded-lg border border-white/[0.1] bg-slate-900/95 px-2.5 py-1 text-[11px] font-semibold text-slate-200 opacity-0 shadow-xl backdrop-blur-sm transition-opacity duration-150 group-hover:opacity-100">
+    <div
+      className={`fixed right-4 top-1/2 z-40 hidden -translate-y-1/2 flex-col gap-1 transition-opacity duration-300 lg:flex ${
+        visible ? "opacity-100" : "opacity-0 pointer-events-none"
+      }`}
+    >
+      {/* Container pill */}
+      <div className="flex flex-col gap-1 rounded-2xl border border-white/[0.08] bg-slate-950/80 p-1.5 shadow-2xl shadow-black/50 backdrop-blur-md">
+        {sections.map(({ id, label, icon, count, countColor }) => {
+          const isActive = id === activeId;
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() =>
+                document
+                  .getElementById(id)
+                  ?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
+              aria-label={`Jump to ${label}`}
+              title={label}
+              className={`group relative flex items-center gap-2 rounded-xl border px-2.5 py-2 transition-all duration-200 ${
+                isActive
+                  ? "border-white/20 bg-white/[0.10] text-white shadow-md shadow-black/30"
+                  : "border-transparent text-slate-500 hover:border-white/[0.10] hover:bg-white/[0.06] hover:text-slate-200"
+              }`}
+            >
+              {/* Left tooltip */}
+              <span className="pointer-events-none absolute right-full mr-3 whitespace-nowrap rounded-lg border border-white/[0.1] bg-slate-900/95 px-2.5 py-1 text-[11px] font-semibold text-slate-200 opacity-0 shadow-xl backdrop-blur-sm transition-opacity duration-150 group-hover:opacity-100">
                 {label}
-                {count ? ` · ${count}` : ""}
+                {count ? (
+                  <span className={`ml-1.5 rounded-full px-1.5 text-[9px] font-bold ${countColor ?? "bg-white/10 text-slate-300"}`}>
+                    {count}
+                  </span>
+                ) : null}
               </span>
-            )}
-            <span className="text-sm leading-none">{icon}</span>
-            {isActive && (
-              <span className="text-[11px] font-semibold">{label}</span>
-            )}
-            {isActive && count !== undefined && count > 0 && (
-              <span
-                className={`rounded-full px-1.5 text-[9px] font-bold ${countColor ?? "bg-white/[0.1] text-slate-300"}`}
-              >
-                {count}
-              </span>
-            )}
-          </button>
-        );
-      })}
+
+              <span className="text-base leading-none">{icon}</span>
+
+              {/* Label + count visible only when active */}
+              {isActive && (
+                <>
+                  <span className="text-[11px] font-semibold leading-none">{label}</span>
+                  {count !== undefined && count > 0 && (
+                    <span className={`rounded-full px-1.5 text-[9px] font-bold ${countColor ?? "bg-white/[0.1] text-slate-300"}`}>
+                      {count}
+                    </span>
+                  )}
+                </>
+              )}
+
+              {/* Active indicator dot */}
+              {isActive && (
+                <span className="absolute -left-0.5 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-white/50" />
+              )}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
