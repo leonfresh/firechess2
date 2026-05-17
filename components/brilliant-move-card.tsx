@@ -65,8 +65,14 @@ export function BrilliantMoveCard({
     () => (move.bestMove ? moveSan(move.fenBefore, move.bestMove) : null),
     [move],
   );
-  // Show eval AFTER the brilliant move so the board and bar are consistent
-  const whiteEvalAfter = toWhiteEval(move.fenAfter, move.cpAfter);
+  // Show eval BEFORE the brilliant move (board shows the position you're asked to find it in)
+  const whiteEvalBefore = toWhiteEval(move.fenBefore, move.cpBefore);
+  // Arrow showing the brilliant move: from → to in cyan
+  const moveArrow: [string, string, string] = [
+    move.userMove.slice(0, 2),
+    move.userMove.slice(2, 4),
+    "rgba(34, 211, 238, 0.85)",
+  ];
 
   return (
     <article className="overflow-hidden rounded-[1.75rem] border border-cyan-500/15 bg-[radial-gradient(circle_at_top_right,_rgba(34,211,238,0.12),_rgba(15,23,42,0.82)_42%,_rgba(2,6,23,0.96)_100%)] shadow-[0_20px_60px_-38px_rgba(34,211,238,0.55)]">
@@ -74,11 +80,11 @@ export function BrilliantMoveCard({
         <div className="border-b border-white/[0.08] p-4 lg:border-b-0 lg:border-r">
           <div ref={boardRef} className="mx-auto w-full max-w-[430px]">
             <div className="flex items-start gap-2">
-              <EvalBar evalCp={whiteEvalAfter} height={boardSize} />
+              <EvalBar evalCp={whiteEvalBefore} height={boardSize} />
               <div className="overflow-hidden rounded-xl">
                 <Chessboard
                   id={`brilliant-${move.gameIndex}-${move.moveNumber}-${move.userMove}`}
-                  position={move.fenAfter}
+                  position={move.fenBefore}
                   boardOrientation={orientation}
                   boardWidth={boardSize}
                   arePiecesDraggable={false}
@@ -86,6 +92,7 @@ export function BrilliantMoveCard({
                   customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
                   showBoardNotation={showCoords}
                   customSquareStyles={moveSquareStyles(move)}
+                  customArrows={[moveArrow]}
                   customPieces={customPieces}
                   customSquare={(props: any) => {
                     const square = props?.square as string | undefined;
@@ -115,7 +122,7 @@ export function BrilliantMoveCard({
               </span>
             </div>
             <div className="text-right text-xs text-slate-400">
-              <p>{move.userColor === "white" ? "White" : "Black"} played</p>
+              <p>{move.userColor === "white" ? "White" : "Black"} to move</p>
               <p>{formatEval(move.cpBefore)} → {formatEval(move.cpAfter)}</p>
             </div>
           </div>
