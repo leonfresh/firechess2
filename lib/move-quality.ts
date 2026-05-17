@@ -177,13 +177,11 @@ function getMovePieceDetails(
 export function isBrilliantCandidate(fenBefore: string, moveUci: string | null) {
   const move = getMovePieceDetails(fenBefore, moveUci);
   if (!move) return false;
-  return (
-    move.moveLosesMaterial ||
-    move.canBeTakenBack ||
-    move.san.includes("x") ||
-    move.san.includes("+") ||
-    move.san.includes("#")
-  );
+  // A brilliant move must be a genuine piece sacrifice:
+  // - moveLosesMaterial: you give up more material than you take (net material loss >= 2 pawns)
+  // - canBeTakenBack: you move to an undefended square where the opponent can recapture for free
+  // Captures that GAIN material (e.g. taking a free queen) are never brilliant — that's just correct play.
+  return move.moveLosesMaterial || move.canBeTakenBack;
 }
 
 export function isBookMove(moveIndex: number, cpLoss: number) {
@@ -209,26 +207,26 @@ export function isBrilliantMove(args: {
     moveIndex = 99,
   } = args;
 
+  // Must be the best (or nearly best) move
   if (!isBestMove || cpLoss > 10 || isBookMove(moveIndex, cpLoss)) {
     return false;
   }
 
-  if (evalBeforeMover >= 350 && evalAfterMover >= 350) {
-    return false;
-  }
+  // Chess.com: "You should not be completely winning even if you hadn't found the move."
+  // If already up +3 pawns, finding a sacrifice isn't special.
+  if (evalBeforeMover >= 300) return false;
 
-  const move = getMovePieceDetails(fenBefore, moveUci);
-  if (!move) return false;
+  // Chess.com: "You should not be in a bad position after a Brilliant move."
+  // If the position drops below -1 pawn after the sacrifice, it's not brilliant.
+  if (evalAfterMover < -100) return false;
 
+  // Must be a genuine piece sacrifice — gaining material by taking a free piece is never brilliant.
   const isSacrifice = isBrilliantCandidate(fenBefore, moveUci);
   if (!isSacrifice) return false;
 
+  // The sacrifice must meaningfully improve the position or create a winning advantage.
   const evalGain = evalAfterMover - evalBeforeMover;
-  const foundWinningShot = evalAfterMover >= 180;
-  const sharpPayoff = evalGain >= 90 || move.san.includes("+") || move.san.includes("#");
-  const wasStillTense = evalBeforeMover <= 140;
-
-  return sharpPayoff && (foundWinningShot || wasStillTense);
+  return evalGain >= 80 || evalAfterMover >= 150;
 }
 
 export function classifyMoveQuality(args: {

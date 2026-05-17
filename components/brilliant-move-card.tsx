@@ -65,7 +65,8 @@ export function BrilliantMoveCard({
     () => (move.bestMove ? moveSan(move.fenBefore, move.bestMove) : null),
     [move],
   );
-  const whiteEvalBefore = toWhiteEval(move.fenBefore, move.cpBefore);
+  // Show eval AFTER the brilliant move so the board and bar are consistent
+  const whiteEvalAfter = toWhiteEval(move.fenAfter, move.cpAfter);
 
   return (
     <article className="overflow-hidden rounded-[1.75rem] border border-cyan-500/15 bg-[radial-gradient(circle_at_top_right,_rgba(34,211,238,0.12),_rgba(15,23,42,0.82)_42%,_rgba(2,6,23,0.96)_100%)] shadow-[0_20px_60px_-38px_rgba(34,211,238,0.55)]">
@@ -73,11 +74,11 @@ export function BrilliantMoveCard({
         <div className="border-b border-white/[0.08] p-4 lg:border-b-0 lg:border-r">
           <div ref={boardRef} className="mx-auto w-full max-w-[430px]">
             <div className="flex items-start gap-2">
-              <EvalBar evalCp={whiteEvalBefore} height={boardSize} />
+              <EvalBar evalCp={whiteEvalAfter} height={boardSize} />
               <div className="overflow-hidden rounded-xl">
                 <Chessboard
                   id={`brilliant-${move.gameIndex}-${move.moveNumber}-${move.userMove}`}
-                  position={move.fenBefore}
+                  position={move.fenAfter}
                   boardOrientation={orientation}
                   boardWidth={boardSize}
                   arePiecesDraggable={false}
@@ -114,7 +115,7 @@ export function BrilliantMoveCard({
               </span>
             </div>
             <div className="text-right text-xs text-slate-400">
-              <p>{move.userColor === "white" ? "White" : "Black"} to move</p>
+              <p>{move.userColor === "white" ? "White" : "Black"} played</p>
               <p>{formatEval(move.cpBefore)} → {formatEval(move.cpAfter)}</p>
             </div>
           </div>
