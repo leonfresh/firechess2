@@ -18,12 +18,17 @@
     "@auth/drizzle-adapter": "^1.11.1",
     "@libsql/client": "^0.17.3",
     "@neondatabase/serverless": "^1.0.2",
+    "@pixiv/three-vrm": "^3.5.2",
+    "@pixiv/three-vrm-animation": "^3.5.2",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
     "@vercel/analytics": "^1.6.1",
     "chess.js": "^1.4.0",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.1",
     "gray-matter": "^4.0.3",
     "html2canvas-pro": "^2.0.0",
+    "msedge-tts": "^2.0.5",
     "next": "^15.1.0",
     "next-auth": "^5.0.0-beta.30",
     "partykit": "^0.0.115",
@@ -39,7 +44,8 @@
     "remark-gfm": "^4.0.1",
     "resend": "^6.9.2",
     "stockfish": "^18.0.7",
-    "stripe": "^20.3.1"
+    "stripe": "^20.3.1",
+    "three": "^0.184.0"
   },
   "browserslist": [
     "chrome >= 93",

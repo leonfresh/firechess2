@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import dynamic from "next/dynamic";
 import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { Chess } from "chess.js";
 import { useBoardSize } from "@/lib/use-board-size";
@@ -10,6 +11,15 @@ import {
   useCustomPieces,
 } from "@/lib/use-coins";
 import { playSound, preloadSounds } from "@/lib/sounds";
+import { usePuzzleTutor } from "@/lib/use-puzzle-tutor";
+
+const PuzzleAvatar = dynamic(
+  () => import("@/components/puzzle-avatar/PuzzleAvatar"),
+  {
+    ssr: false,
+    loading: () => <div className="w-full h-full bg-transparent" />,
+  },
+);
 
 /* ─── Constants ─── */
 
@@ -705,6 +715,42 @@ export default function PuzzlesPage() {
     fetch("/api/turso-puzzles/ping").catch(() => {});
   }, []);
 
+  // ── Tutor mode ────────────────────────────────────────────────────────────
+  const [tutorMode, setTutorMode] = useState(false);
+  const {
+    state: tutorState,
+    audioRef: tutorAudioRef,
+    startTutor,
+    stopTutor,
+    skipPhase,
+  } = usePuzzleTutor();
+
+  // Start/stop tutor when mode toggles or puzzle changes
+  const postTriggerFenRef = useRef<string | null>(null);
+  const tutorSolutionMovesRef = useRef<string>("");
+
+  const launchTutorForActivePuzzle = useCallback(() => {
+    const puzzle = puzzles[activePuzzleIdx];
+    const fen = postTriggerFenRef.current;
+    if (!puzzle || !fen) return;
+    startTutor({
+      id: puzzle.id,
+      fen,
+      solutionMoves: tutorSolutionMovesRef.current,
+      themes: puzzle.themes ?? "",
+      rating: puzzle.rating,
+    });
+  }, [puzzles, activePuzzleIdx, startTutor]);
+
+  useEffect(() => {
+    if (tutorMode && activePuzzle && postTriggerFenRef.current) {
+      launchTutorForActivePuzzle();
+    } else if (!tutorMode) {
+      stopTutor();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tutorMode, activePuzzleIdx]);
+
   /* ─── Update legal moves from current chess instance ─── */
   const updateLegalMoves = useCallback(() => {
     const map = new Map<CbSquare, CbSquare[]>();
@@ -754,6 +800,10 @@ export default function PuzzlesPage() {
       setPinInfo(computePins(instance));
       // Compute defender hints — also kept in ref so updateLegalMoves can access them
       setDefenderInfo(computeDefenders(instance));
+
+      // Store post-trigger state for tutor
+      postTriggerFenRef.current = fen;
+      tutorSolutionMovesRef.current = solution.join(" ");
     },
     [updateLegalMoves],
   );
@@ -1241,90 +1291,134 @@ export default function PuzzlesPage() {
 
   /* ─────────────── Render ─────────────── */
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 p-4 md:p-6">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 px-4 py-10 md:px-8 md:py-14">
       <div className="max-w-6xl mx-auto">
-        <h1 className="text-2xl font-bold mb-0.5">Puzzles</h1>
-        <p className="text-zinc-500 text-sm mb-5">
-          3.35M Lichess puzzles via Turso
-        </p>
+        {/* ── Hero header ── */}
+        <div className="mb-8">
+          <div className="mb-1.5">
+            <span className="text-xs font-semibold uppercase tracking-widest text-orange-400">
+              Play
+            </span>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-2">
+            Puzzle Trainer
+          </h1>
+          <p className="text-base text-stone-300 max-w-xl">
+            Sharpen your tactical vision with over 3 million Lichess puzzles,
+            filtered by rating and motif.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2 items-center">
+            <span className="text-xs px-2.5 py-1 rounded-full border border-orange-500/30 bg-orange-500/[0.08] text-orange-300">
+              3.35M puzzles
+            </span>
+            <span className="text-xs px-2.5 py-1 rounded-full border border-sky-500/30 bg-sky-500/[0.08] text-sky-300">
+              Pin &amp; defender hints
+            </span>
+            <span className="text-xs px-2.5 py-1 rounded-full border border-teal-500/30 bg-teal-500/[0.08] text-teal-300">
+              Brilliant detection
+            </span>
+            <button
+              onClick={() => setTutorMode((v) => !v)}
+              className={`ml-2 flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border transition-all ${
+                tutorMode
+                  ? "bg-pink-500/20 border-pink-500/60 text-pink-300 shadow-[0_0_12px_rgba(236,72,153,0.25)]"
+                  : "border-white/[0.1] bg-white/[0.03] text-zinc-400 hover:border-pink-500/40 hover:text-pink-300"
+              }`}
+            >
+              <span>{tutorMode ? "★" : "☆"}</span>
+              Tutor Mode
+            </button>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-6">
           {/* ── Left: Controls ── */}
           <div className="space-y-4">
-            {/* Difficulty */}
-            <div>
-              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-                Rating Range
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {DIFFICULTY_RANGES.map((d) => (
-                  <button
-                    key={d.label}
-                    onClick={() => setSelectedDifficulty(d)}
-                    className={`px-3 py-1.5 rounded text-sm font-medium border transition-colors ${
-                      selectedDifficulty.label === d.label
-                        ? "bg-orange-500 border-orange-500 text-white"
-                        : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-500"
-                    }`}
-                  >
-                    {d.label}
-                  </button>
-                ))}
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-5">
+              {/* Difficulty */}
+              <div>
+                <div className="mb-2.5 flex items-center gap-3">
+                  <span className="h-px flex-1 bg-white/[0.06]" />
+                  <h2 className="text-xs font-bold uppercase tracking-widest text-orange-400">
+                    Rating Range
+                  </h2>
+                  <span className="h-px flex-1 bg-white/[0.06]" />
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {DIFFICULTY_RANGES.map((d) => (
+                    <button
+                      key={d.label}
+                      onClick={() => setSelectedDifficulty(d)}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                        selectedDifficulty.label === d.label
+                          ? "bg-orange-500/20 border-orange-500/60 text-orange-300"
+                          : "border-white/[0.06] bg-white/[0.02] text-zinc-400 hover:border-white/[0.12] hover:text-white hover:bg-white/[0.04]"
+                      }`}
+                    >
+                      {d.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Themes */}
-            <div>
-              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-                Themes{" "}
-                <span className="text-zinc-600 normal-case font-normal">
-                  (optional)
-                </span>
-              </p>
-              <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-0.5">
-                {THEMES.map((theme) => (
+              {/* Themes */}
+              <div>
+                <div className="mb-2.5 flex items-center gap-3">
+                  <span className="h-px flex-1 bg-white/[0.06]" />
+                  <h2 className="text-xs font-bold uppercase tracking-widest text-sky-400">
+                    Themes
+                  </h2>
+                  <span className="h-px flex-1 bg-white/[0.06]" />
+                </div>
+                <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-0.5 pb-1">
+                  {THEMES.map((theme) => (
+                    <button
+                      key={theme}
+                      onClick={() => toggleTheme(theme)}
+                      className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
+                        selectedThemes.includes(theme)
+                          ? "bg-sky-500/15 border-sky-500/50 text-sky-300"
+                          : "border-white/[0.06] bg-white/[0.02] text-zinc-500 hover:border-white/[0.1] hover:text-zinc-200 hover:bg-white/[0.04]"
+                      }`}
+                    >
+                      {theme}
+                    </button>
+                  ))}
+                </div>
+                {selectedThemes.length > 0 && (
                   <button
-                    key={theme}
-                    onClick={() => toggleTheme(theme)}
-                    className={`px-2 py-1 rounded text-xs font-medium border transition-colors ${
-                      selectedThemes.includes(theme)
-                        ? "bg-sky-600 border-sky-500 text-white"
-                        : "border-zinc-700 bg-zinc-900 text-zinc-400 hover:border-zinc-500 hover:text-zinc-200"
-                    }`}
+                    onClick={() => setSelectedThemes([])}
+                    className="mt-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
                   >
-                    {theme}
+                    clear all ({selectedThemes.length})
                   </button>
-                ))}
+                )}
               </div>
-              {selectedThemes.length > 0 && (
-                <button
-                  onClick={() => setSelectedThemes([])}
-                  className="mt-1 text-xs text-zinc-500 hover:text-zinc-300 underline"
-                >
-                  clear all
-                </button>
-              )}
-            </div>
 
-            {/* Count */}
-            <div>
-              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-                Count
-              </p>
-              <div className="flex gap-1.5">
-                {[1, 3, 5, 10, 20].map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => setLimit(n)}
-                    className={`px-3 py-1.5 rounded text-sm font-medium border transition-colors ${
-                      limit === n
-                        ? "bg-orange-500 border-orange-500 text-white"
-                        : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-500"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
+              {/* Count */}
+              <div>
+                <div className="mb-2.5 flex items-center gap-3">
+                  <span className="h-px flex-1 bg-white/[0.06]" />
+                  <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-400">
+                    Count
+                  </h2>
+                  <span className="h-px flex-1 bg-white/[0.06]" />
+                </div>
+                <div className="flex gap-1.5">
+                  {[1, 3, 5, 10, 20].map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => setLimit(n)}
+                      className={`flex-1 py-1.5 rounded-lg text-sm font-medium border transition-all ${
+                        limit === n
+                          ? "bg-orange-500/20 border-orange-500/60 text-orange-300"
+                          : "border-white/[0.06] bg-white/[0.02] text-zinc-400 hover:border-white/[0.12] hover:text-white hover:bg-white/[0.04]"
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -1332,35 +1426,46 @@ export default function PuzzlesPage() {
             <button
               onClick={loadPuzzles}
               disabled={loading}
-              className="w-full py-2.5 rounded bg-orange-500 hover:bg-orange-400 disabled:opacity-50 text-white font-semibold transition-colors"
+              className="w-full py-3 rounded-xl font-semibold text-white text-sm transition-all hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:translate-y-0"
+              style={{
+                background: loading
+                  ? "linear-gradient(to right, #78350f, #7f1d1d)"
+                  : "linear-gradient(to right, #f97316, #dc2626, #9333ea)",
+                boxShadow: loading
+                  ? "none"
+                  : "0 14px 36px -20px rgba(168,85,247,0.7)",
+              }}
             >
               {loading ? "Loading…" : "Load Puzzles"}
             </button>
 
             {error && (
-              <p className="text-red-400 text-sm bg-red-950/40 border border-red-800/50 rounded px-3 py-2">
+              <p className="text-red-400 text-sm bg-red-950/40 border border-red-800/50 rounded-xl px-3 py-2">
                 {error}
               </p>
             )}
 
             {/* Puzzle list */}
             {puzzles.length > 0 && (
-              <div>
-                <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider mb-2">
-                  Results ({puzzles.length})
+              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-3">
+                <p className="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-2 px-1">
+                  Results{" "}
+                  <span className="text-zinc-600 font-normal normal-case">
+                    ({puzzles.length})
+                  </span>
                 </p>
                 <div className="space-y-1 max-h-56 overflow-y-auto pr-0.5">
                   {puzzles.map((p, i) => (
                     <button
                       key={p.id}
                       onClick={() => selectPuzzle(i)}
-                      className={`w-full text-left px-3 py-2 rounded border text-sm transition-colors ${
+                      className={`w-full text-left px-3 py-2 rounded-lg border text-sm transition-all ${
                         i === activePuzzleIdx
-                          ? "border-orange-500/60 bg-orange-500/10 text-orange-300"
-                          : "border-zinc-800 bg-zinc-900 text-zinc-300 hover:border-zinc-600"
+                          ? "border-orange-500/40 bg-orange-500/10 text-orange-300"
+                          : "border-transparent hover:border-white/[0.06] hover:bg-white/[0.03] text-zinc-400 hover:text-zinc-200"
                       }`}
                     >
-                      <span className="font-mono text-xs text-zinc-500 mr-2">
+                      <span className="font-mono text-xs text-zinc-600 mr-2">
                         #{p.id}
                       </span>
                       <span className="text-orange-400 font-semibold mr-2">
@@ -1376,195 +1481,281 @@ export default function PuzzlesPage() {
             )}
 
             {/* Move quality legend */}
-            <div className="border border-zinc-800 rounded-lg p-3 space-y-1.5">
-              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">
-                Move Quality
-              </p>
-              {(
-                Object.entries(QUALITY) as [
-                  MoveQuality,
-                  (typeof QUALITY)[MoveQuality],
-                ][]
-              ).map(([key, cfg]) => (
-                <div key={key} className="flex items-center gap-2 text-xs">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`/move-badges/${key}.svg`}
-                    alt={cfg.label}
-                    className="w-5 h-5 shrink-0"
-                  />
-                  <span style={{ color: cfg.color }} className="font-medium">
-                    {cfg.label}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ── Right: Board ── */}
-          <div className="space-y-3">
-            {/* Status banner */}
-            {statusBanner && (
-              <div
-                className={`px-4 py-2 rounded border text-sm font-medium ${statusBanner.cls}`}
-              >
-                {statusBanner.text}
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4">
+              <div className="mb-3 flex items-center gap-3">
+                <span className="h-px flex-1 bg-white/[0.06]" />
+                <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-500">
+                  Move Quality
+                </h2>
+                <span className="h-px flex-1 bg-white/[0.06]" />
               </div>
-            )}
-
-            {/* Board */}
-            <div ref={boardRef} className="relative w-full max-w-[520px]">
-              {showBrilliant && (
-                <BrilliantEffect onDone={() => setShowBrilliant(false)} />
-              )}
-              {showCorrect && <CorrectFlash color={showCorrect} />}
-              {showWrong && <WrongFlash />}
-              <Chessboard
-                position={boardFen}
-                boardWidth={boardSize}
-                boardOrientation={boardOrientation}
-                arePiecesDraggable={puzzleState === "playing"}
-                onPieceDrop={onPieceDrop}
-                onSquareClick={onSquareClick}
-                customSquareStyles={squareStyles}
-                customSquare={customSquareRenderer}
-                showBoardNotation={showCoords}
-                customDarkSquareStyle={{
-                  backgroundColor: "#b58863",
-                }}
-                customLightSquareStyle={{
-                  backgroundColor: "#f0d9b5",
-                }}
-                customPieces={customPieces}
-                animationDuration={180}
-                customArrows={
-                  showDefenderHints
-                    ? defenderInfo.arrows.map(([from, to]) => [
-                        from,
-                        to,
-                        "rgba(59,130,246,0.85)",
-                      ])
-                    : []
-                }
-              />
-            </div>
-
-            {/* Controls row */}
-            {activePuzzle && puzzleState !== "idle" && (
-              <div className="flex flex-wrap gap-2 max-w-[520px]">
-                <button
-                  onClick={resetPuzzle}
-                  className="px-4 py-1.5 rounded border border-zinc-700 bg-zinc-900 text-zinc-300 text-sm hover:border-zinc-500 transition-colors"
-                >
-                  ↺ Reset
-                </button>
-                <button
-                  onClick={() =>
-                    setBoardOrientation((o) =>
-                      o === "white" ? "black" : "white",
-                    )
-                  }
-                  className="px-4 py-1.5 rounded border border-zinc-700 bg-zinc-900 text-zinc-300 text-sm hover:border-zinc-500 transition-colors"
-                >
-                  ⇅ Flip
-                </button>
-                <a
-                  href={activePuzzle.game_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-1.5 rounded border border-zinc-700 bg-zinc-900 text-zinc-300 text-sm hover:border-zinc-500 transition-colors"
-                >
-                  Lichess ↗
-                </a>
-                {puzzleState === "solved" &&
-                  activePuzzleIdx + 1 < puzzles.length && (
-                    <button
-                      onClick={nextPuzzle}
-                      className="px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-colors"
-                    >
-                      Next Puzzle →
-                    </button>
-                  )}
-              </div>
-            )}
-
-            {/* Motif hint toggles */}
-            {activePuzzle && puzzleState !== "idle" && (
-              <div className="flex flex-wrap gap-2 max-w-[520px]">
-                <button
-                  onClick={() => setShowPinHints((v) => !v)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded border text-xs font-medium transition-colors ${
-                    showPinHints
-                      ? "border-yellow-600/70 bg-yellow-600/15 text-yellow-300"
-                      : "border-zinc-700 bg-zinc-900 text-zinc-500"
-                  }`}
-                  title="Toggle pin hints"
-                >
-                  📌 Pin hints
-                </button>
-                <button
-                  onClick={() => setShowDefenderHints((v) => !v)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded border text-xs font-medium transition-colors ${
-                    showDefenderHints
-                      ? "border-orange-600/70 bg-orange-600/15 text-orange-300"
-                      : "border-zinc-700 bg-zinc-900 text-zinc-500"
-                  }`}
-                  title="Toggle defender hints"
-                >
-                  🛡️ Defender hints
-                </button>
-              </div>
-            )}
-
-            {/* Puzzle info */}
-            {activePuzzle && (
-              <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-3 text-xs space-y-1.5 font-mono max-w-[520px]">
-                <div className="flex gap-4">
-                  <span>
-                    <span className="text-zinc-500">ID: </span>
-                    <span className="text-zinc-300">{activePuzzle.id}</span>
-                  </span>
-                  <span>
-                    <span className="text-zinc-500">Rating: </span>
-                    <span className="text-orange-400 font-semibold">
-                      {activePuzzle.rating}
-                    </span>
-                  </span>
-                </div>
-                <div>
-                  <span className="text-zinc-500">Themes: </span>
-                  <span className="text-sky-300">{activePuzzle.themes}</span>
-                </div>
-                {activePuzzle.opening_tags && (
-                  <div>
-                    <span className="text-zinc-500">Opening: </span>
-                    <span className="text-zinc-400">
-                      {activePuzzle.opening_tags}
+              <div className="space-y-2">
+                {(
+                  Object.entries(QUALITY) as [
+                    MoveQuality,
+                    (typeof QUALITY)[MoveQuality],
+                  ][]
+                ).map(([key, cfg]) => (
+                  <div key={key} className="flex items-center gap-2.5 text-xs">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`/move-badges/${key}.svg`}
+                      alt={cfg.label}
+                      className="w-5 h-5 shrink-0"
+                    />
+                    <span style={{ color: cfg.color }} className="font-medium">
+                      {cfg.label}
                     </span>
                   </div>
-                )}
-                <div>
-                  <span className="text-zinc-500">Solution: </span>
-                  <span className="text-green-400">
-                    {solutionMoves.map((m, i) => (
-                      <span
-                        key={i}
-                        className={
-                          i < solutionIdx
-                            ? "opacity-40"
-                            : i === solutionIdx && puzzleState === "playing"
-                              ? "text-white"
-                              : ""
-                        }
+                ))}
+              </div>
+            </div>
+          </div>
+          {/* ── Right: Board (+ tutor avatar when active) ── */}
+          <div className="space-y-4">
+            {/* ── Tutor avatar panel ── */}
+            {tutorMode && (
+              <div className="rounded-2xl border border-pink-500/20 bg-pink-500/[0.04] p-3 flex gap-3 items-start">
+                {/* Avatar canvas */}
+                <div className="shrink-0 w-[180px] h-[260px] relative rounded-xl overflow-hidden">
+                  <PuzzleAvatar
+                    audioRef={tutorAudioRef}
+                    gesture={tutorState.gesture}
+                    className="w-full h-full"
+                  />
+                </div>
+
+                {/* Speech bubble + controls */}
+                <div className="flex-1 flex flex-col gap-2 min-w-0">
+                  {/* Phase label */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-pink-400/70">
+                      {tutorState.phase === "thinking"
+                        ? "Your turn"
+                        : tutorState.phase === "loading"
+                          ? "Analyzing..."
+                          : tutorState.phase === "done"
+                            ? "Complete"
+                            : tutorState.phase === "idle"
+                              ? ""
+                              : "Tutor"}
+                    </span>
+                    {tutorState.phase === "thinking" &&
+                      tutorState.thinkingCountdown > 0 && (
+                        <span className="text-xs font-mono text-pink-300">
+                          {tutorState.thinkingCountdown}s
+                        </span>
+                      )}
+                    <span className="flex-1" />
+                    <button
+                      onClick={stopTutor}
+                      className="text-[10px] text-zinc-600 hover:text-zinc-400 transition-colors"
+                    >
+                      stop
+                    </button>
+                  </div>
+
+                  {/* Speech text */}
+                  <div className="rounded-xl bg-white/[0.04] border border-white/[0.06] px-3 py-2.5 min-h-[80px] flex items-start">
+                    <p className="text-sm text-zinc-200 leading-relaxed">
+                      {tutorState.currentText ||
+                        (tutorState.phase === "idle"
+                          ? "Ready whenever you are."
+                          : "...")}
+                    </p>
+                  </div>
+
+                  {/* Skip button */}
+                  {tutorState.isPlaying && tutorState.phase !== "thinking" && (
+                    <button
+                      onClick={skipPhase}
+                      className="self-start text-xs text-zinc-500 hover:text-zinc-300 transition-colors border border-white/[0.06] rounded-lg px-2.5 py-1 hover:border-white/[0.12]"
+                    >
+                      Skip →
+                    </button>
+                  )}
+
+                  {/* Restart tutor */}
+                  {(tutorState.phase === "done" ||
+                    (!tutorState.isPlaying && tutorState.phase !== "idle")) &&
+                    activePuzzle && (
+                      <button
+                        onClick={launchTutorForActivePuzzle}
+                        className="self-start text-xs text-pink-400 hover:text-pink-300 transition-colors border border-pink-500/30 rounded-lg px-2.5 py-1 hover:border-pink-500/50"
                       >
-                        {m}{" "}
-                      </span>
-                    ))}
-                  </span>
+                        ↺ Replay
+                      </button>
+                    )}
                 </div>
               </div>
             )}
-          </div>
+            {/* ── Board card ── */}
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-3 h-fit">
+              {/* Status banner */}
+              {statusBanner && (
+                <div
+                  className={`px-4 py-2.5 rounded-xl border text-sm font-medium ${statusBanner.cls}`}
+                >
+                  {statusBanner.text}
+                </div>
+              )}
+
+              {/* Board */}
+              <div ref={boardRef} className="relative w-full max-w-[520px]">
+                {showBrilliant && (
+                  <BrilliantEffect onDone={() => setShowBrilliant(false)} />
+                )}
+                {showCorrect && <CorrectFlash color={showCorrect} />}
+                {showWrong && <WrongFlash />}
+                <Chessboard
+                  position={boardFen}
+                  boardWidth={boardSize}
+                  boardOrientation={boardOrientation}
+                  arePiecesDraggable={puzzleState === "playing"}
+                  onPieceDrop={onPieceDrop}
+                  onSquareClick={onSquareClick}
+                  customSquareStyles={squareStyles}
+                  customSquare={customSquareRenderer}
+                  showBoardNotation={showCoords}
+                  customDarkSquareStyle={{
+                    backgroundColor: boardTheme.darkSquare,
+                  }}
+                  customLightSquareStyle={{
+                    backgroundColor: boardTheme.lightSquare,
+                  }}
+                  customPieces={customPieces}
+                  animationDuration={180}
+                  customArrows={
+                    showDefenderHints
+                      ? defenderInfo.arrows.map(([from, to]) => [
+                          from,
+                          to,
+                          "rgba(59,130,246,0.85)",
+                        ])
+                      : []
+                  }
+                />
+              </div>
+
+              {/* Controls row */}
+              {activePuzzle && puzzleState !== "idle" && (
+                <div className="flex flex-wrap gap-2 max-w-[520px]">
+                  <button
+                    onClick={resetPuzzle}
+                    className="px-4 py-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] text-zinc-300 text-sm hover:border-white/[0.15] hover:bg-white/[0.07] hover:text-white transition-all"
+                  >
+                    ↺ Reset
+                  </button>
+                  <button
+                    onClick={() =>
+                      setBoardOrientation((o) =>
+                        o === "white" ? "black" : "white",
+                      )
+                    }
+                    className="px-4 py-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] text-zinc-300 text-sm hover:border-white/[0.15] hover:bg-white/[0.07] hover:text-white transition-all"
+                  >
+                    ⇅ Flip
+                  </button>
+                  <a
+                    href={activePuzzle.game_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-1.5 rounded-lg border border-white/[0.08] bg-white/[0.04] text-zinc-300 text-sm hover:border-white/[0.15] hover:bg-white/[0.07] hover:text-white transition-all"
+                  >
+                    Lichess ↗
+                  </a>
+                  {puzzleState === "solved" &&
+                    activePuzzleIdx + 1 < puzzles.length && (
+                      <button
+                        onClick={nextPuzzle}
+                        className="px-4 py-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-sm font-semibold hover:bg-emerald-500/30 transition-all"
+                      >
+                        Next Puzzle →
+                      </button>
+                    )}
+                </div>
+              )}
+
+              {/* Motif hint toggles */}
+              {activePuzzle && puzzleState !== "idle" && (
+                <div className="flex flex-wrap gap-2 max-w-[520px]">
+                  <button
+                    onClick={() => setShowPinHints((v) => !v)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                      showPinHints
+                        ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-300"
+                        : "border-white/[0.06] bg-white/[0.02] text-zinc-500 hover:text-zinc-300"
+                    }`}
+                    title="Toggle pin hints"
+                  >
+                    📌 Pin hints
+                  </button>
+                  <button
+                    onClick={() => setShowDefenderHints((v) => !v)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
+                      showDefenderHints
+                        ? "border-orange-500/40 bg-orange-500/10 text-orange-300"
+                        : "border-white/[0.06] bg-white/[0.02] text-zinc-500 hover:text-zinc-300"
+                    }`}
+                    title="Toggle defender hints"
+                  >
+                    🛡️ Defender hints
+                  </button>
+                </div>
+              )}
+
+              {/* Puzzle info */}
+              {activePuzzle && (
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-xs space-y-1.5 font-mono max-w-[520px]">
+                  <div className="flex gap-4">
+                    <span>
+                      <span className="text-zinc-600">ID: </span>
+                      <span className="text-zinc-400">{activePuzzle.id}</span>
+                    </span>
+                    <span>
+                      <span className="text-zinc-600">Rating: </span>
+                      <span className="text-orange-400 font-semibold">
+                        {activePuzzle.rating}
+                      </span>
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-600">Themes: </span>
+                    <span className="text-sky-400">{activePuzzle.themes}</span>
+                  </div>
+                  {activePuzzle.opening_tags && (
+                    <div>
+                      <span className="text-zinc-600">Opening: </span>
+                      <span className="text-zinc-400">
+                        {activePuzzle.opening_tags}
+                      </span>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-zinc-600">Solution: </span>
+                    <span className="text-emerald-400">
+                      {solutionMoves.map((m, i) => (
+                        <span
+                          key={i}
+                          className={
+                            i < solutionIdx
+                              ? "opacity-40"
+                              : i === solutionIdx && puzzleState === "playing"
+                                ? "text-white"
+                                : ""
+                          }
+                        >
+                          {m}{" "}
+                        </span>
+                      ))}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>{" "}
+            {/* end board card */}
+          </div>{" "}
+          {/* end right space-y-4 wrapper */}
         </div>
       </div>
     </div>

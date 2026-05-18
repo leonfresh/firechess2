@@ -169,35 +169,25 @@ function FloatingSectionNav({ sections }: { sections: FloatingNavSection[] }) {
               }
               aria-label={`Jump to ${label}`}
               title={label}
-              className={`group relative flex items-center gap-2 rounded-xl border px-2.5 py-2 transition-all duration-200 ${
+              className={`group relative flex w-9 items-center justify-center rounded-xl border py-2 transition-all duration-200 ${
                 isActive
                   ? "border-white/20 bg-white/[0.10] text-white shadow-md shadow-black/30"
-                  : "border-transparent text-slate-500 hover:border-white/[0.10] hover:bg-white/[0.06] hover:text-slate-200"
+                  : "border-transparent text-slate-300 hover:border-white/[0.10] hover:bg-white/[0.06] hover:text-white"
               }`}
             >
               {/* Left tooltip */}
               <span className="pointer-events-none absolute right-full mr-3 whitespace-nowrap rounded-lg border border-white/[0.1] bg-slate-900/95 px-2.5 py-1 text-[11px] font-semibold text-slate-200 opacity-0 shadow-xl backdrop-blur-sm transition-opacity duration-150 group-hover:opacity-100">
                 {label}
                 {count ? (
-                  <span className={`ml-1.5 rounded-full px-1.5 text-[9px] font-bold ${countColor ?? "bg-white/10 text-slate-300"}`}>
+                  <span
+                    className={`ml-1.5 rounded-full px-1.5 text-[9px] font-bold ${countColor ?? "bg-white/10 text-slate-300"}`}
+                  >
                     {count}
                   </span>
                 ) : null}
               </span>
 
               <span className="text-base leading-none">{icon}</span>
-
-              {/* Label + count visible only when active */}
-              {isActive && (
-                <>
-                  <span className="text-[11px] font-semibold leading-none">{label}</span>
-                  {count !== undefined && count > 0 && (
-                    <span className={`rounded-full px-1.5 text-[9px] font-bold ${countColor ?? "bg-white/[0.1] text-slate-300"}`}>
-                      {count}
-                    </span>
-                  )}
-                </>
-              )}
 
               {/* Active indicator dot */}
               {isActive && (
@@ -278,8 +268,7 @@ function CompactCardFooter({
         </div>
         <p className="text-xs text-slate-500">
           <span className="font-semibold text-slate-300">{shown}</span> of{" "}
-          <span className="font-semibold text-slate-300">{total}</span>{" "}
-          {label}
+          <span className="font-semibold text-slate-300">{total}</span> {label}
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -289,8 +278,18 @@ function CompactCardFooter({
             onClick={onLoadMore}
             className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-orange-500/25 bg-orange-500/[0.09] px-4 py-2 text-xs font-semibold text-orange-200 transition-all duration-200 hover:border-orange-400/40 hover:bg-orange-500/[0.16] hover:text-white active:scale-[0.97]"
           >
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            <svg
+              className="h-3 w-3"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
             {remaining <= COMPACT_REPORT_LOAD_BATCH
               ? `Show all ${remaining}`
@@ -485,7 +484,9 @@ const MOTIF_DEFS: MotifDefinition[] = [
 function EmptySection({ message }: { message: string }) {
   return (
     <div className="flex items-center gap-3 rounded-[1.5rem] border border-emerald-500/[0.12] bg-emerald-500/[0.04] p-5 text-sm text-slate-400 sm:p-6">
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/[0.15] text-xs text-emerald-400">✓</span>
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/[0.15] text-xs text-emerald-400">
+        ✓
+      </span>
       <span className="text-slate-300">{message}</span>
     </div>
   );
@@ -502,7 +503,8 @@ function ProSectionLimitNotice({
 }) {
   const hidden = total - shown;
   return (
-    <div className="relative overflow-hidden rounded-[1.5rem] border border-amber-500/25 p-5 sm:p-6"
+    <div
+      className="relative overflow-hidden rounded-[1.5rem] border border-amber-500/25 p-5 sm:p-6"
       style={{
         background:
           "linear-gradient(135deg, rgba(30,16,4,0.97) 0%, rgba(44,22,6,0.97) 52%, rgba(56,22,8,0.96) 100%)",
@@ -526,8 +528,8 @@ function ProSectionLimitNotice({
             <p className="mt-0.5 text-sm leading-relaxed text-amber-100/70">
               You're seeing{" "}
               <span className="font-semibold text-amber-200">{shown}</span> of{" "}
-              <span className="font-semibold text-white">{total}</span>{" "}
-              {label}. Pro unlocks the complete list and every future scan.
+              <span className="font-semibold text-white">{total}</span> {label}.
+              Pro unlocks the complete list and every future scan.
             </p>
           </div>
         </div>
@@ -537,8 +539,18 @@ function ProSectionLimitNotice({
           className="btn-cta-fire inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold text-white"
         >
           Unlock Pro
-          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          <svg
+            className="h-3.5 w-3.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2.5}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M13 7l5 5m0 0l-5 5m5-5H6"
+            />
           </svg>
         </a>
       </div>
@@ -865,8 +877,18 @@ function ReportFollowUpCta({
             href="/train"
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.12] px-5 py-2.5 text-sm font-semibold text-emerald-100 shadow-[0_8px_24px_-12px_rgba(16,185,129,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-400/50 hover:bg-emerald-500/[0.2] hover:text-white hover:shadow-[0_12px_32px_-12px_rgba(16,185,129,0.45)]"
           >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+              />
             </svg>
             Open Puzzles & Drills
           </Link>
@@ -876,9 +898,24 @@ function ReportFollowUpCta({
             disabled
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-5 py-2.5 text-sm font-semibold text-slate-400 opacity-60 cursor-not-allowed"
           >
-            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            <svg
+              className="h-4 w-4 animate-spin"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+              />
             </svg>
             Drills loading...
           </button>
@@ -888,8 +925,18 @@ function ReportFollowUpCta({
           href="/dashboard"
           className="inline-flex items-center justify-center gap-2 rounded-xl border border-violet-500/30 bg-violet-500/[0.10] px-5 py-2.5 text-sm font-semibold text-violet-100 shadow-[0_8px_24px_-12px_rgba(139,92,246,0.3)] transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-400/50 hover:bg-violet-500/[0.18] hover:text-white"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+            />
           </svg>
           View Study Plan
         </Link>
@@ -897,8 +944,18 @@ function ReportFollowUpCta({
           href="/daily"
           className="inline-flex items-center justify-center gap-2 rounded-xl border border-cyan-500/30 bg-cyan-500/[0.10] px-5 py-2.5 text-sm font-semibold text-cyan-100 shadow-[0_8px_24px_-12px_rgba(6,182,212,0.25)] transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-400/50 hover:bg-cyan-500/[0.18] hover:text-white"
         >
-          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+            />
           </svg>
           Daily Challenge
         </Link>
@@ -1946,7 +2003,9 @@ function buildTimeAnalysisTarget(moment: TimeMoment): ReportAnalysisTarget {
   };
 }
 
-function buildBrilliantAnalysisTarget(move: BrilliantMove): ReportAnalysisTarget {
+function buildBrilliantAnalysisTarget(
+  move: BrilliantMove,
+): ReportAnalysisTarget {
   return {
     fen: move.fenBefore,
     orientation: orientationFromFen(move.fenBefore),
@@ -2441,13 +2500,29 @@ export function ScanSessionReport({
       count: timeMoments.length || undefined,
       countColor: "bg-fuchsia-500/20 text-fuchsia-300",
     },
+    positionalMotifs.length > 0 && {
+      id: "section-positional",
+      label: "Positional",
+      icon: "🏛️",
+      count: positionalMotifs.length || undefined,
+      countColor: "bg-violet-500/20 text-violet-300",
+    },
+    !!result && {
+      id: "section-training",
+      label: "Drills",
+      icon: "🎯",
+    },
   ].filter(Boolean) as FloatingNavSection[];
 
   return (
     <>
       <FloatingSectionNav sections={floatingNavSections} />
       <div className="mt-6 space-y-6">
-        {showOpenings || showTactics || showEndgames || showBrilliants || showTimeManagement ? (
+        {showOpenings ||
+        showTactics ||
+        showEndgames ||
+        showBrilliants ||
+        showTimeManagement ? (
           <nav
             aria-label="Report sections"
             className="flex items-center gap-2 overflow-x-auto rounded-2xl border border-white/[0.07] bg-white/[0.02] px-3 py-2.5"
@@ -3316,7 +3391,7 @@ export function ScanSessionReport({
         ) : null}
 
         {positionalMotifs.length > 0 ? (
-          <section className="space-y-4">
+          <section id="section-positional" className="space-y-4">
             <SectionHeader
               eyebrow="Positional"
               title="Habits beneath the blunders"
@@ -3335,7 +3410,7 @@ export function ScanSessionReport({
         ) : null}
 
         {result ? (
-          <section className="space-y-4">
+          <section id="section-training" className="space-y-4">
             <SectionHeader
               eyebrow="Training"
               title="What to do next"

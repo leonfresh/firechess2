@@ -99,10 +99,13 @@ export function Navbar() {
   const isTrainActive =
     isActive("/daily") ||
     isActive("/train") ||
+    isActive("/puzzles") ||
+    isActive("/tutor") ||
     isActive("/sparring") ||
     isActive("/guess") ||
     isActive("/chaos") ||
     isActive("/dungeon") ||
+    isActive("/train") ||
     isActive("/roast");
   const isLearnActive =
     isActive("/openings") ||
@@ -200,11 +203,13 @@ export function Navbar() {
       isActive: isTrainActive,
       links: [
         { href: "/daily", label: "📅 Daily Routine" },
-        { href: "/train", label: "🎯 Puzzles & Drills" },
+        { href: "/puzzles", label: "🎯 Puzzles & Drills" },
+        { href: "/tutor", label: "💝 Puzzle Tutor" },
         { href: "/sparring", label: "⚔️ Opening Sparring" },
         { href: "/guess", label: "🧩 Guess the Move" },
         { href: "/chaos", label: "⚡ Chaos Chess" },
         { href: "/dungeon", label: "🗡️ Dungeon Tactics" },
+        { href: "/train", label: "🕹️ Minigames" },
         {
           href: "/roast",
           label: "🔥 Roast the Elo",
@@ -362,10 +367,16 @@ export function Navbar() {
                     📅 Daily Routine
                   </Link>
                   <Link
-                    href="/train"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/train") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
+                    href="/puzzles"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/puzzles") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
                   >
                     🎯 Puzzles & Drills
+                  </Link>
+                  <Link
+                    href="/tutor"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/tutor") ? "bg-pink-500/[0.10] text-pink-300" : "text-slate-400 hover:bg-pink-500/[0.06] hover:text-pink-300"}`}
+                  >
+                    💝 Puzzle Tutor
                   </Link>
                   <Link
                     href="/sparring"
@@ -391,6 +402,12 @@ export function Navbar() {
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/dungeon") ? "bg-red-500/[0.08] text-red-400" : "text-slate-400 hover:bg-red-500/[0.06] hover:text-red-400"}`}
                   >
                     🗡️ Dungeon Tactics
+                  </Link>
+                  <Link
+                    href="/train"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/train") ? "bg-violet-500/[0.08] text-violet-400" : "text-slate-400 hover:bg-violet-500/[0.06] hover:text-violet-400"}`}
+                  >
+                    🕹️ Minigames
                   </Link>
                   <Link
                     href="/roast"
