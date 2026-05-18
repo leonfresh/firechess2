@@ -100,7 +100,6 @@ export function Navbar() {
     isActive("/daily") ||
     isActive("/train") ||
     isActive("/puzzles") ||
-    isActive("/tutor") ||
     isActive("/sparring") ||
     isActive("/guess") ||
     isActive("/chaos") ||
@@ -204,7 +203,6 @@ export function Navbar() {
       links: [
         { href: "/daily", label: "📅 Daily Routine" },
         { href: "/puzzles", label: "🎯 Puzzles & Drills" },
-        { href: "/tutor", label: "💝 Puzzle Tutor" },
         { href: "/sparring", label: "⚔️ Opening Sparring" },
         { href: "/guess", label: "🧩 Guess the Move" },
         { href: "/chaos", label: "⚡ Chaos Chess" },
@@ -371,12 +369,6 @@ export function Navbar() {
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/puzzles") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
                   >
                     🎯 Puzzles & Drills
-                  </Link>
-                  <Link
-                    href="/tutor"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/tutor") ? "bg-pink-500/[0.10] text-pink-300" : "text-slate-400 hover:bg-pink-500/[0.06] hover:text-pink-300"}`}
-                  >
-                    💝 Puzzle Tutor
                   </Link>
                   <Link
                     href="/sparring"

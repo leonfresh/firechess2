@@ -1532,7 +1532,10 @@ export default function HomePage() {
               {[
                 { value: "Lichess + Chess.com", label: "Both platforms" },
                 { value: "Stockfish 16", label: "Engine-powered" },
-                { value: "Openings · Tactics · Endgames", label: "Full coverage" },
+                {
+                  value: "Openings · Tactics · Endgames",
+                  label: "Full coverage",
+                },
                 { value: "Free forever", label: "No credit card" },
               ].map((stat, i) => (
                 <div
@@ -2023,9 +2026,9 @@ export default function HomePage() {
                     Get your free chess analysis report
                   </h2>
                   <p className="mx-auto mt-3 max-w-lg text-base leading-relaxed text-slate-300/80">
-                    Paste your Lichess or Chess.com username and discover exactly
-                    where your rating is leaking — openings, tactics, endgames,
-                    and time management in one clean report.
+                    Paste your Lichess or Chess.com username and discover
+                    exactly where your rating is leaking — openings, tactics,
+                    endgames, and time management in one clean report.
                   </p>
                   <button
                     type="button"
@@ -2702,6 +2705,93 @@ export default function HomePage() {
               </div>
             ))}
           </section>
+
+          {state === "idle" && (
+            <section className="animate-fade-in mx-auto w-full max-w-5xl">
+              <div className="relative overflow-hidden rounded-[1.85rem] border border-white/[0.08] bg-[linear-gradient(160deg,rgba(8,12,24,0.76),rgba(20,14,26,0.62)_54%,rgba(32,18,12,0.66))] px-5 py-5 shadow-[0_24px_90px_-60px_rgba(0,0,0,0.9)] sm:px-6 sm:py-6">
+                <div className="pointer-events-none absolute left-[8%] top-0 h-24 w-24 rounded-full bg-sky-400/[0.06] blur-3xl" />
+                <div className="pointer-events-none absolute bottom-0 right-[10%] h-24 w-24 rounded-full bg-orange-400/[0.06] blur-3xl" />
+
+                <div className="relative grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start">
+                  <div className="max-w-xl">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+                      More to explore
+                    </p>
+                    <h2 className="mt-2 text-xl font-bold text-white sm:text-2xl">
+                      A few strong side modes beyond the main scan flow.
+                    </h2>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-400 sm:text-[0.95rem]">
+                      The homepage stays centered on reports, but these are some
+                      of the most promising detours once you want something more
+                      playful, sharper, or more specialized.
+                    </p>
+                  </div>
+
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {[
+                      {
+                        href: "/chaos",
+                        icon: "⚡",
+                        title: "Chaos Chess",
+                        desc: "Variant energy and unpredictable positions.",
+                        accent:
+                          "border-purple-400/18 bg-purple-500/[0.08] text-purple-200 hover:border-purple-300/35 hover:bg-purple-500/[0.13]",
+                      },
+                      {
+                        href: "/sparring",
+                        icon: "⚔️",
+                        title: "Opening Sparring",
+                        desc: "Rehearse critical lines instead of guessing.",
+                        accent:
+                          "border-sky-400/18 bg-sky-500/[0.08] text-sky-200 hover:border-sky-300/35 hover:bg-sky-500/[0.13]",
+                      },
+                      {
+                        href: "/dungeon",
+                        icon: "🗡️",
+                        title: "Dungeon Tactics",
+                        desc: "A more gamified way to grind calculation.",
+                        accent:
+                          "border-red-400/18 bg-red-500/[0.08] text-red-200 hover:border-red-300/35 hover:bg-red-500/[0.13]",
+                      },
+                      {
+                        href: "/roast",
+                        icon: "🔥",
+                        title: "Roast the Elo",
+                        desc: "A harsher, more entertaining feedback lane.",
+                        accent:
+                          "border-orange-400/18 bg-orange-500/[0.08] text-orange-200 hover:border-orange-300/35 hover:bg-orange-500/[0.13]",
+                      },
+                    ].map((item) => (
+                      <Link
+                        key={item.title}
+                        href={item.href}
+                        className="group flex items-start gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.03] p-3.5 transition hover:border-white/[0.1] hover:bg-white/[0.05]"
+                      >
+                        <span
+                          className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${item.accent}`}
+                        >
+                          <span className="text-lg">{item.icon}</span>
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-3">
+                            <h3 className="text-sm font-semibold text-white transition-colors group-hover:text-slate-100">
+                              {item.title}
+                            </h3>
+                            <span className="text-xs font-semibold text-white/40 transition-colors group-hover:text-white/70">
+                              Open
+                            </span>
+                          </div>
+                          <p className="mt-1 text-sm leading-relaxed text-slate-400">
+                            {item.desc}
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
 
           {/* ─── App Launcher (hidden for now) ─── */}
           {false && state === "idle" && (

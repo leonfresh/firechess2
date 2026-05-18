@@ -2465,6 +2465,13 @@ export function ScanSessionReport({
     })();
 
   const floatingNavSections: FloatingNavSection[] = [
+    showBrilliants && {
+      id: "section-brilliant",
+      label: "Brilliant",
+      icon: "💎",
+      count: brilliantMoves.length || undefined,
+      countColor: "bg-cyan-500/20 text-cyan-300",
+    },
     showOpenings && {
       id: "section-openings",
       label: "Openings",
@@ -2486,13 +2493,6 @@ export function ScanSessionReport({
       count: endgameMistakes.length || undefined,
       countColor: "bg-sky-500/20 text-sky-300",
     },
-    showBrilliants && {
-      id: "section-brilliant",
-      label: "Brilliant",
-      icon: "💎",
-      count: brilliantMoves.length || undefined,
-      countColor: "bg-cyan-500/20 text-cyan-300",
-    },
     showTimeManagement && {
       id: "section-time",
       label: "Time",
@@ -2513,7 +2513,6 @@ export function ScanSessionReport({
       icon: "🎯",
     },
   ].filter(Boolean) as FloatingNavSection[];
-
   return (
     <>
       <FloatingSectionNav sections={floatingNavSections} />
@@ -2527,6 +2526,24 @@ export function ScanSessionReport({
             aria-label="Report sections"
             className="flex items-center gap-2 overflow-x-auto rounded-2xl border border-white/[0.07] bg-white/[0.02] px-3 py-2.5"
           >
+            {showBrilliants ? (
+              <button
+                type="button"
+                onClick={() =>
+                  document
+                    .getElementById("section-brilliant")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white"
+              >
+                💎 Brilliant
+                {brilliantMoves.length > 0 ? (
+                  <span className="rounded-full bg-cyan-500/20 px-1.5 text-[10px] font-bold text-cyan-300">
+                    {brilliantMoves.length}
+                  </span>
+                ) : null}
+              </button>
+            ) : null}
             {showOpenings ? (
               <button
                 type="button"
@@ -2577,24 +2594,6 @@ export function ScanSessionReport({
                 {endgameMistakes.length > 0 ? (
                   <span className="rounded-full bg-sky-500/20 px-1.5 text-[10px] font-bold text-sky-300">
                     {endgameMistakes.length}
-                  </span>
-                ) : null}
-              </button>
-            ) : null}
-            {showBrilliants ? (
-              <button
-                type="button"
-                onClick={() =>
-                  document
-                    .getElementById("section-brilliant")
-                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
-                }
-                className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-slate-300 transition hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white"
-              >
-                💎 Brilliant
-                {brilliantMoves.length > 0 ? (
-                  <span className="rounded-full bg-cyan-500/20 px-1.5 text-[10px] font-bold text-cyan-300">
-                    {brilliantMoves.length}
                   </span>
                 ) : null}
               </button>
@@ -2812,6 +2811,74 @@ export function ScanSessionReport({
           />
         ) : null}
 
+        {showBrilliants ? (
+          <section id="section-brilliant" className="space-y-4">
+            <SectionHeader
+              eyebrow="Highlights"
+              title="Brilliant moves"
+              description={
+                isProcessing
+                  ? "Sacrifices and engine-approved shots are compiled near the end of the scan."
+                  : "Every brilliant move the scan found, with free members seeing the first six and Pro unlocking the full set."
+              }
+              badge={formatCompactBadge({
+                shown: visibleBrilliantMoves.length,
+                available: accessibleBrilliants.length,
+                total: brilliantMoves.length,
+                singular: "brilliant move",
+                plural: "brilliant moves",
+              })}
+              live={isProcessing}
+              viewMode={getSV("brilliant")}
+              onToggleView={() => toggleSV("brilliant")}
+            />
+
+            {visibleBrilliantMoves.length > 0 ? (
+              <CardCarousel
+                viewMode={getSV("brilliant")}
+                footer={
+                  <CompactCardFooter
+                    shown={visibleBrilliantMoves.length}
+                    total={accessibleBrilliants.length}
+                    label="brilliant moves"
+                    onLoadMore={brilliantReveal.loadMore}
+                    onShowLess={brilliantReveal.showLess}
+                  />
+                }
+              >
+                {visibleBrilliantMoves.map((move) => (
+                  <BrilliantMoveCard
+                    key={`${move.gameIndex}-${move.moveNumber}-${move.userMove}`}
+                    move={move}
+                    onOpenAnalysis={() =>
+                      setAnalysisTarget(buildBrilliantAnalysisTarget(move))
+                    }
+                  />
+                ))}
+              </CardCarousel>
+            ) : isProcessing ? (
+              <SectionLoadingProgress
+                message="Brilliant-move highlights are compiling"
+                detail="Checking for best-move sacrifices and other standout tactical shots."
+                current={0}
+                total={scanGameTotal}
+                percent={0}
+                countLabel="games"
+              />
+            ) : (
+              <EmptySection message="No brilliant moves were detected in this scan." />
+            )}
+
+            {!isProcessing && hiddenBrilliantMovesCount > 0 ? (
+              <ProSectionLimitNotice
+                label="brilliant moves"
+                shown={accessibleBrilliants.length}
+                total={brilliantMoves.length}
+              />
+            ) : null}
+          </section>
+        ) : null}
+
         {showOpenings ? (
           <section id="section-openings" className="space-y-4">
             <SectionHeader
@@ -2959,74 +3026,6 @@ export function ScanSessionReport({
                   ))}
                 </CardCarousel>
               </div>
-            ) : null}
-          </section>
-        ) : null}
-
-        {showBrilliants ? (
-          <section id="section-brilliant" className="space-y-4">
-            <SectionHeader
-              eyebrow="Highlights"
-              title="Brilliant moves"
-              description={
-                isProcessing
-                  ? "Sacrifices and engine-approved shots are collected near the end of the report."
-                  : "Every brilliant move the scan found, with free members seeing the first six and Pro unlocking the full set."
-              }
-              badge={formatCompactBadge({
-                shown: visibleBrilliantMoves.length,
-                available: accessibleBrilliants.length,
-                total: brilliantMoves.length,
-                singular: "brilliant move",
-                plural: "brilliant moves",
-              })}
-              live={isProcessing}
-              viewMode={getSV("brilliant")}
-              onToggleView={() => toggleSV("brilliant")}
-            />
-
-            {visibleBrilliantMoves.length > 0 ? (
-              <CardCarousel
-                viewMode={getSV("brilliant")}
-                footer={
-                  <CompactCardFooter
-                    shown={visibleBrilliantMoves.length}
-                    total={accessibleBrilliants.length}
-                    label="brilliant moves"
-                    onLoadMore={brilliantReveal.loadMore}
-                    onShowLess={brilliantReveal.showLess}
-                  />
-                }
-              >
-                {visibleBrilliantMoves.map((move) => (
-                  <BrilliantMoveCard
-                    key={`${move.gameIndex}-${move.moveNumber}-${move.userMove}`}
-                    move={move}
-                    onOpenAnalysis={() =>
-                      setAnalysisTarget(buildBrilliantAnalysisTarget(move))
-                    }
-                  />
-                ))}
-              </CardCarousel>
-            ) : isProcessing ? (
-              <SectionLoadingProgress
-                message="Brilliant-move highlights are compiling"
-                detail="Checking for best-move sacrifices and other standout tactical shots."
-                current={0}
-                total={scanGameTotal}
-                percent={0}
-                countLabel="games"
-              />
-            ) : (
-              <EmptySection message="No brilliant moves were detected in this scan." />
-            )}
-
-            {!isProcessing && hiddenBrilliantMovesCount > 0 ? (
-              <ProSectionLimitNotice
-                label="brilliant moves"
-                shown={accessibleBrilliants.length}
-                total={brilliantMoves.length}
-              />
             ) : null}
           </section>
         ) : null}
