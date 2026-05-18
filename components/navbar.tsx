@@ -202,12 +202,12 @@ export function Navbar() {
       isActive: isTrainActive,
       links: [
         { href: "/daily", label: "📅 Daily Routine" },
+        { href: "/train", label: "🕹️ Training" },
         { href: "/puzzles", label: "🎯 Puzzles & Drills" },
         { href: "/sparring", label: "⚔️ Opening Sparring" },
         { href: "/guess", label: "🧩 Guess the Move" },
         { href: "/chaos", label: "⚡ Chaos Chess" },
         { href: "/dungeon", label: "🗡️ Dungeon Tactics" },
-        { href: "/train", label: "🕹️ Minigames" },
         {
           href: "/roast",
           label: "🔥 Roast the Elo",
@@ -365,6 +365,12 @@ export function Navbar() {
                     📅 Daily Routine
                   </Link>
                   <Link
+                    href="/train"
+                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/train") ? "bg-violet-500/[0.08] text-violet-400" : "text-slate-400 hover:bg-violet-500/[0.06] hover:text-violet-400"}`}
+                  >
+                    🕹️ Training
+                  </Link>
+                  <Link
                     href="/puzzles"
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/puzzles") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.06] hover:text-white"}`}
                   >
@@ -394,12 +400,6 @@ export function Navbar() {
                     className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/dungeon") ? "bg-red-500/[0.08] text-red-400" : "text-slate-400 hover:bg-red-500/[0.06] hover:text-red-400"}`}
                   >
                     🗡️ Dungeon Tactics
-                  </Link>
-                  <Link
-                    href="/train"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/train") ? "bg-violet-500/[0.08] text-violet-400" : "text-slate-400 hover:bg-violet-500/[0.06] hover:text-violet-400"}`}
-                  >
-                    🕹️ Minigames
                   </Link>
                   <Link
                     href="/roast"
