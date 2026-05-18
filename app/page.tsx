@@ -2735,7 +2735,7 @@ export default function HomePage() {
                         title: "Chaos Chess",
                         desc: "Variant energy and unpredictable positions.",
                         accent:
-                          "border-purple-400/18 bg-purple-500/[0.08] text-purple-200 hover:border-purple-300/35 hover:bg-purple-500/[0.13]",
+                          "bg-purple-500/[0.12] text-purple-200 group-hover:bg-purple-500/[0.18]",
                       },
                       {
                         href: "/sparring",
@@ -2743,7 +2743,7 @@ export default function HomePage() {
                         title: "Opening Sparring",
                         desc: "Rehearse critical lines instead of guessing.",
                         accent:
-                          "border-sky-400/18 bg-sky-500/[0.08] text-sky-200 hover:border-sky-300/35 hover:bg-sky-500/[0.13]",
+                          "bg-sky-500/[0.12] text-sky-200 group-hover:bg-sky-500/[0.18]",
                       },
                       {
                         href: "/dungeon",
@@ -2751,7 +2751,7 @@ export default function HomePage() {
                         title: "Dungeon Tactics",
                         desc: "A more gamified way to grind calculation.",
                         accent:
-                          "border-red-400/18 bg-red-500/[0.08] text-red-200 hover:border-red-300/35 hover:bg-red-500/[0.13]",
+                          "bg-red-500/[0.12] text-red-200 group-hover:bg-red-500/[0.18]",
                       },
                       {
                         href: "/roast",
@@ -2759,7 +2759,7 @@ export default function HomePage() {
                         title: "Roast the Elo",
                         desc: "A harsher, more entertaining feedback lane.",
                         accent:
-                          "border-orange-400/18 bg-orange-500/[0.08] text-orange-200 hover:border-orange-300/35 hover:bg-orange-500/[0.13]",
+                          "bg-orange-500/[0.12] text-orange-200 group-hover:bg-orange-500/[0.18]",
                       },
                     ].map((item) => (
                       <Link
@@ -2768,7 +2768,7 @@ export default function HomePage() {
                         className="group flex items-start gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.03] p-3.5 transition hover:border-white/[0.1] hover:bg-white/[0.05]"
                       >
                         <span
-                          className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${item.accent}`}
+                          className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-colors ${item.accent}`}
                         >
                           <span className="text-lg">{item.icon}</span>
                         </span>
