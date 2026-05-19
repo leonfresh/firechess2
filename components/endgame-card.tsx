@@ -923,7 +923,7 @@ export function EndgameCard({
               </button>
             ) : null}
 
-            {mistake.gameUrl ? (
+            {mistake.gameUrl?.startsWith("http") ? (
               <a
                 href={buildGameReviewUrl(
                   mistake.gameUrl,

@@ -1342,7 +1342,7 @@ export function TacticCard({
               </button>
             ) : null}
 
-            {tactic.gameUrl ? (
+            {tactic.gameUrl?.startsWith("http") ? (
               <a
                 href={buildGameReviewUrl(
                   tactic.gameUrl,

@@ -770,7 +770,7 @@ export function TimeCard({
               </button>
             ) : null}
 
-            {moment.gameUrl ? (
+            {moment.gameUrl?.startsWith("http") ? (
               <a
                 href={buildGameReviewUrl(
                   moment.gameUrl,

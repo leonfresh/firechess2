@@ -188,7 +188,7 @@ export function BrilliantMoveCard({
             </button>
           ) : null}
 
-          {move.gameUrl ? (
+          {move.gameUrl?.startsWith("http") ? (
             <a
               href={`${move.gameUrl}${move.gameUrl.includes("lichess.org") ? `#${(move.moveNumber - 1) * 2 + (move.userColor === "white" ? 1 : 2)}` : ""}`}
               target="_blank"
