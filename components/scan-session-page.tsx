@@ -684,7 +684,7 @@ export function ScanSessionPage({
           if (url) patched++;
           return url ? { ...t, gameUrl: url } : t;
         }),
-        brilliantMoves: result.brilliantMoves.map((t) => {
+        brilliantMoves: (result.brilliantMoves ?? []).map((t) => {
           const url = urlMap[t.gameIndex];
           if (url) patched++;
           return url ? { ...t, gameUrl: url } : t;

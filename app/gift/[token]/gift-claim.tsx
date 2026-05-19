@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import { useSession } from "@/components/session-provider";
+
+const PENDING_KEY = "fc_pending_gift";
 
 interface GiftLinkInfo {
   label: string;
@@ -24,14 +26,13 @@ export function GiftClaim({ token, info }: Props) {
   const [claimed, setClaimed] = useState(false);
 
   const planLabel = info.planType === "lifetime" ? "Lifetime Pro" : "Pro";
-  const durationLabel =
-    info.durationDays
-      ? info.durationDays >= 365
-        ? `${Math.round(info.durationDays / 365)} year${info.durationDays >= 730 ? "s" : ""}`
-        : info.durationDays >= 30
+  const durationLabel = info.durationDays
+    ? info.durationDays >= 365
+      ? `${Math.round(info.durationDays / 365)} year${info.durationDays >= 730 ? "s" : ""}`
+      : info.durationDays >= 30
         ? `${Math.round(info.durationDays / 30)} month${info.durationDays >= 60 ? "s" : ""}`
         : `${info.durationDays} days`
-      : "permanently";
+    : "permanently";
 
   async function handleClaim() {
     setLoading(true);
@@ -42,8 +43,11 @@ export function GiftClaim({ token, info }: Props) {
       if (!res.ok) {
         setError(data.error ?? "Something went wrong.");
       } else {
+        localStorage.removeItem(PENDING_KEY);
         setClaimed(true);
-        setTimeout(() => { window.location.href = "/dashboard"; }, 2500);
+        setTimeout(() => {
+          window.location.href = "/dashboard";
+        }, 2500);
       }
     } catch {
       setError("Network error. Please try again.");
@@ -51,6 +55,17 @@ export function GiftClaim({ token, info }: Props) {
       setLoading(false);
     }
   }
+
+  // Auto-claim if the user just returned from sign-in with a pending gift token
+  useEffect(() => {
+    if (!authenticated || claimed || loading) return;
+    if (info.status !== "valid") return;
+    const pending = localStorage.getItem(PENDING_KEY);
+    if (pending === token) {
+      handleClaim();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authenticated]);
 
   if (info.status !== "valid") {
     const messages: Record<string, string> = {
@@ -70,7 +85,9 @@ export function GiftClaim({ token, info }: Props) {
     return (
       <div className="text-center">
         <div className="text-5xl mb-4">🎉</div>
-        <h2 className="text-2xl font-bold text-white mb-2">You&apos;re now {planLabel}!</h2>
+        <h2 className="text-2xl font-bold text-white mb-2">
+          You&apos;re now {planLabel}!
+        </h2>
         <p className="text-gray-400">Redirecting you to your dashboard…</p>
       </div>
     );
@@ -80,7 +97,8 @@ export function GiftClaim({ token, info }: Props) {
     <div className="text-center">
       <div className="text-5xl mb-4">🎁</div>
       <h2 className="text-2xl font-bold text-white mb-2">
-        You&apos;ve been gifted <span className="text-amber-400">{planLabel}</span> access
+        You&apos;ve been gifted{" "}
+        <span className="text-amber-400">{planLabel}</span> access
       </h2>
       <p className="text-gray-400 mb-1">
         Unlock all {planLabel} features {durationLabel}.
@@ -105,9 +123,10 @@ export function GiftClaim({ token, info }: Props) {
         </button>
       ) : (
         <button
-          onClick={() =>
-            signIn(undefined, { callbackUrl: `/gift/${token}` })
-          }
+          onClick={() => {
+            localStorage.setItem(PENDING_KEY, token);
+            signIn(undefined, { callbackUrl: `/gift/${token}` });
+          }}
           className="bg-amber-500 hover:bg-amber-400 text-black font-bold px-8 py-3 rounded-lg text-lg transition"
         >
           Sign in to Claim

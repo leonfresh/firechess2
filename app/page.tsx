@@ -19,7 +19,6 @@ import { TacticCard } from "@/components/tactic-card";
 import { EndgameCard } from "@/components/endgame-card";
 import { TimeCard } from "@/components/time-card";
 import { DailyLoginPopup } from "@/components/daily-login-rewards";
-import { SetupWizard } from "@/components/setup-wizard";
 import { ProWelcomeModal } from "@/components/lifetime-welcome";
 import { AdminDebug } from "@/components/admin-debug";
 import { SampleReportsSection } from "@/components/sample-reports-section";
@@ -3017,9 +3016,6 @@ export default function HomePage() {
 
           {/* ─── Daily Login Popup ─── */}
           {state !== "loading" && authenticated && <DailyLoginPopup />}
-
-          {/* ─── First-run Setup Wizard ─── */}
-          <SetupWizard show={authenticated && state !== "loading"} />
 
           {/* ─── Pro/Lifetime welcome modal (shown once after upgrade or for existing members) ─── */}
           <ProWelcomeModal />
