@@ -11,6 +11,23 @@ import Link from "next/link";
 
 type Provider = { provider: string; providerAccountId: string };
 
+type AdminStats = {
+  totalUsers: number;
+  proUsers: number;
+  lifetimeUsers: number;
+  freeUsers: number;
+  paidNew7d: number;
+  paidNew30d: number;
+  cancellations30d: number;
+  expiringSoon7d: number;
+  activeUsers7d: number;
+  activeUsers30d: number;
+  digestSubscribers: number;
+  totalReports: number;
+  estimatedMrr: number;
+  conversionRate: number;
+};
+
 type UserRow = {
   id: string;
   name: string | null;
@@ -89,6 +106,7 @@ export default function AdminUsersPage() {
   const [page, setPage] = useState(0);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [total, setTotal] = useState(0);
+  const [stats, setStats] = useState<AdminStats | null>(null);
   const [fetching, setFetching] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
@@ -121,6 +139,7 @@ export default function AdminUsersPage() {
           const data = await res.json();
           setUsers(data.users ?? []);
           setTotal(data.total ?? 0);
+          if (data.stats) setStats(data.stats);
         } catch {
           setUsers([]);
         } finally {
@@ -232,20 +251,13 @@ export default function AdminUsersPage() {
     );
   }
 
-  const proCount = users.filter(
-    (u) => u.plan === "pro" || u.plan === "lifetime",
-  ).length;
-  const freeCount = users.filter((u) => u.plan === "free").length;
-
   return (
     <div className="mx-auto min-h-screen max-w-5xl bg-slate-950 px-4 py-12 text-slate-300">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-white">Manage Users</h1>
           <p className="mt-1 text-xs text-slate-500">
-            {total} user{total !== 1 ? "s" : ""} total &middot;{" "}
-            <span className="text-emerald-400">{proCount} Pro</span> &middot;{" "}
-            <span className="text-slate-400">{freeCount} Free</span>
+            {total} user{total !== 1 ? "s" : ""} in current view
           </p>
         </div>
         <Link
@@ -255,6 +267,97 @@ export default function AdminUsersPage() {
           Feedback Panel &rarr;
         </Link>
       </div>
+
+      {/* ── Monetization Stats Dashboard ─────────────────────────────── */}
+      {stats && (
+        <div className="mb-8 space-y-3">
+          {/* Row 1 — User counts */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatCard
+              label="Total Users"
+              value={stats.totalUsers.toLocaleString()}
+              sub="all time"
+              color="slate"
+            />
+            <StatCard
+              label="Pro"
+              value={stats.proUsers.toLocaleString()}
+              sub={`$${stats.estimatedMrr}/mo est. MRR`}
+              color="emerald"
+              highlight
+            />
+            <StatCard
+              label="Lifetime"
+              value={stats.lifetimeUsers.toLocaleString()}
+              sub="one-time purchase"
+              color="amber"
+              highlight
+            />
+            <StatCard
+              label="Free"
+              value={stats.freeUsers.toLocaleString()}
+              sub={`${stats.conversionRate}% paid conversion`}
+              color="slate"
+            />
+          </div>
+
+          {/* Row 2 — Conversions & churn */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatCard
+              label="New Paid (7d)"
+              value={`+${stats.paidNew7d}`}
+              sub="first-time subscriptions"
+              color="cyan"
+            />
+            <StatCard
+              label="New Paid (30d)"
+              value={`+${stats.paidNew30d}`}
+              sub="first-time subscriptions"
+              color="cyan"
+            />
+            <StatCard
+              label="Cancellations (30d)"
+              value={stats.cancellations30d.toLocaleString()}
+              sub="status → canceled"
+              color={stats.cancellations30d > 0 ? "red" : "slate"}
+            />
+            <StatCard
+              label="Expiring Soon"
+              value={stats.expiringSoon7d.toLocaleString()}
+              sub="pro subs in next 7 days"
+              color={stats.expiringSoon7d > 0 ? "amber" : "slate"}
+            />
+          </div>
+
+          {/* Row 3 — Engagement */}
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatCard
+              label="Active Users (7d)"
+              value={stats.activeUsers7d.toLocaleString()}
+              sub="had a session recently"
+              color="violet"
+            />
+            <StatCard
+              label="Active Users (30d)"
+              value={stats.activeUsers30d.toLocaleString()}
+              sub="had a session recently"
+              color="violet"
+            />
+            <StatCard
+              label="Email Digest"
+              value={stats.digestSubscribers.toLocaleString()}
+              sub="weekly digest opt-in"
+              color="blue"
+            />
+            <StatCard
+              label="Total Reports"
+              value={stats.totalReports.toLocaleString()}
+              sub="saved analysis reports"
+              color="slate"
+            />
+          </div>
+        </div>
+      )}
 
       {/* Search */}
       <input
@@ -701,8 +804,84 @@ function Detail({
   );
 }
 
+const STAT_COLOR_CLASSES: Record<
+  string,
+  { border: string; bg: string; value: string; sub: string }
+> = {
+  emerald: {
+    border: "border-emerald-500/20",
+    bg: "bg-emerald-500/[0.06]",
+    value: "text-emerald-300",
+    sub: "text-emerald-500/80",
+  },
+  amber: {
+    border: "border-amber-500/20",
+    bg: "bg-amber-500/[0.06]",
+    value: "text-amber-300",
+    sub: "text-amber-500/80",
+  },
+  cyan: {
+    border: "border-cyan-500/20",
+    bg: "bg-cyan-500/[0.06]",
+    value: "text-cyan-300",
+    sub: "text-cyan-500/80",
+  },
+  red: {
+    border: "border-red-500/20",
+    bg: "bg-red-500/[0.06]",
+    value: "text-red-300",
+    sub: "text-red-500/80",
+  },
+  violet: {
+    border: "border-violet-500/20",
+    bg: "bg-violet-500/[0.06]",
+    value: "text-violet-300",
+    sub: "text-violet-500/80",
+  },
+  blue: {
+    border: "border-blue-500/20",
+    bg: "bg-blue-500/[0.06]",
+    value: "text-blue-300",
+    sub: "text-blue-500/80",
+  },
+  slate: {
+    border: "border-white/[0.08]",
+    bg: "bg-white/[0.03]",
+    value: "text-slate-200",
+    sub: "text-slate-500",
+  },
+};
+
+function StatCard({
+  label,
+  value,
+  sub,
+  color = "slate",
+  highlight,
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  color?: string;
+  highlight?: boolean;
+}) {
+  const c = STAT_COLOR_CLASSES[color] ?? STAT_COLOR_CLASSES.slate;
+  return (
+    <div
+      className={`rounded-xl border px-4 py-3 ${c.border} ${c.bg} ${highlight ? "ring-1 ring-inset ring-white/5" : ""}`}
+    >
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+        {label}
+      </p>
+      <p className={`mt-1 text-2xl font-bold tabular-nums ${c.value}`}>
+        {value}
+      </p>
+      {sub && <p className={`mt-0.5 text-[10px] ${c.sub}`}>{sub}</p>}
+    </div>
+  );
+}
+
 function UserAvatar({ user }: { user: UserRow }) {
-  const [imgError, setImgError] = useState(false);
   const fallbackChar = (user.name?.[0] ?? user.email?.[0] ?? "?").toUpperCase();
 
   if (user.image && !imgError) {

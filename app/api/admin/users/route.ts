@@ -16,7 +16,19 @@ import {
   studyPlans,
   userCoins,
 } from "@/lib/schema";
-import { eq, or, ilike, sql, desc, count, max, sum } from "drizzle-orm";
+import {
+  eq,
+  or,
+  and,
+  ilike,
+  gte,
+  lte,
+  sql,
+  desc,
+  count,
+  max,
+  sum,
+} from "drizzle-orm";
 
 export async function GET(req: NextRequest) {
   const session = await auth();
@@ -42,6 +54,128 @@ export async function GET(req: NextRequest) {
     .select({ total: count(users.id) })
     .from(users)
     .where(whereClause);
+
+  // ── Global aggregate stats (independent of search/pagination) ──────
+  const now = new Date();
+  const ago7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const ago30d = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const next7d = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  const [
+    [{ totalAllUsers }],
+    [{ proUsers }],
+    [{ lifetimeUsers }],
+    [{ paidNew7d }],
+    [{ paidNew30d }],
+    [{ cancellations30d }],
+    [{ expiringSoon7d }],
+    [{ activeUsers7d }],
+    [{ activeUsers30d }],
+    [{ digestCount }],
+    [{ reportsTotal }],
+  ] = await Promise.all([
+    db.select({ totalAllUsers: count(users.id) }).from(users),
+    db
+      .select({ proUsers: count(subscriptions.userId) })
+      .from(subscriptions)
+      .where(eq(subscriptions.plan, "pro")),
+    db
+      .select({ lifetimeUsers: count(subscriptions.userId) })
+      .from(subscriptions)
+      .where(eq(subscriptions.plan, "lifetime")),
+    // Newly paid (sub row first created as paid) in last 7d
+    db
+      .select({ paidNew7d: count(subscriptions.userId) })
+      .from(subscriptions)
+      .where(
+        and(
+          or(eq(subscriptions.plan, "pro"), eq(subscriptions.plan, "lifetime")),
+          gte(subscriptions.createdAt, ago7d),
+        ),
+      ),
+    // Newly paid in last 30d
+    db
+      .select({ paidNew30d: count(subscriptions.userId) })
+      .from(subscriptions)
+      .where(
+        and(
+          or(eq(subscriptions.plan, "pro"), eq(subscriptions.plan, "lifetime")),
+          gte(subscriptions.createdAt, ago30d),
+        ),
+      ),
+    // Cancellations in last 30d
+    db
+      .select({ cancellations30d: count(subscriptions.userId) })
+      .from(subscriptions)
+      .where(
+        and(
+          eq(subscriptions.status, "canceled"),
+          gte(subscriptions.updatedAt, ago30d),
+        ),
+      ),
+    // Pro subscriptions expiring in the next 7 days
+    db
+      .select({ expiringSoon7d: count(subscriptions.userId) })
+      .from(subscriptions)
+      .where(
+        and(
+          eq(subscriptions.plan, "pro"),
+          eq(subscriptions.status, "active"),
+          gte(subscriptions.currentPeriodEnd, now),
+          lte(subscriptions.currentPeriodEnd, next7d),
+        ),
+      ),
+    // Distinct users with any session expiry >= 7 days ago (active recently)
+    db
+      .select({
+        activeUsers7d: sql<number>`COUNT(DISTINCT ${sessions.userId})`,
+      })
+      .from(sessions)
+      .where(gte(sessions.expires, ago7d)),
+    // Distinct users with any session expiry >= 30 days ago
+    db
+      .select({
+        activeUsers30d: sql<number>`COUNT(DISTINCT ${sessions.userId})`,
+      })
+      .from(sessions)
+      .where(gte(sessions.expires, ago30d)),
+    // Weekly digest subscribers
+    db
+      .select({ digestCount: count(subscriptions.userId) })
+      .from(subscriptions)
+      .where(eq(subscriptions.weeklyDigest, true)),
+    // Total saved reports ever
+    db.select({ reportsTotal: count(reports.id) }).from(reports),
+  ]);
+
+  const stats = {
+    totalUsers: Number(totalAllUsers),
+    proUsers: Number(proUsers),
+    lifetimeUsers: Number(lifetimeUsers),
+    freeUsers: Math.max(
+      0,
+      Number(totalAllUsers) - Number(proUsers) - Number(lifetimeUsers),
+    ),
+    paidNew7d: Number(paidNew7d),
+    paidNew30d: Number(paidNew30d),
+    cancellations30d: Number(cancellations30d),
+    expiringSoon7d: Number(expiringSoon7d),
+    activeUsers7d: Number(activeUsers7d),
+    activeUsers30d: Number(activeUsers30d),
+    digestSubscribers: Number(digestCount),
+    totalReports: Number(reportsTotal),
+    /** Estimated MRR = active Pro users × $5/mo */
+    estimatedMrr: Number(proUsers) * 5,
+    /** Paid conversion rate as a percentage */
+    conversionRate:
+      Number(totalAllUsers) > 0
+        ? Math.round(
+            ((Number(proUsers) + Number(lifetimeUsers)) /
+              Number(totalAllUsers)) *
+              1000,
+          ) / 10
+        : 0,
+  };
 
   // Main user data + subscription
   const rows = await db
@@ -233,7 +367,7 @@ export async function GET(req: NextRequest) {
     coins: coinsByUser.get(r.id) ?? 0,
   }));
 
-  return NextResponse.json({ users: result, total: Number(total) });
+  return NextResponse.json({ users: result, total: Number(total), stats });
 }
 
 export async function PATCH(req: NextRequest) {
