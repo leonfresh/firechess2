@@ -134,7 +134,13 @@ export type AnalyzeOptions = {
   onProgress?: (progress: AnalysisProgress) => void;
   /** Called when each section finishes — enables progressive rendering. */
   onSectionReady?: (
-    section: "openings" | "tactics" | "endgames" | "time" | "mental" | "brilliant",
+    section:
+      | "openings"
+      | "tactics"
+      | "endgames"
+      | "time"
+      | "mental"
+      | "brilliant",
     partial: Partial<AnalyzeResponse>,
   ) => void;
 };
@@ -1061,7 +1067,9 @@ function formatPvMovesAsSan(fen: string, pvMoves: string[]): string[] {
       const san = sanForMove(chess.fen(), move);
       if (!san) break;
       const prefix =
-        chess.turn() === "w" ? `${chess.moveNumber()}.` : `${chess.moveNumber()}...`;
+        chess.turn() === "w"
+          ? `${chess.moveNumber()}.`
+          : `${chess.moveNumber()}...`;
       if (!applyMoveToken(chess, move)) break;
       tokens.push(`${prefix}${san}`);
     }
@@ -3700,6 +3708,7 @@ export async function analyzeOpeningLeaksInBrowser(
                                 tags: tacticTags,
                                 timeRemainingSec,
                                 initialTimeSec,
+                                gameUrl: game.gameUrl,
                               });
 
                               seenTacticFens.add(fenBefore);
@@ -4029,6 +4038,7 @@ export async function analyzeOpeningLeaksInBrowser(
                               moveNumber: fullMoveNumber,
                               endgameType,
                               tags,
+                              gameUrl: game.gameUrl,
                             });
                           }
                         }
@@ -4116,7 +4126,11 @@ export async function analyzeOpeningLeaksInBrowser(
     // ── BRILLIANT MOVES ─────────────────────────────────────────────────
     (async () => {
       if (!doTimeOnly) {
-        const found = await analyzeBrilliantMovesFromGames(username, games, engineDepth);
+        const found = await analyzeBrilliantMovesFromGames(
+          username,
+          games,
+          engineDepth,
+        );
         brilliantMoves.push(...found);
         options?.onSectionReady?.("brilliant", { brilliantMoves });
       }
@@ -4548,6 +4562,7 @@ export async function analyzeOpeningLeaksInBrowser(
                   // For "wasted" moments the user played correctly (just took too long),
                   // so their move IS the right answer for the training puzzle.
                   bestMove: bestMove ?? userMoveUci,
+                  gameUrl: game.gameUrl,
                 });
             }
             gameRunningSpentSec += spent;

@@ -6,7 +6,11 @@ import { Chessboard } from "@/components/chessboard-compat";
 import { EvalBar } from "@/components/eval-bar";
 import { MoveBadge } from "@/components/move-badge";
 import { useBoardSize } from "@/lib/use-board-size";
-import { useBoardTheme, useCustomPieces, useShowCoordinates } from "@/lib/use-coins";
+import {
+  useBoardTheme,
+  useCustomPieces,
+  useShowCoordinates,
+} from "@/lib/use-coins";
 import type { BrilliantMove } from "@/lib/types";
 
 function formatEval(cp: number) {
@@ -37,11 +41,11 @@ function moveSquareStyles(move: BrilliantMove) {
 function moveSan(fen: string, uci: string) {
   try {
     const chess = new Chess(fen);
-      const move = chess.move({
-        from: uci.slice(0, 2),
-        to: uci.slice(2, 4),
-        promotion: (uci.slice(4, 5) || undefined) as PieceSymbol | undefined,
-      });
+    const move = chess.move({
+      from: uci.slice(0, 2),
+      to: uci.slice(2, 4),
+      promotion: (uci.slice(4, 5) || undefined) as PieceSymbol | undefined,
+    });
     return move?.san ?? uci;
   } catch {
     return uci;
@@ -88,8 +92,12 @@ export function BrilliantMoveCard({
                   boardOrientation={orientation}
                   boardWidth={boardSize}
                   arePiecesDraggable={false}
-                  customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-                  customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                  customDarkSquareStyle={{
+                    backgroundColor: boardTheme.darkSquare,
+                  }}
+                  customLightSquareStyle={{
+                    backgroundColor: boardTheme.lightSquare,
+                  }}
                   showBoardNotation={showCoords}
                   customSquareStyles={moveSquareStyles(move)}
                   customArrows={[moveArrow]}
@@ -99,10 +107,16 @@ export function BrilliantMoveCard({
                     const showBadge = square === move.userMove.slice(2, 4);
 
                     return (
-                      <div style={props?.style} className="relative h-full w-full">
+                      <div
+                        style={props?.style}
+                        className="relative h-full w-full"
+                      >
                         {props?.children}
                         {showBadge ? (
-                          <MoveBadge classification="brilliant" variant="corner" />
+                          <MoveBadge
+                            classification="brilliant"
+                            variant="corner"
+                          />
                         ) : null}
                       </div>
                     );
@@ -123,7 +137,9 @@ export function BrilliantMoveCard({
             </div>
             <div className="text-right text-xs text-slate-400">
               <p>{move.userColor === "white" ? "White" : "Black"} to move</p>
-              <p>{formatEval(move.cpBefore)} → {formatEval(move.cpAfter)}</p>
+              <p>
+                {formatEval(move.cpBefore)} → {formatEval(move.cpAfter)}
+              </p>
             </div>
           </div>
 
@@ -143,7 +159,8 @@ export function BrilliantMoveCard({
               </p>
               <p className="mt-2 text-sm font-semibold text-white">{san}</p>
               <p className="mt-1 text-xs text-slate-400">
-                Eval gain {((move.cpAfter - move.cpBefore) / 100).toFixed(1)} pawns
+                Eval gain {((move.cpAfter - move.cpBefore) / 100).toFixed(1)}{" "}
+                pawns
               </p>
             </div>
             <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-4">
@@ -154,7 +171,9 @@ export function BrilliantMoveCard({
                 {bestSan ?? san}
               </p>
               <p className="mt-1 text-xs text-slate-400">
-                {move.line && move.line.length > 0 ? move.line.join(" ") : "Principal variation ready in the clean board."}
+                {move.line && move.line.length > 0
+                  ? move.line.join(" ")
+                  : "Principal variation ready in the clean board."}
               </p>
             </div>
           </div>
@@ -167,6 +186,29 @@ export function BrilliantMoveCard({
             >
               Open clean analysis board
             </button>
+          ) : null}
+
+          {move.gameUrl ? (
+            <a
+              href={`${move.gameUrl}${move.gameUrl.includes("lichess.org") ? `#${(move.moveNumber - 1) * 2 + (move.userColor === "white" ? 1 : 2)}` : ""}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-2 text-xs font-semibold text-slate-400 transition hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-slate-200"
+            >
+              <svg
+                width="11"
+                height="11"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+                <polyline points="15 3 21 3 21 9" />
+                <line x1="10" y1="14" x2="21" y2="3" />
+              </svg>
+              View game
+            </a>
           ) : null}
         </div>
       </div>

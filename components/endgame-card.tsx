@@ -270,6 +270,18 @@ const ENDGAME_TIPS: Record<string, string> = {
     "Complex endgames require calculation. Simplify when ahead, complicate when behind. Prioritise king safety and piece activity.",
 };
 
+function buildGameReviewUrl(
+  gameUrl: string,
+  moveNumber: number,
+  sideToMove: "white" | "black",
+): string {
+  if (gameUrl.includes("lichess.org")) {
+    const ply = (moveNumber - 1) * 2 + (sideToMove === "white" ? 1 : 2);
+    return `${gameUrl}#${ply}`;
+  }
+  return gameUrl;
+}
+
 export function EndgameCard({
   mistake,
   engineDepth,
@@ -909,6 +921,33 @@ export function EndgameCard({
               >
                 Open analysis
               </button>
+            ) : null}
+
+            {mistake.gameUrl ? (
+              <a
+                href={buildGameReviewUrl(
+                  mistake.gameUrl,
+                  mistake.moveNumber,
+                  mistake.sideToMove,
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-10 items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-4 text-sm font-semibold text-slate-400 transition-all hover:border-white/[0.14] hover:bg-white/[0.06] hover:text-slate-200"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                >
+                  <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+                View game
+              </a>
             ) : null}
 
             {onCreateCommunityPost ? (

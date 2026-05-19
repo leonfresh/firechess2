@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Chess } from "chess.js";
@@ -56,6 +56,28 @@ import {
   EloIcon,
 } from "@/components/dungeon-illustrations";
 import { stockfishPool } from "@/lib/stockfish-client";
+import famousGamesRaw from "@/scripts/data/ghost-games-seed.json";
+
+/* ================================================================== */
+/*  Famous games dataset types                                          */
+/* ================================================================== */
+
+type FamousGame = {
+  whiteName: string;
+  blackName: string;
+  tournament: string;
+  eventDate: string;
+  result: string;
+  openingName: string;
+  pgnMoves: string;
+  startPly: number;
+  endPly: number;
+  missionTitle: string;
+  missionContext: string;
+  tags: string[];
+};
+
+const FAMOUS_GAMES = famousGamesRaw as unknown as FamousGame[];
 
 /* ================================================================== */
 /*  Lichess puzzle types                                                */
@@ -541,7 +563,7 @@ function PerkBadge({ perk, small }: { perk: Perk; small?: boolean }) {
 }
 
 /* ================================================================== */
-/*  Dungeon Map Visualization (SVG)                                     */
+/*  Dungeon Map Visualization — horizontal scrolling                    */
 /* ================================================================== */
 
 function DungeonMap({
@@ -558,7 +580,7 @@ function DungeonMap({
   onSelectNode: (node: MapNode) => void;
 }) {
   const hasScoutsMap = perks.some((p) => p.id === "scouts-map");
-  const visibleFloors = hasScoutsMap ? currentFloor + 4 : currentFloor + 3;
+  const visibleFloors = hasScoutsMap ? currentFloor + 4 : currentFloor + 2;
 
   const floors = useMemo(() => {
     const byFloor = new Map<number, MapNode[]>();
@@ -570,142 +592,180 @@ function DungeonMap({
     return byFloor;
   }, [nodes]);
 
+  const maxFloor = useMemo(
+    () => Math.max(...nodes.map((n) => n.floor)),
+    [nodes],
+  );
   const currentNode = nodes.find((n) => n.id === currentNodeId);
   const reachableIds = new Set(currentNode?.connections ?? []);
 
-  const startFloor = Math.max(0, currentFloor - 2);
-  const endFloor = Math.min(
-    Math.max(...Array.from(floors.keys())),
-    visibleFloors,
-  );
+  const allFloors: number[] = [];
+  for (let f = 0; f <= maxFloor; f++) allFloors.push(f);
 
-  const displayFloors: number[] = [];
-  for (let f = endFloor; f >= startFloor; f--) {
-    displayFloors.push(f);
-  }
+  // SVG layout — floors go left→right, columns (0-2) go top→bottom
+  const FLOOR_W = 112;
+  const ROW_H = 84;
+  const PAD_X = 56;
+  const PAD_Y = 44;
+  const svgWidth = (maxFloor + 1) * FLOOR_W + 2 * PAD_X;
+  const svgHeight = 3 * ROW_H + 2 * PAD_Y;
 
-  // SVG layout
-  const COL_W = 120;
-  const ROW_H = 85;
-  const PAD_X = 70;
-  const PAD_Y = 45;
-  const svgWidth = 2 * COL_W + 2 * PAD_X;
-  const svgHeight = displayFloors.length * ROW_H + PAD_Y + 25;
-
-  // Build position map
   const nodePositions = useMemo(() => {
     const positions = new Map<string, { x: number; y: number }>();
-    displayFloors.forEach((floor, rowIdx) => {
-      const floorNodes = floors.get(floor) ?? [];
-      floorNodes.forEach((node) => {
-        positions.set(node.id, {
-          x: node.col * COL_W + PAD_X,
-          y: rowIdx * ROW_H + PAD_Y,
-        });
+    for (const node of nodes) {
+      positions.set(node.id, {
+        x: node.floor * FLOOR_W + PAD_X,
+        y: node.col * ROW_H + PAD_Y,
       });
-    });
+    }
     return positions;
-  }, [displayFloors, floors]);
+  }, [nodes]);
 
-  // Collect visible connection lines
   const connections = useMemo(() => {
     const lines: {
       from: { x: number; y: number };
       to: { x: number; y: number };
       isReachable: boolean;
-      fromId: string;
-      toId: string;
     }[] = [];
-    const visibleNodeIds = new Set(nodePositions.keys());
     for (const [nodeId, fromPos] of nodePositions) {
       const node = nodes.find((n) => n.id === nodeId);
       if (!node) continue;
       for (const connId of node.connections) {
-        if (!visibleNodeIds.has(connId)) continue;
         const toPos = nodePositions.get(connId);
         if (!toPos) continue;
         lines.push({
           from: fromPos,
           to: toPos,
           isReachable: currentNode?.id === nodeId && reachableIds.has(connId),
-          fromId: nodeId,
-          toId: connId,
         });
       }
     }
     return lines;
   }, [nodePositions, nodes, currentNode, reachableIds]);
 
+  // Auto-scroll to centre on the current floor whenever it changes
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!scrollRef.current) return;
+    const targetX = currentFloor * FLOOR_W + PAD_X;
+    const containerW = scrollRef.current.clientWidth;
+    const scrollLeft = Math.max(0, targetX - containerW / 2);
+    scrollRef.current.scrollTo({ left: scrollLeft, behavior: "smooth" });
+  }, [currentFloor]);
+
   return (
-    <div className="mx-auto w-full max-w-lg dungeon-screen-enter">
-      {/* Title */}
-      <div className="mb-3 text-center">
-        <h2 className="text-lg font-bold text-white tracking-tight flex items-center justify-center gap-2">
+    <div className="w-full dungeon-screen-enter">
+      {/* Header row */}
+      <div className="mb-3 flex items-center justify-between px-1">
+        <h2 className="text-sm font-bold text-white flex items-center gap-2">
           <svg
-            width="20"
-            height="20"
+            width="15"
+            height="15"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
-            className="text-amber-400"
+            className="text-amber-400 shrink-0"
           >
             <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
             <circle cx="12" cy="10" r="3" />
           </svg>
-          <span>Dungeon Map</span>
+          Dungeon Map
         </h2>
-        <p className="text-xs text-slate-500">Floor {currentFloor}</p>
+        <div className="flex items-center gap-2 text-[10px] text-slate-500">
+          <span className="font-mono text-amber-400/80">
+            Floor {currentFloor}
+          </span>
+          <span>·</span>
+          <span className="font-mono">
+            {currentFloor}/{maxFloor}
+          </span>
+        </div>
       </div>
 
-      {/* SVG Map */}
-      <div className="relative rounded-2xl border border-white/[0.06] bg-gradient-to-b from-white/[0.03] to-transparent p-3 overflow-hidden">
-        {/* Fog overlay at top */}
+      {/* Horizontally scrollable SVG container */}
+      <div
+        ref={scrollRef}
+        className="relative rounded-2xl border border-white/[0.06] bg-gradient-to-b from-white/[0.04] to-transparent overflow-x-auto overflow-y-hidden"
+        style={
+          {
+            scrollbarWidth: "none",
+            WebkitOverflowScrolling: "touch",
+          } as React.CSSProperties
+        }
+      >
+        {/* Left fog edge */}
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-16 z-10"
+          className="pointer-events-none absolute inset-y-0 left-0 w-10 z-10"
           style={{
             background:
-              "linear-gradient(to bottom, rgba(3,7,18,0.9) 0%, transparent 100%)",
+              "linear-gradient(to right, rgba(3,7,18,0.88) 0%, transparent 100%)",
+          }}
+        />
+        {/* Right fog edge — stronger to hint at unexplored territory */}
+        <div
+          className="pointer-events-none absolute inset-y-0 right-0 w-20 z-10"
+          style={{
+            background:
+              "linear-gradient(to left, rgba(3,7,18,0.92) 0%, transparent 100%)",
           }}
         />
 
         <svg
+          width={svgWidth}
+          height={svgHeight}
           viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-          className="w-full"
-          style={{ maxHeight: "50vh" }}
+          style={{ display: "block", minWidth: svgWidth }}
         >
           <defs>
-            {/* Glow filter */}
-            <filter id="node-glow">
-              <feGaussianBlur stdDeviation="4" result="blur" />
+            <filter id="node-glow-h">
+              <feGaussianBlur stdDeviation="3" result="blur" />
               <feMerge>
                 <feMergeNode in="blur" />
                 <feMergeNode in="SourceGraphic" />
               </feMerge>
             </filter>
-            {/* Reachable path gradient */}
-            <linearGradient id="reachable-grad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#93c5fd" stopOpacity="0.6" />
-              <stop offset="100%" stopColor="#60a5fa" stopOpacity="0.3" />
+            {/* Horizontal reachable gradient */}
+            <linearGradient id="reachable-grad-h" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#93c5fd" stopOpacity="0.55" />
+              <stop offset="100%" stopColor="#60a5fa" stopOpacity="0.25" />
             </linearGradient>
           </defs>
 
+          {/* Vertical divider lines per floor */}
+          {allFloors.map((floor) => {
+            const x = floor * FLOOR_W + PAD_X;
+            const isCurrFloor = floor === currentFloor;
+            return isCurrFloor ? (
+              <line
+                key={`div-${floor}`}
+                x1={x}
+                y1={PAD_Y - 30}
+                x2={x}
+                y2={svgHeight - PAD_Y + 14}
+                stroke="rgba(251,191,36,0.12)"
+                strokeWidth={1}
+                strokeDasharray="4 4"
+              />
+            ) : null;
+          })}
+
           {/* Connection lines */}
           {connections.map((conn, i) => {
-            const midY = (conn.from.y + conn.to.y) / 2;
-            const pathD = `M ${conn.from.x} ${conn.from.y} C ${conn.from.x} ${midY}, ${conn.to.x} ${midY}, ${conn.to.x} ${conn.to.y}`;
+            const midX = (conn.from.x + conn.to.x) / 2;
+            const pathD = `M ${conn.from.x} ${conn.from.y} C ${midX} ${conn.from.y}, ${midX} ${conn.to.y}, ${conn.to.x} ${conn.to.y}`;
             return (
               <g key={`conn-${i}`}>
-                {/* Shadow line */}
+                {/* Glow shadow */}
                 <path
                   d={pathD}
                   fill="none"
                   stroke={
                     conn.isReachable
-                      ? "rgba(147, 197, 253, 0.15)"
-                      : "rgba(255,255,255,0.04)"
+                      ? "rgba(147,197,253,0.12)"
+                      : "rgba(255,255,255,0.03)"
                   }
-                  strokeWidth={conn.isReachable ? 6 : 2}
+                  strokeWidth={conn.isReachable ? 7 : 2}
                 />
                 {/* Main line */}
                 <path
@@ -713,8 +773,8 @@ function DungeonMap({
                   fill="none"
                   stroke={
                     conn.isReachable
-                      ? "url(#reachable-grad)"
-                      : "rgba(255,255,255,0.08)"
+                      ? "url(#reachable-grad-h)"
+                      : "rgba(255,255,255,0.07)"
                   }
                   strokeWidth={conn.isReachable ? 2.5 : 1}
                   strokeLinecap="round"
@@ -725,31 +785,50 @@ function DungeonMap({
             );
           })}
 
-          {/* Floor numbers */}
-          {displayFloors.map((floor, rowIdx) => (
-            <text
-              key={`floor-${floor}`}
-              x={12}
-              y={rowIdx * ROW_H + PAD_Y + 3}
-              fontSize={10}
-              fontFamily="monospace"
-              fill="rgba(148, 163, 184, 0.5)"
-              textAnchor="middle"
-            >
-              {floor}
-            </text>
-          ))}
+          {/* Floor labels (below the nodes) */}
+          {allFloors.map((floor) => {
+            const x = floor * FLOOR_W + PAD_X;
+            const isCurrFloor = floor === currentFloor;
+            const label =
+              floor === 0
+                ? "S"
+                : floor % 10 === 0
+                  ? `B${floor / 10}`
+                  : String(floor);
+            return (
+              <text
+                key={`fl-${floor}`}
+                x={x}
+                y={svgHeight - 10}
+                textAnchor="middle"
+                fontSize={isCurrFloor ? 11 : 9}
+                fontFamily="monospace"
+                fontWeight={isCurrFloor ? "bold" : "normal"}
+                fill={
+                  floor % 10 === 0 && floor > 0
+                    ? isCurrFloor
+                      ? "rgba(239,68,68,0.9)"
+                      : "rgba(239,68,68,0.4)"
+                    : isCurrFloor
+                      ? "rgba(251,191,36,0.9)"
+                      : "rgba(148,163,184,0.3)"
+                }
+              >
+                {label}
+              </text>
+            );
+          })}
 
           {/* Nodes */}
-          {displayFloors.map((floor) => {
+          {allFloors.map((floor) => {
             const floorNodes = floors.get(floor) ?? [];
             return floorNodes.map((node) => {
               const pos = nodePositions.get(node.id);
               if (!pos) return null;
-
               const isCurrent = node.id === currentNodeId;
               const isReachable = reachableIds.has(node.id);
               const isHidden = floor > visibleFloors && !node.visited;
+              const isPast = node.visited && !isCurrent;
 
               return (
                 <g
@@ -759,9 +838,8 @@ function DungeonMap({
                   role={isReachable ? "button" : undefined}
                   tabIndex={isReachable ? 0 : undefined}
                 >
-                  {/* Hit area (invisible larger target) */}
                   {isReachable && (
-                    <circle cx={pos.x} cy={pos.y} r={30} fill="transparent" />
+                    <circle cx={pos.x} cy={pos.y} r={34} fill="transparent" />
                   )}
                   <SvgNodeShape
                     type={node.type}
@@ -769,7 +847,7 @@ function DungeonMap({
                     y={pos.y}
                     isCurrent={isCurrent}
                     isReachable={isReachable}
-                    isVisited={node.visited}
+                    isVisited={isPast}
                     isHidden={isHidden}
                     puzzleMode={node.puzzleMode}
                   />
@@ -778,6 +856,25 @@ function DungeonMap({
             });
           })}
         </svg>
+      </div>
+
+      {/* Legend */}
+      <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[10px] text-slate-600">
+        <span>
+          <span className="text-emerald-500/70">◉</span> current
+        </span>
+        <span>
+          <span className="text-blue-400/60">◌</span> reachable
+        </span>
+        <span>
+          <span className="text-red-500/50">B</span> boss
+        </span>
+        <span>
+          <span className="text-slate-700">?</span> hidden
+        </span>
+        <span className="ml-auto text-[10px] text-slate-600">
+          ← scroll to explore →
+        </span>
       </div>
     </div>
   );
@@ -1335,6 +1432,47 @@ function BattleBoard({
             </div>
           </div>
 
+          {/* Combat Stakes */}
+          {(() => {
+            const node = run.map.find((n) => n.id === run.currentNodeId);
+            const diff = node?.difficulty ?? "easy";
+            const dmg = calculateDamage(diff, run.stats, run.perks);
+            const heal = calculateHeal(diff, run.perks);
+            const coins = calculateCoins(diff, run.streak, run.perks);
+            const mult = getStreakMultiplier(run.streak, run.perks);
+            return (
+              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 space-y-1.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
+                  Combat Stakes
+                </p>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-emerald-400">✓ Solve</span>
+                  <span className="font-bold text-emerald-300">
+                    {heal > 0 ? `+${heal} HP · ` : ""}+{coins} 🪙
+                    {mult > 1 ? ` · 🔥×${mult.toFixed(1)}` : ""}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-red-400">✗ Fail</span>
+                  <span className="font-bold text-red-300">−{dmg} HP</span>
+                </div>
+                <div className="flex items-center gap-1.5 pt-1.5 border-t border-white/[0.06]">
+                  <span className="text-[10px] text-slate-600">Attempts:</span>
+                  {Array.from({ length: maxAttempts }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={`h-2.5 w-2.5 rounded-full border ${
+                        i < attempts
+                          ? "bg-red-500/60 border-red-500"
+                          : "bg-white/[0.08] border-white/20"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Timer */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
             <PuzzleTimer
@@ -1664,11 +1802,11 @@ function GuessEvalBoard({
 }
 
 /* ================================================================== */
-/*  Guess the Move — what did the GM play?                              */
+/*  Guess the Move — GM position from famous games DB                   */
 /* ================================================================== */
 
 function GuessMoveBoard({
-  puzzle,
+  puzzle: _puzzle,
   run,
   onSolved,
   onFailed,
@@ -1685,51 +1823,117 @@ function GuessMoveBoard({
   const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
 
-  // Pick an interesting position from the game — a few moves before the puzzle trigger
-  const { fen, correctMove, orientation, moveSAN } = useMemo(() => {
-    const moves = parsePgnMoves(puzzle.game.pgn);
-    // Go to a position a few moves before the puzzle starts
-    const targetPly = Math.max(4, puzzle.puzzle.initialPly - 2);
+  // Pick a famous game deterministically from the run seed + floor
+  const game = useMemo(() => {
+    const idx = (run.seed + run.currentFloor * 7) % FAMOUS_GAMES.length;
+    return FAMOUS_GAMES[idx];
+  }, [run.seed, run.currentFloor]);
+
+  // Derive the board position and correct move from the famous game
+  const {
+    fen,
+    correctMove,
+    orientation,
+    moveSAN,
+    prevLastMove,
+    displayPly,
+    gameLabel,
+    moveLabel,
+    playerColor,
+  } = useMemo(() => {
+    const moves = parsePgnMoves(game.pgnMoves);
+
+    // Deterministic ply selection inside the interesting portion of the game
+    const rngSeed = run.seed * 31 + run.currentFloor * 17;
+    const rngVal = (((rngSeed * 16807) % 2147483647) - 1) / 2147483646;
+    const rangeStart = Math.max(
+      4,
+      game.startPly ?? Math.floor(moves.length * 0.25),
+    );
+    const rangeEnd = Math.min(
+      moves.length - 2,
+      game.endPly ?? Math.floor(moves.length * 0.7),
+    );
+    const targetPly =
+      rangeStart + Math.floor(rngVal * Math.max(1, rangeEnd - rangeStart));
+
+    // Play moves up to targetPly to get the position we show
     const chess = new Chess();
+    let prevFrom = "";
+    let prevTo = "";
     for (let i = 0; i < Math.min(targetPly, moves.length); i++) {
       try {
-        chess.move(moves[i]);
+        const r = chess.move(moves[i]);
+        if (r && i === targetPly - 1) {
+          prevFrom = r.from;
+          prevTo = r.to;
+        }
       } catch {
         break;
       }
     }
     const position = chess.fen();
-    const nextMoveStr = moves[targetPly];
-    let moveResult: any = null;
+
+    // The move we want the player to find is at index targetPly
+    let correctFrom = "";
+    let correctTo = "";
     let san = "";
-    const from = nextMoveStr ? null : null; // We'll get it from chess.move
-    try {
-      moveResult = chess.move(nextMoveStr);
-      san = moveResult?.san ?? nextMoveStr;
-    } catch {}
+    if (targetPly < moves.length) {
+      try {
+        const r = chess.move(moves[targetPly]);
+        if (r) {
+          correctFrom = r.from;
+          correctTo = r.to;
+          san = r.san;
+        }
+      } catch {}
+    }
+
     const ori: "white" | "black" =
       new Chess(position).turn() === "w" ? "white" : "black";
+
+    const whiteShort = game.whiteName.split(" ").pop() ?? game.whiteName;
+    const blackShort = game.blackName.split(" ").pop() ?? game.blackName;
+    const year = game.eventDate?.slice(0, 4) ?? "";
+    const label = `${whiteShort} vs ${blackShort}${year ? ` (${year})` : ""}`;
+
+    const moveNum = Math.ceil((targetPly + 1) / 2);
+    const mLabel = `${moveNum}${ori === "white" ? "." : "..."}`;
+
     return {
       fen: position,
-      correctMove: moveResult
-        ? { from: moveResult.from, to: moveResult.to }
-        : null,
+      correctMove:
+        correctFrom && correctTo ? { from: correctFrom, to: correctTo } : null,
       orientation: ori,
       moveSAN: san,
+      prevLastMove: prevFrom && prevTo ? { from: prevFrom, to: prevTo } : null,
+      displayPly: targetPly,
+      gameLabel: label,
+      moveLabel: mLabel,
+      playerColor: ori === "white" ? "White" : "Black",
     };
-  }, [puzzle]);
+  }, [game, run.seed, run.currentFloor]);
 
   const [state, setState] = useState<"waiting" | "correct" | "wrong">(
     "waiting",
   );
   const [attempts, setAttempts] = useState(0);
   const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(
-    null,
+    prevLastMove,
   );
   const [currentFen, setCurrentFen] = useState(fen);
   const [selected, setSelected] = useState<string | null>(null);
 
   const act = getAct(run.currentFloor);
+
+  // Reset when game/position changes
+  useEffect(() => {
+    setState("waiting");
+    setAttempts(0);
+    setLastMove(prevLastMove);
+    setCurrentFen(fen);
+    setSelected(null);
+  }, [fen, prevLastMove]);
 
   const sideToMove = useMemo(() => {
     try {
@@ -1753,7 +1957,6 @@ function GuessMoveBoard({
       setSelected(null);
 
       if (from === correctMove.from && to === correctMove.to) {
-        // Correct!
         const chess = new Chess(fen);
         try {
           chess.move({ from, to, promotion: "q" });
@@ -1762,10 +1965,10 @@ function GuessMoveBoard({
         setLastMove({ from, to });
         setState("correct");
         playSound("correct");
-        setTimeout(() => onSolved(), 1200);
+        setTimeout(() => onSolved(), 1400);
         return true;
       } else {
-        // Check legality — don't penalize mouse slips / illegal moves
+        // Ignore illegal moves
         try {
           const legCheck = new Chess(fen);
           const legResult = legCheck.move({ from, to, promotion: "q" });
@@ -1773,12 +1976,9 @@ function GuessMoveBoard({
         } catch {
           return false;
         }
-
-        // Wrong but legal move
         setAttempts((a) => a + 1);
         playSound("wrong");
         if (attempts >= 1) {
-          // Two fails — show the answer
           setState("wrong");
           playDungeonSound("damage");
           if (correctMove) {
@@ -1845,7 +2045,9 @@ function GuessMoveBoard({
     [state, currentFen, selected, onDrop],
   );
 
+  // Square highlight styles
   const customSquareStyles: Record<string, React.CSSProperties> = {};
+  // Always show the last move
   if (lastMove) {
     customSquareStyles[lastMove.from] = {
       backgroundColor: "rgba(255, 255, 0, 0.25)",
@@ -1877,7 +2079,24 @@ function GuessMoveBoard({
   return (
     <div className="w-full dungeon-screen-enter">
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px]">
+        {/* Board column */}
         <div className="flex flex-col items-center gap-3">
+          {/* Famous game banner */}
+          <div className="w-full max-w-[720px] rounded-xl border border-amber-500/20 bg-gradient-to-r from-amber-500/[0.06] to-transparent px-4 py-2.5 flex items-center gap-3">
+            <span className="text-xl shrink-0">♟️</span>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-bold text-amber-200 truncate">
+                {gameLabel}
+              </p>
+              <p className="text-[10px] text-slate-500 truncate">
+                {game.tournament} · {game.openingName}
+              </p>
+            </div>
+            <div className="text-[10px] text-slate-600 shrink-0">
+              {game.eventDate?.slice(0, 4)}
+            </div>
+          </div>
+
           <div ref={boardRef} className="w-full max-w-[720px]">
             <div className="overflow-hidden rounded-xl">
               <Chessboard
@@ -1903,6 +2122,7 @@ function GuessMoveBoard({
             </div>
           </div>
 
+          {/* Status bar */}
           <div
             className={`rounded-lg border px-3 py-1.5 text-sm font-medium transition-all ${
               state === "correct"
@@ -1913,11 +2133,23 @@ function GuessMoveBoard({
             }`}
           >
             {state === "waiting"
-              ? `What did the player play here?${attempts > 0 ? " (last chance!)" : ""}`
+              ? `${moveLabel} What did ${playerColor} play?${attempts > 0 ? " (last chance!)" : ""}`
               : state === "correct"
-                ? `✅ Correct! The move was ${moveSAN}`
-                : `❌ Wrong — the move was ${moveSAN}`}
+                ? `✅ ${moveSAN} — well spotted!`
+                : `❌ The move was ${moveSAN}`}
           </div>
+
+          {/* Reveal game context after solve/fail */}
+          {state !== "waiting" && (
+            <div className="w-full max-w-[720px] rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 space-y-1.5">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-amber-400/70">
+                {game.missionTitle}
+              </p>
+              <p className="text-[11px] italic leading-relaxed text-slate-400">
+                {game.missionContext}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}
@@ -1929,30 +2161,33 @@ function GuessMoveBoard({
             actId={act.id}
             seed={run.seed + run.currentFloor}
           />
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-            <p className="text-xs italic leading-relaxed text-slate-400">
-              This position is from a real game. Can you find the move that was
-              actually played?
-            </p>
-          </div>
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                className="text-amber-500"
-              >
-                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-              </svg>
-              <span>{puzzle.puzzle.rating}</span>
-              <span className="text-slate-600">·</span>
-              <span>Move Challenge</span>
+
+          {/* Player cards */}
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="h-5 w-5 rounded-full bg-white border border-slate-300 shrink-0" />
+              <span className="text-xs font-medium text-white truncate">
+                {game.whiteName}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="h-5 w-5 rounded-full bg-zinc-800 border border-zinc-600 shrink-0" />
+              <span className="text-xs font-medium text-white truncate">
+                {game.blackName}
+              </span>
+            </div>
+            <div className="pt-1.5 border-t border-white/[0.06] text-[10px] text-slate-500">
+              {game.tournament} · Move {Math.ceil((displayPly + 1) / 2)}
             </div>
           </div>
+
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+            <p className="text-xs italic leading-relaxed text-slate-400">
+              This position is from a historically significant game. Find the
+              move that was actually played here.
+            </p>
+          </div>
+
           {/* Timer */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
             <PuzzleTimer
@@ -2854,7 +3089,36 @@ export default function DungeonPage() {
   const [eventMessage, setEventMessage] = useState<string | null>(null);
   const [storyMessage, setStoryMessage] = useState<string | null>(null);
   const [showStartScreen, setShowStartScreen] = useState(true);
+  const [savedRun, setSavedRun] = useState<DungeonRun | null>(null);
   const lastActRef = useRef<number>(0);
+
+  // Load saved run from localStorage on mount (SSR-safe)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("dungeon-run-v1");
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as DungeonRun;
+      if (parsed.status === "dead" || parsed.status === "victory") return;
+      setSavedRun(parsed);
+    } catch {}
+  }, []);
+
+  // Save run to localStorage whenever it changes
+  useEffect(() => {
+    if (!run) return;
+    try {
+      localStorage.setItem("dungeon-run-v1", JSON.stringify(run));
+    } catch {}
+  }, [run]);
+
+  // Clear saved run when run ends
+  useEffect(() => {
+    if (run?.status === "dead" || run?.status === "victory") {
+      try {
+        localStorage.removeItem("dungeon-run-v1");
+      } catch {}
+    }
+  }, [run?.status]);
 
   /* ── Start a new run ── */
   const startRun = useCallback((seed?: number) => {
@@ -2863,8 +3127,25 @@ export default function DungeonPage() {
     setPuzzle(null);
     setShowStartScreen(false);
     setEventMessage(null);
+    setSavedRun(null);
     preloadDungeonSounds();
   }, []);
+
+  /* ── Continue a saved run ── */
+  const continueRun = useCallback(() => {
+    if (!savedRun) return;
+    // If we saved mid-battle, resume at the map so a fresh puzzle is fetched
+    const r =
+      savedRun.status === "battle"
+        ? { ...savedRun, status: "exploring" as const }
+        : savedRun;
+    setRun(r);
+    setPuzzle(null);
+    setShowStartScreen(false);
+    setEventMessage(null);
+    setSavedRun(null);
+    preloadDungeonSounds();
+  }, [savedRun]);
 
   /* ── Fetch puzzle for a node ── */
   const fetchPuzzle = useCallback(async (difficulty: Difficulty) => {
@@ -3440,6 +3721,21 @@ export default function DungeonPage() {
           })()}
 
           <div className="mt-8 flex flex-col gap-3 w-full max-w-xs">
+            {savedRun && (
+              <button
+                type="button"
+                onClick={continueRun}
+                className="group relative overflow-hidden rounded-xl bg-blue-500/15 border border-blue-500/20 px-4 py-3.5 text-sm font-medium text-blue-400 transition-all hover:bg-blue-500/25 hover:shadow-lg hover:shadow-blue-500/10"
+              >
+                <span className="relative z-10 flex items-center justify-between">
+                  <span>🗺️ Continue Run — Floor {savedRun.currentFloor}</span>
+                  <span className="text-xs opacity-60">
+                    {savedRun.stats.hp}/{savedRun.stats.maxHp} HP
+                  </span>
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => startRun()}

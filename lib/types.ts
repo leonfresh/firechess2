@@ -103,6 +103,8 @@ export type MissedTactic = {
   timeRemainingSec: number | null;
   /** Initial game time in seconds for this player (null if unknown) */
   initialTimeSec: number | null;
+  /** URL to the source game (Lichess or Chess.com) */
+  gameUrl?: string;
 };
 
 export type EndgameType =
@@ -139,6 +141,8 @@ export type EndgameMistake = {
   moveNumber: number;
   endgameType: EndgameType;
   tags: string[];
+  /** URL to the source game (Lichess or Chess.com) */
+  gameUrl?: string;
 };
 
 export type EndgameStats = {
@@ -259,6 +263,8 @@ export type TimeMoment = {
   evalBefore: number | null;
   /** Best move UCI (from engine) */
   bestMove: string | null;
+  /** URL to the source game (Lichess or Chess.com) */
+  gameUrl?: string;
 };
 
 /** Aggregate time management report */

@@ -1453,6 +1453,21 @@ export default function HomePage() {
                       >
                         Browse Study Boards
                       </Link>
+                      <a
+                        href="https://www.youtube.com/watch?v=MpWsW10YE5M"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex h-12 items-center justify-center gap-2 rounded-xl px-4 text-base font-semibold text-slate-400 transition-colors duration-200 hover:text-white"
+                      >
+                        <svg
+                          className="h-4 w-4 flex-shrink-0"
+                          viewBox="0 0 24 24"
+                          fill="currentColor"
+                        >
+                          <path d="M8 5v14l11-7z" />
+                        </svg>
+                        Watch Trailer
+                      </a>
                     </div>
                   </div>
                 </div>
