@@ -80,13 +80,19 @@ export function Navbar() {
     setMobileOpen(false);
   }, [pathname]);
 
-  // Briefly suppress desktop dropdown hover on route change so they
-  // don't stay open when the cursor hasn't moved after clicking a link.
+  // Suppress desktop dropdown hover on route change until the mouse moves.
+  // A zero-timeout was not enough — the hover CSS re-triggers instantly if
+  // the cursor hasn't left the nav group. We listen for the first mousemove
+  // event instead, which fires as soon as the user nudges the mouse.
   const [suppressDropdowns, setSuppressDropdowns] = useState(false);
   useEffect(() => {
     setSuppressDropdowns(true);
-    const t = setTimeout(() => setSuppressDropdowns(false), 0);
-    return () => clearTimeout(t);
+    const onMove = () => {
+      setSuppressDropdowns(false);
+      window.removeEventListener("mousemove", onMove);
+    };
+    window.addEventListener("mousemove", onMove, { passive: true });
+    return () => window.removeEventListener("mousemove", onMove);
   }, [pathname]);
 
   // Lock body scroll when mobile menu is open

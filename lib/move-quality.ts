@@ -177,20 +177,90 @@ function getMovePieceDetails(
 }
 
 /**
- * A brilliant candidate must be a genuine material sacrifice: the moving piece
- * gives up more material than it captures (net loss ≥ 2 pawns). Moves that
- * merely move to an undefended square (`canBeTakenBack`) without losing material
- * are NOT sacrifices — e.g. Qc8+ where the queen gives check but is never
- * actually taken. Only `moveLosesMaterial` qualifies at any engine depth.
+ * A sacrifice is detected when:
+ * 1. A non-pawn piece moves to a square worth less than itself (net material loss)
+ * 2. The opponent has at least one CHEAPER piece that can immediately recapture
+ * 3. 1-ply lookahead: each cheap recapture is not itself a trap (original mover
+ *    can't immediately recover more material than was sacrificed)
+ *
+ * This avoids false positives like Qc8+ (queen to empty square giving check where
+ * nobody can actually take it), and "relative pin" traps where appearing to give
+ * a piece away actually wins material back immediately.
+ */
+function isSacrificialMove(fenBefore: string, moveUci: string | null): boolean {
+  const parsed = normalizeUci(moveUci);
+  if (!parsed) return false;
+
+  try {
+    const g = new Chess(fenBefore);
+    const piece = g.get(parsed.from as Parameters<Chess["get"]>[0]);
+    if (!piece) return false;
+
+    // Pawns are excluded — pawn brilliancy is evaluated by engine eval, not material loss
+    if (piece.type === "p") return false;
+
+    const capturedPiece = g.get(parsed.to as Parameters<Chess["get"]>[0]);
+    const movedValue = PIECE_VALUES[piece.type] ?? 0;
+    const capturedValue = capturedPiece
+      ? (PIECE_VALUES[capturedPiece.type] ?? 0)
+      : 0;
+
+    // Moving piece must be worth MORE than what it captures
+    if (movedValue <= capturedValue) return false;
+
+    const result = g.move({
+      from: parsed.from,
+      to: parsed.to,
+      promotion: parsed.promotion ?? "q",
+    } as any);
+    if (!result) return false;
+
+    // Opponent must be able to immediately recapture with a CHEAPER piece
+    const cheapCaptures = g.moves({ verbose: true }).filter((m) => {
+      if (m.to !== parsed.to) return false;
+      const attackerValue = PIECE_VALUES[m.piece] ?? 0;
+      return attackerValue < movedValue;
+    });
+    if (cheapCaptures.length === 0) return false;
+
+    // 1-ply lookahead: the cheap recapture must NOT be a trap where the original
+    // mover immediately wins back more than the opponent gained from recapturing
+    return cheapCaptures.some((cap) => {
+      const capValue = PIECE_VALUES[cap.piece] ?? 0;
+      const netGainForOpponent = movedValue - capValue;
+      const g2 = new Chess(g.fen());
+      const capResult = g2.move({
+        from: cap.from,
+        to: cap.to,
+        promotion: "q",
+      } as any);
+      if (!capResult) return false;
+      const opponentIsActuallyLosing = g2
+        .moves({ verbose: true })
+        .some((m2) => {
+          if (!m2.captured) return false;
+          const winVal = PIECE_VALUES[m2.captured] ?? 0;
+          const costVal = PIECE_VALUES[m2.piece] ?? 0;
+          return winVal - costVal > netGainForOpponent;
+        });
+      return !opponentIsActuallyLosing;
+    });
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * A brilliant candidate is a genuine piece sacrifice: the moving non-pawn piece
+ * gives up more material than it captures, the opponent can immediately recapture
+ * with a cheaper piece, and the recapture is not a hidden trap.
  */
 export function isBrilliantCandidate(
   fenBefore: string,
   moveUci: string | null,
   engineDepth?: number,
 ) {
-  const move = getMovePieceDetails(fenBefore, moveUci);
-  if (!move) return false;
-  return move.moveLosesMaterial;
+  return isSacrificialMove(fenBefore, moveUci);
 }
 
 export function isBookMove(moveIndex: number, cpLoss: number) {

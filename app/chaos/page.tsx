@@ -4393,6 +4393,18 @@ export default function ChaosChessPage() {
   const eventLogRef = useRef<HTMLDivElement>(null);
   const boardContainerRef = useRef<HTMLDivElement>(null);
 
+  // Scroll to the top of the page whenever a game begins so the board is
+  // immediately visible regardless of where the user was on the setup screen.
+  useEffect(() => {
+    if (gameStatus === "playing") {
+      const t = setTimeout(
+        () => window.scrollTo({ top: 0, behavior: "smooth" }),
+        80,
+      );
+      return () => clearTimeout(t);
+    }
+  }, [gameStatus]);
+
   /* ── Measure board size via ResizeObserver (react-chessboard v5 removed onBoardWidthChange) ── */
   useEffect(() => {
     const el = boardContainerRef.current;
@@ -11213,6 +11225,25 @@ export default function ChaosChessPage() {
             </svg>
             Join the Discord — strategies, bugs &amp; updates
           </a>
+
+          {/* YouTube intro short */}
+          <div className="mt-8 w-full max-w-[280px]">
+            <p className="mb-3 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              New here? Watch the intro
+            </p>
+            <div
+              className="relative overflow-hidden rounded-2xl border border-white/[0.08] shadow-xl"
+              style={{ aspectRatio: "9/16" }}
+            >
+              <iframe
+                src="https://www.youtube.com/embed/_jN0zakLses"
+                title="Chaos Chess intro"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                className="absolute inset-0 h-full w-full"
+              />
+            </div>
+          </div>
         </div>
       </div>
     );

@@ -721,7 +721,7 @@ function normalizeUci(move: string | null): MoveSquare | null {
 
 /* ── Game cache ─────────────────────────────────────── */
 
-const GAME_CACHE_PREFIX = "fc-gcache-";
+const GAME_CACHE_PREFIX = "fc-gcache-v2-";
 const GAME_CACHE_MAX_GAMES = 5000;
 const GAME_CACHE_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
 
