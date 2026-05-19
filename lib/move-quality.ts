@@ -177,11 +177,11 @@ function getMovePieceDetails(
 }
 
 /**
- * At engine depth ≤ 12, engines can't fully verify complicated positional
- * sacrifices, so `canBeTakenBack` alone generates too many false positives
- * (humans often find moves the engine misevaluates at shallow depth).
- * Require actual material loss (`moveLosesMaterial`) at low depths so only
- * real piece/exchange sacrifices qualify as brilliant candidates.
+ * A brilliant candidate must be a genuine material sacrifice: the moving piece
+ * gives up more material than it captures (net loss ≥ 2 pawns). Moves that
+ * merely move to an undefended square (`canBeTakenBack`) without losing material
+ * are NOT sacrifices — e.g. Qc8+ where the queen gives check but is never
+ * actually taken. Only `moveLosesMaterial` qualifies at any engine depth.
  */
 export function isBrilliantCandidate(
   fenBefore: string,
@@ -190,17 +190,7 @@ export function isBrilliantCandidate(
 ) {
   const move = getMovePieceDetails(fenBefore, moveUci);
   if (!move) return false;
-  // A brilliant move must be a genuine piece sacrifice:
-  // - moveLosesMaterial: you give up more material than you take (net material loss >= 2 pawns)
-  // - canBeTakenBack: you move to an undefended square where the opponent can recapture for free
-  // Captures that GAIN material (e.g. taking a free queen) are never brilliant — that's just correct play.
-  //
-  // At depth ≤ 12 we require an actual material sacrifice because shallow
-  // analysis can't reliably distinguish a positional compensation from noise.
-  if (engineDepth !== undefined && engineDepth <= 12) {
-    return move.moveLosesMaterial;
-  }
-  return move.moveLosesMaterial || move.canBeTakenBack;
+  return move.moveLosesMaterial;
 }
 
 export function isBookMove(moveIndex: number, cpLoss: number) {

@@ -676,6 +676,11 @@ async function fetchChessComGamesInReverse(
         gameUrl:
           game.url ??
           (() => {
+            // Chess.com PGNs include a [Link "https://..."] header with the
+            // direct game URL; the [Site "Chess.com"] tag is never a URL.
+            const linkMatch = game.pgn?.match(/\[Link\s+"([^"]+)"\]/);
+            const linkUrl = linkMatch?.[1];
+            if (linkUrl && linkUrl.startsWith("http")) return linkUrl;
             const m = game.pgn?.match(/\[Site\s+"([^"]+)"\]/);
             const site = m?.[1];
             return site && site.startsWith("http") ? site : undefined;

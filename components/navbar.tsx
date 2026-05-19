@@ -80,6 +80,15 @@ export function Navbar() {
     setMobileOpen(false);
   }, [pathname]);
 
+  // Briefly suppress desktop dropdown hover on route change so they
+  // don't stay open when the cursor hasn't moved after clicking a link.
+  const [suppressDropdowns, setSuppressDropdowns] = useState(false);
+  useEffect(() => {
+    setSuppressDropdowns(true);
+    const t = setTimeout(() => setSuppressDropdowns(false), 0);
+    return () => clearTimeout(t);
+  }, [pathname]);
+
   // Lock body scroll when mobile menu is open
   useEffect(() => {
     document.body.style.overflow = mobileOpen ? "hidden" : "";
@@ -135,6 +144,7 @@ export function Navbar() {
     "h-3 w-3 text-slate-500 transition-transform group-hover:rotate-180 group-focus-within:rotate-180";
   const desktopDropdownClassName =
     "invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100";
+  const desktopGroupCn = `group relative${suppressDropdowns ? " pointer-events-none" : ""}`;
 
   const closeMobileMenu = () => setMobileOpen(false);
   const handleRoastClick = () => {
@@ -283,7 +293,7 @@ export function Navbar() {
           {/* ── Desktop nav — grouped dropdowns ── */}
           <div className="hidden items-center gap-0.5 lg:flex">
             {/* Analyze */}
-            <div className="group relative">
+            <div className={desktopGroupCn}>
               <button
                 type="button"
                 aria-haspopup="true"
@@ -335,7 +345,7 @@ export function Navbar() {
             </div>
 
             {/* Play */}
-            <div className="group relative">
+            <div className={desktopGroupCn}>
               <button
                 type="button"
                 aria-haspopup="true"
@@ -413,7 +423,7 @@ export function Navbar() {
             </div>
 
             {/* Learn */}
-            <div className="group relative">
+            <div className={desktopGroupCn}>
               <button
                 type="button"
                 aria-haspopup="true"
@@ -502,7 +512,7 @@ export function Navbar() {
             </div>
 
             {/* Community */}
-            <div className="group relative">
+            <div className={desktopGroupCn}>
               <button
                 type="button"
                 aria-haspopup="true"
@@ -550,7 +560,7 @@ export function Navbar() {
             </div>
 
             {/* Explore */}
-            <div className="group relative">
+            <div className={desktopGroupCn}>
               <button
                 type="button"
                 aria-haspopup="true"
