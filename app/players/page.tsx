@@ -122,13 +122,16 @@ export default function PlayersIndexPage() {
 
           {/* Header */}
           <header className="mb-12 text-center">
-            <h1 className="mb-4 text-5xl font-bold tracking-tight sm:text-6xl">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-500/20 bg-amber-500/[0.08] px-4 py-1.5 text-xs font-semibold uppercase tracking-widest text-amber-300">
+              ♛ {totalGms} Grandmaster Profiles
+            </div>
+            <h1 className="mb-4 text-5xl font-black tracking-tight text-white sm:text-6xl">
               Chess Grandmasters
             </h1>
-            <p className="mx-auto max-w-2xl text-xl text-slate-400">
-              In-depth profiles of the {totalGms} greatest players in chess
-              history — their opening repertoires, playing styles, career
-              highlights, and the lessons you can steal for your own game.
+            <p className="mx-auto max-w-2xl text-lg text-slate-400">
+              In-depth profiles of the greatest players in chess history — their
+              opening repertoires, playing styles, career highlights, and the
+              lessons you can steal for your own game.
             </p>
           </header>
 
@@ -139,14 +142,24 @@ export default function PlayersIndexPage() {
             const color = ERA_COLORS[era];
 
             return (
-              <section key={era} className="mb-14">
-                <div className="mb-6">
-                  <h2 className={`mb-1 text-2xl font-bold text-${color}-400`}>
-                    {ERA_LABELS[era]}
-                  </h2>
-                  <p className="text-sm text-slate-500">
-                    {ERA_DESCRIPTIONS[era]}
-                  </p>
+              <section key={era} className="mb-16">
+                <div className="mb-7 flex items-center gap-4">
+                  <div
+                    className={`h-px flex-1 bg-gradient-to-r from-${color}-500/40 to-transparent`}
+                  />
+                  <div className="text-center">
+                    <h2
+                      className={`text-2xl font-black text-${color}-300 tracking-tight`}
+                    >
+                      {ERA_LABELS[era]}
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {ERA_DESCRIPTIONS[era]}
+                    </p>
+                  </div>
+                  <div
+                    className={`h-px flex-1 bg-gradient-to-l from-${color}-500/40 to-transparent`}
+                  />
                 </div>
 
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -154,53 +167,72 @@ export default function PlayersIndexPage() {
                     <Link
                       key={gm.id}
                       href={`/players/${gm.id}`}
-                      className="group rounded-xl border border-slate-700 bg-slate-800/50 p-5 transition-colors hover:border-slate-500 hover:bg-slate-800"
+                      className={`group relative overflow-hidden rounded-2xl border bg-slate-900 p-5 transition-all duration-200 hover:shadow-lg border-${color}-500/20 hover:border-${color}-400/50 hover:bg-slate-800/80 hover:shadow-${color}-900/30`}
                     >
-                      <div className="mb-3 flex items-start gap-3">
-                        {gm.imageUrl ? (
-                          <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full ring-2 ring-slate-600 group-hover:ring-slate-400 transition-all">
-                            <Image
-                              src={gm.imageUrl}
-                              alt={gm.name}
-                              fill
-                              className="object-cover object-top"
-                              sizes="56px"
-                            />
+                      {/* Era-tinted gradient overlay */}
+                      <div
+                        className={`pointer-events-none absolute inset-0 bg-gradient-to-br from-${color}-500/[0.07] via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+                      />
+                      <div className="relative">
+                        <div className="mb-3 flex items-start gap-3">
+                          {gm.imageUrl ? (
+                            <div
+                              className={`relative h-16 w-16 shrink-0 overflow-hidden rounded-full ring-2 ring-${color}-500/30 group-hover:ring-${color}-400/70 transition-all duration-200 shadow-md shadow-black/40`}
+                            >
+                              <Image
+                                src={gm.imageUrl}
+                                alt={gm.name}
+                                fill
+                                className="object-cover object-top"
+                                sizes="64px"
+                              />
+                            </div>
+                          ) : (
+                            <div
+                              className={`flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-${color}-900/40 text-2xl ring-2 ring-${color}-500/30`}
+                            >
+                              ♟
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <h3
+                                className={`font-bold text-white text-lg group-hover:text-${color}-300 transition-colors duration-200`}
+                              >
+                                {gm.name}
+                              </h3>
+                              {gm.worldChampion && (
+                                <span className="shrink-0 rounded-full bg-yellow-500/15 px-2 py-0.5 text-xs font-semibold text-yellow-300 ring-1 ring-yellow-400/30">
+                                  ♛ WC
+                                </span>
+                              )}
+                            </div>
+                            <p className="mt-0.5 text-xs text-slate-400">
+                              {gm.nationality} · {gm.born}–
+                              {gm.died ?? "present"}
+                              {gm.peakRating && (
+                                <span
+                                  className={`ml-1.5 font-semibold text-${color}-400/80`}
+                                >
+                                  Peak {gm.peakRating}
+                                </span>
+                              )}
+                            </p>
                           </div>
-                        ) : (
-                          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-slate-700 text-2xl ring-2 ring-slate-600">
-                            ♟
-                          </div>
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <h3 className="font-bold text-white text-lg group-hover:text-orange-300 transition-colors">
-                              {gm.name}
-                            </h3>
-                            {gm.worldChampion && (
-                              <span className="shrink-0 rounded-full bg-yellow-500/10 px-2 py-0.5 text-xs font-medium text-yellow-400 ring-1 ring-yellow-500/20">
-                                ♛
-                              </span>
-                            )}
-                          </div>
-                          <p className="mt-0.5 text-xs text-slate-500">
-                            {gm.nationality} · {gm.born}–{gm.died ?? "present"}
-                            {gm.peakRating && ` · Peak: ${gm.peakRating}`}
-                          </p>
                         </div>
-                      </div>
-                      <p className="mb-3 text-sm text-slate-400 line-clamp-2">
-                        {gm.tagline}
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {gm.style.slice(0, 3).map((s) => (
-                          <span
-                            key={s}
-                            className={`rounded-full bg-${color}-500/10 px-2 py-0.5 text-xs text-${color}-400`}
-                          >
-                            {s}
-                          </span>
-                        ))}
+                        <p className="mb-3 text-sm text-slate-300 line-clamp-2 leading-snug">
+                          {gm.tagline}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {gm.style.slice(0, 3).map((s) => (
+                            <span
+                              key={s}
+                              className={`rounded-full border border-${color}-500/25 bg-${color}-500/10 px-2.5 py-0.5 text-xs font-medium text-${color}-300`}
+                            >
+                              {s}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </Link>
                   ))}

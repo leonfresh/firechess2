@@ -1144,7 +1144,7 @@ async function analyzeBrilliantMovesFromGames(
           userUci &&
           fenAfter &&
           ply >= 6 &&
-          isBrilliantCandidate(fenBefore, userUci)
+          isBrilliantCandidate(fenBefore, userUci, engineDepth)
         ) {
           const screenDepth = Math.max(7, engineDepth - 4);
           const screenBefore = await stockfishPool.evaluateFen(
@@ -1183,6 +1183,7 @@ async function analyzeBrilliantMovesFromGames(
                 evalAfterMover: screenAfterCp,
                 isBestMove: !!isBestScreenMove,
                 moveIndex: ply,
+                engineDepth,
               })
             ) {
               const pvResult = await stockfishPool.getPrincipalVariation(

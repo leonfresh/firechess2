@@ -50,6 +50,7 @@ const plans = [
       "Dedicated tactics & endgame drill modes",
       "Full Mental Game breakdown — archetype, color stats, momentum, streaks",
       "Deep Analysis — full study plans & coaching tips per dimension",
+      "💎 Brilliant Move Detection — real sacrifice moments from your games (not available on AimChess or Chess.com analysis)",
       "⚡ Chaos Chess: 4 Opening Anomaly choices (vs 2 for Free)",
       "⚡ Chaos Chess: all 22 Tarot anomalies unlocked",
     ],
@@ -335,6 +336,51 @@ export default function PricingPage() {
                 </div>
               </article>
             ))}
+          </div>
+
+          {/* Brilliant Move Detection spotlight */}
+          <div className="relative overflow-hidden rounded-2xl border border-cyan-500/25 bg-gradient-to-br from-cyan-500/[0.07] via-slate-900 to-slate-950 p-6 md:p-8">
+            <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-cyan-400/10 blur-[80px]" />
+            <div className="relative flex flex-col gap-5 md:flex-row md:items-center md:gap-8">
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-cyan-500/30 bg-cyan-500/10 text-4xl shadow-lg shadow-cyan-900/30">
+                💎
+              </div>
+              <div className="flex-1 space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-xl font-black text-white">
+                    Brilliant Move Detection
+                  </h3>
+                  <span className="rounded-full border border-cyan-500/25 bg-cyan-500/10 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-cyan-400">
+                    Pro Exclusive
+                  </span>
+                  <span className="rounded-full border border-red-500/20 bg-red-500/[0.07] px-2.5 py-0.5 text-[11px] font-semibold text-red-400">
+                    Not on AimChess
+                  </span>
+                </div>
+                <p className="text-sm leading-relaxed text-slate-300">
+                  FireChess scans your real games for genuine piece sacrifices —
+                  moves where you actually gave up material for a positional or
+                  tactical edge, and the engine confirms it was objectively
+                  correct. Unlike Chess.com&apos;s move badges, this cross-game
+                  scanner surfaces your <em>best</em> moments across hundreds of
+                  games in one place.
+                </p>
+                <div className="flex flex-wrap gap-3 pt-1 text-xs text-slate-400">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+                    Real material sacrifices only — no false positives
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+                    Verified by Stockfish at higher depths
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
+                    Replay the exact position with the PV line
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Competitor comparison — Aimchess vs FireChess */}
@@ -701,6 +747,7 @@ export default function PricingPage() {
                     ],
                     ["Motif pattern analysis", "—", "✓", "✓"],
                     ["Time pressure detection", "—", "✓", "✓"],
+                    ["💎 Brilliant Move Detection", "—", "✓", "✓"],
                     ["Tactics drill mode", "—", "✓", "✓"],
                     ["Endgame drill mode", "—", "✓", "✓"],
                     ["Mental game: basic stats", "✓", "✓", "✓"],

@@ -158,9 +158,11 @@ function getMovePieceDetails(
     const capturedValue = move.captured ? PIECE_VALUES[move.captured] : 0;
     const moveLosesMaterial = movedValue - capturedValue >= 2;
     const canBeTakenBack =
-      countAttackers(beforeChess.fen(), move.to, move.color === "w" ? "b" : "w") >
-        0 &&
-      countAttackers(beforeChess.fen(), move.to, move.color) === 0;
+      countAttackers(
+        beforeChess.fen(),
+        move.to,
+        move.color === "w" ? "b" : "w",
+      ) > 0 && countAttackers(beforeChess.fen(), move.to, move.color) === 0;
 
     return {
       san: move.san,
@@ -174,13 +176,30 @@ function getMovePieceDetails(
   }
 }
 
-export function isBrilliantCandidate(fenBefore: string, moveUci: string | null) {
+/**
+ * At engine depth ≤ 12, engines can't fully verify complicated positional
+ * sacrifices, so `canBeTakenBack` alone generates too many false positives
+ * (humans often find moves the engine misevaluates at shallow depth).
+ * Require actual material loss (`moveLosesMaterial`) at low depths so only
+ * real piece/exchange sacrifices qualify as brilliant candidates.
+ */
+export function isBrilliantCandidate(
+  fenBefore: string,
+  moveUci: string | null,
+  engineDepth?: number,
+) {
   const move = getMovePieceDetails(fenBefore, moveUci);
   if (!move) return false;
   // A brilliant move must be a genuine piece sacrifice:
   // - moveLosesMaterial: you give up more material than you take (net material loss >= 2 pawns)
   // - canBeTakenBack: you move to an undefended square where the opponent can recapture for free
   // Captures that GAIN material (e.g. taking a free queen) are never brilliant — that's just correct play.
+  //
+  // At depth ≤ 12 we require an actual material sacrifice because shallow
+  // analysis can't reliably distinguish a positional compensation from noise.
+  if (engineDepth !== undefined && engineDepth <= 12) {
+    return move.moveLosesMaterial;
+  }
   return move.moveLosesMaterial || move.canBeTakenBack;
 }
 
@@ -196,6 +215,7 @@ export function isBrilliantMove(args: {
   evalAfterMover: number;
   isBestMove: boolean;
   moveIndex?: number;
+  engineDepth?: number;
 }) {
   const {
     fenBefore,
@@ -205,6 +225,7 @@ export function isBrilliantMove(args: {
     evalAfterMover,
     isBestMove,
     moveIndex = 99,
+    engineDepth,
   } = args;
 
   // Must be the best (or nearly best) move
@@ -220,12 +241,19 @@ export function isBrilliantMove(args: {
   // If the position drops below -1 pawn after the sacrifice, it's not brilliant.
   if (evalAfterMover < -100) return false;
 
-  // Must be a genuine piece sacrifice — gaining material by taking a free piece is never brilliant.
-  const isSacrifice = isBrilliantCandidate(fenBefore, moveUci);
+  // Must be a genuine piece sacrifice — pass depth so low-depth scans require
+  // actual material loss rather than just "can be taken back" heuristic.
+  const isSacrifice = isBrilliantCandidate(fenBefore, moveUci, engineDepth);
   if (!isSacrifice) return false;
 
-  // The sacrifice must meaningfully improve the position or create a winning advantage.
+  // At lower depths the eval is noisier — require a stronger positional gain
+  // to avoid false positives from shallow evaluation errors.
   const evalGain = evalAfterMover - evalBeforeMover;
+  const isLowDepth = engineDepth !== undefined && engineDepth <= 12;
+  if (isLowDepth) {
+    // Low depth: require a convincing swing AND a clear advantage after
+    return evalGain >= 150 && evalAfterMover >= 250;
+  }
   return evalGain >= 80 || evalAfterMover >= 150;
 }
 
@@ -259,6 +287,8 @@ export function classifyMoveQuality(args: {
       evalAfterMover,
       isBestMove,
       moveIndex,
+      // classifyMoveQuality doesn't have depth context; caller should use
+      // isBrilliantMove directly with engineDepth for depth-aware checks.
     })
   ) {
     return "brilliant";

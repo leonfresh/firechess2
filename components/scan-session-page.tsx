@@ -12,7 +12,6 @@ import { useSession } from "@/components/session-provider";
 import {
   analyzeBrilliantMovesInBrowser,
   analyzeOpeningLeaksInBrowser,
-  fetchGameUrlMapInBrowser,
   type AnalysisProgress,
 } from "@/lib/client-analysis";
 import { earnCoins } from "@/lib/coins";
@@ -124,10 +123,9 @@ export function ScanSessionPage({
   const [brilliantBackfillState, setBrilliantBackfillState] = useState<
     "idle" | "running" | "done" | "error"
   >("idle");
-  const [patchGameLinksState, setPatchGameLinksState] = useState<
-    "idle" | "running" | "done" | "error"
+  const [adminRerunState, setAdminRerunState] = useState<
+    "idle" | "resetting" | "error"
   >("idle");
-  const [patchGameLinksCount, setPatchGameLinksCount] = useState(0);
   const [reportMetaState, setReportMetaState] = useState<
     "idle" | "running" | "done" | "error"
   >("idle");
@@ -651,81 +649,41 @@ export function ScanSessionPage({
     }
   };
 
-  const handlePatchGameLinks = async () => {
-    if (!isAdmin || !scan.result) return;
-    setPatchGameLinksState("running");
-    setPatchGameLinksCount(0);
+  const handleAdminRerun = async () => {
+    if (!isAdmin || adminRerunState === "resetting") return;
+    setAdminRerunState("resetting");
     try {
-      const urlMap = await fetchGameUrlMapInBrowser(scan.chessUsername, {
-        source: scan.config.source,
-        scanMode: scan.config.scanMode,
-        timeControl: scan.config.speed,
-        maxGames: scan.config.maxGames,
-        maxOpeningMoves: scan.config.maxMoves,
-        cpLossThreshold: scan.config.cpThreshold,
-        engineDepth: scan.config.engineDepth,
-        maxTactics: scan.config.maxTactics ?? Infinity,
-        maxEndgames: scan.config.maxEndgames ?? Infinity,
-        since: scan.config.since ?? undefined,
-      });
-
-      let patched = 0;
-      const result = scan.result;
-
-      const nextResult: AnalyzeResponse = {
-        ...result,
-        missedTactics: result.missedTactics.map((t) => {
-          const url = urlMap[t.gameIndex];
-          if (url) patched++;
-          return url ? { ...t, gameUrl: url } : t;
-        }),
-        endgameMistakes: result.endgameMistakes.map((t) => {
-          const url = urlMap[t.gameIndex];
-          if (url) patched++;
-          return url ? { ...t, gameUrl: url } : t;
-        }),
-        brilliantMoves: (result.brilliantMoves ?? []).map((t) => {
-          const url = urlMap[t.gameIndex];
-          if (url) patched++;
-          return url ? { ...t, gameUrl: url } : t;
-        }),
-        timeManagement: result.timeManagement
-          ? {
-              ...result.timeManagement,
-              moments: result.timeManagement.moments.map((t) => {
-                const url = urlMap[t.gameIndex];
-                if (url) patched++;
-                return url ? { ...t, gameUrl: url } : t;
-              }),
-            }
-          : null,
-      };
-
-      const headers: HeadersInit = { "Content-Type": "application/json" };
-      if (ownerToken) headers["x-scan-owner-token"] = ownerToken;
-
       const res = await fetch(`/api/scans/${scan.id}`, {
         method: "PATCH",
-        headers,
-        body: JSON.stringify({ result: nextResult }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          status: "processing",
+          result: null,
+          reportMeta: null,
+          error: null,
+        }),
       });
-
       if (!res.ok) {
         const json = (await res.json().catch(() => null)) as {
           error?: string;
         } | null;
-        throw new Error(json?.error ?? "Failed to patch game links.");
+        throw new Error(json?.error ?? "Failed to restart the report.");
       }
-
+      analysisStartedRef.current = false;
+      setPerPhaseProgress({});
+      setSectionsReady(new Set());
+      setProgress({ phase: "fetch", message: "Preparing scan", percent: 0 });
+      setSaveState("idle");
+      setAdminRerunState("idle");
       setScan((current) => ({
         ...current,
-        result: nextResult,
-        updatedAt: new Date().toISOString(),
+        status: "processing",
+        result: null,
+        reportMeta: null,
+        error: null,
       }));
-      setPatchGameLinksCount(patched);
-      setPatchGameLinksState("done");
     } catch {
-      setPatchGameLinksState("error");
+      setAdminRerunState("error");
     }
   };
 
@@ -785,26 +743,110 @@ export function ScanSessionPage({
                 <h1 className="mt-4 text-3xl font-black tracking-tight text-white sm:text-4xl">
                   Report for {scan.chessUsername}
                 </h1>
-                <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-300 sm:text-base">
-                  Dedicated report page, shareable link, and a cleaner handoff
-                  out of the homepage.
-                </p>
-                <div className="mt-5 flex flex-wrap gap-2 text-xs">
-                  <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-slate-300">
-                    {scan.result?.gamesAnalyzed ?? scan.config.maxGames} games
-                  </span>
+                <div className="mt-4 flex flex-wrap gap-3">
+                  {/* Key stats */}
+                  {scan.result?.gamesAnalyzed ? (
+                    <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3.5 py-2">
+                      <span className="text-lg leading-none">♟</span>
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                          Games
+                        </p>
+                        <p className="text-sm font-bold text-white">
+                          {scan.result.gamesAnalyzed.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
+                  {liveReportMeta?.estimatedAccuracy ? (
+                    <div className="flex items-center gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.07] px-3.5 py-2">
+                      <span className="text-lg leading-none">🎯</span>
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-500/70">
+                          Accuracy
+                        </p>
+                        <p className="text-sm font-bold text-emerald-300">
+                          {liveReportMeta.estimatedAccuracy.toFixed(1)}%
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
+                  {liveReportMeta?.estimatedRating ? (
+                    <div className="flex items-center gap-2 rounded-xl border border-cyan-500/20 bg-cyan-500/[0.07] px-3.5 py-2">
+                      <span className="text-lg leading-none">📈</span>
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-cyan-500/70">
+                          Est. Rating
+                        </p>
+                        <p className="text-sm font-bold text-cyan-300">
+                          {liveReportMeta.estimatedRating.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
+                  {scan.result && scan.result.leaks.length > 0 ? (
+                    <div className="flex items-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/[0.07] px-3.5 py-2">
+                      <span className="text-lg leading-none">📚</span>
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-500/70">
+                          Opening Leaks
+                        </p>
+                        <p className="text-sm font-bold text-amber-300">
+                          {scan.result.leaks.length}
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
+                  {scan.result && scan.result.missedTactics.length > 0 ? (
+                    <div className="flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/[0.07] px-3.5 py-2">
+                      <span className="text-lg leading-none">⚔️</span>
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-red-500/70">
+                          Missed Tactics
+                        </p>
+                        <p className="text-sm font-bold text-red-300">
+                          {scan.result.missedTactics.length}
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
+                  {scan.result &&
+                  scan.result.brilliantMoves &&
+                  scan.result.brilliantMoves.length > 0 ? (
+                    <div className="flex items-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/[0.07] px-3.5 py-2">
+                      <span className="text-lg leading-none">💎</span>
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-cyan-400/70">
+                          Brilliant Moves
+                        </p>
+                        <p className="text-sm font-bold text-cyan-300">
+                          {scan.result.brilliantMoves.length}
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+                <div className="mt-4 flex flex-wrap gap-2 text-xs">
                   <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-slate-300">
                     Depth {scan.config.engineDepth}
                   </span>
-                  <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-slate-300">
+                  <span
+                    className={`rounded-full border px-3 py-1 font-medium ${
+                      scan.status === "ready"
+                        ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+                        : scan.status === "failed"
+                          ? "border-red-500/20 bg-red-500/10 text-red-300"
+                          : "border-amber-500/20 bg-amber-500/10 text-amber-300"
+                    }`}
+                  >
                     {scan.status === "ready"
-                      ? "Ready"
+                      ? "✓ Complete"
                       : scan.status === "failed"
-                        ? "Failed"
-                        : "Running"}
+                        ? "✗ Failed"
+                        : "⏳ Running"}
                   </span>
                   {liveReportMeta ? (
-                    <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-emerald-300">
+                    <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-3 py-1 font-semibold text-cyan-300">
                       {liveReportMeta.vibeTitle}
                     </span>
                   ) : null}
@@ -879,20 +921,18 @@ export function ScanSessionPage({
                           : "Refresh title & stats"}
                   </button>
                 ) : null}
-                {isAdmin && scan.status === "ready" && scan.result ? (
+                {isAdmin ? (
                   <button
                     type="button"
-                    onClick={handlePatchGameLinks}
-                    disabled={patchGameLinksState === "running"}
+                    onClick={handleAdminRerun}
+                    disabled={adminRerunState === "resetting"}
                     className="rounded-full border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-100 transition hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {patchGameLinksState === "running"
-                      ? "Fetching game links..."
-                      : patchGameLinksState === "error"
-                        ? "Retry game links"
-                        : patchGameLinksState === "done"
-                          ? `Game links patched (${patchGameLinksCount})`
-                          : "Patch game links"}
+                    {adminRerunState === "resetting"
+                      ? "Rerunning..."
+                      : adminRerunState === "error"
+                        ? "Retry rerun"
+                        : "Rerun full scan"}
                   </button>
                 ) : null}
                 {saveState === "saved" ? (
