@@ -25,7 +25,10 @@ export async function POST(req: NextRequest) {
   const sig = req.headers.get("stripe-signature");
 
   if (!sig) {
-    return NextResponse.json({ error: "Missing stripe-signature" }, { status: 400 });
+    return NextResponse.json(
+      { error: "Missing stripe-signature" },
+      { status: 400 },
+    );
   }
 
   let event: Stripe.Event;
@@ -60,7 +63,10 @@ export async function POST(req: NextRequest) {
         .insert(subscriptions)
         .values({
           userId,
-          stripeCustomerId: typeof session.customer === "string" ? session.customer : session.customer?.id ?? null,
+          stripeCustomerId:
+            typeof session.customer === "string"
+              ? session.customer
+              : (session.customer?.id ?? null),
           stripeSubscriptionId: subscriptionId ?? null,
           plan: isLifetime ? "lifetime" : "pro",
           status: "active",
@@ -68,7 +74,10 @@ export async function POST(req: NextRequest) {
         .onConflictDoUpdate({
           target: subscriptions.userId,
           set: {
-            stripeCustomerId: typeof session.customer === "string" ? session.customer : session.customer?.id ?? null,
+            stripeCustomerId:
+              typeof session.customer === "string"
+                ? session.customer
+                : (session.customer?.id ?? null),
             stripeSubscriptionId: subscriptionId ?? null,
             plan: isLifetime ? "lifetime" : "pro",
             status: "active",
@@ -80,10 +89,13 @@ export async function POST(req: NextRequest) {
       // session.discounts is already present in the webhook event (no expand needed).
       // Each discount item has promotion_code as a string ID like "promo_XXXX".
       try {
-        const discounts = session.discounts as Array<{
-          coupon: string;
-          promotion_code: string | null;
-        }> | null | undefined;
+        const discounts = session.discounts as
+          | Array<{
+              coupon: string;
+              promotion_code: string | null;
+            }>
+          | null
+          | undefined;
 
         const promoCodeId = discounts?.[0]?.promotion_code ?? null;
 
@@ -98,7 +110,9 @@ export async function POST(req: NextRequest) {
           if (affiliate) {
             // amount_total is in cents, already after discount
             const amountCents = session.amount_total ?? 0;
-            const commissionCents = Math.round(amountCents * affiliate.commissionPct / 100);
+            const commissionCents = Math.round(
+              (amountCents * affiliate.commissionPct) / 100,
+            );
 
             await db.insert(affiliateReferrals).values({
               affiliateId: affiliate.id,
@@ -108,6 +122,32 @@ export async function POST(req: NextRequest) {
               amountCents,
               commissionCents,
             });
+          }
+        } else {
+          // No promo code — try ?ref= cookie-based attribution
+          const refSlug = session.metadata?.ref ?? null;
+          if (refSlug) {
+            const [refAffiliate] = await db
+              .select()
+              .from(affiliates)
+              .where(eq(affiliates.refSlug, refSlug))
+              .limit(1);
+
+            if (refAffiliate?.active) {
+              const amountCents = session.amount_total ?? 0;
+              const commissionCents = Math.round(
+                (amountCents * refAffiliate.commissionPct) / 100,
+              );
+
+              await db.insert(affiliateReferrals).values({
+                affiliateId: refAffiliate.id,
+                userId,
+                stripeSessionId: session.id,
+                planType: isLifetime ? "lifetime" : "pro",
+                amountCents,
+                commissionCents,
+              });
+            }
           }
         }
       } catch (affiliateErr) {
@@ -121,7 +161,8 @@ export async function POST(req: NextRequest) {
     /* ── Subscription updated (renewal, payment issue, etc.) ── */
     case "customer.subscription.updated": {
       const sub = event.data.object as Stripe.Subscription;
-      const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
+      const customerId =
+        typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
       if (!customerId) break;
 
       // Don't downgrade lifetime users
@@ -134,9 +175,7 @@ export async function POST(req: NextRequest) {
 
       const isPro = sub.status === "active" || sub.status === "trialing";
       const periodEndTs = (sub as any).current_period_end as number | undefined;
-      const periodEnd = periodEndTs
-        ? new Date(periodEndTs * 1000)
-        : null;
+      const periodEnd = periodEndTs ? new Date(periodEndTs * 1000) : null;
 
       await db
         .update(subscriptions)
@@ -157,7 +196,10 @@ export async function POST(req: NextRequest) {
       // Only track renewals — first payment is already captured via checkout.session.completed
       if (invoice.billing_reason === "subscription_create") break;
 
-      const customerId = typeof invoice.customer === "string" ? invoice.customer : (invoice.customer as any)?.id;
+      const customerId =
+        typeof invoice.customer === "string"
+          ? invoice.customer
+          : (invoice.customer as any)?.id;
       if (!customerId) break;
 
       // Find the FireChess user for this Stripe customer
@@ -182,7 +224,10 @@ export async function POST(req: NextRequest) {
 
         // Get the affiliate's current commission % (may have changed since signup)
         const [affiliate] = await db
-          .select({ commissionPct: affiliates.commissionPct, active: affiliates.active })
+          .select({
+            commissionPct: affiliates.commissionPct,
+            active: affiliates.active,
+          })
           .from(affiliates)
           .where(eq(affiliates.id, originalReferral.affiliateId))
           .limit(1);
@@ -193,7 +238,9 @@ export async function POST(req: NextRequest) {
         const amountCents = invoice.amount_paid ?? 0;
         if (amountCents === 0) break;
 
-        const commissionCents = Math.round(amountCents * affiliate.commissionPct / 100);
+        const commissionCents = Math.round(
+          (amountCents * affiliate.commissionPct) / 100,
+        );
 
         await db.insert(affiliateReferrals).values({
           affiliateId: originalReferral.affiliateId,
@@ -212,7 +259,8 @@ export async function POST(req: NextRequest) {
     /* ── Subscription deleted — revert to free (but not lifetime) ── */
     case "customer.subscription.deleted": {
       const sub = event.data.object as Stripe.Subscription;
-      const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
+      const customerId =
+        typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
       if (!customerId) break;
 
       // Don't downgrade lifetime users

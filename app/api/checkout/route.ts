@@ -70,6 +70,9 @@ export async function POST(req: NextRequest) {
       });
   }
 
+  // Read ?ref= affiliate cookie (set by RefTracker client component)
+  const refSlug = req.cookies.get("fc_ref")?.value ?? null;
+
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://firechess.com";
 
   if (isLifetime) {
@@ -95,7 +98,11 @@ export async function POST(req: NextRequest) {
       payment_intent_data: {
         description: "FireChess Lifetime Pro — one-time payment, never expires",
       },
-      metadata: { userId: session.user.id, plan: "lifetime" },
+      metadata: {
+        userId: session.user.id,
+        plan: "lifetime",
+        ...(refSlug ? { ref: refSlug } : {}),
+      },
       success_url: `${appUrl}/?upgraded=lifetime`,
       cancel_url: `${appUrl}/pricing`,
     });
@@ -113,7 +120,7 @@ export async function POST(req: NextRequest) {
         quantity: 1,
       },
     ],
-    metadata: { userId: session.user.id },
+    metadata: { userId: session.user.id, ...(refSlug ? { ref: refSlug } : {}) },
     success_url: `${appUrl}/?upgraded=pro`,
     cancel_url: `${appUrl}/pricing`,
   });

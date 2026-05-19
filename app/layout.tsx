@@ -13,6 +13,8 @@ import {
 } from "@/components/json-ld";
 import { Analytics } from "@vercel/analytics/next";
 import { GoogleTranslate } from "@/components/google-translate";
+import { RefTracker } from "@/components/ref-tracker";
+import { Suspense } from "react";
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
@@ -114,6 +116,9 @@ export default function RootLayout({
           >
             Skip to content
           </a>
+          <Suspense fallback={null}>
+            <RefTracker />
+          </Suspense>
           <EmbedGuard>
             <Navbar />
           </EmbedGuard>

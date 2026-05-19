@@ -18,6 +18,7 @@ type Affiliate = {
   email: string | null;
   stripePromoCodeId: string | null;
   stripePromoCode: string | null;
+  refSlug: string | null;
   commissionPct: number;
   notes: string | null;
   active: boolean;
@@ -33,6 +34,7 @@ const EMPTY_FORM = {
   email: "",
   stripePromoCodeId: "",
   stripePromoCode: "",
+  refSlug: "",
   commissionPct: "20",
   notes: "",
 };
@@ -68,7 +70,9 @@ export default function AdminAffiliatesPage() {
         if (d.error) setListError(d.error);
         else setList(d.affiliates ?? []);
       })
-      .catch(() => setListError("Failed to load — the DB migration may not have run yet."))
+      .catch(() =>
+        setListError("Failed to load — the DB migration may not have run yet."),
+      )
       .finally(() => setFetching(false));
   };
 
@@ -90,6 +94,7 @@ export default function AdminAffiliatesPage() {
       email: a.email ?? "",
       stripePromoCodeId: a.stripePromoCodeId ?? "",
       stripePromoCode: a.stripePromoCode ?? "",
+      refSlug: a.refSlug ?? "",
       commissionPct: String(a.commissionPct),
       notes: a.notes ?? "",
     });
@@ -98,7 +103,10 @@ export default function AdminAffiliatesPage() {
   };
 
   const handleSave = async () => {
-    if (!form.name.trim()) { setError("Name is required"); return; }
+    if (!form.name.trim()) {
+      setError("Name is required");
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -141,7 +149,12 @@ export default function AdminAffiliatesPage() {
   };
 
   const handleDelete = async (a: Affiliate) => {
-    if (!confirm(`Delete affiliate "${a.name}"? This removes all referral records.`)) return;
+    if (
+      !confirm(
+        `Delete affiliate "${a.name}"? This removes all referral records.`,
+      )
+    )
+      return;
     setActionId(a.id);
     await fetch("/api/admin/affiliates", {
       method: "DELETE",
@@ -172,13 +185,19 @@ export default function AdminAffiliatesPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
-              <Link href="/admin" className="hover:text-slate-300 transition-colors">Admin</Link>
+              <Link
+                href="/admin"
+                className="hover:text-slate-300 transition-colors"
+              >
+                Admin
+              </Link>
               <span>/</span>
               <span className="text-slate-300">Affiliates</span>
             </div>
             <h1 className="text-2xl font-bold">Affiliate Program</h1>
             <p className="mt-1 text-sm text-slate-400">
-              Track YouTubers, streamers, and creators who refer users to FireChess Pro.
+              Track YouTubers, streamers, and creators who refer users to
+              FireChess Pro.
             </p>
           </div>
           <button
@@ -192,14 +211,37 @@ export default function AdminAffiliatesPage() {
         {/* Summary cards */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {[
-            { label: "Total Affiliates", value: list.length, color: "text-violet-400" },
-            { label: "Total Referrals", value: totalReferrals, color: "text-cyan-400" },
-            { label: "All-time Revenue", value: cents(totalAllTime), color: "text-emerald-400" },
-            { label: "Commissions Owed", value: cents(totalUnpaid), color: "text-amber-400" },
+            {
+              label: "Total Affiliates",
+              value: list.length,
+              color: "text-violet-400",
+            },
+            {
+              label: "Total Referrals",
+              value: totalReferrals,
+              color: "text-cyan-400",
+            },
+            {
+              label: "All-time Revenue",
+              value: cents(totalAllTime),
+              color: "text-emerald-400",
+            },
+            {
+              label: "Commissions Owed",
+              value: cents(totalUnpaid),
+              color: "text-amber-400",
+            },
           ].map((c) => (
-            <div key={c.label} className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
-              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">{c.label}</p>
-              <p className={`mt-1 text-2xl font-bold tabular-nums ${c.color}`}>{c.value}</p>
+            <div
+              key={c.label}
+              className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4"
+            >
+              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                {c.label}
+              </p>
+              <p className={`mt-1 text-2xl font-bold tabular-nums ${c.color}`}>
+                {c.value}
+              </p>
             </div>
           ))}
         </div>
@@ -217,7 +259,9 @@ export default function AdminAffiliatesPage() {
           </div>
         ) : list.length === 0 ? (
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] py-16 text-center text-slate-500">
-            No affiliates yet. Click <strong className="text-slate-400">+ Add Affiliate</strong> to get started.
+            No affiliates yet. Click{" "}
+            <strong className="text-slate-400">+ Add Affiliate</strong> to get
+            started.
           </div>
         ) : (
           <div className="space-y-3">
@@ -225,7 +269,9 @@ export default function AdminAffiliatesPage() {
               <div
                 key={a.id}
                 className={`rounded-xl border bg-white/[0.03] p-5 transition-colors ${
-                  a.active ? "border-white/[0.06]" : "border-white/[0.03] opacity-60"
+                  a.active
+                    ? "border-white/[0.06]"
+                    : "border-white/[0.03] opacity-60"
                 }`}
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -248,8 +294,26 @@ export default function AdminAffiliatesPage() {
                         {a.active ? "Active" : "Inactive"}
                       </span>
                     </div>
-                    {a.email && <p className="text-xs text-slate-500">{a.email}</p>}
-                    {a.notes && <p className="text-xs text-slate-400 italic">{a.notes}</p>}
+                    {a.email && (
+                      <p className="text-xs text-slate-500">{a.email}</p>
+                    )}
+                    {a.refSlug && (
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(
+                            `https://firechess.com/?ref=${a.refSlug}`,
+                          );
+                        }}
+                        className="mt-0.5 flex items-center gap-1 rounded bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 font-mono text-[11px] text-violet-400 hover:bg-violet-500/20 transition-colors"
+                        title="Click to copy ref link"
+                      >
+                        /?ref={a.refSlug}{" "}
+                        <span className="text-[10px] opacity-60">copy</span>
+                      </button>
+                    )}
+                    {a.notes && (
+                      <p className="text-xs text-slate-400 italic">{a.notes}</p>
+                    )}
                     {a.stripePromoCodeId && (
                       <p className="font-mono text-[10px] text-slate-600">
                         Stripe ID: {a.stripePromoCodeId}
@@ -260,11 +324,17 @@ export default function AdminAffiliatesPage() {
                   {/* Right: stats */}
                   <div className="flex flex-wrap gap-4 text-right">
                     <div>
-                      <p className="text-[10px] uppercase tracking-wide text-slate-600">Referrals</p>
-                      <p className="text-lg font-bold text-white tabular-nums">{a.totalReferrals}</p>
+                      <p className="text-[10px] uppercase tracking-wide text-slate-600">
+                        Referrals
+                      </p>
+                      <p className="text-lg font-bold text-white tabular-nums">
+                        {a.totalReferrals}
+                      </p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-wide text-slate-600">Revenue</p>
+                      <p className="text-[10px] uppercase tracking-wide text-slate-600">
+                        Revenue
+                      </p>
                       <p className="text-lg font-bold text-emerald-400 tabular-nums">
                         {cents(a.totalRevenueCents)}
                       </p>
@@ -278,10 +348,14 @@ export default function AdminAffiliatesPage() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] uppercase tracking-wide text-slate-600">Owed</p>
+                      <p className="text-[10px] uppercase tracking-wide text-slate-600">
+                        Owed
+                      </p>
                       <p
                         className={`text-lg font-bold tabular-nums ${
-                          a.unpaidCommissionCents > 0 ? "text-red-400" : "text-slate-500"
+                          a.unpaidCommissionCents > 0
+                            ? "text-red-400"
+                            : "text-slate-500"
                         }`}
                       >
                         {cents(a.unpaidCommissionCents)}
@@ -329,13 +403,33 @@ export default function AdminAffiliatesPage() {
 
         {/* How-to box */}
         <div className="rounded-xl border border-violet-500/10 bg-violet-500/[0.04] p-5 text-sm text-slate-400 space-y-2">
-          <p className="font-semibold text-slate-300">How to set up a new affiliate</p>
+          <p className="font-semibold text-slate-300">
+            How to set up a new affiliate
+          </p>
           <ol className="list-decimal list-inside space-y-1">
-            <li>In Stripe Dashboard → <strong className="text-slate-200">Coupons</strong> → create a % discount coupon (e.g. 10% off first month).</li>
-            <li>Under <strong className="text-slate-200">Promotion Codes</strong> → attach it to a code like <code className="text-cyan-400">GOTHAM</code>.</li>
-            <li>Copy the <strong className="text-slate-200">Promotion Code ID</strong> (starts with <code className="text-violet-400">promo_</code>).</li>
-            <li>Click <strong className="text-slate-200">+ Add Affiliate</strong> here, paste the ID and set the commission %.</li>
-            <li>Email the creator their code. Every sale using it auto-appears here.</li>
+            <li>
+              In Stripe Dashboard →{" "}
+              <strong className="text-slate-200">Coupons</strong> → create a %
+              discount coupon (e.g. 10% off first month).
+            </li>
+            <li>
+              Under <strong className="text-slate-200">Promotion Codes</strong>{" "}
+              → attach it to a code like{" "}
+              <code className="text-cyan-400">GOTHAM</code>.
+            </li>
+            <li>
+              Copy the{" "}
+              <strong className="text-slate-200">Promotion Code ID</strong>{" "}
+              (starts with <code className="text-violet-400">promo_</code>).
+            </li>
+            <li>
+              Click <strong className="text-slate-200">+ Add Affiliate</strong>{" "}
+              here, paste the ID and set the commission %.
+            </li>
+            <li>
+              Email the creator their code. Every sale using it auto-appears
+              here.
+            </li>
           </ol>
         </div>
       </div>
@@ -344,7 +438,9 @@ export default function AdminAffiliatesPage() {
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl space-y-4">
-            <h2 className="text-lg font-bold">{editId ? "Edit Affiliate" : "New Affiliate"}</h2>
+            <h2 className="text-lg font-bold">
+              {editId ? "Edit Affiliate" : "New Affiliate"}
+            </h2>
 
             {error && (
               <p className="rounded-lg bg-red-500/10 border border-red-500/20 px-3 py-2 text-xs text-red-400">
@@ -353,18 +449,47 @@ export default function AdminAffiliatesPage() {
             )}
 
             {[
-              { key: "name", label: "Creator Name *", placeholder: "GothamChess" },
-              { key: "email", label: "Payment Email", placeholder: "creator@email.com" },
-              { key: "stripePromoCode", label: "Promo Code (what users type)", placeholder: "GOTHAM" },
-              { key: "stripePromoCodeId", label: "Stripe Promo Code ID", placeholder: "promo_XXXXXXXXXXXXXXXX" },
-              { key: "commissionPct", label: "Commission %", placeholder: "20" },
+              {
+                key: "name",
+                label: "Creator Name *",
+                placeholder: "GothamChess",
+              },
+              {
+                key: "email",
+                label: "Payment Email",
+                placeholder: "creator@email.com",
+              },
+              {
+                key: "stripePromoCode",
+                label: "Promo Code (what users type)",
+                placeholder: "GOTHAM",
+              },
+              {
+                key: "stripePromoCodeId",
+                label: "Stripe Promo Code ID",
+                placeholder: "promo_XXXXXXXXXXXXXXXX",
+              },
+              {
+                key: "refSlug",
+                label: "Ref Link Slug (for ?ref= tracking)",
+                placeholder: "zerochess",
+              },
+              {
+                key: "commissionPct",
+                label: "Commission %",
+                placeholder: "20",
+              },
             ].map(({ key, label, placeholder }) => (
               <div key={key}>
-                <label className="mb-1 block text-xs font-medium text-slate-400">{label}</label>
+                <label className="mb-1 block text-xs font-medium text-slate-400">
+                  {label}
+                </label>
                 <input
                   type={key === "commissionPct" ? "number" : "text"}
                   value={form[key as keyof typeof form]}
-                  onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, [key]: e.target.value }))
+                  }
                   placeholder={placeholder}
                   className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder-slate-600 outline-none focus:border-violet-500/60"
                 />
@@ -372,10 +497,14 @@ export default function AdminAffiliatesPage() {
             ))}
 
             <div>
-              <label className="mb-1 block text-xs font-medium text-slate-400">Notes (optional)</label>
+              <label className="mb-1 block text-xs font-medium text-slate-400">
+                Notes (optional)
+              </label>
               <textarea
                 value={form.notes}
-                onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, notes: e.target.value }))
+                }
                 placeholder="e.g. PayPal: creator@email.com — reached out March 2026"
                 rows={2}
                 className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder-slate-600 outline-none focus:border-violet-500/60 resize-none"
@@ -388,10 +517,17 @@ export default function AdminAffiliatesPage() {
                 disabled={saving}
                 className="flex-1 rounded-xl bg-violet-600 py-2.5 text-sm font-bold transition-all hover:bg-violet-500 disabled:opacity-50"
               >
-                {saving ? "Saving…" : editId ? "Save Changes" : "Create Affiliate"}
+                {saving
+                  ? "Saving…"
+                  : editId
+                    ? "Save Changes"
+                    : "Create Affiliate"}
               </button>
               <button
-                onClick={() => { setShowForm(false); setError(null); }}
+                onClick={() => {
+                  setShowForm(false);
+                  setError(null);
+                }}
                 className="flex-1 rounded-xl border border-white/10 py-2.5 text-sm font-medium text-slate-400 transition-colors hover:bg-white/[0.05]"
               >
                 Cancel

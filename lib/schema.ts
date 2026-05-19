@@ -499,6 +499,8 @@ export const affiliates = pgTable("affiliate", {
   stripePromoCodeId: text("stripePromoCodeId"),
   /** The code string users type, e.g. "GOTHAM" — for display only */
   stripePromoCode: text("stripePromoCode"),
+  /** URL-safe slug for ?ref= link tracking, e.g. "zerochess" */
+  refSlug: text("refSlug"),
   /** Commission percentage, e.g. 20 */
   commissionPct: integer("commissionPct").notNull().default(20),
   /** Optional admin notes */

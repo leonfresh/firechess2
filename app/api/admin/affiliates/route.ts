@@ -29,6 +29,7 @@ export async function GET(req: NextRequest) {
       email: affiliates.email,
       stripePromoCodeId: affiliates.stripePromoCodeId,
       stripePromoCode: affiliates.stripePromoCode,
+      refSlug: affiliates.refSlug,
       commissionPct: affiliates.commissionPct,
       notes: affiliates.notes,
       active: affiliates.active,
@@ -73,7 +74,15 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { name, email, stripePromoCodeId, stripePromoCode, commissionPct, notes } = body;
+  const {
+    name,
+    email,
+    stripePromoCodeId,
+    stripePromoCode,
+    refSlug,
+    commissionPct,
+    notes,
+  } = body;
 
   if (!name?.trim()) {
     return NextResponse.json({ error: "Name is required" }, { status: 400 });
@@ -86,6 +95,11 @@ export async function POST(req: NextRequest) {
       email: email?.trim() || null,
       stripePromoCodeId: stripePromoCodeId?.trim() || null,
       stripePromoCode: stripePromoCode?.trim().toUpperCase() || null,
+      refSlug:
+        refSlug
+          ?.trim()
+          .toLowerCase()
+          .replace(/[^a-z0-9_-]/g, "") || null,
       commissionPct: Number(commissionPct) || 20,
       notes: notes?.trim() || null,
     })
@@ -114,16 +128,40 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
-  const { name, email, stripePromoCodeId, stripePromoCode, commissionPct, notes, active } = body;
+  const {
+    name,
+    email,
+    stripePromoCodeId,
+    stripePromoCode,
+    refSlug,
+    commissionPct,
+    notes,
+    active,
+  } = body;
 
   await db
     .update(affiliates)
     .set({
       ...(name !== undefined ? { name: name.trim() } : {}),
       ...(email !== undefined ? { email: email?.trim() || null } : {}),
-      ...(stripePromoCodeId !== undefined ? { stripePromoCodeId: stripePromoCodeId?.trim() || null } : {}),
-      ...(stripePromoCode !== undefined ? { stripePromoCode: stripePromoCode?.trim().toUpperCase() || null } : {}),
-      ...(commissionPct !== undefined ? { commissionPct: Number(commissionPct) } : {}),
+      ...(stripePromoCodeId !== undefined
+        ? { stripePromoCodeId: stripePromoCodeId?.trim() || null }
+        : {}),
+      ...(stripePromoCode !== undefined
+        ? { stripePromoCode: stripePromoCode?.trim().toUpperCase() || null }
+        : {}),
+      ...(refSlug !== undefined
+        ? {
+            refSlug:
+              refSlug
+                ?.trim()
+                .toLowerCase()
+                .replace(/[^a-z0-9_-]/g, "") || null,
+          }
+        : {}),
+      ...(commissionPct !== undefined
+        ? { commissionPct: Number(commissionPct) }
+        : {}),
       ...(notes !== undefined ? { notes: notes?.trim() || null } : {}),
       ...(active !== undefined ? { active: Boolean(active) } : {}),
     })
