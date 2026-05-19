@@ -46,6 +46,22 @@ export async function POST(req: NextRequest) {
 
   let customerId = sub?.stripeCustomerId ?? undefined;
 
+  // Guard: don't let already-active users buy again
+  if (sub?.status === "active") {
+    if (sub.plan === "lifetime") {
+      return NextResponse.json(
+        { error: "You already have lifetime access." },
+        { status: 409 },
+      );
+    }
+    if (sub.plan === "pro" && !isLifetime) {
+      return NextResponse.json(
+        { error: "You already have an active Pro subscription." },
+        { status: 409 },
+      );
+    }
+  }
+
   // Create or reuse Stripe customer
   if (!customerId) {
     const customer = await stripe.customers.create({

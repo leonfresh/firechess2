@@ -97,6 +97,10 @@ export default function PricingPage() {
         ),
       });
       const data = await res.json();
+      if (!res.ok) {
+        alert(data.error ?? "Something went wrong. Please try again.");
+        return;
+      }
       if (data.url) {
         window.location.href = data.url;
       }

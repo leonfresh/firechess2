@@ -12,6 +12,53 @@ import { db } from "@/lib/db";
 import { subscriptions, affiliates, affiliateReferrals } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 import Stripe from "stripe";
+import { Resend } from "resend";
+
+function getResend() {
+  return new Resend(process.env.AUTH_RESEND_KEY);
+}
+
+async function notifyAffiliateSale({
+  affiliateName,
+  affiliateEmail,
+  planType,
+  amountCents,
+  commissionCents,
+  isRenewal,
+}: {
+  affiliateName: string;
+  affiliateEmail: string | null;
+  planType: string;
+  amountCents: number;
+  commissionCents: number;
+  isRenewal: boolean;
+}) {
+  try {
+    const resend = getResend();
+    const amount = `$${(amountCents / 100).toFixed(2)}`;
+    const commission = `$${(commissionCents / 100).toFixed(2)}`;
+    const label = isRenewal ? "Renewal" : "New sale";
+    // Notify admin
+    await resend.emails.send({
+      from: process.env.AUTH_RESEND_FROM ?? "FireChess <noreply@firechess.com>",
+      to: "leon@firechess.com",
+      subject: `[FireChess] Affiliate ${label} — ${affiliateName} earned ${commission}`,
+      text: `${label} via affiliate: ${affiliateName}\nPlan: ${planType}\nSale: ${amount}\nCommission owed: ${commission}\n\nView: https://firechess.com/admin/affiliates`,
+    });
+    // Notify the creator if they have an email on file
+    if (affiliateEmail) {
+      await resend.emails.send({
+        from:
+          process.env.AUTH_RESEND_FROM ?? "FireChess <noreply@firechess.com>",
+        to: affiliateEmail,
+        subject: `You earned ${commission} on FireChess`,
+        text: `Hi ${affiliateName},\n\nSomeone just ${isRenewal ? "renewed their" : "signed up for"} FireChess ${planType} through your referral link.\n\nCommission earned: ${commission}\n\nThis will be paid out to you manually. Reply to this email if you have any questions.\n\nLeon\nFireChess`,
+      });
+    }
+  } catch (e) {
+    console.error("Affiliate notification email failed:", e);
+  }
+}
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -99,6 +146,14 @@ export async function POST(req: NextRequest) {
 
         const promoCodeId = discounts?.[0]?.promotion_code ?? null;
 
+        // Idempotency: skip if we already recorded a commission for this session
+        const [existingCommission] = await db
+          .select({ id: affiliateReferrals.id })
+          .from(affiliateReferrals)
+          .where(eq(affiliateReferrals.stripeSessionId, session.id))
+          .limit(1);
+        if (existingCommission) break;
+
         if (promoCodeId) {
           // Find which affiliate owns this promo code
           const [affiliate] = await db
@@ -107,7 +162,7 @@ export async function POST(req: NextRequest) {
             .where(eq(affiliates.stripePromoCodeId, promoCodeId))
             .limit(1);
 
-          if (affiliate) {
+          if (affiliate?.active) {
             // amount_total is in cents, already after discount
             const amountCents = session.amount_total ?? 0;
             const commissionCents = Math.round(
@@ -121,6 +176,14 @@ export async function POST(req: NextRequest) {
               planType: isLifetime ? "lifetime" : "pro",
               amountCents,
               commissionCents,
+            });
+            await notifyAffiliateSale({
+              affiliateName: affiliate.name,
+              affiliateEmail: affiliate.email ?? null,
+              planType: isLifetime ? "lifetime" : "pro",
+              amountCents,
+              commissionCents,
+              isRenewal: false,
             });
           }
         } else {
@@ -146,6 +209,14 @@ export async function POST(req: NextRequest) {
                 planType: isLifetime ? "lifetime" : "pro",
                 amountCents,
                 commissionCents,
+              });
+              await notifyAffiliateSale({
+                affiliateName: refAffiliate.name,
+                affiliateEmail: refAffiliate.email ?? null,
+                planType: isLifetime ? "lifetime" : "pro",
+                amountCents,
+                commissionCents,
+                isRenewal: false,
               });
             }
           }
@@ -225,6 +296,8 @@ export async function POST(req: NextRequest) {
         // Get the affiliate's current commission % (may have changed since signup)
         const [affiliate] = await db
           .select({
+            name: affiliates.name,
+            email: affiliates.email,
             commissionPct: affiliates.commissionPct,
             active: affiliates.active,
           })
@@ -238,6 +311,16 @@ export async function POST(req: NextRequest) {
         const amountCents = invoice.amount_paid ?? 0;
         if (amountCents === 0) break;
 
+        // Idempotency: skip if we already recorded a commission for this invoice
+        if (typeof invoice.id === "string") {
+          const [existingInvoiceCommission] = await db
+            .select({ id: affiliateReferrals.id })
+            .from(affiliateReferrals)
+            .where(eq(affiliateReferrals.stripeSessionId, invoice.id))
+            .limit(1);
+          if (existingInvoiceCommission) break;
+        }
+
         const commissionCents = Math.round(
           (amountCents * affiliate.commissionPct) / 100,
         );
@@ -249,6 +332,14 @@ export async function POST(req: NextRequest) {
           planType: "pro",
           amountCents,
           commissionCents,
+        });
+        await notifyAffiliateSale({
+          affiliateName: affiliate.name,
+          affiliateEmail: affiliate.email ?? null,
+          planType: "pro",
+          amountCents,
+          commissionCents,
+          isRenewal: true,
         });
       } catch (recurringErr) {
         console.error("Recurring affiliate commission error:", recurringErr);
