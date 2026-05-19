@@ -1011,37 +1011,6 @@ export function ScanSessionPage({
           </section>
         ) : null}
 
-        {isAdmin && scan.status === "ready" && scan.result ? (
-          <section className="mt-4 rounded-[1.5rem] border border-amber-500/20 bg-amber-500/[0.05] p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-300/80">
-              Admin — game links
-            </p>
-            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="max-w-3xl text-sm leading-relaxed text-slate-200">
-                Re-fetch this user&apos;s games and backfill{" "}
-                <code className="rounded bg-white/[0.06] px-1 text-amber-300">
-                  gameUrl
-                </code>{" "}
-                on all tactics, endgames, time moments, and brilliant moves. Use
-                this for reports scanned before game links were introduced.
-              </p>
-              {patchGameLinksState === "done" ? (
-                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300 whitespace-nowrap">
-                  {patchGameLinksCount} entries patched ✓
-                </span>
-              ) : patchGameLinksState === "error" ? (
-                <span className="rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-300">
-                  Error — check console
-                </span>
-              ) : patchGameLinksState === "running" ? (
-                <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300 animate-pulse">
-                  Fetching games…
-                </span>
-              ) : null}
-            </div>
-          </section>
-        ) : null}
-
         {showExpiryPopup ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
             <div className="w-full max-w-md rounded-[1.75rem] border border-amber-500/20 bg-slate-950 p-6 shadow-2xl shadow-black/50">
