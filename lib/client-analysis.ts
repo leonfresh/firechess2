@@ -46,6 +46,7 @@ type ChessComArchiveList = {
 
 type ChessComGame = {
   pgn?: string;
+  url?: string;
   rules?: string;
   time_class?: string;
   end_time?: number;
@@ -672,10 +673,13 @@ async function fetchChessComGamesInReverse(
         winner,
         termination,
         openingName: extractOpeningFromPgn(game.pgn!),
-        gameUrl: (() => {
-          const m = game.pgn?.match(/\[Site\s+"([^"]+)"\]/);
-          return m?.[1];
-        })(),
+        gameUrl:
+          game.url ??
+          (() => {
+            const m = game.pgn?.match(/\[Site\s+"([^"]+)"\]/);
+            const site = m?.[1];
+            return site && site.startsWith("http") ? site : undefined;
+          })(),
       });
     }
   }
