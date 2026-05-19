@@ -967,6 +967,27 @@ async function loadGamesForAnalysis(
   return games;
 }
 
+/**
+ * Fetch games and return a 1-based gameIndex → gameUrl map.
+ * Used by the admin "patch game links" tool to backfill URLs on stored reports
+ * without re-running Stockfish analysis.
+ */
+export async function fetchGameUrlMapInBrowser(
+  username: string,
+  options?: AnalyzeOptions,
+): Promise<Record<number, string>> {
+  const source: AnalysisSource = options?.source ?? "lichess";
+  const maxGames = clampInt(options?.maxGames, DEFAULT_MAX_GAMES, 1, 5000);
+  const games = await loadGamesForAnalysis(username, maxGames, source, options);
+  const map: Record<number, string> = {};
+  games.forEach((game, idx) => {
+    if (game.gameUrl?.startsWith("http")) {
+      map[idx + 1] = game.gameUrl;
+    }
+  });
+  return map;
+}
+
 export async function buildScanReuseSignatureInBrowser(
   username: string,
   options?: AnalyzeOptions,

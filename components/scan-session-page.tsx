@@ -12,6 +12,7 @@ import { useSession } from "@/components/session-provider";
 import {
   analyzeBrilliantMovesInBrowser,
   analyzeOpeningLeaksInBrowser,
+  fetchGameUrlMapInBrowser,
   type AnalysisProgress,
 } from "@/lib/client-analysis";
 import { earnCoins } from "@/lib/coins";
@@ -123,6 +124,10 @@ export function ScanSessionPage({
   const [brilliantBackfillState, setBrilliantBackfillState] = useState<
     "idle" | "running" | "done" | "error"
   >("idle");
+  const [patchGameLinksState, setPatchGameLinksState] = useState<
+    "idle" | "running" | "done" | "error"
+  >("idle");
+  const [patchGameLinksCount, setPatchGameLinksCount] = useState(0);
   const [reportMetaState, setReportMetaState] = useState<
     "idle" | "running" | "done" | "error"
   >("idle");
@@ -163,9 +168,9 @@ export function ScanSessionPage({
   const hasProAccess = plan === "pro" || plan === "lifetime";
   const needsBrilliantBackfill = Boolean(
     scan.scanMode !== "time-management" &&
-      scan.status === "ready" &&
-      scan.result &&
-      (scan.result.reportVersion ?? 0) < 2,
+    scan.status === "ready" &&
+    scan.result &&
+    (scan.result.reportVersion ?? 0) < 2,
   );
   const defaultComposerSeed = useMemo<CommunityPostComposerSeed>(() => {
     if (topLeak) {
@@ -587,7 +592,8 @@ export function ScanSessionPage({
     }
   };
 
-  const handleBrilliantBackfill = async () => {    if (!scan.result || !isAdmin) return;
+  const handleBrilliantBackfill = async () => {
+    if (!scan.result || !isAdmin) return;
 
     setBrilliantBackfillState("running");
 
@@ -629,7 +635,9 @@ export function ScanSessionPage({
         const json = (await res.json().catch(() => null)) as {
           error?: string;
         } | null;
-        throw new Error(json?.error ?? "Failed to update the brilliant section.");
+        throw new Error(
+          json?.error ?? "Failed to update the brilliant section.",
+        );
       }
 
       setScan((current) => ({
@@ -640,6 +648,84 @@ export function ScanSessionPage({
       setBrilliantBackfillState("done");
     } catch {
       setBrilliantBackfillState("error");
+    }
+  };
+
+  const handlePatchGameLinks = async () => {
+    if (!isAdmin || !scan.result) return;
+    setPatchGameLinksState("running");
+    setPatchGameLinksCount(0);
+    try {
+      const urlMap = await fetchGameUrlMapInBrowser(scan.chessUsername, {
+        source: scan.config.source,
+        scanMode: scan.config.scanMode,
+        timeControl: scan.config.speed,
+        maxGames: scan.config.maxGames,
+        maxOpeningMoves: scan.config.maxMoves,
+        cpLossThreshold: scan.config.cpThreshold,
+        engineDepth: scan.config.engineDepth,
+        maxTactics: scan.config.maxTactics ?? Infinity,
+        maxEndgames: scan.config.maxEndgames ?? Infinity,
+        since: scan.config.since ?? undefined,
+      });
+
+      let patched = 0;
+      const result = scan.result;
+
+      const nextResult: AnalyzeResponse = {
+        ...result,
+        missedTactics: result.missedTactics.map((t) => {
+          const url = urlMap[t.gameIndex];
+          if (url) patched++;
+          return url ? { ...t, gameUrl: url } : t;
+        }),
+        endgameMistakes: result.endgameMistakes.map((t) => {
+          const url = urlMap[t.gameIndex];
+          if (url) patched++;
+          return url ? { ...t, gameUrl: url } : t;
+        }),
+        brilliantMoves: result.brilliantMoves.map((t) => {
+          const url = urlMap[t.gameIndex];
+          if (url) patched++;
+          return url ? { ...t, gameUrl: url } : t;
+        }),
+        timeManagement: result.timeManagement
+          ? {
+              ...result.timeManagement,
+              moments: result.timeManagement.moments.map((t) => {
+                const url = urlMap[t.gameIndex];
+                if (url) patched++;
+                return url ? { ...t, gameUrl: url } : t;
+              }),
+            }
+          : null,
+      };
+
+      const headers: HeadersInit = { "Content-Type": "application/json" };
+      if (ownerToken) headers["x-scan-owner-token"] = ownerToken;
+
+      const res = await fetch(`/api/scans/${scan.id}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({ result: nextResult }),
+      });
+
+      if (!res.ok) {
+        const json = (await res.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        throw new Error(json?.error ?? "Failed to patch game links.");
+      }
+
+      setScan((current) => ({
+        ...current,
+        result: nextResult,
+        updatedAt: new Date().toISOString(),
+      }));
+      setPatchGameLinksCount(patched);
+      setPatchGameLinksState("done");
+    } catch {
+      setPatchGameLinksState("error");
     }
   };
 
@@ -756,7 +842,7 @@ export function ScanSessionPage({
                       ? "Regenerating..."
                       : scan.status === "failed"
                         ? "Run again"
-                      : regenerateState === "error"
+                        : regenerateState === "error"
                           ? "Retry regenerate"
                           : "Regenerate"}
                   </button>
@@ -791,6 +877,22 @@ export function ScanSessionPage({
                         : reportMetaState === "done"
                           ? "Title & stats refreshed ✓"
                           : "Refresh title & stats"}
+                  </button>
+                ) : null}
+                {isAdmin && scan.status === "ready" && scan.result ? (
+                  <button
+                    type="button"
+                    onClick={handlePatchGameLinks}
+                    disabled={patchGameLinksState === "running"}
+                    className="rounded-full border border-amber-500/20 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-100 transition hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {patchGameLinksState === "running"
+                      ? "Fetching game links..."
+                      : patchGameLinksState === "error"
+                        ? "Retry game links"
+                        : patchGameLinksState === "done"
+                          ? `Game links patched (${patchGameLinksCount})`
+                          : "Patch game links"}
                   </button>
                 ) : null}
                 {saveState === "saved" ? (
@@ -863,6 +965,37 @@ export function ScanSessionPage({
               ) : reportMetaState === "error" ? (
                 <span className="rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-300">
                   Error — check console
+                </span>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
+
+        {isAdmin && scan.status === "ready" && scan.result ? (
+          <section className="mt-4 rounded-[1.5rem] border border-amber-500/20 bg-amber-500/[0.05] p-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-300/80">
+              Admin — game links
+            </p>
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="max-w-3xl text-sm leading-relaxed text-slate-200">
+                Re-fetch this user&apos;s games and backfill{" "}
+                <code className="rounded bg-white/[0.06] px-1 text-amber-300">
+                  gameUrl
+                </code>{" "}
+                on all tactics, endgames, time moments, and brilliant moves. Use
+                this for reports scanned before game links were introduced.
+              </p>
+              {patchGameLinksState === "done" ? (
+                <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300 whitespace-nowrap">
+                  {patchGameLinksCount} entries patched ✓
+                </span>
+              ) : patchGameLinksState === "error" ? (
+                <span className="rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-300">
+                  Error — check console
+                </span>
+              ) : patchGameLinksState === "running" ? (
+                <span className="rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300 animate-pulse">
+                  Fetching games…
                 </span>
               ) : null}
             </div>
