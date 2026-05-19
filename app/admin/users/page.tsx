@@ -882,6 +882,7 @@ function StatCard({
 }
 
 function UserAvatar({ user }: { user: UserRow }) {
+  const [imgError, setImgError] = useState(false);
   const fallbackChar = (user.name?.[0] ?? user.email?.[0] ?? "?").toUpperCase();
 
   if (user.image && !imgError) {
