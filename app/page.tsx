@@ -178,6 +178,11 @@ export default function HomePage() {
   const [state, setState] = useState<RequestState>("idle");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [siteStats, setSiteStats] = useState<{
+    totalUsers: number;
+    activeUsers30d: number;
+    totalReports: number;
+  } | null>(null);
   const [isLaunchingScan, setIsLaunchingScan] = useState(false);
   const [progressInfo, setProgressInfo] = useState<{
     message: string;
@@ -295,6 +300,16 @@ export default function HomePage() {
   }, [state]);
 
   /* ── Hero typography animation ── */
+  // Fetch public stats once on mount for social proof in the hero
+  useEffect(() => {
+    fetch("/api/stats")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data) setSiteStats(data);
+      })
+      .catch(() => {});
+  }, []);
+
   const heroAnim = (step: number) =>
     heroPhase === "hiding"
       ? "hero-hide"
@@ -1468,6 +1483,40 @@ export default function HomePage() {
                         Watch Trailer
                       </a>
                     </div>
+
+                    {/* Live community stats */}
+                    {siteStats && (
+                      <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 lg:justify-start">
+                        {[
+                          {
+                            value: siteStats.totalUsers,
+                            suffix: "+ players",
+                            icon: "👥",
+                          },
+                          {
+                            value: siteStats.activeUsers30d,
+                            suffix: " active this month",
+                            icon: "🔥",
+                          },
+                          {
+                            value: siteStats.totalReports,
+                            suffix: " scans run",
+                            icon: "📊",
+                          },
+                        ].map((s) => (
+                          <span
+                            key={s.suffix}
+                            className="flex items-center gap-1 text-[13px] text-slate-500"
+                          >
+                            <span>{s.icon}</span>
+                            <span className="font-semibold text-slate-300">
+                              {s.value.toLocaleString()}
+                            </span>
+                            <span>{s.suffix}</span>
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
