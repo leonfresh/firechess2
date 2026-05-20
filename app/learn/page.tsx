@@ -77,13 +77,16 @@ const INITIATIVE_LESSON: Lesson = {
   slides: [
     {
       kind: "text",
-      heading: "The loose pawn is a distraction",
-      body: "In this Queen's Gambit structure, Black's pawn on c4 looks free. White can take it immediately with Bxc4. But that is the wrong question. Black has already castled, White's bishop and queen are aimed at h7, and the kingside is where the position should be decided. When a real attack is available, grabbing a side pawn is often just wasted time.",
-      // QGD Tarrasch structure: 1.d4 d5 2.c4 e6 3.Nc3 Nf6 4.Bg5 Be7 5.e3 O-O 6.Nf3 Nbd7 7.Qc2 c5 8.cxd5 exd5 9.Bd3 c4
-      fen: "r1bq1rk1/pp1nbppp/5n2/3p2B1/2pP4/2NBPN2/PPQ3PP/R3K2R w KQ - 0 10",
-      orientation: "white",
-      highlights: ["c4", "d3", "h7"],
-      arrows: [["d3", "h7"]],
+      heading: "When the pawns are a trap",
+      body: "Paul Morphy reached this position in 1858. Three of Black's pieces – the knight on b8, the bishop on f8, and the rook on h8 – are still on their starting squares. White has the bishop pair fully developed, the queen on b3 threatening b7, the Bc4 aimed at f7, and Bg5 pinning the f6 knight. The b7 pawn looks like a free meal, but Morphy never even considered grabbing it. When real pressure exists, loose pawns are a distraction.",
+      // Opera Game: 1.e4 e5 2.Nf3 d6 3.d4 Bg4 4.dxe5 Bxf3 5.Qxf3 dxe5 6.Bc4 Nf6 7.Qb3 Qe7 8.Nc3 c6 9.Bg5
+      fen: "rn2kb1r/pp2qppp/2p2n2/4p1B1/2B1P3/1QN5/PPP2PPP/R3K2R b KQkq - 1 9",
+      orientation: "black",
+      highlights: ["b8", "f8", "h8"],
+      arrows: [
+        ["c4", "f7"],
+        ["g5", "f6"],
+      ],
     },
     {
       kind: "text",
@@ -92,28 +95,28 @@ const INITIATIVE_LESSON: Lesson = {
     },
     {
       kind: "interact",
-      heading: "Choose the attack, not the pawn",
+      heading: "Develop, don't counterattack",
       instruction:
-        "The pawn on c4 is hanging, but White has something much stronger. Find the move that starts a direct kingside attack.",
-      // QGD Tarrasch structure: 1.d4 d5 2.c4 e6 3.Nc3 Nf6 4.Bg5 Be7 5.e3 O-O 6.Nf3 Nbd7 7.Qc2 c5 8.cxd5 exd5 9.Bd3 c4
-      fen: "r1bq1rk1/pp1nbppp/5n2/3p2B1/2pP4/2NBPN2/PPQ3PP/R3K2R w KQ - 0 10",
-      orientation: "white",
-      correctMoves: ["d3h7"],
-      wrongMoves: ["d3c4"],
+        "Black is in danger with three pieces still asleep. Rather than pushing a pawn to fight back, find the developing move that starts to untangle.",
+      // Opera Game after 9.Bg5: Black is behind in development, king uncastled
+      fen: "rn2kb1r/pp2qppp/2p2n2/4p1B1/2B1P3/1QN5/PPP2PPP/R3K2R b KQkq - 1 9",
+      orientation: "black",
+      correctMoves: ["b8a6"],
+      wrongMoves: ["b7b5"],
       correctExplanation:
-        "Exactly. Bxh7+ is the point. White should open the king, drag it forward, and keep every move forcing.",
+        "Na6 develops the knight and plans ...Nc7 to challenge the powerful Bc4. When behind in development, get pieces off the back rank – don't push pawns.",
       wrongExplanation:
-        "Bxc4 wins a pawn and loses the plot. The attack matters more than this queenside cleanup.",
+        "...b5 looks active but it hands White a free piece sacrifice: 10.Nxb5! rips open lines while Black is still not castled. Morphy finished this game in 17 moves after Black played this very mistake.",
     },
     {
       kind: "text",
       heading: "What greed does to the attack",
-      body: "If White plays the natural-looking 10.Bxc4?, Black simply answers 10...dxc4. The loose pawn is gone, but so is White's attacking bishop. Black has traded off the most dangerous piece, the kingside attack has vanished, and White spent a move helping Black solve the position. That is the real cost of greed: not the pawn, but the attack you gave up to collect it.",
-      // After 10.Bxc4 dxc4 from the QGD Tarrasch structure above
-      fen: "r1bq1rk1/pp1nbppp/5n2/6B1/2pP4/2N1PN2/PPQ3PP/R3K2R w KQ - 0 11",
-      orientation: "white",
-      highlights: ["c4", "g5", "g8"],
-      arrows: [["d5", "c4"]],
+      body: "After 9...b5, Morphy played 10.Nxb5! – ignoring the fact that the piece can be captured. The knight lands on b5 threatening the devastating 11.Nc7+ (forking king and rook), while the bishop battery on c4 and g5 keeps adding pressure. Material is only worth something if your position survives long enough to use it. By move 17, Morphy delivered checkmate with a rook while Black's army sat idle.",
+      // After 9...b5 10.Nxb5!: White knight has jumped to b5, threatening Nc7+ fork
+      fen: "rn2kb1r/p3qppp/2p2n2/1N2p1B1/2B1P3/1Q6/PPP2PPP/R3K2R b KQkq - 0 10",
+      orientation: "black",
+      highlights: ["b5", "c4", "g5"],
+      arrows: [["b5", "c7"]],
     },
     {
       kind: "text",
