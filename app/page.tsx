@@ -182,6 +182,8 @@ export default function HomePage() {
     totalUsers: number;
     activeUsers30d: number;
     totalReports: number;
+    proMembers: number;
+    lifetimeMembers: number;
   } | null>(null);
   const [isLaunchingScan, setIsLaunchingScan] = useState(false);
   const [progressInfo, setProgressInfo] = useState<{
@@ -1540,48 +1542,62 @@ export default function HomePage() {
               </div>
 
               <div
-                className={`relative mt-8 grid gap-3 border-t border-white/[0.07] pt-6 sm:grid-cols-3 ${heroAnim(6)}`}
+                className={`relative mt-8 grid grid-cols-2 gap-3 border-t border-white/[0.07] pt-6 sm:grid-cols-5 ${heroAnim(6)}`}
               >
                 {[
                   {
-                    icon: "⚡",
-                    title: "Mass Analysis",
-                    description:
-                      "Scan your recent archive in one pass instead of checking games by hand.",
-                    accent: "from-amber-400/25 to-orange-500/0",
+                    value: siteStats?.totalUsers,
+                    label: "Players joined",
+                    icon: "👥",
+                    color: "text-sky-400",
+                    accent: "from-sky-400/20 to-sky-500/0",
                   },
                   {
-                    icon: "🧠",
-                    title: "Deep Insights",
-                    description:
-                      "Surface the missed tactics, opening leaks, and endgame slips worth fixing.",
-                    accent: "from-orange-400/25 to-red-500/0",
+                    value: siteStats?.activeUsers30d,
+                    label: "Active this month",
+                    icon: "🔥",
+                    color: "text-orange-400",
+                    accent: "from-orange-400/20 to-orange-500/0",
                   },
                   {
-                    icon: "📈",
-                    title: "Track Progress",
-                    description:
-                      "Keep report pages, shared boards, and saved scans tied to one workflow.",
-                    accent: "from-red-400/20 to-pink-500/0",
+                    value: siteStats?.totalReports,
+                    label: "Scans completed",
+                    icon: "📊",
+                    color: "text-emerald-400",
+                    accent: "from-emerald-400/20 to-emerald-500/0",
+                  },
+                  {
+                    value: siteStats?.proMembers,
+                    label: "Pro members",
+                    icon: "⭐",
+                    color: "text-amber-400",
+                    accent: "from-amber-400/25 to-amber-500/0",
+                  },
+                  {
+                    value: siteStats?.lifetimeMembers,
+                    label: "Lifetime members",
+                    icon: "♾️",
+                    color: "text-violet-400",
+                    accent: "from-violet-400/20 to-violet-500/0",
                   },
                 ].map((item) => (
                   <div
-                    key={item.title}
+                    key={item.label}
                     className="group relative overflow-hidden rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-3.5 transition-colors hover:border-white/[0.09] hover:bg-white/[0.04]"
                   >
                     <div
                       className={`pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r ${item.accent}`}
                     />
-                    <div className="flex items-center gap-2.5">
-                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] text-sm">
-                        {item.icon}
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm">{item.icon}</span>
+                      <span
+                        className={`text-xl font-bold tabular-nums ${item.color}`}
+                      >
+                        {item.value != null ? item.value.toLocaleString() : "—"}
                       </span>
-                      <p className="text-sm font-semibold text-white/90">
-                        {item.title}
-                      </p>
                     </div>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-400/90">
-                      {item.description}
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {item.label}
                     </p>
                   </div>
                 ))}

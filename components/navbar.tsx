@@ -80,19 +80,11 @@ export function Navbar() {
     setMobileOpen(false);
   }, [pathname]);
 
-  // Suppress desktop dropdown hover on route change until the mouse moves.
-  // A zero-timeout was not enough — the hover CSS re-triggers instantly if
-  // the cursor hasn't left the nav group. We listen for the first mousemove
-  // event instead, which fires as soon as the user nudges the mouse.
-  const [suppressDropdowns, setSuppressDropdowns] = useState(false);
+  // Close desktop dropdowns on every route change.
+  // JS-controlled state (not CSS hover) so navigation always dismisses them.
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
   useEffect(() => {
-    setSuppressDropdowns(true);
-    const onMove = () => {
-      setSuppressDropdowns(false);
-      window.removeEventListener("mousemove", onMove);
-    };
-    window.addEventListener("mousemove", onMove, { passive: true });
-    return () => window.removeEventListener("mousemove", onMove);
+    setOpenMenu(null);
   }, [pathname]);
 
   // Lock body scroll when mobile menu is open
@@ -146,11 +138,20 @@ export function Navbar() {
     isActive("/account") ||
     isActive("/support") ||
     isActive("/feedback");
-  const desktopCaretClassName =
-    "h-3 w-3 text-slate-500 transition-transform group-hover:rotate-180 group-focus-within:rotate-180";
-  const desktopDropdownClassName =
-    "invisible absolute left-0 top-full pt-1 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100";
-  const desktopGroupCn = `group relative${suppressDropdowns ? " pointer-events-none" : ""}`;
+  const caretCn = (menu: string) =>
+    `h-3 w-3 text-slate-500 transition-transform ${openMenu === menu ? "rotate-180" : ""}`;
+  const dropdownCn = (menu: string) =>
+    `absolute left-0 top-full pt-1 transition-all duration-150 ${openMenu === menu ? "visible opacity-100" : "invisible opacity-0 pointer-events-none"}`;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const openProps = (menu: string): any => ({
+    className: "relative",
+    onMouseEnter: () => setOpenMenu(menu),
+    onMouseLeave: () => setOpenMenu(null),
+    onFocus: () => setOpenMenu(menu),
+    onBlur: (e: any) => {
+      if (!e.currentTarget.contains(e.relatedTarget)) setOpenMenu(null);
+    },
+  });
 
   const closeMobileMenu = () => setMobileOpen(false);
   const handleRoastClick = () => {
@@ -299,7 +300,7 @@ export function Navbar() {
           {/* ── Desktop nav — grouped dropdowns ── */}
           <div className="hidden items-center gap-0.5 lg:flex">
             {/* Analyze */}
-            <div className={desktopGroupCn}>
+            <div {...openProps("analyze")}>
               <button
                 type="button"
                 aria-haspopup="true"
@@ -311,7 +312,7 @@ export function Navbar() {
               >
                 Analyze
                 <svg
-                  className={desktopCaretClassName}
+                  className={caretCn("analyze")}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -320,7 +321,7 @@ export function Navbar() {
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
-              <div className={desktopDropdownClassName}>
+              <div className={dropdownCn("analyze")}>
                 <div className="min-w-[200px] rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/"
@@ -351,7 +352,7 @@ export function Navbar() {
             </div>
 
             {/* Play */}
-            <div className={desktopGroupCn}>
+            <div {...openProps("play")}>
               <button
                 type="button"
                 aria-haspopup="true"
@@ -363,7 +364,7 @@ export function Navbar() {
               >
                 Play
                 <svg
-                  className={desktopCaretClassName}
+                  className={caretCn("play")}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -372,7 +373,7 @@ export function Navbar() {
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
-              <div className={desktopDropdownClassName}>
+              <div className={dropdownCn("play")}>
                 <div className="min-w-[220px] rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/daily"
@@ -429,7 +430,7 @@ export function Navbar() {
             </div>
 
             {/* Learn */}
-            <div className={desktopGroupCn}>
+            <div {...openProps("learn")}>
               <button
                 type="button"
                 aria-haspopup="true"
@@ -441,7 +442,7 @@ export function Navbar() {
               >
                 Learn
                 <svg
-                  className={desktopCaretClassName}
+                  className={caretCn("learn")}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -450,7 +451,7 @@ export function Navbar() {
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
-              <div className={desktopDropdownClassName}>
+              <div className={dropdownCn("learn")}>
                 <div className="min-w-[200px] rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/openings"
@@ -518,7 +519,7 @@ export function Navbar() {
             </div>
 
             {/* Community */}
-            <div className={desktopGroupCn}>
+            <div {...openProps("community")}>
               <button
                 type="button"
                 aria-haspopup="true"
@@ -530,7 +531,7 @@ export function Navbar() {
               >
                 Community
                 <svg
-                  className={desktopCaretClassName}
+                  className={caretCn("community")}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -539,7 +540,7 @@ export function Navbar() {
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
-              <div className={desktopDropdownClassName}>
+              <div className={dropdownCn("community")}>
                 <div className="min-w-[210px] rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/community"
@@ -566,7 +567,7 @@ export function Navbar() {
             </div>
 
             {/* Explore */}
-            <div className={desktopGroupCn}>
+            <div {...openProps("explore")}>
               <button
                 type="button"
                 aria-haspopup="true"
@@ -578,7 +579,7 @@ export function Navbar() {
               >
                 Explore
                 <svg
-                  className={desktopCaretClassName}
+                  className={caretCn("explore")}
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke="currentColor"
@@ -587,7 +588,7 @@ export function Navbar() {
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
-              <div className={desktopDropdownClassName}>
+              <div className={dropdownCn("explore")}>
                 <div className="min-w-[180px] rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/blog"
