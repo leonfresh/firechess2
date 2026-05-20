@@ -78,7 +78,7 @@ const INITIATIVE_LESSON: Lesson = {
     {
       kind: "text",
       heading: "When the pawns are a trap",
-      body: "Paul Morphy reached this position in 1858. Three of Black's pieces – the knight on b8, the bishop on f8, and the rook on h8 – are still on their starting squares. White has the bishop pair fully developed, the queen on b3 threatening b7, the Bc4 aimed at f7, and Bg5 pinning the f6 knight. The b7 pawn looks like a free meal, but Morphy never even considered grabbing it. When real pressure exists, loose pawns are a distraction.",
+      body: "Paul Morphy reached this position in 1858. Three of Black's pieces – the knight on b8, the bishop on f8, and the rook on h8 – are still on their starting squares. White has the bishop pair fully developed: Bg5 pins the f6 knight to the queen behind it, and Bc4 points directly at f7 threatening Bxf7+ and forking king and rook. Black's king is still in the center with no safe way to castle. This is not a situation to spend time collecting pawns.",
       // Opera Game: 1.e4 e5 2.Nf3 d6 3.d4 Bg4 4.dxe5 Bxf3 5.Qxf3 dxe5 6.Bc4 Nf6 7.Qb3 Qe7 8.Nc3 c6 9.Bg5
       fen: "rn2kb1r/pp2qppp/2p2n2/4p1B1/2B1P3/1QN5/PPP2PPP/R3K2R b KQkq - 1 9",
       orientation: "black",
@@ -111,12 +111,12 @@ const INITIATIVE_LESSON: Lesson = {
     {
       kind: "text",
       heading: "What greed does to the attack",
-      body: "After 9...b5, Morphy played 10.Nxb5! – ignoring the fact that the piece can be captured. The knight lands on b5 threatening the devastating 11.Nc7+ (forking king and rook), while the bishop battery on c4 and g5 keeps adding pressure. Material is only worth something if your position survives long enough to use it. By move 17, Morphy delivered checkmate with a rook while Black's army sat idle.",
-      // After 9...b5 10.Nxb5!: White knight has jumped to b5, threatening Nc7+ fork
+      body: "After 9...b5, Morphy played 10.Nxb5! Black simply captures it: 10...cxb5. But that is exactly what White wanted – the c6 pawn has moved, and now 11.Bxb5+ crashes through along the b5–c6–d7–e8 diagonal. One pawn move opened the line to the king. After 11...Nbd7 12.O-O-O Rd8 13.Rxd7! Rxd7 14.Rd1 Qe6, Morphy offered his queen: 16.Qb8+!! Nxb8 17.Rd8#. Checkmate, while Black's h8 rook never moved.",
+      // After 9...b5 10.Nxb5!: knight on b5 will be captured, opening c6 for Bxb5+ check
       fen: "rn2kb1r/p3qppp/2p2n2/1N2p1B1/2B1P3/1Q6/PPP2PPP/R3K2R b KQkq - 0 10",
       orientation: "black",
       highlights: ["b5", "c4", "g5"],
-      arrows: [["b5", "c7"]],
+      arrows: [["c4", "b5"]],
     },
     {
       kind: "text",
@@ -209,7 +209,91 @@ const INITIATIVE_LESSON: Lesson = {
   ],
 };
 
-const LESSONS: Lesson[] = [INITIATIVE_LESSON];
+/* ─────────────────────────────────────────────────────────────── */
+/*  Lesson: Why Natural Moves Lose                                  */
+/* ─────────────────────────────────────────────────────────────── */
+
+const OPENINGS_LESSON: Lesson = {
+  id: "openings-natural-moves",
+  band: "1200",
+  title: "Why Natural Moves Lose",
+  subtitle: "When following the principles isn't enough",
+  icon: "♟️",
+  estimatedMinutes: 8,
+  tags: ["openings", "pawn storm", "planning"],
+  slides: [
+    {
+      kind: "text",
+      heading: "Natural moves, unnatural problem",
+      body: "Look at Black's last nine moves: develop the knights, develop the bishops, castle early, protect the center. Every single move follows the textbook. Yet Stockfish rates this position +1.1 for White. Opening principles are a starting point – they are not a plan.",
+      // 1.Nc3 e5 2.d4 exd4 3.Qxd4 Nc6 4.Qd3 Nf6 5.Bg5 Be7 6.O-O-O O-O 7.e4 d6 8.f4 h6 9.h4
+      fen: "r1bq1rk1/ppp1bpp1/2np1n1p/6B1/4PP1P/2NQ4/PPP3P1/2KR1BNR b - h3 0 9",
+      orientation: "white",
+      highlights: ["c1", "e4", "f4", "h4"],
+    },
+    {
+      kind: "text",
+      heading: "What White's pieces are saying",
+      body: "White castled queenside on purpose: the king is sheltered while the entire kingside becomes an attacking front. The queen on d3 stares at h7. The bishop on g5 pins the f6 knight to the queen behind it. Pawns on f4 and h4 are the opening barrage – f5, g4, g5, h5 – a wave rolling at Black's king.\n\nThe h6 pawn Black just pushed to \"drive away\" the bishop? That's now a permanent target.",
+      fen: "r1bq1rk1/ppp1bpp1/2np1n1p/6B1/4PP1P/2NQ4/PPP3P1/2KR1BNR b - h3 0 9",
+      orientation: "white",
+      arrows: [
+        ["d3", "h7"],
+        ["f4", "f5"],
+        ["g2", "g4"],
+      ],
+    },
+    {
+      kind: "interact",
+      heading: "Fire the starting gun",
+      instruction:
+        "Black just played ...d6, completing a natural development setup. White has been waiting for this moment. Find the move that starts the kingside pawn storm.",
+      // Position after 7...d6 – White to play 8.f4
+      fen: "r1bq1rk1/ppp1bppp/2np1n2/6B1/4P3/2NQ4/PPP2PPP/2KR1BNR w - - 0 8",
+      orientation: "white",
+      correctMoves: ["f2f4"],
+      wrongMoves: ["g1f3"],
+      correctExplanation:
+        "f4 fires the starting gun. White follows with g4, h4, then f5 and g5 – a pawn wave that gives Black no time to regroup. Every move points at the king.",
+      wrongExplanation:
+        "Nf3 is natural but passive. White already has a complete attacking setup – now is the moment to push. Every move you delay is a tempo Black uses to prepare a defense.",
+    },
+    {
+      kind: "choice",
+      heading: "Why castle queenside?",
+      question:
+        "In this system, White castles queenside while attacking the kingside. What is the key reason for this?",
+      choices: [
+        "O-O-O activates the a1 rook on the d-file immediately",
+        "The king is safer on the queenside when pushing kingside pawns",
+        "Queenside castling is faster – fewer pieces block the path",
+        "The queen on d3 would be threatened if White castled kingside",
+      ],
+      correctIndex: 1,
+      explanation:
+        "The most important reason: when White pushes f4, g4, h4, those pawns cannot also be covering the White king. Castling on the opposite side of the attack keeps the king sheltered while the whole kingside wave rolls forward.",
+    },
+    {
+      kind: "text",
+      heading: "The move that helped the enemy",
+      body: "Black played ...h6 to kick the bishop and stop Bxf6 doubling the pawns. Logical. But look at what it created: the h6 pawn is now fixed and in White's crosshairs. White plays h4-h5, and the pawn that was supposed to help the king becomes the first crack in the wall.\n\nDefensive pawn moves in front of the castled king almost always create more problems than they solve.",
+      fen: "r1bq1rk1/ppp1bpp1/2np1n1p/6B1/4PP1P/2NQ4/PPP3P1/2KR1BNR b - h3 0 9",
+      orientation: "black",
+      highlights: ["h6", "h4"],
+      arrows: [
+        ["h4", "h5"],
+        ["h5", "h6"],
+      ],
+    },
+    {
+      kind: "text",
+      heading: "The takeaway",
+      body: "The difference between a good opening and a great one:\n\n✓ Every White move in this system serves one plan: queenside safety, kingside attack\n✓ Black's natural moves have no overarching goal – just general principles\n✓ When only one side has a plan, that side wins the planning battle before the pieces even clash\n\nLearn a system where every single move points toward checkmate, not just equality.",
+    },
+  ],
+};
+
+const LESSONS: Lesson[] = [INITIATIVE_LESSON, OPENINGS_LESSON];
 
 /* ─────────────────────────────────────────────────────────────── */
 /*  ELO band metadata                                               */
@@ -359,15 +443,10 @@ function TextSlideView({
   onNext: () => void;
 }) {
   return (
-    <div className="mx-auto flex max-w-lg flex-col gap-6">
-      <div>
-        <h2 className="text-2xl font-black tracking-tight text-white leading-snug">
-          {slide.heading}
-        </h2>
-        <p className="mt-3 text-[15px] leading-7 text-slate-300 whitespace-pre-line">
-          {slide.body}
-        </p>
-      </div>
+    <div className="mx-auto flex max-w-lg flex-col gap-5">
+      <h2 className="text-2xl font-black tracking-tight text-white leading-snug">
+        {slide.heading}
+      </h2>
 
       {slide.fen && (
         <LessonBoard
@@ -378,6 +457,10 @@ function TextSlideView({
           draggable={false}
         />
       )}
+
+      <p className="text-[15px] leading-7 text-slate-300 whitespace-pre-line">
+        {slide.body}
+      </p>
 
       <button
         type="button"
@@ -672,23 +755,31 @@ function LiveInteractSlide({
           )}
         </div>
       )}
-      <div
-        className={`rounded-2xl border px-5 py-4 transition-all duration-300 ${
-          solveState === "correct"
-            ? "border-emerald-500/30 bg-emerald-500/[0.06]"
-            : "border-white/[0.06] bg-white/[0.02]"
-        }`}
-      >
-        <p
-          className={`text-sm font-semibold ${solveState === "correct" ? "text-emerald-300" : "text-slate-500"}`}
-        >
-          {solveState === "correct"
-            ? `✓ ${slide.correctExplanation}`
-            : !triggerPlayed
-              ? "Opponent's move is coming…"
-              : "Find the best move — drag or click"}
+      {!triggerPlayed && (
+        <p className="text-center text-xs text-slate-600">
+          Opponent&apos;s move is coming…
         </p>
-      </div>
+      )}
+      {triggerPlayed && solveState === "playing" && (
+        <p className="text-center text-xs text-slate-600">
+          Find the best move — drag or click
+        </p>
+      )}
+
+      {/* Correct modal */}
+      {solveState === "correct" && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/50" />
+          <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl border-t border-emerald-500/30 bg-[#060f0a] px-6 pb-10 pt-5">
+            <p className="text-[11px] font-black uppercase tracking-widest text-emerald-500 mb-1.5">
+              ✓ Correct
+            </p>
+            <p className="text-sm leading-relaxed text-slate-200">
+              {slide.correctExplanation}
+            </p>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -853,47 +944,54 @@ function InteractSlideView({
         customSquareStyles={squareStyles}
       />
 
-      {/* Feedback area */}
-      <div
-        className={`rounded-2xl border px-5 py-4 transition-all duration-300 ${
-          state === "correct"
-            ? "border-emerald-500/30 bg-emerald-500/[0.06]"
-            : state === "wrong"
-              ? "border-red-500/30 bg-red-500/[0.06]"
-              : attempts >= 2
-                ? "border-amber-500/30 bg-amber-500/[0.06]"
-                : "border-white/[0.06] bg-white/[0.02]"
-        }`}
-      >
-        <p
-          className={`text-sm font-semibold ${
-            state === "correct"
-              ? "text-emerald-300"
-              : state === "wrong"
-                ? "text-red-300"
-                : attempts >= 2
-                  ? "text-amber-300"
-                  : "text-slate-500"
-          }`}
-        >
-          {state === "correct"
-            ? `✓ ${slide.correctExplanation}`
-            : state === "wrong"
-              ? `✗ ${slide.wrongExplanation}`
-              : attempts >= 2
-                ? "💡 Hint: look at the highlighted piece"
-                : "Drag a piece or click to select"}
-        </p>
-      </div>
+      <p className="text-center text-xs text-slate-600">
+        {attempts >= 2 && state === "idle"
+          ? "💡 Move the highlighted piece"
+          : "Drag a piece or click to select"}
+      </p>
 
-      {state === "correct" && (
-        <button
-          type="button"
-          onClick={onNext}
-          className="w-full rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-3.5 text-base font-bold text-white shadow-lg shadow-purple-500/20 hover:brightness-110 active:scale-[0.98] transition-all"
-        >
-          Continue →
-        </button>
+      {/* Feedback modal */}
+      {state !== "idle" && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/50"
+            onClick={() => {
+              if (state === "wrong") {
+                setFen(slide.fen ?? "");
+                setState("idle");
+              }
+            }}
+          />
+          <div
+            className={`fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl px-6 pb-10 pt-5 border-t ${
+              state === "correct"
+                ? "border-emerald-500/30 bg-[#060f0a]"
+                : "border-red-500/30 bg-[#0f0606]"
+            }`}
+          >
+            <p
+              className={`text-[11px] font-black uppercase tracking-widest mb-1.5 ${
+                state === "correct" ? "text-emerald-500" : "text-red-500"
+              }`}
+            >
+              {state === "correct" ? "✓ Correct" : "✗ Not quite"}
+            </p>
+            <p className="text-sm leading-relaxed text-slate-200">
+              {state === "correct"
+                ? slide.correctExplanation
+                : slide.wrongExplanation}
+            </p>
+            {state === "correct" && (
+              <button
+                type="button"
+                onClick={onNext}
+                className="mt-5 w-full rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-3.5 text-base font-bold text-white shadow-lg shadow-purple-500/20 hover:brightness-110 active:scale-[0.98] transition-all"
+              >
+                Continue →
+              </button>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
