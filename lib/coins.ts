@@ -39,13 +39,13 @@ export const COIN_REWARDS: Record<
   Exclude<CoinReason, "shop_purchase">,
   { amount: number; label: string }
 > = {
-  daily_correct:   { amount: 10, label: "Daily Challenge — correct!" },
-  daily_wrong:     { amount: 3,  label: "Daily Challenge — attempted" },
-  daily_streak:    { amount: 2,  label: "Daily streak bonus" },
-  study_task:      { amount: 2,  label: "Study task completed" },
-  scan_complete:   { amount: 5,  label: "Scan saved" },
-  achievement:     { amount: 20, label: "Achievement unlocked" },
-  repertoire_save: { amount: 2,  label: "Move saved to repertoire" },
+  daily_correct: { amount: 10, label: "Daily Challenge — correct!" },
+  daily_wrong: { amount: 3, label: "Daily Challenge — attempted" },
+  daily_streak: { amount: 2, label: "Daily streak bonus" },
+  study_task: { amount: 2, label: "Study task completed" },
+  scan_complete: { amount: 5, label: "Scan saved" },
+  achievement: { amount: 20, label: "Achievement unlocked" },
+  repertoire_save: { amount: 2, label: "Move saved to repertoire" },
 };
 
 /* ------------------------------------------------------------------ */
@@ -53,12 +53,12 @@ export const COIN_REWARDS: Record<
 /* ------------------------------------------------------------------ */
 
 const KEY_BALANCE = "fc-coins";
-const KEY_LOG     = "fc-coin-log";
-const KEY_SHOP    = "fc-coin-shop";
+const KEY_LOG = "fc-coin-log";
+const KEY_SHOP = "fc-coin-shop";
 const KEY_SCAN_DAY = "fc-scan-coin-day";
 const KEY_STUDY_DAY = "fc-study-coin-day";
-const KEY_SYNCED  = "fc-coins-synced";
-const MAX_LOG     = 50;
+const KEY_SYNCED = "fc-coins-synced";
+const MAX_LOG = 50;
 const MAX_SCAN_REWARDS_PER_DAY = 3;
 const MAX_STUDY_REWARDS_PER_DAY = 20;
 
@@ -68,20 +68,30 @@ const MAX_STUDY_REWARDS_PER_DAY = 20;
 
 /** Background POST to /api/coins — never throws. */
 function dbEarn(reason: string): void {
-  fetch("/api/coins", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "earn", reason }),
-  }).catch(() => {/* offline / unauthenticated — localStorage only */});
+  try {
+    fetch("/api/coins", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "earn", reason }),
+    }).catch(() => {
+      /* offline / unauthenticated — localStorage only */
+    });
+  } catch {
+    /* extension-intercepted or synchronous fetch failure */
+  }
 }
 
 /** Background spend to /api/coins — never throws. */
 function dbSpend(amount: number, itemId: string): void {
-  fetch("/api/coins", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "spend", amount, itemId }),
-  }).catch(() => {});
+  try {
+    fetch("/api/coins", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "spend", amount, itemId }),
+    }).catch(() => {});
+  } catch {
+    /* extension-intercepted or synchronous fetch failure */
+  }
 }
 
 /**
@@ -89,7 +99,10 @@ function dbSpend(amount: number, itemId: string): void {
  * If the user has never synced, migrates localStorage → DB first.
  * Returns { balance, purchases } from the authoritative source.
  */
-export async function syncCoinsFromDb(): Promise<{ balance: number; purchases: string[] } | null> {
+export async function syncCoinsFromDb(): Promise<{
+  balance: number;
+  purchases: string[];
+} | null> {
   if (typeof window === "undefined") return null;
 
   const alreadySynced = localStorage.getItem(KEY_SYNCED);
@@ -102,7 +115,11 @@ export async function syncCoinsFromDb(): Promise<{ balance: number; purchases: s
       const res = await fetch("/api/coins", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "sync", balance: localBalance, purchases: localPurchases }),
+        body: JSON.stringify({
+          action: "sync",
+          balance: localBalance,
+          purchases: localPurchases,
+        }),
       });
       if (!res.ok) return null;
       const data = await res.json();
@@ -112,7 +129,9 @@ export async function syncCoinsFromDb(): Promise<{ balance: number; purchases: s
         localStorage.setItem(KEY_SHOP, JSON.stringify(data.purchases));
       }
       localStorage.setItem(KEY_SYNCED, "1");
-      window.dispatchEvent(new CustomEvent("fc-coins-changed", { detail: data.balance ?? 0 }));
+      window.dispatchEvent(
+        new CustomEvent("fc-coins-changed", { detail: data.balance ?? 0 }),
+      );
       return { balance: data.balance ?? 0, purchases: data.purchases ?? [] };
     } catch {
       return null; // offline — stay on localStorage
@@ -128,7 +147,9 @@ export async function syncCoinsFromDb(): Promise<{ balance: number; purchases: s
     if (data.purchases?.length) {
       localStorage.setItem(KEY_SHOP, JSON.stringify(data.purchases));
     }
-    window.dispatchEvent(new CustomEvent("fc-coins-changed", { detail: data.balance ?? 0 }));
+    window.dispatchEvent(
+      new CustomEvent("fc-coins-changed", { detail: data.balance ?? 0 }),
+    );
     return { balance: data.balance ?? 0, purchases: data.purchases ?? [] };
   } catch {
     return null;
@@ -156,14 +177,18 @@ export function getLog(): CoinTransaction[] {
 }
 
 /** Award coins for an activity. Returns amount earned (0 if capped). */
-export function earnCoins(reason: Exclude<CoinReason, "shop_purchase">): number {
+export function earnCoins(
+  reason: Exclude<CoinReason, "shop_purchase">,
+): number {
   const today = new Date().toISOString().slice(0, 10);
 
   // Daily cap for scan rewards — max 3 per day
   if (reason === "scan_complete") {
     const raw = localStorage.getItem(KEY_SCAN_DAY);
     let scanDay = { date: "", count: 0 };
-    try { scanDay = raw ? JSON.parse(raw) : scanDay; } catch {}
+    try {
+      scanDay = raw ? JSON.parse(raw) : scanDay;
+    } catch {}
     if (scanDay.date === today) {
       if (scanDay.count >= MAX_SCAN_REWARDS_PER_DAY) return 0; // capped
       scanDay.count++;
@@ -177,7 +202,9 @@ export function earnCoins(reason: Exclude<CoinReason, "shop_purchase">): number 
   if (reason === "study_task") {
     const raw = localStorage.getItem(KEY_STUDY_DAY);
     let studyDay = { date: "", count: 0 };
-    try { studyDay = raw ? JSON.parse(raw) : studyDay; } catch {}
+    try {
+      studyDay = raw ? JSON.parse(raw) : studyDay;
+    } catch {}
     if (studyDay.date === today) {
       if (studyDay.count >= MAX_STUDY_REWARDS_PER_DAY) return 0; // capped
       studyDay.count++;
@@ -197,7 +224,9 @@ export function earnCoins(reason: Exclude<CoinReason, "shop_purchase">): number 
   localStorage.setItem(KEY_LOG, JSON.stringify(log));
 
   // Dispatch custom event so UI can react instantly
-  window.dispatchEvent(new CustomEvent("fc-coins-changed", { detail: balance }));
+  window.dispatchEvent(
+    new CustomEvent("fc-coins-changed", { detail: balance }),
+  );
 
   // Background DB sync
   dbEarn(reason);
@@ -230,7 +259,9 @@ export function spendCoins(amount: number, itemId: string): boolean {
     localStorage.setItem(KEY_SHOP, JSON.stringify(purchased));
   }
 
-  window.dispatchEvent(new CustomEvent("fc-coins-changed", { detail: newBalance }));
+  window.dispatchEvent(
+    new CustomEvent("fc-coins-changed", { detail: newBalance }),
+  );
 
   // Background DB sync
   dbSpend(amount, itemId);

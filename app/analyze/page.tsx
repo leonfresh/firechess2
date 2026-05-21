@@ -23,7 +23,7 @@ import { Chess } from "chess.js";
 import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
 import { EvalBar } from "@/components/eval-bar";
 import { ExplanationModal } from "@/components/explanation-modal";
-import { MoveBadge } from "@/components/move-badge";
+import { BookOpenIcon, MoveBadge } from "@/components/move-badge";
 import {
   explainMoves,
   type PositionExplanation,
@@ -98,7 +98,7 @@ type AnalyzedMove = {
 
 /* ────────────────────────── Constants ────────────────────────── */
 
-const DEFAULT_ENGINE_DEPTH = 14;
+const DEFAULT_ENGINE_DEPTH = 16;
 const DEPTH_OPTIONS = [8, 10, 12, 14, 16, 18, 20] as const;
 
 function formatEval(cp: number): string {
@@ -120,7 +120,9 @@ function formatPvLine(fen: string, pvMoves: string[]): string {
 
     for (const move of pvMoves.slice(0, 8)) {
       const prefix =
-        chess.turn() === "w" ? `${chess.moveNumber()}.` : `${chess.moveNumber()}...`;
+        chess.turn() === "w"
+          ? `${chess.moveNumber()}.`
+          : `${chess.moveNumber()}...`;
       const result = chess.move({
         from: move.slice(0, 2),
         to: move.slice(2, 4),
@@ -1747,7 +1749,9 @@ export default function AnalyzePage() {
                             {selectedMove.color === "w" ? "." : "..."}
                             {selectedMove.san}
                           </span>
-                          <MoveBadge classification={selectedMove.classification} />
+                          <MoveBadge
+                            classification={selectedMove.classification}
+                          />
                           <span className="text-sm">
                             {CLASSIFICATION_EMOJI[selectedMove.classification]}
                           </span>
@@ -1787,7 +1791,8 @@ export default function AnalyzePage() {
                             : "You played the top engine move"}
                         </p>
                         <p className="mt-1 text-xs text-slate-400">
-                          {selectedMove.bestMove && selectedMove.bestMove !== selectedMove.uci
+                          {selectedMove.bestMove &&
+                          selectedMove.bestMove !== selectedMove.uci
                             ? `Best line starts with ${selectedMove.bestMoveSan}.`
                             : "This move stayed on the engine's first line."}
                         </p>
@@ -1797,7 +1802,8 @@ export default function AnalyzePage() {
                           Principal variation
                         </p>
                         <p className="mt-2 text-xs leading-relaxed text-slate-300">
-                          {selectedMovePv || "PV will appear once the engine finishes stitching the line."}
+                          {selectedMovePv ||
+                            "PV will appear once the engine finishes stitching the line."}
                         </p>
                       </div>
                     </div>
@@ -1963,7 +1969,11 @@ export default function AnalyzePage() {
                           <div
                             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-lg font-black ${CLASSIFICATION_COLORS[m.classification]}`}
                           >
-                            {CLASSIFICATION_ICONS[m.classification]}
+                            {m.classification === "book" ? (
+                              <BookOpenIcon size={20} />
+                            ) : (
+                              CLASSIFICATION_ICONS[m.classification]
+                            )}
                           </div>
                           <div className="min-w-0 flex-1">
                             <p

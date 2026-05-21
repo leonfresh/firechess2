@@ -20,7 +20,11 @@ export function EvalBar({ evalCp, height = 340 }: EvalBarProps) {
   const whiteHeight = `${Math.round(whiteRatio * 100)}%`;
   const isMate = Math.abs(cp) >= 99000;
   const label = isMate
-    ? (() => { const n = 100000 - Math.abs(cp); const sign = cp > 0 ? "+" : "-"; return n <= 0 ? `${sign}Mate` : `${sign}M${n}`; })()
+    ? (() => {
+        const n = 100000 - Math.abs(cp);
+        const sign = cp > 0 ? "+" : "-";
+        return n <= 0 ? `${sign}Mate` : `${sign}M${n}`;
+      })()
     : `${pawns > 0 ? "+" : ""}${(Math.round(pawns * 10) / 10).toString()}`;
 
   const isWhiteAdvantage = cp >= 0;
@@ -35,11 +39,13 @@ export function EvalBar({ evalCp, height = 340 }: EvalBarProps) {
         {/* Black side */}
         <div
           className="absolute inset-0"
-          style={{ background: `linear-gradient(to bottom, ${skin.blackGradient[0]}, ${skin.blackGradient[1]})` }}
+          style={{
+            background: `linear-gradient(to bottom, ${skin.blackGradient[0]}, ${skin.blackGradient[1]})`,
+          }}
         />
         {/* White side */}
         <div
-          className="absolute left-0 top-0 w-full transition-all duration-500 ease-out"
+          className="absolute left-0 bottom-0 w-full transition-all duration-500 ease-out"
           style={{
             height: whiteHeight,
             background: isWhiteAdvantage
@@ -50,7 +56,9 @@ export function EvalBar({ evalCp, height = 340 }: EvalBarProps) {
         {/* Center line indicator */}
         <div className="absolute left-0 top-1/2 w-full border-t border-white/10" />
       </div>
-      <span className={`font-mono text-[10px] font-semibold ${isWhiteAdvantage ? "text-slate-300" : "text-slate-500"}`}>
+      <span
+        className={`font-mono text-[10px] font-semibold ${isWhiteAdvantage ? "text-slate-300" : "text-slate-500"}`}
+      >
         {label}
       </span>
     </div>
