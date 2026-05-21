@@ -11,3 +11,28 @@
  ○ Compiling / ...
  ✓ Compiled / in 5.1s (1734 modules)
  GET / 200 in 6052ms
+ ✓ Compiled in 10.5s (789 modules)
+ ✓ Compiled in 1790ms (789 modules)
+ ✓ Compiled in 1550ms (789 modules)
+ ✓ Compiled in 1876ms (789 modules)
+ ○ Compiling /blog ...
+ ✓ Compiled /blog in 1540ms (1275 modules)
+ GET /blog 200 in 4997ms
+ ○ Compiling /blog/[slug] ...
+ ✓ Compiled /blog/[slug] in 4.2s (1894 modules)
+ GET /blog/why-your-puzzle-rating-is-higher-than-your-rapid-rating 200 in 7876ms
+ GET /blog/italian-game-mistakes-club-players-make 200 in 373ms
+ GET /blog/how-to-build-a-chess-study-plan-from-your-own-games 200 in 359ms
+ GET /blog/how-to-study-chess-openings-without-memorizing 200 in 298ms
+ GET /blog 200 in 878ms
+ GET /blog 200 in 789ms
+ ○ Compiling / ...
+ ✓ Compiled / in 830ms (1013 modules)
+ GET / 200 in 2878ms
+ ✓ Compiled /blog/[slug] in 343ms (1332 modules)
+ GET /blog/how-to-study-chess-openings-without-memorizing 200 in 1265ms
+ GET /blog/how-to-study-chess-openings-without-memorizing 200 in 331ms
+ GET /blog/how-to-study-chess-openings-without-memorizing 200 in 347ms
+ GET / 200 in 900ms
+ GET /blog/how-to-study-chess-openings-without-memorizing 200 in 488ms
+ GET /blog 200 in 733ms

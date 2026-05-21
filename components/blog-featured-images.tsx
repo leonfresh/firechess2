@@ -34,6 +34,14 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <ImproveArt />;
     case "chess-brilliant-move-explained":
       return <BrilliantArt />;
+    case "why-your-puzzle-rating-is-higher-than-your-rapid-rating":
+      return <PuzzleVsRapidArt />;
+    case "italian-game-mistakes-club-players-make":
+      return <ItalianMistakesArt />;
+    case "how-to-build-a-chess-study-plan-from-your-own-games":
+      return <StudyPlanArt />;
+    case "how-to-study-chess-openings-without-memorizing":
+      return <OpeningStudyArt />;
     default:
       return <DefaultArt />;
   }
@@ -869,6 +877,155 @@ function BrilliantArt() {
         <text x="12" y="158" fill="#67e8f9" fontSize="11" fontFamily="system-ui">♖ Rook to active square</text>
         <text x="12" y="174" fill="#67e8f9" fontSize="11" fontFamily="system-ui">♕ Queen deflection</text>
       </g>
+    </svg>
+  );
+}
+
+function PuzzleVsRapidArt() {
+  return (
+    <svg viewBox="0 0 680 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="pvrBg" x1="0" y1="0" x2="680" y2="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#08111d" /><stop offset="1" stopColor="#111827" />
+        </linearGradient>
+        <radialGradient id="pvrLeft" cx="170" cy="132" r="130" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#22c55e" stopOpacity="0.12" /><stop offset="1" stopColor="#22c55e" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="pvrRight" cx="515" cy="132" r="140" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#ef4444" stopOpacity="0.12" /><stop offset="1" stopColor="#ef4444" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="680" height="280" rx="18" fill="url(#pvrBg)" />
+      <rect width="680" height="280" rx="18" fill="url(#pvrLeft)" />
+      <rect width="680" height="280" rx="18" fill="url(#pvrRight)" />
+      <rect x="1" y="1" width="678" height="278" rx="17" stroke="white" strokeOpacity="0.05" />
+      <text x="340" y="34" textAnchor="middle" fill="white" fontSize="16" fontWeight="700" fontFamily="system-ui">Puzzle Rating vs Rapid Rating</text>
+      <line x1="340" y1="56" x2="340" y2="240" stroke="#334155" strokeDasharray="4 4" />
+      <g transform="translate(170, 62)">
+        <text x="0" y="0" textAnchor="middle" fill="#86efac" fontSize="13" fontWeight="700" fontFamily="system-ui">PUZZLES</text>
+        <circle cx="0" cy="76" r="54" fill="#14532d" fillOpacity="0.18" stroke="#22c55e" strokeOpacity="0.25" />
+        <path d="M-28,56 h20 v-18 h16 v18 h20 v16 h-20 v18 h-16 v-18 h-20 z" fill="#86efac" fillOpacity="0.9" />
+        <text x="0" y="154" textAnchor="middle" fill="#a7f3d0" fontSize="28" fontWeight="800" fontFamily="system-ui">2200</text>
+        <text x="0" y="176" textAnchor="middle" fill="#4ade80" fontSize="11" fontFamily="system-ui">forced position, clear target</text>
+      </g>
+      <g transform="translate(510, 62)">
+        <text x="0" y="0" textAnchor="middle" fill="#fca5a5" fontSize="13" fontWeight="700" fontFamily="system-ui">RAPID</text>
+        <circle cx="0" cy="76" r="54" fill="#7f1d1d" fillOpacity="0.16" stroke="#ef4444" strokeOpacity="0.22" />
+        <circle cx="0" cy="76" r="22" fill="none" stroke="#fca5a5" strokeWidth="6" strokeOpacity="0.85" />
+        <line x1="0" y1="76" x2="0" y2="58" stroke="#fca5a5" strokeWidth="4" strokeLinecap="round" />
+        <line x1="0" y1="76" x2="14" y2="86" stroke="#fca5a5" strokeWidth="4" strokeLinecap="round" />
+        <text x="0" y="154" textAnchor="middle" fill="#fecaca" fontSize="28" fontWeight="800" fontFamily="system-ui">1200</text>
+        <text x="0" y="176" textAnchor="middle" fill="#f87171" fontSize="11" fontFamily="system-ui">clock, opening, threats, nerves</text>
+      </g>
+      <text x="340" y="238" textAnchor="middle" fill="#94a3b8" fontSize="12" fontFamily="system-ui">same tactical brain, very different conditions</text>
+    </svg>
+  );
+}
+
+function ItalianMistakesArt() {
+  return (
+    <svg viewBox="0 0 680 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="itBg" x1="0" y1="0" x2="680" y2="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0c1220" /><stop offset="1" stopColor="#151a2a" />
+        </linearGradient>
+        <radialGradient id="itGlow" cx="340" cy="140" r="190" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#f59e0b" stopOpacity="0.14" /><stop offset="1" stopColor="#f59e0b" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="680" height="280" rx="18" fill="url(#itBg)" />
+      <rect width="680" height="280" rx="18" fill="url(#itGlow)" />
+      <rect x="1" y="1" width="678" height="278" rx="17" stroke="white" strokeOpacity="0.05" />
+      <text x="340" y="34" textAnchor="middle" fill="white" fontSize="16" fontWeight="700" fontFamily="system-ui">Italian Game Mistakes</text>
+      {[0,1,2,3,4,5,6,7,8].map(i => (
+        <line key={`iv${i}`} x1={164 + i * 44} y1="58" x2={164 + i * 44} y2="234" stroke="#334155" strokeWidth="0.6" strokeOpacity="0.45" />
+      ))}
+      {[0,1,2,3,4,5,6,7,8].map(i => (
+        <line key={`ih${i}`} x1="164" y1={58 + i * 22} x2="516" y2={58 + i * 22} stroke="#334155" strokeWidth="0.6" strokeOpacity="0.45" />
+      ))}
+      {[0,1,2,3,4,5,6,7].map(r =>
+        [0,1,2,3,4,5,6,7].filter(c => (r + c) % 2 === 1).map(c => (
+          <rect key={`is${r}${c}`} x={164 + c * 44} y={58 + r * 22} width="44" height="22" fill="#1e293b" fillOpacity="0.55" />
+        ))
+      )}
+      <circle cx="362" cy="146" r="28" fill="#ef4444" fillOpacity="0.12" stroke="#ef4444" strokeOpacity="0.4" />
+      <text x="362" y="152" textAnchor="middle" fill="#fca5a5" fontSize="18" fontWeight="800" fontFamily="system-ui">?!</text>
+      <path d="M274,103 L304,125 L337,115" fill="none" stroke="#22c55e" strokeWidth="3" strokeOpacity="0.75" strokeLinecap="round" />
+      <path d="M404,165 L439,149 L470,153" fill="none" stroke="#f59e0b" strokeWidth="3" strokeOpacity="0.75" strokeLinecap="round" />
+      <text x="210" y="248" fill="#94a3b8" fontSize="12" fontFamily="system-ui">develop</text>
+      <text x="314" y="248" fill="#94a3b8" fontSize="12" fontFamily="system-ui">castle</text>
+      <text x="416" y="248" fill="#94a3b8" fontSize="12" fontFamily="system-ui">time d4</text>
+    </svg>
+  );
+}
+
+function StudyPlanArt() {
+  return (
+    <svg viewBox="0 0 680 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="spBg" x1="0" y1="0" x2="680" y2="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#090f1b" /><stop offset="1" stopColor="#0f172a" />
+        </linearGradient>
+        <radialGradient id="spGlow" cx="340" cy="132" r="210" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#06b6d4" stopOpacity="0.12" /><stop offset="1" stopColor="#06b6d4" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="680" height="280" rx="18" fill="url(#spBg)" />
+      <rect width="680" height="280" rx="18" fill="url(#spGlow)" />
+      <rect x="1" y="1" width="678" height="278" rx="17" stroke="white" strokeOpacity="0.05" />
+      <text x="340" y="34" textAnchor="middle" fill="white" fontSize="16" fontWeight="700" fontFamily="system-ui">Build a Study Plan From Your Games</text>
+      {[
+        { x: 112, y: 74, title: "Opening Leak", sub: "repeat value high", col: "#f59e0b" },
+        { x: 276, y: 120, title: "Missed Tactic", sub: "drill this motif", col: "#22c55e" },
+        { x: 440, y: 84, title: "Endgame Slip", sub: "study king activity", col: "#06b6d4" },
+      ].map((card) => (
+        <g key={card.title} transform={`translate(${card.x},${card.y})`}>
+          <rect width="128" height="72" rx="10" fill="#111827" fillOpacity="0.85" stroke={card.col} strokeOpacity="0.25" />
+          <text x="14" y="28" fill={card.col} fontSize="12" fontWeight="700" fontFamily="system-ui">{card.title}</text>
+          <text x="14" y="48" fill="#94a3b8" fontSize="11" fontFamily="system-ui">{card.sub}</text>
+        </g>
+      ))}
+      <path d="M176,174 C236,205 278,212 340,212 C404,212 445,198 506,164" fill="none" stroke="#64748b" strokeWidth="2" strokeDasharray="6 5" />
+      <rect x="250" y="188" width="180" height="50" rx="12" fill="#0b1220" stroke="#22c55e" strokeOpacity="0.3" />
+      <text x="340" y="209" textAnchor="middle" fill="#86efac" fontSize="13" fontWeight="700" fontFamily="system-ui">Next 7 Days</text>
+      <text x="340" y="226" textAnchor="middle" fill="#cbd5e1" fontSize="11" fontFamily="system-ui">1 main weakness, 1 support weakness, 1 maintenance habit</text>
+    </svg>
+  );
+}
+
+function OpeningStudyArt() {
+  return (
+    <svg viewBox="0 0 680 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="osBg" x1="0" y1="0" x2="680" y2="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0b1020" /><stop offset="1" stopColor="#16122a" />
+        </linearGradient>
+        <radialGradient id="osGlow" cx="340" cy="140" r="190" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#a855f7" stopOpacity="0.14" /><stop offset="1" stopColor="#a855f7" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="680" height="280" rx="18" fill="url(#osBg)" />
+      <rect width="680" height="280" rx="18" fill="url(#osGlow)" />
+      <rect x="1" y="1" width="678" height="278" rx="17" stroke="white" strokeOpacity="0.05" />
+      <text x="340" y="34" textAnchor="middle" fill="white" fontSize="16" fontWeight="700" fontFamily="system-ui">Study Openings Without Memorizing Everything</text>
+      <g transform="translate(112,72)">
+        <rect width="172" height="138" rx="12" fill="#0f172a" stroke="#334155" />
+        <text x="18" y="28" fill="#fca5a5" fontSize="12" fontWeight="700" fontFamily="system-ui">MEMORIZE ONLY</text>
+        <text x="18" y="58" fill="#94a3b8" fontSize="11" fontFamily="system-ui">move 8</text>
+        <text x="18" y="78" fill="#94a3b8" fontSize="11" fontFamily="system-ui">move 9</text>
+        <text x="18" y="98" fill="#94a3b8" fontSize="11" fontFamily="system-ui">move 10</text>
+        <text x="18" y="128" fill="#f87171" fontSize="11" fontFamily="system-ui">opponent deviates - panic</text>
+      </g>
+      <g transform="translate(396,72)">
+        <rect width="172" height="138" rx="12" fill="#0f172a" stroke="#334155" />
+        <text x="18" y="28" fill="#c084fc" fontSize="12" fontWeight="700" fontFamily="system-ui">UNDERSTAND SHAPE</text>
+        <text x="18" y="58" fill="#cbd5e1" fontSize="11" fontFamily="system-ui">pawn structure</text>
+        <text x="18" y="78" fill="#cbd5e1" fontSize="11" fontFamily="system-ui">piece squares</text>
+        <text x="18" y="98" fill="#cbd5e1" fontSize="11" fontFamily="system-ui">plans + breaks</text>
+        <text x="18" y="128" fill="#a78bfa" fontSize="11" fontFamily="system-ui">deviation - still playable</text>
+      </g>
+      <path d="M304,141 L372,141" stroke="#64748b" strokeWidth="2.5" strokeDasharray="7 6" />
+      <polygon points="372,141 360,135 360,147" fill="#64748b" />
     </svg>
   );
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { MarkdownRenderer } from "./markdown";
 import { ArticleJsonLd, BreadcrumbJsonLd } from "@/components/json-ld";
+import { BlogFeaturedImage } from "@/components/blog-featured-images";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -120,6 +121,10 @@ export default async function BlogPostPage({ params }: Props) {
             <span>{post.readingTime} min read</span>
           </div>
         </header>
+
+        <div className="mt-8 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+          <BlogFeaturedImage slug={post.slug} />
+        </div>
 
         {/* Content */}
         <article className="prose-firechess mt-10">

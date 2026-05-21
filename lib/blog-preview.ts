@@ -20,6 +20,42 @@ export type BlogPreview = {
 /** Latest posts, newest first. Update when adding new articles. */
 export const BLOG_PREVIEWS: BlogPreview[] = [
   {
+    slug: "why-your-puzzle-rating-is-higher-than-your-rapid-rating",
+    title: "Why Your Puzzle Rating Is Higher Than Your Rapid Rating",
+    description:
+      "Why puzzle ratings sit far above rapid ratings, what that gap really means, and how to turn tactical strength into actual game wins.",
+    date: "2026-06-18",
+    tags: ["tactics", "improvement", "rating"],
+    readingTime: 6,
+  },
+  {
+    slug: "italian-game-mistakes-club-players-make",
+    title: "Italian Game Mistakes Club Players Keep Making",
+    description:
+      "The most common Italian Game mistakes for club players, with practical fixes, example positions, and simple plans you can use right away.",
+    date: "2026-06-17",
+    tags: ["openings", "italian-game", "improvement"],
+    readingTime: 6,
+  },
+  {
+    slug: "how-to-build-a-chess-study-plan-from-your-own-games",
+    title: "How to Build a Chess Study Plan From Your Own Games",
+    description:
+      "Use your own recent games to build a realistic chess study plan instead of guessing what to work on next.",
+    date: "2026-06-15",
+    tags: ["study-plan", "improvement", "analysis"],
+    readingTime: 6,
+  },
+  {
+    slug: "how-to-study-chess-openings-without-memorizing",
+    title: "How to Study Chess Openings Without Memorizing Everything",
+    description:
+      "A practical way to study chess openings through ideas, plans, structures, and your own repeated mistakes instead of endless memorization.",
+    date: "2026-06-13",
+    tags: ["openings", "study", "improvement"],
+    readingTime: 5,
+  },
+  {
     slug: "chess-brilliant-move-explained",
     title: "Brilliant Moves in Chess: What They Are and How to Find Them",
     description:
