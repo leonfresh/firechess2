@@ -1,0 +1,13 @@
+   ▲ Next.js 15.5.12
+   - Local:        http://localhost:3005
+   - Network:      http://192.168.86.235:3005
+   - Environments: .env.local
+   - Experiments (use with caution):
+     ✓ optimizeCss
+
+ ✓ Starting...
+ ✓ Ready in 1936ms
+ ✓ Compiled /middleware in 440ms (450 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 5.1s (1734 modules)
+ GET / 200 in 6052ms

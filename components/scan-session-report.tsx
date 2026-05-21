@@ -116,6 +116,50 @@ type ReportAnalysisTarget = {
   subtitle: string;
 };
 
+type ReportViewMode = "focus" | "full";
+
+type FocusIssue =
+  | {
+      kind: "opening";
+      item: RepeatedOpeningLeak;
+      title: string;
+      description: string;
+      metricLabel: string;
+      metricValue: string;
+      tone: "cyan" | "amber" | "sky" | "fuchsia";
+      score: number;
+    }
+  | {
+      kind: "tactic";
+      item: MissedTactic;
+      title: string;
+      description: string;
+      metricLabel: string;
+      metricValue: string;
+      tone: "cyan" | "amber" | "sky" | "fuchsia";
+      score: number;
+    }
+  | {
+      kind: "endgame";
+      item: EndgameMistake;
+      title: string;
+      description: string;
+      metricLabel: string;
+      metricValue: string;
+      tone: "cyan" | "amber" | "sky" | "fuchsia";
+      score: number;
+    }
+  | {
+      kind: "time";
+      item: TimeMoment;
+      title: string;
+      description: string;
+      metricLabel: string;
+      metricValue: string;
+      tone: "cyan" | "amber" | "sky" | "fuchsia";
+      score: number;
+    };
+
 function FloatingSectionNav({ sections }: { sections: FloatingNavSection[] }) {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [visible, setVisible] = useState(false);
@@ -1241,6 +1285,598 @@ function formatPawnLoss(cpLoss: number) {
   return `${(cpLoss / 100).toFixed(2)} pawns`;
 }
 
+function buildFocusIssues({
+  leaks,
+  oneOffMistakes,
+  missedTactics,
+  endgameMistakes,
+  timeMoments,
+}: {
+  leaks: RepeatedOpeningLeak[];
+  oneOffMistakes: RepeatedOpeningLeak[];
+  missedTactics: MissedTactic[];
+  endgameMistakes: EndgameMistake[];
+  timeMoments: TimeMoment[];
+}) {
+  const issues: FocusIssue[] = [];
+
+  for (const leak of leaks.filter((item) => !item.dbApproved)) {
+    const opening = leak.openingName ? `${leak.openingName}: ` : "";
+    issues.push({
+      kind: "opening",
+      item: leak,
+      title: `${opening}recurring opening leak`,
+      description: `This position appeared ${leak.reachCount} time${leak.reachCount === 1 ? "" : "s"}, and the usual move lost ${formatPawnLoss(leak.cpLoss)} on average.`,
+      metricLabel: "Repeat cost",
+      metricValue: `${leak.reachCount}x / ${formatPawnLoss(leak.cpLoss)}`,
+      tone: "cyan",
+      score: leak.cpLoss * Math.max(1, leak.reachCount),
+    });
+  }
+
+  for (const mistake of oneOffMistakes) {
+    issues.push({
+      kind: "opening",
+      item: mistake,
+      title: mistake.openingName
+        ? `${mistake.openingName}: sharp one-off miss`
+        : "Sharp one-off miss",
+      description: `This did not repeat often enough to become a leak, but the position was expensive: ${formatPawnLoss(mistake.cpLoss)}.`,
+      metricLabel: "Single-position cost",
+      metricValue: formatPawnLoss(mistake.cpLoss),
+      tone: "amber",
+      score: mistake.cpLoss * 0.85,
+    });
+  }
+
+  for (const tactic of missedTactics) {
+    const mateLabel =
+      typeof tactic.mateIn === "number"
+        ? `missed mate in ${tactic.mateIn}`
+        : "missed tactic";
+    issues.push({
+      kind: "tactic",
+      item: tactic,
+      title: `Move ${tactic.moveNumber}: ${mateLabel}`,
+      description: isMissedMateTactic(tactic)
+        ? "The engine found a forced mate here. This is the cleanest tactical pattern to drill first."
+        : `The best move was available, but the played move gave away ${formatPawnLoss(tactic.cpLoss)}.`,
+      metricLabel: isMissedMateTactic(tactic) ? "Tactical result" : "Tactic cost",
+      metricValue: isMissedMateTactic(tactic)
+        ? "Forced mate"
+        : formatPawnLoss(tactic.cpLoss),
+      tone: "amber",
+      score: isMissedMateTactic(tactic) ? 100000 + tactic.cpLoss : tactic.cpLoss,
+    });
+  }
+
+  for (const mistake of endgameMistakes) {
+    issues.push({
+      kind: "endgame",
+      item: mistake,
+      title: `${mistake.endgameType} endgame mistake`,
+      description: `This endgame decision on move ${mistake.moveNumber} cost ${formatPawnLoss(mistake.cpLoss)}.`,
+      metricLabel: "Endgame cost",
+      metricValue: formatPawnLoss(mistake.cpLoss),
+      tone: "sky",
+      score: mistake.cpLoss * 0.95,
+    });
+  }
+
+  for (const moment of timeMoments) {
+    const isProblem =
+      moment.verdict === "rushed" ||
+      moment.verdict === "wasted" ||
+      (moment.cpLoss ?? 0) > 0;
+    if (!isProblem) continue;
+
+    issues.push({
+      kind: "time",
+      item: moment,
+      title:
+        moment.verdict === "rushed"
+          ? "Rushed critical decision"
+          : moment.verdict === "wasted"
+            ? "Time spent in the wrong place"
+            : "Clock-management moment",
+      description: moment.reason,
+      metricLabel: "Time spent",
+      metricValue: `${moment.timeSpentSec.toFixed(0)}s`,
+      tone: "fuchsia",
+      score: (moment.cpLoss ?? 0) + moment.complexity * 4,
+    });
+  }
+
+  return issues.sort((left, right) => right.score - left.score);
+}
+
+function ReportViewSwitcher({
+  viewMode,
+  onChange,
+  focusCount,
+}: {
+  viewMode: ReportViewMode;
+  onChange: (mode: ReportViewMode) => void;
+  focusCount: number;
+}) {
+  return (
+    <div className="mx-auto max-w-3xl rounded-[1.75rem] border border-white/[0.1] bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.1),_rgba(15,23,42,0.92)_48%,_rgba(2,6,23,0.98)_100%)] p-4 text-center shadow-2xl shadow-black/20 sm:p-5">
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-300/80">
+          Choose report view
+        </p>
+        <p className="mt-1 text-sm text-slate-400">
+          Full Report is the default. Focus View is there when you want the distilled version.
+        </p>
+      </div>
+
+      <div className="mx-auto mt-4 grid max-w-xl grid-cols-1 gap-2 rounded-2xl border border-white/[0.08] bg-black/25 p-1.5 sm:grid-cols-2">
+        {[
+          {
+            value: "full" as const,
+            label: "Full Report",
+            caption: "Default view",
+          },
+          {
+            value: "focus" as const,
+            label: "Focus View",
+            caption: "Less, but curated",
+          },
+        ].map((option) => {
+          const selected = viewMode === option.value;
+          return (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => onChange(option.value)}
+              className={`rounded-xl px-4 py-3 text-left transition sm:text-center ${
+                selected
+                  ? "bg-white text-slate-950 shadow-lg shadow-black/20"
+                  : "text-slate-400 hover:bg-white/[0.07] hover:text-slate-100"
+              }`}
+              aria-pressed={selected}
+            >
+              <span className="flex items-center justify-between gap-2 sm:justify-center">
+                <span className="text-sm font-black">{option.label}</span>
+                {option.value === "focus" && focusCount > 0 ? (
+                  <span
+                    className={`rounded-full px-1.5 text-[10px] font-bold ${
+                      selected
+                        ? "bg-slate-950/10 text-slate-700"
+                        : "bg-white/[0.08] text-slate-300"
+                    }`}
+                  >
+                    {focusCount}
+                  </span>
+                ) : null}
+              </span>
+              <span
+                className={`mt-0.5 block text-[11px] font-semibold ${
+                  selected ? "text-slate-600" : "text-slate-500"
+                }`}
+              >
+                {option.caption}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function getFocusIssueAnalysisTarget(issue: FocusIssue): ReportAnalysisTarget {
+  switch (issue.kind) {
+    case "opening":
+      return buildOpeningAnalysisTarget(issue.item);
+    case "tactic":
+      return buildTacticAnalysisTarget(issue.item);
+    case "endgame":
+      return buildEndgameAnalysisTarget(issue.item);
+    case "time":
+      return buildTimeAnalysisTarget(issue.item);
+  }
+}
+
+function getFocusIssueCommunitySeed(
+  issue: FocusIssue,
+): CommunityPostComposerSeed {
+  switch (issue.kind) {
+    case "opening":
+      return buildOpeningLeakCommunitySeed(issue.item);
+    case "tactic":
+      return buildTacticCommunitySeed(issue.item);
+    case "endgame":
+      return buildEndgameCommunitySeed(issue.item);
+    case "time":
+      return buildTimeMomentCommunitySeed(issue.item);
+  }
+}
+
+function FocusIssuePreview({
+  issue,
+  engineDepth,
+  onOpenAnalysis,
+  onCreateCommunityPost,
+}: {
+  issue: FocusIssue;
+  engineDepth: number;
+  onOpenAnalysis: () => void;
+  onCreateCommunityPost?: () => void;
+}) {
+  switch (issue.kind) {
+    case "opening":
+      return (
+        <MistakeCard
+          leak={issue.item}
+          engineDepth={engineDepth}
+          onOpenAnalysis={onOpenAnalysis}
+          onCreateCommunityPost={onCreateCommunityPost}
+        />
+      );
+    case "tactic":
+      return (
+        <TacticCard
+          tactic={issue.item}
+          engineDepth={engineDepth}
+          onOpenAnalysis={onOpenAnalysis}
+          onCreateCommunityPost={onCreateCommunityPost}
+        />
+      );
+    case "endgame":
+      return (
+        <EndgameCard
+          mistake={issue.item}
+          engineDepth={engineDepth}
+          onOpenAnalysis={onOpenAnalysis}
+          onCreateCommunityPost={onCreateCommunityPost}
+        />
+      );
+    case "time":
+      return (
+        <TimeCard
+          moment={issue.item}
+          onOpenAnalysis={onOpenAnalysis}
+          onCreateCommunityPost={onCreateCommunityPost}
+        />
+      );
+  }
+}
+
+function FocusReportView({
+  scan,
+  reportMeta,
+  radarNarrative,
+  focusIssues,
+  issueCount,
+  drillsReady,
+  isProcessing,
+  hasProAccess,
+  onSwitchToFull,
+  onOpenAnalysis,
+  onCreateCommunityPost,
+}: {
+  scan: PublicScanSessionPayload;
+  reportMeta: ComputedScanReport | null;
+  radarNarrative: ReturnType<typeof buildRadarNarrative> | null;
+  focusIssues: FocusIssue[];
+  issueCount: number;
+  drillsReady: boolean;
+  isProcessing: boolean;
+  hasProAccess: boolean;
+  onSwitchToFull: () => void;
+  onOpenAnalysis: (target: ReportAnalysisTarget) => void;
+  onCreateCommunityPost?: (seed: CommunityPostComposerSeed) => void;
+}) {
+  const [activeIssueIndex, setActiveIssueIndex] = useState(0);
+  const missionCount = focusIssues.length;
+  const activeIndex = missionCount
+    ? Math.min(activeIssueIndex, missionCount - 1)
+    : 0;
+  const primaryIssue = focusIssues[activeIndex] ?? null;
+  const secondaryIssues = focusIssues
+    .filter((_, index) => index !== activeIndex)
+    .slice(0, 3);
+
+  useEffect(() => {
+    setActiveIssueIndex(0);
+  }, [missionCount, scan.id]);
+
+  const openPrimaryAnalysis = () => {
+    if (primaryIssue) onOpenAnalysis(getFocusIssueAnalysisTarget(primaryIssue));
+  };
+  const createPrimaryPost =
+    primaryIssue && onCreateCommunityPost
+      ? () => onCreateCommunityPost(getFocusIssueCommunitySeed(primaryIssue))
+      : undefined;
+  const primaryCtaLabel =
+    primaryIssue?.kind === "tactic"
+      ? "Train this tactic"
+      : primaryIssue?.kind === "endgame"
+        ? "Fix this endgame"
+        : primaryIssue?.kind === "time"
+          ? "Fix this clock habit"
+          : "Fix this leak";
+  const goToPreviousMission = () =>
+    setActiveIssueIndex((current) =>
+      missionCount ? (current - 1 + missionCount) % missionCount : 0,
+    );
+  const goToNextMission = () =>
+    setActiveIssueIndex((current) =>
+      missionCount ? (current + 1) % missionCount : 0,
+    );
+
+  return (
+    <div className="space-y-6">
+      <section className="grid gap-4 2xl:grid-cols-[minmax(0,1.05fr)_minmax(560px,0.95fr)]">
+        <div className="rounded-[1.75rem] border border-white/[0.08] bg-[radial-gradient(circle_at_top_right,_rgba(16,185,129,0.14),_rgba(15,23,42,0.9)_42%,_rgba(2,6,23,0.98)_100%)] p-6 sm:p-7">
+          <div className="min-w-0">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+                Today's mission
+              </p>
+              {missionCount > 0 ? (
+                <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-slate-300">
+                  {activeIndex + 1} / {missionCount}
+                </span>
+              ) : null}
+            </div>
+            <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.07]">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-300 to-violet-400 transition-[width] duration-300"
+                style={{
+                  width: missionCount
+                    ? `${((activeIndex + 1) / missionCount) * 100}%`
+                    : "100%",
+                }}
+              />
+            </div>
+          </div>
+
+          <div
+            key={primaryIssue ? `${primaryIssue.kind}-${activeIndex}` : "clean"}
+            className="lesson-slide"
+          >
+            <h2 className="mt-5 max-w-4xl text-2xl font-black tracking-tight text-white sm:text-[2rem] xl:text-[2.2rem]">
+              {primaryIssue?.title ??
+                reportMeta?.vibeTitle ??
+                "No single leak is dominating this scan"}
+            </h2>
+            <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-300 sm:text-[15px]">
+              {primaryIssue?.description ??
+                reportMeta?.reportSummary ??
+                "Your report is still useful, but the scan did not find one obvious weakness that should crowd out everything else."}
+            </p>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <MetricCard
+                label="Games"
+                value={scan.result?.gamesAnalyzed || scan.config.maxGames}
+                hint={isProcessing ? "Updating live" : undefined}
+              />
+              <MetricCard
+                label={primaryIssue?.metricLabel ?? "Targets"}
+                value={primaryIssue?.metricValue ?? issueCount}
+                tone={primaryIssue?.tone ?? "emerald"}
+              />
+              <MetricCard
+                label={reportMeta ? "Accuracy" : "Profile"}
+                value={
+                  reportMeta
+                    ? `${reportMeta.estimatedAccuracy.toFixed(1)}%`
+                    : isProcessing
+                      ? "Building"
+                      : "Ready"
+                }
+                tone="fuchsia"
+              />
+            </div>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <Link
+                href="/train"
+                className="inline-flex items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/[0.14] px-5 py-2.5 text-sm font-semibold text-emerald-100 transition hover:border-emerald-400/50 hover:bg-emerald-500/[0.22] hover:text-white"
+              >
+                {primaryCtaLabel}
+              </Link>
+              {primaryIssue ? (
+                <button
+                  type="button"
+                  onClick={openPrimaryAnalysis}
+                  className="inline-flex items-center justify-center rounded-xl border border-cyan-500/25 bg-cyan-500/[0.1] px-5 py-2.5 text-sm font-semibold text-cyan-100 transition hover:border-cyan-400/45 hover:bg-cyan-500/[0.18] hover:text-white"
+                >
+                  Analyze position
+                </button>
+              ) : null}
+              {createPrimaryPost ? (
+                <button
+                  type="button"
+                  onClick={createPrimaryPost}
+                  className="inline-flex items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-white/[0.18] hover:bg-white/[0.08] hover:text-white"
+                >
+                  Ask community
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </div>
+
+        {primaryIssue ? (
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-[1.25rem] border border-white/[0.08] bg-white/[0.03] px-4 py-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={goToPreviousMission}
+                  disabled={missionCount < 2}
+                  aria-label="Previous mission slide"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.03] text-lg font-black text-slate-300 transition hover:border-white/[0.16] hover:bg-white/[0.08] hover:text-white disabled:cursor-default disabled:opacity-35"
+                >
+                  ←
+                </button>
+                <button
+                  type="button"
+                  onClick={goToNextMission}
+                  disabled={missionCount < 2}
+                  aria-label="Next mission slide"
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.03] text-lg font-black text-slate-300 transition hover:border-white/[0.16] hover:bg-white/[0.08] hover:text-white disabled:cursor-default disabled:opacity-35"
+                >
+                  →
+                </button>
+                {missionCount > 1 ? (
+                  <button
+                    type="button"
+                    onClick={goToNextMission}
+                    className="inline-flex items-center justify-center rounded-xl border border-violet-500/25 bg-violet-500/[0.1] px-4 py-2.5 text-sm font-semibold text-violet-100 transition hover:border-violet-400/45 hover:bg-violet-500/[0.18] hover:text-white"
+                  >
+                    Next mission
+                  </button>
+                ) : null}
+              </div>
+
+              {missionCount > 1 ? (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {focusIssues.slice(0, 12).map((issue, index) => {
+                    const selected = index === activeIndex;
+                    return (
+                      <button
+                        key={`${issue.kind}-${issue.title}-${index}`}
+                        type="button"
+                        onClick={() => setActiveIssueIndex(index)}
+                        aria-label={`Go to mission ${index + 1}`}
+                        className={`h-2.5 rounded-full transition-all ${
+                          selected
+                            ? "w-8 bg-white"
+                            : "w-2.5 bg-white/[0.18] hover:bg-white/[0.35]"
+                        }`}
+                      />
+                    );
+                  })}
+                  {missionCount > 12 ? (
+                    <span className="ml-1 text-[10px] font-semibold text-slate-500">
+                      +{missionCount - 12}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+
+            <div
+              key={`preview-${primaryIssue.kind}-${activeIndex}`}
+              className="min-w-0 lesson-slide"
+            >
+              <FocusIssuePreview
+                issue={primaryIssue}
+                engineDepth={scan.config.engineDepth}
+                onOpenAnalysis={openPrimaryAnalysis}
+                onCreateCommunityPost={createPrimaryPost}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-[1.75rem] border border-emerald-500/15 bg-emerald-500/[0.05] p-6">
+            <p className="text-sm font-semibold text-emerald-200">
+              Clean scan
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-slate-300">
+              No major recurring issue stood out. Use the Full Report to inspect
+              the quieter details and decide what to sharpen next.
+            </p>
+          </div>
+        )}
+      </section>
+
+      <section className="grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <div className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+            Coach summary
+          </p>
+          <h3 className="mt-2 text-xl font-black tracking-tight text-white">
+            {reportMeta?.vibeTitle ?? "The report is still settling"}
+          </h3>
+          <p className="mt-2 text-sm leading-relaxed text-slate-400">
+            {reportMeta?.reportSummary ??
+              "As more positions finish scoring, FireChess will tighten this into a clearer diagnosis."}
+          </p>
+          {radarNarrative ? (
+            <p className="mt-3 text-sm leading-relaxed text-slate-300">
+              {radarNarrative.coachingParagraph}
+            </p>
+          ) : null}
+        </div>
+
+        <ReportFollowUpCta
+          drillsReady={drillsReady}
+          issueCount={issueCount}
+          isProcessing={isProcessing}
+        />
+      </section>
+
+      {secondaryIssues.length > 0 ? (
+        <section className="space-y-3">
+          <SectionHeader
+            eyebrow="Next evidence"
+            title="The other moments behind the diagnosis"
+            description="These are the next positions FireChess would inspect after the main mission."
+            badge={`${secondaryIssues.length} shown`}
+          />
+          <div className="grid gap-3 lg:grid-cols-3">
+            {secondaryIssues.map((issue) => (
+              <button
+                key={`${issue.kind}-${issue.title}-${issue.score}`}
+                type="button"
+                onClick={() => onOpenAnalysis(getFocusIssueAnalysisTarget(issue))}
+                className="rounded-[1.25rem] border border-white/[0.08] bg-white/[0.03] p-4 text-left transition hover:border-white/[0.16] hover:bg-white/[0.06]"
+              >
+                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                  {issue.metricLabel}
+                </p>
+                <h3 className="mt-2 text-base font-bold text-white">
+                  {issue.title}
+                </h3>
+                <p className="mt-2 line-clamp-3 text-sm leading-relaxed text-slate-400">
+                  {issue.description}
+                </p>
+              </button>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {!hasProAccess && issueCount > FREE_SCAN_SECTION_SAMPLE ? (
+        <div className="rounded-[1.25rem] border border-amber-500/20 bg-amber-500/[0.06] px-4 py-3 text-sm text-amber-100/80">
+          Focus View shows the best next move first. Full Report keeps the
+          complete available sample and Pro unlocks the rest.
+        </div>
+      ) : null}
+
+      <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              Missing context?
+            </p>
+            <h3 className="mt-1 text-lg font-black tracking-tight text-white">
+              Open the full report
+            </h3>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+              Focus View is for the next move. Full Report shows every opening,
+              tactic, endgame, and clock detail in one place.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onSwitchToFull}
+            className="inline-flex items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-white/[0.18] hover:bg-white/[0.08] hover:text-white"
+          >
+            Open Full Report
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
 type CoachInsightLine = {
   text: string;
   type: "positive" | "improve";
@@ -2246,12 +2882,17 @@ export function ScanSessionReport({
   const [sectionViewModes, setSectionViewModes] = useState<
     Record<string, "list" | "grid">
   >({});
+  const [reportViewMode, setReportViewMode] =
+    useState<ReportViewMode>("full");
   const getSV = (id: string): "list" | "grid" => sectionViewModes[id] ?? "list";
   const toggleSV = (id: string) =>
     setSectionViewModes((p) => ({
       ...p,
       [id]: (p[id] ?? "list") === "list" ? "grid" : "list",
     }));
+  const changeReportViewMode = (mode: ReportViewMode) => {
+    setReportViewMode(mode);
+  };
 
   const visibleLeaks = accessibleLeaks.slice(0, leakReveal.shownCount);
   const visibleOneOffMistakes = accessibleOneOffMistakes.slice(
@@ -2313,6 +2954,17 @@ export function ScanSessionReport({
   const drillsReady =
     scan.status === "ready" && followUpIssueCount > 0 && !isProcessing;
   const radarNarrative = radarData ? buildRadarNarrative(radarData) : null;
+  const focusIssues = useMemo(
+    () =>
+      buildFocusIssues({
+        leaks,
+        oneOffMistakes,
+        missedTactics: accessibleTactics,
+        endgameMistakes: accessibleEndgames,
+        timeMoments: accessibleMoments,
+      }),
+    [accessibleEndgames, accessibleMoments, accessibleTactics, leaks, oneOffMistakes],
+  );
 
   const phaseOrder: Record<AnalysisProgress["phase"], number> = {
     fetch: 0,
@@ -2515,8 +3167,32 @@ export function ScanSessionReport({
   ].filter(Boolean) as FloatingNavSection[];
   return (
     <>
-      <FloatingSectionNav sections={floatingNavSections} />
+      {reportViewMode === "full" ? (
+        <FloatingSectionNav sections={floatingNavSections} />
+      ) : null}
       <div className="mt-6 space-y-6">
+        <ReportViewSwitcher
+          viewMode={reportViewMode}
+          onChange={changeReportViewMode}
+          focusCount={focusIssues.length}
+        />
+
+        {reportViewMode === "focus" ? (
+          <FocusReportView
+            scan={scan}
+            reportMeta={reportMeta}
+            radarNarrative={radarNarrative}
+            focusIssues={focusIssues}
+            issueCount={followUpIssueCount}
+            drillsReady={drillsReady}
+            isProcessing={isProcessing}
+            hasProAccess={hasProAccess}
+            onSwitchToFull={() => changeReportViewMode("full")}
+            onOpenAnalysis={setAnalysisTarget}
+            onCreateCommunityPost={onCreateCommunityPost}
+          />
+        ) : (
+          <>
         {showOpenings ||
         showTactics ||
         showEndgames ||
@@ -3426,6 +4102,8 @@ export function ScanSessionReport({
             />
           </section>
         ) : null}
+          </>
+        )}
       </div>
       <AnalysisBoardModal
         open={Boolean(analysisTarget)}

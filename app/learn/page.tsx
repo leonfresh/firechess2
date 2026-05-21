@@ -478,7 +478,10 @@ const OPENINGS_LESSON: Lesson = {
       fen: "r1bq1rk1/ppp1bpp1/2np1n1p/6B1/4PP1P/2NQ4/PPP3P1/2KR1BNR b - h3 0 9",
       orientation: "black",
       highlights: ["g5", "h6", "h8"],
-      arrows: [["h6", "g5"], ["h1", "h8"]],
+      arrows: [
+        ["h6", "g5"],
+        ["h1", "h8"],
+      ],
     },
     {
       kind: "choice",
@@ -786,7 +789,10 @@ const PASSED_PAWN_LESSON: Lesson = {
       fen: "8/8/k2P4/p7/8/8/8/3K4 w - - 0 1",
       orientation: "white",
       highlights: ["d6", "a5", "d8", "a1"],
-      arrows: [["d6", "d8"], ["a5", "a1"]],
+      arrows: [
+        ["d6", "d8"],
+        ["a5", "a1"],
+      ],
     },
     {
       kind: "choice",
@@ -1187,7 +1193,10 @@ const KNIGHT_OUTPOST_LESSON: Lesson = {
       fen: "r1bq1rk1/pp3p1p/3p2p1/3pN3/4P3/2NB4/PP3PPP/R2QK2R w KQ - 0 1",
       orientation: "white",
       highlights: ["e5", "d5", "f7"],
-      arrows: [["d5", "c4"], ["d5", "e4"]],
+      arrows: [
+        ["d5", "c4"],
+        ["d5", "e4"],
+      ],
     },
     {
       kind: "choice",
@@ -1206,7 +1215,10 @@ const KNIGHT_OUTPOST_LESSON: Lesson = {
       fen: "r2q1rk1/pp3ppp/2p1p3/8/4n3/3B1N2/PP3PPP/R1BQR1K1 w - - 0 1",
       orientation: "white",
       highlights: ["e4", "c5", "b2"],
-      arrows: [["e4", "c5"], ["b2", "b4"]],
+      arrows: [
+        ["e4", "c5"],
+        ["b2", "b4"],
+      ],
     },
     {
       kind: "text",
@@ -2485,52 +2497,52 @@ function ChoiceSlideView({
   const choicesBlock = (
     <div className="flex flex-col gap-2.5">
       {slide.choices.map((choice, i) => {
-          const isSelected = selected === i;
-          const isCorrect = i === slide.correctIndex;
-          let cls =
-            "rounded-2xl border px-5 py-4 text-left text-sm font-semibold transition-all duration-200 ";
-          if (!answered) {
-            cls +=
-              "border-white/[0.08] bg-white/[0.03] text-slate-200 hover:border-purple-500/40 hover:bg-purple-500/[0.06] cursor-pointer";
-          } else if (isCorrect) {
-            cls +=
-              "border-emerald-500/40 bg-emerald-500/[0.08] text-emerald-200 cursor-default lesson-choice-correct";
-          } else if (isSelected && !isCorrect) {
-            cls +=
-              "border-red-500/40 bg-red-500/[0.08] text-red-300 cursor-default";
-          } else {
-            cls +=
-              "border-white/[0.04] bg-white/[0.01] text-slate-600 cursor-default";
-          }
+        const isSelected = selected === i;
+        const isCorrect = i === slide.correctIndex;
+        let cls =
+          "rounded-2xl border px-5 py-4 text-left text-sm font-semibold transition-all duration-200 ";
+        if (!answered) {
+          cls +=
+            "border-white/[0.08] bg-white/[0.03] text-slate-200 hover:border-purple-500/40 hover:bg-purple-500/[0.06] cursor-pointer";
+        } else if (isCorrect) {
+          cls +=
+            "border-emerald-500/40 bg-emerald-500/[0.08] text-emerald-200 cursor-default lesson-choice-correct";
+        } else if (isSelected && !isCorrect) {
+          cls +=
+            "border-red-500/40 bg-red-500/[0.08] text-red-300 cursor-default";
+        } else {
+          cls +=
+            "border-white/[0.04] bg-white/[0.01] text-slate-600 cursor-default";
+        }
 
-          return (
-            <button
-              key={i}
-              type="button"
-              className={cls}
-              onClick={() => {
-                if (!answered) {
-                  playSound(i === slide.correctIndex ? "correct" : "select");
-                  setSelected(i);
-                }
-              }}
-              disabled={answered}
-            >
-              <span className="mr-2 font-black text-slate-600">
-                {answered
-                  ? isCorrect
-                    ? "✓"
-                    : isSelected
-                      ? "✗"
-                      : String.fromCharCode(65 + i)
-                  : String.fromCharCode(65 + i)}
-                .
-              </span>
-              {choice}
-            </button>
-          );
-        })}
-      </div>
+        return (
+          <button
+            key={i}
+            type="button"
+            className={cls}
+            onClick={() => {
+              if (!answered) {
+                playSound(i === slide.correctIndex ? "correct" : "select");
+                setSelected(i);
+              }
+            }}
+            disabled={answered}
+          >
+            <span className="mr-2 font-black text-slate-600">
+              {answered
+                ? isCorrect
+                  ? "✓"
+                  : isSelected
+                    ? "✗"
+                    : String.fromCharCode(65 + i)
+                : String.fromCharCode(65 + i)}
+              .
+            </span>
+            {choice}
+          </button>
+        );
+      })}
+    </div>
   );
 
   const explanationAndNext = answered ? (
