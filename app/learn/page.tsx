@@ -2531,7 +2531,6 @@ function ChoiceSlideView({
           );
         })}
       </div>
-    </div>
   );
 
   const explanationAndNext = answered ? (
