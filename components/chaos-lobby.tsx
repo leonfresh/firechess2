@@ -4,10 +4,10 @@
  * ChaosLobby — Real-time matchmaking lobby for Chaos Chess.
  *
  * Features:
- *  - Online player count (heartbeat every 10s)
+ *  - Online player count (heartbeat every 20s while visible)
  *  - 60-second matchmaking timer with auto-cancel
  *  - Live chat for players waiting in the lobby
- *  - Polls chat messages every 2s for real-time feel
+ *  - Polls chat messages periodically while the tab is visible
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -57,9 +57,15 @@ type LobbyProps = {
 /*  Constants                                                           */
 /* ------------------------------------------------------------------ */
 
-const PRESENCE_INTERVAL = 10_000; // heartbeat every 10s
-const CHAT_POLL_INTERVAL = 2_000; // poll chat every 2s
+const PRESENCE_INTERVAL = 20_000; // heartbeat every 20s while visible
+const CHAT_POLL_INTERVAL = 5_000; // poll chat every 5s while visible
 const MAX_SEARCH_TIME = 60; // 60 seconds max search
+
+function isDocumentVisible() {
+  return (
+    typeof document === "undefined" || document.visibilityState === "visible"
+  );
+}
 
 const PEPE_GIFS = [
   "/pepe-emojis/animated/88627-pepehype.gif",
@@ -116,7 +122,11 @@ export function ChaosLobby({
   }, []);
 
   /* ── Heartbeat: presence ── */
-  const sendHeartbeat = useCallback(async () => {
+  const sendHeartbeat = useCallback(async (force = false) => {
+    if (!force && !isDocumentVisible()) {
+      return;
+    }
+
     try {
       const res = await fetch("/api/chaos/presence", {
         method: "POST",
@@ -132,7 +142,11 @@ export function ChaosLobby({
   }, []);
 
   /* ── Fetch chat messages ── */
-  const fetchMessages = useCallback(async () => {
+  const fetchMessages = useCallback(async (force = false) => {
+    if (!force && !isDocumentVisible()) {
+      return;
+    }
+
     try {
       const res = await fetch("/api/chaos/lobby", { credentials: "include" });
       if (!res.ok) return;
@@ -177,17 +191,34 @@ export function ChaosLobby({
 
   /* ── Start presence + chat polling on mount ── */
   useEffect(() => {
-    sendHeartbeat();
-    fetchMessages();
+    void sendHeartbeat(true);
+    void fetchMessages(true);
 
-    presenceRef.current = setInterval(sendHeartbeat, PRESENCE_INTERVAL);
-    chatPollRef.current = setInterval(fetchMessages, CHAT_POLL_INTERVAL);
+    const handleVisibleRefresh = () => {
+      if (!isDocumentVisible()) {
+        return;
+      }
+
+      void sendHeartbeat(true);
+      void fetchMessages(true);
+    };
+
+    presenceRef.current = setInterval(() => {
+      void sendHeartbeat();
+    }, PRESENCE_INTERVAL);
+    chatPollRef.current = setInterval(() => {
+      void fetchMessages();
+    }, CHAT_POLL_INTERVAL);
+
+    document.addEventListener("visibilitychange", handleVisibleRefresh);
+    window.addEventListener("focus", handleVisibleRefresh);
 
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibleRefresh);
+      window.removeEventListener("focus", handleVisibleRefresh);
       clearAllIntervals();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [clearAllIntervals, fetchMessages, sendHeartbeat]);
 
   /* ── Matchmaking: start search ── */
   const startSearch = useCallback(async () => {

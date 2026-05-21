@@ -36,3 +36,12 @@
  GET / 200 in 900ms
  GET /blog/how-to-study-chess-openings-without-memorizing 200 in 488ms
  GET /blog 200 in 733ms
+ ✓ Compiled in 2.9s (1087 modules)
+ ✓ Compiled in 1309ms (1087 modules)
+ ✓ Compiled in 2.2s (1087 modules)
+ ✓ Compiled in 1492ms (1087 modules)
+ ✓ Compiled in 1440ms (1087 modules)
+ ✓ Compiled in 2s (1087 modules)
+ ✓ Compiled in 1549ms (1087 modules)
+ ✓ Compiled in 1961ms (1087 modules)
+ ✓ Compiled in 1249ms (1087 modules)

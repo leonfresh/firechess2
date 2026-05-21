@@ -4,7 +4,7 @@
  * Body: (none) — uses session user info automatically.
  * Response: { onlineCount, users: { id, name, image }[] }
  *
- * A user is considered "online" if their lastSeen is within the past 30 seconds.
+ * A user is considered "online" if their lastSeen is within the past 60 seconds.
  */
 
 import { NextResponse } from "next/server";
@@ -13,7 +13,7 @@ import { db } from "@/lib/db";
 import { chaosPresence, users } from "@/lib/schema";
 import { gte, eq } from "drizzle-orm";
 
-const ONLINE_THRESHOLD_MS = 30_000; // 30 seconds
+const ONLINE_THRESHOLD_MS = 60_000; // 60 seconds
 
 export async function POST() {
   const session = await auth();

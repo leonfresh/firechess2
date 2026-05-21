@@ -12,6 +12,8 @@ import {
   type CommunitySortMode,
 } from "@/lib/community-shared";
 
+export const revalidate = 60;
+
 export async function GET(req: NextRequest) {
   const sortParam = req.nextUrl.searchParams.get("sort");
   const limitParam = Number(req.nextUrl.searchParams.get("limit") ?? "24");
@@ -22,7 +24,14 @@ export async function GET(req: NextRequest) {
 
   try {
     const posts = await getCommunityFeed(sort, limit);
-    return NextResponse.json({ posts });
+    return NextResponse.json(
+      { posts },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        },
+      },
+    );
   } catch (err) {
     console.error("[community posts GET]", err);
     return NextResponse.json(

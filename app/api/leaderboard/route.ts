@@ -13,10 +13,15 @@ import { db } from "@/lib/db";
 import { reports, users } from "@/lib/schema";
 import { desc, gte, isNotNull, sql } from "drizzle-orm";
 
+export const revalidate = 300;
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const period = searchParams.get("period") ?? "week";
-  const limit = Math.min(Math.max(parseInt(searchParams.get("limit") ?? "50", 10) || 50, 1), 100);
+  const limit = Math.min(
+    Math.max(parseInt(searchParams.get("limit") ?? "50", 10) || 50, 1),
+    100,
+  );
 
   // Build a WHERE clause for time period
   const now = new Date();
@@ -49,5 +54,12 @@ export async function GET(req: NextRequest) {
     .orderBy(desc(reports.firechessScore))
     .limit(limit);
 
-  return NextResponse.json({ period, entries: rows });
+  return NextResponse.json(
+    { period, entries: rows },
+    {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=900",
+      },
+    },
+  );
 }

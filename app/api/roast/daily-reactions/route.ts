@@ -16,11 +16,32 @@ import { auth } from "@/lib/auth";
 /** Allowed reaction emoji keys (moods from RoastAvatar + simple emojis) */
 const ALLOWED_EMOJIS = new Set([
   // Pepe moods (animated ones for max impact)
-  "lmao", "clapping", "shocked", "gamercry", "madpuke",
-  "rage", "bigeyes", "hyped", "cantwatch", "firesgun",
-  "clown", "crylaugh", "nope", "toxic", "loving",
+  "lmao",
+  "clapping",
+  "shocked",
+  "gamercry",
+  "madpuke",
+  "rage",
+  "bigeyes",
+  "hyped",
+  "cantwatch",
+  "firesgun",
+  "clown",
+  "crylaugh",
+  "nope",
+  "toxic",
+  "loving",
   // Simple emoji reactions
-  "💀", "😂", "🔥", "😱", "🤡", "👏", "😭", "🤯", "💩", "👀",
+  "💀",
+  "😂",
+  "🔥",
+  "😱",
+  "🤡",
+  "👏",
+  "😭",
+  "🤯",
+  "💩",
+  "👀",
 ]);
 
 export async function GET(req: NextRequest) {
@@ -43,7 +64,10 @@ export async function GET(req: NextRequest) {
     .orderBy(roastDailyReactions.moveIdx, roastDailyReactions.createdAt);
 
   // Group by moveIdx for easier client consumption
-  const grouped: Record<number, { emoji: string; displayName: string | null }[]> = {};
+  const grouped: Record<
+    number,
+    { emoji: string; displayName: string | null }[]
+  > = {};
   for (const row of rows) {
     if (!grouped[row.moveIdx]) grouped[row.moveIdx] = [];
     grouped[row.moveIdx].push({
@@ -59,7 +83,14 @@ export async function GET(req: NextRequest) {
   }
   const playerCount = uniqueNames.size;
 
-  return NextResponse.json({ date, reactions: grouped, playerCount });
+  return NextResponse.json(
+    { date, reactions: grouped, playerCount },
+    {
+      headers: {
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+      },
+    },
+  );
 }
 
 export async function POST(req: NextRequest) {
@@ -78,7 +109,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Rate limit: max 60 reactions per date per IP (simple check)
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
 
     // Get optional auth session
     let displayName = "Anonymous";

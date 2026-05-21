@@ -120,9 +120,6 @@ export function HomepageCommunityFeed() {
       try {
         const res = await fetch(
           `/api/community/posts?sort=${sort}&limit=${HOMEPAGE_FETCH_LIMIT}`,
-          {
-            cache: "no-store",
-          },
         );
 
         if (!res.ok) {

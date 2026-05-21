@@ -8,6 +8,8 @@ import { db } from "@/lib/db";
 import { chaosRatings, users } from "@/lib/schema";
 import { desc, sql, gte } from "drizzle-orm";
 
+export const revalidate = 300;
+
 export async function GET(req: NextRequest) {
   const limit = Math.min(
     Math.max(
@@ -37,5 +39,12 @@ export async function GET(req: NextRequest) {
     .orderBy(desc(chaosRatings.rating))
     .limit(limit);
 
-  return NextResponse.json({ entries: rows });
+  return NextResponse.json(
+    { entries: rows },
+    {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=900",
+      },
+    },
+  );
 }

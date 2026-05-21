@@ -42,9 +42,20 @@ export function Navbar() {
 
   // Poll for unread support messages
   useEffect(() => {
-    if (!authenticated) return;
+    if (!authenticated) {
+      setUnreadMessages(0);
+      return;
+    }
+
     let cancelled = false;
     const check = () => {
+      if (
+        typeof document !== "undefined" &&
+        document.visibilityState === "hidden"
+      ) {
+        return;
+      }
+
       fetch("/api/feedback/unread")
         .then((r) => r.json())
         .then((d) => {
@@ -52,11 +63,26 @@ export function Navbar() {
         })
         .catch(() => {});
     };
+
     check();
-    const interval = setInterval(check, 60_000); // re-check every 60s
+
+    const handleFocus = () => {
+      check();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        check();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [authenticated, pathname]);
 

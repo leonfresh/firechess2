@@ -1,0 +1,1 @@
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename 'C:\Users\leonf\NextJs\firechess2\.next\cache\webpack\client-development\4.pack.gz_' -> 'C:\Users\leonf\NextJs\firechess2\.next\cache\webpack\client-development\4.pack.gz'

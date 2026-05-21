@@ -7,7 +7,7 @@
  * POST response: { ok: true }
  *
  * Messages are limited to the last 50.
- * Online count is derived from chaosPresence (lastSeen ≤ 30s).
+ * Online count is derived from chaosPresence (lastSeen ≤ 60s).
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -16,7 +16,7 @@ import { db } from "@/lib/db";
 import { chaosLobbyMessages, chaosPresence } from "@/lib/schema";
 import { gte, desc, sql } from "drizzle-orm";
 
-const ONLINE_THRESHOLD_MS = 30_000;
+const ONLINE_THRESHOLD_MS = 60_000;
 const MAX_MESSAGES = 50;
 const MAX_MSG_LENGTH = 200;
 const RATE_LIMIT_MS = 1_500; // 1.5s cooldown

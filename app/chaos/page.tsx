@@ -7682,6 +7682,8 @@ export default function ChaosChessPage() {
   );
   // Keep ref in sync so sendMoveToServer (memoized) can use it
   partySendRef.current = partySend;
+  const partyConnectedRef = useRef(partyConnected);
+  partyConnectedRef.current = partyConnected;
 
   // Callback refs — updated every render so the polling setInterval always uses
   // the latest version of these functions without needing to recreate the interval.
@@ -7729,6 +7731,21 @@ export default function ChaosChessPage() {
         try {
           // Don't poll while the user is actively picking a draft — avoids wiping draft choices
           if (gameStatusRef.current === "drafting") return;
+          // PartyKit is the primary sync path; keep Neon polling as a fallback
+          // while waiting for an opponent or when the realtime socket drops.
+          if (
+            partyConnectedRef.current &&
+            gameStatusRef.current !== "waiting"
+          ) {
+            return;
+          }
+          if (
+            typeof document !== "undefined" &&
+            document.visibilityState === "hidden" &&
+            gameStatusRef.current !== "waiting"
+          ) {
+            return;
+          }
           const res = await fetch(`/api/chaos/move?roomId=${rId}`, {
             headers: chaosHeaders(),
           });

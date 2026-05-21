@@ -13,6 +13,8 @@ import { db } from "@/lib/db";
 import { roastScores, users } from "@/lib/schema";
 import { desc, gte, sql } from "drizzle-orm";
 
+export const revalidate = 300;
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const period = searchParams.get("period") ?? "weekly";
@@ -55,5 +57,12 @@ export async function GET(req: NextRequest) {
     .orderBy(desc(roastScores.score))
     .limit(limit);
 
-  return NextResponse.json({ period, entries: rows });
+  return NextResponse.json(
+    { period, entries: rows },
+    {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=900",
+      },
+    },
+  );
 }

@@ -142,7 +142,12 @@ function AnalysisSectionSkeleton({ label }: { label: string }) {
 }
 
 export default function HomePage() {
-  const { plan: sessionPlan, authenticated, user } = useSession();
+  const {
+    plan: sessionPlan,
+    authenticated,
+    user,
+    loading: sessionLoading,
+  } = useSession();
   const router = useRouter();
   const [heroPhase, setHeroPhase] = useState<"idle" | "hiding" | "revealing">(
     "idle",
@@ -248,13 +253,26 @@ export default function HomePage() {
   const [launcherConfig, setLauncherConfig] =
     useState<LauncherConfig>(DEFAULT_LAUNCHER);
   useEffect(() => {
+    if (sessionLoading) return;
+
+    if (!authenticated) {
+      setLauncherConfig(DEFAULT_LAUNCHER);
+      return;
+    }
+
+    let cancelled = false;
+
     fetch("/api/launcher")
       .then((r) => r.json())
       .then((data) => {
-        if (data?.config) setLauncherConfig(data.config);
+        if (!cancelled && data?.config) setLauncherConfig(data.config);
       })
       .catch(() => {});
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authenticated, sessionLoading]);
 
   const saveLauncherConfig = useCallback(async (config: LauncherConfig) => {
     await fetch("/api/launcher", {
