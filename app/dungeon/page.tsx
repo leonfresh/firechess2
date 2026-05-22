@@ -34,6 +34,7 @@ import {
   getRestFlavor,
   getDeathEpitaph,
   PUZZLE_MODE_INFO,
+  pushRecentValue,
   type DungeonRun,
   type DungeonProfile,
   type MapNode,
@@ -55,6 +56,16 @@ import {
   GuessMoveIcon,
   EloIcon,
 } from "@/components/dungeon-illustrations";
+import {
+  ChessQuiz,
+  getDailyQuizQuestions,
+  type QuizQuestion,
+} from "@/components/chess-quiz";
+import {
+  PieceMemory,
+  getDailyMemoryPositions,
+  type MemoryPosition,
+} from "@/components/piece-memory";
 import { stockfishPool } from "@/lib/stockfish-client";
 import famousGamesRaw from "@/scripts/data/ghost-games-seed.json";
 
@@ -78,6 +89,57 @@ type FamousGame = {
 };
 
 const FAMOUS_GAMES = famousGamesRaw as unknown as FamousGame[];
+
+const QUIZ_CATEGORIES_BY_ACT: Record<number, QuizQuestion["category"][]> = {
+  1: ["tactics", "openings"],
+  2: ["openings", "strategy", "endgame"],
+  3: ["endgame", "tactics", "rules"],
+};
+
+function pickDungeonQuizQuestion(run: DungeonRun): QuizQuestion {
+  const actId = getAct(run.currentFloor).id;
+  const preferredCategories =
+    QUIZ_CATEGORIES_BY_ACT[actId] ?? QUIZ_CATEGORIES_BY_ACT[1];
+  const questions = getDailyQuizQuestions(
+    18,
+    run.seed * 41 + run.currentFloor * 17 + run.puzzlesSolved * 13,
+  );
+
+  return (
+    questions.find((question) =>
+      preferredCategories.includes(question.category),
+    ) ?? questions[0]
+  );
+}
+
+function pickDungeonMemoryPosition(run: DungeonRun): MemoryPosition {
+  const actId = getAct(run.currentFloor).id;
+  const positions = getDailyMemoryPositions(
+    14,
+    run.seed * 53 + run.currentFloor * 19 + run.puzzlesSolved * 11,
+  );
+
+  const preferred =
+    actId === 1
+      ? positions.find(
+          (position) =>
+            /Opening|Defence|Variation|Game/i.test(position.label) ||
+            position.questionType === "location",
+        )
+      : actId === 2
+        ? positions.find(
+            (position) =>
+              /Game|Defence|Study|Dragon|Indian/i.test(position.label) ||
+              position.questionType === "piece",
+          )
+        : positions.find(
+            (position) =>
+              /Endgame|King|Pawn|Rook/i.test(position.label) ||
+              position.questionType === "choice",
+          );
+
+  return preferred ?? positions[0];
+}
 
 /* ================================================================== */
 /*  Lichess puzzle types                                                */
@@ -236,11 +298,18 @@ const BASE_PUZZLE_TIME = 30; // seconds
 function getPuzzleTimeLimit(
   stats: { attack: number },
   perks: Perk[],
+  mode?: PuzzleMode,
 ): number | null {
   // Zen Master = unlimited
   if (perks.some((p) => p.id === "zen-master")) return null;
 
   let time = BASE_PUZZLE_TIME + stats.attack * 2;
+
+  if (mode === "opening") time += 4;
+  if (mode === "endgame") time += 2;
+  if (mode === "time-pressure") {
+    time = Math.max(10, Math.floor(time * 0.55));
+  }
 
   // Cursed Clock = halve time
   if (perks.some((p) => p.id === "cursed-clock"))
@@ -956,6 +1025,8 @@ function BattleBoard({
   const currentNode = run.map.find((n) => n.id === run.currentNodeId);
   const isBoss = currentNode?.type === "boss";
   const isElite = currentNode?.type === "elite";
+  const battleMode = currentNode?.puzzleMode ?? "tactic";
+  const modeInfo = PUZZLE_MODE_INFO[battleMode];
   const act = getAct(run.currentFloor);
 
   const hasSecondWind = run.perks.some(
@@ -1391,7 +1462,9 @@ function BattleBoard({
                   : "border-blue-500/20 bg-blue-500/5 text-blue-400"
               }`}
             >
-              {isElite ? "💀 Elite Fight" : "⚔️ Battle"}
+              {isElite
+                ? `💀 Elite ${modeInfo.label}`
+                : `${modeInfo.icon} ${modeInfo.label}`}
             </div>
           )}
 
@@ -1408,7 +1481,7 @@ function BattleBoard({
             <p className="text-xs italic leading-relaxed text-slate-400">
               {isBoss
                 ? act.bossIntro.split("\n")[0]
-                : getBattleFlavor(run.currentFloor, run.seed)}
+                : `${getBattleFlavor(run.currentFloor, run.seed)} ${modeInfo.description}.`}
             </p>
           </div>
 
@@ -1427,6 +1500,8 @@ function BattleBoard({
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
               <span>{puzzle.puzzle.rating}</span>
+              <span className="text-slate-600">·</span>
+              <span>{modeInfo.label}</span>
               <span className="text-slate-600">·</span>
               <span>{puzzle.matchedTheme}</span>
             </div>
@@ -1476,7 +1551,7 @@ function BattleBoard({
           {/* Timer */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
             <PuzzleTimer
-              timeLimit={getPuzzleTimeLimit(run.stats, run.perks)}
+              timeLimit={getPuzzleTimeLimit(run.stats, run.perks, battleMode)}
               paused={state !== "solving"}
               onExpired={() => {
                 if (state === "solving") {
@@ -1587,6 +1662,9 @@ function GuessEvalBoard({
   const evalRef = useRef<number | null>(null);
 
   const act = getAct(run.currentFloor);
+  const battleMode =
+    run.map.find((node) => node.id === run.currentNodeId)?.puzzleMode ??
+    "guess-eval";
 
   // Run Stockfish to get actual eval
   useEffect(() => {
@@ -1783,7 +1861,7 @@ function GuessEvalBoard({
           {/* Timer */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
             <PuzzleTimer
-              timeLimit={getPuzzleTimeLimit(run.stats, run.perks)}
+              timeLimit={getPuzzleTimeLimit(run.stats, run.perks, battleMode)}
               paused={evaluating || revealed}
               onExpired={() => {
                 if (!revealed) {
@@ -1925,6 +2003,9 @@ function GuessMoveBoard({
   const [selected, setSelected] = useState<string | null>(null);
 
   const act = getAct(run.currentFloor);
+  const battleMode =
+    run.map.find((node) => node.id === run.currentNodeId)?.puzzleMode ??
+    "guess-move";
 
   // Reset when game/position changes
   useEffect(() => {
@@ -2191,7 +2272,7 @@ function GuessMoveBoard({
           {/* Timer */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
             <PuzzleTimer
-              timeLimit={getPuzzleTimeLimit(run.stats, run.perks)}
+              timeLimit={getPuzzleTimeLimit(run.stats, run.perks, battleMode)}
               paused={state !== "waiting"}
               onExpired={() => {
                 if (state === "waiting") {
@@ -2329,6 +2410,9 @@ function GuessEloBoard({
   const [revealed, setRevealed] = useState(false);
 
   const act = getAct(run.currentFloor);
+  const battleMode =
+    run.map.find((node) => node.id === run.currentNodeId)?.puzzleMode ??
+    "guess-elo";
 
   // Also replay a short sequence of recent moves via autoplay
   const [displayFen, setDisplayFen] = useState(fen);
@@ -2523,7 +2607,7 @@ function GuessEloBoard({
           {/* Timer */}
           <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
             <PuzzleTimer
-              timeLimit={getPuzzleTimeLimit(run.stats, run.perks)}
+              timeLimit={getPuzzleTimeLimit(run.stats, run.perks, battleMode)}
               paused={currentMoveIdx < replayMoves.length || revealed}
               onExpired={() => {
                 if (!revealed) {
@@ -2539,6 +2623,130 @@ function GuessEloBoard({
         </div>
       </div>
     </div>
+  );
+}
+
+function DungeonTrainingShell({
+  run,
+  mode,
+  eyebrow,
+  children,
+}: {
+  run: DungeonRun;
+  mode: PuzzleMode;
+  eyebrow: string;
+  children: React.ReactNode;
+}) {
+  const act = getAct(run.currentFloor);
+  const currentNode = run.map.find((node) => node.id === run.currentNodeId);
+  const diff = currentNode?.difficulty ?? "easy";
+  const dmg = calculateDamage(diff, run.stats, run.perks);
+  const heal = calculateHeal(diff, run.perks);
+  const coins = calculateCoins(diff, run.streak, run.perks);
+  const mult = getStreakMultiplier(run.streak, run.perks);
+  const modeInfo = PUZZLE_MODE_INFO[mode];
+
+  return (
+    <div className="w-full dungeon-screen-enter">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_280px]">
+        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5">
+          <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-500">
+            {eyebrow}
+          </p>
+          {children}
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/5 px-4 py-1.5 text-xs font-bold uppercase tracking-wider text-cyan-300">
+            <span>{modeInfo.icon}</span>
+            <span>{modeInfo.label}</span>
+          </div>
+          <BattleSceneVignette
+            actId={act.id}
+            seed={run.seed + run.currentFloor}
+          />
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+            <p className="text-xs italic leading-relaxed text-slate-400">
+              {getBattleFlavor(run.currentFloor, run.seed)}{" "}
+              {modeInfo.description}.
+            </p>
+          </div>
+          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 space-y-1.5">
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Combat Stakes
+            </p>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-emerald-400">✓ Succeed</span>
+              <span className="font-bold text-emerald-300">
+                {heal > 0 ? `+${heal} HP · ` : ""}+{coins} 🪙
+                {mult > 1 ? ` · 🔥×${mult.toFixed(1)}` : ""}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-red-400">✗ Fail</span>
+              <span className="font-bold text-red-300">−{dmg} HP</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function QuizBattleScreen({
+  question,
+  run,
+  onSolved,
+  onFailed,
+}: {
+  question: QuizQuestion;
+  run: DungeonRun;
+  onSolved: () => void;
+  onFailed: () => void;
+}) {
+  return (
+    <DungeonTrainingShell
+      run={run}
+      mode="quiz"
+      eyebrow={`Knowledge Trial · ${question.category}`}
+    >
+      <ChessQuiz
+        question={question}
+        onComplete={(correct) => {
+          if (correct) onSolved();
+          else onFailed();
+        }}
+      />
+    </DungeonTrainingShell>
+  );
+}
+
+function MemoryBattleScreen({
+  position,
+  run,
+  onSolved,
+  onFailed,
+}: {
+  position: MemoryPosition;
+  run: DungeonRun;
+  onSolved: () => void;
+  onFailed: () => void;
+}) {
+  return (
+    <DungeonTrainingShell
+      run={run}
+      mode="memory"
+      eyebrow={`Memory Trial · ${position.label}`}
+    >
+      <PieceMemory
+        position={position}
+        onComplete={(correct) => {
+          if (correct) onSolved();
+          else onFailed();
+        }}
+        viewSeconds={getAct(run.currentFloor).id === 3 ? 6 : 7}
+      />
+    </DungeonTrainingShell>
   );
 }
 
@@ -3085,6 +3293,10 @@ function RunSummary({
 export default function DungeonPage() {
   const [run, setRun] = useState<DungeonRun | null>(null);
   const [puzzle, setPuzzle] = useState<LichessPuzzle | null>(null);
+  const [quizQuestion, setQuizQuestion] = useState<QuizQuestion | null>(null);
+  const [memoryPosition, setMemoryPosition] = useState<MemoryPosition | null>(
+    null,
+  );
   const [loading, setLoading] = useState(false);
   const [eventMessage, setEventMessage] = useState<string | null>(null);
   const [storyMessage, setStoryMessage] = useState<string | null>(null);
@@ -3098,8 +3310,16 @@ export default function DungeonPage() {
       const raw = localStorage.getItem("dungeon-run-v1");
       if (!raw) return;
       const parsed = JSON.parse(raw) as DungeonRun;
-      if (parsed.status === "dead" || parsed.status === "victory") return;
-      setSavedRun(parsed);
+      const normalized: DungeonRun = {
+        ...parsed,
+        recentModes: parsed.recentModes ?? [],
+        recentThemes: parsed.recentThemes ?? [],
+        recentEvents: parsed.recentEvents ?? [],
+      };
+      if (normalized.status === "dead" || normalized.status === "victory") {
+        return;
+      }
+      setSavedRun(normalized);
     } catch {}
   }, []);
 
@@ -3125,6 +3345,8 @@ export default function DungeonPage() {
     const r = createRun(seed);
     setRun(r);
     setPuzzle(null);
+    setQuizQuestion(null);
+    setMemoryPosition(null);
     setShowStartScreen(false);
     setEventMessage(null);
     setSavedRun(null);
@@ -3141,6 +3363,8 @@ export default function DungeonPage() {
         : savedRun;
     setRun(r);
     setPuzzle(null);
+    setQuizQuestion(null);
+    setMemoryPosition(null);
     setShowStartScreen(false);
     setEventMessage(null);
     setSavedRun(null);
@@ -3148,16 +3372,50 @@ export default function DungeonPage() {
   }, [savedRun]);
 
   /* ── Fetch puzzle for a node ── */
-  const fetchPuzzle = useCallback(async (difficulty: Difficulty) => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/dungeon?difficulty=${difficulty}&count=1`);
-      const data = await res.json();
-      if (data.puzzles?.length > 0) {
-        setPuzzle(data.puzzles[0]);
+  const fetchPuzzle = useCallback(
+    async (
+      difficulty: Difficulty,
+      mode: PuzzleMode,
+      excludeThemes: string[],
+    ) => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({
+          difficulty,
+          count: "1",
+          mode,
+        });
+        if (excludeThemes.length > 0) {
+          params.set("excludeThemes", excludeThemes.join(","));
+        }
+
+        const res = await fetch(`/api/dungeon?${params.toString()}`);
+        const data = await res.json();
+        if (data.puzzles?.length > 0) {
+          const nextPuzzle = data.puzzles[0] as LichessPuzzle;
+          setPuzzle(nextPuzzle);
+          return nextPuzzle;
+        }
+      } catch {
+      } finally {
+        setLoading(false);
       }
-    } catch {}
-    setLoading(false);
+      return null;
+    },
+    [],
+  );
+
+  const pickMysteryEventForRun = useCallback((nextRun: DungeonRun) => {
+    const blocked = new Set((nextRun.recentEvents ?? []).slice(-2));
+    const pool = ALL_EVENTS.filter((event) => !blocked.has(event.id));
+    const available = pool.length > 0 ? pool : ALL_EVENTS;
+    const idx =
+      Math.abs(
+        nextRun.seed * 31 +
+          nextRun.currentFloor * 17 +
+          nextRun.puzzlesSolved * 7,
+      ) % available.length;
+    return available[idx];
   }, []);
 
   /* ── Navigate to a node ── */
@@ -3201,18 +3459,61 @@ export default function DungeonPage() {
       switch (node.type) {
         case "battle":
         case "elite":
-        case "boss":
+        case "boss": {
+          const battleMode = node.puzzleMode ?? "tactic";
           updated.status = "battle";
+          updated.recentModes = pushRecentValue(
+            updated.recentModes ?? [],
+            battleMode,
+            4,
+          );
+          setPuzzle(null);
+          setQuizQuestion(null);
+          setMemoryPosition(null);
           setRun(updated);
           playDungeonSound(node.type === "boss" ? "bossIntro" : "battleStart");
-          await fetchPuzzle(node.difficulty ?? "easy");
+          if (battleMode === "quiz") {
+            setLoading(false);
+            setQuizQuestion(pickDungeonQuizQuestion(updated));
+            break;
+          }
+          if (battleMode === "memory") {
+            setLoading(false);
+            setMemoryPosition(pickDungeonMemoryPosition(updated));
+            break;
+          }
+
+          const nextPuzzle = await fetchPuzzle(
+            node.difficulty ?? "easy",
+            battleMode,
+            updated.recentThemes ?? [],
+          );
+          if (nextPuzzle?.matchedTheme) {
+            setRun((currentRun) =>
+              currentRun && currentRun.currentNodeId === node.id
+                ? {
+                    ...currentRun,
+                    recentThemes: pushRecentValue(
+                      currentRun.recentThemes ?? [],
+                      nextPuzzle.matchedTheme,
+                      5,
+                    ),
+                  }
+                : currentRun,
+            );
+          }
           break;
+        }
 
         case "mystery": {
-          const events = ALL_EVENTS;
-          const event = events[Math.floor(Math.random() * events.length)];
+          const event = pickMysteryEventForRun(updated);
           updated.status = "event";
           updated.activeEvent = event;
+          updated.recentEvents = pushRecentValue(
+            updated.recentEvents ?? [],
+            event.id,
+            4,
+          );
           setRun(updated);
           break;
         }
@@ -3232,7 +3533,7 @@ export default function DungeonPage() {
           setRun(updated);
       }
     },
-    [run, fetchPuzzle],
+    [run, fetchPuzzle, pickMysteryEventForRun],
   );
 
   /* ── Puzzle solved ── */
@@ -3300,6 +3601,8 @@ export default function DungeonPage() {
     }
 
     setPuzzle(null);
+    setQuizQuestion(null);
+    setMemoryPosition(null);
     setRun(updated);
   }, [run]);
 
@@ -3350,6 +3653,8 @@ export default function DungeonPage() {
     }
 
     setPuzzle(null);
+    setQuizQuestion(null);
+    setMemoryPosition(null);
     setRun(updated);
   }, [run]);
 
@@ -3496,7 +3801,7 @@ export default function DungeonPage() {
         updated.status = "battle";
         updated.activeEvent = null;
         setRun(updated);
-        fetchPuzzle("hard");
+        fetchPuzzle("hard", "tactic", updated.recentThemes);
         return;
       } else {
         setEventMessage(outcome.message);
@@ -3920,21 +4225,21 @@ export default function DungeonPage() {
             )}
             <div className="flex gap-3 text-slate-400">
               <div className="group relative flex items-center gap-1 cursor-help hover:text-cyan-400 transition-colors">
-                <span>⚔️</span>
-                <span className="font-bold">{run.stats.attack}</span>
+                <span>🧠</span>
+                <span className="font-bold">Focus {run.stats.attack}</span>
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-50">
                   <div className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-[11px] text-slate-300 whitespace-nowrap shadow-xl">
-                    <span className="font-bold text-cyan-400">Attack</span> — +
+                    <span className="font-bold text-cyan-400">Focus</span> — +
                     {2 + run.stats.attack * 2}s thinking time
                   </div>
                 </div>
               </div>
               <div className="group relative flex items-center gap-1 cursor-help hover:text-blue-400 transition-colors">
                 <span>🛡️</span>
-                <span className="font-bold">{run.stats.defense}</span>
+                <span className="font-bold">Guard {run.stats.defense}</span>
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-50">
                   <div className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-[11px] text-slate-300 whitespace-nowrap shadow-xl">
-                    <span className="font-bold text-blue-400">Defense</span> —{" "}
+                    <span className="font-bold text-blue-400">Guard</span> —{" "}
                     {run.stats.defense > 0 ? `-${run.stats.defense * 5}` : "no"}{" "}
                     damage reduction
                   </div>
@@ -3942,11 +4247,11 @@ export default function DungeonPage() {
               </div>
               <div className="group relative flex items-center gap-1 cursor-help hover:text-emerald-400 transition-colors">
                 <span>🍀</span>
-                <span className="font-bold">{run.stats.luck}</span>
+                <span className="font-bold">Fortune {run.stats.luck}</span>
                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 hidden group-hover:block z-50">
                   <div className="rounded-lg border border-white/10 bg-zinc-900 px-3 py-2 text-[11px] text-slate-300 whitespace-nowrap shadow-xl">
-                    <span className="font-bold text-emerald-400">Luck</span> —
-                    better perk rarity rolls
+                    <span className="font-bold text-emerald-400">Fortune</span>{" "}
+                    — better perk rarity rolls and lucky escapes
                   </div>
                 </div>
               </div>
@@ -4144,7 +4449,6 @@ export default function DungeonPage() {
             })()}
 
           {run.status === "battle" &&
-            puzzle &&
             !loading &&
             (() => {
               const currentNode = run.map.find(
@@ -4153,41 +4457,59 @@ export default function DungeonPage() {
               const mode = currentNode?.puzzleMode ?? "tactic";
               switch (mode) {
                 case "guess-eval":
-                  return (
+                  return puzzle ? (
                     <GuessEvalBoard
                       puzzle={puzzle}
                       run={run}
                       onSolved={handlePuzzleSolved}
                       onFailed={handlePuzzleFailed}
                     />
-                  );
+                  ) : null;
                 case "guess-move":
-                  return (
+                  return puzzle ? (
                     <GuessMoveBoard
                       puzzle={puzzle}
                       run={run}
                       onSolved={handlePuzzleSolved}
                       onFailed={handlePuzzleFailed}
                     />
-                  );
+                  ) : null;
                 case "guess-elo":
-                  return (
+                  return puzzle ? (
                     <GuessEloBoard
                       puzzle={puzzle}
                       run={run}
                       onSolved={handlePuzzleSolved}
                       onFailed={handlePuzzleFailed}
                     />
-                  );
+                  ) : null;
+                case "quiz":
+                  return quizQuestion ? (
+                    <QuizBattleScreen
+                      question={quizQuestion}
+                      run={run}
+                      onSolved={handlePuzzleSolved}
+                      onFailed={handlePuzzleFailed}
+                    />
+                  ) : null;
+                case "memory":
+                  return memoryPosition ? (
+                    <MemoryBattleScreen
+                      position={memoryPosition}
+                      run={run}
+                      onSolved={handlePuzzleSolved}
+                      onFailed={handlePuzzleFailed}
+                    />
+                  ) : null;
                 default:
-                  return (
+                  return puzzle ? (
                     <BattleBoard
                       puzzle={puzzle}
                       run={run}
                       onSolved={handlePuzzleSolved}
                       onFailed={handlePuzzleFailed}
                     />
-                  );
+                  ) : null;
               }
             })()}
 

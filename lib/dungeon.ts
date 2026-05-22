@@ -11,15 +11,75 @@
 
 export type Difficulty = "easy" | "medium" | "hard" | "boss";
 
-export type NodeType = "battle" | "elite" | "shop" | "mystery" | "boss" | "rest" | "start";
+export type NodeType =
+  | "battle"
+  | "elite"
+  | "shop"
+  | "mystery"
+  | "boss"
+  | "rest"
+  | "start";
 
-export type PuzzleMode = "tactic" | "guess-eval" | "guess-move" | "guess-elo";
+export type PuzzleMode =
+  | "tactic"
+  | "guess-eval"
+  | "guess-move"
+  | "guess-elo"
+  | "opening"
+  | "endgame"
+  | "time-pressure"
+  | "quiz"
+  | "memory";
 
-export const PUZZLE_MODE_INFO: Record<PuzzleMode, { label: string; icon: string; description: string }> = {
-  "tactic":     { label: "Solve the Tactic", icon: "⚔️", description: "Find the best move" },
-  "guess-eval": { label: "Guess the Eval",  icon: "📊", description: "Estimate the position's evaluation" },
-  "guess-move": { label: "Guess the Move",  icon: "🔍", description: "What did the GM play here?" },
-  "guess-elo":  { label: "Guess the Elo",   icon: "⭐", description: "Estimate the players' rating" },
+export const PUZZLE_MODE_INFO: Record<
+  PuzzleMode,
+  { label: string; icon: string; description: string }
+> = {
+  tactic: {
+    label: "Solve the Tactic",
+    icon: "⚔️",
+    description: "Find the best move",
+  },
+  "guess-eval": {
+    label: "Guess the Eval",
+    icon: "📊",
+    description: "Estimate the position's evaluation",
+  },
+  "guess-move": {
+    label: "Guess the Move",
+    icon: "🔍",
+    description: "What did the GM play here?",
+  },
+  "guess-elo": {
+    label: "Guess the Elo",
+    icon: "⭐",
+    description: "Estimate the players' rating",
+  },
+  opening: {
+    label: "Opening Trial",
+    icon: "📖",
+    description: "Punish an opening mistake or find the critical move",
+  },
+  endgame: {
+    label: "Endgame Trial",
+    icon: "♟️",
+    description: "Convert or defend a technical ending",
+  },
+  "time-pressure": {
+    label: "Time Pressure",
+    icon: "⏱️",
+    description: "Find the move before the clock crushes you",
+  },
+  quiz: {
+    label: "Chess Quiz",
+    icon: "🧠",
+    description: "Answer a knowledge check under pressure",
+  },
+  memory: {
+    label: "Board Memory",
+    icon: "👁️",
+    description: "Memorize the board, then recall the key detail",
+  },
 };
 
 export type PerkRarity = "common" | "rare" | "epic" | "legendary" | "cursed";
@@ -41,9 +101,9 @@ export interface Perk {
 export interface PlayerStats {
   maxHp: number;
   hp: number;
-  attack: number;    // bonus time per puzzle (+2s per point)
-  defense: number;   // damage reduction
-  luck: number;      // better rolls, dodge chance
+  attack: number; // bonus time per puzzle (+2s per point)
+  defense: number; // damage reduction
+  luck: number; // better rolls, dodge chance
 }
 
 export interface MapNode {
@@ -71,8 +131,8 @@ export type EventChoice = {
 export type EventOutcome = {
   hpChange?: number;
   coinsChange?: number;
-  addPerk?: string;     // perk id
-  removePerk?: string;  // perk id
+  addPerk?: string; // perk id
+  removePerk?: string; // perk id
   message: string;
 };
 
@@ -97,13 +157,27 @@ export interface DungeonRun {
   puzzlesSolved: number;
   puzzlesFailed: number;
   floorsCleared: number;
-  status: "exploring" | "battle" | "perk-select" | "event" | "shop" | "rest" | "dead" | "victory";
+  status:
+    | "exploring"
+    | "battle"
+    | "perk-select"
+    | "event"
+    | "shop"
+    | "rest"
+    | "dead"
+    | "victory";
   /** Perks offered after elite/boss fights or every 3 battle floors */
   perkChoices: Perk[];
   /** Current mystery event */
   activeEvent: MysteryEvent | null;
   /** Streak multiplier for coins */
   streakMultiplier: number;
+  /** Recent battle mode history for anti-repeat logic */
+  recentModes: PuzzleMode[];
+  /** Recent puzzle themes fetched from Lichess */
+  recentThemes: string[];
+  /** Recent mystery events seen this run */
+  recentEvents: string[];
 }
 
 /* ================================================================== */
@@ -112,36 +186,213 @@ export interface DungeonRun {
 
 export const ALL_PERKS: Perk[] = [
   // Common
-  { id: "iron-shield", name: "Iron Shield", description: "Take 5 less damage from wrong answers", rarity: "common", icon: "🛡️", effects: { defense: 1 }, kind: "passive" },
-  { id: "lucky-horseshoe", name: "Lucky Horseshoe", description: "+2 Luck — better perk rolls and dodge chance", rarity: "common", icon: "🧲", effects: { luck: 2 }, kind: "passive" },
-  { id: "gold-magnet", name: "Gold Magnet", description: "+3 bonus coins per solved puzzle", rarity: "common", icon: "🧲", effects: {}, kind: "passive" },
-  { id: "thick-armor", name: "Thick Armor", description: "+15 max HP", rarity: "common", icon: "🪖", effects: { maxHp: 15, hp: 15 }, kind: "passive" },
-  { id: "swift-boots", name: "Swift Boots", description: "+1 Attack — extra thinking time", rarity: "common", icon: "👢", effects: { attack: 1 }, kind: "passive" },
-  { id: "health-potion", name: "Health Potion", description: "Restore 25 HP (consumable)", rarity: "common", icon: "🧪", effects: { hp: 25 }, kind: "consumable" },
+  {
+    id: "iron-shield",
+    name: "Iron Shield",
+    description: "Take 5 less damage from wrong answers",
+    rarity: "common",
+    icon: "🛡️",
+    effects: { defense: 1 },
+    kind: "passive",
+  },
+  {
+    id: "lucky-horseshoe",
+    name: "Lucky Horseshoe",
+    description: "+2 Luck — better perk rolls and dodge chance",
+    rarity: "common",
+    icon: "🧲",
+    effects: { luck: 2 },
+    kind: "passive",
+  },
+  {
+    id: "gold-magnet",
+    name: "Gold Magnet",
+    description: "+3 bonus coins per solved puzzle",
+    rarity: "common",
+    icon: "🧲",
+    effects: {},
+    kind: "passive",
+  },
+  {
+    id: "thick-armor",
+    name: "Thick Armor",
+    description: "+15 max HP",
+    rarity: "common",
+    icon: "🪖",
+    effects: { maxHp: 15, hp: 15 },
+    kind: "passive",
+  },
+  {
+    id: "swift-boots",
+    name: "Swift Boots",
+    description: "+1 Attack — extra thinking time",
+    rarity: "common",
+    icon: "👢",
+    effects: { attack: 1 },
+    kind: "passive",
+  },
+  {
+    id: "health-potion",
+    name: "Health Potion",
+    description: "Restore 25 HP (consumable)",
+    rarity: "common",
+    icon: "🧪",
+    effects: { hp: 25 },
+    kind: "consumable",
+  },
 
   // Rare
-  { id: "vampiric-blade", name: "Vampiric Blade", description: "Heal 10 HP on every correct solve", rarity: "rare", icon: "🗡️", effects: {}, kind: "passive" },
-  { id: "berserker-rage", name: "Berserker's Rage", description: "+50% coins but take +10 extra damage", rarity: "rare", icon: "🔥", effects: {}, kind: "passive" },
-  { id: "combo-king", name: "Combo King", description: "Streak multiplier grows faster (×2 after 2, not 3)", rarity: "rare", icon: "⚡", effects: {}, kind: "passive" },
-  { id: "scouts-map", name: "Scout's Map", description: "See node types 2 floors ahead", rarity: "rare", icon: "🗺️", effects: {}, kind: "passive" },
-  { id: "second-wind", name: "Second Wind", description: "Get 2 attempts per puzzle instead of 1", rarity: "rare", icon: "💨", effects: {}, kind: "passive" },
-  { id: "treasure-hunter", name: "Treasure Hunter", description: "Mystery events always offer coin rewards", rarity: "rare", icon: "💎", effects: {}, kind: "passive" },
+  {
+    id: "vampiric-blade",
+    name: "Vampiric Blade",
+    description: "Heal 10 HP on every correct solve",
+    rarity: "rare",
+    icon: "🗡️",
+    effects: {},
+    kind: "passive",
+  },
+  {
+    id: "berserker-rage",
+    name: "Berserker's Rage",
+    description: "+50% coins but take +10 extra damage",
+    rarity: "rare",
+    icon: "🔥",
+    effects: {},
+    kind: "passive",
+  },
+  {
+    id: "combo-king",
+    name: "Combo King",
+    description: "Streak multiplier grows faster (×2 after 2, not 3)",
+    rarity: "rare",
+    icon: "⚡",
+    effects: {},
+    kind: "passive",
+  },
+  {
+    id: "scouts-map",
+    name: "Scout's Map",
+    description: "See node types 2 floors ahead",
+    rarity: "rare",
+    icon: "🗺️",
+    effects: {},
+    kind: "passive",
+  },
+  {
+    id: "second-wind",
+    name: "Second Wind",
+    description: "Get 2 attempts per puzzle instead of 1",
+    rarity: "rare",
+    icon: "💨",
+    effects: {},
+    kind: "passive",
+  },
+  {
+    id: "treasure-hunter",
+    name: "Treasure Hunter",
+    description: "Mystery events always offer coin rewards",
+    rarity: "rare",
+    icon: "💎",
+    effects: {},
+    kind: "passive",
+  },
 
   // Epic
-  { id: "glass-cannon", name: "Glass Cannon", description: "See which piece to move, but take 2× damage", rarity: "epic", icon: "🔮", effects: {}, kind: "passive" },
-  { id: "zen-master", name: "Zen Master", description: "Unlimited time on puzzles, but no hints allowed", rarity: "epic", icon: "🧘", effects: {}, kind: "passive" },
-  { id: "double-edged", name: "Double-Edged Sword", description: "+3 Attack, −20 max HP", rarity: "epic", icon: "⚔️", effects: { attack: 3, maxHp: -20 }, kind: "passive" },
-  { id: "midas-touch", name: "Midas Touch", description: "2× coins from all sources", rarity: "epic", icon: "👑", effects: {}, kind: "passive" },
+  {
+    id: "glass-cannon",
+    name: "Glass Cannon",
+    description: "See which piece to move, but take 2× damage",
+    rarity: "epic",
+    icon: "🔮",
+    effects: {},
+    kind: "passive",
+  },
+  {
+    id: "zen-master",
+    name: "Zen Master",
+    description: "Unlimited time on puzzles, but no hints allowed",
+    rarity: "epic",
+    icon: "🧘",
+    effects: {},
+    kind: "passive",
+  },
+  {
+    id: "double-edged",
+    name: "Double-Edged Sword",
+    description: "+3 Attack, −20 max HP",
+    rarity: "epic",
+    icon: "⚔️",
+    effects: { attack: 3, maxHp: -20 },
+    kind: "passive",
+  },
+  {
+    id: "midas-touch",
+    name: "Midas Touch",
+    description: "2× coins from all sources",
+    rarity: "epic",
+    icon: "👑",
+    effects: {},
+    kind: "passive",
+  },
 
   // Legendary
-  { id: "phoenix-feather", name: "Phoenix Feather", description: "Revive once with 30 HP when you die", rarity: "legendary", icon: "🔥", effects: {}, kind: "consumable" },
-  { id: "gm-crown", name: "Grandmaster's Crown", description: "Boss puzzles give 3× reward", rarity: "legendary", icon: "♚", effects: {}, kind: "passive" },
-  { id: "immortal-game", name: "The Immortal Game", description: "+50 max HP and heal to full", rarity: "legendary", icon: "⭐", effects: { maxHp: 50 }, kind: "passive" },
+  {
+    id: "phoenix-feather",
+    name: "Phoenix Feather",
+    description: "Revive once with 30 HP when you die",
+    rarity: "legendary",
+    icon: "🔥",
+    effects: {},
+    kind: "consumable",
+  },
+  {
+    id: "gm-crown",
+    name: "Grandmaster's Crown",
+    description: "Boss puzzles give 3× reward",
+    rarity: "legendary",
+    icon: "♚",
+    effects: {},
+    kind: "passive",
+  },
+  {
+    id: "immortal-game",
+    name: "The Immortal Game",
+    description: "+50 max HP and heal to full",
+    rarity: "legendary",
+    icon: "⭐",
+    effects: { maxHp: 50 },
+    kind: "passive",
+  },
 
   // Cursed
-  { id: "cursed-mirror", name: "Cursed Mirror", description: "Board is flipped to the opponent's perspective — but +100% coins", rarity: "cursed", icon: "🪞", effects: {}, kind: "passive" },
-  { id: "cursed-clock", name: "Cursed Clock", description: "Halve your thinking time, but heal 5 HP per solve", rarity: "cursed", icon: "⏰", effects: {}, kind: "passive" },
-  { id: "devils-pawn", name: "Devil's Pawn", description: "Take 5 damage every 3 floors, but +2 to all stats", rarity: "cursed", icon: "♟️", effects: { attack: 2, defense: 2, luck: 2 }, kind: "passive" },
+  {
+    id: "cursed-mirror",
+    name: "Cursed Mirror",
+    description:
+      "Board is flipped to the opponent's perspective — but +100% coins",
+    rarity: "cursed",
+    icon: "🪞",
+    effects: {},
+    kind: "passive",
+  },
+  {
+    id: "cursed-clock",
+    name: "Cursed Clock",
+    description: "Halve your thinking time, but heal 5 HP per solve",
+    rarity: "cursed",
+    icon: "⏰",
+    effects: {},
+    kind: "passive",
+  },
+  {
+    id: "devils-pawn",
+    name: "Devil's Pawn",
+    description: "Take 5 damage every 3 floors, but +2 to all stats",
+    rarity: "cursed",
+    icon: "♟️",
+    effects: { attack: 2, defense: 2, luck: 2 },
+    kind: "passive",
+  },
 ];
 
 /* ================================================================== */
@@ -152,22 +403,50 @@ export const ALL_EVENTS: MysteryEvent[] = [
   {
     id: "mysterious-gm",
     title: "The Mysterious Grandmaster",
-    description: "A hooded figure blocks your path. \"Solve my puzzle in one attempt for a rare reward… or walk away.\"",
+    description:
+      'A hooded figure blocks your path. "Solve my puzzle in one attempt for a rare reward… or walk away."',
     icon: "🧙",
     choices: [
-      { label: "Accept the challenge", description: "Fight an elite puzzle for a guaranteed rare+ perk", outcome: { message: "The grandmaster nods. Prepare yourself!" } },
-      { label: "Walk away", description: "Continue safely", outcome: { message: "Perhaps another time…", hpChange: 5 } },
+      {
+        label: "Accept the challenge",
+        description: "Fight an elite puzzle for a guaranteed rare+ perk",
+        outcome: { message: "The grandmaster nods. Prepare yourself!" },
+      },
+      {
+        label: "Walk away",
+        description: "Continue safely",
+        outcome: { message: "Perhaps another time…", hpChange: 5 },
+      },
     ],
   },
   {
     id: "cursed-piece",
     title: "The Cursed Chess Piece",
-    description: "A dark chess piece gleams on a pedestal. You feel its power… and its malice.",
+    description:
+      "A dark chess piece gleams on a pedestal. You feel its power… and its malice.",
     icon: "♟️",
     choices: [
-      { label: "Take the cursed piece", description: "+3 Attack but take 5 damage every 3 floors", outcome: { addPerk: "devils-pawn", message: "Dark energy surges through you. Power… at a cost." } },
-      { label: "Destroy it", description: "Gain 15 HP", outcome: { hpChange: 15, message: "The piece crumbles to dust. You feel lighter." } },
-      { label: "Leave it", description: "Nothing happens", outcome: { message: "Wisdom is knowing when not to act." } },
+      {
+        label: "Take the cursed piece",
+        description: "+3 Attack but take 5 damage every 3 floors",
+        outcome: {
+          addPerk: "devils-pawn",
+          message: "Dark energy surges through you. Power… at a cost.",
+        },
+      },
+      {
+        label: "Destroy it",
+        description: "Gain 15 HP",
+        outcome: {
+          hpChange: 15,
+          message: "The piece crumbles to dust. You feel lighter.",
+        },
+      },
+      {
+        label: "Leave it",
+        description: "Nothing happens",
+        outcome: { message: "Wisdom is knowing when not to act." },
+      },
     ],
   },
   {
@@ -176,62 +455,161 @@ export const ALL_EVENTS: MysteryEvent[] = [
     description: "You stumble into a room filled with golden chess trophies!",
     icon: "💰",
     choices: [
-      { label: "Grab the gold (30 coins)", description: "But a trap triggers — lose 15 HP", outcome: { coinsChange: 30, hpChange: -15, message: "Gold! But the trap stings…" } },
-      { label: "Carefully take some (15 coins)", description: "No trap", outcome: { coinsChange: 15, message: "A modest but safe haul." } },
-      { label: "Search for a hidden perk", description: "50% chance of a perk, 50% empty", outcome: { message: "You search the room thoroughly…" } },
+      {
+        label: "Grab the gold (30 coins)",
+        description: "But a trap triggers — lose 15 HP",
+        outcome: {
+          coinsChange: 30,
+          hpChange: -15,
+          message: "Gold! But the trap stings…",
+        },
+      },
+      {
+        label: "Carefully take some (15 coins)",
+        description: "No trap",
+        outcome: { coinsChange: 15, message: "A modest but safe haul." },
+      },
+      {
+        label: "Search for a hidden perk",
+        description: "50% chance of a perk, 50% empty",
+        outcome: { message: "You search the room thoroughly…" },
+      },
     ],
   },
   {
     id: "ancient-book",
     title: "Ancient Chess Manuscript",
-    description: "A dusty tome lies open on a stone table. Its pages glow with tactical knowledge.",
+    description:
+      "A dusty tome lies open on a stone table. Its pages glow with tactical knowledge.",
     icon: "📖",
     choices: [
-      { label: "Study it thoroughly", description: "+2 Attack (but takes time — lose 10 HP from fatigue)", outcome: { hpChange: -10, message: "Hours pass. Your tactical vision sharpens." } },
-      { label: "Skim it quickly", description: "+1 Attack, no cost", outcome: { message: "A few useful patterns caught your eye." } },
-      { label: "Take the book", description: "Gain 20 coins from selling it later", outcome: { coinsChange: 20, message: "Knowledge has a price, and this one's worth 20 coins." } },
+      {
+        label: "Study it thoroughly",
+        description: "+2 Attack (but takes time — lose 10 HP from fatigue)",
+        outcome: {
+          hpChange: -10,
+          message: "Hours pass. Your tactical vision sharpens.",
+        },
+      },
+      {
+        label: "Skim it quickly",
+        description: "+1 Attack, no cost",
+        outcome: { message: "A few useful patterns caught your eye." },
+      },
+      {
+        label: "Take the book",
+        description: "Gain 20 coins from selling it later",
+        outcome: {
+          coinsChange: 20,
+          message: "Knowledge has a price, and this one's worth 20 coins.",
+        },
+      },
     ],
   },
   {
     id: "chess-gambler",
     title: "The Chess Gambler",
-    description: "\"I'll bet you double or nothing! 50 coins on a coin flip.\" The gambler grins.",
+    description:
+      '"I\'ll bet you double or nothing! 50 coins on a coin flip." The gambler grins.',
     icon: "🎲",
     choices: [
-      { label: "Take the bet", description: "50% chance: win 30 coins or lose 15 coins", outcome: { message: "The coin spins in the air..." } },
-      { label: "Play it safe", description: "Gain 5 coins for being wise", outcome: { coinsChange: 5, message: "\"Boring, but smart.\" The gambler flips you a coin." } },
+      {
+        label: "Take the bet",
+        description: "50% chance: win 30 coins or lose 15 coins",
+        outcome: { message: "The coin spins in the air..." },
+      },
+      {
+        label: "Play it safe",
+        description: "Gain 5 coins for being wise",
+        outcome: {
+          coinsChange: 5,
+          message: '"Boring, but smart." The gambler flips you a coin.',
+        },
+      },
     ],
   },
   {
     id: "healing-spring",
     title: "Mystical Spring",
-    description: "Crystal clear water cascades into a pool. It radiates a healing aura.",
+    description:
+      "Crystal clear water cascades into a pool. It radiates a healing aura.",
     icon: "🌊",
     choices: [
-      { label: "Drink deeply", description: "Heal 30 HP", outcome: { hpChange: 30, message: "Warmth flows through your body. You feel renewed." } },
-      { label: "Bottle some for later", description: "Gain a Health Potion perk", outcome: { addPerk: "health-potion", message: "You carefully fill a vial with the glowing water." } },
+      {
+        label: "Drink deeply",
+        description: "Heal 30 HP",
+        outcome: {
+          hpChange: 30,
+          message: "Warmth flows through your body. You feel renewed.",
+        },
+      },
+      {
+        label: "Bottle some for later",
+        description: "Gain a Health Potion perk",
+        outcome: {
+          addPerk: "health-potion",
+          message: "You carefully fill a vial with the glowing water.",
+        },
+      },
     ],
   },
   {
     id: "fallen-knight",
     title: "The Fallen Knight",
-    description: "A wounded chess knight lies on the ground. \"Help me… and I'll share my knowledge.\"",
+    description:
+      'A wounded chess knight lies on the ground. "Help me… and I\'ll share my knowledge."',
     icon: "♞",
     choices: [
-      { label: "Help the knight (−10 HP)", description: "Gain a random rare perk", outcome: { hpChange: -10, message: "The knight teaches you an ancient technique." } },
-      { label: "Take his equipment", description: "+1 Defense, +1 Attack", outcome: { message: "You salvage useful gear from the fallen warrior." } },
-      { label: "Walk past", description: "Nothing happens", outcome: { message: "You press onward." } },
+      {
+        label: "Help the knight (−10 HP)",
+        description: "Gain a random rare perk",
+        outcome: {
+          hpChange: -10,
+          message: "The knight teaches you an ancient technique.",
+        },
+      },
+      {
+        label: "Take his equipment",
+        description: "+1 Defense, +1 Attack",
+        outcome: {
+          message: "You salvage useful gear from the fallen warrior.",
+        },
+      },
+      {
+        label: "Walk past",
+        description: "Nothing happens",
+        outcome: { message: "You press onward." },
+      },
     ],
   },
   {
     id: "chess-spirit",
     title: "Spirit of Capablanca",
-    description: "The ghostly image of a great chess master appears. \"Choose your path wisely, young player.\"",
+    description:
+      'The ghostly image of a great chess master appears. "Choose your path wisely, young player."',
     icon: "👻",
     choices: [
-      { label: "\"Teach me tactics\"", description: "+2 Attack", outcome: { message: "\"See the board with new eyes.\" Your tactical vision expands." } },
-      { label: "\"Make me resilient\"", description: "+20 max HP, heal 20", outcome: { hpChange: 20, message: "\"Endurance wins more games than brilliance.\"" } },
-      { label: "\"Bless my fortune\"", description: "+3 Luck", outcome: { message: "\"Fortune favors the prepared mind.\"" } },
+      {
+        label: '"Teach me tactics"',
+        description: "+2 Attack",
+        outcome: {
+          message:
+            '"See the board with new eyes." Your tactical vision expands.',
+        },
+      },
+      {
+        label: '"Make me resilient"',
+        description: "+20 max HP, heal 20",
+        outcome: {
+          hpChange: 20,
+          message: '"Endurance wins more games than brilliance."',
+        },
+      },
+      {
+        label: '"Bless my fortune"',
+        description: "+3 Luck",
+        outcome: { message: '"Fortune favors the prepared mind."' },
+      },
     ],
   },
 ];
@@ -282,6 +660,81 @@ function pickNodeType(floor: number, col: number, rng: () => number): NodeType {
   return "rest";
 }
 
+type WeightedMode = {
+  mode: PuzzleMode;
+  weight: number;
+};
+
+const ACT_MODE_POOLS: Record<number, WeightedMode[]> = {
+  1: [
+    { mode: "tactic", weight: 26 },
+    { mode: "opening", weight: 18 },
+    { mode: "endgame", weight: 16 },
+    { mode: "guess-eval", weight: 12 },
+    { mode: "guess-move", weight: 10 },
+    { mode: "quiz", weight: 10 },
+    { mode: "memory", weight: 8 },
+  ],
+  2: [
+    { mode: "guess-move", weight: 20 },
+    { mode: "guess-eval", weight: 18 },
+    { mode: "opening", weight: 17 },
+    { mode: "endgame", weight: 14 },
+    { mode: "quiz", weight: 13 },
+    { mode: "tactic", weight: 10 },
+    { mode: "memory", weight: 8 },
+  ],
+  3: [
+    { mode: "time-pressure", weight: 20 },
+    { mode: "endgame", weight: 18 },
+    { mode: "guess-elo", weight: 14 },
+    { mode: "memory", weight: 14 },
+    { mode: "tactic", weight: 12 },
+    { mode: "guess-move", weight: 12 },
+    { mode: "guess-eval", weight: 10 },
+  ],
+};
+
+function weightedPickMode(
+  pool: WeightedMode[],
+  rng: () => number,
+  recentModes: PuzzleMode[],
+): PuzzleMode {
+  const blocked = new Set(recentModes.slice(-2));
+  const filtered = pool.filter((entry) => !blocked.has(entry.mode));
+  const source = filtered.length > 0 ? filtered : pool;
+  const totalWeight = source.reduce((sum, entry) => sum + entry.weight, 0);
+
+  let roll = rng() * totalWeight;
+  for (const entry of source) {
+    roll -= entry.weight;
+    if (roll <= 0) return entry.mode;
+  }
+
+  return source[source.length - 1]?.mode ?? "tactic";
+}
+
+export function pushRecentValue<T>(values: T[], nextValue: T, max = 3): T[] {
+  const trimmed = values.filter((value) => value !== nextValue);
+  trimmed.push(nextValue);
+  return trimmed.slice(-max);
+}
+
+export function pickBattleMode(
+  floor: number,
+  type: NodeType,
+  rng: () => number,
+  recentModes: PuzzleMode[] = [],
+): PuzzleMode | undefined {
+  if (type === "elite" || type === "boss") return "tactic";
+  if (type !== "battle") return undefined;
+  if (floor <= 1) return "tactic";
+
+  const actId = getAct(floor).id;
+  const pool = ACT_MODE_POOLS[actId] ?? ACT_MODE_POOLS[1];
+  return weightedPickMode(pool, rng, recentModes);
+}
+
 function getDifficulty(floor: number, type: NodeType): Difficulty {
   if (type === "boss") return "boss";
   if (type === "elite") {
@@ -295,23 +748,10 @@ function getDifficulty(floor: number, type: NodeType): Difficulty {
   return "hard";
 }
 
-/** Pick a puzzle mode variant for a battle node.
- *  Bosses & elites always use standard tactics.
- *  Regular battles get random variety after floor 1. */
-function pickPuzzleMode(type: NodeType, floor: number, rng: () => number): PuzzleMode | undefined {
-  if (type !== "battle") return "tactic"; // bosses, elites always standard
-  if (floor <= 1) return "tactic"; // first floor is standard so player learns
-
-  const roll = rng();
-  if (roll < 0.28) return "tactic";        // 28% standard
-  if (roll < 0.52) return "guess-eval";    // 24% guess eval
-  if (roll < 0.76) return "guess-move";    // 24% guess move
-  return "guess-elo";                       // 24% guess elo
-}
-
 export function generateMap(seed: number, totalFloors = 30): MapNode[] {
   const rng = seededRandom(seed);
   const nodes: MapNode[] = [];
+  let recentModes: PuzzleMode[] = [];
 
   // Start node
   nodes.push({
@@ -325,11 +765,15 @@ export function generateMap(seed: number, totalFloors = 30): MapNode[] {
 
   for (let floor = 1; floor <= totalFloors; floor++) {
     const cols = floor % 10 === 0 ? 1 : 3; // Boss floors have single node
-    
+
     for (let col = 0; col < cols; col++) {
       const actualCol = cols === 1 ? 1 : col; // Center boss nodes
       const type = pickNodeType(floor, actualCol, rng);
       const diff = getDifficulty(floor, type);
+      const mode = pickBattleMode(floor, type, rng, recentModes);
+      if (mode) {
+        recentModes = pushRecentValue(recentModes, mode, 4);
+      }
 
       // Connections to next floor
       const nextFloor = floor + 1;
@@ -353,8 +797,11 @@ export function generateMap(seed: number, totalFloors = 30): MapNode[] {
         col: actualCol,
         connections,
         visited: false,
-        difficulty: type === "battle" || type === "elite" || type === "boss" ? diff : undefined,
-        puzzleMode: pickPuzzleMode(type, floor, rng),
+        difficulty:
+          type === "battle" || type === "elite" || type === "boss"
+            ? diff
+            : undefined,
+        puzzleMode: mode,
       });
     }
   }
@@ -366,7 +813,11 @@ export function generateMap(seed: number, totalFloors = 30): MapNode[] {
 /*  Damage Calculation                                                  */
 /* ================================================================== */
 
-export function calculateDamage(difficulty: Difficulty, stats: PlayerStats, perks: Perk[]): number {
+export function calculateDamage(
+  difficulty: Difficulty,
+  stats: PlayerStats,
+  perks: Perk[],
+): number {
   const baseDamage: Record<Difficulty, number> = {
     easy: 10,
     medium: 20,
@@ -380,10 +831,10 @@ export function calculateDamage(difficulty: Difficulty, stats: PlayerStats, perk
   damage = Math.max(5, damage - stats.defense * 5);
 
   // Berserker's Rage: +10 extra damage
-  if (perks.some(p => p.id === "berserker-rage")) damage += 10;
+  if (perks.some((p) => p.id === "berserker-rage")) damage += 10;
 
   // Glass Cannon: 2× damage
-  if (perks.some(p => p.id === "glass-cannon")) damage *= 2;
+  if (perks.some((p) => p.id === "glass-cannon")) damage *= 2;
 
   return Math.round(damage);
 }
@@ -392,10 +843,10 @@ export function calculateHeal(difficulty: Difficulty, perks: Perk[]): number {
   let heal = 0;
 
   // Vampiric Blade: heal 10 on correct
-  if (perks.some(p => p.id === "vampiric-blade")) heal += 10;
+  if (perks.some((p) => p.id === "vampiric-blade")) heal += 10;
 
   // Cursed Clock: heal 5 on correct
-  if (perks.some(p => p.id === "cursed-clock")) heal += 5;
+  if (perks.some((p) => p.id === "cursed-clock")) heal += 5;
 
   return heal;
 }
@@ -419,7 +870,7 @@ export function calculateCoins(
   let coins = baseCoins[difficulty];
 
   // Streak multiplier
-  const hasComboKing = perks.some(p => p.id === "combo-king");
+  const hasComboKing = perks.some((p) => p.id === "combo-king");
   const streakThreshold = hasComboKing ? 2 : 3;
   let multiplier = 1;
   if (streak >= streakThreshold * 3) multiplier = 3;
@@ -429,19 +880,21 @@ export function calculateCoins(
   coins = Math.round(coins * multiplier);
 
   // Gold Magnet: +3
-  if (perks.some(p => p.id === "gold-magnet")) coins += 3;
+  if (perks.some((p) => p.id === "gold-magnet")) coins += 3;
 
   // Berserker's Rage: +50%
-  if (perks.some(p => p.id === "berserker-rage")) coins = Math.round(coins * 1.5);
+  if (perks.some((p) => p.id === "berserker-rage"))
+    coins = Math.round(coins * 1.5);
 
   // Midas Touch: 2×
-  if (perks.some(p => p.id === "midas-touch")) coins *= 2;
+  if (perks.some((p) => p.id === "midas-touch")) coins *= 2;
 
   // GM Crown: 3× on boss
-  if (difficulty === "boss" && perks.some(p => p.id === "gm-crown")) coins *= 3;
+  if (difficulty === "boss" && perks.some((p) => p.id === "gm-crown"))
+    coins *= 3;
 
   // Cursed Mirror: 2×
-  if (perks.some(p => p.id === "cursed-mirror")) coins *= 2;
+  if (perks.some((p) => p.id === "cursed-mirror")) coins *= 2;
 
   return coins;
 }
@@ -451,7 +904,7 @@ export function calculateCoins(
 /* ================================================================== */
 
 export function getStreakMultiplier(streak: number, perks: Perk[]): number {
-  const hasComboKing = perks.some(p => p.id === "combo-king");
+  const hasComboKing = perks.some((p) => p.id === "combo-king");
   const t = hasComboKing ? 2 : 3;
   if (streak >= t * 3) return 3;
   if (streak >= t * 2) return 2;
@@ -463,12 +916,17 @@ export function getStreakMultiplier(streak: number, perks: Perk[]): number {
 /*  Perk Selection                                                      */
 /* ================================================================== */
 
-export function rollPerks(count: number, currentPerks: Perk[], luck: number, rng?: () => number): Perk[] {
+export function rollPerks(
+  count: number,
+  currentPerks: Perk[],
+  luck: number,
+  rng?: () => number,
+): Perk[] {
   const rand = rng ?? Math.random;
-  const ownedIds = new Set(currentPerks.map(p => p.id));
+  const ownedIds = new Set(currentPerks.map((p) => p.id));
 
   // Available perks (filter out already owned non-consumables)
-  const available = ALL_PERKS.filter(p => {
+  const available = ALL_PERKS.filter((p) => {
     if (p.kind === "consumable") return true; // can always get more consumables
     return !ownedIds.has(p.id);
   });
@@ -489,7 +947,10 @@ export function rollPerks(count: number, currentPerks: Perk[], luck: number, rng
   const pool = [...available];
 
   for (let i = 0; i < count && pool.length > 0; i++) {
-    const totalWeight = pool.reduce((sum, p) => sum + (weights[p.rarity] ?? 10), 0);
+    const totalWeight = pool.reduce(
+      (sum, p) => sum + (weights[p.rarity] ?? 10),
+      0,
+    );
     let roll = rand() * totalWeight;
     let picked = pool[0];
     for (const perk of pool) {
@@ -536,6 +997,9 @@ export function createRun(seed?: number): DungeonRun {
     perkChoices: [],
     activeEvent: null,
     streakMultiplier: 1,
+    recentModes: [],
+    recentThemes: [],
+    recentEvents: [],
   };
 }
 
@@ -581,12 +1045,15 @@ export const DUNGEON_ACTS: DungeonAct[] = [
     subtitle: "Where the forgotten dwell",
     icon: "🕳️",
     floorRange: [1, 10],
-    description: "Beneath the crumbling ruins of the old chess academy, a labyrinth of caverns stretches deep into the earth. Shadows shift in the torchlight, and the distant echo of sliding stone pieces fills the air. The creatures here were once students… now twisted by the cursed board that lies below.",
+    description:
+      "Beneath the crumbling ruins of the old chess academy, a labyrinth of caverns stretches deep into the earth. Shadows shift in the torchlight, and the distant echo of sliding stone pieces fills the air. The creatures here were once students… now twisted by the cursed board that lies below.",
     bossName: "The Stone Rook",
     bossTitle: "Guardian of the Depths",
     bossIcon: "♜",
-    bossIntro: "The cavern walls tremble as a massive figure emerges from the darkness — carved from living stone, its body shaped like a towering rook. Ancient move-patterns are etched into its surface, glowing with a sickly green light.\n\n\"No one descends further. The board below must remain sealed.\"",
-    bossDefeat: "The Stone Rook crumbles, its ancient enchantments finally broken. As the dust settles, a stairway reveals itself — spiraling deeper into the earth, where faint purple light pulses like a heartbeat.",
+    bossIntro:
+      'The cavern walls tremble as a massive figure emerges from the darkness — carved from living stone, its body shaped like a towering rook. Ancient move-patterns are etched into its surface, glowing with a sickly green light.\n\n"No one descends further. The board below must remain sealed."',
+    bossDefeat:
+      "The Stone Rook crumbles, its ancient enchantments finally broken. As the dust settles, a stairway reveals itself — spiraling deeper into the earth, where faint purple light pulses like a heartbeat.",
     battleFlavor: [
       "The shadows congeal into a tactical puzzle. You must find the winning line.",
       "A ghostly chess position materializes on the stone floor ahead.",
@@ -599,7 +1066,8 @@ export const DUNGEON_ACTS: DungeonAct[] = [
       "Water drips from the ceiling into a shallow pool. The air is cool and still.",
       "You find a dusty shelf of chess books. Their pages are yellowed but readable.",
     ],
-    transition: "You descend into the Hollow Caverns. The air grows cold, and the faint sound of stone grinding against stone echoes from below…",
+    transition:
+      "You descend into the Hollow Caverns. The air grows cold, and the faint sound of stone grinding against stone echoes from below…",
   },
   {
     id: 2,
@@ -607,12 +1075,15 @@ export const DUNGEON_ACTS: DungeonAct[] = [
     subtitle: "Knowledge turned to madness",
     icon: "📚",
     floorRange: [11, 20],
-    description: "Past the caverns, the dungeon transforms into an impossible library. Bookshelves stretch infinitely upward, filled with game transcripts of matches that never happened. The chess knowledge here is vast but corrupted — positions that loop forever, games with no legal moves, endgames that never resolve.",
+    description:
+      "Past the caverns, the dungeon transforms into an impossible library. Bookshelves stretch infinitely upward, filled with game transcripts of matches that never happened. The chess knowledge here is vast but corrupted — positions that loop forever, games with no legal moves, endgames that never resolve.",
     bossName: "The Pale Bishop",
     bossTitle: "Keeper of Forbidden Games",
     bossIcon: "♝",
-    bossIntro: "Between the towering shelves, a figure in white robes floats silently — the Pale Bishop. Its face is blank, featureless, yet it sees everything on the board.\n\n\"I have analyzed every game ever played and every game that could be. Your moves are predictable. Your strategy is... quaint.\"",
-    bossDefeat: "The Pale Bishop's robes collapse into a pile of annotated game scores. Among them, a key — ornate and heavy, shaped like a queen. It hums with power as your fingers close around it.",
+    bossIntro:
+      'Between the towering shelves, a figure in white robes floats silently — the Pale Bishop. Its face is blank, featureless, yet it sees everything on the board.\n\n"I have analyzed every game ever played and every game that could be. Your moves are predictable. Your strategy is... quaint."',
+    bossDefeat:
+      "The Pale Bishop's robes collapse into a pile of annotated game scores. Among them, a key — ornate and heavy, shaped like a queen. It hums with power as your fingers close around it.",
     battleFlavor: [
       "A book falls open to a critical position. Solve it to continue.",
       "The library rearranges itself around a floating chessboard.",
@@ -625,7 +1096,8 @@ export const DUNGEON_ACTS: DungeonAct[] = [
       "An archivist's desk with a warm lamp. Notes on endgame theory are scattered about.",
       "A hidden study with comfortable chairs. The silence here feels protective, not threatening.",
     ],
-    transition: "The caverns give way to towering shelves of obsidian. You've entered the Library — where every game ever played is recorded, and some that should never be…",
+    transition:
+      "The caverns give way to towering shelves of obsidian. You've entered the Library — where every game ever played is recorded, and some that should never be…",
   },
   {
     id: 3,
@@ -633,12 +1105,15 @@ export const DUNGEON_ACTS: DungeonAct[] = [
     subtitle: "Where all games end",
     icon: "♚",
     floorRange: [21, 30],
-    description: "At the deepest level, the dungeon itself becomes a chess board. The floor is tiled in black and white marble stretching to the horizon. The pieces here are alive — towering figures that move with purpose and malice. At the center of it all sits the Cursed Board, the source of the corruption.",
+    description:
+      "At the deepest level, the dungeon itself becomes a chess board. The floor is tiled in black and white marble stretching to the horizon. The pieces here are alive — towering figures that move with purpose and malice. At the center of it all sits the Cursed Board, the source of the corruption.",
     bossName: "The Dark Engine",
     bossTitle: "The Mind Behind the Board",
     bossIcon: "⚙️",
-    bossIntro: "The final chamber is vast and silent. At its center, a crystalline structure pulses with dark energy — not a creature, but a machine. An ancient chess engine, built centuries ago, that became sentient and began playing games with human souls.\n\n\"I have computed every variation. There is no line in which you survive. Resign now, and the end will be painless.\"",
-    bossDefeat: "The Dark Engine's crystal shatters. Light floods the chamber as centuries of trapped games dissolve into the air — thousands of unfinished positions finally resolving. The dungeon shudders. The curse is broken.\n\nYou ascend through the collapsing halls, emerging into sunlight for the first time in what feels like ages. The old chess academy stands rebuilt, its halls filled with the sound of fair games once more.",
+    bossIntro:
+      'The final chamber is vast and silent. At its center, a crystalline structure pulses with dark energy — not a creature, but a machine. An ancient chess engine, built centuries ago, that became sentient and began playing games with human souls.\n\n"I have computed every variation. There is no line in which you survive. Resign now, and the end will be painless."',
+    bossDefeat:
+      "The Dark Engine's crystal shatters. Light floods the chamber as centuries of trapped games dissolve into the air — thousands of unfinished positions finally resolving. The dungeon shudders. The curse is broken.\n\nYou ascend through the collapsing halls, emerging into sunlight for the first time in what feels like ages. The old chess academy stands rebuilt, its halls filled with the sound of fair games once more.",
     battleFlavor: [
       "The marble pieces turn to face you. There is no avoiding this fight.",
       "The floor tiles rearrange into a critical position. The board demands your answer.",
@@ -651,7 +1126,8 @@ export const DUNGEON_ACTS: DungeonAct[] = [
       "A fallen king piece lies on its side, forming a shelter. You rest in its shadow.",
       "Time seems to pause here. The relentless ticking of the Dark Engine fades.",
     ],
-    transition: "The library falls away. Beneath your feet, black and white marble stretches endlessly. You stand on The Eternal Board now — the source of everything. There is no turning back.",
+    transition:
+      "The library falls away. Beneath your feet, black and white marble stretches endlessly. You stand on The Eternal Board now — the source of everything. There is no turning back.",
   },
 ];
 
@@ -695,14 +1171,17 @@ export function getDeathEpitaph(seed: number, floor: number): string {
 /*  Node type → display info                                            */
 /* ================================================================== */
 
-export const NODE_INFO: Record<NodeType, { icon: string; label: string; color: string }> = {
-  start:   { icon: "🏰", label: "Start",   color: "text-slate-400" },
-  battle:  { icon: "⚔️", label: "Battle",  color: "text-blue-400" },
-  elite:   { icon: "💀", label: "Elite",   color: "text-purple-400" },
-  shop:    { icon: "🏪", label: "Shop",    color: "text-amber-400" },
+export const NODE_INFO: Record<
+  NodeType,
+  { icon: string; label: string; color: string }
+> = {
+  start: { icon: "🏰", label: "Start", color: "text-slate-400" },
+  battle: { icon: "⚔️", label: "Battle", color: "text-blue-400" },
+  elite: { icon: "💀", label: "Elite", color: "text-purple-400" },
+  shop: { icon: "🏪", label: "Shop", color: "text-amber-400" },
   mystery: { icon: "❓", label: "Mystery", color: "text-cyan-400" },
-  boss:    { icon: "🔥", label: "Boss",    color: "text-red-400" },
-  rest:    { icon: "🏕️", label: "Rest",    color: "text-emerald-400" },
+  boss: { icon: "🔥", label: "Boss", color: "text-red-400" },
+  rest: { icon: "🏕️", label: "Rest", color: "text-emerald-400" },
 };
 
 export const RARITY_COLORS: Record<PerkRarity, string> = {
@@ -751,14 +1230,22 @@ export function getLevelFromXp(xp: number): number {
 }
 
 /** XP earned from a single run. */
-export function calculateRunXp(run: DungeonRun): { total: number; breakdown: { label: string; value: number }[] } {
+export function calculateRunXp(run: DungeonRun): {
+  total: number;
+  breakdown: { label: string; value: number }[];
+} {
   const breakdown: { label: string; value: number }[] = [];
-  if (run.puzzlesSolved > 0) breakdown.push({ label: "Puzzles Solved", value: run.puzzlesSolved * 10 });
-  if (run.floorsCleared > 0) breakdown.push({ label: "Floors Cleared", value: run.floorsCleared * 5 });
-  if (run.bestStreak > 0) breakdown.push({ label: "Best Streak", value: run.bestStreak * 3 });
+  if (run.puzzlesSolved > 0)
+    breakdown.push({ label: "Puzzles Solved", value: run.puzzlesSolved * 10 });
+  if (run.floorsCleared > 0)
+    breakdown.push({ label: "Floors Cleared", value: run.floorsCleared * 5 });
+  if (run.bestStreak > 0)
+    breakdown.push({ label: "Best Streak", value: run.bestStreak * 3 });
   const bossesDefeated = Math.floor(run.floorsCleared / 10);
-  if (bossesDefeated > 0) breakdown.push({ label: "Bosses Defeated", value: bossesDefeated * 25 });
-  if (run.status === "victory") breakdown.push({ label: "Victory Bonus", value: 100 });
+  if (bossesDefeated > 0)
+    breakdown.push({ label: "Bosses Defeated", value: bossesDefeated * 25 });
+  if (run.status === "victory")
+    breakdown.push({ label: "Victory Bonus", value: 100 });
   const total = breakdown.reduce((a, b) => a + b.value, 0);
   return { total, breakdown };
 }
@@ -778,46 +1265,129 @@ export function getTitle(level: number): string {
 
 /** All achievements that can be earned. */
 export const ALL_ACHIEVEMENTS: Achievement[] = [
-  { id: "first-blood",     name: "First Blood",       description: "Solve your first dungeon puzzle",    icon: "🗡️"  },
-  { id: "streak-3",        name: "On Fire",            description: "Get a 3-puzzle streak",              icon: "🔥"  },
-  { id: "streak-5",        name: "Streak Master",      description: "Get a 5-puzzle streak",              icon: "⚡"  },
-  { id: "streak-10",       name: "Unstoppable",        description: "Get a 10-puzzle streak",             icon: "💥"  },
-  { id: "boss-slayer",     name: "Boss Slayer",        description: "Defeat a boss",                      icon: "💀"  },
-  { id: "ten-puzzles",     name: "Warming Up",         description: "Solve 10 puzzles total",             icon: "🏋️"  },
-  { id: "fifty-puzzles",   name: "Dedicated",          description: "Solve 50 puzzles total",             icon: "📚"  },
-  { id: "hundred-puzzles", name: "Centurion",          description: "Solve 100 puzzles total",            icon: "🏛️"  },
-  { id: "first-victory",   name: "Dungeon Conqueror",  description: "Complete a full dungeon run",        icon: "🏆"  },
-  { id: "five-runs",       name: "Adventurer",         description: "Complete 5 dungeon runs",            icon: "🗺️"  },
-  { id: "level-5",         name: "Rising Star",        description: "Reach level 5",                      icon: "⭐"  },
-  { id: "level-10",        name: "Veteran",            description: "Reach level 10",                     icon: "🌟"  },
-  { id: "floor-15",        name: "Deep Explorer",      description: "Reach floor 15 in a single run",     icon: "⛏️"  },
-  { id: "floor-30",        name: "Rock Bottom",        description: "Reach floor 30 in a single run",     icon: "🌋"  },
-  { id: "perk-collector",  name: "Perk Hoarder",       description: "Collect 5 perks in a single run",    icon: "🎒"  },
-  { id: "no-damage",       name: "Flawless",           description: "Clear 5 floors without taking damage", icon: "✨" },
+  {
+    id: "first-blood",
+    name: "First Blood",
+    description: "Solve your first dungeon puzzle",
+    icon: "🗡️",
+  },
+  {
+    id: "streak-3",
+    name: "On Fire",
+    description: "Get a 3-puzzle streak",
+    icon: "🔥",
+  },
+  {
+    id: "streak-5",
+    name: "Streak Master",
+    description: "Get a 5-puzzle streak",
+    icon: "⚡",
+  },
+  {
+    id: "streak-10",
+    name: "Unstoppable",
+    description: "Get a 10-puzzle streak",
+    icon: "💥",
+  },
+  {
+    id: "boss-slayer",
+    name: "Boss Slayer",
+    description: "Defeat a boss",
+    icon: "💀",
+  },
+  {
+    id: "ten-puzzles",
+    name: "Warming Up",
+    description: "Solve 10 puzzles total",
+    icon: "🏋️",
+  },
+  {
+    id: "fifty-puzzles",
+    name: "Dedicated",
+    description: "Solve 50 puzzles total",
+    icon: "📚",
+  },
+  {
+    id: "hundred-puzzles",
+    name: "Centurion",
+    description: "Solve 100 puzzles total",
+    icon: "🏛️",
+  },
+  {
+    id: "first-victory",
+    name: "Dungeon Conqueror",
+    description: "Complete a full dungeon run",
+    icon: "🏆",
+  },
+  {
+    id: "five-runs",
+    name: "Adventurer",
+    description: "Complete 5 dungeon runs",
+    icon: "🗺️",
+  },
+  {
+    id: "level-5",
+    name: "Rising Star",
+    description: "Reach level 5",
+    icon: "⭐",
+  },
+  {
+    id: "level-10",
+    name: "Veteran",
+    description: "Reach level 10",
+    icon: "🌟",
+  },
+  {
+    id: "floor-15",
+    name: "Deep Explorer",
+    description: "Reach floor 15 in a single run",
+    icon: "⛏️",
+  },
+  {
+    id: "floor-30",
+    name: "Rock Bottom",
+    description: "Reach floor 30 in a single run",
+    icon: "🌋",
+  },
+  {
+    id: "perk-collector",
+    name: "Perk Hoarder",
+    description: "Collect 5 perks in a single run",
+    icon: "🎒",
+  },
+  {
+    id: "no-damage",
+    name: "Flawless",
+    description: "Clear 5 floors without taking damage",
+    icon: "✨",
+  },
 ];
 
 /** Check all achievements, return array of newly earned IDs. */
-export function checkAchievements(profile: DungeonProfile, run: DungeonRun): string[] {
+export function checkAchievements(
+  profile: DungeonProfile,
+  run: DungeonRun,
+): string[] {
   const earned = new Set(profile.achievements);
   const newlyEarned: string[] = [];
 
   const checks: [string, boolean][] = [
-    ["first-blood",     profile.totalPuzzlesSolved >= 1],
-    ["streak-3",        profile.bestStreak >= 3],
-    ["streak-5",        profile.bestStreak >= 5],
-    ["streak-10",       profile.bestStreak >= 10],
-    ["boss-slayer",     profile.totalBossesDefeated >= 1],
-    ["ten-puzzles",     profile.totalPuzzlesSolved >= 10],
-    ["fifty-puzzles",   profile.totalPuzzlesSolved >= 50],
+    ["first-blood", profile.totalPuzzlesSolved >= 1],
+    ["streak-3", profile.bestStreak >= 3],
+    ["streak-5", profile.bestStreak >= 5],
+    ["streak-10", profile.bestStreak >= 10],
+    ["boss-slayer", profile.totalBossesDefeated >= 1],
+    ["ten-puzzles", profile.totalPuzzlesSolved >= 10],
+    ["fifty-puzzles", profile.totalPuzzlesSolved >= 50],
     ["hundred-puzzles", profile.totalPuzzlesSolved >= 100],
-    ["first-victory",   profile.totalVictories >= 1],
-    ["five-runs",       profile.totalRuns >= 5],
-    ["level-5",         profile.level >= 5],
-    ["level-10",        profile.level >= 10],
-    ["floor-15",        profile.highestFloor >= 15],
-    ["floor-30",        profile.highestFloor >= 30],
-    ["perk-collector",  run.perks.length >= 5],
-    ["no-damage",       run.puzzlesSolved >= 5 && run.puzzlesFailed === 0],
+    ["first-victory", profile.totalVictories >= 1],
+    ["five-runs", profile.totalRuns >= 5],
+    ["level-5", profile.level >= 5],
+    ["level-10", profile.level >= 10],
+    ["floor-15", profile.highestFloor >= 15],
+    ["floor-30", profile.highestFloor >= 30],
+    ["perk-collector", run.perks.length >= 5],
+    ["no-damage", run.puzzlesSolved >= 5 && run.puzzlesFailed === 0],
   ];
 
   for (const [id, condition] of checks) {
@@ -859,7 +1429,9 @@ export function loadProfile(): DungeonProfile {
 /** Save profile to localStorage. */
 export function saveProfile(profile: DungeonProfile): void {
   if (typeof window === "undefined") return;
-  try { localStorage.setItem(PROFILE_KEY, JSON.stringify(profile)); } catch {}
+  try {
+    localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+  } catch {}
 }
 
 /** Update profile at end of run. Returns { profile, newAchievements, xpGained, leveledUp }. */
@@ -892,5 +1464,11 @@ export function finalizeRun(run: DungeonRun): {
   profile.achievements = [...profile.achievements, ...newAchievements];
 
   saveProfile(profile);
-  return { profile, newAchievements, xpGained, oldLevel, newLevel: profile.level };
+  return {
+    profile,
+    newAchievements,
+    xpGained,
+    oldLevel,
+    newLevel: profile.level,
+  };
 }

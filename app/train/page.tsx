@@ -23,6 +23,10 @@ import { playSound, preloadSounds } from "@/lib/sounds";
 import { EvalBar } from "@/components/eval-bar";
 import { earnCoins } from "@/lib/coins";
 import {
+  getRepertoire,
+  type RepertoireEntry,
+} from "@/components/opening-repertoire";
+import {
   ChessQuiz,
   getDailyQuizQuestions,
   type QuizQuestion,
@@ -302,6 +306,31 @@ function buildOpeningPositions(reports: SavedReport[]): DrillPosition[] {
   return positions;
 }
 
+function buildRepertoirePositions(entries: RepertoireEntry[]): DrillPosition[] {
+  const seenFens = new Set<string>();
+
+  return [...entries]
+    .sort(
+      (a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime(),
+    )
+    .filter((entry) => {
+      if (!entry.fen || !entry.correctMove || seenFens.has(entry.fen)) {
+        return false;
+      }
+      seenFens.add(entry.fen);
+      return true;
+    })
+    .map((entry) => ({
+      fen: entry.fen,
+      bestMove: entry.correctMove,
+      label:
+        entry.tags.find(
+          (tag) => !/inaccuracy|mistake|blunder|repeated/i.test(tag || ""),
+        ) ?? "Saved repertoire",
+      cpLoss: entry.cpLoss,
+    }));
+}
+
 /** Build time-pressure drill positions from time management moments */
 function buildTimePositions(reports: SavedReport[]): TimePressurePosition[] {
   const positions: TimePressurePosition[] = [];
@@ -346,6 +375,44 @@ function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+function getLegalTargets(chess: Chess, square: string) {
+  return chess
+    .moves({
+      square: square as Parameters<Chess["moves"]>[0]["square"],
+      verbose: true,
+    })
+    .map((move) => move.to);
+}
+
+function applySelectionStyles(
+  styles: Record<string, React.CSSProperties>,
+  chess: Chess,
+  selectedSquare: string | null,
+  legalTargets: string[],
+) {
+  if (selectedSquare) {
+    styles[selectedSquare] = {
+      ...(styles[selectedSquare] ?? {}),
+      backgroundColor: "rgba(37, 99, 235, 0.38)",
+    };
+  }
+
+  for (const target of legalTargets) {
+    const hasPiece = chess.get(target as Parameters<Chess["get"]>[0]);
+    styles[target] = hasPiece
+      ? {
+          ...(styles[target] ?? {}),
+          background:
+            "radial-gradient(circle, transparent 52%, rgba(0,0,0,0.45) 52%)",
+        }
+      : {
+          ...(styles[target] ?? {}),
+          background:
+            "radial-gradient(circle, rgba(0,0,0,0.35) 25%, transparent 26%)",
+        };
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -512,6 +579,8 @@ function PuzzleBoard({
     square: string;
     type: "correct" | "wrong";
   } | null>(null);
+  const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
+  const [legalTargets, setLegalTargets] = useState<string[]>([]);
   // Track opponent's last move for highlighting
   const [opponentLastMove, setOpponentLastMove] = useState<{
     from: string;
@@ -561,6 +630,11 @@ function PuzzleBoard({
       setHintSquare(null);
     }
   }, [showHint, status, moveIndex, solutionMoves]);
+
+  useEffect(() => {
+    setSelectedSquare(null);
+    setLegalTargets([]);
+  }, [game, status, moveIndex]);
 
   const handleDrop = useCallback(
     (from: CbSquare, to: CbSquare) => {
@@ -652,6 +726,36 @@ function PuzzleBoard({
     [game, moveIndex, solutionMoves, status, onSolved, onFailed, attempts],
   );
 
+  const handleSquareClick = useCallback(
+    (square: CbSquare) => {
+      if (status !== "playing" || moveIndex < 0) return;
+
+      if (selectedSquare && legalTargets.includes(square)) {
+        handleDrop(selectedSquare, square);
+        setSelectedSquare(null);
+        setLegalTargets([]);
+        return;
+      }
+
+      if (selectedSquare === square) {
+        setSelectedSquare(null);
+        setLegalTargets([]);
+        return;
+      }
+
+      const piece = game.get(square as Parameters<Chess["get"]>[0]);
+      if (piece && piece.color === game.turn()) {
+        setSelectedSquare(square);
+        setLegalTargets(getLegalTargets(game, square));
+        return;
+      }
+
+      setSelectedSquare(null);
+      setLegalTargets([]);
+    },
+    [game, handleDrop, legalTargets, moveIndex, selectedSquare, status],
+  );
+
   const customSquareStyles: Record<string, React.CSSProperties> = {};
   // Highlight opponent's last move (from/to squares)
   if (opponentLastMove && status === "playing") {
@@ -687,6 +791,7 @@ function PuzzleBoard({
       };
     }
   }
+  applySelectionStyles(customSquareStyles, game, selectedSquare, legalTargets);
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -705,6 +810,7 @@ function PuzzleBoard({
           id="train-board"
           position={game.fen()}
           onPieceDrop={handleDrop}
+          onSquareClick={handleSquareClick}
           boardOrientation={orientation}
           animationDuration={200}
           arePiecesDraggable={status === "playing"}
@@ -780,6 +886,8 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
     square: string;
     type: "correct" | "wrong";
   } | null>(null);
+  const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
+  const [legalTargets, setLegalTargets] = useState<string[]>([]);
   // Lock orientation at mount — don't recalculate after correct moves
   const [orientation] = useState<"white" | "black">(() => {
     const chess = new Chess(position.fen);
@@ -791,6 +899,11 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
   useEffect(() => {
     preloadSounds();
   }, []);
+
+  useEffect(() => {
+    setSelectedSquare(null);
+    setLegalTargets([]);
+  }, [game, status]);
 
   const handleDrop = useCallback(
     (from: CbSquare, to: CbSquare) => {
@@ -842,6 +955,36 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
     [game, expected, status, onResult, attempts],
   );
 
+  const handleSquareClick = useCallback(
+    (square: CbSquare) => {
+      if (status !== "playing") return;
+
+      if (selectedSquare && legalTargets.includes(square)) {
+        handleDrop(selectedSquare, square);
+        setSelectedSquare(null);
+        setLegalTargets([]);
+        return;
+      }
+
+      if (selectedSquare === square) {
+        setSelectedSquare(null);
+        setLegalTargets([]);
+        return;
+      }
+
+      const piece = game.get(square as Parameters<Chess["get"]>[0]);
+      if (piece && piece.color === game.turn()) {
+        setSelectedSquare(square);
+        setLegalTargets(getLegalTargets(game, square));
+        return;
+      }
+
+      setSelectedSquare(null);
+      setLegalTargets([]);
+    },
+    [game, handleDrop, legalTargets, selectedSquare, status],
+  );
+
   const customSquareStyles: Record<string, React.CSSProperties> = {};
   if (showHint && status === "playing") {
     customSquareStyles[expected.from] = {
@@ -857,6 +1000,7 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
       boxShadow: "inset 0 0 16px 4px rgba(34, 197, 94, 0.5)",
     };
   }
+  applySelectionStyles(customSquareStyles, game, selectedSquare, legalTargets);
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -875,6 +1019,7 @@ function SimplePuzzleBoard({ position, onResult, showHint }: SimpleBoardProps) {
           id="simple-train-board"
           position={game.fen()}
           onPieceDrop={handleDrop}
+          onSquareClick={handleSquareClick}
           boardOrientation={orientation}
           animationDuration={200}
           arePiecesDraggable={status === "playing"}
@@ -954,6 +1099,8 @@ function TimePressureBoard({
     square: string;
     type: "correct" | "wrong";
   } | null>(null);
+  const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
+  const [legalTargets, setLegalTargets] = useState<string[]>([]);
   const orientation = position.userColor;
 
   // Timer
@@ -973,6 +1120,11 @@ function TimePressureBoard({
       if (thinkTimerRef.current) clearInterval(thinkTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    setSelectedSquare(null);
+    setLegalTargets([]);
+  }, [game, status]);
 
   const stopTimer = useCallback(() => {
     if (thinkTimerRef.current) {
@@ -1033,6 +1185,36 @@ function TimePressureBoard({
     [game, expected, status, onResult, attempts, stopTimer],
   );
 
+  const handleSquareClick = useCallback(
+    (square: CbSquare) => {
+      if (status !== "playing") return;
+
+      if (selectedSquare && legalTargets.includes(square)) {
+        handleDrop(selectedSquare, square);
+        setSelectedSquare(null);
+        setLegalTargets([]);
+        return;
+      }
+
+      if (selectedSquare === square) {
+        setSelectedSquare(null);
+        setLegalTargets([]);
+        return;
+      }
+
+      const piece = game.get(square as Parameters<Chess["get"]>[0]);
+      if (piece && piece.color === game.turn()) {
+        setSelectedSquare(square);
+        setLegalTargets(getLegalTargets(game, square));
+        return;
+      }
+
+      setSelectedSquare(null);
+      setLegalTargets([]);
+    },
+    [game, handleDrop, legalTargets, selectedSquare, status],
+  );
+
   const customSquareStyles: Record<string, React.CSSProperties> = {};
   if (showHint && status === "playing") {
     customSquareStyles[expected.from] = {
@@ -1048,6 +1230,7 @@ function TimePressureBoard({
       boxShadow: "inset 0 0 16px 4px rgba(34, 197, 94, 0.5)",
     };
   }
+  applySelectionStyles(customSquareStyles, game, selectedSquare, legalTargets);
 
   // Compute time comparison
   const originalTimeSec = position.timeSpentSec;
@@ -1109,6 +1292,7 @@ function TimePressureBoard({
           id="time-pressure-board"
           position={game.fen()}
           onPieceDrop={handleDrop}
+          onSquareClick={handleSquareClick}
           boardOrientation={orientation}
           animationDuration={200}
           arePiecesDraggable={status === "playing"}
@@ -1199,6 +1383,9 @@ function TimePressureBoard({
 export default function TrainPage() {
   const { authenticated, loading: sessionLoading, user } = useSession();
   const [allReports, setAllReports] = useState<SavedReport[]>([]);
+  const [repertoireEntries, setRepertoireEntries] = useState<RepertoireEntry[]>(
+    [],
+  );
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [loadingReports, setLoadingReports] = useState(true);
   const [activeMode, setActiveMode] = useState<Mode | null>(null);
@@ -1255,6 +1442,21 @@ export default function TrainPage() {
       .finally(() => setLoadingReports(false));
   }, [authenticated, sessionLoading]);
 
+  useEffect(() => {
+    const loadRepertoire = () => {
+      setRepertoireEntries(getRepertoire());
+    };
+
+    loadRepertoire();
+    window.addEventListener("storage", loadRepertoire);
+    window.addEventListener("focus", loadRepertoire);
+
+    return () => {
+      window.removeEventListener("storage", loadRepertoire);
+      window.removeEventListener("focus", loadRepertoire);
+    };
+  }, []);
+
   // Unique chess usernames across all reports
   const usernames = useMemo(() => {
     const set = new Set<string>();
@@ -1274,10 +1476,26 @@ export default function TrainPage() {
     () => buildBlunderPositions(reports),
     [reports],
   );
-  const openingPositions = useMemo(
+  const scanOpeningPositions = useMemo(
     () => buildOpeningPositions(reports),
     [reports],
   );
+  const repertoirePositions = useMemo(
+    () => buildRepertoirePositions(repertoireEntries),
+    [repertoireEntries],
+  );
+  const openingPositions = useMemo(() => {
+    const merged: DrillPosition[] = [];
+    const seenFens = new Set<string>();
+
+    for (const position of [...scanOpeningPositions, ...repertoirePositions]) {
+      if (seenFens.has(position.fen)) continue;
+      seenFens.add(position.fen);
+      merged.push(position);
+    }
+
+    return merged;
+  }, [scanOpeningPositions, repertoirePositions]);
   const timePositions = useMemo(() => buildTimePositions(reports), [reports]);
 
   // Which scan types has the user saved for this username?
@@ -1799,6 +2017,11 @@ export default function TrainPage() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {MODES.map((mode) => {
                 const noReports = mode.needsReport && reports.length === 0;
+                const noOpeningFallback =
+                  mode.id === "opening" && openingPositions.length > 0;
+                const requiresReports =
+                  mode.needsReport &&
+                  (!noOpeningFallback || reports.length > 0);
 
                 // Each mode requires a specific scan type to have meaningful data
                 const missingScanType =
@@ -1807,7 +2030,7 @@ export default function TrainPage() {
                     : mode.id === "blunder"
                       ? !hasTacticsScan && blunderPositions.length === 0
                       : mode.id === "opening"
-                        ? !hasOpeningScan
+                        ? openingPositions.length === 0
                         : mode.id === "endgame"
                           ? !hasEndgameScan
                           : mode.id === "time"
@@ -1815,23 +2038,26 @@ export default function TrainPage() {
                             : false;
 
                 const actuallyDisabled =
-                  noReports ||
-                  (mode.needsReport && missingScanType && mode.id !== "speed");
+                  (mode.needsReport &&
+                    reports.length === 0 &&
+                    !noOpeningFallback) ||
+                  (requiresReports && missingScanType && mode.id !== "speed");
 
                 // Build a helpful disabled message
-                const disabledMessage = noReports
-                  ? "Requires a scan report"
-                  : mode.id === "weakness"
-                    ? "Run a tactics scan to unlock personalized motifs"
-                    : mode.id === "blunder"
-                      ? "Run a tactics scan to unlock — need missed tactic positions"
-                      : mode.id === "opening"
-                        ? "Run an opening scan to unlock"
-                        : mode.id === "endgame"
-                          ? "Run an endgame scan to unlock personalized endgame types"
-                          : mode.id === "time"
-                            ? "Run a time management scan to unlock"
-                            : "No data available";
+                const disabledMessage =
+                  mode.id === "opening"
+                    ? "Run and save a scan, or add moves to your repertoire"
+                    : reports.length === 0
+                      ? "Requires a scan report"
+                      : mode.id === "weakness"
+                        ? "Run and save a scan to unlock personalized motifs"
+                        : mode.id === "blunder"
+                          ? "Run and save a scan to unlock — need missed tactic positions"
+                          : mode.id === "endgame"
+                            ? "Run and save a scan to unlock personalized endgame types"
+                            : mode.id === "time"
+                              ? "Run and save a scan to unlock"
+                              : "No data available";
 
                 return (
                   <button
@@ -1862,7 +2088,8 @@ export default function TrainPage() {
                       )}
                       {mode.id === "opening" && openingPositions.length > 0 && (
                         <p className="mt-2 text-[11px] text-slate-500">
-                          {openingPositions.length} leaks to practice
+                          {openingPositions.length} opening position
+                          {openingPositions.length !== 1 ? "s" : ""} ready
                         </p>
                       )}
                       {mode.id === "weakness" && weakMotifs.length > 0 && (
@@ -2122,7 +2349,8 @@ export default function TrainPage() {
                   <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-8 text-center">
                     <p className="text-sm text-slate-400">
                       No {activeMode === "blunder" ? "blunder" : "opening"}{" "}
-                      positions found. Run a scan first.
+                      positions found. Run a scan and save it to your profile,
+                      or add moves to your repertoire first.
                     </p>
                   </div>
                 )}

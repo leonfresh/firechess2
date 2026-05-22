@@ -3,15 +3,15 @@
  *
  * Admin: count of tickets with status "new" (new ticket or user re-replied).
  * User:  count of own tickets with an unread admin reply
- *        (latest reply on ticket is from admin, not yet seen).
+ *        tracked via the ticket's last admin reply timestamp vs. last user view.
  */
 
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { feedback, ticketReplies } from "@/lib/schema";
+import { feedback } from "@/lib/schema";
 import { isAdmin } from "@/lib/admin";
-import { eq, and, desc } from "drizzle-orm";
+import { and, eq, isNotNull, isNull, lt, or } from "drizzle-orm";
 
 export async function GET() {
   try {
@@ -31,35 +31,21 @@ export async function GET() {
       return NextResponse.json({ count: newTickets.length });
     }
 
-    // Regular user: find tickets where the latest reply is from admin
-    const userTickets = await db
+    const unreadTickets = await db
       .select({ id: feedback.id })
       .from(feedback)
-      .where(eq(feedback.userId, session.user.id));
+      .where(
+        and(
+          eq(feedback.userId, session.user.id),
+          isNotNull(feedback.lastAdminReplyAt),
+          or(
+            isNull(feedback.userLastViewedAt),
+            lt(feedback.userLastViewedAt, feedback.lastAdminReplyAt),
+          ),
+        ),
+      );
 
-    if (userTickets.length === 0) {
-      return NextResponse.json({ count: 0 });
-    }
-
-    let unreadCount = 0;
-    for (const ticket of userTickets) {
-      // Get the latest reply on this ticket
-      const [latestReply] = await db
-        .select({
-          isAdmin: ticketReplies.isAdmin,
-        })
-        .from(ticketReplies)
-        .where(eq(ticketReplies.feedbackId, ticket.id))
-        .orderBy(desc(ticketReplies.createdAt))
-        .limit(1);
-
-      // If the latest reply is from admin, the user has an unread response
-      if (latestReply?.isAdmin) {
-        unreadCount++;
-      }
-    }
-
-    return NextResponse.json({ count: unreadCount });
+    return NextResponse.json({ count: unreadTickets.length });
   } catch (err) {
     console.error("[feedback unread]", err);
     return NextResponse.json({ count: 0 });

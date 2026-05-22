@@ -16,13 +16,23 @@ type Ticket = {
   message: string;
   status: "new" | "read" | "resolved";
   replyCount: number;
+  hasUnreadReply?: boolean;
   createdAt: string;
 };
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  new: { label: "Awaiting Reply", color: "border-blue-500/40 bg-blue-500/10 text-blue-400" },
-  read: { label: "In Progress", color: "border-amber-500/40 bg-amber-500/10 text-amber-400" },
-  resolved: { label: "Resolved", color: "border-emerald-500/40 bg-emerald-500/10 text-emerald-400" },
+  new: {
+    label: "Awaiting Reply",
+    color: "border-blue-500/40 bg-blue-500/10 text-blue-400",
+  },
+  read: {
+    label: "In Progress",
+    color: "border-amber-500/40 bg-amber-500/10 text-amber-400",
+  },
+  resolved: {
+    label: "Resolved",
+    color: "border-emerald-500/40 bg-emerald-500/10 text-emerald-400",
+  },
 };
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -73,7 +83,9 @@ export default function SupportPage() {
         {!loading && !authenticated && (
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900/50 p-12 text-center">
             <span className="mb-3 block text-4xl">🔒</span>
-            <p className="text-zinc-400">Sign in to view your support tickets.</p>
+            <p className="text-zinc-400">
+              Sign in to view your support tickets.
+            </p>
             <Link
               href="/auth/signin"
               className="mt-4 inline-block rounded-lg bg-white px-5 py-2.5 text-sm font-semibold text-black transition hover:bg-zinc-200"
@@ -85,7 +97,9 @@ export default function SupportPage() {
 
         {/* Loading */}
         {authenticated && fetching && (
-          <div className="flex items-center justify-center py-20 text-zinc-500">Loading…</div>
+          <div className="flex items-center justify-center py-20 text-zinc-500">
+            Loading…
+          </div>
         )}
 
         {/* Empty */}
@@ -111,9 +125,14 @@ export default function SupportPage() {
                   className="block rounded-xl border border-zinc-800 bg-zinc-900/60 p-4 transition hover:border-zinc-700 hover:bg-zinc-900/80"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-lg">{CATEGORY_ICONS[t.category] ?? "💬"}</span>
+                    <span className="text-lg">
+                      {CATEGORY_ICONS[t.category] ?? "💬"}
+                    </span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-zinc-200">
+                      <p className="flex items-center gap-2 truncate text-sm font-medium text-zinc-200">
+                        {t.hasUnreadReply && (
+                          <span className="inline-flex h-2 w-2 shrink-0 rounded-full bg-red-500" />
+                        )}
                         {t.subject || t.message.slice(0, 80)}
                       </p>
                       <div className="mt-1 flex items-center gap-3 text-[11px] text-zinc-500">
@@ -126,16 +145,29 @@ export default function SupportPage() {
                         </span>
                         {t.replyCount > 0 && (
                           <span className="flex items-center gap-1">
-                            💬 {t.replyCount} {t.replyCount === 1 ? "reply" : "replies"}
+                            💬 {t.replyCount}{" "}
+                            {t.replyCount === 1 ? "reply" : "replies"}
                           </span>
                         )}
                       </div>
                     </div>
-                    <span className={`rounded-md border px-2 py-0.5 text-[10px] font-medium ${st.color}`}>
+                    <span
+                      className={`rounded-md border px-2 py-0.5 text-[10px] font-medium ${st.color}`}
+                    >
                       {st.label}
                     </span>
-                    <svg className="h-4 w-4 text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    <svg
+                      className="h-4 w-4 text-zinc-600"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M9 5l7 7-7 7"
+                      />
                     </svg>
                   </div>
                 </Link>

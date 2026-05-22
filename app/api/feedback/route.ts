@@ -41,15 +41,19 @@ export async function POST(req: NextRequest) {
     const isGuest = !session?.user?.id;
     const guestToken = isGuest ? crypto.randomUUID() : null;
 
-    const [ticket] = await db.insert(feedback).values({
-      userId: session?.user?.id ?? null,
-      email: email ?? session?.user?.email ?? null,
-      subject: subject?.trim() || null,
-      category: cat,
-      message: message.trim(),
-      status: "new",
-      guestToken,
-    }).returning({ id: feedback.id });
+    const [ticket] = await db
+      .insert(feedback)
+      .values({
+        userId: session?.user?.id ?? null,
+        email: email ?? session?.user?.email ?? null,
+        subject: subject?.trim() || null,
+        category: cat,
+        message: message.trim(),
+        status: "new",
+        guestToken,
+        userLastViewedAt: new Date(),
+      })
+      .returning({ id: feedback.id });
 
     return NextResponse.json({ ok: true, ticketId: ticket.id, guestToken });
   } catch (err) {
@@ -97,6 +101,10 @@ export async function GET() {
     const enriched = tickets.map((t) => ({
       ...t,
       replyCount: replyCounts[t.id] || 0,
+      hasUnreadReply:
+        !admin &&
+        !!t.lastAdminReplyAt &&
+        (!t.userLastViewedAt || t.userLastViewedAt < t.lastAdminReplyAt),
     }));
 
     return NextResponse.json({ feedback: enriched, isAdmin: admin });
@@ -125,7 +133,10 @@ export async function PATCH(req: NextRequest) {
     const { id, status } = body as { id?: string; status?: string };
 
     if (!id || !["new", "read", "resolved"].includes(status ?? "")) {
-      return NextResponse.json({ error: "Invalid id or status" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid id or status" },
+        { status: 400 },
+      );
     }
 
     await db

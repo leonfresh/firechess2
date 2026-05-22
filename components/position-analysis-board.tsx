@@ -53,8 +53,13 @@ type LastMoveJudgement = {
   commentary: string;
 };
 
-const STARTING_FEN =
-  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+type VariationPlaybackState = {
+  active: boolean;
+  key: string | null;
+  label: string | null;
+};
+
+const STARTING_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 const PUZZLE_BADGE_ASSET: Partial<Record<MoveClassification, string>> = {
   brilliant: "brilliant",
@@ -144,10 +149,13 @@ export function PositionAnalysisBoard({
   const showCoords = useShowCoordinates();
   const { ref: boardRef, size: boardSize } = useBoardSize(520);
   const [fen, setFen] = useState(initialFen || STARTING_FEN);
-  const [orientation, setOrientation] =
-    useState<"white" | "black">(initialOrientation);
+  const [orientation, setOrientation] = useState<"white" | "black">(
+    initialOrientation,
+  );
   const [moveHistory, setMoveHistory] = useState<AnalysisMove[]>([]);
-  const [historyStack, setHistoryStack] = useState<string[]>([initialFen || STARTING_FEN]);
+  const [historyStack, setHistoryStack] = useState<string[]>([
+    initialFen || STARTING_FEN,
+  ]);
   const [fenInput, setFenInput] = useState(initialFen || STARTING_FEN);
   const [selectedSquare, setSelectedSquare] = useState<string | null>(null);
   const [legalTargets, setLegalTargets] = useState<string[]>([]);
@@ -161,8 +169,15 @@ export function PositionAnalysisBoard({
   const [showPromotion, setShowPromotion] = useState(false);
   const [lastMoveJudgement, setLastMoveJudgement] =
     useState<LastMoveJudgement | null>(null);
+  const [variationPlayback, setVariationPlayback] =
+    useState<VariationPlaybackState>({
+      active: false,
+      key: null,
+      label: null,
+    });
   const requestIdRef = useRef(0);
   const moveReviewRequestRef = useRef(0);
+  const variationTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     setFen(initialFen || STARTING_FEN);
@@ -176,6 +191,16 @@ export function PositionAnalysisBoard({
   }, [initialFen, initialOrientation]);
 
   useEffect(() => {
+    return () => {
+      if (variationTimeoutRef.current != null) {
+        window.clearTimeout(variationTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (variationPlayback.active) return;
+
     const requestId = ++requestIdRef.current;
     setEngineBusy(true);
 
@@ -185,7 +210,9 @@ export function PositionAnalysisBoard({
     ])
       .then(([evalResult, lines]) => {
         if (requestId !== requestIdRef.current) return;
-        setEngineEval(evalResult ? toWhitePerspective(fen, evalResult.cp) : null);
+        setEngineEval(
+          evalResult ? toWhitePerspective(fen, evalResult.cp) : null,
+        );
         setTopLines(lines ?? []);
       })
       .catch(() => {
@@ -198,7 +225,7 @@ export function PositionAnalysisBoard({
           setEngineBusy(false);
         }
       });
-  }, [fen, engineDepth]);
+  }, [fen, engineDepth, variationPlayback.active]);
 
   const currentTurn = fen.includes(" w ") ? "White" : "Black";
   const lastMove = moveHistory[moveHistory.length - 1] ?? null;
@@ -214,6 +241,10 @@ export function PositionAnalysisBoard({
       return;
     }
 
+    if (variationPlayback.active) {
+      return;
+    }
+
     const requestId = ++moveReviewRequestRef.current;
     const reviewDepth = Math.max(10, engineDepth - 1);
 
@@ -222,12 +253,22 @@ export function PositionAnalysisBoard({
       stockfishClient.evaluateFen(lastMove.fenAfter, reviewDepth),
     ])
       .then(([beforeEval, afterEval]) => {
-        if (requestId !== moveReviewRequestRef.current || !beforeEval || !afterEval) {
+        if (
+          requestId !== moveReviewRequestRef.current ||
+          !beforeEval ||
+          !afterEval
+        ) {
           return;
         }
 
-        const evalBeforeWhite = toWhitePerspective(lastMove.fenBefore, beforeEval.cp);
-        const evalAfterWhite = toWhitePerspective(lastMove.fenAfter, afterEval.cp);
+        const evalBeforeWhite = toWhitePerspective(
+          lastMove.fenBefore,
+          beforeEval.cp,
+        );
+        const evalAfterWhite = toWhitePerspective(
+          lastMove.fenAfter,
+          afterEval.cp,
+        );
         const evalBeforeMover =
           lastMove.color === "w" ? evalBeforeWhite : -evalBeforeWhite;
         const evalAfterMover =
@@ -283,15 +324,13 @@ export function PositionAnalysisBoard({
           setLastMoveJudgement(null);
         }
       });
-  }, [engineDepth, lastMoveReviewKey]);
+  }, [engineDepth, lastMoveReviewKey, variationPlayback.active]);
 
   const squareStyles = useMemo(() => {
     const styles: Record<string, CSSProperties> = {};
 
     for (const target of legalTargets) {
-      const hasPiece = boardPosition.get(
-        target as Parameters<Chess["get"]>[0],
-      );
+      const hasPiece = boardPosition.get(target as Parameters<Chess["get"]>[0]);
       styles[target] = hasPiece
         ? {
             background:
@@ -324,11 +363,9 @@ export function PositionAnalysisBoard({
   const bestMoveArrow = useMemo(() => {
     const bestMove = topLines[0]?.bestMove;
     if (!bestMove || !/^[a-h][1-8][a-h][1-8]/.test(bestMove)) return [];
-    return [[bestMove.slice(0, 2), bestMove.slice(2, 4), "rgba(34,197,94,0.75)"]] as [
-      string,
-      string,
-      string,
-    ][];
+    return [
+      [bestMove.slice(0, 2), bestMove.slice(2, 4), "rgba(34,197,94,0.75)"],
+    ] as [string, string, string][];
   }, [topLines]);
 
   const customSquareRenderer = useMemo(() => {
@@ -362,6 +399,8 @@ export function PositionAnalysisBoard({
   }, [lastMoveJudgement]);
 
   const selectSquare = (square: CbSquare) => {
+    if (variationPlayback.active) return;
+
     const chess = new Chess(fen);
     const piece = chess.get(square as Parameters<Chess["get"]>[0]);
 
@@ -396,6 +435,14 @@ export function PositionAnalysisBoard({
     setLegalTargets([]);
   };
 
+  const stopVariationPlayback = () => {
+    if (variationTimeoutRef.current != null) {
+      window.clearTimeout(variationTimeoutRef.current);
+      variationTimeoutRef.current = null;
+    }
+    setVariationPlayback({ active: false, key: null, label: null });
+  };
+
   const executeMove = (
     sourceSquare: string,
     targetSquare: string,
@@ -428,6 +475,8 @@ export function PositionAnalysisBoard({
   };
 
   const onPieceDrop = (sourceSquare: string, targetSquare: string) => {
+    if (variationPlayback.active) return false;
+
     const chess = new Chess(fen);
     const piece = chess.get(sourceSquare as Parameters<Chess["get"]>[0]);
     const isPromotion =
@@ -460,6 +509,8 @@ export function PositionAnalysisBoard({
   };
 
   const undoMove = () => {
+    stopVariationPlayback();
+
     if (historyStack.length <= 1) return;
 
     setHistoryStack((prev) => {
@@ -475,6 +526,8 @@ export function PositionAnalysisBoard({
   };
 
   const resetBoard = () => {
+    stopVariationPlayback();
+
     setFen(initialFen || STARTING_FEN);
     setFenInput(initialFen || STARTING_FEN);
     setMoveHistory([]);
@@ -484,6 +537,8 @@ export function PositionAnalysisBoard({
   };
 
   const applyFenInput = () => {
+    stopVariationPlayback();
+
     try {
       const chess = new Chess(fenInput.trim());
       const nextFen = chess.fen();
@@ -495,6 +550,69 @@ export function PositionAnalysisBoard({
     } catch {
       setFenInput(fen);
     }
+  };
+
+  const playTopLine = (line: LocalEngineLine, key: string, label: string) => {
+    stopVariationPlayback();
+
+    const previewMoves = line.pvMoves.slice(0, 8);
+    if (previewMoves.length === 0) return;
+
+    const chess = new Chess(fen);
+    const steps: Array<{ move: AnalysisMove; nextFen: string }> = [];
+
+    for (const uci of previewMoves) {
+      try {
+        const fenBefore = chess.fen();
+        const result = chess.move({
+          from: uci.slice(0, 2),
+          to: uci.slice(2, 4),
+          promotion: (uci.slice(4, 5) || undefined) as PieceSymbol | undefined,
+        });
+        if (!result) break;
+
+        steps.push({
+          move: {
+            san: result.san,
+            uci,
+            fenBefore,
+            fenAfter: chess.fen(),
+            moveNumber: Number((fenBefore.split(" ")[5] ?? "1").trim()),
+            color: result.color,
+          },
+          nextFen: chess.fen(),
+        });
+      } catch {
+        break;
+      }
+    }
+
+    if (steps.length === 0) return;
+
+    setVariationPlayback({ active: true, key, label });
+
+    let stepIndex = 0;
+    const runStep = () => {
+      const step = steps[stepIndex];
+      if (!step) {
+        setVariationPlayback({ active: false, key: null, label: null });
+        variationTimeoutRef.current = null;
+        return;
+      }
+
+      pushMove(step.move, step.nextFen);
+      stepIndex += 1;
+
+      if (stepIndex < steps.length) {
+        variationTimeoutRef.current = window.setTimeout(runStep, 500);
+        return;
+      }
+
+      variationTimeoutRef.current = null;
+      setVariationPlayback({ active: false, key: null, label: null });
+    };
+
+    runStep();
   };
 
   const copyFen = async () => {
@@ -572,7 +690,11 @@ export function PositionAnalysisBoard({
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => setOrientation((prev) => (prev === "white" ? "black" : "white"))}
+                onClick={() =>
+                  setOrientation((prev) =>
+                    prev === "white" ? "black" : "white",
+                  )
+                }
                 className="rounded-full border border-white/[0.1] bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08]"
               >
                 Flip
@@ -607,14 +729,18 @@ export function PositionAnalysisBoard({
                     position={fen}
                     boardOrientation={orientation}
                     boardWidth={boardSize}
-                    arePiecesDraggable
+                    arePiecesDraggable={!variationPlayback.active}
                     onPieceDrop={onPieceDrop}
                     onSquareClick={selectSquare}
                     showPromotionDialog={showPromotion}
                     promotionToSquare={promotionTo ?? undefined}
                     onPromotionPieceSelect={onPromotionPieceSelect}
-                    customDarkSquareStyle={{ backgroundColor: boardTheme.darkSquare }}
-                    customLightSquareStyle={{ backgroundColor: boardTheme.lightSquare }}
+                    customDarkSquareStyle={{
+                      backgroundColor: boardTheme.darkSquare,
+                    }}
+                    customLightSquareStyle={{
+                      backgroundColor: boardTheme.lightSquare,
+                    }}
                     customSquareStyles={squareStyles}
                     customSquare={customSquareRenderer}
                     customArrows={bestMoveArrow}
@@ -642,6 +768,11 @@ export function PositionAnalysisBoard({
                 Reset
               </button>
               <div className="ml-auto flex items-center gap-2">
+                {variationPlayback.active && variationPlayback.label ? (
+                  <span className="rounded-full border border-cyan-500/20 bg-cyan-500/10 px-2.5 py-1 text-[11px] font-semibold text-cyan-100">
+                    Playing {variationPlayback.label}
+                  </span>
+                ) : null}
                 <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-slate-300">
                   {currentStateText}
                 </span>
@@ -655,7 +786,9 @@ export function PositionAnalysisBoard({
               <div className="mt-4 rounded-[1.25rem] border border-white/[0.08] bg-black/15 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex flex-wrap items-center gap-2">
-                    <MoveBadge classification={lastMoveJudgement.classification} />
+                    <MoveBadge
+                      classification={lastMoveJudgement.classification}
+                    />
                     <span className="text-sm font-semibold text-white">
                       Last move: {lastMove.moveNumber}
                       {lastMove.color === "w" ? "." : "..."}
@@ -699,17 +832,30 @@ export function PositionAnalysisBoard({
                     Top lines
                   </p>
                 </div>
-                <select
-                  value={engineDepth}
-                  onChange={(event) => setEngineDepth(Number(event.target.value))}
-                  className="rounded-lg border border-white/[0.1] bg-slate-950/70 px-2 py-1.5 text-xs font-semibold text-slate-200 outline-none"
-                >
-                  {[10, 12, 14, 16, 18].map((depth) => (
-                    <option key={depth} value={depth}>
-                      Depth {depth}
-                    </option>
-                  ))}
-                </select>
+                <div className="flex items-center gap-2">
+                  {variationPlayback.active && (
+                    <button
+                      type="button"
+                      onClick={stopVariationPlayback}
+                      className="rounded-lg border border-white/[0.1] bg-white/[0.04] px-2.5 py-1.5 text-xs font-semibold text-slate-200 transition hover:bg-white/[0.08]"
+                    >
+                      Stop
+                    </button>
+                  )}
+                  <select
+                    value={engineDepth}
+                    onChange={(event) =>
+                      setEngineDepth(Number(event.target.value))
+                    }
+                    className="rounded-lg border border-white/[0.1] bg-slate-950/70 px-2 py-1.5 text-xs font-semibold text-slate-200 outline-none"
+                  >
+                    {[10, 12, 14, 16, 18].map((depth) => (
+                      <option key={depth} value={depth}>
+                        Depth {depth}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div className="mt-4 space-y-3">
@@ -739,11 +885,32 @@ export function PositionAnalysisBoard({
                           {line.pv}
                         </p>
                       ) : null}
+                      {line.pv ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            playTopLine(
+                              topLines[index],
+                              line.key,
+                              index === 0 ? "best line" : `line ${index + 1}`,
+                            )
+                          }
+                          disabled={variationPlayback.active}
+                          className="mt-3 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-500/20 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {variationPlayback.active &&
+                          variationPlayback.key === line.key
+                            ? "Playing..."
+                            : "Play on board"}
+                        </button>
+                      ) : null}
                     </div>
                   ))
                 ) : (
                   <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 text-sm text-slate-400">
-                    {engineBusy ? "Reading the position with Stockfish..." : "No engine line available yet."}
+                    {engineBusy
+                      ? "Reading the position with Stockfish..."
+                      : "No engine line available yet."}
                   </div>
                 )}
               </div>
@@ -851,7 +1018,8 @@ export function PositionAnalysisBoard({
             ))
           ) : (
             <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 text-sm text-slate-400">
-              Start playing moves from the board to build a new branch from this position.
+              Start playing moves from the board to build a new branch from this
+              position.
             </div>
           )}
         </div>

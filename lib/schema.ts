@@ -214,6 +214,8 @@ export const feedback = pgTable("feedback", {
     .notNull()
     .default("new"),
   guestToken: text("guestToken"),
+  lastAdminReplyAt: timestamp("lastAdminReplyAt", { mode: "date" }),
+  userLastViewedAt: timestamp("userLastViewedAt", { mode: "date" }),
   createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
 });
 

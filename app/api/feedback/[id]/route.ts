@@ -34,7 +34,8 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const isGuestOwner = guestToken && ticket.guestToken && guestToken === ticket.guestToken;
+    const isGuestOwner =
+      guestToken && ticket.guestToken && guestToken === ticket.guestToken;
     const admin = session?.user?.id ? await isAdmin(session.user.id) : false;
     const isOwner = session?.user?.id && ticket.userId === session.user.id;
 
@@ -49,6 +50,8 @@ export async function GET(
       .where(eq(ticketReplies.feedbackId, id))
       .orderBy(asc(ticketReplies.createdAt));
 
+    const now = new Date();
+
     // If admin is viewing, auto-mark as read
     if (admin && ticket.status === "new") {
       await db
@@ -56,6 +59,12 @@ export async function GET(
         .set({ status: "read" })
         .where(eq(feedback.id, id));
       ticket.status = "read";
+    } else if (!admin) {
+      await db
+        .update(feedback)
+        .set({ userLastViewedAt: now })
+        .where(eq(feedback.id, id));
+      ticket.userLastViewedAt = now;
     }
 
     return NextResponse.json({ ticket, replies });
@@ -87,7 +96,8 @@ export async function POST(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const isGuestOwner = guestToken && ticket.guestToken && guestToken === ticket.guestToken;
+    const isGuestOwner =
+      guestToken && ticket.guestToken && guestToken === ticket.guestToken;
     const admin = session?.user?.id ? await isAdmin(session.user.id) : false;
     const isOwner = session?.user?.id && ticket.userId === session.user.id;
 
@@ -99,17 +109,25 @@ export async function POST(
     const { message } = body as { message?: string };
 
     if (!message || message.trim().length < 1) {
-      return NextResponse.json({ error: "Message is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Message is required" },
+        { status: 400 },
+      );
     }
 
     // Insert reply
-    const [reply] = await db.insert(ticketReplies).values({
-      feedbackId: id,
-      userId: session?.user?.id ?? null,
-      isAdmin: admin,
-      message: message.trim(),
-      emailSent: false,
-    }).returning();
+    const [reply] = await db
+      .insert(ticketReplies)
+      .values({
+        feedbackId: id,
+        userId: session?.user?.id ?? null,
+        isAdmin: admin,
+        message: message.trim(),
+        emailSent: false,
+      })
+      .returning();
+
+    const replyCreatedAt = reply.createdAt ?? new Date();
 
     // If admin replied, send email notification to user
     let emailSent = false;
@@ -133,13 +151,20 @@ export async function POST(
       }
     }
 
-    // If user replied, update status back to "new" so admin sees it
-    if (!admin && ticket.status === "resolved") {
-      await db
-        .update(feedback)
-        .set({ status: "new" })
-        .where(eq(feedback.id, id));
-    }
+    await db
+      .update(feedback)
+      .set(
+        admin
+          ? {
+              status: ticket.status === "resolved" ? "resolved" : "read",
+              lastAdminReplyAt: replyCreatedAt,
+            }
+          : {
+              status: "new",
+              userLastViewedAt: replyCreatedAt,
+            },
+      )
+      .where(eq(feedback.id, id));
 
     return NextResponse.json({ ok: true, reply, emailSent });
   } catch (err) {
@@ -159,7 +184,8 @@ async function sendReplyEmail(
   guestToken: string | null,
 ): Promise<boolean> {
   const resendKey = process.env.AUTH_RESEND_KEY;
-  const from = process.env.AUTH_RESEND_FROM ?? "FireChess <noreply@firechess.com>";
+  const from =
+    process.env.AUTH_RESEND_FROM ?? "FireChess <noreply@firechess.com>";
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://firechess.com";
 
   if (!resendKey) {

@@ -65,6 +65,7 @@ export function Navbar() {
     };
 
     check();
+    const intervalId = window.setInterval(check, 30000);
 
     const handleFocus = () => {
       check();
@@ -81,6 +82,7 @@ export function Navbar() {
 
     return () => {
       cancelled = true;
+      window.clearInterval(intervalId);
       window.removeEventListener("focus", handleFocus);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
@@ -164,6 +166,12 @@ export function Navbar() {
     isActive("/account") ||
     isActive("/support") ||
     isActive("/feedback");
+  const notificationHref = isAdmin ? "/admin/feedback" : "/support";
+  const notificationActive = isAdmin
+    ? isActive("/admin/feedback")
+    : isActive("/support");
+  const notificationCountLabel =
+    unreadMessages > 99 ? "99+" : `${unreadMessages}`;
   const caretCn = (menu: string) =>
     `h-3 w-3 text-slate-500 transition-transform ${openMenu === menu ? "rotate-180" : ""}`;
   const dropdownCn = (menu: string) =>
@@ -712,6 +720,35 @@ export function Navbar() {
                   className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${isActive("/dashboard") ? "bg-white/[0.06] text-white" : "text-slate-400 hover:bg-white/[0.04] hover:text-white"}`}
                 >
                   Dashboard
+                </Link>
+                <Link
+                  href={notificationHref}
+                  className={`relative flex h-9 w-9 items-center justify-center rounded-lg border transition-colors ${notificationActive ? "border-white/[0.14] bg-white/[0.08] text-white" : "border-white/[0.08] bg-white/[0.04] text-slate-400 hover:border-white/[0.15] hover:bg-white/[0.08] hover:text-white"}`}
+                  title={
+                    isAdmin ? "Feedback notifications" : "Support notifications"
+                  }
+                  aria-label={
+                    isAdmin ? "Feedback notifications" : "Support notifications"
+                  }
+                >
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                    />
+                  </svg>
+                  {unreadMessages > 0 && (
+                    <span className="absolute -right-1.5 -top-1.5 inline-flex min-w-[1.15rem] items-center justify-center rounded-full bg-orange-500 px-1 text-[10px] font-black leading-5 text-white shadow-lg shadow-orange-900/40">
+                      {notificationCountLabel}
+                    </span>
+                  )}
                 </Link>
 
                 {/* Profile dropdown */}

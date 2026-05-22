@@ -15,6 +15,13 @@
       "when": 1773911643813,
       "tag": "0001_guest_token",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779403200000,
+      "tag": "0010_feedback_read_tracking",
+      "breakpoints": true
     }
   ]
 }
