@@ -139,11 +139,28 @@ export async function POST(req: NextRequest) {
       await db
         .update(reports)
         .set({
+          chessUsername,
+          source,
+          scanMode: scanMode ?? "both",
+          gamesAnalyzed: gamesAnalyzed ?? 0,
+          maxGames: maxGames ?? null,
+          maxMoves: maxMoves ?? null,
+          cpThreshold: cpThreshold ?? null,
+          engineDepth: engineDepth ?? null,
           reportMeta: reportMeta ?? null,
           estimatedAccuracy,
           estimatedRating,
           weightedCpLoss,
           severeLeakRate,
+          repeatedPositions: repeatedPositions ?? 0,
+          leakCount: lcDup,
+          tacticsCount: tcDup,
+          leaks: leaks ?? [],
+          oneOffMistakes: oneOffMistakes ?? [],
+          missedTactics: missedTactics ?? [],
+          diagnostics: diagnostics ?? null,
+          mentalStats: mentalStats ?? null,
+          timeManagement: timeManagement ?? null,
           firechessScore: firechessScoreDup,
           playerRating: typeof playerRating === "number" ? playerRating : null,
         })
