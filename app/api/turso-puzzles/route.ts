@@ -8,9 +8,11 @@ function buildWhere(
 ): { clause: string; args: (string | number)[] } {
   const args: (string | number)[] = [ratingMin, ratingMax];
   let clause = `AND rating BETWEEN ? AND ?`;
-  for (const theme of themeList) {
-    clause += ` AND themes LIKE ?`;
-    args.push(`%${theme}%`);
+  if (themeList.length > 0) {
+    clause += ` AND (${themeList.map(() => `themes LIKE ?`).join(" OR ")})`;
+    for (const theme of themeList) {
+      args.push(`%${theme}%`);
+    }
   }
   return { clause, args };
 }

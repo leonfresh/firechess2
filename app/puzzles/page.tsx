@@ -107,6 +107,16 @@ function uciToMove(uci: string) {
   };
 }
 
+function formatThemeLabel(theme: string) {
+  const spaced = theme
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .replace(/(\d+)/g, " $1")
+    .replace(/\s+/g, " ")
+    .trim();
+  const normalized = spaced.replace(/^x /i, "X-");
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+}
+
 const PIECE_VALUE: Record<string, number> = {
   p: 1,
   n: 3,
@@ -699,8 +709,8 @@ export default function PuzzlesPage() {
   });
 
   // Hint toggles
-  const [showPinHints, setShowPinHints] = useState(true);
-  const [showDefenderHints, setShowDefenderHints] = useState(true);
+  const [showPinHints, setShowPinHints] = useState(false);
+  const [showDefenderHints, setShowDefenderHints] = useState(false);
 
   // Puzzle buffer — holds up to 5 pre-fetched puzzles for instant auto-advance
   const puzzleBufferRef = useRef<Puzzle[]>([]);
@@ -708,6 +718,17 @@ export default function PuzzlesPage() {
   const isFillingBufferRef = useRef(false);
 
   const activePuzzle = puzzles[activePuzzleIdx] ?? null;
+  const selectedThemeLabels = useMemo(
+    () => selectedThemes.map(formatThemeLabel),
+    [selectedThemes],
+  );
+  const filterSummary = useMemo(() => {
+    if (selectedThemes.length === 0) {
+      return "All themes active";
+    }
+    return `${selectedThemes.length} theme${selectedThemes.length === 1 ? "" : "s"} selected • match any`;
+  }, [selectedThemes]);
+  const enabledHintCount = Number(showPinHints) + Number(showDefenderHints);
 
   // Preload sounds on mount + wake Turso
   useEffect(() => {
@@ -1312,7 +1333,7 @@ export default function PuzzlesPage() {
               3.35M puzzles
             </span>
             <span className="text-xs px-2.5 py-1 rounded-full border border-sky-500/30 bg-sky-500/[0.08] text-sky-300">
-              Pin &amp; defender hints
+              Optional board hints
             </span>
             <span className="text-xs px-2.5 py-1 rounded-full border border-teal-500/30 bg-teal-500/[0.08] text-teal-300">
               Brilliant detection
@@ -1335,6 +1356,19 @@ export default function PuzzlesPage() {
           {/* ── Left: Controls ── */}
           <div className="space-y-4">
             <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 space-y-5">
+              <div className="rounded-xl border border-white/[0.06] bg-[linear-gradient(135deg,rgba(249,115,22,0.12),rgba(14,165,233,0.08))] p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-300/80">
+                  Current Queue
+                </p>
+                <p className="mt-1 text-sm font-semibold text-white">
+                  {selectedDifficulty.label} rating • {filterSummary}
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+                  Leave themes empty for the full pool, or stack a few motifs
+                  and FireChess will match any of them.
+                </p>
+              </div>
+
               {/* Difficulty */}
               <div>
                 <div className="mb-2.5 flex items-center gap-3">
@@ -1370,28 +1404,60 @@ export default function PuzzlesPage() {
                   </h2>
                   <span className="h-px flex-1 bg-white/[0.06]" />
                 </div>
-                <div className="flex flex-wrap gap-1.5 max-h-48 overflow-y-auto pr-0.5 pb-1">
+                <div className="mb-3 flex items-center justify-between gap-3 text-[11px] text-zinc-500">
+                  <span>
+                    Pick one or more motifs. Multi-select now matches any
+                    selected theme.
+                  </span>
+                  <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-0.5 text-zinc-300">
+                    {selectedThemes.length === 0
+                      ? "All"
+                      : selectedThemes.length}
+                  </span>
+                </div>
+                {selectedThemeLabels.length > 0 && (
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    {selectedThemeLabels.map((theme, index) => (
+                      <button
+                        key={`${theme}-${index}`}
+                        onClick={() => toggleTheme(selectedThemes[index])}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-sky-500/30 bg-sky-500/[0.1] px-2.5 py-1 text-[11px] font-medium text-sky-200 transition hover:border-sky-400/45 hover:bg-sky-500/[0.16]"
+                      >
+                        <span>{theme}</span>
+                        <span className="text-sky-400">x</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="flex flex-wrap gap-1.5 max-h-56 overflow-y-auto pr-0.5 pb-1">
                   {THEMES.map((theme) => (
                     <button
                       key={theme}
                       onClick={() => toggleTheme(theme)}
-                      className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-all ${
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                         selectedThemes.includes(theme)
-                          ? "bg-sky-500/15 border-sky-500/50 text-sky-300"
+                          ? "bg-sky-500/15 border-sky-500/50 text-sky-300 shadow-[0_0_0_1px_rgba(56,189,248,0.08)]"
                           : "border-white/[0.06] bg-white/[0.02] text-zinc-500 hover:border-white/[0.1] hover:text-zinc-200 hover:bg-white/[0.04]"
                       }`}
                     >
-                      {theme}
+                      {selectedThemes.includes(theme) ? (
+                        <span className="text-[10px] text-sky-400">✓</span>
+                      ) : null}
+                      {formatThemeLabel(theme)}
                     </button>
                   ))}
                 </div>
-                {selectedThemes.length > 0 && (
+                {selectedThemes.length > 0 ? (
                   <button
                     onClick={() => setSelectedThemes([])}
-                    className="mt-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+                    className="mt-2 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
                   >
-                    clear all ({selectedThemes.length})
+                    Clear all themes ({selectedThemes.length})
                   </button>
+                ) : (
+                  <p className="mt-2 text-xs text-zinc-500">
+                    No motif filter applied.
+                  </p>
                 )}
               </div>
 
@@ -1436,8 +1502,13 @@ export default function PuzzlesPage() {
                   : "0 14px 36px -20px rgba(168,85,247,0.7)",
               }}
             >
-              {loading ? "Loading…" : "Load Puzzles"}
+              {loading
+                ? "Loading puzzles…"
+                : `Load ${limit} puzzle${limit === 1 ? "" : "s"}`}
             </button>
+            <p className="text-center text-xs text-zinc-500">
+              {selectedDifficulty.label} • {filterSummary}
+            </p>
 
             {error && (
               <p className="text-red-400 text-sm bg-red-950/40 border border-red-800/50 rounded-xl px-3 py-2">
@@ -1472,7 +1543,12 @@ export default function PuzzlesPage() {
                         ★{p.rating}
                       </span>
                       <span className="text-zinc-500 text-xs truncate">
-                        {p.themes?.split(" ").slice(0, 3).join(", ")}
+                        {p.themes
+                          ?.split(" ")
+                          .filter(Boolean)
+                          .slice(0, 3)
+                          .map(formatThemeLabel)
+                          .join(", ")}
                       </span>
                     </button>
                   ))}
@@ -1678,29 +1754,53 @@ export default function PuzzlesPage() {
 
               {/* Motif hint toggles */}
               {activePuzzle && puzzleState !== "idle" && (
-                <div className="flex flex-wrap gap-2 max-w-[520px]">
-                  <button
-                    onClick={() => setShowPinHints((v) => !v)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
-                      showPinHints
-                        ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-300"
-                        : "border-white/[0.06] bg-white/[0.02] text-zinc-500 hover:text-zinc-300"
-                    }`}
-                    title="Toggle pin hints"
-                  >
-                    📌 Pin hints
-                  </button>
-                  <button
-                    onClick={() => setShowDefenderHints((v) => !v)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-all ${
-                      showDefenderHints
-                        ? "border-orange-500/40 bg-orange-500/10 text-orange-300"
-                        : "border-white/[0.06] bg-white/[0.02] text-zinc-500 hover:text-zinc-300"
-                    }`}
-                    title="Toggle defender hints"
-                  >
-                    🛡️ Defender hints
-                  </button>
+                <div className="w-full max-w-[520px] rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                  <div className="mb-3 flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
+                        Board Aids
+                      </p>
+                      <p className="mt-1 text-xs leading-relaxed text-zinc-400">
+                        Hints start off by default so the board stays clean.
+                        Turn them on only when you want motif guidance.
+                      </p>
+                    </div>
+                    <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] font-medium text-zinc-300">
+                      {enabledHintCount === 0
+                        ? "All off"
+                        : `${enabledHintCount} on`}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setShowPinHints((v) => !v)}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-all ${
+                        showPinHints
+                          ? "border-yellow-500/40 bg-yellow-500/10 text-yellow-300"
+                          : "border-white/[0.06] bg-white/[0.02] text-zinc-500 hover:text-zinc-300"
+                      }`}
+                      title="Toggle pin hints"
+                    >
+                      <span>📌 Pin clues</span>
+                      <span className="rounded-full border border-current/20 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">
+                        {showPinHints ? "On" : "Off"}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => setShowDefenderHints((v) => !v)}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-xs font-medium transition-all ${
+                        showDefenderHints
+                          ? "border-orange-500/40 bg-orange-500/10 text-orange-300"
+                          : "border-white/[0.06] bg-white/[0.02] text-zinc-500 hover:text-zinc-300"
+                      }`}
+                      title="Toggle defender hints"
+                    >
+                      <span>🛡️ Defender clues</span>
+                      <span className="rounded-full border border-current/20 px-1.5 py-0.5 text-[10px] uppercase tracking-wide">
+                        {showDefenderHints ? "On" : "Off"}
+                      </span>
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -1721,7 +1821,19 @@ export default function PuzzlesPage() {
                   </div>
                   <div>
                     <span className="text-zinc-600">Themes: </span>
-                    <span className="text-sky-400">{activePuzzle.themes}</span>
+                    <div className="mt-1 flex flex-wrap gap-1.5">
+                      {activePuzzle.themes
+                        .split(" ")
+                        .filter(Boolean)
+                        .map((theme) => (
+                          <span
+                            key={theme}
+                            className="rounded-full border border-sky-500/20 bg-sky-500/[0.08] px-2 py-0.5 text-[11px] text-sky-300"
+                          >
+                            {formatThemeLabel(theme)}
+                          </span>
+                        ))}
+                    </div>
                   </div>
                   {activePuzzle.opening_tags && (
                     <div>
