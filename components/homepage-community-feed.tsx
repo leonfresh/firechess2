@@ -471,16 +471,14 @@ export function HomepageCommunityFeed() {
                               />
                             </div>
                           ) : (
-                            <div className="relative overflow-hidden rounded-[1.35rem]">
-                              <CommunityBoardPreview
-                                fen={post.fen}
-                                pgn={post.pgn}
-                                orientation={post.orientation ?? "white"}
-                                size={560}
-                                showCoordinates={false}
-                                href={`/community/${post.slug}`}
-                              />
-                            </div>
+                            <CommunityBoardPreview
+                              fen={post.fen}
+                              pgn={post.pgn}
+                              orientation={post.orientation ?? "white"}
+                              size={560}
+                              showCoordinates={false}
+                              href={`/community/${post.slug}`}
+                            />
                           )}
                         </div>
 

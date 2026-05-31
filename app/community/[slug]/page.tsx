@@ -84,7 +84,7 @@ export default async function CommunityPostPage({
         </nav>
 
         <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-          <section className="space-y-6 rounded-[2rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
+          <section className="min-w-0 space-y-6 rounded-[2rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
                 <span className="rounded-full border border-cyan-500/25 bg-cyan-500/10 px-2.5 py-1 text-cyan-300">

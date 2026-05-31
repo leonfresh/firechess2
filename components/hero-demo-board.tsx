@@ -303,7 +303,10 @@ export function HeroDemoBoard({
   paused?: boolean;
   userLeaks?: RepeatedOpeningLeak[];
 }) {
-  const { ref: heroBoardRef, size: heroBoardSize } = useBoardSize(300);
+  const { ref: heroBoardRef, size: heroBoardSize } = useBoardSize(300, {
+    evalBar: false,
+    minSize: 120,
+  });
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const showCoords = useShowCoordinates();
@@ -373,13 +376,13 @@ export function HeroDemoBoard({
   return (
     <article className="w-full overflow-hidden rounded-[1.7rem] border border-white/[0.08] bg-[linear-gradient(160deg,rgba(7,11,28,0.88),rgba(10,16,36,0.94)_48%,rgba(29,18,49,0.92))] shadow-[0_34px_90px_-52px_rgba(125,211,252,0.45)] backdrop-blur-sm sm:grid sm:grid-cols-[auto_1fr]">
       {/* ── Left column: board ── */}
-      <div
-        ref={heroBoardRef}
-        className="p-2.5 sm:border-r sm:border-white/[0.05] sm:p-3"
-      >
+      <div className="p-2.5 sm:border-r sm:border-white/[0.05] sm:p-3">
         <div className="flex items-start gap-1.5">
           <MiniEvalBar evalCp={current.evalBefore} height={heroBoardSize} />
-          <div className="relative min-w-0 overflow-hidden rounded-[1.15rem] bg-[linear-gradient(180deg,rgba(7,11,28,0.96),rgba(30,43,90,0.88)_60%,rgba(236,72,153,0.26))] p-1 shadow-2xl shadow-black/40 ring-1 ring-white/[0.08]">
+          <div
+            ref={heroBoardRef}
+            className="relative min-w-0 overflow-hidden rounded-[1.15rem] bg-[linear-gradient(180deg,rgba(7,11,28,0.96),rgba(30,43,90,0.88)_60%,rgba(236,72,153,0.26))] p-1 shadow-2xl shadow-black/40 ring-1 ring-white/[0.08]"
+          >
             <Chessboard
               id="hero-demo-board"
               position={current.fen}

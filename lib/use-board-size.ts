@@ -17,10 +17,14 @@ const useIsomorphicLayoutEffect =
  * Uses useLayoutEffect so the correct size is calculated before the first paint,
  * preventing a flash of the oversized fallback value on mobile.
  */
-export function useBoardSize(fallback = 400, opts?: { evalBar?: boolean }) {
+export function useBoardSize(
+  fallback = 400,
+  opts?: { evalBar?: boolean; minSize?: number },
+) {
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(fallback);
   const hasEvalBar = opts?.evalBar !== false;
+  const minSize = opts?.minSize ?? 260;
 
   useIsomorphicLayoutEffect(() => {
     const el = ref.current;
@@ -47,7 +51,7 @@ export function useBoardSize(fallback = 400, opts?: { evalBar?: boolean }) {
       const maxByHeight = Math.max(260, vh - 280);
       const maxSize = Math.min(maxByWidth, maxByHeight, fallback);
 
-      setSize(Math.max(260, Math.min(available, maxSize)));
+      setSize(Math.max(minSize, Math.min(available, maxSize)));
     };
 
     update();
@@ -63,7 +67,7 @@ export function useBoardSize(fallback = 400, opts?: { evalBar?: boolean }) {
       window.removeEventListener("resize", update);
       window.visualViewport?.removeEventListener("resize", update);
     };
-  }, [fallback, hasEvalBar]);
+  }, [fallback, hasEvalBar, minSize]);
 
   return { ref, size };
 }

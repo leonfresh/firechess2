@@ -12,11 +12,16 @@ import { Chess } from "chess.js";
 import {
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
   type CSSProperties,
 } from "react";
+
+// useLayoutEffect fires before paint on the client; fall back to useEffect on the server
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 type ReplayStep = {
   fen: string;
@@ -110,7 +115,7 @@ export function CommunityBoardPreview({
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
   const coinCoordinates = useShowCoordinates();
-  const [boardWidth, setBoardWidth] = useState(size);
+  const [boardWidth, setBoardWidth] = useState(0);
 
   const replaySteps = useMemo(
     () => (showReplayControls ? buildReplaySteps(pgn) : null),
@@ -178,7 +183,7 @@ export function CommunityBoardPreview({
     setAutoplay(false);
   }, [maxStepIndex, pgn]);
 
-  useEffect(() => {
+  useIsomorphicLayoutEffect(() => {
     const frame = frameRef.current;
     if (!frame) return;
 

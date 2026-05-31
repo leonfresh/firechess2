@@ -846,7 +846,7 @@ export default function GuessTheMovePage() {
                   return (
                     <div
                       key={game.label}
-                      className="group rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 transition-all hover:border-blue-500/20 hover:bg-blue-500/[0.03]"
+                      className="group min-w-0 rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 transition-all hover:border-blue-500/20 hover:bg-blue-500/[0.03]"
                     >
                       <div className="mb-3 flex items-start justify-between">
                         <div className="min-w-0">
