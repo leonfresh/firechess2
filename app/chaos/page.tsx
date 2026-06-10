@@ -1460,16 +1460,63 @@ function AnomalyPickerScreen({
   // Middle 2 (indices 1 & 2) are free; outer 2 (indices 0 & 3) are Pro-locked
   const isLocked = (i: number) => !isPro && (i === 0 || i === 3);
 
+  useEffect(() => {
+    if (typeof document === "undefined" || typeof window === "undefined") {
+      return;
+    }
+
+    const { body, documentElement } = document;
+    const scrollY = window.scrollY;
+    const prevBody = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overscrollBehavior: body.style.overscrollBehavior,
+    };
+    const prevHtml = {
+      overflow: documentElement.style.overflow,
+      overscrollBehavior: documentElement.style.overscrollBehavior,
+    };
+
+    body.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overscrollBehavior = "none";
+    documentElement.style.overflow = "hidden";
+    documentElement.style.overscrollBehavior = "none";
+
+    return () => {
+      body.style.overflow = prevBody.overflow;
+      body.style.position = prevBody.position;
+      body.style.top = prevBody.top;
+      body.style.left = prevBody.left;
+      body.style.right = prevBody.right;
+      body.style.width = prevBody.width;
+      body.style.overscrollBehavior = prevBody.overscrollBehavior;
+      documentElement.style.overflow = prevHtml.overflow;
+      documentElement.style.overscrollBehavior =
+        prevHtml.overscrollBehavior;
+      window.scrollTo(0, scrollY);
+    };
+  }, []);
+
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-md"
+      className="fixed inset-0 z-[200] flex items-end justify-center overflow-y-auto overscroll-contain bg-black/85 p-2 backdrop-blur-md sm:items-center sm:p-4"
       style={{ animation: "draft-bg-enter 0.4s ease-out both" }}
     >
       <div
-        className="relative mx-4 w-full max-w-3xl rounded-2xl border border-purple-500/20 bg-[#080d1a]/95 p-5 sm:p-8"
+        className="relative w-full max-w-3xl overflow-y-auto overscroll-contain rounded-2xl border border-purple-500/20 bg-[#080d1a]/95 p-5 max-h-[calc(100dvh-1rem)] sm:p-8 sm:max-h-[90dvh]"
         style={{
           animation:
             "draft-modal-enter 0.5s cubic-bezier(0.34,1.56,0.64,1) both",
+          WebkitOverflowScrolling: "touch",
         }}
       >
         {/* Stars background */}
@@ -1538,7 +1585,7 @@ function AnomalyPickerScreen({
           </div>
 
           {/* Cards grid */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-4">
             {choices.map((anomaly, i) => {
               const locked = isLocked(i);
               const isSelected = selected?.id === anomaly.id;
@@ -1573,7 +1620,7 @@ function AnomalyPickerScreen({
                           ? { boxShadow: `0 0 20px ${anomaly.glowColor}` }
                           : {}),
                       }}
-                      className={`group relative w-full rounded-xl border p-3 text-left transition-all duration-200 disabled:cursor-not-allowed
+                      className={`group relative w-full rounded-xl border p-2.5 text-left transition-all duration-200 disabled:cursor-not-allowed sm:p-3
                         ${
                           isSelected
                             ? `${anomaly.borderClass} bg-gradient-to-b ${anomaly.bgGradient} scale-[1.03] ring-2 ring-purple-500/50`
@@ -1626,21 +1673,21 @@ function AnomalyPickerScreen({
                         )}
                       </div>
                       {/* Icon */}
-                      <div className="mb-2 text-2xl sm:text-3xl">
+                      <div className="mb-1.5 text-2xl sm:mb-2 sm:text-3xl">
                         {anomaly.icon}
                       </div>
                       {/* Tarot name */}
                       <p
-                        className={`text-[9px] font-bold uppercase tracking-wider opacity-60 ${anomaly.accentColor}`}
+                        className={`text-[8px] font-bold uppercase tracking-wider opacity-60 sm:text-[9px] ${anomaly.accentColor}`}
                       >
                         {anomaly.tarotName}
                       </p>
                       {/* Ability name */}
-                      <p className="mt-0.5 text-sm font-black text-white leading-tight">
+                      <p className="mt-0.5 text-xs font-black text-white leading-tight sm:text-sm">
                         {anomaly.name}
                       </p>
                       {/* Description */}
-                      <p className="mt-1.5 text-[10px] leading-snug text-slate-400">
+                      <p className="mt-1 text-[9px] leading-snug text-slate-400 sm:mt-1.5 sm:text-[10px]">
                         {anomaly.description}
                       </p>
                       {/* Trigger badge */}
@@ -1661,7 +1708,7 @@ function AnomalyPickerScreen({
 
                     {/* ── BACK FACE (shown initially while face-down) ── */}
                     <div
-                      className="absolute inset-0 rounded-xl flex flex-col items-center justify-center overflow-hidden border"
+                      className="absolute inset-0 flex min-h-[158px] flex-col items-center justify-center overflow-hidden rounded-xl border sm:min-h-[220px]"
                       style={{
                         backfaceVisibility: "hidden",
                         WebkitBackfaceVisibility: "hidden",
@@ -1747,7 +1794,12 @@ function AnomalyPickerScreen({
 
           {/* Actions */}
           {waitingForOpponent ? (
-            <div className="mt-5 flex flex-col items-center gap-3">
+            <div
+              className="sticky bottom-[-1.25rem] z-10 -mx-5 mt-5 flex flex-col items-center gap-3 border-t border-white/8 bg-[#080d1a]/95 px-5 pt-4 sm:static sm:mx-0 sm:border-t-0 sm:bg-transparent sm:px-0 sm:pt-0"
+              style={{
+                paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",
+              }}
+            >
               <div className="flex items-center gap-2 rounded-xl border border-purple-500/30 bg-purple-500/10 px-5 py-3">
                 <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-purple-400 border-t-transparent" />
                 <span className="text-sm font-semibold text-purple-300">
@@ -1760,7 +1812,12 @@ function AnomalyPickerScreen({
               </p>
             </div>
           ) : (
-            <div className="mt-5 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+            <div
+              className="sticky bottom-[-1.25rem] z-10 -mx-5 mt-5 flex flex-col items-center gap-3 border-t border-white/8 bg-[#080d1a]/95 px-5 pt-4 sm:static sm:mx-0 sm:flex-row sm:justify-center sm:border-t-0 sm:bg-transparent sm:px-0 sm:pt-0"
+              style={{
+                paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1rem)",
+              }}
+            >
               <button
                 type="button"
                 disabled={!selected}
@@ -1774,7 +1831,7 @@ function AnomalyPickerScreen({
               <button
                 type="button"
                 onClick={() => onSkipRef.current()}
-                className="text-xs text-slate-600 hover:text-slate-400 transition-colors"
+                className="text-xs text-slate-600 transition-colors hover:text-slate-400"
               >
                 Skip — play without anomaly
               </button>
@@ -2318,12 +2375,62 @@ function DraftModal({
     setTimeout(() => onLockedPick(mod), 650);
   }, [pendingPreviewMod, previewDontAsk, onLockedPick]);
 
+  useEffect(() => {
+    if (
+      peeking ||
+      typeof document === "undefined" ||
+      typeof window === "undefined"
+    ) {
+      return;
+    }
+
+    const { body, documentElement } = document;
+    const scrollY = window.scrollY;
+    const prevBody = {
+      overflow: body.style.overflow,
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+      overscrollBehavior: body.style.overscrollBehavior,
+    };
+    const prevHtml = {
+      overflow: documentElement.style.overflow,
+      overscrollBehavior: documentElement.style.overscrollBehavior,
+    };
+
+    body.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    body.style.overscrollBehavior = "none";
+    documentElement.style.overflow = "hidden";
+    documentElement.style.overscrollBehavior = "none";
+
+    return () => {
+      body.style.overflow = prevBody.overflow;
+      body.style.position = prevBody.position;
+      body.style.top = prevBody.top;
+      body.style.left = prevBody.left;
+      body.style.right = prevBody.right;
+      body.style.width = prevBody.width;
+      body.style.overscrollBehavior = prevBody.overscrollBehavior;
+      documentElement.style.overflow = prevHtml.overflow;
+      documentElement.style.overscrollBehavior =
+        prevHtml.overscrollBehavior;
+      window.scrollTo(0, scrollY);
+    };
+  }, [peeking]);
+
   // Preview confirmation popup
   if (pendingPreviewMod) {
     return (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto overscroll-contain bg-black/70 p-4 backdrop-blur-sm">
         <div
-          className="mx-4 w-full max-w-sm rounded-2xl border border-amber-500/30 bg-slate-900 p-6 shadow-2xl shadow-amber-900/20"
+          className="w-full max-w-sm rounded-2xl border border-amber-500/30 bg-slate-900 p-5 shadow-2xl shadow-amber-900/20 max-h-[calc(100dvh-2rem)] overflow-y-auto sm:p-6"
           style={{ animation: "draft-modal-enter 0.25s ease-out both" }}
         >
           {/* Header */}
@@ -2402,7 +2509,7 @@ function DraftModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto overscroll-contain sm:items-center"
       style={{
         animation: "draft-bg-enter 0.4s ease-out both",
         backgroundColor: "rgba(0,0,0,0.75)",
@@ -2410,10 +2517,11 @@ function DraftModal({
     >
       {/* Modal container */}
       <div
-        className="relative w-full max-w-2xl rounded-t-2xl border border-purple-500/30 bg-[#0a0f1a]/95 p-4 sm:mx-4 sm:rounded-2xl sm:p-6 md:p-8 max-h-[90vh] overflow-y-auto"
+        className="relative w-full max-w-2xl rounded-t-2xl border border-purple-500/30 bg-[#0a0f1a]/95 p-4 sm:mx-4 sm:rounded-2xl sm:p-6 md:p-8 max-h-[calc(100dvh-0.75rem)] overflow-y-auto overscroll-contain sm:max-h-[90vh]"
         style={{
           animation:
             "draft-modal-enter 0.5s ease-out both, draft-pulse 2s ease-in-out 0.5s infinite",
+          WebkitOverflowScrolling: "touch",
         }}
       >
         {/* Decorative spinning rune behind header */}
@@ -2476,7 +2584,7 @@ function DraftModal({
 
         {/* Cards */}
         <div
-          className="grid gap-3 grid-cols-1 sm:gap-5 sm:grid-cols-3"
+          className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-5"
           style={{ perspective: "1200px" }}
         >
           {choices.map((mod, idx) => {
@@ -2488,11 +2596,13 @@ function DraftModal({
             const glowColor = TIER_GLOW_COLORS[mod.tier];
             const isLocked =
               unlockedIds !== undefined && !unlockedIds.has(mod.id);
+            const shouldCenterLastMobileCard =
+              choices.length % 2 === 1 && idx === choices.length - 1;
 
             return (
               <div
                 key={mod.id}
-                className="relative"
+                className={`relative ${shouldCenterLastMobileCard ? "col-span-2 w-full max-w-[14rem] justify-self-center sm:col-span-1 sm:max-w-none" : ""}`}
                 style={{
                   animation: `card-deal 0.5s cubic-bezier(0.34,1.56,0.64,1) ${idx * 0.15}s both`,
                   transformStyle: "preserve-3d",
@@ -2508,10 +2618,9 @@ function DraftModal({
                 >
                   {/* ─── Card Back (face-down) ─── */}
                   <div
-                    className="absolute inset-0 flex flex-col items-center justify-center rounded-xl border border-purple-500/30 bg-gradient-to-br from-[#1a1040] via-[#0f0a2a] to-[#1a0a30] p-4 sm:p-5"
+                    className="absolute inset-0 flex min-h-[140px] flex-col items-center justify-center rounded-xl border border-purple-500/30 bg-gradient-to-br from-[#1a1040] via-[#0f0a2a] to-[#1a0a30] p-3 sm:min-h-[180px] sm:p-5"
                     style={{
                       backfaceVisibility: "hidden",
-                      minHeight: "180px",
                     }}
                   >
                     {/* Decorative rune pattern */}
@@ -2546,7 +2655,7 @@ function DraftModal({
                     onMouseEnter={() => allRevealed && setHoveredId(mod.id)}
                     onMouseLeave={() => setHoveredId(null)}
                     disabled={!allRevealed || !!pickedId}
-                    className={`relative flex w-full flex-row items-center gap-3 rounded-xl border p-3 text-left sm:flex-col sm:gap-0 sm:p-5 sm:text-center ${tier.bg} ${tier.border} ${
+                    className={`relative flex min-h-[140px] w-full flex-col items-center gap-1.5 rounded-xl border p-2.5 text-center sm:min-h-[180px] sm:gap-0 sm:p-5 ${tier.bg} ${tier.border} ${
                       allRevealed && !pickedId
                         ? "cursor-pointer transition-all duration-200"
                         : ""
@@ -2558,7 +2667,6 @@ function DraftModal({
                     style={{
                       backfaceVisibility: "hidden",
                       transform: "rotateY(180deg)",
-                      minHeight: "180px",
                       ...(isPicked
                         ? {
                             animation: "card-picked 0.5s ease-out both",
@@ -2596,7 +2704,7 @@ function DraftModal({
 
                     {/* Preview badge for locked cards — fully pickable, saved to localStorage after use */}
                     {isLocked && (
-                      <div className="pointer-events-none absolute top-2 right-2 z-20 rounded-full bg-amber-500/20 border border-amber-400/40 px-1.5 py-0.5 text-[9px] font-bold text-amber-300">
+                      <div className="pointer-events-none absolute right-2 top-2 z-20 rounded-full border border-amber-400/40 bg-amber-500/20 px-1.5 py-0.5 text-[9px] font-bold text-amber-300">
                         🎁 Preview
                       </div>
                     )}
@@ -2605,26 +2713,26 @@ function DraftModal({
                     <div className="relative z-10 shrink-0 sm:mb-2">
                       <Emoji
                         emoji={mod.icon}
-                        className="w-8 h-8 sm:w-12 sm:h-12"
+                        className="h-8 w-8 sm:h-12 sm:w-12"
                       />
                     </div>
 
-                    <div className="relative z-10 flex-1 min-w-0 sm:flex-none">
+                    <div className="relative z-10 min-w-0 flex-1">
                       {/* Tier badge */}
                       <span
-                        className={`mb-1 inline-block rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider sm:mb-2 sm:text-[10px] ${tier.text} ${tier.bg}`}
+                        className={`mb-1 inline-block rounded-full px-2 py-0.5 text-[8px] font-bold uppercase tracking-wider sm:mb-2 sm:text-[10px] ${tier.text} ${tier.bg}`}
                       >
                         {TIER_LABELS[mod.tier]}
                       </span>
 
                       {/* Name */}
-                      <h3 className="text-xs font-bold text-white sm:mb-1 sm:text-sm">
+                      <h3 className="text-[11px] font-bold text-white sm:mb-1 sm:text-sm">
                         {mod.name}
                       </h3>
 
                       {/* Piece target */}
                       {mod.piece && (
-                        <span className="text-[9px] uppercase tracking-wider text-slate-500 sm:mb-2 sm:text-[10px] block">
+                        <span className="block text-[8px] uppercase tracking-wider text-slate-500 sm:mb-2 sm:text-[10px]">
                           {
                             {
                               p: "Pawns",
@@ -2646,7 +2754,7 @@ function DraftModal({
                       )}
 
                       {/* Description */}
-                      <p className="text-[10px] leading-relaxed text-slate-400 sm:text-xs">
+                      <p className="text-[9px] leading-snug text-slate-400 sm:text-xs">
                         {mod.description}
                       </p>
                     </div>
@@ -2675,7 +2783,7 @@ function DraftModal({
                             e.stopPropagation();
                             onTemperanceReroll?.(mod);
                           }}
-                          className="mt-2 w-full rounded-md border border-sky-500/40 bg-sky-500/10 px-2 py-1 text-[9px] font-bold text-sky-400 transition-all hover:bg-sky-500/20 hover:text-sky-300 sm:text-[10px]"
+                          className="mt-2 w-full rounded-md border border-sky-500/40 bg-sky-500/10 px-2 py-1 text-[8px] font-bold text-sky-400 transition-all hover:bg-sky-500/20 hover:text-sky-300 sm:text-[10px]"
                           title="Discard this card and draw 2 fresh replacements (once per phase)"
                         >
                           🌊 Discard & Reroll
