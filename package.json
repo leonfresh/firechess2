@@ -28,6 +28,7 @@
     "drizzle-orm": "^0.45.1",
     "gray-matter": "^4.0.3",
     "html2canvas-pro": "^2.0.0",
+    "lucide-react": "^1.17.0",
     "msedge-tts": "^2.0.5",
     "next": "^15.1.0",
     "next-auth": "^5.0.0-beta.30",

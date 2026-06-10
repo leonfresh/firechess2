@@ -4,10 +4,10 @@
 
 :root {
   color-scheme: dark;
-  --bg-primary: #060915;
-  --accent-fire: #7dd3fc;
-  --accent-gold: #a78bfa;
-  --accent-crimson: #f472b6;
+  --bg-primary: #08070b;
+  --accent-fire: #f97316;
+  --accent-gold: #d4a657;
+  --accent-crimson: #dc2626;
 }
 
 * {
@@ -278,6 +278,14 @@ button {
 
   .tag-amber {
     @apply tag-pill border-amber-500/20 bg-amber-500/[0.08] text-amber-300;
+  }
+
+  .tag-cyan {
+    @apply tag-pill border-cyan-500/20 bg-cyan-500/[0.08] text-cyan-300;
+  }
+
+  .tag-fuchsia {
+    @apply tag-pill border-fuchsia-500/20 bg-fuchsia-500/[0.08] text-fuchsia-300;
   }
 }
 

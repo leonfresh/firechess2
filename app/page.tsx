@@ -10,6 +10,30 @@ import {
 } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  ArrowRight,
+  BarChart3,
+  BookOpen,
+  Brain,
+  Castle,
+  CheckCircle2,
+  Dumbbell,
+  FileText,
+  Flame,
+  FolderOpen,
+  Gem,
+  Globe,
+  GraduationCap,
+  Hammer,
+  Infinity as InfinityIcon,
+  ScanSearch,
+  Search,
+  Skull,
+  Star,
+  Swords,
+  Users,
+  Zap,
+} from "lucide-react";
 import { CommunityPostComposerModal } from "@/components/community-post-composer-modal";
 import { DrillMode } from "@/components/drill-mode";
 import { HeroProductScreenshot } from "@/components/hero-product-screenshot";
@@ -1511,24 +1535,24 @@ export default function HomePage() {
                           {
                             value: siteStats.totalUsers,
                             suffix: "+ players",
-                            icon: "👥",
+                            icon: Users,
                           },
                           {
                             value: siteStats.activeUsers30d,
                             suffix: " active this month",
-                            icon: "🔥",
+                            icon: Flame,
                           },
                           {
                             value: siteStats.totalReports,
                             suffix: " scans run",
-                            icon: "📊",
+                            icon: BarChart3,
                           },
                         ].map((s) => (
                           <span
                             key={s.suffix}
-                            className="flex items-center gap-1 text-[13px] text-slate-500"
+                            className="flex items-center gap-1.5 text-[13px] text-slate-500"
                           >
-                            <span>{s.icon}</span>
+                            <s.icon className="h-3.5 w-3.5 text-orange-300/70" />
                             <span className="font-semibold text-slate-300">
                               {s.value.toLocaleString()}
                             </span>
@@ -1566,37 +1590,37 @@ export default function HomePage() {
                   {
                     value: siteStats?.totalUsers,
                     label: "Players joined",
-                    icon: "👥",
-                    color: "text-sky-400",
-                    accent: "from-sky-400/20 to-sky-500/0",
+                    icon: Users,
+                    color: "text-amber-300",
+                    accent: "from-amber-400/20 to-amber-500/0",
                   },
                   {
                     value: siteStats?.activeUsers30d,
                     label: "Active this month",
-                    icon: "🔥",
+                    icon: Flame,
                     color: "text-orange-400",
                     accent: "from-orange-400/20 to-orange-500/0",
                   },
                   {
                     value: siteStats?.totalReports,
                     label: "Scans completed",
-                    icon: "📊",
+                    icon: BarChart3,
                     color: "text-emerald-400",
                     accent: "from-emerald-400/20 to-emerald-500/0",
                   },
                   {
                     value: siteStats?.proMembers,
                     label: "Pro members",
-                    icon: "⭐",
+                    icon: Star,
                     color: "text-amber-400",
                     accent: "from-amber-400/25 to-amber-500/0",
                   },
                   {
                     value: siteStats?.lifetimeMembers,
                     label: "Lifetime members",
-                    icon: "♾️",
-                    color: "text-violet-400",
-                    accent: "from-violet-400/20 to-violet-500/0",
+                    icon: InfinityIcon,
+                    color: "text-red-400",
+                    accent: "from-red-400/20 to-red-500/0",
                   },
                 ].map((item) => (
                   <div
@@ -1606,8 +1630,8 @@ export default function HomePage() {
                     <div
                       className={`pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r ${item.accent}`}
                     />
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm">{item.icon}</span>
+                    <div className="flex items-center gap-2">
+                      <item.icon className={`h-4 w-4 ${item.color}`} />
                       <span
                         className={`text-xl font-bold tabular-nums ${item.color}`}
                       >
@@ -1650,7 +1674,68 @@ export default function HomePage() {
             </div>
           )}
 
-          <SampleReportsSection />
+          {/* ─── How it works ─── */}
+          {state === "idle" && (
+            <section className="scroll-reveal mx-auto w-full max-w-5xl">
+              <div className="text-center">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-orange-300/80">
+                  How it works
+                </p>
+                <h2 className="mt-3 text-2xl font-bold text-white sm:text-3xl">
+                  From username to game plan in three steps
+                </h2>
+                <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-slate-400 sm:text-base">
+                  No uploads, no setup. FireChess reads your public games and
+                  does the rest — right in your browser.
+                </p>
+              </div>
+
+              <div className="relative mt-8 grid gap-4 sm:grid-cols-3">
+                <div
+                  className="pointer-events-none absolute left-[18%] right-[18%] top-9 hidden h-px bg-gradient-to-r from-orange-400/0 via-orange-400/25 to-orange-400/0 sm:block"
+                  aria-hidden="true"
+                />
+                {[
+                  {
+                    step: "1",
+                    icon: Search,
+                    title: "Enter your username",
+                    text: "Pick Lichess or Chess.com. We pull your recent games automatically — nothing to export.",
+                  },
+                  {
+                    step: "2",
+                    icon: ScanSearch,
+                    title: "Get your report",
+                    text: "Stockfish scans your openings, tactics, endgames, and clock usage in one pass.",
+                  },
+                  {
+                    step: "3",
+                    icon: Dumbbell,
+                    title: "Drill the leaks",
+                    text: "Every repeated mistake becomes a position you can replay, share, or train until it sticks.",
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.step}
+                    className="relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 text-center transition-colors hover:border-orange-400/20 hover:bg-white/[0.03]"
+                  >
+                    <div className="relative mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-orange-400/20 bg-orange-400/[0.08]">
+                      <item.icon className="h-5 w-5 text-orange-300" />
+                      <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
+                        {item.step}
+                      </span>
+                    </div>
+                    <h3 className="mt-4 text-base font-semibold text-white">
+                      {item.title}
+                    </h3>
+                    <p className="mt-1.5 text-sm leading-relaxed text-slate-400">
+                      {item.text}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           <section
             id="analyzer"
@@ -1856,30 +1941,30 @@ export default function HomePage() {
                 <div className="mt-5 space-y-3">
                   {[
                     {
-                      icon: "⚡",
+                      icon: Zap,
                       color: "from-amber-400/20 to-orange-500/10",
                       iconColor: "text-amber-400",
                       title: "Missed tactics",
                       text: "Short, forcing positions bubble to the top first.",
                     },
                     {
-                      icon: "♟",
+                      icon: Swords,
                       color: "from-orange-400/20 to-red-500/10",
                       iconColor: "text-orange-400",
                       title: "Opening leaks",
                       text: "Repeated positions get grouped into clearer priorities.",
                     },
                     {
-                      icon: "📋",
+                      icon: FileText,
                       color: "from-red-400/15 to-pink-500/10",
                       iconColor: "text-red-400",
                       title: "Canonical report",
                       text: "Each full scan opens on its own dedicated report page.",
                     },
                     {
-                      icon: "💎",
-                      color: "from-cyan-400/15 to-blue-500/10",
-                      iconColor: "text-cyan-400",
+                      icon: Gem,
+                      color: "from-yellow-400/15 to-amber-500/10",
+                      iconColor: "text-yellow-300",
                       title: "Brilliant moves",
                       text: "Exceptional plays detected and highlighted in your report.",
                     },
@@ -1889,9 +1974,9 @@ export default function HomePage() {
                       className="group flex gap-3 rounded-xl border border-white/[0.04] p-3 transition-colors hover:border-white/[0.08] hover:bg-white/[0.02]"
                     >
                       <div
-                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${item.color} ${item.iconColor} text-sm`}
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${item.color} ${item.iconColor}`}
                       >
-                        {item.icon}
+                        <item.icon className="h-4 w-4" />
                       </div>
                       <div>
                         <p className="text-sm font-semibold text-white">
@@ -1907,6 +1992,9 @@ export default function HomePage() {
               </div>
             </div>
           </section>
+
+          {/* ─── Sample reports ─── */}
+          {state === "idle" && <SampleReportsSection />}
 
           {/* ─── Community Loop ─── */}
           {state === "idle" && (
@@ -1975,7 +2063,7 @@ export default function HomePage() {
                       {[
                         {
                           href: "/board",
-                          icon: "🧰",
+                          icon: Hammer,
                           title: "Board Workbench",
                           description:
                             "Paste a FEN or PGN, trim the exact moment, and publish it without rebuilding the position by hand.",
@@ -1984,7 +2072,7 @@ export default function HomePage() {
                         },
                         {
                           href: "/community",
-                          icon: "🔥",
+                          icon: Flame,
                           title: "Community Hub",
                           description:
                             "Browse live positions, opening debates, and study posts grounded in real boards rather than generic chat.",
@@ -1996,7 +2084,7 @@ export default function HomePage() {
                             authenticated && user?.id
                               ? `/community/profile/${user.id}`
                               : "/community",
-                          icon: "🗂️",
+                          icon: FolderOpen,
                           title: authenticated
                             ? "My Study Profile"
                             : "Study Profiles",
@@ -2015,7 +2103,7 @@ export default function HomePage() {
                           <div
                             className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${item.accent}`}
                           >
-                            <span className="text-lg">{item.icon}</span>
+                            <item.icon className="h-[18px] w-[18px]" />
                           </div>
 
                           <div className="min-w-0">
@@ -2097,68 +2185,6 @@ export default function HomePage() {
             </section>
           )}
 
-          {/* ─── Blog Section ─── */}
-          {state === "idle" && (
-            <>
-              {/* CTA Banner */}
-              <div
-                className="relative overflow-hidden rounded-[2rem] px-6 py-10 text-center shadow-[0_0_80px_-20px_rgba(249,115,22,0.18)] sm:px-10 sm:py-12"
-                style={{
-                  background:
-                    "linear-gradient(135deg, rgba(30,14,6,0.97) 0%, rgba(51,22,8,0.96) 42%, rgba(72,18,8,0.95) 75%, rgba(30,8,14,0.97) 100%)",
-                }}
-              >
-                {/* Edge glow lines */}
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/40 to-transparent" />
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-red-400/20 to-transparent" />
-                {/* Ambient orbs */}
-                <div className="pointer-events-none absolute left-[10%] top-[-20%] h-64 w-64 rounded-full bg-orange-500/[0.07] blur-3xl" />
-                <div className="pointer-events-none absolute bottom-[-20%] right-[12%] h-56 w-56 rounded-full bg-red-600/[0.06] blur-3xl" />
-
-                <div className="relative mx-auto max-w-2xl">
-                  <span className="inline-flex rounded-full bg-orange-400/[0.1] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.32em] text-orange-200/70">
-                    Free · No credit card
-                  </span>
-                  <h2 className="mt-4 bg-gradient-to-r from-amber-200 via-orange-300 to-red-400 bg-clip-text text-3xl font-black leading-tight tracking-tight text-transparent sm:text-4xl">
-                    Get your free chess analysis report
-                  </h2>
-                  <p className="mx-auto mt-3 max-w-lg text-base leading-relaxed text-slate-300/80">
-                    Paste your Lichess or Chess.com username and discover
-                    exactly where your rating is leaking — openings, tactics,
-                    endgames, and time management in one clean report.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      document.getElementById("analyzer")?.scrollIntoView({
-                        behavior: "smooth",
-                        block: "start",
-                      })
-                    }
-                    className="btn-cta-fire mt-6 inline-flex h-12 items-center gap-2 rounded-xl px-8 text-base font-bold text-white"
-                  >
-                    Analyze my games — it's free
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2.5}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M13 7l5 5m0 0l-5 5m5-5H6"
-                      />
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <HomepageBlogSection />
-            </>
-          )}
-
           {/* ─── Loading State ─── */}
           {state === "loading" && (
             <div
@@ -2214,12 +2240,12 @@ export default function HomePage() {
               {/* Phase steps */}
               <div className="mt-4 flex flex-wrap items-center justify-between gap-y-2 text-[11px] font-medium">
                 {[
-                  { key: "fetch", label: "Download", icon: "🌐" },
-                  { key: "parse", label: "Parse", icon: "📖" },
-                  { key: "eval", label: "Evaluate", icon: "🧠" },
-                  { key: "tactics", label: "Tactics", icon: "⚔️" },
-                  { key: "endgames", label: "Endgames", icon: "♟️" },
-                  { key: "done", label: "Done", icon: "✅" },
+                  { key: "fetch", label: "Download", icon: Globe },
+                  { key: "parse", label: "Parse", icon: BookOpen },
+                  { key: "eval", label: "Evaluate", icon: Brain },
+                  { key: "tactics", label: "Tactics", icon: Swords },
+                  { key: "endgames", label: "Endgames", icon: Castle },
+                  { key: "done", label: "Done", icon: CheckCircle2 },
                 ].map((step) => {
                   const phases = [
                     "fetch",
@@ -2251,7 +2277,7 @@ export default function HomePage() {
                             : "text-slate-500"
                       }`}
                     >
-                      <span className="text-sm">{step.icon}</span>
+                      <step.icon className="h-4 w-4" />
                       <span>{step.label}</span>
                       {isActive && (
                         <span className="mt-0.5 h-0.5 w-4 rounded-full bg-emerald-400" />
@@ -2287,7 +2313,7 @@ export default function HomePage() {
                     >
                       <div className="flex items-center justify-between mb-2.5">
                         <div className="flex items-center gap-2">
-                          <span className="text-base">🎓</span>
+                          <GraduationCap className="h-4 w-4 text-orange-300" />
                           <span className="text-sm font-semibold text-white">
                             Chess Profile
                           </span>
@@ -2765,44 +2791,6 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* ─── Feature Pills ─── */}
-          <section className="animate-fade-in mx-auto grid w-full max-w-5xl gap-4 sm:grid-cols-3">
-            {[
-              {
-                icon: "🎯",
-                title: "Pattern Detection",
-                desc: "Spots positions you keep reaching and misplaying",
-              },
-              {
-                icon: "🧠",
-                title: "Move Explanations",
-                desc: "Shows why the engine move is superior to yours",
-              },
-              {
-                icon: "📸",
-                title: "Share-Ready Reports",
-                desc: "Screenshot-worthy performance analytics card",
-              },
-            ].map((feature) => (
-              <div
-                key={feature.title}
-                className="glass-card-hover group flex items-start gap-4 p-5"
-              >
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/[0.04] text-xl transition-transform group-hover:scale-110">
-                  {feature.icon}
-                </span>
-                <div>
-                  <h3 className="font-semibold text-slate-100">
-                    {feature.title}
-                  </h3>
-                  <p className="mt-0.5 text-sm text-slate-400">
-                    {feature.desc}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </section>
-
           {state === "idle" && (
             <section className="animate-fade-in mx-auto w-full max-w-5xl">
               <div className="relative overflow-hidden rounded-[1.85rem] border border-white/[0.08] bg-[linear-gradient(160deg,rgba(8,12,24,0.76),rgba(20,14,26,0.62)_54%,rgba(32,18,12,0.66))] px-5 py-5 shadow-[0_24px_90px_-60px_rgba(0,0,0,0.9)] sm:px-6 sm:py-6">
@@ -2828,7 +2816,7 @@ export default function HomePage() {
                     {[
                       {
                         href: "/chaos",
-                        icon: "⚡",
+                        icon: Zap,
                         title: "Chaos Chess",
                         desc: "Variant energy and unpredictable positions.",
                         accent:
@@ -2836,7 +2824,7 @@ export default function HomePage() {
                       },
                       {
                         href: "/sparring",
-                        icon: "⚔️",
+                        icon: Swords,
                         title: "Opening Sparring",
                         desc: "Rehearse critical lines instead of guessing.",
                         accent:
@@ -2844,7 +2832,7 @@ export default function HomePage() {
                       },
                       {
                         href: "/dungeon",
-                        icon: "🗡️",
+                        icon: Skull,
                         title: "Dungeon Tactics",
                         desc: "A more gamified way to grind calculation.",
                         accent:
@@ -2852,7 +2840,7 @@ export default function HomePage() {
                       },
                       {
                         href: "/roast",
-                        icon: "🔥",
+                        icon: Flame,
                         title: "Roast the Elo",
                         desc: "A harsher, more entertaining feedback lane.",
                         accent:
@@ -2867,7 +2855,7 @@ export default function HomePage() {
                         <span
                           className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-colors ${item.accent}`}
                         >
-                          <span className="text-lg">{item.icon}</span>
+                          <item.icon className="h-[18px] w-[18px]" />
                         </span>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-3">
@@ -2912,144 +2900,77 @@ export default function HomePage() {
             </section>
           )}
 
-          {/* ─── Landing Close ─── */}
+          {/* ─── Final CTA ─── */}
           {state === "idle" && (
             <section className="animate-fade-in mx-auto w-full max-w-5xl">
-              <div className="relative overflow-hidden rounded-[2.25rem] bg-[linear-gradient(160deg,rgba(9,13,30,0.26),rgba(12,16,36,0.12)_58%,rgba(30,22,49,0.14))] px-6 py-6 ring-1 ring-inset ring-white/[0.04] md:px-7 md:py-7">
-                <div className="pointer-events-none absolute -left-12 top-10 h-40 w-40 rounded-full bg-sky-400/[0.06] blur-[95px]" />
-                <div className="pointer-events-none absolute right-0 bottom-0 h-40 w-40 rounded-full bg-fuchsia-500/[0.06] blur-[100px]" />
-                <div className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+              <div
+                className="relative overflow-hidden rounded-[2rem] px-6 py-10 text-center shadow-[0_0_80px_-20px_rgba(249,115,22,0.18)] sm:px-10 sm:py-12"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(30,14,6,0.97) 0%, rgba(51,22,8,0.96) 42%, rgba(72,18,8,0.95) 75%, rgba(30,8,14,0.97) 100%)",
+                }}
+              >
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/40 to-transparent" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-red-400/20 to-transparent" />
+                <div className="pointer-events-none absolute left-[10%] top-[-20%] h-64 w-64 rounded-full bg-orange-500/[0.07] blur-3xl" />
+                <div className="pointer-events-none absolute bottom-[-20%] right-[12%] h-56 w-56 rounded-full bg-red-600/[0.06] blur-3xl" />
 
-                <div className="relative grid gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(18rem,0.8fr)] lg:items-end">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-orange-300/75">
-                      What Happens Next
-                    </p>
-                    <h2 className="mt-3 max-w-3xl text-2xl font-bold text-white sm:text-3xl">
-                      Run the scan, keep the board, choose the right follow-up.
-                    </h2>
-                    <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-400 sm:text-base">
-                      FireChess works best when the exact position survives the
-                      diagnosis. Review it, post it, or train it without losing
-                      the mistake that made it matter.
-                    </p>
+                <div className="relative mx-auto max-w-2xl">
+                  <span className="inline-flex rounded-full bg-orange-400/[0.1] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.32em] text-orange-200/70">
+                    Free · No credit card
+                  </span>
+                  <h2 className="mt-4 bg-gradient-to-r from-amber-200 via-orange-300 to-red-400 bg-clip-text text-3xl font-black leading-tight tracking-tight text-transparent sm:text-4xl">
+                    Get your free chess analysis report
+                  </h2>
+                  <p className="mx-auto mt-3 max-w-lg text-base leading-relaxed text-slate-300/80">
+                    Enter your Lichess or Chess.com username and discover
+                    exactly where your rating is leaking — openings, tactics,
+                    endgames, and time management in one clean report.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      document.getElementById("analyzer")?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                      })
+                    }
+                    className="btn-cta-fire mt-6 inline-flex h-12 items-center gap-2 rounded-xl px-8 text-base font-bold text-white"
+                  >
+                    Analyze my games — it&apos;s free
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
 
-                    <div className="mt-5 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold text-slate-300">
-                      <span className="inline-flex items-center gap-2 text-slate-400">
-                        <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
-                        Signal from your own games
-                      </span>
-                      <span className="inline-flex items-center gap-2 text-slate-400">
-                        <span className="h-1.5 w-1.5 rounded-full bg-fuchsia-300" />
-                        Board-first follow-up
-                      </span>
-                      <span className="inline-flex items-center gap-2 text-slate-400">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-                        Training after context
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="rounded-[1.75rem] border border-white/[0.08] bg-black/15 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
-                      Start Here
-                    </p>
-                    <a
-                      href="#analyzer"
-                      className="btn-primary mt-4 flex w-full items-center justify-center gap-2"
-                    >
-                      Scan My Games
-                      <svg
-                        className="h-4 w-4"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2.5}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M13 7l5 5m0 0l-5 5m5-5H6"
-                        />
-                      </svg>
-                    </a>
-
-                    <div className="mt-4 flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold text-slate-300">
+                  <div className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 border-t border-white/[0.07] pt-5 text-sm font-semibold text-slate-400">
+                    {[
+                      { href: "/board", label: "Open Workbench" },
+                      { href: "/train", label: "Go to Training" },
+                      { href: "/community", label: "Explore Community" },
+                    ].map((link) => (
                       <Link
-                        href="/board"
-                        className="inline-flex items-center gap-2 transition-colors hover:text-white"
+                        key={link.href}
+                        href={link.href}
+                        className="inline-flex items-center gap-1.5 transition-colors hover:text-white"
                       >
-                        Open Workbench
-                        <svg
-                          className="h-3.5 w-3.5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2.5}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M13 7l5 5m0 0l-5 5m5-5H6"
-                          />
-                        </svg>
+                        {link.label}
+                        <ArrowRight className="h-3.5 w-3.5" />
                       </Link>
-                      <Link
-                        href="/train"
-                        className="inline-flex items-center gap-2 transition-colors hover:text-white"
-                      >
-                        Go to Training
-                        <svg
-                          className="h-3.5 w-3.5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2.5}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M13 7l5 5m0 0l-5 5m5-5H6"
-                          />
-                        </svg>
-                      </Link>
-                      <Link
-                        href="/community"
-                        className="inline-flex items-center gap-2 transition-colors hover:text-white"
-                      >
-                        Explore Community
-                        <svg
-                          className="h-3.5 w-3.5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2.5}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M13 7l5 5m0 0l-5 5m5-5H6"
-                          />
-                        </svg>
-                      </Link>
-                    </div>
-
-                    <p className="mt-5 border-t border-white/[0.08] pt-4 text-sm leading-relaxed text-slate-400">
-                      No random puzzle spam. No dead-end reports. Just your
-                      games, your repeat positions, and clearer next actions.
-                    </p>
+                    ))}
                   </div>
                 </div>
               </div>
             </section>
           )}
 
+          {/* ─── Blog Section ─── */}
+          {state === "idle" && <HomepageBlogSection />}
+
           {/* ─── Notice ─── */}
           {notice && state !== "loading" && (
             <div className="glass-card animate-fade-in border-amber-500/20 p-5">
               <div className="flex items-start gap-3">
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 text-amber-400">
-                  ⚡
+                  <Zap className="h-4 w-4" />
                 </span>
                 <p className="text-sm text-amber-200">{notice}</p>
               </div>
