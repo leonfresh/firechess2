@@ -8,6 +8,7 @@ import { CardCarousel } from "@/components/card-carousel";
 import type { CommunityPostComposerSeed } from "@/components/community-post-composer-modal";
 import { EndgameCard } from "@/components/endgame-card";
 import { MistakeCard } from "@/components/mistake-card";
+import { GuidedWalk } from "@/components/guided-walk/guided-walk";
 import {
   MentalGameLoading,
   ScanMentalGame,
@@ -116,7 +117,7 @@ type ReportAnalysisTarget = {
   subtitle: string;
 };
 
-type ReportViewMode = "focus" | "full";
+type ReportViewMode = "guided" | "focus" | "full";
 
 type FocusIssue =
   | {
@@ -1406,21 +1407,26 @@ function ReportViewSwitcher({
           Choose report view
         </p>
         <p className="mt-1 text-sm text-slate-400">
-          Full Report is the default. Focus View is there when you want the distilled version.
+          Walk through your biggest findings step by step, or jump to the full breakdown.
         </p>
       </div>
 
-      <div className="mx-auto mt-4 grid max-w-xl grid-cols-1 gap-2 rounded-2xl border border-white/[0.08] bg-black/25 p-1.5 sm:grid-cols-2">
+      <div className="mx-auto mt-4 grid max-w-xl grid-cols-1 gap-2 rounded-2xl border border-white/[0.08] bg-black/25 p-1.5 sm:grid-cols-3">
         {[
           {
-            value: "full" as const,
-            label: "Full Report",
-            caption: "Default view",
+            value: "guided" as const,
+            label: "Guided Walk",
+            caption: "Step by step",
           },
           {
             value: "focus" as const,
             label: "Focus View",
             caption: "Less, but curated",
+          },
+          {
+            value: "full" as const,
+            label: "Full Report",
+            caption: "Everything",
           },
         ].map((option) => {
           const selected = viewMode === option.value;
@@ -2882,8 +2888,11 @@ export function ScanSessionReport({
   const [sectionViewModes, setSectionViewModes] = useState<
     Record<string, "list" | "grid">
   >({});
-  const [reportViewMode, setReportViewMode] =
-    useState<ReportViewMode>("full");
+  const [reportViewMode, setReportViewMode] = useState<ReportViewMode>(
+    // Land on the guided walkthrough first when a report is ready; fall back
+    // to "full" while the scan is still processing.
+    scan.status === "processing" || !scan.result ? "full" : "guided",
+  );
   const getSV = (id: string): "list" | "grid" => sectionViewModes[id] ?? "list";
   const toggleSV = (id: string) =>
     setSectionViewModes((p) => ({
@@ -3170,6 +3179,29 @@ export function ScanSessionReport({
       {reportViewMode === "full" ? (
         <FloatingSectionNav sections={floatingNavSections} />
       ) : null}
+
+      {/* ── Guided walkthrough (Brilliant-style, default on fresh reports) ──
+          One card at a time over the existing report data, then graduates to
+          the Focus view. Full report stays available via the switcher. */}
+      {reportViewMode === "guided" && reportMeta ? (
+        <div className="mt-6">
+          <GuidedWalk
+            report={reportMeta}
+            vibeTitle={reportMeta.vibeTitle}
+            gamesAnalyzed={result?.gamesAnalyzed ?? 0}
+            leaks={leaks}
+            oneOffMistakes={oneOffMistakes}
+            positionTraces={result?.diagnostics?.positionTraces ?? []}
+            missedTactics={accessibleTactics}
+            endgameMistakes={accessibleEndgames}
+            mentalStats={mentalStats}
+            username={scan.chessUsername}
+            onFinish={() => changeReportViewMode("focus")}
+          />
+        </div>
+      ) : null}
+
+      {reportViewMode !== "guided" ? (
       <div className="mt-6 space-y-6">
         <ReportViewSwitcher
           viewMode={reportViewMode}
@@ -4105,6 +4137,7 @@ export function ScanSessionReport({
           </>
         )}
       </div>
+      ) : null}
       <AnalysisBoardModal
         open={Boolean(analysisTarget)}
         onClose={() => setAnalysisTarget(null)}
