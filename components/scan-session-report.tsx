@@ -1395,19 +1395,27 @@ function ReportViewSwitcher({
   viewMode,
   onChange,
   focusCount,
+  disabled = false,
 }: {
   viewMode: ReportViewMode;
   onChange: (mode: ReportViewMode) => void;
   focusCount: number;
+  disabled?: boolean;
 }) {
   return (
-    <div className="mx-auto max-w-3xl rounded-[1.75rem] border border-white/[0.1] bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.1),_rgba(15,23,42,0.92)_48%,_rgba(2,6,23,0.98)_100%)] p-4 text-center shadow-2xl shadow-black/20 sm:p-5">
+    <div
+      className={`mx-auto max-w-3xl rounded-[1.75rem] border border-white/[0.1] bg-[radial-gradient(circle_at_top,_rgba(16,185,129,0.1),_rgba(15,23,42,0.92)_48%,_rgba(2,6,23,0.98)_100%)] p-4 text-center shadow-2xl shadow-black/20 sm:p-5 transition ${
+        disabled ? "pointer-events-none opacity-40" : ""
+      }`}
+    >
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-emerald-300/80">
-          Choose report view
+          {disabled ? "Finishing scan…" : "Choose report view"}
         </p>
         <p className="mt-1 text-sm text-slate-400">
-          Walk through your biggest findings step by step, or jump to the full breakdown.
+          {disabled
+            ? "You can switch views once the scan completes."
+            : "Walk through your biggest findings step by step, or jump to the full breakdown."}
         </p>
       </div>
 
@@ -1435,6 +1443,7 @@ function ReportViewSwitcher({
               key={option.value}
               type="button"
               onClick={() => onChange(option.value)}
+              disabled={disabled}
               className={`rounded-xl px-4 py-3 text-left transition sm:text-center ${
                 selected
                   ? "bg-white text-slate-950 shadow-lg shadow-black/20"
@@ -2771,6 +2780,7 @@ export function ScanSessionReport({
   hasProAccess = false,
   scanProgress = null,
   perPhaseProgress,
+  guidedLaunchSignal = 0,
   onCreateCommunityPost,
 }: {
   scan: PublicScanSessionPayload;
@@ -2780,6 +2790,9 @@ export function ScanSessionReport({
   perPhaseProgress?: Partial<
     Record<AnalysisProgress["phase"], AnalysisProgress>
   >;
+  /** Bumped by the parent to request a switch into guided mode (e.g. from the
+   *  scan-complete modal). */
+  guidedLaunchSignal?: number;
   onCreateCommunityPost?: (seed: CommunityPostComposerSeed) => void;
 }) {
   const result = scan.result;
@@ -2902,6 +2915,14 @@ export function ScanSessionReport({
   const changeReportViewMode = (mode: ReportViewMode) => {
     setReportViewMode(mode);
   };
+
+  // Parent (scan-complete modal) can request the guided walkthrough by bumping
+  // the signal. Ignore the initial 0 so it doesn't fire on mount.
+  useEffect(() => {
+    if (guidedLaunchSignal > 0) {
+      setReportViewMode("guided");
+    }
+  }, [guidedLaunchSignal]);
 
   const visibleLeaks = accessibleLeaks.slice(0, leakReveal.shownCount);
   const visibleOneOffMistakes = accessibleOneOffMistakes.slice(
@@ -3207,6 +3228,7 @@ export function ScanSessionReport({
           viewMode={reportViewMode}
           onChange={changeReportViewMode}
           focusCount={focusIssues.length}
+          disabled={isProcessing}
         />
 
         {reportViewMode === "focus" ? (

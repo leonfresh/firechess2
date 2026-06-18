@@ -143,7 +143,15 @@ export function ScanSessionPage({
   >({});
   const [sectionsReady, setSectionsReady] = useState<Set<string>>(new Set());
   const [showExpiryPopup, setShowExpiryPopup] = useState(false);
+  const [showScanComplete, setShowScanComplete] = useState(false);
+  // Incremented when the user picks "Start guided walkthrough" from the
+  // completion modal. ScanSessionReport watches this to switch to guided mode.
+  const [guidedLaunchSignal, setGuidedLaunchSignal] = useState(0);
   const analysisStartedRef = useRef(false);
+  // Remembers whether this scan was freshly processed in this session, so the
+  // completion modal only fires for scans that actually ran here (not on revisit
+  // of an already-ready report).
+  const prevStatusRef = useRef(initialScan.status);
 
   useEffect(() => {
     try {
@@ -393,6 +401,20 @@ export function ScanSessionPage({
     }
   }, [isOwner, scan]);
 
+  // When a scan that started processing on THIS page reaches "ready", surface
+  // the completion modal. Skipped when revisiting an already-ready report
+  // (prevStatusRef starts at "ready" in that case, so no transition occurs).
+  useEffect(() => {
+    if (
+      prevStatusRef.current === "processing" &&
+      scan.status === "ready" &&
+      scan.result
+    ) {
+      setShowScanComplete(true);
+    }
+    prevStatusRef.current = scan.status;
+  }, [scan.status, scan.result]);
+
   const dismissExpiryPopup = () => {
     setShowExpiryPopup(false);
     try {
@@ -450,6 +472,7 @@ export function ScanSessionPage({
           source: scan.config.source,
           scanMode: scan.config.scanMode,
           gamesAnalyzed: scan.result.gamesAnalyzed,
+          gamesDateRange: scan.result.gamesDateRange ?? null,
           maxGames: scan.config.maxGames,
           maxMoves: scan.config.maxMoves,
           cpThreshold: scan.config.cpThreshold,
@@ -1046,6 +1069,74 @@ export function ScanSessionPage({
           </div>
         ) : null}
 
+        {showScanComplete && scan.result ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+            <div className="w-full max-w-md rounded-[1.75rem] border border-emerald-500/20 bg-slate-950 p-6 text-center shadow-2xl shadow-black/50">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 text-3xl">
+                ✓
+              </div>
+              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-emerald-300">
+                Scan complete
+              </p>
+              <h2 className="mt-2 text-2xl font-black text-white">
+                Your scan is ready
+              </h2>
+              <p className="mt-2 text-sm text-slate-400">
+                {scan.result.gamesAnalyzed} games analyzed
+              </p>
+              <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-2 py-3">
+                  <div className="text-lg font-black text-white">
+                    {scan.result.leaks.length}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">
+                    Leaks
+                  </div>
+                </div>
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-2 py-3">
+                  <div className="text-lg font-black text-white">
+                    {scan.result.missedTactics.length}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">
+                    Tactics
+                  </div>
+                </div>
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-2 py-3">
+                  <div className="text-lg font-black text-white">
+                    {scan.result.repeatedPositions}
+                  </div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500">
+                    Positions
+                  </div>
+                </div>
+              </div>
+              <p className="mt-4 text-sm leading-relaxed text-slate-300">
+                Walk through your biggest findings step by step, or jump
+                straight to the full breakdown.
+              </p>
+              <div className="mt-5 flex flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowScanComplete(false);
+                    setGuidedLaunchSignal((n) => n + 1);
+                  }}
+                  className="w-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
+                >
+                  Start guided walkthrough →
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowScanComplete(false)}
+                  className="w-full rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm font-semibold text-slate-300 transition hover:text-white"
+                >
+                  View full report
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         <CommunityPostComposerModal
           open={composerOpen}
           onClose={() => {
@@ -1204,6 +1295,7 @@ export function ScanSessionPage({
             hasProAccess={hasProAccess}
             scanProgress={progress}
             perPhaseProgress={perPhaseProgress}
+            guidedLaunchSignal={guidedLaunchSignal}
             onCreateCommunityPost={openComposer}
           />
         ) : null}

@@ -77,6 +77,7 @@ export async function POST(req: NextRequest) {
     source,
     scanMode,
     gamesAnalyzed,
+    gamesDateRange,
     maxGames,
     maxMoves,
     cpThreshold,
@@ -143,6 +144,14 @@ export async function POST(req: NextRequest) {
           source,
           scanMode: scanMode ?? "both",
           gamesAnalyzed: gamesAnalyzed ?? 0,
+          gamesStartDate:
+            typeof gamesDateRange?.start === "number"
+              ? gamesDateRange.start
+              : null,
+          gamesEndDate:
+            typeof gamesDateRange?.end === "number"
+              ? gamesDateRange.end
+              : null,
           maxGames: maxGames ?? null,
           maxMoves: maxMoves ?? null,
           cpThreshold: cpThreshold ?? null,
@@ -192,6 +201,12 @@ export async function POST(req: NextRequest) {
       source,
       scanMode: scanMode ?? "both",
       gamesAnalyzed: gamesAnalyzed ?? 0,
+      gamesStartDate:
+        typeof gamesDateRange?.start === "number"
+          ? gamesDateRange.start
+          : null,
+      gamesEndDate:
+        typeof gamesDateRange?.end === "number" ? gamesDateRange.end : null,
       maxGames,
       maxMoves,
       cpThreshold,

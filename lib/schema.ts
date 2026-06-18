@@ -130,6 +130,11 @@ export const reports = pgTable("report", {
 
   /* config snapshot */
   gamesAnalyzed: integer("gamesAnalyzed").notNull().default(0),
+  /** When the analyzed games were actually played (epoch ms). Lets the
+   *  dashboard plot progress by game date rather than the report save date,
+   *  so historical-range scans don't fake a recent rating drop. */
+  gamesStartDate: integer("gamesStartDate"),
+  gamesEndDate: integer("gamesEndDate"),
   maxGames: integer("maxGames"),
   maxMoves: integer("maxMoves"),
   cpThreshold: integer("cpThreshold"),

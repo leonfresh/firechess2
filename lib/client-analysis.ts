@@ -4210,6 +4210,26 @@ export async function analyzeOpeningLeaksInBrowser(
         })()
       : null;
 
+  // Earliest / latest game play dates — used by the dashboard to plot progress
+  // by when the games were actually played (not the report save date). Falls
+  // back to the requested `since`/`until` window when individual games lack
+  // timestamps (e.g. some imports), so a range scan still has a usable range.
+  const gamePlayedAts = games
+    .map((g) => g.playedAt)
+    .filter((t): t is number => typeof t === "number" && t > 0);
+  const earliestGameAt =
+    gamePlayedAts.length > 0
+      ? Math.min(...gamePlayedAts)
+      : options?.since ?? null;
+  const latestGameAt =
+    gamePlayedAts.length > 0
+      ? Math.max(...gamePlayedAts)
+      : options?.until ?? null;
+  const gamesDateRange: { start: number; end: number } | null =
+    earliestGameAt != null && latestGameAt != null
+      ? { start: earliestGameAt, end: latestGameAt }
+      : null;
+
   // ── Compute Time Management Score (0-100) from clock data ──
   // Measures: consistency of move timing, avoiding time scrambles, not wasting time
   if (doTimeOnly) {
@@ -5029,6 +5049,7 @@ export async function analyzeOpeningLeaksInBrowser(
     reportVersion: 2,
     scanSignature,
     gamesAnalyzed,
+    gamesDateRange,
     repeatedPositions,
     leaks,
     oneOffMistakes,

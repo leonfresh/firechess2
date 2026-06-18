@@ -61,6 +61,9 @@ type SavedReport = {
   source: string;
   scanMode: string;
   gamesAnalyzed: number;
+  /** Epoch ms of when the analyzed games were played (null for legacy rows). */
+  gamesStartDate: number | null;
+  gamesEndDate: number | null;
   maxGames: number | null;
   maxMoves: number | null;
   cpThreshold: number | null;
@@ -248,31 +251,56 @@ export default function DashboardPage() {
     );
   }, [reports, selectedUser]);
 
-  // Latest report
-  const latest = filtered[0] ?? null;
-  const previous = filtered[1] ?? null;
+  // Ordering key for "current form" views (progress chart, radar, deltas).
+  // Prefer the date the games were actually played so a historical-range scan
+  // (old games, lower Elo) doesn't pose as "latest" and fabricate a rating drop.
+  // Falls back to the report save date for legacy rows without game dates.
+  const reportSortDate = (r: (typeof reports)[number]) =>
+    r.gamesEndDate
+      ? new Date(r.gamesEndDate).getTime()
+      : new Date(r.createdAt).getTime();
 
-  // Only include openings / both scans for progress/radar (tactics & time-management don't produce accuracy)
+  // Latest report (by save date — drives the "days since last scan" nudge)
+  const latest = filtered[0] ?? null;
+
+  // Latest by game date (for the "Latest vs Previous" form comparison). A
+  // historical-range scan saved today won't outrank a recent scan here.
+  const byGameDate = useMemo(
+    () => [...filtered].sort((a, b) => reportSortDate(b) - reportSortDate(a)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [filtered],
+  );
+  const latestByGame = byGameDate[0] ?? null;
+  const previousByGame = byGameDate[1] ?? null;
+
+  // Only include openings / both scans for progress/radar (tactics & time-management don't produce accuracy).
+  // Ordered by game date (fallback save date) so a historical scan can't become "latest".
   const filteredForProgress = useMemo(() => {
-    return filtered.filter(
-      (r) => r.scanMode === "openings" || r.scanMode === "both",
-    );
+    return filtered
+      .filter((r) => r.scanMode === "openings" || r.scanMode === "both")
+      .sort((a, b) => reportSortDate(b) - reportSortDate(a));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtered]);
 
-  // Latest openings-based report for radar / accuracy metrics
+  // Latest openings-based report for radar / accuracy metrics (by game date)
   const latestNonTimeMgmt = filteredForProgress[0] ?? null;
   const previousNonTimeMgmt = filteredForProgress[1] ?? null;
 
-  // Progress data for line chart (oldest → newest, with timestamps for date axis)
-  // Only include reports that have accuracy/cpLoss (openings / both scans)
+  // Progress data for line chart (oldest → newest, with timestamps for date axis).
+  // Plotted by game date so a historical scan lands back when those games were
+  // actually played, not "today" with an old rating.
   const progressData = useMemo(() => {
-    return [...filteredForProgress].reverse().map((r) => ({
-      timestamp: new Date(r.createdAt).getTime(),
-      date: formatShortDate(r.createdAt),
-      accuracy: r.estimatedAccuracy ?? 0,
-      rating: r.estimatedRating ?? 0,
-      cpLoss: r.weightedCpLoss ?? 0,
-    }));
+    return [...filteredForProgress].reverse().map((r) => {
+      const sortDate = reportSortDate(r);
+      return {
+        timestamp: sortDate,
+        date: formatShortDate(new Date(sortDate).toISOString()),
+        accuracy: r.estimatedAccuracy ?? 0,
+        rating: r.estimatedRating ?? 0,
+        cpLoss: r.weightedCpLoss ?? 0,
+      };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filteredForProgress]);
 
   // Aggregate stats
@@ -945,8 +973,8 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* ─── Key Metrics Comparison (latest vs previous) ─── */}
-          {latest && previous && filtered.length >= 2 && (
+          {/* ─── Key Metrics Comparison (latest vs previous, by game date) ─── */}
+          {latestByGame && previousByGame && filtered.length >= 2 && (
             <div
               className="glass-card animate-fade-in-up space-y-4 p-6"
               style={{ animationDelay: "0.4s" }}
@@ -957,31 +985,31 @@ export default function DashboardPage() {
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <CompareMetric
                   label="Accuracy"
-                  current={latest.estimatedAccuracy}
-                  prev={previous.estimatedAccuracy}
+                  current={latestByGame.estimatedAccuracy}
+                  prev={previousByGame.estimatedAccuracy}
                   suffix="%"
                 />
                 <CompareMetric
                   label="Est. Rating"
-                  current={latest.estimatedRating}
-                  prev={previous.estimatedRating}
+                  current={latestByGame.estimatedRating}
+                  prev={previousByGame.estimatedRating}
                 />
                 <CompareMetric
                   label="Avg CP Loss"
-                  current={latest.weightedCpLoss}
-                  prev={previous.weightedCpLoss}
+                  current={latestByGame.weightedCpLoss}
+                  prev={previousByGame.weightedCpLoss}
                   invert
                 />
                 <CompareMetric
                   label="Severe Leak Rate"
                   current={
-                    latest.severeLeakRate != null
-                      ? latest.severeLeakRate * 100
+                    latestByGame.severeLeakRate != null
+                      ? latestByGame.severeLeakRate * 100
                       : null
                   }
                   prev={
-                    previous.severeLeakRate != null
-                      ? previous.severeLeakRate * 100
+                    previousByGame.severeLeakRate != null
+                      ? previousByGame.severeLeakRate * 100
                       : null
                   }
                   suffix="%"

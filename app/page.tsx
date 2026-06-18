@@ -1296,6 +1296,16 @@ export default function HomePage() {
       return;
     }
 
+    if (!hasProAccess && gameRangeMode === "since") {
+      setError(
+        "Scanning by date range is a Pro feature. Use “Last N” (up to " +
+          FREE_MAX_GAMES +
+          " games) or upgrade on /pricing.",
+      );
+      setState("error");
+      return;
+    }
+
     if (gameRangeMode === "since" && !sinceDate) {
       setError('Please pick a start date for the "Range" range mode.');
       setState("error");
@@ -1322,10 +1332,13 @@ export default function HomePage() {
     }
 
     try {
-      // When "since" mode, use a high cap so the date filter is the real limiter
+      // Range mode forces a high cap so the date filter is the real limiter.
+      // For free users we still clamp to the free cap as a safety net (the
+      // hard block above should already prevent reaching here in Range mode).
+      const rangeCap = hasProAccess ? 5000 : FREE_MAX_GAMES;
       const safeGames =
         gameRangeMode === "since"
-          ? 5000
+          ? rangeCap
           : Math.min(5000, Math.max(1, Math.floor(gameCount || 300)));
       const safeSince =
         gameRangeMode === "since" && sinceDate
@@ -2292,8 +2305,9 @@ export default function HomePage() {
                               value={sinceDate}
                               onChange={(e) => setSinceDate(e.target.value)}
                               max={new Date().toISOString().split("T")[0]}
+                              disabled={!hasProAccess}
                               aria-label="Scan games from date"
-                              className="glass-input h-10 text-sm"
+                              className="glass-input h-10 text-sm disabled:cursor-not-allowed disabled:opacity-50"
                             />
                           </div>
                           <div className="space-y-1">
@@ -2306,11 +2320,20 @@ export default function HomePage() {
                               onChange={(e) => setUntilDate(e.target.value)}
                               min={sinceDate || undefined}
                               max={new Date().toISOString().split("T")[0]}
+                              disabled={!hasProAccess}
                               aria-label="Scan games until date (optional)"
-                              className="glass-input h-10 text-sm"
+                              className="glass-input h-10 text-sm disabled:cursor-not-allowed disabled:opacity-50"
                             />
                           </div>
                         </div>
+                      )}
+                      {gameRangeMode === "since" && !hasProAccess && (
+                        <p className="text-xs font-medium text-amber-400">
+                          Requires{" "}
+                          <Link href="/pricing" className="underline">
+                            Pro
+                          </Link>
+                        </p>
                       )}
                       {gameRangeMode === "count" && gamesOverFreeLimit && (
                         <p className="text-xs font-medium text-amber-400">

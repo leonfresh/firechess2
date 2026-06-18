@@ -323,6 +323,10 @@ export type AnalyzeResponse = {
   /** Stable hash of the exact downloaded games plus scan settings. */
   scanSignature?: string;
   gamesAnalyzed: number;
+  /** When the analyzed games were actually played (epoch ms). Used by the
+   *  dashboard to plot progress by game date instead of the save date, so a
+   *  historical-range scan doesn't fabricate a recent rating drop. */
+  gamesDateRange?: { start: number; end: number } | null;
   repeatedPositions: number;
   leaks: RepeatedOpeningLeak[];
   oneOffMistakes: RepeatedOpeningLeak[];
