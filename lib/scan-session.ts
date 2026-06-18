@@ -16,6 +16,7 @@ export type ScanSessionConfig = {
   scanMode: ScanMode;
   speed: TimeControl[];
   since: number | null;
+  until: number | null;
   maxTactics: number | null;
   maxEndgames: number | null;
 };

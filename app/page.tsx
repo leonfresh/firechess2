@@ -195,6 +195,7 @@ export default function HomePage() {
   );
   const [gameCount, setGameCount] = useState(300);
   const [sinceDate, setSinceDate] = useState("");
+  const [untilDate, setUntilDate] = useState("");
   const [moveCount, setMoveCount] = useState(30);
   const [cpThreshold, setCpThreshold] = useState(50);
   const [engineDepth, setEngineDepth] = useState(12);
@@ -445,6 +446,7 @@ export default function HomePage() {
         speed?: string | string[];
         gameRangeMode?: string;
         sinceDate?: string;
+        untilDate?: string;
         cardViewMode?: string;
       };
 
@@ -459,6 +461,9 @@ export default function HomePage() {
       }
       if (typeof parsed.sinceDate === "string" && parsed.sinceDate) {
         setSinceDate(parsed.sinceDate);
+      }
+      if (typeof parsed.untilDate === "string") {
+        setUntilDate(parsed.untilDate);
       }
       if (typeof parsed.moveCount === "number") {
         setMoveCount(Math.min(30, Math.max(1, Math.floor(parsed.moveCount))));
@@ -540,6 +545,7 @@ export default function HomePage() {
           speed,
           gameRangeMode,
           sinceDate,
+          untilDate,
           cardViewMode,
           username: username.trim() || undefined,
         }),
@@ -557,6 +563,7 @@ export default function HomePage() {
     speed,
     gameRangeMode,
     sinceDate,
+    untilDate,
     cardViewMode,
     username,
   ]);
@@ -1290,7 +1297,18 @@ export default function HomePage() {
     }
 
     if (gameRangeMode === "since" && !sinceDate) {
-      setError('Please pick a start date for the "Since" range mode.');
+      setError('Please pick a start date for the "Range" range mode.');
+      setState("error");
+      return;
+    }
+
+    if (
+      gameRangeMode === "since" &&
+      sinceDate &&
+      untilDate &&
+      new Date(untilDate).getTime() < new Date(sinceDate).getTime()
+    ) {
+      setError('The "To" date can\'t be before the "From" date.');
       setState("error");
       return;
     }
@@ -1312,6 +1330,10 @@ export default function HomePage() {
       const safeSince =
         gameRangeMode === "since" && sinceDate
           ? new Date(sinceDate).getTime()
+          : undefined;
+      const safeUntil =
+        gameRangeMode === "since" && untilDate
+          ? new Date(untilDate).getTime()
           : undefined;
       const safeMoves = Math.min(
         hasProAccess ? 40 : FREE_MAX_MOVES,
@@ -1356,6 +1378,7 @@ export default function HomePage() {
         scanMode: safeScanMode,
         speed,
         since: safeSince ?? null,
+        until: safeUntil ?? null,
         maxTactics: null,
         maxEndgames: null,
       };
@@ -1370,6 +1393,7 @@ export default function HomePage() {
             scanMode: safeScanMode,
             timeControl: speed,
             since: safeSince,
+            until: safeUntil,
           })
         : null;
 
@@ -2220,7 +2244,7 @@ export default function HomePage() {
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
                           Games
-                          <HelpTip text="How many recent games to scan (Last N), or pick a start date (Since) to include all games from that point." />
+                          <HelpTip text="Scan your N most recent games (Last N), or pick a date range to include every game played in that window. The end date is optional — leave it blank to scan up to today." />
                         </span>
                         <div className="grid h-6 grid-cols-2 gap-0.5 rounded-md border border-white/[0.06] bg-white/[0.02] p-0.5">
                           <button
@@ -2243,7 +2267,7 @@ export default function HomePage() {
                                 : "text-slate-500 hover:text-slate-300"
                             }`}
                           >
-                            Since
+                            Range
                           </button>
                         </div>
                       </div>
@@ -2258,14 +2282,35 @@ export default function HomePage() {
                           className="glass-input h-10 text-sm"
                         />
                       ) : (
-                        <input
-                          type="date"
-                          value={sinceDate}
-                          onChange={(e) => setSinceDate(e.target.value)}
-                          max={new Date().toISOString().split("T")[0]}
-                          aria-label="Scan games since date"
-                          className="glass-input h-10 text-sm"
-                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-1">
+                            <span className="text-[10px] uppercase tracking-wider text-slate-500">
+                              From
+                            </span>
+                            <input
+                              type="date"
+                              value={sinceDate}
+                              onChange={(e) => setSinceDate(e.target.value)}
+                              max={new Date().toISOString().split("T")[0]}
+                              aria-label="Scan games from date"
+                              className="glass-input h-10 text-sm"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-[10px] uppercase tracking-wider text-slate-500">
+                              To
+                            </span>
+                            <input
+                              type="date"
+                              value={untilDate}
+                              onChange={(e) => setUntilDate(e.target.value)}
+                              min={sinceDate || undefined}
+                              max={new Date().toISOString().split("T")[0]}
+                              aria-label="Scan games until date (optional)"
+                              className="glass-input h-10 text-sm"
+                            />
+                          </div>
+                        </div>
                       )}
                       {gameRangeMode === "count" && gamesOverFreeLimit && (
                         <p className="text-xs font-medium text-amber-400">

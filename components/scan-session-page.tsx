@@ -609,6 +609,7 @@ export function ScanSessionPage({
           maxTactics: scan.config.maxTactics ?? Infinity,
           maxEndgames: scan.config.maxEndgames ?? Infinity,
           since: scan.config.since ?? undefined,
+          until: scan.config.until ?? undefined,
         },
       );
 

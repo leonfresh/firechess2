@@ -132,6 +132,8 @@ export type AnalyzeOptions = {
   maxEndgames?: number;
   /** Only include games played after this epoch timestamp (milliseconds) */
   since?: number;
+  /** Only include games played before this epoch timestamp (milliseconds) */
+  until?: number;
   onProgress?: (progress: AnalysisProgress) => void;
   /** Called when each section finishes — enables progressive rendering. */
   onSectionReady?: (
@@ -576,6 +578,17 @@ async function fetchChessComGamesInReverse(
     });
   }
 
+  // When an "until" filter is set, skip archives newer than the target month
+  const untilMs = options?.until;
+  if (untilMs) {
+    const untilDate = new Date(untilMs);
+    const untilYYYYMM = `${untilDate.getUTCFullYear()}/${String(untilDate.getUTCMonth() + 1).padStart(2, "0")}`;
+    archives = archives.filter((url) => {
+      const match = url.match(/\/(\d{4}\/\d{2})$/);
+      return match ? match[1] <= untilYYYYMM : true;
+    });
+  }
+
   if (archives.length === 0) {
     return [];
   }
@@ -613,6 +626,9 @@ async function fetchChessComGamesInReverse(
 
       // Skip games before the "since" date
       if (sinceMs && game.end_time && game.end_time * 1000 < sinceMs) continue;
+
+      // Skip games after the "until" date
+      if (untilMs && game.end_time && game.end_time * 1000 > untilMs) continue;
 
       // Time control filter for Chess.com games
       const tcRaw = options?.timeControl;
@@ -911,7 +927,9 @@ async function loadGamesForAnalysis(
     const perfParam =
       lichessPerfs.length > 0 ? `&perfType=${lichessPerfs.join(",")}` : "";
     const sinceParam = fetchSince > 0 ? `&since=${fetchSince}` : "";
-    const lichessUrl = `https://lichess.org/api/games/user/${encodeURIComponent(username)}?max=${maxGames}&moves=true&opening=true&clocks=true&evals=false&pgnInJson=false${perfParam}${sinceParam}`;
+    const fetchUntil = options?.until ?? 0;
+    const untilParam = fetchUntil > 0 ? `&until=${fetchUntil}` : "";
+    const lichessUrl = `https://lichess.org/api/games/user/${encodeURIComponent(username)}?max=${maxGames}&moves=true&opening=true&clocks=true&evals=false&pgnInJson=false${perfParam}${sinceParam}${untilParam}`;
 
     const hasSinceFilter = fetchSince > 0;
     const lichessGames = await streamLichessGames(
@@ -954,6 +972,11 @@ async function loadGamesForAnalysis(
     if (options?.since) {
       additions = additions.filter(
         (g) => !g.playedAt || g.playedAt >= options.since!,
+      );
+    }
+    if (options?.until) {
+      additions = additions.filter(
+        (g) => !g.playedAt || g.playedAt <= options.until!,
       );
     }
     if (additions.length > 0) {

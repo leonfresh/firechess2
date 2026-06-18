@@ -23,7 +23,13 @@ function isValidScanConfig(value: unknown): value is ScanSessionConfig {
       config.scanMode === "endgames" ||
       config.scanMode === "time-management" ||
       config.scanMode === "both") &&
-    Array.isArray(config.speed)
+    Array.isArray(config.speed) &&
+    (config.since === null ||
+      config.since === undefined ||
+      typeof config.since === "number") &&
+    (config.until === null ||
+      config.until === undefined ||
+      typeof config.until === "number")
   );
 }
 
