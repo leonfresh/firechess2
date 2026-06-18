@@ -15,6 +15,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { users, subscriptions, reports, studyPlans } from "@/lib/schema";
 import { eq, desc, gte, and, sql } from "drizzle-orm";
+import type { RepeatedOpeningLeak } from "@/lib/types";
+import {
+  ratingBracket,
+  weeklyWeakness,
+  currentWeekIndex,
+} from "@/lib/weekly-weakness";
 
 export const runtime = "nodejs";
 export const maxDuration = 60; // seconds
@@ -63,9 +69,16 @@ export async function GET(req: NextRequest) {
       .where(and(eq(reports.userId, user.userId), gte(reports.createdAt, oneWeekAgo)))
       .orderBy(desc(reports.estimatedAccuracy));
 
-    /* ─ Latest report ever (for "days since last scan") ─ */
+    /* ─ Latest report ever (for "days since last scan" + top leak) ─ */
     const [latestReport] = await db
-      .select({ createdAt: reports.createdAt })
+      .select({
+        id: reports.id,
+        createdAt: reports.createdAt,
+        leaks: reports.leaks,
+        playerRating: reports.playerRating,
+        chessUsername: reports.chessUsername,
+        source: reports.source,
+      })
       .from(reports)
       .where(eq(reports.userId, user.userId))
       .orderBy(desc(reports.createdAt))
@@ -96,29 +109,72 @@ export async function GET(req: NextRequest) {
 
     const unsubUrl = `${appUrl}/api/email-prefs?action=unsubscribe&uid=${user.userId}`;
 
-    // Build stats rows
-    let statsHtml = "";
-    if (scanCount > 0) {
-      statsHtml = `
-        <div style="background: #18181b; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
-          <p style="color: #34d399; font-size: 20px; font-weight: 700; margin: 0 0 4px;">
-            ${scanCount} scan${scanCount > 1 ? "s" : ""} this week
+    /* ─ Lead card: the user's single biggest leak ─────────────────── */
+    // Impact-weighted: a leak that recurs and costs centipawns is the one
+    // actually costing rating, not a one-off blunder. Falls back to the
+    // universal weakness-of-the-week if the report has no structured leaks.
+    const leaks = (latestReport.leaks ?? []) as RepeatedOpeningLeak[];
+    const topLeak = leaks
+      .map((l) => ({ leak: l, impact: (l.cpLoss ?? 0) * (l.reachCount ?? 1) }))
+      .sort((a, b) => b.impact - a.impact)[0]?.leak;
+
+    const reportUrl = `${appUrl}/report/${latestReport.id}`;
+
+    const leakHtml = topLeak
+      ? `
+        <div style="background: #1a120b; border: 1px solid rgba(249,115,22,0.25); border-radius: 10px; padding: 20px; margin-bottom: 16px;">
+          <p style="color: #fb923c; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 8px;">
+            🔥 Your biggest leak right now
           </p>
-          <p style="color: #a1a1aa; font-size: 13px; margin: 0;">
-            ${totalGames} games analyzed ${bestAcc ? `· Best accuracy: <strong style="color:#fff;">${bestAcc}%</strong>` : ""}
+          <p style="color: #fff; font-size: 18px; font-weight: 700; margin: 0 0 8px;">
+            ${escapeHtml(topLeak.openingName ?? "A recurring position")}
+          </p>
+          <p style="color: #d4d4d8; font-size: 14px; line-height: 1.5; margin: 0 0 12px;">
+            You played <strong style="color:#fff;">${escapeHtml(topLeak.userMove ?? "?")}</strong>
+            ${topLeak.bestMove ? ` instead of <strong style="color:#34d399;">${escapeHtml(topLeak.bestMove)}</strong>` : ""}
+            in ${topLeak.reachCount ?? 1} game${(topLeak.reachCount ?? 1) > 1 ? "s" : ""},
+            dropping about <strong style="color:#fbbf24;">${(topLeak.cpLoss ?? 0).toFixed(1)}cp</strong> each time.
+          </p>
+          ${
+            topLeak.userWins != null || topLeak.userLosses != null
+              ? `<p style="color:#71717a; font-size:12px; margin:0 0 14px;">
+                  Your record with it: ${topLeak.userWins ?? 0}W ${topLeak.userDraws ?? 0}D ${topLeak.userLosses ?? 0}L
+                 </p>`
+              : ""
+          }
+          <a href="${reportUrl}" style="display:inline-block; background: linear-gradient(135deg, #fbbf24, #f97316); color:#1c1917; font-weight:700; font-size:13px; padding:10px 22px; border-radius:8px; text-decoration:none;">
+            Drill this position →
+          </a>
+        </div>`
+      : "";
+
+    /* ─ Universal "weakness of the week" — valuable even with no activity ─ */
+    const bracket = ratingBracket(latestReport.playerRating ?? undefined);
+    const tip = weeklyWeakness(bracket, currentWeekIndex());
+
+    const tipHtml = `
+        <div style="background: #18181b; border-left: 3px solid #a78bfa; border-radius: 8px; padding: 18px; margin-bottom: 16px;">
+          <p style="color: #c084fc; font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin: 0 0 6px;">
+            📚 Weakness of the week · ${bracket} level
+          </p>
+          <p style="color: #fff; font-size: 16px; font-weight: 600; margin: 0 0 8px;">
+            ${escapeHtml(tip.title)}
+          </p>
+          <p style="color: #a1a1aa; font-size: 13px; line-height: 1.55; margin: 0 0 10px;">
+            ${escapeHtml(tip.blurb)}
+          </p>
+          <p style="color: #34d399; font-size: 13px; line-height: 1.55; margin: 0;">
+            <strong>Fix:</strong> ${escapeHtml(tip.fix)}
           </p>
         </div>`;
-    } else {
-      statsHtml = `
-        <div style="background: #18181b; border-radius: 8px; padding: 16px; margin-bottom: 16px; border-left: 3px solid #f59e0b;">
-          <p style="color: #fbbf24; font-size: 16px; font-weight: 600; margin: 0 0 4px;">
-            No scans this week
-          </p>
-          <p style="color: #a1a1aa; font-size: 13px; margin: 0;">
-            Your last scan was ${daysSince} day${daysSince !== 1 ? "s" : ""} ago. Time for a fresh analysis!
-          </p>
-        </div>`;
-    }
+
+    /* ─ Activity footer (demoted — vanity stats no longer lead) ─────── */
+    const activityLine =
+      scanCount > 0
+        ? `${scanCount} scan${scanCount > 1 ? "s" : ""} · ${totalGames} games${
+            bestAcc ? ` · best accuracy ${bestAcc}%` : ""
+          }`
+        : `Last scan ${daysSince} day${daysSince !== 1 ? "s" : ""} ago`;
 
     // Study plan row
     let planHtml = "";
@@ -126,7 +182,7 @@ export async function GET(req: NextRequest) {
       planHtml = `
         <div style="background: #18181b; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
           <p style="color: #c084fc; font-size: 14px; font-weight: 600; margin: 0 0 4px;">
-            📚 Study Plan: ${activePlan.title}
+            📚 Study Plan: ${escapeHtml(activePlan.title ?? "")}
           </p>
           <p style="color: #a1a1aa; font-size: 13px; margin: 0;">
             ${activePlan.currentStreak} day streak · ${activePlan.progress}% complete
@@ -134,44 +190,41 @@ export async function GET(req: NextRequest) {
         </div>`;
     }
 
-    // Motivational line
-    const motivations = [
-      "Every game has a lesson. Let's find yours.",
-      "The best players study their losses. You're already ahead.",
-      "Small improvements compound. Keep scanning!",
-      "Your next breakthrough is one scan away.",
-      "Consistency beats talent. Keep the streak alive!",
-    ];
-    const motivation = motivations[Math.floor(Math.random() * motivations.length)];
+    const subject = topLeak
+      ? `🔥 Your leak this week: ${truncate(topLeak.openingName ?? "a recurring position", 30)}`
+      : `🔥 ${tip.title} — this week's fix`;
 
     const html = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 560px; margin: 0 auto; color: #e4e4e7;">
         <div style="background: #0a0a0a; border-radius: 12px; padding: 32px; border: 1px solid #27272a;">
           <div style="margin-bottom: 24px;">
             <span style="font-size: 24px; font-weight: 700; color: #fff;">🔥 FireChess</span>
-            <span style="color: #52525b; font-size: 13px; margin-left: 8px;">Weekly Digest</span>
+            <span style="color: #52525b; font-size: 13px; margin-left: 8px;">Weekly Leak Report</span>
           </div>
 
           <p style="color: #fff; font-size: 18px; font-weight: 600; margin-bottom: 16px;">
-            Hey ${firstName} 👋
+            Hey ${escapeHtml(firstName)} 👋
           </p>
 
-          <p style="color: #a1a1aa; font-size: 14px; margin-bottom: 20px;">
-            Here's your weekly chess improvement summary:
+          <p style="color: #a1a1aa; font-size: 14px; margin-bottom: 20px; line-height: 1.5;">
+            ${
+              topLeak
+                ? "Here's the single mistake costing you the most rating right now — plus this week's universal weakness to drill."
+                : "No new scan to analyse yet, so here's this week's weakness for your level. Run a scan to get a personal leak report like the one below."
+            }
           </p>
 
-          ${statsHtml}
+          ${leakHtml}
+          ${tipHtml}
           ${planHtml}
 
-          <p style="color: #a1a1aa; font-size: 13px; font-style: italic; margin-bottom: 24px;">
-            "${motivation}"
-          </p>
-
-          <a href="${appUrl}" style="display: inline-block; background: linear-gradient(135deg, #10b981, #06b6d4); color: #000; font-weight: 600; font-size: 14px; padding: 12px 28px; border-radius: 8px; text-decoration: none;">
-            ${scanCount > 0 ? "View Dashboard →" : "Scan Now →"}
+          <a href="${appUrl}" style="display: inline-block; background: linear-gradient(135deg, #fbbf24, #f97316); color: #1c1917; font-weight: 700; font-size: 14px; padding: 12px 28px; border-radius: 8px; text-decoration: none;">
+            ${scanCount > 0 ? "View my dashboard →" : "Scan my games →"}
           </a>
 
-          <p style="color: #3f3f46; font-size: 11px; margin-top: 32px; border-top: 1px solid #27272a; padding-top: 16px;">
+          <p style="color: #52525b; font-size: 11px; margin-top: 20px;">${escapeHtml(activityLine)}</p>
+
+          <p style="color: #3f3f46; font-size: 11px; margin-top: 24px; border-top: 1px solid #27272a; padding-top: 16px;">
             You're receiving this because you have a FireChess account.
             <a href="${unsubUrl}" style="color: #52525b; text-decoration: underline;">Unsubscribe from weekly digests</a>
           </p>
@@ -189,9 +242,7 @@ export async function GET(req: NextRequest) {
         body: JSON.stringify({
           from,
           to: user.email,
-          subject: scanCount > 0
-            ? `🔥 Your Week: ${scanCount} scan${scanCount > 1 ? "s" : ""}${bestAcc ? `, ${bestAcc}% best accuracy` : ""}`
-            : `🔥 Time for a fresh scan — ${daysSince}d since your last`,
+          subject,
           html,
         }),
       });
@@ -208,4 +259,19 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ ok: true, sent, total: eligibleUsers.length });
+}
+
+/* ── Small HTML helpers ─────────────────────────────────────────────────── */
+
+function escapeHtml(s: string | null | undefined): string {
+  if (!s) return "";
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function truncate(s: string, max: number): string {
+  return s.length > max ? s.slice(0, max - 1) + "…" : s;
 }

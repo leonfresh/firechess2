@@ -865,3 +865,27 @@ export const communityReactions = pgTable(
   },
   (t) => [unique().on(t.postId, t.userId, t.kind)],
 );
+
+/* ------------------------------------------------------------------ */
+/*  Newsletter / lead capture                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Anonymous homepage email captures for the weekly-digest nurture funnel.
+ * Separate from `subscriptions` (which is tied to a registered userId) so we
+ * can collect leads before signup. When a subscriber later registers, the
+ * weekly-digest cron picks them up from `users`+`subscriptions` instead.
+ */
+export const newsletterSubscribers = pgTable(
+  "newsletter_subscriber",
+  {
+    email: text("email").primaryKey(),
+    /** Where the lead came from — e.g. "homepage", "blog", "exit-intent". */
+    source: text("source").notNull().default("homepage"),
+    leadMagnet: text("leadMagnet"),
+    createdAt: timestamp("createdAt", { mode: "date" }).defaultNow(),
+    unsubscribedAt: timestamp("unsubscribedAt", { mode: "date" }),
+    /** Optional token used for one-click unsubscribe links. */
+    unsubscribeToken: text("unsubscribeToken"),
+  },
+);

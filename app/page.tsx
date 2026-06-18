@@ -12,32 +12,43 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
-  BarChart3,
   BookOpen,
   Brain,
   Castle,
   CheckCircle2,
-  Dumbbell,
   FileText,
   Flame,
-  FolderOpen,
   Gem,
   Globe,
   GraduationCap,
-  Hammer,
-  Infinity as InfinityIcon,
-  ScanSearch,
-  Search,
   Skull,
-  Star,
   Swords,
-  Users,
   Zap,
 } from "lucide-react";
 import { CommunityPostComposerModal } from "@/components/community-post-composer-modal";
 import { DrillMode } from "@/components/drill-mode";
-import { HeroProductScreenshot } from "@/components/hero-product-screenshot";
-import { HomepageCommunityFeed } from "@/components/homepage-community-feed";
+import {
+  HeroSection,
+  HeroSocialProofStrip,
+  type SiteStats as HeroSiteStats,
+} from "@/components/home/hero-section";
+import dynamic from "next/dynamic";
+
+// Below-the-fold homepage sections are code-split to keep the 8k-line page's
+// initial JS bundle lean. They only render when no scan is in flight, so
+// deferring them is safe and improves LCP / INP on mobile.
+const HowItWorks = dynamic(
+  () => import("@/components/home/how-it-works").then((m) => m.HowItWorks),
+  { ssr: true },
+);
+const CommunityLoop = dynamic(
+  () => import("@/components/home/community-loop").then((m) => m.CommunityLoop),
+  { ssr: true },
+);
+const EmailCapture = dynamic(
+  () => import("@/components/home/email-capture").then((m) => m.EmailCapture),
+  { ssr: true },
+);
 import { MistakeCard } from "@/components/mistake-card";
 import { TacticCard } from "@/components/tactic-card";
 import { EndgameCard } from "@/components/endgame-card";
@@ -368,6 +379,20 @@ export default function HomePage() {
       setHeroPhase("revealing");
       heroTimerRef.current = setTimeout(() => setHeroPhase("idle"), 3000);
     }, 400);
+  }, []);
+
+  // Hero CTA scroll handlers — smooth-scroll to the analyzer form and the
+  // inline sample-reports section without a route change.
+  const scrollToAnalyzer = useCallback(() => {
+    document
+      .getElementById("analyzer")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, []);
+
+  const scrollToSampleReports = useCallback(() => {
+    document
+      .getElementById("sample-reports")
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
   useEffect(() => {
@@ -1455,287 +1480,17 @@ export default function HomePage() {
       <div className="relative z-10 px-4 py-10 sm:px-6 md:px-10">
         <section className="mx-auto w-full max-w-7xl space-y-12 sm:space-y-14 lg:space-y-16">
           {/* ─── Hero Section ─── */}
-          <header className="animate-fade-in-up">
-            <div
-              className="relative overflow-hidden rounded-[2.75rem] px-5 py-7 shadow-[0_40px_120px_-64px_rgba(20,8,5,0.95)] sm:px-8 sm:py-9 lg:px-10 lg:py-10"
-              style={{
-                background:
-                  "linear-gradient(145deg, rgba(10, 9, 13, 0.97) 0%, rgba(19, 13, 16, 0.96) 46%, rgba(56, 25, 12, 0.95) 100%)",
-              }}
-            >
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-200/35 to-transparent" />
-              <div className="pointer-events-none absolute left-[-8%] top-[-10%] h-48 w-48 rounded-full bg-orange-400/[0.08] blur-3xl" />
-              <div className="pointer-events-none absolute bottom-[-12%] right-[8%] h-44 w-44 rounded-full bg-red-500/[0.07] blur-3xl" />
-
-              <div className="relative grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start lg:gap-10">
-                <div className="space-y-6 text-center lg:text-left">
-                  <div className={`space-y-3 ${heroAnim(2)}`}>
-                    <span className="inline-flex rounded-full bg-orange-400/[0.07] px-3 py-1 font-mono text-[11px] uppercase tracking-[0.32em] text-orange-100/70">
-                      Archive to board to plan
-                    </span>
-                    <div className="space-y-2">
-                      <h1 className="text-5xl font-black leading-[0.96] tracking-[-0.05em] text-white md:text-6xl lg:text-[4.45rem]">
-                        Analyze more.
-                      </h1>
-                      <h1 className="bg-gradient-to-r from-amber-200 via-orange-300 to-red-400 bg-clip-text text-5xl font-black italic leading-[0.96] tracking-[-0.05em] text-transparent md:text-6xl lg:text-[4.45rem]">
-                        Improve faster.
-                      </h1>
-                    </div>
-                  </div>
-
-                  <p
-                    className={`text-base leading-relaxed text-slate-300/90 md:text-lg lg:max-w-xl ${heroAnim(3)}`}
-                  >
-                    FireChess pulls your recent games into one clean report,
-                    then turns the sharpest positions into boards you can
-                    review, share, and drill.
-                  </p>
-
-                  <div className={`space-y-4 ${heroAnim(4)}`}>
-                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center lg:justify-start">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          document.getElementById("analyzer")?.scrollIntoView({
-                            behavior: "smooth",
-                            block: "start",
-                          })
-                        }
-                        className="btn-cta-fire inline-flex h-12 items-center justify-center rounded-xl px-6 text-base font-semibold text-white"
-                      >
-                        Analyze Your Games
-                      </button>
-                      <Link
-                        href="/community"
-                        className="inline-flex h-12 items-center justify-center rounded-xl bg-white/[0.05] px-6 text-base font-semibold text-slate-100 transition-colors duration-200 hover:bg-orange-400/[0.08] hover:text-white"
-                      >
-                        Browse Study Boards
-                      </Link>
-                      <a
-                        href="https://www.youtube.com/watch?v=MpWsW10YE5M"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex h-12 items-center justify-center gap-2 rounded-xl px-4 text-base font-semibold text-slate-400 transition-colors duration-200 hover:text-white"
-                      >
-                        <svg
-                          className="h-4 w-4 flex-shrink-0"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                        >
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
-                        Watch Trailer
-                      </a>
-                    </div>
-
-                    {/* Live community stats */}
-                    {siteStats && (
-                      <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 lg:justify-start">
-                        {[
-                          {
-                            value: siteStats.totalUsers,
-                            suffix: "+ players",
-                            icon: Users,
-                          },
-                          {
-                            value: siteStats.activeUsers30d,
-                            suffix: " active this month",
-                            icon: Flame,
-                          },
-                          {
-                            value: siteStats.totalReports,
-                            suffix: " scans run",
-                            icon: BarChart3,
-                          },
-                        ].map((s) => (
-                          <span
-                            key={s.suffix}
-                            className="flex items-center gap-1.5 text-[13px] text-slate-500"
-                          >
-                            <s.icon className="h-3.5 w-3.5 text-orange-300/70" />
-                            <span className="font-semibold text-slate-300">
-                              {s.value.toLocaleString()}
-                            </span>
-                            <span>{s.suffix}</span>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div
-                  className={`relative mx-auto w-full max-w-[38rem] lg:max-w-none ${heroAnim(5)}`}
-                >
-                  <div className="pointer-events-none absolute -inset-10 rounded-full bg-orange-500/[0.06] blur-3xl" />
-                  <div className="relative overflow-hidden rounded-[2rem] bg-black/55 p-1 shadow-[0_0_80px_-16px_rgba(249,115,22,0.22),0_48px_120px_-52px_rgba(0,0,0,0.95)] ring-1 ring-white/[0.04]">
-                    <HeroProductScreenshot paused={state !== "idle"} />
-                    <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 backdrop-blur-sm">
-                      <span className="relative flex h-1.5 w-1.5">
-                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-                        <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-green-400" />
-                      </span>
-                      <span className="text-[10px] font-medium text-white/60">
-                        Live
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                className={`relative mt-8 grid grid-cols-2 gap-3 border-t border-white/[0.07] pt-6 sm:grid-cols-5 ${heroAnim(6)}`}
-              >
-                {[
-                  {
-                    value: siteStats?.totalUsers,
-                    label: "Players joined",
-                    icon: Users,
-                    color: "text-amber-300",
-                    accent: "from-amber-400/20 to-amber-500/0",
-                  },
-                  {
-                    value: siteStats?.activeUsers30d,
-                    label: "Active this month",
-                    icon: Flame,
-                    color: "text-orange-400",
-                    accent: "from-orange-400/20 to-orange-500/0",
-                  },
-                  {
-                    value: siteStats?.totalReports,
-                    label: "Scans completed",
-                    icon: BarChart3,
-                    color: "text-emerald-400",
-                    accent: "from-emerald-400/20 to-emerald-500/0",
-                  },
-                  {
-                    value: siteStats?.proMembers,
-                    label: "Pro members",
-                    icon: Star,
-                    color: "text-amber-400",
-                    accent: "from-amber-400/25 to-amber-500/0",
-                  },
-                  {
-                    value: siteStats?.lifetimeMembers,
-                    label: "Lifetime members",
-                    icon: InfinityIcon,
-                    color: "text-red-400",
-                    accent: "from-red-400/20 to-red-500/0",
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.label}
-                    className="group relative overflow-hidden rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-3.5 transition-colors hover:border-white/[0.09] hover:bg-white/[0.04]"
-                  >
-                    <div
-                      className={`pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r ${item.accent}`}
-                    />
-                    <div className="flex items-center gap-2">
-                      <item.icon className={`h-4 w-4 ${item.color}`} />
-                      <span
-                        className={`text-xl font-bold tabular-nums ${item.color}`}
-                      >
-                        {item.value != null ? item.value.toLocaleString() : "—"}
-                      </span>
-                    </div>
-                    <p className="mt-0.5 text-xs text-slate-500">
-                      {item.label}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </header>
+          <HeroSection
+            siteStats={siteStats as HeroSiteStats}
+            onScanClick={scrollToAnalyzer}
+            onSeeSampleClick={scrollToSampleReports}
+          />
 
           {/* ─── Social proof strip ─── */}
-          {state === "idle" && (
-            <div className="scroll-reveal flex flex-wrap items-center justify-center gap-x-8 gap-y-3 px-2">
-              {[
-                { value: "Lichess + Chess.com", label: "Both platforms" },
-                { value: "Stockfish 16", label: "Engine-powered" },
-                {
-                  value: "Openings · Tactics · Endgames",
-                  label: "Full coverage",
-                },
-                { value: "Free forever", label: "No credit card" },
-              ].map((stat, i) => (
-                <div
-                  key={stat.label}
-                  className={`chip-pop flex items-center gap-2`}
-                  style={{ animationDelay: `${i * 0.08}s` }}
-                >
-                  <span className="h-1.5 w-1.5 rounded-full bg-orange-400/60" />
-                  <span className="text-sm font-semibold text-white/85">
-                    {stat.value}
-                  </span>
-                  <span className="text-sm text-slate-500">— {stat.label}</span>
-                </div>
-              ))}
-            </div>
-          )}
+          {state === "idle" && <HeroSocialProofStrip siteStats={siteStats as HeroSiteStats} />}
 
           {/* ─── How it works ─── */}
-          {state === "idle" && (
-            <section className="scroll-reveal mx-auto w-full max-w-5xl">
-              <div className="text-center">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-orange-300/80">
-                  How it works
-                </p>
-                <h2 className="mt-3 text-2xl font-bold text-white sm:text-3xl">
-                  From username to game plan in three steps
-                </h2>
-                <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-slate-400 sm:text-base">
-                  No uploads, no setup. FireChess reads your public games and
-                  does the rest — right in your browser.
-                </p>
-              </div>
-
-              <div className="relative mt-8 grid gap-4 sm:grid-cols-3">
-                <div
-                  className="pointer-events-none absolute left-[18%] right-[18%] top-9 hidden h-px bg-gradient-to-r from-orange-400/0 via-orange-400/25 to-orange-400/0 sm:block"
-                  aria-hidden="true"
-                />
-                {[
-                  {
-                    step: "1",
-                    icon: Search,
-                    title: "Enter your username",
-                    text: "Pick Lichess or Chess.com. We pull your recent games automatically — nothing to export.",
-                  },
-                  {
-                    step: "2",
-                    icon: ScanSearch,
-                    title: "Get your report",
-                    text: "Stockfish scans your openings, tactics, endgames, and clock usage in one pass.",
-                  },
-                  {
-                    step: "3",
-                    icon: Dumbbell,
-                    title: "Drill the leaks",
-                    text: "Every repeated mistake becomes a position you can replay, share, or train until it sticks.",
-                  },
-                ].map((item) => (
-                  <div
-                    key={item.step}
-                    className="relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 text-center transition-colors hover:border-orange-400/20 hover:bg-white/[0.03]"
-                  >
-                    <div className="relative mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-orange-400/20 bg-orange-400/[0.08]">
-                      <item.icon className="h-5 w-5 text-orange-300" />
-                      <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
-                        {item.step}
-                      </span>
-                    </div>
-                    <h3 className="mt-4 text-base font-semibold text-white">
-                      {item.title}
-                    </h3>
-                    <p className="mt-1.5 text-sm leading-relaxed text-slate-400">
-                      {item.text}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+          {state === "idle" && <HowItWorks />}
 
           <section
             id="analyzer"
@@ -1994,195 +1749,21 @@ export default function HomePage() {
           </section>
 
           {/* ─── Sample reports ─── */}
-          {state === "idle" && <SampleReportsSection />}
+          {state === "idle" && (
+            <div id="sample-reports" className="scroll-mt-24">
+              <SampleReportsSection />
+            </div>
+          )}
+
+          {/* ─── Lead capture (free weekly leak report) ─── */}
+          {state === "idle" && <EmailCapture />}
 
           {/* ─── Community Loop ─── */}
           {state === "idle" && (
-            <section className="relative">
-              <div
-                className="relative overflow-hidden rounded-[2rem] px-5 py-6 shadow-[0_30px_100px_-56px_rgba(37,12,7,0.98)] sm:px-6 sm:py-7 lg:px-8"
-                style={{
-                  background:
-                    "linear-gradient(150deg, rgba(11, 9, 12, 0.97) 0%, rgba(17, 12, 15, 0.96) 54%, rgba(46, 24, 14, 0.94) 100%)",
-                }}
-              >
-                <div className="relative space-y-7">
-                  <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-                    <div className="max-w-3xl">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-orange-100/80">
-                        Community loop
-                      </p>
-
-                      <div className="mt-4">
-                        <h2 className="text-2xl font-bold text-white sm:text-3xl">
-                          Turn every report into a board people can actually
-                          use.
-                        </h2>
-                        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-300/80 sm:text-base">
-                          Once the scan finds the leak, you should be able to
-                          cut the exact position, ask a sharper question,
-                          collect ideas, and keep the lesson inside your study
-                          workflow.
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-3 lg:items-end">
-                      <p className="max-w-sm text-sm leading-relaxed text-slate-400 lg:text-right">
-                        Fresh positions, opening debates, and study boards
-                        should stay playable right on the homepage.
-                      </p>
-                      <Link
-                        href="/community"
-                        className="inline-flex items-center gap-2 rounded-full border border-orange-400/20 bg-orange-400/[0.08] px-4 py-2 text-sm font-semibold text-orange-100 transition-colors hover:border-orange-300/35 hover:bg-orange-400/[0.14] hover:text-white"
-                      >
-                        View full feed
-                        <svg
-                          className="h-4 w-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth={2.5}
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M13 7l5 5m0 0l-5 5m5-5H6"
-                          />
-                        </svg>
-                      </Link>
-                    </div>
-                  </div>
-
-                  <div className="mt-6">
-                    <HomepageCommunityFeed />
-                  </div>
-
-                  <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1.45fr)_minmax(0,0.95fr)]">
-                    <div className="divide-y divide-white/[0.08]">
-                      {[
-                        {
-                          href: "/board",
-                          icon: Hammer,
-                          title: "Board Workbench",
-                          description:
-                            "Paste a FEN or PGN, trim the exact moment, and publish it without rebuilding the position by hand.",
-                          accent:
-                            "border-amber-400/20 bg-amber-400/[0.07] text-amber-200 hover:border-amber-300/40",
-                        },
-                        {
-                          href: "/community",
-                          icon: Flame,
-                          title: "Community Hub",
-                          description:
-                            "Browse live positions, opening debates, and study posts grounded in real boards rather than generic chat.",
-                          accent:
-                            "border-orange-400/20 bg-orange-400/[0.07] text-orange-200 hover:border-orange-300/40",
-                        },
-                        {
-                          href:
-                            authenticated && user?.id
-                              ? `/community/profile/${user.id}`
-                              : "/community",
-                          icon: FolderOpen,
-                          title: authenticated
-                            ? "My Study Profile"
-                            : "Study Profiles",
-                          description: authenticated
-                            ? "Your saved boards and posts become a reviewable study surface instead of a forgotten report archive."
-                            : "Profiles collect positions, lessons, and lines into a shareable review deck.",
-                          accent:
-                            "border-red-400/20 bg-red-400/[0.07] text-red-200 hover:border-red-300/40",
-                        },
-                      ].map((item, index) => (
-                        <Link
-                          key={item.title}
-                          href={item.href}
-                          className="group grid gap-3 py-4 transition-colors sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-start"
-                        >
-                          <div
-                            className={`inline-flex h-10 w-10 items-center justify-center rounded-xl ${item.accent}`}
-                          >
-                            <item.icon className="h-[18px] w-[18px]" />
-                          </div>
-
-                          <div className="min-w-0">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-100/40">
-                              0{index + 1}
-                            </p>
-                            <h3 className="mt-1 text-base font-semibold text-white transition-colors group-hover:text-orange-100">
-                              {item.title}
-                            </h3>
-                            <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate-400">
-                              {item.description}
-                            </p>
-                          </div>
-
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-white/60 transition-colors group-hover:text-white sm:justify-self-end sm:pt-6">
-                            Open
-                            <svg
-                              className="h-3.5 w-3.5"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth={2.5}
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M13 7l5 5m0 0l-5 5m5-5H6"
-                              />
-                            </svg>
-                          </span>
-                        </Link>
-                      ))}
-                    </div>
-
-                    <div className="space-y-4 lg:pl-6">
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-100/70">
-                        Study Flow
-                      </p>
-
-                      <div className="space-y-4 border-l border-white/[0.08] pl-4 sm:pl-5">
-                        {[
-                          {
-                            step: "01",
-                            title: "Scan the archive",
-                            description:
-                              "Run a report and isolate the repeat leaks that matter.",
-                          },
-                          {
-                            step: "02",
-                            title: "Lift the board out",
-                            description:
-                              "Push the exact moment into the workbench with context intact.",
-                          },
-                          {
-                            step: "03",
-                            title: "Discuss or drill",
-                            description:
-                              "Turn the lesson into a post, a saved card, or a training target.",
-                          },
-                        ].map((item) => (
-                          <div key={item.step} className="relative">
-                            <span className="absolute -left-[1.3rem] top-1.5 h-2.5 w-2.5 rounded-full bg-amber-200/70 shadow-[0_0_0_6px_rgba(251,191,36,0.06)] sm:-left-[1.55rem]" />
-                            <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-slate-500">
-                              Step {item.step}
-                            </p>
-                            <h3 className="mt-1.5 text-sm font-semibold text-white">
-                              {item.title}
-                            </h3>
-                            <p className="mt-1.5 text-sm leading-relaxed text-slate-400">
-                              {item.description}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
+            <CommunityLoop
+              authenticated={authenticated}
+              userId={user?.id}
+            />
           )}
 
           {/* ─── Loading State ─── */}
