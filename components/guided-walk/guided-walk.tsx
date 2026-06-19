@@ -68,17 +68,21 @@ export type GuidedWalkProps = {
 export function GuidedWalk(props: GuidedWalkProps) {
   const [step, setStep] = useState(0);
 
-  // Pick the single highest-impact leak for step 1.
+  // Pick the single highest-impact leak for step 1. Skip entries that don't
+  // have a usable board position so the slide never renders empty.
   const topLeak = useMemo(() => {
     return [...props.leaks]
+      .filter((l) => l.fenBefore && l.userColor)
       .map((l) => ({ leak: l, impact: (l.cpLoss ?? 0) * (l.reachCount ?? 1) }))
       .sort((a, b) => b.impact - a.impact)[0]?.leak ?? null;
   }, [props.leaks]);
 
-  // Pick one missed tactic (prefer one with a mate or big swing).
+  // Pick one missed tactic (prefer one with a mate or big swing). Needs a FEN
+  // for the interactive board to be meaningful.
   const topTactic = useMemo(() => {
-    if (props.missedTactics.length === 0) return null;
-    return [...props.missedTactics].sort((a, b) => {
+    const usable = props.missedTactics.filter((t) => t.fenBefore && t.userColor);
+    if (usable.length === 0) return null;
+    return [...usable].sort((a, b) => {
       const aScore = (a.mateIn ?? 0) * 1000 + (a.cpAfter ?? 0);
       const bScore = (b.mateIn ?? 0) * 1000 + (b.cpAfter ?? 0);
       return bScore - aScore;
@@ -251,22 +255,24 @@ function HeadlineStep({
       <div className="mt-7 grid w-full max-w-md grid-cols-2 gap-3">
         <Stat
           label="Accuracy"
-          value={`${report.estimatedAccuracy.toFixed(1)}%`}
+          value={`${(report.estimatedAccuracy ?? 0).toFixed(1)}%`}
           color="text-emerald-400"
         />
         <Stat
           label="Est. Rating"
-          value={report.estimatedRating.toString()}
+          value={
+            report.estimatedRating ? report.estimatedRating.toString() : "—"
+          }
           color="text-cyan-400"
         />
         <Stat
           label="Avg eval loss"
-          value={(report.weightedCpLoss / 100).toFixed(2)}
+          value={((report.weightedCpLoss ?? 0) / 100).toFixed(2)}
           color="text-amber-400"
         />
         <Stat
           label="Leak rate"
-          value={`${(report.severeLeakRate * 100).toFixed(0)}%`}
+          value={`${((report.severeLeakRate ?? 0) * 100).toFixed(0)}%`}
           color="text-red-400"
         />
       </div>
@@ -318,17 +324,33 @@ function TopLeakStep({
         <div className="space-y-4">
           <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
             <p className="text-sm leading-relaxed text-slate-300">
-              You played{" "}
-              <span className="font-bold text-white">{leak.userMove}</span>{" "}
-              {leak.bestMove && (
+              {leak.userMove ? (
                 <>
-                  instead of{" "}
-                  <span className="font-bold text-emerald-400">
-                    {leak.bestMove}
-                  </span>
+                  You played{" "}
+                  <span className="font-bold text-white">{leak.userMove}</span>{" "}
+                  {leak.bestMove && (
+                    <>
+                      instead of{" "}
+                      <span className="font-bold text-emerald-400">
+                        {leak.bestMove}
+                      </span>
+                    </>
+                  )}
+                  .
+                </>
+              ) : (
+                <>
+                  The engine suggests{" "}
+                  {leak.bestMove ? (
+                    <span className="font-bold text-emerald-400">
+                      {leak.bestMove}
+                    </span>
+                  ) : (
+                    "a cleaner continuation"
+                  )}
+                  .
                 </>
               )}
-              .
             </p>
             <div className="mt-3 grid grid-cols-3 gap-2 text-center">
               <MiniStat

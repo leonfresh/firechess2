@@ -2400,7 +2400,7 @@ export default function HomePage() {
                           className="glass-input h-10 text-sm"
                         />
                       ) : (
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-2">
                           <div className="space-y-1">
                             <span className="text-[10px] uppercase tracking-wider text-slate-500">
                               From
@@ -2412,7 +2412,7 @@ export default function HomePage() {
                               max={new Date().toISOString().split("T")[0]}
                               disabled={!hasProAccess}
                               aria-label="Scan games from date"
-                              className="glass-input h-10 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                              className="glass-input h-10 min-w-0 text-sm disabled:cursor-not-allowed disabled:opacity-50"
                             />
                           </div>
                           <div className="space-y-1">
@@ -2427,7 +2427,7 @@ export default function HomePage() {
                               max={new Date().toISOString().split("T")[0]}
                               disabled={!hasProAccess}
                               aria-label="Scan games until date (optional)"
-                              className="glass-input h-10 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                              className="glass-input h-10 min-w-0 text-sm disabled:cursor-not-allowed disabled:opacity-50"
                             />
                           </div>
                         </div>

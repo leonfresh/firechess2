@@ -12,6 +12,7 @@ import { tiltInsight } from "@/components/guided-walk/guided-walk";
 import { GuidedWalk } from "@/components/guided-walk/guided-walk";
 import { GuidedWalkBoard } from "@/components/guided-walk/guided-walk-board";
 import { ReportViewToggle } from "@/components/guided-walk/report-view-toggle";
+import { ReportEntryChoice } from "@/components/guided-walk/report-entry-choice";
 import {
   MentalGameLoading,
   ScanMentalGame,
@@ -2280,6 +2281,29 @@ export function ScanSessionReport({
     }
   }, [guidedLaunchSignal]);
 
+  // ── Entry choice prompt ──
+  // When you open an already-complete report, ask once how you want to read
+  // it (Guided tour vs Full). Fresh scans are handled by the scan-complete
+  // modal instead, so this only fires for reports that were "ready" on mount.
+  // The choice is remembered per report so revisits don't nag.
+  const entryChoiceKey = `firechess-report-entry-choice:${scan.id}`;
+  const shouldPromptEntry =
+    typeof window !== "undefined" &&
+    window.localStorage.getItem(entryChoiceKey) !== "dismissed";
+  const [showEntryChoice, setShowEntryChoice] = useState(
+    scan.status === "ready" &&
+      Boolean(scan.result) &&
+      guidedLaunchSignal === 0 &&
+      shouldPromptEntry,
+  );
+  const dismissEntryChoice = (mode: ReportViewMode) => {
+    setShowEntryChoice(false);
+    changeReportViewMode(mode);
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(entryChoiceKey, "dismissed");
+    }
+  };
+
   const visibleLeaks = accessibleLeaks.slice(0, leakReveal.shownCount);
   const visibleOneOffMistakes = accessibleOneOffMistakes.slice(
     0,
@@ -2542,6 +2566,10 @@ export function ScanSessionReport({
   ].filter(Boolean) as FloatingNavSection[];
   return (
     <>
+      <ReportEntryChoice
+        open={showEntryChoice}
+        onChoose={dismissEntryChoice}
+      />
       {reportViewMode === "full" ? (
         <FloatingSectionNav sections={floatingNavSections} />
       ) : null}
