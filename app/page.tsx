@@ -33,6 +33,7 @@ import {
   type SiteStats as HeroSiteStats,
 } from "@/components/home/hero-section";
 import { GuidedWalk } from "@/components/guided-walk/guided-walk";
+import { ReportViewToggle } from "@/components/guided-walk/report-view-toggle";
 import dynamic from "next/dynamic";
 
 // Below-the-fold homepage sections are code-split to keep the 8k-line page's
@@ -223,9 +224,9 @@ export default function HomePage() {
     speed: TimeControl[];
   } | null>(null);
   const [state, setState] = useState<RequestState>("idle");
-  // Report view: "guided" (Brilliant-style walkthrough, default) or "full"
-  // (the complete scrollable report). Reset to "guided" on every fresh scan.
-  const [viewMode, setViewMode] = useState<"guided" | "full">("guided");
+  // Report view: "full" (the complete scrollable report, default) or "guided"
+  // (Brilliant-style walkthrough). The sticky toggle switches between them.
+  const [viewMode, setViewMode] = useState<"guided" | "full">("full");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [siteStats, setSiteStats] = useState<{
@@ -1240,8 +1241,8 @@ export default function HomePage() {
     setResult(browserResult);
     setActiveReportPath(null);
     setState("done");
-    // Fresh scan → start in the guided walkthrough.
-    setViewMode("guided");
+    // Fresh scan → land on the full report; guided is one tap away.
+    setViewMode("full");
 
     // Cache report in localStorage for offline restore
     try {
@@ -2253,8 +2254,8 @@ export default function HomePage() {
                           setResult(entry.result);
                           setActiveReportPath(entry.reportPath ?? null);
                           setState("done");
-                          // Restored report → start in guided walkthrough too.
-                          setViewMode("guided");
+                          // Restored report → land on the full report.
+                          setViewMode("full");
                           setSaveStatus("idle");
                           setShowRestoreBanner(false);
                           setAdvancedSettingsOpen(false);
@@ -2791,10 +2792,23 @@ export default function HomePage() {
           {/* ─── Results ─── */}
           {result !== null && (state === "done" || state === "loading") && (
             <section ref={reportRef} className="animate-fade-in-up space-y-8">
-              {/* ── Guided walkthrough (Brilliant-style, default on fresh scans) ──
-                  Renders one card at a time over the existing report data, then
-                  flips viewMode to "full" to reveal the complete report below.
-                  The full report is rendered unchanged when viewMode === "full". */}
+              {/* ── Sticky view toggle (Guided / Full) — always present ── */}
+              <ReportViewToggle
+                viewMode={viewMode}
+                onChange={(mode) => {
+                  setViewMode(mode);
+                  // Returning to guided restarts the walkthrough at the top.
+                  if (mode === "guided") {
+                    reportRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }
+                }}
+              />
+
+              {/* ── Guided walkthrough (Brilliant-style, one card at a time) ──
+                  Available via the toggle above; onFinish flips to Full. */}
               {viewMode === "guided" && report && (
                 <GuidedWalk
                   report={report}
@@ -2810,8 +2824,6 @@ export default function HomePage() {
                   username={result.username}
                   onFinish={() => {
                     setViewMode("full");
-                    // Scroll back to the top of the report so the full view
-                    // starts where the walkthrough left off.
                     reportRef.current?.scrollIntoView({
                       behavior: "smooth",
                       block: "start",
@@ -2819,8 +2831,7 @@ export default function HomePage() {
                   }}
                 />
               )}
-              {/* Full report — hidden during the guided walkthrough, revealed
-                  when the user finishes/skips it (viewMode === "full"). */}
+              {/* Full report — the default view; everything below. */}
               {viewMode === "full" && (
               <>
               {/* Report Heading + Action Bar */}
