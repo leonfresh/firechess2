@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   ArrowRight,
   ChevronLeft,
@@ -9,11 +10,20 @@ import {
   Gauge,
   Lightbulb,
   ListChecks,
+  Sparkles,
+  Trophy,
   X,
 } from "lucide-react";
 import { GuidedWalkBoard } from "@/components/guided-walk/guided-walk-board";
+import {
+  StrengthsRadar,
+  buildRadarNarrative,
+  computeRadarData,
+  type RadarProps,
+} from "@/components/radar-chart";
 import type {
   AnalysisReport,
+  BrilliantMove,
   EndgameMistake,
   MentalStats,
   MissedTactic,
@@ -24,15 +34,25 @@ import type {
 /* ────────────────────────────────────────────────────────────────────────
  * GuidedWalk
  *
- * A Brilliant-style, one-card-at-a-time presenter layered over the existing
- * report data. It does NOT recompute anything — it sequences the user through
- * their findings, then graduates to the full report via onFinish().
+ * A Brilliant-style, one-screen-at-a-time presenter that takes over the full
+ * viewport (a portal over document.body, page scroll locked) and walks the
+ * user through everything important in their scan — then graduates to the full
+ * report via onFinish(). It does NOT recompute anything; it sequences the
+ * existing report data.
  *
- * 4 lean steps (v1):
- *   0. Headline   — accuracy snapshot + the one-line verdict
- *   1. Top leak   — biggest repeated opening mistake + a mini-drill
- *   2. A tactic   — one missed tactic as a solve/reveal micro-interaction
- *   3. The plan   — top 3 things to drill this week, then "see full report"
+ * Renders as a fixed full-screen overlay (deep-black, immersive) so the report
+ * page is fully hidden while in guided mode, like the Brilliant screenshot.
+ *
+ * Up to 8 steps (steps with no data are omitted, so the counter always matches
+ * real content):
+ *   1. Headline   — accuracy snapshot + the one-line verdict
+ *   2. Radar      — strengths radar + strongest/weakest dimensions
+ *   3. Top leak   — biggest repeated opening mistake (your move vs best)
+ *   4. Tactic     — one missed tactic as a solve/reveal micro-interaction
+ *   5. Brilliant  — your best engine-approved move (a positive beat)
+ *   6. Endgame    — one endgame technique moment
+ *   7. Profile    — coach's note + top strengths spotlights
+ *   8. The plan   — top things to drill this week + clock/tilt check
  *
  * The full report is rendered separately (untouched) by the page once the
  * user finishes or skips.
@@ -51,9 +71,9 @@ export type GuidedWalkProps = {
   oneOffMistakes: RepeatedOpeningLeak[];
   /** Position traces for the drill engine. */
   positionTraces: PositionEvalTrace[];
-  /** Missed tactics for step 2 + the drill. */
+  /** Missed tactics for the tactic step + the drill. */
   missedTactics: MissedTactic[];
-  /** Endgame mistakes (used by the drill engine if present). */
+  /** Endgame mistakes (used by the endgame step if present). */
   endgameMistakes?: EndgameMistake[];
   /** FENs to exclude from drilling (DB-approved inaccuracies). */
   excludeFens?: Set<string>;
@@ -61,15 +81,23 @@ export type GuidedWalkProps = {
   mentalStats?: MentalStats | null;
   /** Username, for copy. */
   username: string;
+  /** Radar props — when present, the strengths-radar step is shown. */
+  radarProps?: RadarProps | null;
+  /** Brilliant moves — when present, the brilliant-move step is shown. */
+  brilliantMoves?: BrilliantMove[];
   /** Called when the user finishes or skips → page flips to full view. */
   onFinish: () => void;
 };
 
 export function GuidedWalk(props: GuidedWalkProps) {
   const [step, setStep] = useState(0);
+  // SSR guard: portals need document.body, so wait for mount.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
-  // Pick the single highest-impact leak for step 1. Skip entries that don't
-  // have a usable board position so the slide never renders empty.
+  // ── Select the single highest-impact items for each board step. ──
+
+  // Top leak: highest cpLoss × reachCount, needs a usable board position.
   const topLeak = useMemo(() => {
     return [...props.leaks]
       .filter((l) => l.fenBefore && l.userColor)
@@ -77,8 +105,7 @@ export function GuidedWalk(props: GuidedWalkProps) {
       .sort((a, b) => b.impact - a.impact)[0]?.leak ?? null;
   }, [props.leaks]);
 
-  // Pick one missed tactic (prefer one with a mate or big swing). Needs a FEN
-  // for the interactive board to be meaningful.
+  // Top tactic: prefer mate / big swing, needs a FEN.
   const topTactic = useMemo(() => {
     const usable = props.missedTactics.filter((t) => t.fenBefore && t.userColor);
     if (usable.length === 0) return null;
@@ -89,7 +116,37 @@ export function GuidedWalk(props: GuidedWalkProps) {
     })[0];
   }, [props.missedTactics]);
 
-  // Top 3 items for the weekly plan.
+  // Best brilliant: prefer the biggest eval gain for the user.
+  const topBrilliant = useMemo(() => {
+    const usable = (props.brilliantMoves ?? []).filter(
+      (b) => b.fenBefore && b.userColor,
+    );
+    if (usable.length === 0) return null;
+    return [...usable].sort(
+      (a, b) => (b.cpAfter ?? 0) - (b.cpBefore ?? 0) - ((a.cpAfter ?? 0) - (a.cpBefore ?? 0)),
+    )[0];
+  }, [props.brilliantMoves]);
+
+  // One endgame moment: biggest cpLoss, needs a FEN.
+  const topEndgame = useMemo(() => {
+    const usable = (props.endgameMistakes ?? []).filter(
+      (e) => e.fenBefore && e.userColor,
+    );
+    if (usable.length === 0) return null;
+    return [...usable].sort((a, b) => (b.cpLoss ?? 0) - (a.cpLoss ?? 0))[0];
+  }, [props.endgameMistakes]);
+
+  // Radar narrative for the profile step.
+  const radarData = useMemo(
+    () => (props.radarProps ? computeRadarData(props.radarProps) : null),
+    [props.radarProps],
+  );
+  const narrative = useMemo(
+    () => (radarData ? buildRadarNarrative(radarData) : null),
+    [radarData],
+  );
+
+  // Top items for the weekly plan.
   const planItems = useMemo(() => {
     const items: { label: string; tag: string }[] = [];
     for (const l of props.leaks.slice(0, 2)) {
@@ -115,50 +172,103 @@ export function GuidedWalk(props: GuidedWalkProps) {
     return items.slice(0, 3);
   }, [props.leaks, props.oneOffMistakes, topTactic]);
 
-  const totalSteps = 4;
+  // ── Build the step list dynamically (omit steps with no data). ──
+  const steps = useMemo(() => {
+    const list: string[] = ["headline"];
+    if (props.radarProps && radarData) list.push("radar");
+    list.push("leak");
+    list.push("tactic");
+    if (topBrilliant) list.push("brilliant");
+    if (topEndgame) list.push("endgame");
+    if (narrative) list.push("profile");
+    list.push("plan");
+    return list;
+  }, [props.radarProps, radarData, topBrilliant, topEndgame, narrative]);
+
+  const totalSteps = steps.length;
   const isLast = step === totalSteps - 1;
 
   const next = () => (isLast ? props.onFinish() : setStep((s) => s + 1));
   const back = () => setStep((s) => Math.max(0, s - 1));
 
-  return (
-    <div className="animate-fade-in-up">
+  // ── Lock page scroll while the takeover is mounted. ──
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
+
+  // ── Keyboard nav: arrows + Escape. ──
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") {
+        e.preventDefault();
+        next();
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        back();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        props.onFinish();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, totalSteps]);
+
+  if (!mounted) return null;
+
+  const currentStep = steps[step];
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[200] flex flex-col bg-[#050507] text-white"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Guided report walkthrough"
+    >
+      {/* Ambient glow — subtle, like the Brilliant backdrop. */}
       <div
-        className="relative flex min-h-[34rem] flex-col rounded-[2rem] border border-white/[0.06] p-5 shadow-[0_40px_120px_-64px_rgba(20,8,5,0.95)] sm:p-7 lg:p-9"
+        className="pointer-events-none absolute inset-0 opacity-70"
         style={{
           background:
-            "linear-gradient(150deg, rgba(10,9,13,0.97) 0%, rgba(19,13,16,0.96) 50%, rgba(46,24,14,0.94) 100%)",
+            "radial-gradient(120% 80% at 50% -10%, rgba(249,115,22,0.10) 0%, rgba(15,23,42,0.0) 45%, rgba(0,0,0,0) 100%)",
         }}
-      >
-        {/* Top bar: progress + skip */}
-        <div className="flex shrink-0 items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            {Array.from({ length: totalSteps }).map((_, i) => (
-              <span
-                key={i}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  i === step
-                    ? "w-7 bg-orange-400"
-                    : i < step
-                      ? "w-3 bg-orange-400/60"
-                      : "w-3 bg-white/15"
-                }`}
-              />
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={props.onFinish}
-            className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 transition-colors hover:text-white"
-          >
-            Skip walkthrough
-            <X className="h-3.5 w-3.5" />
-          </button>
-        </div>
+      />
 
-        {/* Step body — sized to its content so nothing scrolls inside the card. */}
-        <div className="mt-7 flex-1">
-          {step === 0 && (
+      {/* Top bar: progress + skip */}
+      <div className="relative z-10 flex shrink-0 items-center justify-between gap-4 px-5 pt-5 sm:px-8 sm:pt-7">
+        <div className="flex items-center gap-2">
+          {steps.map((s, i) => (
+            <span
+              key={s}
+              className={`h-1.5 rounded-full transition-all duration-300 ${
+                i === step
+                  ? "w-8 bg-orange-400"
+                  : i < step
+                    ? "w-3 bg-orange-400/60"
+                    : "w-3 bg-white/15"
+              }`}
+            />
+          ))}
+        </div>
+        <button
+          type="button"
+          onClick={props.onFinish}
+          className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 transition-colors hover:text-white"
+        >
+          Skip walkthrough
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      {/* Step body — scrolls if it overflows; centered, animates per step. */}
+      <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 items-center overflow-y-auto px-5 py-8 sm:px-8">
+        <div key={currentStep} className="animate-fade-in-up w-full">
+          {currentStep === "headline" && (
             <HeadlineStep
               report={props.report}
               vibeTitle={props.vibeTitle}
@@ -166,16 +276,35 @@ export function GuidedWalk(props: GuidedWalkProps) {
               username={props.username}
             />
           )}
-          {step === 1 && (
-            <TopLeakStep leak={topLeak} hasNoLeaks={props.leaks.length === 0} />
+          {currentStep === "radar" && props.radarProps && radarData && (
+            <RadarStep
+              radarProps={props.radarProps}
+              data={radarData}
+              narrative={narrative}
+            />
           )}
-          {step === 2 && (
+          {currentStep === "leak" && (
+            <TopLeakStep
+              leak={topLeak}
+              hasNoLeaks={props.leaks.length === 0}
+            />
+          )}
+          {currentStep === "tactic" && (
             <TacticStep
               tactic={topTactic}
               hasNoTactics={props.missedTactics.length === 0}
             />
           )}
-          {step === 3 && (
+          {currentStep === "brilliant" && topBrilliant && (
+            <BrilliantStep brilliant={topBrilliant} />
+          )}
+          {currentStep === "endgame" && topEndgame && (
+            <EndgameStep endgame={topEndgame} />
+          )}
+          {currentStep === "profile" && narrative && radarData && (
+            <ProfileStep narrative={narrative} data={radarData} />
+          )}
+          {currentStep === "plan" && (
             <PlanStep
               planItems={planItems}
               mentalStats={props.mentalStats}
@@ -183,45 +312,46 @@ export function GuidedWalk(props: GuidedWalkProps) {
             />
           )}
         </div>
-
-        {/* Bottom nav — pinned to the card bottom, never moves */}
-        <div className="mt-7 flex shrink-0 items-center justify-between gap-3 border-t border-white/[0.07] pt-5">
-          <button
-            type="button"
-            onClick={back}
-            disabled={step === 0}
-            className="inline-flex items-center gap-1 rounded-xl px-3 py-2 text-sm font-medium text-slate-400 transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Back
-          </button>
-          <span className="text-xs font-medium text-slate-600">
-            {step + 1} / {totalSteps}
-          </span>
-          <button
-            type="button"
-            onClick={next}
-            className="btn-cta-fire group inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white"
-          >
-            {isLast ? (
-              <>
-                See full report
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </>
-            ) : (
-              <>
-                Next
-                <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </>
-            )}
-          </button>
-        </div>
       </div>
-    </div>
+
+      {/* Bottom nav — pinned to the bottom of the viewport. */}
+      <div className="relative z-10 mx-auto flex w-full max-w-4xl shrink-0 items-center justify-between gap-3 border-t border-white/[0.07] px-5 py-5 sm:px-8">
+        <button
+          type="button"
+          onClick={back}
+          disabled={step === 0}
+          className="inline-flex items-center gap-1 rounded-xl px-3 py-2 text-sm font-medium text-slate-400 transition-colors hover:text-white disabled:cursor-not-allowed disabled:opacity-30"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Back
+        </button>
+        <span className="text-xs font-medium text-slate-600">
+          {step + 1} / {totalSteps}
+        </span>
+        <button
+          type="button"
+          onClick={next}
+          className="btn-cta-fire group inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white"
+        >
+          {isLast ? (
+            <>
+              See full report
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </>
+          ) : (
+            <>
+              Next
+              <ChevronRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </>
+          )}
+        </button>
+      </div>
+    </div>,
+    document.body,
   );
 }
 
-/* ── Step 0: Headline ──────────────────────────────────────────────────── */
+/* ── Step 1: Headline ─────────────────────────────────────────────────── */
 
 function HeadlineStep({
   report,
@@ -240,7 +370,7 @@ function HeadlineStep({
         <Gauge className="h-3 w-3" />
         Scan complete · {gamesAnalyzed} games
       </span>
-      <h2 className="mt-5 text-3xl font-black leading-tight text-white sm:text-4xl">
+      <h2 className="mt-5 text-4xl font-black leading-tight text-white sm:text-5xl">
         Here&apos;s the one thing
         <br />
         <span className="bg-gradient-to-r from-amber-200 via-orange-300 to-red-400 bg-clip-text text-transparent">
@@ -252,7 +382,7 @@ function HeadlineStep({
         Here&apos;s what matters most — then we&apos;ll walk you through it.
       </p>
 
-      <div className="mt-7 grid w-full max-w-md grid-cols-2 gap-3">
+      <div className="mt-8 grid w-full max-w-xl grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat
           label="Accuracy"
           value={`${(report.estimatedAccuracy ?? 0).toFixed(1)}%`}
@@ -278,7 +408,7 @@ function HeadlineStep({
       </div>
 
       {vibeTitle && (
-        <p className="mt-5 text-sm italic text-slate-500">
+        <p className="mt-6 text-sm italic text-slate-500">
           Verdict: {vibeTitle}
         </p>
       )}
@@ -286,7 +416,74 @@ function HeadlineStep({
   );
 }
 
-/* ── Step 1: Top leak ──────────────────────────────────────────────────── */
+/* ── Step 2: Strengths radar ──────────────────────────────────────────── */
+
+function RadarStep({
+  radarProps,
+  data,
+  narrative,
+}: {
+  radarProps: RadarProps;
+  data: ReturnType<typeof computeRadarData>;
+  narrative: ReturnType<typeof buildRadarNarrative> | null;
+}) {
+  const avg = Math.round(
+    data.reduce((s, d) => s + d.value, 0) / data.length,
+  );
+  const sorted = [...data].sort((a, b) => a.value - b.value);
+  const weakest = sorted[0];
+  const strongest = sorted[sorted.length - 1];
+
+  return (
+    <div className="flex flex-col items-center text-center">
+      <StepHeader
+        eyebrow="Your strengths profile"
+        title="Where you're already strong"
+        icon={<Gauge className="h-4 w-4" />}
+        tone="orange"
+      />
+      {narrative && (
+        <p className="mt-4 max-w-lg text-sm leading-relaxed text-slate-400">
+          {narrative.confidenceLead}
+        </p>
+      )}
+
+      <div className="mt-6 grid w-full items-center gap-6 lg:grid-cols-2">
+        <div className="glass-card p-4 sm:p-5">
+          <StrengthsRadar {...radarProps} />
+        </div>
+        <div className="space-y-3 text-left">
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300/80">
+              Strongest dimension
+            </p>
+            <p className="mt-1 text-lg font-bold text-white">
+              {strongest?.dimension}{" "}
+              <span className="text-emerald-400">{strongest?.value}</span>
+            </p>
+          </div>
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.05] p-4">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-amber-300/80">
+              Biggest opportunity
+            </p>
+            <p className="mt-1 text-lg font-bold text-white">
+              {weakest?.dimension}{" "}
+              <span className="text-amber-400">{weakest?.value}</span>
+            </p>
+          </div>
+          <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-4 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              Overall
+            </p>
+            <p className="mt-1 text-3xl font-black text-white">{avg}<span className="text-base text-slate-500">/100</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Step 3: Top leak ─────────────────────────────────────────────────── */
 
 function TopLeakStep({
   leak,
@@ -387,7 +584,7 @@ function TopLeakStep({
   );
 }
 
-/* ── Step 2: A tactic ──────────────────────────────────────────────────── */
+/* ── Step 4: A tactic ─────────────────────────────────────────────────── */
 
 function TacticStep({
   tactic,
@@ -439,7 +636,235 @@ function TacticStep({
   );
 }
 
-/* ── Step 3: The plan ──────────────────────────────────────────────────── */
+/* ── Step 5: A brilliant move ─────────────────────────────────────────── */
+
+function BrilliantStep({ brilliant }: { brilliant: BrilliantMove }) {
+  return (
+    <div>
+      <StepHeader
+        eyebrow="Your best move this scan"
+        title="You found a brilliant"
+        icon={<Sparkles className="h-4 w-4" />}
+        tone="orange"
+      />
+      <div className="mt-4 grid items-start gap-5 lg:grid-cols-2">
+        {/* Praise mode: the user's move is highlighted green as a great find. */}
+        <GuidedWalkBoard
+          fen={brilliant.fenBefore}
+          userMove={brilliant.userMove}
+          userColor={brilliant.userColor}
+          mode="static"
+          praise
+        />
+        <div className="space-y-4 lg:pt-1">
+          <p className="text-sm leading-relaxed text-slate-300">
+            Not every finding here is a leak. The engine flagged this move as
+            brilliant — a deep, non-obvious idea that most players miss. You
+            found it.
+          </p>
+          {brilliant.reason && (
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/[0.05] p-4">
+              <p className="text-xs leading-relaxed text-slate-300">
+                <span className="font-semibold text-emerald-300">Why it&apos;s strong:</span>{" "}
+                {brilliant.reason}
+              </p>
+            </div>
+          )}
+          <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
+            <div className="grid grid-cols-2 gap-2 text-center">
+              <MiniStat
+                label="Eval swing"
+                value={`+${(((brilliant.cpAfter ?? 0) - (brilliant.cpBefore ?? 0)) / 100).toFixed(2)}`}
+                tone="good"
+              />
+              <MiniStat
+                label="Move no."
+                value={`${brilliant.moveNumber ?? "?"}`}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Step 6: An endgame moment ────────────────────────────────────────── */
+
+function EndgameStep({ endgame }: { endgame: EndgameMistake }) {
+  return (
+    <div>
+      <StepHeader
+        eyebrow="Endgame technique"
+        title={endgame.endgameType ?? "A conversion that slipped"}
+        icon={<Crosshair className="h-4 w-4" />}
+        tone="orange"
+      />
+      <div className="mt-4 grid items-start gap-5 lg:grid-cols-2">
+        <GuidedWalkBoard
+          fen={endgame.fenBefore}
+          userMove={endgame.userMove}
+          bestMove={endgame.bestMove}
+          userColor={endgame.userColor}
+          mode="static"
+        />
+        <div className="space-y-4 lg:pt-1">
+          <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
+            <p className="text-sm leading-relaxed text-slate-300">
+              {endgame.userMove ? (
+                <>
+                  You played{" "}
+                  <span className="font-bold text-white">{endgame.userMove}</span>{" "}
+                  {endgame.bestMove && (
+                    <>
+                      instead of{" "}
+                      <span className="font-bold text-emerald-400">
+                        {endgame.bestMove}
+                      </span>
+                    </>
+                  )}
+                  .
+                </>
+              ) : (
+                <>
+                  The engine suggests{" "}
+                  {endgame.bestMove ? (
+                    <span className="font-bold text-emerald-400">
+                      {endgame.bestMove}
+                    </span>
+                  ) : (
+                    "a cleaner technique"
+                  )}
+                  .
+                </>
+              )}
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-center">
+              <MiniStat
+                label="Cost"
+                value={`${(endgame.cpLoss ?? 0).toFixed(0)}cp`}
+                tone="warn"
+              />
+              <MiniStat
+                label="Move no."
+                value={`${endgame.moveNumber ?? "?"}`}
+              />
+            </div>
+          </div>
+          <div className="rounded-xl border border-sky-500/15 bg-sky-500/[0.04] p-4">
+            <p className="text-xs leading-relaxed text-slate-400">
+              <span className="font-semibold text-sky-300">Why endgames matter:</span>{" "}
+              Endgames are where points are banked or thrown away. Fewer pieces
+              means fewer calculations — the right technique here is pure
+              knowledge, and it converts results.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Step 7: Profile / coach's note ───────────────────────────────────── */
+
+function ProfileStep({
+  narrative,
+  data,
+}: {
+  narrative: ReturnType<typeof buildRadarNarrative>;
+  data: ReturnType<typeof computeRadarData>;
+}) {
+  return (
+    <div>
+      <StepHeader
+        eyebrow="Your profile"
+        title="The coach's read"
+        icon={<Trophy className="h-4 w-4" />}
+        tone="orange"
+      />
+      <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-400">
+        {narrative.coachingParagraph}
+      </p>
+
+      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+        {narrative.topStrengths.map((dimension, index) => (
+          <ProfileSpotlightCard
+            key={dimension.dimension}
+            label={index === 0 ? "Current edge" : "Also helping"}
+            dimension={dimension}
+            accent={index === 0 ? "emerald" : "cyan"}
+          />
+        ))}
+      </div>
+
+      <div className="mt-4 rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
+        <p className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+          All dimensions
+        </p>
+        <div className="space-y-2">
+          {data.map((d) => (
+            <ProfileBar key={d.dimension} dimension={d.dimension} value={d.value} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProfileSpotlightCard({
+  label,
+  dimension,
+  accent,
+}: {
+  label: string;
+  dimension: { dimension: string; value: number };
+  accent: "emerald" | "cyan";
+}) {
+  const accentClass =
+    accent === "emerald"
+      ? "border-emerald-500/20 bg-emerald-500/[0.05] text-emerald-400"
+      : "border-cyan-500/20 bg-cyan-500/[0.05] text-cyan-400";
+  return (
+    <div className={`rounded-xl border ${accentClass} p-4`}>
+      <p className="text-[10px] font-semibold uppercase tracking-wider opacity-80">
+        {label}
+      </p>
+      <p className="mt-1 text-lg font-bold text-white">
+        {dimension.dimension}{" "}
+        <span className="opacity-90">{dimension.value}</span>
+      </p>
+    </div>
+  );
+}
+
+function ProfileBar({ dimension, value }: { dimension: string; value: number }) {
+  const barBg =
+    value >= 75
+      ? "bg-emerald-400"
+      : value >= 50
+        ? "bg-cyan-400"
+        : value >= 30
+          ? "bg-amber-400"
+          : "bg-red-400";
+  return (
+    <div className="flex items-center gap-3">
+      <span className="w-24 shrink-0 truncate text-xs text-slate-500">
+        {dimension}
+      </span>
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.06]">
+        <div
+          className={`h-1.5 rounded-full ${barBg} transition-all duration-700`}
+          style={{ width: `${value}%` }}
+        />
+      </div>
+      <span className="w-8 shrink-0 text-right text-xs font-bold tabular-nums text-white">
+        {value}
+      </span>
+    </div>
+  );
+}
+
+/* ── Step 8: The plan ─────────────────────────────────────────────────── */
 
 function PlanStep({
   planItems,
@@ -519,16 +944,14 @@ function StepHeader({
       ? "bg-orange-400/[0.08] text-orange-200/80"
       : "bg-emerald-400/[0.08] text-emerald-200/80";
   return (
-    <div>
+    <div className="text-center">
       <span
         className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-mono text-[11px] uppercase tracking-[0.2em] ${toneClass}`}
       >
         {icon}
         {eyebrow}
       </span>
-      <h3 className="mt-3 text-2xl font-bold text-white sm:text-3xl">
-        {title}
-      </h3>
+      <h3 className="mt-3 text-3xl font-bold text-white sm:text-4xl">{title}</h3>
     </div>
   );
 }
@@ -559,14 +982,16 @@ function MiniStat({
 }: {
   label: string;
   value: string;
-  tone?: "neutral" | "warn" | "bad";
+  tone?: "neutral" | "warn" | "bad" | "good";
 }) {
   const color =
     tone === "warn"
       ? "text-amber-400"
       : tone === "bad"
         ? "text-red-400"
-        : "text-white";
+        : tone === "good"
+          ? "text-emerald-400"
+          : "text-white";
   return (
     <div>
       <p className={`text-base font-bold tabular-nums ${color}`}>{value}</p>

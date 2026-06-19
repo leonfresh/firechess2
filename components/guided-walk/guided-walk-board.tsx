@@ -30,6 +30,10 @@ type Props = {
   /** Who the user plays as — sets board orientation. */
   userColor: "white" | "black";
   mode: "static" | "interactive";
+  /** Praise mode: highlight the user's move as a great find (green) instead of
+   *  the usual red "you played / green best move" contrast. Used for brilliant
+   *  moves, where the user's move IS the move worth celebrating. */
+  praise?: boolean;
 };
 
 type Sq = { from: string; to: string; promotion?: string };
@@ -58,7 +62,7 @@ function resolve(fen: string, move: string | null | undefined): Sq | null {
   }
 }
 
-export function GuidedWalkBoard({ fen, userMove, bestMove, userColor, mode }: Props) {
+export function GuidedWalkBoard({ fen, userMove, bestMove, userColor, mode, praise }: Props) {
   const { ref, size } = useBoardSize(420, { evalBar: false });
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
@@ -86,9 +90,14 @@ export function GuidedWalkBoard({ fen, userMove, bestMove, userColor, mode }: Pr
   const arrows = useMemo(() => {
     const list: [string, string, string?][] = [];
     if (mode === "static") {
-      // Best move first (drawn under) in green; user move in red on top.
-      if (bestSq) list.push([bestSq.from, bestSq.to, "#22c55e"]);
-      if (userSq) list.push([userSq.from, userSq.to, "#ef4444"]);
+      if (praise) {
+        // Praise: the user's move is the hero — a single bold green arrow.
+        if (userSq) list.push([userSq.from, userSq.to, "#22c55e"]);
+      } else {
+        // Best move first (drawn under) in green; user move in red on top.
+        if (bestSq) list.push([bestSq.from, bestSq.to, "#22c55e"]);
+        if (userSq) list.push([userSq.from, userSq.to, "#ef4444"]);
+      }
     } else {
       // Interactive: show the best-move hint in green so the user has a target,
       // and the user's own move (red) once they've attempted and missed.
@@ -98,7 +107,7 @@ export function GuidedWalkBoard({ fen, userMove, bestMove, userColor, mode }: Pr
       }
     }
     return list;
-  }, [bestSq, userSq, mode, attempted, solved]);
+  }, [bestSq, userSq, mode, attempted, solved, praise]);
 
   function legalMovesFrom(square: string): string[] {
     try {
@@ -135,13 +144,15 @@ export function GuidedWalkBoard({ fen, userMove, bestMove, userColor, mode }: Pr
   }
 
   const customSquareStyles: Record<string, React.CSSProperties> = {};
-  // In static mode, tint the user's source/target squares.
+  // In static mode, tint squares. Praise mode celebrates the user's move
+  // (green); the normal contrast shows the user's move red vs best green.
   if (mode === "static") {
+    const userTint = praise ? "rgba(34,197,94,0.35)" : "rgba(239,68,68,0.35)";
     if (userSq) {
-      customSquareStyles[userSq.from] = { background: "rgba(239,68,68,0.35)" };
-      customSquareStyles[userSq.to] = { background: "rgba(239,68,68,0.35)" };
+      customSquareStyles[userSq.from] = { background: userTint };
+      customSquareStyles[userSq.to] = { background: userTint };
     }
-    if (bestSq) {
+    if (!praise && bestSq) {
       customSquareStyles[bestSq.from] = {
         ...(customSquareStyles[bestSq.from] ?? {}),
         boxShadow: "inset 0 0 0 3px rgba(34,197,94,0.6)",
@@ -205,14 +216,23 @@ export function GuidedWalkBoard({ fen, userMove, bestMove, userColor, mode }: Pr
 
       {mode === "static" && (
         <div className="mt-3 flex items-center justify-center gap-4 text-xs">
-          <span className="flex items-center gap-1.5 text-slate-400">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" />
-            You played
-          </span>
-          <span className="flex items-center gap-1.5 text-slate-400">
-            <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-500" />
-            Best move
-          </span>
+          {praise ? (
+            <span className="flex items-center gap-1.5 text-emerald-400">
+              <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-500" />
+              Your move
+            </span>
+          ) : (
+            <>
+              <span className="flex items-center gap-1.5 text-slate-400">
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-500" />
+                You played
+              </span>
+              <span className="flex items-center gap-1.5 text-slate-400">
+                <span className="inline-block h-2.5 w-2.5 rounded-full bg-green-500" />
+                Best move
+              </span>
+            </>
+          )}
         </div>
       )}
     </div>

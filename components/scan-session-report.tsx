@@ -22,6 +22,7 @@ import { ScanPositionalMotifs } from "@/components/scan-positional-motifs";
 import {
   RadarLegend,
   StrengthsRadar,
+  buildRadarNarrative,
   computeRadarData,
   type RadarDimension,
 } from "@/components/radar-chart";
@@ -998,65 +999,6 @@ const RADAR_STRENGTH_NOTES: Record<string, string> = {
   Resilience:
     "You keep enough fight in messy spots to stay competitive after mistakes.",
 };
-
-function buildRadarNarrative(data: RadarDimension[]) {
-  const sorted = [...data].sort((a, b) => a.value - b.value);
-  const strongest = sorted.at(-1) ?? data[0];
-  const backupStrength = sorted.at(-2) ?? strongest;
-  const weakest = sorted[0] ?? data[0];
-  const avg = Math.round(
-    data.reduce((sum, dimension) => sum + dimension.value, 0) / data.length,
-  );
-
-  if (!strongest || !backupStrength || !weakest) {
-    return {
-      topStrengths: data.slice(0, 2),
-      confidenceLead:
-        "There is already something useful in this profile to build around.",
-      strengthNote:
-        "The point of this section is to show where your confidence should come from before the training plan starts asking for more.",
-      coachingParagraph:
-        "Use the report as a starting point, not a verdict. Lean on what already feels stable and make the next improvement one clear target at a time.",
-    };
-  }
-
-  if (avg >= 75) {
-    return {
-      topStrengths: [strongest, backupStrength],
-      confidenceLead: `${strongest.dimension} is already a real weapon in your games, with ${backupStrength.dimension} right behind it.`,
-      strengthNote:
-        "This report reads more like refinement than repair. You already have clear strengths to lean on.",
-      coachingParagraph: `You already have a strong base, especially in ${strongest.dimension}. The cleanest next gain now is ${weakest.dimension}: tighten that one bottleneck and the rest of the profile should feel even more reliable. Treat this report as sharpening, not rebuilding.`,
-    };
-  }
-
-  if (avg >= 50) {
-    return {
-      topStrengths: [strongest, backupStrength],
-      confidenceLead: `${strongest.dimension} is already giving your games real structure.`,
-      strengthNote: `You are not starting from zero here. ${backupStrength.dimension} is also helping keep the floor of your game higher.`,
-      coachingParagraph: `You already have a solid foundation, led by ${strongest.dimension}. The next jump should come from ${weakest.dimension}, because that is the main thing pulling the rest of the profile down. Fix that one deliberately and the rest of your game should feel steadier without losing confidence.`,
-    };
-  }
-
-  if (avg >= 30) {
-    return {
-      topStrengths: [strongest, backupStrength],
-      confidenceLead: `${strongest.dimension} is the first part of your game that already looks buildable.`,
-      strengthNote:
-        "That matters more than the low points. The report still shows a base you can trust while you improve the rest.",
-      coachingParagraph: `There is enough here to build on, especially in ${strongest.dimension}. The biggest lift now comes from ${weakest.dimension}: get that bottleneck under control and the whole profile should calm down. Focus on one weakness at a time and let your stronger area keep the rest of your game stable.`,
-    };
-  }
-
-  return {
-    topStrengths: [strongest, backupStrength],
-    confidenceLead: `${strongest.dimension} is still the best place to start building confidence.`,
-    strengthNote:
-      "Even a rough report is useful when it shows you where the first solid footing is.",
-    coachingParagraph: `This report is a starting point, not a label. Build around ${strongest.dimension} first, then put most of your effort into ${weakest.dimension}, because that is where the fastest gains should come from. Small progress there will make the rest of your game feel less fragile.`,
-  };
-}
 
 function StrengthSpotlightCard({
   label,
@@ -2588,9 +2530,11 @@ export function ScanSessionReport({
         disabled={isProcessing}
       />
 
-      {/* ── Guided walkthrough (Brilliant-style, one card at a time) ──
-          Immersive card sequence: headline → top leak → tactic → plan, then
-          hands off to the full report via the sticky toggle. */}
+      {/* ── Guided walkthrough (Brilliant-style, full-viewport takeover) ──
+          Immersive full-screen sequence: headline → radar → top leak →
+          tactic → brilliant → endgame → profile → plan, then hands off to
+          the full report via the sticky toggle. Renders in a portal over the
+          page body, so the mt-6 wrapper below is just a render anchor. */}
       {reportViewMode === "guided" && reportMeta ? (
         <div className="mt-6">
           <GuidedWalk
@@ -2604,6 +2548,8 @@ export function ScanSessionReport({
             endgameMistakes={accessibleEndgames}
             mentalStats={mentalStats}
             username={scan.chessUsername}
+            radarProps={radarProps}
+            brilliantMoves={accessibleBrilliants}
             onFinish={() => changeReportViewMode("full")}
           />
         </div>

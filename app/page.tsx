@@ -2807,8 +2807,9 @@ export default function HomePage() {
                 }}
               />
 
-              {/* ── Guided walkthrough (Brilliant-style, one card at a time) ──
-                  Available via the toggle above; onFinish flips to Full. */}
+              {/* ── Guided walkthrough (Brilliant-style, full-viewport takeover) ──
+                  Available via the toggle above; onFinish flips to Full.
+                  Renders in a portal over the page body. */}
               {viewMode === "guided" && report && (
                 <GuidedWalk
                   report={report}
@@ -2822,6 +2823,22 @@ export default function HomePage() {
                   excludeFens={dbApprovedFens}
                   mentalStats={result.mentalStats ?? null}
                   username={result.username}
+                  radarProps={
+                    report
+                      ? {
+                          accuracy: report.estimatedAccuracy,
+                          leakCount: realLeakCount,
+                          repeatedPositions: result.repeatedPositions,
+                          tacticsCount: result.totalTacticsFound,
+                          gamesAnalyzed: result.gamesAnalyzed,
+                          weightedCpLoss: report.weightedCpLoss,
+                          severeLeakRate: report.severeLeakRate,
+                          timeManagementScore: result.timeManagementScore,
+                          endgameTechniqueScore: report.endgameTechniqueScore,
+                        }
+                      : null
+                  }
+                  brilliantMoves={result.brilliantMoves ?? []}
                   onFinish={() => {
                     setViewMode("full");
                     reportRef.current?.scrollIntoView({
