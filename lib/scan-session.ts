@@ -19,6 +19,12 @@ export type ScanSessionConfig = {
   until: number | null;
   maxTactics: number | null;
   maxEndgames: number | null;
+  /**
+   * Raw PGN text for the "pgn" source (possibly multiple games). Stored in the
+   * config jsonb column so PGN-based reports stay reloadable/shareable. Only
+   * present when source === "pgn".
+   */
+  pgnText?: string;
 };
 
 export type ComputedScanReport = {

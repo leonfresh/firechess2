@@ -8,29 +8,67 @@ import {
   type ScanSessionConfig,
 } from "@/lib/scan-session";
 
+/** Hard limits for the pasted-PGN source. */
+const PGN_MAX_BYTES = 2 * 1024 * 1024; // 2 MB
+const PGN_MAX_GAMES = 250;
+
+function countPgnGames(text: string): number {
+  // Cheap pre-split count: number of top-level `[Event ` markers, with a
+  // fallback to blank-line-separated blocks when there are no tag headers.
+  const eventCount = (text.match(/^\[Event\s/gm) || []).length;
+  if (eventCount > 0) return eventCount;
+  return text
+    .split(/\n\s*\n+/)
+    .map((g) => g.trim())
+    .filter(Boolean).length;
+}
+
 function isValidScanConfig(value: unknown): value is ScanSessionConfig {
   if (!value || typeof value !== "object") return false;
 
   const config = value as Partial<ScanSessionConfig>;
-  return (
-    typeof config.maxGames === "number" &&
-    typeof config.maxMoves === "number" &&
-    typeof config.cpThreshold === "number" &&
-    typeof config.engineDepth === "number" &&
-    (config.source === "lichess" || config.source === "chesscom") &&
-    (config.scanMode === "openings" ||
+  const sourceValid =
+    config.source === "lichess" ||
+    config.source === "chesscom" ||
+    config.source === "pgn";
+
+  if (
+    typeof config.maxGames !== "number" ||
+    typeof config.maxMoves !== "number" ||
+    typeof config.cpThreshold !== "number" ||
+    typeof config.engineDepth !== "number" ||
+    !sourceValid ||
+    !(
+      config.scanMode === "openings" ||
       config.scanMode === "tactics" ||
       config.scanMode === "endgames" ||
       config.scanMode === "time-management" ||
-      config.scanMode === "both") &&
-    Array.isArray(config.speed) &&
-    (config.since === null ||
+      config.scanMode === "both"
+    ) ||
+    !Array.isArray(config.speed) ||
+    !(
+      config.since === null ||
       config.since === undefined ||
-      typeof config.since === "number") &&
-    (config.until === null ||
+      typeof config.since === "number"
+    ) ||
+    !(
+      config.until === null ||
       config.until === undefined ||
-      typeof config.until === "number")
-  );
+      typeof config.until === "number"
+    )
+  ) {
+    return false;
+  }
+
+  // PGN source requires non-empty text within size/game limits.
+  if (config.source === "pgn") {
+    const text = config.pgnText;
+    if (typeof text !== "string" || !text.trim()) return false;
+    if (Buffer.byteLength(text, "utf8") > PGN_MAX_BYTES) return false;
+    if (countPgnGames(text) > PGN_MAX_GAMES) return false;
+  }
+
+  return true;
 }
 
 export async function POST(req: NextRequest) {

@@ -577,7 +577,7 @@ function EmptyStep({
   );
 }
 
-function tiltInsight(stats: MentalStats, username: string): string {
+export function tiltInsight(stats: MentalStats, username: string): string {
   // Best-effort insight from whatever mental/clock data is present.
   if (typeof stats.tiltRate === "number" && stats.tiltRate > 40) {
     return `${username} loses ${stats.tiltRate.toFixed(0)}% of games immediately after a loss — tilt is leaking rating. Take a 5-minute break between rated games to reset.`;

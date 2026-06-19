@@ -293,6 +293,9 @@ export function ScanSessionPage({
             maxTactics: scan.config.maxTactics ?? Infinity,
             maxEndgames: scan.config.maxEndgames ?? Infinity,
             since: scan.config.since ?? undefined,
+            ...(scan.config.source === "pgn" && scan.config.pgnText
+              ? { pgnText: scan.config.pgnText }
+              : {}),
             onProgress: (nextProgress) => {
               // Monotonic global percent so the top bar never goes backward
               setProgress((prev) => ({

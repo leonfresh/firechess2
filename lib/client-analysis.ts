@@ -89,7 +89,7 @@ type SourceGame = {
   gameUrl?: string;
 };
 
-export type AnalysisSource = "lichess" | "chesscom";
+export type AnalysisSource = "lichess" | "chesscom" | "pgn";
 export type ScanMode =
   | "openings"
   | "tactics"
@@ -134,6 +134,12 @@ export type AnalyzeOptions = {
   since?: number;
   /** Only include games played before this epoch timestamp (milliseconds) */
   until?: number;
+  /**
+   * Raw PGN text (possibly multiple games) for the "pgn" source. When set and
+   * source === "pgn", games are parsed from this text instead of being fetched
+   * from Lichess/Chess.com.
+   */
+  pgnText?: string;
   onProgress?: (progress: AnalysisProgress) => void;
   /** Called when each section finishes — enables progressive rendering. */
   onSectionReady?: (
@@ -274,21 +280,29 @@ function extractOpeningFromPgn(pgn: string): string | undefined {
   return undefined;
 }
 
+/**
+ * Extract `{[%clk H:MM:SS]}` annotations from a PGN movetext and return
+ * centiseconds per ply (matching the Lichess clock format). Pulled out so both
+ * the Chess.com path and the pasted-PGN path share the same logic.
+ */
+function extractClkAnnotations(pgn: string): number[] {
+  const clockRegex = /\{\[%clk\s+(\d+):(\d+):(\d+(?:\.\d+)?)\]\}/g;
+  const clocks: number[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = clockRegex.exec(pgn)) !== null) {
+    const hours = parseInt(match[1], 10);
+    const minutes = parseInt(match[2], 10);
+    const seconds = parseFloat(match[3]);
+    clocks.push(Math.round((hours * 3600 + minutes * 60 + seconds) * 100));
+  }
+  return clocks;
+}
+
 function parseMovesFromChessComPgn(
   pgn: string,
 ): { moves: string; clocks: number[] } | null {
   try {
-    // Extract %clk annotations before loading (chess.js strips comments)
-    const clockRegex = /\{\[%clk\s+(\d+):(\d+):(\d+(?:\.\d+)?)\]\}/g;
-    const clocks: number[] = [];
-    let match: RegExpExecArray | null;
-    while ((match = clockRegex.exec(pgn)) !== null) {
-      const hours = parseInt(match[1], 10);
-      const minutes = parseInt(match[2], 10);
-      const seconds = parseFloat(match[3]);
-      // Store as centiseconds to match Lichess format
-      clocks.push(Math.round((hours * 3600 + minutes * 60 + seconds) * 100));
-    }
+    const clocks = extractClkAnnotations(pgn);
 
     const chess = new Chess();
     chess.loadPgn(pgn, { strict: false });
@@ -296,11 +310,173 @@ function parseMovesFromChessComPgn(
     if (!history.length) return null;
     return {
       moves: history.join(" "),
-      clocks: clocks.length > 0 ? clocks : [],
+      clocks,
     };
   } catch {
     return null;
   }
+}
+
+/**
+ * Split a pasted blob of (possibly multiple) PGNs into individual game strings.
+ * Games are conventionally delimited by a leading `[Event ` tag, so we split
+ * before each top-level `[Event ` marker. Also tolerates games separated only
+ * by blank lines (no tag block) as a fallback.
+ */
+export function splitMultiPgn(text: string): string[] {
+  if (!text) return [];
+  // Normalize CRLF / CR to LF.
+  const normalized = text.replace(/\r\n?/g, "\n");
+
+  // Split before each top-level `[Event ` line (PGN seven-tag roster convention).
+  const parts = normalized.split(/(?=^\[Event\s)/m);
+  const games: string[] = [];
+  for (const part of parts) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    if (/^\[Event\s/.test(trimmed)) {
+      games.push(trimmed);
+    } else if (games.length === 0) {
+      // Leading non-`[Event]` content before the first game — if it looks like
+      // movetext (no tag block at all), treat the whole leading blob as one game.
+      // Otherwise (whitespace/garbage) drop it.
+      if (/\d+\.\s/.test(trimmed) || /^\s*[a-hOo]/.test(trimmed)) {
+        games.push(trimmed);
+      }
+    } else {
+      // Trailing content after the last `[Event]` game without its own tag —
+      // append it to the previous game (likely a malformed split).
+      games[games.length - 1] += "\n" + trimmed;
+    }
+  }
+
+  // Fallback: no `[Event]` markers found but movetext exists — split on blank
+  // lines so batches of bare move-lists still work.
+  if (games.length === 0) {
+    const blankSplit = normalized
+      .split(/\n\s*\n+/)
+      .map((g) => g.trim())
+      .filter(Boolean);
+    for (const g of blankSplit) games.push(g);
+  }
+
+  return games;
+}
+
+/** Parse a `[Result "..."]` value into a unified `GameOutcome`. */
+function parseResultHeader(value: string | undefined): GameOutcome | undefined {
+  switch (value?.trim()) {
+    case "1-0":
+      return "white";
+    case "0-1":
+      return "black";
+    case "1/2-1/2":
+    case "½-½":
+      return "draw";
+    default:
+      return undefined;
+  }
+}
+
+function parseRatingHeader(value: string | undefined): number | undefined {
+  if (!value) return undefined;
+  const n = parseInt(value, 10);
+  return Number.isFinite(n) && n > 0 ? n : undefined;
+}
+
+/** Combine `[UTCDate]` + `[UTCTime]` (or fall back to `[Date]`) into epoch ms. */
+function parsePlayedAtFromHeaders(
+  utcDate: string | undefined,
+  utcTime: string | undefined,
+  date: string | undefined,
+): number | undefined {
+  const combine = (d: string, t: string): number | undefined => {
+    // d looks like "YYYY.MM.DD", t looks like "HH:MM:SS"
+    const m = d.match(/^(\d{4})\.(\d{2})\.(\d{2})$/);
+    if (!m) return undefined;
+    const tm = t.match(/^(\d{2}):(\d{2}):(\d{2})$/);
+    const iso = `${m[1]}-${m[2]}-${m[3]}T${tm ? tm.slice(1).join(":") : "00:00:00"}Z`;
+    const ms = Date.parse(iso);
+    return Number.isFinite(ms) ? ms : undefined;
+  };
+
+  if (utcDate) {
+    const ms = combine(utcDate, utcTime ?? "00:00:00");
+    if (ms !== undefined) return ms;
+  }
+  if (date) {
+    // Some exports use `[Date "YYYY.MM.DD"]`; ignore "????.??.??" placeholders.
+    const ms = combine(date, "00:00:00");
+    if (ms !== undefined) return ms;
+  }
+  return undefined;
+}
+
+/**
+ * Parse a single PGN into a `SourceGame`. Extracts moves, clocks, player names,
+ * ratings, result, date, and opening — the full set the downstream analysis
+ * needs for color detection, tactics, endgames, mental stats, and time mgmt.
+ * Returns null on parse failure or when no moves could be replayed.
+ */
+export function parsePgnToSourceGame(pgn: string): SourceGame | null {
+  try {
+    const clocks = extractClkAnnotations(pgn);
+
+    const chess = new Chess();
+    chess.loadPgn(pgn, { strict: false });
+    const history = chess.history();
+    if (!history.length) return null;
+
+    const headers = chess.getHeaders();
+    const whiteName = headers.White && headers.White !== "?" ? headers.White : undefined;
+    const blackName = headers.Black && headers.Black !== "?" ? headers.Black : undefined;
+    const whiteRating = parseRatingHeader(headers.WhiteElo);
+    const blackRating = parseRatingHeader(headers.BlackElo);
+    const winner = parseResultHeader(headers.Result);
+    const playedAt = parsePlayedAtFromHeaders(headers.UTCDate, headers.UTCTime, headers.Date);
+    const openingName = extractOpeningFromPgn(pgn);
+    const site = headers.Site;
+    const gameUrl = site && /^https?:\/\//i.test(site) ? site : undefined;
+
+    const game: SourceGame = {
+      moves: history.join(" "),
+      whiteName,
+      blackName,
+      winner,
+      openingName,
+    };
+    if (whiteRating !== undefined) game.whiteRating = whiteRating;
+    if (blackRating !== undefined) game.blackRating = blackRating;
+    if (playedAt !== undefined) game.playedAt = playedAt;
+    if (gameUrl) game.gameUrl = gameUrl;
+    if (clocks.length > 0) game.clocks = clocks;
+    return game;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Parse a multi-game PGN blob into `SourceGame[]`, dropping any games that fail
+ * to parse. Applies an optional `since`/`until` epoch-ms window on `playedAt`
+ * (games with no parseable date pass the filter).
+ */
+export function parseMultiPgnToSourceGames(
+  text: string,
+  opts: { since?: number; until?: number; maxGames?: number } = {},
+): SourceGame[] {
+  const games = splitMultiPgn(text)
+    .map(parsePgnToSourceGame)
+    .filter((g): g is SourceGame => g !== null)
+    .filter((g) => {
+      if (g.playedAt === undefined) return true;
+      if (opts.since && g.playedAt < opts.since) return false;
+      if (opts.until && g.playedAt > opts.until) return false;
+      return true;
+    });
+  return typeof opts.maxGames === "number"
+    ? games.slice(0, opts.maxGames)
+    : games;
 }
 
 function scoreToCpFromUserPerspective(
@@ -859,6 +1035,24 @@ async function loadGamesForAnalysis(
   source: AnalysisSource,
   options?: AnalyzeOptions,
 ): Promise<SourceGame[]> {
+  // ── Pasted/uploaded PGN: parse directly, bypass the network cache entirely ──
+  if (source === "pgn") {
+    if (!options?.pgnText || !options.pgnText.trim()) {
+      return [];
+    }
+    emitProgress(options, {
+      phase: "fetch",
+      message: "📋 Parsing pasted PGN",
+      detail: "Splitting games from your PGN text",
+      percent: 2,
+    });
+    return parseMultiPgnToSourceGames(options.pgnText, {
+      since: options?.since,
+      until: options?.until,
+      maxGames,
+    });
+  }
+
   let games: SourceGame[] = [];
 
   // ── Game cache: avoid re-downloading games we already have ──

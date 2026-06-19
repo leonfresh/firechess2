@@ -122,7 +122,7 @@ export const reports = pgTable("report", {
 
   /* identifiers */
   chessUsername: text("chessUsername").notNull(),
-  source: text("source").$type<"lichess" | "chesscom">().notNull(),
+  source: text("source").$type<"lichess" | "chesscom" | "pgn">().notNull(),
   scanMode: text("scanMode")
     .$type<"openings" | "tactics" | "endgames" | "time-management" | "both">()
     .notNull()
@@ -177,7 +177,7 @@ export const scanSessions = pgTable("scan_session", {
   userId: text("userId").references(() => users.id, { onDelete: "set null" }),
   guestToken: text("guestToken"),
   chessUsername: text("chessUsername").notNull(),
-  source: text("source").$type<"lichess" | "chesscom">().notNull(),
+  source: text("source").$type<"lichess" | "chesscom" | "pgn">().notNull(),
   scanMode: text("scanMode")
     .$type<"openings" | "tactics" | "endgames" | "time-management" | "both">()
     .notNull()
@@ -259,7 +259,7 @@ export const studyPlans = pgTable("study_plan", {
 
   /** Chess username + source this plan is for */
   chessUsername: text("chessUsername"),
-  source: text("source").$type<"lichess" | "chesscom">(),
+  source: text("source").$type<"lichess" | "chesscom" | "pgn">(),
 
   /** Human-readable title, e.g. "Week of Feb 27 — Fix Italian Game leaks" */
   title: text("title").notNull(),

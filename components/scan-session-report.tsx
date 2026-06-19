@@ -8,7 +8,8 @@ import { CardCarousel } from "@/components/card-carousel";
 import type { CommunityPostComposerSeed } from "@/components/community-post-composer-modal";
 import { EndgameCard } from "@/components/endgame-card";
 import { MistakeCard } from "@/components/mistake-card";
-import { GuidedWalk } from "@/components/guided-walk/guided-walk";
+import { tiltInsight } from "@/components/guided-walk/guided-walk";
+import { GuidedWalkBoard } from "@/components/guided-walk/guided-walk-board";
 import {
   MentalGameLoading,
   ScanMentalGame,
@@ -34,6 +35,7 @@ import type {
   BrilliantMove,
   EndgameStats,
   EndgameMistake,
+  MentalStats,
   MissedTactic,
   PositionalFinding,
   RepeatedOpeningLeak,
@@ -117,7 +119,7 @@ type ReportAnalysisTarget = {
   subtitle: string;
 };
 
-type ReportViewMode = "guided" | "focus" | "full";
+type ReportViewMode = "guided" | "full";
 
 type FocusIssue =
   | {
@@ -1394,12 +1396,10 @@ function buildFocusIssues({
 function ReportViewSwitcher({
   viewMode,
   onChange,
-  focusCount,
   disabled = false,
 }: {
   viewMode: ReportViewMode;
   onChange: (mode: ReportViewMode) => void;
-  focusCount: number;
   disabled?: boolean;
 }) {
   return (
@@ -1415,21 +1415,16 @@ function ReportViewSwitcher({
         <p className="mt-1 text-sm text-slate-400">
           {disabled
             ? "You can switch views once the scan completes."
-            : "Walk through your biggest findings step by step, or jump to the full breakdown."}
+            : "Walk through your biggest findings step by step, or open the full breakdown."}
         </p>
       </div>
 
-      <div className="mx-auto mt-4 grid max-w-xl grid-cols-1 gap-2 rounded-2xl border border-white/[0.08] bg-black/25 p-1.5 sm:grid-cols-3">
+      <div className="mx-auto mt-4 grid max-w-xl grid-cols-1 gap-2 rounded-2xl border border-white/[0.08] bg-black/25 p-1.5 sm:grid-cols-2">
         {[
           {
             value: "guided" as const,
-            label: "Guided Walk",
+            label: "Guided",
             caption: "Step by step",
-          },
-          {
-            value: "focus" as const,
-            label: "Focus View",
-            caption: "Less, but curated",
           },
           {
             value: "full" as const,
@@ -1451,20 +1446,7 @@ function ReportViewSwitcher({
               }`}
               aria-pressed={selected}
             >
-              <span className="flex items-center justify-between gap-2 sm:justify-center">
-                <span className="text-sm font-black">{option.label}</span>
-                {option.value === "focus" && focusCount > 0 ? (
-                  <span
-                    className={`rounded-full px-1.5 text-[10px] font-bold ${
-                      selected
-                        ? "bg-slate-950/10 text-slate-700"
-                        : "bg-white/[0.08] text-slate-300"
-                    }`}
-                  >
-                    {focusCount}
-                  </span>
-                ) : null}
-              </span>
+              <span className="block text-sm font-black">{option.label}</span>
               <span
                 className={`mt-0.5 block text-[11px] font-semibold ${
                   selected ? "text-slate-600" : "text-slate-500"
@@ -1556,6 +1538,344 @@ function FocusIssuePreview({
         />
       );
   }
+}
+
+function GuidedFocusView({
+  scan,
+  reportMeta,
+  focusIssues,
+  mentalStats,
+  username,
+  isProcessing,
+  hasProAccess,
+  onSwitchToFull,
+  onOpenAnalysis,
+  onCreateCommunityPost,
+}: {
+  scan: PublicScanSessionPayload;
+  reportMeta: ComputedScanReport;
+  focusIssues: FocusIssue[];
+  mentalStats: MentalStats | null;
+  username: string;
+  isProcessing: boolean;
+  hasProAccess: boolean;
+  onSwitchToFull: () => void;
+  onOpenAnalysis: (target: ReportAnalysisTarget) => void;
+  onCreateCommunityPost?: (seed: CommunityPostComposerSeed) => void;
+}) {
+  // Slide 0 = headline/plan preamble; slides 1..N = one per focus issue.
+  const missionCount = focusIssues.length;
+  const totalSlides = missionCount + 1;
+  const [activeIndex, setActiveIndex] = useState(0);
+  const safeIndex = Math.min(activeIndex, totalSlides - 1);
+  const isPreamble = safeIndex === 0;
+  const activeIssue = !isPreamble ? focusIssues[safeIndex - 1] ?? null : null;
+
+  useEffect(() => {
+    setActiveIndex(0);
+  }, [missionCount, scan.id]);
+
+  const goNext = () =>
+    setActiveIndex((i) => (i + 1 < totalSlides ? i + 1 : i));
+  const goPrev = () => setActiveIndex((i) => Math.max(0, i - 1));
+
+  // Weekly drill plan — same selection GuidedWalk used: top 2 leaks + 1 tactic.
+  const topTactic = useMemo(() => {
+    return [...focusIssues]
+      .filter((f) => f.kind === "tactic")
+      .sort((a, b) => b.score - a.score)[0];
+  }, [focusIssues]);
+  const planItems = useMemo(() => {
+    const items: { label: string; tag: string }[] = [];
+    for (const l of focusIssues.filter((f) => f.kind === "opening").slice(0, 2)) {
+      items.push({ label: l.title, tag: "Opening" });
+    }
+    if (topTactic) {
+      const tactic = topTactic.item as MissedTactic;
+      items.push({
+        label: tactic.mateIn
+          ? `Find mate in ${tactic.mateIn}`
+          : "Spot winning tactics",
+        tag: "Tactics",
+      });
+    }
+    return items.slice(0, 3);
+  }, [focusIssues, topTactic]);
+
+  const openActiveAnalysis = () => {
+    if (activeIssue) onOpenAnalysis(getFocusIssueAnalysisTarget(activeIssue));
+  };
+  const createActivePost =
+    activeIssue && onCreateCommunityPost
+      ? () => onCreateCommunityPost(getFocusIssueCommunitySeed(activeIssue))
+      : undefined;
+  const activeCtaLabel =
+    activeIssue?.kind === "tactic"
+      ? "Train this tactic"
+      : activeIssue?.kind === "endgame"
+        ? "Fix this endgame"
+        : activeIssue?.kind === "time"
+          ? "Fix this clock habit"
+          : "Fix this leak";
+
+  const tilt = mentalStats ? tiltInsight(mentalStats, username) : null;
+  const engineDepth = scan.config.engineDepth;
+
+  return (
+    <div className="space-y-6">
+      <section className="rounded-[1.75rem] border border-white/[0.08] bg-[radial-gradient(circle_at_top_right,_rgba(16,185,129,0.14),_rgba(15,23,42,0.9)_42%,_rgba(2,6,23,0.98)_100%)] p-6 sm:p-7">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+            {isPreamble ? "Your scan" : "Mission"}
+          </p>
+          <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-[11px] font-semibold text-slate-300">
+            {safeIndex + 1} / {totalSlides}
+          </span>
+        </div>
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/[0.07]">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-emerald-400 via-cyan-300 to-violet-400 transition-[width] duration-300"
+            style={{ width: `${((safeIndex + 1) / totalSlides) * 100}%` }}
+          />
+        </div>
+
+        {/* ── Slide 0: headline + plan preamble ── */}
+        {isPreamble ? (
+          <div key="preamble" className="lesson-slide">
+            <h2 className="mt-5 max-w-3xl text-2xl font-black tracking-tight text-white sm:text-[2rem]">
+              {reportMeta.vibeTitle ?? "Here's what matters most"}
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300">
+              {reportMeta.reportSummary ??
+                `We compared every move in ${username}'s ${scan.result?.gamesAnalyzed ?? ""} games against the engine. Walk through your biggest findings one step at a time.`}
+            </p>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <MetricCard
+                label="Accuracy"
+                value={`${reportMeta.estimatedAccuracy.toFixed(1)}%`}
+                tone="emerald"
+                hint={isProcessing ? "Updating live" : undefined}
+              />
+              <MetricCard
+                label="Est. Rating"
+                value={reportMeta.estimatedRating.toString()}
+                tone="cyan"
+              />
+              <MetricCard
+                label="Avg eval loss"
+                value={`${(reportMeta.weightedCpLoss / 100).toFixed(2)}`}
+                tone="amber"
+              />
+              <MetricCard
+                label="Leak rate"
+                value={`${(reportMeta.severeLeakRate * 100).toFixed(0)}%`}
+                tone="fuchsia"
+              />
+            </div>
+
+            {planItems.length > 0 ? (
+              <div className="mt-5 rounded-[1.25rem] border border-white/[0.08] bg-white/[0.02] p-4">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  This week's drills
+                </p>
+                <ol className="mt-3 space-y-2">
+                  {planItems.map((item, i) => (
+                    <li key={i} className="flex items-center gap-3 text-sm">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white/[0.06] text-xs font-bold text-slate-300">
+                        {i + 1}
+                      </span>
+                      <span className="text-slate-200">{item.label}</span>
+                      <span className="ml-auto rounded-full bg-white/[0.05] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                        {item.tag}
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            ) : null}
+
+            {tilt ? (
+              <p className="mt-4 rounded-xl border border-cyan-500/15 bg-cyan-500/[0.04] p-3 text-xs leading-relaxed text-slate-400">
+                <span className="font-semibold text-cyan-300">Mental game:</span>{" "}
+                {tilt}
+              </p>
+            ) : null}
+
+            <div className="mt-5">
+              <button
+                type="button"
+                onClick={goNext}
+                disabled={missionCount === 0}
+                className="inline-flex items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/[0.14] px-5 py-2.5 text-sm font-semibold text-emerald-100 transition hover:border-emerald-400/50 hover:bg-emerald-500/[0.22] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {missionCount > 0
+                  ? `Start → ${missionCount} mission${missionCount > 1 ? "s" : ""}`
+                  : "Nothing to fix — nice"}
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* ── Slides 1..N: mission per focus issue ── */
+          <div
+            key={activeIssue ? `${activeIssue.kind}-${safeIndex}` : "empty"}
+            className="lesson-slide"
+          >
+            {activeIssue ? (
+              <>
+                <h2 className="mt-5 max-w-3xl text-xl font-black tracking-tight text-white sm:text-2xl">
+                  {activeIssue.title}
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-300">
+                  {activeIssue.description}
+                </p>
+
+                {/* Interactive teaching moment for tactics — the one piece
+                    Focus View was missing. */}
+                {activeIssue.kind === "tactic" ? (
+                  <div className="mt-4 flex justify-center">
+                    <GuidedWalkBoard
+                      fen={(activeIssue.item as MissedTactic).fenBefore}
+                      bestMove={(activeIssue.item as MissedTactic).bestMove}
+                      userColor={(activeIssue.item as MissedTactic).userColor}
+                      mode="interactive"
+                    />
+                  </div>
+                ) : null}
+
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <Link
+                    href="/train"
+                    className="inline-flex items-center justify-center rounded-xl border border-emerald-500/30 bg-emerald-500/[0.14] px-5 py-2.5 text-sm font-semibold text-emerald-100 transition hover:border-emerald-400/50 hover:bg-emerald-500/[0.22] hover:text-white"
+                  >
+                    {activeCtaLabel}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={openActiveAnalysis}
+                    className="inline-flex items-center justify-center rounded-xl border border-cyan-500/25 bg-cyan-500/[0.1] px-5 py-2.5 text-sm font-semibold text-cyan-100 transition hover:border-cyan-400/45 hover:bg-cyan-500/[0.18] hover:text-white"
+                  >
+                    Analyze position
+                  </button>
+                  {createActivePost ? (
+                    <button
+                      type="button"
+                      onClick={createActivePost}
+                      className="inline-flex items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-white/[0.18] hover:bg-white/[0.08] hover:text-white"
+                    >
+                      Ask community
+                    </button>
+                  ) : null}
+                </div>
+
+                <div className="mt-5">
+                  <FocusIssuePreview
+                    issue={activeIssue}
+                    engineDepth={engineDepth}
+                    onOpenAnalysis={openActiveAnalysis}
+                    onCreateCommunityPost={createActivePost}
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="mt-5 rounded-[1.25rem] border border-emerald-500/15 bg-emerald-500/[0.05] p-6">
+                <p className="text-sm font-semibold text-emerald-200">
+                  Clean scan
+                </p>
+                <p className="mt-2 text-sm leading-relaxed text-slate-300">
+                  No major recurring issue stood out. Use the Full Report to
+                  inspect the quieter details.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Navigation: arrows + dots ── */}
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-[1.25rem] border border-white/[0.08] bg-white/[0.03] px-4 py-3">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={goPrev}
+              disabled={safeIndex === 0}
+              aria-label="Previous"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.03] text-lg font-black text-slate-300 transition hover:border-white/[0.16] hover:bg-white/[0.08] hover:text-white disabled:cursor-default disabled:opacity-35"
+            >
+              ←
+            </button>
+            <button
+              type="button"
+              onClick={goNext}
+              disabled={safeIndex >= totalSlides - 1}
+              aria-label="Next"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/[0.08] bg-white/[0.03] text-lg font-black text-slate-300 transition hover:border-white/[0.16] hover:bg-white/[0.08] hover:text-white disabled:cursor-default disabled:opacity-35"
+            >
+              →
+            </button>
+            {safeIndex < totalSlides - 1 ? (
+              <button
+                type="button"
+                onClick={goNext}
+                className="inline-flex items-center justify-center rounded-xl border border-violet-500/25 bg-violet-500/[0.1] px-4 py-2.5 text-sm font-semibold text-violet-100 transition hover:border-violet-400/45 hover:bg-violet-500/[0.18] hover:text-white"
+              >
+                Next
+              </button>
+            ) : null}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            {Array.from({ length: totalSlides }).map((_, index) => {
+              const selected = index === safeIndex;
+              return (
+                <button
+                  key={index}
+                  type="button"
+                  onClick={() => setActiveIndex(index)}
+                  aria-label={`Go to slide ${index + 1}`}
+                  className={`h-2.5 rounded-full transition-all ${
+                    selected
+                      ? "w-8 bg-white"
+                      : "w-2.5 bg-white/[0.18] hover:bg-white/[0.35]"
+                  }`}
+                />
+              );
+            })}
+          </div>
+        </div>
+
+        {!hasProAccess && missionCount > FREE_SCAN_SECTION_SAMPLE ? (
+          <p className="mt-3 rounded-[1.25rem] border border-amber-500/20 bg-amber-500/[0.06] px-4 py-3 text-xs text-amber-100/80">
+            Guided shows your top {FREE_SCAN_SECTION_SAMPLE} findings first.
+            Upgrade to Pro to unlock the rest.
+          </p>
+        ) : null}
+      </section>
+
+      <section className="rounded-[1.5rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+              Want the details?
+            </p>
+            <h3 className="mt-1 text-lg font-black tracking-tight text-white">
+              Open the full report
+            </h3>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+              The walkthrough covers your biggest findings. Full Report shows
+              every opening, tactic, endgame, and clock detail in one place.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onSwitchToFull}
+            className="inline-flex items-center justify-center rounded-xl border border-white/[0.1] bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-white/[0.18] hover:bg-white/[0.08] hover:text-white"
+          >
+            Open Full Report
+          </button>
+        </div>
+      </section>
+    </div>
+  );
 }
 
 function FocusReportView({
@@ -3201,23 +3521,23 @@ export function ScanSessionReport({
         <FloatingSectionNav sections={floatingNavSections} />
       ) : null}
 
-      {/* ── Guided walkthrough (Brilliant-style, default on fresh reports) ──
-          One card at a time over the existing report data, then graduates to
-          the Focus view. Full report stays available via the switcher. */}
+      {/* ── Guided walkthrough (merged narrative + mission carousel) ──
+          Preamble slide (headline, stats, plan, tilt) then one mission per
+          focus issue, with the interactive tactic board on tactic missions.
+          Full report stays available via the switcher. */}
       {reportViewMode === "guided" && reportMeta ? (
         <div className="mt-6">
-          <GuidedWalk
-            report={reportMeta}
-            vibeTitle={reportMeta.vibeTitle}
-            gamesAnalyzed={result?.gamesAnalyzed ?? 0}
-            leaks={leaks}
-            oneOffMistakes={oneOffMistakes}
-            positionTraces={result?.diagnostics?.positionTraces ?? []}
-            missedTactics={accessibleTactics}
-            endgameMistakes={accessibleEndgames}
+          <GuidedFocusView
+            scan={scan}
+            reportMeta={reportMeta}
+            focusIssues={focusIssues}
             mentalStats={mentalStats}
             username={scan.chessUsername}
-            onFinish={() => changeReportViewMode("focus")}
+            isProcessing={isProcessing}
+            hasProAccess={hasProAccess}
+            onSwitchToFull={() => changeReportViewMode("full")}
+            onOpenAnalysis={setAnalysisTarget}
+            onCreateCommunityPost={onCreateCommunityPost}
           />
         </div>
       ) : null}
@@ -3227,26 +3547,9 @@ export function ScanSessionReport({
         <ReportViewSwitcher
           viewMode={reportViewMode}
           onChange={changeReportViewMode}
-          focusCount={focusIssues.length}
           disabled={isProcessing}
         />
 
-        {reportViewMode === "focus" ? (
-          <FocusReportView
-            scan={scan}
-            reportMeta={reportMeta}
-            radarNarrative={radarNarrative}
-            focusIssues={focusIssues}
-            issueCount={followUpIssueCount}
-            drillsReady={drillsReady}
-            isProcessing={isProcessing}
-            hasProAccess={hasProAccess}
-            onSwitchToFull={() => changeReportViewMode("full")}
-            onOpenAnalysis={setAnalysisTarget}
-            onCreateCommunityPost={onCreateCommunityPost}
-          />
-        ) : (
-          <>
         {showOpenings ||
         showTactics ||
         showEndgames ||
@@ -4156,8 +4459,6 @@ export function ScanSessionReport({
             />
           </section>
         ) : null}
-          </>
-        )}
       </div>
       ) : null}
       <AnalysisBoardModal

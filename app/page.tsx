@@ -72,6 +72,7 @@ import {
 import {
   analyzeOpeningLeaksInBrowser,
   buildScanReuseSignatureInBrowser,
+  splitMultiPgn,
 } from "@/lib/client-analysis";
 import type { AnalysisProgress } from "@/lib/client-analysis";
 import type {
@@ -146,6 +147,9 @@ function reportCacheKey(mode: ScanMode): string {
 const FREE_MAX_GAMES = 300;
 const FREE_MAX_DEPTH = 12;
 const FREE_MAX_MOVES = 30;
+/** Hard limits for the pasted-PGN source (kept in sync with the server). */
+const PGN_MAX_BYTES = 2 * 1024 * 1024; // 2 MB
+const PGN_MAX_GAMES = 250;
 const FREE_TACTIC_SAMPLE = 10;
 const FREE_ENDGAME_SAMPLE = 10;
 const FREE_TIME_MANAGEMENT_SAMPLE = 10;
@@ -200,6 +204,7 @@ export default function HomePage() {
   const [cpThreshold, setCpThreshold] = useState(50);
   const [engineDepth, setEngineDepth] = useState(12);
   const [source, setSource] = useState<AnalysisSource | null>(null);
+  const [pgnText, setPgnText] = useState("");
   const [scanMode, setScanMode] = useState<ScanMode>(FULL_SCAN_MODE);
   const [speed, setSpeed] = useState<TimeControl[]>(["all"]);
   const [cardViewMode, setCardViewMode] = useState<CardViewMode>(() => {
@@ -1279,9 +1284,37 @@ export default function HomePage() {
     }
 
     if (!source) {
-      setError("Please select a platform — Lichess or Chess.com.");
+      setError(
+        "Please select a platform — Lichess, Chess.com, or Paste PGN.",
+      );
       setState("error");
       return;
+    }
+
+    // Pasted-PGN source has its own validation: non-empty text within limits,
+    // and at least one parseable game.
+    if (source === "pgn") {
+      const trimmedPgn = pgnText.trim();
+      if (!trimmedPgn) {
+        setError("Paste at least one PGN game (or upload a .pgn file).");
+        setState("error");
+        return;
+      }
+      if (new Blob([trimmedPgn]).size > PGN_MAX_BYTES) {
+        setError(
+          `That PGN is too large (max ${Math.round(PGN_MAX_BYTES / 1024 / 1024)} MB). Trim it down or split it into a smaller batch.`,
+        );
+        setState("error");
+        return;
+      }
+      const pgnGameCount = splitMultiPgn(trimmedPgn).length;
+      if (pgnGameCount > PGN_MAX_GAMES) {
+        setError(
+          `That's ${pgnGameCount} games — the limit is ${PGN_MAX_GAMES}. Split your batch and run a few scans.`,
+        );
+        setState("error");
+        return;
+      }
     }
 
     if (
@@ -1394,6 +1427,7 @@ export default function HomePage() {
         until: safeUntil ?? null,
         maxTactics: null,
         maxEndgames: null,
+        ...(safeSource === "pgn" ? { pgnText: pgnText.trim() } : {}),
       };
 
       const reuseSignature = authenticated
@@ -1407,6 +1441,7 @@ export default function HomePage() {
             timeControl: speed,
             since: safeSince,
             until: safeUntil,
+            ...(safeSource === "pgn" ? { pgnText: pgnText.trim() } : {}),
           })
         : null;
 
@@ -1590,6 +1625,17 @@ export default function HomePage() {
                     >
                       Chess.com
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setSource("pgn")}
+                      className={`rounded-xl px-3 py-2 text-sm font-semibold transition-all duration-200 ${
+                        source === "pgn"
+                          ? "bg-gradient-to-r from-amber-200 to-orange-300 text-slate-950 shadow-[0_14px_30px_-18px_rgba(251,146,60,0.78)]"
+                          : "text-slate-400 hover:bg-white/[0.06] hover:text-slate-200"
+                      }`}
+                    >
+                      Paste PGN
+                    </button>
                   </div>
                   <div className="h-6 w-px shrink-0 bg-white/[0.10]" />
                   <input
@@ -1601,12 +1647,70 @@ export default function HomePage() {
                         ? "Your Chess.com username"
                         : source === "lichess"
                           ? "Your Lichess username"
-                          : "Pick a platform, then enter username"
+                          : source === "pgn"
+                            ? "Your name (as it appears in the PGN)"
+                            : "Pick a platform, then enter username"
                     }
-                    aria-label="Chess username"
+                    aria-label={
+                      source === "pgn" ? "Your name" : "Chess username"
+                    }
                     className="flex-1 bg-transparent py-4 pl-4 pr-4 text-base text-white outline-none placeholder:text-slate-500"
                   />
                 </div>
+
+                {source === "pgn" && (
+                  <div className="rounded-2xl border border-orange-500/10 bg-white/[0.04] p-3">
+                    <textarea
+                      value={pgnText}
+                      onChange={(e) => setPgnText(e.target.value)}
+                      placeholder={
+                        "Paste one or more PGN games here (e.g. from your OTB app or DGT board).\nClocks and ratings are picked up automatically if present."
+                      }
+                      aria-label="PGN games"
+                      spellCheck={false}
+                      className="h-40 w-full resize-y rounded-xl bg-black/30 p-3 font-mono text-xs leading-relaxed text-white outline-none placeholder:text-slate-500"
+                    />
+                    <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
+                      <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-white/[0.06] px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors hover:bg-white/[0.10]">
+                        <svg
+                          className="h-3.5 w-3.5"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="17 8 12 3 7 8" />
+                          <line x1="12" y1="3" x2="12" y2="15" />
+                        </svg>
+                        Upload .pgn file
+                        <input
+                          type="file"
+                          accept=".pgn,.txt"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = () => {
+                              const text =
+                                typeof reader.result === "string"
+                                  ? reader.result
+                                  : "";
+                              setPgnText(text);
+                            };
+                            reader.readAsText(file);
+                          }}
+                        />
+                      </label>
+                      <span className="text-[11px] text-slate-500">
+                        Up to 250 games · 2 MB
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 <div
                   className="rounded-[1.45rem] px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
