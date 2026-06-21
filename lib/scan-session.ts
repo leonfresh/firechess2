@@ -191,7 +191,7 @@ export function computeScanReportMeta(
 
   const estimatedAccuracy = Math.min(
     99.5,
-    Math.max(25, 100 * Math.exp(-blendedCpLoss / 120)),
+    Math.max(25, 100 * Math.exp(-blendedCpLoss / 180)),
   );
 
   const actualRating = result?.playerRating;

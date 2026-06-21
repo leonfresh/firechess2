@@ -349,4 +349,17 @@ export type AnalyzeResponse = {
   openingSummaries?: OpeningSummary[];
   diagnostics?: AnalysisDiagnostics;
   report?: AnalysisReport;
+  /** Per-game metadata so the best-game page can reconstruct and display
+   *  the user's top performance without re-fetching from external APIs.
+   *  Each entry stores moves in SAN notation, player names, result, and URL. */
+  games?: Array<{
+    moves: string;
+    whiteName?: string;
+    blackName?: string;
+    winner?: string;
+    gameUrl?: string;
+    openingName?: string;
+    whiteRating?: number;
+    blackRating?: number;
+  }>;
 };

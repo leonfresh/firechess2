@@ -51,11 +51,11 @@ export function HowItWorks() {
         {steps.map((item) => (
           <div
             key={item.step}
-            className="relative rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 text-center transition-colors hover:border-orange-400/20 hover:bg-white/[0.03]"
+            className="group relative rounded-2xl border border-white/[0.04] p-5 text-center transition-all duration-300 hover:border-orange-400/15 hover:shadow-[0_0_40px_-16px_rgba(249,115,22,0.12)]"
           >
-            <div className="relative mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-orange-400/20 bg-orange-400/[0.08]">
+            <div className="relative mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-400/[0.07] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
               <item.icon className="h-5 w-5 text-orange-300" />
-              <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
+              <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white shadow-[0_4px_12px_-4px_rgba(249,115,22,0.5)]">
                 {item.step}
               </span>
             </div>

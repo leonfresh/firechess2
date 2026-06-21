@@ -9,7 +9,7 @@ import type { CommunityPostComposerSeed } from "@/components/community-post-comp
 import { EndgameCard } from "@/components/endgame-card";
 import { MistakeCard } from "@/components/mistake-card";
 import { tiltInsight } from "@/components/guided-walk/guided-walk";
-import { GuidedWalk } from "@/components/guided-walk/guided-walk";
+import { GuidedWalk, type GuidedSaveStatus } from "@/components/guided-walk/guided-walk";
 import { GuidedWalkBoard } from "@/components/guided-walk/guided-walk-board";
 import { ReportViewToggle } from "@/components/guided-walk/report-view-toggle";
 import { ReportEntryChoice } from "@/components/guided-walk/report-entry-choice";
@@ -1382,13 +1382,31 @@ function TacticsCoachInsight({
   }
 
   return (
-    <CoachInsightPanel
-      headline={headline}
-      headlineClass={headlineClass}
-      lines={lines.slice(0, 3)}
-      borderClass="border-amber-500/15"
-      backgroundClass="bg-[radial-gradient(circle_at_top_right,_rgba(245,158,11,0.10),_rgba(15,23,42,0.82)_40%,_rgba(2,6,23,0.96)_100%)]"
-    />
+    <>
+      {matesMissed > 0 ? (
+        <div className="mb-3 flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/[0.06] px-4 py-3">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-red-600 text-base font-black text-white shadow-lg">
+            ♛
+          </span>
+          <div>
+            <p className="text-sm font-bold text-red-300">
+              {matesMissed} missed mate{matesMissed > 1 ? "s" : ""}
+            </p>
+            <p className="text-xs text-slate-400">
+              Forced checkmate{matesMissed > 1 ? "s were" : " was"} available but
+              went unnoticed — these are the highest-impact misses.
+            </p>
+          </div>
+        </div>
+      ) : null}
+      <CoachInsightPanel
+        headline={headline}
+        headlineClass={headlineClass}
+        lines={lines.slice(0, 3)}
+        borderClass="border-amber-500/15"
+        backgroundClass="bg-[radial-gradient(circle_at_top_right,_rgba(245,158,11,0.10),_rgba(15,23,42,0.82)_40%,_rgba(2,6,23,0.96)_100%)]"
+      />
+    </>
   );
 }
 
@@ -2081,6 +2099,9 @@ export function ScanSessionReport({
   perPhaseProgress,
   guidedLaunchSignal = 0,
   onCreateCommunityPost,
+  onSave,
+  saveStatus,
+  authenticated,
 }: {
   scan: PublicScanSessionPayload;
   reportMeta: ComputedScanReport | null;
@@ -2093,6 +2114,14 @@ export function ScanSessionReport({
    *  scan-complete modal). */
   guidedLaunchSignal?: number;
   onCreateCommunityPost?: (seed: CommunityPostComposerSeed) => void;
+  /** Save-to-profile handler — threaded down to the GuidedWalk's final-step
+   *  prompt. When omitted, no prompt is shown. The parent (scan-session-page)
+   *  owns the real save logic. */
+  onSave?: () => void;
+  /** Save progress, mirrored from the parent. */
+  saveStatus?: GuidedSaveStatus;
+  /** Whether the user is signed in — flips the prompt copy for guests. */
+  authenticated?: boolean;
 }) {
   const result = scan.result;
   const isProcessing = scan.status === "processing";
@@ -2201,8 +2230,7 @@ export function ScanSessionReport({
     Record<string, "list" | "grid">
   >({});
   const [reportViewMode, setReportViewMode] = useState<ReportViewMode>(
-    // Default to the full report; the guided walkthrough is one tap away via
-    // the sticky toggle (or the scan-complete modal's "Start walkthrough").
+    // Full report while scanning; guided tour offered via modal when ready.
     "full",
   );
   const getSV = (id: string): "list" | "grid" => sectionViewModes[id] ?? "list";
@@ -2224,10 +2252,8 @@ export function ScanSessionReport({
   }, [guidedLaunchSignal]);
 
   // ── Entry choice prompt ──
-  // When you open an already-complete report, ask once how you want to read
-  // it (Guided tour vs Full). Fresh scans are handled by the scan-complete
-  // modal instead, so this only fires for reports that were "ready" on mount.
-  // The choice is remembered per report so revisits don't nag.
+  // Once the scan completes, ask guided vs full. Fresh scans show the
+  // scan-complete modal instead, so this only fires for reports already ready.
   const entryChoiceKey = `firechess-report-entry-choice:${scan.id}`;
   const shouldPromptEntry =
     typeof window !== "undefined" &&
@@ -2550,6 +2576,9 @@ export function ScanSessionReport({
             username={scan.chessUsername}
             radarProps={radarProps}
             brilliantMoves={accessibleBrilliants}
+            onSave={onSave}
+            saveStatus={saveStatus}
+            authenticated={authenticated}
             onFinish={() => changeReportViewMode("full")}
           />
         </div>
@@ -2667,6 +2696,20 @@ export function ScanSessionReport({
             value={result.gamesAnalyzed || scan.config.maxGames}
             hint={isProcessing ? "Updating live" : undefined}
           />
+          {!isProcessing && result.games && result.games.length > 0 ? (
+            <Link
+              href={`/best-game/${scan.id}`}
+              className="group relative overflow-hidden rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.07] to-orange-500/[0.03] p-4 transition hover:border-amber-500/30 hover:from-amber-500/[0.10] hover:to-orange-500/[0.06]"
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-400/80">
+                Best Game
+              </p>
+              <p className="mt-1 text-sm font-bold text-amber-200 group-hover:text-amber-100">
+                View your best performance →
+              </p>
+              <div className="absolute -bottom-2 -right-2 text-3xl opacity-10">🏆</div>
+            </Link>
+          ) : null}
           <MetricCard
             label="Repeat positions"
             value={result.repeatedPositions}

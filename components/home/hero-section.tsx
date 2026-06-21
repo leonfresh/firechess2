@@ -50,12 +50,13 @@ export function HeroSection({ siteStats, onScanClick, onSeeSampleClick }: Props)
         className="relative overflow-hidden rounded-[2.75rem] px-5 py-7 shadow-[0_40px_120px_-64px_rgba(20,8,5,0.95)] sm:px-8 sm:py-9 lg:px-10 lg:py-10"
         style={{
           background:
-            "linear-gradient(145deg, rgba(10, 9, 13, 0.97) 0%, rgba(19, 13, 16, 0.96) 46%, rgba(56, 25, 12, 0.95) 100%)",
+            "linear-gradient(150deg, rgba(10, 9, 13, 0.97) 0%, rgba(19, 13, 16, 0.96) 42%, rgba(34, 19, 12, 0.95) 70%, rgba(56, 25, 12, 0.92) 100%)",
         }}
       >
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-200/35 to-transparent" />
-        <div className="pointer-events-none absolute left-[-8%] top-[-10%] h-48 w-48 rounded-full bg-orange-400/[0.08] blur-3xl" />
-        <div className="pointer-events-none absolute bottom-[-12%] right-[8%] h-44 w-44 rounded-full bg-red-500/[0.07] blur-3xl" />
+        <div className="pointer-events-none absolute -left-12 -top-12 h-64 w-64 rounded-full bg-orange-400/[0.06] blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-16 left-1/4 h-56 w-56 rounded-full bg-red-500/[0.05] blur-3xl" />
+        <div className="pointer-events-none absolute -right-10 top-1/3 h-48 w-48 rounded-full bg-amber-500/[0.04] blur-3xl" />
 
         <div className="relative grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start lg:gap-10">
           {/* ── Copy column ─────────────────────────────────────────── */}
@@ -142,16 +143,18 @@ export function HeroSection({ siteStats, onScanClick, onSeeSampleClick }: Props)
           {/* ── Visual column ──────────────────────────────────────── */}
           <div className="relative mx-auto w-full max-w-[38rem] lg:max-w-none">
             <div className="pointer-events-none absolute -inset-10 rounded-full bg-orange-500/[0.06] blur-3xl" />
-            <div className="relative overflow-hidden rounded-[2rem] bg-black/55 p-1 shadow-[0_0_80px_-16px_rgba(249,115,22,0.22),0_48px_120px_-52px_rgba(0,0,0,0.95)] ring-1 ring-white/[0.04]">
-              <HeroProductScreenshot paused={false} />
-              <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 backdrop-blur-sm">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-green-400" />
-                </span>
-                <span className="text-[10px] font-medium text-white/60">
-                  Live demo
-                </span>
+            <div className="relative rounded-[2rem] bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-transparent p-[1.5px] shadow-[0_0_80px_-16px_rgba(249,115,22,0.22),0_48px_120px_-52px_rgba(0,0,0,0.95)]">
+              <div className="relative overflow-hidden rounded-[calc(2rem-1.5px)] bg-[#050508]">
+                <HeroProductScreenshot paused={false} />
+                <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 backdrop-blur-sm">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-green-400" />
+                  </span>
+                  <span className="text-[10px] font-medium text-white/60">
+                    Live demo
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -163,55 +166,53 @@ export function HeroSection({ siteStats, onScanClick, onSeeSampleClick }: Props)
           product "games scanned" and "leaks found" feel alive even with a
           small user base, and map directly to the value proposition.
         */}
-        <div className="relative mt-8 grid grid-cols-2 gap-3 border-t border-white/[0.07] pt-6 sm:grid-cols-4">
-          {[
-            {
-              value: siteStats?.totalReports,
-              label: "Games analyzed",
-              icon: Search,
-              color: "text-emerald-400",
-              accent: "from-emerald-400/20 to-emerald-500/0",
-            },
-            {
-              value: siteStats?.totalUsers,
-              label: "Players signed up",
-              icon: Flame,
-              color: "text-orange-400",
-              accent: "from-orange-400/20 to-orange-500/0",
-            },
-            {
-              value: siteStats?.proMembers,
-              label: "Pro members",
-              icon: Star,
-              color: "text-amber-400",
-              accent: "from-amber-400/25 to-amber-500/0",
-            },
-            {
-              value: siteStats?.lifetimeMembers,
-              label: "Lifetime members",
-              icon: InfinityIcon,
-              color: "text-red-400",
-              accent: "from-red-400/20 to-red-500/0",
-            },
-          ].map((item) => (
-            <div
-              key={item.label}
-              className="group relative overflow-hidden rounded-xl border border-white/[0.05] bg-white/[0.02] px-4 py-3.5 transition-colors hover:border-white/[0.09] hover:bg-white/[0.04]"
-            >
+        <div className="relative mt-8 border-t border-white/[0.07] pt-6">
+          <div className="grid grid-cols-2 sm:grid-cols-4">
+            {[
+              {
+                value: siteStats?.totalReports,
+                label: "Games analyzed",
+                icon: Search,
+                color: "text-emerald-400",
+              },
+              {
+                value: siteStats?.totalUsers,
+                label: "Players signed up",
+                icon: Flame,
+                color: "text-orange-400",
+              },
+              {
+                value: siteStats?.proMembers,
+                label: "Pro members",
+                icon: Star,
+                color: "text-amber-400",
+              },
+              {
+                value: siteStats?.lifetimeMembers,
+                label: "Lifetime members",
+                icon: InfinityIcon,
+                color: "text-red-400",
+              },
+            ].map((item, i) => (
               <div
-                className={`pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r ${item.accent}`}
-              />
-              <div className="flex items-center gap-2">
-                <item.icon className={`h-4 w-4 ${item.color}`} />
-                <span
-                  className={`text-xl font-bold tabular-nums ${item.color}`}
-                >
-                  {item.value != null ? item.value.toLocaleString() : "—"}
-                </span>
+                key={item.label}
+                className="group relative px-4 py-3 transition-colors hover:bg-white/[0.02]"
+              >
+                {i > 0 && (
+                  <div className="absolute left-0 top-3 hidden h-8 w-px bg-white/[0.06] sm:block" />
+                )}
+                <div className="flex items-center gap-2.5">
+                  <item.icon className={`h-4 w-4 ${item.color}`} />
+                  <span
+                    className={`text-xl font-bold tabular-nums ${item.color}`}
+                  >
+                    {item.value != null ? item.value.toLocaleString() : "—"}
+                  </span>
+                </div>
+                <p className="mt-0.5 text-xs text-slate-500">{item.label}</p>
               </div>
-              <p className="mt-0.5 text-xs text-slate-500">{item.label}</p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     </header>

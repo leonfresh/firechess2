@@ -748,12 +748,23 @@ export function TacticCard({
       const animBadge = animating && square ? animBadges[square] : null;
       const showSeverity =
         !animating && !!userMoveDetails && square === userMoveDetails.to;
+      const showMateFlag =
+        !animating &&
+        isMate &&
+        !!bestMoveDetails &&
+        square === bestMoveDetails.to &&
+        (!showSeverity || userMoveDetails?.to !== bestMoveDetails.to);
       const badge =
         animBadge ??
         (showSeverity ? { label: severityLabel, color: severityColor } : null);
       return (
         <div style={props?.style} className="relative h-full w-full">
           {props?.children}
+          {showMateFlag ? (
+            <span className="pointer-events-none absolute -right-1 -top-1 z-[40] flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-black text-white shadow-lg drop-shadow-md">
+              ♛
+            </span>
+          ) : null}
           {badge ? (
             <span
               className="pointer-events-none absolute right-0.5 top-0.5 z-[40] rounded px-1 py-[1px] text-[9px] font-bold text-white shadow"
@@ -765,7 +776,7 @@ export function TacticCard({
         </div>
       );
     }) as any;
-  }, [animating, animBadges, userMoveDetails, severityColor, severityLabel]);
+  }, [animating, animBadges, userMoveDetails, severityColor, severityLabel, isMate, bestMoveDetails]);
 
   const moveToUciStr = (move: MoveDetails | null): string | null => {
     if (!move) return null;
@@ -1085,7 +1096,7 @@ export function TacticCard({
                   className="shrink-0 rounded-lg px-2.5 py-1 text-xs font-bold text-white"
                   style={{ backgroundColor: severityColor }}
                 >
-                  {severityLabel}
+                  {isMate ? <>♛ {severityLabel}</> : severityLabel}
                 </span>
               </div>
             </div>

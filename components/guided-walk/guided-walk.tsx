@@ -2,8 +2,11 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { Chess } from "chess.js";
 import {
   ArrowRight,
+  Bookmark,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Crosshair,
@@ -11,6 +14,7 @@ import {
   Lightbulb,
   ListChecks,
   Sparkles,
+  Target,
   Trophy,
   X,
 } from "lucide-react";
@@ -21,6 +25,7 @@ import {
   computeRadarData,
   type RadarProps,
 } from "@/components/radar-chart";
+import { isMissedMateTactic } from "@/lib/tactic-utils";
 import type {
   AnalysisReport,
   BrilliantMove,
@@ -30,6 +35,52 @@ import type {
   PositionEvalTrace,
   RepeatedOpeningLeak,
 } from "@/lib/types";
+
+/* ── Move display helpers ────────────────────────────────────────────────
+ * userMove/bestMove fields are stored as UCI (e.g. "h7h8", "e7e8q"). The full
+ * report's cards convert to SAN at render via chess.js; the guided tour now
+ * does the same so moves read as "h8=Q+" / "Nf3" rather than raw coordinates.
+ * Never returns null — falls back to a human-readable UCI format so callers
+ * never show raw coordinate notation like "h7h8" in the UI. */
+function fmtUci(uci: string): string {
+  const to = uci.slice(2, 4);
+  const promo = uci.length > 4 ? `=${uci[4].toUpperCase()}` : "";
+  return `${to}${promo}`;
+}
+
+function moveSan(fen: string, move: string | null | undefined): string | null {
+  if (!move) return null;
+  try {
+    const c = new Chess(fen);
+    const uci = /^[a-h][1-8][a-h][1-8][qrbn]?$/.test(move);
+    const r = uci
+      ? c.move({
+          from: move.slice(0, 2),
+          to: move.slice(2, 4),
+          promotion: (move.slice(4, 5) || undefined) as
+            | "q"
+            | "r"
+            | "b"
+            | "n"
+            | undefined,
+        })
+      : c.move(move);
+    if (r) return r.san;
+  } catch {
+    // chess.js failed — format the UCI into something readable
+  }
+  // Fallback: format UCI as a readable human string instead of raw coords
+  if (/^[a-h][1-8][a-h][1-8][qrbn]?$/.test(move)) {
+    return fmtUci(move);
+  }
+  return move;
+}
+
+/** Derive the side to move ("white" | "black") from a FEN's active-color field.
+ *  Used for opening-leak traces, which carry no userColor of their own. */
+function colorFromFen(fen: string): "white" | "black" {
+  return fen.split(" ")[1] === "b" ? "black" : "white";
+}
 
 /* ────────────────────────────────────────────────────────────────────────
  * GuidedWalk
@@ -58,6 +109,13 @@ import type {
  * user finishes or skips.
  * ──────────────────────────────────────────────────────────────────────── */
 
+export type GuidedSaveStatus =
+  | "idle"
+  | "saving"
+  | "saved"
+  | "duplicate"
+  | "error";
+
 export type GuidedWalkProps = {
   /** Aggregate report card (accuracy, rating, leak rate). */
   report: AnalysisReport;
@@ -85,6 +143,17 @@ export type GuidedWalkProps = {
   radarProps?: RadarProps | null;
   /** Brilliant moves — when present, the brilliant-move step is shown. */
   brilliantMoves?: BrilliantMove[];
+  /**
+   * Save-to-profile handler. When provided (along with `saveStatus`), the final
+   * "plan" step shows a save prompt. The parent owns the real save logic and
+   * reflects progress back via `saveStatus`; GuidedWalk stays save-agnostic.
+   * If omitted, no prompt is rendered.
+   */
+  onSave?: () => void;
+  /** Save progress, mirrored from the parent's save state. */
+  saveStatus?: GuidedSaveStatus;
+  /** Whether the user is signed in — flips copy to "Sign in to Save" for guests. */
+  authenticated?: boolean;
   /** Called when the user finishes or skips → page flips to full view. */
   onFinish: () => void;
 };
@@ -171,6 +240,8 @@ export function GuidedWalk(props: GuidedWalkProps) {
     }
     return items.slice(0, 3);
   }, [props.leaks, props.oneOffMistakes, topTactic]);
+
+
 
   // ── Build the step list dynamically (omit steps with no data). ──
   const steps = useMemo(() => {
@@ -309,8 +380,12 @@ export function GuidedWalk(props: GuidedWalkProps) {
               planItems={planItems}
               mentalStats={props.mentalStats}
               username={props.username}
+              onSave={props.onSave}
+              saveStatus={props.saveStatus}
+              authenticated={props.authenticated}
             />
           )}
+
         </div>
       </div>
 
@@ -501,13 +576,17 @@ function TopLeakStep({
       />
     );
   }
+  // UCI → SAN for display, matching the full report's cards.
+  const userSan = moveSan(leak.fenBefore, leak.userMove);
+  const bestSan = moveSan(leak.fenBefore, leak.bestMove);
+  const isSideline = leak.dbApproved;
   return (
     <div>
       <StepHeader
-        eyebrow="Your biggest opening leak"
+        eyebrow={isSideline ? "An offbeat sideline you play" : "Your biggest opening leak"}
         title={leak.openingName ?? "A recurring position"}
         icon={<Crosshair className="h-4 w-4" />}
-        tone="orange"
+        tone={isSideline ? "emerald" : "orange"}
       />
       <div className="mt-4 grid items-start gap-5 lg:grid-cols-2">
         {/* The position, with your move (red) vs the best move (green) */}
@@ -524,12 +603,12 @@ function TopLeakStep({
               {leak.userMove ? (
                 <>
                   You played{" "}
-                  <span className="font-bold text-white">{leak.userMove}</span>{" "}
+                  <span className="font-bold text-white">{userSan ?? leak.userMove}</span>{" "}
                   {leak.bestMove && (
                     <>
                       instead of{" "}
                       <span className="font-bold text-emerald-400">
-                        {leak.bestMove}
+                        {bestSan ?? leak.bestMove}
                       </span>
                     </>
                   )}
@@ -540,7 +619,7 @@ function TopLeakStep({
                   The engine suggests{" "}
                   {leak.bestMove ? (
                     <span className="font-bold text-emerald-400">
-                      {leak.bestMove}
+                      {bestSan ?? leak.bestMove}
                     </span>
                   ) : (
                     "a cleaner continuation"
@@ -570,14 +649,55 @@ function TopLeakStep({
               />
             </div>
           </div>
-          <div className="rounded-xl border border-orange-500/15 bg-orange-500/[0.04] p-4">
-            <p className="text-xs leading-relaxed text-slate-400">
-              <span className="font-semibold text-orange-300">Why it matters:</span>{" "}
-              A leak that shows up in {leak.reachCount ?? 1} of your games is a
-              habit, not a blunder. Fix this one position and you fix it every
-              time you reach it.
-            </p>
-          </div>
+
+          {/* Offbeat sideline banner */}
+          {isSideline && leak.dbWinRate != null && leak.dbGames != null && (
+            <div className="flex items-center gap-3 rounded-xl border border-indigo-500/20 bg-indigo-500/[0.06] px-3.5 py-2.5">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/20 text-lg">
+                📚
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-indigo-400/70">
+                  Known Opening Line
+                </p>
+                <p className="mt-0.5 text-xs text-slate-400">
+                  Your move{" "}
+                  <span className="font-mono font-bold text-slate-300">
+                    {userSan ?? leak.userMove}
+                  </span>{" "}
+                  is played in{" "}
+                  <span className="font-semibold text-slate-300">
+                    {leak.dbGames.toLocaleString()}
+                  </span>{" "}
+                  database games with a{" "}
+                  <span className="font-semibold text-indigo-400">
+                    {(leak.dbWinRate * 100).toFixed(0)}%
+                  </span>{" "}
+                  win rate. The engine prefers a different approach, but
+                  this is a well-known sideline with practical results.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {isSideline ? (
+            <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/[0.04] p-4">
+              <p className="text-xs leading-relaxed text-slate-400">
+                <span className="font-semibold text-emerald-300">Nothing to fix:</span>{" "}
+                This isn't a mistake — it's a sideline you know. The engine just prefers a different
+                move, but your choice is well-established in practice with decent results.
+              </p>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-orange-500/15 bg-orange-500/[0.04] p-4">
+              <p className="text-xs leading-relaxed text-slate-400">
+                <span className="font-semibold text-orange-300">Why it matters:</span>{" "}
+                A leak that shows up in {leak.reachCount ?? 1} of your games is a
+                habit, not a blunder. Fix this one position and you fix it every
+                time you reach it.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -692,6 +812,8 @@ function BrilliantStep({ brilliant }: { brilliant: BrilliantMove }) {
 /* ── Step 6: An endgame moment ────────────────────────────────────────── */
 
 function EndgameStep({ endgame }: { endgame: EndgameMistake }) {
+  const userSan = moveSan(endgame.fenBefore, endgame.userMove);
+  const bestSan = moveSan(endgame.fenBefore, endgame.bestMove);
   return (
     <div>
       <StepHeader
@@ -714,12 +836,12 @@ function EndgameStep({ endgame }: { endgame: EndgameMistake }) {
               {endgame.userMove ? (
                 <>
                   You played{" "}
-                  <span className="font-bold text-white">{endgame.userMove}</span>{" "}
+                  <span className="font-bold text-white">{userSan ?? endgame.userMove}</span>{" "}
                   {endgame.bestMove && (
                     <>
                       instead of{" "}
                       <span className="font-bold text-emerald-400">
-                        {endgame.bestMove}
+                        {bestSan ?? endgame.bestMove}
                       </span>
                     </>
                   )}
@@ -730,7 +852,7 @@ function EndgameStep({ endgame }: { endgame: EndgameMistake }) {
                   The engine suggests{" "}
                   {endgame.bestMove ? (
                     <span className="font-bold text-emerald-400">
-                      {endgame.bestMove}
+                      {bestSan ?? endgame.bestMove}
                     </span>
                   ) : (
                     "a cleaner technique"
@@ -870,10 +992,16 @@ function PlanStep({
   planItems,
   mentalStats,
   username,
+  onSave,
+  saveStatus = "idle",
+  authenticated = true,
 }: {
   planItems: { label: string; tag: string }[];
   mentalStats?: MentalStats | null;
   username: string;
+  onSave?: () => void;
+  saveStatus?: GuidedSaveStatus;
+  authenticated?: boolean;
 }) {
   return (
     <div>
@@ -922,9 +1050,116 @@ function PlanStep({
           </p>
         </div>
       )}
+
+      {onSave && (
+        <SavePrompt
+          onSave={onSave}
+          saveStatus={saveStatus}
+          authenticated={authenticated}
+        />
+      )}
     </div>
   );
 }
+
+/* ── Save-to-profile prompt (final step) ──────────────────────────────── */
+
+function SavePrompt({
+  onSave,
+  saveStatus,
+  authenticated,
+}: {
+  onSave: () => void;
+  saveStatus: GuidedSaveStatus;
+  authenticated: boolean;
+}) {
+  // Already saved — confirm and step back. No button needed.
+  if (saveStatus === "saved" || saveStatus === "duplicate") {
+    return (
+      <div className="mt-5 flex items-center gap-3 rounded-xl border border-emerald-500/25 bg-emerald-500/[0.07] p-4">
+        <CheckCircle2 className="h-6 w-6 shrink-0 text-emerald-400" />
+        <div>
+          <p className="text-sm font-bold text-emerald-300">
+            {saveStatus === "duplicate"
+              ? "Already on your dashboard"
+              : "Saved to your profile"}
+          </p>
+          <p className="mt-0.5 text-xs leading-relaxed text-slate-400">
+            Find it anytime on your dashboard. The full report below has every
+            position and deeper analysis.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const isSaving = saveStatus === "saving";
+  const isError = saveStatus === "error";
+
+  return (
+    <div className="mt-5 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-cyan-500/[0.06] to-emerald-500/[0.04] p-5">
+      <div className="flex items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-300">
+          <Bookmark className="h-5 w-5" />
+        </span>
+        <div className="flex-1">
+          <h4 className="text-base font-bold text-white">
+            {authenticated ? "Save this report" : "Keep this report"}
+          </h4>
+          <p className="mt-1 text-xs leading-relaxed text-slate-400">
+            {authenticated
+              ? "Lock these findings to your profile so you can come back to them anytime."
+              : "Create a free account to save this scan to your profile before it expires in 24 hours."}
+          </p>
+          {isError && (
+            <p className="mt-2 text-xs font-medium text-red-400">
+              Something went wrong saving — tap to try again.
+            </p>
+          )}
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onSave}
+        disabled={isSaving}
+        className="btn-cta-fire group mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-bold text-white disabled:opacity-60"
+      >
+        {isSaving ? (
+          <>
+            <svg
+              className="h-4 w-4 animate-spin"
+              viewBox="0 0 24 24"
+              fill="none"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="3"
+                className="opacity-20"
+              />
+              <path
+                d="M12 2a10 10 0 019.95 9"
+                stroke="currentColor"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+            </svg>
+            Saving…
+          </>
+        ) : (
+          <>
+            {authenticated ? "Save Report" : "Sign in to Save"}
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </>
+        )}
+      </button>
+    </div>
+  );
+}
+
+/* ── Step 9: Best game showcase ──────────────────────────────────────────── */
 
 /* ── Shared bits ───────────────────────────────────────────────────────── */
 

@@ -34,6 +34,10 @@ type Props = {
    *  the usual red "you played / green best move" contrast. Used for brilliant
    *  moves, where the user's move IS the move worth celebrating. */
   praise?: boolean;
+  /** Fired (once) when the user plays the correct best move in interactive
+   *  mode. Lets a parent (e.g. the recap trainer) track solves + auto-advance
+   *  without re-implementing move matching. */
+  onSolved?: () => void;
 };
 
 type Sq = { from: string; to: string; promotion?: string };
@@ -62,7 +66,7 @@ function resolve(fen: string, move: string | null | undefined): Sq | null {
   }
 }
 
-export function GuidedWalkBoard({ fen, userMove, bestMove, userColor, mode, praise }: Props) {
+export function GuidedWalkBoard({ fen, userMove, bestMove, userColor, mode, praise, onSolved }: Props) {
   const { ref, size } = useBoardSize(420, { evalBar: false });
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
@@ -133,6 +137,7 @@ export function GuidedWalkBoard({ fen, userMove, bestMove, userColor, mode, prai
         setSolved(true);
         setHighlight({ from: sourceSq, to: targetSq });
         setFenState(c.fen());
+        onSolved?.();
         return true;
       }
       // Wrong — show the best move as a hint, snap back.

@@ -1300,6 +1300,9 @@ export function ScanSessionPage({
             perPhaseProgress={perPhaseProgress}
             guidedLaunchSignal={guidedLaunchSignal}
             onCreateCommunityPost={openComposer}
+            onSave={handleSave}
+            saveStatus={saveState}
+            authenticated={authenticated}
           />
         ) : null}
       </div>

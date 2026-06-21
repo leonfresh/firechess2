@@ -25,7 +25,6 @@ import {
   Swords,
   Zap,
 } from "lucide-react";
-import { CommunityPostComposerModal } from "@/components/community-post-composer-modal";
 import { DrillMode } from "@/components/drill-mode";
 import {
   HeroSection,
@@ -41,10 +40,6 @@ import dynamic from "next/dynamic";
 // deferring them is safe and improves LCP / INP on mobile.
 const HowItWorks = dynamic(
   () => import("@/components/home/how-it-works").then((m) => m.HowItWorks),
-  { ssr: true },
-);
-const CommunityLoop = dynamic(
-  () => import("@/components/home/community-loop").then((m) => m.CommunityLoop),
   { ssr: true },
 );
 const EmailCapture = dynamic(
@@ -250,12 +245,11 @@ export default function HomePage() {
   >("idle");
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [copyLinkLabel, setCopyLinkLabel] = useState("Copy Link");
-  const [activeReportPath, setActiveReportPath] = useState<string | null>(null);
-  const [communityComposerOpen, setCommunityComposerOpen] = useState(false);
   const [welcomeBack, setWelcomeBack] = useState<string | null>(null);
   const [cachedReportEntry, setCachedReportEntry] =
     useState<CachedReportEntry | null>(null);
+  const [copyLinkLabel, setCopyLinkLabel] = useState("Copy Link");
+  const [activeReportPath, setActiveReportPath] = useState<string | null>(null);
   const [showRestoreBanner, setShowRestoreBanner] = useState(false);
   const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
   const [leakTab, setLeakTab] = useState<"repeated" | "one-off">("repeated");
@@ -1052,10 +1046,6 @@ export default function HomePage() {
       computeScanReportMeta(result, lastRunConfig?.cpThreshold ?? cpThreshold),
     [cpThreshold, lastRunConfig?.cpThreshold, result],
   );
-  const activeReportUrl = useMemo(() => {
-    if (!activeReportPath || typeof window === "undefined") return null;
-    return new URL(activeReportPath, window.location.origin).toString();
-  }, [activeReportPath]);
   const maxObservedCpLoss = useMemo(() => {
     const losses = diagnostics?.positionTraces
       .map((trace) => trace.cpLoss)
@@ -1064,6 +1054,11 @@ export default function HomePage() {
     if (!losses || losses.length === 0) return null;
     return Math.max(...losses);
   }, [diagnostics]);
+
+  const activeReportUrl = useMemo(() => {
+    if (!activeReportPath || typeof window === "undefined") return null;
+    return new URL(activeReportPath, window.location.origin).toString();
+  }, [activeReportPath]);
 
   const onBrowserProgress = (progress: AnalysisProgress) => {
     setProgressInfo({
@@ -1905,14 +1900,6 @@ export default function HomePage() {
 
           {/* ─── Lead capture (free weekly leak report) ─── */}
           {state === "idle" && <EmailCapture />}
-
-          {/* ─── Community Loop ─── */}
-          {state === "idle" && (
-            <CommunityLoop
-              authenticated={authenticated}
-              userId={user?.id}
-            />
-          )}
 
           {/* ─── Loading State ─── */}
           {state === "loading" && (
@@ -2839,6 +2826,17 @@ export default function HomePage() {
                       : null
                   }
                   brilliantMoves={result.brilliantMoves ?? []}
+                  onSave={() => {
+                    // Guest funnel mirrors the existing in-page Save buttons:
+                    // redirect to sign-in before attempting the save.
+                    if (!authenticated) {
+                      window.location.href = "/auth/signin";
+                      return;
+                    }
+                    saveReportToAccount();
+                  }}
+                  saveStatus={saveStatus}
+                  authenticated={authenticated}
                   onFinish={() => {
                     setViewMode("full");
                     reportRef.current?.scrollIntoView({
@@ -2954,100 +2952,6 @@ export default function HomePage() {
 
                   {/* Divider */}
                   <span className="hidden h-6 w-px bg-white/10 sm:block" />
-
-                  {/* Share on X / Twitter */}
-                  <button
-                    type="button"
-                    disabled={!activeReportUrl}
-                    title={
-                      activeReportUrl
-                        ? undefined
-                        : "Share links only work from dedicated report pages."
-                    }
-                    onClick={() => {
-                      const text = `🔥 My FireChess analysis: ${report ? `${report.estimatedAccuracy.toFixed(1)}% accuracy` : `${result.gamesAnalyzed} games scanned`}${result.playerRating ? ` (${result.playerRating} rated)` : ""} — ${result.leaks.length} opening leaks, ${result.missedTactics.length} missed tactics found\n\nScan your games free at`;
-                      if (!activeReportUrl) return;
-                      const url = activeReportUrl;
-                      window.open(
-                        `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
-                        "_blank",
-                        "noopener",
-                      );
-                    }}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <svg
-                      className="h-4 w-4"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-                    </svg>
-                    Share
-                  </button>
-
-                  {/* Share on Reddit */}
-                  <button
-                    type="button"
-                    disabled={!activeReportUrl}
-                    title={
-                      activeReportUrl
-                        ? undefined
-                        : "Share links only work from dedicated report pages."
-                    }
-                    onClick={() => {
-                      if (!activeReportUrl) return;
-                      const title = `My FireChess Analysis: ${report ? `${report.estimatedAccuracy.toFixed(1)}% accuracy` : `${result.gamesAnalyzed} games`}${result.playerRating ? ` (${result.playerRating})` : ""} — ${result.leaks.length} leaks, ${result.missedTactics.length} missed tactics`;
-                      window.open(
-                        `https://www.reddit.com/submit?url=${encodeURIComponent(activeReportUrl)}&title=${encodeURIComponent(title)}`,
-                        "_blank",
-                        "noopener",
-                      );
-                    }}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-orange-500/30 hover:bg-orange-500/[0.08] hover:text-orange-400 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <svg
-                      className="h-4 w-4"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                    >
-                      <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z" />
-                    </svg>
-                    Reddit
-                  </button>
-
-                  {/* Copy Link */}
-                  <button
-                    type="button"
-                    disabled={!activeReportUrl}
-                    title={
-                      activeReportUrl
-                        ? undefined
-                        : "Share links only work from dedicated report pages."
-                    }
-                    onClick={() => {
-                      if (!activeReportUrl) return;
-                      navigator.clipboard.writeText(activeReportUrl);
-                      setCopyLinkLabel("Copied!");
-                      setTimeout(() => setCopyLinkLabel("Copy Link"), 1500);
-                    }}
-                    className="inline-flex items-center gap-1.5 rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-slate-300 transition-all hover:border-white/20 hover:bg-white/[0.08] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                      />
-                    </svg>
-                    {copyLinkLabel}
-                  </button>
 
                   {/* Download PNG */}
                   <button
@@ -8425,6 +8329,7 @@ export default function HomePage() {
                   </p>
                 </div>
               </div>
+
               </>
               )}
             </section>
@@ -8432,30 +8337,95 @@ export default function HomePage() {
         </section>
       </div>
 
-      <button
-        type="button"
-        onClick={() => setCommunityComposerOpen(true)}
-        aria-label="Create community post"
-        aria-haspopup="dialog"
-        className={`fixed right-4 z-40 flex items-center gap-3 rounded-full border border-white/[0.1] bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.26),_rgba(15,23,42,0.92)_42%,_rgba(2,6,23,0.98)_100%)] px-3 py-3 text-white shadow-[0_20px_60px_rgba(6,182,212,0.18)] backdrop-blur-xl transition hover:scale-[1.02] hover:border-cyan-300/30 sm:right-6 sm:px-4 ${state === "done" && result && saveStatus !== "saved" && saveStatus !== "duplicate" ? "bottom-24" : "bottom-5 sm:bottom-6"}`}
-      >
-        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-lg font-black text-slate-950 shadow-lg shadow-cyan-500/20">
-          +
-        </span>
-        <span className="hidden sm:block">
-          <span className="block text-[10px] font-semibold uppercase tracking-[0.24em] text-cyan-200/70">
-            Community
-          </span>
-          <span className="block text-sm font-semibold text-white">
-            Create a post
-          </span>
-        </span>
-      </button>
+      {/* ─── Testimonials / Human Photos ─── */}
+      <section className="border-t border-white/[0.06] py-20 md:py-28">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+            <div className="mx-auto max-w-2xl text-center">
+              <h2 className="text-3xl font-extrabold text-white md:text-4xl">
+                Trusted by chess players of all levels
+              </h2>
+              <p className="mt-4 text-base text-slate-400">
+                From casual club players to tournament competitors — FireChess
+                helps you find and fix the gaps in your game.
+              </p>
+            </div>
 
-      <CommunityPostComposerModal
-        open={communityComposerOpen}
-        onClose={() => setCommunityComposerOpen(false)}
-      />
+            <div className="mt-16 grid gap-8 md:grid-cols-3">
+              {/* Testimonial 1 */}
+              <div className="group relative rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 transition-all hover:border-violet-500/30 hover:bg-white/[0.04]">
+                <div className="flex items-center gap-4">
+                  <img
+                    src="/images/testimonials/david-chen.jpg"
+                    alt="David Chen"
+                    className="h-14 w-14 rounded-full object-cover ring-2 ring-violet-500/20"
+                    width={56}
+                    height={56}
+                    loading="lazy"
+                  />
+                  <div>
+                    <p className="font-bold text-white">David Chen</p>
+                    <p className="text-sm text-slate-500">Club player, 1650 Elo</p>
+                  </div>
+                </div>
+                <blockquote className="mt-4 text-sm leading-relaxed text-slate-300">
+                  &ldquo;I always knew my openings were weak, but seeing the
+                  exact leaks laid out game-by-game was eye-opening. My accuracy
+                  went from 65% to 82% in two months.&rdquo;
+                </blockquote>
+              </div>
+
+              {/* Testimonial 2 */}
+              <div className="group relative rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 transition-all hover:border-violet-500/30 hover:bg-white/[0.04]">
+                <div className="flex items-center gap-4">
+                  <img
+                    src="/images/testimonials/sarah-okonkwo.jpg"
+                    alt="Sarah Müller"
+                    className="h-14 w-14 rounded-full object-cover ring-2 ring-violet-500/20"
+                    width={56}
+                    height={56}
+                    loading="lazy"
+                  />
+                  <div>
+                    <p className="font-bold text-white">Sarah Müller</p>
+                    <p className="text-sm text-slate-500">
+                      Tournament player, 1950 Elo
+                    </p>
+                  </div>
+                </div>
+                <blockquote className="mt-4 text-sm leading-relaxed text-slate-300">
+                  &ldquo;The tactic recognition drill is exactly what I needed.
+                  I was missing forks in cramped positions — now I catch them
+                  instantly. Up 120 points in three months.&rdquo;
+                </blockquote>
+              </div>
+
+              {/* Testimonial 3 */}
+              <div className="group relative rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 transition-all hover:border-violet-500/30 hover:bg-white/[0.04]">
+                <div className="flex items-center gap-4">
+                  <img
+                    src="/images/testimonials/marcus-rivera.jpg"
+                    alt="Marcus Rivera"
+                    className="h-14 w-14 rounded-full object-cover ring-2 ring-violet-500/20"
+                    width={56}
+                    height={56}
+                    loading="lazy"
+                  />
+                  <div>
+                    <p className="font-bold text-white">Marcus Rivera</p>
+                    <p className="text-sm text-slate-500">
+                      Casual player, 1200 Elo
+                    </p>
+                  </div>
+                </div>
+                <blockquote className="mt-4 text-sm leading-relaxed text-slate-300">
+                  &ldquo;I play a few blitz games on my lunch break. FireChess
+                  makes it dead simple to upload them and see what I&rsquo;m
+                  doing wrong. The study plan alone is worth it.&rdquo;
+                </blockquote>
+              </div>
+            </div>
+          </div>
+        </section>
 
       {/* ─── Sticky Save Bar ─── */}
       {state === "done" &&

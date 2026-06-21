@@ -4220,12 +4220,14 @@ export async function analyzeOpeningLeaksInBrowser(
                         // suboptimal-but-still-winning move should not tank the score.
                         // Cap the contribution when the position remains comfortably winning
                         // after the move (advantage stays above 150 cp).
-                        const TRIVIAL_WIN_CP = 400; // winning by 4+ pawns
-                        const STILL_WINNING_CP = 150; // position still clearly won
+                        // In clearly winning positions (up 2+ pawns), a suboptimal
+                        // move that keeps a clear advantage should barely affect accuracy.
+                        const TRIVIAL_WIN_CP = 200; // winning by 2+ pawns
+                        const STILL_WINNING_CP = 100; // still up 1+ pawn after the move
                         const accumulatedCpLoss =
                           cpBefore >= TRIVIAL_WIN_CP &&
                           cpAfterUser >= STILL_WINNING_CP
-                            ? Math.min(cpLoss, 30)
+                            ? Math.min(cpLoss, 15)
                             : cpLoss;
 
                         totalEndgameCpLoss += accumulatedCpLoss;
@@ -5264,5 +5266,15 @@ export async function analyzeOpeningLeaksInBrowser(
       gameTraces,
       positionTraces,
     },
+    games: games.map((g) => ({
+      moves: g.moves,
+      whiteName: g.whiteName,
+      blackName: g.blackName,
+      winner: g.winner,
+      gameUrl: g.gameUrl,
+      openingName: g.openingName,
+      whiteRating: g.whiteRating,
+      blackRating: g.blackRating,
+    })),
   };
 }

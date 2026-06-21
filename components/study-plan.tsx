@@ -161,21 +161,27 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
     );
   }
 
-  // No plan — show CTA to generate one
+  // No plan — show CTA to generate one (Brilliant-style premium card)
   if (!plan) {
     return (
-      <div className="relative overflow-hidden rounded-2xl border border-violet-500/20 p-8">
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.06] via-fuchsia-500/[0.04] to-cyan-500/[0.06]" />
-        <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-violet-500/10 blur-[70px]" />
-        <div className="relative flex flex-col items-center text-center">
-          <span className="flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-500/15 text-3xl shadow-lg shadow-violet-500/10">📋</span>
-          <h3 className="mt-5 text-xl font-extrabold text-white">Your Personal Study Plan</h3>
+      <div className="relative overflow-hidden rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/[0.04] via-fuchsia-500/[0.03] to-cyan-500/[0.04]">
+        <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-violet-500/10 blur-[80px]" />
+        <div className="pointer-events-none absolute -bottom-16 -left-16 h-36 w-36 rounded-full bg-cyan-500/10 blur-[60px]" />
+        <div className="relative flex flex-col items-center px-8 pb-8 pt-10 text-center">
+          {/* Chess king illustration */}
+          <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/10 shadow-lg shadow-violet-500/10">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-violet-300">
+              <path d="M12 2 L13 6 L16 4 L14 8 L18 8 L15 11 L18 14 L14 14 L13 18 L11 18 L10 14 L6 14 L9 11 L6 8 L10 8 L8 4 L11 6 Z" className="fill-violet-300/10" />
+              <rect x="7" y="19" width="10" height="3" rx="0.5" className="fill-violet-400/20" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-extrabold text-white">Unlock Your Personal Study Plan</h3>
           <p className="mx-auto mt-2 max-w-md text-sm text-slate-400">
-            Run an analysis scan and save your report. FireChess will generate a personalized weekly study plan based on your biggest weaknesses — with daily tasks, drills, and progress tracking.
+            Run an analysis scan and FireChess builds a weekly study plan around your biggest weaknesses — with daily tasks, drills, and progress tracking.
           </p>
           <Link
             href="/"
-            className="btn-primary mt-5 inline-flex items-center gap-2"
+            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-500/20 transition-all hover:brightness-110"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             Run a Scan
@@ -192,87 +198,89 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
   const weeklyTasks = tasks.filter((t) => !t.recurring);
 
   return (
-    <div className="space-y-5">
-      {/* Plan header card */}
-      <div className="relative overflow-hidden rounded-2xl border border-violet-500/20 p-6">
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-violet-500/[0.05] via-transparent to-fuchsia-500/[0.05]" />
-        <div className="pointer-events-none absolute -right-12 -top-12 h-32 w-32 rounded-full bg-violet-500/10 blur-[60px]" />
+    <div className="relative overflow-hidden rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/[0.03] via-fuchsia-500/[0.02] to-cyan-500/[0.03]">
+      {/* Glow orbs */}
+      <div className="pointer-events-none absolute -right-20 -top-20 h-48 w-48 rounded-full bg-violet-500/10 blur-[80px]" />
+      <div className="pointer-events-none absolute -bottom-16 -left-16 h-36 w-36 rounded-full bg-cyan-500/10 blur-[60px]" />
 
-        <div className="relative">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-500/15 text-2xl shadow-lg shadow-violet-500/10">📋</span>
-              <div>
-                <h3 className="text-lg font-bold text-white">{plan.title}</h3>
-                <p className="text-sm text-slate-400">
-                  {completedCount}/{totalCount} tasks complete
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={deletePlan}
-              title="Delete plan"
-              className="rounded-lg p-1.5 text-white/20 transition-colors hover:bg-red-500/20 hover:text-red-400"
-            >
-              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clipRule="evenodd" />
-              </svg>
-            </button>
+      <div className="relative p-6 md:p-8">
+        {/* Top row: illustration + title */}
+        <div className="flex flex-col items-center text-center md:flex-row md:items-start md:gap-8 md:text-left">
+          {/* Chess illustration (like Brilliant's balance scale) */}
+          <div className="mb-4 flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/20 to-fuchsia-500/10 shadow-lg shadow-violet-500/10 md:mb-0">
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" className="text-violet-300">
+              <rect x="4" y="2" width="16" height="3" rx="0.5" className="fill-violet-400/20" />
+              <circle cx="12" cy="10" r="5" className="fill-violet-300/10" />
+              <path d="M7 15 L17 15 L12 19 Z" className="fill-violet-300/15" />
+              <circle cx="12" cy="10" r="1.5" fill="currentColor" />
+              <rect x="11" y="10" width="2" height="5" />
+              <rect x="8" y="19" width="8" height="3" rx="0.5" className="fill-violet-400/20" />
+            </svg>
           </div>
 
-          {/* Progress bar */}
-          <div className="mt-4">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-slate-400">Progress</span>
-              <span className="font-bold text-white">{plan.progress}%</span>
+          <div className="flex-1">
+            <div className="flex items-center justify-center gap-3 md:justify-start">
+              <span className="rounded-full bg-violet-500/15 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-violet-400">
+                Study Plan
+              </span>
+              {plan.weaknesses?.topLeakOpenings?.[0] && (
+                <span className="rounded-full bg-amber-500/10 px-3 py-0.5 text-[11px] font-medium text-amber-400/80">
+                  {plan.weaknesses.topLeakOpenings[0]}
+                </span>
+              )}
             </div>
-            <div className="mt-1.5 h-2.5 w-full overflow-hidden rounded-full bg-white/[0.06]">
-              <div
-                className={`h-full rounded-full ${progressColor(plan.progress)} transition-all duration-500`}
-                style={{ width: `${plan.progress}%` }}
-              />
-            </div>
-          </div>
+            <h3 className="mt-2 text-2xl font-extrabold text-white md:text-3xl">{plan.title}</h3>
+            <p className="mt-1 text-sm text-slate-400">
+              {completedCount}/{totalCount} tasks · {plan.currentStreak} day streak
+            </p>
 
-          {/* Streak + Stats */}
-          <div className="mt-4 flex flex-wrap gap-3">
-            <div className="flex items-center gap-2 rounded-lg border border-orange-500/15 bg-orange-500/[0.06] px-3 py-1.5">
-              <span className="text-base">🔥</span>
-              <div>
-                <div className="text-sm font-bold text-orange-400">{plan.currentStreak} day{plan.currentStreak !== 1 ? "s" : ""}</div>
-                <div className="text-[10px] text-orange-400/60">{streakMessage(plan.currentStreak)}</div>
+            {/* Progress bar */}
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-500">Progress</span>
+                <span className="font-bold text-white">{plan.progress}%</span>
+              </div>
+              <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-white/[0.06]">
+                <div
+                  className={`h-full rounded-full ${progressColor(plan.progress)} transition-all duration-500`}
+                  style={{ width: `${plan.progress}%` }}
+                />
               </div>
             </div>
-            {plan.longestStreak > 0 && (
-              <div className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5">
-                <span className="text-base">🏆</span>
-                <div>
-                  <div className="text-sm font-bold text-white">{plan.longestStreak} day{plan.longestStreak !== 1 ? "s" : ""}</div>
-                  <div className="text-[10px] text-white/40">Best streak</div>
-                </div>
-              </div>
-            )}
-            {plan.weaknesses && plan.weaknesses.topLeakOpenings && plan.weaknesses.topLeakOpenings.length > 0 && (
-              <div className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.03] px-3 py-1.5">
-                <span className="text-base">🎯</span>
-                <div>
-                  <div className="text-sm font-bold text-white">{plan.weaknesses.topLeakOpenings[0]}</div>
-                  <div className="text-[10px] text-white/40">Focus opening</div>
-                </div>
-              </div>
-            )}
+
+            {/* Actions row */}
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <Link
+                href="/daily"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-500/20 transition-all hover:brightness-110"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+                {plan.progress > 0 ? "Continue Training" : "Start Training"}
+              </Link>
+              <button
+                onClick={deletePlan}
+                className="rounded-lg p-2 text-white/20 transition-colors hover:bg-red-500/20 hover:text-red-400"
+                title="Delete plan"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.75 1A2.75 2.75 0 006 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 10.23 1.482l.149-.022.841 10.518A2.75 2.75 0 007.596 19h4.807a2.75 2.75 0 002.742-2.53l.841-10.52.149.023a.75.75 0 00.23-1.482A41.03 41.03 0 0014 4.193V3.75A2.75 2.75 0 0011.25 1h-2.5zM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4zM8.58 7.72a.75.75 0 00-1.5.06l.3 7.5a.75.75 0 101.5-.06l-.3-7.5zm4.34.06a.75.75 0 10-1.5-.06l-.3 7.5a.75.75 0 101.5.06l.3-7.5z" clipRule="evenodd" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Daily Habits */}
       {recurringTasks.length > 0 && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 px-1">
+        <div className="border-t border-white/[0.06] px-6 pb-2 pt-4 md:px-8">
+          <div className="flex items-center gap-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-violet-400/70">Daily Habits</span>
             <span className="h-px flex-1 bg-white/[0.06]" />
           </div>
-          <div className="space-y-2">
+          <div className="mt-2 space-y-1.5">
             {recurringTasks.map((task) => (
               <TaskRow
                 key={task.id}
@@ -289,12 +297,12 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
 
       {/* Weekly Tasks */}
       {weeklyTasks.length > 0 && (
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 px-1">
+        <div className="border-t border-white/[0.06] px-6 pb-4 pt-4 md:px-8">
+          <div className="flex items-center gap-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-violet-400/70">This Week</span>
             <span className="h-px flex-1 bg-white/[0.06]" />
           </div>
-          <div className="space-y-2">
+          <div className="mt-2 space-y-1.5">
             {weeklyTasks.map((task) => (
               <TaskRow
                 key={task.id}
@@ -311,15 +319,17 @@ export function StudyPlanWidget({ chessUsername, source }: { chessUsername?: str
 
       {/* 100% celebration */}
       {plan.progress === 100 && (
-        <div className="rounded-2xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/[0.06] to-cyan-500/[0.06] p-5 text-center">
-          <p className="text-lg font-bold text-emerald-300">🎉 All tasks complete!</p>
-          <p className="mt-1 text-sm text-slate-400">
-            Run a new scan to generate a fresh study plan and track your improvement.
-          </p>
-          <Link href="/" className="btn-primary mt-3 inline-flex items-center gap-2 text-sm">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            New Scan
-          </Link>
+        <div className="border-t border-white/[0.06] px-6 py-5 text-center md:px-8">
+          <div className="rounded-xl border border-emerald-500/20 bg-gradient-to-r from-emerald-500/[0.06] to-cyan-500/[0.06] p-5">
+            <p className="text-lg font-bold text-emerald-300">🎉 All tasks complete!</p>
+            <p className="mt-1 text-sm text-slate-400">
+              Run a new scan to generate a fresh study plan and track your improvement.
+            </p>
+            <Link href="/" className="btn-primary mt-3 inline-flex items-center gap-2 text-sm">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+              New Scan
+            </Link>
+          </div>
         </div>
       )}
     </div>
@@ -347,37 +357,37 @@ function TaskRow({
 
   return (
     <div
-      className={`group rounded-xl border transition-all ${
+      className={`group rounded-lg border transition-all ${
         task.completed
           ? "border-white/[0.04] bg-white/[0.015] opacity-60"
           : `${colors.border} bg-white/[0.025] hover:bg-white/[0.04]`
       }`}
     >
-      <div className="flex items-center gap-3 p-3.5">
+      <div className="flex items-center gap-2.5 p-2.5">
         {/* Checkbox */}
         <button
           onClick={onToggle}
           disabled={toggling}
-          className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border-2 transition-all ${
+          className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-all ${
             task.completed
               ? "border-emerald-500/40 bg-emerald-500/20 text-emerald-400"
               : "border-white/15 bg-white/[0.03] hover:border-white/30"
           } ${toggling ? "animate-pulse" : ""}`}
         >
           {task.completed && (
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
               <polyline points="20 6 9 17 4 12" />
             </svg>
           )}
         </button>
 
         {/* Icon */}
-        <span className="text-lg">{task.icon}</span>
+        <span className="text-base">{task.icon}</span>
 
         {/* Content */}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className={`text-sm font-semibold ${task.completed ? "text-white/40 line-through" : "text-white"}`}>
+          <div className="flex items-center gap-1.5">
+            <span className={`text-sm ${task.completed ? "text-white/40 line-through" : "font-semibold text-white"}`}>
               {task.title}
             </span>
             {task.recurring && (
@@ -387,23 +397,20 @@ function TaskRow({
               <span className="rounded-full bg-white/[0.06] px-1.5 py-0.5 text-[9px] text-white/30">Day {task.dayIndex}</span>
             )}
           </div>
-          <span className={`rounded-full ${colors.bg} ${colors.text} text-[10px] font-medium px-1.5 py-0.5`}>
-            {categoryLabel(task.category)}
-          </span>
         </div>
 
         {/* Expand / Link */}
-        <div className="flex shrink-0 items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1">
           {task.link && (
             <a
               href={task.link}
               target="_blank"
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
-              className="rounded-lg p-1.5 text-white/20 transition-colors hover:bg-white/[0.06] hover:text-white/50"
+              className="rounded p-1 text-white/20 transition-colors hover:bg-white/[0.06] hover:text-white/50"
               title="Open resource"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" />
                 <polyline points="15 3 21 3 21 9" />
                 <line x1="10" y1="14" x2="21" y2="3" />
@@ -412,11 +419,11 @@ function TaskRow({
           )}
           <button
             onClick={onExpand}
-            className="rounded-lg p-1.5 text-white/20 transition-colors hover:bg-white/[0.06] hover:text-white/50"
+            className="rounded p-1 text-white/20 transition-colors hover:bg-white/[0.06] hover:text-white/50"
           >
             <svg
-              width="14"
-              height="14"
+              width="12"
+              height="12"
               viewBox="0 0 20 20"
               fill="currentColor"
               className={`transition-transform ${expanded ? "rotate-180" : ""}`}
@@ -429,8 +436,8 @@ function TaskRow({
 
       {/* Expanded description */}
       {expanded && (
-        <div className="animate-fade-in border-t border-white/5 px-3.5 pb-3.5 pt-3">
-          <p className="text-sm leading-relaxed text-slate-400">{task.description}</p>
+        <div className="animate-fade-in border-t border-white/5 px-2.5 pb-2.5 pt-2">
+          <p className="text-xs leading-relaxed text-slate-400">{task.description}</p>
         </div>
       )}
     </div>

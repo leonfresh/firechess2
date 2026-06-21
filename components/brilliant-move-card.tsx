@@ -46,10 +46,14 @@ function moveSan(fen: string, uci: string) {
       to: uci.slice(2, 4),
       promotion: (uci.slice(4, 5) || undefined) as PieceSymbol | undefined,
     });
-    return move?.san ?? uci;
+    if (move) return move.san;
   } catch {
-    return uci;
+    // fall through to formatting below
   }
+  // Human-readable fallback instead of raw UCI
+  const to = uci.slice(2, 4);
+  const promo = uci.length > 4 ? `=${uci[4].toUpperCase()}` : "";
+  return `${to}${promo}`;
 }
 
 export function BrilliantMoveCard({

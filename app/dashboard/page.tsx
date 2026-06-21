@@ -428,14 +428,19 @@ export default function DashboardPage() {
         <div className="animate-float absolute bottom-20 left-1/3 h-72 w-72 rounded-full bg-fuchsia-500/[0.05] blur-[100px]" />
       </div>
 
-      <div className="relative z-10 px-6 py-12 md:px-10">
-        <div className="mx-auto max-w-6xl space-y-10">
+      <div className="relative z-10 px-6 py-8 md:px-10">
+        <div className="mx-auto max-w-6xl">
           {/* ─── Header ─── */}
-          <header className="animate-fade-in-up space-y-2">
-            <div className="flex flex-wrap items-center gap-3">
-              <h1 className="text-3xl font-bold tracking-tight text-white md:text-4xl">
-                Dashboard
+          <header className="animate-fade-in-up mb-8 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-white md:text-3xl">
+                Hello, {user?.name?.split(" ")[0] ?? "Player"}
               </h1>
+              <p className="mt-0.5 text-sm text-slate-500">
+                What do you want to work on today?
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
               {(plan === "pro" || plan === "lifetime") && (
                 <span
                   className={`text-xs ${plan === "lifetime" ? "tag-amber" : "tag-emerald"}`}
@@ -456,597 +461,420 @@ export default function DashboardPage() {
                 </span>
               )}
             </div>
-            <p className="text-sm text-white/40">
-              {user?.name ? `${user.name}'s` : "Your"} chess analysis overview
-            </p>
           </header>
 
-          {/* ─── User Filter ─── */}
-          {userOptions.length > 1 && (
-            <div
-              className="animate-fade-in-up flex items-center gap-3"
-              style={{ animationDelay: "0.05s" }}
-            >
-              <label className="text-xs font-medium text-white/40">
-                Player
-              </label>
-              <select
-                value={selectedUser}
-                onChange={(e) => setSelectedUser(e.target.value)}
-                className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-1.5 text-sm text-white backdrop-blur transition-colors hover:border-white/20 focus:border-emerald-500/50 focus:outline-none"
-              >
-                <option value="__all__" className="bg-slate-900">
-                  All players
-                </option>
-                {userOptions.map((u) => (
-                  <option
-                    key={`${u.username}__${u.source}`}
-                    value={`${u.username}__${u.source}`}
-                    className="bg-slate-900"
-                  >
-                    {u.username} ({u.source})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          {/* ─── Two-Column Layout ─── */}
+          <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
 
-          {/* ─── Stat Cards ─── */}
-          <div
-            data-tour="stats"
-            className="animate-fade-in-up grid grid-cols-2 gap-4 md:grid-cols-4"
-            style={{ animationDelay: "0.1s" }}
-          >
-            <StatCard label="Reports" value={filtered.length} icon="📋" />
-            <StatCard
-              label="Games Analyzed"
-              value={totalGames.toLocaleString()}
-              icon="♟️"
-            />
-            <StatCard
-              label="Leaks Found"
-              value={totalLeaks.toLocaleString()}
-              icon="🔍"
-            />
-            <StatCard
-              label="Tactics Missed"
-              value={totalTactics.toLocaleString()}
-              icon="⚡"
-            />
-          </div>
+            {/* ═══ LEFT SIDEBAR ═══ */}
+            <aside className="space-y-5">
 
-          {/* ─── Rescan Reminder ─── */}
-          {daysSinceLastScan != null && daysSinceLastScan >= 3 && (
-            <div
-              className="animate-fade-in-up rounded-2xl border border-amber-500/20 bg-gradient-to-r from-amber-500/[0.06] via-amber-500/[0.03] to-transparent p-4"
-              style={{ animationDelay: "0.12s" }}
-            >
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-xl">
-                    ⏰
-                  </span>
-                  <div>
-                    <p className="text-sm font-bold text-white">
-                      Time for a new scan!
-                    </p>
-                    <p className="text-xs text-slate-400">
-                      It&apos;s been {daysSinceLastScan} day
-                      {daysSinceLastScan !== 1 ? "s" : ""} since your last
-                      analysis. Run a fresh scan to track improvement.
-                    </p>
+              {/* Search / Player Filter */}
+              <div className="animate-fade-in-up space-y-3">
+                {userOptions.length > 1 ? (
+                  <div className="relative">
+                    <svg
+                      className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <select
+                      value={selectedUser}
+                      onChange={(e) => setSelectedUser(e.target.value)}
+                      className="w-full appearance-none rounded-xl border border-white/[0.08] bg-white/[0.04] py-2.5 pl-10 pr-4 text-sm text-white/80 transition-colors hover:border-white/20 focus:border-emerald-500/50 focus:outline-none"
+                    >
+                      <option value="__all__" className="bg-[#08070b]">All players</option>
+                      {userOptions.map((u) => (
+                        <option
+                          key={`${u.username}__${u.source}`}
+                          value={`${u.username}__${u.source}`}
+                          className="bg-[#08070b]"
+                        >
+                          {u.username}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                </div>
-                <Link
-                  href="/"
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 px-4 py-2 text-xs font-bold text-white shadow-lg shadow-amber-500/15 transition-all hover:brightness-110"
-                >
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                  </svg>
-                  New Scan
-                </Link>
+                ) : (
+                  <div className="relative">
+                    <svg
+                      className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input
+                      readOnly
+                      value={selectedUser !== "__all__" ? selectedUser.split("__")[0] : "Your games"}
+                      className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] py-2.5 pl-10 pr-4 text-sm text-white/60 outline-none"
+                    />
+                  </div>
+                )}
               </div>
-            </div>
-          )}
 
-          {/* ─── Progress Highlights (rescan improvement) ─── */}
-          {latestNonTimeMgmt &&
-            previousNonTimeMgmt &&
-            filteredForProgress.length >= 2 && (
+              {/* Compact Stat Cards */}
+              <div className="animate-fade-in-up grid grid-cols-2 gap-2" style={{ animationDelay: "0.05s" }}>
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                  <div className="text-lg font-bold text-white">{filtered.length}</div>
+                  <div className="text-[10px] text-slate-500">Reports</div>
+                </div>
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                  <div className="text-lg font-bold text-white">{totalGames.toLocaleString()}</div>
+                  <div className="text-[10px] text-slate-500">Games</div>
+                </div>
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                  <div className="text-lg font-bold text-white">{totalLeaks.toLocaleString()}</div>
+                  <div className="text-[10px] text-slate-500">Leaks</div>
+                </div>
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                  <div className="text-lg font-bold text-white">{totalTactics.toLocaleString()}</div>
+                  <div className="text-[10px] text-slate-500">Tactics</div>
+                </div>
+              </div>
+
+              {/* Daily Login Rewards */}
+              <div
+                data-tour="daily-login"
+                className="animate-fade-in-up"
+                style={{ animationDelay: "0.08s" }}
+              >
+                <DailyLoginRewards />
+              </div>
+
+              {/* Daily Chess Tip */}
               <div
                 className="animate-fade-in-up"
-                style={{ animationDelay: "0.13s" }}
+                style={{ animationDelay: "0.1s" }}
               >
-                <ProgressHighlights
-                  latest={latestNonTimeMgmt}
-                  previous={previousNonTimeMgmt}
-                />
-              </div>
-            )}
-
-          {/* ─── Study Plan ─── */}
-          <div
-            data-tour="study-plan"
-            className="animate-fade-in-up"
-            style={{ animationDelay: "0.15s" }}
-          >
-            <StudyPlanWidget
-              chessUsername={
-                selectedUser !== "__all__"
-                  ? selectedUser.split("__")[0]
-                  : undefined
-              }
-              source={
-                selectedUser !== "__all__"
-                  ? selectedUser.split("__")[1]
-                  : undefined
-              }
-            />
-          </div>
-
-          {/* ─── Daily Login Rewards ─── */}
-          <div
-            data-tour="daily-login"
-            className="animate-fade-in-up"
-            style={{ animationDelay: "0.155s" }}
-          >
-            <DailyLoginRewards />
-          </div>
-
-          {/* ─── Daily Chess Tip ─── */}
-          <div
-            className="animate-fade-in-up"
-            style={{ animationDelay: "0.157s" }}
-          >
-            <DailyTipWidget />
-          </div>
-
-          {/* ─── Daily Challenge ─── */}
-          {allTactics.length > 0 && (
-            <div
-              data-tour="daily-challenge"
-              className="animate-fade-in-up"
-              style={{ animationDelay: "0.16s" }}
-            >
-              <DailyChallenge allTactics={allTactics} />
-            </div>
-          )}
-
-          {/* ─── Daily Routine CTA ─── */}
-          <Link
-            href="/daily"
-            className="animate-fade-in-up group block rounded-2xl border border-amber-500/20 bg-gradient-to-r from-amber-500/[0.08] to-orange-500/[0.05] p-5 transition-all hover:border-amber-500/30 hover:shadow-lg"
-            style={{ animationDelay: "0.163s" }}
-          >
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-2xl">
-                📅
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="text-base font-bold text-white group-hover:text-amber-300">
-                  Daily Training
-                </h3>
-                <p className="mt-0.5 text-xs text-slate-400">
-                  A personalized 8-exercise session — puzzles and blunder drills
-                  from your own games. New every day.
-                </p>
-              </div>
-              <svg
-                className="h-5 w-5 shrink-0 text-slate-600 transition-all group-hover:translate-x-0.5 group-hover:text-amber-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </div>
-          </Link>
-
-          {/* ─── Training CTA ─── */}
-          <Link
-            href="/train"
-            className="animate-fade-in-up group block rounded-2xl border border-white/[0.06] bg-gradient-to-r from-fuchsia-500/[0.08] to-cyan-500/[0.08] p-5 transition-all hover:border-fuchsia-500/20 hover:shadow-lg"
-            style={{ animationDelay: "0.165s" }}
-          >
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-fuchsia-500/15 text-2xl">
-                🎯
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="text-base font-bold text-white group-hover:text-fuchsia-300">
-                  Training Center
-                </h3>
-                <p className="mt-0.5 text-xs text-slate-400">
-                  Practice puzzles targeting your weaknesses. Speed drills,
-                  opening trainer, endgame gym, and more.
-                </p>
-              </div>
-              <svg
-                className="h-5 w-5 shrink-0 text-slate-600 transition-all group-hover:translate-x-0.5 group-hover:text-fuchsia-400"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </div>
-          </Link>
-
-          {/* ─── Goal + Achievements row ─── */}
-          <div data-tour="goals" className="grid gap-6 lg:grid-cols-2">
-            <div
-              className="animate-fade-in-up"
-              style={{ animationDelay: "0.17s" }}
-            >
-              <GoalWidget
-                currentAccuracy={latestNonTimeMgmt?.estimatedAccuracy ?? null}
-                currentRating={latestNonTimeMgmt?.estimatedRating ?? null}
-              />
-            </div>
-            <div
-              className="glass-card animate-fade-in-up p-6"
-              style={{ animationDelay: "0.18s" }}
-            >
-              <AchievementsPanel ctx={achievementCtx} />
-            </div>
-          </div>
-
-          {/* ─── Percentile + Repertoire row ─── */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div
-              className="animate-fade-in-up"
-              style={{ animationDelay: "0.19s" }}
-            >
-              <PercentileWidget
-                accuracy={latestNonTimeMgmt?.estimatedAccuracy ?? null}
-                rating={latestNonTimeMgmt?.estimatedRating ?? null}
-              />
-            </div>
-            <div
-              className="animate-fade-in-up"
-              style={{ animationDelay: "0.20s" }}
-            >
-              <RepertoirePanel />
-            </div>
-          </div>
-
-          {/* ─── Main Grid: Radar + Progress ─── */}
-          <div className="grid gap-6 lg:grid-cols-2">
-            {/* Radar */}
-            <div
-              data-tour="radar"
-              className="glass-card animate-fade-in-up space-y-4 p-6"
-              style={{ animationDelay: "0.2s" }}
-            >
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-white">
-                  Strengths & Weaknesses
-                </h2>
-                <span className="text-xs text-white/30">Latest report</span>
+                <DailyTipWidget />
               </div>
 
-              {latestNonTimeMgmt && (
-                <>
-                  <StrengthsRadar {...radarPropsFrom(latestNonTimeMgmt)} />
-                  <RadarLegend
-                    data={computeRadarData(radarPropsFrom(latestNonTimeMgmt))}
-                    props={radarPropsFrom(latestNonTimeMgmt)}
-                  />
-                </>
-              )}
-            </div>
-
-            {/* Progress Chart */}
-            <div
-              data-tour="progress"
-              className="glass-card animate-fade-in-up space-y-4 p-6"
-              style={{ animationDelay: "0.3s" }}
-            >
-              <h2 className="text-lg font-semibold text-white">
-                Progress Over Time
-              </h2>
-
-              {progressData.length < 2 ? (
-                <div className="flex h-64 items-center justify-center">
-                  <p className="text-sm text-white/40">
-                    Run at least 2 analyses to see your progress chart.
-                  </p>
+              {/* Rescan reminder (compact, in sidebar) */}
+              {daysSinceLastScan != null && daysSinceLastScan >= 3 && (
+                <div
+                  className="animate-fade-in-up rounded-xl border border-amber-500/15 bg-amber-500/[0.04] p-3"
+                  style={{ animationDelay: "0.12s" }}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">⏰</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-white">New scan ready</p>
+                      <p className="text-[10px] text-slate-500">
+                        {daysSinceLastScan} day{daysSinceLastScan !== 1 ? "s" : ""} ago
+                      </p>
+                    </div>
+                    <Link
+                      href="/"
+                      className="shrink-0 rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 px-3 py-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/15 transition-all hover:brightness-110"
+                    >
+                      Scan
+                    </Link>
+                  </div>
                 </div>
-              ) : (
-                <>
-                  {/* Accuracy */}
-                  <div>
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                      <span className="text-xs font-medium text-white/50">
-                        Accuracy
-                      </span>
-                      {latestNonTimeMgmt && previousNonTimeMgmt && (
-                        <DeltaBadge
-                          value={delta(
-                            latestNonTimeMgmt.estimatedAccuracy,
-                            previousNonTimeMgmt.estimatedAccuracy,
-                          )}
-                        />
-                      )}
-                    </div>
-                    <ResponsiveContainer width="100%" height={120}>
-                      <AreaChart data={progressData}>
-                        <defs>
-                          <linearGradient
-                            id="gradAccuracy"
-                            x1="0"
-                            y1="0"
-                            x2="0"
-                            y2="1"
-                          >
-                            <stop
-                              offset="0%"
-                              stopColor="rgb(16,185,129)"
-                              stopOpacity={0.3}
-                            />
-                            <stop
-                              offset="100%"
-                              stopColor="rgb(16,185,129)"
-                              stopOpacity={0}
-                            />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid
-                          stroke="rgba(255,255,255,0.04)"
-                          strokeDasharray="3 3"
-                        />
-                        <XAxis
-                          dataKey="timestamp"
-                          type="number"
-                          scale="time"
-                          domain={["dataMin", "dataMax"]}
-                          tickFormatter={(ts: number) =>
-                            new Date(ts).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                            })
-                          }
-                          tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10 }}
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <YAxis
-                          domain={[0, 100]}
-                          tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10 }}
-                          axisLine={false}
-                          tickLine={false}
-                          width={30}
-                        />
-                        <Tooltip
-                          labelFormatter={(label) =>
-                            new Date(Number(label)).toLocaleDateString(
-                              "en-US",
-                              {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              },
-                            )
-                          }
-                          contentStyle={{
-                            background: "rgba(15,23,42,0.95)",
-                            border: "1px solid rgba(255,255,255,0.1)",
-                            borderRadius: "8px",
-                            color: "#fff",
-                            fontSize: "12px",
-                          }}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="accuracy"
-                          stroke="rgb(16,185,129)"
-                          fill="url(#gradAccuracy)"
-                          strokeWidth={2}
-                          dot={{ r: 3, fill: "rgb(52,211,153)" }}
-                          animationDuration={800}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-
-                  {/* CP Loss */}
-                  <div>
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="h-2 w-2 rounded-full bg-cyan-400" />
-                      <span className="text-xs font-medium text-white/50">
-                        Avg CP Loss
-                      </span>
-                      {latestNonTimeMgmt && previousNonTimeMgmt && (
-                        <DeltaBadge
-                          value={delta(
-                            latestNonTimeMgmt.weightedCpLoss,
-                            previousNonTimeMgmt.weightedCpLoss,
-                          )}
-                          invert
-                        />
-                      )}
-                    </div>
-                    <ResponsiveContainer width="100%" height={120}>
-                      <AreaChart data={progressData}>
-                        <defs>
-                          <linearGradient
-                            id="gradCp"
-                            x1="0"
-                            y1="0"
-                            x2="0"
-                            y2="1"
-                          >
-                            <stop
-                              offset="0%"
-                              stopColor="rgb(6,182,212)"
-                              stopOpacity={0.3}
-                            />
-                            <stop
-                              offset="100%"
-                              stopColor="rgb(6,182,212)"
-                              stopOpacity={0}
-                            />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid
-                          stroke="rgba(255,255,255,0.04)"
-                          strokeDasharray="3 3"
-                        />
-                        <XAxis
-                          dataKey="timestamp"
-                          type="number"
-                          scale="time"
-                          domain={["dataMin", "dataMax"]}
-                          tickFormatter={(ts: number) =>
-                            new Date(ts).toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                            })
-                          }
-                          tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10 }}
-                          axisLine={false}
-                          tickLine={false}
-                        />
-                        <YAxis
-                          tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10 }}
-                          axisLine={false}
-                          tickLine={false}
-                          width={30}
-                        />
-                        <Tooltip
-                          labelFormatter={(label) =>
-                            new Date(Number(label)).toLocaleDateString(
-                              "en-US",
-                              {
-                                month: "short",
-                                day: "numeric",
-                                year: "numeric",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              },
-                            )
-                          }
-                          contentStyle={{
-                            background: "rgba(15,23,42,0.95)",
-                            border: "1px solid rgba(255,255,255,0.1)",
-                            borderRadius: "8px",
-                            color: "#fff",
-                            fontSize: "12px",
-                          }}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="cpLoss"
-                          stroke="rgb(6,182,212)"
-                          fill="url(#gradCp)"
-                          strokeWidth={2}
-                          dot={{ r: 3, fill: "rgb(34,211,238)" }}
-                          animationDuration={800}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                </>
               )}
-            </div>
-          </div>
+            </aside>
 
-          {/* ─── Key Metrics Comparison (latest vs previous, by game date) ─── */}
-          {latestByGame && previousByGame && filtered.length >= 2 && (
-            <div
-              className="glass-card animate-fade-in-up space-y-4 p-6"
-              style={{ animationDelay: "0.4s" }}
-            >
-              <h2 className="text-lg font-semibold text-white">
-                Latest vs. Previous
-              </h2>
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                <CompareMetric
-                  label="Accuracy"
-                  current={latestByGame.estimatedAccuracy}
-                  prev={previousByGame.estimatedAccuracy}
-                  suffix="%"
-                />
-                <CompareMetric
-                  label="Est. Rating"
-                  current={latestByGame.estimatedRating}
-                  prev={previousByGame.estimatedRating}
-                />
-                <CompareMetric
-                  label="Avg CP Loss"
-                  current={latestByGame.weightedCpLoss}
-                  prev={previousByGame.weightedCpLoss}
-                  invert
-                />
-                <CompareMetric
-                  label="Severe Leak Rate"
-                  current={
-                    latestByGame.severeLeakRate != null
-                      ? latestByGame.severeLeakRate * 100
-                      : null
+            {/* ═══ MAIN CONTENT ═══ */}
+            <main className="min-w-0 space-y-6">
+
+              {/* ─── Hero: Study Plan (like Brilliant course card) ─── */}
+              <div
+                data-tour="study-plan"
+                className="animate-fade-in-up"
+                style={{ animationDelay: "0.05s" }}
+              >
+                <StudyPlanWidget
+                  chessUsername={
+                    selectedUser !== "__all__"
+                      ? selectedUser.split("__")[0]
+                      : undefined
                   }
-                  prev={
-                    previousByGame.severeLeakRate != null
-                      ? previousByGame.severeLeakRate * 100
-                      : null
+                  source={
+                    selectedUser !== "__all__"
+                      ? selectedUser.split("__")[1]
+                      : undefined
                   }
-                  suffix="%"
-                  invert
                 />
               </div>
-            </div>
-          )}
 
-          {/* ─── Report History ─── */}
-          <div
-            data-tour="reports"
-            className="animate-fade-in-up space-y-4"
-            style={{ animationDelay: "0.5s" }}
-          >
-            <h2 className="text-lg font-semibold text-white">Report History</h2>
-            <div className="space-y-3">
-              {reports.map((r, i) => (
-                <ReportRow
-                  key={r.id}
-                  report={r}
-                  index={i}
-                  expanded={expandedId === r.id}
-                  onToggle={() =>
-                    setExpandedId(expandedId === r.id ? null : r.id)
-                  }
-                  onDelete={() => handleDeleteReport(r.id)}
-                />
-              ))}
-            </div>
+              {/* ─── Progress Highlights ─── */}
+              {latestNonTimeMgmt &&
+                previousNonTimeMgmt &&
+                filteredForProgress.length >= 2 && (
+                  <div
+                    className="animate-fade-in-up"
+                    style={{ animationDelay: "0.08s" }}
+                  >
+                    <ProgressHighlights
+                      latest={latestNonTimeMgmt}
+                      previous={previousNonTimeMgmt}
+                    />
+                  </div>
+                )}
+
+              {/* ─── Daily Challenge ─── */}
+              {allTactics.length > 0 && (
+                <div
+                  data-tour="daily-challenge"
+                  className="animate-fade-in-up"
+                  style={{ animationDelay: "0.1s" }}
+                >
+                  <DailyChallenge allTactics={allTactics} />
+                </div>
+              )}
+
+              {/* ─── Training CTAs ─── */}
+              <div className="animate-fade-in-up grid gap-4 sm:grid-cols-2" style={{ animationDelay: "0.13s" }}>
+                <Link
+                  href="/daily"
+                  className="group rounded-xl border border-amber-500/15 bg-gradient-to-r from-amber-500/[0.06] to-orange-500/[0.03] p-4 transition-all hover:border-amber-500/25 hover:shadow-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-lg">
+                      📅
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm font-bold text-white group-hover:text-amber-300">
+                        Daily Training
+                      </h3>
+                      <p className="mt-0.5 text-[11px] text-slate-500">
+                        8 personalized exercises
+                      </p>
+                    </div>
+                    <svg
+                      className="h-4 w-4 shrink-0 text-slate-600 transition-all group-hover:translate-x-0.5 group-hover:text-amber-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </Link>
+                <Link
+                  href="/train"
+                  className="group rounded-xl border border-fuchsia-500/15 bg-gradient-to-r from-fuchsia-500/[0.06] to-cyan-500/[0.03] p-4 transition-all hover:border-fuchsia-500/25 hover:shadow-lg"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-fuchsia-500/15 text-lg">
+                      🎯
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-sm font-bold text-white group-hover:text-fuchsia-300">
+                        Training Center
+                      </h3>
+                      <p className="mt-0.5 text-[11px] text-slate-500">
+                        Puzzles, drills & more
+                      </p>
+                    </div>
+                    <svg
+                      className="h-4 w-4 shrink-0 text-slate-600 transition-all group-hover:translate-x-0.5 group-hover:text-fuchsia-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
+                </Link>
+              </div>
+
+              {/* ─── Goal + Achievements ─── */}
+              <div data-tour="goals" className="grid gap-6 sm:grid-cols-2">
+                <div
+                  className="animate-fade-in-up"
+                  style={{ animationDelay: "0.15s" }}
+                >
+                  <GoalWidget
+                    currentAccuracy={latestNonTimeMgmt?.estimatedAccuracy ?? null}
+                    currentRating={latestNonTimeMgmt?.estimatedRating ?? null}
+                  />
+                </div>
+                <div
+                  className="glass-card animate-fade-in-up p-5"
+                  style={{ animationDelay: "0.16s" }}
+                >
+                  <AchievementsPanel ctx={achievementCtx} />
+                </div>
+              </div>
+
+              {/* ─── Percentile + Repertoire ─── */}
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div
+                  className="animate-fade-in-up"
+                  style={{ animationDelay: "0.17s" }}
+                >
+                  <PercentileWidget
+                    accuracy={latestNonTimeMgmt?.estimatedAccuracy ?? null}
+                    rating={latestNonTimeMgmt?.estimatedRating ?? null}
+                  />
+                </div>
+                <div
+                  className="animate-fade-in-up"
+                  style={{ animationDelay: "0.18s" }}
+                >
+                  <RepertoirePanel />
+                </div>
+              </div>
+
+              {/* ─── Radar + Progress ─── */}
+              <div className="grid gap-6 lg:grid-cols-2">
+                <div
+                  data-tour="radar"
+                  className="glass-card animate-fade-in-up space-y-4 p-5"
+                  style={{ animationDelay: "0.2s" }}
+                >
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-sm font-semibold text-white">
+                      Strengths & Weaknesses
+                    </h2>
+                    <span className="text-[10px] text-white/30">Latest</span>
+                  </div>
+                  {latestNonTimeMgmt && (
+                    <>
+                      <StrengthsRadar {...radarPropsFrom(latestNonTimeMgmt)} />
+                      <RadarLegend
+                        data={computeRadarData(radarPropsFrom(latestNonTimeMgmt))}
+                        props={radarPropsFrom(latestNonTimeMgmt)}
+                      />
+                    </>
+                  )}
+                </div>
+
+                <div
+                  data-tour="progress"
+                  className="glass-card animate-fade-in-up space-y-4 p-5"
+                  style={{ animationDelay: "0.3s" }}
+                >
+                  <h2 className="text-sm font-semibold text-white">
+                    Progress Over Time
+                  </h2>
+                  {progressData.length < 2 ? (
+                    <div className="flex h-48 items-center justify-center">
+                      <p className="text-xs text-white/40">
+                        Run at least 2 analyses to see your progress chart.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div>
+                        <div className="mb-2 flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                          <span className="text-[11px] font-medium text-white/50">Accuracy</span>
+                          {latestNonTimeMgmt && previousNonTimeMgmt && (
+                            <DeltaBadge value={delta(latestNonTimeMgmt.estimatedAccuracy, previousNonTimeMgmt.estimatedAccuracy)} />
+                          )}
+                        </div>
+                        <ResponsiveContainer width="100%" height={100}>
+                          <AreaChart data={progressData}>
+                            <defs>
+                              <linearGradient id="gradAccuracy" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="rgb(16,185,129)" stopOpacity={0.3} />
+                                <stop offset="100%" stopColor="rgb(16,185,129)" stopOpacity={0} />
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
+                            <XAxis dataKey="timestamp" type="number" scale="time" domain={["dataMin", "dataMax"]}
+                              tickFormatter={(ts) => new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                              tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 9 }} axisLine={false} tickLine={false}
+                            />
+                            <YAxis domain={[0, 100]} tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 9 }} axisLine={false} tickLine={false} width={25} />
+                            <Tooltip labelFormatter={(label) => new Date(Number(label)).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                              contentStyle={{ background: "rgba(15,23,42,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", fontSize: "11px" }}
+                            />
+                            <Area type="monotone" dataKey="accuracy" stroke="rgb(16,185,129)" fill="url(#gradAccuracy)" strokeWidth={2} dot={{ r: 3, fill: "rgb(52,211,153)" }} animationDuration={800} />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                      <div>
+                        <div className="mb-2 flex items-center gap-2">
+                          <span className="h-2 w-2 rounded-full bg-cyan-400" />
+                          <span className="text-[11px] font-medium text-white/50">Avg CP Loss</span>
+                          {latestNonTimeMgmt && previousNonTimeMgmt && (
+                            <DeltaBadge value={delta(latestNonTimeMgmt.weightedCpLoss, previousNonTimeMgmt.weightedCpLoss)} invert />
+                          )}
+                        </div>
+                        <ResponsiveContainer width="100%" height={100}>
+                          <AreaChart data={progressData}>
+                            <defs>
+                              <linearGradient id="gradCp" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="rgb(6,182,212)" stopOpacity={0.3} />
+                                <stop offset="100%" stopColor="rgb(6,182,212)" stopOpacity={0} />
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
+                            <XAxis dataKey="timestamp" type="number" scale="time" domain={["dataMin", "dataMax"]}
+                              tickFormatter={(ts) => new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                              tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 9 }} axisLine={false} tickLine={false}
+                            />
+                            <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 9 }} axisLine={false} tickLine={false} width={25} />
+                            <Tooltip labelFormatter={(label) => new Date(Number(label)).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                              contentStyle={{ background: "rgba(15,23,42,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", fontSize: "11px" }}
+                            />
+                            <Area type="monotone" dataKey="cpLoss" stroke="rgb(6,182,212)" fill="url(#gradCp)" strokeWidth={2} dot={{ r: 3, fill: "rgb(34,211,238)" }} animationDuration={800} />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* ─── Key Metrics Comparison ─── */}
+              {latestByGame && previousByGame && filtered.length >= 2 && (
+                <div
+                  className="glass-card animate-fade-in-up space-y-4 p-5"
+                  style={{ animationDelay: "0.4s" }}
+                >
+                  <h2 className="text-sm font-semibold text-white">Latest vs. Previous</h2>
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                    <CompareMetric label="Accuracy" current={latestByGame.estimatedAccuracy} prev={previousByGame.estimatedAccuracy} suffix="%" />
+                    <CompareMetric label="Est. Rating" current={latestByGame.estimatedRating} prev={previousByGame.estimatedRating} />
+                    <CompareMetric label="Avg CP Loss" current={latestByGame.weightedCpLoss} prev={previousByGame.weightedCpLoss} invert />
+                    <CompareMetric label="Severe Leak Rate" current={latestByGame.severeLeakRate != null ? latestByGame.severeLeakRate * 100 : null} prev={previousByGame.severeLeakRate != null ? previousByGame.severeLeakRate * 100 : null} suffix="%" invert />
+                  </div>
+                </div>
+              )}
+
+              {/* ─── Report History ─── */}
+              <div
+                data-tour="reports"
+                className="animate-fade-in-up space-y-4"
+                style={{ animationDelay: "0.5s" }}
+              >
+                <h2 className="text-sm font-semibold text-white">Report History</h2>
+                <div className="space-y-2">
+                  {reports.map((r, i) => (
+                    <ReportRow
+                      key={r.id}
+                      report={r}
+                      index={i}
+                      expanded={expandedId === r.id}
+                      onToggle={() => setExpandedId(expandedId === r.id ? null : r.id)}
+                      onDelete={() => handleDeleteReport(r.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* ─── Onboarding Tour ─── */}
+              <OnboardingTour />
+
+              {/* ─── Pro/Lifetime welcome modal ─── */}
+              <ProWelcomeModal />
+            </main>
           </div>
-
-          {/* ─── Onboarding Tour ─── */}
-          <OnboardingTour />
-
-          {/* ─── Pro/Lifetime welcome modal ─── */}
-          <ProWelcomeModal />
         </div>
       </div>
     </div>

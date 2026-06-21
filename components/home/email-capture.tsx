@@ -57,15 +57,16 @@ export function EmailCapture() {
   return (
     <section className="animate-fade-in-up mx-auto w-full max-w-5xl">
       <div
-        className="relative overflow-hidden rounded-[2rem] px-5 py-8 shadow-[0_30px_100px_-56px_rgba(20,8,5,0.98)] sm:px-8 sm:py-10"
+        className="relative overflow-hidden rounded-[2rem] px-5 py-8 sm:px-8 sm:py-10"
         style={{
           background:
-            "linear-gradient(150deg, rgba(11, 9, 12, 0.97) 0%, rgba(20, 13, 16, 0.96) 54%, rgba(48, 22, 12, 0.95) 100%)",
+            "linear-gradient(150deg, rgba(11, 9, 12, 0.97) 0%, rgba(20, 13, 16, 0.96) 44%, rgba(34, 18, 12, 0.95) 72%, rgba(48, 22, 12, 0.92) 100%)",
         }}
       >
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-200/35 to-transparent" />
-        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-orange-500/[0.08] blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 -left-16 h-44 w-44 rounded-full bg-amber-500/[0.06] blur-3xl" />
+        <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-orange-500/[0.06] blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-20 h-52 w-52 rounded-full bg-amber-500/[0.05] blur-3xl" />
+        <div className="pointer-events-none absolute left-1/3 top-1/4 h-40 w-40 rounded-full bg-red-500/[0.04] blur-3xl" />
 
         <div className="relative grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
           {/* ── Pitch ──────────────────────────────────────────────── */}
@@ -101,10 +102,10 @@ export function EmailCapture() {
             ) : (
               <form onSubmit={onSubmit} className="space-y-3">
                 <div
-                  className={`flex flex-col gap-2 overflow-hidden rounded-2xl border bg-white/[0.04] p-1.5 transition-colors duration-200 sm:flex-row sm:items-center focus-within:border-orange-400/35 ${
+                  className={`flex flex-col gap-2 overflow-hidden rounded-2xl border bg-white/[0.03] p-1 transition-colors duration-200 sm:flex-row sm:items-center focus-within:border-orange-400/30 focus-within:bg-white/[0.05] ${
                     status === "error"
-                      ? "border-red-500/40"
-                      : "border-orange-500/10"
+                      ? "border-red-500/35"
+                      : "border-white/[0.06]"
                   }`}
                 >
                   <div className="flex flex-1 items-center gap-2 px-3 py-2">
