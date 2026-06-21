@@ -406,12 +406,12 @@ export default function DashboardPage() {
           <h2 className="text-xl font-bold text-white">No reports yet</h2>
           <p className="text-sm text-white/50">
             Run your first analysis on the{" "}
-            <Link href="/" className="text-emerald-400 hover:underline">
+            <Link href="/?scan=1" className="text-emerald-400 hover:underline">
               scanner page
             </Link>{" "}
             and your report will appear here automatically.
           </p>
-          <Link href="/" className="btn-primary mx-auto mt-4 inline-block">
+          <Link href="/?scan=1" className="btn-primary mx-auto mt-4 inline-block">
             Go to Scanner
           </Link>
         </div>
@@ -466,125 +466,8 @@ export default function DashboardPage() {
           {/* ─── Two-Column Layout ─── */}
           <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
 
-            {/* ═══ LEFT SIDEBAR ═══ */}
-            <aside className="space-y-5">
-
-              {/* Search / Player Filter */}
-              <div className="animate-fade-in-up space-y-3">
-                {userOptions.length > 1 ? (
-                  <div className="relative">
-                    <svg
-                      className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <circle cx="11" cy="11" r="8" />
-                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    </svg>
-                    <select
-                      value={selectedUser}
-                      onChange={(e) => setSelectedUser(e.target.value)}
-                      className="w-full appearance-none rounded-xl border border-white/[0.08] bg-white/[0.04] py-2.5 pl-10 pr-4 text-sm text-white/80 transition-colors hover:border-white/20 focus:border-emerald-500/50 focus:outline-none"
-                    >
-                      <option value="__all__" className="bg-[#08070b]">All players</option>
-                      {userOptions.map((u) => (
-                        <option
-                          key={`${u.username}__${u.source}`}
-                          value={`${u.username}__${u.source}`}
-                          className="bg-[#08070b]"
-                        >
-                          {u.username}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <svg
-                      className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <circle cx="11" cy="11" r="8" />
-                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    </svg>
-                    <input
-                      readOnly
-                      value={selectedUser !== "__all__" ? selectedUser.split("__")[0] : "Your games"}
-                      className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] py-2.5 pl-10 pr-4 text-sm text-white/60 outline-none"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Compact Stat Cards */}
-              <div className="animate-fade-in-up grid grid-cols-2 gap-2" style={{ animationDelay: "0.05s" }}>
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                  <div className="text-lg font-bold text-white">{filtered.length}</div>
-                  <div className="text-[10px] text-slate-500">Reports</div>
-                </div>
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                  <div className="text-lg font-bold text-white">{totalGames.toLocaleString()}</div>
-                  <div className="text-[10px] text-slate-500">Games</div>
-                </div>
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                  <div className="text-lg font-bold text-white">{totalLeaks.toLocaleString()}</div>
-                  <div className="text-[10px] text-slate-500">Leaks</div>
-                </div>
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                  <div className="text-lg font-bold text-white">{totalTactics.toLocaleString()}</div>
-                  <div className="text-[10px] text-slate-500">Tactics</div>
-                </div>
-              </div>
-
-              {/* Daily Login Rewards */}
-              <div
-                data-tour="daily-login"
-                className="animate-fade-in-up"
-                style={{ animationDelay: "0.08s" }}
-              >
-                <DailyLoginRewards />
-              </div>
-
-              {/* Daily Chess Tip */}
-              <div
-                className="animate-fade-in-up"
-                style={{ animationDelay: "0.1s" }}
-              >
-                <DailyTipWidget />
-              </div>
-
-              {/* Rescan reminder (compact, in sidebar) */}
-              {daysSinceLastScan != null && daysSinceLastScan >= 3 && (
-                <div
-                  className="animate-fade-in-up rounded-xl border border-amber-500/15 bg-amber-500/[0.04] p-3"
-                  style={{ animationDelay: "0.12s" }}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg">⏰</span>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-bold text-white">New scan ready</p>
-                      <p className="text-[10px] text-slate-500">
-                        {daysSinceLastScan} day{daysSinceLastScan !== 1 ? "s" : ""} ago
-                      </p>
-                    </div>
-                    <Link
-                      href="/"
-                      className="shrink-0 rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 px-3 py-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/15 transition-all hover:brightness-110"
-                    >
-                      Scan
-                    </Link>
-                  </div>
-                </div>
-              )}
-            </aside>
-
-            {/* ═══ MAIN CONTENT ═══ */}
-            <main className="min-w-0 space-y-6">
+            {/* ═══ MAIN CONTENT (first in DOM for mobile) ═══ */}
+            <main className="min-w-0 space-y-6 order-1 lg:order-2">
 
               {/* ─── Hero: Study Plan (like Brilliant course card) ─── */}
               <div
@@ -639,24 +522,12 @@ export default function DashboardPage() {
                   className="group rounded-xl border border-amber-500/15 bg-gradient-to-r from-amber-500/[0.06] to-orange-500/[0.03] p-4 transition-all hover:border-amber-500/25 hover:shadow-lg"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-lg">
-                      📅
-                    </div>
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 text-lg">📅</div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-bold text-white group-hover:text-amber-300">
-                        Daily Training
-                      </h3>
-                      <p className="mt-0.5 text-[11px] text-slate-500">
-                        8 personalized exercises
-                      </p>
+                      <h3 className="text-sm font-bold text-white group-hover:text-amber-300">Daily Training</h3>
+                      <p className="mt-0.5 text-[11px] text-slate-500">8 personalized exercises</p>
                     </div>
-                    <svg
-                      className="h-4 w-4 shrink-0 text-slate-600 transition-all group-hover:translate-x-0.5 group-hover:text-amber-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
+                    <svg className="h-4 w-4 shrink-0 text-slate-600 transition-all group-hover:translate-x-0.5 group-hover:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
@@ -666,24 +537,12 @@ export default function DashboardPage() {
                   className="group rounded-xl border border-fuchsia-500/15 bg-gradient-to-r from-fuchsia-500/[0.06] to-cyan-500/[0.03] p-4 transition-all hover:border-fuchsia-500/25 hover:shadow-lg"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-fuchsia-500/15 text-lg">
-                      🎯
-                    </div>
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-fuchsia-500/15 text-lg">🎯</div>
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-sm font-bold text-white group-hover:text-fuchsia-300">
-                        Training Center
-                      </h3>
-                      <p className="mt-0.5 text-[11px] text-slate-500">
-                        Puzzles, drills & more
-                      </p>
+                      <h3 className="text-sm font-bold text-white group-hover:text-fuchsia-300">Training Center</h3>
+                      <p className="mt-0.5 text-[11px] text-slate-500">Puzzles, drills & more</p>
                     </div>
-                    <svg
-                      className="h-4 w-4 shrink-0 text-slate-600 transition-all group-hover:translate-x-0.5 group-hover:text-fuchsia-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
+                    <svg className="h-4 w-4 shrink-0 text-slate-600 transition-all group-hover:translate-x-0.5 group-hover:text-fuchsia-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
@@ -692,160 +551,96 @@ export default function DashboardPage() {
 
               {/* ─── Goal + Achievements ─── */}
               <div data-tour="goals" className="grid gap-6 sm:grid-cols-2">
-                <div
-                  className="animate-fade-in-up"
-                  style={{ animationDelay: "0.15s" }}
-                >
+                <div className="animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
                   <GoalWidget
                     currentAccuracy={latestNonTimeMgmt?.estimatedAccuracy ?? null}
                     currentRating={latestNonTimeMgmt?.estimatedRating ?? null}
                   />
                 </div>
-                <div
-                  className="glass-card animate-fade-in-up p-5"
-                  style={{ animationDelay: "0.16s" }}
-                >
+                <div className="glass-card animate-fade-in-up p-5" style={{ animationDelay: "0.16s" }}>
                   <AchievementsPanel ctx={achievementCtx} />
                 </div>
               </div>
 
-              {/* ─── Percentile + Repertoire ─── */}
-              <div className="grid gap-6 sm:grid-cols-2">
-                <div
-                  className="animate-fade-in-up"
-                  style={{ animationDelay: "0.17s" }}
-                >
-                  <PercentileWidget
-                    accuracy={latestNonTimeMgmt?.estimatedAccuracy ?? null}
-                    rating={latestNonTimeMgmt?.estimatedRating ?? null}
-                  />
-                </div>
-                <div
-                  className="animate-fade-in-up"
-                  style={{ animationDelay: "0.18s" }}
-                >
-                  <RepertoirePanel />
-                </div>
+              {/* ─── Repertoire ─── */}
+              <div className="animate-fade-in-up" style={{ animationDelay: "0.18s" }}>
+                <RepertoirePanel />
               </div>
 
-              {/* ─── Radar + Progress ─── */}
-              <div className="grid gap-6 lg:grid-cols-2">
-                <div
-                  data-tour="radar"
-                  className="glass-card animate-fade-in-up space-y-4 p-5"
-                  style={{ animationDelay: "0.2s" }}
-                >
-                  <div className="flex items-center justify-between">
-                    <h2 className="text-sm font-semibold text-white">
-                      Strengths & Weaknesses
-                    </h2>
-                    <span className="text-[10px] text-white/30">Latest</span>
+              {/* ─── Progress Charts ─── */}
+              <div
+                data-tour="progress"
+                className="glass-card animate-fade-in-up space-y-4 p-5"
+                style={{ animationDelay: "0.3s" }}
+              >
+                <h2 className="text-sm font-semibold text-white">Progress Over Time</h2>
+                {progressData.length < 2 ? (
+                  <div className="flex h-48 items-center justify-center">
+                    <p className="text-xs text-white/40">Run at least 2 analyses to see your progress chart.</p>
                   </div>
-                  {latestNonTimeMgmt && (
-                    <>
-                      <StrengthsRadar {...radarPropsFrom(latestNonTimeMgmt)} />
-                      <RadarLegend
-                        data={computeRadarData(radarPropsFrom(latestNonTimeMgmt))}
-                        props={radarPropsFrom(latestNonTimeMgmt)}
-                      />
-                    </>
-                  )}
-                </div>
-
-                <div
-                  data-tour="progress"
-                  className="glass-card animate-fade-in-up space-y-4 p-5"
-                  style={{ animationDelay: "0.3s" }}
-                >
-                  <h2 className="text-sm font-semibold text-white">
-                    Progress Over Time
-                  </h2>
-                  {progressData.length < 2 ? (
-                    <div className="flex h-48 items-center justify-center">
-                      <p className="text-xs text-white/40">
-                        Run at least 2 analyses to see your progress chart.
-                      </p>
+                ) : (
+                  <>
+                    <div>
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                        <span className="text-[11px] font-medium text-white/50">Accuracy</span>
+                        {latestNonTimeMgmt && previousNonTimeMgmt && (
+                          <DeltaBadge value={delta(latestNonTimeMgmt.estimatedAccuracy, previousNonTimeMgmt.estimatedAccuracy)} />
+                        )}
+                      </div>
+                      <ResponsiveContainer width="100%" height={100}>
+                        <AreaChart data={progressData}>
+                          <defs>
+                            <linearGradient id="gradAccuracy" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="rgb(16,185,129)" stopOpacity={0.3} />
+                              <stop offset="100%" stopColor="rgb(16,185,129)" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
+                          <XAxis dataKey="timestamp" type="number" scale="time" domain={["dataMin", "dataMax"]}
+                            tickFormatter={(ts) => new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                            tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 9 }} axisLine={false} tickLine={false}
+                          />
+                          <YAxis domain={[0, 100]} tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 9 }} axisLine={false} tickLine={false} width={25} />
+                          <Tooltip labelFormatter={(label) => new Date(Number(label)).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            contentStyle={{ background: "rgba(15,23,42,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", fontSize: "11px" }}
+                          />
+                          <Area type="monotone" dataKey="accuracy" stroke="rgb(16,185,129)" fill="url(#gradAccuracy)" strokeWidth={2} dot={{ r: 3, fill: "rgb(52,211,153)" }} animationDuration={800} />
+                        </AreaChart>
+                      </ResponsiveContainer>
                     </div>
-                  ) : (
-                    <>
-                      <div>
-                        <div className="mb-2 flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                          <span className="text-[11px] font-medium text-white/50">Accuracy</span>
-                          {latestNonTimeMgmt && previousNonTimeMgmt && (
-                            <DeltaBadge value={delta(latestNonTimeMgmt.estimatedAccuracy, previousNonTimeMgmt.estimatedAccuracy)} />
-                          )}
-                        </div>
-                        <ResponsiveContainer width="100%" height={100}>
-                          <AreaChart data={progressData}>
-                            <defs>
-                              <linearGradient id="gradAccuracy" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="rgb(16,185,129)" stopOpacity={0.3} />
-                                <stop offset="100%" stopColor="rgb(16,185,129)" stopOpacity={0} />
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
-                            <XAxis dataKey="timestamp" type="number" scale="time" domain={["dataMin", "dataMax"]}
-                              tickFormatter={(ts) => new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                              tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 9 }} axisLine={false} tickLine={false}
-                            />
-                            <YAxis domain={[0, 100]} tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 9 }} axisLine={false} tickLine={false} width={25} />
-                            <Tooltip labelFormatter={(label) => new Date(Number(label)).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                              contentStyle={{ background: "rgba(15,23,42,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", fontSize: "11px" }}
-                            />
-                            <Area type="monotone" dataKey="accuracy" stroke="rgb(16,185,129)" fill="url(#gradAccuracy)" strokeWidth={2} dot={{ r: 3, fill: "rgb(52,211,153)" }} animationDuration={800} />
-                          </AreaChart>
-                        </ResponsiveContainer>
+                    <div>
+                      <div className="mb-2 flex items-center gap-2">
+                        <span className="h-2 w-2 rounded-full bg-cyan-400" />
+                        <span className="text-[11px] font-medium text-white/50">Avg CP Loss</span>
+                        {latestNonTimeMgmt && previousNonTimeMgmt && (
+                          <DeltaBadge value={delta(latestNonTimeMgmt.weightedCpLoss, previousNonTimeMgmt.weightedCpLoss)} invert />
+                        )}
                       </div>
-                      <div>
-                        <div className="mb-2 flex items-center gap-2">
-                          <span className="h-2 w-2 rounded-full bg-cyan-400" />
-                          <span className="text-[11px] font-medium text-white/50">Avg CP Loss</span>
-                          {latestNonTimeMgmt && previousNonTimeMgmt && (
-                            <DeltaBadge value={delta(latestNonTimeMgmt.weightedCpLoss, previousNonTimeMgmt.weightedCpLoss)} invert />
-                          )}
-                        </div>
-                        <ResponsiveContainer width="100%" height={100}>
-                          <AreaChart data={progressData}>
-                            <defs>
-                              <linearGradient id="gradCp" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="rgb(6,182,212)" stopOpacity={0.3} />
-                                <stop offset="100%" stopColor="rgb(6,182,212)" stopOpacity={0} />
-                              </linearGradient>
-                            </defs>
-                            <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
-                            <XAxis dataKey="timestamp" type="number" scale="time" domain={["dataMin", "dataMax"]}
-                              tickFormatter={(ts) => new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                              tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 9 }} axisLine={false} tickLine={false}
-                            />
-                            <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 9 }} axisLine={false} tickLine={false} width={25} />
-                            <Tooltip labelFormatter={(label) => new Date(Number(label)).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                              contentStyle={{ background: "rgba(15,23,42,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", fontSize: "11px" }}
-                            />
-                            <Area type="monotone" dataKey="cpLoss" stroke="rgb(6,182,212)" fill="url(#gradCp)" strokeWidth={2} dot={{ r: 3, fill: "rgb(34,211,238)" }} animationDuration={800} />
-                          </AreaChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </>
-                  )}
-                </div>
+                      <ResponsiveContainer width="100%" height={100}>
+                        <AreaChart data={progressData}>
+                          <defs>
+                            <linearGradient id="gradCp" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="rgb(6,182,212)" stopOpacity={0.3} />
+                              <stop offset="100%" stopColor="rgb(6,182,212)" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
+                          <XAxis dataKey="timestamp" type="number" scale="time" domain={["dataMin", "dataMax"]}
+                            tickFormatter={(ts) => new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                            tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 9 }} axisLine={false} tickLine={false}
+                          />
+                          <YAxis tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 9 }} axisLine={false} tickLine={false} width={25} />
+                          <Tooltip labelFormatter={(label) => new Date(Number(label)).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            contentStyle={{ background: "rgba(15,23,42,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "8px", color: "#fff", fontSize: "11px" }}
+                          />
+                          <Area type="monotone" dataKey="cpLoss" stroke="rgb(6,182,212)" fill="url(#gradCp)" strokeWidth={2} dot={{ r: 3, fill: "rgb(34,211,238)" }} animationDuration={800} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </>
+                )}
               </div>
-
-              {/* ─── Key Metrics Comparison ─── */}
-              {latestByGame && previousByGame && filtered.length >= 2 && (
-                <div
-                  className="glass-card animate-fade-in-up space-y-4 p-5"
-                  style={{ animationDelay: "0.4s" }}
-                >
-                  <h2 className="text-sm font-semibold text-white">Latest vs. Previous</h2>
-                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-                    <CompareMetric label="Accuracy" current={latestByGame.estimatedAccuracy} prev={previousByGame.estimatedAccuracy} suffix="%" />
-                    <CompareMetric label="Est. Rating" current={latestByGame.estimatedRating} prev={previousByGame.estimatedRating} />
-                    <CompareMetric label="Avg CP Loss" current={latestByGame.weightedCpLoss} prev={previousByGame.weightedCpLoss} invert />
-                    <CompareMetric label="Severe Leak Rate" current={latestByGame.severeLeakRate != null ? latestByGame.severeLeakRate * 100 : null} prev={previousByGame.severeLeakRate != null ? previousByGame.severeLeakRate * 100 : null} suffix="%" invert />
-                  </div>
-                </div>
-              )}
 
               {/* ─── Report History ─── */}
               <div
@@ -874,6 +669,129 @@ export default function DashboardPage() {
               {/* ─── Pro/Lifetime welcome modal ─── */}
               <ProWelcomeModal />
             </main>
+
+            {/* ═══ LEFT SIDEBAR (second in DOM, shows on right on desktop) ═══ */}
+            <aside className="space-y-5 order-2 lg:order-1">
+
+              {/* Search / Player Filter */}
+              <div className="animate-fade-in-up space-y-3">
+                {userOptions.length > 1 ? (
+                  <div className="relative">
+                    <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <select
+                      value={selectedUser}
+                      onChange={(e) => setSelectedUser(e.target.value)}
+                      className="w-full appearance-none rounded-xl border border-white/[0.08] bg-white/[0.04] py-2.5 pl-10 pr-4 text-sm text-white/80 transition-colors hover:border-white/20 focus:border-emerald-500/50 focus:outline-none"
+                    >
+                      <option value="__all__" className="bg-[#08070b]">All players</option>
+                      {userOptions.map((u) => (
+                        <option key={`${u.username}__${u.source}`} value={`${u.username}__${u.source}`} className="bg-[#08070b]">{u.username}</option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div className="relative">
+                    <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    </svg>
+                    <input readOnly value={selectedUser !== "__all__" ? selectedUser.split("__")[0] : "Your games"}
+                      className="w-full rounded-xl border border-white/[0.08] bg-white/[0.04] py-2.5 pl-10 pr-4 text-sm text-white/60 outline-none"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Compact Stat Cards */}
+              <div className="animate-fade-in-up grid grid-cols-2 gap-2" style={{ animationDelay: "0.05s" }}>
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                  <div className="text-lg font-bold text-white">{filtered.length}</div>
+                  <div className="text-[10px] text-slate-500">Reports</div>
+                </div>
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                  <div className="text-lg font-bold text-white">{totalGames.toLocaleString()}</div>
+                  <div className="text-[10px] text-slate-500">Games</div>
+                </div>
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                  <div className="text-lg font-bold text-white">{totalLeaks.toLocaleString()}</div>
+                  <div className="text-[10px] text-slate-500">Leaks</div>
+                </div>
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                  <div className="text-lg font-bold text-white">{totalTactics.toLocaleString()}</div>
+                  <div className="text-[10px] text-slate-500">Tactics</div>
+                </div>
+              </div>
+
+              {/* Strengths Radar */}
+              {latestNonTimeMgmt && (
+                <div
+                  data-tour="radar"
+                  className="glass-card animate-fade-in-up p-4"
+                  style={{ animationDelay: "0.07s" }}
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <h2 className="text-xs font-semibold text-white/80">Strengths & Weaknesses</h2>
+                    <span className="text-[9px] text-white/30">Latest</span>
+                  </div>
+                  <StrengthsRadar {...radarPropsFrom(latestNonTimeMgmt)} />
+                  <div className="mt-3">
+                    <RadarLegend
+                      data={computeRadarData(radarPropsFrom(latestNonTimeMgmt))}
+                      props={radarPropsFrom(latestNonTimeMgmt)}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* How You Compare */}
+              <div className="animate-fade-in-up" style={{ animationDelay: "0.09s" }}>
+                <PercentileWidget
+                  accuracy={latestNonTimeMgmt?.estimatedAccuracy ?? null}
+                  rating={latestNonTimeMgmt?.estimatedRating ?? null}
+                />
+              </div>
+
+              {/* Latest vs Previous */}
+              {latestByGame && previousByGame && filtered.length >= 2 && (
+                <div
+                  className="glass-card animate-fade-in-up space-y-3 p-4"
+                  style={{ animationDelay: "0.1s" }}
+                >
+                  <h2 className="text-xs font-semibold text-white/80">Latest vs. Previous</h2>
+                  <div className="grid grid-cols-2 gap-2">
+                    <CompactMetric label="Accuracy" current={latestByGame.estimatedAccuracy} prev={previousByGame.estimatedAccuracy} suffix="%" />
+                    <CompactMetric label="Rating" current={latestByGame.estimatedRating} prev={previousByGame.estimatedRating} />
+                    <CompactMetric label="CP Loss" current={latestByGame.weightedCpLoss} prev={previousByGame.weightedCpLoss} invert />
+                    <CompactMetric label="Leak Rate" current={latestByGame.severeLeakRate != null ? latestByGame.severeLeakRate * 100 : null} prev={previousByGame.severeLeakRate != null ? previousByGame.severeLeakRate * 100 : null} suffix="%" invert />
+                  </div>
+                </div>
+              )}
+
+              {/* Daily Login Rewards */}
+              <div data-tour="daily-login" className="animate-fade-in-up" style={{ animationDelay: "0.12s" }}>
+                <DailyLoginRewards />
+              </div>
+
+              {/* Daily Chess Tip */}
+              <div className="animate-fade-in-up" style={{ animationDelay: "0.14s" }}>
+                <DailyTipWidget />
+              </div>
+
+              {/* Rescan reminder (compact) */}
+              {daysSinceLastScan != null && daysSinceLastScan >= 3 && (
+                <div className="animate-fade-in-up rounded-xl border border-amber-500/15 bg-amber-500/[0.04] p-3" style={{ animationDelay: "0.16s" }}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">⏰</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-white">New scan ready</p>
+                      <p className="text-[10px] text-slate-500">{daysSinceLastScan} day{daysSinceLastScan !== 1 ? "s" : ""} ago</p>
+                    </div>
+                    <Link href="/?scan=1" className="shrink-0 rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 px-3 py-1.5 text-[10px] font-bold text-white shadow-lg shadow-amber-500/15 transition-all hover:brightness-110">Scan</Link>
+                  </div>
+                </div>
+              )}
+            </aside>
           </div>
         </div>
       </div>
@@ -928,7 +846,7 @@ function DeltaBadge({
   );
 }
 
-function CompareMetric({
+function CompactMetric({
   label,
   current,
   prev,
@@ -944,27 +862,21 @@ function CompareMetric({
   const diff = current != null && prev != null ? current - prev : null;
   const isGood = diff != null ? (invert ? diff < 0 : diff > 0) : false;
   return (
-    <div className="rounded-xl border border-white/5 bg-white/[0.03] p-4">
-      <div className="mb-1 text-xs text-white/40">{label}</div>
-      <div className="flex items-end gap-2">
-        <span className="text-xl font-bold text-white">
+    <div className="rounded-lg border border-white/[0.05] bg-white/[0.02] p-2.5">
+      <div className="text-[10px] text-white/40">{label}</div>
+      <div className="mt-0.5 flex items-baseline gap-1.5">
+        <span className="text-sm font-bold text-white">
           {current != null ? current.toFixed(1) : "—"}
           {suffix}
         </span>
         {diff != null && (
-          <span
-            className={`mb-0.5 text-xs font-semibold ${
-              isGood ? "text-emerald-400" : "text-red-400"
-            }`}
-          >
-            {diff > 0 ? "+" : ""}
-            {diff.toFixed(1)}
+          <span className={`text-[10px] font-semibold ${isGood ? "text-emerald-400" : "text-red-400"}`}>
+            {diff > 0 ? "+" : ""}{diff.toFixed(1)}
           </span>
         )}
       </div>
-      <div className="mt-1 text-[10px] text-white/25">
-        prev: {prev != null ? prev.toFixed(1) : "—"}
-        {suffix}
+      <div className="mt-0.5 text-[9px] text-white/20">
+        prev {prev != null ? prev.toFixed(1) : "—"}{suffix}
       </div>
     </div>
   );

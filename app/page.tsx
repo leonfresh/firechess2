@@ -185,6 +185,16 @@ export default function HomePage() {
     loading: sessionLoading,
   } = useSession();
   const router = useRouter();
+
+  // Redirect authenticated users to their dashboard (skip if ?scan=1)
+  useEffect(() => {
+    if (!sessionLoading && authenticated) {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("scan") === "1") return;
+      router.replace("/dashboard");
+    }
+  }, [sessionLoading, authenticated, router]);
+
   const [heroPhase, setHeroPhase] = useState<"idle" | "hiding" | "revealing">(
     "idle",
   );
