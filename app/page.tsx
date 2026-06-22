@@ -190,7 +190,7 @@ export default function HomePage() {
   useEffect(() => {
     if (!sessionLoading && authenticated) {
       const params = new URLSearchParams(window.location.search);
-      if (params.get("scan") === "1") return;
+      if (params.get("scan") === "1" || params.get("landing") === "1") return;
       router.replace("/dashboard");
     }
   }, [sessionLoading, authenticated, router]);
@@ -1284,7 +1284,11 @@ export default function HomePage() {
 
     const trimmed = username.trim();
     if (!trimmed) {
-      setError("Please enter your chess username.");
+      setError(
+        source === "pgn"
+          ? "Enter your name as it appears in the PGN (e.g. [White \"YourName\"])."
+          : "Please enter your chess username.",
+      );
       setState("error");
       return;
     }
@@ -2808,19 +2812,21 @@ export default function HomePage() {
                   Available via the toggle above; onFinish flips to Full.
                   Renders in a portal over the page body. */}
               {viewMode === "guided" && report && (
-                <GuidedWalk
-                  report={report}
-                  vibeTitle={report.vibeTitle}
-                  gamesAnalyzed={result.gamesAnalyzed}
-                  leaks={leaks}
-                  oneOffMistakes={oneOffMistakes}
-                  positionTraces={diagnostics?.positionTraces ?? []}
-                  missedTactics={missedTactics}
-                  endgameMistakes={endgameMistakes}
-                  excludeFens={dbApprovedFens}
-                  mentalStats={result.mentalStats ?? null}
-                  username={result.username}
-                  radarProps={
+                  <GuidedWalk
+                    report={report}
+                    vibeTitle={report.vibeTitle}
+                    gamesAnalyzed={result.gamesAnalyzed}
+                    source={source ?? undefined}
+                    leaks={leaks}
+                    oneOffMistakes={oneOffMistakes}
+                    positionTraces={diagnostics?.positionTraces ?? []}
+                    missedTactics={missedTactics}
+                    positionalFindings={positionalFindings}
+                    endgameMistakes={endgameMistakes}
+                    excludeFens={dbApprovedFens}
+                    mentalStats={result.mentalStats ?? null}
+                    username={result.username}
+                    radarProps={
                     report
                       ? {
                           accuracy: report.estimatedAccuracy,

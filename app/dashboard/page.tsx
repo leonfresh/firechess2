@@ -25,7 +25,6 @@ import { DailyChallenge } from "@/components/daily-challenge";
 import { ProgressHighlights } from "@/components/progress-highlights";
 import { RepertoirePanel } from "@/components/opening-repertoire";
 import { PercentileWidget } from "@/components/percentile-widget";
-import { DailyLoginRewards } from "@/components/daily-login-rewards";
 import { DailyTipWidget } from "@/components/daily-tip";
 import { OnboardingTour } from "@/components/onboarding-tour";
 import { ProWelcomeModal } from "@/components/lifetime-welcome";
@@ -348,76 +347,10 @@ export default function DashboardPage() {
     };
   }, [reports, latestNonTimeMgmt, previousNonTimeMgmt]);
 
-  /* ─── loading / auth states ─── */
-  if (sessionLoading || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="flex items-center gap-3 text-white/50">
-          <svg className="h-5 w-5 animate-spin" viewBox="0 0 24 24" fill="none">
-            <circle
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="3"
-              className="opacity-20"
-            />
-            <path
-              d="M12 2a10 10 0 019.95 9"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
-          </svg>
-          Loading dashboard…
-        </div>
-      </div>
-    );
-  }
-
-  if (!authenticated) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 px-6">
-        <div className="glass-card max-w-md space-y-4 p-8 text-center">
-          <div className="text-4xl">📊</div>
-          <h2 className="text-xl font-bold text-white">
-            Sign in to view your dashboard
-          </h2>
-          <p className="text-sm text-white/50">
-            Your analysis reports are saved to your account. Sign in to track
-            your progress over time.
-          </p>
-          <Link
-            href="/auth/signin"
-            className="btn-primary mx-auto mt-4 inline-block"
-          >
-            Sign In
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  if (reports.length === 0) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center gap-6 px-6">
-        <div className="glass-card max-w-md space-y-4 p-8 text-center">
-          <div className="text-4xl">🔬</div>
-          <h2 className="text-xl font-bold text-white">No reports yet</h2>
-          <p className="text-sm text-white/50">
-            Run your first analysis on the{" "}
-            <Link href="/?scan=1" className="text-emerald-400 hover:underline">
-              scanner page
-            </Link>{" "}
-            and your report will appear here automatically.
-          </p>
-          <Link href="/?scan=1" className="btn-primary mx-auto mt-4 inline-block">
-            Go to Scanner
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  /* ─── Determine UI state ─── */
+  const showSignIn = !sessionLoading && !authenticated;
+  const showEmptyState = !sessionLoading && authenticated && !loading && reports.length === 0;
+  const showGrid = !showSignIn && !showEmptyState;
 
   return (
     <div className="relative min-h-screen">
@@ -432,39 +365,91 @@ export default function DashboardPage() {
         <div className="mx-auto max-w-6xl">
           {/* ─── Header ─── */}
           <header className="animate-fade-in-up mb-8 flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight text-white md:text-3xl">
-                Hello, {user?.name?.split(" ")[0] ?? "Player"}
-              </h1>
-              <p className="mt-0.5 text-sm text-slate-500">
-                What do you want to work on today?
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              {(plan === "pro" || plan === "lifetime") && (
-                <span
-                  className={`text-xs ${plan === "lifetime" ? "tag-amber" : "tag-emerald"}`}
-                >
-                  {plan === "lifetime" ? "LIFETIME" : "PRO"}
-                </span>
-              )}
-              {profileTitle && (
-                <span
-                  className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${profileTitle.badgeClass}`}
-                >
-                  {profileTitle.name}
-                </span>
-              )}
-              {coinBalance > 0 && (
-                <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-bold text-amber-400">
-                  <span>🪙</span> {coinBalance.toLocaleString()}
-                </span>
-              )}
-            </div>
+            {sessionLoading ? (
+              <div>
+                <div className="h-8 w-48 animate-pulse rounded bg-white/[0.06]" />
+                <div className="mt-2 h-4 w-64 animate-pulse rounded bg-white/[0.04]" />
+              </div>
+            ) : (
+              <>
+                <div>
+                  <h1 className="text-2xl font-bold tracking-tight text-white md:text-3xl">
+                    Hello, {user?.name?.split(" ")[0] ?? "Player"}
+                  </h1>
+                  <p className="mt-0.5 text-sm text-slate-500">
+                    What do you want to work on today?
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {(plan === "pro" || plan === "lifetime") && (
+                    <span
+                      className={`text-xs ${plan === "lifetime" ? "tag-amber" : "tag-emerald"}`}
+                    >
+                      {plan === "lifetime" ? "LIFETIME" : "PRO"}
+                    </span>
+                  )}
+                  {profileTitle && (
+                    <span
+                      className={`rounded-full px-2.5 py-0.5 text-[11px] font-bold ${profileTitle.badgeClass}`}
+                    >
+                      {profileTitle.name}
+                    </span>
+                  )}
+                  {coinBalance > 0 && (
+                    <span className="flex items-center gap-1 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[11px] font-bold text-amber-400">
+                      <span>🪙</span> {coinBalance.toLocaleString()}
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
           </header>
 
-          {/* ─── Two-Column Layout ─── */}
-          <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
+          {/* ─── Sign-in card ─── */}
+          {showSignIn && (
+            <div className="flex min-h-screen flex-col items-center justify-center gap-6 px-6">
+              <div className="glass-card max-w-md space-y-4 p-8 text-center">
+                <div className="text-4xl">📊</div>
+                <h2 className="text-xl font-bold text-white">
+                  Sign in to view your dashboard
+                </h2>
+                <p className="text-sm text-white/50">
+                  Your analysis reports are saved to your account. Sign in to track
+                  your progress over time.
+                </p>
+                <Link
+                  href="/auth/signin"
+                  className="btn-primary mx-auto mt-4 inline-block"
+                >
+                  Sign In
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* ─── Empty state ─── */}
+          {showEmptyState && (
+            <div className="flex min-h-screen flex-col items-center justify-center gap-6 px-6">
+              <div className="glass-card max-w-md space-y-4 p-8 text-center">
+                <div className="text-4xl">🔬</div>
+                <h2 className="text-xl font-bold text-white">No reports yet</h2>
+                <p className="text-sm text-white/50">
+                  Run your first analysis on the{" "}
+                  <Link href="/?scan=1" className="text-emerald-400 hover:underline">
+                    scanner page
+                  </Link>{" "}
+                  and your report will appear here automatically.
+                </p>
+                <Link href="/?scan=1" className="btn-primary mx-auto mt-4 inline-block">
+                  Go to Scanner
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {/* ─── Two-Column Layout (loading + content) ─── */}
+          {showGrid && (
+            <div className="grid gap-8 lg:grid-cols-[280px_1fr]">
 
             {/* ═══ MAIN CONTENT (first in DOM for mobile) ═══ */}
             <main className="min-w-0 space-y-6 order-1 lg:order-2">
@@ -649,18 +634,32 @@ export default function DashboardPage() {
                 style={{ animationDelay: "0.5s" }}
               >
                 <h2 className="text-sm font-semibold text-white">Report History</h2>
-                <div className="space-y-2">
-                  {reports.map((r, i) => (
-                    <ReportRow
-                      key={r.id}
-                      report={r}
-                      index={i}
-                      expanded={expandedId === r.id}
-                      onToggle={() => setExpandedId(expandedId === r.id ? null : r.id)}
-                      onDelete={() => handleDeleteReport(r.id)}
-                    />
-                  ))}
-                </div>
+                {loading ? (
+                  <div className="space-y-2">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="glass-card flex animate-pulse items-center gap-4 p-4">
+                        <div className="h-10 w-10 rounded-full bg-white/[0.06]" />
+                        <div className="flex-1 space-y-2">
+                          <div className="h-4 w-48 rounded bg-white/[0.06]" />
+                          <div className="h-3 w-32 rounded bg-white/[0.04]" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {reports.map((r, i) => (
+                      <ReportRow
+                        key={r.id}
+                        report={r}
+                        index={i}
+                        expanded={expandedId === r.id}
+                        onToggle={() => setExpandedId(expandedId === r.id ? null : r.id)}
+                        onDelete={() => handleDeleteReport(r.id)}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* ─── Onboarding Tour ─── */}
@@ -671,7 +670,7 @@ export default function DashboardPage() {
             </main>
 
             {/* ═══ LEFT SIDEBAR (second in DOM, shows on right on desktop) ═══ */}
-            <aside className="space-y-5 order-2 lg:order-1">
+            <aside className="space-y-6 order-2 lg:order-1">
 
               {/* Search / Player Filter */}
               <div className="animate-fade-in-up space-y-3">
@@ -705,29 +704,49 @@ export default function DashboardPage() {
 
               {/* Compact Stat Cards */}
               <div className="animate-fade-in-up grid grid-cols-2 gap-2" style={{ animationDelay: "0.05s" }}>
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                  <div className="text-lg font-bold text-white">{filtered.length}</div>
-                  <div className="text-[10px] text-slate-500">Reports</div>
-                </div>
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                  <div className="text-lg font-bold text-white">{totalGames.toLocaleString()}</div>
-                  <div className="text-[10px] text-slate-500">Games</div>
-                </div>
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                  <div className="text-lg font-bold text-white">{totalLeaks.toLocaleString()}</div>
-                  <div className="text-[10px] text-slate-500">Leaks</div>
-                </div>
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                  <div className="text-lg font-bold text-white">{totalTactics.toLocaleString()}</div>
-                  <div className="text-[10px] text-slate-500">Tactics</div>
-                </div>
+                {loading ? (
+                  <>
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} className="animate-pulse rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                        <div className="h-6 w-12 rounded bg-white/[0.06]" />
+                        <div className="mt-1 h-3 w-14 rounded bg-white/[0.04]" />
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  <>
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                      <div className="text-lg font-bold text-white">{filtered.length}</div>
+                      <div className="text-[10px] text-slate-500">Reports</div>
+                    </div>
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                      <div className="text-lg font-bold text-white">{totalGames.toLocaleString()}</div>
+                      <div className="text-[10px] text-slate-500">Games</div>
+                    </div>
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                      <div className="text-lg font-bold text-white">{totalLeaks.toLocaleString()}</div>
+                      <div className="text-[10px] text-slate-500">Leaks</div>
+                    </div>
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+                      <div className="text-lg font-bold text-white">{totalTactics.toLocaleString()}</div>
+                      <div className="text-[10px] text-slate-500">Tactics</div>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Strengths Radar */}
-              {latestNonTimeMgmt && (
+              {loading ? (
+                <div className="glass-card animate-fade-in-up p-5" style={{ animationDelay: "0.07s" }}>
+                  <div className="mb-4 h-4 w-36 animate-pulse rounded bg-white/[0.06]" />
+                  <div className="flex items-center justify-center py-6">
+                    <div className="h-40 w-40 animate-pulse rounded-full bg-white/[0.04]" />
+                  </div>
+                </div>
+              ) : latestNonTimeMgmt ? (
                 <div
                   data-tour="radar"
-                  className="glass-card animate-fade-in-up p-4"
+                  className="glass-card animate-fade-in-up p-5"
                   style={{ animationDelay: "0.07s" }}
                 >
                   <div className="mb-3 flex items-center justify-between">
@@ -742,7 +761,7 @@ export default function DashboardPage() {
                     />
                   </div>
                 </div>
-              )}
+              ) : null}
 
               {/* How You Compare */}
               <div className="animate-fade-in-up" style={{ animationDelay: "0.09s" }}>
@@ -755,7 +774,7 @@ export default function DashboardPage() {
               {/* Latest vs Previous */}
               {latestByGame && previousByGame && filtered.length >= 2 && (
                 <div
-                  className="glass-card animate-fade-in-up space-y-3 p-4"
+                  className="glass-card animate-fade-in-up space-y-3 p-5"
                   style={{ animationDelay: "0.1s" }}
                 >
                   <h2 className="text-xs font-semibold text-white/80">Latest vs. Previous</h2>
@@ -767,11 +786,6 @@ export default function DashboardPage() {
                   </div>
                 </div>
               )}
-
-              {/* Daily Login Rewards */}
-              <div data-tour="daily-login" className="animate-fade-in-up" style={{ animationDelay: "0.12s" }}>
-                <DailyLoginRewards />
-              </div>
 
               {/* Daily Chess Tip */}
               <div className="animate-fade-in-up" style={{ animationDelay: "0.14s" }}>
@@ -793,6 +807,7 @@ export default function DashboardPage() {
               )}
             </aside>
           </div>
+        )}
         </div>
       </div>
     </div>
@@ -897,10 +912,9 @@ function ReportRow({
 }) {
   const r = report;
   const isTimeMgmt = r.scanMode === "time-management";
-  const reportHref =
-    r.scanMode === "both" && r.scanSessionId
-      ? `/report/${r.scanSessionId}`
-      : null;
+  const reportHref = r.scanSessionId
+    ? `/report/${r.scanSessionId}`
+    : null;
   const rProps = radarPropsFrom(r);
   const radarData = computeRadarData(rProps);
   const radarAvg = Math.round(

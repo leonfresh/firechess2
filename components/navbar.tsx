@@ -318,7 +318,7 @@ export function Navbar() {
         <nav className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 border-b border-white/[0.08] px-0 pb-3 md:px-1 xl:px-0">
           {/* ── Logo ── */}
           <Link
-            href="/"
+            href={pathname.includes("/dashboard") ? "/?landing=1" : "/"}
             className="group inline-flex items-center gap-2.5 text-base font-bold text-white transition-colors hover:text-slate-200"
           >
             <Image

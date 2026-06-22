@@ -9,10 +9,12 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Copy,
   Crosshair,
   Gauge,
   Lightbulb,
   ListChecks,
+  Share2,
   Sparkles,
   Target,
   Trophy,
@@ -35,6 +37,12 @@ import type {
   PositionEvalTrace,
   RepeatedOpeningLeak,
 } from "@/lib/types";
+import {
+  buildMotifs,
+  POSITIONAL_MOTIF_NAMES,
+  type DerivedMotif,
+  type PositionalFinding,
+} from "@/lib/build-motifs";
 
 /* ── Move display helpers ────────────────────────────────────────────────
  * userMove/bestMove fields are stored as UCI (e.g. "h7h8", "e7e8q"). The full
@@ -123,6 +131,8 @@ export type GuidedWalkProps = {
   vibeTitle?: string;
   /** Games analyzed in this scan. */
   gamesAnalyzed: number;
+  /** Source platform. */
+  source?: "lichess" | "chesscom" | "pgn";
   /** Repeated opening leaks, sorted by impact downstream. */
   leaks: RepeatedOpeningLeak[];
   /** One-off opening mistakes. */
@@ -135,6 +145,8 @@ export type GuidedWalkProps = {
   endgameMistakes?: EndgameMistake[];
   /** FENs to exclude from drilling (DB-approved inaccuracies). */
   excludeFens?: Set<string>;
+  /** Positional findings for motif computation. */
+  positionalFindings?: PositionalFinding[];
   /** Mental/tilt stats — for a one-line insight in the plan step. */
   mentalStats?: MentalStats | null;
   /** Username, for copy. */
@@ -243,18 +255,31 @@ export function GuidedWalk(props: GuidedWalkProps) {
 
 
 
+  // ── Compute tactical motifs from all position sources. ──
+  const motifs = useMemo(() => {
+    return buildMotifs(
+      props.missedTactics,
+      props.leaks,
+      props.oneOffMistakes,
+      props.positionalFindings ?? [],
+    );
+  }, [props.missedTactics, props.leaks, props.oneOffMistakes, props.positionalFindings]);
+
+  const topMotif = motifs.length > 0 ? motifs[0] : null;
+
   // ── Build the step list dynamically (omit steps with no data). ──
   const steps = useMemo(() => {
     const list: string[] = ["headline"];
     if (props.radarProps && radarData) list.push("radar");
     list.push("leak");
+    if (topMotif) list.push("motif");
     list.push("tactic");
     if (topBrilliant) list.push("brilliant");
     if (topEndgame) list.push("endgame");
     if (narrative) list.push("profile");
     list.push("plan");
     return list;
-  }, [props.radarProps, radarData, topBrilliant, topEndgame, narrative]);
+  }, [props.radarProps, radarData, topMotif, topBrilliant, topEndgame, narrative]);
 
   const totalSteps = steps.length;
   const isLast = step === totalSteps - 1;
@@ -366,6 +391,9 @@ export function GuidedWalk(props: GuidedWalkProps) {
               hasNoTactics={props.missedTactics.length === 0}
             />
           )}
+          {currentStep === "motif" && topMotif && (
+            <MotifStep motif={topMotif} />
+          )}
           {currentStep === "brilliant" && topBrilliant && (
             <BrilliantStep brilliant={topBrilliant} />
           )}
@@ -380,6 +408,9 @@ export function GuidedWalk(props: GuidedWalkProps) {
               planItems={planItems}
               mentalStats={props.mentalStats}
               username={props.username}
+              report={props.report}
+              gamesAnalyzed={props.gamesAnalyzed}
+              vibeTitle={props.vibeTitle}
               onSave={props.onSave}
               saveStatus={props.saveStatus}
               authenticated={props.authenticated}
@@ -756,7 +787,71 @@ function TacticStep({
   );
 }
 
-/* ── Step 5: A brilliant move ─────────────────────────────────────────── */
+/* ── Step 5: Worst tactical motif pattern ──────────────────────────────── */
+
+function MotifStep({ motif }: { motif: DerivedMotif }) {
+  const example = motif.examples[0];
+  const userColor = example?.fenBefore?.split(" ")[1] === "b" ? "black" : "white";
+  return (
+    <div>
+      <StepHeader
+        eyebrow="Your most common pattern"
+        title={motif.icon + " " + motif.name}
+        icon={<Crosshair className="h-4 w-4" />}
+        tone="orange"
+      />
+      <div className="mt-4 grid items-start gap-5 lg:grid-cols-2">
+        {example ? (
+          <GuidedWalkBoard
+            fen={example.fenBefore}
+            userMove={example.userMove}
+            bestMove={example.bestMove}
+            userColor={userColor}
+            mode="static"
+          />
+        ) : (
+          <div className="flex aspect-square items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.03] text-sm text-slate-500">
+            No example position available
+          </div>
+        )}
+        <div className="space-y-4 lg:pt-1">
+          <div className="rounded-xl border border-white/[0.07] bg-white/[0.03] p-4">
+            <p className="text-sm leading-relaxed text-slate-300">
+              You made <span className="font-bold text-white">{motif.count}</span>{" "}
+              {motif.count === 1 ? "mistake" : "mistakes"} fitting this pattern,
+              averaging{" "}
+              <span className="font-bold text-amber-400">
+                {motif.avgCpLoss.toFixed(0)}cp
+              </span>{" "}
+              per slip.
+            </p>
+            <div className="mt-3 grid grid-cols-2 gap-2 text-center">
+              <MiniStat
+                label="Occurrences"
+                value={`${motif.count}`}
+              />
+              <MiniStat
+                label="Avg loss"
+                value={`${motif.avgCpLoss.toFixed(0)}cp`}
+                tone="warn"
+              />
+            </div>
+          </div>
+          <div className="rounded-xl border border-cyan-500/15 bg-cyan-500/[0.04] p-4">
+            <p className="text-xs leading-relaxed text-slate-400">
+              <span className="font-semibold text-cyan-300">Pattern training:</span>{" "}
+              Recognizing <em>{motif.name.toLowerCase()}</em> when it appears
+              on the board lets you find the right continuation instead of an
+              ordinary move. Drill this motif in the full report below.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Step 6: A brilliant move ─────────────────────────────────────────── */
 
 function BrilliantStep({ brilliant }: { brilliant: BrilliantMove }) {
   return (
@@ -809,7 +904,7 @@ function BrilliantStep({ brilliant }: { brilliant: BrilliantMove }) {
   );
 }
 
-/* ── Step 6: An endgame moment ────────────────────────────────────────── */
+/* ── Step 7: An endgame moment ────────────────────────────────────────── */
 
 function EndgameStep({ endgame }: { endgame: EndgameMistake }) {
   const userSan = moveSan(endgame.fenBefore, endgame.userMove);
@@ -887,7 +982,7 @@ function EndgameStep({ endgame }: { endgame: EndgameMistake }) {
   );
 }
 
-/* ── Step 7: Profile / coach's note ───────────────────────────────────── */
+/* ── Step 8: Profile / coach's note ───────────────────────────────────── */
 
 function ProfileStep({
   narrative,
@@ -986,12 +1081,15 @@ function ProfileBar({ dimension, value }: { dimension: string; value: number }) 
   );
 }
 
-/* ── Step 8: The plan ─────────────────────────────────────────────────── */
+/* ── Step 9: The plan ─────────────────────────────────────────────────── */
 
 function PlanStep({
   planItems,
   mentalStats,
   username,
+  report,
+  gamesAnalyzed,
+  vibeTitle,
   onSave,
   saveStatus = "idle",
   authenticated = true,
@@ -999,6 +1097,9 @@ function PlanStep({
   planItems: { label: string; tag: string }[];
   mentalStats?: MentalStats | null;
   username: string;
+  report: AnalysisReport;
+  gamesAnalyzed: number;
+  vibeTitle?: string;
   onSave?: () => void;
   saveStatus?: GuidedSaveStatus;
   authenticated?: boolean;
@@ -1058,7 +1159,95 @@ function PlanStep({
           authenticated={authenticated}
         />
       )}
+
+      {/* ── Share card ── */}
+      <div className="mt-5 rounded-2xl border border-white/[0.08] bg-gradient-to-br from-sky-500/[0.06] to-violet-500/[0.04] p-5">
+        <div className="flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/15 text-sky-300">
+            <Share2 className="h-5 w-5" />
+          </span>
+          <div className="flex-1">
+            <h4 className="text-base font-bold text-white">Share your report</h4>
+            <p className="mt-1 text-xs leading-relaxed text-slate-400">
+              Let others see your chess profile — accuracy, rating, and leak
+              rate in one post.
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <ShareOnXButton
+            username={username}
+            accuracy={report.estimatedAccuracy}
+            rating={report.estimatedRating}
+            gamesAnalyzed={gamesAnalyzed}
+            vibeTitle={vibeTitle}
+          />
+          <CopyLinkButton />
+        </div>
+      </div>
     </div>
+  );
+}
+
+/* ── Share on X button ──────────────────────────────────────────────── */
+
+function ShareOnXButton({
+  username,
+  accuracy,
+  rating,
+  gamesAnalyzed,
+  vibeTitle,
+}: {
+  username: string;
+  accuracy: number;
+  rating: number;
+  gamesAnalyzed: number;
+  vibeTitle?: string;
+}) {
+  const text = encodeURIComponent(
+    `I analyzed ${gamesAnalyzed} games on FireChess${vibeTitle ? ` — "${vibeTitle}"` : ""}\n` +
+    `${accuracy.toFixed(1)}% accuracy · ${rating.toFixed(0)} est. rating\n` +
+    `See my full report:`,
+  );
+  const url = encodeURIComponent(
+    typeof window !== "undefined" ? window.location.href : "https://firechess.com",
+  );
+  return (
+    <a
+      href={`https://twitter.com/intent/tweet?text=${text}&url=${url}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-1.5 rounded-xl bg-white/[0.06] px-4 py-2.5 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/[0.12] hover:text-white"
+    >
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+      </svg>
+      Share on X
+    </a>
+  );
+}
+
+/* ── Copy link button ───────────────────────────────────────────────── */
+
+function CopyLinkButton() {
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    const link = typeof window !== "undefined" ? window.location.href : "";
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* clipboard unavailable */ }
+  };
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      className="inline-flex items-center gap-1.5 rounded-xl bg-white/[0.06] px-4 py-2.5 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/[0.12] hover:text-white"
+    >
+      <Copy className="h-4 w-4" />
+      {copied ? "Copied!" : "Copy link"}
+    </button>
   );
 }
 
@@ -1159,7 +1348,7 @@ function SavePrompt({
   );
 }
 
-/* ── Step 9: Best game showcase ──────────────────────────────────────────── */
+/* ── Step 10: Best game showcase ──────────────────────────────────────────── */
 
 /* ── Shared bits ───────────────────────────────────────────────────────── */
 

@@ -62,7 +62,9 @@ function formatScanMode(mode: PublicScanSessionPayload["scanMode"]) {
 }
 
 function formatSource(source: PublicScanSessionPayload["source"]) {
-  return source === "chesscom" ? "Chess.com" : "Lichess";
+  if (source === "chesscom") return "Chess.com";
+  if (source === "pgn") return "PGN File";
+  return "Lichess";
 }
 
 function formatTimeRemaining(expiresAtIso: string | null) {
@@ -1292,18 +1294,34 @@ export function ScanSessionPage({
         ) : null}
 
         {scan.result ? (
-          <ScanSessionReport
-            scan={scan}
-            reportMeta={liveReportMeta}
-            hasProAccess={hasProAccess}
-            scanProgress={progress}
-            perPhaseProgress={perPhaseProgress}
-            guidedLaunchSignal={guidedLaunchSignal}
-            onCreateCommunityPost={openComposer}
-            onSave={handleSave}
-            saveStatus={saveState}
-            authenticated={authenticated}
-          />
+          <>
+            {scan.result.gamesAnalyzed === 0 && scan.config.source === "pgn" && (
+              <section className="mt-6 rounded-[1.75rem] border border-amber-500/20 bg-amber-500/10 p-6 text-amber-100">
+                <h2 className="text-lg font-bold">No games analyzed</h2>
+                <p className="mt-2 text-sm leading-relaxed">
+                  The PGN was parsed but no games matched the name{" "}
+                  <strong className="font-bold text-white">{scan.chessUsername}</strong>.
+                  Make sure the name you entered matches the{" "}
+                  <code className="rounded bg-black/30 px-1.5 py-0.5 font-mono text-xs">[White]</code>{" "}
+                  or{" "}
+                  <code className="rounded bg-black/30 px-1.5 py-0.5 font-mono text-xs">[Black]</code>{" "}
+                  header in your PGN file (case-insensitive).
+                </p>
+              </section>
+            )}
+            <ScanSessionReport
+              scan={scan}
+              reportMeta={liveReportMeta}
+              hasProAccess={hasProAccess}
+              scanProgress={progress}
+              perPhaseProgress={perPhaseProgress}
+              guidedLaunchSignal={guidedLaunchSignal}
+              onCreateCommunityPost={openComposer}
+              onSave={handleSave}
+              saveStatus={saveState}
+              authenticated={authenticated}
+            />
+          </>
         ) : null}
       </div>
     </div>

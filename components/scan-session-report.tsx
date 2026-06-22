@@ -14,6 +14,17 @@ import { GuidedWalkBoard } from "@/components/guided-walk/guided-walk-board";
 import { ReportViewToggle } from "@/components/guided-walk/report-view-toggle";
 import { ReportEntryChoice } from "@/components/guided-walk/report-entry-choice";
 import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  LabelList,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
+import {
   MentalGameLoading,
   ScanMentalGame,
 } from "@/components/scan-mental-game";
@@ -46,65 +57,17 @@ import type {
   TimeManagementReport,
   TimeMoment,
 } from "@/lib/types";
-
-const POSITIONAL_MOTIF_NAMES = new Set([
-  "Unnecessary Captures",
-  "Premature Trades",
-  "Released Tension",
-  "Passive Retreats",
-  "Trading Advantage",
-  "Greedy Pawn Grabs",
-  "Weakened Pawn Structure",
-  "Wrong Recaptures",
-  "Missed Development",
-  "King Exposure",
-  "Piece Activity",
-  "Premature Pawn Breaks",
-  "General Inaccuracy",
-  "Neglected Castling",
-  "Aimless Moves",
-  "Overextended Pawns",
-  "Center Neglect",
-  "Hanging Pieces",
-]);
-
-const STILL_WINNING_THRESHOLD = 350;
+import {
+  POSITIONAL_MOTIF_NAMES,
+  buildMotifs,
+  type DerivedMotif,
+  type MotifExample,
+} from "@/lib/build-motifs";
 const FREE_SCAN_SECTION_SAMPLE = 6;
 const COMPACT_REPORT_INITIAL_COUNT = 6;
 const COMPACT_REPORT_LOAD_BATCH = 24;
 const DEFAULT_ANALYSIS_FEN =
   "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-
-type TaggedPosition = {
-  tags: string[];
-  cpLoss: number;
-  fenBefore: string;
-  userMove?: string;
-  bestMove?: string | null;
-  evalAfterUser?: number;
-  gameUrl?: string;
-};
-
-type DerivedMotif = {
-  name: string;
-  icon: string;
-  count: number;
-  avgCpLoss: number;
-  examples: Array<{
-    fenBefore: string;
-    userMove?: string;
-    bestMove?: string | null;
-    cpLoss: number;
-    gameUrl?: string;
-  }>;
-};
-
-type MotifDefinition = {
-  name: string;
-  icon: string;
-  positional?: boolean;
-  match: (position: TaggedPosition) => boolean;
-};
 
 // ── Floating section nav ─────────────────────────────────────────────────────
 
@@ -337,158 +300,7 @@ function formatCompactBadge({
   return `${available} ${available === 1 ? singular : plural}`;
 }
 
-const MOTIF_DEFS: MotifDefinition[] = [
-  {
-    name: "Hanging Pieces",
-    icon: "💀",
-    positional: true,
-    match: (position) => position.tags.includes("Hanging Piece"),
-  },
-  {
-    name: "Missed Mate",
-    icon: "👑",
-    match: (position) => position.tags.includes("Missed Mate"),
-  },
-  {
-    name: "Missed Check",
-    icon: "⚡",
-    match: (position) => position.tags.includes("Missed Check"),
-  },
-  {
-    name: "Missed Capture",
-    icon: "🗡️",
-    match: (position) =>
-      position.tags.includes("Missed Capture") ||
-      position.tags.includes("Forcing Capture"),
-  },
-  {
-    name: "Back Rank Threats",
-    icon: "🏰",
-    match: (position) => position.tags.includes("Back Rank"),
-  },
-  {
-    name: "Knight Tactics",
-    icon: "♞",
-    match: (position) => position.tags.includes("Knight Fork?"),
-  },
-  {
-    name: "Queen Tactics",
-    icon: "♛",
-    match: (position) => position.tags.includes("Queen Tactic"),
-  },
-  {
-    name: "Converting Advantage",
-    icon: "📈",
-    match: (position) => position.tags.includes("Converting Advantage"),
-  },
-  {
-    name: "Equal Position Misses",
-    icon: "⚖️",
-    match: (position) => position.tags.includes("Equal Position"),
-  },
-  {
-    name: "Unnecessary Captures",
-    icon: "🚫",
-    positional: true,
-    match: (position) => position.tags.includes("Unnecessary Capture"),
-  },
-  {
-    name: "Premature Trades",
-    icon: "🤝",
-    positional: true,
-    match: (position) => position.tags.includes("Premature Trade"),
-  },
-  {
-    name: "Released Tension",
-    icon: "💨",
-    positional: true,
-    match: (position) => position.tags.includes("Released Tension"),
-  },
-  {
-    name: "Passive Retreats",
-    icon: "🐢",
-    positional: true,
-    match: (position) => position.tags.includes("Passive Retreat"),
-  },
-  {
-    name: "Trading Advantage",
-    icon: "📉",
-    positional: true,
-    match: (position) => position.tags.includes("Trading Advantage"),
-  },
-  {
-    name: "Greedy Pawn Grabs",
-    icon: "🍕",
-    positional: true,
-    match: (position) => position.tags.includes("Greedy Pawn Grab"),
-  },
-  {
-    name: "Weakened Pawn Structure",
-    icon: "🏚️",
-    positional: true,
-    match: (position) => position.tags.includes("Weakened Pawn Structure"),
-  },
-  {
-    name: "Wrong Recaptures",
-    icon: "↩️",
-    positional: true,
-    match: (position) => position.tags.includes("Wrong Recapture"),
-  },
-  {
-    name: "Missed Development",
-    icon: "🐌",
-    positional: true,
-    match: (position) => position.tags.includes("Missed Development"),
-  },
-  {
-    name: "King Exposure",
-    icon: "👑",
-    positional: true,
-    match: (position) => position.tags.includes("King Exposure"),
-  },
-  {
-    name: "Piece Activity",
-    icon: "📊",
-    positional: true,
-    match: (position) => position.tags.includes("Piece Activity"),
-  },
-  {
-    name: "Premature Pawn Breaks",
-    icon: "⚔️",
-    positional: true,
-    match: (position) => position.tags.includes("Premature Pawn Break"),
-  },
-  {
-    name: "General Inaccuracy",
-    icon: "⚠️",
-    positional: true,
-    match: (position) => position.tags.includes("Inaccuracy"),
-  },
-  {
-    name: "Neglected Castling",
-    icon: "🏰",
-    positional: true,
-    match: (position) => position.tags.includes("Neglected Castling"),
-  },
-  {
-    name: "Aimless Moves",
-    icon: "🌀",
-    positional: true,
-    match: (position) => position.tags.includes("Aimless Move"),
-  },
-  {
-    name: "Overextended Pawns",
-    icon: "📏",
-    positional: true,
-    match: (position) => position.tags.includes("Overextended Pawn"),
-  },
-  {
-    name: "Center Neglect",
-    icon: "🎯",
-    positional: true,
-    match: (position) => position.tags.includes("Center Neglect"),
-  },
-];
+
 
 function EmptySection({ message }: { message: string }) {
   return (
@@ -1982,115 +1794,6 @@ function buildBrilliantAnalysisTarget(
   };
 }
 
-function buildMotifs(
-  missedTactics: MissedTactic[],
-  leaks: RepeatedOpeningLeak[],
-  oneOffMistakes: RepeatedOpeningLeak[],
-  positionalFindings: PositionalFinding[],
-) {
-  const allPositions: TaggedPosition[] = [];
-
-  for (const tactic of missedTactics) {
-    allPositions.push({
-      tags: tactic.tags,
-      cpLoss: tactic.cpLoss,
-      fenBefore: tactic.fenBefore,
-      userMove: tactic.userMove,
-      bestMove: tactic.bestMove,
-      evalAfterUser: -tactic.cpAfter,
-    });
-  }
-
-  for (const leak of leaks) {
-    if (!leak.tags?.length) continue;
-    allPositions.push({
-      tags: leak.tags,
-      cpLoss: leak.cpLoss,
-      fenBefore: leak.fenBefore,
-      userMove: leak.userMove,
-      bestMove: leak.bestMove,
-      evalAfterUser:
-        typeof leak.evalAfter === "number" ? -leak.evalAfter : undefined,
-    });
-  }
-
-  for (const mistake of oneOffMistakes) {
-    if (!mistake.tags?.length) continue;
-    allPositions.push({
-      tags: mistake.tags,
-      cpLoss: mistake.cpLoss,
-      fenBefore: mistake.fenBefore,
-      userMove: mistake.userMove,
-      bestMove: mistake.bestMove,
-      evalAfterUser:
-        typeof mistake.evalAfter === "number" ? -mistake.evalAfter : undefined,
-    });
-  }
-
-  for (const finding of positionalFindings) {
-    if (!finding.tags?.length) continue;
-    allPositions.push({
-      tags: finding.tags,
-      cpLoss: finding.cpLoss,
-      fenBefore: finding.fenBefore,
-      userMove: finding.userMove,
-      bestMove: finding.bestMove,
-      gameUrl: finding.gameUrl,
-    });
-  }
-
-  if (allPositions.length === 0) return [];
-
-  const groups: DerivedMotif[] = [];
-
-  for (const definition of MOTIF_DEFS) {
-    const seenFens = new Set<string>();
-    const matching: TaggedPosition[] = [];
-
-    for (const position of allPositions) {
-      if (!definition.match(position) || seenFens.has(position.fenBefore)) {
-        continue;
-      }
-
-      if (
-        typeof position.evalAfterUser === "number" &&
-        position.evalAfterUser > STILL_WINNING_THRESHOLD
-      ) {
-        continue;
-      }
-
-      seenFens.add(position.fenBefore);
-      matching.push(position);
-    }
-
-    const minCount = definition.positional ? 1 : 2;
-    if (matching.length < minCount) continue;
-
-    const avgCpLoss =
-      matching.reduce((sum, position) => sum + position.cpLoss, 0) /
-      matching.length;
-
-    groups.push({
-      name: definition.name,
-      icon: definition.icon,
-      count: matching.length,
-      avgCpLoss,
-      examples: [...matching]
-        .sort((left, right) => right.cpLoss - left.cpLoss)
-        .slice(0, 6)
-        .map((position) => ({
-          fenBefore: position.fenBefore,
-          userMove: position.userMove,
-          bestMove: position.bestMove,
-          cpLoss: position.cpLoss,
-          gameUrl: position.gameUrl,
-        })),
-    });
-  }
-
-  return groups.sort((left, right) => right.avgCpLoss - left.avgCpLoss);
-}
-
 export function ScanSessionReport({
   scan,
   reportMeta,
@@ -2160,6 +1863,50 @@ export function ScanSessionReport({
     () => motifs.filter((motif) => POSITIONAL_MOTIF_NAMES.has(motif.name)),
     [motifs],
   );
+
+  // ── Chart data for Performance Overview ──
+  const categoryData = useMemo(() => {
+    const openingCp = leaks.reduce((s, l) => s + l.cpLoss, 0) +
+      oneOffMistakes.reduce((s, m) => s + m.cpLoss, 0);
+    const tacticCp = missedTactics.reduce((s, t) => s + t.cpLoss, 0);
+    const endgameCp = endgameMistakes.reduce((s, e) => s + e.cpLoss, 0);
+    const positionalCp = positionalFindings.reduce((s, p) => s + p.cpLoss, 0);
+    return [
+      { name: "Openings", count: leaks.length + oneOffMistakes.length, cpLoss: openingCp, fill: "#f59e0b" },
+      { name: "Tactics", count: missedTactics.length, cpLoss: tacticCp, fill: "#ef4444" },
+      { name: "Endgames", count: endgameMistakes.length, cpLoss: endgameCp, fill: "#8b5cf6" },
+      { name: "Positional", count: positionalFindings.length, cpLoss: positionalCp, fill: "#06b6d4" },
+    ].filter((d) => d.count > 0);
+  }, [leaks, oneOffMistakes, missedTactics, endgameMistakes, positionalFindings]);
+
+  const phaseData = useMemo(() => {
+    const midgameTactics = missedTactics.filter(
+      (t) => !t.moveNumber || t.moveNumber <= 35,
+    );
+    const endgameTactics = missedTactics.filter(
+      (t) => t.moveNumber && t.moveNumber > 35,
+    );
+    return [
+      {
+        name: "Opening",
+        cpLoss: leaks.reduce((s, l) => s + l.cpLoss, 0) +
+          oneOffMistakes.reduce((s, m) => s + m.cpLoss, 0),
+        fill: "#22c55e",
+      },
+      {
+        name: "Middlegame",
+        cpLoss: midgameTactics.reduce((s, t) => s + t.cpLoss, 0) +
+          positionalFindings.reduce((s, p) => s + p.cpLoss, 0),
+        fill: "#f59e0b",
+      },
+      {
+        name: "Endgame",
+        cpLoss: endgameMistakes.reduce((s, e) => s + e.cpLoss, 0) +
+          endgameTactics.reduce((s, t) => s + t.cpLoss, 0),
+        fill: "#ef4444",
+      },
+    ];
+  }, [leaks, oneOffMistakes, missedTactics, endgameMistakes, positionalFindings]);
 
   const radarProps = useMemo(() => {
     if (!result || !reportMeta) return null;
@@ -2484,6 +2231,11 @@ export function ScanSessionReport({
     })();
 
   const floatingNavSections: FloatingNavSection[] = [
+    categoryData.length > 0 && {
+      id: "section-overview",
+      label: "Overview",
+      icon: "📊",
+    },
     showBrilliants && {
       id: "section-brilliant",
       label: "Brilliant",
@@ -2567,10 +2319,12 @@ export function ScanSessionReport({
             report={reportMeta}
             vibeTitle={reportMeta.vibeTitle}
             gamesAnalyzed={result.gamesAnalyzed || scan.config.maxGames}
+            source={scan.config.source}
             leaks={leaks}
             oneOffMistakes={oneOffMistakes}
             positionTraces={result.diagnostics?.positionTraces ?? []}
             missedTactics={accessibleTactics}
+            positionalFindings={positionalFindings}
             endgameMistakes={accessibleEndgames}
             mentalStats={mentalStats}
             username={scan.chessUsername}
@@ -2895,6 +2649,120 @@ export function ScanSessionReport({
             isProcessing={isProcessing}
           />
         ) : null}
+
+        {/* ── Performance Overview ── */}
+        {categoryData.length > 0 && (
+          <section id="section-overview" className="space-y-4">
+            <SectionHeader
+              eyebrow="At a glance"
+              title="Performance overview"
+              description="Where your mistakes landed and how much each phase cost you."
+            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              {/* Mistakes by category */}
+              <div className="rounded-[1.75rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
+                <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Mistakes by category
+                </h3>
+                <p className="mb-4 text-[11px] text-slate-600">
+                  Count of errors detected per area
+                </p>
+                <div className="h-56">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={categoryData} margin={{ left: -12, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fill: "#94a3b8", fontSize: 11 }}
+                        axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        allowDecimals={false}
+                        tick={{ fill: "#64748b", fontSize: 11 }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          background: "rgba(15,23,42,0.95)",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          borderRadius: "12px",
+                          fontSize: "12px",
+                        }}
+                        labelStyle={{ color: "#e2e8f0", fontWeight: 600 }}
+                        formatter={(value) => [value ?? 0, "Mistakes"]}
+                      />
+                      <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={48}>
+                        {categoryData.map((entry, i) => (
+                          <Cell key={i} fill={entry.fill} />
+                        ))}
+                        <LabelList
+                          dataKey="count"
+                          position="top"
+                          fill="#94a3b8"
+                          fontSize={11}
+                          fontWeight={700}
+                        />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* CP loss by game phase */}
+              <div className="rounded-[1.75rem] border border-white/[0.08] bg-white/[0.03] p-5 sm:p-6">
+                <h3 className="mb-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  CP loss by game phase
+                </h3>
+                <p className="mb-4 text-[11px] text-slate-600">
+                  Total centipawns lost per phase of the game
+                </p>
+                <div className="h-56">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={phaseData} margin={{ left: -12, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                      <XAxis
+                        dataKey="name"
+                        tick={{ fill: "#94a3b8", fontSize: 11 }}
+                        axisLine={{ stroke: "rgba(255,255,255,0.08)" }}
+                        tickLine={false}
+                      />
+                      <YAxis
+                        tick={{ fill: "#64748b", fontSize: 11 }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          background: "rgba(15,23,42,0.95)",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          borderRadius: "12px",
+                          fontSize: "12px",
+                        }}
+                        labelStyle={{ color: "#e2e8f0", fontWeight: 600 }}
+                        formatter={(value) => [value != null ? `${value.toLocaleString()}cp` : "0cp", "Total cp loss"]}
+                      />
+                      <Bar dataKey="cpLoss" radius={[4, 4, 0, 0]} maxBarSize={48}>
+                        {phaseData.map((entry, i) => (
+                          <Cell key={i} fill={entry.fill} />
+                        ))}
+                        <LabelList
+                          dataKey="cpLoss"
+                          position="top"
+                          fill="#94a3b8"
+                          fontSize={11}
+                          fontWeight={700}
+                          formatter={(value) => value != null ? `${value.toLocaleString()}cp` : "0cp"}
+                        />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {showBrilliants ? (
           <section id="section-brilliant" className="space-y-4">
