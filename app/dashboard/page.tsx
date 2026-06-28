@@ -455,6 +455,11 @@ export default function DashboardPage() {
             {/* ═══ MAIN CONTENT (first in DOM for mobile) ═══ */}
             <main className="min-w-0 space-y-6 order-1 lg:order-2">
 
+              {/* ─── New Scan Widget ─── */}
+              <div className="animate-fade-in-up" style={{ animationDelay: "0s" }}>
+                <DashboardScanWidget />
+              </div>
+
               {/* ─── Hero: Study Plan (like Brilliant course card) ─── */}
               <div
                 data-tour="study-plan"
@@ -672,11 +677,6 @@ export default function DashboardPage() {
 
             {/* ═══ LEFT SIDEBAR (second in DOM, shows on right on desktop) ═══ */}
             <aside className="space-y-6 order-2 lg:order-1">
-
-              {/* ─── New Scan Widget ─── */}
-              <div className="animate-fade-in-up" style={{ animationDelay: "0s" }}>
-                <DashboardScanWidget />
-              </div>
 
               {/* Search / Player Filter */}
               <div className="animate-fade-in-up space-y-3">

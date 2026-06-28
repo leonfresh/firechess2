@@ -171,7 +171,7 @@ export function HeroSection({ siteStats, onScanClick, onSeeSampleClick }: Props)
             {[
               {
                 value: siteStats?.totalReports,
-                label: "Games analyzed",
+                label: "Reports created",
                 icon: Search,
                 color: "text-emerald-400",
               },
