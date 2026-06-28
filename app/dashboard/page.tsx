@@ -28,6 +28,7 @@ import { PercentileWidget } from "@/components/percentile-widget";
 import { DailyTipWidget } from "@/components/daily-tip";
 import { OnboardingTour } from "@/components/onboarding-tour";
 import { ProWelcomeModal } from "@/components/lifetime-welcome";
+import { DashboardScanWidget } from "@/components/dashboard-scan-widget";
 import { useCoinBalance } from "@/lib/use-coins";
 import { useProfileTitle } from "@/lib/use-coins";
 import { earnCoins } from "@/lib/coins";
@@ -671,6 +672,11 @@ export default function DashboardPage() {
 
             {/* ═══ LEFT SIDEBAR (second in DOM, shows on right on desktop) ═══ */}
             <aside className="space-y-6 order-2 lg:order-1">
+
+              {/* ─── New Scan Widget ─── */}
+              <div className="animate-fade-in-up" style={{ animationDelay: "0s" }}>
+                <DashboardScanWidget />
+              </div>
 
               {/* Search / Player Filter */}
               <div className="animate-fade-in-up space-y-3">

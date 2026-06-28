@@ -467,7 +467,7 @@ export default function HomePage() {
         setGameRangeMode(parsed.gameRangeMode);
       }
       if (typeof parsed.gameCount === "number") {
-        setGameCount(Math.min(5000, Math.max(1, Math.floor(parsed.gameCount))));
+        setGameCount(Math.min(100000, Math.max(1, Math.floor(parsed.gameCount))));
       }
       if (typeof parsed.sinceDate === "string" && parsed.sinceDate) {
         setSinceDate(parsed.sinceDate);
@@ -1378,11 +1378,11 @@ export default function HomePage() {
       // Range mode forces a high cap so the date filter is the real limiter.
       // For free users we still clamp to the free cap as a safety net (the
       // hard block above should already prevent reaching here in Range mode).
-      const rangeCap = hasProAccess ? 5000 : FREE_MAX_GAMES;
+      const rangeCap = hasProAccess ? 100000 : FREE_MAX_GAMES;
       const safeGames =
         gameRangeMode === "since"
           ? rangeCap
-          : Math.min(5000, Math.max(1, Math.floor(gameCount || 300)));
+          : Math.min(hasProAccess ? 100000 : 5000, Math.max(1, Math.floor(gameCount || 300)));
       const safeSince =
         gameRangeMode === "since" && sinceDate
           ? new Date(sinceDate).getTime()
@@ -2394,7 +2394,7 @@ export default function HomePage() {
                         <input
                           type="number"
                           min={1}
-                          max={hasProAccess ? 5000 : 300}
+                          max={hasProAccess ? 100000 : 300}
                           value={gameCount}
                           onChange={(e) => setGameCount(Number(e.target.value))}
                           aria-label="Number of games to scan"

@@ -1199,7 +1199,7 @@ export async function fetchGameUrlMapInBrowser(
   options?: AnalyzeOptions,
 ): Promise<Record<number, string>> {
   const source: AnalysisSource = options?.source ?? "lichess";
-  const maxGames = clampInt(options?.maxGames, DEFAULT_MAX_GAMES, 1, 5000);
+  const maxGames = clampInt(options?.maxGames, DEFAULT_MAX_GAMES, 1, 100000);
   const games = await loadGamesForAnalysis(username, maxGames, source, options);
   const map: Record<number, string> = {};
   games.forEach((game, idx) => {
@@ -1215,7 +1215,7 @@ export async function buildScanReuseSignatureInBrowser(
   options?: AnalyzeOptions,
 ): Promise<string> {
   const source: AnalysisSource = options?.source ?? "lichess";
-  const maxGames = clampInt(options?.maxGames, DEFAULT_MAX_GAMES, 1, 5000);
+  const maxGames = clampInt(options?.maxGames, DEFAULT_MAX_GAMES, 1, 100000);
   const maxOpeningMoves = clampInt(
     options?.maxOpeningMoves,
     DEFAULT_MAX_OPENING_MOVES,
@@ -1457,7 +1457,7 @@ export async function analyzeBrilliantMovesInBrowser(
   options?: AnalyzeOptions,
 ): Promise<BrilliantMove[]> {
   const source: AnalysisSource = options?.source ?? "lichess";
-  const maxGames = clampInt(options?.maxGames, DEFAULT_MAX_GAMES, 1, 5000);
+  const maxGames = clampInt(options?.maxGames, DEFAULT_MAX_GAMES, 1, 100000);
   const engineDepth = clampInt(options?.engineDepth, 10, 6, 24);
   const games = await loadGamesForAnalysis(username, maxGames, source, options);
 
@@ -2789,7 +2789,7 @@ export async function analyzeOpeningLeaksInBrowser(
   options?: AnalyzeOptions,
 ): Promise<AnalyzeResponse> {
   const source: AnalysisSource = options?.source ?? "lichess";
-  const maxGames = clampInt(options?.maxGames, DEFAULT_MAX_GAMES, 1, 5000);
+  const maxGames = clampInt(options?.maxGames, DEFAULT_MAX_GAMES, 1, 100000);
   const maxOpeningMoves = clampInt(
     options?.maxOpeningMoves,
     DEFAULT_MAX_OPENING_MOVES,

@@ -41,7 +41,7 @@ const plans = [
     subtitle: "For serious improvers",
     badge: "🔥 Launch pricing — 37% off",
     features: [
-      "Up to 5,000 games per scan",
+      "Unlimited games per scan",
       "Higher engine depth (13–24)",
       "Unlimited missed tactics scanner",
       "Unlimited endgame mistake scanner",
@@ -712,8 +712,8 @@ export default function PricingPage() {
                     [
                       "Recent games per scan",
                       "Up to 300",
-                      "Up to 5,000",
-                      "Up to 5,000",
+                      "Unlimited",
+                      "Unlimited",
                     ],
                     ["Engine depth", "Up to 12", "Up to 24", "Up to 24"],
                     ["Opening leak detection", "✓", "✓", "✓"],
