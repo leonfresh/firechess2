@@ -97,7 +97,7 @@ export function PricingTeaser() {
                   <span className="text-sm text-slate-400">{tier.suffix}</span>
                 )}
                 {tier.was && (
-                  <span className="text-sm text-slate-500 line-through">
+                  <span className="text-sm text-slate-400 line-through">
                     {tier.was}
                   </span>
                 )}
@@ -128,7 +128,7 @@ export function PricingTeaser() {
           ))}
         </div>
 
-        <p className="mt-8 text-center text-sm text-slate-500">
+        <p className="mt-8 text-center text-sm text-slate-400">
           <Link
             href="/pricing"
             className="underline-offset-2 hover:text-slate-300 hover:underline"

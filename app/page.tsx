@@ -699,7 +699,7 @@ export default function HomePage() {
                     aria-label={
                       source === "pgn" ? "Your name" : "Chess username"
                     }
-                    className="flex-1 bg-transparent py-4 pl-4 pr-4 text-base text-white outline-none placeholder:text-slate-500"
+                    className="flex-1 bg-transparent py-4 pl-4 pr-4 text-base text-white outline-none placeholder:text-slate-400"
                   />
                 </div>
 
@@ -713,7 +713,7 @@ export default function HomePage() {
                       }
                       aria-label="PGN games"
                       spellCheck={false}
-                      className="h-40 w-full resize-y rounded-xl bg-black/30 p-3 font-mono text-xs leading-relaxed text-white outline-none placeholder:text-slate-500"
+                      className="h-40 w-full resize-y rounded-xl bg-black/30 p-3 font-mono text-xs leading-relaxed text-white outline-none placeholder:text-slate-400"
                     />
                     <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
                       <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-white/[0.06] px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors hover:bg-white/[0.10]">
@@ -750,7 +750,7 @@ export default function HomePage() {
                           }}
                         />
                       </label>
-                      <span className="text-[11px] text-slate-500">
+                      <span className="text-[11px] text-slate-400">
                         Up to 250 games · 2 MB
                       </span>
                     </div>
@@ -871,7 +871,7 @@ export default function HomePage() {
                   </button>
                 </div>
 
-                <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-slate-500">
+                <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-slate-400">
                   <svg
                     className="h-3.5 w-3.5 text-emerald-400/80"
                     viewBox="0 0 24 24"
@@ -1053,7 +1053,7 @@ export default function HomePage() {
 
                 <div className="relative grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-start">
                   <div className="max-w-xl">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-400">
                       More to explore
                     </p>
                     <h2 className="mt-2 text-xl font-bold text-white sm:text-2xl">
@@ -1166,7 +1166,7 @@ export default function HomePage() {
                 <button
                   type="button"
                   onClick={() => setToast(null)}
-                  className="ml-1 text-slate-500 hover:text-slate-300 transition-colors"
+                  className="ml-1 text-slate-400 hover:text-slate-300 transition-colors"
                   aria-label="Close notification"
                 >
                   <svg
@@ -1263,7 +1263,7 @@ export default function HomePage() {
                     <span className="block text-sm font-semibold text-white">
                       u/{t.user}
                     </span>
-                    <span className="block text-xs text-slate-500">
+                    <span className="block text-xs text-slate-400">
                       {t.flair}
                     </span>
                   </span>
@@ -1272,7 +1272,7 @@ export default function HomePage() {
             ))}
           </div>
 
-          <p className="mt-10 text-center text-xs text-slate-500">
+          <p className="mt-10 text-center text-xs text-slate-400">
             Real users, quoted with their Reddit usernames —{" "}
             <a
               href={REDDIT_THREAD_URL}

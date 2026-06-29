@@ -96,7 +96,7 @@ export function HeroSection({ siteStats, onScanClick, onSeeSampleClick }: Props)
             </button>
 
             {/* Quiet secondary affordances — sample link, free-forever, trailer */}
-            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-sm text-slate-500 lg:justify-start">
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-sm text-slate-400 lg:justify-start">
               <button
                 type="button"
                 onClick={onSeeSampleClick}
@@ -204,7 +204,7 @@ export function HeroSection({ siteStats, onScanClick, onSeeSampleClick }: Props)
                     {item.value != null ? item.value.toLocaleString() : "—"}
                   </span>
                 </div>
-                <p className="text-sm text-slate-500">{item.label}</p>
+                <p className="text-sm text-slate-400">{item.label}</p>
               </div>
             ))}
           </div>
