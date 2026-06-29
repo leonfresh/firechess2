@@ -35,6 +35,7 @@ import { AdminDebug } from "@/components/admin-debug";
 import { SampleReportsSection } from "@/components/sample-reports-section";
 import { HomepageBlogSection } from "@/components/homepage-blog-section";
 import { DiscordCta } from "@/components/home/discord-cta";
+import { Faq } from "@/components/home/faq";
 import type { CardViewMode } from "@/components/card-carousel";
 import { useSession } from "@/components/session-provider";
 import {
@@ -868,6 +869,22 @@ export default function HomePage() {
                     </svg>
                   </button>
                 </div>
+
+                <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-xs text-slate-500">
+                  <svg
+                    className="h-3.5 w-3.5 text-emerald-400/80"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="3" y="11" width="18" height="11" rx="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                  </svg>
+                  We only read your public games — never your password.
+                </p>
               </div>
             </form>
 
@@ -955,7 +972,8 @@ export default function HomePage() {
           {/* ─── Discord community ─── */}
           {state === "idle" && <DiscordCta />}
 
-
+          {/* ─── FAQ — handles "is it free / do you need my password" objections ─── */}
+          {state === "idle" && <Faq />}
 
           {/* ─── Final CTA ─── */}
           {state === "idle" && (

@@ -4,7 +4,6 @@ import {
   ArrowRight,
   Crosshair,
   Flame,
-  Infinity as InfinityIcon,
   PlayCircle,
   Repeat,
   Search,
@@ -12,6 +11,9 @@ import {
   Target,
 } from "lucide-react";
 import { HeroProductScreenshot } from "@/components/hero-product-screenshot";
+
+const REDDIT_THREAD_URL =
+  "https://www.reddit.com/r/chessbeginners/comments/1re8jgm/i_made_a_free_tool_that_finds_the_mistakes_you/";
 
 export type SiteStats = {
   totalUsers: number;
@@ -118,6 +120,15 @@ export function HeroSection({ siteStats, onScanClick, onSeeSampleClick }: Props)
                 </svg>
                 Watch the 90-sec trailer
               </a>
+              <a
+                href={REDDIT_THREAD_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 transition-colors hover:text-slate-300"
+              >
+                <Star className="h-3.5 w-3.5 text-amber-300" />
+                Real feedback on r/chessbeginners
+              </a>
             </div>
           </div>
 
@@ -160,11 +171,13 @@ export function HeroSection({ siteStats, onScanClick, onSeeSampleClick }: Props)
 
         {/* ── Activity metrics row ─────────────────────────────────── */}
         {/*
-          Activity-based proof, not vanity user counts. "Reports created" feels
-          alive even with a small user base and maps to the value proposition.
+          Only the cumulative, flattering numbers. The Pro/Lifetime member
+          counts were removed deliberately: tiny counts read as "nobody buys
+          this" (negative social proof) and hurt conversion more than they help.
+          Re-add them once the numbers are large enough to be persuasive.
         */}
         <div className="relative mt-14 border-t border-white/[0.06] pt-10 lg:mt-16">
-          <div className="grid grid-cols-2 gap-y-6 sm:grid-cols-4">
+          <div className="flex flex-wrap items-center justify-center gap-x-16 gap-y-6">
             {[
               {
                 value: siteStats?.totalReports,
@@ -177,18 +190,6 @@ export function HeroSection({ siteStats, onScanClick, onSeeSampleClick }: Props)
                 label: "Players signed up",
                 icon: Flame,
                 color: "text-orange-400",
-              },
-              {
-                value: siteStats?.proMembers,
-                label: "Pro members",
-                icon: Star,
-                color: "text-amber-400",
-              },
-              {
-                value: siteStats?.lifetimeMembers,
-                label: "Lifetime members",
-                icon: InfinityIcon,
-                color: "text-red-400",
               },
             ].map((item) => (
               <div
@@ -210,35 +211,5 @@ export function HeroSection({ siteStats, onScanClick, onSeeSampleClick }: Props)
         </div>
       </div>
     </header>
-  );
-}
-
-/** Compact social-proof strip used directly below the hero. */
-export function HeroSocialProofStrip({ siteStats }: { siteStats: SiteStats }) {
-  const items = [
-    { value: "Lichess + Chess.com", label: "Both platforms" },
-    { value: "Stockfish 18", label: "Engine-powered" },
-    {
-      value: "Openings · Tactics · Endgames",
-      label: "Full coverage",
-    },
-    { value: "Free forever", label: "No credit card" },
-  ];
-  return (
-    <div className="scroll-reveal flex flex-wrap items-center justify-center gap-x-8 gap-y-3 px-2">
-      {items.map((stat, i) => (
-        <div
-          key={stat.label}
-          className="chip-pop flex items-center gap-2"
-          style={{ animationDelay: `${i * 0.08}s` }}
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-orange-400/60" />
-          <span className="text-sm font-semibold text-white/85">
-            {stat.value}
-          </span>
-          <span className="text-sm text-slate-500">— {stat.label}</span>
-        </div>
-      ))}
-    </div>
   );
 }
