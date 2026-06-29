@@ -28,7 +28,6 @@ import {
 import { DrillMode } from "@/components/drill-mode";
 import {
   HeroSection,
-  HeroSocialProofStrip,
   type SiteStats as HeroSiteStats,
 } from "@/components/home/hero-section";
 import { GuidedWalk } from "@/components/guided-walk/guided-walk";
@@ -55,6 +54,7 @@ import { ProWelcomeModal } from "@/components/lifetime-welcome";
 import { AdminDebug } from "@/components/admin-debug";
 import { SampleReportsSection } from "@/components/sample-reports-section";
 import { HomepageBlogSection } from "@/components/homepage-blog-section";
+import { DiscordCta } from "@/components/home/discord-cta";
 import { CardCarousel, ViewModeToggle } from "@/components/card-carousel";
 import type { CardViewMode } from "@/components/card-carousel";
 import { useSession } from "@/components/session-provider";
@@ -1566,7 +1566,7 @@ export default function HomePage() {
   return (
     <div className="relative min-h-screen">
       <div className="relative z-10 px-4 py-10 sm:px-6 md:px-10">
-        <section className="mx-auto w-full max-w-7xl space-y-12 sm:space-y-14 lg:space-y-16">
+        <section className="mx-auto w-full max-w-7xl space-y-20 sm:space-y-24 lg:space-y-28">
           {/* ─── Hero Section ─── */}
           <HeroSection
             siteStats={siteStats as HeroSiteStats}
@@ -1574,11 +1574,11 @@ export default function HomePage() {
             onSeeSampleClick={scrollToSampleReports}
           />
 
-          {/* ─── Social proof strip ─── */}
-          {state === "idle" && <HeroSocialProofStrip siteStats={siteStats as HeroSiteStats} />}
-
-          {/* ─── How it works ─── */}
-          {state === "idle" && <HowItWorks />}
+          {/*
+            Social-proof strip removed: its trust signals (Stockfish 18,
+            free-forever, platform coverage) now live in the redesigned hero,
+            so a separate band here only added consecutive-row clutter.
+          */}
 
           <section
             id="analyzer"
@@ -1905,6 +1905,10 @@ export default function HomePage() {
             </div>
           </section>
 
+          {/* ─── How it works (placed below the scan tool so the primary
+              action sits directly under the hero) ─── */}
+          {state === "idle" && <HowItWorks />}
+
           {/* ─── Sample reports ─── */}
           {state === "idle" && (
             <div id="sample-reports" className="scroll-mt-24">
@@ -1914,6 +1918,9 @@ export default function HomePage() {
 
           {/* ─── Lead capture (free weekly leak report) ─── */}
           {state === "idle" && <EmailCapture />}
+
+          {/* ─── Discord community ─── */}
+          {state === "idle" && <DiscordCta />}
 
           {/* ─── Loading State ─── */}
           {state === "loading" && (

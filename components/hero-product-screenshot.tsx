@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { HeroDemoBoard } from "@/components/hero-demo-board";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 
 type Tab = "Overview" | "Opening Leaks" | "Strengths";
 const TABS: Tab[] = ["Opening Leaks", "Overview", "Strengths"];
@@ -553,6 +554,7 @@ function StrengthsPanel() {
 // ── Main component ──────────────────────────────────────────────────────────
 export function HeroProductScreenshot({ paused }: { paused?: boolean }) {
   const [tab, setTab] = useState<Tab>("Opening Leaks");
+  const reducedMotion = useReducedMotion();
 
   const panelClass = (panel: Tab) =>
     `absolute inset-0 transition-opacity duration-300 ${
@@ -562,7 +564,9 @@ export function HeroProductScreenshot({ paused }: { paused?: boolean }) {
     }`;
 
   useEffect(() => {
-    if (paused) return;
+    // Don't auto-advance tabs when the user prefers reduced motion; the tabs
+    // remain clickable so all three views are still reachable.
+    if (paused || reducedMotion) return;
 
     const timeoutMs = tab === "Opening Leaks" ? 5600 : 4200;
 
@@ -571,7 +575,7 @@ export function HeroProductScreenshot({ paused }: { paused?: boolean }) {
     }, timeoutMs);
 
     return () => window.clearTimeout(timer);
-  }, [paused, tab]);
+  }, [paused, tab, reducedMotion]);
 
   return (
     <div className="relative w-full select-none">

@@ -1239,3 +1239,18 @@ body {
 .confetti-particle {
   animation: confetti-fall var(--cf-dur, 1.2s) ease-in var(--cf-delay, 0s) both;
 }
+
+/* ── Reduced-motion accessibility ──────────────────────────────────────────
+   Respect the OS "reduce motion" setting: neutralize decorative CSS animation
+   and transitions site-wide. JS-driven loops (carousel/board autoplay) pause
+   themselves via the useReducedMotion hook. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

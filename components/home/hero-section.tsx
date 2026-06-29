@@ -36,114 +36,95 @@ type Props = {
 };
 
 /**
- * Homepage hero.
+ * Homepage hero — Opal-inspired centered layout.
  *
- * Messaging wedge: repeated mistakes / leaks — FireChess's true differentiator
- * vs generic Lichess / Chess.com analysis. Leads with the differentiated
- * promise, then a sample-report CTA so visitors see the payoff before
- * committing a username.
+ * Structure mirrors what makes opal.google feel inviting: the animated product
+ * demo sits ON TOP, a short calm headline beneath it, and a SINGLE primary CTA.
+ * Everything is centered with generous whitespace and minimal body copy — the
+ * demo does the explaining, not paragraphs. Keeps the dark "fire" identity; the
+ * airiness comes from spacing and one-idea-per-block structure, not a light bg.
  */
 export function HeroSection({ siteStats, onScanClick, onSeeSampleClick }: Props) {
   return (
     <header className="animate-fade-in-up">
-      <div
-        className="relative overflow-hidden rounded-[2.75rem] px-5 py-7 shadow-[0_40px_120px_-64px_rgba(20,8,5,0.95)] sm:px-8 sm:py-9 lg:px-10 lg:py-10"
-        style={{
-          background:
-            "linear-gradient(150deg, rgba(10, 9, 13, 0.97) 0%, rgba(19, 13, 16, 0.96) 42%, rgba(34, 19, 12, 0.95) 70%, rgba(56, 25, 12, 0.92) 100%)",
-        }}
-      >
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-200/35 to-transparent" />
-        <div className="pointer-events-none absolute -left-12 -top-12 h-64 w-64 rounded-full bg-orange-400/[0.06] blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 left-1/4 h-56 w-56 rounded-full bg-red-500/[0.05] blur-3xl" />
-        <div className="pointer-events-none absolute -right-10 top-1/3 h-48 w-48 rounded-full bg-amber-500/[0.04] blur-3xl" />
+      <div className="relative overflow-hidden px-2 py-10 sm:px-4 sm:py-14 lg:py-20">
+        {/* Ambient glows */}
+        <div className="pointer-events-none absolute left-1/2 top-0 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-orange-500/[0.07] blur-[120px]" />
+        <div className="pointer-events-none absolute right-0 top-1/3 h-72 w-72 rounded-full bg-red-500/[0.04] blur-[120px]" />
 
-        <div className="relative grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:items-start lg:gap-10">
-          {/* ── Copy column ─────────────────────────────────────────── */}
-          <div className="space-y-6 text-center lg:text-left">
-            <div className="space-y-3">
-              <span className="inline-flex items-center gap-2 rounded-full bg-orange-400/[0.07] px-3 py-1 font-mono text-[11px] uppercase tracking-[0.28em] text-orange-100/70">
-                <Repeat className="h-3 w-3" />
-                Find the leaks you keep repeating
+        {/* ── Two-column hero — copy left, slideshow right ──────────────
+            A tall multi-tab demo sits better beside the copy than on top of
+            it; this keeps the headline + CTA visible without the demo pushing
+            them down the page. */}
+        <div className="relative grid items-center gap-10 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:gap-14">
+          {/* Copy column */}
+          <div className="flex flex-col items-center gap-6 text-center lg:items-start lg:text-left">
+            {/* Badge */}
+            <span className="inline-flex items-center gap-2 rounded-full border border-orange-400/15 bg-orange-400/[0.06] px-3.5 py-1.5 font-mono text-[11px] uppercase tracking-[0.28em] text-orange-100/75">
+              <Repeat className="h-3 w-3" />
+              Find the leaks you keep repeating
+            </span>
+
+            {/* Headline — two explicit lines so the italic gradient phrase gets
+                its own line box. Inline wrapping + tight leading + italic was
+                clipping the glyphs of the gradient word. pb gives the descenders
+                and clip box room. */}
+            <h1 className="text-[3.25rem] font-black leading-[1.0] tracking-[-0.05em] text-white sm:text-6xl lg:text-[4.5rem]">
+              <span className="block">Stop losing the</span>
+              <span className="block bg-gradient-to-r from-amber-200 via-orange-300 to-red-400 bg-clip-text pb-2 italic text-transparent">
+                same way twice.
               </span>
+            </h1>
 
-              <div className="space-y-2">
-                <h1 className="text-5xl font-black leading-[0.96] tracking-[-0.05em] text-white md:text-6xl lg:text-[4.45rem]">
-                  Stop losing the
-                </h1>
-                <h1 className="bg-gradient-to-r from-amber-200 via-orange-300 to-red-400 bg-clip-text text-5xl font-black italic leading-[0.96] tracking-[-0.05em] text-transparent md:text-6xl lg:text-[4.45rem]">
-                  same way twice.
-                </h1>
-              </div>
-            </div>
-
-            <p className="text-base leading-relaxed text-slate-300/90 md:text-lg lg:max-w-xl">
+            {/* Subhead — one line, no paragraph */}
+            <p className="max-w-xl text-lg leading-relaxed text-slate-300/90">
               FireChess scans your Lichess &amp; Chess.com games with Stockfish
-              18 to find the{" "}
-              <span className="font-semibold text-white">
-                opening mistakes you repeat every week
-              </span>
-              , the tactics you miss, and the endgames you fumble — then turns
-              each one into a drillable position.
+              18, finds the mistakes you keep repeating, and turns each one into
+              a position you can drill.
             </p>
 
-            {/* ── CTAs ──────────────────────────────────────────────── */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center lg:justify-start">
-              <button
-                type="button"
-                onClick={onScanClick}
-                className="btn-cta-fire group inline-flex h-12 items-center justify-center gap-2 rounded-xl px-6 text-base font-semibold text-white"
-              >
-                Scan my games — free
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </button>
+            {/* Single primary CTA */}
+            <button
+              type="button"
+              onClick={onScanClick}
+              className="btn-cta-fire group inline-flex h-14 items-center justify-center gap-2 rounded-xl px-8 text-base font-semibold text-white"
+            >
+              Scan my games — free
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </button>
+
+            {/* Quiet secondary affordances — sample link, free-forever, trailer */}
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 text-sm text-slate-500 lg:justify-start">
               <button
                 type="button"
                 onClick={onSeeSampleClick}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-white/[0.05] px-6 text-base font-semibold text-slate-100 transition-colors duration-200 hover:bg-orange-400/[0.08] hover:text-white"
+                className="inline-flex items-center gap-1.5 font-medium transition-colors hover:text-slate-200"
               >
-                <PlayCircle className="h-4 w-4 text-orange-300" />
+                <PlayCircle className="h-4 w-4 text-orange-400" />
                 See a sample report
               </button>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/70" />
+                Free forever · no credit card
+              </span>
               <a
                 href="https://www.youtube.com/watch?v=MpWsW10YE5M"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl px-4 text-base font-semibold text-slate-400 transition-colors duration-200 hover:text-white"
+                className="inline-flex items-center gap-1.5 transition-colors hover:text-slate-300"
               >
-                <svg
-                  className="h-4 w-4 flex-shrink-0"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                >
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M8 5v14l11-7z" />
                 </svg>
-                Watch trailer
+                Watch the 90-sec trailer
               </a>
-            </div>
-
-            {/* Differentiator chips — what you can't get on plain Lichess */}
-            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 lg:justify-start">
-              {[
-                { icon: Repeat, label: "Repeated-leak detection" },
-                { icon: Crosshair, label: "Drill mode on your positions" },
-                { icon: Target, label: "Tilt & clock analysis" },
-              ].map((c) => (
-                <span
-                  key={c.label}
-                  className="flex items-center gap-1.5 text-[13px] text-slate-500"
-                >
-                  <c.icon className="h-3.5 w-3.5 text-orange-300/70" />
-                  <span className="text-slate-300">{c.label}</span>
-                </span>
-              ))}
             </div>
           </div>
 
-          {/* ── Visual column ──────────────────────────────────────── */}
-          <div className="relative mx-auto w-full max-w-[38rem] lg:max-w-none">
-            <div className="pointer-events-none absolute -inset-10 rounded-full bg-orange-500/[0.06] blur-3xl" />
-            <div className="relative rounded-[2rem] bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-transparent p-[1.5px] shadow-[0_0_80px_-16px_rgba(249,115,22,0.22),0_48px_120px_-52px_rgba(0,0,0,0.95)]">
+          {/* Demo column — the restored multi-tab slideshow */}
+          <div className="relative mx-auto w-full max-w-[40rem] lg:max-w-none">
+            <div className="pointer-events-none absolute -inset-10 rounded-full bg-orange-500/[0.07] blur-3xl" />
+            <div className="relative rounded-[2rem] bg-gradient-to-br from-white/[0.07] via-white/[0.02] to-transparent p-[1.5px] shadow-[0_0_90px_-20px_rgba(249,115,22,0.2),0_50px_120px_-56px_rgba(0,0,0,0.9)]">
               <div className="relative overflow-hidden rounded-[calc(2rem-1.5px)] bg-[#050508]">
                 <HeroProductScreenshot paused={false} />
                 <div className="pointer-events-none absolute left-3 top-3 flex items-center gap-1.5 rounded-full bg-black/60 px-2.5 py-1 backdrop-blur-sm">
@@ -160,14 +141,30 @@ export function HeroSection({ siteStats, onScanClick, onSeeSampleClick }: Props)
           </div>
         </div>
 
+        {/* ── Differentiators — what plain Lichess can't give you ──── */}
+        <div className="relative mt-14 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 lg:mt-16">
+          {[
+            { icon: Repeat, label: "Repeated-leak detection" },
+            { icon: Crosshair, label: "Drill mode on your own positions" },
+            { icon: Target, label: "Tilt & clock analysis" },
+          ].map((c) => (
+            <span
+              key={c.label}
+              className="flex items-center gap-2 text-sm text-slate-400"
+            >
+              <c.icon className="h-4 w-4 text-orange-300/70" />
+              {c.label}
+            </span>
+          ))}
+        </div>
+
         {/* ── Activity metrics row ─────────────────────────────────── */}
         {/*
-          Activity-based proof, not vanity user counts. For an early-stage
-          product "games scanned" and "leaks found" feel alive even with a
-          small user base, and map directly to the value proposition.
+          Activity-based proof, not vanity user counts. "Reports created" feels
+          alive even with a small user base and maps to the value proposition.
         */}
-        <div className="relative mt-8 border-t border-white/[0.07] pt-6">
-          <div className="grid grid-cols-2 sm:grid-cols-4">
+        <div className="relative mt-14 border-t border-white/[0.06] pt-10 lg:mt-16">
+          <div className="grid grid-cols-2 gap-y-6 sm:grid-cols-4">
             {[
               {
                 value: siteStats?.totalReports,
@@ -193,23 +190,20 @@ export function HeroSection({ siteStats, onScanClick, onSeeSampleClick }: Props)
                 icon: InfinityIcon,
                 color: "text-red-400",
               },
-            ].map((item, i) => (
+            ].map((item) => (
               <div
                 key={item.label}
-                className="group relative px-4 py-3 transition-colors hover:bg-white/[0.02]"
+                className="flex flex-col items-center gap-1 text-center"
               >
-                {i > 0 && (
-                  <div className="absolute left-0 top-3 hidden h-8 w-px bg-white/[0.06] sm:block" />
-                )}
-                <div className="flex items-center gap-2.5">
-                  <item.icon className={`h-4 w-4 ${item.color}`} />
+                <div className="flex items-center gap-2">
+                  <item.icon className={`h-5 w-5 ${item.color}`} />
                   <span
-                    className={`text-xl font-bold tabular-nums ${item.color}`}
+                    className={`text-3xl font-bold tabular-nums ${item.color}`}
                   >
                     {item.value != null ? item.value.toLocaleString() : "—"}
                   </span>
                 </div>
-                <p className="mt-0.5 text-xs text-slate-500">{item.label}</p>
+                <p className="text-sm text-slate-500">{item.label}</p>
               </div>
             ))}
           </div>

@@ -9,6 +9,7 @@ import {
   useShowCoordinates,
   useCustomPieces,
 } from "@/lib/use-coins";
+import { useReducedMotion } from "@/lib/use-reduced-motion";
 import type { RepeatedOpeningLeak } from "@/lib/types";
 
 /* ── Mini eval bar (matches the real EvalBar look) ── */
@@ -312,6 +313,7 @@ export function HeroDemoBoard({
   const showCoords = useShowCoordinates();
   const [index, setIndex] = useState(0);
   const [autoplay, setAutoplay] = useState(true);
+  const reducedMotion = useReducedMotion();
 
   const scenarios = useMemo(() => {
     const base =
@@ -338,12 +340,14 @@ export function HeroDemoBoard({
   }, [scenarios]);
 
   useEffect(() => {
-    if (!autoplay || paused) return;
+    // Pause the scenario carousel when the user prefers reduced motion; the
+    // Prev/Next controls still let them step through positions manually.
+    if (!autoplay || paused || reducedMotion) return;
     const interval = window.setInterval(() => {
       setIndex((prev) => (prev + 1) % scenarios.length);
     }, 4500);
     return () => window.clearInterval(interval);
-  }, [autoplay, paused, scenarios.length]);
+  }, [autoplay, paused, reducedMotion, scenarios.length]);
 
   const goNext = () => {
     setAutoplay(false);
