@@ -36,6 +36,7 @@ import { SampleReportsSection } from "@/components/sample-reports-section";
 import { HomepageBlogSection } from "@/components/homepage-blog-section";
 import { DiscordCta } from "@/components/home/discord-cta";
 import { Faq } from "@/components/home/faq";
+import { PricingTeaser } from "@/components/home/pricing-teaser";
 import type { CardViewMode } from "@/components/card-carousel";
 import { useSession } from "@/components/session-provider";
 import {
@@ -965,6 +966,9 @@ export default function HomePage() {
               <SampleReportsSection />
             </div>
           )}
+
+          {/* ─── Pricing teaser (Free / Pro / Lifetime) ─── */}
+          {state === "idle" && <PricingTeaser />}
 
           {/* ─── Lead capture (free weekly leak report) ─── */}
           {state === "idle" && <EmailCapture />}
