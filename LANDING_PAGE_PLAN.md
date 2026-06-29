@@ -264,9 +264,11 @@ Apply the earlier audit (decisions already made).
 - [x] **Deleted** the dead App Launcher block + its `LauncherEditor` import, `launcherConfig` state, `saveLauncherConfig`, and loader effect.
 - [x] **Deleted** the dead `state === "loading"` UI block (~638 lines; `setState("loading")` is never called) — which also contained the already-dead welcome-back / restore-cached-report banners.
 - [x] **Removed the entire dead inline-report / scan-result subsystem** (decision: remove, not revive). The homepage scan navigates to `/report/[id]`; the inline report was unreachable. Net effect of Phase 1 + Phase 4: **`app/page.tsx` 8,597 → 1,267 lines (~85% smaller)**, `tsc` + `tsc --noUnusedLocals` clean, renders 200. Commits `e475f98`, `2876b1b`.
-- [ ] **Demote** "More to explore" (Chaos/Sparring/Dungeon/Roast) to the very bottom or footer. _(Not done yet — the one remaining section-diet item.)_
-- [ ] **Move testimonials** above the Final CTA — _gated on Phase 5 authenticity check._
-- [ ] Re-confirm spacing reads as distinct breathing blocks.
+- [x] **Demoted** "More to explore" (Chaos/Sparring/Dungeon/Roast) below the Blog section (commit `0ee1333`).
+- [x] **Testimonials** handled in Phase 5 (replaced, not moved — see below).
+- [x] Spacing reads as distinct breathing blocks (doubled rhythm from Phase 1).
+
+**Phase 4 is complete.**
 
 **Acceptance:** fewer top-level sections; focus path = hero → scan → how-it-works → proof → CTA.
 
@@ -276,9 +278,12 @@ Apply the earlier audit (decisions already made).
 
 **Problem:** testimonials look placeholder (stock-photo names + fabricated stats, ~lines 8362–8448); no trust/logo strip.
 
-- [ ] **Confirm testimonial authenticity.** If placeholder → replace with real quotes or remove until real.
-- [ ] Add a **trust strip** above the fold using real `siteStats` (e.g. "Lichess + Chess.com · Stockfish 18 · N reports created").
-- [ ] Optional: **animated count-up** on stats when scrolled into view (respect Phase 2 reduced-motion).
+- [x] **Confirmed: testimonials were fabricated** (placeholder names/photos/stats). Per decision, **replaced** with an honest "What a single scan actually finds" capability band — verifiable product claims, no fake people (commit `0ee1333`). Declined to make the fake ones "look more real" (deceptive endorsement / consumer-protection risk). Real attributed testimonials can drop into the same slot later.
+- [x] **Trust signals** are covered honestly: the hero stats row uses real `siteStats`, and the new band states real platform/engine facts (Lichess + Chess.com, Stockfish 18).
+- [ ] _Optional, deferred:_ animated count-up on the hero stats when scrolled into view (respect Phase 2 reduced-motion).
+- [ ] _Cleanup, optional:_ the now-unreferenced `public/images/testimonials/*.jpg` placeholder photos can be deleted.
+
+**Phase 5 is effectively complete** (only optional polish remains).
 
 **Acceptance:** every proof element is real; a credible trust signal sits above the fold.
 
