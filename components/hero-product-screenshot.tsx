@@ -556,8 +556,13 @@ export function HeroProductScreenshot({ paused }: { paused?: boolean }) {
   const [tab, setTab] = useState<Tab>("Opening Leaks");
   const reducedMotion = useReducedMotion();
 
+  // Each tab has a different natural height inside the fixed-height frame.
+  // `flex flex-col justify-center` vertically centers the active tab's content
+  // (full width preserved) so the shorter "Opening Leaks" board sits balanced
+  // in the frame instead of dumping all its slack at the bottom — no height
+  // animation (which read as jank), no clipping of the taller tabs.
   const panelClass = (panel: Tab) =>
-    `absolute inset-0 transition-opacity duration-300 ${
+    `absolute inset-0 flex flex-col justify-center transition-opacity duration-300 ${
       tab === panel
         ? "pointer-events-auto opacity-100"
         : "pointer-events-none opacity-0"
