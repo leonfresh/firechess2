@@ -256,9 +256,13 @@ function buildInstantScanPayload(args): PublicScanSessionPayload {
 > risky on site-wide chrome (there's also no footer component to move overflow
 > into — it would have to be built). **Decision: leave the nav as-is.**
 >
-> Optional, low-priority polish if ever desired: merge the 2-link **Community**
-> dropdown into **Explore** (5 → 4 top-level menus); make the right-side CTA
-> match the hero ("Scan my games"). Not doing these now.
+> **Update (2026-06-29):** Per the user, the **Community** top-level menu was
+> removed (low usage) — desktop dropdown, mobile section, mobile primary link,
+> and the `isCommunityActive` helper. Nav is now 4 top-level menus (Analyze /
+> Play / Learn / Explore). `/board` (Board Workbench) lived under Community and
+> lost its nav entry — relocate to Analyze if it should stay discoverable.
+> Remaining optional polish: make the right-side CTA match the hero ("Scan my
+> games").
 
 **Original problem statement (superseded):** `navbar.tsx` is 1,471 lines / ~57 links — opposite of the lean modern header.
 
