@@ -5,9 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
+  Crosshair,
   FileText,
   Flame,
   Gem,
+  Repeat,
+  Search,
   Skull,
   Swords,
   Zap,
@@ -954,6 +957,73 @@ export default function HomePage() {
           {state === "idle" && <DiscordCta />}
 
 
+
+          {/* ─── Final CTA ─── */}
+          {state === "idle" && (
+            <section className="animate-fade-in mx-auto w-full max-w-5xl">
+              <div
+                className="relative overflow-hidden rounded-[2rem] px-6 py-10 text-center shadow-[0_0_80px_-20px_rgba(249,115,22,0.18)] sm:px-10 sm:py-12"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(30,14,6,0.97) 0%, rgba(51,22,8,0.96) 42%, rgba(72,18,8,0.95) 75%, rgba(30,8,14,0.97) 100%)",
+                }}
+              >
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/40 to-transparent" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-red-400/20 to-transparent" />
+                <div className="pointer-events-none absolute left-[10%] top-[-20%] h-64 w-64 rounded-full bg-orange-500/[0.07] blur-3xl" />
+                <div className="pointer-events-none absolute bottom-[-20%] right-[12%] h-56 w-56 rounded-full bg-red-600/[0.06] blur-3xl" />
+
+                <div className="relative mx-auto max-w-2xl">
+                  <span className="inline-flex rounded-full bg-orange-400/[0.1] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.32em] text-orange-200/70">
+                    Free · No credit card
+                  </span>
+                  <h2 className="mt-4 bg-gradient-to-r from-amber-200 via-orange-300 to-red-400 bg-clip-text text-3xl font-black leading-tight tracking-tight text-transparent sm:text-4xl">
+                    Get your free chess analysis report
+                  </h2>
+                  <p className="mx-auto mt-3 max-w-lg text-base leading-relaxed text-slate-300/80">
+                    Enter your Lichess or Chess.com username and discover
+                    exactly where your rating is leaking — openings, tactics,
+                    endgames, and time management in one clean report.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      document.getElementById("analyzer")?.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start",
+                      })
+                    }
+                    className="btn-cta-fire mt-6 inline-flex h-12 items-center gap-2 rounded-xl px-8 text-base font-bold text-white"
+                  >
+                    Analyze my games — it&apos;s free
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+
+                  <div className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 border-t border-white/[0.07] pt-5 text-sm font-semibold text-slate-400">
+                    {[
+                      { href: "/board", label: "Open Workbench" },
+                      { href: "/train", label: "Go to Training" },
+                      { href: "/community", label: "Explore Community" },
+                    ].map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className="inline-flex items-center gap-1.5 transition-colors hover:text-white"
+                      >
+                        {link.label}
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* ─── Blog Section ─── */}
+          {state === "idle" && <HomepageBlogSection />}
+
+          {/* ─── More to explore (secondary modes) ─── */}
           {state === "idle" && (
             <section className="animate-fade-in mx-auto w-full max-w-5xl">
               <div className="relative overflow-hidden rounded-[1.85rem] border border-white/[0.08] bg-[linear-gradient(160deg,rgba(8,12,24,0.76),rgba(20,14,26,0.62)_54%,rgba(32,18,12,0.66))] px-5 py-5 shadow-[0_24px_90px_-60px_rgba(0,0,0,0.9)] sm:px-6 sm:py-6">
@@ -1041,72 +1111,6 @@ export default function HomePage() {
             </section>
           )}
 
-
-          {/* ─── Final CTA ─── */}
-          {state === "idle" && (
-            <section className="animate-fade-in mx-auto w-full max-w-5xl">
-              <div
-                className="relative overflow-hidden rounded-[2rem] px-6 py-10 text-center shadow-[0_0_80px_-20px_rgba(249,115,22,0.18)] sm:px-10 sm:py-12"
-                style={{
-                  background:
-                    "linear-gradient(135deg, rgba(30,14,6,0.97) 0%, rgba(51,22,8,0.96) 42%, rgba(72,18,8,0.95) 75%, rgba(30,8,14,0.97) 100%)",
-                }}
-              >
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-300/40 to-transparent" />
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-red-400/20 to-transparent" />
-                <div className="pointer-events-none absolute left-[10%] top-[-20%] h-64 w-64 rounded-full bg-orange-500/[0.07] blur-3xl" />
-                <div className="pointer-events-none absolute bottom-[-20%] right-[12%] h-56 w-56 rounded-full bg-red-600/[0.06] blur-3xl" />
-
-                <div className="relative mx-auto max-w-2xl">
-                  <span className="inline-flex rounded-full bg-orange-400/[0.1] px-3 py-1 font-mono text-[10px] uppercase tracking-[0.32em] text-orange-200/70">
-                    Free · No credit card
-                  </span>
-                  <h2 className="mt-4 bg-gradient-to-r from-amber-200 via-orange-300 to-red-400 bg-clip-text text-3xl font-black leading-tight tracking-tight text-transparent sm:text-4xl">
-                    Get your free chess analysis report
-                  </h2>
-                  <p className="mx-auto mt-3 max-w-lg text-base leading-relaxed text-slate-300/80">
-                    Enter your Lichess or Chess.com username and discover
-                    exactly where your rating is leaking — openings, tactics,
-                    endgames, and time management in one clean report.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      document.getElementById("analyzer")?.scrollIntoView({
-                        behavior: "smooth",
-                        block: "start",
-                      })
-                    }
-                    className="btn-cta-fire mt-6 inline-flex h-12 items-center gap-2 rounded-xl px-8 text-base font-bold text-white"
-                  >
-                    Analyze my games — it&apos;s free
-                    <ArrowRight className="h-4 w-4" />
-                  </button>
-
-                  <div className="mt-7 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 border-t border-white/[0.07] pt-5 text-sm font-semibold text-slate-400">
-                    {[
-                      { href: "/board", label: "Open Workbench" },
-                      { href: "/train", label: "Go to Training" },
-                      { href: "/community", label: "Explore Community" },
-                    ].map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        className="inline-flex items-center gap-1.5 transition-colors hover:text-white"
-                      >
-                        {link.label}
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </section>
-          )}
-
-          {/* ─── Blog Section ─── */}
-          {state === "idle" && <HomepageBlogSection />}
-
           {/* ─── Notice ─── */}
           {notice && state !== "loading" && (
             <div className="glass-card animate-fade-in border-amber-500/20 p-5">
@@ -1172,95 +1176,62 @@ export default function HomePage() {
         </section>
       </div>
 
-      {/* ─── Testimonials / Human Photos ─── */}
+      {/*
+        ─── What a scan finds ───
+        Replaced the previous testimonial cards: those were placeholder people
+        with fabricated names/photos/stats, which is deceptive (and a legal
+        risk under endorsement/consumer-protection rules). This band makes the
+        same "why trust this" case with honest, verifiable product claims
+        instead. Add real, attributed testimonials here once you have them.
+      */}
       <section className="border-t border-white/[0.06] py-20 md:py-28">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-            <div className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-extrabold text-white md:text-4xl">
-                Trusted by chess players of all levels
-              </h2>
-              <p className="mt-4 text-base text-slate-400">
-                From casual club players to tournament competitors — FireChess
-                helps you find and fix the gaps in your game.
-              </p>
-            </div>
-
-            <div className="mt-16 grid gap-8 md:grid-cols-3">
-              {/* Testimonial 1 */}
-              <div className="group relative rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 transition-all hover:border-violet-500/30 hover:bg-white/[0.04]">
-                <div className="flex items-center gap-4">
-                  <img
-                    src="/images/testimonials/david-chen.jpg"
-                    alt="David Chen"
-                    className="h-14 w-14 rounded-full object-cover ring-2 ring-violet-500/20"
-                    width={56}
-                    height={56}
-                    loading="lazy"
-                  />
-                  <div>
-                    <p className="font-bold text-white">David Chen</p>
-                    <p className="text-sm text-slate-500">Club player, 1650 Elo</p>
-                  </div>
-                </div>
-                <blockquote className="mt-4 text-sm leading-relaxed text-slate-300">
-                  &ldquo;I always knew my openings were weak, but seeing the
-                  exact leaks laid out game-by-game was eye-opening. My accuracy
-                  went from 65% to 82% in two months.&rdquo;
-                </blockquote>
-              </div>
-
-              {/* Testimonial 2 */}
-              <div className="group relative rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 transition-all hover:border-violet-500/30 hover:bg-white/[0.04]">
-                <div className="flex items-center gap-4">
-                  <img
-                    src="/images/testimonials/sarah-okonkwo.jpg"
-                    alt="Sarah Müller"
-                    className="h-14 w-14 rounded-full object-cover ring-2 ring-violet-500/20"
-                    width={56}
-                    height={56}
-                    loading="lazy"
-                  />
-                  <div>
-                    <p className="font-bold text-white">Sarah Müller</p>
-                    <p className="text-sm text-slate-500">
-                      Tournament player, 1950 Elo
-                    </p>
-                  </div>
-                </div>
-                <blockquote className="mt-4 text-sm leading-relaxed text-slate-300">
-                  &ldquo;The tactic recognition drill is exactly what I needed.
-                  I was missing forks in cramped positions — now I catch them
-                  instantly. Up 120 points in three months.&rdquo;
-                </blockquote>
-              </div>
-
-              {/* Testimonial 3 */}
-              <div className="group relative rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 transition-all hover:border-violet-500/30 hover:bg-white/[0.04]">
-                <div className="flex items-center gap-4">
-                  <img
-                    src="/images/testimonials/marcus-rivera.jpg"
-                    alt="Marcus Rivera"
-                    className="h-14 w-14 rounded-full object-cover ring-2 ring-violet-500/20"
-                    width={56}
-                    height={56}
-                    loading="lazy"
-                  />
-                  <div>
-                    <p className="font-bold text-white">Marcus Rivera</p>
-                    <p className="text-sm text-slate-500">
-                      Casual player, 1200 Elo
-                    </p>
-                  </div>
-                </div>
-                <blockquote className="mt-4 text-sm leading-relaxed text-slate-300">
-                  &ldquo;I play a few blitz games on my lunch break. FireChess
-                  makes it dead simple to upload them and see what I&rsquo;m
-                  doing wrong. The study plan alone is worth it.&rdquo;
-                </blockquote>
-              </div>
-            </div>
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="text-3xl font-extrabold text-white md:text-4xl">
+              What a single scan actually finds
+            </h2>
+            <p className="mt-4 text-base text-slate-400">
+              Not another one-off blunder checker — FireChess looks across all
+              your recent games to find the patterns quietly costing you rating.
+            </p>
           </div>
-        </section>
+
+          <div className="mt-16 grid gap-8 md:grid-cols-3">
+            {[
+              {
+                icon: Repeat,
+                title: "The leaks you keep repeating",
+                body: "It scans your whole game history and surfaces the opening mistakes you make again and again — the ones a single-game review never catches.",
+              },
+              {
+                icon: Crosshair,
+                title: "Turned into drillable positions",
+                body: "Every repeated leak, missed tactic, and fumbled endgame becomes a position you can practice until the pattern finally sticks.",
+              },
+              {
+                icon: Search,
+                title: "Engine-backed, both platforms",
+                body: "Powered by Stockfish 18 across Lichess and Chess.com, with tilt and clock-management patterns most analysis tools ignore.",
+              },
+            ].map((card) => (
+              <div
+                key={card.title}
+                className="group relative rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 transition-all hover:border-orange-500/30 hover:bg-white/[0.04]"
+              >
+                <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-orange-500/10 text-orange-300">
+                  <card.icon className="h-5 w-5" />
+                </span>
+                <h3 className="mt-4 text-lg font-bold text-white">
+                  {card.title}
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-400">
+                  {card.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
     </div>
   );
