@@ -238,9 +238,22 @@ function buildInstantScanPayload(args): PublicScanSessionPayload {
 
 ---
 
-## Phase 3 — Navigation slim-down _(~1–1.5 days, risk: medium)_
+## Phase 3 — Navigation slim-down _(re-scoped — mostly not needed)_
 
-**Problem:** `navbar.tsx` is 1,471 lines / ~57 links — opposite of the lean modern header.
+> **FINDING (2026-06-29):** On inspection, `navbar.tsx`'s "~57 links" was a raw
+> `href` count across **desktop + mobile duplicates**. The actual UX is already
+> a modern **categorized mega-menu**: 5 grouped dropdowns — **Analyze / Play /
+> Learn / Community / Explore** — each holding a handful of links, mirrored in
+> grouped `mobileSections`. That's the lean, grouped pattern the research
+> recommends, so a slim-down refactor would be churn for little gain and is
+> risky on site-wide chrome (there's also no footer component to move overflow
+> into — it would have to be built). **Decision: leave the nav as-is.**
+>
+> Optional, low-priority polish if ever desired: merge the 2-link **Community**
+> dropdown into **Explore** (5 → 4 top-level menus); make the right-side CTA
+> match the hero ("Scan my games"). Not doing these now.
+
+**Original problem statement (superseded):** `navbar.tsx` is 1,471 lines / ~57 links — opposite of the lean modern header.
 
 ### 3.1 Define the lean landing nav
 
