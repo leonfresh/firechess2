@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  FormEvent,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { FormEvent, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -53,40 +46,11 @@ import type {
   ScanMode,
   TimeControl,
 } from "@/lib/client-analysis";
-import type { AnalyzeResponse, RepeatedOpeningLeak } from "@/lib/types";
-import { fetchExplorerMoves } from "@/lib/lichess-explorer";
-import { earnCoins, hasPurchased } from "@/lib/coins";
-import {
-  buildReportContentHash,
-  computeScanReportMeta,
-  scanOwnerStorageKey,
-  type PublicScanSessionPayload,
-} from "@/lib/scan-session";
-import { ScanSessionReport } from "@/components/scan-session-report";
+import { scanOwnerStorageKey } from "@/lib/scan-session";
 
 type RequestState = "idle" | "loading" | "done" | "error";
 const PREFS_KEY = "firechess-user-prefs";
-const REPORT_CACHE_KEY_PREFIX = "fc-last-report";
 const FULL_SCAN_MODE: ScanMode = "both";
-
-type CachedReportEntry = {
-  result: AnalyzeResponse;
-  config: {
-    maxGames: number;
-    maxMoves: number;
-    cpThreshold: number;
-    engineDepth: number;
-    source: AnalysisSource;
-    scanMode: ScanMode;
-    speed: TimeControl[];
-  };
-  savedAt: string;
-  reportPath?: string;
-};
-
-function reportCacheKey(mode: ScanMode): string {
-  return `${REPORT_CACHE_KEY_PREFIX}-${mode}`;
-}
 
 const FREE_MAX_GAMES = 300;
 const FREE_MAX_DEPTH = 12;
@@ -135,7 +99,9 @@ export default function HomePage() {
     }
     return "list";
   });
-  const [lastRunConfig, setLastRunConfig] = useState<{
+  // Write-only: persisted into the scan request; the report now renders on the
+  // /report/[id] route, so the homepage never reads this back.
+  const [, setLastRunConfig] = useState<{
     maxGames: number;
     maxMoves: number;
     cpThreshold: number;
@@ -145,11 +111,6 @@ export default function HomePage() {
     speed: TimeControl[];
   } | null>(null);
   const [state, setState] = useState<RequestState>("idle");
-  // Report view: "full" (the complete scrollable report, default) or "guided"
-  // (Brilliant-style walkthrough). The sticky toggle switches between them.
-  // viewMode is set by the scan flow (defaults the report to "full"); the
-  // toggle UI now lives inside <ScanSessionReport>, so only the setter is used.
-  const [, setViewMode] = useState<"guided" | "full">("full");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [siteStats, setSiteStats] = useState<{
@@ -160,28 +121,12 @@ export default function HomePage() {
     lifetimeMembers: number;
   } | null>(null);
   const [isLaunchingScan, setIsLaunchingScan] = useState(false);
-  const [progressInfo] = useState<{
-    message: string;
-    detail?: string;
-    percent: number;
-    phase: string;
-  }>({ message: "", percent: 0, phase: "" });
-  const [result, setResult] = useState<AnalyzeResponse | null>(null);
   const [localProEnabled, setLocalProEnabled] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<
+  const [, setSaveStatus] = useState<
     "idle" | "saving" | "saved" | "duplicate" | "error"
   >("idle");
   const [toast, setToast] = useState<string | null>(null);
-  const [welcomeBack, setWelcomeBack] = useState<string | null>(null);
-  const [cachedReportEntry, setCachedReportEntry] =
-    useState<CachedReportEntry | null>(null);
-  const [activeReportPath, setActiveReportPath] = useState<string | null>(null);
-  const [showRestoreBanner, setShowRestoreBanner] = useState(false);
   const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
-  // Set by the scan flow; its read-side UI now lives in <ScanSessionReport>.
-  const [, setTimeUnlocked] = useState(false);
-  const reportRef = useRef<HTMLElement>(null);
-  const loadingRef = useRef<HTMLDivElement>(null);
 
   const hasProAccess =
     sessionPlan === "pro" || sessionPlan === "lifetime" || localProEnabled;
@@ -330,7 +275,6 @@ export default function HomePage() {
         (parsed as any).username
       ) {
         setUsername((parsed as any).username);
-        setWelcomeBack((parsed as any).username);
       }
       if (
         parsed.cardViewMode === "carousel" ||
@@ -412,285 +356,7 @@ export default function HomePage() {
     username,
   ]);
 
-  /* ── Load cached report from localStorage (for unauthenticated users) ── */
-  useEffect(() => {
-    try {
-      const modes: ScanMode[] = [
-        "openings",
-        "tactics",
-        "endgames",
-        "both",
-        "time-management",
-      ];
-      // Find the most recently saved across all modes
-      let newest: CachedReportEntry | null = null;
-      for (const mode of modes) {
-        const raw = window.localStorage.getItem(reportCacheKey(mode));
-        if (!raw) continue;
-        const parsed = JSON.parse(raw) as CachedReportEntry;
-        if (!newest || new Date(parsed.savedAt) > new Date(newest.savedAt)) {
-          newest = parsed;
-        }
-      }
-      if (newest) {
-        setCachedReportEntry(newest);
-        setShowRestoreBanner(true);
-      }
-    } catch {
-      /* ignore */
-    }
-  }, []);
 
-  /* ── Fetch latest saved report leaks for personalized hero board ── */
-  const [, setHeroLeaks] = useState<RepeatedOpeningLeak[]>([]);
-  const [savedScanModes, setSavedScanModes] = useState<Set<string>>(new Set());
-  useEffect(() => {
-    if (!authenticated) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/reports");
-        if (!res.ok) return;
-        const json = await res.json();
-        const allReports: Array<{ scanMode?: string; leaks?: unknown[] }> =
-          json.reports ?? [];
-        if (!cancelled) {
-          const modes = new Set<string>();
-          for (const r of allReports) {
-            if (r.scanMode) modes.add(r.scanMode);
-          }
-          setSavedScanModes(modes);
-          const latest = allReports[0];
-          if (latest?.leaks?.length) {
-            setHeroLeaks(latest.leaks as RepeatedOpeningLeak[]);
-          }
-        }
-      } catch {
-        /* silent */
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [authenticated]);
-
-  const leaks = useMemo(() => result?.leaks ?? [], [result]);
-
-  // Check if user has unlocked time management with coins
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      setTimeUnlocked(hasPurchased("time-management-unlock"));
-    }
-  }, [result]);
-
-  // DB-approved inaccuracy detection — exclude these FENs from drills
-  const [, setDbApprovedFens] = useState<Set<string>>(new Set());
-  useEffect(() => {
-    if (leaks.length === 0) {
-      setDbApprovedFens(new Set());
-      return;
-    }
-    const inaccuracyLeaks = leaks.filter((l) => l.cpLoss < 100);
-    if (inaccuracyLeaks.length === 0) {
-      setDbApprovedFens(new Set());
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      const approved = new Set<string>();
-      // Check explorer in parallel (batches of 4 to avoid rate limits)
-      for (let i = 0; i < inaccuracyLeaks.length; i += 4) {
-        const batch = inaccuracyLeaks.slice(i, i + 4);
-        const results = await Promise.all(
-          batch.map((l) =>
-            fetchExplorerMoves(l.fenBefore, l.sideToMove).catch(() => null),
-          ),
-        );
-        if (cancelled) return;
-        results.forEach((res, idx) => {
-          if (!res) return;
-          const leak = batch[idx];
-          const userMoveInDb = res.moves.find((m) => m.uci === leak.userMove);
-          if (
-            userMoveInDb &&
-            userMoveInDb.totalGames >= 100 &&
-            userMoveInDb.winRate >= 0.45
-          ) {
-            approved.add(leak.fenBefore);
-          }
-        });
-      }
-      if (!cancelled) setDbApprovedFens(approved);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [leaks]);
-
-  const report = useMemo(
-    () =>
-      computeScanReportMeta(result, lastRunConfig?.cpThreshold ?? cpThreshold),
-    [cpThreshold, lastRunConfig?.cpThreshold, result],
-  );
-
-  // Adapts the instant in-browser scan into the shared report's payload shape
-  // so the homepage renders the same <ScanSessionReport> as the /report/[id]
-  // route instead of a duplicated inline report. Instant scans aren't
-  // persisted, so id/timestamps are synthetic.
-  const instantScanPayload = useMemo<PublicScanSessionPayload | null>(() => {
-    if (!result) return null;
-    const cfgSource: AnalysisSource =
-      lastRunConfig?.source ?? source ?? "lichess";
-    const cfgScanMode: ScanMode = lastRunConfig?.scanMode ?? scanMode;
-    return {
-      id: activeReportPath?.split("/").pop() ?? "instant",
-      userId: null,
-      chessUsername: username,
-      source: cfgSource,
-      scanMode: cfgScanMode,
-      status: state === "loading" ? "processing" : "ready",
-      config: {
-        maxGames: lastRunConfig?.maxGames ?? gameCount,
-        maxMoves: lastRunConfig?.maxMoves ?? moveCount,
-        cpThreshold: lastRunConfig?.cpThreshold ?? cpThreshold,
-        engineDepth: lastRunConfig?.engineDepth ?? engineDepth,
-        source: cfgSource,
-        scanMode: cfgScanMode,
-        speed: lastRunConfig?.speed ?? speed,
-        since: null,
-        until: null,
-        maxTactics: null,
-        maxEndgames: null,
-        ...(cfgSource === "pgn" ? { pgnText } : {}),
-      },
-      result,
-      reportMeta: report,
-      error: error || null,
-      savedReportId: null,
-      expiresAt: null,
-      createdAt: null,
-      updatedAt: null,
-    };
-  }, [
-    result,
-    lastRunConfig,
-    source,
-    scanMode,
-    state,
-    activeReportPath,
-    username,
-    gameCount,
-    moveCount,
-    cpThreshold,
-    engineDepth,
-    speed,
-    pgnText,
-    report,
-    error,
-  ]);
-
-  /** Save analysis report to the user's account (called explicitly via button). */
-  const saveReportToAccount = useCallback(async () => {
-    if (!result || !lastRunConfig) return;
-    setSaveStatus("saving");
-    try {
-      let contentHash = result.scanSignature ?? null;
-      if (!contentHash) {
-        const hashInput = buildReportContentHash(
-          result,
-          lastRunConfig.source,
-          lastRunConfig.scanMode,
-        );
-        const hashBuffer = await crypto.subtle.digest(
-          "SHA-256",
-          new TextEncoder().encode(hashInput),
-        );
-        contentHash = Array.from(new Uint8Array(hashBuffer))
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join("");
-      }
-
-      const res = await fetch("/api/reports", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chessUsername: result.username,
-          source: lastRunConfig.source,
-          scanMode: lastRunConfig.scanMode,
-          gamesAnalyzed: result.gamesAnalyzed,
-          maxGames: lastRunConfig.maxGames,
-          maxMoves: lastRunConfig.maxMoves,
-          cpThreshold: lastRunConfig.cpThreshold,
-          engineDepth: lastRunConfig.engineDepth,
-          // Use the client-side computed report values (same as displayed)
-          estimatedAccuracy: report?.estimatedAccuracy ?? null,
-          estimatedRating: report?.estimatedRating ?? null,
-          weightedCpLoss: report?.weightedCpLoss ?? null,
-          severeLeakRate: report?.severeLeakRate ?? null,
-          repeatedPositions: result.repeatedPositions,
-          leaks: result.leaks,
-          oneOffMistakes: result.oneOffMistakes,
-          missedTactics: result.missedTactics,
-          diagnostics: result.diagnostics ?? null,
-          mentalStats: result.mentalStats ?? null,
-          timeManagement: result.timeManagement ?? null,
-          playerRating: result.playerRating ?? null,
-          reportMeta: report
-            ? {
-                consistencyScore: report.consistencyScore,
-                p75CpLoss: report.p75CpLoss,
-                confidence: report.confidence,
-                topTag: report.topTag,
-                vibeTitle: report.vibeTitle,
-                sampleSize: report.sampleSize,
-                endgameTechniqueScore: report.endgameTechniqueScore ?? null,
-              }
-            : null,
-          contentHash,
-        }),
-      });
-      const json = await res.json();
-      if (json.saved || json.reason === "duplicate") {
-        setSaveStatus(json.saved ? "saved" : "duplicate");
-        // Award coins for saving a scan
-        if (json.saved) {
-          try {
-            earnCoins("scan_complete");
-          } catch {}
-        }
-        // Auto-generate a study plan (works for both new saves and duplicates)
-        try {
-          const planRes = await fetch("/api/study-plan", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              reportId: json.id,
-              chessUsername: result.username,
-              source: lastRunConfig.source,
-              topLeakOpenings: [],
-              accuracy: report?.estimatedAccuracy ?? 50,
-              leakCount: result.leaks.length,
-              repeatedPositions: result.repeatedPositions,
-              tacticsCount: result.totalTacticsFound,
-              gamesAnalyzed: result.gamesAnalyzed,
-              weightedCpLoss: report?.weightedCpLoss ?? 0,
-              severeLeakRate: report?.severeLeakRate ?? 0,
-              estimatedRating: report?.estimatedRating ?? null,
-              scanMode: lastRunConfig.scanMode,
-            }),
-          });
-          if (!planRes.ok)
-            console.warn("Study plan generation failed:", await planRes.text());
-        } catch (e) {
-          console.warn("Study plan generation error:", e);
-        }
-      } else {
-        setSaveStatus("error");
-      }
-    } catch {
-      setSaveStatus("error");
-    }
-  }, [result, report, lastRunConfig]);
 
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -1503,19 +1169,6 @@ export default function HomePage() {
           {/* ─── Admin Debug Widget ─── */}
           <AdminDebug />
 
-          {/* ─── Results ─── */}
-          {result !== null && (state === "done" || state === "loading") && (
-            <section ref={reportRef} className="animate-fade-in-up space-y-8">
-              {instantScanPayload && (
-                <ScanSessionReport
-                  scan={instantScanPayload}
-                  reportMeta={report}
-                  hasProAccess={hasProAccess}
-                  authenticated={authenticated}
-                />
-              )}
-            </section>
-          )}
         </section>
       </div>
 
@@ -1609,90 +1262,6 @@ export default function HomePage() {
           </div>
         </section>
 
-      {/* ─── Sticky Save Bar ─── */}
-      {state === "done" &&
-        result &&
-        saveStatus !== "saved" &&
-        saveStatus !== "duplicate" && (
-          <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.08] bg-slate-950/90 backdrop-blur-lg">
-            <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
-              <p className="text-sm text-slate-300">
-                <span className="font-semibold text-white">
-                  {result.leaks.length} leaks
-                </span>{" "}
-                &middot;{" "}
-                <span className="font-semibold text-white">
-                  {result.missedTactics.length} tactics
-                </span>
-                {result.endgameMistakes.length > 0 && (
-                  <>
-                    {" "}
-                    &middot;{" "}
-                    <span className="font-semibold text-white">
-                      {result.endgameMistakes.length} endgame
-                    </span>
-                  </>
-                )}{" "}
-                found — save to unlock training modes
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!authenticated) {
-                    window.location.href = "/auth/signin";
-                    return;
-                  }
-                  saveReportToAccount();
-                }}
-                disabled={saveStatus === "saving"}
-                className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-600 to-emerald-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-cyan-500/20 transition-all hover:brightness-110 disabled:opacity-50"
-              >
-                {saveStatus === "saving" ? (
-                  <>
-                    <svg
-                      className="h-4 w-4 animate-spin"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                    >
-                      <circle
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        className="opacity-20"
-                      />
-                      <path
-                        d="M12 2a10 10 0 019.95 9"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    Saving…
-                  </>
-                ) : (
-                  <>
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                      />
-                    </svg>
-                    {authenticated ? "Save Report" : "Sign in to Save"}
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        )}
     </div>
   );
 }
