@@ -110,6 +110,14 @@ Group the homepage by what truly needs client JS.
 
 _Decided 2026-06-29: keep instant results, replace the duplicated inline report JSX with the shared component._
 
+> **PROGRESS (2026-06-29, branch `landing-modernization`):**
+> - [x] Step 1 — adapter `instantScanPayload` (useMemo) added.
+> - [x] Step 2 — swap done: inline report (5,555 lines) replaced with `<ScanSessionReport>`. `app/page.tsx` 8,597 → 3,050 lines. tsc clean, idle homepage HTTP 200, committed `d955a81`.
+> - [ ] Step 3 — **only required props wired** (`scan`, `reportMeta`, `hasProAccess`, `authenticated`). **Omitted (optional):** `onSave`/`saveStatus`, `guidedLaunchSignal`, `onCreateCommunityPost`, `scanProgress`, `perPhaseProgress`. → save-prompt, guided-launch-from-modal, community-post, and live-progress-in-report are not wired yet. Wire if the live test shows they're needed.
+> - [x] Step 4 — dead-code cleanup DONE. Removed ~90 unused symbols + the dead legacy instant-browser-scan path (`runBrowserAnalysis`, `onBrowserProgress`, `tacticMotifs`/motif memos, `quickScanMode`, hero-anim helpers, pos-explain state, etc.). `app/page.tsx` now **2,412 lines** (from 8,597 — a 72% reduction). `tsc --noUnusedLocals` clean; full `tsc` clean; homepage renders 200.
+> - **Discovery:** the primary scan flow already POSTs to `/api/scans` and navigates to `/report/[id]` — the inline report/loading/instant-browser path was legacy. The inline `<ScanSessionReport>` now only serves the *restore-cached-report* path. (A dead `state === "loading"` UI block remains — `setState("loading")` is never called — left as an optional future trim.)
+> - [ ] **LIVE-SCAN TEST (yours):** run a real username through the homepage and confirm the report renders + matches `/report/[id]`; check PNG export, save-to-dashboard, Pro gating, guided walk.
+
 **The recipe (reverse-engineered from `components/scan-session-page.tsx:1312`):**
 
 `ScanSessionReport` props (signature at `components/scan-session-report.tsx:1797`):

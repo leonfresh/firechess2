@@ -25,18 +25,15 @@ import {
   Swords,
   Zap,
 } from "lucide-react";
-import { DrillMode } from "@/components/drill-mode";
 import {
   HeroSection,
   type SiteStats as HeroSiteStats,
 } from "@/components/home/hero-section";
-import { GuidedWalk } from "@/components/guided-walk/guided-walk";
-import { ReportViewToggle } from "@/components/guided-walk/report-view-toggle";
 import dynamic from "next/dynamic";
 
-// Below-the-fold homepage sections are code-split to keep the 8k-line page's
-// initial JS bundle lean. They only render when no scan is in flight, so
-// deferring them is safe and improves LCP / INP on mobile.
+// Below-the-fold homepage sections are code-split to keep the initial JS
+// bundle lean. They only render when no scan is in flight, so deferring them
+// is safe and improves LCP / INP on mobile.
 const HowItWorks = dynamic(
   () => import("@/components/home/how-it-works").then((m) => m.HowItWorks),
   { ssr: true },
@@ -45,32 +42,18 @@ const EmailCapture = dynamic(
   () => import("@/components/home/email-capture").then((m) => m.EmailCapture),
   { ssr: true },
 );
-import { MistakeCard } from "@/components/mistake-card";
-import { TacticCard } from "@/components/tactic-card";
-import { EndgameCard } from "@/components/endgame-card";
-import { TimeCard } from "@/components/time-card";
 import { DailyLoginPopup } from "@/components/daily-login-rewards";
 import { ProWelcomeModal } from "@/components/lifetime-welcome";
 import { AdminDebug } from "@/components/admin-debug";
 import { SampleReportsSection } from "@/components/sample-reports-section";
 import { HomepageBlogSection } from "@/components/homepage-blog-section";
 import { DiscordCta } from "@/components/home/discord-cta";
-import { CardCarousel, ViewModeToggle } from "@/components/card-carousel";
 import type { CardViewMode } from "@/components/card-carousel";
 import { useSession } from "@/components/session-provider";
-import { OpeningRankings } from "@/components/opening-rankings";
 import {
-  StrengthsRadar,
-  RadarLegend,
-  InsightCards,
-  computeRadarData,
-} from "@/components/radar-chart";
-import {
-  analyzeOpeningLeaksInBrowser,
   buildScanReuseSignatureInBrowser,
   splitMultiPgn,
 } from "@/lib/client-analysis";
-import type { AnalysisProgress } from "@/lib/client-analysis";
 import type {
   AnalysisSource,
   ScanMode,
@@ -78,21 +61,7 @@ import type {
 } from "@/lib/client-analysis";
 import type { AnalyzeResponse, RepeatedOpeningLeak } from "@/lib/types";
 import { fetchExplorerMoves } from "@/lib/lichess-explorer";
-import { shareReportCard } from "@/lib/share-report";
-import { earnCoins, spendCoins, hasPurchased, getBalance } from "@/lib/coins";
-import { POSITIONAL_PATTERNS } from "@/lib/positional-quotes";
-import {
-  explainOpeningLeak,
-  describeEndPosition,
-  type PositionExplanation,
-} from "@/lib/position-explainer";
-import { ExplanationModal } from "@/components/explanation-modal";
-import { stockfishClient } from "@/lib/stockfish-client";
-import { PersonalizedPuzzles } from "@/components/personalized-puzzles";
-import { PositionalMotifTrainer } from "@/components/positional-motif-trainer";
-import { Chessboard, type CbSquare } from "@/components/chessboard-compat";
-import { Chess, type PieceSymbol } from "chess.js";
-import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";
+import { earnCoins, hasPurchased } from "@/lib/coins";
 import { DEFAULT_LAUNCHER, type LauncherConfig } from "@/lib/launcher-apps";
 import { LauncherEditor } from "@/components/launcher-editor";
 import {
@@ -102,7 +71,6 @@ import {
   type PublicScanSessionPayload,
 } from "@/lib/scan-session";
 import { ScanSessionReport } from "@/components/scan-session-report";
-import { isMissedMateTactic } from "@/lib/tactic-utils";
 
 function HelpTip({ text }: { text: string }) {
   return (
@@ -148,42 +116,14 @@ const FREE_MAX_MOVES = 30;
 /** Hard limits for the pasted-PGN source (kept in sync with the server). */
 const PGN_MAX_BYTES = 2 * 1024 * 1024; // 2 MB
 const PGN_MAX_GAMES = 250;
-const FREE_TACTIC_SAMPLE = 10;
-const FREE_ENDGAME_SAMPLE = 10;
-const FREE_TIME_MANAGEMENT_SAMPLE = 10;
-const FREE_POSITIONAL_SAMPLE = 3;
 const LOCAL_PRO_HOTKEY_ENABLED =
   process.env.NEXT_PUBLIC_ENABLE_LOCAL_PRO_HOTKEY !== "false";
 const IS_DEV = process.env.NODE_ENV !== "production";
-
-function AnalysisSectionSkeleton({ label }: { label: string }) {
-  return (
-    <div className="space-y-4 animate-pulse py-2">
-      {[1, 2, 3].map((i) => (
-        <div
-          key={i}
-          className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4"
-        >
-          <div className="flex gap-4">
-            <div className="h-16 w-16 rounded-xl bg-white/[0.08] shrink-0" />
-            <div className="flex-1 space-y-2 pt-1">
-              <div className="h-3.5 w-3/4 rounded bg-white/[0.08]" />
-              <div className="h-3 w-1/2 rounded bg-white/[0.06]" />
-              <div className="h-3 w-2/3 rounded bg-white/[0.06]" />
-            </div>
-          </div>
-        </div>
-      ))}
-      <p className="text-center text-xs text-slate-500">{label}</p>
-    </div>
-  );
-}
 
 export default function HomePage() {
   const {
     plan: sessionPlan,
     authenticated,
-    user,
     loading: sessionLoading,
   } = useSession();
   const router = useRouter();
@@ -197,10 +137,6 @@ export default function HomePage() {
     }
   }, [sessionLoading, authenticated, router]);
 
-  const [heroPhase, setHeroPhase] = useState<"idle" | "hiding" | "revealing">(
-    "idle",
-  );
-  const heroTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [username, setUsername] = useState("");
   const [gameRangeMode, setGameRangeMode] = useState<"count" | "since">(
     "count",
@@ -233,7 +169,9 @@ export default function HomePage() {
   const [state, setState] = useState<RequestState>("idle");
   // Report view: "full" (the complete scrollable report, default) or "guided"
   // (Brilliant-style walkthrough). The sticky toggle switches between them.
-  const [viewMode, setViewMode] = useState<"guided" | "full">("full");
+  // viewMode is set by the scan flow (defaults the report to "full"); the
+  // toggle UI now lives inside <ScanSessionReport>, so only the setter is used.
+  const [, setViewMode] = useState<"guided" | "full">("full");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [siteStats, setSiteStats] = useState<{
@@ -244,7 +182,7 @@ export default function HomePage() {
     lifetimeMembers: number;
   } | null>(null);
   const [isLaunchingScan, setIsLaunchingScan] = useState(false);
-  const [progressInfo, setProgressInfo] = useState<{
+  const [progressInfo] = useState<{
     message: string;
     detail?: string;
     percent: number;
@@ -256,51 +194,16 @@ export default function HomePage() {
     "idle" | "saving" | "saved" | "duplicate" | "error"
   >("idle");
   const [toast, setToast] = useState<string | null>(null);
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [welcomeBack, setWelcomeBack] = useState<string | null>(null);
   const [cachedReportEntry, setCachedReportEntry] =
     useState<CachedReportEntry | null>(null);
-  const [copyLinkLabel, setCopyLinkLabel] = useState("Copy Link");
   const [activeReportPath, setActiveReportPath] = useState<string | null>(null);
   const [showRestoreBanner, setShowRestoreBanner] = useState(false);
   const [advancedSettingsOpen, setAdvancedSettingsOpen] = useState(false);
-  const [leakTab, setLeakTab] = useState<"repeated" | "one-off">("repeated");
-  const [openingFolder, setOpeningFolder] = useState<"mistakes" | "rankings">(
-    "mistakes",
-  );
-  const [tacticsOpen, setTacticsOpen] = useState(true);
-  const [patternsOpen, setPatternsOpen] = useState(true);
-  const [endgamesOpen, setEndgamesOpen] = useState(true);
-  const [puzzleBoardOpen, setPuzzleBoardOpen] = useState(false);
-  const [timeManagementOpen, setTimeManagementOpen] = useState(true);
-  const [sectionsDone, setSectionsDone] = useState<Set<string>>(new Set());
-  const [timeVerdictTab, setTimeVerdictTab] = useState<
-    "all" | "wasted" | "rushed" | "justified"
-  >("all");
-  const [expandedMotifs, setExpandedMotifs] = useState<Set<string>>(new Set());
-  const [posExplainModalOpen, setPosExplainModalOpen] = useState(false);
-  const [posExplainRich, setPosExplainRich] =
-    useState<PositionExplanation | null>(null);
-  const [posExplainAnimUci, setPosExplainAnimUci] = useState<string[]>([]);
-  const [posExplainAltUci, setPosExplainAltUci] = useState<string[]>([]);
-  const [posExplainAltLabel, setPosExplainAltLabel] = useState<
-    string | undefined
-  >();
-  const [posExplainFen, setPosExplainFen] = useState("");
-  const [posExplainOrientation, setPosExplainOrientation] = useState<
-    "white" | "black"
-  >("white");
-  const [posExplainTitle, setPosExplainTitle] = useState("");
-  const [posExplainSubtitle, setPosExplainSubtitle] = useState<
-    string | undefined
-  >();
-  const [posExplaining, setPosExplaining] = useState<string | null>(null);
-  const [timeUnlocked, setTimeUnlocked] = useState(false);
+  // Set by the scan flow; its read-side UI now lives in <ScanSessionReport>.
+  const [, setTimeUnlocked] = useState(false);
   const reportRef = useRef<HTMLElement>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
-  const pngRef = useRef<HTMLDivElement>(null);
-  const boardTheme = useBoardTheme();
-  const customPieces = useCustomPieces();
 
   const [launcherConfig, setLauncherConfig] =
     useState<LauncherConfig>(DEFAULT_LAUNCHER);
@@ -380,22 +283,6 @@ export default function HomePage() {
         if (data) setSiteStats(data);
       })
       .catch(() => {});
-  }, []);
-
-  const heroAnim = (step: number) =>
-    heroPhase === "hiding"
-      ? "hero-hide"
-      : heroPhase === "revealing"
-        ? `hero-reveal-${step}`
-        : "";
-
-  const triggerHeroAnimation = useCallback(() => {
-    if (heroTimerRef.current) clearTimeout(heroTimerRef.current);
-    setHeroPhase("hiding");
-    heroTimerRef.current = setTimeout(() => {
-      setHeroPhase("revealing");
-      heroTimerRef.current = setTimeout(() => setHeroPhase("idle"), 3000);
-    }, 400);
   }, []);
 
   // Hero CTA scroll handlers — smooth-scroll to the analyzer form and the
@@ -610,7 +497,7 @@ export default function HomePage() {
   }, []);
 
   /* ── Fetch latest saved report leaks for personalized hero board ── */
-  const [heroLeaks, setHeroLeaks] = useState<RepeatedOpeningLeak[]>([]);
+  const [, setHeroLeaks] = useState<RepeatedOpeningLeak[]>([]);
   const [savedScanModes, setSavedScanModes] = useState<Set<string>>(new Set());
   useEffect(() => {
     if (!authenticated) return;
@@ -643,26 +530,6 @@ export default function HomePage() {
   }, [authenticated]);
 
   const leaks = useMemo(() => result?.leaks ?? [], [result]);
-  /** Leak count excluding DB-approved sidelines — used for radar/scoring so sidelines don't penalize */
-  const realLeakCount = useMemo(
-    () => leaks.filter((l) => !l.dbApproved).length,
-    [leaks],
-  );
-  const missedTactics = useMemo(() => result?.missedTactics ?? [], [result]);
-  const endgameMistakes = useMemo(
-    () => result?.endgameMistakes ?? [],
-    [result],
-  );
-  const oneOffMistakes = useMemo(() => result?.oneOffMistakes ?? [], [result]);
-  const positionalFindings = useMemo(
-    () => result?.positionalFindings ?? [],
-    [result],
-  );
-  const endgameStats = useMemo(() => result?.endgameStats ?? null, [result]);
-  const timeManagement = useMemo(
-    () => result?.timeManagement ?? null,
-    [result],
-  );
 
   // Check if user has unlocked time management with coins
   useEffect(() => {
@@ -672,7 +539,7 @@ export default function HomePage() {
   }, [result]);
 
   // DB-approved inaccuracy detection — exclude these FENs from drills
-  const [dbApprovedFens, setDbApprovedFens] = useState<Set<string>>(new Set());
+  const [, setDbApprovedFens] = useState<Set<string>>(new Set());
   useEffect(() => {
     if (leaks.length === 0) {
       setDbApprovedFens(new Set());
@@ -715,344 +582,6 @@ export default function HomePage() {
     };
   }, [leaks]);
 
-  // Motif clustering — combine missed tactics, opening leaks, AND one-off mistakes
-  const tacticMotifs = useMemo(() => {
-    // Build a unified array of tagged positions from all sources
-    type TaggedPosition = {
-      tags: string[];
-      cpLoss: number;
-      fenBefore: string;
-      userMove?: string;
-      bestMove?: string | null;
-      gameUrl?: string;
-      /**
-       * Eval from the USER's perspective AFTER their move (centipawns).
-       * Positive = user is still winning. Used to skip "still crushing" positions.
-       */
-      evalAfterUser?: number;
-    };
-
-    // Threshold: if user is still winning by more than this after the blunder, skip it
-    const STILL_WINNING_THRESHOLD = 350; // +3.5 pawns — clearly still winning
-
-    const allPositions: TaggedPosition[] = [];
-
-    for (const t of missedTactics) {
-      // cpBefore and cpAfter are from side-to-move's perspective
-      // evalAfterUser = what the user (side that moved) has after their move
-      //   = negated cpAfter (since after the move it's opponent's turn)
-      const evalAfterUser = -t.cpAfter;
-      allPositions.push({
-        tags: t.tags,
-        cpLoss: t.cpLoss,
-        fenBefore: t.fenBefore,
-        userMove: t.userMove,
-        bestMove: t.bestMove,
-        evalAfterUser,
-      });
-    }
-    for (const l of leaks) {
-      if (l.tags?.length) {
-        // evalAfter is from the side-to-move's perspective after the move (opponent's perspective)
-        // evalAfterUser (original mover) = -evalAfter
-        const evalAfterUser =
-          typeof l.evalAfter === "number" ? -l.evalAfter : undefined;
-        allPositions.push({
-          tags: l.tags,
-          cpLoss: l.cpLoss,
-          fenBefore: l.fenBefore,
-          userMove: l.userMove,
-          bestMove: l.bestMove,
-          evalAfterUser,
-        });
-      }
-    }
-    for (const o of oneOffMistakes) {
-      if (o.tags?.length) {
-        const evalAfterUser =
-          typeof o.evalAfter === "number" ? -o.evalAfter : undefined;
-        allPositions.push({
-          tags: o.tags,
-          cpLoss: o.cpLoss,
-          fenBefore: o.fenBefore,
-          userMove: o.userMove,
-          bestMove: o.bestMove,
-          evalAfterUser,
-        });
-      }
-    }
-    for (const pf of positionalFindings) {
-      if (pf.tags?.length) {
-        allPositions.push({
-          tags: pf.tags,
-          cpLoss: pf.cpLoss,
-          fenBefore: pf.fenBefore,
-          userMove: pf.userMove,
-          bestMove: pf.bestMove,
-          // PositionalFinding has no eval data; can't filter by winning margin
-        });
-      }
-    }
-
-    if (allPositions.length === 0) return [];
-
-    // Positional pattern tags that should surface even with 1 occurrence
-    const positionalTags = new Set([
-      "Unnecessary Capture",
-      "Premature Trade",
-      "Released Tension",
-      "Passive Retreat",
-      "Trading Advantage",
-      "Greedy Pawn Grab",
-      "Premature Pawn Break",
-      "Weakened Pawn Structure",
-      "Wrong Recapture",
-      "Missed Development",
-      "Piece Activity",
-      "King Exposure",
-      "Hanging Piece",
-    ]);
-
-    // Define motif categories with matching logic
-    const motifDefs: {
-      name: string;
-      icon: string;
-      positional?: boolean;
-      match: (t: TaggedPosition) => boolean;
-    }[] = [
-      {
-        name: "Hanging Pieces",
-        icon: "💀",
-        positional: true,
-        match: (t) => t.tags.includes("Hanging Piece"),
-      },
-      {
-        name: "Missed Mate",
-        icon: "👑",
-        match: (t) => t.tags.includes("Missed Mate"),
-      },
-      {
-        name: "Missed Check",
-        icon: "⚡",
-        match: (t) => t.tags.includes("Missed Check"),
-      },
-      {
-        name: "Missed Capture",
-        icon: "🗡️",
-        match: (t) =>
-          t.tags.includes("Missed Capture") ||
-          t.tags.includes("Forcing Capture"),
-      },
-      {
-        name: "Back Rank Threats",
-        icon: "🏰",
-        match: (t) => t.tags.includes("Back Rank"),
-      },
-      {
-        name: "Knight Tactics",
-        icon: "♞",
-        match: (t) => t.tags.includes("Knight Fork?"),
-      },
-      {
-        name: "Queen Tactics",
-        icon: "♛",
-        match: (t) => t.tags.includes("Queen Tactic"),
-      },
-      {
-        name: "Converting Advantage",
-        icon: "📈",
-        match: (t) => t.tags.includes("Converting Advantage"),
-      },
-      {
-        name: "Equal Position Misses",
-        icon: "⚖️",
-        match: (t) => t.tags.includes("Equal Position"),
-      },
-      {
-        name: "Unnecessary Captures",
-        icon: "🚫",
-        positional: true,
-        match: (t) => t.tags.includes("Unnecessary Capture"),
-      },
-      {
-        name: "Premature Trades",
-        icon: "🤝",
-        positional: true,
-        match: (t) => t.tags.includes("Premature Trade"),
-      },
-      {
-        name: "Released Tension",
-        icon: "💨",
-        positional: true,
-        match: (t) => t.tags.includes("Released Tension"),
-      },
-      {
-        name: "Passive Retreats",
-        icon: "🐢",
-        positional: true,
-        match: (t) => t.tags.includes("Passive Retreat"),
-      },
-      {
-        name: "Trading Advantage",
-        icon: "📉",
-        positional: true,
-        match: (t) => t.tags.includes("Trading Advantage"),
-      },
-      {
-        name: "Greedy Pawn Grabs",
-        icon: "🍕",
-        positional: true,
-        match: (t) => t.tags.includes("Greedy Pawn Grab"),
-      },
-      {
-        name: "Weakened Pawn Structure",
-        icon: "🏚️",
-        positional: true,
-        match: (t) => t.tags.includes("Weakened Pawn Structure"),
-      },
-      {
-        name: "Wrong Recaptures",
-        icon: "↩️",
-        positional: true,
-        match: (t) => t.tags.includes("Wrong Recapture"),
-      },
-      {
-        name: "Missed Development",
-        icon: "🐌",
-        positional: true,
-        match: (t) => t.tags.includes("Missed Development"),
-      },
-      {
-        name: "King Exposure",
-        icon: "👑",
-        positional: true,
-        match: (t) => t.tags.includes("King Exposure"),
-      },
-      {
-        name: "Piece Activity",
-        icon: "📊",
-        positional: true,
-        match: (t) => t.tags.includes("Piece Activity"),
-      },
-      {
-        name: "Premature Pawn Breaks",
-        icon: "⚔️",
-        positional: true,
-        match: (t) => t.tags.includes("Premature Pawn Break"),
-      },
-      {
-        name: "General Inaccuracy",
-        icon: "⚠️",
-        positional: true,
-        match: (t) => t.tags.includes("Inaccuracy"),
-      },
-      {
-        name: "Neglected Castling",
-        icon: "🏰",
-        positional: true,
-        match: (t) => t.tags.includes("Neglected Castling"),
-      },
-      {
-        name: "Aimless Moves",
-        icon: "🌀",
-        positional: true,
-        match: (t) => t.tags.includes("Aimless Move"),
-      },
-      {
-        name: "Overextended Pawns",
-        icon: "📏",
-        positional: true,
-        match: (t) => t.tags.includes("Overextended Pawn"),
-      },
-      {
-        name: "Center Neglect",
-        icon: "🎯",
-        positional: true,
-        match: (t) => t.tags.includes("Center Neglect"),
-      },
-    ];
-
-    const groups: {
-      name: string;
-      icon: string;
-      count: number;
-      avgCpLoss: number;
-      tactics: typeof missedTactics;
-      examples: TaggedPosition[];
-    }[] = [];
-
-    for (const def of motifDefs) {
-      // Deduplicate by FEN so the same position from leaks+tactics isn't double-counted
-      const seen = new Set<string>();
-      const matching: TaggedPosition[] = [];
-      for (const p of allPositions) {
-        if (def.match(p) && !seen.has(p.fenBefore)) {
-          // Skip positions where the user was still clearly winning after the mistake
-          // (e.g., saccing a queen but still up a rook vs lone king — not worth drilling)
-          if (
-            typeof p.evalAfterUser === "number" &&
-            p.evalAfterUser > STILL_WINNING_THRESHOLD
-          ) {
-            continue;
-          }
-          seen.add(p.fenBefore);
-          matching.push(p);
-        }
-      }
-      // Positional patterns show with 1+ occurrence, tactical patterns need 2+
-      const minCount = def.positional ? 1 : 2;
-      if (matching.length >= minCount) {
-        const avgLoss =
-          matching.reduce((sum, t) => sum + t.cpLoss, 0) / matching.length;
-        // For the tactics array, only include actual MissedTactic objects (for card rendering)
-        const tacticMatches = missedTactics.filter(def.match);
-        groups.push({
-          name: def.name,
-          icon: def.icon,
-          count: matching.length,
-          avgCpLoss: avgLoss,
-          tactics: tacticMatches,
-          examples: matching.sort((a, b) => b.cpLoss - a.cpLoss).slice(0, 6),
-        });
-      }
-    }
-
-    return groups.sort((a, b) => b.avgCpLoss - a.avgCpLoss);
-  }, [missedTactics, leaks, oneOffMistakes, positionalFindings]);
-
-  // Separate tactical motifs (for Pattern Analysis) from positional motifs (for dedicated section)
-  const POSITIONAL_MOTIF_NAMES = new Set([
-    "Unnecessary Captures",
-    "Premature Trades",
-    "Released Tension",
-    "Passive Retreats",
-    "Trading Advantage",
-    "Greedy Pawn Grabs",
-    "Weakened Pawn Structure",
-    "Wrong Recaptures",
-    "Missed Development",
-    "King Exposure",
-    "Piece Activity",
-    "Premature Pawn Breaks",
-    "General Inaccuracy",
-    "Neglected Castling",
-    "Aimless Moves",
-    "Overextended Pawns",
-    "Center Neglect",
-    "Hanging Pieces",
-  ]);
-
-  const tacticalMotifs = useMemo(
-    () => tacticMotifs.filter((m) => !POSITIONAL_MOTIF_NAMES.has(m.name)),
-    [tacticMotifs],
-  );
-
-  const positionalMotifs = useMemo(
-    () => tacticMotifs.filter((m) => POSITIONAL_MOTIF_NAMES.has(m.name)),
-    [tacticMotifs],
-  );
-
-  const diagnostics = result?.diagnostics;
   const report = useMemo(
     () =>
       computeScanReportMeta(result, lastRunConfig?.cpThreshold ?? cpThreshold),
@@ -1114,28 +643,6 @@ export default function HomePage() {
     report,
     error,
   ]);
-  const maxObservedCpLoss = useMemo(() => {
-    const losses = diagnostics?.positionTraces
-      .map((trace) => trace.cpLoss)
-      .filter((value): value is number => typeof value === "number");
-
-    if (!losses || losses.length === 0) return null;
-    return Math.max(...losses);
-  }, [diagnostics]);
-
-  const activeReportUrl = useMemo(() => {
-    if (!activeReportPath || typeof window === "undefined") return null;
-    return new URL(activeReportPath, window.location.origin).toString();
-  }, [activeReportPath]);
-
-  const onBrowserProgress = (progress: AnalysisProgress) => {
-    setProgressInfo({
-      message: progress.message,
-      detail: progress.detail,
-      percent: progress.percent,
-      phase: progress.phase,
-    });
-  };
 
   /** Save analysis report to the user's account (called explicitly via button). */
   const saveReportToAccount = useCallback(async () => {
@@ -1240,102 +747,6 @@ export default function HomePage() {
     }
   }, [result, report, lastRunConfig]);
 
-  const runBrowserAnalysis = async (
-    trimmed: string,
-    safeGames: number,
-    safeMoves: number,
-    safeCpThreshold: number,
-    safeDepth: number,
-    safeSource: AnalysisSource,
-    reason?: string,
-    scanModeOverride?: ScanMode,
-    since?: number,
-  ) => {
-    if (reason) setNotice(reason);
-    // Consolidated scans always run the full report so counts and ranking stay complete.
-    const effectiveScanMode: ScanMode = FULL_SCAN_MODE;
-    const effectiveMaxTactics = Infinity;
-    const effectiveMaxEndgames = Infinity;
-
-    const browserResult = await analyzeOpeningLeaksInBrowser(trimmed, {
-      source: safeSource,
-      scanMode: effectiveScanMode,
-      timeControl: speed,
-      maxGames: safeGames,
-      maxOpeningMoves: safeMoves,
-      cpLossThreshold: safeCpThreshold,
-      engineDepth: safeDepth,
-      maxTactics: effectiveMaxTactics,
-      maxEndgames: effectiveMaxEndgames,
-      since,
-      onProgress: onBrowserProgress,
-      onSectionReady: (section, partial) => {
-        setResult((prev) => {
-          const base: AnalyzeResponse = prev ?? {
-            username: trimmed,
-            gamesAnalyzed: 0,
-            repeatedPositions: 0,
-            leaks: [],
-            oneOffMistakes: [],
-            missedTactics: [],
-            totalTacticsFound: 0,
-            endgameMistakes: [],
-            endgameStats: null,
-          };
-          return { ...base, ...partial };
-        });
-        setSectionsDone((prev) => {
-          const isFirst = prev.size === 0;
-          const next = new Set([...prev, section]);
-          if (isFirst) {
-            setTimeout(
-              () =>
-                reportRef.current?.scrollIntoView({
-                  behavior: "smooth",
-                  block: "start",
-                }),
-              300,
-            );
-          }
-          return next;
-        });
-      },
-    });
-    setResult(browserResult);
-    setActiveReportPath(null);
-    setState("done");
-    // Fresh scan → land on the full report; guided is one tap away.
-    setViewMode("full");
-
-    // Cache report in localStorage for offline restore
-    try {
-      const cacheKey = reportCacheKey(effectiveScanMode);
-      const entry: CachedReportEntry = {
-        result: browserResult,
-        config: {
-          maxGames: safeGames,
-          maxMoves: safeMoves,
-          cpThreshold: safeCpThreshold,
-          engineDepth: safeDepth,
-          source: safeSource,
-          scanMode: effectiveScanMode,
-          speed,
-        },
-        savedAt: new Date().toISOString(),
-      };
-      window.localStorage.setItem(cacheKey, JSON.stringify(entry));
-    } catch {
-      /* ignore storage failures */
-    }
-
-    // Toast + smooth scroll to report
-    setToast("✅ Your report is ready!");
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 4000);
-    setTimeout(() => {
-      reportRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 300);
-  };
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -1572,55 +983,6 @@ export default function HomePage() {
   };
 
   /** Legacy reruns collapse back into the full scan. */
-  const quickScanMode = async (_mode: ScanMode) => {
-    const trimmed = username.trim();
-    if (!trimmed || !lastRunConfig) return;
-    const mode = FULL_SCAN_MODE;
-    setScanMode(mode);
-    setLastRunConfig({
-      ...lastRunConfig,
-      scanMode: mode,
-      speed: lastRunConfig.speed ?? speed,
-    });
-    setState("loading");
-    setError("");
-    setNotice("");
-    setResult(null);
-    setActiveReportPath(null);
-    setSectionsDone(new Set());
-    setSaveStatus("idle");
-    setTimeout(
-      () =>
-        loadingRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        }),
-      50,
-    );
-    setProgressInfo({
-      message: "🔄 Refreshing full scan",
-      detail: "Re-analyzing openings, tactics, endgames, and time together...",
-      percent: 0,
-      phase: "fetch",
-    });
-    try {
-      await runBrowserAnalysis(
-        trimmed,
-        lastRunConfig.maxGames,
-        lastRunConfig.maxMoves,
-        lastRunConfig.cpThreshold,
-        lastRunConfig.engineDepth,
-        lastRunConfig.source,
-        `Running full scan for ${trimmed}...`,
-        mode,
-      );
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Unexpected error";
-      setError(message);
-      setState("error");
-    }
-  };
-
   return (
     <div className="relative min-h-screen">
       <div className="relative z-10 px-4 py-10 sm:px-6 md:px-10">
