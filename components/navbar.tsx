@@ -152,7 +152,6 @@ export function Navbar() {
     isActive("/games") ||
     isActive("/players") ||
     isActive("/glossary");
-  const isCommunityActive = isActive("/community") || isActive("/board");
   const isExploreActive =
     isActive("/blog") ||
     isActive("/leaderboard") ||
@@ -212,12 +211,6 @@ export function Navbar() {
       label: "Learn",
       description: "Study library",
       active: isLearnActive,
-    },
-    {
-      href: "/community",
-      label: "Community",
-      description: "Live boards",
-      active: isCommunityActive,
     },
   ];
 
@@ -281,15 +274,6 @@ export function Navbar() {
         { href: "/games", label: "♛ Famous Games" },
         { href: "/players", label: "👑 Grandmasters" },
         { href: "/glossary", label: "📚 Glossary" },
-      ],
-    },
-    {
-      key: "community",
-      label: "Community",
-      isActive: isCommunityActive,
-      links: [
-        { href: "/community", label: "🔥 Community Hub" },
-        { href: "/board", label: "🧰 Board Workbench" },
       ],
     },
     {
@@ -548,54 +532,6 @@ export function Navbar() {
                   >
                     📈 Improve by Rating
                   </Link>
-                </div>
-              </div>
-            </div>
-
-            {/* Community */}
-            <div {...openProps("community")}>
-              <button
-                type="button"
-                aria-haspopup="true"
-                className={`flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                  isCommunityActive
-                    ? "bg-white/[0.06] text-white"
-                    : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
-                }`}
-              >
-                Community
-                <svg
-                  className={caretCn("community")}
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
-              </button>
-              <div className={dropdownCn("community")}>
-                <div className="min-w-[210px] rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
-                  <Link
-                    href="/community"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/community") ? "bg-orange-500/[0.08] text-orange-300" : "text-slate-400 hover:bg-orange-500/[0.06] hover:text-orange-300"}`}
-                  >
-                    🔥 Community Hub
-                  </Link>
-                  <Link
-                    href="/board"
-                    className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/board") ? "bg-cyan-500/[0.08] text-cyan-300" : "text-slate-400 hover:bg-cyan-500/[0.06] hover:text-cyan-300"}`}
-                  >
-                    🧰 Board Workbench
-                  </Link>
-                  {user?.id && (
-                    <Link
-                      href={`/community/profile/${user.id}`}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${isActive("/community/profile") ? "bg-fuchsia-500/[0.08] text-fuchsia-300" : "text-slate-400 hover:bg-fuchsia-500/[0.06] hover:text-fuchsia-300"}`}
-                    >
-                      🗂️ My Public Profile
-                    </Link>
-                  )}
                 </div>
               </div>
             </div>
