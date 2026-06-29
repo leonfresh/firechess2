@@ -5,12 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
-  Crosshair,
   FileText,
   Flame,
   Gem,
-  Repeat,
-  Search,
   Skull,
   Swords,
   Zap,
@@ -54,6 +51,8 @@ import { scanOwnerStorageKey } from "@/lib/scan-session";
 type RequestState = "idle" | "loading" | "done" | "error";
 const PREFS_KEY = "firechess-user-prefs";
 const FULL_SCAN_MODE: ScanMode = "both";
+const REDDIT_THREAD_URL =
+  "https://www.reddit.com/r/chessbeginners/comments/1re8jgm/i_made_a_free_tool_that_finds_the_mistakes_you/";
 
 const FREE_MAX_GAMES = 300;
 const FREE_MAX_DEPTH = 12;
@@ -1177,59 +1176,92 @@ export default function HomePage() {
       </div>
 
       {/*
-        ─── What a scan finds ───
-        Replaced the previous testimonial cards: those were placeholder people
-        with fabricated names/photos/stats, which is deceptive (and a legal
-        risk under endorsement/consumer-protection rules). This band makes the
-        same "why trust this" case with honest, verifiable product claims
-        instead. Add real, attributed testimonials here once you have them.
+        ─── Social proof: real Reddit comments ───
+        Genuine, verbatim comments from the r/chessbeginners launch thread,
+        attributed to the real usernames + rating flairs and linked to the
+        source so they're verifiable. Capitalization lightly normalized;
+        wording unchanged. If a commenter ever asks to be removed, drop their
+        card. (This replaced an earlier set of fabricated testimonials.)
       */}
       <section className="border-t border-white/[0.06] py-20 md:py-28">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-extrabold text-white md:text-4xl">
-              What a single scan actually finds
+              What players said on Reddit
             </h2>
             <p className="mt-4 text-base text-slate-400">
-              Not another one-off blunder checker — FireChess looks across all
-              your recent games to find the patterns quietly costing you rating.
+              Real, unedited comments from the{" "}
+              <a
+                href={REDDIT_THREAD_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-semibold text-orange-300 underline-offset-2 hover:underline"
+              >
+                r/chessbeginners launch thread
+              </a>
+              .
             </p>
           </div>
 
           <div className="mt-16 grid gap-8 md:grid-cols-3">
             {[
               {
-                icon: Repeat,
-                title: "The leaks you keep repeating",
-                body: "It scans your whole game history and surfaces the opening mistakes you make again and again — the ones a single-game review never catches.",
+                initial: "N",
+                user: "No-Sky2462",
+                flair: "1200–1400 · Lichess",
+                quote:
+                  "I absolutely love this! If I had the money I would definitely support you.",
               },
               {
-                icon: Crosshair,
-                title: "Turned into drillable positions",
-                body: "Every repeated leak, missed tactic, and fumbled endgame becomes a position you can practice until the pattern finally sticks.",
+                initial: "C",
+                user: "cooolcooolio",
+                flair: "1000–1200 · Chess.com",
+                quote: "That's a great tool.",
               },
               {
-                icon: Search,
-                title: "Engine-backed, both platforms",
-                body: "Powered by Stockfish 18 across Lichess and Chess.com, with tilt and clock-management patterns most analysis tools ignore.",
+                initial: "R",
+                user: "raineling",
+                flair: "200–400 · Chess.com",
+                quote:
+                  "Honestly, quite an impressive application. I wish I had your skills.",
               },
-            ].map((card) => (
-              <div
-                key={card.title}
-                className="group relative rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6 transition-all hover:border-orange-500/30 hover:bg-white/[0.04]"
+            ].map((t) => (
+              <figure
+                key={t.user}
+                className="relative rounded-2xl border border-white/[0.08] bg-white/[0.02] p-6"
               >
-                <span className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-orange-500/10 text-orange-300">
-                  <card.icon className="h-5 w-5" />
-                </span>
-                <h3 className="mt-4 text-lg font-bold text-white">
-                  {card.title}
-                </h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate-400">
-                  {card.body}
-                </p>
-              </div>
+                <blockquote className="text-base leading-relaxed text-slate-200">
+                  &ldquo;{t.quote}&rdquo;
+                </blockquote>
+                <figcaption className="mt-5 flex items-center gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-500/15 text-sm font-bold text-orange-200">
+                    {t.initial}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold text-white">
+                      u/{t.user}
+                    </span>
+                    <span className="block text-xs text-slate-500">
+                      {t.flair}
+                    </span>
+                  </span>
+                </figcaption>
+              </figure>
             ))}
           </div>
+
+          <p className="mt-10 text-center text-xs text-slate-500">
+            Real users, quoted with their Reddit usernames —{" "}
+            <a
+              href={REDDIT_THREAD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-slate-400 underline-offset-2 hover:text-slate-200 hover:underline"
+            >
+              read them in context
+            </a>
+            .
+          </p>
         </div>
       </section>
 
