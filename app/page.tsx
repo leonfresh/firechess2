@@ -66,6 +66,21 @@ const LOCAL_PRO_HOTKEY_ENABLED =
   process.env.NEXT_PUBLIC_ENABLE_LOCAL_PRO_HOTKEY !== "false";
 const IS_DEV = process.env.NODE_ENV !== "production";
 
+/** Small "?" hover tooltip used by the advanced scan settings panel. */
+function HelpTip({ text }: { text: string }) {
+  return (
+    <span className="group relative ml-1 inline-flex">
+      <span className="flex h-[15px] w-[15px] cursor-help items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-[9px] font-bold leading-none text-slate-400 transition-colors group-hover:border-emerald-500/30 group-hover:bg-emerald-500/10 group-hover:text-emerald-400">
+        ?
+      </span>
+      <span className="pointer-events-none absolute bottom-full left-1/2 z-[9999] mb-2 w-48 -translate-x-1/2 rounded-lg border border-white/[0.08] bg-slate-900/95 px-3 py-2 text-[11px] font-normal normal-case leading-snug tracking-normal text-slate-300 opacity-0 shadow-xl backdrop-blur-sm transition-opacity group-hover:opacity-100">
+        {text}
+        <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-slate-900/95" />
+      </span>
+    </span>
+  );
+}
+
 export default function HomePage() {
   const {
     plan: sessionPlan,
@@ -1193,6 +1208,317 @@ export default function HomePage() {
 
           {/* ─── Admin Debug Widget ─── */}
           <AdminDebug />
+
+          {/* ─── Advanced scan settings modal ─── */}
+          {advancedSettingsOpen && (
+            <div className="fixed inset-0 z-[80] flex items-start justify-center bg-[rgba(2,6,23,0.78)] px-4 py-6 backdrop-blur-sm sm:items-center sm:px-6">
+              <div
+                className="absolute inset-0"
+                onClick={() => setAdvancedSettingsOpen(false)}
+                aria-hidden="true"
+              />
+              <section className="relative z-10 max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-[2rem] border border-white/[0.08] bg-[rgba(6,11,26,0.96)] p-5 shadow-[0_30px_120px_-48px_rgba(2,6,23,0.98)] sm:p-6">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-cyan-200/72">
+                      Advanced Scan Settings
+                    </p>
+                    <h2 className="mt-2 text-2xl font-bold text-white">
+                      Tune the scan without crowding the homepage.
+                    </h2>
+                    <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">
+                      These settings apply to the quick scan above. Set the
+                      platform and username there, then use this panel for
+                      depth, thresholds, and range.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setAdvancedSettingsOpen(false)}
+                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.04] text-slate-400 transition hover:border-white/[0.16] hover:text-white"
+                    aria-label="Close advanced scan settings"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                    >
+                      <path d="M18 6 6 18M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="mt-5 flex flex-wrap items-center gap-2">
+                  <span className="tag-cyan text-[11px]">
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-400" />
+                    Browser analysis
+                  </span>
+                  {IS_DEV && LOCAL_PRO_HOTKEY_ENABLED && (
+                    <span
+                      className={`tag-pill text-[11px] ${
+                        localProEnabled
+                          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                          : "border-white/10 bg-white/[0.03] text-slate-400"
+                      }`}
+                    >
+                      Pro: {localProEnabled ? "ON" : "OFF"} (~)
+                    </span>
+                  )}
+                </div>
+
+
+                <div className="mt-6 space-y-3">
+                  <div className="stat-card space-y-2">
+                    <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                      Time Control
+                      <HelpTip text="Filter which game speeds to include. Pick specific ones or All. Multi-select is supported — click multiple to combine." />
+                    </span>
+                    <div className="grid h-auto grid-cols-3 gap-1 rounded-lg border border-white/[0.06] bg-white/[0.02] p-1 sm:h-10 sm:grid-cols-5">
+                      {[
+                        { value: "all" as const, label: "All" },
+                        { value: "bullet" as const, label: "Bullet" },
+                        { value: "blitz" as const, label: "Blitz" },
+                        { value: "rapid" as const, label: "Rapid" },
+                        { value: "classical" as const, label: "Classical" },
+                      ].map((tc) => {
+                        const isActive = speed.includes(tc.value);
+                        return (
+                          <button
+                            key={tc.value}
+                            type="button"
+                            onClick={() => {
+                              if (tc.value === "all") {
+                                setSpeed(["all"]);
+                              } else {
+                                setSpeed((prev) => {
+                                  const withoutAll = prev.filter(
+                                    (s) => s !== "all",
+                                  );
+                                  const next = withoutAll.includes(tc.value)
+                                    ? withoutAll.filter((s) => s !== tc.value)
+                                    : [...withoutAll, tc.value];
+                                  return next.length === 0 || next.length === 4
+                                    ? ["all"]
+                                    : next;
+                                });
+                              }
+                            }}
+                            className={`rounded-md text-[11px] font-semibold transition-all duration-200 ${
+                              isActive
+                                ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-slate-950 shadow-glow-sm"
+                                : "text-slate-400 hover:bg-white/[0.05] hover:text-slate-200"
+                            }`}
+                          >
+                            {tc.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {!speed.includes("all") && speed.length > 1 && (
+                      <p className="text-[10px] text-slate-500">
+                        {speed.length} time controls selected
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+                    <div className="stat-card space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                          Games
+                          <HelpTip text="Scan your N most recent games (Last N), or pick a date range to include every game played in that window. The end date is optional — leave it blank to scan up to today." />
+                        </span>
+                        <div className="grid h-6 grid-cols-2 gap-0.5 rounded-md border border-white/[0.06] bg-white/[0.02] p-0.5">
+                          <button
+                            type="button"
+                            onClick={() => setGameRangeMode("count")}
+                            className={`rounded px-1.5 text-[10px] font-semibold transition-all ${
+                              gameRangeMode === "count"
+                                ? "bg-emerald-500/80 text-slate-950"
+                                : "text-slate-500 hover:text-slate-300"
+                            }`}
+                          >
+                            Last N
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setGameRangeMode("since")}
+                            className={`rounded px-1.5 text-[10px] font-semibold transition-all ${
+                              gameRangeMode === "since"
+                                ? "bg-emerald-500/80 text-slate-950"
+                                : "text-slate-500 hover:text-slate-300"
+                            }`}
+                          >
+                            Range
+                          </button>
+                        </div>
+                      </div>
+                      {gameRangeMode === "count" ? (
+                        <input
+                          type="number"
+                          min={1}
+                          max={hasProAccess ? 100000 : 300}
+                          value={gameCount}
+                          onChange={(e) => setGameCount(Number(e.target.value))}
+                          aria-label="Number of games to scan"
+                          className="glass-input h-10 text-sm"
+                        />
+                      ) : (
+                        <div className="space-y-2">
+                          <div className="space-y-1">
+                            <span className="text-[10px] uppercase tracking-wider text-slate-500">
+                              From
+                            </span>
+                            <input
+                              type="date"
+                              value={sinceDate}
+                              onChange={(e) => setSinceDate(e.target.value)}
+                              max={new Date().toISOString().split("T")[0]}
+                              disabled={!hasProAccess}
+                              aria-label="Scan games from date"
+                              className="glass-input h-10 min-w-0 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-[10px] uppercase tracking-wider text-slate-500">
+                              To
+                            </span>
+                            <input
+                              type="date"
+                              value={untilDate}
+                              onChange={(e) => setUntilDate(e.target.value)}
+                              min={sinceDate || undefined}
+                              max={new Date().toISOString().split("T")[0]}
+                              disabled={!hasProAccess}
+                              aria-label="Scan games until date (optional)"
+                              className="glass-input h-10 min-w-0 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      {gameRangeMode === "since" && !hasProAccess && (
+                        <p className="text-xs font-medium text-amber-400">
+                          Requires{" "}
+                          <Link href="/pricing" className="underline">
+                            Pro
+                          </Link>
+                        </p>
+                      )}
+                      {gameRangeMode === "count" && gamesOverFreeLimit && (
+                        <p className="text-xs font-medium text-amber-400">
+                          {!hasProAccess ? (
+                            <>
+                              Requires{" "}
+                              <Link href="/pricing" className="underline">
+                                Pro
+                              </Link>
+                            </>
+                          ) : gameCount > 1000 ? (
+                            `${gameCount.toLocaleString()} games — may take a while`
+                          ) : (
+                            "Unlocked"
+                          )}
+                        </p>
+                      )}
+                      {gameRangeMode === "since" && !sinceDate && (
+                        <p className="text-[10px] text-slate-500">
+                          Pick a start date
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="stat-card space-y-2">
+                      <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                        Moves
+                        <HelpTip text="How deep into the opening to scan (number of moves per side). Higher values catch later opening deviations but take longer." />
+                      </span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={hasProAccess ? 40 : FREE_MAX_MOVES}
+                        value={moveCount}
+                        onChange={(e) => setMoveCount(Number(e.target.value))}
+                        aria-label="Number of moves to scan"
+                        className="glass-input h-10 text-sm"
+                      />
+                      {!hasProAccess && movesOverFreeLimit && (
+                        <p className="text-xs font-medium text-amber-400">
+                          Free capped at {FREE_MAX_MOVES}.{" "}
+                          <Link href="/pricing" className="underline">
+                            Upgrade
+                          </Link>{" "}
+                          for up to 40.
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="stat-card space-y-2">
+                      <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                        CP Threshold
+                        <HelpTip text="Minimum centipawn loss to flag a move as a mistake. Lower = stricter (catches inaccuracies). Default 50cp works well for most players." />
+                      </span>
+                      <input
+                        type="number"
+                        min={1}
+                        max={1000}
+                        value={cpThreshold}
+                        onChange={(e) => setCpThreshold(Number(e.target.value))}
+                        aria-label="Centipawn loss threshold"
+                        className="glass-input h-10 text-sm"
+                      />
+                    </div>
+
+                    <div className="stat-card space-y-2">
+                      <span className="text-xs font-medium uppercase tracking-wider text-slate-500">
+                        Depth
+                        <HelpTip text="Stockfish engine search depth. Higher = more accurate but slower. 12 is good for quick scans, 18+ for serious analysis. Pro unlocks up to 24." />
+                      </span>
+                      <input
+                        type="number"
+                        min={6}
+                        max={24}
+                        value={engineDepth}
+                        onChange={(e) => setEngineDepth(Number(e.target.value))}
+                        aria-label="Engine search depth"
+                        className="glass-input h-10 text-sm"
+                      />
+                      {depthOverFreeLimit && (
+                        <p className="text-xs font-medium text-amber-400">
+                          {!hasProAccess ? (
+                            <>
+                              Requires{" "}
+                              <Link href="/pricing" className="underline">
+                                Pro
+                              </Link>
+                            </>
+                          ) : (
+                            "Unlocked"
+                          )}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex flex-col gap-3 border-t border-white/[0.08] pt-4 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-xs leading-relaxed text-slate-500">
+                    These settings update the next scan immediately. Use the
+                    main scan button in the quick-scan card when you are ready.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setAdvancedSettingsOpen(false)}
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.04] px-5 py-2.5 text-sm font-semibold text-white transition hover:border-white/[0.18] hover:bg-white/[0.07]"
+                  >
+                    Done
+                  </button>
+                </div>
+              </section>
+            </div>
+          )}
 
         </section>
       </div>
