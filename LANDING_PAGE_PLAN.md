@@ -261,9 +261,11 @@ function buildInstantScanPayload(args): PublicScanSessionPayload {
 
 Apply the earlier audit (decisions already made).
 
-- [ ] **Delete** the dead App Launcher block (`{false && state === "idle" && …}`, ~line 2650) + now-unused `LauncherEditor` import, `launcherConfig` state, `saveLauncherConfig`, and the loader `useEffect`. _(A background task was spun off for this — fold it in.)_
-- [ ] **Demote** "More to explore" (Chaos/Sparring/Dungeon/Roast, ~line 2563) to the very bottom or footer.
-- [ ] **Move testimonials** above the Final CTA (proof before ask) — _gated on Phase 5 authenticity check._
+- [x] **Deleted** the dead App Launcher block + its `LauncherEditor` import, `launcherConfig` state, `saveLauncherConfig`, and loader effect.
+- [x] **Deleted** the dead `state === "loading"` UI block (~638 lines; `setState("loading")` is never called) — which also contained the already-dead welcome-back / restore-cached-report banners.
+- [x] **Removed the entire dead inline-report / scan-result subsystem** (decision: remove, not revive). The homepage scan navigates to `/report/[id]`; the inline report was unreachable. Net effect of Phase 1 + Phase 4: **`app/page.tsx` 8,597 → 1,267 lines (~85% smaller)**, `tsc` + `tsc --noUnusedLocals` clean, renders 200. Commits `e475f98`, `2876b1b`.
+- [ ] **Demote** "More to explore" (Chaos/Sparring/Dungeon/Roast) to the very bottom or footer. _(Not done yet — the one remaining section-diet item.)_
+- [ ] **Move testimonials** above the Final CTA — _gated on Phase 5 authenticity check._
 - [ ] Re-confirm spacing reads as distinct breathing blocks.
 
 **Acceptance:** fewer top-level sections; focus path = hero → scan → how-it-works → proof → CTA.
