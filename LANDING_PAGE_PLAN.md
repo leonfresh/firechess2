@@ -72,7 +72,14 @@ Research sources: SaaSFrame "10 SaaS landing trends 2026", Memorable.design "Her
 | INP | _tbd_ | | < 200ms |
 | CLS | _tbd_ | | < 0.1 |
 | TBT | _tbd_ | | < 200ms |
-| `/` First Load JS | _tbd_ | | ↓ 30%+ |
+| `/` First Load JS | _not captured_ | **215 kB** (static prerender) | ↓ 30%+ |
+
+> _After Phase 1+4:_ production build clean (exit 0, 0 errors). Homepage `/` =
+> 44.2 kB route size, **215 kB First Load JS**, statically prerendered. No
+> pre-change baseline was captured, but `/report/[id]` — which now solely
+> carries the full report tree the homepage used to duplicate — is **439 kB**,
+> so the homepage shed roughly half its JS by dropping that tree. LCP/INP/CLS
+> still want a real Lighthouse run if you want exact field numbers.
 
 ---
 
