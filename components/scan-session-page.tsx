@@ -8,6 +8,7 @@ import {
   type CommunityPostComposerSeed,
 } from "@/components/community-post-composer-modal";
 import { ScanSessionReport } from "@/components/scan-session-report";
+import { BiggestTakeawayCard } from "@/components/biggest-takeaway-card";
 import { useSession } from "@/components/session-provider";
 import {
   analyzeBrilliantMovesInBrowser,
@@ -995,6 +996,10 @@ export function ScanSessionPage({
             </div>
           </div>
         </section>
+
+        {scan.status === "ready" && scan.result ? (
+          <BiggestTakeawayCard result={scan.result} />
+        ) : null}
 
         {isAdmin && scan.status === "ready" && scan.result ? (
           <section className="mt-6 rounded-[1.5rem] border border-cyan-500/20 bg-cyan-500/[0.06] p-5">

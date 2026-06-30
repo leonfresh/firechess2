@@ -1,0 +1,24 @@
+{
+  "name": "firechess-shorts-remotion",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Remotion workspace for FireChess vertical shorts — uses the real react-chessboard board.",
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render src/index.ts roast out.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.0",
+    "@remotion/google-fonts": "^4.0.0",
+    "chess.js": "^1.4.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-chessboard": "^5.10.0",
+    "remotion": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.7.0"
+  }
+}

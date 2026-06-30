@@ -1,0 +1,172 @@
+{
+  "evalWhite": [
+    35,
+    32,
+    30,
+    -1,
+    27,
+    -30,
+    -36,
+    -38,
+    -38,
+    -83,
+    -35,
+    -217,
+    -131,
+    -251,
+    -89,
+    -257,
+    -324,
+    -531,
+    -527,
+    -519,
+    -517
+  ],
+  "moves": [
+    {
+      "ply": 1,
+      "san": "e4",
+      "white": true,
+      "cpLoss": 3,
+      "classification": "book"
+    },
+    {
+      "ply": 2,
+      "san": "e5",
+      "white": false,
+      "cpLoss": 0,
+      "classification": "book"
+    },
+    {
+      "ply": 3,
+      "san": "Bc4",
+      "white": true,
+      "cpLoss": 31,
+      "classification": "inaccuracy"
+    },
+    {
+      "ply": 4,
+      "san": "Nc6",
+      "white": false,
+      "cpLoss": 28,
+      "classification": "inaccuracy"
+    },
+    {
+      "ply": 5,
+      "san": "Qh5",
+      "white": true,
+      "cpLoss": 57,
+      "classification": "inaccuracy"
+    },
+    {
+      "ply": 6,
+      "san": "g6",
+      "white": false,
+      "cpLoss": 0,
+      "classification": "book"
+    },
+    {
+      "ply": 7,
+      "san": "Qf3",
+      "white": true,
+      "cpLoss": 2,
+      "classification": "book"
+    },
+    {
+      "ply": 8,
+      "san": "Nf6",
+      "white": false,
+      "cpLoss": 0,
+      "classification": "book"
+    },
+    {
+      "ply": 9,
+      "san": "d3",
+      "white": true,
+      "cpLoss": 45,
+      "classification": "inaccuracy"
+    },
+    {
+      "ply": 10,
+      "san": "Bg7",
+      "white": false,
+      "cpLoss": 48,
+      "classification": "inaccuracy"
+    },
+    {
+      "ply": 11,
+      "san": "Nh3",
+      "white": true,
+      "cpLoss": 182,
+      "classification": "mistake"
+    },
+    {
+      "ply": 12,
+      "san": "O-O",
+      "white": false,
+      "cpLoss": 86,
+      "classification": "mistake"
+    },
+    {
+      "ply": 13,
+      "san": "O-O",
+      "white": true,
+      "cpLoss": 120,
+      "classification": "mistake"
+    },
+    {
+      "ply": 14,
+      "san": "d6",
+      "white": false,
+      "cpLoss": 162,
+      "classification": "mistake"
+    },
+    {
+      "ply": 15,
+      "san": "Qg3",
+      "white": true,
+      "cpLoss": 168,
+      "classification": "mistake"
+    },
+    {
+      "ply": 16,
+      "san": "Nd4",
+      "white": false,
+      "cpLoss": 0,
+      "classification": "book"
+    },
+    {
+      "ply": 17,
+      "san": "c3",
+      "white": true,
+      "cpLoss": 207,
+      "classification": "blunder"
+    },
+    {
+      "ply": 18,
+      "san": "Ne2+",
+      "white": false,
+      "cpLoss": 4,
+      "classification": "best"
+    },
+    {
+      "ply": 19,
+      "san": "Kh1",
+      "white": true,
+      "cpLoss": 0,
+      "classification": "best"
+    },
+    {
+      "ply": 20,
+      "san": "Nxg3",
+      "white": false,
+      "cpLoss": 2,
+      "classification": "best"
+    }
+  ],
+  "whiteAccuracy": 63.6,
+  "whiteAvgCpLoss": 82,
+  "whiteBlunders": 1,
+  "whiteMistakes": 3,
+  "whiteInaccuracies": 3
+}

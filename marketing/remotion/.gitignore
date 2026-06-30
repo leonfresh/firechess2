@@ -1,0 +1,8 @@
+node_modules/
+out.mp4
+*.mp4
+*.png
+*.wav
+.remotion/
+.env
+validate-game.mjs

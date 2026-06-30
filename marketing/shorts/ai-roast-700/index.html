@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1080, height=1920" />
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 1080px; height: 1920px; overflow: hidden;
+        background: #070410; font-family: "Inter", system-ui, sans-serif; color: #fff;
+      }
+      #root { position: relative; width: 1080px; height: 1920px;
+        background: radial-gradient(120% 70% at 50% 16%, #1a0f33 0%, #0a0612 58%, #070410 100%); }
+
+      /* progress + brand */
+      #prog { position: absolute; top: 0; left: 0; right: 0; height: 8px; background: rgba(255,255,255,.08); z-index: 9; }
+      #progFill { height: 100%; width: 0; background: linear-gradient(90deg, #a855f7, #f59e0b); }
+      #brand { position: absolute; top: 30px; right: 38px; font-size: 30px; font-weight: 800; color: #fbbf24; opacity: 0; z-index: 9; }
+
+      .scene { position: absolute; inset: 0; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; text-align: center; padding: 150px 80px; gap: 34px; opacity: 0; }
+
+      .kicker { font-size: 30px; font-weight: 800; letter-spacing: 7px; color: #c084fc;
+        background: rgba(168,85,247,.14); padding: 14px 32px; border-radius: 999px; }
+      .hook { font-size: 96px; font-weight: 900; line-height: 1.06; letter-spacing: -1px; text-shadow: 0 6px 30px rgba(0,0,0,.5); }
+      .hook.sm { font-size: 84px; }
+      .hl { color: #fbbf24; text-shadow: 0 0 40px rgba(251,191,36,.5); }
+      .sub { font-size: 50px; font-weight: 700; color: #f0abfc; }
+      .sub.small { color: #94a3b8; font-weight: 600; font-size: 42px; }
+
+      .cap { font-size: 60px; font-weight: 800; line-height: 1.16; text-shadow: 0 3px 18px rgba(0,0,0,.6); }
+      .cap.top { position: absolute; top: 150px; left: 0; right: 0; padding: 0 90px; }
+      .cap.bot { position: absolute; bottom: 160px; left: 0; right: 0; padding: 0 90px; }
+      .dim { color: #94a3b8; font-weight: 600; }
+      .red { color: #f87171; text-shadow: 0 0 26px rgba(248,113,113,.5); }
+
+      /* board */
+      .board-area { position: relative; width: 760px; height: 760px; border-radius: 12px; overflow: hidden;
+        box-shadow: 0 16px 56px rgba(0,0,0,.55), 0 0 0 3px rgba(168,85,247,.3); }
+      .bd { display: grid; grid-template-columns: repeat(8, 1fr); width: 100%; height: 100%; position: absolute; inset: 0; }
+      .sq { display: flex; align-items: center; justify-content: center; font-size: 74px; line-height: 1; position: relative; }
+      .lt { background: #5b5470; } .dk { background: #332c49; }
+      .pw { color: #f8f8f8; text-shadow: 0 3px 4px rgba(0,0,0,.7); }
+      .pb { color: #15131c; text-shadow: 0 1px 2px rgba(255,255,255,.22); }
+      .mark { position: absolute; inset: 6%; border-radius: 50%; box-shadow: 0 0 0 5px #f87171 inset; }
+      .mark.amber { box-shadow: 0 0 0 5px #fbbf24 inset; }
+      .flash { position: absolute; inset: 0; background: radial-gradient(circle, rgba(248,113,113,.55), transparent 68%); opacity: 0; z-index: 4; }
+      .tour { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; }
+      .evalbar { position: absolute; left: -26px; top: 0; width: 16px; height: 100%; background: #15131c;
+        border-radius: 8px; overflow: hidden; display: flex; flex-direction: column-reverse; }
+      .evalW { width: 100%; background: #f0f0f0; }
+
+      /* roast card */
+      .roast-card { width: 860px; background: linear-gradient(160deg, #1c1030, #120a22);
+        border: 2px solid rgba(168,85,247,.4); border-radius: 28px; padding: 54px 46px;
+        box-shadow: 0 20px 80px rgba(120,40,200,.3); text-align: left; }
+      .rc-head { font-size: 34px; font-weight: 900; letter-spacing: 2px; color: #fbbf24; margin-bottom: 34px; }
+      .rc-line { font-size: 50px; font-weight: 700; line-height: 1.28; margin: 22px 0; }
+      .rc-line em { color: #f87171; font-style: normal; }
+      .rc-line.punch { color: #c084fc; margin-top: 36px; font-weight: 800; }
+
+      /* stats */
+      .stat-grid { display: flex; gap: 24px; width: 900px; justify-content: center; }
+      .stat { flex: 1; background: rgba(255,255,255,.04); border: 2px solid rgba(255,255,255,.1); border-radius: 22px; padding: 40px 10px; }
+      .num { font-size: 96px; font-weight: 900; color: #f87171; line-height: 1; }
+      .num.q { color: #fbbf24; }
+      .lab { font-size: 26px; font-weight: 700; letter-spacing: 1px; color: #94a3b8; margin-top: 18px; text-transform: uppercase; }
+      .leak { font-size: 42px; font-weight: 600; color: #cbd5e1; line-height: 1.4; }
+      .leak b { color: #fff; }
+      .scan-line { font-size: 60px; font-weight: 800; color: #6ee7b7; background: rgba(16,185,129,.1);
+        border: 2px solid rgba(16,185,129,.3); padding: 22px 40px; border-radius: 18px; font-family: ui-monospace, monospace; }
+
+      /* end */
+      .logo { font-size: 100px; font-weight: 900; color: #fbbf24; text-shadow: 0 0 50px rgba(251,191,36,.5); }
+      .cta { font-size: 60px; font-weight: 800; }
+      .cta-sub { font-size: 38px; color: #94a3b8; font-weight: 600; }
+      .cta-sub b { color: #fff; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-duration="30" data-width="1080" data-height="1920">
+      <div id="prog"><div id="progFill"></div></div>
+      <div id="brand">🔥 FireChess</div>
+
+      <!-- S0 hook -->
+      <div class="scene" id="s0">
+        <div class="kicker">CHESS ROAST</div>
+        <div class="hook">I let an AI roast<br>a <span class="hl">700-rated</span><br>player's chess</div>
+        <div class="sub">It was brutal 💀</div>
+      </div>
+
+      <!-- S1 queen out -->
+      <div class="scene" id="s1">
+        <div class="cap top">Qh5 on move 2.<br><span class="dim">A "classic."</span></div>
+        <div class="board-area" id="board1"></div>
+      </div>
+
+      <!-- S2 queen tour -->
+      <div class="scene" id="s2">
+        <div class="cap top">By move 9 the queen<br>had visited <span class="hl">5 squares</span>.</div>
+        <div class="board-area" id="board2">
+          <svg class="tour" id="tourSvg" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <polyline id="tourLine" points="43.75,93.75 93.75,43.75 68.75,68.75 18.75,68.75 43.75,93.75"
+              fill="none" stroke="#fbbf24" stroke-width="1.2" stroke-dasharray="240" stroke-dashoffset="240"/>
+          </svg>
+        </div>
+        <div class="cap bot">Five stops. Zero plan.</div>
+      </div>
+
+      <!-- S3 blunder -->
+      <div class="scene" id="s3">
+        <div class="cap top">Then he just…<br>left it there.</div>
+        <div class="board-area" id="board3">
+          <div id="board3a" style="position:absolute;inset:0"></div>
+          <div id="board3b" style="position:absolute;inset:0;opacity:0"></div>
+          <div class="flash" id="flash3"></div>
+        </div>
+        <div class="cap bot red">Nxh5. Queen gone.</div>
+      </div>
+
+      <!-- S4 roast card -->
+      <div class="scene" id="s4">
+        <div class="roast-card">
+          <div class="rc-head">♛ THE QUEEN TOUR, 2026</div>
+          <div class="rc-line">h5 → f3 → b3 → d1 → h5.</div>
+          <div class="rc-line">You developed your queen.</div>
+          <div class="rc-line">And <em>nothing</em> else.</div>
+          <div class="rc-line punch">Stockfish reviewed this<br>and asked for a break.</div>
+        </div>
+      </div>
+
+      <!-- S5 stats -->
+      <div class="scene" id="s5">
+        <div class="cap top">The damage report:</div>
+        <div class="stat-grid">
+          <div class="stat"><div class="num" id="numAcc">0%</div><div class="lab">accuracy</div></div>
+          <div class="stat"><div class="num" id="numBl">0</div><div class="lab">blunders</div></div>
+          <div class="stat"><div class="num q">M9</div><div class="lab">queen hung</div></div>
+        </div>
+        <div class="leak">Most repeated leak:<br><b>Early queen — in 5 of his games.</b></div>
+      </div>
+
+      <!-- S6 second hook -->
+      <div class="scene" id="s6">
+        <div class="sub small">But here's the part that hurts…</div>
+        <div class="hook sm">He loses<br>this <span class="hl">exact</span> way<br>every game.</div>
+      </div>
+
+      <!-- S7 your games -->
+      <div class="scene" id="s7">
+        <div class="hook sm">FireChess does this<br>to <span class="hl">YOUR</span> games.</div>
+        <div class="scan-line">@yourname<span id="caret">▍</span></div>
+      </div>
+
+      <!-- S8 end card -->
+      <div class="scene" id="s8">
+        <div class="logo">🔥 FireChess</div>
+        <div class="cta">Scan your games free</div>
+        <div class="cta-sub">No signup. Just search <b>FireChess</b>.</div>
+      </div>
+    </div>
+
+    <script>
+      /* ---- build chess boards (DOM only, no animation) ---- */
+      const files = ['a','b','c','d','e','f','g','h'];
+      const G = { p:'♟', n:'♞', b:'♝', r:'♜', q:'♛', k:'♚' };
+      const pos1 = { g8:'kb',f8:'rb',a8:'rb',d8:'qb',c8:'bb',c6:'nb',f6:'nb',c5:'bb',
+        a7:'pb',b7:'pb',c7:'pb',d6:'pb',e5:'pb',f7:'pb',g6:'pb',h7:'pb',
+        g1:'kw',f1:'rw',a1:'rw',h5:'qw',c4:'bw',c1:'bw',b1:'nw',f3:'nw',
+        a2:'pw',b2:'pw',c2:'pw',d2:'pw',e4:'pw',f2:'pw',g2:'pw',h2:'pw' };
+      const pos3 = Object.assign({}, pos1); delete pos3.f6; delete pos3.h5; pos3.h5 = 'nb';
+
+      function board(pos, opts) {
+        opts = opts || {};
+        const bd = document.createElement('div'); bd.className = 'bd';
+        for (let r = 0; r < 8; r++) for (let f = 0; f < 8; f++) {
+          const name = files[f] + (8 - r);
+          const sq = document.createElement('div');
+          sq.className = 'sq ' + (((r + f) % 2 === 0) ? 'lt' : 'dk');
+          const pc = pos[name];
+          if (pc) { const sp = document.createElement('span'); sp.className = pc[1] === 'w' ? 'pw' : 'pb'; sp.textContent = G[pc[0]]; sq.appendChild(sp); }
+          if (opts.mark && opts.mark.includes(name)) { const m = document.createElement('div'); m.className = 'mark' + (opts.amber && opts.amber.includes(name) ? ' amber' : ''); sq.appendChild(m); }
+          bd.appendChild(sq);
+        }
+        return bd;
+      }
+      function evalbar(pct, id) { const e = document.createElement('div'); e.className = 'evalbar';
+        const w = document.createElement('div'); w.className = 'evalW'; if (id) w.id = id; w.style.height = pct + '%'; e.appendChild(w); return e; }
+
+      const b1 = document.getElementById('board1'); b1.appendChild(evalbar(52)); b1.appendChild(board(pos1, { mark:['h5'], amber:['h5'] }));
+      const b2 = document.getElementById('board2'); b2.insertBefore(board(pos1, {}), b2.firstChild);
+      document.getElementById('board3a').appendChild(evalbar(52, 'eval3')); document.getElementById('board3a').appendChild(board(pos1, { mark:['h5','f6'] }));
+      document.getElementById('board3b').appendChild(board(pos3, { mark:['h5'] }));
+
+      /* ---- GSAP timeline (the deterministic source of truth) ---- */
+      const T = { s0:0, s1:2.4, s2:4.6, s3:7.2, s4:10.6, s5:16.0, s6:20.0, s7:23.2, s8:25.8, end:30 };
+      const tl = gsap.timeline({ paused: true });
+
+      // progress bar across full duration
+      tl.fromTo('#progFill', { width: 0 }, { width: 1080, duration: T.end, ease: 'none' }, 0);
+      tl.to('#brand', { opacity: 0.55, duration: 0.4 }, T.s1);
+
+      function scene(sel, tin, tout, enter) {
+        tl.fromTo(sel, { opacity: 0 }, { opacity: 1, duration: 0.3 }, tin);
+        if (enter) enter(tin);
+        tl.to(sel, { opacity: 0, duration: 0.3 }, tout - 0.3);
+      }
+      const pop = (sel, t) => tl.from(sel, { opacity: 0, y: 40, scale: 0.9, duration: 0.45, ease: 'back.out(1.7)' }, t);
+
+      scene('#s0', T.s0, T.s1, (t) => { pop('#s0 .hook', t + 0.05); tl.from('#s0 .sub', { opacity: 0, y: 20, duration: 0.4 }, t + 0.5); });
+      scene('#s1', T.s1, T.s2, (t) => { tl.from('#board1', { opacity: 0, scale: 0.95, duration: 0.4 }, t); tl.from('#s1 .cap', { opacity: 0, y: -20, duration: 0.4 }, t + 0.1); });
+      scene('#s2', T.s2, T.s3, (t) => { tl.from('#board2 .bd', { opacity: 0, duration: 0.3 }, t); tl.to('#tourLine', { strokeDashoffset: 0, duration: 1.5, ease: 'power1.inOut' }, t + 0.4); tl.from('#s2 .cap.bot', { opacity: 0, duration: 0.4 }, t + 1.4); });
+      scene('#s3', T.s3, T.s4, (t) => {
+        tl.from('#s3 .cap.top', { opacity: 0, y: -20, duration: 0.4 }, t);
+        // the blunder: cross-fade boards, swing eval bar, red flash
+        tl.to('#board3b', { opacity: 1, duration: 0.25 }, t + 1.3);
+        tl.fromTo('#eval3', { height: '52%' }, { height: '7%', duration: 0.9, ease: 'power3.out' }, t + 1.3);
+        tl.fromTo('#flash3', { opacity: 1 }, { opacity: 0, duration: 0.7, ease: 'power2.out' }, t + 1.3);
+        tl.from('#s3 .cap.bot', { opacity: 0, scale: 0.8, duration: 0.4, ease: 'back.out(2)' }, t + 1.4);
+      });
+      scene('#s4', T.s4, T.s5, (t) => { tl.from('.roast-card', { opacity: 0, y: 30, duration: 0.4 }, t); tl.from('.rc-line', { opacity: 0, x: -16, duration: 0.35, stagger: 0.55 }, t + 0.4); });
+      scene('#s5', T.s5, T.s6, (t) => {
+        tl.from('.stat', { opacity: 0, y: 24, duration: 0.35, stagger: 0.12 }, t + 0.1);
+        const acc = { v: 0 }, bl = { v: 0 };
+        tl.to(acc, { v: 41, duration: 1.0, ease: 'power1.out', onUpdate: () => document.getElementById('numAcc').textContent = Math.round(acc.v) + '%' }, t + 0.3);
+        tl.to(bl, { v: 7, duration: 1.0, ease: 'power1.out', onUpdate: () => document.getElementById('numBl').textContent = Math.round(bl.v) }, t + 0.3);
+        tl.from('.leak', { opacity: 0, y: 16, duration: 0.4 }, t + 1.2);
+      });
+      scene('#s6', T.s6, T.s7, (t) => { tl.from('#s6 .sub', { opacity: 0, duration: 0.4 }, t); pop('#s6 .hook', t + 0.5); });
+      scene('#s7', T.s7, T.s8, (t) => { pop('#s7 .hook', t + 0.05); tl.from('.scan-line', { opacity: 0, y: 20, duration: 0.4 }, t + 0.5); tl.to('#caret', { opacity: 0, duration: 0.4, repeat: 5, yoyo: true }, t + 0.9); });
+      scene('#s8', T.s8, T.end + 0.3, (t) => { pop('.logo', t + 0.05); tl.from('.cta', { opacity: 0, y: 16, duration: 0.4 }, t + 0.4); tl.from('.cta-sub', { opacity: 0, duration: 0.4 }, t + 0.7); });
+
+      // pin total duration
+      tl.set({}, {}, T.end);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines['main'] = tl;
+    </script>
+  </body>
+</html>
