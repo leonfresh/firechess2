@@ -71,6 +71,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+    site: "@firechessapp",
+    creator: "@firechessapp",
     title: "FireChess - Free Chess Analysis & Opening Leak Scanner",
     description:
       "Scan your games for repeated mistakes, missed tactics, and endgame blunders. Free & powered by Stockfish 18.",

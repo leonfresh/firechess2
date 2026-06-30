@@ -42,6 +42,14 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <StudyPlanArt />;
     case "how-to-study-chess-openings-without-memorizing":
       return <OpeningStudyArt />;
+    case "how-to-play-chaos-chess":
+      return <ChaosHowToArt />;
+    case "best-chaos-chess-modifiers-ranked":
+      return <ModifierTierArt />;
+    case "most-played-openings-by-rating":
+      return <OpeningsDataArt />;
+    case "how-often-chess-players-blunder":
+      return <BlunderDataArt />;
     default:
       return <DefaultArt />;
   }
@@ -1068,6 +1076,194 @@ function DefaultArt() {
       </g>
       {/* Watermark */}
       <text x="200" y="180" textAnchor="middle" fill="white" fillOpacity="0.04" fontSize="20" fontWeight="700">{'FIRECHESS'}</text>
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Chaos Chess  how to play  3 draft cards + 5-phase track           */
+/* ================================================================== */
+function ChaosHowToArt() {
+  return (
+    <svg viewBox="0 0 680 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="chtBg" x1="0" y1="0" x2="680" y2="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0a0618" /><stop offset="1" stopColor="#0d0a1e" />
+        </linearGradient>
+        <radialGradient id="chtGlow" cx="340" cy="120" r="240" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#a855f7" stopOpacity="0.16" /><stop offset="1" stopColor="#a855f7" stopOpacity="0" />
+        </radialGradient>
+        <filter id="chtF"><feGaussianBlur stdDeviation="5" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="680" height="280" rx="18" fill="url(#chtBg)" />
+      <rect width="680" height="280" rx="18" fill="url(#chtGlow)" />
+      <rect x="1" y="1" width="678" height="278" rx="17" stroke="#a855f7" strokeOpacity="0.16" />
+      <text x="340" y="36" textAnchor="middle" fill="white" fontSize="16" fontWeight="800" fontFamily="system-ui">How to Play Chaos Chess</text>
+      <text x="340" y="56" textAnchor="middle" fill="#94a3b8" fontSize="11" fontFamily="system-ui">Draft a permanent modifier every 5 turns</text>
+      {/* 3 draft cards */}
+      {[
+        { dx: -120, lbl: "COMMON", col: "#22c55e", icon: "🚀" },
+        { dx: 0, lbl: "EPIC", col: "#a855f7", icon: "🔫" },
+        { dx: 120, lbl: "RARE", col: "#3b82f6", icon: "🏇" },
+      ].map((c, i) => (
+        <g key={c.lbl} transform={`translate(${340 + c.dx},150)`}>
+          <rect x="-44" y="-44" width="88" height="108" rx="9" fill="#160a30" fillOpacity="0.9"
+            stroke={c.col} strokeOpacity={i === 1 ? 0.85 : 0.4} strokeWidth={i === 1 ? 2 : 1.2}
+            filter={i === 1 ? "url(#chtF)" : undefined} />
+          <text x="0" y="-22" textAnchor="middle" fontSize="26">{c.icon}</text>
+          <text x="0" y="22" textAnchor="middle" fill={c.col} fontSize="11" fontWeight="700" fontFamily="system-ui">{c.lbl}</text>
+          <rect x="-30" y="34" width="60" height="3" rx="1.5" fill={c.col} fillOpacity="0.3" />
+          <rect x="-24" y="42" width="48" height="3" rx="1.5" fill={c.col} fillOpacity="0.2" />
+        </g>
+      ))}
+      {/* 5-phase escalation track */}
+      <line x1="120" y1="246" x2="560" y2="246" stroke="#a855f7" strokeOpacity="0.25" strokeWidth="2" />
+      {[
+        { x: 120, c: "#64748b" }, { x: 230, c: "#3b82f6" }, { x: 340, c: "#a855f7" },
+        { x: 450, c: "#a855f7" }, { x: 560, c: "#fbbf24" },
+      ].map((p, i) => (
+        <g key={`ph${i}`}>
+          <circle cx={p.x} cy="246" r={i === 4 ? 7 : 5.5} fill={p.c} />
+          <text x={p.x} y="266" textAnchor="middle" fill="#94a3b8" fontSize="10" fontFamily="system-ui">{`T${(i + 1) * 5}`}</text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Chaos modifier tier list  S / A / B / C rows                       */
+/* ================================================================== */
+function ModifierTierArt() {
+  const rows = [
+    { t: "S", col: "#fbbf24", icons: ["🔫", "👸", "🏇", "⚡"] },
+    { t: "A", col: "#a855f7", icons: ["☢️", "🌙", "🔱", "💥"] },
+    { t: "B", col: "#3b82f6", icons: ["🚀", "🐉", "💀"] },
+    { t: "C", col: "#64748b", icons: ["🌀", "🪃"] },
+  ];
+  return (
+    <svg viewBox="0 0 680 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="mtrBg" x1="0" y1="0" x2="680" y2="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0a0618" /><stop offset="1" stopColor="#11091f" />
+        </linearGradient>
+        <radialGradient id="mtrGlow" cx="340" cy="140" r="220" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#fbbf24" stopOpacity="0.1" /><stop offset="1" stopColor="#fbbf24" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="680" height="280" rx="18" fill="url(#mtrBg)" />
+      <rect width="680" height="280" rx="18" fill="url(#mtrGlow)" />
+      <rect x="1" y="1" width="678" height="278" rx="17" stroke="white" strokeOpacity="0.05" />
+      <text x="340" y="38" textAnchor="middle" fill="white" fontSize="16" fontWeight="800" fontFamily="system-ui">Best Chaos Chess Modifiers, Ranked</text>
+      {rows.map((row, i) => (
+        <g key={row.t} transform={`translate(70,${64 + i * 48})`}>
+          <rect x="0" y="0" width="48" height="40" rx="8" fill={row.col} fillOpacity="0.16" stroke={row.col} strokeOpacity="0.5" />
+          <text x="24" y="27" textAnchor="middle" fill={row.col} fontSize="20" fontWeight="900" fontFamily="system-ui">{row.t}</text>
+          <rect x="58" y="0" width="482" height="40" rx="8" fill="#150c28" fillOpacity="0.7" stroke="#2a1a44" />
+          {row.icons.map((ic, j) => (
+            <g key={j} transform={`translate(${80 + j * 56},20)`}>
+              <rect x="-20" y="-15" width="40" height="30" rx="6" fill={row.col} fillOpacity="0.08" stroke={row.col} strokeOpacity="0.22" />
+              <text x="0" y="6" textAnchor="middle" fontSize="16">{ic}</text>
+            </g>
+          ))}
+        </g>
+      ))}
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Openings by rating  heatmap grid + board motif                     */
+/* ================================================================== */
+function OpeningsDataArt() {
+  const cells = [
+    [44, 47, 49, 50, 51, 52],
+    [43, 46, 48, 48, 49, 47],
+    [46, 48, 49, 50, 51, 50],
+    [45, 47, 48, 47, 48, 46],
+    [48, 49, 50, 51, 50, 52],
+  ];
+  const color = (v: number) => {
+    if (v >= 51) return "#0c7d57";
+    if (v >= 50) return "#2f5d50";
+    if (v >= 49) return "#3a4252";
+    if (v >= 47) return "#7a4250";
+    return "#b03048";
+  };
+  return (
+    <svg viewBox="0 0 680 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="opdBg" x1="0" y1="0" x2="680" y2="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0a0e1a" /><stop offset="1" stopColor="#0d1222" />
+        </linearGradient>
+        <radialGradient id="opdGlow" cx="340" cy="150" r="220" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#10b981" stopOpacity="0.1" /><stop offset="1" stopColor="#10b981" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="680" height="280" rx="18" fill="url(#opdBg)" />
+      <rect width="680" height="280" rx="18" fill="url(#opdGlow)" />
+      <rect x="1" y="1" width="678" height="278" rx="17" stroke="white" strokeOpacity="0.05" />
+      <text x="340" y="36" textAnchor="middle" fill="white" fontSize="16" fontWeight="800" fontFamily="system-ui">1.5M Games: Openings by Rating</text>
+      <text x="340" y="56" textAnchor="middle" fill="#64748b" fontSize="11" fontFamily="system-ui">White win % heatmap  green = White scores well</text>
+      {/* heatmap */}
+      <g transform="translate(150,76)">
+        {cells.map((rowArr, r) =>
+          rowArr.map((v, c) => (
+            <g key={`${r}-${c}`}>
+              <rect x={c * 62} y={r * 32} width="58" height="28" rx="4" fill={color(v)} />
+              <text x={c * 62 + 29} y={r * 32 + 18} textAnchor="middle" fill="#e2e8f0" fontSize="11" fontWeight="600" fontFamily="system-ui">{v}</text>
+            </g>
+          )),
+        )}
+        {/* axis labels */}
+        {["<1k", "1.2k", "1.4k", "1.6k", "1.8k", "2.2k"].map((l, i) => (
+          <text key={l} x={i * 62 + 29} y="-8" textAnchor="middle" fill="#94a3b8" fontSize="10" fontFamily="system-ui">{l}</text>
+        ))}
+      </g>
+      <text x="60" y="160" textAnchor="middle" fill="#64748b" fontSize="10" fontFamily="system-ui" transform="rotate(-90 60 160)">opening</text>
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Blunders by rating  descending bar chart + tilted piece           */
+/* ================================================================== */
+function BlunderDataArt() {
+  const vals = [11.9, 9.8, 8.8, 7.9, 7.0, 6.6, 5.9, 5.1];
+  const max = 12;
+  const labels = ["<1k", "1.0k", "1.2k", "1.4k", "1.6k", "1.8k", "2.0k", "2.2k"];
+  return (
+    <svg viewBox="0 0 680 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bldBg" x1="0" y1="0" x2="680" y2="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0a0e1a" /><stop offset="1" stopColor="#140d1a" />
+        </linearGradient>
+        <radialGradient id="bldGlow" cx="200" cy="120" r="220" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#ef4444" stopOpacity="0.1" /><stop offset="1" stopColor="#ef4444" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <rect width="680" height="280" rx="18" fill="url(#bldBg)" />
+      <rect width="680" height="280" rx="18" fill="url(#bldGlow)" />
+      <rect x="1" y="1" width="678" height="278" rx="17" stroke="white" strokeOpacity="0.05" />
+      <text x="340" y="36" textAnchor="middle" fill="white" fontSize="16" fontWeight="800" fontFamily="system-ui">How Often Players Blunder, by Rating</text>
+      <text x="340" y="56" textAnchor="middle" fill="#64748b" fontSize="11" fontFamily="system-ui">Blunders per 100 moves  60k analyzed games</text>
+      {/* bars */}
+      <g transform="translate(60,80)">
+        <line x1="0" y1="160" x2="560" y2="160" stroke="#334155" strokeWidth="1" />
+        {vals.map((v, i) => {
+          const h = (v / max) * 150;
+          const t = i / (vals.length - 1);
+          const col = `rgb(${Math.round(225 - (225 - 16) * t)},${Math.round(60 + (185 - 60) * t)},${Math.round(72 + (129 - 72) * t)})`;
+          const x = i * 70 + 12;
+          return (
+            <g key={i}>
+              <rect x={x} y={160 - h} width="44" height={h} rx="4" fill={col} />
+              <text x={x + 22} y={160 - h - 7} textAnchor="middle" fill="#e2e8f0" fontSize="11" fontWeight="700" fontFamily="system-ui">{v}</text>
+              <text x={x + 22} y="178" textAnchor="middle" fill="#94a3b8" fontSize="10" fontFamily="system-ui">{labels[i]}</text>
+            </g>
+          );
+        })}
+      </g>
     </svg>
   );
 }

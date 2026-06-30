@@ -1,0 +1,51 @@
+[Event "Rated Blitz game"]
+[Site "https://lichess.org/abcd1234"]
+[White "alice"]
+[Black "bob"]
+[Result "1-0"]
+[WhiteElo "1180"]
+[BlackElo "1210"]
+[ECO "B01"]
+[Opening "Scandinavian Defense"]
+[TimeControl "300+0"]
+
+1. e4 d5 2. exd5 Qxd5 3. Nc3 Qa5 1-0
+
+[Event "Rated Blitz game"]
+[Site "https://lichess.org/efgh5678"]
+[White "carol"]
+[Black "dave"]
+[Result "0-1"]
+[WhiteElo "1190"]
+[BlackElo "1205"]
+[ECO "C50"]
+[Opening "Italian Game"]
+[TimeControl "300+0"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 0-1
+
+[Event "Rated Rapid game"]
+[Site "https://lichess.org/ijkl9012"]
+[White "erin"]
+[Black "frank"]
+[Result "1/2-1/2"]
+[WhiteElo "2050"]
+[BlackElo "2080"]
+[ECO "C50"]
+[Opening "Italian Game"]
+[TimeControl "600+0"]
+
+1. e4 e5 2. Nf3 Nc6 3. Bc4 Be7 1/2-1/2
+
+[Event "Rated Bullet game"]
+[Site "https://lichess.org/mnop3456"]
+[White "grace"]
+[Black "heidi"]
+[Result "1-0"]
+[WhiteElo "2210"]
+[BlackElo "2190"]
+[ECO "B01"]
+[Opening "Scandinavian Defense"]
+[TimeControl "120+1"]
+
+1. e4 d5 2. exd5 Nf6 1-0
