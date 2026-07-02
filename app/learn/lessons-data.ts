@@ -776,11 +776,17 @@ const PASSED_PAWN_LESSON2: Lesson = {
       kind: "interact",
       heading: "Push the passer",
       instruction: "White has a 2-to-1 pawn majority on the kingside. White's f-pawn has no enemy pawn blocking it. Find the move that starts creating a passed pawn.",
-      fen: "8/5ppp/4k3/p7/5P2/6P1/6K1/8 w - - 0 1",
+
+      fen: "8/6pp/5k2/8/5PP1/8/6K1/8 w - - 0 1",
+
       orientation: "white",
+
       correctMoves: ["f4f5"],
-      wrongMoves: ["g3g4", "g2f3", "f4f6"],
+
+      wrongMoves: ["g4g5", "g2f3", "g2h3"],
+
       correctExplanation: "f5! Advance the unopposed pawn. Black's pawns can't block f5 because they're on the g- and h-files. After f5-f6, the pawn becomes a passed pawn that Black must block with pieces.",
+
       wrongExplanation: "Push the pawn that has no enemy pawn in front of it on its file. The kingside majority (f- and g-pawns vs Black's g- and h-pawns) means the f-pawn can become a passer.",
     },
     {
@@ -1222,13 +1228,13 @@ const SIMPLIFICATION_LESSON: Lesson = {
     {
       kind: "interact",
       heading: "Simplify when ahead",
-      instruction: "White is a pawn up. Black's knight attacks your bishop. Should you trade? Find the move that simplifies toward a winning endgame.",
-      fen: "r1bq1rk1/ppp2ppp/2np4/4p3/2BnP3/2NPB3/PPP2PPP/R3K2R w KQ - 0 12",
+      instruction: "White is up a bishop. Black's knight on d4 attacks your bishop on e3. Should you trade? Find the move that simplifies toward a winning endgame.",
+      fen: "r1bq1rk1/pppppppp/2n5/8/2BnP3/2N1BN2/PPPP1PPP/R2Q1RK1 w - - 0 10",
       orientation: "white",
       correctMoves: ["e3d4"],
-      wrongMoves: ["e3c1", "d3c4", "e4e5"],
-      correctExplanation: "Bxd4! Trade bishop for knight. When you're a pawn up, every exchange brings you closer to a winning endgame. Black's knight was active — removing it simplifies the position and reduces Black's counterplay.",
-      wrongExplanation: "When ahead in material, trade pieces. Don't avoid exchanges — seek them out. The fewer pieces on the board, the more your extra pawn matters.",
+      wrongMoves: ["d2d3", "f3e1", "f3h4"],
+      correctExplanation: "Bxd4! Trade bishop for knight. When you're up in material, every exchange brings you closer to a winning endgame. Black's knight was active — removing it simplifies the position and reduces Black's counterplay.",
+      wrongExplanation: "When ahead in material, trade pieces. Don't avoid exchanges — seek them out. The fewer pieces on the board, the more your material advantage matters.",
     },
     {
       kind: "choice",
@@ -1517,7 +1523,7 @@ const CONVERTING_LESSON: Lesson = {
       kind: "interact",
       heading: "Simplify the position",
       instruction: "White is up two pawns. Black's knight on g4 is active and threatens your e5 pawn. Find the move that attacks the knight and starts the simplification.",
-      fen: "r1b2rk1/ppp2ppp/2np4/4P3/2B1P1n1/2NP4/PPP3PP/R4RK1 w - - 0 13",
+      fen: "r1b2rk1/pp3ppp/3p4/4P3/2B1P1n1/2N5/PPP2PPP/R4RK1 w - - 0 13",
       orientation: "white",
       correctMoves: ["h2h3"],
       wrongMoves: ["f1e1", "g1h1", "g2g3"],
