@@ -11,7 +11,10 @@ export function OrganizationJsonLd() {
     name: "FireChess",
     url: "https://firechess.com",
     logo: "https://firechess.com/firechess-logo.png",
-    sameAs: [],
+    sameAs: [
+      "https://github.com/leonfresh/firechess2",
+      "https://discord.gg/YS8fc4FtEk",
+    ],
     description:
       "Free chess analysis tool that scans your Lichess and Chess.com games for repeated opening mistakes, missed tactics, and endgame blunders using Stockfish 18.",
   };
@@ -193,6 +196,15 @@ export function WebSiteJsonLd() {
     publisher: {
       "@type": "Organization",
       name: "FireChess",
+    },
+    potentialAction: {
+      "@type": "SearchAction",
+      target: {
+        "@type": "EntryPoint",
+        urlTemplate:
+          "https://firechess.com/search?q={search_term_string}",
+      },
+      "query-input": "required name=search_term_string",
     },
   };
 

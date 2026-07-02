@@ -68,6 +68,7 @@ export const metadata: Metadata = {
     siteName: "FireChess",
     type: "website",
     locale: "en_US",
+    images: [{ url: "https://firechess.com/opengraph-image", width: 1200, height: 630 }],
   },
   twitter: {
     card: "summary_large_image",
