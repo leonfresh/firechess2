@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /account/
+Disallow: /support/
+
+# Allow sample report pages (shared publicly)
+Allow: /report/sample-
+
+Sitemap: https://firechess.com/sitemap.xml

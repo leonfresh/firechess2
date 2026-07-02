@@ -6,7 +6,7 @@ import { ChevronDown } from "lucide-react";
  * kept truthful and match the real free/Pro split. Uses native <details> so it
  * works without JS and stays accessible.
  */
-const FAQS: { q: string; a: string }[] = [
+export const FAQ_ITEMS: { q: string; a: string }[] = [
   {
     q: "Is FireChess free?",
     a: "Yes — scanning your games is free, no credit card. The free tier covers opening-leak detection across your recent games, the full report card, strengths radar, mental-game stats, and a sample of tactics and endgames. Pro unlocks unlimited tactic and endgame scanning plus deeper breakdowns.",
@@ -33,7 +33,7 @@ export function Faq() {
           Frequently asked questions
         </h2>
         <div className="mt-10 space-y-3">
-          {FAQS.map((f) => (
+          {FAQ_ITEMS.map((f) => (
             <details
               key={f.q}
               className="group rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 transition-colors hover:border-white/[0.14]"

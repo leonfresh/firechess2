@@ -177,6 +177,47 @@ export default async function BlogPostPage({ params }: Props) {
             )}
           </nav>
         )}
+
+        {/* Related posts by shared tags */}
+        {(() => {
+          const tagSet = new Set(post.tags);
+          const related = allPosts
+            .filter(
+              (p) =>
+                p.slug !== slug && p.tags.some((t) => tagSet.has(t)),
+            )
+            .slice(0, 3);
+          if (related.length === 0) return null;
+          return (
+            <section className="mt-14">
+              <h2 className="mb-5 text-lg font-bold text-white">
+                Related Articles
+              </h2>
+              <div className="grid gap-4 sm:grid-cols-3">
+                {related.map((rp) => (
+                  <Link
+                    key={rp.slug}
+                    href={`/blog/${rp.slug}`}
+                    className="group rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 transition-all hover:border-white/[0.12] hover:bg-white/[0.04]"
+                  >
+                    <p className="line-clamp-2 text-sm font-semibold text-slate-200 transition-colors group-hover:text-white">
+                      {rp.title}
+                    </p>
+                    <p className="mt-1.5 line-clamp-2 text-xs text-slate-500">
+                      {rp.description}
+                    </p>
+                    <div className="mt-2 text-[11px] text-slate-600">
+                      {new Date(rp.date).toLocaleDateString("en-US", {
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          );
+        })()}
       </div>
     </div>
   );

@@ -35,7 +35,7 @@ import { AdminDebug } from "@/components/admin-debug";
 import { SampleReportsSection } from "@/components/sample-reports-section";
 import { HomepageBlogSection } from "@/components/homepage-blog-section";
 import { DiscordCta } from "@/components/home/discord-cta";
-import { Faq } from "@/components/home/faq";
+import { Faq, FAQ_ITEMS } from "@/components/home/faq";
 import { PricingTeaser } from "@/components/home/pricing-teaser";
 import type { CardViewMode } from "@/components/card-carousel";
 import { useSession } from "@/components/session-provider";
@@ -992,7 +992,28 @@ export default function HomePage() {
           {state === "idle" && <DiscordCta />}
 
           {/* ─── FAQ — handles "is it free / do you need my password" objections ─── */}
-          {state === "idle" && <Faq />}
+          {state === "idle" && (
+            <>
+              <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{
+                  __html: JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@type": "FAQPage",
+                    mainEntity: FAQ_ITEMS.map((f) => ({
+                      "@type": "Question",
+                      name: f.q,
+                      acceptedAnswer: {
+                        "@type": "Answer",
+                        text: f.a,
+                      },
+                    })),
+                  }),
+                }}
+              />
+              <Faq />
+            </>
+          )}
 
           {/* ─── Final CTA ─── */}
           {state === "idle" && (
