@@ -23,17 +23,77 @@ import {
 } from "@/lib/move-quality";
 import { useBoardTheme, useCustomPieces } from "@/lib/use-coins";
 import { useBoardSize } from "@/lib/use-board-size";
-import type {
-  Lesson,
-  Slide,
-  RatingBand,
-  TextSlide,
-  InteractSlide,
-  ChoiceSlide,
-  ReplaySlide,
-} from "@/lib/lesson-types";
-import { NEW_LESSONS } from "./lessons-data";
 
+/* ─────────────────────────────────────────────────────────────── */
+/*  Types                                                           */
+/* ─────────────────────────────────────────────────────────────── */
+
+type RatingBand = "800" | "1200" | "1600" | "2000";
+
+type TextSlide = {
+  kind: "text";
+  heading: string;
+  body: string;
+  insight?: string;
+  fen?: string;
+  orientation?: "white" | "black";
+  highlights?: string[];
+  arrows?: [string, string][];
+  photo?: { src: string; credit: string };
+};
+
+type InteractSlide = {
+  kind: "interact";
+  heading: string;
+  instruction: string;
+  // Hardcoded position mode
+  fen?: string;
+  orientation?: "white" | "black";
+  correctMoves?: string[];
+  wrongMoves?: string[];
+  // Live Lichess puzzle mode (fetchTheme overrides fen/correctMoves)
+  fetchTheme?: string;
+  correctExplanation: string;
+  wrongExplanation: string;
+  badge?: MoveClassification;
+};
+
+type ChoiceSlide = {
+  kind: "choice";
+  heading: string;
+  question: string;
+  choices: string[];
+  correctIndex: number;
+  explanation: string;
+  fen?: string;
+  orientation?: "white" | "black";
+  highlights?: string[];
+  arrows?: [string, string][];
+};
+
+type ReplaySlide = {
+  kind: "replay";
+  heading: string;
+  body: string;
+  startFen?: string;
+  moves: string[];
+  orientation?: "white" | "black";
+  intervalMs?: number;
+  badges?: Record<number, { sq: string; cls: MoveClassification }>;
+};
+
+type Slide = TextSlide | InteractSlide | ChoiceSlide | ReplaySlide;
+
+type Lesson = {
+  id: string;
+  band: RatingBand;
+  title: string;
+  subtitle: string;
+  icon: string;
+  estimatedMinutes: number;
+  tags: string[];
+  slides: Slide[];
+};
 
 /* ─────────────────────────────────────────────────────────────── */
 /*  Lesson: The Initiative                                          */
@@ -1184,7 +1244,6 @@ const LESSONS: Lesson[] = [
   PASSED_PAWN_LESSON,
   OPEN_FILES_LESSON,
   KNIGHT_OUTPOST_LESSON,
-  ...NEW_LESSONS,
 ];
 
 /* ─────────────────────────────────────────────────────────────── */
