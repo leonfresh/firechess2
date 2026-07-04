@@ -50,6 +50,8 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <OpeningsDataArt />;
     case "how-often-chess-players-blunder":
       return <BlunderDataArt />;
+    case "sicilian-defense-for-beginners":
+      return <SicilianArt />;
     default:
       return <DefaultArt />;
   }
@@ -1264,6 +1266,63 @@ function BlunderDataArt() {
           );
         })}
       </g>
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Sicilian Defense — knight + pawn clash                             */
+/* ================================================================== */
+function SicilianArt() {
+  return (
+    <svg viewBox="0 0 680 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="siBg" x1="0" y1="0" x2="680" y2="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0a0618" /><stop offset="1" stopColor="#120a1a" />
+        </linearGradient>
+        <radialGradient id="siGl" cx="340" cy="140" r="240" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#f59e0b" stopOpacity="0.15" /><stop offset="1" stopColor="#f59e0b" stopOpacity="0" />
+        </radialGradient>
+        <filter id="siF"><feGaussianBlur stdDeviation="4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="680" height="280" rx="18" fill="url(#siBg)" />
+      <rect width="680" height="280" rx="18" fill="url(#siGl)" />
+      <rect x="1" y="1" width="678" height="278" rx="17" stroke="white" strokeOpacity="0.05" />
+      <text x="340" y="36" textAnchor="middle" fill="white" fontSize="18" fontWeight="800" fontFamily="system-ui" letterSpacing="0.3">Sicilian Defense for Beginners</text>
+      <text x="340" y="56" textAnchor="middle" fill="#f59e0b" fontSize="12" fontWeight="600" fontFamily="system-ui">1.e4 c5 — Three winning lines for club players</text>
+      <g transform="translate(340, 210)" fill="none">
+        <g transform="translate(-90, -75)" filter="url(#siF)">
+          <ellipse cx="90" cy="95" rx="30" ry="5" fill="black" fillOpacity="0.3" />
+          <path d="M70,90 L60,38 Q65,28 78,30 L95,38 L105,25 Q110,20 115,28 L115,60 Q118,70 130,75 L140,80 L140,90 Z" fill="#f59e0b" fillOpacity="0.88" />
+          <circle cx="80" cy="42" r="6" fill="#f59e0b" fillOpacity="0.95" />
+          <rect x="68" y="78" width="70" height="5" rx="2" fill="#f59e0b" fillOpacity="0.75" />
+          <rect x="72" y="83" width="58" height="4" rx="2" fill="#f59e0b" fillOpacity="0.5" />
+          <path d="M65,88 L145,88 L145,92 L65,92 Z" fill="#f59e0b" fillOpacity="0.35" />
+        </g>
+        <g transform="translate(50, -60)" filter="url(#siF)">
+          <ellipse cx="30" cy="85" rx="12" ry="2.5" fill="black" fillOpacity="0.25" />
+          <circle cx="30" cy="55" r="8" fill="#94a3b8" fillOpacity="0.6" />
+          <path d="M23,62 L16,85 Q30,90 44,85 L37,62 Z" fill="#94a3b8" fillOpacity="0.55" />
+          <ellipse cx="30" cy="86" rx="13" ry="4.5" fill="#94a3b8" fillOpacity="0.5" />
+        </g>
+        <g transform="translate(160, -50)">
+          <rect x="0" y="0" width="180" height="30" rx="6" fill="white" fillOpacity="0.04" stroke="white" strokeOpacity="0.06" />
+          <circle cx="14" cy="15" r="5" fill="#10b981" fillOpacity="0.4" />
+          <text x="25" y="19" fill="white" fontSize="12" fontWeight="600" fontFamily="system-ui">Accelerated Dragon</text>
+        </g>
+        <g transform="translate(160, -14)">
+          <rect x="0" y="0" width="180" height="30" rx="6" fill="white" fillOpacity="0.04" stroke="white" strokeOpacity="0.06" />
+          <circle cx="14" cy="15" r="5" fill="#06b6d4" fillOpacity="0.4" />
+          <text x="25" y="19" fill="white" fontSize="12" fontWeight="600" fontFamily="system-ui">Classical Sicilian</text>
+        </g>
+        <g transform="translate(160, 22)">
+          <rect x="0" y="0" width="180" height="30" rx="6" fill="white" fillOpacity="0.04" stroke="white" strokeOpacity="0.06" />
+          <circle cx="14" cy="15" r="5" fill="#a855f7" fillOpacity="0.4" />
+          <text x="25" y="19" fill="white" fontSize="12" fontWeight="600" fontFamily="system-ui">Kan Variation</text>
+        </g>
+      </g>
+      <path d="M160,170 L160,140 Q160,130 170,130 L340,130" stroke="#f59e0b" strokeOpacity="0.15" strokeWidth="1.5" fill="none" />
+      <path d="M160,50 L160,80 Q160,90 170,90 L340,90" stroke="#f59e0b" strokeOpacity="0.15" strokeWidth="1.5" fill="none" />
     </svg>
   );
 }
