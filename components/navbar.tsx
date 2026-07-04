@@ -179,11 +179,12 @@ export function Navbar() {
   const openProps = (menu: string): any => ({
     className: "relative",
     onMouseEnter: () => setOpenMenu(menu),
+  });
+  // Separate handlers for the dropdown panel so hover gap doesn't close it
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const dropdownProps = (menu: string): any => ({
+    onMouseEnter: () => setOpenMenu(menu),
     onMouseLeave: () => setOpenMenu(null),
-    onFocus: () => setOpenMenu(menu),
-    onBlur: (e: any) => {
-      if (!e.currentTarget.contains(e.relatedTarget)) setOpenMenu(null);
-    },
   });
 
   const closeMobileMenu = () => setMobileOpen(false);
@@ -339,7 +340,7 @@ export function Navbar() {
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
-              <div className={dropdownCn("analyze")}>
+              <div className={dropdownCn("analyze")} {...dropdownProps("analyze")}>
                 <div className="min-w-[200px] rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/"
@@ -391,7 +392,7 @@ export function Navbar() {
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
-              <div className={dropdownCn("play")}>
+              <div className={dropdownCn("play")} {...dropdownProps("play")}>
                 <div className="min-w-[220px] rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/daily"
@@ -469,7 +470,7 @@ export function Navbar() {
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
-              <div className={dropdownCn("learn")}>
+              <div className={dropdownCn("learn")} {...dropdownProps("learn")}>
                 <div className="min-w-[200px] rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/openings"
@@ -558,7 +559,7 @@ export function Navbar() {
                   <polyline points="6 9 12 15 18 9" />
                 </svg>
               </button>
-              <div className={dropdownCn("explore")}>
+              <div className={dropdownCn("explore")} {...dropdownProps("explore")}>
                 <div className="min-w-[180px] rounded-xl border border-white/[0.08] bg-[linear-gradient(180deg,rgba(6,10,24,0.96),rgba(18,18,38,0.95))] p-1.5 shadow-xl shadow-black/50 backdrop-blur-xl">
                   <Link
                     href="/blog"
