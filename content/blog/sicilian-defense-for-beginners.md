@@ -37,7 +37,7 @@ The Accelerated Dragon is the single best Sicilian for beginners. Here's why:
 
 **Key idea:** The ...d5 break in the center is Black's main equalizer. After 8...d5, Black has comfortable equality regardless of whether White captures or advances. This is a specific, concrete plan you can aim for in every game.
 
-<chess-position fen="r1bq1rk1/pp2ppbp/2n2np1/3p4/2BP4/2N1BN2/PPP2PPP/R2Q1RK1 w - - 0 9" caption="The Accelerated Dragon after the ...d5 break — Black has comfortable equality" orientation="white"></chess-position>
+<chess-position fen="r1bq1rk1/pp2ppbp/2n2np1/3p4/2BP4/2N1BN2/PPP2PPP/R2Q1RK1 w - - 0 9" caption="The Accelerated Dragon after the ...d5 break — Black has comfortable equality" orientation="black"></chess-position>
 
 **Common beginner mistake:** Playing ...d6 instead of ...d5 in one move. That transposes to the full Dragon, and suddenly you face the Yugoslav Attack. Stick to the Accelerated line and play ...d5 as a single move.
 
@@ -59,7 +59,7 @@ After the starting position, Black typically continues with g6/Bg7 or e6/Be7 dep
 
 6.Be3 e6 7.Qd2 Be7 8.0-0-0 0-0 9.f4 d5!
 
-<chess-position fen="r1bq1rk1/pp2bppp/2nppn2/3p4/3NPP2/2N1B3/PPPQ2PP/2KR1B1R w - - 0 10" caption="Classical Sicilian with opposite-side castling — Black achieves the ...d5 break" orientation="white"></chess-position>
+<chess-position fen="r1bq1rk1/pp2bppp/2nppn2/3p4/3NPP2/2N1B3/PPPQ2PP/2KR1B1R w - - 0 10" caption="Classical Sicilian with opposite-side castling — Black achieves the ...d5 break" orientation="black"></chess-position>
 
 Again — the ...d5 break is your priority. Once Black achieves ...d5 in the Sicilian, you've solved most of your opening problems.
 
@@ -77,7 +77,7 @@ The Kan is the most flexible and positional of the three lines. It's perfect for
 **The basic setup:**
 1.e4 c5 2.Nf3 e6 3.d4 cxd4 4.Nxd4 a6 5.Nc3 Qc7 6.Bd3 Nf6 7.0-0 Be7 8.Be3 0-0 9.f4 d6
 
-<chess-position fen="r1b2rk1/1pqnbppp/p2ppn2/8/3NPP2/2NBB3/PPP3PP/R2Q1RK1 w - - 0 10" caption="The Kan Variation — Black's flexible setup with queen on c7, pawn on a6 preventing Nb5" orientation="white"></chess-position>
+<chess-position fen="r1b2rk1/1pqnbppp/p2ppn2/8/3NPP2/2NBB3/PPP3PP/R2Q1RK1 w - - 0 10" caption="The Kan Variation — Black's flexible setup with queen on c7, pawn on a6 preventing Nb5" orientation="black"></chess-position>
 
 **Key idea:** Black's pawn on a6 prevents Nb5 (a common annoyance in many Sicilians). The queen on c7 eyes the c2 pawn and supports a future ...d5 break. The position is solid and flexible — you can choose between ...b5 expansion on the queenside or a timely ...d5 in the center.
 
