@@ -1,0 +1,43 @@
+{
+  "cycle": 3,
+  "total_pages_created": 3,
+  "published_slugs": [
+    "average-centipawn-loss-by-rating",
+    "sicilian-defense-for-beginners",
+    "guess-the-elo-chess"
+  ],
+  "analytics_history": [
+    {
+      "cycle": 1,
+      "date": "2026-07-04",
+      "slug": "average-centipawn-loss-by-rating",
+      "gsc_query_targeted": "average centipawn loss",
+      "query_impressions": 185,
+      "query_clicks": 0,
+      "query_position": 9.4,
+      "period_days": 14
+    },
+    {
+      "cycle": 2,
+      "date": "2026-07-04",
+      "slug": "sicilian-defense-for-beginners",
+      "gsc_query_targeted": "sicilian defense for beginners",
+      "query_impressions": null,
+      "query_clicks": null,
+      "query_position": null,
+      "period_days": 14
+    },
+    {
+      "cycle": 3,
+      "date": "2026-07-04",
+      "slug": "guess-the-elo-chess",
+      "gsc_query_targeted": "guess the elo",
+      "query_impressions": 35,
+      "query_clicks": 2,
+      "query_position": 7.9,
+      "period_days": 14
+    }
+  ],
+  "next_cycle_focus": "ACPL chess — 26 impressions, pos 7.5, 0 CTR — create glossary-style post or update existing centipawn post to include ACPL keyword",
+  "last_run": "2026-07-04"
+}
