@@ -15,6 +15,7 @@ const customComponents: Components & Record<string, any> = {
     const orientation =
       attrs.orientation ?? attrs.dataOrientation ?? "white";
     const caption = attrs.caption ?? attrs.dataCaption ?? "";
+    const showAnalysis = attrs.analysis !== undefined || attrs.dataAnalysis !== undefined;
     if (!fen) return null;
     return (
       <BlogChessBoard
@@ -22,6 +23,7 @@ const customComponents: Components & Record<string, any> = {
         moves={moves || undefined}
         orientation={orientation as "white" | "black"}
         caption={caption || undefined}
+        showAnalysis={showAnalysis}
       />
     );
   },

@@ -1544,6 +1544,11 @@ function ShirovTopalovBh3Art() {
       <rect x="1" y="1" width="678" height="278" rx="17" stroke="white" strokeOpacity="0.05" />
       <text x="340" y="36" textAnchor="middle" fill="white" fontSize="14" fontWeight="800" fontFamily="system-ui">The Immortal Bh3 Sacrifice</text>
       <text x="340" y="54" textAnchor="middle" fill="#f87171" fontSize="11" fontFamily="system-ui">Shirov vs Topalov · Linares 1998</text>
+      {/* Brilliant badge */}
+      <g transform="translate(340, 74)">
+        <rect x="-28" y="-10" width="56" height="20" rx="10" fill="#06b6d4" fillOpacity="0.15" stroke="#06b6d4" strokeOpacity="0.4" strokeWidth="1" />
+        <text x="0" y="4" textAnchor="middle" fill="#22d3ee" fontSize="12" fontWeight="800" fontFamily="system-ui">!! Brilliant</text>
+      </g>
       {[0,45,90,135,180,225,270,315].map((a) => {
         const r = a * Math.PI / 180;
         const x2 = 340 + Math.cos(r) * 120;
