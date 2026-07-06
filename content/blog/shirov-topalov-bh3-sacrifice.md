@@ -8,27 +8,29 @@ tags: ["shirov topalov bh3", "greatest chess moves", "famous chess games", "endg
 
 Some chess moves are brilliant. A rare few transcend the game itself. Alexei Shirov's **47...Bh3!!** against Veselin Topalov at Linares 1998 is one of them — a bishop sacrifice so counter-intuitive that chess engines of the era evaluated it as a losing blunder, and even Garry Kasparov, watching from the ringside, couldn't immediately explain what Shirov had seen.
 
+Play through the full game below. The critical moment comes at move 47:
 
+<chess-position fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq -" moves="d4,Nf6,c4,g6,Nc3,d5,cxd5,Nxd5,e4,Nxc3,bxc3,Bg7,Bb5+,c6,Ba4,O-O,Ne2,Nd7,O-O,e5,f3,Qe7,Be3,Rd8,Qc2,Nb6,Bb3,Be6,Rad1,Nc4,Bc1,b5,f4,exd4,Nxd4,Bg4,Rde1,Qc5,Kh1,a5,h3,Bd7,a4,bxa4,Ba2,Be8,e5,Nb6,f5,Nd5,Bd2,Nb4,Qxa4,Nxa2,Qxa2,Bxe5,fxg6,hxg6,Bg5,Rd5,Re3,Qd6,Qe2,Bd7,c4,Bxd4,cxd5,Bxe3,Qxe3,Re8,Qc3,Qxd5,Bh6,Re5,Rf3,Qc5,Qa1,Bf5,Re3,f6,Rxe5,Qxe5,Qa2+,Qd5,Qxd5+,cxd5,Bd2,a4,Bc3,Kf7,h4,Ke6,Kg1,Bh3,gxh3,Kf5,Kf2,Ke4,Bxf6,d4,Be7,Kd3,Bc5,Kc4,Be7,Kb3" orientation="white" caption="Topalov vs Shirov, Linares 1998 — Play through the entire game, from the Grünfeld opening to the legendary bishop sacrifice and the endgame king march"></chess-position>
 
 ## The Setup: Linares 1998
 
 The 1998 Linares super-tournament was one of the strongest events of its era. Veselin Topalov (White, 2740) faced Alexei Shirov (Black, 2710) in the tenth round. The game began as a **Grünfeld Defense, Exchange Variation** — a sharp opening where Black concedes central space to activate pieces against White's pawn center.
 
-Both players navigated the opening accurately. The game saw queens and rooks exchanged early, transitioning into a complex opposite-colored bishops endgame. By move 40, the position had crystallized: White had a bishop on c3, pawns on a4, g2, and h4; Black had a bishop on f5, king on e6, and pawns on a4, d5, f6, and g6.
-
-A human would evaluate this as equal — or even slightly favorable for White, who has the more active bishop. An engine would agree: the position is dead drawn with best play.
+Both players navigated the opening accurately. The game saw queens and rooks exchanged early, transitioning into a complex opposite-colored bishops endgame. By move 40, the position had crystallized.
 
 ## The Critical Moment: 47.Kg1
 
 Topalov played **47.Kg1**, a natural-looking move that brings the king toward the center. It was the last move before disaster.
 
-
+<chess-position fen="8/8/4kpp1/3p1b2/p6P/2B5/6P1/6K1 b - - 2 47" caption="Position after 47.Kg1 — White's king centralizes, but this normal-looking move loses. Black to play." orientation="black"></chess-position>
 
 ## 47...Bh3!! — The Move That Broke Chess
 
 > "The best endgame move ever played." — Various grandmasters
 
 Shirov played **47...Bh3!!**, placing his bishop on a square attacked by White's g2-pawn and adjacent to the h4-pawn. On the surface, it's a simple blunder: one of White's pawns can capture for free.
+
+<chess-position fen="8/8/4kpp1/3p4/p6P/2B4b/6P1/6K1 w - - 3 48" moves="gxh3,Kf5,Kf2,Ke4,Bxf6,d4,Be7,Kd3,Bc5,Kc4,Be7,Kb3" orientation="black" caption="47...Bh3!! — The bishop is en prise to two pawns, yet neither capture saves White. Play through the main line."></chess-position>
 
 But the sacrifice is the point. Here's why:
 
@@ -47,6 +49,8 @@ The white king is still stuck on f2, guarding the g-pawn. Black's king marches t
 ### If White Declines: 48.Kf2
 
 What if Topalov tried a different strategy, moving the king toward the center without capturing?
+
+<chess-position fen="8/8/4kpp1/3p4/p6P/2B4b/6P1/6K1 w - - 3 48" moves="Kf2,Kf5,Ke3,Bxg2" orientation="black" caption="If White declines the sacrifice with 48.Kf2, Black simply takes the g2-pawn, creating three connected passed pawns on the kingside."></chess-position>
 
 > **48.Kf2 Kf5 49.Ke3 Bxg2**
 
@@ -76,16 +80,11 @@ When bishops run on different colors, the defender's bishop can't attack the opp
 
 This game is a perfect example of why you should calculate concretely rather than trust "material count." Even a modern player relying on a quick Stockfish check might think "bishop for nothing? Bad." But the concrete calculation proves otherwise. Always check **king activity** and **tempo counts** in endgame positions.
 
-## See the Full Game on FireChess
-
-You can [play through the complete Shirov vs Topalov 1998 game on FireChess](https://firechess.com/games/shirov-topalov-1998), move by move, with the interactive board. It's one of the most-visited famous games on our site — and now you know why that bishop on h3 is so special.
-
 ### More Chess Improvement Resources
 
 - **[Analyze Your Own Games Free](https://firechess.com/)** — FireChess scans your Lichess or Chess.com games with Stockfish 18 to find tactical patterns you miss
 - **[Chaos Chess](https://firechess.com/chaos)** — Train your calculation under randomized conditions
 - **[Guess the Elo](https://firechess.com/roast)** — Test your positional judgment against real games
-- **[How to Analyze Chess Games](https://firechess.com/blog/how-to-analyze-chess-games)** — A systematic approach to post-game analysis
 - **[Chess Endgame Patterns Club Players Miss](https://firechess.com/blog/endgame-patterns-club-players-miss)** — The zugzwang and king-activity patterns that win games
 
 ## Other Famous Sacrifices
