@@ -1,12 +1,13 @@
 {
-  "cycle": 4,
-  "total_pages_created": 4,
+  "cycle": 5,
+  "total_pages_created": 5,
   "published_slugs": [
     "average-centipawn-loss-by-rating",
     "sicilian-defense-for-beginners",
     "guess-the-elo-chess",
     "guess-elo-from-pgn",
-    "firechess-july-2026-feature-update"
+    "firechess-july-2026-feature-update",
+    "shirov-topalov-bh3-sacrifice"
   ],
   "analytics_history": [
     {
@@ -48,8 +49,18 @@
       "query_clicks": 1,
       "query_position": 22.5,
       "period_days": 14
+    },
+    {
+      "cycle": 5,
+      "date": "2026-07-06",
+      "slug": "shirov-topalov-bh3-sacrifice",
+      "gsc_query_targeted": "/games/shirov-topalov-1998",
+      "query_impressions": 2237,
+      "query_clicks": 0,
+      "query_position": 5.8,
+      "period_days": 14
     }
   ],
-  "next_cycle_focus": "ACPL chess — 23 impressions, pos 7.4, 0 CTR — consider glossary-style post or updating existing centipawn content to include 'acpl chess' keyword",
+  "next_cycle_focus": "How to improve chess rating 1200 to 1500 — next priority queue item; evergreen study-plan content with high search volume",
   "last_run": "2026-07-06"
 }
