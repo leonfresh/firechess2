@@ -15,7 +15,7 @@ const customComponents: Components & Record<string, any> = {
     const orientation =
       attrs.orientation ?? attrs.dataOrientation ?? "white";
     const caption = attrs.caption ?? attrs.dataCaption ?? "";
-    const showAnalysis = attrs.analysis !== undefined || attrs.dataAnalysis !== undefined;
+    const showAnalysis = attrs.analysis != null || attrs.dataAnalysis != null;
     if (!fen) return null;
     return (
       <BlogChessBoard

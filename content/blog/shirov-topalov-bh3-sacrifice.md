@@ -30,7 +30,7 @@ Topalov played **47.Kg1**, a natural-looking move that brings the king toward th
 
 Shirov played **47...Bh3!!**, placing his bishop on a square attacked by White's g2-pawn and adjacent to the h4-pawn. On the surface, it's a simple blunder: one of White's pawns can capture for free.
 
-<chess-position fen="8/8/4kpp1/3p4/p6P/2B4b/6P1/6K1 w - - 3 48" moves="gxh3,Kf5,Kf2,Ke4,Bxf6,d4,Be7,Kd3,Bc5,Kc4,Be7,Kb3" analysis caption="47...Bh3!! — The bishop is en prise to two pawns, yet neither capture saves White. Play through the main line (analysis badges via Stockfish)." orientation="black"></chess-position>
+<chess-position fen="8/8/4kpp1/3p4/p6P/2B4b/6P1/6K1 w - - 3 48" moves="gxh3,Kf5,Kf2,Ke4,Bxf6,d4,Be7,Kd3,Bc5,Kc4,Be7,Kb3" analysis="true" caption="47...Bh3!! — The bishop is en prise to two pawns, yet neither capture saves White. Play through the main line (analysis badges via Stockfish)." orientation="black"></chess-position>
 
 But the sacrifice is the point. Here's why:
 
