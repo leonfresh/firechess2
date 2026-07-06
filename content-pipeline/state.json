@@ -1,10 +1,12 @@
 {
-  "cycle": 3,
-  "total_pages_created": 3,
+  "cycle": 4,
+  "total_pages_created": 4,
   "published_slugs": [
     "average-centipawn-loss-by-rating",
     "sicilian-defense-for-beginners",
-    "guess-the-elo-chess"
+    "guess-the-elo-chess",
+    "guess-elo-from-pgn",
+    "firechess-july-2026-feature-update"
   ],
   "analytics_history": [
     {
@@ -36,8 +38,18 @@
       "query_clicks": 2,
       "query_position": 7.9,
       "period_days": 14
+    },
+    {
+      "cycle": 4,
+      "date": "2026-07-06",
+      "slug": "firechess-july-2026-feature-update",
+      "gsc_query_targeted": "/changelog page",
+      "query_impressions": 705,
+      "query_clicks": 1,
+      "query_position": 22.5,
+      "period_days": 14
     }
   ],
-  "next_cycle_focus": "ACPL chess — 26 impressions, pos 7.5, 0 CTR — create glossary-style post or update existing centipawn post to include ACPL keyword",
-  "last_run": "2026-07-04"
+  "next_cycle_focus": "ACPL chess — 23 impressions, pos 7.4, 0 CTR — consider glossary-style post or updating existing centipawn content to include 'acpl chess' keyword",
+  "last_run": "2026-07-06"
 }
