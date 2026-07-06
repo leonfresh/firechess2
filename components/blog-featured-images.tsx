@@ -52,6 +52,18 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <BlunderDataArt />;
     case "sicilian-defense-for-beginners":
       return <SicilianArt />;
+    case "guess-the-elo-chess":
+      return <GuessTheEloChessArt />;
+    case "average-centipawn-loss-by-rating":
+      return <AverageCentipawnLossByArt />;
+    case "guess-elo-from-pgn":
+      return <GuessEloFromPgnArt />;
+    case "firechess-july-2026-feature-update":
+      return <FirechessJuly2026Art />;
+    case "shirov-topalov-bh3-sacrifice":
+      return <ShirovTopalovBh3Art />;
+    case "guess-the-elo-chess":
+      return <GuessTheEloChessArt />;
     default:
       return <DefaultArt />;
   }
@@ -1323,6 +1335,241 @@ function SicilianArt() {
       </g>
       <path d="M160,170 L160,140 Q160,130 170,130 L340,130" stroke="#f59e0b" strokeOpacity="0.15" strokeWidth="1.5" fill="none" />
       <path d="M160,50 L160,80 Q160,90 170,90 L340,90" stroke="#f59e0b" strokeOpacity="0.15" strokeWidth="1.5" fill="none" />
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  ACPL by Rating — horizontal gauge: beginner red → GM cyan         */
+/* ================================================================== */
+function AverageCentipawnLossByArt() {
+  const vals = [250, 120, 80, 62, 50, 45, 35, 25, 20, 15];
+  const labels = ["0", "1k", "1.2k", "1.4k", "1.6k", "1.8k", "2k", "2.2k", "2.4k", "2.6k+"];
+  const max = 250;
+  return (
+    <svg viewBox="0 0 680 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="apBg" x1="0" y1="0" x2="680" y2="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0a0e1a" /><stop offset="1" stopColor="#140d1a" />
+        </linearGradient>
+        <radialGradient id="apGlow" cx="340" cy="120" r="260" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#06b6d4" stopOpacity="0.08" /><stop offset="1" stopColor="#06b6d4" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="apGauge" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#ef4444" /><stop offset="0.35" stopColor="#f59e0b" /><stop offset="0.65" stopColor="#22c55e" /><stop offset="1" stopColor="#06b6d4" />
+        </linearGradient>
+        <filter id="apF"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="680" height="280" rx="18" fill="url(#apBg)" />
+      <rect width="680" height="280" rx="18" fill="url(#apGlow)" />
+      <rect x="1" y="1" width="678" height="278" rx="17" stroke="white" strokeOpacity="0.05" />
+      <text x="340" y="36" textAnchor="middle" fill="white" fontSize="16" fontWeight="800" fontFamily="system-ui">Average Centipawn Loss by Rating</text>
+      <text x="340" y="56" textAnchor="middle" fill="#64748b" fontSize="11" fontFamily="system-ui">ACPL drops as rating rises · 50k+ games</text>
+      <g transform="translate(60, 100)">
+        <rect x="0" y="0" width="560" height="12" rx="6" fill="url(#apGauge)" fillOpacity="0.85" />
+        {vals.map((v, i) => {
+          const x = (i / (vals.length - 1)) * 560;
+          const h = (v / max) * 60;
+          const col = i < 3 ? "#f87171" : i < 5 ? "#fbbf24" : i < 7 ? "#4ade80" : "#67e8f9";
+          return (
+            <g key={i}>
+              <rect x={x - 2.5} y={85 - h} width="5" height={h} rx="2" fill={col} filter="url(#apF)" />
+              <text x={x} y={-8} textAnchor="middle" fill={col} fontSize="9" fontWeight="700" fontFamily="system-ui">{v}</text>
+              <text x={x} y="24" textAnchor="middle" fill="#64748b" fontSize="8" fontFamily="system-ui">{labels[i]}</text>
+            </g>
+          );
+        })}
+        <line x1="0" y1="0" x2="560" y2="0" stroke="#334155" strokeWidth="0.5" />
+        <line x1="0" y1="12" x2="560" y2="12" stroke="#334155" strokeWidth="0.5" />
+      </g>
+      <text x="340" y="268" textAnchor="middle" fill="#06b6d4" fontSize="9" fontWeight="600" fontFamily="system-ui" letterSpacing="1.5">ANALYSIS — ACPL BENCHMARKS</text>
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Guess the Elo — glowing question mark with surrounding pieces      */
+/* ================================================================== */
+function GuessTheEloChessArt() {
+  return (
+    <svg viewBox="0 0 680 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="geBg" x1="0" y1="0" x2="680" y2="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0a0618" /><stop offset="1" stopColor="#120a1a" />
+        </linearGradient>
+        <radialGradient id="geGlow" cx="340" cy="140" r="220" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#a855f7" stopOpacity="0.12" /><stop offset="1" stopColor="#a855f7" stopOpacity="0" />
+        </radialGradient>
+        <filter id="geF"><feGaussianBlur stdDeviation="5" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="680" height="280" rx="18" fill="url(#geBg)" />
+      <rect width="680" height="280" rx="18" fill="url(#geGlow)" />
+      <rect x="1" y="1" width="678" height="278" rx="17" stroke="white" strokeOpacity="0.05" />
+      <text x="340" y="36" textAnchor="middle" fill="white" fontSize="16" fontWeight="800" fontFamily="system-ui">Guess the Elo Chess</text>
+      <text x="340" y="56" textAnchor="middle" fill="#a855f7" fontSize="11" fontFamily="system-ui">Can you spot the rating? Test your chess eye</text>
+      {/* Central question mark */}
+      <g transform="translate(340, 158)" filter="url(#geF)">
+        <circle r="52" fill="#a855f7" fillOpacity="0.07" />
+        <circle r="38" fill="#a855f7" fillOpacity="0.12" stroke="#a855f7" strokeOpacity="0.4" strokeWidth="1" />
+        <text x="0" y="-18" textAnchor="middle" fill="#c084fc" fontSize="42" fontWeight="800" fontFamily="system-ui">?</text>
+        <text x="0" y="10" textAnchor="middle" fill="#a855f7" fontSize="14" fontFamily="system-ui">ELO</text>
+      </g>
+      {/* Piece silhouettes around the ? */}
+      <g transform="translate(340, 148)" fill="#94a3b8" fillOpacity="0.5">
+        <g transform="translate(-100, -30)"><circle cx="8" cy="6" r="6.5"/><path d="M0,15 L-5,30 Q8,35 21,30 L16,15 Z"/><ellipse cx="8" cy="31" rx="12" ry="4"/></g>
+        <g transform="translate(100, -30)"><circle cx="8" cy="6" r="6.5"/><path d="M0,15 L-5,30 Q8,35 21,30 L16,15 Z"/><ellipse cx="8" cy="31" rx="12" ry="4"/></g>
+        <g transform="translate(-120, 20)"><ellipse cx="8" cy="12" rx="4" ry="6"/><rect x="2" y="18" width="12" height="8" rx="2"/></g>
+        <g transform="translate(110, 20)"><ellipse cx="8" cy="12" rx="4" ry="6"/><rect x="2" y="18" width="12" height="8" rx="2"/></g>
+      </g>
+      {/* Analysis lines radiating */}
+      {[-60, 60].map((dx, i) => (
+        <line key={i} x1={340 + dx} y1="100" x2={340 + dx * 0.3} y2="130" stroke="#a855f7" strokeOpacity="0.2" strokeWidth="1" strokeDasharray="3 3" />
+      ))}
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Guess Elo from PGN — document with magnifying glass               */
+/* ================================================================== */
+function GuessEloFromPgnArt() {
+  return (
+    <svg viewBox="0 0 680 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="gpBg" x1="0" y1="0" x2="680" y2="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0a0e1a" /><stop offset="1" stopColor="#140d1a" />
+        </linearGradient>
+        <radialGradient id="gpGlow" cx="300" cy="140" r="240" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#3b82f6" stopOpacity="0.1" /><stop offset="1" stopColor="#3b82f6" stopOpacity="0" />
+        </radialGradient>
+        <filter id="gpF"><feGaussianBlur stdDeviation="4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="680" height="280" rx="18" fill="url(#gpBg)" />
+      <rect width="680" height="280" rx="18" fill="url(#gpGlow)" />
+      <rect x="1" y="1" width="678" height="278" rx="17" stroke="white" strokeOpacity="0.05" />
+      <text x="340" y="36" textAnchor="middle" fill="white" fontSize="16" fontWeight="800" fontFamily="system-ui">Guess Elo from PGN</text>
+      <text x="340" y="56" textAnchor="middle" fill="#3b82f6" fontSize="11" fontFamily="system-ui">Upload a PGN file and estimate the rating instantly</text>
+      <g transform="translate(200, 148)" filter="url(#gpF)">
+        <rect x="-60" y="-40" width="120" height="80" rx="6" fill="#1e293b" fillOpacity="0.5" stroke="#334155" strokeWidth="1" />
+        <rect x="-53" y="-33" width="106" height="2" rx="1" fill="#475569" />
+        <rect x="-53" y="-27" width="80" height="2" rx="1" fill="#475569" />
+        <rect x="-53" y="-21" width="60" height="2" rx="1" fill="#475569" />
+        <rect x="-53" y="-15" width="90" height="2" rx="1" fill="#475569" />
+        <rect x="-53" y="-9" width="70" height="2" rx="1" fill="#475569" />
+        <rect x="-53" y="-3" width="85" height="2" rx="1" fill="#475569" />
+        <rect x="-53" y="3" width="55" height="2" rx="1" fill="#475569" />
+        <path d="M-60,-40 L-56,-44 L64,-44 L60,-40" fill="#1e293b" fillOpacity="0.5" stroke="#334155" strokeWidth="1" />
+        <rect x="-10" y="-44" width="20" height="6" rx="2" fill="#3b82f6" fillOpacity="0.3" />
+        <text x="5" y="-40" textAnchor="middle" fill="#60a5fa" fontSize="7" fontWeight="700" fontFamily="system-ui">PGN</text>
+      </g>
+      <g transform="translate(340, 120)" filter="url(#gpF)">
+        <circle cx="0" cy="0" r="32" fill="#3b82f6" fillOpacity="0.06" stroke="#3b82f6" strokeOpacity="0.2" strokeWidth="1.5" />
+        <circle cx="0" cy="0" r="22" fill="none" stroke="#60a5fa" strokeWidth="2.5" strokeOpacity="0.6" />
+        <line x1="16" y1="16" x2="32" y2="32" stroke="#60a5fa" strokeWidth="3.5" strokeLinecap="round" strokeOpacity="0.6" />
+        <text x="0" y="4" textAnchor="middle" fill="#60a5fa" fontSize="20" fontWeight="700" fontFamily="system-ui">ELO</text>
+      </g>
+      <text x="340" y="268" textAnchor="middle" fill="#3b82f6" fontSize="9" fontWeight="600" fontFamily="system-ui" letterSpacing="1.5">TOOL — PGN RATING ESTIMATOR</text>
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  July 2026 Feature Update — timeline roadmap with release dots      */
+/* ================================================================== */
+function FirechessJuly2026Art() {
+  const features = [
+    { x: 80, c: "#f59e0b", lbl: "Roast", h: 60 },
+    { x: 200, c: "#22c55e", lbl: "Daily", h: 75 },
+    { x: 320, c: "#a855f7", lbl: "Chaos", h: 90 },
+    { x: 440, c: "#3b82f6", lbl: "Reports", h: 65 },
+    { x: 560, c: "#ef4444", lbl: "Pro+", h: 50 },
+  ];
+  return (
+    <svg viewBox="0 0 680 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="fuBg" x1="0" y1="0" x2="680" y2="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0a0618" /><stop offset="1" stopColor="#0f081f" />
+        </linearGradient>
+        <radialGradient id="fuGl" cx="340" cy="140" r="260" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#a855f7" stopOpacity="0.08" /><stop offset="1" stopColor="#a855f7" stopOpacity="0" />
+        </radialGradient>
+        <filter id="fuF"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="680" height="280" rx="18" fill="url(#fuBg)" />
+      <rect width="680" height="280" rx="18" fill="url(#fuGl)" />
+      <rect x="1" y="1" width="678" height="278" rx="17" stroke="white" strokeOpacity="0.05" />
+      <text x="340" y="36" textAnchor="middle" fill="white" fontSize="16" fontWeight="800" fontFamily="system-ui">What's New on FireChess</text>
+      <text x="340" y="56" textAnchor="middle" fill="#a855f7" fontSize="11" fontFamily="system-ui">28 releases · 4 major features · 1 lifetime plan</text>
+      <line x1="60" y1="180" x2="620" y2="180" stroke="#a855f7" strokeOpacity="0.15" strokeWidth="2" />
+      {features.map((f, i) => (
+        <g key={i}>
+          <rect x={f.x - 16} y={180 - f.h} width="32" height={f.h} rx="4" fill={f.c} fillOpacity="0.15" stroke={f.c} strokeOpacity="0.4" strokeWidth="1" filter="url(#fuF)" />
+          <circle cx={f.x} cy={180} r="7" fill={f.c} fillOpacity="0.3" stroke={f.c} strokeWidth="2" filter="url(#fuF)" />
+          <circle cx={f.x} cy={180} r="7" fill={f.c} fillOpacity="0.6" stroke={f.c} strokeWidth="2" />
+          <circle cx={f.x} cy={180} r="3" fill="white" fillOpacity="0.8" />
+          <text x={f.x} y={180 - f.h - 8} textAnchor="middle" fill={f.c} fontSize="10" fontWeight="700" fontFamily="system-ui">{f.lbl}</text>
+        </g>
+      ))}
+      <rect x="0" y="200" width="680" height="80" fill="#111827" fillOpacity="0.2" />
+      <line x1="0" y1="200" x2="680" y2="200" stroke="#1f2937" />
+      <g transform="translate(340, 235)">
+        <rect x="-100" y="-14" width="200" height="28" rx="14" fill="white" fillOpacity="0.04" stroke="white" strokeOpacity="0.06" />
+        <text x="0" y="5" textAnchor="middle" fill="#94a3b8" fontSize="11" fontFamily="system-ui">H1 2026 — 28 releases shipped</text>
+      </g>
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Shirov vs Topalov — glowing bishop sacrifice with dramatic rays    */
+/* ================================================================== */
+function ShirovTopalovBh3Art() {
+  return (
+    <svg viewBox="0 0 680 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="shBg" x1="0" y1="0" x2="680" y2="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0a0608" /><stop offset="1" stopColor="#160808" />
+        </linearGradient>
+        <radialGradient id="shGl" cx="340" cy="140" r="260" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#ef4444" stopOpacity="0.15" /><stop offset="1" stopColor="#ef4444" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="shBurst" cx="340" cy="140" r="60" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#fbbf24" stopOpacity="0.3" /><stop offset="1" stopColor="#ef4444" stopOpacity="0" />
+        </radialGradient>
+        <filter id="shF"><feGaussianBlur stdDeviation="5" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+        <filter id="shF2"><feGaussianBlur stdDeviation="2" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="680" height="280" rx="18" fill="url(#shBg)" />
+      <rect width="680" height="280" rx="18" fill="url(#shGl)" />
+      <rect x="1" y="1" width="678" height="278" rx="17" stroke="white" strokeOpacity="0.05" />
+      <text x="340" y="36" textAnchor="middle" fill="white" fontSize="14" fontWeight="800" fontFamily="system-ui">The Immortal Bh3 Sacrifice</text>
+      <text x="340" y="54" textAnchor="middle" fill="#f87171" fontSize="11" fontFamily="system-ui">Shirov vs Topalov · Linares 1998</text>
+      {[0,45,90,135,180,225,270,315].map((a) => {
+        const r = a * Math.PI / 180;
+        const x2 = 340 + Math.cos(r) * 120;
+        const y2 = 140 + Math.sin(r) * 120;
+        return <line key={a} x1="340" y1="140" x2={x2} y2={y2} stroke="#ef4444" strokeOpacity="0.12" strokeWidth="1.5" />;
+      })}
+      <circle cx="340" cy="140" r="40" fill="url(#shBurst)" />
+      <circle cx="340" cy="140" r="36" fill="#ef4444" fillOpacity="0.08" stroke="#fbbf24" strokeOpacity="0.3" strokeWidth="1.5" filter="url(#shF)" />
+      <g transform="translate(340, 137)" filter="url(#shF2)">
+        <path d="M332,15 L336,5 Q340,0 344,5 L348,15 Z" fill="#fbbf24" fillOpacity="0.9" />
+        <circle cx="340" cy="-5" r="6" fill="#fbbf24" fillOpacity="0.95" />
+        <ellipse cx="340" cy="8" rx="6" ry="3" fill="#fbbf24" fillOpacity="0.7" />
+        <ellipse cx="340" cy="18" rx="9" ry="3" fill="#fbbf24" fillOpacity="0.5" />
+        <line x1="337" y1="10" x2="337" y2="15" stroke="#fbbf24" strokeOpacity="0.6" strokeWidth="0.8" />
+        <line x1="343" y1="10" x2="343" y2="15" stroke="#fbbf24" strokeOpacity="0.6" strokeWidth="0.8" />
+      </g>
+      <circle cx="340" cy="140" r="80" fill="none" stroke="#ef4444" strokeOpacity="0.08" strokeWidth="1" strokeDasharray="4 6" />
+      <circle cx="340" cy="140" r="100" fill="none" stroke="#ef4444" strokeOpacity="0.04" strokeWidth="1" strokeDasharray="2 8" />
+      <g transform="translate(230, 160)" fill="#94a3b8" fillOpacity="0.35">
+        <circle cx="15" cy="10" r="8"/><path d="M5,22 L-2,40 Q15,46 32,40 L25,22 Z"/><ellipse cx="15" cy="42" rx="16" ry="5.5"/>
+      </g>
+      <g transform="translate(420, 150)" fill="#94a3b8" fillOpacity="0.3">
+        <rect x="8" y="0" width="4" height="12" rx="1"/><circle cx="10" cy="-6" r="6"/>
+        <path d="M4,12 L0,24 L20,24 L16,12 Z"/><rect x="-2" y="24" width="24" height="5" rx="2"/>
+      </g>
+      <text x="340" y="268" textAnchor="middle" fill="#ef4444" fontSize="9" fontWeight="600" fontFamily="system-ui" letterSpacing="1.5">47...Bh3!! — THE MOVE THAT STUNNED KASPAROV</text>
     </svg>
   );
 }
