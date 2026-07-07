@@ -64,6 +64,8 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <ShirovTopalovBh3Art />;
     case "guess-the-elo-chess":
       return <GuessTheEloChessArt />;
+    case "chess-rating-1200-to-1500":
+      return <ChessRating1200Art />;
     default:
       return <DefaultArt />;
   }
@@ -1575,6 +1577,83 @@ function ShirovTopalovBh3Art() {
         <path d="M4,12 L0,24 L20,24 L16,12 Z"/><rect x="-2" y="24" width="24" height="5" rx="2"/>
       </g>
       <text x="340" y="268" textAnchor="middle" fill="#ef4444" fontSize="9" fontWeight="600" fontFamily="system-ui" letterSpacing="1.5">47...Bh3!! — THE MOVE THAT STUNNED KASPAROV</text>
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Chess rating 1200 to 1500 — climbing graph with piece milestones   */
+/* ================================================================== */
+function ChessRating1200Art() {
+  return (
+    <svg viewBox="0 0 680 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="rBg" x1="0" y1="0" x2="680" y2="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#080c18" /><stop offset="1" stopColor="#0a1020" />
+        </linearGradient>
+        <radialGradient id="rGl" cx="340" cy="140" r="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#10b981" stopOpacity="0.08" /><stop offset="1" stopColor="#10b981" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="rPg" cx="340" cy="240" r="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#6366f1" stopOpacity="0.06" /><stop offset="1" stopColor="#6366f1" stopOpacity="0" />
+        </radialGradient>
+        <filter id="rF"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+        <filter id="rF2"><feGaussianBlur stdDeviation="5" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+        <linearGradient id="rLine" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#6366f1" stopOpacity="0.4" />
+          <stop offset="0.5" stopColor="#22c55e" stopOpacity="0.8" />
+          <stop offset="1" stopColor="#f59e0b" stopOpacity="1" />
+        </linearGradient>
+      </defs>
+      <rect width="680" height="280" rx="18" fill="url(#rBg)" />
+      <rect x="1" y="1" width="678" height="278" rx="17" stroke="white" strokeOpacity="0.05" />
+      <rect width="680" height="280" rx="18" fill="url(#rGl)" />
+      {/* Title */}
+      <text x="340" y="32" textAnchor="middle" fill="white" fontSize="16" fontWeight="800" fontFamily="system-ui" letterSpacing="1">1200 → 1500</text>
+      <text x="340" y="50" textAnchor="middle" fill="#94a3b8" fontSize="11" fontFamily="system-ui">The Improvement Climb</text>
+      {/* Grid lines */}
+      <line x1="70" y1="90" x2="610" y2="90" stroke="#1e293b" strokeWidth="0.5" strokeDasharray="4 4" />
+      <line x1="70" y1="130" x2="610" y2="130" stroke="#1e293b" strokeWidth="0.5" strokeDasharray="4 4" />
+      <line x1="70" y1="170" x2="610" y2="170" stroke="#1e293b" strokeWidth="0.5" strokeDasharray="4 4" />
+      <line x1="70" y1="210" x2="610" y2="210" stroke="#1e293b" strokeWidth="0.5" strokeDasharray="4 4" />
+      {/* Graph climb path */}
+      <path d="M70,220 C130,225 160,200 200,175 C240,150 250,160 280,145 C310,130 340,120 370,110 C400,100 420,105 450,100 C480,95 530,110 610,80" fill="none" stroke="url(#rLine)" strokeWidth="2.5" strokeLinecap="round" />
+      {/* Glow under the curve */}
+      <path d="M70,220 C130,225 160,200 200,175 C240,150 250,160 280,145 C310,130 340,120 370,110 C400,100 420,105 450,100 C480,95 530,110 610,80 L610,270 L70,270 Z" fill="url(#rPg)" fillOpacity="0.5" />
+      {/* Milestone markers */}
+      {/* 1200 — pawn milestone */}
+      <g transform="translate(70, 220)">
+        <circle r="18" fill="#6366f1" fillOpacity="0.15" stroke="#6366f1" strokeOpacity="0.4" strokeWidth="1" filter="url(#rF)" />
+        <text y="6" textAnchor="middle" fill="#a5b4fc" fontSize="20" fontFamily="serif">♟</text>
+        <text y="40" textAnchor="middle" fill="#6366f1" fontSize="12" fontWeight="700" fontFamily="system-ui">1200</text>
+      </g>
+      {/* 1300 — knight milestone */}
+      <g transform="translate(200, 175)">
+        <circle r="18" fill="#10b981" fillOpacity="0.15" stroke="#10b981" strokeOpacity="0.4" strokeWidth="1" filter="url(#rF)" />
+        <text y="7" textAnchor="middle" fill="#6ee7b7" fontSize="18" fontFamily="serif">♞</text>
+        <text y="40" textAnchor="middle" fill="#10b981" fontSize="12" fontWeight="700" fontFamily="system-ui">1300</text>
+      </g>
+      {/* 1400 — bishop milestone */}
+      <g transform="translate(370, 110)">
+        <circle r="18" fill="#22d3ee" fillOpacity="0.15" stroke="#22d3ee" strokeOpacity="0.4" strokeWidth="1" filter="url(#rF)" />
+        <text y="7" textAnchor="middle" fill="#67e8f9" fontSize="18" fontFamily="serif">♝</text>
+        <text y="40" textAnchor="middle" fill="#22d3ee" fontSize="12" fontWeight="700" fontFamily="system-ui">1400</text>
+      </g>
+      {/* 1500 — queen/crown milestone */}
+      <g transform="translate(610, 80)">
+        <circle r="22" fill="#f59e0b" fillOpacity="0.15" stroke="#fbbf24" strokeOpacity="0.5" strokeWidth="1.5" filter="url(#rF2)" />
+        <text y="7" textAnchor="middle" fill="#fcd34d" fontSize="20" fontFamily="serif">♛</text>
+        <text y="45" textAnchor="middle" fill="#f59e0b" fontSize="13" fontWeight="700" fontFamily="system-ui">1500</text>
+      </g>
+      {/* Decorative chessboard mini-patterns */}
+      <g opacity="0.03">
+        {[0,1,2,3,4,5,6,7].map(r =>
+          [0,1,2,3,4,5,6,7].filter(c => (r + c) % 2 === 1).map(c => (
+            <rect key={`b${r}${c}`} x={40 + c * 6} y={250 + r * 3.5} width="6" height="3.5" fill="white" />
+          ))
+        )}
+      </g>
+      <text x="340" y="268" textAnchor="middle" fill="#475569" fontSize="9" fontFamily="system-ui" letterSpacing="1">RATING PROGRESSION · FOUR PILLARS TO CLIMB</text>
     </svg>
   );
 }

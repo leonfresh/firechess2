@@ -11,7 +11,7 @@ Done in this cycle:
 2. [x] ~~**"Guess the Elo" blog post** — GSC gap, next_cycle_focus~~ *(Cycle 3)*
 3. [x] ~~**"What's New on FireChess" feature update** — changelog page gap (705 imp, <1% CTR)~~ *(Cycle 4)*
 4. [x] ~~**"Shirov's Bh3!! Sacrifice"** — game page gap (2,237 imp, 0 clicks, pos 5.8)~~ *(Cycle 5)*
-5. **"How to improve chess rating from 1200 to 1500"** — evergreen, study plan content
+5. [x] ~~**"How to improve chess rating from 1200 to 1500"** — evergreen, study plan content~~ *(Cycle 6)*
 6. **"Best chess openings for beginners by rating"** — listicle, good for featured snippets
 7. **"Chess tactics every player should know"** — tactic pattern reference, links to existing tactic pages
 8. **"Lichess vs Chess.com: which is better for improvement?"** — comparison, high search volume

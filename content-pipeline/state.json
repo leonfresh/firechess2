@@ -1,13 +1,14 @@
 {
-  "cycle": 5,
-  "total_pages_created": 5,
+  "cycle": 6,
+  "total_pages_created": 6,
   "published_slugs": [
     "average-centipawn-loss-by-rating",
     "sicilian-defense-for-beginners",
     "guess-the-elo-chess",
     "guess-elo-from-pgn",
     "firechess-july-2026-feature-update",
-    "shirov-topalov-bh3-sacrifice"
+    "shirov-topalov-bh3-sacrifice",
+    "chess-rating-1200-to-1500"
   ],
   "analytics_history": [
     {
@@ -59,8 +60,18 @@
       "query_clicks": 0,
       "query_position": 5.8,
       "period_days": 14
+    },
+    {
+      "cycle": 6,
+      "date": "2026-07-08",
+      "slug": "chess-rating-1200-to-1500",
+      "gsc_query_targeted": "how to improve chess rating from 1200 to 1500",
+      "query_impressions": null,
+      "query_clicks": null,
+      "query_position": null,
+      "period_days": 14
     }
   ],
-  "next_cycle_focus": "How to improve chess rating 1200 to 1500 — next priority queue item; evergreen study-plan content with high search volume",
-  "last_run": "2026-07-06"
+  "next_cycle_focus": "Best chess openings for beginners by rating \u2014 listicle, good for featured snippets",
+  "last_run": "2026-07-08"
 }
