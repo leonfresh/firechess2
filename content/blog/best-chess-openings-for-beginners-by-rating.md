@@ -218,7 +218,7 @@ By 1600, opening preparation matters. Before a tournament or match:
 <chess-position
   fen="r1bqkbnr/pppp1ppp/2n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R b KQkq - 0 3"
   caption="The Ruy Lopez (3.Bb5). A rich opening that teaches deep positional themes — but save it for 1400+."
-></chess_position>
+></chess-position>
 
 ## Quick Reference Table — Best Openings by Rating
 
