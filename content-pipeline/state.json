@@ -18,8 +18,9 @@
     {"cycle": 4, "date": "2026-07-06", "slug": "firechess-july-2026-feature-update", "gsc_query_targeted": "/changelog page", "query_impressions": 705, "query_clicks": 1, "query_position": 22.5, "period_days": 14},
     {"cycle": 5, "date": "2026-07-06", "slug": "shirov-topalov-bh3-sacrifice", "gsc_query_targeted": "/games/shirov-topalov-1998", "query_impressions": 2237, "query_clicks": 0, "query_position": 5.8, "period_days": 14},
     {"cycle": 6, "date": "2026-07-08", "slug": "chess-rating-1200-to-1500", "gsc_query_targeted": "how to improve chess rating from 1200 to 1500", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14},
-    {"cycle": 7, "date": "2026-07-08", "slug": "best-chess-openings-for-beginners-by-rating", "gsc_query_targeted": "priority queue #6: best openings for beginners listicle", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14}
+    {"cycle": 7, "date": "2026-07-08", "slug": "best-chess-openings-for-beginners-by-rating", "gsc_query_targeted": "priority queue #6: best openings for beginners listicle", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14},
+    {"cycle": 8, "date": "2026-07-09", "slug": "chess-tactics-every-player-should-know", "gsc_query_targeted": "priority queue #7: chess tactics every player should know", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14}
   ],
-  "next_cycle_focus": "Chess tactics every player should know — tactic pattern reference, links to existing tactic pages",
-  "last_run": "2026-07-08"
+  "next_cycle_focus": "Lichess vs Chess.com: which is better for improvement? — comparison, high search volume",
+  "last_run": "2026-07-09"
 }

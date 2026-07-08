@@ -8,4 +8,4 @@
 | 4 | 2026-07-06 | firechess-july-2026-feature-update | published | "/changelog" — 705 imp, 1 click, pos 22.5 |
 | 5 | 2026-07-06 | shirov-topalov-bh3-sacrifice | published | "/games/shirov-topalov-1998" — 2,237 imp, 0 clicks, pos 5.8 |
 | 6 | 2026-07-08 | chess-rating-1200-to-1500 | published | priority queue #5 — evergreen study plan, 1200-1500 rating bracket |
-| 7 | 2026-07-08 | best-chess-openings-for-beginners-by-rating | published | priority queue #6 — listicle, good for featured snippets |
+| 7 | 2026-07-09 | chess-tactics-every-player-should-know | published | priority queue #7 — comprehensive tactics guide, 8 essential patterns with FEN positions |

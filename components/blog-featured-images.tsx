@@ -68,6 +68,8 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <ChessRating1200Art />;
     case "best-chess-openings-for-beginners-by-rating":
       return <BestOpeningsBeginnersArt />;
+    case "chess-tactics-every-player-should-know":
+      return <TacticsArt />;
     default:
       return <DefaultArt />;
   }
@@ -1751,6 +1753,87 @@ function BestOpeningsBeginnersArt() {
         <text x="12" y="268" fill="white" fontSize="14" fontFamily="serif">♟♞♝♜♛♚</text>
       </g>
       <text x="340" y="270" textAnchor="middle" fill="#475569" fontSize="9" fontFamily="system-ui" letterSpacing="1">OPENING RECOMMENDATIONS · LEVEL UP YOUR REPERTOIRE</text>
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  24. Chess Tactics  knight fork radiating lines, pin diagonal       */
+/* ================================================================== */
+function TacticsArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="t-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0c1220" /><stop offset="1" stopColor="#1a0a1a" />
+        </linearGradient>
+        <radialGradient id="t-glow" cx="200" cy="100" r="140" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#ef4444" stopOpacity="0.15" /><stop offset="0.5" stopColor="#fbbf24" stopOpacity="0.08" /><stop offset="1" stopColor="#ef4444" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="t-knight-glow" cx="180" cy="80" r="50" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#fbbf24" stopOpacity="0.4" /><stop offset="1" stopColor="#fbbf24" stopOpacity="0" />
+        </radialGradient>
+        <filter id="t-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#t-bg)" />
+      <rect width="400" height="200" fill="url(#t-glow)" />
+      {/* Board grid in background */}
+      {[0,1,2,3,4,5,6,7].map(i => (
+        <line key={`tv${i}`} x1={100+i*25} y1="30" x2={100+i*25} y2="180" stroke="#334155" strokeWidth="0.5" strokeOpacity="0.3" />
+      ))}
+      {[0,1,2,3,4,5,6,7].map(i => (
+        <line key={`th${i}`} x1="100" y1={30+i*18.75} x2="275" y2={30+i*18.75} stroke="#334155" strokeWidth="0.5" strokeOpacity="0.3" />
+      ))}
+      {/* Dark squares on partial board */}
+      {[0,1,2,3,4,5,6,7].map(r =>
+        [0,1,2,3,4,5,6,7].filter(c => (r + c) % 2 === 1).map(c => (
+          <rect key={`ts${r}${c}`} x={100+c*25} y={30+r*18.75} width="25" height="18.75" fill="#1e293b" fillOpacity="0.4" />
+        ))
+      )}
+      {/* Knight silhouette (central) */}
+      <g transform="translate(175, 60)" filter="url(#t-f)">
+        <circle cx="20" cy="55" r="9" fill="#fbbf24" fillOpacity="0.15" />
+        <path d="M12,28 Q10,18 16,12 Q20,8 26,12 Q32,16 30,24 L32,28 Q34,32 30,36 L26,38 Q22,40 18,38 Z" fill="#fbbf24" fillOpacity="0.9" />
+        <path d="M12,28 Q10,18 16,12 Q20,8 26,12 Q32,16 30,24 L32,28 Q34,32 30,36 L26,38 Q22,40 18,38 Z" fill="none" stroke="#fcd34d" strokeWidth="1.5" />
+        <path d="M22,10 L24,4 L28,10" fill="#fbbf24" fillOpacity="0.9" />
+        <circle cx="24" cy="18" r="2" fill="#0c1220" />
+        <path d="M10,24 Q6,20 8,16" stroke="#fcd34d" strokeWidth="1.5" fill="none" />
+        <path d="M8,20 Q4,16 6,12" stroke="#fcd34d" strokeWidth="1.5" fill="none" />
+      </g>
+      {/* Fork lines radiating from knight */}
+      <g strokeDasharray="5 3" strokeWidth="2" strokeOpacity="0.8">
+        <line x1="200" y1="95" x2="270" y2="45" stroke="#ef4444">
+          <animate attributeName="strokeDashoffset" from="16" to="0" dur="2s" repeatCount="indefinite" />
+        </line>
+        <line x1="200" y1="95" x2="135" y2="45" stroke="#22c55e">
+          <animate attributeName="strokeDashoffset" from="16" to="0" dur="2s" repeatCount="indefinite" />
+        </line>
+        <line x1="200" y1="95" x2="280" y2="155" stroke="#3b82f6">
+          <animate attributeName="strokeDashoffset" from="16" to="0" dur="2s" repeatCount="indefinite" />
+        </line>
+      </g>
+      {/* Target piece icons at arrow ends */}
+      <text x="280" y="42" textAnchor="middle" fill="#ef4444" fontSize="28" fontFamily="serif" filter="url(#t-f)">♔</text>
+      <text x="280" y="42" textAnchor="middle" fill="#ef4444" fontSize="28" fontFamily="serif" opacity="0.5">♔</text>
+      <text x="125" y="42" textAnchor="middle" fill="#22c55e" fontSize="28" fontFamily="serif" filter="url(#t-f)">♕</text>
+      <text x="125" y="42" textAnchor="middle" fill="#22c55e" fontSize="28" fontFamily="serif" opacity="0.5">♕</text>
+      <text x="290" y="158" textAnchor="middle" fill="#3b82f6" fontSize="26" fontFamily="serif" filter="url(#t-f)">♖</text>
+      {/* Pin line — bishop diagonal */}
+      <line x1="100" y1="180" x2="220" y2="40" stroke="#fbbf24" strokeWidth="3" strokeOpacity="0.5" strokeDasharray="2 6" />
+      <text x="90" y="185" textAnchor="middle" fill="#fbbf24" fontSize="18" fontFamily="serif" opacity="0.6">♗</text>
+      {/* Chain link for pin icon */}
+      <g transform="translate(155, 145)" opacity="0.45">
+        <circle cx="0" cy="0" r="4" fill="none" stroke="#fbbf24" strokeWidth="1.5" />
+        <circle cx="10" cy="0" r="4" fill="none" stroke="#fbbf24" strokeWidth="1.5" />
+        <line x1="4" y1="0" x2="6" y2="0" stroke="#fbbf24" strokeWidth="1.5" />
+      </g>
+      {/* Bottom tagline */}
+      <text x="200" y="196" textAnchor="middle" fill="#475569" fontSize="9" fontFamily="system-ui" letterSpacing="2">FORK · PIN · SKEWER · DISCOVERED ATTACK · ZWISCHENZUG</text>
+      {/* Pulsing glow */}
+      <circle cx="200" cy="95" r="15" fill="#fbbf24" fillOpacity="0.08">
+        <animate attributeName="r" values="10;25;10" dur="3s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0.12;0.02;0.12" dur="3s" repeatCount="indefinite" />
+      </circle>
     </svg>
   );
 }
