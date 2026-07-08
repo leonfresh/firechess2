@@ -1764,19 +1764,19 @@ function TacticsArt() {
   return (
     <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <linearGradient id="t-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+        <linearGradient id="tac-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
           <stop offset="0" stopColor="#0c1220" /><stop offset="1" stopColor="#1a0a1a" />
         </linearGradient>
-        <radialGradient id="t-glow" cx="200" cy="100" r="140" gradientUnits="userSpaceOnUse">
+        <radialGradient id="tac-glow" cx="200" cy="100" r="140" gradientUnits="userSpaceOnUse">
           <stop offset="0" stopColor="#ef4444" stopOpacity="0.15" /><stop offset="0.5" stopColor="#fbbf24" stopOpacity="0.08" /><stop offset="1" stopColor="#ef4444" stopOpacity="0" />
         </radialGradient>
-        <radialGradient id="t-knight-glow" cx="180" cy="80" r="50" gradientUnits="userSpaceOnUse">
+        <radialGradient id="tac-knight-glow" cx="180" cy="80" r="50" gradientUnits="userSpaceOnUse">
           <stop offset="0" stopColor="#fbbf24" stopOpacity="0.4" /><stop offset="1" stopColor="#fbbf24" stopOpacity="0" />
         </radialGradient>
-        <filter id="t-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+        <filter id="tac-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
       </defs>
-      <rect width="400" height="200" fill="url(#t-bg)" />
-      <rect width="400" height="200" fill="url(#t-glow)" />
+      <rect width="400" height="200" fill="url(#tac-bg)" />
+      <rect width="400" height="200" fill="url(#tac-glow)" />
       {/* Board grid in background */}
       {[0,1,2,3,4,5,6,7].map(i => (
         <line key={`tv${i}`} x1={100+i*25} y1="30" x2={100+i*25} y2="180" stroke="#334155" strokeWidth="0.5" strokeOpacity="0.3" />
@@ -1791,7 +1791,7 @@ function TacticsArt() {
         ))
       )}
       {/* Knight silhouette (central) */}
-      <g transform="translate(175, 60)" filter="url(#t-f)">
+      <g transform="translate(175, 60)" filter="url(#tac-f)">
         <circle cx="20" cy="55" r="9" fill="#fbbf24" fillOpacity="0.15" />
         <path d="M12,28 Q10,18 16,12 Q20,8 26,12 Q32,16 30,24 L32,28 Q34,32 30,36 L26,38 Q22,40 18,38 Z" fill="#fbbf24" fillOpacity="0.9" />
         <path d="M12,28 Q10,18 16,12 Q20,8 26,12 Q32,16 30,24 L32,28 Q34,32 30,36 L26,38 Q22,40 18,38 Z" fill="none" stroke="#fcd34d" strokeWidth="1.5" />
@@ -1813,11 +1813,11 @@ function TacticsArt() {
         </line>
       </g>
       {/* Target piece icons at arrow ends */}
-      <text x="280" y="42" textAnchor="middle" fill="#ef4444" fontSize="28" fontFamily="serif" filter="url(#t-f)">♔</text>
+      <text x="280" y="42" textAnchor="middle" fill="#ef4444" fontSize="28" fontFamily="serif" filter="url(#tac-f)">♔</text>
       <text x="280" y="42" textAnchor="middle" fill="#ef4444" fontSize="28" fontFamily="serif" opacity="0.5">♔</text>
-      <text x="125" y="42" textAnchor="middle" fill="#22c55e" fontSize="28" fontFamily="serif" filter="url(#t-f)">♕</text>
+      <text x="125" y="42" textAnchor="middle" fill="#22c55e" fontSize="28" fontFamily="serif" filter="url(#tac-f)">♕</text>
       <text x="125" y="42" textAnchor="middle" fill="#22c55e" fontSize="28" fontFamily="serif" opacity="0.5">♕</text>
-      <text x="290" y="158" textAnchor="middle" fill="#3b82f6" fontSize="26" fontFamily="serif" filter="url(#t-f)">♖</text>
+      <text x="290" y="158" textAnchor="middle" fill="#3b82f6" fontSize="26" fontFamily="serif" filter="url(#tac-f)">♖</text>
       {/* Pin line — bishop diagonal */}
       <line x1="100" y1="180" x2="220" y2="40" stroke="#fbbf24" strokeWidth="3" strokeOpacity="0.5" strokeDasharray="2 6" />
       <text x="90" y="185" textAnchor="middle" fill="#fbbf24" fontSize="18" fontFamily="serif" opacity="0.6">♗</text>
