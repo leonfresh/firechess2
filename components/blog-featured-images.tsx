@@ -66,6 +66,8 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <GuessTheEloChessArt />;
     case "chess-rating-1200-to-1500":
       return <ChessRating1200Art />;
+    case "best-chess-openings-for-beginners-by-rating":
+      return <BestOpeningsBeginnersArt />;
     default:
       return <DefaultArt />;
   }
@@ -1654,6 +1656,101 @@ function ChessRating1200Art() {
         )}
       </g>
       <text x="340" y="268" textAnchor="middle" fill="#475569" fontSize="9" fontFamily="system-ui" letterSpacing="1">RATING PROGRESSION · FOUR PILLARS TO CLIMB</text>
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Best openings for beginners — chessboard with opening cards        */
+/* ================================================================== */
+function BestOpeningsBeginnersArt() {
+  return (
+    <svg viewBox="0 0 680 280" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="obBg" x1="0" y1="0" x2="680" y2="280" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0a0e1a" /><stop offset="1" stopColor="#0d1222" />
+        </linearGradient>
+        <radialGradient id="obGl" cx="340" cy="140" r="260" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#22d3ee" stopOpacity="0.06" /><stop offset="1" stopColor="#22d3ee" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="obCard1" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#f59e0b" stopOpacity="0.15" /><stop offset="1" stopColor="#f59e0b" stopOpacity="0.03" />
+        </linearGradient>
+        <linearGradient id="obCard2" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#10b981" stopOpacity="0.15" /><stop offset="1" stopColor="#10b981" stopOpacity="0.03" />
+        </linearGradient>
+        <linearGradient id="obCard3" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#6366f1" stopOpacity="0.15" /><stop offset="1" stopColor="#6366f1" stopOpacity="0.03" />
+        </linearGradient>
+        <filter id="obF"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="680" height="280" rx="18" fill="url(#obBg)" />
+      <rect x="1" y="1" width="678" height="278" rx="17" stroke="white" strokeOpacity="0.05" />
+      <rect width="680" height="280" fill="url(#obGl)" />
+      {/* Title */}
+      <text x="340" y="32" textAnchor="middle" fill="white" fontSize="15" fontWeight="800" fontFamily="system-ui" letterSpacing="1">OPENINGS FOR EVERY LEVEL</text>
+      <text x="340" y="50" textAnchor="middle" fill="#94a3b8" fontSize="10" fontFamily="system-ui">From Beginner to Tournament Player</text>
+      {/* Chessboard — mini */}
+      <g transform="translate(24, 68)">
+        {[0,1,2,3,4,5,6,7].map(r =>
+          [0,1,2,3,4,5,6,7].map(c => {
+            const d = (r + c) % 2 === 1;
+            return <rect key={`${r}${c}`} x={c*12} y={r*12} width="12" height="12" fill={d ? '#1e3a5f' : '#e8edf3'} rx="1" />;
+          })
+        )}
+        {/* Mini pieces */}
+        <text x={24} y={84} textAnchor="middle" fill="#0f172a" fontSize="10" fontFamily="serif">♔</text>
+        <text x={24} y={12} textAnchor="middle" fill="#1e3a5f" fontSize="10" fontFamily="serif">♚</text>
+        <text x={12} y={72} textAnchor="middle" fill="#0f172a" fontSize="8" fontFamily="serif">♙</text>
+        <text x={36} y={24} textAnchor="middle" fill="#1e3a5f" fontSize="8" fontFamily="serif">♟</text>
+      </g>
+      {/* Opening recommendation cards */}
+      {/* Card 1: Under 1000 — Italian Game */}
+      <g transform="translate(130, 64)">
+        <rect width="165" height="62" rx="10" fill="url(#obCard1)" stroke="#f59e0b" strokeOpacity="0.2" strokeWidth="1" />
+        <text x="12" y="20" fill="#fbbf24" fontSize="11" fontWeight="800" fontFamily="system-ui">&lt; 1000</text>
+        <text x="12" y="36" fill="#f1f5f9" fontSize="10" fontFamily="system-ui" fontWeight="600">Italian Game</text>
+        <text x="12" y="50" fill="#94a3b8" fontSize="8.5" fontFamily="system-ui">1.e4 e5 2.Nf3 Nc6 3.Bc4</text>
+      </g>
+      {/* Card 2: 1000–1200 — London System */}
+      <g transform="translate(130, 132)">
+        <rect width="165" height="62" rx="10" fill="url(#obCard2)" stroke="#10b981" strokeOpacity="0.2" strokeWidth="1" />
+        <text x="12" y="20" fill="#34d399" fontSize="11" fontWeight="800" fontFamily="system-ui">1000–1200</text>
+        <text x="12" y="36" fill="#f1f5f9" fontSize="10" fontFamily="system-ui" fontWeight="600">London System</text>
+        <text x="12" y="50" fill="#94a3b8" fontSize="8.5" fontFamily="system-ui">1.d4 2.Bf4 3.e3 — system</text>
+      </g>
+      {/* Card 3: 1400+ — Queen's Gambit */}
+      <g transform="translate(130, 200)">
+        <rect width="165" height="62" rx="10" fill="url(#obCard3)" stroke="#6366f1" strokeOpacity="0.2" strokeWidth="1" />
+        <text x="12" y="20" fill="#818cf8" fontSize="11" fontWeight="800" fontFamily="system-ui">1400+</text>
+        <text x="12" y="36" fill="#f1f5f9" fontSize="10" fontFamily="system-ui" fontWeight="600">Queen's Gambit</text>
+        <text x="12" y="50" fill="#94a3b8" fontSize="8.5" fontFamily="system-ui">1.d4 d5 2.c4 — classical</text>
+      </g>
+      {/* Right side — rating ladder */}
+      <g transform="translate(380, 60)">
+        <text x="0" y="16" fill="#64748b" fontSize="9" fontFamily="system-ui" fontWeight="600" letterSpacing="2">RATING LADDER</text>
+        {/* Ladder items */}
+        {[
+          { r: "1800+", label: "Full repertoire", color: "#22d3ee", y: 36 },
+          { r: "1600", label: "Ruy Lopez / Catalan", color: "#06b6d4", y: 74 },
+          { r: "1400", label: "Queen's Gambit", color: "#10b981", y: 112 },
+          { r: "1200", label: "London System", color: "#84cc16", y: 150 },
+          { r: "1000", label: "Italian + Caro-Kann", color: "#eab308", y: 188 },
+        ].map((item) => (
+          <g key={item.r}>
+            <text x="0" y={item.y} fill={item.color} fontSize="13" fontWeight="800" fontFamily="system-ui">{item.r}</text>
+            <text x="55" y={item.y} fill="#cbd5e1" fontSize="11" fontFamily="system-ui">{item.label}</text>
+            <line x1="0" y1={item.y + 6} x2="260" y2={item.y + 6} stroke="#1e293b" strokeWidth="0.5" />
+          </g>
+        ))}
+        {/* Arrow */}
+        <path d="M10,210 L10,34 M5,42 L10,34 L15,42" stroke="#22d3ee" strokeOpacity="0.3" strokeWidth="1.5" fill="none" />
+      </g>
+      {/* Decorative pieces */}
+      <g opacity="0.08">
+        <text x="12" y="268" fill="white" fontSize="14" fontFamily="serif">♟♞♝♜♛♚</text>
+      </g>
+      <text x="340" y="270" textAnchor="middle" fill="#475569" fontSize="9" fontFamily="system-ui" letterSpacing="1">OPENING RECOMMENDATIONS · LEVEL UP YOUR REPERTOIRE</text>
     </svg>
   );
 }
