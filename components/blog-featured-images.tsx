@@ -72,6 +72,8 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <TacticsArt />;
     case "lichess-vs-chess-com-improvement":
       return <LichessVsChesscomArt />;
+    case "immortal-zugzwang-game-samisch-nimzowitsch":
+      return <ImmortalZugzwangArt />;
     default:
       return <DefaultArt />;
   }
@@ -1911,6 +1913,87 @@ function LichessVsChesscomArt() {
       <line x1="218" y1="92" x2="232" y2="92" stroke="#fbbf24" strokeWidth="1" strokeOpacity="0.15" />
       <line x1="200" y1="74" x2="200" y2="64" stroke="#fbbf24" strokeWidth="1" strokeOpacity="0.15" />
       <line x1="200" y1="110" x2="200" y2="120" stroke="#fbbf24" strokeWidth="1" strokeOpacity="0.15" />
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Immortal Zugzwang  locked pieces, cage bars, trapped king         */
+/* ================================================================== */
+function ImmortalZugzwangArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="iz-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0a0f1a" /><stop offset="1" stopColor="#140a1a" />
+        </linearGradient>
+        <radialGradient id="iz-glow" cx="200" cy="100" r="130" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#8b5cf6" stopOpacity="0.12" /><stop offset="1" stopColor="#8b5cf6" stopOpacity="0" />
+        </radialGradient>
+        <filter id="iz-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#iz-bg)" />
+      <rect width="400" height="200" fill="url(#iz-glow)" />
+      {/* Cage bars — zugzwang visual metaphor */}
+      <line x1="80" y1="25" x2="80" y2="175" stroke="#475569" strokeWidth="2" strokeOpacity="0.35" />
+      <line x1="120" y1="25" x2="120" y2="175" stroke="#475569" strokeWidth="1.5" strokeOpacity="0.25" />
+      <line x1="280" y1="25" x2="280" y2="175" stroke="#475569" strokeWidth="1.5" strokeOpacity="0.25" />
+      <line x1="320" y1="25" x2="320" y2="175" stroke="#475569" strokeWidth="2" strokeOpacity="0.35" />
+      {/* Top bar */}
+      <line x1="60" y1="35" x2="340" y2="35" stroke="#475569" strokeWidth="2" strokeOpacity="0.3" />
+      {/* Bottom bar */}
+      <line x1="60" y1="165" x2="340" y2="165" stroke="#475569" strokeWidth="2" strokeOpacity="0.3" />
+      {/* Central chessboard — 4x4 mini board */}
+      <g transform="translate(152,68)">
+        {[0,1,2,3].map(r =>
+          [0,1,2,3].filter(c => (r + c) % 2 === 0).map(c => (
+            <rect key={`s${r}${c}`} x={c*24} y={r*24} width="24" height="24" fill="#1e293b" fillOpacity="0.4" />
+          ))
+        )}
+        {[0,1,2,3].map(r =>
+          [0,1,2,3].filter(c => (r + c) % 2 === 1).map(c => (
+            <rect key={`t${r}${c}`} x={c*24} y={r*24} width="24" height="24" fill="#334155" fillOpacity="0.25" />
+          ))
+        )}
+      </g>
+      {/* Trapped white king — center board, surrounded by black pieces */}
+      <g transform="translate(200,92)" filter="url(#iz-f)">
+        <text x="0" y="0" textAnchor="middle" fill="#fbbf24" fontSize="28" fontFamily="serif" fillOpacity="0.7">♔</text>
+        {/* Restriction rings */}
+        <circle cx="0" cy="0" r="20" fill="none" stroke="#8b5cf6" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="3 3">
+          <animate attributeName="r" values="20;24;20" dur="3s" repeatCount="indefinite" />
+          <animate attributeName="strokeOpacity" values="0.3;0.15;0.3" dur="3s" repeatCount="indefinite" />
+        </circle>
+      </g>
+      {/* Black queen dominating from c-file */}
+      <g transform="translate(128,68)">
+        <text x="0" y="0" textAnchor="middle" fill="#a78bfa" fontSize="20" fontFamily="serif" fillOpacity="0.6">♛</text>
+      </g>
+      {/* Black bishop dominating diagonal */}
+      <g transform="translate(248,140)">
+        <text x="0" y="0" textAnchor="middle" fill="#a78bfa" fontSize="18" fontFamily="serif" fillOpacity="0.5">♝</text>
+      </g>
+      {/* Black rook controlling file */}
+      <g transform="translate(248,68)">
+        <text x="0" y="0" textAnchor="middle" fill="#a78bfa" fontSize="18" fontFamily="serif" fillOpacity="0.5">♜</text>
+      </g>
+      {/* White pawns — blocked, can't move */}
+      <g fill="#fbbf24" fillOpacity="0.3">
+        <text x="176" y="164" fontSize="14" fontFamily="serif">♟</text>
+        <text x="200" y="164" fontSize="14" fontFamily="serif">♟</text>
+        <text x="224" y="164" fontSize="14" fontFamily="serif">♟</text>
+      </g>
+      {/* Static trapped white knights */}
+      <g fill="#fbbf24" fillOpacity="0.25">
+        <text x="152" y="116" fontSize="16" fontFamily="serif">♞</text>
+        <text x="248" y="116" fontSize="16" fontFamily="serif">♞</text>
+      </g>
+      {/* Zigzag lines showing "no exit" */}
+      <path d="M152,44 Q170,50 176,44 Q182,38 188,44 Q194,50 200,44 Q206,38 212,44 Q218,50 224,44 Q230,38 236,44 Q242,50 248,44" fill="none" stroke="#ef4444" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="2 3" />
+      <path d="M152,156 Q170,150 176,156 Q182,162 188,156 Q194,150 200,156 Q206,162 212,156 Q218,150 224,156 Q230,162 236,156 Q242,150 248,156" fill="none" stroke="#ef4444" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="2 3" />
+      {/* "Zugzwang" text */}
+      <text x="200" y="36" textAnchor="middle" fill="#8b5cf6" fillOpacity="0.5" fontSize="10" fontFamily="system-ui" letterSpacing="3">ZUGZWANG</text>
+      <text x="200" y="186" textAnchor="middle" fill="#8b5cf6" fillOpacity="0.4" fontSize="10" fontFamily="system-ui" letterSpacing="3">NO GOOD MOVES</text>
     </svg>
   );
 }
