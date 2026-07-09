@@ -1,6 +1,6 @@
 {
   "cycle": 10,
-  "total_pages_created": 10,
+  "total_pages_created": 11,
   "published_slugs": [
     "average-centipawn-loss-by-rating",
     "sicilian-defense-for-beginners",
@@ -11,7 +11,8 @@
     "chess-rating-1200-to-1500",
     "best-chess-openings-for-beginners-by-rating",
     "chess-tactics-every-player-should-know",
-    "lichess-vs-chess-com-improvement"
+    "lichess-vs-chess-com-improvement",
+    "immortal-zugzwang-game-samisch-nimzowitsch"
   ],
   "analytics_history": [
     {"cycle": 1, "date": "2026-07-04", "slug": "average-centipawn-loss-by-rating", "gsc_query_targeted": "average centipawn loss", "query_impressions": 185, "query_clicks": 0, "query_position": 9.4, "period_days": 14},
@@ -22,8 +23,9 @@
     {"cycle": 6, "date": "2026-07-08", "slug": "chess-rating-1200-to-1500", "gsc_query_targeted": "how to improve chess rating from 1200 to 1500", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14},
     {"cycle": 7, "date": "2026-07-08", "slug": "best-chess-openings-for-beginners-by-rating", "gsc_query_targeted": "priority queue #6: best openings for beginners listicle", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14},
     {"cycle": 8, "date": "2026-07-09", "slug": "chess-tactics-every-player-should-know", "gsc_query_targeted": "priority queue #7: chess tactics every player should know", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14},
-    {"cycle": 9, "date": "2026-07-09", "slug": "lichess-vs-chess-com-improvement", "gsc_query_targeted": "priority queue #8: Lichess vs Chess.com comparison", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14}
+    {"cycle": 9, "date": "2026-07-09", "slug": "lichess-vs-chess-com-improvement", "gsc_query_targeted": "priority queue #8: Lichess vs Chess.com comparison", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14},
+    {"cycle": 10, "date": "2026-07-09", "slug": "immortal-zugzwang-game-samisch-nimzowitsch", "gsc_query_targeted": "priority queue #9: Immortal Zugzwang game analysis", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14}
   ],
-  "next_cycle_focus": "Cycle 10: The Immortal Zugzwang Game — Sämisch vs Nimzowitsch famous game analysis (queue #9)",
+  "next_cycle_focus": "Cycle 11: How to calculate chess variations deeper (queue #10), OR GSC gap: /blog/what-is-centipawn-loss (2715 imp, 0.15% CTR — needs meta refresh or new adjacent content)",
   "last_run": "2026-07-09"
 }
