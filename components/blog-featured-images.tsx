@@ -70,6 +70,8 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <BestOpeningsBeginnersArt />;
     case "chess-tactics-every-player-should-know":
       return <TacticsArt />;
+    case "lichess-vs-chess-com-improvement":
+      return <LichessVsChesscomArt />;
     default:
       return <DefaultArt />;
   }
@@ -1834,6 +1836,81 @@ function TacticsArt() {
         <animate attributeName="r" values="10;25;10" dur="3s" repeatCount="indefinite" />
         <animate attributeName="opacity" values="0.12;0.02;0.12" dur="3s" repeatCount="indefinite" />
       </circle>
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  9. Lichess vs Chess.com  two platforms clashing, scales balancing */
+/* ================================================================== */
+function LichessVsChesscomArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="lc-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0c1220" /><stop offset="1" stopColor="#14102a" />
+        </linearGradient>
+        <radialGradient id="lc-left" cx="120" cy="100" r="110" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#10b981" stopOpacity="0.18" /><stop offset="1" stopColor="#10b981" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient id="lc-right" cx="280" cy="100" r="110" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#3b82f6" stopOpacity="0.18" /><stop offset="1" stopColor="#3b82f6" stopOpacity="0" />
+        </radialGradient>
+        <filter id="lc-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#lc-bg)" />
+      <rect width="400" height="200" fill="url(#lc-left)" />
+      <rect width="400" height="200" fill="url(#lc-right)" />
+      {/* Center divider line */}
+      <line x1="200" y1="20" x2="200" y2="180" stroke="#475569" strokeWidth="1" strokeOpacity="0.4" strokeDasharray="4 3" />
+      {/* LEFT SIDE — Lichess (green, open, minimalist) */}
+      <g transform="translate(120,60)">
+        <rect x="-20" y="-25" width="40" height="50" rx="5" fill="none" stroke="#10b981" strokeWidth="2.5" strokeOpacity="0.8" />
+        <rect x="-15" y="-18" width="30" height="8" rx="2" fill="#10b981" fillOpacity="0.7" />
+        <rect x="-15" y="-5" width="24" height="7" rx="2" fill="#10b981" fillOpacity="0.5" />
+        <rect x="-15" y="7" width="30" height="7" rx="2" fill="#10b981" fillOpacity="0.6" />
+      </g>
+      {/* Lichess pieces (minimalist outlines) */}
+      <g transform="translate(95,115)" fill="none" stroke="#10b981" strokeWidth="1.8" strokeOpacity="0.6">
+        <circle cx="0" cy="-12" r="5" />
+        <path d="M-3,-8 L-4,4 Q0,7 4,4 L3,-8 Z" />
+        <ellipse cx="0" cy="6" rx="7" ry="2.5" />
+        <g transform="translate(35,0)">
+          <path d="M-5,7 L-6,-12 Q-7,-22 -1,-26 L1,-28 Q4,-25 6,-22 L8,-16 Q10,-12 8,-8 L8,0 Q5,3 -3,3 Z" />
+          <circle cx="1" cy="-20" r="1.5" fill="#10b981" fillOpacity="0.5" />
+        </g>
+      </g>
+      <text x="120" y="170" textAnchor="middle" fill="#10b981" fillOpacity="0.55" fontSize="11" fontFamily="system-ui" letterSpacing="2">FREE · OPEN · ALL FEATURES</text>
+      <path d="M108,182 Q120,190 132,182 Q138,178 144,182 Q156,190 168,182" fill="none" stroke="#10b981" strokeWidth="1.5" strokeOpacity="0.35" />
+      {/* RIGHT SIDE — Chess.com (blue, polished, premium) */}
+      <g transform="translate(280,58)">
+        <circle cx="0" cy="-20" r="3" fill="#3b82f6" fillOpacity="0.7" />
+        <path d="M-8,-14 L-6,-20 L-2,-15 L0,-22 L2,-15 L6,-20 L8,-14 Z" fill="#3b82f6" fillOpacity="0.6" />
+        <circle cx="0" cy="-10" r="9" fill="#3b82f6" fillOpacity="0.5" />
+        <path d="M-6,-3 L-10,12 Q0,16 10,12 L6,-3 Z" fill="#3b82f6" fillOpacity="0.5" />
+        <ellipse cx="0" cy="14" rx="13" ry="4.5" fill="#3b82f6" fillOpacity="0.4" />
+      </g>
+      <g transform="translate(260,115)" fill="none" stroke="#3b82f6" strokeWidth="1.8" strokeOpacity="0.6">
+        <circle cx="0" cy="-12" r="5" />
+        <path d="M-3,-8 L-4,4 Q0,7 4,4 L3,-8 Z" />
+        <ellipse cx="0" cy="6" rx="7" ry="2.5" />
+        <g transform="translate(35,0)">
+          <circle cx="0" cy="-20" r="3.5" />
+          <path d="M-5,-6 L-7,-18 L-3,-14 L0,-24 L3,-14 L7,-18 L5,-6 Z" />
+          <circle cx="0" cy="-10" r="8" />
+          <path d="M-5,-3 L-8,8 Q0,12 8,8 L5,-3 Z" />
+          <ellipse cx="0" cy="10" rx="11" ry="3.5" />
+        </g>
+      </g>
+      <text x="280" y="170" textAnchor="middle" fill="#3b82f6" fillOpacity="0.55" fontSize="11" fontFamily="system-ui" letterSpacing="2">POLISHED · CURATED · $14.99/MO</text>
+      <text x="280" y="186" textAnchor="middle" fill="#3b82f6" fillOpacity="0.35" fontSize="13" fontFamily="system-ui">$</text>
+      {/* Center "VS" decal */}
+      <circle cx="200" cy="92" r="18" fill="none" stroke="#475569" strokeWidth="1.5" strokeOpacity="0.4" />
+      <text x="200" y="99" textAnchor="middle" fill="#fbbf24" fillOpacity="0.6" fontSize="16" fontFamily="system-ui" fontWeight="700">VS</text>
+      <line x1="182" y1="92" x2="168" y2="92" stroke="#fbbf24" strokeWidth="1" strokeOpacity="0.15" />
+      <line x1="218" y1="92" x2="232" y2="92" stroke="#fbbf24" strokeWidth="1" strokeOpacity="0.15" />
+      <line x1="200" y1="74" x2="200" y2="64" stroke="#fbbf24" strokeWidth="1" strokeOpacity="0.15" />
+      <line x1="200" y1="110" x2="200" y2="120" stroke="#fbbf24" strokeWidth="1" strokeOpacity="0.15" />
     </svg>
   );
 }

@@ -1,9 +1,9 @@
 # Content Priority Queue
 
-## Cycle 5 — Complete
+## Cycle 9 — Complete
 
 Done in this cycle:
-- [x] **"Shirov's Bh3!! Sacrifice" blog post** — GSC gap: `/games/shirov-topalov-1998` game page has 2,237 impressions, 0 clicks, position 5.8. Created blog post analyzing the famous bishop sacrifice to capture those impressions and link to the game page.
+- [x] **"Lichess vs Chess.com: Which Platform Actually Helps You Improve Faster?"** — Priority queue #8, high search volume comparison topic. Head-to-head covering analysis, puzzles, learning, openings, engines, mobile, pricing, and recommendations by rating. 3,389 words.
 
 ## Queue (ordered by priority)
 
@@ -14,26 +14,20 @@ Done in this cycle:
 5. [x] ~~**"How to improve chess rating from 1200 to 1500"** — evergreen, study plan content~~ *(Cycle 6)*
 6. [x] ~~**"Best chess openings for beginners by rating"** — listicle, good for featured snippets~~ *(Cycle 7)*
 7. [x] ~~**"Chess tactics every player should know"** — tactic pattern reference, links to existing tactic pages~~ *(Cycle 8)*
-8. **"Lichess vs Chess.com: which is better for improvement?"** — comparison, high search volume
+8. [x] ~~**"Lichess vs Chess.com: which is better for improvement?"** — comparison, high search volume~~ *(Cycle 9)*
 9. **"The Immortal Zugzwang Game: Sämisch vs Nimzowitsch"** — another famous game analysis in the same series
+10. **"How to calculate chess variations deeper"** — evergreen improvement guide, positional training
+11. **"Chess visualisation training: seeing 3 moves ahead"** — skill-building, links to coordinate training
 
-## Discovered during Cycle 5 (from fresh GSC data)
-
-- **Shirov-Topalov 1998 game page** — 2,237 impressions, pos 5.8, 0 clicks — addressed by Cycle 5 blog post
-- **"alexei shirov bh3 sacrifice" family** — ~25 combined impressions, pos 4.1-9.3 — addressed by Cycle 5
-- **"average centipawn loss"** — 201 impressions, pos 9.2, 0 clicks — existing post but fresh data shows no improvement; may need meta refresh or interlinking
-- **"centipawn loss meaning"** — 107 impressions, pos 7.3, CTR 0.93% — existing post exists
-- **"acpl chess"** — 23 impressions, pos 7.4, 0 CTR — query not directly covered; consider glossary enhancement to existing centipawn posts
-- **Guess the Elo queries** — combined ~68 impressions, positions 5.5-8.4 — existing posts may need time to rank
-
-## GSC Data Snapshot (14 days ending 2026-07-06)
+## GSC Observations (14 days ending 2026-07-09)
 
 | Metric | Value |
 |--------|-------|
-| Total clicks | 134 |
-| Total impressions | 7,822 |
-| Avg CTR | 1.71% |
-| Avg position | 9.3 |
-| Top page | /chaos (59 clicks, pos 3.2, 16.95% CTR) |
-| Top query | "chaos chess" (34 clicks, pos 1.5) |
-| Biggest gap | /games/shirov-topalov-1998 (2,237 imp, 0 clicks, pos 5.8) |
+| Total clicks | 113 |
+| Total impressions | 7,431 |
+| Avg CTR | 1.52% |
+| Avg position | 9.2 |
+| Top page | /chaos (56 clicks, pos 3.0, 18.54% CTR) |
+| Top query | "chaos chess" (28 clicks, pos 1.4) |
+| Biggest impression-lever | /games/shirov-topalov-1998 (2,247 imp, 0 clicks, pos 5.7) — Cycle 5 blog post now live, waiting for ranking |
+| Notable gap | /blog/what-is-centipawn-loss (2,584 imp, only 4 clicks, 0.15% CTR) — high impressions, low CTR needs meta/description refresh |
