@@ -12,3 +12,4 @@
 | 8 | 2026-07-09 | chess-tactics-every-player-should-know | published | priority queue #7 — comprehensive tactics guide, 8 essential patterns with FEN positions |
 | 9 | 2026-07-09 | lichess-vs-chess-com-improvement | published | priority queue #8 — Lichess vs Chess.com comparison, high search volume |
 | 10 | 2026-07-09 | immortal-zugzwang-game-samisch-nimzowitsch | published | priority queue #9 — Sämisch vs Nimzowitsch Immortal Zugzwang game analysis |
+| 11 | 2026-07-10 | chess-calculation-training-calculate-variations | published | priority queue #10 — "how to calculate chess variations deeper" evergreen, 2,800 words, 5 FEN-validated positions, 4 calculation methods with comparison table |

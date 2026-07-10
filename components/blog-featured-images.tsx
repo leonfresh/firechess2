@@ -74,6 +74,8 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <LichessVsChesscomArt />;
     case "immortal-zugzwang-game-samisch-nimzowitsch":
       return <ImmortalZugzwangArt />;
+    case "chess-calculation-training-calculate-variations":
+      return <CalculationTrainingArt />;
     default:
       return <DefaultArt />;
   }
@@ -1994,6 +1996,70 @@ function ImmortalZugzwangArt() {
       {/* "Zugzwang" text */}
       <text x="200" y="36" textAnchor="middle" fill="#8b5cf6" fillOpacity="0.5" fontSize="10" fontFamily="system-ui" letterSpacing="3">ZUGZWANG</text>
       <text x="200" y="186" textAnchor="middle" fill="#8b5cf6" fillOpacity="0.4" fontSize="10" fontFamily="system-ui" letterSpacing="3">NO GOOD MOVES</text>
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Calculation Training  brain/neural network, chess pieces           */
+/* ================================================================== */
+function CalculationTrainingArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="ct-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0a0e1a" /><stop offset="1" stopColor="#0d1025" />
+        </linearGradient>
+        <radialGradient id="ct-glow" cx="200" cy="100" r="140" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#06b6d4" stopOpacity="0.15" /><stop offset="1" stopColor="#06b6d4" stopOpacity="0" />
+        </radialGradient>
+        <filter id="ct-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#ct-bg)" />
+      <rect width="400" height="200" fill="url(#ct-glow)" />
+      {/* Neural network connections — calculation metaphor */}
+      <g stroke="#06b6d4" strokeWidth="0.6" strokeOpacity="0.2">
+        <line x1="60" y1="100" x2="340" y2="100" />
+        <line x1="60" y1="100" x2="200" y2="40" />
+        <line x1="60" y1="100" x2="200" y2="160" />
+        <line x1="340" y1="100" x2="200" y2="40" />
+        <line x1="340" y1="100" x2="200" y2="160" />
+        <line x1="200" y1="40" x2="200" y2="160" />
+        <line x1="100" y1="70" x2="300" y2="130" />
+        <line x1="100" y1="130" x2="300" y2="70" />
+      </g>
+      {/* Node points — synapses firing */}
+      <circle cx="60" cy="100" r="4" fill="#06b6d4" opacity="0.6" filter="url(#ct-f)"/>
+      <circle cx="340" cy="100" r="4" fill="#06b6d4" opacity="0.6" filter="url(#ct-f)"/>
+      <circle cx="200" cy="40" r="3" fill="#22d3ee" opacity="0.5" />
+      <circle cx="200" cy="160" r="3" fill="#22d3ee" opacity="0.5" />
+      <circle cx="100" cy="70" r="2" fill="#06b6d4" opacity="0.35" />
+      <circle cx="300" cy="130" r="2" fill="#06b6d4" opacity="0.35" />
+      <circle cx="100" cy="130" r="2" fill="#06b6d4" opacity="0.35" />
+      <circle cx="300" cy="70" r="2" fill="#06b6d4" opacity="0.35" />
+      {/* Animated synapse pulse */}
+      <circle cx="200" cy="100" r="2" fill="#22d3ee" opacity="0.8">
+        <animate attributeName="r" values="2;6;2" dur="2.5s" repeatCount="indefinite" />
+        <animate attributeName="opacity" values="0.8;0;0.8" dur="2.5s" repeatCount="indefinite" />
+      </circle>
+      {/* Chess pieces as thought nodes */}
+      <g transform="translate(160,85)">
+        <text textAnchor="middle" fill="#fbbf24" fontSize="22" fontFamily="serif" opacity="0.8">♘</text>
+      </g>
+      <g transform="translate(240,85)">
+        <text textAnchor="middle" fill="#fbbf24" fontSize="22" fontFamily="serif" opacity="0.8">♗</text>
+      </g>
+      <g transform="translate(200,115)">
+        <text textAnchor="middle" fill="#fbbf24" fontSize="22" fontFamily="serif" opacity="0.8">♔</text>
+      </g>
+      {/* Branching lines — calculating variations */}
+      <path d="M260,85 Q280,75 290,80 Q300,85 295,95 Q290,105 300,110" fill="none" stroke="#f59e0b" strokeWidth="0.8" strokeOpacity="0.3" strokeDasharray="2 2" />
+      <path d="M140,85 Q120,75 110,80 Q100,85 105,95 Q110,105 100,110" fill="none" stroke="#f59e0b" strokeWidth="0.8" strokeOpacity="0.3" strokeDasharray="2 2" />
+      {/* Title text */}
+      <text x="200" y="36" textAnchor="middle" fill="#06b6d4" fillOpacity="0.35" fontSize="8" fontFamily="system-ui" letterSpacing="4">CALCULATION</text>
+      <text x="200" y="186" textAnchor="middle" fill="#64748b" fillOpacity="0.3" fontSize="9" fontFamily="system-ui" letterSpacing="2">CANDIDATES · FORCING · DEPTH · CHECK</text>
+      {/* Arrow showing depth progression */}
+      <path d="M80,172 L100,168 M90,170 L110,166 M100,168 L120,164" fill="none" stroke="#f59e0b" strokeWidth="0.6" strokeOpacity="0.25" />
     </svg>
   );
 }

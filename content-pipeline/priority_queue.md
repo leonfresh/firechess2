@@ -16,19 +16,20 @@ Done in this cycle:
 7. [x] ~~**"Chess tactics every player should know"** — tactic pattern reference, links to existing tactic pages~~ *(Cycle 8)*
 8. [x] ~~**"Lichess vs Chess.com: which is better for improvement?"** — comparison, high search volume~~ *(Cycle 9)*
 9. [x] ~~**"The Immortal Zugzwang Game: Sämisch vs Nimzowitsch"** — another famous game analysis in the same series~~ *(Cycle 10)*
-10. **"How to calculate chess variations deeper"** — evergreen improvement guide, calculation training
-11. **"Chess visualisation training: seeing 3 moves ahead"** — skill-building, links to coordinate training
+|10. [x] ~~**"How to calculate chess variations deeper"** — evergreen improvement guide, calculation training~~ *(Cycle 11)*
+|11. **"Chess visualisation training: seeing 3 moves ahead"** — skill-building, links to coordinate training
 
-## GSC Observations (14 days ending 2026-07-09)
+## GSC Observations (14 days ending 2026-07-10)
 
 | Metric | Value |
 |--------|-------|
-| Total clicks | 121 |
-| Total impressions | 7,677 |
-| Avg CTR | 1.58% |
-| Avg position | 9.1 |
-| Top page | /chaos (60 clicks, pos 3.0, 18.29% CTR) |
-| Top query | "chaos chess" (32 clicks, pos 1.4) |
-| Biggest impression-lever | /blog/what-is-centipawn-loss (2,715 imp, only 4 clicks, 0.15% CTR) — needs meta/title refresh |
-| Notable gap | /games/shirov-topalov-1998 (2,251 imp, 0 clicks, pos 5.7) — Cycle 5 blog post now live, waiting for ranking |
-| New gap | "average centipawn loss" — 178 imp, 0 clicks, pos 9.3 (covered by existing post, may need optimization) |
+| Total clicks | 108 |
+| Total impressions | 7,239 |
+| Avg CTR | 1.49% |
+| Avg position | 9.2 |
+| Top page | /chaos (55 clicks, pos 3.0, 19.03% CTR) |
+| Top query | "chaos chess" (29 clicks, pos 1.3) |
+| Biggest impression-lever | /blog/what-is-centipawn-loss (2,482 imp, only 4 clicks, 0.16% CTR) — needs meta/title refresh |
+| Notable gap | /games/shirov-topalov-1998 (2,222 imp, 0 clicks, pos 5.7) — blog post live since Cycle 5, still ranking on game page |
+| New gap | "average centipawn loss" — 147 imp, 0 clicks, pos 9.4 (covered by Cycle 1 post, may need optimization) |
+| Cycle 11 focus | Queue #10: "How to calculate chess variations deeper" — published, now targeting "chess calculation training" queries |
