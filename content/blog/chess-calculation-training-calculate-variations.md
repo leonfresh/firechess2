@@ -1,6 +1,6 @@
 ---
 title: "Chess Calculation Training — How to Calculate Variations Deeper and Find the Best Move"
-description: "Master four proven calculation methods — candidate moves, forcing sequences, tree of variations, and blunder check — with practice positions and a 30-day training plan."
+description: "Master four proven calculation methods — candidate moves, forcing sequences, tree of variations, and blunder check — with a 30-day training plan."
 date: "2026-07-10"
 author: "FireChess Team"
 tags:
