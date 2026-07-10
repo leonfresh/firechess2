@@ -1,6 +1,6 @@
 {
-  "cycle": 11,
-  "total_pages_created": 12,
+  "cycle": 12,
+  "total_pages_created": 13,
   "published_slugs": [
     "average-centipawn-loss-by-rating",
     "sicilian-defense-for-beginners",
@@ -13,7 +13,8 @@
     "chess-tactics-every-player-should-know",
     "lichess-vs-chess-com-improvement",
     "immortal-zugzwang-game-samisch-nimzowitsch",
-    "chess-calculation-training-calculate-variations"
+    "chess-calculation-training-calculate-variations",
+    "chess-visualisation-training-3-moves-ahead"
   ],
   "analytics_history": [
     {"cycle": 1, "date": "2026-07-04", "slug": "average-centipawn-loss-by-rating", "gsc_query_targeted": "average centipawn loss", "query_impressions": 185, "query_clicks": 0, "query_position": 9.4, "period_days": 14},
@@ -26,8 +27,9 @@
     {"cycle": 8, "date": "2026-07-09", "slug": "chess-tactics-every-player-should-know", "gsc_query_targeted": "priority queue #7: chess tactics every player should know", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14},
     {"cycle": 9, "date": "2026-07-09", "slug": "lichess-vs-chess-com-improvement", "gsc_query_targeted": "priority queue #8: Lichess vs Chess.com comparison", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14},
     {"cycle": 10, "date": "2026-07-09", "slug": "immortal-zugzwang-game-samisch-nimzowitsch", "gsc_query_targeted": "priority queue #9: Immortal Zugzwang game analysis", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14},
-    {"cycle": 11, "date": "2026-07-10", "slug": "chess-calculation-training-calculate-variations", "gsc_query_targeted": "priority queue #10: how to calculate chess variations deeper", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14}
+    {"cycle": 11, "date": "2026-07-10", "slug": "chess-calculation-training-calculate-variations", "gsc_query_targeted": "priority queue #10: how to calculate chess variations deeper", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14},
+    {"cycle": 12, "date": "2026-07-11", "slug": "chess-visualisation-training-3-moves-ahead", "gsc_query_targeted": "priority queue #11: chess visualisation training, seeing 3 moves ahead", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14}
   ],
-  "next_cycle_focus": "Cycle 12: Chess visualisation training (queue #11), OR GSC gap: /blog/what-is-centipawn-loss (2,482 imp, 0.16% CTR — needs meta refresh or new adjacent content)",
-  "last_run": "2026-07-10"
+  "next_cycle_focus": "Cycle 13: GSC gap: /blog/what-is-centipawn-loss (2,658 imp, 0.19% CTR — meta refresh needed, or write adjacent content targeting 'acpl chess' queries), OR priority queue exhausted — check GSC data for new gaps",
+  "last_run": "2026-07-11"
 }

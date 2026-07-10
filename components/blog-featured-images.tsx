@@ -76,6 +76,8 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <ImmortalZugzwangArt />;
     case "chess-calculation-training-calculate-variations":
       return <CalculationTrainingArt />;
+    case "chess-visualisation-training-3-moves-ahead":
+      return <VisualisationTrainingArt />;
     default:
       return <DefaultArt />;
   }
@@ -2060,6 +2062,88 @@ function CalculationTrainingArt() {
       <text x="200" y="186" textAnchor="middle" fill="#64748b" fillOpacity="0.3" fontSize="9" fontFamily="system-ui" letterSpacing="2">CANDIDATES · FORCING · DEPTH · CHECK</text>
       {/* Arrow showing depth progression */}
       <path d="M80,172 L100,168 M90,170 L110,166 M100,168 L120,164" fill="none" stroke="#f59e0b" strokeWidth="0.6" strokeOpacity="0.25" />
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Visualisation Training  mind's eye seeing 3 moves ahead            */
+/* ================================================================== */
+function VisualisationTrainingArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="vis-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0a0e1a" /><stop offset="1" stopColor="#0d1025" />
+        </linearGradient>
+        <radialGradient id="vis-glow" cx="200" cy="100" r="130" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#8b5cf6" stopOpacity="0.15" /><stop offset="1" stopColor="#8b5cf6" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="vis-beam" x1="0.5" y1="0" x2="0.5" y2="1">
+          <stop offset="0" stopColor="#a78bfa" stopOpacity="0.3" /><stop offset="1" stopColor="#a78bfa" stopOpacity="0" />
+        </linearGradient>
+        <filter id="vis-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#vis-bg)" />
+      <rect width="400" height="200" fill="url(#vis-glow)" />
+      {/* Mini chessboard at centre */}
+      <g transform="translate(172,78)">
+        {[0,1,2,3,4,5].map(r =>
+          [0,1,2,3,4,5].filter(c => (r + c) % 2 === 0).map(c => (
+            <rect key={`s${r}${c}`} x={c*10} y={r*10} width="10" height="10" fill="#1e293b" fillOpacity="0.6" />
+          ))
+        )}
+        {[0,1,2,3,4,5].map(r =>
+          [0,1,2,3,4,5].filter(c => (r + c) % 2 === 1).map(c => (
+            <rect key={`t${r}${c}`} x={c*10} y={r*10} width="10" height="10" fill="#334155" fillOpacity="0.35" />
+          ))
+        )}
+        {/* Pieces on board — simplified silhouettes */}
+        <text x="0" y="55" textAnchor="middle" fill="#fbbf24" fontSize="9" fontFamily="serif" opacity="0.7">♔</text>
+        <text x="10" y="25" textAnchor="middle" fill="#94a3b8" fontSize="9" fontFamily="serif" opacity="0.6">♘</text>
+        <text x="20" y="45" textAnchor="middle" fill="#94a3b8" fontSize="9" fontFamily="serif" opacity="0.5">♟</text>
+        <text x="30" y="15" textAnchor="middle" fill="#fbbf24" fontSize="9" fontFamily="serif" opacity="0.6">♗</text>
+        <text x="40" y="35" textAnchor="middle" fill="#94a3b8" fontSize="9" fontFamily="serif" opacity="0.6">♚</text>
+        <text x="50" y="55" textAnchor="middle" fill="#fbbf24" fontSize="9" fontFamily="serif" opacity="0.5">♜</text>
+      </g>
+      {/* Cylinder beam projecting forward — "seeing ahead" */}
+      <ellipse cx="200" cy="75" rx="50" ry="12" fill="url(#vis-beam)" />
+      {/* Three projection layers — 1, 2, 3 moves ahead */}
+      <g transform="translate(200,155)">
+        {/* Layer 1 — 1 move ahead (closest, brightest) */}
+        <line x1="-15" y1="5" x2="-20" y2="18" stroke="#a78bfa" strokeWidth="2.5" strokeOpacity="0.8" strokeLinecap="round" />
+        <line x1="15" y1="5" x2="20" y2="18" stroke="#a78bfa" strokeWidth="2.5" strokeOpacity="0.8" strokeLinecap="round" />
+        <line x1="0" y1="5" x2="0" y2="22" stroke="#a78bfa" strokeWidth="2.5" strokeOpacity="0.8" strokeLinecap="round" />
+        <circle cx="-20" cy="18" r="2.5" fill="#a78bfa" opacity="0.9" filter="url(#vis-f)" />
+        <circle cx="20" cy="18" r="2.5" fill="#a78bfa" opacity="0.9" filter="url(#vis-f)" />
+        <circle cx="0" cy="22" r="2.5" fill="#a78bfa" opacity="0.9" filter="url(#vis-f)" />
+        
+        {/* Layer 2 — 2 moves ahead (medium distance) */}
+        <line x1="-20" y1="18" x2="-28" y2="32" stroke="#a78bfa" strokeWidth="2" strokeOpacity="0.55" strokeLinecap="round" />
+        <line x1="20" y1="18" x2="28" y2="32" stroke="#a78bfa" strokeWidth="2" strokeOpacity="0.55" strokeLinecap="round" />
+        <line x1="0" y1="22" x2="0" y2="36" stroke="#a78bfa" strokeWidth="2" strokeOpacity="0.55" strokeLinecap="round" />
+        <circle cx="-28" cy="32" r="2" fill="#a78bfa" opacity="0.65" />
+        <circle cx="28" cy="32" r="2" fill="#a78bfa" opacity="0.65" />
+        <circle cx="0" cy="36" r="2" fill="#a78bfa" opacity="0.65" />
+        
+        {/* Layer 3 — 3 moves ahead (farthest, faintest) */}
+        <line x1="-28" y1="32" x2="-35" y2="46" stroke="#a78bfa" strokeWidth="1.5" strokeOpacity="0.35" strokeLinecap="round" />
+        <line x1="28" y1="32" x2="35" y2="46" stroke="#a78bfa" strokeWidth="1.5" strokeOpacity="0.35" strokeLinecap="round" />
+        <line x1="0" y1="36" x2="0" y2="50" stroke="#a78bfa" strokeWidth="1.5" strokeOpacity="0.35" strokeLinecap="round" />
+        <circle cx="-35" cy="46" r="1.5" fill="#a78bfa" opacity="0.4" />
+        <circle cx="35" cy="46" r="1.5" fill="#a78bfa" opacity="0.4" />
+        <circle cx="0" cy="50" r="1.5" fill="#a78bfa" opacity="0.4" />
+      </g>
+      {/* Eye silhouette at top — the "mind's eye" */}
+      <g transform="translate(200,30)">
+        <path d="M-28,0 Q-20,-14 0,-14 Q20,-14 28,0 Q20,14 0,14 Q-20,14 -28,0 Z" fill="none" stroke="#a78bfa" strokeWidth="1.5" strokeOpacity="0.5" />
+        <circle cx="0" cy="0" r="7" fill="#a78bfa" opacity="0.12" />
+        <circle cx="0" cy="0" r="3" fill="#a78bfa" opacity="0.35" filter="url(#vis-f)" />
+      </g>
+      {/* Connecting line from eye to board */}
+      <line x1="200" y1="44" x2="200" y2="72" stroke="#a78bfa" strokeWidth="0.8" strokeOpacity="0.2" strokeDasharray="2 3" />
+      {/* Labels */}
+      <text x="200" y="184" textAnchor="middle" fill="#a78bfa" fillOpacity="0.3" fontSize="8" fontFamily="system-ui" letterSpacing="4">3 MOVES AHEAD</text>
     </svg>
   );
 }
