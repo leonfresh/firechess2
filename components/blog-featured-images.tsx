@@ -78,6 +78,8 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <CalculationTrainingArt />;
     case "chess-visualisation-training-3-moves-ahead":
       return <VisualisationTrainingArt />;
+    case "london-system-guide-club-players":
+      return <LondonSystemArt />;
     default:
       return <DefaultArt />;
   }
@@ -2144,6 +2146,89 @@ function VisualisationTrainingArt() {
       <line x1="200" y1="44" x2="200" y2="72" stroke="#a78bfa" strokeWidth="0.8" strokeOpacity="0.2" strokeDasharray="2 3" />
       {/* Labels */}
       <text x="200" y="184" textAnchor="middle" fill="#a78bfa" fillOpacity="0.3" fontSize="8" fontFamily="system-ui" letterSpacing="4">3 MOVES AHEAD</text>
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  The London System  — pawn triangle with radiant king & bishop      */
+/* ================================================================== */
+function LondonSystemArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="lon-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0c1220" /><stop offset="1" stopColor="#0f172a" />
+        </linearGradient>
+        <radialGradient id="lon-glow" cx="200" cy="100" r="130" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#8b5cf6" stopOpacity="0.2" /><stop offset="1" stopColor="#8b5cf6" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="lon-tri" x1="0.5" y1="0" x2="0.5" y2="1">
+          <stop offset="0" stopColor="#a78bfa" stopOpacity="0.35" /><stop offset="1" stopColor="#a78bfa" stopOpacity="0.08" />
+        </linearGradient>
+        <filter id="lon-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#lon-bg)" />
+      <rect width="400" height="200" fill="url(#lon-glow)" />
+      
+      {/* The London Triangle — 3 pawns forming the triangle structure */}
+      {/* Central pawn (d4) — the anchor */}
+      <g transform="translate(200,70)">
+        <circle cx="0" cy="-18" r="12" fill="#a78bfa" fillOpacity="0.85" />
+        <path d="M-7,-8 L-11,22 Q0,28 11,22 L7,-8 Z" fill="#a78bfa" fillOpacity="0.8" />
+        <ellipse cx="0" cy="24" rx="16" ry="6" fill="#a78bfa" fillOpacity="0.7" />
+        {/* Glow ring */}
+        <circle cx="0" cy="-18" r="18" fill="none" stroke="#a78bfa" strokeWidth="1.5" strokeOpacity="0.5" filter="url(#lon-f)" />
+      </g>
+      
+      {/* Left pawn (c3) */}
+      <g transform="translate(152,112) scale(0.85)">
+        <circle cx="0" cy="-16" r="10" fill="#8b5cf6" fillOpacity="0.65" />
+        <path d="M-6,-7 L-9,18 Q0,23 9,18 L6,-7 Z" fill="#8b5cf6" fillOpacity="0.6" />
+        <ellipse cx="0" cy="20" rx="13" ry="5" fill="#8b5cf6" fillOpacity="0.55" />
+      </g>
+      
+      {/* Right pawn (e3) */}
+      <g transform="translate(248,112) scale(0.85)">
+        <circle cx="0" cy="-16" r="10" fill="#8b5cf6" fillOpacity="0.65" />
+        <path d="M-6,-7 L-9,18 Q0,23 9,18 L6,-7 Z" fill="#8b5cf6" fillOpacity="0.6" />
+        <ellipse cx="0" cy="20" rx="13" ry="5" fill="#8b5cf6" fillOpacity="0.55" />
+      </g>
+      
+      {/* Connecting lines — triangle shape */}
+      <line x1="200" y1="96" x2="152" y2="112" stroke="#a78bfa" strokeWidth="0.8" strokeOpacity="0.25" strokeDasharray="4 3" />
+      <line x1="200" y1="96" x2="248" y2="112" stroke="#a78bfa" strokeWidth="0.8" strokeOpacity="0.25" strokeDasharray="4 3" />
+      <line x1="152" y1="112" x2="248" y2="112" stroke="#a78bfa" strokeWidth="0.8" strokeOpacity="0.25" strokeDasharray="4 3" />
+      
+      {/* Bishop silhouette behind the pawns — the Bf4 setup */}
+      <g transform="translate(200,38)">
+        <path d="M-3,-12 Q0,-16 3,-12 L5,-4 Q6,2 4,6 L2,10 Q1,12 0,12 Q-1,12 -2,10 L-4,6 Q-6,2 -5,-4 Z" fill="#c4b5fd" fillOpacity="0.3" />
+        <circle cx="0" cy="-16" r="3" fill="#c4b5fd" fillOpacity="0.25" />
+      </g>
+      
+      {/* Radiant circles emanating from the centre */}
+      <circle cx="200" cy="70" r="35" fill="none" stroke="#a78bfa" strokeWidth="0.5" strokeOpacity="0.15" />
+      <circle cx="200" cy="70" r="55" fill="none" stroke="#a78bfa" strokeWidth="0.5" strokeOpacity="0.1" />
+      <circle cx="200" cy="70" r="75" fill="none" stroke="#a78bfa" strokeWidth="0.5" strokeOpacity="0.06" />
+      
+      {/* Knight silhouette on the right — representing the Jobava option */}
+      <g transform="translate(310,145) scale(0.6)" opacity="0.4">
+        <path d="M-5,6 L-7,-12 Q-8,-22 -2,-26 L0,-28 Q3,-25 5,-22 L7,-16 Q9,-12 7,-8 L7,0 Q4,3 -3,3 Z" fill="#c4b5fd" />
+        <circle cx="-1" cy="-20" r="1.5" fill="#0c1220" />
+      </g>
+      
+      {/* Small sparkle dots */}
+      {[[85,30],[320,25],[360,80],[40,150],[340,170]].map(([x,y],i) => (
+        <circle key={`sp${i}`} cx={x} cy={y} r={1.2} fill="#a78bfa" fillOpacity={0.25 + i*0.05}>
+          <animate attributeName="opacity" values={`${0.3};0.05;0.3`} dur={`${2.5+i*0.8}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
+      
+      {/* Ground line */}
+      <line x1="100" y1="160" x2="300" y2="160" stroke="#475569" strokeWidth="0.8" strokeOpacity="0.3" />
+      
+      {/* Label */}
+      <text x="200" y="188" textAnchor="middle" fill="#a78bfa" fillOpacity="0.25" fontSize="8" fontFamily="system-ui" letterSpacing="3">LONDON SYSTEM</text>
     </svg>
   );
 }
