@@ -15,3 +15,4 @@
 | 11 | 2026-07-10 | chess-calculation-training-calculate-variations | published | priority queue #10 — "how to calculate chess variations deeper" evergreen, 2,800 words, 5 FEN-validated positions, 4 calculation methods with comparison table |
 | 12 | 2026-07-11 | chess-visualisation-training-3-moves-ahead | published | priority queue #11 — chess visualisation training, 7 drills, blindfold progression, 4-week plan, 3,589 words, 7 FEN-validated positions |
 | 13 | 2026-07-11 | london-system-guide-club-players | published | GSC gap: London System — high-volume opening topic, no dedicated guide existed, club-player focus, 3,356 words, 9 FEN-validated positions |
+| 14 | 2026-07-11 | what-is-centipawn-loss | published | GSC gap: centipawn loss meaning / what is centipawn loss — 427 combined impressions, 3 clicks, pos 7.5 — informational intent gap. 3,187 words, 6 FEN-validated positions, 4 internal links |

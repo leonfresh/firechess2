@@ -10,6 +10,16 @@ Done in this cycle:
 Done in this cycle:
 - [x] **"Chess visualisation training: seeing 3 moves ahead"** — Priority queue #11, 3,589 words, 7 drills including blindfold progression, mental board swap, hands-free analysis, mystery square, square-colour mnemonics, from-here calculation, and coordinate mastery. 4-week training plan. 7 FEN-validated chess positions.
 
+## Cycle 13 — Complete
+
+Done in this cycle:
+- [x] **"London System Guide for Club Players"** — GSC gap: London System, high-volume opening topic with no dedicated guide. 3,356 words, 9 FEN-validated positions.
+
+## Cycle 14 — Complete
+
+Done in this cycle:
+- [x] **"What Is Centipawn Loss in Chess? The Complete Guide"** — GSC gap: "centipawn loss meaning" / "what is centipawn loss" — 427 combined impressions, only 3 clicks in 14 days. The existing ACPL-by-rating post targets comparative intent; this new post targets the definitional/educational intent. 3,187 words, 6 FEN-validated positions, 10 H2 sections, 4 internal links.
+
 ## Queue (ordered by priority)
 - **[Empty]** — All items completed. Next cycle should identify new GSC gaps.
 

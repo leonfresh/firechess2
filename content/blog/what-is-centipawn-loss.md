@@ -1,293 +1,280 @@
 ---
-title: "What Is Centipawn Loss and Why It Matters"
-description: "Understanding centipawn loss (CPL) — the key metric engines use to measure your chess accuracy, and how to use it to improve."
-date: "2026-02-18"
+title: "What Is Centipawn Loss in Chess? The Complete Guide"
+description: "Centipawn loss explained simply — what it measures, how chess engines calculate it, and how to use average centipawn loss (ACPL) to track improvement and find your biggest mistakes."
+date: "2026-07-11"
 author: "FireChess Team"
-tags: ["analysis", "fundamentals"]
+tags: ["analysis", "fundamentals", "improvement", "centipawn-loss"]
+canonical: https://firechess.com/blog/what-is-centipawn-loss
 ---
 
-If you've ever analyzed a chess game with an engine, you've seen evaluation numbers like +0.5 or -1.2. But what do they actually mean? And how can a simple number tell you how well you played?
+You've just finished a hard-fought 45-minute game. You open the analysis board, run the engine, and there it is: **"Average Centipawn Loss: 72."**
 
-The answer lies in **centipawn loss** — the most important metric in computer chess analysis.
+What does that number actually mean? Is 72 good? Bad? How is it even calculated? And why should you care?
 
-<div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="640" height="300" viewBox="0 0 640 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="cpbg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#080c18"/><stop offset="1" stop-color="#0d1020"/>
-    </linearGradient>
-    <filter id="cpg"><feGaussianBlur stdDeviation="5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-    <radialGradient id="cpgl" cx="320" cy="130" r="200" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#f59e0b" stop-opacity="0.06"/><stop offset="1" stop-color="#f59e0b" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-  <rect width="640" height="300" rx="18" fill="url(#cpbg)"/>
-  <rect x="1" y="1" width="638" height="298" rx="17" stroke="white" stroke-opacity="0.04"/>
-  <rect width="640" height="300" rx="18" fill="url(#cpgl)"/>
-  <!-- Balance scale post -->
-  <rect x="316" y="80" width="8" height="140" fill="#374151"/>
-  <rect x="310" y="210" width="20" height="6" rx="3" fill="#4b5563"/>
-  <rect x="300" y="214" width="40" height="5" rx="2" fill="#374151"/>
-  <!-- Scale beam (tilted — right side heavier) -->
-  <line x1="160" y1="88" x2="480" y2="78" stroke="#6b7280" stroke-width="4" stroke-linecap="round"/>
-  <!-- Left pan chains -->
-  <line x1="200" y1="90" x2="200" y2="130" stroke="#4b5563" stroke-width="1.5"/>
-  <line x1="160" y1="88" x2="160" y2="128" stroke="#4b5563" stroke-width="1.5"/>
-  <!-- Left pan plate -->
-  <ellipse cx="180" cy="132" rx="40" ry="6" fill="#334155" stroke="#4b5563" stroke-width="1"/>
-  <!-- White king on left pan (drawn) -->
-  <g fill="#d1d5db" transform="translate(180, 100)">
-    <rect x="-1.5" y="-22" width="3" height="8"/><rect x="-4" y="-19" width="8" height="3"/>
-    <circle r="6" cy="-10"/><path d="M-5,-4 L-8,10 L8,10 L5,-4 Z"/><rect x="-9" y="10" width="18" height="4" rx="1.5"/>
-  </g>
-  <!-- Left label -->
-  <text x="180" y="158" text-anchor="middle" fill="#6ee7b7" font-size="14" font-weight="600">Best Move</text>
-  <text x="180" y="178" text-anchor="middle" fill="#6ee7b7" font-size="28" font-weight="700" filter="url(#cpg)">+0.50</text>
-  <!-- Right pan chains -->
-  <line x1="440" y1="80" x2="440" y2="120" stroke="#4b5563" stroke-width="1.5"/>
-  <line x1="480" y1="78" x2="480" y2="118" stroke="#4b5563" stroke-width="1.5"/>
-  <!-- Right pan plate (lower = heavier) -->
-  <ellipse cx="460" cy="122" rx="40" ry="6" fill="#334155" stroke="#4b5563" stroke-width="1"/>
-  <!-- Stack of centipawn coins on right pan -->
-  <g transform="translate(460, 90)">
-    <ellipse rx="14" ry="3" cy="20" fill="#b45309" stroke="#d97706" stroke-width="0.5"/>
-    <ellipse rx="14" ry="3" cy="15" fill="#b45309" stroke="#d97706" stroke-width="0.5"/>
-    <ellipse rx="14" ry="3" cy="10" fill="#d97706" stroke="#f59e0b" stroke-width="0.5"/>
-    <ellipse rx="14" ry="3" cy="5" fill="#d97706" stroke="#f59e0b" stroke-width="0.5"/>
-    <ellipse rx="14" ry="3" cy="0" fill="#f59e0b" stroke="#fbbf24" stroke-width="0.5"/>
-    <text y="4" text-anchor="middle" fill="#451a03" font-size="7" font-weight="700">CP</text>
-  </g>
-  <!-- Right label -->
-  <text x="460" y="148" text-anchor="middle" fill="#fbbf24" font-size="14" font-weight="600">Your Move</text>
-  <text x="460" y="168" text-anchor="middle" fill="#fbbf24" font-size="28" font-weight="700">+0.10</text>
-  <!-- Equals and result -->
-  <text x="320" y="178" text-anchor="middle" fill="#475569" font-size="24">=</text>
-  <!-- CPL result glow -->
-  <g filter="url(#cpg)">
-    <rect x="270" y="228" width="100" height="44" rx="12" fill="#ef4444" fill-opacity="0.08" stroke="#ef4444" stroke-opacity="0.3" stroke-width="1.5"/>
-  </g>
-  <text x="320" y="248" text-anchor="middle" fill="#f87171" font-size="13" font-weight="600">CPL</text>
-  <text x="320" y="268" text-anchor="middle" fill="#f87171" font-size="22" font-weight="700">40</text>
-  <!-- Scale bar at bottom -->
-  <rect x="50" y="284" width="540" height="8" rx="4" fill="#1e293b"/>
-  <rect x="50" y="284" width="135" height="8" rx="4" fill="#10b981" fill-opacity="0.4"/>
-  <rect x="185" y="284" width="135" height="8" fill="#f59e0b" fill-opacity="0.35"/>
-  <rect x="320" y="284" width="135" height="8" fill="#ef4444" fill-opacity="0.35"/>
-  <rect x="455" y="284" width="135" height="8" rx="4" fill="#7f1d1d" fill-opacity="0.4"/>
-  <!-- Particles -->
-  <circle cx="80" cy="50" r="1" fill="#10b981" opacity="0.1"><animate attributeName="opacity" values="0.1;0.03;0.1" dur="3s" repeatCount="indefinite"/></circle>
-  <circle cx="570" cy="40" r="1.5" fill="#f59e0b" opacity="0.08"><animate attributeName="opacity" values="0.08;0.02;0.08" dur="4s" repeatCount="indefinite"/></circle>
-</svg>
-</div>
+If you've ever stared at a centipawn loss score and felt more confused than informed, you're not alone. The concept sits at the centre of modern chess analysis — every major platform from Lichess to Chess.com to FireChess uses it — but most players don't fully understand what the number represents or how to use it.
 
-## Centipawns: The Universal Chess Currency
+This guide fixes that. By the end, you'll know exactly what centipawn loss is, how Stockfish assigns those mysterious numbers, and — most importantly — how to use centipawn loss to find your biggest weaknesses and improve faster.
 
-A **centipawn** (cp) is 1/100th of a pawn. When an engine says a position is "+50 cp," it means White has an advantage equivalent to half a pawn. When it says "-125 cp," Black is ahead by about 1.25 pawns.
+---
 
-This standardized unit lets us compare positions across completely different games and openings. Whether you're playing the Sicilian or the London System, a +50 cp advantage means roughly the same thing.
+## What Is a Centipawn? The Unit of Chess Analysis
 
-## What Is Centipawn Loss (CPL)?
+The word "centipawn" is a portmanteau of **centi** (one-hundredth) and **pawn**. One centipawn equals 1/100 of a pawn's value on the chessboard.
 
-**Centipawn loss** measures how much evaluation you lose with each move compared to the engine's top choice.
+Think of it as the smallest meaningful unit of chess advantage. Just as a gram measures tiny amounts of mass and a cent measures tiny amounts of currency, a centipawn measures tiny advantages and disadvantages in a chess position.
 
-Here's how it works:
+**The baseline assumption:** A pawn is worth 100 centipawns. This isn't arbitrary — it's a convention that emerged from decades of computer chess research. The five traditional material values map as follows:
 
-1. The engine evaluates the position before your move
-2. You play your move
-3. The engine evaluates the new position
-4. The difference between the best possible evaluation and the actual evaluation after your move is your **centipawn loss** for that move
+| Piece | Centipawn Value |
+|-------|-----------------|
+| Pawn | 100 cp |
+| Knight | 320 cp (≈3.2 pawns) |
+| Bishop | 330 cp (≈3.3 pawns) |
+| Rook | 500 cp (5 pawns) |
+| Queen | 900 cp (9 pawns) |
 
-**Example:**
+These are starting points. The engine adjusts these values dynamically based on position, piece activity, king safety, pawn structure, and dozens of other factors. A knight on a perfect outpost might be evaluated at 350 cp; the same knight stuck on the edge of the board might drop to 280 cp.
 
-- Position evaluation before your move: +0.50 (White is slightly better)
-- Engine's best move would maintain +0.50
-- You play a different move, and the evaluation drops to +0.10
-- Your centipawn loss: **40 cp** (you gave away 0.4 pawns of advantage)
+**Centipawn loss**, then, measures the difference between your move and the engine's best move, expressed in these units. If the best move in a position gives the engine +0.50 (a 50-centipawn advantage) and your move gives +0.20, your centipawn loss for that move is 30 cp — the difference between the optimal and what you played.
 
-## Average CPL: Your Accuracy Score
+---
 
-Your **average centipawn loss** (ACPL) across a game tells you how accurately you played overall. Lower is better:
+## How Chess Engines Calculate Centipawn Loss
 
-<div style="margin: 2rem 0; display: flex; justify-content: center;">
-<svg width="600" height="300" viewBox="0 0 600 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="acbg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#080c18"/><stop offset="1" stop-color="#0d1020"/>
-    </linearGradient>
-    <filter id="acg"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-    <radialGradient id="acgl" cx="0.5" cy="0.8" r="0.5">
-      <stop offset="0" stop-color="#fbbf24" stop-opacity="0.15"/><stop offset="1" stop-color="#fbbf24" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-  <rect width="600" height="300" rx="16" fill="url(#acbg)"/>
-  <rect x="1" y="1" width="598" height="298" rx="15" stroke="white" stroke-opacity="0.04"/>
-  <!-- Ground -->
-  <rect x="0" y="235" width="600" height="65" fill="#111827" opacity="0.5"/>
-  <line x1="0" y1="235" x2="600" y2="235" stroke="#1f2937"/>
-  <!-- Title -->
-  <text x="300" y="30" text-anchor="middle" fill="white" font-size="15" font-weight="700" letter-spacing="0.5">AVERAGE CPL BY PLAYING STRENGTH</text>
-  <!-- 6 kings growing from left (small/dim beginner) to right (tall/bright GM) -->
-  <!-- Beginner — tiny dim king -->
-  <g transform="translate(65, 0)" opacity="0.35">
-    <rect x="-10" y="225" width="20" height="10" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
-    <g fill="#f87171" transform="translate(0, 210) scale(0.55)">
-      <rect x="-1.5" y="-22" width="3" height="8"/><rect x="-4" y="-19" width="8" height="3"/>
-      <circle r="6" cy="-10"/><path d="M-5,-4 L-8,10 L8,10 L5,-4 Z"/><rect x="-9" y="10" width="18" height="4" rx="1.5"/>
-    </g>
-    <text y="252" text-anchor="middle" fill="#f87171" font-size="12" font-weight="700">90–150+</text>
-    <text y="268" text-anchor="middle" fill="#64748b" font-size="10">Beginner</text>
-  </g>
-  <!-- Intermediate — small king -->
-  <g transform="translate(160, 0)" opacity="0.5">
-    <rect x="-12" y="222" width="24" height="12" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
-    <g fill="#f87171" transform="translate(0, 198) scale(0.7)">
-      <rect x="-1.5" y="-22" width="3" height="8"/><rect x="-4" y="-19" width="8" height="3"/>
-      <circle r="6" cy="-10"/><path d="M-5,-4 L-8,10 L8,10 L5,-4 Z"/><rect x="-9" y="10" width="18" height="4" rx="1.5"/>
-    </g>
-    <text y="252" text-anchor="middle" fill="#f87171" font-size="12" font-weight="700">60–90</text>
-    <text y="268" text-anchor="middle" fill="#64748b" font-size="10">Intermediate</text>
-  </g>
-  <!-- Expert — medium king -->
-  <g transform="translate(255, 0)" opacity="0.65">
-    <rect x="-13" y="218" width="26" height="14" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
-    <g fill="#fbbf24" transform="translate(0, 185) scale(0.85)">
-      <rect x="-1.5" y="-22" width="3" height="8"/><rect x="-4" y="-19" width="8" height="3"/>
-      <circle r="6" cy="-10"/><path d="M-5,-4 L-8,10 L8,10 L5,-4 Z"/><rect x="-9" y="10" width="18" height="4" rx="1.5"/>
-    </g>
-    <text y="252" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="700">40–60</text>
-    <text y="268" text-anchor="middle" fill="#64748b" font-size="10">Expert</text>
-  </g>
-  <!-- IM/FM — taller king -->
-  <g transform="translate(350, 0)" opacity="0.8">
-    <rect x="-14" y="214" width="28" height="15" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
-    <g fill="#67e8f9" transform="translate(0, 170) scale(1.0)">
-      <rect x="-1.5" y="-22" width="3" height="8"/><rect x="-4" y="-19" width="8" height="3"/>
-      <circle r="6" cy="-10"/><path d="M-5,-4 L-8,10 L8,10 L5,-4 Z"/><rect x="-9" y="10" width="18" height="4" rx="1.5"/>
-    </g>
-    <text y="252" text-anchor="middle" fill="#67e8f9" font-size="12" font-weight="700">25–40</text>
-    <text y="268" text-anchor="middle" fill="#64748b" font-size="10">IM / FM</text>
-  </g>
-  <!-- GM — tall king with glow -->
-  <g transform="translate(445, 0)" opacity="0.9">
-    <rect x="-14" y="210" width="28" height="16" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
-    <g fill="#6ee7b7" transform="translate(0, 152) scale(1.15)">
-      <rect x="-1.5" y="-22" width="3" height="8"/><rect x="-4" y="-19" width="8" height="3"/>
-      <circle r="6" cy="-10"/><path d="M-5,-4 L-8,10 L8,10 L5,-4 Z"/><rect x="-9" y="10" width="18" height="4" rx="1.5"/>
-    </g>
-    <text y="252" text-anchor="middle" fill="#6ee7b7" font-size="12" font-weight="700">15–25</text>
-    <text y="268" text-anchor="middle" fill="#64748b" font-size="10">Grandmaster</text>
-  </g>
-  <!-- Super GM — tallest king, bright glow -->
-  <g transform="translate(540, 0)">
-    <rect x="-15" y="205" width="30" height="18" rx="2" fill="#1f2937" stroke="#334155" stroke-width="0.5"/>
-    <circle cy="140" r="40" fill="url(#acgl)"/>
-    <g fill="#fbbf24" transform="translate(0, 130) scale(1.35)" filter="url(#acg)">
-      <rect x="-1.5" y="-22" width="3" height="8"/><rect x="-4" y="-19" width="8" height="3"/>
-      <circle r="6" cy="-10"/><path d="M-5,-4 L-8,10 L8,10 L5,-4 Z"/><rect x="-9" y="10" width="18" height="4" rx="1.5"/>
-    </g>
-    <text y="252" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="700">10–15</text>
-    <text y="268" text-anchor="middle" fill="#64748b" font-size="10">Super GM</text>
-  </g>
-  <!-- Rising accuracy arrow -->
-  <path d="M65 200 C200 195 400 170 540 120" stroke="#334155" stroke-width="1.5" fill="none" stroke-dasharray="4 3" opacity="0.3">
-    <animate attributeName="stroke-dashoffset" from="14" to="0" dur="3s" repeatCount="indefinite"/>
-  </path>
-  <text x="300" y="287" text-anchor="middle" fill="#3f3f46" font-size="11" font-style="italic">Lower ACPL = more accurate play</text>
-</svg>
-</div>
+This is where most explanations get fuzzy, so let's be precise.
 
-| ACPL | Approximate Level |
-|------|-------------------|
-| 10-15 | Super Grandmaster |
-| 15-25 | Grandmaster |
-| 25-40 | International Master / FIDE Master |
-| 40-60 | Expert (1800-2100) |
-| 60-90 | Intermediate (1400-1800) |
-| 90-150 | Beginner-Intermediate (1000-1400) |
-| 150+ | Beginner |
+### Step 1: The Engine Evaluates the Position Before Your Move
 
-These ranges are approximate and vary by position complexity, time control, and game length.
+When you ask Stockfish to analyse a game, it looks at the position just before your move and assigns it a numerical evaluation. This is the familiar "eval bar" number you see during analysis — a positive number means White is better, a negative number means Black is better.
 
-## Why CPL Matters for Improvement
+A position evaluated at **+0.73** means White has an advantage equivalent to 73 centipawns — roughly three-quarters of a pawn. A position at **-1.20** means Black is ahead by about the equivalent of one pawn and 20 centipawns.
 
-### 1. It's Objective
+### Step 2: The Engine Considers All Possible Moves
 
-Unlike subjective assessments ("I played okay"), CPL gives you a hard number. You either lost 20 centipawns or 80. There's no room for self-deception.
+Stockfish examines every legal move in the position and calculates the best evaluation it can achieve after each one. It does this by looking ahead many moves — typically 20-30 ply (half-moves) deep in online analysis — and using a search algorithm called alpha-beta pruning combined with neural network evaluation.
 
-### 2. It Identifies Your Worst Moves
+For each candidate move, the engine asks: *"If I play this, what's the best possible outcome for both sides over the next 20+ moves?"*
 
-Sorting your moves by CPL instantly highlights your biggest mistakes. A move with 200+ cp loss is a blunder. A move with 50-100 cp loss is an inaccuracy. This prioritization tells you exactly where to focus your study.
+### Step 3: Centipawn Loss = Best Evaluation — Your Move's Evaluation
 
-### 3. It Tracks Progress Over Time
+The formula is straightforward:
 
-By monitoring your ACPL across games, you can see whether your accuracy is genuinely improving. A player whose ACPL drops from 65 to 45 over three months has made real, measurable progress — regardless of what happened to their rating.
+```
+Centipawn Loss = Evaluation(Best Move) - Evaluation(Your Move)
+```
 
-### 4. It Reveals Game Phase Weaknesses
+Adjusted for perspective: if the best move evaluates to +1.00 and your move evaluates to +0.70, your centipawn loss is **30 cp**. You gave up 30 centipawns of advantage compared to the optimal move.
 
-Breaking down CPL by game phase tells a powerful story:
+The engine typically normalises this so it's always displayed as a positive number (the *loss* you incurred). A "centipawn loss of 45" means you lost 45 centipawns of advantage relative to the best move in that position.
 
-- **High opening CPL** → you need better opening preparation
-- **High middlegame CPL** → you need to work on tactical awareness and positional understanding
-- **High endgame CPL** → you need endgame study
+### A Concrete Example
 
-## The Limitations of CPL
+<chess-position fen="rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" caption="Starting position — evaluation is 0.00, perfectly equal. Any deviation from best play starts accumulating centipawn loss." />
 
-CPL is powerful but not perfect. Be aware of these caveats:
+From the starting position, the best move is widely accepted as 1.e4 or 1.d4 (evaluation roughly +0.20 for White's first-move advantage). If you play 1.a3, the evaluation drops to roughly 0.00, and your centipawn loss for that move is about **20 cp** — you gave up 20 centipawns of White's starting advantage with a single unnecessary move.
 
-### Position Complexity
+Each subsequent move adds to or subtracts from your cumulative centipawn loss. Your **average centipawn loss (ACPL)** is simply the total centipawn loss across all your moves divided by the number of moves you played.
 
-In a sharp tactical position with one correct move and ten losing ones, even a good player might incur high CPL. In a quiet position where multiple moves are roughly equal, almost anyone can maintain low CPL. A single ACPL number doesn't account for how difficult the positions were.
+<chess-position fen="r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4" caption="The Italian Game after 1.e4 e5 2.Nf3 Nc6 3.Bc4 Bc5 — a balanced opening with near-zero centipawn loss for both sides if played correctly." />
 
-### Forced Moves
+---
 
-If there's only one legal move (or one obvious recapture), low CPL on that move isn't an achievement. Some tools filter out forced moves to give a more accurate picture.
+## What Different Centipawn Loss Values Look Like on the Board
 
-### Opening Book Moves
+Numbers on a page are abstract. Let's put them on a real chessboard so you can see what different centipawn loss scores represent.
 
-Moves made from memorized opening theory shouldn't count the same as over-the-board decisions. The best analysis tools let you set a move threshold (e.g., only analyze from move 8 onwards).
+### Centipawn Loss 0-15: Near-Perfect Play
 
-### Sample Size
+At this level, you're finding the best move or something close to it. This is the range of grandmaster performance in most positions. A 10-centipawn loss means you played a move that's objectively almost as good as the engine's first choice — maybe you chose a slightly less optimal square for your bishop, or a different pawn advance that's still sound.
 
-One game isn't enough data. Your ACPL in a single game can swing wildly based on the specific positions that arose. You need at least 20-30 games for your average to be meaningful.
+### Centipawn Loss 15-40: Small Inaccuracies
 
-## How to Use CPL Effectively
+This is the range of strong club players and experts (1800-2200 rating). You're not blundering — you're just not finding the most precise continuation. A 25-centipawn loss typically means you played a solid-developing move when a more aggressive or more subtle move was available.
 
-### Track Your ACPL Monthly
+### Centipawn Loss 40-80: Clear Mistakes
 
-Keep a simple log: analyze your games at the end of each week and note your average CPL. Look for trends. Are you improving? Stagnating? Getting worse in certain areas?
+This is the most common centipawn loss range for intermediate club players (1200-1600). You're making mistakes that give away roughly half a pawn to a full pawn of advantage. These are often positional errors — misplacing a piece, trading the wrong pieces, or pushing a pawn that creates a weakness.
 
-### Focus on High-CPL Moves
+### Centipawn Loss 80-150: Blunders
 
-Don't try to study everything. Filter for moves where you lost 50+ centipawns and ask yourself:
+A centipawn loss over 80 is almost always a tactical mistake or a severe positional misjudgment. At 100+ cp, you've essentially given away a full pawn worth of advantage — often through a hanging piece, a missed fork, or a serious positional concession.
 
-- Did I miss a tactic?
-- Did I misunderstand the position?
-- Was I in time trouble?
-- Is this a pattern I've seen before?
+### Centipawn Loss 150+: Game-Losing Mistakes
 
-### Compare Game Phases
+At this level, you've probably dropped a full piece or allowed a decisive attack. A 300+ centipawn loss almost always means you hung a knight or bishop, missed a forced mate, or walked into a devastating tactic.
 
-Run your games through an analyzer that breaks down CPL by opening, middlegame, and endgame. This tells you exactly which phase needs the most work.
+<chess-position fen="rnb1kbnr/pppp1ppp/8/4q3/2B1P3/8/PPPP1PPP/RNBQK1NR w KQkq - 0 4" caption="Black's queen has just been captured by the pawn on e4 after Black blundered by moving it to e5 without considering the pawn capture. Centipawn loss for Black: +950 cp — a full queen lost." analysis="true" />
 
-### Set Realistic Targets
+---
 
-If your current ACPL is 75, don't aim for 25. Target a 10-15 point improvement over 2-3 months. Sustainable improvement is gradual.
+## Centipawn Loss vs. Accuracy Percentage
 
-## CPL in Practice
+Many chess analysis platforms, including FireChess, display both an **accuracy percentage** and an **average centipawn loss (ACPL)** for each game. People often ask: "Aren't they the same thing?"
 
-Here's a real example of how CPL analysis works:
+They're correlated, but they measure different things.
 
-You play 20 games in a week. Your analyzer reports:
+**Average centipawn loss** is the raw mathematical average of how many centipawns you gave up per move. It's an absolute number — 55 ACPL means the same thing game to game, regardless of how sharp or quiet the position was.
 
-- **Overall ACPL: 52** (solid intermediate play)
-- **Opening ACPL: 38** (good preparation)
-- **Middlegame ACPL: 48** (decent)  
-- **Endgame ACPL: 71** (needs work)
+**Accuracy percentage** is a normalised score that converts centipawn loss into a 0-100% scale based on how close your moves were to the engine's best. It's designed to be more intuitive: 95% accuracy means you played at an elite level; 60% means you were struggling.
 
-The data is clear: your endgame is your weakest phase. You'd benefit most from studying basic endgame patterns — king and pawn endings, rook endings, and converting small advantages.
+| ACPL | Typical Accuracy (FireChess) | What It Means |
+|------|------------------------------|---------------|
+| 10-20 | 95-99% | Grandmaster level |
+| 25-35 | 90-94% | Master / IM level |
+| 40-50 | 85-89% | Expert / strong club |
+| 55-70 | 78-84% | Club player (1400-1600) |
+| 70-90 | 72-78% | Casual club player |
+| 90-150 | 65-72% | Beginner / intermediate |
+| 150+ | Below 65% | Complete beginner |
 
-## Analyze Your CPL with FireChess
+The relationship isn't perfectly linear. A game with one 300-centipawn blunder and 39 perfect moves might give you 55 ACPL but 94% accuracy. The blunder drags down the ACPL more than it drags down the percentage, because accuracy penalises blunders heavily but not infinitely.
 
-FireChess uses Stockfish 18 to analyze your games and calculates detailed centipawn loss metrics across every game phase. It runs entirely in your browser — your games and analysis stay private.
+**Practical guidance:** Use ACPL for tracking long-term improvement (it's more granular) and accuracy for quick game-to-game comparisons (it's more intuitive).
 
-Upload your Lichess or Chess.com username, and get a breakdown of your accuracy, worst moves, and where to focus your improvement. The basic analysis is free.
+For a deeper explanation of the accuracy metric itself, see our guide to [chess accuracy scores explained](/blog/chess-accuracy-score-explained).
+
+---
+
+## Common Misconceptions About Centipawn Loss
+
+Let's clear up the misunderstandings that cause the most confusion.
+
+### Myth 1: "Low centipawn loss means I played perfectly"
+
+**Reality:** A low centipawn loss means your moves were *close* to the engine's best — but only within the depth the engine was searching. Stockfish at depth 20 might give a move 0.00 evaluation, and at depth 40 the same move could be -0.40. Additionally, centipawn loss doesn't capture the difficulty of finding moves: a 5-centipawn loss in a forcing tactical sequence is less impressive than a 5-centipawn loss in a quiet positional manoeuvring game.
+
+### Myth 2: "A -1.00 mistake is always as bad as another -1.00 mistake"
+
+**Reality:** The same centipawn value can mean very different things depending on the position. Losing 100 centipawns in a dead-equal position means you went from equal to clearly worse — that's a genuine blunder. Losing 100 centipawns from a position where you're already down 300 centipawns (lost a piece) is almost meaningless — you went from losing to losing.
+
+This is why chess engines report **evaluation before and after** your move, not just the delta. A -5.00 position where you play a -5.20 move: the centipawn loss is only 20, but you're still dead lost.
+
+### Myth 3: "You should try to get 0 centipawn loss every game"
+
+**Reality:** Even Magnus Carlsen averages 15-25 ACPL in classical games. Human beings don't play like engines — and they shouldn't try to. The goal isn't perfection (which doesn't exist in a human context); the goal is **reducing your biggest mistakes**. A game with 38 solid moves and one 200-centipawn blunder is a game you need to analyse; a game with 40 moves averaging 45-centipawn loss each is a game where you played at your level consistently.
+
+### Myth 4: "Centipawn loss is comparable across different time controls"
+
+**Reality:** As we cover in our [ACPL by rating guide](/blog/average-centipawn-loss-by-rating), your centipawn loss inflates dramatically as the clock runs out. A player who averages 40 ACPL in classical might average 70 in blitz and 110 in bullet. Always compare within the same time control.
+
+### Myth 5: "All engines give the same centipawn loss"
+
+**Reality:** Different engines and even different engine settings produce different centipawn loss numbers for the same game. Stockfish 18 at depth 22 will report different evaluations than Stockfish 16 at depth 18. Lichess's evaluations tend to be more forgiving than Chess.com's or FireChess's because of depth differences.
+
+<chess-position fen="r1bqk2r/pppp1ppp/2n5/4P3/2B5/5N2/PPP2PPP/RNBQK2R b KQkq - 0 5" caption="White is up a clean pawn thanks to the e5 pawn, with a strong centre and developed pieces. The centipawn advantage here is approximately +100-120 cp. Black's task is to minimise further losses." analysis="true" />
+
+---
+
+## How to Use Centipawn Loss in Your Game Analysis
+
+This is where theory becomes practice. Here's a step-by-step workflow for using centipawn loss to actually improve.
+
+### Step 1: Upload Your Game to FireChess
+
+Import games from Lichess, Chess.com, or paste a PGN. FireChess analyses every move and produces a report with centipawn loss per move, per phase, and per opening.
+
+### Step 2: Find Your Biggest Single Moves
+
+Sort your moves by centipawn loss descending. The top 3-5 moves (your biggest mistakes) are where you should focus your attention. **Don't spread your limited study time across every 20-centipawn inaccuracy — find the 200-centipawn blunders and fix them first.**
+
+### Step 3: Categorise the Mistake
+
+For each big mistake, ask:
+- Was it a **tactical blunder** (missed a fork, pin, skewer)?
+- Was it a **positional error** (wrong square, bad trade)?
+- Was it **time pressure** (flagged, under 30 seconds)?
+- Was it an **opening mistake** (wrong response to something unfamiliar)?
+
+Categorise each one. After 10 games, patterns will emerge. If every big mistake is tactical, your tactics training should be your priority. If every big mistake is in the opening, you need opening preparation. If time pressure is the culprit, work on time management.
+
+### Step 4: Calculate Your Phase-by-Phase ACPL
+
+Don't just look at the overall average. Break it down:
+
+| Phase | Your ACPL | Target ACPL (Your Rating) |
+|-------|-----------|--------------------------|
+| Opening (1-15) | | |
+| Middlegame (16-35) | | |
+| Endgame (36+) | | |
+
+Most club players find their middlegame ACPL is 1.5x to 2x their opening ACPL. That tells you exactly where your training time should go. If you're scoring 35 ACPL in openings but 80 ACPL in the middlegame, you don't need more opening study — you need middlegame pattern recognition.
+
+### Step 5: Track Your ACPL Over Time
+
+ACPL is a **leading indicator** of improvement. Your rating might stagnate for weeks while your ACPL slowly drops — and then your rating catches up. Track your monthly ACPL average rather than your daily rating, and you'll see progress even before your rating moves.
+
+| Month | ACPL | Rating | Notes |
+|-------|------|--------|-------|
+| Month 1 | 72 | 1420 | Baseline |
+| Month 2 | 65 | 1450 | Tactics work paying off |
+| Month 3 | 58 | 1510 | Clear improvement |
+| Month 4 | 55 | 1530 | Plateau — time for positional study |
+
+---
+
+## Platform Differences: Lichess vs. Chess.com vs. FireChess
+
+If you've analysed the same game on multiple platforms, you've probably noticed different ACPL numbers. This isn't a bug — it's a feature of different engine configurations.
+
+| Platform | Engine | Typical Depth | ACPL Bias |
+|----------|--------|---------------|-----------|
+| Lichess | Stockfish (various) | 22 ply | ~10% lower (more forgiving) |
+| Chess.com | Cloud Stockfish | 25-30 ply | Baseline |
+| FireChess | Stockfish 18 | Balanced depth | Comparable to Chess.com |
+
+**Why the difference:** A weaker engine or lower depth sees fewer tactical possibilities, so it considers more "good enough" moves as equal to the best move. Your centipawn loss appears lower because the engine doesn't penalise you as harshly for missing a deep 25-move tactic.
+
+**What this means for you:** Always benchmark against your own historical data on the *same platform*. Don't compare your Lichess ACPL of 55 to a friend's Chess.com ACPL of 55 — they're measured differently. Use FireChess consistently for your improvement tracking.
+
+---
+
+## FAQ: Quick Answers to Common Questions
+
+### What is a good average centipawn loss?
+It depends entirely on your rating and time control. For a 1500-rated player in rapid, anything under 60 is good. For a 2000-rated player, under 45 is expected. See our [ACPL by rating table](/blog/average-centipawn-loss-by-rating) for detailed benchmarks.
+
+### Is centipawn loss the same as accuracy?
+No. Accuracy percentage is a normalised score (0-100%) based on centipawn loss. Centipawn loss is the raw mathematical measure. They correlate strongly but aren't identical.
+
+### What is a centipawn loss of 100?
+A centipawn loss of 100 means you gave up the equivalent of one full pawn of advantage on a single move. This is a genuine blunder in most positions.
+
+### Why does my centipawn loss vary so much between games?
+That's normal. A game where you face a sharp Sicilian Defence and have to calculate complex tactics will naturally produce higher centipawn loss than a slow Queen's Gambit game where you play known theory for 20 moves. Average across 10+ games before drawing conclusions.
+
+### How many games do I need for a reliable ACPL reading?
+At least 10 games in the same time control. A single game has too much variance from the specific opening, opponent, and circumstances. Ten games smooth out the noise.
+
+### Can centipawn loss be negative?
+No. Centipawn loss is defined as the absolute difference between your move's evaluation and the best move's evaluation. It's always a non-negative number. Some platforms display "0" for the best move, meaning zero centipawns lost.
+
+### Does centipawn loss matter in completely winning positions?
+It matters less. When you're up a queen and a rook, a 100-centipawn inaccuracy is irrelevant. Focus your analysis on critical positions — where the game was balanced and a mistake changed the outcome.
+
+### Is centipawn loss useful for openings?
+Partially. Opening centipawn loss tends to be very low because there's established theory. A high centipawn loss in the opening usually means you left book and made a mistake. More useful is tracking your centipawn loss *after leaving theory* — that's a measure of how well you understand the resulting middlegame positions.
+
+---
+
+## Quick Reference Table: Centipawn Loss by Impact
+
+| Centipawn Loss | Classification | Typical Cause | Impact on Game |
+|----------------|---------------|---------------|----------------|
+| 0-15 | Excellent | Best or near-best move | Negligible |
+| 15-40 | Inaccuracy | Minor positional imprecision | Small advantage lost |
+| 40-80 | Mistake | Tactical miss or positional error | Noticeable advantage lost |
+| 80-150 | Blunder | Hanging piece, missed tactic | Often game-deciding |
+| 150-300 | Severe blunder | Lost piece, fatal positional concession | Usually loses |
+| 300+ | Disaster | Lost queen, missed forced mate | Game over |
+
+---
+
+## Conclusion: From Number to Improvement
+
+Centipawn loss is, at heart, a tool — not a judgment. A number like "72 ACPL" tells you nothing by itself. But 72 ACPL *trending toward 60* tells you you're improving. A 150-centipawn blunder *in the same pattern across three games* tells you exactly what to study. An ACPL spike *in the middlegame but not the opening* tells you where to invest your training time.
+
+The players who improve fastest aren't the ones with the lowest centipawn loss. They're the ones who **use** centipawn loss data to find their specific weaknesses and target them.
+
+Upload your next game to FireChess, scan the centipawn loss breakdown by phase, and find the one pattern that's costing you the most. Fix that one thing. Watch your ACPL drop. Watch your rating follow.
+
+*Ready to analyse your games? Use the [FireChess analysis tool](/analysis) to get a free centipawn loss breakdown with phase-by-phase reporting.*

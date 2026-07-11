@@ -1,6 +1,6 @@
 {
-  "cycle": 12,
-  "total_pages_created": 13,
+  "cycle": 14,
+  "total_pages_created": 15,
   "published_slugs": [
     "average-centipawn-loss-by-rating",
     "sicilian-defense-for-beginners",
@@ -15,7 +15,8 @@
     "immortal-zugzwang-game-samisch-nimzowitsch",
     "chess-calculation-training-calculate-variations",
     "chess-visualisation-training-3-moves-ahead",
-    "london-system-guide-club-players"
+    "london-system-guide-club-players",
+    "what-is-centipawn-loss"
   ],
   "analytics_history": [
     {"cycle": 1, "date": "2026-07-04", "slug": "average-centipawn-loss-by-rating", "gsc_query_targeted": "average centipawn loss", "query_impressions": 185, "query_clicks": 0, "query_position": 9.4, "period_days": 14},
@@ -30,8 +31,9 @@
     {"cycle": 10, "date": "2026-07-09", "slug": "immortal-zugzwang-game-samisch-nimzowitsch", "gsc_query_targeted": "priority queue #9 — Immortal Zugzwang game analysis", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14},
     {"cycle": 11, "date": "2026-07-10", "slug": "chess-calculation-training-calculate-variations", "gsc_query_targeted": "priority queue #10: how to calculate chess variations deeper", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14},
     {"cycle": 12, "date": "2026-07-11", "slug": "chess-visualisation-training-3-moves-ahead", "gsc_query_targeted": "priority queue #11: chess visualisation training, seeing 3 moves ahead", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14},
-    {"cycle": 13, "date": "2026-07-11", "slug": "london-system-guide-club-players", "gsc_query_targeted": "GSC gap: London System — high-volume opening topic, no dedicated guide existed", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14}
+    {"cycle": 13, "date": "2026-07-11", "slug": "london-system-guide-club-players", "gsc_query_targeted": "GSC gap: London System — high-volume opening topic, no dedicated guide existed", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14},
+    {"cycle": 14, "date": "2026-07-11", "slug": "what-is-centipawn-loss", "gsc_query_targeted": "centipawn loss meaning / what is centipawn loss — 427 combined impressions, 3 clicks, informational intent gap", "query_impressions": 427, "query_clicks": 3, "query_position": 7.5, "period_days": 14}
   ],
-  "next_cycle_focus": "Cycle 14: GSC data suggests 'average centipawn loss' (161 imp, 0 clicks, pos 9.3) still underperforming — consider meta refresh on existing post. Alternatively, target new opening guide (e.g., Caro-Kann, Queen's Gambit) or pawn structures deep-dive for next cycle.",
+  "next_cycle_focus": "Cycle 15: Next GSC opportunity: the /games/shirov-topalov-1998 page (2,201 imp, 0 clicks, pos 5.7) still underperforms despite dedicated blog post — consider internal linking refresh. Alternatively, target 'fire chess engine' (22 imp, 1 click, pos 3.5) branding confusion, or write a Caro-Kann / Queen's Gambit opening guide as the next evergreen opening deep-dive.",
   "last_run": "2026-07-11"
 }
