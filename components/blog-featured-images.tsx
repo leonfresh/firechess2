@@ -80,6 +80,8 @@ export function BlogFeaturedImage({ slug }: { slug: string }) {
       return <VisualisationTrainingArt />;
     case "london-system-guide-club-players":
       return <LondonSystemArt />;
+    case "queens-gambit-guide":
+      return <QueensGambitArt />;
     default:
       return <DefaultArt />;
   }
@@ -2229,6 +2231,97 @@ function LondonSystemArt() {
       
       {/* Label */}
       <text x="200" y="188" textAnchor="middle" fill="#a78bfa" fillOpacity="0.25" fontSize="8" fontFamily="system-ui" letterSpacing="3">LONDON SYSTEM</text>
+    </svg>
+  );
+}
+
+/* ================================================================== */
+/*  Queen's Gambit  — two pawns centre, radiant arrow & crown          */
+/* ================================================================== */
+function QueensGambitArt() {
+  return (
+    <svg viewBox="0 0 400 200" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="qg-bg" x1="0" y1="0" x2="400" y2="200" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#0a0e1a" /><stop offset="1" stopColor="#110a1a" />
+        </linearGradient>
+        <radialGradient id="qg-glow" cx="200" cy="90" r="130" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#f59e0b" stopOpacity="0.18" /><stop offset="1" stopColor="#f59e0b" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="qg-arrow" x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0" stopColor="#fbbf24" stopOpacity="0.15" /><stop offset="0.5" stopColor="#fbbf24" stopOpacity="0.4" /><stop offset="1" stopColor="#fbbf24" stopOpacity="0.15" />
+        </linearGradient>
+        <filter id="qg-f"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+        <filter id="qg-f2"><feGaussianBlur stdDeviation="6" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width="400" height="200" fill="url(#qg-bg)" />
+      <rect width="400" height="200" fill="url(#qg-glow)" />
+
+      {/* Queen crown silhouette — the Queen's Gambit emblem */}
+      <g transform="translate(200,42)">
+        {/* Crown base */}
+        <path d="M-28,10 L-22,-2 Q-18,-8 -14,-10 Q-10,-12 -6,-8 L0,0 L6,-8 Q10,-12 14,-10 Q18,-8 22,-2 L28,10 Z" fill="#fbbf24" fillOpacity="0.6" />
+        {/* Crown points */}
+        <circle cx="-20" cy="-3" r="4" fill="#fbbf24" fillOpacity="0.8" filter="url(#qg-f)" />
+        <circle cx="0" cy="2" r="5" fill="#fbbf24" fillOpacity="0.9" filter="url(#qg-f)" />
+        <circle cx="20" cy="-3" r="4" fill="#fbbf24" fillOpacity="0.8" filter="url(#qg-f)" />
+        {/* Jewel accent */}
+        <circle cx="0" cy="6" r="2.5" fill="#f59e0b" fillOpacity="0.9" />
+      </g>
+
+      {/* White pawn on d4 (left centre) */}
+      <g transform="translate(150,92)">
+        <circle cx="0" cy="-18" r="13" fill="#fbbf24" fillOpacity="0.85" />
+        <path d="M-8,-7 L-12,24 Q0,30 12,24 L8,-7 Z" fill="#fbbf24" fillOpacity="0.8" />
+        <ellipse cx="0" cy="26" rx="17" ry="6" fill="#fbbf24" fillOpacity="0.7" />
+        {/* Glow ring */}
+        <circle cx="0" cy="-18" r="19" fill="none" stroke="#fbbf24" strokeWidth="1.5" strokeOpacity="0.5" filter="url(#qg-f)" />
+      </g>
+
+      {/* Black pawn on d5 (right centre) — the target */}
+      <g transform="translate(250,92)">
+        <circle cx="0" cy="-18" r="13" fill="#94a3b8" fillOpacity="0.85" />
+        <path d="M-8,-7 L-12,24 Q0,30 12,24 L8,-7 Z" fill="#64748b" fillOpacity="0.8" />
+        <ellipse cx="0" cy="26" rx="17" ry="6" fill="#64748b" fillOpacity="0.7" />
+      </g>
+
+      {/* The gambit arrow — c4->d5, offering the pawn */}
+      <path d="M170,130 Q185,103 230,105" fill="none" stroke="url(#qg-arrow)" strokeWidth="4" strokeOpacity="0.7" strokeDasharray="8 4">
+        <animate attributeName="strokeDashoffset" from="0" to="-24" dur="1.5s" repeatCount="indefinite" />
+      </path>
+      {/* Arrowhead */}
+      <polygon points="230,105 218,97 220,113" fill="#fbbf24" fillOpacity="0.5">
+        <animate attributeName="opacity" values="0.3;0.7;0.3" dur="2s" repeatCount="indefinite" />
+      </polygon>
+
+      {/* Support pawn on c4 — the gambit pawn */}
+      <g transform="translate(115,130) scale(0.65)">
+        <circle cx="0" cy="-16" r="10" fill="#f59e0b" fillOpacity="0.6" />
+        <path d="M-5,-6 L-8,16 Q0,20 8,16 L5,-6 Z" fill="#f59e0b" fillOpacity="0.55" />
+        <ellipse cx="0" cy="18" rx="12" ry="4.5" fill="#f59e0b" fillOpacity="0.5" />
+      </g>
+
+      {/* Variation labels */}
+      <g opacity="0.3">
+        <text x="90" y="172" textAnchor="middle" fill="#fbbf24" fontSize="7" fontFamily="system-ui" letterSpacing="2">QGD</text>
+        <text x="200" y="172" textAnchor="middle" fill="#fbbf24" fontSize="7" fontFamily="system-ui" letterSpacing="2">QGA</text>
+        <text x="310" y="172" textAnchor="middle" fill="#fbbf24" fontSize="7" fontFamily="system-ui" letterSpacing="2">SLAV</text>
+      </g>
+
+      {/* Connecting lines to variations */}
+      <line x1="135" y1="110" x2="90" y2="165" stroke="#fbbf24" strokeWidth="0.5" strokeOpacity="0.2" strokeDasharray="2 2" />
+      <line x1="200" y1="110" x2="200" y2="165" stroke="#fbbf24" strokeWidth="0.5" strokeOpacity="0.2" strokeDasharray="2 2" />
+      <line x1="265" y1="110" x2="310" y2="165" stroke="#fbbf24" strokeWidth="0.5" strokeOpacity="0.2" strokeDasharray="2 2" />
+
+      {/* Title */}
+      <text x="200" y="190" textAnchor="middle" fill="#fbbf24" fillOpacity="0.2" fontSize="8" fontFamily="system-ui" letterSpacing="4">QUEEN'S GAMBIT</text>
+
+      {/* Small decorative sparkles */}
+      {[[70,30],[330,45],[360,140],[40,160],[300,30]].map(([x,y],i) => (
+        <circle key={`sp${i}`} cx={x} cy={y} r={1.2} fill="#fbbf24" fillOpacity={0.2 + i*0.06}>
+          <animate attributeName="opacity" values={`0.3;0.05;0.3`} dur={`${2+i*0.7}s`} repeatCount="indefinite" />
+        </circle>
+      ))}
     </svg>
   );
 }

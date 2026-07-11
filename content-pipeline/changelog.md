@@ -9,10 +9,11 @@
 | 5 | 2026-07-06 | shirov-topalov-bh3-sacrifice | published | "/games/shirov-topalov-1998" — 2,237 imp, 0 clicks, pos 5.8 |
 | 6 | 2026-07-08 | chess-rating-1200-to-1500 | published | priority queue #5 — evergreen study plan, 1200-1500 rating bracket |
 | 7 | 2026-07-08 | best-chess-openings-for-beginners-by-rating | published | priority queue #6 — best openings for beginners listicle |
-| 8 | 2026-07-09 | chess-tactics-every-player-should-know | published | priority queue #7 — comprehensive tactics guide, 8 essential patterns with FEN positions |
-| 9 | 2026-07-09 | lichess-vs-chess-com-improvement | published | priority queue #8 — Lichess vs Chess.com comparison, high search volume |
-| 10 | 2026-07-09 | immortal-zugzwang-game-samisch-nimzowitsch | published | priority queue #9 — Sämisch vs Nimzowitsch Immortal Zugzwang game analysis |
-| 11 | 2026-07-10 | chess-calculation-training-calculate-variations | published | priority queue #10 — "how to calculate chess variations deeper" evergreen, 2,800 words, 5 FEN-validated positions, 4 calculation methods with comparison table |
-| 12 | 2026-07-11 | chess-visualisation-training-3-moves-ahead | published | priority queue #11 — chess visualisation training, 7 drills, blindfold progression, 4-week plan, 3,589 words, 7 FEN-validated positions |
-| 13 | 2026-07-11 | london-system-guide-club-players | published | GSC gap: London System — high-volume opening topic, no dedicated guide existed, club-player focus, 3,356 words, 9 FEN-validated positions |
-| 14 | 2026-07-11 | what-is-centipawn-loss | published | GSC gap: centipawn loss meaning / what is centipawn loss — 427 combined impressions, 3 clicks, pos 7.5 — informational intent gap. 3,187 words, 6 FEN-validated positions, 4 internal links |
+| 8 | 2026-07-09 | chess-tactics-every-player-should-know | published | priority queue #7 — 8 essential tactical patterns with FEN positions |
+| 9 | 2026-07-09 | lichess-vs-chess-com-improvement | published | priority queue #8 — Lichess vs Chess.com comparison |
+| 10 | 2026-07-09 | immortal-zugzwang-game-samisch-nimzowitsch | published | priority queue #9 — Immortal Zugzwang game analysis |
+| 11 | 2026-07-10 | chess-calculation-training-calculate-variations | published | priority queue #10 — "how to calculate chess variations deeper", 2,800 words, 5 FEN positions |
+| 12 | 2026-07-11 | chess-visualisation-training-3-moves-ahead | published | priority queue #11 — 7 visualisation drills, blindfold progression, 4-week plan, 3,589 words |
+| 13 | 2026-07-11 | london-system-guide-club-players | published | GSC gap: London System — high-volume opening topic, 3,356 words, 9 FEN positions |
+| 14 | 2026-07-11 | what-is-centipawn-loss | published | GSC gap: centipawn loss meaning / what is centipawn loss — 427 combined impressions, 3 clicks, informational intent gap, 3,187 words, 6 FEN positions |
+| 15 | 2026-07-12 | queens-gambit-guide | published | Evergreen opening deep-dive — Queen's Gambit, no dedicated guide existed, complements London System & Sicilian guides, 3,473 words, 8 FEN-validated positions, 11 H2 sections, 5 internal links |

@@ -1,6 +1,6 @@
 {
-  "cycle": 14,
-  "total_pages_created": 15,
+  "cycle": 15,
+  "total_pages_created": 16,
   "published_slugs": [
     "average-centipawn-loss-by-rating",
     "sicilian-defense-for-beginners",
@@ -16,7 +16,8 @@
     "chess-calculation-training-calculate-variations",
     "chess-visualisation-training-3-moves-ahead",
     "london-system-guide-club-players",
-    "what-is-centipawn-loss"
+    "what-is-centipawn-loss",
+    "queens-gambit-guide"
   ],
   "analytics_history": [
     {"cycle": 1, "date": "2026-07-04", "slug": "average-centipawn-loss-by-rating", "gsc_query_targeted": "average centipawn loss", "query_impressions": 185, "query_clicks": 0, "query_position": 9.4, "period_days": 14},
@@ -32,8 +33,9 @@
     {"cycle": 11, "date": "2026-07-10", "slug": "chess-calculation-training-calculate-variations", "gsc_query_targeted": "priority queue #10: how to calculate chess variations deeper", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14},
     {"cycle": 12, "date": "2026-07-11", "slug": "chess-visualisation-training-3-moves-ahead", "gsc_query_targeted": "priority queue #11: chess visualisation training, seeing 3 moves ahead", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14},
     {"cycle": 13, "date": "2026-07-11", "slug": "london-system-guide-club-players", "gsc_query_targeted": "GSC gap: London System — high-volume opening topic, no dedicated guide existed", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14},
-    {"cycle": 14, "date": "2026-07-11", "slug": "what-is-centipawn-loss", "gsc_query_targeted": "centipawn loss meaning / what is centipawn loss — 427 combined impressions, 3 clicks, informational intent gap", "query_impressions": 427, "query_clicks": 3, "query_position": 7.5, "period_days": 14}
+    {"cycle": 14, "date": "2026-07-11", "slug": "what-is-centipawn-loss", "gsc_query_targeted": "centipawn loss meaning / what is centipawn loss — 427 combined impressions, 3 clicks, informational intent gap", "query_impressions": 427, "query_clicks": 3, "query_position": 7.5, "period_days": 14},
+    {"cycle": 15, "date": "2026-07-12", "slug": "queens-gambit-guide", "gsc_query_targeted": "evergreen opening deep-dive — Queen's Gambit, no dedicated guide existed, complements London System and Sicilian guides", "query_impressions": null, "query_clicks": null, "query_position": null, "period_days": 14}
   ],
-  "next_cycle_focus": "Cycle 15: Next GSC opportunity: the /games/shirov-topalov-1998 page (2,201 imp, 0 clicks, pos 5.7) still underperforms despite dedicated blog post — consider internal linking refresh. Alternatively, target 'fire chess engine' (22 imp, 1 click, pos 3.5) branding confusion, or write a Caro-Kann / Queen's Gambit opening guide as the next evergreen opening deep-dive.",
-  "last_run": "2026-07-11"
+  "next_cycle_focus": "Cycle 16: Review GSC data for next gap. Potential targets: (1) 'acpl chess' — 20 imp, 0 clicks, pos 7.1 — centipawn-adjacent acronym query still uncovered. (2) 'fire chess engine' — 22 imp, 1 click — brand confusion query. (3) Caro-Kann opening guide — last major opening without dedicated post. (4) Chess endgame fundamentals — check if 'endgame-patterns-club-players-miss' fully covers the basics. (5) Chess.com vs FireChess comparison — feature differentiation post.",
+  "last_run": "2026-07-12"
 }
