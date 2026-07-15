@@ -300,6 +300,33 @@ export type PositionalFinding = {
   gameUrl?: string;
 };
 
+/* ── Positional Structure types ── */
+
+/** A single structural axis pattern with win rate */
+export type StructuralAxisEntry = {
+  pattern: string;
+  games: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  winPct: number;
+};
+
+/** A key insight comparing best vs worst structural patterns */
+export type StructuralInsight = {
+  axis: string;
+  best: { pattern: string; winPct: number; games: number };
+  worst: { pattern: string; winPct: number; games: number };
+  gap: number;
+  text: string;
+};
+
+/** Full structural report, keyed by axis name */
+export type StructuralReport = {
+  byAxis: Record<string, StructuralAxisEntry[]>;
+  topInsights: StructuralInsight[];
+};
+
 export type BrilliantMove = {
   fenBefore: string;
   fenAfter: string;
@@ -347,6 +374,8 @@ export type AnalyzeResponse = {
   mentalStats?: MentalStats | null;
   /** Per-game opening summaries for the Opening Rankings view */
   openingSummaries?: OpeningSummary[];
+  /** Structural pattern analysis (fianchetto, center type, IQP, etc.) */
+  structuralReport?: StructuralReport;
   diagnostics?: AnalysisDiagnostics;
   report?: AnalysisReport;
   /** Per-game metadata so the best-game page can reconstruct and display

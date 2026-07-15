@@ -40,6 +40,8 @@ import {
   generateCoachLine,
   generateVariationLine,
   buildLessonSummary,
+  buildCoachDebrief,
+  type CoachDebriefStats,
   type MoveClassification,
   type CoachMove,
   type PrevMoveContext,
@@ -697,7 +699,7 @@ export default function CoachPage() {
           // Advancement is triggered by the tts.speaking watcher below
         } else {
           // No TTS — use timer-based advance
-          const pauseMs = move.isKeyMoment ? 4000 : speed;
+          const pauseMs = move.isKeyMoment ? 4000 : move.narration ? speed : 600;
           scheduleNext(pauseMs);
         }
       }, delay);
@@ -881,6 +883,11 @@ export default function CoachPage() {
     if (moves.length === 0 || currentIdx < moves.length - 1) return [];
     return buildLessonSummary(moves);
   }, [moves, currentIdx]);
+
+  const coachDebrief = useMemo(() => {
+    if (moves.length === 0) return null;
+    return buildCoachDebrief(moves);
+  }, [moves]);
 
   /* ══════════════════════════════════════════════════════════════
      Square styles
@@ -1481,20 +1488,59 @@ export default function CoachPage() {
                 </div>
               ))}
 
-              {/* Lesson summary */}
-              {isAtEnd && lessonSummary.length > 0 && (
-                <div className="mt-3 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
-                  <div className="mb-2 text-xs font-semibold text-amber-400 uppercase tracking-wide">
-                    Key Lessons
-                  </div>
-                  {lessonSummary.map((ls, i) => (
-                    <div key={i} className="mb-2 last:mb-0">
-                      <div className="text-[11px] font-medium text-slate-400">
-                        {ls.moment}
-                      </div>
-                      <div className="text-xs text-slate-300">{ls.lesson}</div>
+              {/* Coach debrief — stats + lessons */}
+              {isAtEnd && coachDebrief && (
+                <div className="mt-3 space-y-3">
+                  {/* Stats */}
+                  <div className="rounded-lg border border-white/[0.08] bg-white/[0.03] p-3">
+                    <div className="mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wide">
+                      Game Stats
                     </div>
-                  ))}
+                    <div className="grid grid-cols-4 gap-2 text-center text-[11px]">
+                      <div>
+                        <div className="text-lg font-bold text-emerald-400">{coachDebrief.totalMoves}</div>
+                        <div className="text-slate-500">Moves</div>
+                      </div>
+                      <div>
+                        <div className={`text-lg font-bold ${coachDebrief.blunders > 0 ? "text-red-400" : "text-slate-500"}`}>{coachDebrief.blunders}</div>
+                        <div className="text-slate-500">Blunders</div>
+                      </div>
+                      <div>
+                        <div className={`text-lg font-bold ${coachDebrief.mistakes > 0 ? "text-orange-400" : "text-slate-500"}`}>{coachDebrief.mistakes}</div>
+                        <div className="text-slate-500">Mistakes</div>
+                      </div>
+                      <div>
+                        <div className={`text-lg font-bold ${coachDebrief.inaccuracies > 0 ? "text-amber-400" : "text-slate-500"}`}>{coachDebrief.inaccuracies}</div>
+                        <div className="text-slate-500">?!</div>
+                      </div>
+                    </div>
+                    {coachDebrief.topThemes.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {coachDebrief.topThemes.slice(0, 3).map((t) => (
+                          <span key={t.theme} className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-300">
+                            {t.theme} ×{t.count}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Key Lessons */}
+                  {lessonSummary.length > 0 && (
+                    <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+                      <div className="mb-2 text-xs font-semibold text-amber-400 uppercase tracking-wide">
+                        Key Lessons
+                      </div>
+                      {lessonSummary.map((ls, i) => (
+                        <div key={i} className="mb-2 last:mb-0">
+                          <div className="text-[11px] font-medium text-slate-400">
+                            {ls.moment}
+                          </div>
+                          <div className="text-xs text-slate-300">{ls.lesson}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>

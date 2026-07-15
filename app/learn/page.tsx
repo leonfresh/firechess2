@@ -1295,35 +1295,6 @@ const BAND_COLORS: Record<
 };
 
 /* ─────────────────────────────────────────────────────────────── */
-/*  LessonProgress                                                  */
-/* ─────────────────────────────────────────────────────────────── */
-
-function LessonProgress({
-  current,
-  total,
-}: {
-  current: number;
-  total: number;
-}) {
-  return (
-    <div className="flex gap-1">
-      {Array.from({ length: total }).map((_, i) => (
-        <div
-          key={i}
-          className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-            i < current
-              ? "bg-purple-500"
-              : i === current
-                ? "bg-purple-400/70"
-                : "bg-white/[0.08]"
-          }`}
-        />
-      ))}
-    </div>
-  );
-}
-
-/* ─────────────────────────────────────────────────────────────── */
 /*  LessonBoard                                                     */
 /* ─────────────────────────────────────────────────────────────── */
 
@@ -1354,7 +1325,7 @@ function LessonBoard({
 }) {
   const boardTheme = useBoardTheme();
   const customPieces = useCustomPieces();
-  const { ref, size } = useBoardSize(480);
+  const { ref, size } = useBoardSize(1200);
   const [evalCp, setEvalCp] = useState<number | null>(null);
 
   useEffect(() => {
@@ -1439,18 +1410,30 @@ function TextSlideView({
 
   if (slide.fen) {
     return (
-      <div className="mx-auto w-full max-w-5xl grid lg:grid-cols-2 gap-8 lg:items-center">
-        {/* Content: first in DOM so heading shows above board on mobile */}
-        <div className="flex flex-col gap-5 lg:order-last">
-          <h2 className="text-2xl font-black tracking-tight text-white leading-snug">
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6">
+        {/* Board — the hero */}
+        <div className="w-full flex justify-center">
+          <LessonBoard
+            fen={slide.fen}
+            orientation={slide.orientation}
+            highlights={slide.highlights}
+            arrows={slide.arrows}
+            draggable={false}
+            showEval
+          />
+        </div>
+
+        {/* Text — below board, scrollable if long */}
+        <div className="flex w-full flex-col gap-4 text-center max-h-[35dvh] overflow-y-auto">
+          <h2 className="text-xl font-black tracking-tight text-white leading-snug shrink-0">
             {slide.heading}
           </h2>
-          <p className="text-[15px] leading-7 text-slate-300 whitespace-pre-line">
+          <p className="text-[15px] leading-7 text-slate-300 whitespace-pre-line max-w-2xl mx-auto">
             {slide.body}
           </p>
           {slide.insight && (
-            <div className="rounded-2xl border border-purple-500/25 bg-purple-500/[0.07] px-5 py-4">
-              <p className="text-[11px] font-black uppercase tracking-widest text-purple-400 mb-1.5">
+            <div className="mx-auto max-w-xl rounded-xl border border-purple-500/25 bg-purple-500/[0.07] px-4 py-3.5">
+              <p className="text-[11px] font-black uppercase tracking-widest text-purple-400 mb-1">
                 💡 Key insight
               </p>
               <p className="text-sm leading-relaxed text-purple-200/80">
@@ -1461,54 +1444,20 @@ function TextSlideView({
           <button
             type="button"
             onClick={handleAdvance}
-            className="w-full rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-3.5 text-base font-bold text-white shadow-lg shadow-purple-500/20 hover:brightness-110 active:scale-[0.98] transition-all"
+            className="mx-auto w-full max-w-sm rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-3.5 text-base font-bold text-white shadow-lg shadow-purple-500/20 hover:brightness-110 active:scale-[0.98] transition-all"
           >
             Got it →
           </button>
         </div>
-        <LessonBoard
-          fen={slide.fen}
-          orientation={slide.orientation}
-          highlights={slide.highlights}
-          arrows={slide.arrows}
-          draggable={false}
-          showEval
-        />
       </div>
     );
   }
 
   if (slide.photo) {
     return (
-      <div className="mx-auto w-full max-w-5xl grid lg:grid-cols-2 gap-8 lg:items-center">
-        {/* Text: first in DOM so heading appears above photo on mobile */}
-        <div className="flex flex-col gap-5 lg:order-last">
-          <h2 className="text-2xl font-black tracking-tight text-white leading-snug">
-            {slide.heading}
-          </h2>
-          <p className="text-[15px] leading-7 text-slate-300 whitespace-pre-line">
-            {slide.body}
-          </p>
-          {slide.insight && (
-            <div className="rounded-2xl border border-purple-500/25 bg-purple-500/[0.07] px-5 py-4">
-              <p className="text-[11px] font-black uppercase tracking-widest text-purple-400 mb-1.5">
-                💡 Key insight
-              </p>
-              <p className="text-sm leading-relaxed text-purple-200/80">
-                {slide.insight}
-              </p>
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={handleAdvance}
-            className="w-full rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-3.5 text-base font-bold text-white shadow-lg shadow-purple-500/20 hover:brightness-110 active:scale-[0.98] transition-all"
-          >
-            Got it →
-          </button>
-        </div>
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6">
         {/* Photo */}
-        <div className="flex flex-col gap-2">
+        <div className="w-full max-w-lg flex flex-col gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={slide.photo.src}
@@ -1519,13 +1468,40 @@ function TextSlideView({
             {slide.photo.credit}
           </p>
         </div>
+        {/* Text */}
+        <div className="flex w-full flex-col items-center gap-4 text-center max-h-[35dvh] overflow-y-auto">
+          <div className="w-full max-w-lg">
+            <h2 className="text-xl font-black tracking-tight text-white leading-snug shrink-0">
+              {slide.heading}
+            </h2>
+            <p className="mt-2 text-[15px] leading-7 text-slate-300 whitespace-pre-line">
+              {slide.body}
+            </p>
+            {slide.insight && (
+              <div className="mt-4 rounded-xl border border-purple-500/25 bg-purple-500/[0.07] px-4 py-3.5">
+                <p className="text-[11px] font-black uppercase tracking-widest text-purple-400 mb-1">
+                  💡 Key insight
+                </p>
+                <p className="text-sm leading-relaxed text-purple-200/80">
+                  {slide.insight}
+                </p>
+              </div>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={handleAdvance}
+            className="w-full max-w-sm rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-3.5 text-base font-bold text-white shadow-lg shadow-purple-500/20 hover:brightness-110 active:scale-[0.98] transition-all"
+          >
+            Got it →
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div
-      className="mx-auto flex max-w-lg flex-col gap-5 cursor-pointer select-none"
+    <div className="mx-auto flex max-w-2xl flex-col gap-5 cursor-pointer select-none text-center"
       onClick={handleAdvance}
     >
       <h2 className="text-2xl font-black tracking-tight text-white leading-snug">
@@ -1708,37 +1684,9 @@ function ReplaySlideView({
   const badge = slide.badges?.[idx] ?? autoBadge;
 
   return (
-    <div className="mx-auto w-full max-w-5xl grid lg:grid-cols-2 gap-8 lg:items-start">
-      {/* Right col: heading + body (visible once replay ends) */}
-      <div className="flex flex-col gap-5 lg:order-last">
-        <h2 className="text-2xl font-black tracking-tight text-white leading-snug">
-          {slide.heading}
-        </h2>
-        {done ? (
-          <>
-            <p className="text-[15px] leading-7 text-slate-300 whitespace-pre-line">
-              {slide.body}
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                playSound("select");
-                onNext();
-              }}
-              className="w-full rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-3.5 text-base font-bold text-white shadow-lg shadow-purple-500/20 hover:brightness-110 active:scale-[0.98] transition-all"
-            >
-              Got it →
-            </button>
-          </>
-        ) : (
-          <p className="text-sm text-slate-500">
-            Watch the moves play out, then continue when ready.
-          </p>
-        )}
-      </div>
-
-      {/* Left col: board + move label + controls */}
-      <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6">
+      {/* Board + controls */}
+      <div className="w-full flex flex-col items-center gap-4">
         <LessonBoard
           fen={frame.fen}
           orientation={slide.orientation ?? "white"}
@@ -1750,7 +1698,7 @@ function ReplaySlideView({
         />
 
         {/* Move label + counter */}
-        <div className="flex items-center justify-between px-1">
+        <div className="flex items-center justify-between w-full max-w-[480px] px-1">
           <span className="text-[13px] font-semibold text-slate-300">
             {moveLabel}
           </span>
@@ -1759,78 +1707,76 @@ function ReplaySlideView({
           </span>
         </div>
 
-        {/* Controls */}
+        {/* Playback controls */}
         <div className="flex items-center justify-center gap-2">
           <button
             type="button"
-            onClick={() => {
-              playSound("select");
-              setPlaying(false);
-              setIdx(0);
-            }}
+            onClick={() => { playSound("select"); setPlaying(false); setIdx(0); }}
             className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.06] text-slate-400 hover:bg-white/[0.10] transition-colors"
             title="Reset"
-          >
-            ⏮
-          </button>
+          >⏮</button>
           <button
             type="button"
-            onClick={() => {
-              playSound("select");
-              setPlaying(false);
-              setIdx((i) => Math.max(0, i - 1));
-            }}
+            onClick={() => { playSound("select"); setPlaying(false); setIdx((i) => Math.max(0, i - 1)); }}
             disabled={idx <= 0}
             className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.06] text-slate-400 hover:bg-white/[0.10] disabled:opacity-30 transition-colors"
             title="Previous move"
-          >
-            ◀
-          </button>
+          >◀</button>
           <button
             type="button"
             onClick={() => {
               playSound("select");
-              if (done) {
-                setIdx(0);
-                setPlaying(true);
-              } else {
-                setPlaying((p) => !p);
-              }
+              if (done) { setIdx(0); setPlaying(true); }
+              else { setPlaying((p) => !p); }
             }}
             className="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-600 text-white hover:brightness-110 transition-all shadow-lg shadow-purple-500/20"
             title={playing ? "Pause" : done ? "Replay" : "Play"}
-          >
-            {playing ? "⏸" : done ? "↺" : "▶"}
-          </button>
+          >{playing ? "⏸" : done ? "↺" : "▶"}</button>
           <button
             type="button"
             onClick={() => {
               const nextIdx = Math.min(frames.length - 1, idx + 1);
-              playSound(
-                frames[nextIdx]?.san?.includes("x") ? "capture" : "move",
-              );
-              setPlaying(false);
-              setIdx(nextIdx);
+              playSound(frames[nextIdx]?.san?.includes("x") ? "capture" : "move");
+              setPlaying(false); setIdx(nextIdx);
             }}
             disabled={done}
             className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.06] text-slate-400 hover:bg-white/[0.10] disabled:opacity-30 transition-colors"
             title="Next move"
-          >
-            ▶
-          </button>
+          >▶</button>
           <button
             type="button"
-            onClick={() => {
-              playSound("select");
-              setPlaying(false);
-              setIdx(frames.length - 1);
-            }}
+            onClick={() => { playSound("select"); setPlaying(false); setIdx(frames.length - 1); }}
             className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.06] text-slate-400 hover:bg-white/[0.10] transition-colors"
             title="Skip to end"
-          >
-            ⏭
-          </button>
+          >⏭</button>
         </div>
+      </div>
+
+      {/* Text panel — visible below once replay ends, scrollable */}
+      <div className="flex w-full flex-col items-center gap-4 text-center max-h-[30dvh] overflow-y-auto">
+        <div className="w-full max-w-lg">
+          <h2 className="text-xl font-black tracking-tight text-white leading-snug shrink-0">
+            {slide.heading}
+          </h2>
+          {done ? (
+            <p className="mt-2 text-[15px] leading-7 text-slate-300 whitespace-pre-line">
+              {slide.body}
+            </p>
+          ) : (
+            <p className="mt-2 text-sm text-slate-500">
+              Watch the moves play out, then continue when ready.
+            </p>
+          )}
+        </div>
+        {done && (
+          <button
+            type="button"
+            onClick={() => { playSound("select"); onNext(); }}
+            className="w-full max-w-sm rounded-2xl bg-gradient-to-r from-purple-600 to-violet-500 py-3.5 text-base font-bold text-white shadow-lg shadow-purple-500/20 hover:brightness-110 active:scale-[0.98] transition-all"
+          >
+            Got it →
+          </button>
+        )}
       </div>
     </div>
   );
@@ -2096,24 +2042,10 @@ function LiveInteractSlide({
       </div>
     );
 
-  const toMoveLabel = orientation === "white" ? "White" : "Black";
   return (
-    <div className="mx-auto w-full max-w-5xl grid lg:grid-cols-2 gap-8 lg:items-start">
-      {/* Right col: heading + instruction */}
-      <div className="flex flex-col gap-4 lg:order-last">
-        <div>
-          <h2 className="text-2xl font-black tracking-tight text-white">
-            {slide.heading}
-          </h2>
-          <p className="mt-2 text-sm text-slate-400">{slide.instruction}</p>
-          <p className="mt-1 text-[11px] font-semibold uppercase tracking-widest text-slate-600">
-            {!triggerPlayed ? "Opponent is moving…" : `${toMoveLabel} to move`}
-          </p>
-        </div>
-      </div>
-
-      {/* Left col: board + attempt dots + hint */}
-      <div className="flex flex-col gap-3">
+    <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6">
+      {/* Board */}
+      <div className="w-full flex justify-center">
         <LessonBoard
           fen={
             fen || "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
@@ -2124,8 +2056,21 @@ function LiveInteractSlide({
           draggable={triggerPlayed && solveState === "playing"}
           customSquareStyles={sqStyles}
         />
+      </div>
+
+      {/* Instruction + status — scrollable */}
+      <div className="flex w-full flex-col items-center gap-3 text-center max-h-[30dvh] overflow-y-auto">
+        <div className="w-full max-w-lg">
+          <h2 className="text-xl font-black tracking-tight text-white shrink-0">
+            {slide.heading}
+          </h2>
+          <p className="mt-1 text-sm text-slate-400">{slide.instruction}</p>
+          <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-widest text-slate-600">
+            {!triggerPlayed ? "Opponent is moving…" : `${orientation === "white" ? "White" : "Black"} to move`}
+          </p>
+        </div>
         {triggerPlayed && solveState === "playing" && (
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center gap-2">
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
@@ -2133,21 +2078,17 @@ function LiveInteractSlide({
               />
             ))}
             {hintSq && (
-              <span className="ml-2 text-xs text-amber-400">
+              <span className="ml-1 text-xs text-amber-400">
                 💡 Move the highlighted piece
               </span>
             )}
           </div>
         )}
         {!triggerPlayed && (
-          <p className="text-center text-xs text-slate-600">
-            Opponent&apos;s move is coming…
-          </p>
+          <p className="text-xs text-slate-600">Opponent&apos;s move is coming…</p>
         )}
         {triggerPlayed && solveState === "playing" && (
-          <p className="text-center text-xs text-slate-600">
-            Find the best move — drag or click
-          </p>
+          <p className="text-xs text-slate-600">Find the best move — drag or click</p>
         )}
       </div>
 
@@ -2381,25 +2322,10 @@ function InteractSlideView({
       squareStyles[hintFrom] = { backgroundColor: "rgba(251,191,36,0.45)" };
   }
 
-  const toMove = (slide.fen ?? "").split(" ")[1] === "b" ? "Black" : "White";
-
   return (
-    <div className="mx-auto w-full max-w-5xl grid lg:grid-cols-2 gap-8 lg:items-start">
-      {/* Right col: heading + instruction */}
-      <div className="flex flex-col gap-4 lg:order-last">
-        <div>
-          <h2 className="text-2xl font-black tracking-tight text-white">
-            {slide.heading}
-          </h2>
-          <p className="mt-2 text-sm text-slate-400">{slide.instruction}</p>
-          <p className="mt-1 text-[11px] font-semibold uppercase tracking-widest text-slate-600">
-            {toMove} to move
-          </p>
-        </div>
-      </div>
-
-      {/* Left col: board + hint */}
-      <div className="flex flex-col gap-3">
+    <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6">
+      {/* Board */}
+      <div className="w-full flex justify-center">
         <LessonBoard
           fen={fen}
           orientation={orientation}
@@ -2416,7 +2342,20 @@ function InteractSlideView({
             state === "correct" ? moveClassification : undefined
           }
         />
-        <p className="text-center text-xs text-slate-600">
+      </div>
+
+      {/* Instruction + status — scrollable */}
+      <div className="flex w-full flex-col items-center gap-3 text-center max-h-[30dvh] overflow-y-auto">
+        <div className="w-full max-w-lg">
+          <h2 className="text-xl font-black tracking-tight text-white shrink-0">
+            {slide.heading}
+          </h2>
+          <p className="mt-1 text-sm text-slate-400">{slide.instruction}</p>
+          <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-widest text-slate-600">
+            {(slide.fen ?? "").split(" ")[1] === "b" ? "Black" : "White"} to move
+          </p>
+        </div>
+        <p className="text-xs text-slate-600">
           {state === "evaluating"
             ? "Analysing…"
             : attempts >= 2 && state === "idle"
@@ -2567,33 +2506,39 @@ function ChoiceSlideView({
 
   if (slide.fen) {
     return (
-      <div className="mx-auto w-full max-w-5xl grid lg:grid-cols-2 gap-8 lg:items-start">
-        <div className="flex flex-col gap-5 lg:order-last">
-          <div>
-            <h2 className="text-2xl font-black tracking-tight text-white">
+      <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-6">
+        {/* Board */}
+        <div className="w-full flex justify-center">
+          <LessonBoard
+            fen={slide.fen}
+            orientation={slide.orientation}
+            highlights={slide.highlights}
+            arrows={slide.arrows}
+            draggable={false}
+          />
+        </div>
+        {/* Choices + question — scrollable */}
+        <div className="flex w-full flex-col items-center gap-4 text-center max-h-[35dvh] overflow-y-auto">
+          <div className="w-full max-w-lg">
+            <h2 className="text-xl font-black tracking-tight text-white shrink-0">
               {slide.heading}
             </h2>
-            <p className="mt-3 text-[15px] leading-7 text-slate-200">
+            <p className="mt-2 text-sm text-slate-200">
               {slide.question}
             </p>
           </div>
-          {choicesBlock}
+          <div className="w-full max-w-lg">
+            {choicesBlock}
+          </div>
           {explanationAndNext}
         </div>
-        <LessonBoard
-          fen={slide.fen}
-          orientation={slide.orientation}
-          highlights={slide.highlights}
-          arrows={slide.arrows}
-          draggable={false}
-        />
       </div>
     );
   }
 
   return (
-    <div className="mx-auto flex max-w-lg flex-col gap-5">
-      <div>
+    <div className="mx-auto flex max-w-2xl flex-col gap-5">
+      <div className="text-center">
         <h2 className="text-2xl font-black tracking-tight text-white">
           {slide.heading}
         </h2>
@@ -2659,7 +2604,216 @@ function Confetti() {
 }
 
 /* ─────────────────────────────────────────────────────────────── */
-/*  LessonRunner                                                    */
+/*  KojiChat — AI tutor chatbot (Brilliant-style)                  */
+/* ─────────────────────────────────────────────────────────────── */
+
+type KojiMessage = {
+  role: "bot" | "user";
+  text: string;
+};
+
+const KOJI_GREETINGS: Record<string, string> = {
+  text: "I'm Koji, your chess tutor! 🏆 This slide is teaching you an important concept. Ask me anything about the position or the idea being explained.",
+  interact: "Ready to test your skills? 🎯 Try the move you think is best on the board. I can give you a hint if you're stuck!",
+  choice: "Tricky question? 🤔 I can explain the concepts behind each option. Just ask!",
+  replay: "Watch the moves carefully! 👀 I can explain why each move was played or what the key ideas are.",
+};
+
+function KojiChat({
+  lessonTitle,
+  slideKind,
+}: {
+  lessonTitle: string;
+  slideKind: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [messages, setMessages] = useState<KojiMessage[]>([]);
+  const [input, setInput] = useState("");
+  const [started, setStarted] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Initialize with greeting on first open
+  useEffect(() => {
+    if (open && !started) {
+      setStarted(true);
+      const greeting =
+        KOJI_GREETINGS[slideKind] ??
+        "Hi! I'm Koji, your chess tutor. Ask me anything about this lesson.";
+      setMessages([{ role: "bot", text: greeting }]);
+    }
+    if (open) {
+      setTimeout(() => inputRef.current?.focus(), 300);
+    }
+  }, [open, started, slideKind]);
+
+  // Pre-written coaching tips based on slide kind
+  const getCoachTip = (kind: string): string | null => {
+    const tips: Record<string, string[]> = {
+      text: [
+        "💡 Try to visualize the position in your head before looking at the board.",
+        "🔑 The key insight box summarizes the most important idea — make sure you understand it before moving on.",
+        "📝 If this concept is new, re-read the body slowly. Chess ideas build on each other.",
+      ],
+      interact: [
+        "🤔 Not sure? Ask yourself: what's the opponent's biggest threat right now?",
+        "🎯 Look for checks, captures, and threats — in that order.",
+        "⏸️ Take your time. There's no clock here — think through the position carefully.",
+      ],
+      choice: [
+        "📖 Read each option carefully. Often the wrong answers are designed to be tempting.",
+        "🧠 Think about the principle being taught in this lesson — which answer aligns with it?",
+        "💡 Eliminate the obviously wrong options first, then reason about the remaining ones.",
+      ],
+      replay: [
+        "👀 Watch how each move changes the position. Try to guess the next move before it plays.",
+        "🎯 Notice which pieces are active and which are passive — that's often the lesson.",
+        "♟️ Ask yourself: what's the plan behind these moves? Look for the idea, not just the move.",
+      ],
+    };
+    const kindTips = tips[kind];
+    if (!kindTips) return null;
+    return kindTips[Math.floor(Math.random() * kindTips.length)];
+  };
+
+  const handleSend = useCallback(
+    (text: string) => {
+      if (!text.trim()) return;
+      setMessages((prev) => [...prev, { role: "user", text: text.trim() }]);
+      setInput("");
+
+      // Generate a contextual bot response
+      setTimeout(() => {
+        const lower = text.toLowerCase();
+        let reply = "";
+
+        if (lower.includes("hint") || lower.includes("help") || lower.includes("stuck")) {
+          const tip = getCoachTip(slideKind);
+          reply =
+            tip ??
+            "Think about the fundamental principle this lesson is teaching. Sometimes the simplest move is the right one!";
+        } else if (lower.includes("why") || lower.includes("explain")) {
+          reply =
+            "Great question! The key is to look at what each piece is doing. Pay attention to which pieces are active and which are passive — that usually reveals the answer.";
+        } else if (lower.includes("stockfish") || lower.includes("eval") || lower.includes("engine")) {
+          reply =
+            "Stockfish analysis is shown on the eval bar next to the board. A positive number means White is better, negative means Black is better. The bar's height shows how big the advantage is!";
+        } else if (lower.includes("hello") || lower.includes("hi ") || lower === "hi") {
+          reply = `Hey there! 👋 Welcome to "${lessonTitle}". I'm here to help you understand the concepts. What would you like to know?`;
+        } else {
+          reply =
+            "That's a good question! Think about the position in terms of the theme of this lesson. What principle is being demonstrated? If you need a hint, just ask!";
+        }
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "bot",
+            text: reply,
+          },
+        ]);
+      }, 600);
+    },
+    [slideKind, lessonTitle],
+  );
+
+  return (
+    <>
+      {/* Floating button */}
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={`fixed bottom-4 right-4 z-50 flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-all hover:scale-110 active:scale-95 ${
+          open
+            ? "bg-purple-700 ring-2 ring-purple-400"
+            : "bg-gradient-to-br from-purple-600 to-violet-500"
+        }`}
+        title="Ask Koji (AI tutor)"
+      >
+        {open ? (
+          <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        ) : (
+          <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+        )}
+      </button>
+
+      {/* Chat panel */}
+      {open && (
+        <div className="fixed bottom-20 right-4 z-50 w-80 rounded-2xl border border-white/[0.08] bg-[#0d0d11]/95 backdrop-blur-xl shadow-2xl overflow-hidden flex flex-col"
+          style={{ maxHeight: "min(500px, calc(100vh - 120px))" }}
+        >
+          {/* Header */}
+          <div className="flex items-center gap-2.5 border-b border-white/[0.06] px-4 py-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-amber-400 text-sm font-black text-white">
+              K
+            </div>
+            <div>
+              <p className="text-[13px] font-bold text-white">Koji</p>
+              <p className="text-[10px] text-slate-500">AI Tutor</p>
+            </div>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
+            {messages.map((msg, i) => (
+              <div
+                key={i}
+                className={`flex ${msg.role === "bot" ? "justify-start" : "justify-end"}`}
+              >
+                <div
+                  className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+                    msg.role === "bot"
+                      ? "bg-white/[0.06] text-slate-200 rounded-tl-sm"
+                      : "bg-purple-600/80 text-white rounded-tr-sm"
+                  }`}
+                >
+                  {msg.text}
+                </div>
+              </div>
+            ))}
+            {messages.length === 1 && (
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/[0.04] px-3 py-2">
+                <p className="text-[11px] text-amber-400/70">
+                  💡 Try asking &ldquo;give me a hint&rdquo; or &ldquo;why is this the right move?&rdquo;
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Input */}
+          <div className="border-t border-white/[0.06] p-2">
+            <div className="flex gap-2">
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSend(input);
+                }}
+                placeholder="Ask Koji..."
+                className="flex-1 rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm text-white placeholder-slate-600 outline-none focus:border-purple-500/50 transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => handleSend(input)}
+                disabled={!input.trim()}
+                className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-600 text-white hover:brightness-110 disabled:opacity-40 transition-all shrink-0"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
 /* ─────────────────────────────────────────────────────────────── */
 
 function LessonRunner({
@@ -2677,7 +2831,6 @@ function LessonRunner({
   const total = lesson.slides.length;
 
   const handleNext = useCallback(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
     if (idx + 1 >= total) {
       setDone(true);
       earnCoins("study_task");
@@ -2686,6 +2839,24 @@ function LessonRunner({
       setIdx((i) => i + 1);
     }
   }, [idx, total]);
+
+  // Keyboard navigation — skip when user is typing in an input/textarea (e.g. Koji chat)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (done) return;
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      )
+        return;
+      if (e.key === "ArrowRight" || e.key === " " || e.key === "Enter") {
+        e.preventDefault();
+        handleNext();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [handleNext, done]);
 
   if (done) {
     return (
@@ -2731,45 +2902,76 @@ function LessonRunner({
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Header */}
-      <div className="flex items-center gap-3">
+    <div className="flex h-full flex-col">
+      {/* Minimal top bar — X icon + progress dots + points */}
+      <div className="flex items-center gap-3 px-3 pt-2 pb-1">
         <button
           type="button"
           onClick={() => {
             playSound("select");
             onBack();
           }}
-          className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-400 transition-colors"
+          className="flex h-8 w-8 items-center justify-center rounded-xl text-slate-600 hover:text-slate-400 hover:bg-white/[0.05] transition-colors shrink-0"
+          title="Exit lesson"
         >
-          ← Back
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
-        <div className="flex-1">
-          <LessonProgress current={idx} total={total} />
+
+        {/* Progress dots */}
+        <div className="flex-1 flex items-center gap-1.5">
+          {Array.from({ length: total }).map((_, i) => (
+            <div
+              key={i}
+              className={`flex-1 h-1.5 rounded-full transition-all duration-300 ${
+                i <= idx ? "bg-purple-500" : "bg-white/[0.08]"
+              }`}
+            />
+          ))}
         </div>
-        <span className="text-[11px] text-slate-600">
-          {idx + 1} / {total}
+
+        {/* Step counter */}
+        <span className="text-[11px] text-slate-600 shrink-0 font-medium">
+          {idx + 1}/{total}
         </span>
+
+        {/* Points placeholder (matches Brilliant's style) */}
+        <div className="flex items-center gap-1 text-slate-600 shrink-0">
+          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+          </svg>
+          <span className="text-[10px]">0</span>
+        </div>
       </div>
 
-      {/* Slide */}
-      <div key={idx} className="lesson-slide">
-        {slide?.kind === "text" && (
-          <TextSlideView slide={slide} onNext={handleNext} />
-        )}
-        {slide?.kind === "interact" &&
-          (slide.fetchTheme ? (
-            <LiveInteractSlide key={idx} slide={slide} onNext={handleNext} />
-          ) : (
-            <InteractSlideView key={idx} slide={slide} onNext={handleNext} />
-          ))}
-        {slide?.kind === "choice" && (
-          <ChoiceSlideView key={idx} slide={slide} onNext={handleNext} />
-        )}
-        {slide?.kind === "replay" && (
-          <ReplaySlideView key={idx} slide={slide} onNext={handleNext} />
-        )}
+      {/* Slide — fills remaining height, centered */}
+      <div className="flex-1 flex items-center justify-center overflow-y-auto px-3 pb-4">
+        <div
+          key={idx}
+          className="w-full lesson-slide"
+          style={{ maxWidth: "min(96vw, 1600px)" }}
+        >
+          {slide?.kind === "text" && (
+            <TextSlideView slide={slide} onNext={handleNext} />
+          )}
+          {slide?.kind === "interact" &&
+            (slide.fetchTheme ? (
+              <LiveInteractSlide key={idx} slide={slide} onNext={handleNext} />
+            ) : (
+              <InteractSlideView key={idx} slide={slide} onNext={handleNext} />
+            ))}
+          {slide?.kind === "choice" && (
+            <ChoiceSlideView key={idx} slide={slide} onNext={handleNext} />
+          )}
+          {slide?.kind === "replay" && (
+            <ReplaySlideView key={idx} slide={slide} onNext={handleNext} />
+          )}
+        </div>
       </div>
+
+      {/* Koji AI tutor */}
+      <KojiChat lessonTitle={lesson.title} slideKind={slide?.kind ?? ""} />
     </div>
   );
 }
@@ -2929,38 +3131,30 @@ function LearnPageInner() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      {/* Top bar */}
-      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/[0.05] bg-[#0a0a0a]/90 px-4 py-3 backdrop-blur sm:px-6">
-        {phase === "catalog" ? (
+    <div
+      className={`bg-[#0a0a0a] ${
+        phase === "lesson" ? "h-screen overflow-hidden" : "min-h-screen"
+      }`}
+    >
+      {/* Top bar — hidden during lessons, minimal when catalog */}
+      {phase === "catalog" && (
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/[0.05] bg-[#0a0a0a]/90 px-4 py-3 backdrop-blur sm:px-6">
           <Link
             href="/train"
             className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-400 transition-colors"
           >
             ← Training Hub
           </Link>
-        ) : (
-          <button
-            type="button"
-            onClick={() => {
-              playSound("select");
-              handleBack();
-            }}
-            className="flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-400 transition-colors"
-          >
-            ← Lessons
-          </button>
-        )}
-        {activeLesson && phase === "lesson" && (
-          <p className="text-xs font-semibold text-slate-500 truncate max-w-[60%]">
-            {activeLesson.title}
-          </p>
-        )}
-        <div className="w-24" />
-      </div>
+          <div className="w-24" />
+        </div>
+      )}
 
       {/* Content */}
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+      <div
+        className={`${
+          phase === "lesson" ? "h-full" : "mx-auto max-w-6xl px-4 py-8 sm:px-6"
+        }`}
+      >
         {phase === "catalog" && <LessonCatalog onSelect={handleSelect} />}
         {phase === "lesson" && activeLesson && (
           <LessonRunner

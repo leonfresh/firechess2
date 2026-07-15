@@ -21,6 +21,7 @@ import type {
   PlayerColor,
   PositionEvalTrace,
   RepeatedOpeningLeak,
+  StructuralReport,
   TimeMoment,
   TimeManagementReport,
   TimeVerdict,
@@ -5240,6 +5241,8 @@ export async function analyzeOpeningLeaksInBrowser(
     percent: 100,
   });
 
+  const structuralReport = computeStructuralReport(games);
+
   return {
     username,
     reportVersion: 2,
@@ -5262,6 +5265,10 @@ export async function analyzeOpeningLeaksInBrowser(
     mentalStats,
     openingSummaries:
       openingSummaries.length > 0 ? openingSummaries : undefined,
+    structuralReport:
+      structuralReport
+        ? structuralReport
+        : undefined,
     diagnostics: {
       gameTraces,
       positionTraces,
@@ -5277,4 +5284,192 @@ export async function analyzeOpeningLeaksInBrowser(
       blackRating: g.blackRating,
     })),
   };
+}
+
+/* ── Structural position classifier ── */
+
+const CENTER_SQUARES = ["d4", "d5", "e4", "e5"];
+const FIANCHETTO_MAP = {
+  w: { kingside: { b: "g2", p: "g3" }, queenside: { b: "b2", p: "b3" } },
+  b: { kingside: { b: "g7", p: "g6" }, queenside: { b: "b7", p: "b6" } },
+};
+
+function findKingPos(chess: Chess, color: "w" | "b"): { file: number; rank: number } | null {
+  const b = chess.board();
+  for (let r = 0; r < 8; r++) {
+    for (let f = 0; f < 8; f++) {
+      const p = b[r][f];
+      if (p && p.type === "k" && p.color === color) return { file: f, rank: 8 - r };
+    }
+  }
+  return null;
+}
+
+function hasFianc(chess: Chess, color: "w" | "b", side: "kingside" | "queenside"): boolean {
+  const cfg = FIANCHETTO_MAP[color][side];
+  const bishop = chess.get(cfg.b as any);
+  const pawn = chess.get(cfg.p as any);
+  return !!(bishop && bishop.type === "b" && bishop.color === color
+    && pawn && pawn.type === "p" && pawn.color === color);
+}
+
+function classifyCenterType(chess: Chess): string {
+  const count = CENTER_SQUARES.filter(sq => {
+    const p = chess.get(sq as any);
+    return p && p.type === "p";
+  }).length;
+  if (count >= 3) return "closed";
+  if (count === 0) return "open";
+  return "semi-open";
+}
+
+function classifyCastling(chess: Chess): string {
+  const wk = (() => { const k = findKingPos(chess, "w"); return k && k.rank === 1 && (k.file === 2 || k.file === 6); })();
+  const bk = (() => { const k = findKingPos(chess, "b"); return k && k.rank === 8 && (k.file === 2 || k.file === 6); })();
+  if (!wk && !bk) return "none";
+  if (wk && bk) {
+    const ws = findKingPos(chess, "w")!;
+    const bs = findKingPos(chess, "b")!;
+    const wSide = ws.file <= 3 ? "queenside" : "kingside";
+    const bSide = bs.file <= 3 ? "queenside" : "kingside";
+    return wSide !== bSide ? "opposite" : "same-side";
+  }
+  return wk ? "white-only" : "black-only";
+}
+
+function hasIQP(chess: Chess, color: "w" | "b"): boolean {
+  const r = color === "w" ? 4 : 5;
+  const dp = chess.get(`d${r}`);
+  if (!dp || dp.type !== "p" || dp.color !== color) return false;
+  for (let ir = 2; ir <= 7; ir++) {
+    const cf = chess.get(`c${ir}` as any);
+    const ef = chess.get(`e${ir}` as any);
+    if (cf && cf.type === "p" && cf.color === color) return false;
+    if (ef && ef.type === "p" && ef.color === color) return false;
+  }
+  return true;
+}
+
+function classifyPawnStructure(chess: Chess, color: "w" | "b"): string {
+  const fen = chess.fen();
+  const board = chess.board();
+  const files: number[][] = [];
+  for (let f = 0; f < 8; f++) {
+    files[f] = [];
+    for (let r = 0; r < 8; r++) {
+      const p = board[r][f];
+      if (p && p.type === "p" && p.color === color) files[f].push(8 - r);
+    }
+  }
+  const total = files.reduce((s, ranks) => s + ranks.length, 0);
+  if (total === 0) return "no-pawns";
+  const doubled = files.filter(ranks => ranks.length >= 2).length;
+  const isolated = files.filter((ranks, i) => {
+    return ranks.length > 0 && (!files[i - 1] || files[i - 1].length === 0) && (!files[i + 1] || files[i + 1].length === 0);
+  }).length;
+  if (isolated > 0 && doubled > 0) return "shattered";
+  if (isolated > 0) return "isolated";
+  if (doubled > 0) return "doubled";
+  return "healthy";
+}
+
+/** Replay a game's moves through chess.js up to ply 15 and classify structural features. */
+function classifyGameStructure(moves: string, winner: string | null | undefined): Record<string, string> {
+  const clean = moves.replace(/\s*(1-0|0-1|1\/2-1\/2)\s*$/, "").trim();
+  const tokens = clean.split(/\s+/);
+  const chess = new Chess();
+  let ply = 0;
+
+  for (const token of tokens) {
+    if (!token || /^\d+\./.test(token)) continue;
+    try {
+      const r = chess.move(token);
+      if (r) ply++;
+    } catch { /* skip non-move tokens */ }
+    // Classify at ply 15 (structures settled)
+    if (ply === 15) {
+      const uc: "w" | "b" = "w"; // user is always white from this perspective
+      const uFianc = hasFianc(chess, uc, "kingside") && hasFianc(chess, uc, "queenside") ? "double"
+        : hasFianc(chess, uc, "kingside") || hasFianc(chess, uc, "queenside") ? "single" : "none";
+      const oFianc = hasFianc(chess, "b", "kingside") || hasFianc(chess, "b", "queenside") ? true : false;
+      return {
+        fianchetto: uFianc,
+        opponentFianchetto: oFianc ? "yes" : "no",
+        doubleFianchetto: uFianc === "double" ? "double" : "not-double",
+        centerType: classifyCenterType(chess),
+        castling: classifyCastling(chess),
+        iqp: hasIQP(chess, "w") ? "white-iqp" : hasIQP(chess, "b") ? "black-iqp" : "none",
+        pawnStructure: classifyPawnStructure(chess, uc),
+      };
+    }
+  }
+  return {};
+}
+
+export function computeStructuralReport(
+  games: { moves: string; winner?: string | null }[],
+): StructuralReport | null {
+  const data: Record<string, Record<string, { games: number; wins: number; draws: number; losses: number }>> = {};
+  const MIN_GAMES = 3;
+  let classified = 0;
+
+  const record = (axis: string, pattern: string, winner: string | null | undefined) => {
+    if (!data[axis]) data[axis] = {};
+    if (!data[axis][pattern]) data[axis][pattern] = { games: 0, wins: 0, draws: 0, losses: 0 };
+    const s = data[axis][pattern];
+    s.games++;
+    if (winner === "draw") s.draws++;
+    else if (winner === "white") s.wins++;
+    else s.losses++;
+  };
+
+  for (const game of games) {
+    if (!game.moves) continue;
+    const result = classifyGameStructure(game.moves, game.winner);
+    if (!result.fianchetto) continue;
+    classified++;
+
+    record("fianchetto", result.fianchetto, game.winner);
+    record("centerType", result.centerType, game.winner);
+    record("castling", result.castling, game.winner);
+    record("iqp", result.iqp, game.winner);
+    record("doubleFianchetto", result.doubleFianchetto, game.winner);
+    record("pawnStructure", result.pawnStructure, game.winner);
+  }
+
+  if (classified < MIN_GAMES) return null;
+
+  const byAxis: Record<string, StructuralReport["byAxis"][string]> = {};
+  const topInsights: StructuralReport["topInsights"] = [];
+
+  for (const [axis, patterns] of Object.entries(data)) {
+    const entries = Object.entries(patterns)
+      .map(([pattern, s]) => ({
+        pattern,
+        games: s.games,
+        wins: s.wins,
+        draws: s.draws,
+        losses: s.losses,
+        winPct: s.games > 0 ? +((s.wins / s.games) * 100).toFixed(1) : 0,
+      }))
+      .sort((a, b) => b.games - a.games);
+    byAxis[axis] = entries;
+
+    const sig = entries.filter(e => e.games >= MIN_GAMES);
+    if (sig.length >= 2) {
+      const sorted = [...sig].sort((a, b) => b.winPct - a.winPct);
+      const gap = +(sorted[0].winPct - sorted[sorted.length - 1].winPct).toFixed(1);
+      if (gap >= 10) {
+        topInsights.push({
+          axis,
+          best: { pattern: sorted[0].pattern, winPct: sorted[0].winPct, games: sorted[0].games },
+          worst: { pattern: sorted[sorted.length - 1].pattern, winPct: sorted[sorted.length - 1].winPct, games: sorted[sorted.length - 1].games },
+          gap,
+          text: `Win ${sorted[0].winPct}% in ${axis}=${sorted[0].pattern} vs ${sorted[sorted.length - 1].winPct}% in ${axis}=${sorted[sorted.length - 1].pattern} (${gap}pt gap).`,
+        });
+      }
+    }
+  }
+
+  return { byAxis, topInsights };
 }

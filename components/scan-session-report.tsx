@@ -29,7 +29,9 @@ import {
   ScanMentalGame,
 } from "@/components/scan-mental-game";
 import { OpeningRankings } from "@/components/opening-rankings";
+import { ReportSlideDeck } from "@/components/report-slide-deck";
 import { ScanPositionalMotifs } from "@/components/scan-positional-motifs";
+import { ScanStructuralStats } from "@/components/scan-structural-stats";
 import {
   RadarLegend,
   StrengthsRadar,
@@ -54,6 +56,7 @@ import type {
   MissedTactic,
   PositionalFinding,
   RepeatedOpeningLeak,
+  StructuralReport,
   TimeManagementReport,
   TimeMoment,
 } from "@/lib/types";
@@ -169,6 +172,92 @@ function FloatingSectionNav({ sections }: { sections: FloatingNavSection[] }) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/* ── Slide-mode navigation strip (prev/next carousel feel) ── */
+
+function SlideSectionNavigator({
+  sections,
+}: {
+  sections: FloatingNavSection[];
+}) {
+  const [currentIdx, setCurrentIdx] = useState(0);
+
+  // Track which section is visible via scroll position
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const idx = sections.findIndex(
+              (s) => s.id === (entry.target as HTMLElement).id,
+            );
+            if (idx !== -1) setCurrentIdx(idx);
+          }
+        }
+      },
+      { rootMargin: "-15% 0px -55% 0px", threshold: 0 },
+    );
+
+    const elements = sections
+      .map((s) => document.getElementById(s.id))
+      .filter((el): el is HTMLElement => el !== null);
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [sections]);
+
+  const goTo = (idx: number) => {
+    const section = sections[idx];
+    if (!section) return;
+    document
+      .getElementById(section.id)
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setCurrentIdx(idx);
+  };
+
+  if (sections.length < 2) return null;
+
+  return (
+    <div className="sticky bottom-4 z-30 flex items-center justify-center gap-3 rounded-2xl border border-white/[0.08] bg-slate-950/90 px-4 py-2.5 shadow-2xl shadow-black/50 backdrop-blur-md">
+      <button
+        type="button"
+        onClick={() => goTo(currentIdx - 1)}
+        disabled={currentIdx === 0}
+        className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent"
+        aria-label="Previous section"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+
+      <div className="flex items-center gap-1.5">
+        {sections.map((section, idx) => (
+          <button
+            key={section.id}
+            type="button"
+            onClick={() => goTo(idx)}
+            className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium transition-all ${
+              idx === currentIdx
+                ? "bg-white/[0.1] text-white"
+                : "text-slate-500 hover:text-slate-300"
+            }`}
+          >
+            <span className="text-xs">{section.icon}</span>
+            <span className="hidden sm:inline">{section.label}</span>
+          </button>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => goTo(currentIdx + 1)}
+        disabled={currentIdx >= sections.length - 1}
+        className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition hover:bg-white/[0.06] hover:text-white disabled:opacity-30 disabled:hover:bg-transparent"
+        aria-label="Next section"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
     </div>
   );
 }
@@ -1843,6 +1932,7 @@ export function ScanSessionReport({
     result?.timeManagementScore ?? timeManagement?.score ?? null;
   const isTimeManagementScan = scan.scanMode === "time-management";
   const timeMoments = timeManagement?.moments ?? [];
+  const structuralReport = result?.structuralReport ?? null;
 
   const realLeakCount = useMemo(
     () => leaks.filter((leak) => !leak.dbApproved).length,
@@ -1980,6 +2070,7 @@ export function ScanSessionReport({
     // Full report while scanning; guided tour offered via modal when ready.
     "full",
   );
+  const [slideView, setSlideView] = useState(false);
   const getSV = (id: string): "list" | "grid" => sectionViewModes[id] ?? "list";
   const toggleSV = (id: string) =>
     setSectionViewModes((p) => ({
@@ -2072,6 +2163,7 @@ export function ScanSessionReport({
   const showBrilliants =
     scan.scanMode !== "time-management" &&
     ((result?.reportVersion ?? 0) >= 2 || brilliantMoves.length > 0);
+  const showStructural = Boolean(structuralReport?.byAxis && Object.keys(structuralReport.byAxis).length > 0);
   const showTimeManagement =
     isTimeManagementScan || scan.scanMode === "both" || Boolean(timeManagement);
   const followUpIssueCount =
@@ -2242,6 +2334,12 @@ export function ScanSessionReport({
       icon: "💎",
       count: brilliantMoves.length || undefined,
       countColor: "bg-cyan-500/20 text-cyan-300",
+    },
+    showStructural && {
+      id: "section-structural",
+      label: "Structures",
+      icon: "🏗️",
+      countColor: "bg-emerald-500/20 text-emerald-300",
     },
     showOpenings && {
       id: "section-openings",
@@ -2442,6 +2540,23 @@ export function ScanSessionReport({
               </button>
             ) : null}
           </nav>
+        ) : null}
+
+        {/* ── Slide mode toggle ── */}
+        {(showBrilliants || showOpenings || showTactics || showEndgames || showTimeManagement || showStructural) ? (
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setSlideView((v) => !v)}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-semibold transition ${
+                slideView
+                  ? "border-white/[0.15] bg-white/[0.08] text-white"
+                  : "border-white/[0.06] bg-white/[0.02] text-slate-500 hover:border-white/[0.1] hover:text-slate-300"
+              }`}
+            >
+              {slideView ? "📖 List View" : "📺 Slide View"}
+            </button>
+          </div>
         ) : null}
 
         <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
@@ -2763,6 +2878,18 @@ export function ScanSessionReport({
             </div>
           </section>
         )}
+
+        {/* ── Positional Structure Stats ── */}
+        {showStructural && structuralReport ? (
+          <section id="section-structural" className="space-y-4">
+            <SectionHeader
+              eyebrow="Structures"
+              title="Positional structure report"
+              description="How your win rate shifts depending on pawn structures, fianchetto patterns, castling types, and other positional features."
+            />
+            <ScanStructuralStats report={structuralReport} />
+          </section>
+        ) : null}
 
         {showBrilliants ? (
           <section id="section-brilliant" className="space-y-4">
@@ -3379,6 +3506,11 @@ export function ScanSessionReport({
             />
           </section>
         ) : null}
+
+        {/* ── Section carousel nav (prev/next slide) ── */}
+        {slideView && (
+          <SlideSectionNavigator sections={floatingNavSections} />
+        )}
       </div>
       ) : null}
       <AnalysisBoardModal

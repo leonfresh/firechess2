@@ -496,6 +496,47 @@ function maybeSanPrefix(san: string, seed: number): string {
   return "";
 }
 
+/* ── Silence filter — which themes justify narration ── */
+
+const INSTRUCTIVE_THEMES = new Set([
+  // Tactical
+  "Fork", "Knight Fork", "Pin", "Skewer",
+  "Discovered Attack", "Discovered Check", "Double Check",
+  "Back Rank", "Back-Rank Mate",
+  "Arabian Mate", "Smothered Mate", "Boden's Mate", "Anastasia's Mate",
+  "Sacrifice", "Exchange Sacrifice",
+  "Overloaded Piece", "Promotion", "Underpromotion",
+  "Hanging Piece", "Trapped Piece",
+  "En Passant", "Castling",
+  "Deflection", "Attraction", "Interference", "Clearance",
+  "Capturing Defender", "Checkmate",
+  "Winning Exchange", "Losing Exchange",
+  "Walks Into Fork", "Walks Into Pin", "Hangs Material",
+  "Back-Rank Mate Threat",
+  // Positional / structural
+  "Passed Pawn", "Advanced Pawn", "Exposed King",
+  "Weakening Move", "Attacking f2/f7", "Outpost", "Zugzwang",
+]);
+
+/**
+ * Decide whether a routine (best/good) move deserves narration.
+ * Errors, brilliant moves, and inaccuracies always narrate — this is
+ * only called for the "everything is fine" bucket.
+ */
+function shouldNarrate(
+  cpLoss: number,
+  themes: string[],
+  primaryTheme: string | undefined,
+): boolean {
+  if (primaryTheme && INSTRUCTIVE_THEMES.has(primaryTheme)) return true;
+  for (const t of themes) {
+    if (INSTRUCTIVE_THEMES.has(t)) return true;
+  }
+  // Significant evaluation swing — something changed
+  if (Math.abs(cpLoss) > 30) return true;
+  return false;
+}
+
 /* ── Phase labels to skip when looking for primary theme ── */
 
 const PHASE_LABELS = new Set([
@@ -686,10 +727,13 @@ export function generateCoachLine(
       themes.some((t) => KEY_TACTICAL_THEMES.has(t))) ||
     (move.cpLoss === 0 && themes.some((t) => KEY_TACTICAL_THEMES.has(t)));
 
-  /* ── Book moves: brief theory note ── */
+  /* ── Book moves: brief theory note (only first 8 half-moves) ── */
   if (move.classification === "book" && move.cpLoss < 10) {
-    const text = pickLine(BOOK_COMMENTS, usedLines);
-    return { text, isKeyMoment: false, keyMomentLabel: null, themes };
+    if (move.moveNumber <= 8) {
+      const text = pickLine(BOOK_COMMENTS, usedLines);
+      return { text, isKeyMoment: false, keyMomentLabel: null, themes };
+    }
+    return { text: "", isKeyMoment: false, keyMomentLabel: null, themes };
   }
 
   const keyMomentLabel = getKeyMomentLabel(move.classification, primaryTheme);
@@ -744,6 +788,11 @@ export function generateCoachLine(
     text = coaching ? `${intro} ${coaching}`.trim() : intro;
   } else {
     /* ── Good/best move: phase comment + optional theme note ── */
+    // Silence filter: skip routine moves that teach nothing
+    if (!shouldNarrate(move.cpLoss, themes, primaryTheme)) {
+      return { text: "", isKeyMoment: false, keyMomentLabel: null, themes };
+    }
+
     const phasePool =
       GOOD_MOVE_COMMENTS[phase] ?? GOOD_MOVE_COMMENTS["Middlegame"];
     text = pickLine(phasePool, usedLines);
@@ -956,6 +1005,59 @@ export function getPhaseBanner(fen: string, moveNumber: number): string | null {
 }
 
 /* ── Summary lesson bullets ── */
+
+export interface CoachDebriefStats {
+  totalMoves: number;
+  blunders: number;
+  mistakes: number;
+  inaccuracies: number;
+  brilliant: number;
+  totalCpLoss: number;
+  topThemes: { theme: string; count: number }[];
+}
+
+export function buildCoachDebrief(
+  moves: {
+    classification: MoveClassification;
+    themes: string[];
+    san: string;
+    moveNumber: number;
+    color: "w" | "b";
+    narration: string | null;
+  }[],
+): CoachDebriefStats {
+  const stats: CoachDebriefStats = {
+    totalMoves: 0,
+    blunders: 0,
+    mistakes: 0,
+    inaccuracies: 0,
+    brilliant: 0,
+    totalCpLoss: 0,
+    topThemes: [],
+  };
+
+  const themeCounts = new Map<string, number>();
+
+  for (const m of moves) {
+    stats.totalMoves++;
+    if (m.classification === "blunder") stats.blunders++;
+    else if (m.classification === "mistake") stats.mistakes++;
+    else if (m.classification === "inaccuracy") stats.inaccuracies++;
+    else if (m.classification === "brilliant") stats.brilliant++;
+
+    for (const theme of m.themes) {
+      themeCounts.set(theme, (themeCounts.get(theme) ?? 0) + 1);
+    }
+  }
+
+  // Sort themes by frequency, take top 5
+  stats.topThemes = Array.from(themeCounts.entries())
+    .map(([theme, count]) => ({ theme, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  return stats;
+}
 
 export function buildLessonSummary(
   moves: {

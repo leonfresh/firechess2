@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { WordTiming } from "@/app/api/puzzle-speech/route";
 import type { GestureType } from "@/components/puzzle-avatar/PuzzleAvatar";
 import type { PuzzleAvatarAudioRef } from "@/components/puzzle-avatar/PuzzleAvatar";
 import { buildPuzzleScript } from "@/lib/puzzle-commentary";
@@ -55,33 +54,6 @@ interface UsePuzzleTutorReturn {
   stopTutor: () => void;
   nextMove: () => void;
   setVoice: (voice: string) => void;
-}
-
-async function generateSpeech(
-  text: string,
-  voice: string,
-): Promise<{
-  audioBase64: string;
-  wordTimings: WordTiming[];
-  durationSeconds: number;
-} | null> {
-  const controller = new AbortController();
-  const timeoutId = window.setTimeout(() => controller.abort(), 12000);
-
-  try {
-    const res = await fetch("/api/puzzle-speech", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      signal: controller.signal,
-      body: JSON.stringify({ text, voice }),
-    });
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
-  } finally {
-    window.clearTimeout(timeoutId);
-  }
 }
 
 const OPTIONAL_ANALYSIS_WAIT_MS = 2500;
@@ -188,9 +160,6 @@ export function usePuzzleTutor(): UsePuzzleTutorReturn {
   });
 
   const audioRef = useRef<PuzzleAvatarAudioRef>({ wordActive: 0 });
-  const audioElRef = useRef<HTMLAudioElement | null>(null);
-  const wordTimingsRef = useRef<WordTiming[]>([]);
-  const animFrameRef = useRef<number | null>(null);
   const voiceRef = useRef("en-US-AvaNeural");
   const activeWaitRef = useRef<(() => void) | null>(null);
   const sequenceIdRef = useRef(0);
@@ -215,15 +184,6 @@ export function usePuzzleTutor(): UsePuzzleTutorReturn {
   );
 
   const cleanupPlayback = useCallback(() => {
-    if (audioElRef.current) {
-      audioElRef.current.pause();
-      audioElRef.current.src = "";
-      audioElRef.current = null;
-    }
-    if (animFrameRef.current !== null) {
-      cancelAnimationFrame(animFrameRef.current);
-      animFrameRef.current = null;
-    }
     if (audioRef.current) audioRef.current.wordActive = 0;
 
     if (typeof window !== "undefined" && window.speechSynthesis) {
@@ -310,110 +270,13 @@ export function usePuzzleTutor(): UsePuzzleTutorReturn {
     [cleanupPlayback, clearActiveWait, isCurrentSequence],
   );
 
-  const playEdgeAudio = useCallback(
-    async (
-      audioBase64: string,
-      wordTimings: WordTiming[],
-      sequenceId: number,
-    ): Promise<SpeechOutcome> => {
-      cleanupPlayback();
-
-      return new Promise<SpeechOutcome>((resolve) => {
-        const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
-        audioElRef.current = audio;
-        wordTimingsRef.current = wordTimings;
-
-        let settled = false;
-
-        const cleanup = () => {
-          if (audioElRef.current === audio) {
-            audioElRef.current = null;
-          }
-          if (animFrameRef.current !== null) {
-            cancelAnimationFrame(animFrameRef.current);
-            animFrameRef.current = null;
-          }
-          if (audioRef.current) {
-            audioRef.current.wordActive = 0;
-          }
-          audio.pause();
-          audio.src = "";
-        };
-
-        const finish = (outcome: SpeechOutcome) => {
-          if (settled) return;
-          settled = true;
-          clearActiveWait(interrupt);
-          cleanup();
-          resolve(outcome);
-        };
-
-        const interrupt = () => finish("interrupted");
-        activeWaitRef.current = interrupt;
-
-        const tick = () => {
-          if (!audioElRef.current || !isCurrentSequence(sequenceId)) {
-            finish("interrupted");
-            return;
-          }
-
-          const currentTime = audioElRef.current.currentTime;
-          const active = wordTimingsRef.current.some(
-            (word) =>
-              currentTime >= word.startTime && currentTime <= word.endTime,
-          );
-          if (audioRef.current) {
-            audioRef.current.wordActive = active ? 1 : 0;
-          }
-          animFrameRef.current = requestAnimationFrame(tick);
-        };
-
-        audio.onplay = () => {
-          if (!isCurrentSequence(sequenceId)) {
-            finish("interrupted");
-            return;
-          }
-          animFrameRef.current = requestAnimationFrame(tick);
-        };
-        audio.onended = () => finish("completed");
-        audio.onerror = () => finish("failed");
-
-        audio.play().catch((error) => {
-          finish(isPlaybackBlocked(error) ? "blocked" : "failed");
-        });
-      });
-    },
-    [cleanupPlayback, clearActiveWait, isCurrentSequence],
-  );
-
   const speakAndAwait = useCallback(
     async (text: string, sequenceId: number): Promise<SpeechOutcome> => {
       cleanupPlayback();
 
-      const result = await generateSpeech(text, voiceRef.current);
-      if (!isCurrentSequence(sequenceId)) {
-        return "interrupted";
-      }
-
-      if (result) {
-        const edgeOutcome = await playEdgeAudio(
-          result.audioBase64,
-          result.wordTimings,
-          sequenceId,
-        );
-        if (edgeOutcome === "completed" || edgeOutcome === "interrupted") {
-          return edgeOutcome;
-        }
-      }
-
       return speakWithBrowserFallback(text, sequenceId);
     },
-    [
-      cleanupPlayback,
-      isCurrentSequence,
-      playEdgeAudio,
-      speakWithBrowserFallback,
-    ],
+    [cleanupPlayback, speakWithBrowserFallback],
   );
 
   const waitMs = useCallback(
